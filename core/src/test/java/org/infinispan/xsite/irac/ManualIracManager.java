@@ -77,6 +77,17 @@ public class ManualIracManager extends ControlledIracManager {
       super.requestState(requestor, segments);
    }
 
+   @Override
+   public boolean containsKey(Object key) {
+      return pendingKeys.containsKey(key) ||
+            super.containsKey(key) ||
+            pendingStateTransfer.stream()
+                  .map(StateTransferRequest::getState)
+                  .flatMap(Collection::stream)
+                  .map(XSiteState::key)
+                  .anyMatch(key::equals);
+   }
+
    public void sendKeys() {
       pendingKeys.values().forEach(this::send);
       pendingKeys.clear();
@@ -155,7 +166,7 @@ public class ManualIracManager extends ControlledIracManager {
       private final boolean expiration;
 
       private PendingKeyRequest(Object key, Object lockOwner, int segment, boolean expiration) {
-         this.keyInfo = new IracManagerKeyInfo(segment, key, lockOwner);
+         keyInfo = new IracManagerKeyInfo(segment, key, lockOwner);
          this.expiration = expiration;
       }
 

@@ -1,5 +1,6 @@
 package org.infinispan.interceptors.xsite;
 
+import java.lang.invoke.MethodHandles;
 import java.util.function.Predicate;
 
 import org.infinispan.commands.tx.CommitCommand;
@@ -13,7 +14,10 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.ExceptionSyncInvocationStage;
 import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Handles x-site data backups for optimistic transactional caches.
@@ -23,6 +27,7 @@ import org.infinispan.interceptors.InvocationStage;
  */
 public class OptimisticBackupInterceptor extends BaseBackupInterceptor {
 
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private boolean hasOnePhaseCommitBackups;
 
    @Inject
@@ -46,7 +51,21 @@ public class OptimisticBackupInterceptor extends BaseBackupInterceptor {
       }
 
       InvocationStage stage = backupSender.backupPrepare(command, ctx.getCacheTransaction(), ctx.getTransaction());
-      return invokeNextAndWaitForCrossSite(ctx, command, stage);
+      return invokeNextAndHandle(ctx, command, (rCtx, rCommand, rv, throwable) -> stage.andHandle(rCtx, rCommand, (rCtx1, rCommand1, rv1, throwable1) -> {
+         if (log.isTraceEnabled()) {
+            log.tracef("Response received from remote site for transaction %s: %s (throwable=%s)", rCommand1.getGlobalTransaction(), rv1, throwable1);
+         }
+         if (throwable != null) {
+            if (throwable1 != null) {
+               throwable.addSuppressed(throwable1);
+            }
+            return new ExceptionSyncInvocationStage(throwable);
+         }
+         if (throwable1 != null) {
+            return new ExceptionSyncInvocationStage(throwable1);
+         }
+         return rv;
+      }));
    }
 
    @Override
@@ -86,27 +105,17 @@ public class OptimisticBackupInterceptor extends BaseBackupInterceptor {
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) {
-      if (!shouldRollbackRemoteTxCommand(ctx))
-         return invokeNext(ctx, command);
-
-      if (isTxFromRemoteSite(command.getGlobalTransaction())) {
+      if (!shouldInvokeRemoteTxCommand(ctx) || isTxFromRemoteSite(command.getGlobalTransaction())) {
          return invokeNext(ctx, command);
       }
 
+      // we always send the rollback command to remote sites but, we avoid waiting if the transaction does not
+      // have remote locks acquired (very likely it will fail remotely with "transaction not found")
       InvocationStage stage = backupSender.backupRollback(command, ctx.getTransaction());
+      if (((LocalTxInvocationContext) ctx).getRemoteLocksAcquired().isEmpty()) {
+         return invokeNext(ctx, command);
+      }
       return invokeNextAndWaitForCrossSite(ctx, command, stage);
-   }
-
-   private boolean shouldRollbackRemoteTxCommand(TxInvocationContext<?> ctx) {
-      return shouldInvokeRemoteTxCommand(ctx) && hasBeenPrepared((LocalTxInvocationContext) ctx);
-   }
-
-   /**
-    * This 'has been prepared' logic only applies to optimistic transactions, hence it is not present in the
-    * LocalTransaction object itself.
-    */
-   private boolean hasBeenPrepared(LocalTxInvocationContext ctx) {
-      return !ctx.getRemoteLocksAcquired().isEmpty();
    }
 
    private void trackKeysForAsyncBackups(CommitCommand command) {
