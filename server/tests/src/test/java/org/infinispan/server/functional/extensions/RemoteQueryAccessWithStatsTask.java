@@ -5,7 +5,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.SearchStatisticsSnapshot;
 import org.infinispan.tasks.ServerTask;
@@ -32,15 +34,17 @@ public class RemoteQueryAccessWithStatsTask implements ServerTask<String> {
       RemoteQueryAccess remoteQueryAccess = ctx.getRemoteQueryAccess().get();
       Map<String, Object> params = Map.of("name", name);
 
-      List<?> objects = remoteQueryAccess.executeQuery(QUERY, params, -1, -1, 1, false).list();
-      int firstQuerySize = objects.size();
+      Query<User> query = remoteQueryAccess.query(QUERY);
+      query.setParameters(params);
+      List<User> users = query.list();
 
-      for (int i = 0; i < objects.size(); i++) {
-         cache.put(500 + i, objects.get(i));
+      for (int i = 0; i < users.size(); i++) {
+         cache.put(500 + i, users.get(i));
       }
 
-      objects = remoteQueryAccess.executeQuery(QUERY_PROJ_TEXT, params, -1, -1, 1, false).list();
-      List<Object[]> proj = (List<Object[]>) objects;
+      Query<Object[]> queryProj = remoteQueryAccess.query(QUERY_PROJ_TEXT);
+      queryProj.setParameters(params);
+      List<Object[]> proj = queryProj.list();
       Json jsonProj = Json.array();
       proj.forEach(array -> jsonProj.asJsonList().add(Json.array(array)));
 
@@ -49,7 +53,7 @@ public class RemoteQueryAccessWithStatsTask implements ServerTask<String> {
       Json json = statisticsSnapshot.toJson();
 
       Json serverTaskInfo = Json.object();
-      serverTaskInfo.set("query-result-size", firstQuerySize);
+      serverTaskInfo.set("query-result-size", users.size());
       serverTaskInfo.set("param-name", name);
       serverTaskInfo.set("projection-query-result", jsonProj);
 

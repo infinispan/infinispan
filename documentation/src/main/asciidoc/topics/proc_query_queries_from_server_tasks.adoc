@@ -1,6 +1,11 @@
 [id='queries_server_tasks_{context}']
 = Remote queries from server tasks
 
+[WARNING]
+====
+The feature is marked as experimental.
+====
+
 Indexes for remote caches encoded with ProtoBuf can be used to run queries from server tasks,
 even if the server tasks are run embedded with the server JVM.
 
@@ -23,3 +28,11 @@ Using the method `executeQuery`, that will take the following parameter:
 . `offset` and `maxResults`: for pagination
 . `hitCountAccuracy`: the bound up to hit count will be exact
 . `local`: if the query should report results only considering the local index shard
+
+[IMPORTANT]
+====
+The feature is marked as experimental.
+Several query APIs are not available from this setting.
+In particular is not possible to execute a statement, verify if a query has projections defined, it is not possible to use
+Neither the iterator, nor the entity iterator, timeouts and forcing the score to be computed.
+====
