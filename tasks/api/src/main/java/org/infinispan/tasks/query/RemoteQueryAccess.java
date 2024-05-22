@@ -1,13 +1,11 @@
 package org.infinispan.tasks.query;
 
-import java.io.IOException;
-import java.util.Map;
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.util.Experimental;
 
-import org.infinispan.commons.api.query.QueryResult;
-
+@Experimental
 public interface RemoteQueryAccess {
 
-   QueryResult<?> executeQuery(String queryString, Map<String, Object> namedParametersMap, Integer offset,
-                               Integer maxResults, Integer hitCountAccuracy, boolean isLocal) throws IOException;
+   <T> Query<T> query(String query);
 
 }

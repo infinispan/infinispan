@@ -107,4 +107,8 @@ public interface Log extends BasicLogger {
    @Message(id = 28026, value = "Error indexing protobuf entity.")
    void errorIndexingProtobufEntry(@Cause Throwable cause);
 
+   @LogMessage(level = WARN)
+   @Message(id = 28027, value = "Error unmarshalling protobuf entity.")
+   void errorUnmarshallingProtobufEntity(@Cause Throwable cause);
+
 }
