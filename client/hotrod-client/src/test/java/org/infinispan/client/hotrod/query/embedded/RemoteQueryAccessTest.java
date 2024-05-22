@@ -3,7 +3,6 @@ package org.infinispan.client.hotrod.query.embedded;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.client.hotrod.RemoteCache;
@@ -75,19 +74,19 @@ public class RemoteQueryAccessTest extends SingleHotRodServerTest {
    }
 
    @Test
-   public void remoteQueriesFromEmbedded() throws Exception {
+   public void remoteQueriesFromEmbedded() {
       RemoteQueryAccess remoteQueryAccess = SecurityActions
             .getCacheComponentRegistry(cache.getAdvancedCache()).getComponent(RemoteQueryAccess.class);
 
-      List<?> objects = remoteQueryAccess
-            .executeQuery(QUERY_TEXT, Collections.emptyMap(), -1, -1, 1, false).list();
-      assertThat(objects).extracting("name")
+      Query<Game> query = remoteQueryAccess.query(QUERY_TEXT);
+      List<Game> list = query.list();
+      assertThat(list).extracting("name")
             .containsExactlyInAnyOrder("The Secret of Monkey Island", "Monkey Island 2: LeChuck's Revenge");
 
       // this query is hybrid, since the fields name and description are not projectable
-      objects = remoteQueryAccess
-            .executeQuery(QUERY_PROJ_TEXT, Collections.emptyMap(), -1, -1, 1, false).list();
-      assertThat(objects).extracting(array -> ((Object[]) array)[0] )
+      Query<Object[]> queryProj = remoteQueryAccess.query(QUERY_PROJ_TEXT);
+      List<Object[]> proj = queryProj.list();
+      assertThat(proj).extracting(objects -> objects[0])
             .containsExactlyInAnyOrder("The Secret of Monkey Island", "Monkey Island 2: LeChuck's Revenge");
 
       expectedIndexedQueries(2, 1);

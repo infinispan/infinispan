@@ -169,7 +169,7 @@ public final class LifecycleManager implements ModuleLifecycle {
             bcr.replaceComponent(IndexStatistics.class.getName(), new LocalIndexStatistics(), true);
             bcr.rewire();
 
-            cr.registerComponent(new RemoteQueryAccessImpl(), RemoteQueryAccess.class);
+            cr.registerComponent(new RemoteQueryAccessEngine(), RemoteQueryAccess.class);
          }
 
       }
