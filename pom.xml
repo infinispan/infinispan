@@ -2319,24 +2319,6 @@
             </executions>
          </plugin>
          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>buildnumber-maven-plugin</artifactId>
-            <version>3.2.0</version>
-            <executions>
-               <execution>
-                  <phase>validate</phase>
-                  <goals>
-                     <goal>create</goal>
-                  </goals>
-                  <configuration>
-                     <doCheck>false</doCheck>
-                     <doUpdate>false</doUpdate>
-                     <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-invoker-plugin</artifactId>
             <version>${version.maven.invoker}</version>

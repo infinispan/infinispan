@@ -329,12 +329,54 @@
                </executions>
             </plugin>
             <plugin>
-               <groupId>org.eclipse.transformer</groupId>
-               <artifactId>transformer-maven-plugin</artifactId>
-               <version>${version.eclipse.transformer}</version>
+               <groupId>org.codehaus.mojo</groupId>
+               <artifactId>buildnumber-maven-plugin</artifactId>
+               <version>3.2.0</version>
+               <executions>
+                  <execution>
+                     <phase>validate</phase>
+                     <goals>
+                        <goal>create</goal>
+                     </goals>
+                     <configuration>
+                        <doCheck>false</doCheck>
+                        <doUpdate>false</doUpdate>
+                        <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
+                        <timezone>UTC</timezone>
+                     </configuration>
+                  </execution>
+               </executions>
+            </plugin>
+            <plugin>
+               <groupId>io.github.git-commit-id</groupId>
+               <artifactId>git-commit-id-maven-plugin</artifactId>
+               <version>8.0.2</version>
+               <executions>
+                  <execution>
+                     <id>get-the-git-infos</id>
+                     <goals>
+                        <goal>revision</goal>
+                     </goals>
+                     <phase>initialize</phase>
+                  </execution>
+               </executions>
+               <configuration>
+                  <dateFormatTimeZone>UTC</dateFormatTimeZone>
+               </configuration>
             </plugin>
          </plugins>
       </pluginManagement>
+
+      <plugins>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>buildnumber-maven-plugin</artifactId>
+         </plugin>
+         <plugin>
+            <groupId>io.github.git-commit-id</groupId>
+            <artifactId>git-commit-id-maven-plugin</artifactId>
+         </plugin>
+      </plugins>
    </build>
 
    <profiles>
@@ -346,6 +388,9 @@
                <value>upstream</value>
             </property>
          </activation>
+         <properties>
+            <project.build.outputTimestamp>${git.commit.time}</project.build.outputTimestamp>
+         </properties>
          <build>
             <plugins>
                <plugin>
