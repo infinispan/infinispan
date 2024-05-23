@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
@@ -13,6 +14,7 @@ import org.infinispan.objectfilter.impl.syntax.parser.projection.ScorePropertyPa
 import org.infinispan.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.EnumValueDescriptor;
@@ -44,6 +46,9 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
    public static final int KEY_FIELD_ATTRIBUTE_ID = 150_003;
 
    private static final IndexedFieldProvider.FieldIndexingMetadata<Descriptor> PROTO_NO_INDEXING = IndexedFieldProvider.noIndexing();
+   private static final String EMBEDDED_ANNOTATION = "Embedded";
+   private static final String STRUCTURE_ATTRIBUTE_NAME = "structure";
+   private static final String NESTED_STRUCTURE_VALUE = "NESTED";
 
    private final EntityNameResolver<Descriptor> entityNameResolver;
 
@@ -136,6 +141,28 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
    @Override
    public Class<?> getIndexedPropertyType(Descriptor entityType, String[] propertyPath) {
       return getPrimitivePropertyType(entityType, propertyPath);
+   }
+
+   @Override
+   public boolean isNestedIndexStructure(Descriptor entityType, String[] propertyPath) {
+      FieldDescriptor field = getField(entityType, propertyPath);
+      if (field == null) {
+         return false;
+      }
+      Map<String, AnnotationElement.Annotation> annotations = field.getAnnotations();
+      if (annotations == null) {
+         return false;
+      }
+      AnnotationElement.Annotation annotation = annotations.get(EMBEDDED_ANNOTATION);
+      if (annotation == null) {
+         return false;
+      }
+
+      AnnotationElement.Value structure = annotation.getAttributeValue(STRUCTURE_ATTRIBUTE_NAME);
+      if (structure == null) {
+         return false;
+      }
+      return NESTED_STRUCTURE_VALUE.equals(structure.getValue());
    }
 
    /**

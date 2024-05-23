@@ -93,4 +93,9 @@ public class ExprVisitor implements Visitor<BooleanExpr, ValueExpr> {
    public ValueExpr visit(AggregationExpr aggregationExpr) {
       return aggregationExpr;
    }
+
+   @Override
+   public BooleanExpr visit(NestedExpr nestedExpr) {
+      return nestedExpr;
+   }
 }

@@ -28,6 +28,7 @@ import org.hibernate.search.engine.search.predicate.dsl.ExistsPredicateOptionsSt
 import org.hibernate.search.engine.search.predicate.dsl.KnnPredicateOptionsStep;
 import org.hibernate.search.engine.search.predicate.dsl.KnnPredicateVectorStep;
 import org.hibernate.search.engine.search.predicate.dsl.MatchPredicateOptionsStep;
+import org.hibernate.search.engine.search.predicate.dsl.NestedPredicateClausesStep;
 import org.hibernate.search.engine.search.predicate.dsl.PhrasePredicateOptionsStep;
 import org.hibernate.search.engine.search.predicate.dsl.PredicateFinalStep;
 import org.hibernate.search.engine.search.predicate.dsl.PredicateScoreStep;
@@ -59,6 +60,7 @@ import org.infinispan.objectfilter.impl.syntax.FullTextTermExpr;
 import org.infinispan.objectfilter.impl.syntax.IsNullExpr;
 import org.infinispan.objectfilter.impl.syntax.KnnPredicate;
 import org.infinispan.objectfilter.impl.syntax.LikeExpr;
+import org.infinispan.objectfilter.impl.syntax.NestedExpr;
 import org.infinispan.objectfilter.impl.syntax.NotExpr;
 import org.infinispan.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
@@ -147,7 +149,7 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
       Class<T> projectedType = null;
       boolean displayGroupFirst = false;
 
-      for (int i=0; i<parsingResult.getProjectedPaths().length; i++) {
+      for (int i = 0; i < parsingResult.getProjectedPaths().length; i++) {
          PropertyPath projectedPath = parsingResult.getProjectedPaths()[i];
          if (projectedPath instanceof AggregationPropertyPath) {
             if (projectedType != null) {
@@ -571,4 +573,17 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
    public PredicateFinalStep visit(AggregationExpr aggregationExpr) {
       throw new IllegalStateException("This node type should not be visited");
    }
+
+   @Override
+   public PredicateFinalStep visit(NestedExpr nestedExpr) {
+      BooleanPredicateClausesStep<?> bool = predicateFactory.bool();
+      NestedPredicateClausesStep<?> nested = predicateFactory.nested(nestedExpr.getNestedPath());
+      for (BooleanExpr c : nestedExpr.getChildren()) {
+         PredicateFinalStep clause = c.acceptVisitor(this);
+         nested.add(clause);
+      }
+      bool.must(nested);
+      return bool;
+   }
+
 }

@@ -154,6 +154,10 @@ public abstract class ObjectPropertyHelper<TypeMetadata> {
       return null; // non-indexed
    }
 
+   public boolean isNestedIndexStructure(TypeMetadata entityType, String[] propertyPath) {
+      return false;
+   }
+
    public abstract boolean hasProperty(TypeMetadata entityType, String[] propertyPath);
 
    public abstract boolean hasEmbeddedProperty(TypeMetadata entityType, String[] propertyPath);

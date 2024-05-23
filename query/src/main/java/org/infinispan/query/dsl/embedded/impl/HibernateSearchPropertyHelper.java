@@ -9,6 +9,7 @@ import org.hibernate.search.engine.backend.metamodel.IndexDescriptor;
 import org.hibernate.search.engine.backend.metamodel.IndexFieldDescriptor;
 import org.hibernate.search.engine.backend.metamodel.IndexValueFieldDescriptor;
 import org.hibernate.search.engine.backend.metamodel.IndexValueFieldTypeDescriptor;
+import org.hibernate.search.engine.backend.types.IndexFieldTraits;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
@@ -88,6 +89,15 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
    }
 
    @Override
+   public boolean isNestedIndexStructure(Class<?> entityType, String[] propertyPath) {
+      IndexFieldDescriptor fieldDescriptor = getFieldDescriptor(entityType, propertyPath);
+      if (fieldDescriptor == null || fieldDescriptor.type() == null) {
+         return false;
+      }
+      return fieldDescriptor.type().traits().contains(IndexFieldTraits.Predicates.NESTED);
+   }
+
+   @Override
    public boolean isRepeatedProperty(Class<?> entityType, String[] propertyPath) {
       IndexFieldDescriptor fieldDescriptor = getFieldDescriptor(entityType, propertyPath);
       if (fieldDescriptor == null) {
@@ -114,8 +124,8 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       }
 
       if (propertyPath.length == 1 && (propertyPath[0].equals(KEY) || propertyPath[0].equals(VALUE) ||
-            propertyPath[0].equals(VERSION) || propertyPath[0].equals(SCORE)) ) {
-            return true;
+            propertyPath[0].equals(VERSION) || propertyPath[0].equals(SCORE))) {
+         return true;
       }
 
       return super.hasProperty(entityType, propertyPath);
