@@ -104,4 +104,14 @@ public final class FullTextVisitor implements Visitor<Boolean, Boolean> {
    public Boolean visit(AggregationExpr aggregationExpr) {
       return Boolean.FALSE;
    }
+
+   @Override
+   public Boolean visit(NestedExpr nestedExpr) {
+      for (BooleanExpr c : nestedExpr.getNestedChildren()) {
+         if (c.acceptVisitor(this)) {
+            return Boolean.TRUE;
+         }
+      }
+      return Boolean.FALSE;
+   }
 }

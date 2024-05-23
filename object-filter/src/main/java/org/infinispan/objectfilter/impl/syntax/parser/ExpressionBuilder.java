@@ -3,7 +3,9 @@ package org.infinispan.objectfilter.impl.syntax.parser;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.ql.PropertyPath;
@@ -23,6 +25,7 @@ import org.infinispan.objectfilter.impl.syntax.FullTextTermExpr;
 import org.infinispan.objectfilter.impl.syntax.IsNullExpr;
 import org.infinispan.objectfilter.impl.syntax.KnnPredicate;
 import org.infinispan.objectfilter.impl.syntax.LikeExpr;
+import org.infinispan.objectfilter.impl.syntax.NestedExpr;
 import org.infinispan.objectfilter.impl.syntax.NotExpr;
 import org.infinispan.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
@@ -44,6 +47,8 @@ final class ExpressionBuilder<TypeMetadata> {
    private final ObjectPropertyHelper<TypeMetadata> propertyHelper;
 
    private TypeMetadata entityType;
+
+   private Map<String, NestedExpr> nestedExprMap = new HashMap<>();
 
    /**
     * Keep track of all the parent expressions ({@code AND}, {@code OR}, {@code NOT}) of the WHERE/HAVING clause of the
@@ -82,7 +87,29 @@ final class ExpressionBuilder<TypeMetadata> {
 
    public void addComparison(PropertyPath<?> propertyPath, ComparisonExpr.Type comparisonType, Object value) {
       Comparable typedValue = (Comparable) propertyHelper.convertToBackendType(entityType, propertyPath.asArrayPath(), value);
-      push(new ComparisonExpr(makePropertyValueExpr(propertyPath), new ConstantValueExpr(typedValue), comparisonType));
+      ComparisonExpr comparisonExpr = new ComparisonExpr(makePropertyValueExpr(propertyPath), new ConstantValueExpr(typedValue), comparisonType);
+      push(comparisonExpr);
+   }
+
+   public void addNestedComparison(PropertyPath<?> propertyPath, ComparisonExpr.Type comparisonType, Object value, String joinAlias, PropertyPath<TypeDescriptor<TypeMetadata>> embeddedPath) {
+      if (!propertyHelper.isNestedIndexStructure(entityType, embeddedPath.getNodeNamesWithoutAlias().toArray(new String[]{}))) {
+         log.warn("NestedExpr currently only supported on NESTED embedded fields. Falling back to ComparisonExpr");
+         addComparison(propertyPath, comparisonType, value);
+         return;
+      }
+      Comparable typedValue = (Comparable) propertyHelper.convertToBackendType(entityType, propertyPath.asArrayPath(), value);
+
+      ComparisonExpr comparisonExpr = new ComparisonExpr(makePropertyValueExpr(propertyPath), new ConstantValueExpr(typedValue), comparisonType);
+      if (!nestedExprMap.containsKey(joinAlias)) {
+         nestedExprMap.put(joinAlias, new NestedExpr(getNestedPath(propertyPath)));
+         push(nestedExprMap.get(joinAlias));
+      }
+      nestedExprMap.get(joinAlias).add(comparisonExpr);
+   }
+
+   private String getNestedPath(PropertyPath<?> propertyPath) {
+      String stringPath = propertyPath.asStringPath();
+      return stringPath.substring(0, stringPath.contains(".") ? stringPath.lastIndexOf(".") : stringPath.length());
    }
 
    public void addRange(PropertyPath<?> propertyPath, Object lower, Object upper) {

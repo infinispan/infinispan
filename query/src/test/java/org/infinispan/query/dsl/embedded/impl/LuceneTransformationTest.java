@@ -55,7 +55,7 @@ public class LuceneTransformationTest extends SingleCacheManagerTest {
       super.teardown();
    }
 
-   @Test(expectedExceptions = { ParsingException.class },
+   @Test(expectedExceptions = {ParsingException.class},
          expectedExceptionsMessageRegExp = "ISPN028502: Unknown alias: a.")
    public void testRaiseExceptionDueToUnknownAlias() {
       parseAndTransform("from org.infinispan.query.dsl.embedded.impl.model.Employee e where a.name = 'same'");
@@ -233,7 +233,7 @@ public class LuceneTransformationTest extends SingleCacheManagerTest {
             "+sameInfo:foo");
    }
 
-   @Test(expectedExceptions = { SearchException.class },
+   @Test(expectedExceptions = {SearchException.class},
          expectedExceptionsMessageRegExp = "HSEARCH000610: Unknown field 'otherInfo'.*Context: indexes \\[org.infinispan.query.dsl.embedded.impl.model.Employee\\]")
    public void testWrongFieldName() {
       parseAndTransform("from org.infinispan.query.dsl.embedded.impl.model.Employee e where e.otherInfo = 'foo'");
@@ -731,6 +731,29 @@ public class LuceneTransformationTest extends SingleCacheManagerTest {
    }
 
    @Test
+   public void testJoinWithFilterOnCollectionOfNestedEmbedded() {
+      String ickle = "select d.email from org.infinispan.query.dsl.embedded.impl.model.Employee e " +
+            "JOIN e.nestedContactDetails d WHERE d.email ='1234' AND d.phoneNumber='+36 12 345-678'";
+
+      IckleParsingResult<Class<?>> ickleParsingResult = parse(ickle);
+      SearchQuery<?> result = transform(ickleParsingResult);
+      assertThat(result.queryString()).isEqualTo("+ToParentBlockJoinQuery (#__HSEARCH_type:child #__HSEARCH_nested_document_path:nestedContactDetails " +
+            "+(+nestedContactDetails.email:1234 +nestedContactDetails.phoneNumber:+36 12 345-678)) #__HSEARCH_type:main");
+   }
+
+   @Test
+   public void testJoinWithFilterOnSingleNestedEmbedded() {
+      String ickle = "select e.name from org.infinispan.query.dsl.embedded.impl.model.Employee e " +
+            "JOIN e.nestedAuthor auth " +
+            "WHERE auth.name='DummyAuthor' AND auth.vatNumber='12345AZ'";
+
+      IckleParsingResult<Class<?>> ickleParsingResult = parse(ickle);
+      SearchQuery<?> result = transform(ickleParsingResult);
+      assertThat(result.queryString()).isEqualTo("+ToParentBlockJoinQuery (#__HSEARCH_type:child #__HSEARCH_nested_document_path:nestedAuthor " +
+            "+(+nestedAuthor.name:DummyAuthor +nestedAuthor.vatNumber:12345AZ)) #__HSEARCH_type:main");
+   }
+
+   @Test
    public void testBeAbleToProjectUnqualifiedField() {
       String ickle = "SELECT name, text FROM org.infinispan.query.dsl.embedded.impl.model.Employee e JOIN e.contactDetails d";
       IckleParsingResult<Class<?>> parsed = parse(ickle);
@@ -806,9 +829,13 @@ public class LuceneTransformationTest extends SingleCacheManagerTest {
    }
 
    private SearchQuery<?> transform(IckleParsingResult<Class<?>> ickleParsingResult, Map<String, Object> parameters) {
+      return transform(ickleParsingResult, parameters, Employee.class);
+   }
+
+   private SearchQuery<?> transform(IckleParsingResult<Class<?>> ickleParsingResult, Map<String, Object> parameters, Class<?> targetedType) {
       SearchQueryMaker<Class<?>> searchQueryMaker = new SearchQueryMaker<>(searchMapping, propertyHelper, 100, 10_000);
       return searchQueryMaker
-            .transform(ickleParsingResult, parameters, Employee.class, null)
+            .transform(ickleParsingResult, parameters, targetedType, null)
             .builder(searchMapping.getMappingSession()).build();
    }
 }
