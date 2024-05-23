@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.graalvm.nativeimage.hosted.Feature;
@@ -36,7 +35,7 @@ public class ReflectionProcessor {
       reflectiveClasses.addAll(
             Arrays.stream(classes)
                   .map(c -> ReflectiveClass.of(c, fields, methods))
-                  .collect(Collectors.toList())
+                  .toList()
       );
       return this;
    }
@@ -50,7 +49,7 @@ public class ReflectionProcessor {
             Arrays.stream(classes)
                   .map(featureAccess::findClassByName)
                   .map(c -> ReflectiveClass.of(c, fields, methods))
-                  .collect(Collectors.toList())
+                  .toList()
       );
       return this;
    }

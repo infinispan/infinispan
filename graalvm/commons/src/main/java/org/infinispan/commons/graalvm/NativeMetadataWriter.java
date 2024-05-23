@@ -17,7 +17,7 @@ public class NativeMetadataWriter {
       String rootDir = args.length > 1 ? args[1] : "";
       Files.createDirectories(Paths.get(rootDir));
 
-      Json reflection = array(metadata.reflectiveClasses());
+      Json reflection = array(metadata.reflectiveClasses().sorted());
 
       Json resource = Json.object()
             .set("resources",

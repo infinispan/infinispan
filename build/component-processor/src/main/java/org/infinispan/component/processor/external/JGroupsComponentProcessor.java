@@ -5,7 +5,6 @@ import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -79,7 +78,7 @@ public class JGroupsComponentProcessor extends AbstractProcessor {
       w.println("import org.infinispan.commons.stat.MetricInfo;");
       w.println("import org.jgroups.stack.Protocol;");
       w.println();
-      w.printf("@Generated(value = \"%s\", date = \"%s\")%n", getClass().getName(), Instant.now().toString());
+      w.printf("@Generated(value = \"%s\")%n", getClass().getName());
       w.printf("public class %s {%n", className);
       w.println("   public static final Map<Class<? extends Protocol>, Collection<MetricInfo>> PROTOCOL_METADATA = new HashMap<>();");
       w.printf("   private %s() {}%n", className);

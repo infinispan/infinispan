@@ -8,8 +8,8 @@ import static org.infinispan.commons.configuration.io.xml.XmlPullParser.START_TA
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -168,7 +168,7 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
    }
 
    private Collection<String> jgroupsClasses() {
-      Set<String> classes = new HashSet<>();
+      Set<String> classes = new TreeSet<>();
       try (InputStream source = org.jgroups.Message.class.getClassLoader().getResourceAsStream(ClassConfigurator.MAGIC_NUMBER_FILE)) {
          MXParser reader = new MXParser();
          reader.setFeature(FEATURE_PROCESS_NAMESPACES, false);
