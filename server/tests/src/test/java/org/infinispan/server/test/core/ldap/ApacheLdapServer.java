@@ -4,13 +4,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import javax.security.auth.kerberos.KerberosPrincipal;
-
+import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
-import org.apache.directory.api.ldap.model.exception.LdapInvalidDnException;
+import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.ldif.LdifEntry;
 import org.apache.directory.api.ldap.model.ldif.LdifReader;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
@@ -21,21 +21,26 @@ import org.apache.directory.server.core.annotations.ContextEntry;
 import org.apache.directory.server.core.annotations.CreateDS;
 import org.apache.directory.server.core.annotations.CreateIndex;
 import org.apache.directory.server.core.annotations.CreatePartition;
+import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.factory.DSAnnotationProcessor;
 import org.apache.directory.server.core.kerberos.KeyDerivationInterceptor;
 import org.apache.directory.server.factory.ServerAnnotationProcessor;
-import org.apache.directory.server.kerberos.KerberosConfig;
-import org.apache.directory.server.kerberos.kdc.KdcServer;
 import org.apache.directory.server.kerberos.shared.crypto.encryption.KerberosKeyFactory;
-import org.apache.directory.server.kerberos.shared.keytab.Keytab;
-import org.apache.directory.server.kerberos.shared.keytab.KeytabEntry;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.directory.server.protocol.shared.transport.Transport;
-import org.apache.directory.server.protocol.shared.transport.UdpTransport;
-import org.apache.directory.shared.kerberos.KerberosTime;
-import org.apache.directory.shared.kerberos.codec.types.EncryptionType;
-import org.apache.directory.shared.kerberos.components.EncryptionKey;
+import org.apache.kerby.kerberos.kerb.KrbException;
+import org.apache.kerby.kerberos.kerb.admin.kadmin.local.LocalKadmin;
+import org.apache.kerby.kerberos.kerb.admin.kadmin.local.LocalKadminImpl;
+import org.apache.kerby.kerberos.kerb.keytab.Keytab;
+import org.apache.kerby.kerberos.kerb.keytab.KeytabEntry;
+import org.apache.kerby.kerberos.kerb.server.KdcConfig;
+import org.apache.kerby.kerberos.kerb.server.KdcConfigKey;
+import org.apache.kerby.kerberos.kerb.server.KdcServer;
+import org.apache.kerby.kerberos.kerb.type.KerberosTime;
+import org.apache.kerby.kerberos.kerb.type.base.EncryptionKey;
+import org.apache.kerby.kerberos.kerb.type.base.EncryptionType;
+import org.apache.kerby.kerberos.kerb.type.base.PrincipalName;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.core.AbstractInfinispanServerDriver;
 
@@ -53,31 +58,11 @@ public class ApacheLdapServer implements LdapServer {
    private KdcServer kdcServer;
    private final boolean withKdc;
    private final String initLDIF;
+   private LocalKadmin kadmin;
 
    public ApacheLdapServer(boolean withKdc, String initLDIF) {
       this.withKdc = withKdc;
       this.initLDIF = initLDIF;
-   }
-
-   @CreateLdapServer(transports = {@CreateTransport(protocol = "LDAP", port = LDAP_PORT, address = LDAP_HOST)})
-   public void createLdap(String keystoreFile, String initLDIF) throws Exception {
-
-      final SchemaManager schemaManager = directoryService.getSchemaManager();
-
-      try (InputStream is = getClass().getClassLoader().getResourceAsStream(initLDIF)) {
-         for (LdifEntry ldifEntry : new LdifReader(is)) {
-            directoryService.getAdminSession().add(new DefaultEntry(schemaManager, ldifEntry.getEntry()));
-         }
-      }
-
-      final CreateLdapServer createLdapServer = (CreateLdapServer) AnnotationUtils.getInstance(CreateLdapServer.class);
-
-      ldapServer = ServerAnnotationProcessor.instantiateLdapServer(createLdapServer, directoryService);
-      ldapServer.setKeystoreFile(keystoreFile);
-      ldapServer.setCertificatePassword(AbstractInfinispanServerDriver.KEY_PASSWORD);
-      Transport ldaps = new TcpTransport(LDAPS_PORT);
-      ldaps.enableSSL(true);
-      ldapServer.addTransports(ldaps);
    }
 
    @CreateDS(
@@ -107,18 +92,32 @@ public class ApacheLdapServer implements LdapServer {
       directoryService.addLast(new KeyDerivationInterceptor());
    }
 
+   @CreateLdapServer(
+         transports = {
+               @CreateTransport(protocol = "LDAP", port = LDAP_PORT, address = LDAP_HOST),
+               @CreateTransport(protocol = "LDAPS", port = LDAPS_PORT, address = LDAP_HOST, ssl = true),
+         }
+   )
+   public void createLdap(String keystoreFile) throws Exception {
+      final CreateLdapServer createLdapServer = (CreateLdapServer) AnnotationUtils.getInstance(CreateLdapServer.class);
+      ldapServer = ServerAnnotationProcessor.instantiateLdapServer(createLdapServer, directoryService);
+      ldapServer.setKeystoreFile(keystoreFile);
+      ldapServer.setCertificatePassword(AbstractInfinispanServerDriver.KEY_PASSWORD);
+      Arrays.stream(ldapServer.getTransports())
+            .filter(Transport::isSSLEnabled)
+            .map(t -> (TcpTransport) t)
+            .forEach(t -> t.setEnabledProtocols(Arrays.asList("TLSv1.3", "TLSv1.2")));
+   }
+
    @Override
    public void start(String keystoreFile, File confDir) throws Exception {
-      if (withKdc) {
-         generateKeyTab(new File(confDir, "hotrod.keytab"), "hotrod/datagrid@INFINISPAN.ORG", "hotrodPassword");
-         generateKeyTab(new File(confDir, "http.keytab"), "HTTP/localhost@INFINISPAN.ORG", "httpPassword");
-      }
       createDs();
-      createLdap(keystoreFile, initLDIF);
+      createLdap(keystoreFile);
       ldapServer.start();
       if (withKdc) {
          startKdc();
       }
+      loadLDIF(confDir);
    }
 
    @Override
@@ -135,31 +134,46 @@ public class ApacheLdapServer implements LdapServer {
       }
    }
 
-   private void startKdc() throws IOException, LdapInvalidDnException {
+   private void loadLDIF(File confDir) throws IOException, LdapException, KrbException {
+      final SchemaManager schemaManager = directoryService.getSchemaManager();
+      CoreSession session = directoryService.getAdminSession();
+      try (InputStream is = getClass().getClassLoader().getResourceAsStream(initLDIF)) {
+         for (LdifEntry ldifEntry : new LdifReader(is)) {
+            session.add(new DefaultEntry(schemaManager, ldifEntry.getEntry()));
+            Attribute attribute = ldifEntry.get("krb5PrincipalName");
+            if (attribute != null && kadmin != null) {
+               String krb5PrincipalName = attribute.getString();
+               String password = ldifEntry.get("userPassword").getString();
+               kadmin.addPrincipal(krb5PrincipalName, password);
+               if (krb5PrincipalName.contains("/")) {
+                  String name = krb5PrincipalName.substring(0, krb5PrincipalName.indexOf('/')).toLowerCase();
+                  generateKeyTab(new File(confDir, name + ".keytab"), krb5PrincipalName, password);
+               }
+            }
+         }
+      }
+   }
+
+   private void startKdc() throws KrbException {
       createKdc();
+      kdcServer.init();
+      kadmin = new LocalKadminImpl(kdcServer.getKdcSetting(), kdcServer.getIdentityService());
       kdcServer.start();
    }
 
    private void createKdc() {
-      KdcServer kdcServer = new KdcServer();
-      kdcServer.setServiceName("TestKDCServer");
-      kdcServer.setSearchBaseDn(DOMAIN);
-      KerberosConfig config = kdcServer.getConfig();
-      config.setServicePrincipal("krbtgt/INFINISPAN.ORG@" + REALM);
-      config.setPrimaryRealm(REALM);
-      config.setMaximumTicketLifetime(60_000 * 1440);
-      config.setMaximumRenewableLifetime(60_000 * 10_080);
-
-      config.setPaEncTimestampRequired(false);
-
-      UdpTransport udp = new UdpTransport("0.0.0.0", KDC_PORT);
-      kdcServer.addTransports(udp);
-
-      kdcServer.setDirectoryService(directoryService);
-      this.kdcServer = kdcServer;
+      kdcServer = new KdcServer();
+      kdcServer.setKdcRealm(REALM);
+      kdcServer.setAllowUdp(true);
+      kdcServer.setKdcPort(KDC_PORT);
+      KdcConfig config = kdcServer.getKdcConfig();
+      config.setString(KdcConfigKey.KDC_SERVICE_NAME, "TestKDCServer");
+      config.setLong(KdcConfigKey.MAXIMUM_TICKET_LIFETIME, 60_000L * 1440);
+      config.setLong(KdcConfigKey.MAXIMUM_RENEWABLE_LIFETIME, 60_000L * 10_080);
+      config.setBoolean(KdcConfigKey.PA_ENC_TIMESTAMP_REQUIRED, false);
    }
 
-   public static String generateKeyTab(File keyTabFile, String... credentials) {
+   public static void generateKeyTab(File keyTabFile, String... credentials) {
       List<KeytabEntry> entries = new ArrayList<>();
       KerberosTime ktm = new KerberosTime();
 
@@ -167,18 +181,17 @@ public class ApacheLdapServer implements LdapServer {
          String principal = credentials[i++];
          String password = credentials[i++];
 
-         for (Map.Entry<EncryptionType, EncryptionKey> keyEntry : KerberosKeyFactory.getKerberosKeys(principal, password)
+         for (Map.Entry<org.apache.directory.shared.kerberos.codec.types.EncryptionType, org.apache.directory.shared.kerberos.components.EncryptionKey> entry : KerberosKeyFactory.getKerberosKeys(principal, password)
                .entrySet()) {
-            EncryptionKey key = keyEntry.getValue();
-            entries.add(new KeytabEntry(principal, KerberosPrincipal.KRB_NT_PRINCIPAL, ktm, (byte) key.getKeyVersion(), key));
+            EncryptionType type = EncryptionType.fromValue(entry.getKey().getValue());
+            EncryptionKey xkey = new EncryptionKey(type, entry.getValue().getKeyValue());
+            entries.add(new KeytabEntry(new PrincipalName(principal), ktm, (byte) entry.getValue().getKeyVersion(), xkey));
          }
       }
-
-      Keytab keyTab = Keytab.getInstance();
-      keyTab.setEntries(entries);
+      Keytab keyTab = new Keytab();
+      keyTab.addKeytabEntries(entries);
       try {
-         keyTab.write(keyTabFile);
-         return keyTabFile.getAbsolutePath();
+         keyTab.store(keyTabFile);
       } catch (IOException e) {
          throw new IllegalStateException("Cannot create keytab: " + keyTabFile, e);
       }
