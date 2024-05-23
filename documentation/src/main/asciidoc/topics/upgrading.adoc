@@ -1,3 +1,46 @@
+= Upgrading from 15.0 to 15.1
+
+== JGroups Metrics
+
+The following metrics have been removed:
+
+* Protocols `org.jgroups.protocols.MFC`. `org.jgroups.protocols.MFC_NB`, `org.jgroups.protocols.UFC` and `org.jgroups.protocols.UFC_NB`
+- `get_number_of_credit_requests_received`
+- `get_number_of_credit_requests_sent`
+- `get_number_of_credit_responses_received`
+- `get_number_of_credit_responses_sent`
+
+* Protocols `org.jgroups.protocols.SHARED_LOOPBACK`, `org.jgroups.protocols.TCP, org.jgroups.protocols.TCP_NIO2`, `org.jgroups.protocols.TUNNEL`, and `org.jgroups.protocols.UDP`
+- `get_num_rejected_msgs`
+
+* Protocol `org.jgroups.protocols.RED`
+- `get_dropped_messages`
+- `get_total_messages`
+
+* Protocol `org.jgroups.protocols.UNICAST3`
+- `get_num_messages_received`
+- `get_num_messages_sent`
+
+* Protocol `org.jgroups.protocols.pbcast.STABLE`
+- `get_stability_received`
+- `get_stability_sent`
+- `get_stable_received`
+- `get_stable_sent`
+
+* Protocol `org.jgroups.protocols.pbcast.STATE_TRANSFER`
+- `get_average_state_size`
+- `get_number_of_state_bytes_sent`
+- `get_number_of_state_requests`
+
+The following metrics have been renamed:
+
+* Protocols `org.jgroups.protocols.SHARED_LOOPBACK`, `org.jgroups.protocols.TCP, org.jgroups.protocols.TCP_NIO2`, `org.jgroups.protocols.TUNNEL`, and `org.jgroups.protocols.UDP`
+- `get_num_mcast_msgs_received` -> `get_num_mcasts_received`
+- `get_num_mcast_msgs_sent` -> `get_num_mcasts_sent`
+- `get_num_ucast_msgs_received` -> `get_num_ucasts_received`
+- `get_num_ucast_msgs_sent` - `get_num_ucasts_sent`
+
+
 = Upgrading from 14.0 to 15.0
 
 == Deprecations, removals and moved classes
