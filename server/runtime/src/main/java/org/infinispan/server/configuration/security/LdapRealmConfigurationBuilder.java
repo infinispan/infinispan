@@ -65,6 +65,11 @@ public class LdapRealmConfigurationBuilder implements RealmProviderBuilder<LdapR
       return this;
    }
 
+   public LdapRealmConfigurationBuilder clientSSLContext(String value) {
+      attributes.attribute(LdapRealmConfiguration.CLIENT_SSL_CONTEXT).set(value);
+      return this;
+   }
+
    public LdapRealmConfigurationBuilder directEvidenceVerification(boolean value) {
       attributes.attribute(LdapRealmConfiguration.DIRECT_EVIDENCE_VERIFICATION).set(value);
       return this;
