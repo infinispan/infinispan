@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -11,7 +12,7 @@ import org.graalvm.nativeimage.hosted.RuntimeReflection;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 
-public class ReflectiveClass implements JsonSerialization {
+public class ReflectiveClass implements JsonSerialization, Comparable<ReflectiveClass> {
 
    final Class<?> clazz;
    final Constructor<?>[] constructors;
@@ -41,8 +42,11 @@ public class ReflectiveClass implements JsonSerialization {
 
    public ReflectiveClass(Class<?> clazz, Constructor<?>[] constructors, Field[] fields, Method[] methods) {
       this.clazz = clazz;
+      Arrays.sort(constructors, Comparator.comparing(Constructor::toString)); // We use the method signature
       this.constructors = constructors;
+      Arrays.sort(fields, Comparator.comparing(Field::getName));
       this.fields = fields;
+      Arrays.sort(methods, Comparator.comparing(Method::toString)); // We use the method signature
       this.methods = methods;
    }
 
@@ -92,5 +96,10 @@ public class ReflectiveClass implements JsonSerialization {
          j.set("methods", methodArray);
       }
       return j;
+   }
+
+   @Override
+   public int compareTo(ReflectiveClass o) {
+      return clazz.getName().compareTo(o.clazz.getName());
    }
 }

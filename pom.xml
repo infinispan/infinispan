@@ -2048,7 +2048,7 @@
                         <Os-Version>${os.version}</Os-Version>
                         <Scm-Url>${project.scm.url}</Scm-Url>
                         <Scm-Connection>${project.scm.connection}</Scm-Connection>
-                        <Scm-Revision>${buildNumber}</Scm-Revision>
+                        <Scm-Revision>${git.commit.id}</Scm-Revision>
                      </manifestEntries>
                   </archive>
                   <doclint>all</doclint>
@@ -2178,7 +2178,9 @@
                <version>${version.maven.compiler}</version>
                <configuration>
                   <release>${maven.compiler.release}</release>
-                  <compilerArgs>${maven.compiler.arguments}</compilerArgs>
+                  <compilerArgs>
+                     <arg>-Aorg.jboss.logging.tools.addGeneratedAnnotation=false</arg>
+                  </compilerArgs>
                   <encoding>UTF-8</encoding>
                   <excludes>
                      <exclude>**/package-info.java</exclude>
@@ -2313,24 +2315,6 @@
                   </goals>
                   <configuration>
                      <cpuCount>system.numCores</cpuCount>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>buildnumber-maven-plugin</artifactId>
-            <version>3.2.1</version>
-            <executions>
-               <execution>
-                  <phase>validate</phase>
-                  <goals>
-                     <goal>create</goal>
-                  </goals>
-                  <configuration>
-                     <doCheck>false</doCheck>
-                     <doUpdate>false</doUpdate>
-                     <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
                   </configuration>
                </execution>
             </executions>

@@ -50,6 +50,8 @@
       <maven.compiler.release>17</maven.compiler.release>
       <maven.javadoc.skip>false</maven.javadoc.skip>
 
+      <project.build.outputTimestamp>${git.commit.time}</project.build.outputTimestamp>
+
       <!-- === Branding Configuration === -->
       <infinispan.brand.name>Infinispan</infinispan.brand.name>
       <infinispan.brand.prefix>infinispan</infinispan.brand.prefix>
@@ -204,6 +206,7 @@
       <version.maven.deploy>3.1.4</version.maven.deploy>
       <version.maven.enforcer>3.5.0</version.maven.enforcer>
       <version.maven.exec>3.5.0</version.maven.exec>
+      <version.maven.git-commit-id>9.0.1</version.maven.git-commit-id>
       <version.maven.gpg>3.2.7</version.maven.gpg>
       <version.maven.help>3.5.1</version.maven.help>
       <version.maven.install>3.1.4</version.maven.install>
@@ -299,8 +302,34 @@
                   </execution>
                </executions>
             </plugin>
+            <plugin>
+               <groupId>io.github.git-commit-id</groupId>
+               <artifactId>git-commit-id-maven-plugin</artifactId>
+               <version>${version.maven.git-commit-id}</version>
+               <executions>
+                  <execution>
+                     <id>git</id>
+                     <goals>
+                        <goal>revision</goal>
+                     </goals>
+                     <phase>initialize</phase>
+                  </execution>
+               </executions>
+               <configuration>
+                  <dateFormatTimeZone>UTC</dateFormatTimeZone>
+                  <runOnlyOnce>true</runOnlyOnce>
+                  <skipPoms>false</skipPoms>
+                  <useNativeGit>true</useNativeGit>
+               </configuration>
+            </plugin>
          </plugins>
       </pluginManagement>
+      <plugins>
+         <plugin>
+            <groupId>io.github.git-commit-id</groupId>
+            <artifactId>git-commit-id-maven-plugin</artifactId>
+         </plugin>
+      </plugins>
    </build>
 
    <profiles>

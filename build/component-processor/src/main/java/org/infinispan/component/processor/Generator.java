@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.NoSuchFileException;
-import java.time.Instant;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,7 +78,7 @@ public class Generator {
          writer.printf("import org.infinispan.lifecycle.ModuleLifecycle;%n");
          writer.printf("%n");
          writer.printf("/**%n * @api.private %n */%n");
-         writer.printf("@Generated(value = \"%s\", date = \"%s\")%n", getClass().getName(), Instant.now().toString());
+         writer.printf("@Generated(value = \"%s\")%n", getClass().getName());
          writer.printf("public final class %sPackageImpl {%n", model.module.classPrefix);
          writer.printf("   public static void registerMetadata(ModuleMetadataBuilder.ModuleBuilder builder) {%n");
 
@@ -317,7 +316,7 @@ public class Generator {
          writer.printf("import org.infinispan.manager.ModuleRepository;%n");
          writer.printf("%n");
          writer.printf("/**%n * @api.private %n */%n");
-         writer.printf("@Generated(value = \"%s\", date = \"%s\")%n", getClass().getName(), Instant.now().toString());
+         writer.printf("@Generated(value = \"%s\")%n", getClass().getName());
          writer.printf("public final class %sModuleImpl implements ModuleMetadataBuilder {%n", module.classPrefix);
 
          writer.printf("//module %s%n", module.moduleClassName);
