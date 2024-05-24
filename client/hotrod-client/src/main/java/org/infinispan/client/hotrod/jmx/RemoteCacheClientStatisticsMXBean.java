@@ -21,6 +21,11 @@ public interface RemoteCacheClientStatisticsMXBean {
    long getAverageRemoteReadTime();
 
    /**
+    * Returns the average read time, in nanoseconds, for a remote cache.
+    */
+   long getAverageRemoteReadTimeNanos();
+
+   /**
     * Returns the number of remote cache stores (put, replace) that the client applied.
     * Failed conditional operations do not increase the count of entries in the remote cache. Put operations always increase the count even if an operation replaces an equal value.
     */
@@ -32,6 +37,11 @@ public interface RemoteCacheClientStatisticsMXBean {
    long getAverageRemoteStoreTime();
 
    /**
+    * Returns the average store time, in nanoseconds, for a remote cache.
+    */
+   long getAverageRemoteStoreTimeNanos();
+
+   /**
     * Returns the number of removes for a remote cache.
     */
    long getRemoteRemoves();
@@ -40,6 +50,11 @@ public interface RemoteCacheClientStatisticsMXBean {
     * Returns the average time, in milliseconds, for remove operations in a remote cache.
     */
    long getAverageRemoteRemovesTime();
+
+   /**
+    * Returns the average time, in nanoseconds, for remove operations in a remote cache.
+    */
+   long getAverageRemoteRemovesTimeNanos();
 
    /**
     * Returns the number of near-cache hits. Returns a value of 0 if near-caching is disabled.

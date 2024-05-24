@@ -23,6 +23,7 @@ public class ClientStatisticsTest {
       clientStatistics.dataStore(now, 1);
       // then:
       assertTrue(clientStatistics.getAverageRemoteStoreTime() > 0);
+      assertTrue(clientStatistics.getAverageRemoteStoreTimeNanos() > 1000);
    }
 
    public void testAverageRemoteReadTime() {
@@ -36,6 +37,7 @@ public class ClientStatisticsTest {
       clientStatistics.dataRead(true, now, 1);
       // then:
       assertTrue(clientStatistics.getAverageRemoteReadTime() > 0);
+      assertTrue(clientStatistics.getAverageRemoteReadTimeNanos() > 1000);
    }
 
    public void testAverageRemovesTime() {
@@ -49,5 +51,6 @@ public class ClientStatisticsTest {
       clientStatistics.dataRemove(now, 1);
       // then:
       assertTrue(clientStatistics.getAverageRemoteRemovesTime() > 0);
+      assertTrue(clientStatistics.getAverageRemoteRemovesTimeNanos() > 1000);
    }
 }
