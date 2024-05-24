@@ -45,11 +45,15 @@ public final class ClientStatistics implements RemoteCacheClientStatisticsMXBean
 
    @Override
    public long getAverageRemoteReadTime() {
+      return TimeUnit.NANOSECONDS.toMillis(getAverageRemoteReadTimeNanos());
+   }
+
+   @Override
+   public long getAverageRemoteReadTimeNanos() {
       long total = counters.get(StripeB.remoteCacheHitsFieldUpdater) + counters.get(StripeB.remoteCacheMissesFieldUpdater);
       if (total == 0)
          return 0;
-      total = (counters.get(StripeB.remoteCacheHitsTimeFieldUpdater) + counters.get(StripeB.remoteCacheMissesTimeFieldUpdater)) / total;
-      return TimeUnit.NANOSECONDS.toMillis(total);
+      return (counters.get(StripeB.remoteCacheHitsTimeFieldUpdater) + counters.get(StripeB.remoteCacheMissesTimeFieldUpdater)) / total;
    }
 
    @Override
@@ -59,11 +63,15 @@ public final class ClientStatistics implements RemoteCacheClientStatisticsMXBean
 
    @Override
    public long getAverageRemoteStoreTime() {
+      return TimeUnit.NANOSECONDS.toMillis(getAverageRemoteStoreTimeNanos());
+   }
+
+   @Override
+   public long getAverageRemoteStoreTimeNanos() {
       long total = counters.get(StripeB.remoteCacheStoresFieldUpdater);
       if (total == 0)
          return 0;
-      total = counters.get(StripeB.remoteCacheStoresTimeFieldUpdater) / total;
-      return TimeUnit.NANOSECONDS.toMillis(total);
+      return counters.get(StripeB.remoteCacheStoresTimeFieldUpdater) / total;
    }
 
    @Override
@@ -73,11 +81,15 @@ public final class ClientStatistics implements RemoteCacheClientStatisticsMXBean
 
    @Override
    public long getAverageRemoteRemovesTime() {
+      return TimeUnit.NANOSECONDS.toMillis(getAverageRemoteRemovesTimeNanos());
+   }
+
+   @Override
+   public long getAverageRemoteRemovesTimeNanos() {
       long total = counters.get(StripeB.remoteCacheRemovesFieldUpdater);
       if (total == 0)
          return 0;
-      total = counters.get(StripeB.remoteCacheRemovesTimeFieldUpdater) / total;
-      return TimeUnit.NANOSECONDS.toMillis(total);
+      return counters.get(StripeB.remoteCacheRemovesTimeFieldUpdater) / total;
    }
 
    @Override
