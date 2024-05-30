@@ -302,7 +302,7 @@
                                         <!-- full server -->
                                         <feature-pack>
                                             <groupId>${appserver.groupId}</groupId>
-                                            <artifactId>wildfly-galleon-pack</artifactId>
+                                            <artifactId>wildfly-ee-galleon-pack</artifactId>
                                             <version>${appserver.version}</version>
                                         </feature-pack>
                                     </feature-packs>
