@@ -23,7 +23,7 @@ public class ContainerEmbeddedCacheManagerFactoryBean implements FactoryBean<Cac
 
    @Override
    public CacheManager getObject() throws Exception {
-      return new SpringEmbeddedCacheManager((EmbeddedCacheManager) this.cacheContainer);
+      return new SpringEmbeddedCacheManager(this.cacheContainer);
    }
 
    @Override

@@ -1,0 +1,13 @@
+[id='configuring-remotecm-bean_{context}']
+= Using the reactive mode with Reactor
+Since Spring 6.1, reactive mode is supported to make use of caching withing
+reactive applications.
+If you are using `spring-boot-starter-webflux`, your application may block.
+To enable the {brandname} reactive driver, you need to specify the following property
+in the `application.properties`.
+
++
+[source,text,options=nowrap,subs=attributes+]
+----
+infinispan.embedded.reactive=true
+----

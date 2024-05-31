@@ -31,14 +31,23 @@ public class SpringEmbeddedCacheManager implements CacheManager {
 
    private final EmbeddedCacheManager nativeCacheManager;
    private final ConcurrentMap<String, SpringCache> springCaches = new ConcurrentHashMap<>();
+   private boolean reactive;
 
    /**
     * @param nativeCacheManager Underlying cache manager
     */
    public SpringEmbeddedCacheManager(final EmbeddedCacheManager nativeCacheManager) {
+      this(nativeCacheManager, false);
+   }
+
+   /**
+    * @param nativeCacheManager Underlying cache manager
+    */
+   public SpringEmbeddedCacheManager(final EmbeddedCacheManager nativeCacheManager, boolean reactive) {
       Assert.notNull(nativeCacheManager,
                      "A non-null instance of EmbeddedCacheManager needs to be supplied");
       this.nativeCacheManager = nativeCacheManager;
+      this.reactive = reactive;
    }
 
    @Override
@@ -46,7 +55,7 @@ public class SpringEmbeddedCacheManager implements CacheManager {
       return springCaches.computeIfAbsent(name, n -> {
          final Cache<Object, Object> nativeCache = this.nativeCacheManager.getCache(n);
 
-         return new SpringCache(nativeCache);
+         return new SpringCache(nativeCache, reactive);
       });
    }
 

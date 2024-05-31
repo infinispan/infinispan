@@ -21,6 +21,10 @@ public class InfinispanRemoteConfigurationProperties extends org.infinispan.clie
     */
    private String clientProperties = DEFAULT_CLIENT_PROPERTIES;
 
+   private boolean reactive = false;
+   private long readTimeout = 0;
+   private long writeTimeout = 0;
+
    public String getClientProperties() {
       return clientProperties;
    }
@@ -53,4 +57,27 @@ public class InfinispanRemoteConfigurationProperties extends org.infinispan.clie
       cluster.forEach((k, v) -> this.getProperties().setProperty(CLUSTER_PROPERTIES_PREFIX + "." + k, v));
    }
 
+   public boolean isReactive() {
+      return reactive;
+   }
+
+   public void setReactive(boolean reactive) {
+      this.reactive = reactive;
+   }
+
+   public long getReadTimeout() {
+      return readTimeout;
+   }
+
+   public void setReadTimeout(long readTimeout) {
+      this.readTimeout = readTimeout;
+   }
+
+   public long getWriteTimeout() {
+      return writeTimeout;
+   }
+
+   public void setWriteTimeout(long writeTimeout) {
+      this.writeTimeout = writeTimeout;
+   }
 }
