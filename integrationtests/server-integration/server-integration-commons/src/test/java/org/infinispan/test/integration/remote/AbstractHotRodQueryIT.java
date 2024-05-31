@@ -43,9 +43,9 @@ public abstract class AbstractHotRodQueryIT {
          // register schema
          registerSchema(remoteCacheManager, schema.getProtoFileName(), schema.getProtoFile());
 
-         String xmlConfig = "" +
+         String xmlConfig =
                "<distributed-cache name=\"books\">\n" +
-               "  <indexing path=\"${java.io.tmpdir}/index\">\n" +
+               "  <indexing>\n" +
                "    <indexed-entities>\n" +
                "      <indexed-entity>book_sample.Book</indexed-entity>\n" +
                "    </indexed-entities>\n" +
