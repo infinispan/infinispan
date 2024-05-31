@@ -12,6 +12,11 @@ public class InfinispanEmbeddedConfigurationProperties {
    private boolean enabled = true;
 
    /**
+    * Reactive mode
+    */
+   private boolean reactive = false;
+
+   /**
     * The configuration file to use as a template for all caches created.
     */
    private String configXml = "";
@@ -53,5 +58,13 @@ public class InfinispanEmbeddedConfigurationProperties {
 
    public void setEnabled(boolean enabled) {
       this.enabled = enabled;
+   }
+
+   public void setReactive(boolean reactive) {
+      this.reactive = reactive;
+   }
+
+   public boolean isReactive() {
+      return reactive;
    }
 }

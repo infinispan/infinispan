@@ -38,22 +38,32 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
    private final ConcurrentMap<String, SpringCache> springCaches = new ConcurrentHashMap<>();
    private volatile long readTimeout;
    private volatile long writeTimeout;
+   private volatile boolean reactive;
 
    /**
     * @param nativeCacheManager the underlying cache manager
     */
-   public SpringRemoteCacheManager(final RemoteCacheManager nativeCacheManager, long readTimeout, long writeTimeout) {
+   public SpringRemoteCacheManager(final RemoteCacheManager nativeCacheManager, boolean reactive, long readTimeout, long writeTimeout) {
       Assert.notNull(nativeCacheManager,
                      "A non-null instance of EmbeddedCacheManager needs to be supplied");
       this.nativeCacheManager = nativeCacheManager;
       this.readTimeout = readTimeout;
       this.writeTimeout = writeTimeout;
+      this.reactive = reactive;
 
       configureMarshallers(nativeCacheManager);
    }
 
+   public SpringRemoteCacheManager(final RemoteCacheManager nativeCacheManager, long readTimeout, long writeTimeout) {
+      this(nativeCacheManager, false,readTimeout, writeTimeout);
+   }
+
    public SpringRemoteCacheManager(final RemoteCacheManager nativeCacheManager) {
-      this(nativeCacheManager, 0, 0);
+      this(nativeCacheManager, false,0, 0);
+   }
+
+   public SpringRemoteCacheManager(final RemoteCacheManager nativeCacheManager, boolean reactive) {
+      this(nativeCacheManager, reactive,0, 0);
    }
 
    /**
@@ -67,7 +77,7 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
          return null;
       }
 
-      return springCaches.computeIfAbsent(name, n -> new SpringCache(nativeCache, readTimeout, writeTimeout));
+      return springCaches.computeIfAbsent(name, n -> new SpringCache(nativeCache, reactive, readTimeout, writeTimeout));
    }
 
    /**
