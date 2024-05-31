@@ -70,6 +70,12 @@
       </exclusions>
     </dependency>
 
+    <dependency>
+      <groupId>org.infinispan.protostream</groupId>
+      <artifactId>protostream-processor</artifactId>
+      <version>${version.protostream}</version>
+    </dependency>
+
     <!-- test dependencies -->
     <dependency>
       <groupId>org.springframework.boot</groupId>

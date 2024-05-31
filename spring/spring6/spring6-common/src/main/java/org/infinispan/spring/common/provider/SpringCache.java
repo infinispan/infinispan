@@ -30,23 +30,33 @@ import java.util.function.Supplier;
  */
 public class SpringCache implements Cache {
    public static final SimpleValueWrapper NULL_VALUE_WRAPPER = new SimpleValueWrapper(null);
+   public static final String REACTIVE_DISABLED = "Reactive mode is disabled. " +
+           "Enable it by setting 'infinispan.embedded.reactive=true' in embedded mode " +
+           "and 'infinispan.remote.reactive=true' in remote mode.";
 
    private final BasicCache nativeCache;
    private final long readTimeout;
    private final long writeTimeout;
    private final Map<Object, ReentrantLock> synchronousGetLocks = new ConcurrentHashMap<>();
    private final Map<Object, CompletableFuture> computationResults = new ConcurrentHashMap<>();
+   private final boolean reactive;
 
-   /**
-    * @param nativeCache underlying cache
-    */
    public SpringCache(BasicCache nativeCache) {
-      this(nativeCache, 0, 0);
+      this(nativeCache, false, 0, 0);
+   }
+
+   public SpringCache(BasicCache nativeCache, boolean reactive) {
+      this(nativeCache, reactive, 0, 0);
    }
 
    public SpringCache(BasicCache nativeCache, long readTimeout, long writeTimeout) {
+      this(nativeCache, false, readTimeout, writeTimeout);
+   }
+
+   public SpringCache(BasicCache nativeCache, boolean reactive, long readTimeout, long writeTimeout) {
       Assert.notNull(nativeCache, "A non-null Infinispan cache implementation is required");
       this.nativeCache = nativeCache;
+      this.reactive = reactive;
       this.readTimeout = readTimeout;
       this.writeTimeout = writeTimeout;
    }
@@ -142,6 +152,11 @@ public class SpringCache implements Cache {
     */
    @Override
    public void put(final Object key, final Object value) {
+      if (reactive) {
+         this.nativeCache.putAsync(key, encodeNull(value));
+         return;
+      }
+
       try {
          if (writeTimeout > 0)
             this.nativeCache.putAsync(key, encodeNull(value)).get(writeTimeout, TimeUnit.MILLISECONDS);
@@ -159,6 +174,11 @@ public class SpringCache implements Cache {
     * @see BasicCache#put(Object, Object, long, TimeUnit)
     */
    public void put(Object key, Object value, long lifespan, TimeUnit unit) {
+      if (reactive) {
+         this.nativeCache.putAsync(key, encodeNull(value), lifespan, unit);
+         return;
+      }
+
       try {
          if (writeTimeout > 0)
             this.nativeCache.putAsync(key, encodeNull(value), lifespan, unit).get(writeTimeout, TimeUnit.MILLISECONDS);
@@ -192,6 +212,10 @@ public class SpringCache implements Cache {
     */
    @Override
    public void evict(final Object key) {
+      if (reactive) {
+         this.nativeCache.removeAsync(key);
+         return;
+      }
       try {
          if (writeTimeout > 0)
             this.nativeCache.removeAsync(key).get(writeTimeout, TimeUnit.MILLISECONDS);
@@ -210,6 +234,11 @@ public class SpringCache implements Cache {
     */
    @Override
    public void clear() {
+      if (reactive) {
+         this.nativeCache.clearAsync();
+         return;
+      }
+
       try {
          if (writeTimeout > 0)
             this.nativeCache.clearAsync().get(writeTimeout, TimeUnit.MILLISECONDS);
@@ -256,7 +285,7 @@ public class SpringCache implements Cache {
 
    //Implemented as a static holder class for backwards compatibility.
    //Imagine a situation where a client has new integration module and old Spring version. In that case
-   //this exception does not exist. However we can bypass this by using separate class file (which is loaded
+   //this exception does not exist. However, we can bypass this by using separate class file (which is loaded
    //by the JVM when needed...)
    private static class ValueRetrievalExceptionResolver {
       static RuntimeException throwValueRetrievalException(Object key, Callable<?> loader, Throwable ex) {
@@ -270,11 +299,18 @@ public class SpringCache implements Cache {
 
    @Override
    public CompletableFuture<?> retrieve(Object key) {
+      if (!reactive) {
+         throw new UnsupportedOperationException(REACTIVE_DISABLED);
+      }
       return encodedToValueWrapper(nativeCache.getAsync(key));
    }
 
    @Override
    public <T> CompletableFuture<T> retrieve(Object key, Supplier<CompletableFuture<T>> valueLoaderAsync) {
+      if (!reactive) {
+         throw new UnsupportedOperationException(REACTIVE_DISABLED);
+      }
+
       CompletionStage<T> completionStage = CompletionStages.handleAndCompose(nativeCache.getAsync(key), (v1, ex1) -> {
          if (ex1 != null) {
             return CompletableFuture.failedFuture(ex1);

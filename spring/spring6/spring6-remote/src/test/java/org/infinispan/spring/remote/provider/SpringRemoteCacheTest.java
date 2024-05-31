@@ -26,6 +26,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
@@ -110,7 +111,7 @@ public class SpringRemoteCacheTest extends SingleCacheManagerTest {
 
    @Test(timeOut = 30_000)
    public void testRetrieveMethods() throws Exception {
-      final SpringRemoteCacheManager springRemoteCacheManager = new SpringRemoteCacheManager(remoteCacheManager);
+      final SpringRemoteCacheManager springRemoteCacheManager = new SpringRemoteCacheManager(remoteCacheManager, true);
       final SpringCache cache = springRemoteCacheManager.getCache(TEST_CACHE_NAME);
 
       cache.put("test-one", "one");
@@ -149,6 +150,16 @@ public class SpringRemoteCacheTest extends SingleCacheManagerTest {
       assertEquals("thread1", valueAfterGetterIsDoneTest2.get());
       assertEquals("thread1", valueObtainedByThread1);
       assertEquals("thread1", valueObtainedByThread2);
+   }
+
+   @Test(timeOut = 30_000)
+   public void testRetrieveMethodsWithNoReactive() {
+      final SpringRemoteCacheManager springRemoteCacheManager = new SpringRemoteCacheManager(remoteCacheManager, false);
+      final SpringCache cache = springRemoteCacheManager.getCache(TEST_CACHE_NAME);
+
+      assertThrowsExactly(UnsupportedOperationException.class, () -> cache.retrieve("test-3").get(10, TimeUnit.SECONDS));
+      assertThrowsExactly(UnsupportedOperationException.class, () -> cache.retrieve("test-3", () -> CompletableFuture.completedFuture("hello"))
+              .get(10, TimeUnit.SECONDS));
    }
 
    @DataProvider(name = "caches")
