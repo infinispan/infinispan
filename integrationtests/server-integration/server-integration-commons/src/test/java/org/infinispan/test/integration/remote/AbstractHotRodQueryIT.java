@@ -44,7 +44,7 @@ public abstract class AbstractHotRodQueryIT {
 
          String xmlConfig = """
                <distributed-cache name="books">
-                 <indexing path="${java.io.tmpdir}/index">
+                 <indexing>
                    <indexed-entities>
                      <indexed-entity>book_sample.Book</indexed-entity>
                    </indexed-entities>
