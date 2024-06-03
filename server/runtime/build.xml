@@ -90,6 +90,7 @@
             <include name="mozilla public license 1.1.txt"/>
             <include name="ofl-1.1.txt"/>
             <include name="xstream-bsd.txt"/>
+            <include name="mit-0.txt"/>
          </fileset>
       </copy>
    </target>
