@@ -43,7 +43,7 @@
                                     <xsl:variable name="last-index">
                                         <xsl:call-template name="last-index-of">
                                             <xsl:with-param name="txt" select="url"/>
-                                            <xsl:with-param name="delimiter" select="'/'"></xsl:with-param>
+                                            <xsl:with-param name="delimiter" select="'/'"/>
                                         </xsl:call-template>
                                     </xsl:variable>
                                     <xsl:variable name="prefix" select="concat($name,' - ')" />
@@ -167,6 +167,9 @@
             <xsl:when test="contains($filename, 'epl-2.0')">
                 <xsl:text>eclipse public license 2.0.txt</xsl:text>
             </xsl:when>
+            <xsl:when test="contains($filename, 'eclipse public license 2.0')">
+                <xsl:text>eclipse public license 2.0.txt</xsl:text>
+            </xsl:when>
             <xsl:when test="contains($filename, 'edl-1.0.txt')">
                 <xsl:text>eclipse distribution license, version 1.0.txt</xsl:text>
             </xsl:when>
@@ -194,6 +197,9 @@
             <xsl:when test="contains($filename, 'cc0')">
                 <xsl:text>cc0-1.0.txt</xsl:text>
             </xsl:when>
+            <xsl:when test="contains($filename, 'creative commons zero v1.0')">
+                <xsl:text>cc0-1.0.txt</xsl:text>
+            </xsl:when>
             <xsl:when test="contains($filename, 'public domain')">
                 <xsl:text>public domain.txt</xsl:text>
             </xsl:when>
@@ -211,6 +217,9 @@
             </xsl:when>
             <xsl:when test="$filename = 'indiana university extreme! lab software license - license.txt'">
                 <xsl:text>indiana university extreme! lab software license, version 1.1.1 - license.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="contains($filename, 'mit-0')">
+                <xsl:text>mit-0.txt</xsl:text>
             </xsl:when>
             <xsl:otherwise>
                 <xsl:value-of select="$filename"/>
