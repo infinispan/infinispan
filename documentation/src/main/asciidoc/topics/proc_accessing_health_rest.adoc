@@ -8,7 +8,7 @@ Get {brandname} cluster health via the REST API.
 +
 [source]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/health
+GET /rest/v2/container/health
 ----
 
 {brandname} responds with a `JSON` document such as the following:
@@ -24,7 +24,7 @@ Get Cache Manager status as follows:
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/health/status
+GET /rest/v2/container/health/status
 ----
 ====
 

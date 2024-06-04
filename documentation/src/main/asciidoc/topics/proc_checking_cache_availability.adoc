@@ -18,7 +18,7 @@ Verify availability of clustered caches in network partitions in one of the foll
 +
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/<cacheManagerName>/health
+GET /rest/v2/container/health
 ----
 
 * Programmatically retrieve the availability of embedded caches with the `getAvailability()` method in the `AdvancedCache` API.
