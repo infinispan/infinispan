@@ -379,12 +379,6 @@ Restore {brandname} resources from backup archives. The provided
 `{restoreName}` is for tracking restore progress, and is independent of the name of
 backup file being restored.
 
-[IMPORTANT]
-====
-You can restore resources only if the container name in the backup archive
-matches `{cacheManagerName}`.
-====
-
 [source,options="nowrap",subs=attributes+]
 ----
 POST /rest/v2/container/restores/{restoreName}
@@ -467,7 +461,7 @@ failed.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/restores
+GET /rest/v2/container/restores
 ----
 
 {brandname} responds with an Array of all restore names as in the following example:

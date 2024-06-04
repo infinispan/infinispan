@@ -9,7 +9,7 @@ class InfinispanConnection:
     def __init__(self, server: str = 'http://localhost:11222', cache_manager: str = 'default',
                  auth: tuple = ('admin', 'change_me')) -> None:
         super().__init__()
-        self.__url = f'{server}/rest/v2/cache-managers/{cache_manager}/x-site/backups/'
+        self.__url = f'{server}/rest/v2/container/x-site/backups/'
         self.__auth = auth
         self.__headers = {
             'accept': 'application/json'
