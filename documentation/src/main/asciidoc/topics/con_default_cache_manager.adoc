@@ -17,7 +17,7 @@ CLI:: Run the [command]`describe` command in the default container.
 [//containers/default]> describe
 ----
 
-REST:: Open `127.0.0.1:11222/rest/v2/cache-managers/default/` in any browser.
+REST:: Open `127.0.0.1:11222/rest/v2/container/` in any browser.
 
 
 [discrete]
