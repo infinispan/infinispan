@@ -3,8 +3,11 @@ package org.infinispan.test.integration.store;
 import static java.io.File.separator;
 import static org.junit.Assert.assertEquals;
 
+import java.nio.file.Paths;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -68,6 +71,7 @@ public abstract class AbstractInfinispanStoreRocksDBIT {
       String baseDir = CommonsTestingUtil.tmpDirectory(this.getClass().getSimpleName(), "server-" + index);
       String dataDir = baseDir + separator + "data";
       String expiredDir = baseDir + separator + "expired";
+      Util.recursiveFileRemove(Paths.get(baseDir));
 
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
       global.transport()
