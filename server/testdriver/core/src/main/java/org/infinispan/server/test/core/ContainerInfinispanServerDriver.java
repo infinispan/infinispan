@@ -54,6 +54,7 @@ import org.infinispan.commons.test.Ansi;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.ThreadLeakChecker;
+import org.infinispan.commons.util.OS;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
@@ -303,6 +304,12 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                   cmd.getHostConfig().withMemorySwap(IMAGE_MEMORY_SWAP);
                }
             });
+      if (configuration.numServers() == 1 && (OS.getCurrentOs().equals(OS.MAC_OS) || OS.getCurrentOs().equals(OS.WINDOWS))) {
+         container.addExposedPorts(
+                 11222, // HTTP/Hot Rod
+                 7800  // JGroups TCP
+         );
+      }
       String debug = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_DEBUG);
       String javaOpts = null;
       String site = configuration.site();
