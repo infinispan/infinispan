@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - 14.0.x
+      - 15.*.x
 
     types:
       - opened
@@ -49,9 +50,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update PR Title 14.0.x
-        if: ${{ github.base_ref == '14.0.x' }}
-        run: gh pr edit ${{ github.event.pull_request.number }} --title "[14.0.x] ${{ env.JIRA_ISSUE_KEY }} ${{ github.event.pull_request.title }}"
+      - name: Update PR Title
+        if: ${{ github.base_ref != 'main' }}
+        run: gh pr edit ${{ github.event.pull_request.number }} --title "[${{ github.base_ref }}] ${{ env.JIRA_ISSUE_KEY }} ${{ github.event.pull_request.title }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
