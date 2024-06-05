@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - 14.0.x
+      - 15.*.x
     types:
       - closed
 
