@@ -120,11 +120,11 @@ public class XSiteEventsManagerImpl implements XSiteEventsManager {
 
    @SiteViewChanged
    public void onSiteViewChanged(SitesViewChangedEvent event) {
-      // This event is only triggered in SiteMaster nodes.
-      xSiteViewMetrics.updateAllBasedOnNewView(event.getSites());
       if (!transport.isPrimaryRelayNode()) {
          return;
       }
+      // This event is only triggered in SiteMaster nodes.
+      xSiteViewMetrics.onNewCrossSiteView(event.getJoiners(), event.getLeavers());
       log.debugf("On site view changed event: %s", event);
       event.getJoiners().stream()
             .filter(this::isRemoteSite)
@@ -151,10 +151,10 @@ public class XSiteEventsManagerImpl implements XSiteEventsManager {
 
    @ViewChanged
    public void onViewChanged(ViewChangedEvent event) {
-      if (transport.isSiteCoordinator()) {
+      if (transport.isPrimaryRelayNode()) {
          // The node is a SiteMaster, or it is being promoted to SiteMaster.
          // Update the metrics.
-         xSiteViewMetrics.updateAllBasedOnNewView(transport.getSitesView());
+         xSiteViewMetrics.onSiteCoordinatorPromotion(transport.getSitesView());
       } else {
          // A node can lose its SiteMaster role, for example, during the merge event (in cluster split brain).
          // Mark all unknown to signal the results from this node is not reliable.
@@ -164,7 +164,7 @@ public class XSiteEventsManagerImpl implements XSiteEventsManager {
 
    private void registerMetricForSite(String siteName) {
       // A non SiteMaster returns an empty list. Change to null to signal that the metric is unreliable.
-      var siteView = transport.isSiteCoordinator() ? transport.getSitesView() : null;
+      var siteView = transport.isPrimaryRelayNode() ? transport.getSitesView() : null;
       xSiteViewMetrics.onNewSiteFound(siteName, siteView);
    }
 
