@@ -42,6 +42,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    private static final String STATE_SEGMENT_OWNER_COUNT = "segmentOwner.%d.num";
 
    private final int numOwners;
+   private transient final int hashCode;
 
    /**
     * The routing table.
@@ -62,6 +63,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
          }
          this.segmentOwners[s] = List.copyOf(segmentOwners[s]);
       }
+      this.hashCode = hashCodeInternal();
    }
 
    // Only used by the externalizer, so we can skip copying collections
@@ -78,6 +80,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
          }
       }
       this.segmentOwners = segmentOwners;
+      this.hashCode = hashCodeInternal();
    }
 
    DefaultConsistentHash(ScopedPersistentState state) {
@@ -93,6 +96,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
             segmentOwners[i].add(uuid);
          }
       }
+      this.hashCode = hashCodeInternal();
    }
 
    @Override
@@ -157,6 +161,10 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
 
    @Override
    public int hashCode() {
+      return hashCode;
+   }
+
+   private int hashCodeInternal() {
       int result = numOwners;
       result = 31 * result + members.hashCode();
       result = 31 * result + Arrays.hashCode(segmentOwners);
