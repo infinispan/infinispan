@@ -36,7 +36,12 @@ class XSiteViewMetrics implements Constants {
       siteMetrics.clear();
    }
 
-   void updateAllBasedOnNewView(Collection<String> siteView) {
+   void onNewCrossSiteView(Collection<String> joiners, Collection<String> leavers) {
+      joiners.forEach(this::handleJoiner);
+      leavers.forEach(this::handleLeaver);
+   }
+
+   void onSiteCoordinatorPromotion(Collection<String> siteView) {
       siteMetrics.forEach((siteName, metric) -> metric.status.set(siteView.contains(siteName) ? ONLINE : OFFLINE));
    }
 
@@ -51,11 +56,29 @@ class XSiteViewMetrics implements Constants {
       }
    }
 
+   private void handleJoiner(String siteName) {
+      siteMetrics.computeIfPresent(siteName, this::setOnline);
+   }
+
+   private void handleLeaver(String siteName) {
+      siteMetrics.computeIfPresent(siteName, this::setOffline);
+   }
+
    private SiteStatusMetric create(String siteName) {
       var registry = metricsRegistrySupplier.get();
       var status = new AtomicInteger(UNKNOWN);
       var metricId = registry.registerMetrics(status, METRIC, JGROUPS_PREFIX, metricTags(siteName));
       return new SiteStatusMetric(metricId, status);
+   }
+
+   private SiteStatusMetric setOnline(String siteName, SiteStatusMetric metric) {
+      metric.status.set(ONLINE);
+      return metric;
+   }
+
+   private SiteStatusMetric setOffline(String siteName, SiteStatusMetric metric) {
+      metric.status.set(OFFLINE);
+      return metric;
    }
 
    private Map<String, String> metricTags(String siteName) {
