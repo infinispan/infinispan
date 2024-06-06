@@ -2389,4 +2389,9 @@ public interface Log extends BasicLogger {
 
    @Message(value = "The alias '%s' is already being used by cache '%s'", id = 975)
    CacheConfigurationException duplicateAliasName(String alias, String cacheName);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Received new cross-site event, site(s) %s: %s", id = 976)
+   @Description("A cluster has either joined or left the global cluster view.")
+   void crossSiteViewEvent(String action, String sites);
 }

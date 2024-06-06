@@ -1347,13 +1347,20 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
    }
 
    private void updateSitesView(Collection<String> sitesUp, Collection<String> sitesDown) {
-      // TODO code will be changed by ISPN-12989
-      if (isSiteCoordinator()) {
-         Set<String> reachableSites = getSitesView();
-         log.tracef("Sites view changed: up %s, down %s, new view is %s", sitesUp, sitesDown, reachableSites);
-         XSITE.receivedXSiteClusterView(reachableSites);
-         CompletionStages.join(notifier.notifyCrossSiteViewChanged(reachableSites, sitesUp, sitesDown));
+      var view = getSitesView();
+      log.tracef("Sites view changed: up %s, down %s, new view is %s", sitesUp, sitesDown, view);
+      if (!sitesUp.isEmpty()) {
+         XSITE.crossSiteViewEvent("joining", String.join(", ", sitesUp));
       }
+      if (!sitesDown.isEmpty()) {
+         XSITE.crossSiteViewEvent("leaving", String.join(", ", sitesDown));
+      }
+      if (isPrimaryRelayNode()) {
+         XSITE.receivedXSiteClusterView(view);
+      } else {
+         view = Collections.emptySet();
+      }
+      CompletionStages.join(notifier.notifyCrossSiteViewChanged(view, sitesUp, sitesDown));
    }
 
    private void siteUnreachable(String site) {
