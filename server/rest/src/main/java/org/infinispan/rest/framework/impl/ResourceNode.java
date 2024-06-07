@@ -24,6 +24,7 @@ import org.infinispan.util.logging.LogFactory;
 class ResourceNode {
 
    private final static Log logger = LogFactory.getLog(ResourceNode.class, Log.class);
+   public static final StringPathItem WILDCARD_PATH = new StringPathItem("*");
 
    private final PathItem pathItem;
    private final Map<ExtendedMethod, Invocation> invocationTable = new HashMap<>();
@@ -128,8 +129,7 @@ class ResourceNode {
 
    private ResourceNode findMatch(String path, Map<String, String> variables) {
       for (Map.Entry<PathItem, ResourceNode> e : children.entrySet()) {
-         if (e.getKey() instanceof VariablePathItem) {
-            VariablePathItem vpi = (VariablePathItem) e.getKey();
+         if (e.getKey() instanceof VariablePathItem vpi) {
             Map<String, String> vars = PathInterpreter.resolveVariables(vpi.getExpression(), path);
             if (!vars.isEmpty()) {
                variables.putAll(vars);
@@ -160,7 +160,7 @@ class ResourceNode {
             continue;
          }
          ResourceNode resourceNode = current.children.get(pathItem);
-         ResourceNode matchAll = current.children.get(new StringPathItem("*"));
+         ResourceNode matchAll = current.children.get(WILDCARD_PATH);
          if (resourceNode != null) {
             current = resourceNode;
          } else {
