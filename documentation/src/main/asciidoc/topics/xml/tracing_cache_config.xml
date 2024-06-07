@@ -1,3 +1,3 @@
 <replicated-cache>
-    <tracing enabled="true" categories="container, cluster" />
+    <tracing enabled="true" categories="container cluster x-site persistence" />
 </replicated-cache>
