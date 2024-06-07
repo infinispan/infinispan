@@ -5,7 +5,7 @@
       "tracing" : {
         "collector-endpoint" : "http://localhost:4318",
         "enabled" : true,
-        "exporter-protocol" : "otlp",
+        "exporter-protocol" : "OTLP",
         "service-name" : "infinispan-server",
         "security" : false
       }
