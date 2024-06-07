@@ -2,5 +2,7 @@ distributedCache:
   tracing:
     enabled: true
     categories:
-      - container
-      - cluster
+      - "container"
+      - "cluster"
+      - "x-site"
+      - "persistence"
