@@ -11,7 +11,7 @@ For this reason, you must execute code with a {brandname} user that has a role w
 
 .Procedure
 
-. If necessary, retrieve the current Subject from the {brandname} context or `AccessControlContext`:
+. If necessary, retrieve the current Subject from the {brandname} context:
 +
 [source,java]
 ----
@@ -23,12 +23,6 @@ Security.getSubject();
 ----
 Security.doAs(mySubject, (PrivilegedAction<String>)() -> cache.put("key", "value"));
 ----
-
-[NOTE]
-====
-You can use the `Security.doAs()` or `Subject.doAs()` method.
-{brandname} recommends `Security.doAs()` for better performance.
-====
 
 [role="_additional-resources"]
 .Additional resources
