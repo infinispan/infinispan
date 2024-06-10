@@ -167,6 +167,7 @@ include::json/rest_full_cache_detail.json[]
 * `persistent` true if the cache is persisted.
 * `transactional` true if the cache is transactional.
 * `secured` true if the cache is secured.
+* `tracing` true if the cache has tracing enabled.
 * `has_remote_backup` true if the cache has remote backups.
 * `key_storage` the media type of the cache keys.
 * `value_storage` the media type of the cache values.

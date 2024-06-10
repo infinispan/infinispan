@@ -313,6 +313,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       cacheInfo.secured = cacheConfiguration.security().authorization().enabled();
       cacheInfo.indexed = cacheConfiguration.indexing().enabled();
       cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasBackups();
+      cacheInfo.tracing = cacheConfiguration.tracing().enabled();
 
       // If the cache is ignored, status is IGNORED
       if (ignoredCaches.contains(cacheName)) {
@@ -364,6 +365,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       public boolean indexed;
       public boolean secured;
       public boolean hasRemoteBackup;
+      public boolean tracing;
       public HealthStatus health;
       public Boolean rebalancing_enabled;
 
@@ -380,6 +382,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
                .set("secured", secured)
                .set("indexed", indexed)
                .set("has_remote_backup", hasRemoteBackup)
+               .set("tracing", tracing)
                .set("health", health);
 
          if (rebalancing_enabled != null) {
@@ -934,7 +937,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       fullDetail.keyStorage = cache.getAdvancedCache().getKeyDataConversion().getStorageMediaType();
       fullDetail.valueStorage = cache.getAdvancedCache().getValueDataConversion().getStorageMediaType();
       fullDetail.mode = configuration.clustering().cacheModeString();
-
+      fullDetail.tracing = configuration.tracing().enabled();
       return addEntityAsJson(fullDetail.toJson(), invocationHelper.newResponse(request), pretty).build();
    }
 
@@ -1206,6 +1209,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       public boolean transactional;
       public boolean secured;
       public boolean hasRemoteBackup;
+      public boolean tracing;
       public Boolean indexingInProgress;
       public boolean statistics;
       public Boolean queryable;
@@ -1262,6 +1266,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
                .set("transactional", transactional)
                .set("secured", secured)
                .set("has_remote_backup", hasRemoteBackup)
+               .set("tracing", tracing)
                .set("statistics", statistics)
                .set("key_storage", keyStorage)
                .set("value_storage", valueStorage)

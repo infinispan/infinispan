@@ -180,6 +180,11 @@ public class CacheManagerInfo implements JsonSerialization {
       return transport.getRelayNodesAddress().stream().map(Objects::toString).collect(Collectors.toList());
    }
 
+   public boolean isTracingEnabled() {
+      return cacheManager.getConfigurationManager()
+                 .getGlobalConfiguration().tracing().enabled();
+   }
+
    @Override
    public Json toJson() {
      Json result = Json.object()
@@ -201,14 +206,15 @@ public class CacheManagerInfo implements JsonSerialization {
             .set("local_site", getLocalSite())
             .set("relay_node", isRelayNode())
             .set("relay_nodes_address", Json.make(getRelayNodesAddress()))
-            .set("sites_view", Json.make(getSites()));
+            .set("sites_view", Json.make(getSites()))
+            .set("tracing_enabled", isTracingEnabled());
 
       Boolean rebalancingEnabled = isRebalancingEnabled();
       if (rebalancingEnabled != null) {
          result.set("rebalancing_enabled", rebalancingEnabled);
       }
 
-     return result;
+      return result;
    }
 
    static class BasicCacheInfo implements JsonSerialization {
