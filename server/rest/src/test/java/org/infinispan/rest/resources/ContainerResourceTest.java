@@ -247,6 +247,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       assertEquals(1, cmInfo.at("sites_view").asList().size());
       assertEquals("LON-1", cmInfo.at("sites_view").asList().get(0));
       assertTrue(cmInfo.at("rebalancing_enabled").asBoolean());
+      assertFalse(cmInfo.at("tracing_enabled").asBoolean());
    }
 
    @Test

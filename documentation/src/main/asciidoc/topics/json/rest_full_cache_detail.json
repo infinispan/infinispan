@@ -39,6 +39,7 @@
   "transactional": false,
   "secured": false,
   "has_remote_backup": false,
+  "tracing": true,
   "indexing_in_progress": false,
   "statistics": false,
   "mode" : "DIST_SYNC",
