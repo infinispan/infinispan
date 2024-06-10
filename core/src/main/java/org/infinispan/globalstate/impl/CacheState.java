@@ -44,6 +44,15 @@ public class CacheState {
       return flags;
    }
 
+   @Override
+   public String toString() {
+      return "CacheState{" +
+            "template='" + template + '\'' +
+            ", configuration='" + configuration + '\'' +
+            ", flags=" + flags +
+            '}';
+   }
+
    public static class Externalizer implements AdvancedExternalizer<CacheState> {
 
       @Override

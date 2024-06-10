@@ -16,6 +16,8 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.security.actions.SecurityActions;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Listens to events on the global state cache and manages cache configuration creation / removal accordingly
@@ -25,6 +27,7 @@ import org.infinispan.security.actions.SecurityActions;
  */
 @Listener(observation = Listener.Observation.BOTH)
 public class GlobalConfigurationStateListener {
+   private static final Log log = LogFactory.getLog(GlobalConfigurationStateListener.class);
    private final GlobalConfigurationManagerImpl gcm;
 
    GlobalConfigurationStateListener(GlobalConfigurationManagerImpl gcm) {
@@ -42,6 +45,9 @@ public class GlobalConfigurationStateListener {
 
       String name = event.getKey().getName();
       CacheState state = event.getValue();
+
+      log.infof("Received scope '%s' for cache '%s' with %s", scope, name, state);
+
       if (CACHE_SCOPE.equals(scope)) {
          CompletionStage<Void> cs = gcm.createCacheLocally(name, state);
          // zero capacity nodes have to wait for a non-zero capacity node to start the cache.
