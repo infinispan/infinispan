@@ -38,6 +38,7 @@ If cross-site replication is not configured, {brandname} returns "local".
 * `sites_view` The list of sites that participate in cross-site replication. +
 If cross-site replication is not configured, {brandname} returns an empty list.
 * `rebalancing_enabled` is true if rebalancing is enabled. Fetching this property might fail on the server. In that case the property won't be present in the payload.
+* `tracing_enabled` is true if tracing is enabled.
 
 
 [id='rest_v2_container_health']

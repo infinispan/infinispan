@@ -9,6 +9,7 @@
   "secured": false,
   "indexed": true,
   "has_remote_backup": true,
+  "tracing": false,
   "health":"HEALTHY",
   "rebalancing_enabled": true
 }, {
@@ -22,6 +23,7 @@
   "secured": false,
   "indexed": true,
   "has_remote_backup": true,
+  "tracing": true,
   "health":"HEALTHY",
   "rebalancing_enabled": false
 }]

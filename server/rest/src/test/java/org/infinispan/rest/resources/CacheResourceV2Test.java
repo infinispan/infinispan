@@ -727,6 +727,9 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
       List<String> isRebalancingEnabled = find(jsonNode, "rebalancing_enabled");
       Assert.assertTrue(isRebalancingEnabled.contains("true"));
+
+      List<String> tracing = find(jsonNode, "tracing");
+      Assert.assertFalse(tracing.isEmpty());
    }
 
    private List<String> find(Json array, String name) {
@@ -747,6 +750,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(document.at("indexed")).isNotNull();
       assertThat(document.at("has_remote_backup")).isNotNull();
       assertThat(document.at("secured")).isNotNull();
+      assertThat(document.at("tracing")).isNotNull();
       assertThat(document.at("indexing_in_progress")).isNotNull();
       assertThat(document.at("queryable")).isNotNull();
       assertThat(document.at("rebalancing_enabled")).isNotNull();
