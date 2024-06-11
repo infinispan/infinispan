@@ -96,7 +96,8 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       GlobalConfiguration globalConfiguration = cacheManager.getCacheManagerConfiguration();
 
       Configuration.Builder configuration = Configuration.builder();
-      configuration.schemaValidation(globalConfiguration.serialization().schemaCompatibilityValidation());
+      configuration.schemaValidation(globalConfiguration.serialization().schemaCompatibilityValidation())
+            .wrapCollectionElements(true);
       Search5Annotations.configure(configuration);
       InfinispanAnnotations.configure(configuration);
       serCtx = ProtobufUtil.newSerializationContext(configuration.build());
