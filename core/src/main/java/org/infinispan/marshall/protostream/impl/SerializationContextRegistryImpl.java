@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.marshall.UserContextInitializerImpl;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -24,7 +25,6 @@ import org.infinispan.marshall.persistence.impl.PersistenceContextInitializerImp
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.ImmutableSerializationContext;
-import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.types.java.CommonContainerTypesSchema;
@@ -128,7 +128,7 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
    // non-core modules registering their SerializationContextInitializer(s) which depend on a core initializer.
    private static final class MarshallerContext {
       private final List<BaseMarshaller<?>> marshallers = new ArrayList<>();
-      private final SerializationContext ctx = ProtobufUtil.newSerializationContext();
+      private final SerializationContext ctx = ProtoStreamMarshaller.newSerializationContext();
 
       MarshallerContext addContextInitializer(SerializationContextInitializer sci) {
          register(sci, ctx);
