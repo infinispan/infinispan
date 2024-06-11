@@ -1,7 +1,6 @@
 package org.infinispan.server.core.admin.embeddedserver;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -26,11 +25,6 @@ public class TemplateNamesTask extends AdminServerTask<byte[]> {
    @Override
    public String getTaskOperationName() {
       return "templates";
-   }
-
-   @Override
-   public Set<String> getParameters() {
-      return Collections.emptySet();
    }
 
    @Override

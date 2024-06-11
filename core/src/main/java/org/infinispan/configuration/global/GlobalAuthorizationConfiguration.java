@@ -36,7 +36,7 @@ public class GlobalAuthorizationConfiguration {
          .initializer(new AttributeInitializer<>() {
             @Override
             public Map<String, Role> initialize() {
-               return DEFAULT_ROLES;
+               return new HashMap<>(DEFAULT_ROLES);
             }
          }).build();
    public static final AttributeDefinition<Boolean> GROUP_ONLY_MAPPING = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.GROUP_ONLY_MAPPING, true, Boolean.class).immutable().build();
@@ -129,7 +129,7 @@ public class GlobalAuthorizationConfiguration {
    }
 
    public boolean isDefaultRoles() {
-      return roles == DEFAULT_ROLES;
+      return DEFAULT_ROLES.equals(roles);
    }
 
    public boolean groupOnlyMapping() {

@@ -47,13 +47,13 @@ import org.infinispan.commons.util.OS;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.configuration.parsing.CacheParser;
+import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.ClusterExecutor;
@@ -190,8 +190,7 @@ public class Server extends BaseServerManagement implements AutoCloseable {
    public static final String INFINISPAN_FILE_WATCHER = "infinispan.file.watcher";
 
    // Defaults
-   private static final String SERVER_DEFAULTS = "infinispan-defaults.xml";
-
+   private static final String SERVER_DEFAULTS = "infinispan-server-templates.xml";
    public static final String DEFAULT_SERVER_CONFIG = "conf";
    public static final String DEFAULT_SERVER_DATA = "data";
    public static final String DEFAULT_SERVER_LIB = "lib";
@@ -216,7 +215,6 @@ public class Server extends BaseServerManagement implements AutoCloseable {
    private final Properties properties;
    private final LoggingAuditLogger defaultAuditLogger = new LoggingAuditLogger();
    private ExitHandler exitHandler = new DefaultExitHandler();
-   private ConfigurationBuilderHolder defaultsHolder;
    private ConfigurationBuilderHolder configurationBuilderHolder;
    private DefaultCacheManager cacheManager;
    private Map<String, ProtocolServer> protocolServers;
@@ -317,25 +315,22 @@ public class Server extends BaseServerManagement implements AutoCloseable {
    private void parseConfiguration(List<Path> configurationFiles) {
       ParserRegistry parser = new ParserRegistry(classLoader, false, properties);
       try {
-         // load the defaults first
-         URL defaults = this.getClass().getClassLoader().getResource(SERVER_DEFAULTS);
-         defaultsHolder = parser.parse(defaults);
-
-         // Set a default audit logger
-         defaultsHolder.getGlobalConfigurationBuilder().security().authorization().auditLogger(defaultAuditLogger);
-
-         // base the global configuration to the default
          configurationBuilderHolder = new ConfigurationBuilderHolder(classLoader);
          GlobalConfigurationBuilder global = configurationBuilderHolder.getGlobalConfigurationBuilder();
-         global.read(defaultsHolder.getGlobalConfigurationBuilder().build());
-
-         // Copy all default templates
-         StringBuilder defaultTemplateNames = new StringBuilder();
-         for (Map.Entry<String, ConfigurationBuilder> entry : defaultsHolder.getNamedConfigurationBuilders().entrySet()) {
-            configurationBuilderHolder.newConfigurationBuilder(entry.getKey()).read(entry.getValue().build());
-            defaultTemplateNames.append(entry.getKey()).append(",");
-         }
-         properties.put(CacheParser.ALLOWED_DUPLICATES, defaultTemplateNames.toString());
+         global
+               .shutdown()
+                  .hookBehavior(ShutdownHookBehavior.DONT_REGISTER)
+               .globalState()
+                  .enable()
+                  .persistentLocation(properties.getProperty(INFINISPAN_SERVER_DATA_PATH))
+                  .sharedPersistentLocation(properties.getProperty(INFINISPAN_SERVER_DATA_PATH))
+                  .configurationStorage(ConfigurationStorage.OVERLAY)
+               .security()
+                  .authorization()
+                     .auditLogger(defaultAuditLogger);
+         // load the defaults first
+         URL defaults = this.getClass().getClassLoader().getResource(SERVER_DEFAULTS);
+         configurationBuilderHolder.read(parser.parse(defaults));
 
          // then load the user configurations
          for (Path configurationFile : configurationFiles) {
@@ -351,15 +346,6 @@ public class Server extends BaseServerManagement implements AutoCloseable {
                parser.serialize(w, global.build(), configs);
             }
             log.debugf("Actual configuration: %s", sw);
-         }
-
-         // Amend the named caches configurations with the defaults
-         for (Map.Entry<String, ConfigurationBuilder> entry : configurationBuilderHolder.getNamedConfigurationBuilders().entrySet()) {
-            Configuration cfg = entry.getValue().build();
-            ConfigurationBuilder defaultCfg = defaultsHolder.getNamedConfigurationBuilders().get("org.infinispan." + cfg.clustering().cacheMode().name());
-            ConfigurationBuilder rebased = new ConfigurationBuilder().read(defaultCfg.build());
-            rebased.read(cfg);
-            entry.setValue(rebased);
          }
 
          // Process the server configuration
@@ -383,7 +369,7 @@ public class Server extends BaseServerManagement implements AutoCloseable {
          }
 
          // Set the operation handler on all endpoints
-         ServerAdminOperationsHandler adminOperationsHandler = new ServerAdminOperationsHandler(defaultsHolder);
+         ServerAdminOperationsHandler adminOperationsHandler = new ServerAdminOperationsHandler();
          ServerConfigurationBuilder serverConfigurationBuilder = global.module(ServerConfigurationBuilder.class);
          for (EndpointConfigurationBuilder endpoint : serverConfigurationBuilder.endpoints().endpoints().values()) {
             for (ProtocolServerConfigurationBuilder<?, ?, ?> connector : endpoint.connectors()) {

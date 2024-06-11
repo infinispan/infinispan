@@ -141,7 +141,7 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
          } else {
             url = uri.toURL();
          }
-         try (Scanner scanner = new Scanner(url.openStream(), StandardCharsets.UTF_8.toString()).useDelimiter("\\A")) {
+         try (Scanner scanner = new Scanner(url.openStream(), StandardCharsets.UTF_8).useDelimiter("\\A")) {
             return this.configuration(scanner.next());
          }
       } catch (Exception e) {
@@ -165,7 +165,11 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
     *
     * @param template the template to use
     * @return an instance of the builder
+    * @deprecated since default templates have been removed, use {@link #configuration(String)} and supply the cache type
+    * using the declarative configuration, for example <tt>{"replicated-cache": { "mode": "sync"}}</tt> in place of
+    * <tt>org.infinispan.REPL_SYNC</tt>
     */
+   @Deprecated(forRemoval = true, since = "15.1")
    public RemoteCacheConfigurationBuilder templateName(DefaultTemplate template) {
       attributes.attribute(TEMPLATE_NAME).set(template.getTemplateName());
       return this;

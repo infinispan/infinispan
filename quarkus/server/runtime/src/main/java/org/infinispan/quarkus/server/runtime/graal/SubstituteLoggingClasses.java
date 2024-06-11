@@ -1,6 +1,5 @@
 package org.infinispan.quarkus.server.runtime.graal;
 
-import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.framework.ResourceManager;
 import org.infinispan.rest.resources.LoggingResource;
@@ -61,12 +60,12 @@ final class Target_BootstrapLogging { }
 @TargetClass(ServerAdminOperationsHandler.class)
 final class Target_ServerAdminOperationsHandler {
    @Substitute
-   private static AdminServerTask<?>[] generateTasks(ConfigurationBuilderHolder defaultsHolder) {
-      return generateTasksWithoutLogging(defaultsHolder);
+   private static AdminServerTask<?>[] generateTasks() {
+      return generateTasksWithoutLogging();
    }
 
    @Alias
-   private static AdminServerTask<?>[] generateTasksWithoutLogging(ConfigurationBuilderHolder defaultsHolder) {
+   private static AdminServerTask<?>[] generateTasksWithoutLogging() {
       return null;
    }
 }

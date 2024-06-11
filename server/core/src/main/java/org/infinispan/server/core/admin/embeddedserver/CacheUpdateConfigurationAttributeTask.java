@@ -28,7 +28,6 @@ import org.infinispan.server.core.admin.AdminServerTask;
  * @since 14.0.7
  */
 public class CacheUpdateConfigurationAttributeTask extends AdminServerTask<Void> {
-
    private static final Set<String> PARAMETERS = Set.of("name", "attribute", "value");
 
    @Override

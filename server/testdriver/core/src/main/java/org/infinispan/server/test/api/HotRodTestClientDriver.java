@@ -123,9 +123,9 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
       if (serverConfiguration != null) {
          return remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, serverConfiguration);
       } else if (mode != null) {
-         return remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, "org.infinispan." + mode.name());
+         return remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, forCacheMode(mode));
       } else {
-         return remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, "org.infinispan." + CacheMode.DIST_SYNC.name());
+         return remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, forCacheMode(CacheMode.DIST_SYNC));
       }
    }
 

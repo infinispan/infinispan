@@ -23,11 +23,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
  */
 public class CacheGetOrCreateTask extends CacheCreateTask {
    @Override
-   public String getTaskContextName() {
-      return "cache";
-   }
-
-   @Override
    public String getTaskOperationName() {
       return "getorcreate";
    }

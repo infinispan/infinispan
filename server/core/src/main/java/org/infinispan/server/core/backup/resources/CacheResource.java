@@ -36,6 +36,7 @@ import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.CacheParser;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
@@ -148,7 +149,12 @@ public class CacheResource extends AbstractContainerResource {
          try (InputStream is = zip.getInputStream(zip.getEntry(zipPath))) {
             ConfigurationReader reader = ConfigurationReader.from(is).withProperties(properties).withNamingStrategy(NamingStrategy.KEBAB_CASE).withType(MediaType.fromExtension(configFile)).build();
             ConfigurationBuilderHolder builderHolder = parserRegistry.parse(reader, configurationManager.toBuilderHolder());
-            Configuration config = builderHolder.getNamedConfigurationBuilders().get(cacheName).build();
+            ConfigurationBuilder builder = builderHolder.getNamedConfigurationBuilders().get(cacheName);
+            if (isInternalName(builder.configuration())) {
+               // Work around template inheritance bug that existed until 15.0
+               builder.configuration(null);
+            }
+            Configuration config = builder.build();
             log.debugf("Restoring Cache %s: %s", cacheName, config.toStringConfiguration(cacheName));
             // Create the cache
             SecurityActions.getOrCreateCache(cm, cacheName, config);
