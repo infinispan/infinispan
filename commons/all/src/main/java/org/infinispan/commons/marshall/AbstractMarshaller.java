@@ -2,6 +2,7 @@ package org.infinispan.commons.marshall;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
@@ -102,6 +103,11 @@ public abstract class AbstractMarshaller implements Marshaller {
       int bytesRead;
       while ((bytesRead = inputStream.read(buf, 0, buf.length)) != -1) bytes.write(buf, 0, bytesRead);
       return objectFromByteBuffer(bytes.getRawBuffer(), 0, bytes.size());
+   }
+
+   public void objectToOutputStream(Object obj, OutputStream outputStream) throws IOException, InterruptedException {
+      byte[] bytes = objectToByteBuffer(obj);
+      outputStream.write(bytes);
    }
 
 }

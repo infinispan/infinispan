@@ -406,7 +406,7 @@ public final class MediaType {
    }
 
    public Map<String, String> getParameters() {
-      return Collections.unmodifiableMap(params);
+      return params;
    }
 
    public MediaType withParameters(Map<String, String> parameters) {

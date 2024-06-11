@@ -18,6 +18,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.BloomFilter;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.MurmurHash3BloomFilter;
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.NumericVersion;
@@ -132,6 +133,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       // We can fix this by adding a temporary check that if a get is being performed and the listener checks the
       // bloom filter for the key to return a bit saying to not cache the returned value
       if (bloomFilter != null) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Added key %s to bloom filter for cache %s", Util.toStr(key), cacheName);
+         }
          bloomFilter.addToFilter(key);
       }
    }
@@ -567,6 +571,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
          BloomFilter<byte[]> bloomFilter = null;
          if (bloomBits > 0) {
             bloomFilter = MurmurHash3BloomFilter.createConcurrentFilter(bloomBits);
+            if (log.isTraceEnabled()) {
+               log.tracef("Installing bloom filter for listener %s on cache %s", Util.toStr(listenerId), header.cacheName);
+            }
             BloomFilter<byte[]> priorFilter = bloomFilters.putIfAbsent(header.cacheName, bloomFilter);
             assert priorFilter == null;
          }

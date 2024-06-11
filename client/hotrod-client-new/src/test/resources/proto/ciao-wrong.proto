@@ -1,0 +1,18 @@
+syntax = "proto2";
+
+package org.infinispan;
+
+/**
+ * @Indexed
+ */
+message author {
+
+  /**
+   * @Text(sortable = true)
+   */
+  required string name = 1;
+
+  reserved "age";
+  reserved 2;
+
+}
