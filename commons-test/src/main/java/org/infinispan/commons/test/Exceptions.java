@@ -88,6 +88,11 @@ public class Exceptions {
       assertException(exceptionClass, t.getCause().getCause().getCause());
    }
 
+   public static void assertRootCause(Class<? extends Throwable> throwableClass, Throwable t) {
+      Throwable rootCause = getRootCause(t);
+      assertException(throwableClass, rootCause);
+   }
+
    public static void expectException(Class<? extends Throwable> exceptionClass, String messageRegex,
          ExceptionRunnable runnable) {
       Throwable t = extractException(runnable);

@@ -1,6 +1,7 @@
 package org.infinispan.commons.marshall;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
@@ -29,6 +30,11 @@ public class ImmutableProtoStreamMarshaller extends AbstractMarshaller {
    @Override
    public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException, ClassNotFoundException {
       return ProtobufUtil.fromWrappedByteArray(getSerializationContext(), buf, offset, length);
+   }
+
+   @Override
+   public Object objectFromInputStream(InputStream inputStream) throws IOException {
+      return ProtobufUtil.fromWrappedStream(getSerializationContext(), inputStream);
    }
 
    @Override
