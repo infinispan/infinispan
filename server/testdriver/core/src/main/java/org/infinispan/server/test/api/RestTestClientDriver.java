@@ -1,6 +1,5 @@
 package org.infinispan.server.test.api;
 
-import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
@@ -78,12 +77,14 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
       RestClient restClient = get();
       String name = testClient.getMethodName(qualifiers);
       CompletionStage<RestResponse> future;
+      RestEntity configEntity;
       if (serverConfiguration != null) {
-         RestEntity configEntity = RestEntity.create(MediaType.APPLICATION_XML, serverConfiguration.toStringConfiguration(name));
-         future = restClient.cache(name).createWithConfiguration(configEntity, flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
+         configEntity = RestEntity.create(MediaType.APPLICATION_XML, serverConfiguration.toStringConfiguration(name));
+
       } else {
-         future = restClient.cache(name).createWithTemplate("org.infinispan." + Objects.requireNonNullElse(mode, CacheMode.DIST_SYNC).name(), flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
+         configEntity = RestEntity.create(MediaType.APPLICATION_JSON, forCacheMode(mode != null ? mode : CacheMode.DIST_SYNC).toStringConfiguration(name));
       }
+      future = restClient.cache(name).createWithConfiguration(configEntity, flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
       try (RestResponse response = Exceptions.unchecked(() -> future.toCompletableFuture().get(TIMEOUT, TimeUnit.SECONDS))) {
          if (response.status() != 200) {
             switch (response.status()) {

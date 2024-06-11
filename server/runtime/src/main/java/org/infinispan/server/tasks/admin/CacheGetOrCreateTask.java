@@ -6,7 +6,6 @@ import java.util.Map;
 
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
@@ -23,9 +22,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * @since 9.2
  */
 public class CacheGetOrCreateTask extends CacheCreateTask {
-   public CacheGetOrCreateTask(ConfigurationBuilderHolder defaultsHolder) {
-      super(defaultsHolder);
-   }
 
    @Override
    public String getTaskContextName() {

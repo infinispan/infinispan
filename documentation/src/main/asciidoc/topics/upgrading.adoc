@@ -13,6 +13,9 @@ Instead now withFlags will return a new instance if new flags are applied
 and the previous instance will be untouched.
 This allows for thread and virtual thread safety.
 
+== Server templates
+
+The internal server templates have been removed.
 
 == Upgrading from 14.0 to 15.0
 

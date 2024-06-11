@@ -32,7 +32,9 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
     * @param template {@link DefaultTemplate} enum
     * @return the cache
     * @throws HotRodClientException
+    * @deprecated use {@link #createCache(String, String)} instead
     */
+   @Deprecated(forRemoval = true)
    <K, V> RemoteCache<K, V> createCache(String name, DefaultTemplate template) throws HotRodClientException;
 
    /**
@@ -70,7 +72,9 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
     * @param template {@link DefaultTemplate} enum
     * @return the cache
     * @throws HotRodClientException
+    * @deprecated use {@link #getOrCreateCache(String, String)} instead
     */
+   @Deprecated(forRemoval = true)
    <K, V> RemoteCache<K, V> getOrCreateCache(String name, DefaultTemplate template) throws HotRodClientException;
 
    /**

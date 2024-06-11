@@ -1,6 +1,7 @@
 package org.infinispan.configuration.global;
 
 import static org.infinispan.configuration.global.GlobalStorageConfiguration.CONFIGURATION_STORAGE_SUPPLIER;
+import static org.infinispan.configuration.global.GlobalStorageConfiguration.STORAGE;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.function.Supplier;
@@ -13,7 +14,6 @@ import org.infinispan.globalstate.LocalConfigurationStorage;
 
 public class GlobalStorageConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<GlobalStorageConfiguration> {
    private final AttributeSet attributes;
-   private ConfigurationStorage storage = ConfigurationStorage.VOLATILE;
 
    GlobalStorageConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
@@ -31,26 +31,25 @@ public class GlobalStorageConfigurationBuilder extends AbstractGlobalConfigurati
    }
 
    public GlobalStorageConfigurationBuilder configurationStorage(ConfigurationStorage configurationStorage) {
-      storage = configurationStorage;
+      attributes.attribute(STORAGE).set(configurationStorage);
       return this;
    }
 
    @Override
    public void validate() {
-      if (storage.equals(ConfigurationStorage.CUSTOM) && attributes.attribute(CONFIGURATION_STORAGE_SUPPLIER).isNull()) {
+      if (attributes.attribute(STORAGE).get().equals(ConfigurationStorage.CUSTOM) && attributes.attribute(CONFIGURATION_STORAGE_SUPPLIER).isNull()) {
          throw CONFIG.customStorageStrategyNotSet();
       }
    }
 
    @Override
    public GlobalStorageConfiguration create() {
-      return new GlobalStorageConfiguration(attributes.protect(), storage);
+      return new GlobalStorageConfiguration(attributes.protect());
    }
 
    @Override
    public GlobalStorageConfigurationBuilder read(GlobalStorageConfiguration template, Combine combine) {
       attributes.read(template.attributes(), combine);
-      this.storage = template.configurationStorage();
       return this;
    }
 }

@@ -2,7 +2,6 @@ package org.infinispan.server.core.admin.embeddedserver;
 
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,13 +22,7 @@ import org.infinispan.server.core.admin.AdminServerTask;
  * @since 12.0
  */
 public class TemplateRemoveTask extends AdminServerTask<Void> {
-   private static final Set<String> PARAMETERS;
-
-   static {
-      Set<String> params = new HashSet<>(1);
-      params.add("name");
-      PARAMETERS = Collections.unmodifiableSet(params);
-   }
+   private static final Set<String> PARAMETERS = Collections.singleton("name");
 
    @Override
    public String getTaskContextName() {

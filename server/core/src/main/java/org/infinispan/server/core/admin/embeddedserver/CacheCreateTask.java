@@ -1,8 +1,6 @@
 package org.infinispan.server.core.admin.embeddedserver;
 
-import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,15 +25,7 @@ import org.infinispan.server.core.admin.AdminServerTask;
  * @since 9.1
  */
 public class CacheCreateTask extends AdminServerTask<Void> {
-   private static final Set<String> PARAMETERS;
-
-   static {
-      Set<String> params = new HashSet<>(3);
-      params.add("name");
-      params.add("template");
-      params.add("configuration");
-      PARAMETERS = Collections.unmodifiableSet(params);
-   }
+   private static final Set<String> PARAMETERS = Set.of("name", "template", "configuration");
 
    @Override
    public String getTaskContextName() {
