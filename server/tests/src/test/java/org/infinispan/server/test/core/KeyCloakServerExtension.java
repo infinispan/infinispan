@@ -36,7 +36,7 @@ import org.testcontainers.utility.MountableFile;
  * @since 10.0
  **/
 public class KeyCloakServerExtension implements AfterAllCallback, BeforeAllCallback {
-   public static final String KEYCLOAK_IMAGE = System.getProperty(TestSystemPropertyNames.KEYCLOAK_IMAGE, "quay.io/keycloak/keycloak:latest");
+   public static final String KEYCLOAK_IMAGE = System.getProperty(TestSystemPropertyNames.KEYCLOAK_IMAGE, "quay.io/keycloak/keycloak:24.0");
    private final String realmJsonFile;
 
    private FixedHostPortGenericContainer<?> container;
