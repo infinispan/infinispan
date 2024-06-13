@@ -10,8 +10,8 @@ In both cases, the mappings are stored in the cluster registry and can be manipu
 * Start the {brandname} CLI.
 * Connect to a running {brandname} cluster.
 
-include::{topics}/proc_cli_user_roles_permissions.adoc[leveloffset=+1]
-include::{topics}/proc_cli_user_grant_roles.adoc[leveloffset=+1]
+include::proc_cli_user_roles_permissions.adoc[leveloffset=+1]
+include::proc_cli_user_grant_roles.adoc[leveloffset=+1]
 
 == Cluster role mapper name rewriters
 
