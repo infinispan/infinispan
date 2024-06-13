@@ -44,12 +44,12 @@ public final class SearchMappingBuilder {
 
    SearchMappingBuilder(PojoBootstrapIntrospector introspector, ClassLoader aggregatedClassLoader,
                         Collection<ProgrammaticSearchMappingProvider> mappingProviders,
-                        BlockingManager blockingManager, FailureCounter failureCounter) {
+                        BlockingManager blockingManager, FailureCounter failureCounter, int maxConcurrency) {
       propertyChecker = ConfigurationPropertyChecker.create();
       propertySource = indexProperties.createPropertySource(propertyChecker);
 
       mappingKey = new InfinispanMappingKey();
-      mappingInitiator = new InfinispanMappingInitiator(introspector, mappingProviders, blockingManager, failureCounter);
+      mappingInitiator = new InfinispanMappingInitiator(introspector, mappingProviders, blockingManager, failureCounter, maxConcurrency);
 
       // Enable annotated type discovery by default
       mappingInitiator.annotatedTypeDiscoveryEnabled(true);

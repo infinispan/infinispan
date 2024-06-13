@@ -2,6 +2,7 @@ package org.infinispan.commons.internal;
 
 import java.lang.reflect.Method;
 import java.security.SecureRandom;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -80,6 +81,8 @@ public class CommonsBlockHoundIntegration implements BlockHoundIntegration {
 
       // Allow logging to block
       builder.allowBlockingCallsInside(java.util.logging.Logger.class.getName(), "log");
+      // Offer just acquires lock temporarily to add element
+      builder.allowBlockingCallsInside(ArrayBlockingQueue.class.getName(), "offer");
    }
 
    private static void log4j(BlockHound.Builder builder) {
