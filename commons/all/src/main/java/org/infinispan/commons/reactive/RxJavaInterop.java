@@ -78,7 +78,7 @@ public class RxJavaInterop {
     * @return A Flowable that completes once the completable future completes.
     * @param <R>: A generic type for the flowable.
     */
-   public static <R> Flowable<R> voidCompletionStageToFlowable(CompletionStage<Void> stage) {
+   public static <R> Flowable<R> voidCompletionStageToFlowable(CompletionStage<?> stage) {
       if (CompletionStages.isCompletedSuccessfully(stage)) {
          return Flowable.empty();
       }

@@ -83,6 +83,9 @@ public class LazySearchMapping implements SearchMapping {
    }
 
    @Override
+   public void start() { }
+
+   @Override
    public void close() {
       // no need to create a SearchMapping if we are going to close it.
       findMapping().ifPresent(SearchMapping::close);
@@ -305,6 +308,9 @@ public class LazySearchMapping implements SearchMapping {
                }
             }
          }
+      }
+      if (searchMapping != null) {
+         searchMapping.start();
       }
       return searchMapping;
    }

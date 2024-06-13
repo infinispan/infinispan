@@ -207,6 +207,13 @@ public interface BlockingManager {
    <V> CompletionStage<V> continueOnNonBlockingThread(CompletionStage<V> delay, Object traceId);
 
    /**
+    * Returns the non blocking executor that this BlockingManager uses to resume tasks on when the task is not ran
+    * inline with the invoking blocking thread.
+    * @return an executor use for non blocking tasks
+    */
+   Executor nonBlockingExecutor();
+
+   /**
     * Provided a publisher that is known to block when subscribed to. Thus if the thread that subscribes in a non
     * blocking thread we will instead subscribe on a blocking thread and observe on a non blocking thread for each
     * published value.

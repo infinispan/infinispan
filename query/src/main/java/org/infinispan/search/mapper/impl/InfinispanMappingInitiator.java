@@ -24,15 +24,17 @@ public class InfinispanMappingInitiator extends AbstractPojoMappingInitiator<Inf
    private final Collection<ProgrammaticSearchMappingProvider> mappingProviders;
    private final BlockingManager blockingManager;
    private final FailureCounter failureCounter;
+   private final int maxConcurrency;
 
    private PojoSelectionEntityLoader<?> entityLoader;
    private EntityConverter entityConverter;
 
    public InfinispanMappingInitiator(PojoBootstrapIntrospector introspector,
                                      Collection<ProgrammaticSearchMappingProvider> mappingProviders,
-                                     BlockingManager blockingManager, FailureCounter failureCounter) {
+                                     BlockingManager blockingManager, FailureCounter failureCounter, int maxConcurrency) {
       super(introspector);
       typeConfigurationContributor = new InfinispanTypeConfigurationContributor(introspector);
+      this.maxConcurrency = maxConcurrency;
       addConfigurationContributor(typeConfigurationContributor);
       this.mappingProviders = mappingProviders;
       this.blockingManager = blockingManager;
@@ -63,6 +65,6 @@ public class InfinispanMappingInitiator extends AbstractPojoMappingInitiator<Inf
 
    @Override
    protected PojoMapperDelegate<InfinispanMappingPartialBuildState> createMapperDelegate() {
-      return new InfinispanMapperDelegate(entityLoader, entityConverter, blockingManager, failureCounter);
+      return new InfinispanMapperDelegate(entityLoader, entityConverter, blockingManager, failureCounter, maxConcurrency);
    }
 }

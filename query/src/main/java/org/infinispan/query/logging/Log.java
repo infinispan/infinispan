@@ -11,6 +11,7 @@ import org.hibernate.search.util.common.SearchException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.concurrent.CacheBackpressureFullException;
 import org.infinispan.objectfilter.ParsingException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -215,5 +216,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Failed to purge index for segments %s", id = 14066)
    void failedToPurgeIndexForSegments(@Cause Throwable cause, IntSet removedSegments);
 
+   @Message(value = "Hibernate Search updates are not keeping up. Look into increasing index writer queue and/or thread pool sizes.", id = 14067)
+   CacheBackpressureFullException hibernateSearchBackpressure();
    // !!!!!! When adding anything new here please check the last used id in org.infinispan.query.core.impl.Log !!!!!!
 }

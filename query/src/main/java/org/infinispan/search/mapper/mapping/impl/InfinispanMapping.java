@@ -62,19 +62,23 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
 
    InfinispanMapping(PojoMappingDelegate mappingDelegate, InfinispanTypeContextContainer typeContextContainer,
                      PojoSelectionEntityLoader<?> entityLoader, EntityConverter entityConverter,
-                     BlockingManager blockingManager, FailureCounter failureCounter) {
+                     BlockingManager blockingManager, FailureCounter failureCounter, int maxConcurrency) {
       super(mappingDelegate);
       this.typeContextContainer = typeContextContainer;
       this.entityLoader = entityLoader;
       this.entityConverter = entityConverter;
       mappingSession = new InfinispanSearchSession(this, entityLoader);
       searchIndexer = new SearchIndexerImpl(mappingSession.createIndexer(), entityConverter, typeContextContainer,
-            blockingManager);
+            blockingManager, maxConcurrency);
       this.failureCounter = failureCounter;
       allIndexedEntityNames = typeContextContainer.allIndexed().stream()
             .map(SearchIndexedEntity::name).collect(Collectors.toSet());
       allIndexedEntityJavaClasses = typeContextContainer.allIndexed().stream()
             .map(SearchIndexedEntity::javaClass).collect(Collectors.toSet());
+   }
+
+   public void start() {
+      searchIndexer.start();
    }
 
    @Override

@@ -13,4 +13,9 @@ public class CacheBackpressureFullException extends CacheException {
    public CacheBackpressureFullException() {
       TimedThreadDump.generateThreadDump();
    }
+
+   public CacheBackpressureFullException(String message) {
+      super(message);
+      TimedThreadDump.generateThreadDump();
+   }
 }

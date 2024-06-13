@@ -302,7 +302,7 @@ public class CompletionStages {
    }
 
    public static <I> CompletionStage<Void> performConcurrently(Iterable<I> iterable, int parallelism, Scheduler scheduler,
-                                                               Function<? super I, CompletionStage<Void>> function) {
+                                                               Function<? super I, CompletionStage<?>> function) {
       return Flowable.fromIterable(iterable)
             .parallel(parallelism)
             .runOn(scheduler)

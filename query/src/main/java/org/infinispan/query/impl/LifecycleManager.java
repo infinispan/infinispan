@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentMap;
 import javax.management.ObjectName;
 
 import org.apache.lucene.search.BooleanQuery;
+import org.hibernate.search.backend.lucene.cfg.LuceneIndexSettings;
 import org.hibernate.search.backend.lucene.work.spi.LuceneWorkExecutorProvider;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -330,11 +331,14 @@ public class LifecycleManager implements ModuleLifecycle {
          numberOfShards = sharding.getShards();
       }
 
+      Integer queueSize = cache.getCacheConfiguration().indexing().writer().getQueueSize();
+      int maxConcurrency = queueSize == null ? LuceneIndexSettings.Defaults.INDEXING_QUEUE_SIZE : queueSize;
+
       SearchMappingCommonBuilding commonBuilding = new SearchMappingCommonBuilding(
             KeyTransformationHandlerIdentifierBridge.createReference(keyTransformationHandler),
             extractProperties(globalConfiguration, cache.getName(), indexingConfiguration, aggregatedClassLoader),
             aggregatedClassLoader, mappingProviders, blockingManager, luceneWorkExecutorProvider,
-            numberOfShards);
+            numberOfShards, maxConcurrency);
       Set<Class<?>> types = new HashSet<>(indexedClasses.values());
 
       if (!types.isEmpty()) {
