@@ -1180,8 +1180,13 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       builder.status(NO_CONTENT);
       String cache = request.variables().get("cacheName");
       InternalCacheRegistry internalRegistry = gcr.getComponent(InternalCacheRegistry.class);
+      if (internalRegistry.isInternalCache(cache)) {
+         return CompletableFuture.completedFuture(builder
+               .status(BAD_REQUEST)
+               .entity(Json.make(String.format("Cache '%s' is internal", cache)))
+               .build());
+      }
       if (ecm.isRunning(cache)) return CompletableFuture.completedFuture(builder.build());
-      if (internalRegistry.isInternalCache(cache)) return CompletableFuture.completedFuture(builder.build());
 
       return CompletableFuture.supplyAsync(() -> {
          if (!ctm.useCurrentTopologyAsStable(cache, force))
