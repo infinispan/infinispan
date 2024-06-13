@@ -1,16 +1,15 @@
 package org.infinispan.search.mapper.work.impl;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.hibernate.search.engine.backend.work.execution.DocumentCommitStrategy;
 import org.hibernate.search.engine.backend.work.execution.DocumentRefreshStrategy;
 import org.hibernate.search.engine.backend.work.execution.OperationSubmitter;
-import org.hibernate.search.engine.common.execution.spi.SimpleScheduledExecutor;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.hibernate.search.mapper.pojo.route.DocumentRoutesDescriptor;
 import org.hibernate.search.mapper.pojo.work.spi.PojoIndexer;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.query.concurrent.InfinispanIndexingExecutorProvider;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 import org.infinispan.search.mapper.session.impl.InfinispanIndexedTypeContext;
 import org.infinispan.search.mapper.session.impl.InfinispanTypeContextProvider;
@@ -25,15 +24,14 @@ public class SearchIndexerImpl implements SearchIndexer {
    private final PojoIndexer delegate;
    private final EntityConverter entityConverter;
    private final InfinispanTypeContextProvider typeContextProvider;
-
-   private final SimpleScheduledExecutor offloadingExecutor;
+   private final BlockingManager blockingManager;
 
    public SearchIndexerImpl(PojoIndexer delegate, EntityConverter entityConverter,
-         InfinispanTypeContextProvider typeContextProvider, BlockingManager blockingManager) {
+                            InfinispanTypeContextProvider typeContextProvider, BlockingManager blockingManager) {
       this.delegate = delegate;
       this.entityConverter = entityConverter;
       this.typeContextProvider = typeContextProvider;
-      this.offloadingExecutor = InfinispanIndexingExecutorProvider.writeExecutor(blockingManager);
+      this.blockingManager = blockingManager;
    }
 
    @Override
@@ -43,10 +41,17 @@ public class SearchIndexerImpl implements SearchIndexer {
          return CompletableFutures.completedNull();
       }
 
-      return delegate.add(convertedValue.typeIdentifier, providedId,
-            DocumentRoutesDescriptor.fromLegacyRoutingKey(routingKey), convertedValue.value,
-            DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE,
-            OperationSubmitter.offloading(offloadingExecutor::submit));
+      try {
+         return delegate.add(convertedValue.typeIdentifier, providedId,
+               DocumentRoutesDescriptor.fromLegacyRoutingKey(routingKey), convertedValue.value,
+               DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE,
+               OperationSubmitter.rejecting());
+      } catch (Exception ex) {
+         return blockingManager.runBlocking(() -> delegate.add(convertedValue.typeIdentifier, providedId,
+               DocumentRoutesDescriptor.fromLegacyRoutingKey(routingKey), convertedValue.value,
+               DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE,
+               OperationSubmitter.blocking()), this).toCompletableFuture();
+      }
    }
 
    @Override
@@ -56,10 +61,17 @@ public class SearchIndexerImpl implements SearchIndexer {
          return CompletableFutures.completedNull();
       }
 
-      return delegate.addOrUpdate(convertedValue.typeIdentifier, providedId,
-            DocumentRoutesDescriptor.fromLegacyRoutingKey(routingKey), convertedValue.value,
-            DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE,
-            OperationSubmitter.offloading(offloadingExecutor::submit));
+      try {
+         return delegate.addOrUpdate(convertedValue.typeIdentifier, providedId,
+               DocumentRoutesDescriptor.fromLegacyRoutingKey(routingKey), convertedValue.value,
+               DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE,
+               OperationSubmitter.rejecting());
+      } catch (Exception ex) {
+         return blockingManager.runBlocking(() -> delegate.addOrUpdate(convertedValue.typeIdentifier, providedId,
+               DocumentRoutesDescriptor.fromLegacyRoutingKey(routingKey), convertedValue.value,
+               DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE,
+               OperationSubmitter.blocking()), this).toCompletableFuture();
+      }
    }
 
    @Override
@@ -69,19 +81,45 @@ public class SearchIndexerImpl implements SearchIndexer {
          return CompletableFutures.completedNull();
       }
 
-      return delegate.delete(convertedValue.typeIdentifier, providedId,
-            DocumentRoutesDescriptor.fromLegacyRoutingKey(routingKey), convertedValue.value,
-            DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE,
-            OperationSubmitter.offloading(offloadingExecutor::submit));
+      try {
+         return delegate.delete(convertedValue.typeIdentifier, providedId,
+               DocumentRoutesDescriptor.fromLegacyRoutingKey(routingKey), convertedValue.value,
+               DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE,
+               OperationSubmitter.rejecting());
+      } catch (Exception ex) {
+         return blockingManager.runBlocking(() -> delegate.delete(convertedValue.typeIdentifier, providedId,
+               DocumentRoutesDescriptor.fromLegacyRoutingKey(routingKey), convertedValue.value,
+               DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE,
+               OperationSubmitter.blocking()), this).toCompletableFuture();
+      }
    }
 
    @Override
    public CompletableFuture<?> purge(Object providedId, String routingKey) {
+      AtomicBoolean full = new AtomicBoolean(false);
       return CompletableFuture.allOf(typeContextProvider.allTypeIdentifiers().stream()
-            .map((typeIdentifier) -> delegate.delete(typeIdentifier, providedId,
-                  DocumentRoutesDescriptor.fromLegacyRoutingKey(routingKey),
-                  DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE,
-                  OperationSubmitter.offloading(offloadingExecutor::submit)))
+            .map((typeIdentifier) -> {
+               if (full.get()) {
+                  return blockingManager.runBlocking(() -> delegate.delete(typeIdentifier, providedId,
+                        DocumentRoutesDescriptor.fromLegacyRoutingKey(routingKey),
+                        DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE,
+                        OperationSubmitter.blocking()), this).toCompletableFuture();
+               }
+
+               try {
+                  return delegate.delete(typeIdentifier, providedId,
+                        DocumentRoutesDescriptor.fromLegacyRoutingKey(routingKey),
+                        DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE,
+                        OperationSubmitter.rejecting());
+               } catch (Exception ex) {
+                  full.set(true);
+
+                  return blockingManager.runBlocking(() -> delegate.delete(typeIdentifier, providedId,
+                        DocumentRoutesDescriptor.fromLegacyRoutingKey(routingKey),
+                        DocumentCommitStrategy.NONE, DocumentRefreshStrategy.NONE,
+                        OperationSubmitter.blocking()), this).toCompletableFuture();
+               }
+            } )
             .toArray(CompletableFuture[]::new));
    }
 
