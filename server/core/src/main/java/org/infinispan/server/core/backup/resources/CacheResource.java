@@ -221,7 +221,8 @@ public class CacheResource extends AbstractContainerResource {
       boolean valueMarshalling = !scm.getValueStorageMediaType().isBinary();
 
       int batchSize = SecurityActions.getCacheConfiguration(cache).clustering().stateTransfer().chunkSize();
-      Publisher<Object> p = f.rebatchRequests(batchSize)
+      return Flowable.fromPublisher(blockingManager.blockingPublisher(f))
+            .rebatchRequests(batchSize)
             .map(entry -> {
                Object key = keyMarshalling ? unmarshall(entry.key, userMarshaller) : scm.getKeyWrapper().wrap(entry.key);
                Object value = valueMarshalling ? unmarshall(entry.value, userMarshaller) : scm.getValueWrapper().wrap(entry.value);
@@ -235,11 +236,7 @@ public class CacheResource extends AbstractContainerResource {
                cmd.setInternalMetadata(entry.internalMetadata);
                return cmd;
             })
-            .flatMap(cmd -> RxJavaInterop.voidCompletionStageToFlowable(invocationHelper.invokeAsync(cmd, 1)));
-      // The count will subscribe.
-      // Execute the complete publisher as blocking, this will avoid (hide, more precisely) issues when operations
-      // are blocking by mistake.
-      return Flowable.fromPublisher(blockingManager.blockingPublisher(p))
+            .flatMap(cmd -> RxJavaInterop.voidCompletionStageToFlowable(invocationHelper.invokeAsync(cmd, 1)), batchSize)
             .count()
             .toCompletionStage()
             .thenAccept(entries -> log.debugf("Cache %s restored %d entries", cacheName, entries));
