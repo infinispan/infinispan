@@ -879,6 +879,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          // Getting rebalancing status might raise an exception
       }
 
+      boolean globalTracingEnabled = globalConfiguration.tracing().enabled();
+
       Integer size = null;
       if (globalConfiguration.metrics().accurateSize()) {
          try {
@@ -934,7 +936,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       fullDetail.keyStorage = cache.getAdvancedCache().getKeyDataConversion().getStorageMediaType();
       fullDetail.valueStorage = cache.getAdvancedCache().getValueDataConversion().getStorageMediaType();
       fullDetail.mode = configuration.clustering().cacheModeString();
-
+      fullDetail.tracing = globalTracingEnabled && configuration.tracing().enabled();
       return addEntityAsJson(fullDetail.toJson(), invocationHelper.newResponse(request), pretty).build();
    }
 
