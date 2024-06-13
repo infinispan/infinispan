@@ -45,6 +45,8 @@ public interface SearchMapping extends AutoCloseable {
 
    FailureHandler getFailureHandler();
 
+   void start();
+
    @Override
    void close();
 
@@ -114,9 +116,9 @@ public interface SearchMapping extends AutoCloseable {
 
    static SearchMappingBuilder builder(PojoBootstrapIntrospector introspector, ClassLoader aggregatedClassLoader,
                                        Collection<ProgrammaticSearchMappingProvider> mappingProviders,
-                                       BlockingManager blockingManager, FailureCounter failureCounter) {
-      return new SearchMappingBuilder(introspector, aggregatedClassLoader, mappingProviders,
-            blockingManager, failureCounter);
+                                       BlockingManager blockingManager, FailureCounter failureCounter, int maxConcurrency) {
+      return new SearchMappingBuilder(introspector, aggregatedClassLoader, mappingProviders, blockingManager,
+            failureCounter, maxConcurrency);
    }
 
 }

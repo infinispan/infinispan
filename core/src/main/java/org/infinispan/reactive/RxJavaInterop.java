@@ -36,7 +36,7 @@ public class RxJavaInterop extends org.infinispan.commons.reactive.RxJavaInterop
       return Flowable.empty();
    };
 
-   public static <R> Flowable<R> voidCompletionStageToFlowable(CompletionStage<Void> stage) {
+   public static <R> Flowable<R> voidCompletionStageToFlowable(CompletionStage<?> stage) {
       if (CompletionStages.isCompletedSuccessfully(stage)) {
          return Flowable.empty();
       }

@@ -92,14 +92,13 @@ public class IndexingOperationOffloadingTest extends SingleCacheManagerTest {
          CompletableFuture<Void> execution = types.putAllAsync(chunk);
          log.info("Started: " + (c + 1) + " / " + CHUNKS_NUMBER + ". Elapsed: " + getElapsed(timeZero));
 
-         execution.whenComplete((unused, throwable) -> {
+         chunksExecutions[c] = execution.whenComplete((unused, throwable) -> {
             if (throwable != null) {
                fail("We don't expect the throwable:", throwable);
             }
             log.info("Completed: " + completedExecutions.incrementAndGet() + " / " + CHUNKS_NUMBER +
                   ". Elapsed: " + getElapsed(timeZero));
          });
-         chunksExecutions[c] = execution;
       }
 
       CompletableFuture.allOf(chunksExecutions).get();

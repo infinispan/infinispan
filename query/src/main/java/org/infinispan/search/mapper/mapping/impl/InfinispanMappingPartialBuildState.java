@@ -17,19 +17,21 @@ public class InfinispanMappingPartialBuildState implements MappingPartialBuildSt
    private final EntityConverter entityConverter;
    private final BlockingManager blockingManager;
    private final FailureCounter failureCounter;
+   private final int maxConcurrency;
 
    InfinispanMappingPartialBuildState(PojoMappingDelegate mappingDelegate,
                                       InfinispanTypeContextContainer typeContextContainer,
                                       PojoSelectionEntityLoader<?> entityLoader,
                                       EntityConverter entityConverter,
                                       BlockingManager blockingManager,
-                                      FailureCounter failureCounter) {
+                                      FailureCounter failureCounter, int maxConcurrency) {
       this.mappingDelegate = mappingDelegate;
       this.typeContextContainer = typeContextContainer;
       this.entityLoader = entityLoader;
       this.entityConverter = entityConverter;
       this.blockingManager = blockingManager;
       this.failureCounter = failureCounter;
+      this.maxConcurrency = maxConcurrency;
    }
 
    @Override
@@ -38,7 +40,9 @@ public class InfinispanMappingPartialBuildState implements MappingPartialBuildSt
    }
 
    public MappingImplementor<SearchMapping> finalizeMapping() {
-      return new InfinispanMapping(mappingDelegate, typeContextContainer, entityLoader, entityConverter,
-            blockingManager, failureCounter);
+      InfinispanMapping mapping = new InfinispanMapping(mappingDelegate, typeContextContainer, entityLoader, entityConverter,
+            blockingManager, failureCounter, maxConcurrency);
+      mapping.start();
+      return mapping;
    }
 }
