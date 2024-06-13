@@ -18,7 +18,6 @@ import java.util.concurrent.ConcurrentMap;
 import javax.management.ObjectName;
 
 import org.apache.lucene.search.BooleanQuery;
-import org.hibernate.search.backend.lucene.cfg.LuceneIndexSettings;
 import org.hibernate.search.backend.lucene.work.spi.LuceneWorkExecutorProvider;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -31,6 +30,7 @@ import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.IndexShardingConfiguration;
+import org.infinispan.configuration.cache.IndexWriterConfiguration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.IndexingMode;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -331,8 +331,12 @@ public class LifecycleManager implements ModuleLifecycle {
          numberOfShards = sharding.getShards();
       }
 
-      Integer queueSize = cache.getCacheConfiguration().indexing().writer().getQueueSize();
-      int maxConcurrency = queueSize == null ? LuceneIndexSettings.Defaults.INDEXING_QUEUE_SIZE : queueSize;
+      IndexWriterConfiguration writer = cache.getCacheConfiguration().indexing().writer();
+      Integer queueSize = writer.getQueueSize();
+      Integer queueCount = writer.getQueueCount();
+
+      // we **guess** that the distribution of the hash functions applied to the document id as keys to be 67% of the optimal
+      int maxConcurrency = queueCount == 1 ? queueSize : (int) (queueCount * queueSize * 0.67);
 
       SearchMappingCommonBuilding commonBuilding = new SearchMappingCommonBuilding(
             KeyTransformationHandlerIdentifierBridge.createReference(keyTransformationHandler),

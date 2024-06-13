@@ -54,7 +54,7 @@ public class PutAllTest extends SingleCacheManagerTest {
             .storage(LOCAL_HEAP)
             .addIndexedEntity(TestEntity.class)
             .addIndexedEntity(AnotherTestEntity.class)
-            .writer().queueSize(1);
+            .writer().queueSize(1).queueCount(1);
       cfg.memory()
             .storageType(storageType);
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);

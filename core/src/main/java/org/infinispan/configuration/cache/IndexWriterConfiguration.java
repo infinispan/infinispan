@@ -14,9 +14,9 @@ public class IndexWriterConfiguration extends ConfigurationElement<IndexWriterCo
    public static final AttributeDefinition<Integer> INDEX_THREAD_POOL_SIZE =
          AttributeDefinition.builder(Attribute.THREAD_POOL_SIZE, 1, Integer.class).immutable().build();
    public static final AttributeDefinition<Integer> INDEX_QUEUE_COUNT =
-         AttributeDefinition.builder(Attribute.QUEUE_COUNT, 1, Integer.class).immutable().build();
+         AttributeDefinition.builder(Attribute.QUEUE_COUNT, 4, Integer.class).immutable().build();
    public static final AttributeDefinition<Integer> INDEX_QUEUE_SIZE =
-         AttributeDefinition.builder(Attribute.QUEUE_SIZE, null, Integer.class).immutable().build();
+         AttributeDefinition.builder(Attribute.QUEUE_SIZE, 4_000, Integer.class).immutable().build();
    public static final AttributeDefinition<Integer> INDEX_COMMIT_INTERVAL =
          AttributeDefinition.builder(Attribute.COMMIT_INTERVAL, null, Integer.class).immutable().build();
    public static final AttributeDefinition<Integer> INDEX_RAM_BUFFER_SIZE =
