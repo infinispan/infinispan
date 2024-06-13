@@ -132,6 +132,17 @@
                </execution>
             </executions>
          </plugin>
+         <plugin>
+            <groupId>org.infinispan.maven-plugins</groupId>
+            <artifactId>proto-schema-compatibility-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <goals>
+                     <goal>proto-schema-compatibility-check</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
       </plugins>
    </build>
 
