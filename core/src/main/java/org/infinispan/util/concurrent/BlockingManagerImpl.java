@@ -284,6 +284,11 @@ public class BlockingManagerImpl implements BlockingManager {
    }
 
    @Override
+   public Executor nonBlockingExecutor() {
+      return nonBlockingExecutor;
+   }
+
+   @Override
    public <V> Publisher<V> blockingPublisher(Publisher<V> publisher) {
       return Flowable.defer(() -> {
          if (isCurrentThreadBlocking()) {

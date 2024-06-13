@@ -18,13 +18,15 @@ public final class InfinispanMapperDelegate implements PojoMapperDelegate<Infini
    private final EntityConverter entityConverter;
    private final BlockingManager blockingManager;
    private final FailureCounter failureCounter;
+   private final int maxConcurrency;
 
    public InfinispanMapperDelegate(PojoSelectionEntityLoader<?> entityLoader, EntityConverter entityConverter,
-                                   BlockingManager blockingManager, FailureCounter failureCounter) {
+                                   BlockingManager blockingManager, FailureCounter failureCounter, int maxConcurrency) {
       this.entityLoader = entityLoader;
       this.entityConverter = entityConverter;
       this.blockingManager = blockingManager;
       this.failureCounter = failureCounter;
+      this.maxConcurrency = maxConcurrency;
    }
 
    @Override
@@ -48,6 +50,6 @@ public final class InfinispanMapperDelegate implements PojoMapperDelegate<Infini
    @Override
    public InfinispanMappingPartialBuildState prepareBuild(PojoMappingDelegate mappingDelegate) {
       return new InfinispanMappingPartialBuildState(mappingDelegate, typeContextContainerBuilder.build(),
-            entityLoader, entityConverter, blockingManager, failureCounter);
+            entityLoader, entityConverter, blockingManager, failureCounter, maxConcurrency);
    }
 }

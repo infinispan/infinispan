@@ -22,12 +22,14 @@ public class SearchMappingCommonBuilding {
    private final BlockingManager blockingManager;
    private final LuceneWorkExecutorProvider luceneWorkExecutorProvider;
    private final Integer numberOfShards;
+   private final int maxConcurrency;
 
    public SearchMappingCommonBuilding(BeanReference<? extends IdentifierBridge<Object>> identifierBridge,
                                       Map<String, Object> properties, ClassLoader aggregatedClassLoader,
                                       Collection<ProgrammaticSearchMappingProvider> mappingProviders,
                                       BlockingManager blockingManager,
-                                      LuceneWorkExecutorProvider luceneWorkExecutorProvider, Integer numberOfShards) {
+                                      LuceneWorkExecutorProvider luceneWorkExecutorProvider, Integer numberOfShards,
+                                      int maxConcurrency) {
       this.identifierBridge = identifierBridge;
       this.properties = properties;
       this.aggregatedClassLoader = aggregatedClassLoader;
@@ -35,13 +37,14 @@ public class SearchMappingCommonBuilding {
       this.blockingManager = blockingManager;
       this.luceneWorkExecutorProvider = luceneWorkExecutorProvider;
       this.numberOfShards = numberOfShards;
+      this.maxConcurrency = maxConcurrency;
    }
 
    public SearchMappingBuilder builder(PojoBootstrapIntrospector introspector) {
       InfinispanIndexingFailureHandler indexingFailureHandler = new InfinispanIndexingFailureHandler();
 
       SearchMappingBuilder builder = SearchMapping.builder(introspector, aggregatedClassLoader, mappingProviders,
-                  blockingManager, indexingFailureHandler.failureCounter())
+                  blockingManager, indexingFailureHandler.failureCounter(), maxConcurrency)
             .setProvidedIdentifierBridge(identifierBridge)
             .setProperties(properties)
             .setProperty("backend_work_executor_provider", luceneWorkExecutorProvider)

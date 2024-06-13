@@ -15,6 +15,8 @@ public interface SearchIndexer extends AutoCloseable {
 
    CompletableFuture<?> purge(Object providedId, String routingKey);
 
+   void start();
+
    @Override
    void close();
 
