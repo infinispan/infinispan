@@ -125,8 +125,8 @@ pipeline {
         always {
             // Record any warnings before the tests log their own stuff
             recordIssues enabledForFailure: true,
-                         forensicsDisabled: true,
-                         blameDisabled: true,
+                         skipBlames: true,
+                         quiet: true,
                          tools: [
                 mavenConsole(), java(), javaDoc(),
                 checkStyle(),
