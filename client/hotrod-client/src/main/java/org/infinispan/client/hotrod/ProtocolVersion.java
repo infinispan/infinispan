@@ -3,20 +3,10 @@ package org.infinispan.client.hotrod;
 import java.util.Locale;
 
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.Codec20;
-import org.infinispan.client.hotrod.impl.protocol.Codec21;
-import org.infinispan.client.hotrod.impl.protocol.Codec22;
-import org.infinispan.client.hotrod.impl.protocol.Codec23;
-import org.infinispan.client.hotrod.impl.protocol.Codec24;
-import org.infinispan.client.hotrod.impl.protocol.Codec25;
-import org.infinispan.client.hotrod.impl.protocol.Codec26;
-import org.infinispan.client.hotrod.impl.protocol.Codec27;
-import org.infinispan.client.hotrod.impl.protocol.Codec28;
-import org.infinispan.client.hotrod.impl.protocol.Codec29;
 import org.infinispan.client.hotrod.impl.protocol.Codec30;
 import org.infinispan.client.hotrod.impl.protocol.Codec31;
 import org.infinispan.client.hotrod.impl.protocol.Codec40;
-import org.infinispan.client.hotrod.impl.protocol.Codec50;
+import org.infinispan.client.hotrod.impl.protocol.Codec41;
 
 /**
  * Enumeration of supported Hot Rod client protocol VERSIONS.
@@ -27,24 +17,14 @@ import org.infinispan.client.hotrod.impl.protocol.Codec50;
 public enum ProtocolVersion {
 
    // These need to go in order: lowest version is first - this way compareTo works for VERSIONS
-   PROTOCOL_VERSION_20(2, 0, new Codec20()),
-   PROTOCOL_VERSION_21(2, 1, new Codec21()),
-   PROTOCOL_VERSION_22(2, 2, new Codec22()),
-   PROTOCOL_VERSION_23(2, 3, new Codec23()),
-   PROTOCOL_VERSION_24(2, 4, new Codec24()),
-   PROTOCOL_VERSION_25(2, 5, new Codec25()),
-   PROTOCOL_VERSION_26(2, 6, new Codec26()),
-   PROTOCOL_VERSION_27(2, 7, new Codec27()),
-   PROTOCOL_VERSION_28(2, 8, new Codec28()),
-   PROTOCOL_VERSION_29(2, 9, new Codec29()),
    PROTOCOL_VERSION_30(3, 0, new Codec30()),
    PROTOCOL_VERSION_31(3, 1, new Codec31()),
    PROTOCOL_VERSION_40(4, 0, new Codec40()),
-   PROTOCOL_VERSION_50(5, 0, new Codec50()),
+   PROTOCOL_VERSION_50(4, 1, new Codec41()),
    // New VERSIONS go above this line to satisfy compareTo of enum working for VERSIONS
 
    // The version here doesn't matter as long as it is >= 3.0. It must be the LAST version
-   PROTOCOL_VERSION_AUTO(5, 0, "AUTO", new Codec50()),
+   PROTOCOL_VERSION_AUTO(4, 1, "AUTO", new Codec41()),
    ;
 
    private static final ProtocolVersion[] VERSIONS = values();

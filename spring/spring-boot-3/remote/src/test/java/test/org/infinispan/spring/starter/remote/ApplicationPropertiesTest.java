@@ -68,7 +68,7 @@ public class ApplicationPropertiesTest {
       assertThat(configuration.connectionTimeout()).isEqualTo(200);
       assertThat(configuration.maxRetries()).isEqualTo(30);
       assertThat(configuration.batchSize()).isEqualTo(91);
-      assertThat(configuration.version()).isEqualTo(ProtocolVersion.PROTOCOL_VERSION_24);
+      assertThat(configuration.version()).isEqualTo(ProtocolVersion.PROTOCOL_VERSION_31);
 
       // pool
       assertThat(configuration.connectionPool().maxActive()).isEqualTo(90);

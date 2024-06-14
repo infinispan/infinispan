@@ -21,7 +21,7 @@ public class Codec40 extends Codec31 {
    }
 
    @Override
-   public Object returnPossiblePrevValue(ByteBuf buf, short status, DataFormat dataFormat, int flags, ClassAllowList allowList, Marshaller marshaller) {
+   public Object returnPossiblePrevValue(ByteBuf buf, short status, DataFormat dataFormat, ClassAllowList allowList, Marshaller marshaller) {
       if (HotRodConstants.hasPrevious(status)) {
          MetadataValue<Object> metadataValue = GetWithMetadataOperation.readMetadataValue(buf, status, dataFormat, allowList);
          return metadataValue != null ? metadataValue.getValue() : null;

@@ -92,7 +92,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
          switch (state()) {
             case READ_MESSAGE_ID:
                long messageId = codec.readMessageId(in);
-               receivedOpCode = codec.readOpCode(in);
+               receivedOpCode = in.readUnsignedByte();
                switch (receivedOpCode) {
                   case CACHE_ENTRY_CREATED_EVENT_RESPONSE:
                   case CACHE_ENTRY_MODIFIED_EVENT_RESPONSE:

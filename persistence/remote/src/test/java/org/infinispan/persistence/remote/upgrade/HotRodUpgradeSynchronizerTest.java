@@ -1,8 +1,8 @@
 package org.infinispan.persistence.remote.upgrade;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
@@ -39,7 +39,7 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
    protected static final String OLD_CACHE = "old-cache";
    protected String TEST_CACHE = this.getClass().getName();
 
-   protected static final ProtocolVersion OLD_PROTOCOL_VERSION = ProtocolVersion.PROTOCOL_VERSION_20;
+   protected static final ProtocolVersion OLD_PROTOCOL_VERSION = ProtocolVersion.PROTOCOL_VERSION_30;
    protected static final ProtocolVersion NEW_PROTOCOL_VERSION = ProtocolVersion.DEFAULT_PROTOCOL_VERSION;
 
    @BeforeMethod

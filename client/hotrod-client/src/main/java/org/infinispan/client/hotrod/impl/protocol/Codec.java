@@ -61,8 +61,6 @@ public interface Codec {
 
    long readMessageId(ByteBuf buf);
 
-   short readOpCode(ByteBuf buf);
-
    /**
     * Reads a response header from the transport and returns the status
     * of the response.
@@ -71,7 +69,7 @@ public interface Codec {
 
    AbstractClientEvent readCacheEvent(ByteBuf buf, Function<byte[], DataFormat> listenerDataFormat, short eventTypeId, ClassAllowList allowList, SocketAddress serverAddress);
 
-   Object returnPossiblePrevValue(ByteBuf buf, short status, DataFormat dataFormat, int flags, ClassAllowList allowList, Marshaller marshaller);
+   Object returnPossiblePrevValue(ByteBuf buf, short status, DataFormat dataFormat, ClassAllowList allowList, Marshaller marshaller);
 
    void writeClientListenerInterests(ByteBuf buf, Set<Class<? extends Annotation>> classes);
 

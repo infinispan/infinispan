@@ -69,7 +69,7 @@ public abstract class AbstractKeyOperation<T> extends StatsAffectingRetryingOper
    }
 
    protected T returnPossiblePrevValue(ByteBuf buf, short status) {
-      return (T) codec.returnPossiblePrevValue(buf, status, dataFormat(), flags(), cfg.getClassAllowList(), channelFactory.getMarshaller());
+      return (T) codec.returnPossiblePrevValue(buf, status, dataFormat(), cfg.getClassAllowList(), channelFactory.getMarshaller());
    }
 
    protected VersionedOperationResponse returnVersionedOperationResponse(ByteBuf buf, short status) {
