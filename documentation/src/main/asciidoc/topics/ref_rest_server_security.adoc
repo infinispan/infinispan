@@ -176,7 +176,7 @@ Delete an existing role.
 include::rest_examples/get_v2_security_roles_delete.adoc[]
 ----
 
-[id='rest_v2_get_principal_roles']
+[id='rest_v2_get_permission_roles']
 = Retrieving the permissions for a role
 View all the permissions of a role.
 

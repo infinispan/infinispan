@@ -1,4 +1,4 @@
-[id='configuring-remotecm-bean_{context}']
+[id='configuring-remotecm-bean-embedded_{context}']
 = Using the reactive mode with Reactor
 
 Starting with Spring 6.1, reactive mode is supported to make use of caching within reactive applications.
