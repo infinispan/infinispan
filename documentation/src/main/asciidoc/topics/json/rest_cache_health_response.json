@@ -1,0 +1,30 @@
+{
+    "cluster_health":{
+        "cluster_name":"ISPN",
+        "health_status":"HEALTHY",
+        "number_of_nodes":2,
+        "node_names":[
+            "NodeA-36229",
+            "NodeB-28703"
+        ]
+    },
+    "cache_health":[
+        {
+            "status":"HEALTHY",
+            "cache_name":"___protobuf_metadata"
+        },
+        {
+            "status":"HEALTHY",
+            "cache_name":"cache2"
+        },
+        {
+            "status":"HEALTHY",
+            "cache_name":"mycache"
+        },
+        {
+            "status":"HEALTHY",
+            "cache_name":"cache1"
+        }
+    ]
+
+}
