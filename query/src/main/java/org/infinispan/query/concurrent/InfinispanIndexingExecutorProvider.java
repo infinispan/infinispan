@@ -1,5 +1,7 @@
 package org.infinispan.query.concurrent;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -37,15 +39,17 @@ public class InfinispanIndexingExecutorProvider extends AbstractComponentFactory
 
    static final class InfinispanScheduledExecutor implements SimpleScheduledExecutor {
 
+      private final Executor blockingExecutor;
       private final BlockingManager blockingManager;
 
       public InfinispanScheduledExecutor(BlockingManager blockingManager) {
          this.blockingManager = blockingManager;
+         this.blockingExecutor = blockingManager.asExecutor(this.getClass().getSimpleName());
       }
 
       @Override
       public Future<?> submit(Runnable task) {
-         return blockingManager.runBlocking(task, this).toCompletableFuture();
+         return CompletableFuture.runAsync(task, blockingExecutor);
       }
 
       @Override
