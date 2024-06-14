@@ -43,7 +43,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelInitializer;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelPool;
-import org.infinispan.client.hotrod.impl.transport.netty.V5ChannelPool;
+import org.infinispan.client.hotrod.impl.transport.netty.SingleChannelPool;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.ClassAllowList;
@@ -280,7 +280,7 @@ public class Codec30 implements Codec {
 
    @Override
    public ChannelPool createPool(EventExecutor executor, SocketAddress address, ChannelInitializer channelInitializer, BiConsumer<ChannelPool, ChannelFactory.ChannelEventType> connectionFailureListener, Configuration configuration) {
-      return V5ChannelPool.createAndStartPool(address, channelInitializer, connectionFailureListener);
+      return SingleChannelPool.createAndStartPool(address, channelInitializer, connectionFailureListener);
    }
 
    @Override

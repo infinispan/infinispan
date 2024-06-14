@@ -15,8 +15,8 @@ import io.netty.channel.Channel;
 import io.netty.util.internal.shaded.org.jctools.queues.MessagePassingQueue;
 import io.netty.util.internal.shaded.org.jctools.queues.MpscUnboundedArrayQueue;
 
-public class V5ChannelPool implements ChannelPool, MessagePassingQueue.Consumer<ChannelOperation> {
-   private static final Log log = LogFactory.getLog(V5ChannelPool.class);
+public class SingleChannelPool implements ChannelPool, MessagePassingQueue.Consumer<ChannelOperation> {
+   private static final Log log = LogFactory.getLog(SingleChannelPool.class);
    private final SocketAddress address;
    private final ChannelInitializer newChannelInvoker;
    private final AtomicBoolean attemptedConnect = new AtomicBoolean();
@@ -30,16 +30,16 @@ public class V5ChannelPool implements ChannelPool, MessagePassingQueue.Consumer<
    HeaderDecoder headerDecoder;
    ByteBuf buffer;
 
-   public V5ChannelPool(SocketAddress address, ChannelInitializer channelInitializer,
-                        BiConsumer<ChannelPool, ChannelFactory.ChannelEventType> connectionFailureListener) {
+   public SingleChannelPool(SocketAddress address, ChannelInitializer channelInitializer,
+                            BiConsumer<ChannelPool, ChannelFactory.ChannelEventType> connectionFailureListener) {
       this.address = address;
       this.newChannelInvoker = channelInitializer;
       this.connectionFailureListener = connectionFailureListener;
    }
 
-   public static V5ChannelPool createAndStartPool(SocketAddress address, ChannelInitializer newChannelInvoker,
-                                           BiConsumer<ChannelPool, ChannelFactory.ChannelEventType> connectionFailureListener) {
-      V5ChannelPool channelPool = new V5ChannelPool(address, newChannelInvoker, connectionFailureListener);
+   public static SingleChannelPool createAndStartPool(SocketAddress address, ChannelInitializer newChannelInvoker,
+                                                      BiConsumer<ChannelPool, ChannelFactory.ChannelEventType> connectionFailureListener) {
+      SingleChannelPool channelPool = new SingleChannelPool(address, newChannelInvoker, connectionFailureListener);
       channelPool.attemptConnect();
       return channelPool;
    }

@@ -7,7 +7,7 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelInitializer;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelPool;
-import org.infinispan.client.hotrod.impl.transport.netty.V5ChannelPool;
+import org.infinispan.client.hotrod.impl.transport.netty.SingleChannelPool;
 
 import io.netty.util.concurrent.EventExecutor;
 
@@ -18,6 +18,6 @@ public class Codec41 extends Codec40 {
    public ChannelPool createPool(EventExecutor executor, SocketAddress address, ChannelInitializer channelInitializer,
                                  BiConsumer<ChannelPool, ChannelFactory.ChannelEventType> connectionFailureListener,
                                  Configuration configuration) {
-      return V5ChannelPool.createAndStartPool(address, channelInitializer, connectionFailureListener);
+      return SingleChannelPool.createAndStartPool(address, channelInitializer, connectionFailureListener);
    }
 }
