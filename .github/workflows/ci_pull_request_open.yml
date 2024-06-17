@@ -12,6 +12,7 @@ jobs:
         with:
           java-version: '21'
           cache: maven
+          distribution: 'adopt'
       - name: Setup GraalVM
         uses: graalvm/setup-graalvm@v1
         with:
