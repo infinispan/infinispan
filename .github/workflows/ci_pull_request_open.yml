@@ -1,0 +1,22 @@
+name: CI Pull Request Open
+on:
+  pull_request_target:
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+      - name: Setup Maven
+        uses: s4u/setup-maven-action@3.9.0
+      - name: Setup GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
+      - name: Build with Maven
+        run: mvn clean install -B -e -DskipTests -Pnative
