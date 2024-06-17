@@ -8,17 +8,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - name: Setup Java and Maven
+        uses: s4u/setup-maven-action@1.13.0
         with:
-          java-version: '21'
-          cache: maven
-          distribution: 'adopt'
-          maven-version: '3.9.6'
-      - name: Setup GraalVM
-        uses: graalvm/setup-graalvm@v1
-        with:
-          java-version: '21'
-          distribution: 'graalvm'
+          java-version: 21
+          maven-version: 3.9.6
       - name: Build with Maven
         run: mvn clean install -B -e -DskipTests -Pnative
