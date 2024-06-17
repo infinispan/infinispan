@@ -7,7 +7,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        
       - name: Setup Java and Maven
         uses: s4u/setup-maven-action@1.13.0
         with:
