@@ -144,13 +144,13 @@ include::xml/indexing_index_writer.xml[]
 |Maximum amount of memory that can be used for buffering added entries and deletions before they are flushed to the index storage. Large values result in faster indexing but use more memory. For faster indexing performance you should set this attribute instead of `max-buffered-entries`. When used in combination with the `max-buffered-entries` attribute, a flush occurs for whichever event happens first.
 
 |`thread-pool-size`
-|Number of threads that execute write operations to the index.
+|This configuration is ignored since Infinispan 15.0. The indexing engine now uses the Infinispan thread pools.
 
 |`queue-count`
-|Number of internal queues to use for each indexed type. Each queue holds a batch of modifications that is applied to the index and queues are processed in parallel. Increasing the number of queues will lead to an increase of indexing throughput, but only if the bottleneck is CPU. For optimum results, do not set a value for `queue-count` that is larger than the value for `thread-pool-size`.
+|Default 4. Number of internal queues to use for each indexed type. Each queue holds a batch of modifications that is applied to the index and queues are processed in parallel. Increasing the number of queues will lead to an increase of indexing throughput, but only if the bottleneck is CPU.
 
 |`queue-size`
-|Maximum number of elements each queue can hold. Increasing the `queue-size` value increases the amount of memory that is used during indexing operations. Setting a value that is too small can block indexing operations.
+|Default 4000. Maximum number of elements each queue can hold. Increasing the `queue-size` value increases the amount of memory that is used during indexing operations. Setting a value that is too small can lead to `CacheBackpressureFullException` or `RejectedExecutionExceptionOperationSubmitter` since index operation requests are never blocked. In this case to solve the issue increase the `queue-size` or set the `queue-count` to 1.
 
 |`low-level-trace`
 |Enables low-level trace information for indexing operations. Enabling this attribute substantially degrades performance. You should use this low-level tracing only as a last resource for troubleshooting.
