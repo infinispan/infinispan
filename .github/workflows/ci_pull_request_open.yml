@@ -1,6 +1,6 @@
 name: CI Pull Request Open
 on:
-  pull_request_target:
+  pull_request:
 jobs:
   image:
     runs-on: ubuntu-latest
