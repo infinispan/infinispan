@@ -13,7 +13,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: 21
-          maven-version: 3.9.6
+          cache: maven
       - run: mvn --version
       - name: Build with Maven
         run: mvn -s maven-settings.xml clean install surefire-report:report pmd:cpd pmd:pmd spotbugs:spotbugs -B -e -DskipTests -Pnative
