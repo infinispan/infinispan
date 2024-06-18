@@ -1,0 +1,33 @@
+{
+  "definitions" : [ {
+    "protopath" : "generated:/:persistence.jdbc.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "MetadataImpl",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "version",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        }, {
+          "id" : 2,
+          "name" : "segments",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        } ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.jdbc"
+      }
+    }
+  } ]
+}
