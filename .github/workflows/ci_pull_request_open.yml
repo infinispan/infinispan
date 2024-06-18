@@ -14,3 +14,6 @@ jobs:
           maven-version: 3.9.6
       - name: Build with Maven
         run: mvn -s maven-settings.xml clean install -B -e -DskipTests -Pnative
+      - name: Test with Maven
+        run: mvn verify -s maven-settings.xml -B -e -DrerunFailingTestsCount=2 \
+                        -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative
