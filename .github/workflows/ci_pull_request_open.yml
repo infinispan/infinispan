@@ -15,7 +15,7 @@ jobs:
           java-version: 21
           maven-version: 3.9.6
       - name: Build with Maven
-        run: mvn -s maven-settings.xml clean install -B -e -DskipTests -Pnative
+        run: mvn -s maven-settings.xml clean install surefire-report:report pmd:cpd pmd:pmd spotbugs:spotbugs -B -e -DskipTests -Pnative
       - name: Test with Maven
         run: > 
           mvn verify -s maven-settings.xml -B -e -DrerunFailingTestsCount=2
