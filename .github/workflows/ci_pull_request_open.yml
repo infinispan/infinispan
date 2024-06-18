@@ -9,13 +9,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Java and Maven
-        uses: s4u/setup-maven-action@v1.7.0
+      - name: Set up Maven
+        uses: stCarolas/setup-maven@v5
         with:
-          checkout-fetch-depth: 0
+          maven-version: 3.9.6
+      - name: Setup Java
+        uses: action/setup-java@v4
+        with:
           java-version: 21
           java-distribution: oracle
-          maven-version: 3.9.6      
+          cache: maven
       - run: mvn --version
       - name: Build with Maven
         run: mvn -s maven-settings.xml clean install surefire-report:report pmd:cpd pmd:pmd spotbugs:spotbugs -B -e -DskipTests -Pnative
