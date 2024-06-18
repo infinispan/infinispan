@@ -5,6 +5,7 @@ import java.util.List;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.parsing.Attribute;
 import org.infinispan.configuration.parsing.Element;
 
@@ -13,10 +14,10 @@ import org.infinispan.configuration.parsing.Element;
  */
 public class PersistenceConfiguration extends ConfigurationElement<PersistenceConfiguration> {
    public static final AttributeDefinition<Boolean> PASSIVATION = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PASSIVATION, false).immutable().build();
-   public static final AttributeDefinition<Integer> AVAILABILITY_INTERVAL = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AVAILABILITY_INTERVAL, 30000).immutable().build();
+   public static final AttributeDefinition<TimeQuantity> AVAILABILITY_INTERVAL = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AVAILABILITY_INTERVAL, TimeQuantity.valueOf("30s")).parser(TimeQuantity.PARSER).immutable().build();
    public static final AttributeDefinition<Integer> CONNECTION_ATTEMPTS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CONNECTION_ATTEMPTS, 10).build();
    @Deprecated(forRemoval=true, since = "15.0")
-   public static final AttributeDefinition<Integer> CONNECTION_INTERVAL = AttributeDefinition.builder(Attribute.CONNECTION_INTERVAL, 50).immutable().deprecated(15, 0).build();
+   public static final AttributeDefinition<TimeQuantity> CONNECTION_INTERVAL = AttributeDefinition.builder(Attribute.CONNECTION_INTERVAL, TimeQuantity.valueOf("50s")).parser(TimeQuantity.PARSER).immutable().deprecated(15, 0).build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(PersistenceConfiguration.class, PASSIVATION, AVAILABILITY_INTERVAL, CONNECTION_ATTEMPTS, CONNECTION_INTERVAL);
@@ -47,7 +48,7 @@ public class PersistenceConfiguration extends ConfigurationElement<PersistenceCo
    }
 
    public int availabilityInterval() {
-      return attributes.attribute(AVAILABILITY_INTERVAL).get();
+      return (int) attributes.attribute(AVAILABILITY_INTERVAL).get().longValue();
    }
 
    public int connectionAttempts() {

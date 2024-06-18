@@ -16,6 +16,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.Element;
@@ -50,7 +51,12 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
    }
 
    public RealmConfigurationBuilder cacheLifespan(long lifespan) {
-      this.attributes.attribute(CACHE_LIFESPAN).set(lifespan);
+      this.attributes.attribute(CACHE_LIFESPAN).set(TimeQuantity.valueOf(lifespan));
+      return this;
+   }
+
+   public RealmConfigurationBuilder cacheLifespan(String lifespan) {
+      this.attributes.attribute(CACHE_LIFESPAN).set(TimeQuantity.valueOf(lifespan));
       return this;
    }
 

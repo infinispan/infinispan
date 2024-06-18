@@ -1,7 +1,7 @@
 <server xmlns="urn:infinispan:server:{schemaversion}">
     <security>
         <security-realms>
-            <security-realm name="default" cache-max-size="1024" cache-lifespan="120000">
+            <security-realm name="default" cache-max-size="1024" cache-lifespan="20m">
             </security-realm>
         </security-realms>
     </security>

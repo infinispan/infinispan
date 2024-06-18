@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
 
@@ -58,8 +59,18 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
     * Maximum lifespan of an entry placed in the L1 cache.
     */
    public L1ConfigurationBuilder lifespan(long lifespan) {
-      attributes.attribute(LIFESPAN).set(lifespan);
-      return this;
+      TimeQuantity quantity = TimeQuantity.valueOf(lifespan);
+      attributes.attribute(LIFESPAN).set(quantity);
+      return enabled(quantity.longValue() > 0);
+   }
+
+   /**
+    * Same as {@link #lifespan(long)} but supporting time units
+    */
+   public L1ConfigurationBuilder lifespan(String lifespan) {
+      TimeQuantity quantity = TimeQuantity.valueOf(lifespan);
+      attributes.attribute(LIFESPAN).set(quantity);
+      return enabled(quantity.longValue() > 0);
    }
 
    /**
@@ -72,8 +83,16 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
    /**
     * How often the L1 requestors map is cleaned up of stale items
     */
-   public L1ConfigurationBuilder cleanupTaskFrequency(long frequencyMillis) {
-      attributes.attribute(CLEANUP_TASK_FREQUENCY).set(frequencyMillis);
+   public L1ConfigurationBuilder cleanupTaskFrequency(long frequency) {
+      attributes.attribute(CLEANUP_TASK_FREQUENCY).set(TimeQuantity.valueOf(frequency));
+      return this;
+   }
+
+   /**
+    * Same as {@link #cleanupTaskFrequency(long)} but supporting time units.
+    */
+   public L1ConfigurationBuilder cleanupTaskFrequency(String frequency) {
+      attributes.attribute(CLEANUP_TASK_FREQUENCY).set(TimeQuantity.valueOf(frequency));
       return this;
    }
 
@@ -105,7 +124,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
          if (!clustering().cacheMode().isDistributed())
             throw CONFIG.l1OnlyForDistributedCache(clustering().cacheMode().friendlyCacheModeString());
 
-         if (attributes.attribute(LIFESPAN).get() < 1)
+         if (attributes.attribute(LIFESPAN).get().longValue() < 1)
             throw CONFIG.l1InvalidLifespan();
 
          MemoryConfigurationBuilder memoryConfigurationBuilder = getClusteringBuilder().memory();

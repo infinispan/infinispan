@@ -26,6 +26,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.wildfly.common.Assert;
 import org.wildfly.security.SecurityFactory;
@@ -82,13 +83,13 @@ public class KerberosSecurityFactoryConfigurationBuilder implements Builder<Kerb
       return this;
    }
 
-   public KerberosSecurityFactoryConfigurationBuilder minimumRemainingLifetime(int minimumRemainingLifetime) {
-      attributes.attribute(MINIMUM_REMAINING_LIFETIME).set(minimumRemainingLifetime);
+   public KerberosSecurityFactoryConfigurationBuilder minimumRemainingLifetime(String minimumRemainingLifetime) {
+      attributes.attribute(MINIMUM_REMAINING_LIFETIME).set(TimeQuantity.valueOf(minimumRemainingLifetime));
       return this;
    }
 
-   public KerberosSecurityFactoryConfigurationBuilder requestLifetime(int requestLifetime) {
-      attributes.attribute(REQUEST_LIFETIME).set(requestLifetime);
+   public KerberosSecurityFactoryConfigurationBuilder requestLifetime(String requestLifetime) {
+      attributes.attribute(REQUEST_LIFETIME).set(TimeQuantity.valueOf(requestLifetime));
       return this;
    }
 
@@ -154,8 +155,8 @@ public class KerberosSecurityFactoryConfigurationBuilder implements Builder<Kerb
                .setWrapGssCredential(attributes.attribute(WRAP_GSS_CREDENTIAL).get())
                .setOptions(attributes.attribute(OPTIONS).get())
                .setFailCache(attributes.attribute(FAIL_CACHE).get())
-               .setRequestLifetime(attributes.attribute(REQUEST_LIFETIME).get())
-               .setMinimumRemainingLifetime(attributes.attribute(MINIMUM_REMAINING_LIFETIME).get())
+               .setRequestLifetime((int) attributes.attribute(REQUEST_LIFETIME).get().toDuration().toMinutes())
+               .setMinimumRemainingLifetime((int) attributes.attribute(MINIMUM_REMAINING_LIFETIME).get().toDuration().toMinutes())
          ;
          try {
             for (String name : attributes.attribute(MECHANISM_NAMES).get()) {

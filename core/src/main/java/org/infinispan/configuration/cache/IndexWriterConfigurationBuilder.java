@@ -11,6 +11,7 @@ import static org.infinispan.configuration.cache.IndexWriterConfiguration.INDEX_
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 
 /**
  * @since 12.0
@@ -52,7 +53,12 @@ public class IndexWriterConfigurationBuilder extends AbstractIndexingConfigurati
    }
 
    public IndexWriterConfigurationBuilder commitInterval(int value) {
-      attributes.attribute(INDEX_COMMIT_INTERVAL).set(value);
+      attributes.attribute(INDEX_COMMIT_INTERVAL).set(TimeQuantity.valueOf(value));
+      return this;
+   }
+
+   public IndexWriterConfigurationBuilder commitInterval(long value) {
+      attributes.attribute(INDEX_COMMIT_INTERVAL).set(TimeQuantity.valueOf(value));
       return this;
    }
 

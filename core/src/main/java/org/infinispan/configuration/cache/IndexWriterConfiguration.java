@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.parsing.Attribute;
 import org.infinispan.configuration.parsing.Element;
 
@@ -17,8 +18,8 @@ public class IndexWriterConfiguration extends ConfigurationElement<IndexWriterCo
          AttributeDefinition.builder(Attribute.QUEUE_COUNT, 4, Integer.class).immutable().build();
    public static final AttributeDefinition<Integer> INDEX_QUEUE_SIZE =
          AttributeDefinition.builder(Attribute.QUEUE_SIZE, 4_000, Integer.class).immutable().build();
-   public static final AttributeDefinition<Integer> INDEX_COMMIT_INTERVAL =
-         AttributeDefinition.builder(Attribute.COMMIT_INTERVAL, null, Integer.class).immutable().build();
+   public static final AttributeDefinition<TimeQuantity> INDEX_COMMIT_INTERVAL =
+         AttributeDefinition.builder(Attribute.COMMIT_INTERVAL, TimeQuantity.valueOf("1s")).parser(TimeQuantity.PARSER).immutable().build();
    public static final AttributeDefinition<Integer> INDEX_RAM_BUFFER_SIZE =
          AttributeDefinition.builder(Attribute.RAM_BUFFER_SIZE, null, Integer.class).immutable().build();
    public static final AttributeDefinition<Integer> INDEX_MAX_BUFFERED_ENTRIES =
@@ -55,7 +56,8 @@ public class IndexWriterConfiguration extends ConfigurationElement<IndexWriterCo
    }
 
    public Integer getCommitInterval() {
-      return attributes.attribute(INDEX_COMMIT_INTERVAL).get();
+      // Preserve backwards compatibility, but potentially lose resolution
+      return (int) attributes.attribute(INDEX_COMMIT_INTERVAL).get().longValue();
    }
 
    public Integer getRamBufferSize() {

@@ -82,12 +82,24 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
       return this;
    }
 
+   @Override
+   public HotRodServerConfigurationBuilder topologyLockTimeout(String topologyLockTimeout) {
+      topologyCache.lockTimeout(topologyLockTimeout);
+      return this;
+   }
+
    /**
     * Configures the replication timeout for the topology cache. See {@link org.infinispan.configuration.cache.ClusteringConfigurationBuilder#remoteTimeout(long)}.
     * Defaults to 10 seconds
     */
    @Override
    public HotRodServerConfigurationBuilder topologyReplTimeout(long topologyReplTimeout) {
+      topologyCache.replicationTimeout(topologyReplTimeout);
+      return this;
+   }
+
+   @Override
+   public HotRodServerConfigurationBuilder topologyReplTimeout(String topologyReplTimeout) {
       topologyCache.replicationTimeout(topologyReplTimeout);
       return this;
    }

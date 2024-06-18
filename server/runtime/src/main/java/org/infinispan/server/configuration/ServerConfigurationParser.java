@@ -445,7 +445,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                securityRealmBuilder.defaultRealm(value);
                break;
             case CACHE_LIFESPAN:
-               securityRealmBuilder.cacheLifespan(ParseUtils.parseLong(reader, i, value));
+               securityRealmBuilder.cacheLifespan(value);
                break;
             case CACHE_MAX_SIZE:
                securityRealmBuilder.cacheMaxSize(ParseUtils.parseInt(reader, i, value));
@@ -637,7 +637,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                jwtBuilder.publicKey(value);
                break;
             case JKU_TIMEOUT:
-               jwtBuilder.jkuTimeout(ParseUtils.parseLong(reader, i, value));
+               jwtBuilder.jkuTimeout(value);
                break;
             case CLIENT_SSL_CONTEXT:
                jwtBuilder.clientSSLContext(value);
@@ -646,10 +646,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
                jwtBuilder.hostNameVerificationPolicy(value);
                break;
             case CONNECTION_TIMEOUT:
-               jwtBuilder.connectionTimeout(ParseUtils.parseInt(reader, i, value));
+               jwtBuilder.connectionTimeout(value);
                break;
             case READ_TIMEOUT:
-               jwtBuilder.readTimeout(ParseUtils.parseInt(reader, i, value));
+               jwtBuilder.readTimeout(value);
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -682,10 +682,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
                oauthBuilder.hostVerificationPolicy(value);
                break;
             case CONNECTION_TIMEOUT:
-               oauthBuilder.connectionTimeout(ParseUtils.parseInt(reader, i, value));
+               oauthBuilder.connectionTimeout(value);
                break;
             case READ_TIMEOUT:
-               oauthBuilder.readTimeout(ParseUtils.parseInt(reader, i, value));
+               oauthBuilder.readTimeout(value);
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -746,10 +746,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
                ldapRealmConfigBuilder.connectionPooling(ParseUtils.parseBoolean(reader, i, value));
                break;
             case CONNECTION_TIMEOUT:
-               ldapRealmConfigBuilder.connectionTimeout(ParseUtils.parseInt(reader, i, value));
+               ldapRealmConfigBuilder.connectionTimeout(value);
                break;
             case READ_TIMEOUT:
-               ldapRealmConfigBuilder.readTimeout(ParseUtils.parseInt(reader, i, value));
+               ldapRealmConfigBuilder.readTimeout(value);
                break;
             case REFERRAL_MODE:
                ldapRealmConfigBuilder.referralMode(DirContextFactory.ReferralMode.valueOf(value.toUpperCase()));
@@ -1352,13 +1352,13 @@ public class ServerConfigurationParser implements ConfigurationParser {
                }
                break;
             case MINIMUM_REMAINING_LIFETIME:
-               builder.minimumRemainingLifetime(ParseUtils.parseInt(reader, i, value));
+               builder.minimumRemainingLifetime(value);
                break;
             case OBTAIN_KERBEROS_TICKET:
                builder.obtainKerberosTicket(ParseUtils.parseBoolean(reader, i, value));
                break;
             case REQUEST_LIFETIME:
-               builder.requestLifetime(ParseUtils.parseInt(reader, i, value));
+               builder.requestLifetime(value);
                break;
             case REQUIRED:
                builder.checkKeyTab(ParseUtils.parseBoolean(reader, i, value));
@@ -1536,19 +1536,19 @@ public class ServerConfigurationParser implements ConfigurationParser {
                dataSourceBuilder.initialSize(ParseUtils.parseInt(reader, i, value));
                break;
             case BLOCKING_TIMEOUT:
-               dataSourceBuilder.blockingTimeout(ParseUtils.parseInt(reader, i, value));
+               dataSourceBuilder.blockingTimeout(value);
                break;
             case BACKGROUND_VALIDATION:
-               dataSourceBuilder.backgroundValidation(ParseUtils.parseLong(reader, i, value));
+               dataSourceBuilder.backgroundValidation(value);
                break;
             case VALIDATE_ON_ACQUISITION:
-               dataSourceBuilder.validateOnAcquisition(ParseUtils.parseLong(reader, i, value));
+               dataSourceBuilder.validateOnAcquisition(value);
                break;
             case LEAK_DETECTION:
-               dataSourceBuilder.leakDetection(ParseUtils.parseLong(reader, i, value));
+               dataSourceBuilder.leakDetection(value);
                break;
             case IDLE_REMOVAL:
-               dataSourceBuilder.idleRemoval(ParseUtils.parseInt(reader, i, value));
+               dataSourceBuilder.idleRemoval(value);
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);

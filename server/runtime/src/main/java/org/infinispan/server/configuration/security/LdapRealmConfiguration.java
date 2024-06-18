@@ -8,6 +8,7 @@ import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.server.configuration.Attribute;
 import org.infinispan.server.configuration.Element;
 import org.infinispan.server.configuration.ServerConfigurationSerializer;
@@ -36,8 +37,8 @@ public class LdapRealmConfiguration extends ConfigurationElement<LdapRealmConfig
    static final AttributeDefinition<String> PRINCIPAL = AttributeDefinition.builder(Attribute.PRINCIPAL, null, String.class).immutable().build();
    static final AttributeDefinition<Integer> PAGE_SIZE = AttributeDefinition.builder(Attribute.PAGE_SIZE, 50, Integer.class).immutable().build();
    static final AttributeDefinition<String> URL = AttributeDefinition.builder(Attribute.URL, null, String.class).immutable().build();
-   static final AttributeDefinition<Integer> CONNECTION_TIMEOUT = AttributeDefinition.builder(Attribute.CONNECTION_TIMEOUT, 5_000, Integer.class).immutable().build();
-   static final AttributeDefinition<Integer> READ_TIMEOUT = AttributeDefinition.builder(Attribute.READ_TIMEOUT, 60_000, Integer.class).immutable().build();
+   static final AttributeDefinition<TimeQuantity> CONNECTION_TIMEOUT = AttributeDefinition.builder(Attribute.CONNECTION_TIMEOUT, TimeQuantity.valueOf("5s")).immutable().build();
+   static final AttributeDefinition<TimeQuantity> READ_TIMEOUT = AttributeDefinition.builder(Attribute.READ_TIMEOUT, TimeQuantity.valueOf("1m")).parser(TimeQuantity.PARSER).immutable().build();
    static final AttributeDefinition<Boolean> CONNECTION_POOLING = AttributeDefinition.builder(Attribute.CONNECTION_POOLING, false, Boolean.class).immutable().build();
    static final AttributeDefinition<DirContextFactory.ReferralMode> REFERRAL_MODE = AttributeDefinition.builder(Attribute.REFERRAL_MODE, DirContextFactory.ReferralMode.IGNORE, DirContextFactory.ReferralMode.class).immutable().build();
    static final AttributeDefinition<String> CLIENT_SSL_CONTEXT = AttributeDefinition.builder(Attribute.CLIENT_SSL_CONTEXT, null, String.class).immutable().build();
@@ -80,8 +81,8 @@ public class LdapRealmConfiguration extends ConfigurationElement<LdapRealmConfig
       dirContextBuilder.setSecurityPrincipal(attributes.attribute(PRINCIPAL).get());
       dirContextBuilder.setCredentialSource(attributes.attribute(CREDENTIAL).get().get());
       dirContextBuilder
-            .setConnectTimeout(attributes.attribute(LdapRealmConfiguration.CONNECTION_TIMEOUT).get())
-            .setReadTimeout(attributes.attribute(LdapRealmConfiguration.READ_TIMEOUT).get());
+            .setConnectTimeout(attributes.attribute(LdapRealmConfiguration.CONNECTION_TIMEOUT).get().intValue())
+            .setReadTimeout(attributes.attribute(LdapRealmConfiguration.READ_TIMEOUT).get().intValue());
       dirContextBuilder.setConnectionProperties(connectionProperties);
       attributes.attribute(CLIENT_SSL_CONTEXT).apply(v -> dirContextBuilder.setSocketFactory(security.realms().getRealm(v).clientSSLContext().getSocketFactory()));
       DirContextFactory dirContextFactory = dirContextBuilder.build();

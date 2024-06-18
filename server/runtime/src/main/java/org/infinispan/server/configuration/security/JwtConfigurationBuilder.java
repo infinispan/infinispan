@@ -12,6 +12,7 @@ import static org.infinispan.server.configuration.security.JwtConfiguration.READ
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 
 /**
  * @since 10.0
@@ -52,8 +53,8 @@ public class JwtConfigurationBuilder implements Builder<JwtConfiguration> {
       return this;
    }
 
-   public JwtConfigurationBuilder jkuTimeout(long timeout) {
-      attributes.attribute(JKU_TIMEOUT).set(timeout);
+   public JwtConfigurationBuilder jkuTimeout(String timeout) {
+      attributes.attribute(JKU_TIMEOUT).set(TimeQuantity.valueOf(timeout));
       return this;
    }
 
@@ -62,13 +63,13 @@ public class JwtConfigurationBuilder implements Builder<JwtConfiguration> {
       return this;
    }
 
-   public JwtConfigurationBuilder connectionTimeout(int timeout) {
-      attributes.attribute(CONNECTION_TIMEOUT).set(timeout);
+   public JwtConfigurationBuilder connectionTimeout(String timeout) {
+      attributes.attribute(CONNECTION_TIMEOUT).set(TimeQuantity.valueOf(timeout));
       return this;
    }
 
-   public JwtConfigurationBuilder readTimeout(int timeout) {
-      attributes.attribute(READ_TIMEOUT).set(timeout);
+   public JwtConfigurationBuilder readTimeout(String timeout) {
+      attributes.attribute(READ_TIMEOUT).set(TimeQuantity.valueOf(timeout));
       return this;
    }
 

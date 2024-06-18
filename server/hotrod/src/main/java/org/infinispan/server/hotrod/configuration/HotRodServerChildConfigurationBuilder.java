@@ -33,11 +33,15 @@ public interface HotRodServerChildConfigurationBuilder {
     */
    HotRodServerChildConfigurationBuilder topologyLockTimeout(long topologyLockTimeout);
 
+   HotRodServerConfigurationBuilder topologyLockTimeout(String topologyLockTimeout);
+
    /**
     * Configures the replication timeout for the topology cache. See {@link org.infinispan.configuration.cache.ClusteringConfigurationBuilder#remoteTimeout(long)}.
     * Defaults to 10 seconds
     */
    HotRodServerChildConfigurationBuilder topologyReplTimeout(long topologyReplTimeout);
+
+   HotRodServerConfigurationBuilder topologyReplTimeout(String topologyReplTimeout);
 
    /**
     * Configures whether to enable waiting for initial state transfer for the topology cache. See {@link

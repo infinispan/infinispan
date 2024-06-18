@@ -17,8 +17,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
-import net.jcip.annotations.GuardedBy;
-
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
@@ -34,6 +32,8 @@ import org.infinispan.interceptors.distribution.PrimaryOwnerOnlyCollector;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * An acknowledge collector for Triangle algorithm used in non-transactional caches for write operations.
@@ -69,7 +69,7 @@ public class CommandAckCollector {
    public void start() {
       timeoutNanoSeconds = TimeUnit.MILLISECONDS.toNanos(configuration.clustering().remoteTimeout());
       configuration.clustering().attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
-            .addListener((a, ignored) -> timeoutNanoSeconds = TimeUnit.MILLISECONDS.toNanos(a.get()));
+            .addListener((a, ignored) -> timeoutNanoSeconds = TimeUnit.MILLISECONDS.toNanos(a.get().longValue()));
    }
 
    /**

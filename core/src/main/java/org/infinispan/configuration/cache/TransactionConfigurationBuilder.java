@@ -15,8 +15,6 @@ import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.concurrent.TimeUnit;
 
-import jakarta.transaction.Synchronization;
-import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.commons.configuration.Builder;
@@ -24,10 +22,14 @@ import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
+
+import jakarta.transaction.Synchronization;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Defines transactional (JTA) characteristics of the cache.
@@ -66,7 +68,15 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * This configuration property may be adjusted at runtime
     */
    public TransactionConfigurationBuilder cacheStopTimeout(long l) {
-      attributes.attribute(CACHE_STOP_TIMEOUT).set(l);
+      attributes.attribute(CACHE_STOP_TIMEOUT).set(TimeQuantity.valueOf(l));
+      return this;
+   }
+
+   /**
+    * Same as {@link #cacheStopTimeout(long)} but supports time-units such as "30s", "10m", "1h", "5d"
+    */
+   public TransactionConfigurationBuilder cacheStopTimeout(String s) {
+      attributes.attribute(CACHE_STOP_TIMEOUT).set(TimeQuantity.valueOf(s));
       return this;
    }
 
@@ -187,7 +197,12 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     *The time interval (millis) at which the thread that cleans up transaction completion information kicks in. Defaults to 30000.
     */
    public TransactionConfigurationBuilder reaperWakeUpInterval(long interval) {
-      attributes.attribute(REAPER_WAKE_UP_INTERVAL).set(interval);
+      attributes.attribute(REAPER_WAKE_UP_INTERVAL).set(TimeQuantity.valueOf(interval));
+      return this;
+   }
+
+   public TransactionConfigurationBuilder reaperWakeUpInterval(String interval) {
+      attributes.attribute(REAPER_WAKE_UP_INTERVAL).set(TimeQuantity.valueOf(interval));
       return this;
    }
 
@@ -195,7 +210,12 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * The duration (millis) in which to keep information about the completion of a transaction. Defaults to 60000.
     */
    public TransactionConfigurationBuilder completedTxTimeout(long timeout) {
-      attributes.attribute(COMPLETED_TX_TIMEOUT).set(timeout);
+      attributes.attribute(COMPLETED_TX_TIMEOUT).set(TimeQuantity.valueOf(timeout));
+      return this;
+   }
+
+   public TransactionConfigurationBuilder completedTxTimeout(String timeout) {
+      attributes.attribute(COMPLETED_TX_TIMEOUT).set(TimeQuantity.valueOf(timeout));
       return this;
    }
 
@@ -215,12 +235,12 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
 
    @Override
    public void validate() {
-      Attribute<Long> reaperWakeUpInterval = attributes.attribute(REAPER_WAKE_UP_INTERVAL);
-      Attribute<Long> completedTxTimeout = attributes.attribute(COMPLETED_TX_TIMEOUT);
-      if (reaperWakeUpInterval.get()< 0)
-         throw CONFIG.invalidReaperWakeUpInterval(reaperWakeUpInterval.get());
-      if (completedTxTimeout.get() < 0)
-         throw CONFIG.invalidCompletedTxTimeout(completedTxTimeout.get());
+      Attribute<TimeQuantity> reaperWakeUpInterval = attributes.attribute(REAPER_WAKE_UP_INTERVAL);
+      Attribute<TimeQuantity> completedTxTimeout = attributes.attribute(COMPLETED_TX_TIMEOUT);
+      if (reaperWakeUpInterval.get().longValue()< 0)
+         throw CONFIG.invalidReaperWakeUpInterval(reaperWakeUpInterval.get().longValue());
+      if (completedTxTimeout.get().longValue() < 0)
+         throw CONFIG.invalidCompletedTxTimeout(completedTxTimeout.get().longValue());
       CacheMode cacheMode = clustering().cacheMode();
       if (!attributes.attribute(NOTIFICATIONS).get() && !getBuilder().template()) {
          CONFIG.transactionNotificationsDisabled();

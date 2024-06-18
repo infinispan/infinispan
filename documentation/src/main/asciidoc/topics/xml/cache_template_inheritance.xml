@@ -1,13 +1,13 @@
 <infinispan>
   <cache-container>
     <distributed-cache-configuration name="base-template">
-      <expiration lifespan="5000"/>
+      <expiration lifespan="5s"/>
     </distributed-cache-configuration>
     <distributed-cache-configuration name="extended-template"
                                      configuration="base-template">
       <encoding media-type="application/x-protostream"/>
-      <expiration lifespan="10000"
-                  max-idle="1000"/>
+      <expiration lifespan="10s"
+                  max-idle="1s"/>
     </distributed-cache-configuration>
   </cache-container>
 </infinispan>

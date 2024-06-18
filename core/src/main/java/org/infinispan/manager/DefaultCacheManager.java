@@ -1270,7 +1270,7 @@ public class DefaultCacheManager extends InternalCacheManager {
                globalComponentRegistry.getComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR));
       } else {
          return ClusterExecutors.allSubmissionExecutor(null, this, null,
-               TransportConfiguration.DISTRIBUTED_SYNC_TIMEOUT.getDefaultValue(), TimeUnit.MILLISECONDS,
+               TransportConfiguration.DISTRIBUTED_SYNC_TIMEOUT.getDefaultValue().longValue(), TimeUnit.MILLISECONDS,
                blockingManager,
                globalComponentRegistry.getComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR));
       }

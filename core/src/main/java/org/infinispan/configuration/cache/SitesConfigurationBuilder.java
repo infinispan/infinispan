@@ -11,6 +11,7 @@ import java.util.Set;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.xsite.spi.XSiteEntryMergePolicy;
 import org.infinispan.xsite.spi.XSiteMergePolicy;
@@ -91,7 +92,15 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
     * @return {@code this}.
     */
    public SitesConfigurationBuilder maxTombstoneCleanupDelay(long value) {
-      attributes.attribute(SitesConfiguration.MAX_CLEANUP_DELAY).set(value);
+      attributes.attribute(SitesConfiguration.MAX_CLEANUP_DELAY).set(TimeQuantity.valueOf(value));
+      return this;
+   }
+
+   /**
+    * Same as {@link #maxTombstoneCleanupDelay(long)} but supporting time units.
+    */
+   public SitesConfigurationBuilder maxTombstoneCleanupDelay(String value) {
+      attributes.attribute(SitesConfiguration.MAX_CLEANUP_DELAY).set(TimeQuantity.valueOf(value));
       return this;
    }
 

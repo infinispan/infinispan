@@ -18,10 +18,10 @@
         <connection-pool initial-size="1"
                          max-size="10"
                          min-size="3"
-                         background-validation="1000"
-                         idle-removal="1"
-                         blocking-timeout="1000"
-                         leak-detection="10000"/>
+                         background-validation="1s"
+                         idle-removal="1m"
+                         blocking-timeout="1s"
+                         leak-detection="10s"/>
      </data-source>
   </data-sources>
 </server>

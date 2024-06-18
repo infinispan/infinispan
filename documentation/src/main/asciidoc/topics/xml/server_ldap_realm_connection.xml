@@ -6,8 +6,8 @@
                     url="ldap://my-ldap-server:10389"
                     principal="uid=admin,ou=People,dc=infinispan,dc=org"
                     credential="strongPassword"
-                    connection-timeout="3000"
-                    read-timeout="30000"
+                    connection-timeout="3s"
+                    read-timeout="30s"
                     connection-pooling="true"
                     referral-mode="ignore"
                     page-size="30">

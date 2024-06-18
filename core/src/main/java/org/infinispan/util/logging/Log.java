@@ -2172,8 +2172,8 @@ public interface Log extends BasicLogger {
    @Description("Before it starts automatic cross-site state transfer operations, the coordinator node checks all local nodes to determine if state transfer is necessary. This error occurs when the coordinator node gets an exception from one or more local nodes. Check that nodes in the cluster are online and operating as expected.")
    void unableToStartXSiteAutStateTransfer(String cacheName, String targetSite, @Cause Throwable t);
 
-   @Message(value = "State transfer timeout (%d) must be greater than or equal to the remote timeout (%d)", id = 636)
-   CacheConfigurationException invalidStateTransferTimeout(Long stateTransferTimeout, Long remoteTimeout);
+   @Message(value = "State transfer timeout (%s) must be greater than or equal to the remote timeout (%s)", id = 636)
+   CacheConfigurationException invalidStateTransferTimeout(String stateTransferTimeout, String remoteTimeout);
 
    @Message(value = "Timeout waiting for topology %d, current topology is %d", id = 637)
    TimeoutException topologyTimeout(int expectedTopologyId, int currentTopologyId);

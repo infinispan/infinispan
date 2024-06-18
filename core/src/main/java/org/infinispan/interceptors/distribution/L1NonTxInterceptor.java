@@ -41,7 +41,9 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.EntryFactory;
@@ -56,9 +58,7 @@ import org.infinispan.interceptors.impl.BaseRpcInterceptor;
 import org.infinispan.interceptors.impl.MultiSubCommandInvoker;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -116,7 +116,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       cacheConfiguration.clustering()
                    .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
                    .addListener((a, ignored) -> {
-                      replicationTimeout = a.get();
+                      replicationTimeout = a.get().longValue();
                    });
    }
 

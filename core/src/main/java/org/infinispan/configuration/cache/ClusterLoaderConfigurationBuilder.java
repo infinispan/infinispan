@@ -5,6 +5,7 @@ import static org.infinispan.configuration.cache.ClusterLoaderConfiguration.REMO
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Combine;
+import org.infinispan.commons.util.TimeQuantity;
 
 /**
  * @deprecated since 11.0. To be removed in 14.0 ISPN-11864 with no direct replacement.
@@ -22,7 +23,12 @@ public class ClusterLoaderConfigurationBuilder extends AbstractStoreConfiguratio
    }
 
    public ClusterLoaderConfigurationBuilder remoteCallTimeout(long remoteCallTimeout) {
-      attributes.attribute(REMOTE_CALL_TIMEOUT).set(remoteCallTimeout);
+      attributes.attribute(REMOTE_CALL_TIMEOUT).set(TimeQuantity.valueOf(remoteCallTimeout));
+      return this;
+   }
+
+   public ClusterLoaderConfigurationBuilder remoteCallTimeout(String remoteCallTimeout) {
+      attributes.attribute(REMOTE_CALL_TIMEOUT).set(TimeQuantity.valueOf(remoteCallTimeout));
       return this;
    }
 

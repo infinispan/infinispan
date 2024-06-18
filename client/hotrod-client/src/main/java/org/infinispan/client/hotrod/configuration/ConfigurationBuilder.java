@@ -433,7 +433,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       }
       this.connectionPool.withPoolProperties(typed);
       if (typed.containsKey(ConfigurationProperties.CONNECT_TIMEOUT)) {
-         this.connectionTimeout(typed.getIntProperty(ConfigurationProperties.CONNECT_TIMEOUT, connectionTimeout, true));
+         this.connectionTimeout((int) typed.getDurationProperty(ConfigurationProperties.CONNECT_TIMEOUT, connectionTimeout, true));
       }
       if (typed.containsKey(ConfigurationProperties.HASH_FUNCTION_PREFIX + ".1")) {
          log.warn("Hash function version 1 is no longer supported");
@@ -471,7 +471,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          this.addServers(serverList);
       }
       if (typed.containsKey(ConfigurationProperties.SO_TIMEOUT)) {
-         this.socketTimeout(typed.getIntProperty(ConfigurationProperties.SO_TIMEOUT, socketTimeout, true));
+         this.socketTimeout((int) typed.getDurationProperty(ConfigurationProperties.SO_TIMEOUT, socketTimeout, true));
       }
       if (typed.containsKey(ConfigurationProperties.TCP_NO_DELAY)) {
          this.tcpNoDelay(typed.getBooleanProperty(ConfigurationProperties.TCP_NO_DELAY, tcpNoDelay, true));
@@ -486,13 +486,13 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          this.maxRetries(typed.getIntProperty(ConfigurationProperties.MAX_RETRIES, maxRetries, true));
       }
       if (typed.containsKey(ConfigurationProperties.DNS_RESOLVER_MIN_TTL)) {
-         this.dnsResolverMinTTL(typed.getIntProperty(ConfigurationProperties.DNS_RESOLVER_MIN_TTL, dnsResolverMinTTL, true));
+         this.dnsResolverMinTTL((int) typed.getDurationProperty(ConfigurationProperties.DNS_RESOLVER_MIN_TTL, dnsResolverMinTTL, true));
       }
       if (typed.containsKey(ConfigurationProperties.DNS_RESOLVER_MAX_TTL)) {
-         this.dnsResolverMaxTTL(typed.getIntProperty(ConfigurationProperties.DNS_RESOLVER_MAX_TTL, dnsResolverMaxTTL, true));
+         this.dnsResolverMaxTTL((int) typed.getDurationProperty(ConfigurationProperties.DNS_RESOLVER_MAX_TTL, dnsResolverMaxTTL, true));
       }
       if (typed.containsKey(ConfigurationProperties.DNS_RESOLVER_NEGATIVE_TTL)) {
-         this.dnsResolverNegativeTTL(typed.getIntProperty(ConfigurationProperties.DNS_RESOLVER_NEGATIVE_TTL, dnsResolverNegativeTTL, true));
+         this.dnsResolverNegativeTTL((int) typed.getDurationProperty(ConfigurationProperties.DNS_RESOLVER_NEGATIVE_TTL, dnsResolverNegativeTTL, true));
       }
       this.security.ssl().withProperties(properties);
       this.security.authentication().withProperties(properties);

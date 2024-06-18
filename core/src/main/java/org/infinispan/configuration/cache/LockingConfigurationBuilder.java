@@ -11,6 +11,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -75,7 +76,12 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
     * Maximum time to attempt a particular lock acquisition
     */
    public LockingConfigurationBuilder lockAcquisitionTimeout(long l) {
-      attributes.attribute(LOCK_ACQUISITION_TIMEOUT).set(l);
+      attributes.attribute(LOCK_ACQUISITION_TIMEOUT).set(TimeQuantity.valueOf(l));
+      return this;
+   }
+
+   public LockingConfigurationBuilder lockAcquisitionTimeout(String s) {
+      attributes.attribute(LOCK_ACQUISITION_TIMEOUT).set(TimeQuantity.valueOf(s));
       return this;
    }
 

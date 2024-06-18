@@ -6,7 +6,7 @@
     <cache-container default-cache="default">
         <transport/>
         <local-cache name="default">
-            <locking concurrency-level="100" acquire-timeout="1000"/>
+            <locking concurrency-level="100" acquire-timeout="1s"/>
         </local-cache>
         <clustered-locks xmlns="urn:infinispan:config:clustered-locks:{schemaversion}"
                          num-owners = "3"

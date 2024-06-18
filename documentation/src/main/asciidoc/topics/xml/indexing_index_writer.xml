@@ -1,6 +1,6 @@
 <distributed-cache>
   <indexing storage="filesystem" path="${java.io.tmpdir}/baseDir">
-    <index-writer commit-interval="2000"
+    <index-writer commit-interval="2s"
                   low-level-trace="false"
                   max-buffered-entries="32"
                   queue-count="1"

@@ -125,14 +125,14 @@
    </xs:complexType>
 
    <xs:complexType name="data-source-connection-factory">
-      <xs:all>
-         <xs:element type="tns:credential-reference" name="credential-reference" minOccurs="0"/>
-         <xs:element type="tns:property" name="connection-property" minOccurs="0" maxOccurs="unbounded">
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+         <xs:element type="tns:credential-reference" name="credential-reference"/>
+         <xs:element type="tns:property" name="connection-property">
             <xs:annotation>
                <xs:documentation>Properties for the JDBC driver</xs:documentation>
             </xs:annotation>
          </xs:element>
-      </xs:all>
+      </xs:choice>
       <xs:attribute name="driver" type="xs:token" use="required">
          <xs:annotation>
             <xs:documentation>Unique reference to the JDBC driver</xs:documentation>
@@ -197,41 +197,46 @@
             <xs:documentation>Initial number of connections the pool should hold</xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="blocking-timeout" type="xs:nonNegativeInteger" default="0">
+      <xs:attribute name="blocking-timeout" type="xs:string" default="0">
          <xs:annotation>
             <xs:documentation>
                Maximum time in milliseconds to block while waiting for a connection before throwing an exception
                This will never throw an exception if creating a new connection takes an inordinately long period of time
                Default is 0 meaning that a call will wait indefinitely
+               You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="background-validation" type="xs:nonNegativeInteger" default="0">
+      <xs:attribute name="background-validation" type="xs:string" default="0">
          <xs:annotation>
             <xs:documentation>
                Time in milliseconds between background validation runs. A duration of 0 means that this feature is disabled.
+               You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="validate-on-acquisition" type="xs:nonNegativeInteger" default="0">
+      <xs:attribute name="validate-on-acquisition" type="xs:string" default="0">
          <xs:annotation>
             <xs:documentation>
                Connections idle for longer than this time, specified in milliseconds, are validated before being
                acquired (foreground validation). A duration of 0 means that this feature is disabled.
+               You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="leak-detection" type="xs:nonNegativeInteger" default="0">
+      <xs:attribute name="leak-detection" type="xs:string" default="0">
          <xs:annotation>
             <xs:documentation>
                Time in milliseconds a connection has to be held before a leak warning
+               You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="idle-removal" type="xs:nonNegativeInteger" default="0">
+      <xs:attribute name="idle-removal" type="xs:string" default="0">
          <xs:annotation>
             <xs:documentation>
-               Time in minutes a connection has to be idle before it can be removed
+               Time in milliseconds a connection has to be idle before it can be removed.
+               You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -272,9 +277,12 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="idle-timeout" type="xs:int">
+      <xs:attribute name="idle-timeout" type="xs:string" default="0">
          <xs:annotation>
-            <xs:documentation>Specifies the maximum time, in seconds, that client connections can remain inactive. Defaults to 0 (no timeout). </xs:documentation>
+            <xs:documentation>
+               Specifies the maximum time, in seconds, that client connections can remain inactive. Defaults to 0 (no timeout).
+               You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
+            </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute name="tcp-nodelay" type="xs:boolean">
@@ -325,13 +333,13 @@
    <xs:complexType name="endpoint">
       <xs:complexContent>
          <xs:extension base="tns:protocol-connector">
-            <xs:all>
-               <xs:element name="ip-filter" type="tns:ip-filter" minOccurs="0"/>
-               <xs:element type="tns:hotrod-connector" name="hotrod-connector" minOccurs="0" maxOccurs="unbounded"/>
-               <xs:element type="tns:rest-connector" name="rest-connector" minOccurs="0" maxOccurs="unbounded"/>
-               <xs:element type="tns:memcached-connector" name="memcached-connector" minOccurs="0" maxOccurs="unbounded"/>
-               <xs:element type="tns:resp-connector" name="resp-connector" minOccurs="0" maxOccurs="unbounded"/>
-            </xs:all>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+               <xs:element name="ip-filter" type="tns:ip-filter"/>
+               <xs:element type="tns:hotrod-connector" name="hotrod-connector"/>
+               <xs:element type="tns:rest-connector" name="rest-connector"/>
+               <xs:element type="tns:memcached-connector" name="memcached-connector"/>
+               <xs:element type="tns:resp-connector" name="resp-connector"/>
+            </xs:choice>
             <xs:attribute name="socket-binding" type="xs:string" use="required">
                <xs:annotation>
                   <xs:documentation>Specifies the socket the endpoint connector binds to.</xs:documentation>
@@ -391,12 +399,12 @@
                <xs:element name="authentication" type="tns:authentication" minOccurs="0"/>
                <xs:element name="encryption" type="tns:encryption" minOccurs="0"/>
             </xs:all>
-            <xs:attribute name="external-host" type="xs:string" use="optional">
+            <xs:attribute name="external-host" type="xs:string">
                <xs:annotation>
                   <xs:documentation>Sets an external address for this node to accept client connections. Defaults to the server socket binding address.</xs:documentation>
                </xs:annotation>
             </xs:attribute>
-            <xs:attribute name="external-port" type="xs:int" use="optional">
+            <xs:attribute name="external-port" type="xs:int">
                <xs:annotation>
                   <xs:documentation>Sets an external port for this node. Defaults to the server socket binding port.</xs:documentation>
                </xs:annotation>
@@ -467,7 +475,7 @@
                <xs:element name="cors-rules" type="tns:cors-rules" minOccurs="0"/>
                <xs:element name="encryption" type="tns:encryption" minOccurs="0"/>
             </xs:all>
-            <xs:attribute name="context-path" type="xs:string" use="optional">
+            <xs:attribute name="context-path" type="xs:string">
                <xs:annotation>
                   <xs:documentation>
                     Sets the context path for REST connectors and defaults to
@@ -478,23 +486,23 @@
                   </xs:documentation>
                </xs:annotation>
             </xs:attribute>
-            <xs:attribute name="extended-headers" type="tns:extended-headers" use="optional" default="ON_DEMAND">
+            <xs:attribute name="extended-headers" type="tns:extended-headers" default="ON_DEMAND">
                <xs:annotation>
                   <xs:documentation>Enables extended headers. Values are NEVER / ON_DEMAND (default).
                   </xs:documentation>
                </xs:annotation>
             </xs:attribute>
-            <xs:attribute name="max-content-length" type="xs:int" use="optional">
+            <xs:attribute name="max-content-length" type="xs:int">
                <xs:annotation>
                   <xs:documentation>Sets the maximum allowed content length.</xs:documentation>
                </xs:annotation>
             </xs:attribute>
-            <xs:attribute name="compression-level" type="xs:int" use="optional" default="6">
+            <xs:attribute name="compression-level" type="xs:int" default="6">
                <xs:annotation>
                   <xs:documentation>Sets the level for compressed requests and responses.</xs:documentation>
                </xs:annotation>
             </xs:attribute>
-            <xs:attribute name="compression-threshold" type="xs:int" use="optional" default="0">
+            <xs:attribute name="compression-threshold" type="xs:int" default="0">
                <xs:annotation>
                   <xs:documentation>The response body is compressed when the size of the response body exceeds the threshold. The value should be a non-negative number. 0 will enable compression for all responses.</xs:documentation>
                </xs:annotation>
@@ -532,15 +540,19 @@
    </xs:complexType>
 
    <xs:complexType name="topology-state-transfer">
-      <xs:attribute name="lock-timeout" type="xs:int" use="optional">
+      <xs:attribute name="lock-timeout" type="xs:string" default="10s">
          <xs:annotation>
-            <xs:documentation>Configures lock acquisition timeouts, in seconds, for topology caches. Defaults to 10.
+            <xs:documentation>
+               Configures lock acquisition timeouts, for topology caches. Defaults to 10 seconds.
+               You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="replication-timeout" type="xs:int" use="optional">
+      <xs:attribute name="replication-timeout" type="xs:string" default="10s">
          <xs:annotation>
-            <xs:documentation>Configures replication timeouts, in seconds, for topology caches. Defaults to 10.
+            <xs:documentation>
+               Configures replication timeouts for topology caches. Defaults to 10 seconds.
+               You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -550,7 +562,7 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="await-initial-retrieval" type="xs:boolean" use="optional"
+      <xs:attribute name="await-initial-retrieval" type="xs:boolean"
                     default="${TopologyCache.awaitInitialRetrieval}">
          <xs:annotation>
             <xs:documentation>Configures whether initial state retrieval should happen immediately at startup. Applies only when lazy-retrieval is false. Values are true (default) / false.
@@ -818,7 +830,7 @@
          </xs:documentation>
       </xs:annotation>
       <xs:sequence>
-         <xs:element name="cors-rule" type="tns:cors-rule" minOccurs="1" maxOccurs="unbounded"/>
+         <xs:element name="cors-rule" type="tns:cors-rule" maxOccurs="unbounded"/>
       </xs:sequence>
    </xs:complexType>
 
@@ -835,7 +847,7 @@
             <xs:documentation>TLS SNI host name</xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="security-realm" type="xs:string" use="optional">
+      <xs:attribute name="security-realm" type="xs:string">
          <xs:annotation>
             <xs:documentation>A corresponding security realm. If none is specified, the default will be used.
             </xs:documentation>
@@ -1116,10 +1128,10 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="cache-lifespan" type="xs:long" default="60000">
+      <xs:attribute name="cache-lifespan" type="xs:string" default="60s">
          <xs:annotation>
             <xs:documentation>
-               The lifespan, in millisenconds, of entries in the identity cache after which they expire and are reloaded from the realm provider. Defaults to -1 (never expires).
+               The lifespan, in milliseconds, of entries in the identity cache after which they expire and are reloaded from the realm provider. Defaults to -1 (never expires).
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -1142,15 +1154,15 @@
       <xs:attribute type="xs:string" name="value" use="required"/>
    </xs:complexType>
 
-   <xs:complexType name="interface-global"></xs:complexType>
+   <xs:complexType name="interface-global"/>
 
-   <xs:complexType name="interface-link-local"></xs:complexType>
+   <xs:complexType name="interface-link-local"/>
 
-   <xs:complexType name="interface-loopback"></xs:complexType>
+   <xs:complexType name="interface-loopback"/>
 
-   <xs:complexType name="interface-non-loopback"></xs:complexType>
+   <xs:complexType name="interface-non-loopback"/>
 
-   <xs:complexType name="interface-site-local"></xs:complexType>
+   <xs:complexType name="interface-site-local"/>
 
    <xs:complexType name="security-realm-server-identities">
       <xs:sequence>
@@ -1413,19 +1425,21 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute type="xs:integer" name="connection-timeout" default="5000">
+      <xs:attribute type="xs:string" name="connection-timeout" default="5s">
          <xs:annotation>
             <xs:documentation>
                Sets the timeout, in milliseconds, for LDAP server connections.
                The default value is 5 seconds.
+               You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute type="xs:integer" name="read-timeout" default="60000">
+      <xs:attribute type="xs:string" name="read-timeout" default="1m">
          <xs:annotation>
             <xs:documentation>
                Sets the read timeout, in milliseconds, for LDAP server
                operations. The default value is 1 minute.
+               You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -1754,27 +1768,30 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute type="xs:long" name="jku-timeout" default="120000">
+      <xs:attribute type="xs:string" name="jku-timeout" default="2m">
          <xs:annotation>
             <xs:documentation>
                A timeout, in milliseconds for cached jwks when using jku claim.
                After this timeout, the keys of need to be re-cached before use. Default value is 2 minutes.
+               You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute type="xs:integer" name="connection-timeout" default="2000">
+      <xs:attribute type="xs:string" name="connection-timeout" default="2s">
          <xs:annotation>
             <xs:documentation>
                Sets the timeout, in milliseconds, for connections to the JKU server.
                The default value is 2 seconds.
+               You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute type="xs:integer" name="read-timeout" default="2000">
+      <xs:attribute type="xs:string" name="read-timeout" default="2s">
          <xs:annotation>
             <xs:documentation>
                Sets the read timeout, in milliseconds, for the JKU server.
                operations. The default value is 2 seconds.
+               You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -1824,19 +1841,21 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute type="xs:integer" name="connection-timeout" default="2000">
+      <xs:attribute type="xs:string" name="connection-timeout" default="2s">
          <xs:annotation>
             <xs:documentation>
                Sets the timeout, in milliseconds, for connections to the OAuth2 server.
                The default value is 2 seconds.
+               You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute type="xs:integer" name="read-timeout" default="2000">
+      <xs:attribute type="xs:string" name="read-timeout" default="2s">
          <xs:annotation>
             <xs:documentation>
                Sets the read timeout, in milliseconds, for the OAuth2 server.
                operations. The default value is 2 seconds.
+               You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>

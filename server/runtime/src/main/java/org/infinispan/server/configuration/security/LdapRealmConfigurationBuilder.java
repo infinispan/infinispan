@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.server.security.PasswordCredentialSource;
 import org.wildfly.security.auth.realm.ldap.DirContextFactory;
 import org.wildfly.security.auth.server.NameRewriter;
@@ -79,13 +80,13 @@ public class LdapRealmConfigurationBuilder implements RealmProviderBuilder<LdapR
       return this;
    }
 
-   public LdapRealmConfigurationBuilder connectionTimeout(int connectionTimeout) {
-      attributes.attribute(LdapRealmConfiguration.CONNECTION_TIMEOUT).set(connectionTimeout);
+   public LdapRealmConfigurationBuilder connectionTimeout(String connectionTimeout) {
+      attributes.attribute(LdapRealmConfiguration.CONNECTION_TIMEOUT).set(TimeQuantity.valueOf(connectionTimeout));
       return this;
    }
 
-   public LdapRealmConfigurationBuilder readTimeout(int readTimeout) {
-      attributes.attribute(LdapRealmConfiguration.READ_TIMEOUT).set(readTimeout);
+   public LdapRealmConfigurationBuilder readTimeout(String readTimeout) {
+      attributes.attribute(LdapRealmConfiguration.READ_TIMEOUT).set(TimeQuantity.valueOf(readTimeout));
       return this;
    }
 

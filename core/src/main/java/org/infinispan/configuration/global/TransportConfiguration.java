@@ -2,11 +2,11 @@ package org.infinispan.configuration.global;
 
 import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.remoting.transport.Transport;
 
@@ -21,12 +21,12 @@ public class TransportConfiguration {
          .immutable().build();
    public static final AttributeDefinition<String> NODE_NAME = AttributeDefinition.builder("nodeName", null, String.class)
          .immutable().build();
-   public static final AttributeDefinition<Long> DISTRIBUTED_SYNC_TIMEOUT = AttributeDefinition.builder(
-         "lockTimeout", TimeUnit.MINUTES.toMillis(4)).build();
+   public static final AttributeDefinition<TimeQuantity> DISTRIBUTED_SYNC_TIMEOUT = AttributeDefinition.builder(
+         "lockTimeout", TimeQuantity.valueOf("4m")).build();
    public static final AttributeDefinition<Integer> INITIAL_CLUSTER_SIZE = AttributeDefinition.builder("initialClusterSize", -1)
          .immutable().build();
-   public static final AttributeDefinition<Long> INITIAL_CLUSTER_TIMEOUT = AttributeDefinition.builder(
-           "initialClusterTimeout", TimeUnit.MINUTES.toMillis(1)).build();
+   public static final AttributeDefinition<TimeQuantity> INITIAL_CLUSTER_TIMEOUT = AttributeDefinition.builder(
+           "initialClusterTimeout", TimeQuantity.valueOf("1m")).parser(TimeQuantity.PARSER).build();
    public static final AttributeDefinition<String> STACK = AttributeDefinition.builder("stack", null, String.class).build();
    public static final AttributeDefinition<String> TRANSPORT_EXECUTOR = AttributeDefinition.builder("executor", "transport-pool", String.class).build();
    public static final AttributeDefinition<String> REMOTE_EXECUTOR = AttributeDefinition.builder("remoteCommandExecutor", "remote-command-pool", String.class).build();
@@ -50,9 +50,9 @@ public class TransportConfiguration {
    private final Attribute<String> rackId;
    private final Attribute<String> siteId;
    private final Attribute<String> nodeName;
-   private final Attribute<Long> distributedSyncTimeout;
+   private final Attribute<TimeQuantity> distributedSyncTimeout;
    private final Attribute<Integer> initialClusterSize;
-   private final Attribute<Long> initialClusterTimeout;
+   private final Attribute<TimeQuantity> initialClusterTimeout;
    private final AttributeSet attributes;
    private final JGroupsConfiguration jgroupsConfiguration;
    private final ThreadPoolConfiguration transportThreadPool;
@@ -101,7 +101,15 @@ public class TransportConfiguration {
    }
 
    public long distributedSyncTimeout() {
-      return distributedSyncTimeout.get();
+      return distributedSyncTimeout.get().longValue();
+   }
+
+   public void distributedSyncTimeout(long l) {
+      distributedSyncTimeout.set(TimeQuantity.valueOf(l));
+   }
+
+   public void distributedSyncTimeout(String s) {
+      distributedSyncTimeout.set(TimeQuantity.valueOf(s));
    }
 
    public int initialClusterSize() {
@@ -109,7 +117,7 @@ public class TransportConfiguration {
    }
 
    public long initialClusterTimeout() {
-      return initialClusterTimeout.get();
+      return initialClusterTimeout.get().longValue();
    }
 
    public Transport transport() {

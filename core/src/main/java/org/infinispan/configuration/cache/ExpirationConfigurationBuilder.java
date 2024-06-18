@@ -13,6 +13,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.expiration.TouchMode;
 import org.infinispan.util.logging.Log;
@@ -42,7 +43,12 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
     * Note that this can be overridden on a per-entry basis by using the Cache API.
     */
    public ExpirationConfigurationBuilder lifespan(long l) {
-      attributes.attribute(LIFESPAN).set(l);
+      attributes.attribute(LIFESPAN).set(TimeQuantity.valueOf(l));
+      return this;
+   }
+
+   public ExpirationConfigurationBuilder lifespan(String l) {
+      attributes.attribute(LIFESPAN).set(TimeQuantity.valueOf(l));
       return this;
    }
 
@@ -63,7 +69,12 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
     * Note that this can be overridden on a per-entry basis by using the Cache API.
     */
    public ExpirationConfigurationBuilder maxIdle(long l) {
-      attributes.attribute(MAX_IDLE).set(l);
+      attributes.attribute(MAX_IDLE).set(TimeQuantity.valueOf(null, l));
+      return this;
+   }
+
+   public ExpirationConfigurationBuilder maxIdle(String s) {
+      attributes.attribute(MAX_IDLE).set(TimeQuantity.valueOf(s));
       return this;
    }
 
@@ -84,7 +95,7 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
     * @return the max idle setting, default is -1 for disabled
     */
    public long maxIdle() {
-      return attributes.attribute(MAX_IDLE).get();
+      return attributes.attribute(MAX_IDLE).get().longValue();
    }
 
    /**
@@ -127,12 +138,17 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
     * wakeupInterval to -1.
     */
    public ExpirationConfigurationBuilder wakeUpInterval(long l) {
-      attributes.attribute(WAKEUP_INTERVAL).set(l);
+      attributes.attribute(WAKEUP_INTERVAL).set(TimeQuantity.valueOf(l));
+      return this;
+   }
+
+   public ExpirationConfigurationBuilder wakeUpInterval(String s) {
+      attributes.attribute(WAKEUP_INTERVAL).set(TimeQuantity.valueOf(s));
       return this;
    }
 
    public long wakeupInterval() {
-      return attributes.attribute(WAKEUP_INTERVAL).get();
+      return attributes.attribute(WAKEUP_INTERVAL).get().longValue();
    }
 
    /**

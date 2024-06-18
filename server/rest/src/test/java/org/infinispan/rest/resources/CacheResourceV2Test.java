@@ -31,7 +31,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.IOException;
@@ -53,6 +52,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.assertj.core.api.Assertions;
 import org.infinispan.AdvancedCache;
@@ -117,25 +118,27 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    private static final String PERSISTENT_LOCATION = tmpDirectory(CacheResourceV2Test.class.getName());
 
    private static final String PROTO_SCHEMA =
-         " /* @Indexed */                     \n" +
-               " message Entity {                   \n" +
-               "    /* @Basic */                    \n" +
-               "    required int32 value=1;         \n" +
-               "    optional string description=2;  \n" +
-               " }                                  \n" +
-               " /* @Indexed */                     \n" +
-               " message Another {                  \n" +
-               "    /* @Basic */                    \n" +
-               "    required int32 value=1;         \n" +
-               "    optional string description=2;  \n" +
-               " }";
+         """
+                /* @Indexed */
+                message Entity {
+                   /* @Basic */
+                   required int32 value=1;
+                   optional string description=2;
+                }
+                /* @Indexed */
+                message Another {
+                   /* @Basic */
+                   required int32 value=1;
+                   optional string description=2;
+                }\
+               """;
    public static final String ACCEPT = "Accept";
 
    protected CacheMode cacheMode;
 
    @Override
    protected String parameters() {
-      return "[security=" + security + ", protocol=" + protocol.toString() + ", ssl=" + ssl + ", cacheMode=" + cacheMode + ", browser=" + browser +"]";
+      return "[security=" + security + ", protocol=" + protocol.toString() + ", ssl=" + ssl + ", cacheMode=" + cacheMode + ", browser=" + browser + "]";
    }
 
    protected CacheResourceV2Test withCacheMode(CacheMode cacheMode) {
@@ -397,40 +400,43 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(response).isOk();
       Json attributes = Json.read(join(response).body());
       assertEquals(16, attributes.asJsonMap().size());
-      assertEquals("long", attributes.at("clustering.remote-timeout").at("type").asString());
-      assertEquals(15000, attributes.at("clustering.remote-timeout").at("value").asLong());
+      assertEquals("timequantity", attributes.at("clustering.remote-timeout").at("type").asString());
+      assertEquals("15s", attributes.at("clustering.remote-timeout").at("value").asString());
       assertThat(attributes.at("indexing.indexed-entities").at("type").asString()).isEqualTo("set");
       assertThat(attributes.at("indexing.indexed-entities").at("value").asList()).isEmpty();
    }
 
    public void testUpdateConfigurationAttribute() {
-      String protoSchema = "package org.infinispan;\n\n" +
-            "/**\n" +
-            " * @Indexed\n" +
-            " */\n" +
-            "message Developer {\n" +
-            "   /**\n" +
-            "    * @Basic\n" +
-            "    */\n" +
-            "   optional string nick = 1;\n" +
-            "   /**\n" +
-            "    * @Basic(sortable=true)\n" +
-            "    */\n" +
-            "   optional int32 contributions = 2;\n" +
-            "}\n" +
-            "/**\n" +
-            " * @Indexed\n" +
-            " */\n" +
-            "message Engineer {  \n" +
-            "   /**\n" +
-            "    * @Basic\n" +
-            "    */\n" +
-            "   optional string nick = 1;\n" +
-            "   /**\n" +
-            "    * @Basic(sortable=true)\n" +
-            "    */\n" +
-            "   optional int32 contributions = 2;\n" +
-            "}\n";
+      String protoSchema = """
+            package org.infinispan;
+
+            /**
+             * @Indexed
+             */
+            message Developer {
+               /**
+                * @Basic
+                */
+               optional string nick = 1;
+               /**
+                * @Basic(sortable=true)
+                */
+               optional int32 contributions = 2;
+            }
+            /**
+             * @Indexed
+             */
+            message Engineer { \s
+               /**
+                * @Basic
+                */
+               optional string nick = 1;
+               /**
+                * @Basic(sortable=true)
+                */
+               optional int32 contributions = 2;
+            }
+            """;
 
       // Register schema
       RestResponse restResponse = join(client.schemas().put("dev.proto", protoSchema));

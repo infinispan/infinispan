@@ -15,6 +15,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.ConfigurationUtils;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
 
@@ -49,7 +50,15 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
     *           not available, an exception is thrown during cache operations.
     */
    public PersistenceConfigurationBuilder availabilityInterval(int interval) {
-      attributes.attribute(AVAILABILITY_INTERVAL).set(interval);
+      attributes.attribute(AVAILABILITY_INTERVAL).set(TimeQuantity.valueOf(interval));
+      return this;
+   }
+
+   /**
+    * Same as {@link #availabilityInterval(int)} but supporting time units
+    */
+   public PersistenceConfigurationBuilder availabilityInterval(String interval) {
+      attributes.attribute(AVAILABILITY_INTERVAL).set(TimeQuantity.valueOf(interval));
       return this;
    }
 

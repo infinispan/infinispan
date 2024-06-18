@@ -51,7 +51,7 @@ public class DataSourceFactory {
             .acquisitionTimeout(Duration.ofMillis(configuration.blockingTimeout()))
             .validationTimeout(Duration.ofMillis(configuration.backgroundValidation()))
             .leakTimeout(Duration.ofMillis(configuration.leakDetection()))
-            .reapTimeout(Duration.ofMinutes(configuration.idleRemoval()));
+            .reapTimeout(Duration.ofMillis(configuration.idleRemoval()));
 
       if (driver.contains("postgresql")) {
          pool.exceptionSorter(new PostgreSQLExceptionSorter());

@@ -6,8 +6,8 @@
         <encoding media-type="application/x-protostream"/>
         <memory max-count="1000000"
                 when-full="REMOVE"/>
-        <expiration lifespan="5000"
-                    max-idle="1000"/>
+        <expiration lifespan="5s"
+                    max-idle="1s"/>
       </distributed-cache-configuration>
    </cache-container>
 </infinispan>

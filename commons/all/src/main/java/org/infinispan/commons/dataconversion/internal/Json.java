@@ -46,6 +46,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.util.TimeQuantity;
 
 /**
  * <p>
@@ -1189,6 +1190,8 @@ public class Json implements java.io.Serializable {
             return O;
          } else if (anything instanceof Boolean)
             return factory().bool((Boolean) anything);
+         else if (anything instanceof TimeQuantity)
+            return factory().string(anything.toString());
          else if (anything instanceof Number)
             return factory().number((Number) anything);
          else if (anything instanceof Enum) {

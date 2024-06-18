@@ -547,7 +547,7 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case STOP_TIMEOUT: {
-               builder.transaction().cacheStopTimeout(ParseUtils.parseLong(reader, i, value));
+               builder.transaction().cacheStopTimeout(value);
                break;
             }
             case MODE: {
@@ -567,11 +567,11 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case REAPER_WAKE_UP_INTERVAL: {
-               builder.transaction().reaperWakeUpInterval(ParseUtils.parseLong(reader, i, value));
+               builder.transaction().reaperWakeUpInterval(value);
                break;
             }
             case COMPLETED_TX_TIMEOUT: {
-               builder.transaction().completedTxTimeout(ParseUtils.parseLong(reader, i, value));
+               builder.transaction().completedTxTimeout(value);
                break;
             }
             case TRANSACTION_PROTOCOL: {
@@ -651,15 +651,15 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case MAX_IDLE: {
-               builder.expiration().maxIdle(ParseUtils.parseLong(reader, i, value));
+               builder.expiration().maxIdle(value);
                break;
             }
             case LIFESPAN: {
-               builder.expiration().lifespan(ParseUtils.parseLong(reader, i, value));
+               builder.expiration().lifespan(value);
                break;
             }
             case INTERVAL: {
-               builder.expiration().wakeUpInterval(ParseUtils.parseLong(reader, i, value));
+               builder.expiration().wakeUpInterval(value);
                break;
             }
             case TOUCH: {
@@ -750,7 +750,7 @@ public class CacheParser implements ConfigurationParser {
             break;
          }
          case REMOTE_TIMEOUT: {
-            builder.clustering().remoteTimeout(ParseUtils.parseLong(reader, index, value));
+            builder.clustering().remoteTimeout(value);
             break;
          }
          default: {
@@ -804,15 +804,11 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case L1_LIFESPAN: {
-               long lifespan = ParseUtils.parseLong(reader, i, value);
-               if (lifespan > 0)
-                  builder.clustering().l1().enable().lifespan(lifespan);
-               else
-                  builder.clustering().l1().disable();
+               builder.clustering().l1().lifespan(value);
                break;
             }
             case INVALIDATION_CLEANUP_TASK_FREQUENCY: {
-               builder.clustering().l1().cleanupTaskFrequency(ParseUtils.parseLong(reader, i, value));
+               builder.clustering().l1().cleanupTaskFrequency(value);
                break;
             }
             case CAPACITY:
@@ -948,7 +944,7 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(attrName);
          switch (attribute) {
             case REMOTE_TIMEOUT:
-               cclb.remoteCallTimeout(ParseUtils.parseLong(reader, i, value));
+               cclb.remoteCallTimeout(value);
                break;
             default:
                parseStoreAttribute(reader, i, cclb);

@@ -14,6 +14,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.Attribute;
 import org.infinispan.server.configuration.Element;
@@ -38,7 +39,7 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder(Attribute.NAME, null, String.class).build();
    static final AttributeDefinition<String> DEFAULT_REALM = AttributeDefinition.builder(Attribute.DEFAULT_REALM, null, String.class).immutable().build();
    static final AttributeDefinition<Integer> CACHE_MAX_SIZE = AttributeDefinition.builder(Attribute.CACHE_MAX_SIZE, 256).build();
-   static final AttributeDefinition<Long> CACHE_LIFESPAN = AttributeDefinition.builder(Attribute.CACHE_LIFESPAN, 60_000L).build();
+   static final AttributeDefinition<TimeQuantity> CACHE_LIFESPAN = AttributeDefinition.builder(Attribute.CACHE_LIFESPAN, TimeQuantity.valueOf("1m")).build();
    static final AttributeDefinition<EvidenceDecoder> EVIDENCE_DECODER = AttributeDefinition.builder(Attribute.EVIDENCE_DECODER, null, EvidenceDecoder.class).immutable().build();
    private final EnumSet<ServerSecurityRealm.Feature> features = EnumSet.noneOf(ServerSecurityRealm.Feature.class);
    Map<String, SecurityRealm> realms; // visible to DistributedRealmConfiguration
@@ -170,7 +171,7 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
       int maxEntries = attributes.attribute(CACHE_MAX_SIZE).get();
       if (maxEntries > 0 && realm instanceof CacheableSecurityRealm) {
          if (cache == null) {
-            cache = new LRURealmIdentityCache(maxEntries, attributes.attribute(CACHE_LIFESPAN).get());
+            cache = new LRURealmIdentityCache(maxEntries, attributes.attribute(CACHE_LIFESPAN).get().longValue());
          }
          if (realm instanceof ModifiableSecurityRealm) {
             return new CachingModifiableSecurityRealm((CacheableSecurityRealm) realm, cache);
