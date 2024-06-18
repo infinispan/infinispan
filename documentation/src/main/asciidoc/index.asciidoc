@@ -23,11 +23,11 @@ Infinispan provides distributed, in-memory data storage for modern cloud-native 
 Plan, configure, deploy, and manage Infinispan clusters.
 
 [unstyled]
-* link:titles/tuning/tuning.html[Performance considerations and tuning guidelines]
-* link:titles/server/server.html[Guide to Infinispan Server]
+* link:titles/server/server.html[Infinispan Server Guide]
 * link:titles/cli/cli.html[Using the Command Line Interface (CLI)]
 * link:titles/rest/rest.html[Using the REST API]
 * link:titles/security/security.html[Security guide]
+* link:titles/tuning/tuning.html[Performance considerations and tuning guidelines]
 * link:titles/upgrading/upgrading.html[Upgrading Infinispan deployments]
 
 [discrete]
@@ -45,6 +45,6 @@ Use Infinispan caching capabilities to boost application performance with a faul
 * link:titles/hotrod_protocol/hotrod_protocol.html[Hot Rod protocol reference]
 * link:titles/hibernate/hibernate.html[Hibernate second-level caching (2LC)]
 * link:titles/spring_boot/starter.html[Spring Boot Starter]
-* link:titles/resp/resp-endpoint.html[Using the RESP protocol endpoint with Infinispan]
-* link:titles/spring/spring.html[Spring Cache and Spring Sessions with Infinispan]
 * link:titles/memcached/memcached.html[Using the Memcached protocol endpoint with Infinispan]
+* link:titles/resp/resp-endpoint.html[Using the Redis-compatible RESP protocol endpoint with Infinispan]
+* link:titles/spring/spring.html[Spring Cache and Spring Sessions with Infinispan]
