@@ -4,6 +4,8 @@ on:
 jobs:
   image:
     runs-on: ubuntu-latest
+    env:
+      MAVEN_OPTS: "-Xmx1500m -XX:+HeapDumpOnOutOfMemoryError"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
