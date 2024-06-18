@@ -231,8 +231,8 @@
       <local-cache name="custom-default-max-results">
          <query default-max-results="10" hit-count-accuracy="1000" />
       </local-cache>
-      <distributed-cache name="dist" mode="SYNC" l1-lifespan="1200000" owners="4"
-                         remote-timeout="35000" segments="2" statistics="true"
+      <distributed-cache name="dist" mode="SYNC" l1-lifespan="20m" owners="4"
+                         remote-timeout="35s" segments="2" statistics="true"
                          consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
                          key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
          <backups max-cleanup-delay="60000" tombstone-map-size="128000" merge-policy="ALWAYS_REMOVE">
@@ -247,7 +247,7 @@
             </backup>
          </backups>
          <backup-for remote-cache="users" remote-site="LON"/>
-         <locking acquire-timeout="31500" concurrency-level="3500" isolation="READ_COMMITTED" striping="true"/>
+         <locking acquire-timeout="31.5s" concurrency-level="3500" isolation="READ_COMMITTED" striping="true"/>
          <transaction mode="FULL_XA" stop-timeout="61500" locking="OPTIMISTIC"/>
          <expiration interval="11500" lifespan="13" max-idle="13" touch="SYNC"/>
          <memory storage="OBJECT" max-count="21500"/>
@@ -377,7 +377,7 @@
       <local-cache-configuration name="local-template" statistics="true">
          <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
          <transaction mode="FULL_XA" stop-timeout="60000" locking="OPTIMISTIC" transaction-manager-lookup="org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup" complete-timeout="34000" reaper-interval="35000" auto-commit="true" />
-         <expiration interval="10000" lifespan="10" max-idle="10"/>
+         <expiration interval="10s" lifespan="10" max-idle="10"/>
          <persistence passivation="false">
             <file-store path="path" shared="false" preload="true" purge="false">
                <write-behind modification-queue-size="2048"/>

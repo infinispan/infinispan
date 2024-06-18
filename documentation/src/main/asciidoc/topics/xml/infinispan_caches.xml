@@ -10,7 +10,7 @@
                        mode="ASYNC"
                        statistics="true">
       <encoding media-type="application/x-protostream"/>
-      <expiration lifespan="300000"/>
+      <expiration lifespan="5m"/>
       <memory max-size="400MB"
               when-full="REMOVE"/>
     </distributed-cache>
@@ -18,7 +18,7 @@
                        mode="SYNC"
                        statistics="true">
       <encoding media-type="application/x-protostream"/>
-      <expiration lifespan="300000"/>
+      <expiration lifespan="5m"/>
       <memory max-size="400MB"
               when-full="REMOVE"/>
     </distributed-cache>

@@ -10,6 +10,7 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.configuration.attributes.PropertiesAttributeSerializer;
+import org.infinispan.commons.util.TimeQuantity;
 import org.wildfly.security.credential.source.CredentialSource;
 
 import io.agroal.api.configuration.AgroalConnectionFactoryConfiguration;
@@ -32,11 +33,11 @@ public class DataSourceConfiguration extends ConfigurationElement<DataSourceConf
    static final AttributeDefinition<Integer> MIN_SIZE = AttributeDefinition.builder(Attribute.MIN_SIZE, 0, Integer.class).build();
    static final AttributeDefinition<Integer> INITIAL_SIZE = AttributeDefinition.builder(Attribute.INITIAL_SIZE, 0, Integer.class).build();
 
-   static final AttributeDefinition<Long> BLOCKING_TIMEOUT = AttributeDefinition.builder(Attribute.BLOCKING_TIMEOUT, 0L, Long.class).build();
-   static final AttributeDefinition<Long> BACKGROUND_VALIDATION = AttributeDefinition.builder(Attribute.BACKGROUND_VALIDATION, 0L, Long.class).build();
-   static final AttributeDefinition<Long> VALIDATE_ON_ACQUISITION = AttributeDefinition.builder(Attribute.VALIDATE_ON_ACQUISITION, 0L, Long.class).build();
-   static final AttributeDefinition<Long> LEAK_DETECTION = AttributeDefinition.builder(Attribute.LEAK_DETECTION, 0L, Long.class).build();
-   static final AttributeDefinition<Integer> IDLE_REMOVAL = AttributeDefinition.builder(Attribute.IDLE_REMOVAL, 0, Integer.class).build();
+   static final AttributeDefinition<TimeQuantity> BLOCKING_TIMEOUT = AttributeDefinition.builder(Attribute.BLOCKING_TIMEOUT, TimeQuantity.valueOf(0)).build();
+   static final AttributeDefinition<TimeQuantity> BACKGROUND_VALIDATION = AttributeDefinition.builder(Attribute.BACKGROUND_VALIDATION, TimeQuantity.valueOf(0)).build();
+   static final AttributeDefinition<TimeQuantity> VALIDATE_ON_ACQUISITION = AttributeDefinition.builder(Attribute.VALIDATE_ON_ACQUISITION, TimeQuantity.valueOf(0)).build();
+   static final AttributeDefinition<TimeQuantity> LEAK_DETECTION = AttributeDefinition.builder(Attribute.LEAK_DETECTION, TimeQuantity.valueOf(0)).build();
+   static final AttributeDefinition<TimeQuantity> IDLE_REMOVAL = AttributeDefinition.builder(Attribute.IDLE_REMOVAL, TimeQuantity.valueOf(0)).build();
 
    static final AttributeDefinition<Map<String, String>> CONNECTION_PROPERTIES = AttributeDefinition.builder(Element.CONNECTION_PROPERTY, null, (Class<Map<String, String>>) (Class<?>) Map.class)
          .initializer(LinkedHashMap::new)
@@ -103,23 +104,23 @@ public class DataSourceConfiguration extends ConfigurationElement<DataSourceConf
    }
 
    public long blockingTimeout() {
-      return attributes.attribute(BLOCKING_TIMEOUT).get();
+      return attributes.attribute(BLOCKING_TIMEOUT).get().longValue();
    }
 
    public long backgroundValidation() {
-      return attributes.attribute(BACKGROUND_VALIDATION).get();
+      return attributes.attribute(BACKGROUND_VALIDATION).get().longValue();
    }
 
    public long validateOnAcquisition() {
-      return attributes.attribute(VALIDATE_ON_ACQUISITION).get();
+      return attributes.attribute(VALIDATE_ON_ACQUISITION).get().longValue();
    }
 
    public long leakDetection() {
-      return attributes.attribute(LEAK_DETECTION).get();
+      return attributes.attribute(LEAK_DETECTION).get().longValue();
    }
 
-   public int idleRemoval() {
-      return attributes.attribute(IDLE_REMOVAL).get();
+   public long idleRemoval() {
+      return attributes.attribute(IDLE_REMOVAL).get().longValue();
    }
 
    public Map<String, String> connectionProperties() {

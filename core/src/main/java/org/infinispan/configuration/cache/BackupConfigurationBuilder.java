@@ -11,6 +11,7 @@ import static org.infinispan.util.logging.Log.CONFIG;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.xsite.XSiteNamedCache;
 
@@ -72,7 +73,15 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
     * Timeout(millis) used for replicating calls to other sites.
     */
    public BackupConfigurationBuilder replicationTimeout(long replicationTimeout) {
-      attributes.attribute(REPLICATION_TIMEOUT).set(replicationTimeout);
+      attributes.attribute(REPLICATION_TIMEOUT).set(TimeQuantity.valueOf(replicationTimeout));
+      return this;
+   }
+
+   /**
+    * Same as {@link #replicationTimeout(long)} but supporting time units.
+    */
+   public BackupConfigurationBuilder replicationTimeout(String replicationTimeout) {
+      attributes.attribute(REPLICATION_TIMEOUT).set(TimeQuantity.valueOf(replicationTimeout));
       return this;
    }
 

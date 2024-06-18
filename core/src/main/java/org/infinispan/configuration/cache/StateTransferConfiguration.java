@@ -1,11 +1,10 @@
 package org.infinispan.configuration.cache;
 
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.parsing.Element;
 
 /**
@@ -17,7 +16,7 @@ import org.infinispan.configuration.parsing.Element;
 public class StateTransferConfiguration extends ConfigurationElement<StateTransferConfiguration> {
    public static final AttributeDefinition<Boolean> AWAIT_INITIAL_TRANSFER = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AWAIT_INITIAL_TRANSFER, true).immutable().build();
    public static final AttributeDefinition<Boolean> FETCH_IN_MEMORY_STATE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, true).immutable().build();
-   public static final AttributeDefinition<Long> TIMEOUT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.TIMEOUT, TimeUnit.MINUTES.toMillis(4)).immutable().build();
+   public static final AttributeDefinition<TimeQuantity> TIMEOUT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.TIMEOUT, TimeQuantity.valueOf("4m")).parser(TimeQuantity.PARSER).immutable().build();
    public static final AttributeDefinition<Integer> CHUNK_SIZE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CHUNK_SIZE, 512).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
@@ -26,7 +25,7 @@ public class StateTransferConfiguration extends ConfigurationElement<StateTransf
 
    private final Attribute<Boolean> awaitInitialTransfer;
    private final Attribute<Boolean> fetchInMemoryState;
-   private final Attribute<Long> timeout;
+   private final Attribute<TimeQuantity> timeout;
    private final Attribute<Integer> chunkSize;
 
    StateTransferConfiguration(AttributeSet attributes) {
@@ -54,7 +53,7 @@ public class StateTransferConfiguration extends ConfigurationElement<StateTransf
     * caches, before throwing an exception and aborting startup.
     */
    public long timeout() {
-      return timeout.get();
+      return timeout.get().longValue();
    }
 
    /**
@@ -65,7 +64,7 @@ public class StateTransferConfiguration extends ConfigurationElement<StateTransf
     */
    @Deprecated(forRemoval=true, since = "12.1")
    public StateTransferConfiguration timeout(long l) {
-      timeout.set(l);
+      timeout.set(TimeQuantity.valueOf(l));
       return this;
    }
 

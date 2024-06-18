@@ -17,3 +17,17 @@ If you declare caches as part of your {brandname} Server configuration you shoul
 
 To dynamically synchronize remote caches across {brandname} clusters, create them at runtime.
 ====
+
+[TIP]
+====
+Wherever a time quantity, such as a timeout or an interval, is specified within a declarative configuration, it is possible
+to describe it using time units:
+
+* **ms**:  milliseconds
+* **s**:  seconds
+* **m**:  minutes
+* **h**:  hours
+* **d**:  days
+
+Examples: `1000`,  `1s`,  `1.5h`, `10m`.
+====

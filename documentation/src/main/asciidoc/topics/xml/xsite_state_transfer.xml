@@ -3,9 +3,9 @@
     <backup site="LON"
             strategy="ASYNC">
       <state-transfer chunk-size="600"
-                      timeout="2400000"
+                      timeout="40m"
                       max-retries="30"
-                      wait-time="2000"
+                      wait-time="2s"
                       mode="AUTO"/>
     </backup>
   </backups>

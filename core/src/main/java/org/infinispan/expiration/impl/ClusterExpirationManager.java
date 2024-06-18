@@ -18,6 +18,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -33,7 +34,6 @@ import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -79,7 +79,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       configuration.clustering()
                    .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
                    .addListener((a, ignored) -> {
-                      timeout = a.get();
+                      timeout = a.get().longValue();
                    });
    }
 

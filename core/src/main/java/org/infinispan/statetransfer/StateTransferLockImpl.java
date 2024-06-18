@@ -60,7 +60,7 @@ public class StateTransferLockImpl implements StateTransferLock {
       configuration.clustering()
                    .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
                    .addListener((a, ignored) -> {
-                      remoteTimeout = a.get();
+                      remoteTimeout = a.get().longValue();
                    });
    }
 

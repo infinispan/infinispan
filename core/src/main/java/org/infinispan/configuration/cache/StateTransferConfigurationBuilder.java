@@ -12,6 +12,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -71,7 +72,15 @@ public class StateTransferConfigurationBuilder extends
     * Must be greater than or equal to 'remote-timeout' in the clustering configuration.
     */
    public StateTransferConfigurationBuilder timeout(long l) {
-      attributes.attribute(TIMEOUT).set(l);
+      attributes.attribute(TIMEOUT).set(TimeQuantity.valueOf(l));
+      return this;
+   }
+
+   /**
+    * Same as {@link #timeout(long)} but supporting time units
+    */
+   public StateTransferConfigurationBuilder timeout(String s) {
+      attributes.attribute(TIMEOUT).set(TimeQuantity.valueOf(s));
       return this;
    }
 
@@ -104,10 +113,10 @@ public class StateTransferConfigurationBuilder extends
             && !getClusteringBuilder().cacheMode().needsStateTransfer())
          throw CONFIG.awaitInitialTransferOnlyForDistOrRepl();
 
-      Attribute<Long> timeoutAttribute = attributes.attribute(TIMEOUT);
-      Attribute<Long> remoteTimeoutAttribute = clustering().attributes.attribute(ClusteringConfiguration.REMOTE_TIMEOUT);
-      if (timeoutAttribute.get() < remoteTimeoutAttribute.get()) {
-         throw CONFIG.invalidStateTransferTimeout(timeoutAttribute.get(), remoteTimeoutAttribute.get());
+      Attribute<TimeQuantity> timeoutAttribute = attributes.attribute(TIMEOUT);
+      Attribute<TimeQuantity> remoteTimeoutAttribute = clustering().attributes.attribute(ClusteringConfiguration.REMOTE_TIMEOUT);
+      if (timeoutAttribute.get().longValue() < remoteTimeoutAttribute.get().longValue()) {
+         throw CONFIG.invalidStateTransferTimeout(timeoutAttribute.get().toString(), remoteTimeoutAttribute.get().toString());
       }
    }
 

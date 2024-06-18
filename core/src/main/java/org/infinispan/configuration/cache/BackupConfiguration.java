@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.parsing.Attribute;
 import org.infinispan.configuration.parsing.Element;
 
@@ -13,7 +14,7 @@ import org.infinispan.configuration.parsing.Element;
 public class BackupConfiguration extends ConfigurationElement<BackupConfiguration> {
    public static final AttributeDefinition<String> SITE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.SITE, null, String.class).autoPersist(false).immutable().build();
    public static final AttributeDefinition<BackupConfiguration.BackupStrategy> STRATEGY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STRATEGY, BackupConfiguration.BackupStrategy.ASYNC).immutable().build();
-   public static final AttributeDefinition<Long> REPLICATION_TIMEOUT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.TIMEOUT, 15000L).build();
+   public static final AttributeDefinition<TimeQuantity> REPLICATION_TIMEOUT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.TIMEOUT, TimeQuantity.valueOf("15s")).parser(TimeQuantity.PARSER).build();
    public static final AttributeDefinition<BackupFailurePolicy> FAILURE_POLICY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.BACKUP_FAILURE_POLICY, BackupFailurePolicy.WARN).build();
    public static final AttributeDefinition<String> FAILURE_POLICY_CLASS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.FAILURE_POLICY_CLASS, null, String.class).immutable().build();
    public static final AttributeDefinition<Boolean> USE_TWO_PHASE_COMMIT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.USE_TWO_PHASE_COMMIT, false).immutable().build();
@@ -68,7 +69,7 @@ public class BackupConfiguration extends ConfigurationElement<BackupConfiguratio
    }
 
    public long replicationTimeout() {
-      return attributes.attribute(REPLICATION_TIMEOUT).get();
+      return attributes.attribute(REPLICATION_TIMEOUT).get().longValue();
    }
 
    /**

@@ -240,7 +240,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case LOCK_TIMEOUT: {
-               builder.topologyLockTimeout(Long.parseLong(value));
+               builder.topologyLockTimeout(value);
                break;
             }
             case AWAIT_INITIAL_RETRIEVAL: {
@@ -248,7 +248,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case REPLICATION_TIMEOUT: {
-               builder.topologyReplTimeout(Long.parseLong(value));
+               builder.topologyReplTimeout(value);
                break;
             }
             case LAZY_RETRIEVAL: {

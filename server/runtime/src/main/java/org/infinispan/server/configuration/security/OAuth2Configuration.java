@@ -11,6 +11,7 @@ import java.util.function.Supplier;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.Attribute;
 import org.infinispan.server.configuration.Element;
@@ -31,8 +32,8 @@ public class OAuth2Configuration extends ConfigurationElement<OAuth2Configuratio
    static final AttributeDefinition<String> CLIENT_SSL_CONTEXT = AttributeDefinition.builder(Attribute.CLIENT_SSL_CONTEXT, null, String.class).immutable().build();
    static final AttributeDefinition<String> HOST_VERIFICATION_POLICY = AttributeDefinition.builder(Attribute.HOST_NAME_VERIFICATION_POLICY, null, String.class).immutable().build();
    static final AttributeDefinition<String> INTROSPECTION_URL = AttributeDefinition.builder(Attribute.INTROSPECTION_URL, null, String.class).immutable().build();
-   static final AttributeDefinition<Integer> CONNECTION_TIMEOUT = AttributeDefinition.builder(Attribute.CONNECTION_TIMEOUT, 2000, Integer.class).immutable().build();
-   static final AttributeDefinition<Integer> READ_TIMEOUT = AttributeDefinition.builder(Attribute.READ_TIMEOUT, 2000, Integer.class).immutable().build();
+   static final AttributeDefinition<TimeQuantity> CONNECTION_TIMEOUT = AttributeDefinition.builder(Attribute.CONNECTION_TIMEOUT, TimeQuantity.valueOf("2s")).immutable().build();
+   static final AttributeDefinition<TimeQuantity> READ_TIMEOUT = AttributeDefinition.builder(Attribute.READ_TIMEOUT, TimeQuantity.valueOf("2s")).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(OAuth2Configuration.class, CLIENT_ID, CLIENT_SSL_CONTEXT, INTROSPECTION_URL, HOST_VERIFICATION_POLICY, CONNECTION_TIMEOUT, READ_TIMEOUT, CLIENT_SECRET);
@@ -46,6 +47,8 @@ public class OAuth2Configuration extends ConfigurationElement<OAuth2Configuratio
       OAuth2IntrospectValidator.Builder validatorBuilder = OAuth2IntrospectValidator.builder();
       validatorBuilder.clientId(attributes.attribute(CLIENT_ID).get());
       validatorBuilder.clientSecret(new String(resolvePassword(attributes.attribute(CLIENT_SECRET))));
+      validatorBuilder.connectionTimeout(attributes.attribute(CONNECTION_TIMEOUT).get().intValue());
+      validatorBuilder.readTimeout(attributes.attribute(READ_TIMEOUT).get().intValue());
       final URL url;
       try {
          url = new URI(attributes.attribute(INTROSPECTION_URL).get()).toURL();

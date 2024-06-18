@@ -1,1 +1,1 @@
-<locking acquire-timeout="10000"/>
+<locking acquire-timeout="10s"/>

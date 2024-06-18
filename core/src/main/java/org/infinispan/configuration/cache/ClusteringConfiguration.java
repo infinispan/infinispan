@@ -1,11 +1,10 @@
 package org.infinispan.configuration.cache;
 
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.parsing.Element;
 
 
@@ -18,15 +17,15 @@ import org.infinispan.configuration.parsing.Element;
 public class ClusteringConfiguration extends ConfigurationElement<ClusteringConfiguration> {
    public static final AttributeDefinition<CacheType> CACHE_TYPE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.TYPE, CacheType.LOCAL).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Boolean> CACHE_SYNC = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MODE, true, Boolean.class).immutable().autoPersist(false).build();
-   public static final AttributeDefinition<Long> REMOTE_TIMEOUT =
-         AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.REMOTE_TIMEOUT, TimeUnit.SECONDS.toMillis(15)).build();
+   public static final AttributeDefinition<TimeQuantity> REMOTE_TIMEOUT =
+         AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.REMOTE_TIMEOUT, TimeQuantity.valueOf("15s")).parser(TimeQuantity.PARSER).build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(ClusteringConfiguration.class, CACHE_TYPE, CACHE_SYNC, REMOTE_TIMEOUT);
    }
 
    private final CacheMode cacheMode;
-   private final Attribute<Long> remoteTimeout;
+   private final Attribute<TimeQuantity> remoteTimeout;
    private final HashConfiguration hashConfiguration;
    private final L1Configuration l1Configuration;
    private final StateTransferConfiguration stateTransferConfiguration;
@@ -56,7 +55,7 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
     * the call is aborted and an exception is thrown.
     */
    public long remoteTimeout() {
-      return remoteTimeout.get();
+      return remoteTimeout.get().longValue();
    }
 
    /**
@@ -64,7 +63,11 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
     * the call is aborted and an exception is thrown.
     */
    public void remoteTimeout(long timeoutMillis) {
-      remoteTimeout.set(timeoutMillis);
+      remoteTimeout.set(TimeQuantity.valueOf(timeoutMillis));
+   }
+
+   public void remoteTimeout(String timeout) {
+      remoteTimeout.set(TimeQuantity.valueOf(timeout));
    }
 
    /**

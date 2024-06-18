@@ -1,11 +1,10 @@
 package org.infinispan.configuration.cache;
 
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.expiration.TouchMode;
 
@@ -13,20 +12,20 @@ import org.infinispan.expiration.TouchMode;
  * Controls the default expiration settings for entries in the cache.
  */
 public class ExpirationConfiguration extends ConfigurationElement<ExpirationConfiguration> {
-   public static final AttributeDefinition<Long> LIFESPAN = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.LIFESPAN, -1L).build();
-   public static final AttributeDefinition<Long> MAX_IDLE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MAX_IDLE, -1L).build();
+   public static final AttributeDefinition<TimeQuantity> LIFESPAN = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.LIFESPAN, TimeQuantity.valueOf(null, -1)).parser(TimeQuantity.PARSER).build();
+   public static final AttributeDefinition<TimeQuantity> MAX_IDLE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MAX_IDLE, TimeQuantity.valueOf(null, -1)).parser(TimeQuantity.PARSER).build();
    public static final AttributeDefinition<Boolean> REAPER_ENABLED = AttributeDefinition.builder("reaperEnabled", true).immutable().autoPersist(false).build();
-   public static final AttributeDefinition<Long> WAKEUP_INTERVAL = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.INTERVAL, TimeUnit.MINUTES.toMillis(1)).build();
+   public static final AttributeDefinition<TimeQuantity> WAKEUP_INTERVAL = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.INTERVAL, TimeQuantity.valueOf("1m")).parser(TimeQuantity.PARSER).build();
    public static final AttributeDefinition<TouchMode> TOUCH = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.TOUCH, TouchMode.SYNC).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(ExpirationConfiguration.class, LIFESPAN, MAX_IDLE, REAPER_ENABLED, WAKEUP_INTERVAL, TOUCH);
    }
 
-   private final Attribute<Long> lifespan;
-   private final Attribute<Long> maxIdle;
+   private final Attribute<TimeQuantity> lifespan;
+   private final Attribute<TimeQuantity> maxIdle;
    private final Attribute<Boolean> reaperEnabled;
-   private final Attribute<Long> wakeUpInterval;
+   private final Attribute<TimeQuantity> wakeUpInterval;
    private final Attribute<TouchMode> touch;
 
    ExpirationConfiguration(AttributeSet attributes) {
@@ -45,7 +44,7 @@ public class ExpirationConfiguration extends ConfigurationElement<ExpirationConf
     * Note that this can be overridden on a per-entry basis by using the Cache API.
     */
    public long lifespan() {
-      return lifespan.get();
+      return lifespan.get().longValue();
    }
 
    /**
@@ -55,7 +54,7 @@ public class ExpirationConfiguration extends ConfigurationElement<ExpirationConf
     * Note that this can be overridden on a per-entry basis by using the Cache API.
     */
    public long maxIdle() {
-      return maxIdle.get();
+      return maxIdle.get().longValue();
    }
 
    /**
@@ -73,7 +72,7 @@ public class ExpirationConfiguration extends ConfigurationElement<ExpirationConf
     * wakeupInterval to -1.
     */
    public long wakeUpInterval() {
-      return wakeUpInterval.get();
+      return wakeUpInterval.get().longValue();
    }
 
    /**

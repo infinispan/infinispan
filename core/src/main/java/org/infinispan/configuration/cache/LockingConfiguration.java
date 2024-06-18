@@ -1,11 +1,10 @@
 package org.infinispan.configuration.cache;
 
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.parsing.Element;
 
 /**
@@ -17,7 +16,7 @@ import org.infinispan.configuration.parsing.Element;
 public class LockingConfiguration extends ConfigurationElement<LockingConfiguration> {
    public static final AttributeDefinition<Integer> CONCURRENCY_LEVEL = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CONCURRENCY_LEVEL, 32).immutable().build();
    public static final AttributeDefinition<IsolationLevel> ISOLATION_LEVEL  = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ISOLATION, IsolationLevel.REPEATABLE_READ).immutable().build();
-   public static final AttributeDefinition<Long> LOCK_ACQUISITION_TIMEOUT  = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ACQUIRE_TIMEOUT, TimeUnit.SECONDS.toMillis(10)).build();
+   public static final AttributeDefinition<TimeQuantity> LOCK_ACQUISITION_TIMEOUT  = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ACQUIRE_TIMEOUT, TimeQuantity.valueOf("10s")).parser(TimeQuantity.PARSER).build();
    public static final AttributeDefinition<Boolean> USE_LOCK_STRIPING = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STRIPING, false).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
@@ -31,7 +30,7 @@ public class LockingConfiguration extends ConfigurationElement<LockingConfigurat
 
    private final Attribute<Integer> concurrencyLevel;
    private final Attribute<IsolationLevel> isolationLevel;
-   private final Attribute<Long> lockAcquisitionTimeout;
+   private final Attribute<TimeQuantity> lockAcquisitionTimeout;
    private final Attribute<Boolean> useLockStriping;
 
    LockingConfiguration(AttributeSet attributes) {
@@ -73,11 +72,16 @@ public class LockingConfiguration extends ConfigurationElement<LockingConfigurat
     * Maximum time to attempt a particular lock acquisition
     */
    public long lockAcquisitionTimeout() {
-      return lockAcquisitionTimeout.get();
+      return lockAcquisitionTimeout.get().longValue();
    }
 
    public LockingConfiguration lockAcquisitionTimeout(long timeout) {
-      lockAcquisitionTimeout.set(timeout);
+      lockAcquisitionTimeout.set(TimeQuantity.valueOf(timeout));
+      return this;
+   }
+
+   public LockingConfiguration lockAcquisitionTimeout(String timeout) {
+      lockAcquisitionTimeout.set(TimeQuantity.valueOf(timeout));
       return this;
    }
 

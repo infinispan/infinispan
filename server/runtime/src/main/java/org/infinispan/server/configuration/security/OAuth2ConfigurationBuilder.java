@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.server.security.PasswordCredentialSource;
 import org.wildfly.security.credential.source.CredentialSource;
 
@@ -57,13 +58,13 @@ public class OAuth2ConfigurationBuilder implements Builder<OAuth2Configuration> 
       return this;
    }
 
-   public OAuth2ConfigurationBuilder connectionTimeout(int timeout) {
-      attributes.attribute(OAuth2Configuration.CONNECTION_TIMEOUT).set(timeout);
+   public OAuth2ConfigurationBuilder connectionTimeout(String timeout) {
+      attributes.attribute(OAuth2Configuration.CONNECTION_TIMEOUT).set(TimeQuantity.valueOf(timeout));
       return this;
    }
 
-   public OAuth2ConfigurationBuilder readTimeout(int timeout) {
-      attributes.attribute(OAuth2Configuration.READ_TIMEOUT).set(timeout);
+   public OAuth2ConfigurationBuilder readTimeout(String timeout) {
+      attributes.attribute(OAuth2Configuration.READ_TIMEOUT).set(TimeQuantity.valueOf(timeout));
       return this;
    }
 

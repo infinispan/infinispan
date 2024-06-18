@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.partitionhandling.PartitionHandling;
 
@@ -70,7 +71,15 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
     * the call is aborted and an exception is thrown.
     */
    public ClusteringConfigurationBuilder remoteTimeout(long l) {
-      attributes.attribute(REMOTE_TIMEOUT).set(l);
+      attributes.attribute(REMOTE_TIMEOUT).set(TimeQuantity.valueOf(l));
+      return this;
+   }
+
+   /**
+    * Same as {@link #remoteTimeout(long)} but supporting time units.
+    */
+   public ClusteringConfigurationBuilder remoteTimeout(String s) {
+      attributes.attribute(REMOTE_TIMEOUT).set(TimeQuantity.valueOf(s));
       return this;
    }
 

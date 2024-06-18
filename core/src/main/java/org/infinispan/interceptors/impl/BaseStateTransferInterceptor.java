@@ -68,7 +68,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       transactionDataTimeout = configuration.clustering().remoteTimeout();
       configuration.clustering().attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
                    .addListener((a, ignored) -> {
-                      transactionDataTimeout = a.get();
+                      transactionDataTimeout = a.get().longValue();
                    });
    }
 

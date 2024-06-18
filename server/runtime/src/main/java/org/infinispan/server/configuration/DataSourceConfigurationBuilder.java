@@ -7,6 +7,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.server.security.PasswordCredentialSource;
 import org.wildfly.security.credential.source.CredentialSource;
 
@@ -88,28 +89,28 @@ public class DataSourceConfigurationBuilder implements Builder<DataSourceConfigu
       return this;
    }
 
-   public DataSourceConfigurationBuilder blockingTimeout(long blockingTimeout) {
-      attributes.attribute(DataSourceConfiguration.BLOCKING_TIMEOUT).set(blockingTimeout);
+   public DataSourceConfigurationBuilder blockingTimeout(String blockingTimeout) {
+      attributes.attribute(DataSourceConfiguration.BLOCKING_TIMEOUT).set(TimeQuantity.valueOf(blockingTimeout));
       return this;
    }
 
-   public DataSourceConfigurationBuilder backgroundValidation(long backgroundValidation) {
-      attributes.attribute(DataSourceConfiguration.BACKGROUND_VALIDATION).set(backgroundValidation);
+   public DataSourceConfigurationBuilder backgroundValidation(String backgroundValidation) {
+      attributes.attribute(DataSourceConfiguration.BACKGROUND_VALIDATION).set(TimeQuantity.valueOf(backgroundValidation));
       return this;
    }
 
-   public DataSourceConfigurationBuilder validateOnAcquisition(long validateOnAcquisition) {
-      attributes.attribute(DataSourceConfiguration.VALIDATE_ON_ACQUISITION).set(validateOnAcquisition);
+   public DataSourceConfigurationBuilder validateOnAcquisition(String validateOnAcquisition) {
+      attributes.attribute(DataSourceConfiguration.VALIDATE_ON_ACQUISITION).set(TimeQuantity.valueOf(validateOnAcquisition));
       return this;
    }
 
-   public DataSourceConfigurationBuilder leakDetection(long leakDetection) {
-      attributes.attribute(DataSourceConfiguration.LEAK_DETECTION).set(leakDetection);
+   public DataSourceConfigurationBuilder leakDetection(String leakDetection) {
+      attributes.attribute(DataSourceConfiguration.LEAK_DETECTION).set(TimeQuantity.valueOf(leakDetection));
       return this;
    }
 
-   public DataSourceConfigurationBuilder idleRemoval(int idleRemoval) {
-      attributes.attribute(DataSourceConfiguration.IDLE_REMOVAL).set(idleRemoval);
+   public DataSourceConfigurationBuilder idleRemoval(String idleRemoval) {
+      attributes.attribute(DataSourceConfiguration.IDLE_REMOVAL).set(TimeQuantity.valueOf(idleRemoval));
       return this;
    }
 

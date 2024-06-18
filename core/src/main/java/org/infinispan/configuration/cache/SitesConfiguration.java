@@ -14,6 +14,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.xsite.spi.XSiteEntryMergePolicy;
@@ -32,7 +33,8 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
          .serializer(MergePolicyAttributeUtil.INSTANCE)
          .immutable()
          .build();
-   public static final AttributeDefinition<Long> MAX_CLEANUP_DELAY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MAX_CLEANUP_DELAY, 30000L)
+   public static final AttributeDefinition<TimeQuantity> MAX_CLEANUP_DELAY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MAX_CLEANUP_DELAY, TimeQuantity.valueOf("30s"))
+         .parser(TimeQuantity.PARSER)
          .validator(greaterThanZero(org.infinispan.configuration.parsing.Attribute.MAX_CLEANUP_DELAY))
          .immutable()
          .build();
@@ -168,7 +170,7 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
     * @return The maximum delay, in milliseconds, between which tombstone cleanup tasks run.
     */
    public long maxTombstoneCleanupDelay() {
-      return attributes.attribute(MAX_CLEANUP_DELAY).get();
+      return attributes.attribute(MAX_CLEANUP_DELAY).get().longValue();
    }
 
    /**

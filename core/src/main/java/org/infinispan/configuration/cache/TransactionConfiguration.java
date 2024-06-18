@@ -2,14 +2,13 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.commons.configuration.attributes.IdentityAttributeCopier.identityCopier;
 
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
@@ -24,7 +23,7 @@ import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLooku
  */
 public class TransactionConfiguration extends ConfigurationElement<TransactionConfiguration> {
    public static final AttributeDefinition<Boolean> AUTO_COMMIT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AUTO_COMMIT, true).immutable().build();
-   public static final AttributeDefinition<Long> CACHE_STOP_TIMEOUT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STOP_TIMEOUT, TimeUnit.SECONDS.toMillis(30)).build();
+   public static final AttributeDefinition<TimeQuantity> CACHE_STOP_TIMEOUT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STOP_TIMEOUT, TimeQuantity.valueOf("30s")).parser(TimeQuantity.PARSER).build();
    public static final AttributeDefinition<LockingMode> LOCKING_MODE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.LOCKING, LockingMode.OPTIMISTIC)
          .immutable().build();
    public static final AttributeDefinition<TransactionManagerLookup> TRANSACTION_MANAGER_LOOKUP = AttributeDefinition.<TransactionManagerLookup>builder(org.infinispan.configuration.parsing.Attribute.TRANSACTION_MANAGER_LOOKUP_CLASS, GenericTransactionManagerLookup.INSTANCE)
@@ -37,8 +36,8 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
          .autoPersist(false).build();
    public static final AttributeDefinition<Boolean> USE_SYNCHRONIZATION = AttributeDefinition.builder("synchronization", false).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Boolean> USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS = AttributeDefinition.builder("single-phase-auto-commit", false).build();
-   public static final AttributeDefinition<Long> REAPER_WAKE_UP_INTERVAL = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.REAPER_WAKE_UP_INTERVAL, 30000L).immutable().build();
-   public static final AttributeDefinition<Long> COMPLETED_TX_TIMEOUT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.COMPLETED_TX_TIMEOUT, 60000L).immutable().build();
+   public static final AttributeDefinition<TimeQuantity> REAPER_WAKE_UP_INTERVAL = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.REAPER_WAKE_UP_INTERVAL, TimeQuantity.valueOf("30s")).parser(TimeQuantity.PARSER).immutable().build();
+   public static final AttributeDefinition<TimeQuantity> COMPLETED_TX_TIMEOUT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.COMPLETED_TX_TIMEOUT, TimeQuantity.valueOf("1m")).parser(TimeQuantity.PARSER).immutable().build();
    public static final AttributeDefinition<Boolean> NOTIFICATIONS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.NOTIFICATIONS, true).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
@@ -52,18 +51,17 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
    }
 
    private final Attribute<Boolean> autoCommit;
-   private final Attribute<Long> cacheStopTimeout;
+   private final Attribute<TimeQuantity> cacheStopTimeout;
    private final Attribute<LockingMode> lockingMode;
    private final Attribute<TransactionManagerLookup> transactionManagerLookup;
    private final Attribute<TransactionSynchronizationRegistryLookup> transactionSynchronizationRegistryLookup;
    private final Attribute<TransactionMode> transactionMode;
    private final Attribute<Boolean> useSynchronization;
    private final Attribute<Boolean> use1PcForAutoCommitTransactions;
-   private final Attribute<Long> reaperWakeUpInterval;
-   private final Attribute<Long> completedTxTimeout;
+   private final Attribute<TimeQuantity> reaperWakeUpInterval;
+   private final Attribute<TimeQuantity> completedTxTimeout;
    private final Attribute<Boolean> notifications;
    private final RecoveryConfiguration recovery;
-   private final boolean invocationBatching;
 
    TransactionConfiguration(AttributeSet attributes, RecoveryConfiguration recovery, boolean invocationBatching) {
       super(Element.TRANSACTION, attributes, recovery);
@@ -79,7 +77,6 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
       completedTxTimeout = attributes.attribute(COMPLETED_TX_TIMEOUT);
       notifications = attributes.attribute(NOTIFICATIONS);
       this.recovery = recovery;
-      this.invocationBatching = invocationBatching;
    }
 
    /**
@@ -98,9 +95,18 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
     * the cache was stopped, this could only last as long as the transaction timeout allows it.
     */
    public TransactionConfiguration cacheStopTimeout(long l) {
-      cacheStopTimeout.set(l);
+      cacheStopTimeout.set(TimeQuantity.valueOf(l));
       return this;
    }
+
+   /**
+    * Same as {@link #cacheStopTimeout(long)} but supports time-units
+    */
+   public TransactionConfiguration cacheStopTimeout(String s) {
+      cacheStopTimeout.set(TimeQuantity.valueOf(s));
+      return this;
+   }
+
 
    /**
     * If there are any ongoing transactions when a cache is stopped, Infinispan waits for ongoing remote and local
@@ -109,7 +115,7 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
     * the cache was stopped, this could only last as long as the transaction timeout allows it.
     */
    public long cacheStopTimeout() {
-      return cacheStopTimeout.get();
+      return cacheStopTimeout.get().longValue();
    }
 
    /**
@@ -170,14 +176,14 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
     * @see TransactionConfigurationBuilder#reaperWakeUpInterval(long)
     */
    public long reaperWakeUpInterval() {
-      return reaperWakeUpInterval.get();
+      return reaperWakeUpInterval.get().longValue();
    }
 
    /**
     * @see TransactionConfigurationBuilder#completedTxTimeout(long)
     */
    public long completedTxTimeout() {
-      return completedTxTimeout.get();
+      return completedTxTimeout.get().longValue();
    }
 
    /**

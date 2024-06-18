@@ -91,6 +91,26 @@ public class TypedProperties extends Properties {
       }
    }
 
+   public long getDurationProperty(String key, long defaultValue) {
+      return getDurationProperty(key, defaultValue, false);
+   }
+
+   public long getDurationProperty(String key, long defaultValue, boolean doStringReplace) {
+      Object value = this.get(key);
+      if (value instanceof Long) {
+         return (long) value;
+      } else {
+         return getPropertyFn(value, defaultValue, doStringReplace, valueStr -> {
+            try {
+               return TimeQuantity.valueOf(valueStr).longValue();
+            } catch (NumberFormatException nfe) {
+               log.unableToConvertStringPropertyToLong(valueStr, defaultValue);
+               return defaultValue;
+            }
+         });
+      }
+   }
+
    public boolean getBooleanProperty(String key, boolean defaultValue) {
       return getBooleanProperty(key, defaultValue, false);
    }

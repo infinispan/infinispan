@@ -152,7 +152,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       cacheConfiguration.clustering()
                    .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
                    .addListener((a, ignored) -> {
-                      rpcOptions = new RpcOptions(DeliverOrder.NONE, a.get() * 3, TimeUnit.MILLISECONDS);
+                      rpcOptions = new RpcOptions(DeliverOrder.NONE, a.get().longValue() * 3, TimeUnit.MILLISECONDS);
                    });
    }
 

@@ -2,7 +2,7 @@
   <backups>
     <backup site="NYC"
             strategy="ASYNC"
-            timeout="10000">
+            timeout="10s">
       <take-offline after-failures="5" min-wait="15000"/>
     </backup>
   </backups>

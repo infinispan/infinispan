@@ -98,7 +98,7 @@ public class RestServerResource {
       assertEquals(2, cacheDefaults.at("local-cache").at("clustering").at("hash").at("owners").asInteger());
       assertEquals(-1, cacheDefaults.at("local-cache").at("expiration").at("lifespan").asInteger());
       assertEquals("REPEATABLE_READ", cacheDefaults.at("local-cache").at("locking").at("isolation").asString());
-      assertEquals(30000, cacheDefaults.at("local-cache").at("transaction").at("reaper-interval").asInteger());
-      assertEquals(30000, cacheDefaults.at("local-cache").at("sites").at("max-cleanup-delay").asInteger());
+      assertEquals("30s", cacheDefaults.at("local-cache").at("transaction").at("reaper-interval").asString());
+      assertEquals("30s", cacheDefaults.at("local-cache").at("sites").at("max-cleanup-delay").asString());
    }
 }

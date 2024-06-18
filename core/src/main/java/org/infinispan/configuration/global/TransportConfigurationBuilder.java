@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.transport.Transport;
@@ -102,7 +103,15 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
     * @return
     */
    public TransportConfigurationBuilder distributedSyncTimeout(long distributedSyncTimeout) {
-      attributes.attribute(DISTRIBUTED_SYNC_TIMEOUT).set(distributedSyncTimeout);
+      attributes.attribute(DISTRIBUTED_SYNC_TIMEOUT).set(TimeQuantity.valueOf(distributedSyncTimeout));
+      return this;
+   }
+
+   /**
+    * Same as {@link #distributedSyncTimeout(long)} but supporting time units
+    */
+   public TransportConfigurationBuilder distributedSyncTimeout(String  distributedSyncTimeout) {
+      attributes.attribute(DISTRIBUTED_SYNC_TIMEOUT).set(TimeQuantity.valueOf(distributedSyncTimeout));
       return this;
    }
 
@@ -129,7 +138,16 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
     * Sets the timeout for the initial cluster to form. Defaults to 1 minute
     */
    public TransportConfigurationBuilder initialClusterTimeout(long initialClusterTimeout, TimeUnit unit) {
-      attributes.attribute(INITIAL_CLUSTER_TIMEOUT).set(unit.toMillis(initialClusterTimeout));
+      attributes.attribute(INITIAL_CLUSTER_TIMEOUT).set(TimeQuantity.valueOf(unit.toMillis(initialClusterTimeout)));
+      return this;
+   }
+
+   /**
+    * Same as {@link #initialClusterTimeout(long, TimeUnit)} but supporting time units.
+    */
+
+   public TransportConfigurationBuilder initialClusterTimeout(String initialClusterTimeout) {
+      attributes.attribute(INITIAL_CLUSTER_TIMEOUT).set(TimeQuantity.valueOf(initialClusterTimeout));
       return this;
    }
 

@@ -5,13 +5,13 @@
   <locking isolation="REPEATABLE_READ"/>
   <transaction mode="FULL_XA"
                locking="OPTIMISTIC"/>
-  <expiration lifespan="5000"
-              max-idle="1000" />
+  <expiration lifespan="5s"
+              max-idle="1s" />
   <memory max-count="1000000"
           when-full="REMOVE"/>
   <indexing enabled="true"
             storage="local-heap">
-    <index-reader refresh-interval="1000"/>
+    <index-reader refresh-interval="1s"/>
     <indexed-entities>
       <indexed-entity>org.infinispan.Person</indexed-entity>
     </indexed-entities>

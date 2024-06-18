@@ -73,8 +73,8 @@ public final class ByteQuantity {
       GiB(KIBI, 3),
       TiB(KIBI, 4);
 
-      BigDecimal base;
-      int exp;
+      final BigDecimal base;
+      final int exp;
 
       Unit(BigDecimal base, int exp) {
          this.base = base;

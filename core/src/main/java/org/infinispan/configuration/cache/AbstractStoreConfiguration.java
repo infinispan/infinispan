@@ -20,7 +20,7 @@ public class AbstractStoreConfiguration<T extends StoreConfiguration> extends Co
    public static final AttributeDefinition<Integer> MAX_BATCH_SIZE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MAX_BATCH_SIZE, 100).immutable().build();
    public static final AttributeDefinition<Boolean> SEGMENTED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.SEGMENTED, true).immutable().build();
    public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder(Element.PROPERTIES, null, TypedProperties.class)
-         .initializer(() -> new TypedProperties()).autoPersist(false).immutable().build();
+         .initializer(TypedProperties::new).autoPersist(false).immutable().build();
    private final Attribute<Integer> maxBatchSize;
 
    public static AttributeSet attributeDefinitionSet() {

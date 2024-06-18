@@ -3,6 +3,7 @@ package org.infinispan.server.hotrod.configuration;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 
 public class TopologyCacheConfigurationBuilder implements Builder<TopologyCacheConfiguration> {
    private final AttributeSet attributes;
@@ -17,12 +18,22 @@ public class TopologyCacheConfigurationBuilder implements Builder<TopologyCacheC
    }
 
    public TopologyCacheConfigurationBuilder lockTimeout(long value) {
-      attributes.attribute(TopologyCacheConfiguration.TOPOLOGY_LOCK_TIMEOUT).set(value);
+      attributes.attribute(TopologyCacheConfiguration.TOPOLOGY_LOCK_TIMEOUT).set(TimeQuantity.valueOf(value));
+      return this;
+   }
+
+   public TopologyCacheConfigurationBuilder lockTimeout(String value) {
+      attributes.attribute(TopologyCacheConfiguration.TOPOLOGY_LOCK_TIMEOUT).set(TimeQuantity.valueOf(value));
       return this;
    }
 
    public TopologyCacheConfigurationBuilder replicationTimeout(long value) {
-      attributes.attribute(TopologyCacheConfiguration.TOPOLOGY_REPL_TIMEOUT).set(value);
+      attributes.attribute(TopologyCacheConfiguration.TOPOLOGY_REPL_TIMEOUT).set(TimeQuantity.valueOf(value));
+      return this;
+   }
+
+   public TopologyCacheConfigurationBuilder replicationTimeout(String value) {
+      attributes.attribute(TopologyCacheConfiguration.TOPOLOGY_REPL_TIMEOUT).set(TimeQuantity.valueOf(value));
       return this;
    }
 

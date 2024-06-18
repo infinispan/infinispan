@@ -160,7 +160,7 @@ As the index content changes, {brandname} needs to refresh the reader so that se
 <distributed-cache>
   <indexing storage="filesystem" path="${java.io.tmpdir}/baseDir">
     <!-- Sets an interval of one second for the index reader. -->
-    <index-reader refresh-interval="1000"/>
+    <index-reader refresh-interval="1s"/>
     <!-- Additional indexing configuration goes here. -->
   </indexing>
 </distributed-cache>
@@ -173,7 +173,7 @@ The index writer constructs an index composed of one or more segments (sub-index
 ----
 <distributed-cache>
   <indexing storage="filesystem" path="${java.io.tmpdir}/baseDir">
-    <index-writer commit-interval="2000"
+    <index-writer commit-interval="2s"
                   low-level-trace="false"
                   max-buffered-entries="32"
                   queue-count="1"
@@ -232,7 +232,7 @@ Timeout:: Specifies the timeout, in milliseconds, for synchronous and asynchrono
   <backups>
     <backup site="NYC"
             strategy="ASYNC"
-            timeout="10000" />
+            timeout="10s" />
   </backups>
 </distributed-cache>
 ----
@@ -336,13 +336,13 @@ You can create {brandname} configuration in  XML, JSON, or YAML format.
   <locking isolation="REPEATABLE_READ"/>
   <transaction mode="FULL_XA"
                locking="OPTIMISTIC"/>
-  <expiration lifespan="5000"
-              max-idle="1000" />
+  <expiration lifespan="5s"
+              max-idle="1s" />
   <memory max-count="1000000"
           when-full="REMOVE"/>
   <indexing enabled="true"
             storage="local-heap">
-    <index-reader refresh-interval="1000"/>
+    <index-reader refresh-interval="1s"/>
     <indexed-entities>
       <indexed-entity>org.infinispan.Person</indexed-entity>
     </indexed-entities>

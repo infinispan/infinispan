@@ -28,6 +28,7 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeListener;
 import org.infinispan.commons.stat.MetricInfo;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.logging.TraceException;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
@@ -94,7 +95,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    @Inject XSiteMetricsCollector xSiteMetricsCollector;
 
    private final Function<ReplicableCommand, ReplicableCommand> toCacheRpcCommand = this::toCacheRpcCommand;
-   private final AttributeListener<Long> updateRpcOptions = this::updateRpcOptions;
+   private final AttributeListener<TimeQuantity> updateRpcOptions = this::updateRpcOptions;
    private final XSiteResponse.XSiteResponseCompleted xSiteResponseCompleted = this::registerXSiteTime;
 
    private final LongAdder replicationCount = new LongAdder();
@@ -207,8 +208,8 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
       xSiteSpanAttributes = cacheSpanAttribute.getAttributes(SpanCategory.X_SITE);
    }
 
-   private void updateRpcOptions(Attribute<Long> attribute, Long oldValue) {
-      syncRpcOptions = new RpcOptions(DeliverOrder.NONE, attribute.get(), TimeUnit.MILLISECONDS);
+   private void updateRpcOptions(Attribute<TimeQuantity> attribute, TimeQuantity oldValue) {
+      syncRpcOptions = new RpcOptions(DeliverOrder.NONE, attribute.get().longValue(), TimeUnit.MILLISECONDS);
    }
 
    @ManagedAttribute(description = "Retrieves the committed view.", displayName = "Committed view", dataType = DataType.TRAIT)
