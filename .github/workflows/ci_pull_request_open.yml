@@ -26,3 +26,6 @@ jobs:
         run: > 
           mvn -s maven-settings.xml verify -B -e -DrerunFailingTestsCount=2
               -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative
+      - name: Publish Test Report
+        if: success() || failure()
+        uses: scacap/action-surefire-report@v1
