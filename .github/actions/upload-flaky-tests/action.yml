@@ -1,0 +1,62 @@
+name: Report flaky test
+description: Finds flaky tests and uploads reports
+inputs:
+  job-name:
+    description: 'Job name to help identify the job'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Install xmllint tool
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xsltproc
+    - id: flaky-tests
+      name: Find flaky tests
+      #if: github.repository == 'keycloak/keycloak'
+      shell: bash
+      run: |
+        FLAKES=""
+        SEP=""
+        for dir in $(find -type d -name 'surefire-reports*'); do
+          for i in $(grep -l -E '<flakyFailure|<flakyError' $dir/TEST-*.xml); do
+            FLAKES="$FLAKES$SEP$i"
+            SEP=$'\n'
+          done
+        done
+        fdir=$(find -wholename '*/surefire-reports*/TEST-*.xml')
+        FLAKES_PR_COMMENT=$(xsltproc .github/actions/upload-flaky-tests/flaky.xslt $fdir)
+        if [ "$FLAKES" != "" ]; then
+          PR="${{ github.event.number }}"
+          JOB_NAME="${{ inputs.job-name }}"
+
+          MATRIX="${{ join(matrix.*, ' - ') }}"
+          if [ "$MATRIX" != "" ]; then
+            JOB_NAME="$JOB_NAME ($MATRIX)"
+          fi
+
+          JOB_URL=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs --paginate --jq ".jobs | map(select(.name == \"$JOB_NAME\")) | .[].html_url")
+
+          echo "job_name=$JOB_NAME" >> job-summary.properties
+          echo "job_url=$JOB_URL" >> job-summary.properties
+          if [ "$PR" != "" ]; then
+            echo "pr=$PR" >> job-summary.properties
+            pr_url=https://github.com/${{ github.repository }}/pull/$PR
+            echo "pr_url=https://github.com/${{ github.repository }}/pull/$PR" >> job-summary.properties
+            printf "__FLAKY TESTS__\n\n%s" "$FLAKES_PR_COMMENT" | gh pr comment $pr_url -F -
+          fi
+          echo "flakes<<EOF" >> $GITHUB_OUTPUT
+          echo "job-summary.properties" >> $GITHUB_OUTPUT
+          echo "$FLAKES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+        fi
+
+    - uses: actions/upload-artifact@v4
+      if: ${{ steps.flaky-tests.outputs.flakes }}
+      with:
+        name: flaky-tests-${{ github.job }}-${{ join(matrix.*, '-') }}
+        path: ${{ steps.flaky-tests.outputs.flakes }}
+        if-no-files-found: error
