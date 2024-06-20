@@ -24,13 +24,13 @@ jobs:
       - name: Build with Maven
         run: >
             mvn -s maven-settings.xml
-                  clean install surefire-report:report
-                  pmd:cpd pmd:pmd spotbugs:spotbugs
-                  -B -e -DskipTests -Pnative
+            clean install surefire-report:report
+            pmd:cpd pmd:pmd spotbugs:spotbugs
+            -B -e -DskipTests -Pnative
       - name: Test with Maven
         run: >
             mvn verify -B -e -Dsurefire.rerunFailingTestsCount=2
-                  -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative
+            -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative
       - name: Publish Test Report
         if: success() || failure()
         uses: ScaCap/action-surefire-report@v1
