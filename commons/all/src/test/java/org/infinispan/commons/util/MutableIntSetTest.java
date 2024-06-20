@@ -16,7 +16,6 @@ import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 
 import org.junit.After;
-import org.junit.AssumptionViolatedException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
