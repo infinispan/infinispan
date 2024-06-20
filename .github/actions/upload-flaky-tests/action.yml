@@ -15,7 +15,7 @@ runs:
         sudo apt-get install -y xsltproc
     - id: flaky-tests
       name: Find flaky tests
-      #if: github.repository == 'keycloak/keycloak'
+      #if: github.repository == 'infinispan/infinispan'
       shell: bash
       run: |
         FLAKES=""
