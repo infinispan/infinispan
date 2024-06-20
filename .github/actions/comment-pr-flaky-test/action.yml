@@ -1,0 +1,38 @@
+name: Comment PR for flaky test
+description: This action comments on PR for flaky test
+inputs:
+  pr_number:
+    description: PR number
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Install xmllint tool
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install xmlstarlet
+    - id: flaky-tests
+      env:
+        GH_TOKEN: ${{ github.token }}
+      name: Find flaky tests
+      #if: github.repository == 'infinispan/infinispan'
+      shell: bash
+      run: |
+        PR="${{ inputs.pr_number }}"
+        if [ "$PR" != "" ]; then
+          shopt -s nullglob globstar
+          FLAKY_TEST_GLOB="**/target/*-reports*/**/TEST-*FLAKY.xml"
+          TESTS=(${FLAKY_TEST_GLOB})
+          for TEST in "${TESTS[@]}"
+          do
+            FULL_TEST_NAME=$(xmlstarlet sel -T -t -m "/testsuite/testcase" -o '   - '\
+             -v "concat(@classname,'#',@name)" -n ${TEST} \
+             | sed 's/(Flaky Test)//' | sed 's/\[[0-9]\]//')
+            FLAKES_PR_COMMENT="$FLAKES_PR_COMMENT$FULL_TEST_NAME\n"
+          done
+          if [ "$FLAKES_PR_COMMENT" != "" ]; then
+            pr_url=https://github.com/${{ github.repository }}/pull/$PR
+            printf "__FLAKY TESTS__\n%b" "$FLAKES_PR_COMMENT" | gh pr comment $pr_url -F -
+          fi
+        fi
