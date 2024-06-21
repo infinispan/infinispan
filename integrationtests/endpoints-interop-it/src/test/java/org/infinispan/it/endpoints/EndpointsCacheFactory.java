@@ -78,9 +78,11 @@ public class EndpointsCacheFactory<K, V> {
    private final int numOwners;
    private final boolean l1Enable;
    private final boolean memcachedWithDecoder;
+   private final MediaType mediaType;
 
    private EndpointsCacheFactory(String cacheName, Marshaller marshaller, CacheMode cacheMode, int numOwners, boolean l1Enable,
-                                 Transcoder<Object> transcoder, SerializationContextInitializer contextInitializer) {
+                                 Transcoder<Object> transcoder, SerializationContextInitializer contextInitializer,
+                                 MediaType mediaType) {
       this.cacheName = cacheName;
       this.marshaller = marshaller;
       this.cacheMode = cacheMode;
@@ -89,6 +91,7 @@ public class EndpointsCacheFactory<K, V> {
       this.transcoder = transcoder;
       this.memcachedWithDecoder = transcoder != null;
       this.contextInitializer = contextInitializer;
+      this.mediaType = mediaType;
    }
 
    private EndpointsCacheFactory<K, V> setup() throws Exception {
@@ -124,8 +127,8 @@ public class EndpointsCacheFactory<K, V> {
       org.infinispan.configuration.cache.ConfigurationBuilder builder =
             new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.clustering().cacheMode(cacheMode)
-            .encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE)
-            .encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
+            .encoding().key().mediaType(mediaType)
+            .encoding().value().mediaType(mediaType);
 
       if (cacheMode.isDistributed() && numOwners != DEFAULT_NUM_OWNERS) {
          builder.clustering().hash().numOwners(numOwners);
@@ -278,6 +281,7 @@ public class EndpointsCacheFactory<K, V> {
       private String cacheName = "test";
       private Marshaller marshaller = null;
       private Transcoder<Object> transcoder = null;
+      private MediaType mediaType = APPLICATION_OBJECT;
 
       public Builder<K, V> withCacheMode(CacheMode cacheMode) {
          this.cacheMode = cacheMode;
@@ -314,9 +318,14 @@ public class EndpointsCacheFactory<K, V> {
          return this;
       }
 
+      public Builder<K, V> withMediaType(MediaType mediaType) {
+         this.mediaType = mediaType;
+         return this;
+      }
+
       public EndpointsCacheFactory<K, V> build() throws Exception {
-         EndpointsCacheFactory<K, V> endpointsCacheFactory =
-               new EndpointsCacheFactory<>(cacheName, marshaller, cacheMode, numOwners, l1Enable, transcoder, contextInitializer);
+         EndpointsCacheFactory<K, V> endpointsCacheFactory = new EndpointsCacheFactory<>(
+                     cacheName, marshaller, cacheMode, numOwners, l1Enable, transcoder, contextInitializer, mediaType);
          return endpointsCacheFactory.setup();
       }
    }
