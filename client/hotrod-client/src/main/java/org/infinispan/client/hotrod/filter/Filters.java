@@ -2,7 +2,8 @@ package org.infinispan.client.hotrod.filter;
 
 import java.util.Map;
 
-import org.infinispan.query.dsl.Query;
+import org.infinispan.commons.api.query.Query;
+
 
 /**
  * @author gustavonalle
