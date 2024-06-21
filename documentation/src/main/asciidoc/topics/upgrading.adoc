@@ -1,6 +1,6 @@
-= Upgrading from 15.0 to 15.1
+== Upgrading from 15.0 to 15.1
 
-== JGroups Metrics
+=== JGroups Metrics
 
 The following metrics have been removed:
 
@@ -41,16 +41,16 @@ The following metrics have been renamed:
 - `get_num_ucast_msgs_sent` - `get_num_ucasts_sent`
 
 
-= Upgrading from 14.0 to 15.0
+== Upgrading from 14.0 to 15.0
 
-== Deprecations, removals and moved classes
+=== Deprecations, removals and moved classes
 
-=== Moved
+==== Moved
 
 * The `org.infinispan.util.TimeoutException` has been moved to `org.infinispan.commons.TimeoutException`
 * `org.infinispan.util.concurrent.IsolationLevel` has been moved to `org.infinispan.configuration.IsolationLevel`
 
-=== Removed
+==== Removed
 
 * All: Parsing of configuration files with schema < 10.0
 * Commons: `Start.priority` and `Stop.priority`
@@ -79,7 +79,7 @@ The following metrics have been renamed:
 * Remote Store: transport factory and maxIdle
 
 
-== Metrics
+=== Metrics
 
 The JGroups and cross-site metrics name changed when `names-as-tags` is set to `true`,
 where the cluster's name and the site's name are no longer present in the metrics name but as a tag.
@@ -106,17 +106,17 @@ vendor_jgroups_frag4_get_number_of_sent_fragments{cache_manager="default",cluste
 vendor_jgroups_frag4_get_number_of_sent_fragments{cache_manager="default",cluster="cluster",node="..."} 2.0
 ----
 
-== SecurityManager
+=== SecurityManager
 
-Aligning with the deprecation for removal of the SecurityManager since JDK 17, we no longer support integration with a
-SecurityManager.
+Aligning with the deprecation for removal of the `SecurityManager` since JDK 17, we no longer support integration with a
+`SecurityManager`.
 
-== Jakarta and Java EE
+=== Jakarta and Java EE
 * Infinispan has been updated to use `jakarta.*` packages only.
 * If you require the legacy `javax.*` packages, you should utilise Infinispan 14.0.x.
 * The transitional `*-jakarta` jars, which included both `jakarta.*` and `javax.*` packages, have been removed.
 
-== Removals
+=== Removals
 
 * The Kryo and Protostuff marshallers have been removed.
 * Extended Statistics module have been removed.
@@ -124,7 +124,7 @@ SecurityManager.
 * Spring 5.x and Spring Boot 2.x support.
 * Wildfly modules are no longer provided.
 
-== Hot Rod client defaults
+=== Hot Rod client defaults
 {brandname} introduced changes to the properties of the Hot Rod client.
 
 .`ssl_hostname_validation`
@@ -159,13 +159,13 @@ Additionally, setting the `sni_host_name` is now required when hostname validati
 | SCRAM-SHA-256
 |===
 
-== RESP Endpoint
+=== RESP Endpoint
 
 * Default expiration may be applied to the cache configuration used by the RESP endpoint
 
-== Search
+=== Search
 
-=== Indexing
+==== Indexing
 
 * The `property` attribute has been removed.
 
@@ -173,64 +173,64 @@ Additionally, setting the `sni_host_name` is now required when hostname validati
 
 * The `index` attribute has been removed.
 
-== Indexing annotations
+=== Indexing annotations
 
 * The support for the old Hibernate Search 5 annotations have been removed
 
 * `@ProtoDoc`, no longer required since 14.0, is now deprecated
 
-== Security
+=== Security
 
 The principal role mapper now applies only to groups instead of both groups and user principals.
 Use the `cache-manager.security.authorization.group-only-mapping=false` configuration to use the old behavior.
 
-== Scattered cache removal
+=== Scattered cache removal
 
 The scattered cache mode have been removed. Use Distributed caches instead.
 
-== Global State
+=== Global State
 
 Infinispan will now refuse to start if a dangling lock file is found in the persistent global state, indicating
 an unclean shutdown. The behavior can be changed by configuring the global state `unclean-shutdown-action` setting.
 
-== Persistence
+=== Persistence
 The default `availability-interval` has been increased to 30 seconds. The previous default was 1 second.
 
-=== SoftIndexFileStore
+==== SoftIndexFileStore
 
 The index segment configuration is no longer used and instead the number of segments is determined solely by the number of cache segments.
 
-== RESP endpoint
+=== RESP endpoint
 
 The RESP endpoint cache now requires the key storage media type to be
 application/octet-stream.
 
-== Client listeners remove events
+=== Client listeners remove events
 
 Client listeners remove events will now be propagated even if the remove did not remove a value.
 This is required to properly support new changes around the new `includeOldValue` method on `CacheEventConverter`.
 NOTE: Remote events do not include any values by default
 
-== NearCache SPI
+=== NearCache SPI
 
-Due to incosistency issues with concurrent updates the NearCache SPI needed to be updated to have concurrent
+Due to inconsistency issues with concurrent updates the NearCache SPI needed to be updated to have concurrent
 based methods to prevent an issue where a stale entry may have been saved in the near cache.
 For more information please see link:https://issues.jboss.org/browse/ISPN-13612[ISPN-13612]
 
-= Upgrading from 13.0 to 14.0
+== Upgrading from 13.0 to 14.0
 
-== Security authorization SPI
+=== Security authorization SPI
 
 `org.infinispan.security.PrincipalRoleMapperContext` is deprecated in 14.0 and replaced by `org.infinispan.security.AuthorizationMapperContext`.
 
-== Scattered cache deprecation
+=== Scattered cache deprecation
 
 The scattered cache mode is deprecated in 14.0 and will be removed in 16.0.
 
 
-== Cross Site Replication
+=== Cross Site Replication
 
-=== Asynchronous backup strategy logging
+==== Asynchronous backup strategy logging
 
 By default, the asynchronous backup strategy logs exceptions that occur on remote sites.
 To disable exceptions for async backup operations, set `failure-policy="IGNORE"` in your configuration as follows:
@@ -240,12 +240,13 @@ To disable exceptions for async backup operations, set `failure-policy="IGNORE"`
 <backup site="NYC" strategy="ASYNC" failure-policy="IGNORE" />
 ----
 
-== Store properties
+=== Store properties
 
 Store provided properties are no longer allowed to override store explicit configuration.
 
 For example the below configuration would set the read only configuration of the store to true.
 
+[source,xml,options="nowrap",subs=attributes+]
 ----
 <persistence>
   <file-store>
@@ -259,6 +260,7 @@ For example the below configuration would set the read only configuration of the
 Now the readOnly property is only provided to the store itself and does not affect the store explicit configuration.
 The same configuration should be changed to the following instead.
 
+[source,xml,options="nowrap",subs=attributes+]
 ----
 <persistence>
   <file-store read-only="true">
@@ -268,7 +270,7 @@ The same configuration should be changed to the following instead.
 </persistence>
 ----
 
-== Fetch Persistent State Remove
+=== Fetch Persistent State Remove
 
 The store property named fetch-persistent-state has been deprecated and removed from xml configuration.
 Instead the first configured non shared store that allows for bulk loading will be used for state transfer of entries.
@@ -277,28 +279,29 @@ transferring entries stored in a store.
 
 NOTE: This change has no effect for shared stores
 
-== RocksDB store
+=== RocksDB store
 
 The RocksDB implementation is no longer included by default with the server. It can be installed via the CLI:
 
+[source,shell,options="nowrap",subs=attributes+]
 ----
 cli.sh install org.rocksdb:rocksdbjni:6.22.1.1
 ----
 
-== JDBC Store database versions configuration deprecated
+=== JDBC Store database versions configuration deprecated
 
 Prior we allowed a user to specify the database major and minor versions when configuring the database parameters.
 These two options are now deprecated and ignored as we always retrieve them from the JDBC metadata directly.
 This affects all three of the JDBC based stores (string-keyed-jdbc-store, table-jdbc-store and query-jdbc-store).
 
-== Micrometer Metrics
+=== Micrometer Metrics
 
 Microprofile metrics are no longer supported, available output metrics are now Prometheus and OpenMetrics.
 
 The implementation relies on Micrometer library, for more information see
 the link:../server/server.html#configuring-metrics_statistics-jmx[Configuring Infinispan metrics].
 
-== Jakarta EE compatible jars available
+=== Jakarta EE compatible jars available
 
 We now distribute Jakarta EE based jars for users.
 This is in addition to the javax compatible jars.
@@ -314,26 +317,27 @@ Some modules that have Jakarta based jars are the following (note there are quit
 
 If your application requires using the jakarta instead of javax namespace all you need to do is to append your dependencies with `-jakarta`.
 
-```xml
+[source,xml,options="nowrap",subs=attributes+]
+----
 <dependency>
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-client-hotrod-jakarta</artifactId>
 </dependency>
-```
+----
 
-== Hibernate 6.0 2LC Update
+=== Hibernate 6.0 2LC Update
 
 Hibernate 6.0 is now supported and is the only implementation supported moving forward.
 If Hibernate 5.3 support is needed, you must use an older version of Infinispan.
 
-== JPAStore has been removed
+=== JPAStore has been removed
 
 The JPAStore has been removed in Infinispan 14.0.
 It is suggested instead to use the new SQL Table or Query Stores that were added in Infinispan 13.0.
 
-== Query API
+=== Query API
 
-=== {brandname} native annotations
+==== {brandname} native annotations
 
 This release introduces new indexing annotations: `@Indexed`, `@Basic`, `@Decimal`, `@Keyword`, `@Text`, and `@Embedded`.
 Each of the annotations supports a set of attributes that you can use to further describe how the entity is indexed.
@@ -360,34 +364,34 @@ The following table summarizes the mapping of fields between Hibernate Search 5 
 | N/A | normalizer = "lowercase"| @Keyword| Mapping fields that were analyzed or normalized is not possible due to the potential data loss in the process.
 |===
 
-== Query efficiency
+=== Query efficiency
 
 The default for maximum results returned by a query that was present in Infinispan 12.1.5.Final and earlier versions has been restored.
 You can now change the default limit by setting the `default-max-results` cache property.
 The default value of default-max-results is 100.
 Limiting the number of results returned by a query significantly improves performance of queries that don't have an explicit limit set.
 
-== The (undocumented) server filesystem-realm has been removed
+=== The (undocumented) server filesystem-realm has been removed
 
 The `filesystem-realm`, an experimental feature which has never been documented, has been removed.
 
-= Upgrading from 12.1 to 13.0
+== Upgrading from 12.1 to 13.0
 
-== Search
+=== Search
 
 The optional ```IndexedQueryMode``` parameter has been removed from queries in library mode, CLI, Hot Rod and REST.
 Since 12.0, {brandname} ignores this parameter since it detects the optimal way of performing indexed queries.
 
-== REST
+=== REST
 
-=== Indexer
+==== Indexer
 
 The ```mass-index``` operation from the cache resource has been deprecated.
 Use ```reindex``` instead:
 
  /rest/v2/caches/{cacheName}/search/indexes?action=reindex
 
-=== Rolling Upgrades
+==== Rolling Upgrades
 
 The following operation has been deprecated:
 
@@ -397,14 +401,14 @@ Use the substitute:
 
 * ```DELETE /rest/v2/caches/{cacheName}/rolling-upgrade/source-connection```
 
-== File-Based Cache Store (`file-store`) Configuration Defaults to SoftIndexFileStore
+=== File-Based Cache Store (`file-store`) Configuration Defaults to SoftIndexFileStore
 
 Including `file-store` persistence in cache configuration now creates a soft index file-based cache store, `SoftIndexFileStore`, instead of a single-file cache store, `SingleFileStore`.
 In previous versions `SingleFileStore` was the default for file-based cache stores.
 
 Any `file-store` configuration with a schema version of 13 is automatically migrated to a `SoftIndexFileStore` after upgrading to Infinispan 13.
 
-=== Schema changes
+==== Schema changes
 
 The following changes apply to the Infinispan 13 configuration schemas:
 
@@ -413,9 +417,9 @@ The following changes apply to the Infinispan 13 configuration schemas:
 * The `single-file-store` element has been added to the `urn:infinispan:config` namespace if you want to configure a single file store, which is deprecated.
 * The `endpoints` element in the `urn:infinispan:server` namespace is no longer a repeating element, but a wrapper for 0 or more `endpoint` elements.
 
-=== Migrating Soft-Index File Stores
+==== Migrating Soft-Index File Stores
 
-==== Declarative
+===== Declarative
 
 If you are upgrading to Infinispan 13 from a previous version, and your caches include any configuration with the `soft-index-file-store` element, you should convert that configuration to use the `file-store` element instead.
 
@@ -441,29 +445,29 @@ If you are upgrading to Infinispan 13 from a previous version, and your caches i
 </persistence>
 ----
 
-==== Programmatic
+===== Programmatic
 
 .Infinispan 12.1 and earlier
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[source,java,options="nowrap",subs=attributes+,role="primary"]
 ----
-ConfigurationBuilder b = new ConfigurationBuilder();
-b.persistence()
-    .addStore(SoftIndexFileStoreConfigurationBuilder.class)
-        .indexLocation("testCache/index");
-        .dataLocation("testCache/data")
-----
-
-.Infinispan 13 and later
-[source,xml,options="nowrap",subs=attributes+,role="secondary"]
-----
-ConfigurationBuilder b = new ConfigurationBuilder();
-b.persistence()
-    .addSoftIndexFileStore()
+ConfigurationBuilder b = new ConfigurationBuilder()
+   .persistence()
+      .addStore(SoftIndexFileStoreConfigurationBuilder.class)
         .indexLocation("testCache/index")
         .dataLocation("testCache/data");
 ----
 
-=== Migrating Single File Stores
+.Infinispan 13 and later
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+ConfigurationBuilder b = new ConfigurationBuilder()
+   .persistence()
+      .addSoftIndexFileStore()
+        .indexLocation("testCache/index")
+        .dataLocation("testCache/data");
+----
+
+==== Migrating Single File Stores
 
 To use `SingleFileStore` as a file-based cache store with Infinispan 13 or later, do one of the following:
 
@@ -480,9 +484,9 @@ To use `SingleFileStore` as a file-based cache store with Infinispan 13 or later
 .Programmatic
 [source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
-ConfigurationBuilder b = new ConfigurationBuilder();
-b.persistence()
-    .addSingleFileStore();
+ConfigurationBuilder b = new ConfigurationBuilder()
+   .persistence()
+      .addSingleFileStore();
 ----
 
 However, Infinispan does not recommend using `SingleFileStore`.
@@ -490,7 +494,7 @@ Instead you should use `SoftIndexFileStore` for file-based cache stores because 
 
 Find out more details about configuring file-based cache stores in the _Configuration Guide_.
 
-== Accurate size metrics
+=== Accurate size metrics
 
 The `currentNumberOfEntries` statistics now return `-1` by default as the calculation is expensive. Accurate values can be restored using the following configuration:
 
@@ -505,16 +509,16 @@ The `currentNumberOfEntries` statistics now return `-1` by default as the calcul
 .Programmatic
 [source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
-GlobalConfigurationBuilder b = new GlobalConfigurationBuilder();
-b.metrics()
-    .accurateSize(true);
+GlobalConfigurationBuilder b = new GlobalConfigurationBuilder()
+   .metrics()
+     .accurateSize(true);
 ----
 
-= Upgrading from 11.x or 12.0 to 12.1
+== Upgrading from 11.x or 12.0 to 12.1
 
   If you are upgrading from 11.x to 12.1, you should also review the 11.0 to 12.0 upgrade notes.
 
-== Upgrading Deployments with Single File Cache Store Persistence
+=== Upgrading Deployments with Single File Cache Store Persistence
 
 When upgrading Infinispan to 12.1, caches that include a `SingleFileStore` persistence configuration can encounter an issue that leads to data corruption.
 
@@ -540,26 +544,26 @@ From the Infinispan CLI use the `site push-site-state` command as follows:
 ----
 
 
-== JGroups configuration changes
+=== JGroups configuration changes
 
-=== Message bundler
+==== Message bundler
 The default JGroups bundler has changed from
 "no-bundler" (a thread sending a message writes it to the TCP socket or sends the UDP datagram directly) to
 "transfer-queue" (a thread sending a message only adds the message to a queue, and a separate
 bundler thread groups the messages in "batches" then sends the batches).
 
-== Encoding
+=== Encoding
 
 * `org.infinispan.commons.dataconversion.Encoder` has been deprecated and will be removed in a future version.
 
-== Authorization
+=== Authorization
 
 A new `CREATE` permission has been introduced, with the following effects:
 * users now require the `CREATE` permission to be able to create/remove caches/counters/locks instead of the `ADMIN` permission
 * it supersedes the internal `___schema_manager` role, which has now been deprecated. It is required in order to add/remove schemas.
 * it supersedes the internal `___script_manager` role, which has now been deprecated. It is required in order to add/remove scripts.
 
-=== Server
+==== Server
 
 Authorization is now enabled out-of-the-box in the default server configuration.
 Authorization only applies to "global" operations (administrative and management), so normal cache usage is unaffected.
@@ -567,7 +571,7 @@ You can revert to the previous behavior by removing the `<authorization>` elemen
 
 The default logging configuration now includes an audit logging which is disabled by default.
 
-== Server Trust Store
+=== Server Trust Store
 
 The trust store configuration is now part of the server identity to allow client certificate validation
 without requiring authentication. Adding a `truststore-realm` will reference the identity's trust store.
@@ -602,18 +606,18 @@ without requiring authentication. Adding a `truststore-realm` will reference the
 ----
 
 
-= Upgrading from 11.0 to 12.0
+== Upgrading from 11.0 to 12.0
 
-== Encoding
+=== Encoding
 
 Conversions of cache data between `application/x-java-object` and `application/json` are deprecated and will be removed
 in a future version. For JSON support, it is recommend to configure the cache with `application/x-protostream` encoding.
 
-== OSGi
+=== OSGi
 
 Support for OSGi was deprecated and has been removed.
 
-== REST
+=== REST
 
 Some operations that previously supported both `GET` and `POST` now support only `POST`:
 
@@ -659,7 +663,7 @@ have been deprecated and will be removed in a future version.
 
 Users should migrate to the ```/v2/caches/{cacheName}/search/stats``` endpoint. Please consult the REST API docs for more details.
 
-== Search
+=== Search
 
 * It's not possible anymore to enable or disable search statistics via JMX. Query and Index statistics are only exposed when the cache "statistics" configuration is enabled.
 
@@ -670,7 +674,7 @@ Users should migrate to the ```/v2/caches/{cacheName}/search/stats``` endpoint. 
   Starting with version 12 this results in a fatal error preventing the cache to start.
   Please update your configurations accordingly.
 
-=== Indexing configuration
+==== Indexing configuration
 
 Configuring indexing using the `property` element is deprecated and will be removed in a future version.
 Use the `<index-reader>` and `<index-writer>` configuration elements to define indexing behaviour.
@@ -678,7 +682,7 @@ For the programmatic configuration, use `builder.indexing().reader()` and `build
 
 To migrate your configuration, please refer to the sections below:
 
-==== Storage
+===== Storage
 
 .Memory Storage
 
@@ -714,7 +718,7 @@ To migrate your configuration, please refer to the sections below:
 <indexing storage="filesystem" path="${java.io.tmpdir}/baseDir"/>
 ----
 
-==== Reader refresh
+===== Reader refresh
 [source,xml]
 ----
 <!-- 11.0 -->
@@ -731,7 +735,7 @@ To migrate your configuration, please refer to the sections below:
 </indexing>
 ----
 
-==== IndexManager
+===== IndexManager
 
 From 12.0, `near-real-time` is the default index manager and no configuration is needed:
 
@@ -749,7 +753,7 @@ From 12.0, `near-real-time` is the default index manager and no configuration is
 <indexing enabled="true"/>
 ----
 
-==== Worker sync/async
+===== Worker sync/async
 
 The `default.worker.execution` is redundant as the indexing process is async by default:
 
@@ -770,7 +774,7 @@ The `default.worker.execution` is redundant as the indexing process is async by 
 </indexing>
 ----
 
-==== Low level Lucene options
+===== Low level Lucene options
 
 The properties used previously to tune the Lucene index directly are now
 available under the `<index-writer>` element.
@@ -795,32 +799,32 @@ available under the `<index-writer>` element.
 </indexing>
 ----
 
-==== Supporting older indexes
+===== Supporting older indexes
 
 The property `lucene_version` is deprecated and will not be supported in a future version. It is recommended to re-index when migrating from older Infinispan versions instead of reusing the underlying indexes on disk created
 in an older Lucene version.
 
-==== Sharding
+===== Sharding
 
 Configuration of sharding through the property `default.sharding_strategy.nbr_of_shards` is deprecated and will be removed in a future version.
 
-==== Maximum boolean clauses
+===== Maximum boolean clauses
 
 The property `infinispan.query.lucene.max-boolean-clauses` is now only supported when used via JVM property. Support for using
 it inside the `<property>` element of the index configuration was removed.
 
 
-== Cache Health
+=== Cache Health
 A new status `FAILED` has been added to the cache health, to indicate that a cache failed to start with the
 provided configuration. The possible statuses of the cache health are now HEALTHY, HEALTHY_REBALANCING, DEGRADED and FAILED.
 
-== Marshalling
+=== Marshalling
 
-=== Kryo and Protostuff marshaller deprecation
+==== Kryo and Protostuff marshaller deprecation
 
 The Kryo and Protostuff marshallers have been deprecated and will be removed in Infinispan 15.0
 
-=== {brandname} includes an upgraded version of the ProtoStream API that can
+==== {brandname} includes an upgraded version of the ProtoStream API that can
 affect upgrade from previous {brandname} versions.
 
 In previous versions, the ProtoStream API did not correctly nest message types
@@ -831,58 +835,58 @@ annotations are at top-level. This ensures that the nesting in your persisted
 messages matches the nesting in your Java classes, otherwise data
 incompatibility issues can occur.
 
-=== Allow lists
+==== Allow lists
 
 All occurrences of "white list" have been renamed to "allow list".
 
-== Persistence
+=== Persistence
 
-=== JdbcStringBasedStore
+==== JdbcStringBasedStore
 The JDBC string based store now creates an additional `_META` to ensure that any database content is compatible with
 the current {brandname} version and configuration.
 
-=== Rest Store
+==== Rest Store
 The rest-store has been removed. Users should utilise the HotRod based remote-store for reading/writing to Infinispan clusters.
 
-=== Hot Rod client
+==== Hot Rod client
 The `trust_store_path` property has been deprecated. Use `trust_store_filename` instead and specify `pem` in `trust_store_type`.
 
-= Upgrading from 10.1 to 11.0
+== Upgrading from 10.1 to 11.0
 
-== HotRod Client
+=== HotRod Client
 The `GenericJBossMarshaller` is no longer automatically configured if the `infinispan-jboss-marshalling` module is on the
 classpath. If jboss-marshalling is required, it's necessary for the aforementioned jar to be on the classpath and for
 the `org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller` to be explicitly configured when creating the
 RemoteCacheManager.
 
-== Wildfly modules
+=== Wildfly modules
 
 The Wildfly modules are now deprecated. The `jgroups`, `infinispan` and `endpoint` extensions have been removed and
 all the components are now in a single `org.infinispan` module.
 
-== Cross Site Replication
+=== Cross Site Replication
 
 * The `org.infinispan.xsite.CustomFailurePolicy` interface has been deprecated and it will be replaced by
 `org.infinispan.configuration.cache.CustomFailurePolicy`.
 
 * Cross Site Replication was disabled for local caches. They are unable to send or receive updates.
 
-== Total Order transaction protocol removed
+=== Total Order transaction protocol removed
 
 Total Order transaction protocol was deprecated in 10.0 and now it is removed.
 
-== JGroups configuration system property changes
+=== JGroups configuration system property changes
 
 The default stacks now now use system property `jgroups.bind.address` to configure the bind address.
 System properties `jgroups.tcp.address` and `jgroups.udp.address` still work, but they are considered deprecated and will be removed.
 
-== OSGi
+=== OSGi
 
 OSGi support has been deprecated and will be removed in a future release.
 
-== Search
+=== Search
 
-=== Indexing
+==== Indexing
 
 * The Infinispan Lucene Directory, the `InfinispanIndexManager` and `AffinityIndexManager` index managers, and the Infinispan Directory provider for Hibernate Search were deprecated and are now removed.
 
@@ -904,7 +908,7 @@ This requirement exists solely for indexed caches and applies to both Java class
 Please consider updating your cache configurations in order to avoid these warnings now.
 Starting with version 12 such incomplete configurations will be considered invalid and will result in a fatal error at cache startup time.
 
-=== Querying
+==== Querying
 
 * The `SearchManager` has been deprecated and no longer supports Lucene and Hibernate Search native objects:
 ** `.getQuery()` methods that take a Lucene Query have been removed. The alternative methods that take an Ickle query from the `org.infinispan.query.Search` entry point should be used instead.
@@ -916,7 +920,7 @@ Starting with version 12 such incomplete configurations will be considered inval
 * Instances of `org.infinispan.query.dsl.Query` don't cache query results anymore and allow queries to be re-executed when
 calling methods such as `list()`.
 
-==== Entity Mappings
+===== Entity Mappings
 
 * It is now required to annotate a field that requires sorting with `@SortableField`, both for embedded and remote queries.
 
@@ -930,51 +934,51 @@ calling methods such as `list()`.
 ** `indexNullAs`, used as an attribute in the `@Field` declaration
 ** The configuration `hibernate.search.index_uninverting_allowed`, that allows regular `@Field` to be sortable by un-inverting them at runtime
 
-== ThreadFactoryConfiguration changes
+=== ThreadFactoryConfiguration changes
 
 The ThreadGroup configuration setting has been removed and only thread group name is allowed now.
 This configuration was inconsistent between programmatic and declarative configuration and is now
 consistent.
 
-== Persistence
+=== Persistence
 
-=== Single File Store
+==== Single File Store
 The `<file-store relative-to=""">` attribute has been removed. This attribute will be ignored in pre 11.0 schemas with
 only the `path` attribute being taking into account when configuring the stores location.
 
-=== ClusterLoader
+==== ClusterLoader
 The `ClusterLoader` has been deprecated and will be removed in a future release with no direct replacement.
 
-== HotRod
+=== HotRod
 The `LAZY_RETRIEVAL` option utilises the now deprecated `ClusterLoader` and consequently has also been deprecated. It will be removed in a
 future release with no direct replacement.
 
-== Memory configuration changes
+=== Memory configuration changes
 
 * The `BINARY` storage has been deprecated, and will no longer store primitives and String mixed with `byte[]`, but only `byte[]`.
 * The child elements `<object>`, `<binary>` and `<off-heap>` are also deprecated. The following config changes should be done:
 
 ** On heap storage:
 
- 10.1
 [source,xml]
 ----
+<!--  10.1 -->
 <memory>
    <object size="1000000" strategy="REMOVE"/>
 </memory>
 ----
 
- 11.0
 [source,xml]
 ----
+<!--  11.0 -->
 <memory max-count="1000000" when-full="REMOVE"/>
 ----
 
 ** Binary, on heap storage:
 
- 10.1
 [source,xml]
 ----
+<!--  10.1 -->
 <cache>
    <memory>
       <binary size="500000000" strategy="EXCEPTION" eviction="MEMORY"/>
@@ -982,9 +986,9 @@ future release with no direct replacement.
 </cache>
 ----
 
- 11.0
 [source,xml]
 ----
+<!--  11.0 -->
 <cache>
    <!-- Or any other binary format -->
    <encoding media-type="application/x-protostream"/>
@@ -995,9 +999,9 @@ future release with no direct replacement.
 
 ** Off-heap:
 
- 10.1
 [source,xml]
 ----
+<!--  10.1 -->
 <cache>
    <memory>
       <off-heap size="10000000" eviction="COUNT"/>
@@ -1005,42 +1009,42 @@ future release with no direct replacement.
 </cache>
 ----
 
- 11.0
 [source,xml]
 ----
+<!--  11.0 -->
 <memory storage="OFF_HEAP" max-count="10000000"/>
 ----
 
 * Due to the changes above, cache configurations serialized to XML or JSON (for example, when using REST) will always be in the new format.
 
-== Encoding in Server Caches
+=== Encoding in Server Caches
 
 * Server caches should configure the MediaType for keys and values, or else a WARN will be logged.
 Usage of operations that require data conversion or indexing will not be supported for caches without encoding
 configuration in a future version. These operations include search, task execution, remote filters/converter/listeners,
 REST/Hot Rod reading/writing in different data formats
 
-== Security
+=== Security
 
-=== Server security
+==== Server security
 The server is now secure by default. Use the `user-tool` to add users or remove the security realm attribute from the endpoint to allow anonymous connections.
 
-=== Cache authorization roles
+==== Cache authorization roles
 If you do not explicitly specify roles when enabling cache authorization, all roles declared in the global configuration apply.
 
-== REST
+=== REST
 
 * REST API calls that have the extra URL parameter `?action` to perform operations with side effects now also
 support the POST method (returning 200 when the response has content or 204 otherwise).
 Support for using `GET` method on those calls will be removed in a future version.
 
-= Upgrading from 10.0 to 10.1 and 10.0 to 11.0
+== Upgrading from 10.0 to 10.1 and 10.0 to 11.0
 
-== Maximum Idle Timeouts with Clustered Cache Modes
+=== Maximum Idle Timeouts with Clustered Cache Modes
 Maximum idle expiration has been changed to improve data consistency with clustered cache modes when Infinispan nodes fail.
 
 [NOTE]
-====
+=====
 * `Cache.get()` calls do not return until the touch commands complete. This
 synchronous behavior increases latency of client requests and reduces
 performance.
@@ -1050,19 +1054,19 @@ stored in off-heap memory.
 
 * Likewise, `max-idle` does not work if caches use cache stores as a persistence
 layer.
-====
+=====
 
 See link:{../configuring/configuring.html#expiration_maxidle}[Maximum Idle Expiration] for complete details.
 
-= Upgrading from 10.0 to 10.1
+== Upgrading from 10.0 to 10.1
 
-== REST Store
+=== REST Store
 
 The following configurations were removed from the REST store: ```append-cache-name-to-path``` and ```path```.
 
 To specify the remote server endpoint path, a single configuration ```cache-name``` should be used.
 
-== Infinispan Lucene Directory is deprecated
+=== Infinispan Lucene Directory is deprecated
 
 The Infinispan Lucene directory is now deprecated and will be removed in a future release.
 Consequently, the Infinispan Directory provider for Hibernate Search will also be discontinued, with no replacement.
@@ -1082,7 +1086,7 @@ Users are encouraged to reconfigure their indexes as non-shared, using the Near 
 
 Queries need to be adjusted to use the ```BROADCAST``` runtime option.
 
-== Security role mappers and audit loggers
+=== Security role mappers and audit loggers
 
 The security role mapper implementations have been moved from the `org.infinispan.security.impl` package to the
 `org.infinispan.security.mappers` package:
@@ -1097,7 +1101,7 @@ The security audit logger implementations have been moved from the `org.infinisp
 * `org.infinispan.security.impl.LoggingAuditLogger` => `org.infinispan.security.audit.LoggingAuditLogger`
 * `org.infinispan.security.impl.NullAuditLogger` => `org.infinispan.security.audit.NullAuditLogger`
 
-== Memcached protocol server is deprecated
+=== Memcached protocol server is deprecated
 
 The Memcached protocol server is now deprecated and will be removed in a future release.
 This is being done because Infinispan only implements the very dated text-only protocol instead of the binary protocol
@@ -1105,19 +1109,19 @@ which means no security (authentication / encryption), no support for some new M
 with Infinispan features like single-port. If someone in the community wishes to implement the binary protocol, we
 would revert the decision.
 
-== Hot Rod client default mechanism changed to SCRAM-SHA-512
+=== Hot Rod client default mechanism changed to SCRAM-SHA-512
 
 The default Hot Rod client authentication mechanism has been changed from `DIGEST-MD5` to `SCRAM-SHA-512`.
 If you are using `property` user realms, you must make sure you are using `plain-text` storage.
 
-== Transactions
+=== Transactions
 The Map implementation `EntryVersionsMap` has been removed and replaced with a `Map<Object, IncrementalEntryVersion>`.
 If the old `EntryVersionsMap#merge` logic is required, it can be replaced with `org.infinispan.transaction.impl.WriteSkewHelper#mergeEntryVersions`,
 however users should not rely on this code as it could be removed in the future without notice,
 
-= Upgrading from 9.4 to 10.0
+== Upgrading from 9.4 to 10.0
 
-== Marshalling
+=== Marshalling
 The internal marshalling capabilities of {brandname} have undergone a significant refactoring in 10.0. The marshalling of
 internal {brandname} objects and user objects are now truly isolated. This means that it's now possible to configure
 link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html[Marshaller] implementations in embedded mode or on the
@@ -1129,7 +1133,7 @@ we now utilise the ProtoStream library to store user types in the language agnos
 format. It is still possible to utilise the old default, link:{javadocroot}/org/infinispan/jboss/marshalling/core/JBossUserMarshaller.html[JBossUserMarshaller],
 however it's necessary to add the `org.infinispan:infinispan-jboss-marshalling` artifact to your application's classpath.
 
-=== Externalizer Deprecations
+==== Externalizer Deprecations
 The following interfaces/annotations have been deprecated as a consequence of the marshalling refactoring:
 
 * link:{javadocroot}/org/infinispan/commons/marshall/Externalizer.html[Externalizer],
@@ -1144,7 +1148,7 @@ via the global link:{javadocroot}/org/infinispan/configuration/global/Serializat
 It's highly recommended to migrate from the old Externalizer and JBoss marshalling approach to the new ProtoStream based
 marshalling, as the interfaces listed above and the JBossUserMarshaller implementation will be removed in future versions.
 
-=== Store Migration
+==== Store Migration
 Unfortunately, the extensive marshalling changes mean that the binary format used by Infinispan stores in `9.4.x` is no
 longer compatible with `10.0.x`. Therefore, it's necessary for any existing stores to be migrated to the new format via
 the StoreMigrator tool.
@@ -1152,7 +1156,7 @@ the StoreMigrator tool.
 NOTE: Whilst we regret that 9.4.x stores are no longer binary compatible, these extensive changes should ensure binary
 compatibility across future major versions.
 
-=== Store Defaults
+==== Store Defaults
 
 Stores now default to being segmented if the property is not configured. Some stores do not support
 being segmented, which will result in a configuration exception being thrown at startup. The moving forward
@@ -1164,57 +1168,57 @@ current implementation requires opening file descriptors based on how many segme
 cause issues in some configurations and users should be aware. Infinispan will print a single WARN message
 when such a configuration is found.
 
-== CacheContainterAdmin
+=== CacheContainterAdmin
 
 Caches created through the CacheContainerAdmin API will now be `PERMANENT` by default. Use the `VOLATILE` flag to obtain the previous behaviour.
 
-== Hot Rod 3.0
+=== Hot Rod 3.0
 
 Older versions of the Hot Rod protocol treated expiration values greater than the number of milliseconds in 30 days as Unix time. Starting with Hot Rod 3.0 this adjustment no longer happens and expiration is taken literally.
 
-== Total Order transaction protocol is deprecated
+=== Total Order transaction protocol is deprecated
 
 Total Order transaction protocol is going to be removed in a future release.
 Use the default protocol (2PC).
 
-== Removed the infinispan.server.hotrod.workerThreads system property
+=== Removed the infinispan.server.hotrod.workerThreads system property
 
 The `infinispan.server.hotrod.workerThreads` property was introduced as a hack to work around the fact that the configuration did not expose it.
 The property has been removed and endpoint worker threads must now be exclusively configured using the `worker-threads` attribute.
 
-== Removed AtomicMap and FineGrainedAtomicMap
+=== Removed AtomicMap and FineGrainedAtomicMap
 
 AtomicMapLookup, AtomicMap and FineGrainedAtomicMap have been removed. Please see FunctionalMaps or Cache#Merge for
 similar functionality.
 
-== Removed Delta and DeltaAware
+=== Removed Delta and DeltaAware
 
 The previously deprecated Delta and DeltaAware interfaces have been removed.
 
-== Removed compatibility mode
+=== Removed compatibility mode
 
 The previously deprecated Compatibility Mode has been removed.
 
-== Removed the implicit default cache
+=== Removed the implicit default cache
 
 The default cache must now be named explicitly via the link:{javadocroot}/org/infinispan/configuration/global/GlobalConfigurationBuilder.html#defaultCacheName(java.lang.String)[GlobalConfigurationBuilder#defaultCacheName()] method.
 
-== Removed DistributedExecutor
+=== Removed DistributedExecutor
 
 The previously deprecated DistributedExecutor is now removed. References should be updated to use ClusterExecutor.
 
-== Removed the Tree module
+=== Removed the Tree module
 
 TreeCache has been unsupported for a long time and was only intended as a quick stopgap for JBossCache users. The module has now been removed
 completely.
 
-== The JDBC PooledConnectionFactory now utilises Agroal
+=== The JDBC PooledConnectionFactory now utilises Agroal
 Previously the JDBC PooledConnectionFactory provided c3p0 and HikariCP based connection pools.
 From 10.0 we only provide a PooledConnectionFactory based upon the link:https://agroal.github.io/[Agroal project].
 This means that it is no longer possible to utilise `c3p0.properties` and `hikari.properties` files to configure the pool,
 instead an agroal compatiblet properties file can be provided.
 
-== XML configuration changes
+=== XML configuration changes
 Several configuration elements and attributes that were deprecated since 9.0 have been removed:
 
 * `<eviction>` - replaced with `memory`
@@ -1227,21 +1231,21 @@ The xsite state transfer chunk size (`<backup><state-transfer chunk-size="X"/></
 same as the regular state transfer chunk size.
 Previously a value &lt;= 0 would transfer the entire cache in a single batch, which is almost always a bad idea.
 
-== RemoteCache Changes
+=== RemoteCache Changes
 
-=== Marshalling Changes
+==== Marshalling Changes
 The default marshaller is no longer GenericJbossMarshaller. We now utilise the link:https://github.com/infinispan/protostream[ProtoStream]
 library as the default. If Java Serialization is required by clients, we strongly recommend utilising the
 link:link:{javadocroot}/org/infinispan/commons/marshall/JavaSerializationMarshaller[JavaSerializationMarshaller] instead.
 However if the GenericJbossMarshaller must be used, it's necessary to add the `org.infinispan:infinispan-jboss-marshalling`
 artifact to your client's classpath and for the `GenericJbossMarshaller` to be configured as the marshaller.
 
-=== The getBulk methods have been removed
+==== The getBulk methods have been removed
 The getBulk method is an expensive method as it requires holding all keys in memory at once and requires a possibly very single result
 to populate it. The new retrieveEntries, entrySet, keySet and values methods handle this in a much more efficient way. Therefore the
 getBulk methods have been removed in favor of them.
 
-== Persistence changes
+=== Persistence changes
 
 * File-based cache stores (SingleFileStore, SoftIndexFileStore, RocksDBStore) filesystem layout has been normalized so that they will use the `GlobalStateConfiguration` persistent location as a default location. Additionally, all stores will now use the cache name as part of the data file/directory naming allowing multiple stores to avoid conflicts and ambiguity.
 * The CLI loader (`infinispan-persistence-cli`) has been removed.
@@ -1250,77 +1254,77 @@ getBulk methods have been removed in favor of them.
 +
 Using `shared=true` is enough, as only the primary owner of each key will write to a shared store.
 
-== Client/Server changes
+=== Client/Server changes
 
 * The Hot Rod client and server only support protocol versions 2.0 and higher. Support for Hot Rod versions 1.0 to 1.3 has been dropped.
 
-== SKIP_LISTENER_NOTIFICATION flag
+=== SKIP_LISTENER_NOTIFICATION flag
 
 `SKIP_LISTENER_NOTIFICATION` notification flag has been added in the hotrod client.
 This flag only works when the client and the server version is 9.4.15 or higher.
 Spring Session integration uses this flag when a session id has changed.
 If you are using Spring Session with Infinispan 9.4, consider upgrading the client and the server.
 
-== performAsync header removed from REST
+=== performAsync header removed from REST
 
 The `performAsync` header was removed from the REST server. Clients that want to perform async operations with
 the REST server should manage the request and response on their side to avoid blocking.
 
-== REST status code change
+=== REST status code change
 
 REST operations that don't return resources and are used with `PUT`, `POST` and `DELETE` methods now return status `204` (No content) instead of `200`.
 
-== Default JGroups stacks in the XML configuration
+=== Default JGroups stacks in the XML configuration
 
 With the introduction of inline XML JGroups stacks in the configuration, two default stacks are always enabled: `udp` and `tcp`.
 If you are declaring your own stacks with the same names, an exception reporting the conflict will be thrown. Simply rename
 your own configurations to avoid the conflict.
 
-== JGroups legacy S3_PING replaced with aws.S3_PING
+=== JGroups legacy S3_PING replaced with aws.S3_PING
 
 Because of changes in AWS's access policy regarding signatures, legacy S3_PING will not work in newer regions and will stop working in older regions too.
 For this reason, you should migrate to using aws.S3_PING instead.
 
-== Cache and Cache Manager Listeners can now be configured to be non blocking
+=== Cache and Cache Manager Listeners can now be configured to be non blocking
 Listeners in the past that were sync, always ran in the thread that caused the event. We now allow a Listener method to
 be non-blocking in that it will still fire in the original thread, under the assumption that it will return immediately.
 Please read the Listener Javadoc for information and examples on this.
 
-== Distributed Streams operations no longer support null values
+=== Distributed Streams operations no longer support null values
 Distributed Streams has parts rewritten to utilize non blocking reactive streams based operations. As such null values
 are not supported as values from operations as per the reactive streams spec. Please utilize other means to denote
 a null value.
 
-== Removed the infinispan-cloud module
+=== Removed the infinispan-cloud module
 The infinispan-cloud module has been removed and the `kubernetes`, `ec2`, `google` and `azure` default configurations have been included in `infinispan-core` and can be
 referenced as default named JGroups configurations.
 
-== Removed experimental flag GUARANTEED_DELIVERY
-Almost as soon as GUARANTEED_DELIVERY was added, UNICAST3 and NAKACK2.resend_last_seqno removed the need for it.
-It was always documented as experimental, so we removed it without deprecation and we also removed the RSVP protocol
+=== Removed experimental flag GUARANTEED_DELIVERY
+Almost as soon as `GUARANTEED_DELIVERY` was added, `UNICAST3` and `NAKACK2.resend_last_seqno` removed the need for it.
+It was always documented as experimental, so we removed it without deprecation and we also removed the `RSVP` protocol
 from the default JGroups stacks.
 
-== Cache Health
-The possible statuses of the cache health are now HEALTHY, HEALTHY_REBALANCING and DEGRADED to better
+=== Cache Health
+The possible statuses of the cache health are now `HEALTHY`, `HEALTHY_REBALANCING` and `DEGRADED` to better
 reflect the fact that `rebalancing` doesn't mean a cluster is unhealthy.
 
-== Multi-tenancy
+=== Multi-tenancy
 
 When using multi-tenancy in the WildFly based server, it's necessary to specify the `content-path` for each of the REST connectors, to match the `prefix` element under `multi-tenancy\rest\prefix`.
 
-== OffHeap Automatic Resizing
+=== OffHeap Automatic Resizing
 Off Heap memory containers now will dynamically resize based on number of entries in the container. Due to this the
 address count configuration value  is now deprecated for APIs and has been removed from the xml parser.
 
 
-== Deprecated methods from DataContainer removed
+=== Deprecated methods from DataContainer removed
 The deprecated methods keySet, values, entrySet and executeTask has been removed.
 
-= Upgrading from 9.3 to 9.4
+== Upgrading from 9.3 to 9.4
 
-== Client/Server changes
+=== Client/Server changes
 
-=== Compatibility mode deprecation
+==== Compatibility mode deprecation
 
 Compatibility mode has been deprecated and will be removed in the next {brandname} version.
 
@@ -1337,74 +1341,74 @@ If storing data as unmarshalled objects is still desired, the equivalent of comp
 </encoding>
 ----
 
-=== Memcached storage
+==== Memcached storage
 
 For better interoperability between endpoints, the Memcached server no longer stores keys as `java.lang.String`, but as UTF-8 `byte[]`.
 
 If using memcached, it's recommended to run a rolling upgrade from 9.3 to store data in the new format, or reload the data in the cache.
 
-=== Scripts Response
+==== Scripts Response
 
 Distributed scripts with text-based data type no longer return `null` when the result from each server is null. The response is now a JSON array with each individual result, e.g. `"[null, null]"`
 
-=== WebSocket endpoint removal
+==== WebSocket endpoint removal
 The WebSocket endpoint has been unmaintained for several years. It has been removed.
 
-=== Hot Rod client connection pool properties
+==== Hot Rod client connection pool properties
 Since the Hot Rod client was overhauled in 9.2, the way the connection pool configuration is handled has changed.
 Infinispan 9.4 introduces a new naming scheme for the connection pool properties which deprecates the old _commons-pool_
 names. For a complete reference of the available configuration options for the properties file please refer to
 link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html#package.description[remote client configuration] javadoc.
 
-=== Server thread pools
+==== Server thread pools
 The threads that handle the child Netty event loops have been renamed from *-ServerWorker to *-ServerIO
 
-== Persistence Changes
+=== Persistence Changes
 
-=== Shared and Passivation
+==== Shared and Passivation
 
 A store cannot be configured as both shared and having passivation enabled.
 Doing so can cause data inconsistencies as there is no way to synchronize
 data between all the various nodes. As such this configuration will now
 cause a startup exception. Please update your configuration as appropriate.
 
-== Query changes
+=== Query changes
 
-=== AffinityIndexManager
+==== AffinityIndexManager
 
 The default number of shards is down to `4`, it was previously equals to the number of segments in the cache.
 
-= Upgrading from 9.2 to 9.3
+== Upgrading from 9.2 to 9.3
 
-== AdvancedCacheLoader changes
-The AdvancedCacheLoader SPI has been enhanced to provide an alternative method to process and instead allows reactive streams based publishKeys and publishEntries methods which provide benefits in performance, threading and ease of use. Note this change will only affect you if you wish take advantage of it in any custom CacheLoaders you may have implemented.
+=== AdvancedCacheLoader changes
+The `AdvancedCacheLoader` SPI has been enhanced to provide an alternative method to process and instead allows reactive streams based `publishKeys` and `publishEntries` methods which provide benefits in performance, threading and ease of use. Note this change will only affect you if you wish take advantage of it in any custom CacheLoaders you may have implemented.
 
-== Partition Handling Configuration
-In 9.3 the default MergePolicy is now MergePolicy.NONE, opposed to MergePolicy.PREFERRED_ALWAYS.
+=== Partition Handling Configuration
+In 9.3 the default `MergePolicy` is now `MergePolicy.NONE`, opposed to `MergePolicy.PREFERRED_ALWAYS`.
 
-== Stat Changes
+=== Stat Changes
 We have reverted the stat changes introduced in 9.1, so average values for read, write and removals are once again returned
 as milliseconds.
 
-== Event log changes
+=== Event log changes
 Several new event log messages have been added, and one message has been removed (ISPN100013).
 
-== Max Idle Expiration Changes
+=== Max Idle Expiration Changes
 The max idle entry expiration information is sent between owners in the cluster. However when an entry expires via max idle on a given node, this was not replicated (only removing it locally). Max idle has been enhanced to now expire an entry across the entire cluster, instead of per node. This includes ensuring that max idle expiration is applied across all owners (meaning if another node has accessed the entry within the given time it will prevent that entry from expiring on other nodes that didn't have an access).
 
 Max idle in a transactional clustered cache does not remove expired entries on access (although it will not be returned). These entries are only removed via the expiration reaper.
 
 Iteration in a clustered cache will still show entries that are expired via maxIdle to ensure good performance, but could be removed at any point due to expiration reaper.
 
-== WildFly Modules
+=== WildFly Modules
 The {brandname} WildFly modules are now located in the `system/add-ons/{moduleprefix}` dir as per the
 link:https://developer.jboss.org/wiki%20/LayeredDistributionsAndModulePathOrganization[WildFly module conventions].
 
-== Deserialization Allow list
+=== Deserialization Allow list
 
 Deserialization of content sent by clients to the server are no longer allowed by default.
-This applies to JSON, XML, and marshalled byte[] that, depending on the cache configuration, will cause the server
-to convert it to Java Objects either to store it or to perform any operation that cannot be done on a byte[] directly.
+This applies to JSON, XML, and marshalled `byte[]` that, depending on the cache configuration, will cause the server
+to convert it to Java Objects either to store it or to perform any operation that cannot be done on a `byte[]` directly.
 
 The deserialization needs to be enabled using system properties, ether by class name or regular expressions:
 
@@ -1417,18 +1421,18 @@ The deserialization needs to be enabled using system properties, ether by class 
 -Dinfinispan.deserialization.allowlist.regexps=.*
 ----
 
-= Upgrading from 9.0 to 9.1
+== Upgrading from 9.0 to 9.1
 
-== Kubernetes Ping changes
+=== Kubernetes Ping changes
 
 The latest version of Kubernetes Ping uses unified environmental variables for both Kubernetes and OpenShift.
 Some of them were shortened for example `OPENSHIFT_KUBE_PING_NAMESPACE` was changed to `KUBERNETES_NAMESPACE`.
 Please refer to link:https://github.com/jgroups-extras/jgroups-kubernetes/blob/master/README.adoc[Kubernetes Ping documentation].
 
-== Stat Changes
+=== Stat Changes
 Average values for read, write and removals are now returned in Nanoseconds, opposed to Milliseconds.
 
-== (FineGrained)AtomicMap reimplemented
+=== (FineGrained)AtomicMap reimplemented
 
 Infinispan now contains a new implementation of both `AtomicMap` and `FineGrainedAtomicMap`, but the semantics has been preserved. The new implementation does not use `DeltaAware` interface but the Functional API instead.
 
@@ -1436,29 +1440,29 @@ There are no changes needed for `AtomicMap`, but it now supports non-transaction
 
 `FineGrainedAtomicMap` now uses the Grouping API and therefore you need to enable groups in configuration. Also it holds entries as regular cache entries, plus one cache entry for cached key set (the map itself). Therefore the cache size or iteration/streaming results may differ. Note that fine grained atomic maps are still supported on transactional caches only.
 
-== RemoteCache keySet/entrySet/values
+=== RemoteCache keySet/entrySet/values
 
 RemoteCache now implements all of the collection backed methods from `Map` interface.
 Previously `keySet` was implemented, however it was a deep copy. This has now changed
 and it is a backing set. That is that the set retrieves the updated values on each
-invocation or updates to the backing remote cache for writes. The entrySet and values
+invocation or updates to the backing remote cache for writes. The `entrySet` and `values`
 methods are also now supported as backing variants as well.
 
 If you wish to have a copy like was provided before it is recommended to copy the
-contents into a in memory local set such as
+contents into an in-memory local set such as
 
 [source,java]
 ----
 Set<K> keysCopy = remoteCache.keySet().stream().collect(Collectors.toSet());
 ----
 
-== DeltaAware deprecated
+=== DeltaAware deprecated
 
 Interfaces `DeltaAware`, `Delta` and `CopyableDeltaAware` have been deprecated. Method `AdvancedCache.applyDelta()` has been deprecated and the implementation does not allow custom set of locked keys. `ApplyDeltaCommand` and its uses in interceptor stack are deprecated.
 
 Any partial updates to an entry should be replaced using the Functional API.
 
-== {brandname} Query Configuration
+=== {brandname} Query Configuration
 
 The configuration property `directory_provider` now accepts a new value `local-heap`.
 This value replaces the now deprecated `ram`, and as its predecessor will cause the index to be stored in a `org.apache.lucene.store.RAMDirectory`.
@@ -1469,10 +1473,10 @@ We suggest to perform this replacement, as the `ram` value will no longer be rec
 This change was made as the team believes the `local-heap` name better expresses the storage model, especially as this storage method will not allow real-time replication of the index across multiple nodes.
 This index storage option is mostly useful for single node integration testing of the query functionality.
 
-== Store Batch Size Changes
-TableManipulation::batchSize and JpaStoreConfiguration::batchSize have been deprecated and replaced by the higher level AbstractStoreConfiguration::maxBatchSize.
+=== Store Batch Size Changes
+`TableManipulation::batchSize` and `JpaStoreConfiguration::batchSize` have been deprecated and replaced by the higher level `AbstractStoreConfiguration::maxBatchSize`.
 
-== Partition Handling changes
+=== Partition Handling changes
 In Infinispan 9.1 partition handling has been improved to allow for automatic conflict resolution on partition merges. Consequently,
 PartitionHandlingConfiguration::enabled has been deprecated in favour of PartitionHandlingConfiguration::whenSplit.
 Configuring whenSplit to the DENY_READ_WRITES strategy is equivalent to setting enabled to true, whilst specifying
@@ -1482,9 +1486,9 @@ Furthermore, during a partition merge with ALLOW_READ_WRITES, the default EntryM
 MergePolicies.PREFERRED_ALWAYS which provides a deterministic way of tie-breaking CacheEntry conflicts.
 If you require the old behaviour, simply set the merge-policy to null.
 
-= Upgrading from 8.x to 9.0
+== Upgrading from 8.x to 9.0
 
-== Default transaction mode changed
+=== Default transaction mode changed
 
 The default configuration for transactional caches changed from `READ_COMMITTED` and `OPTIMISTIC` locking to `REPEATABLE_READ` and `OPTIMISTIC` locking with `write-skew` enabled.
 
@@ -1496,12 +1500,12 @@ The following configuration has been deprecated:
 * `write-skew`: as said, it is automatically enabled.
 * `<versioning>` and its attributes. It is automatically enabled and configured when needed.
 
-== Removed eagerLocking and eagerLockingSingleNode configuration settings
+=== Removed eagerLocking and eagerLockingSingleNode configuration settings
 Both were deprecated since version 5.1.
 `eagerLocking(true)` can be replaced with `lockingMode(LockingMode.PESSIMISTIC)`,
 and `eagerLockingSingleNode()` does not need a replacement because it was a no-op.
 
-== Removed async transaction support
+=== Removed async transaction support
 
 Asynchronous mode is no longer supported in transactional caches and it will automatically use the synchronous cache mode.
 In addition, the second phase of a transaction commit is done synchronously.
@@ -1510,7 +1514,7 @@ The following methods (and related) are deprecated:
 * `TransactionConfigurationBuilder.syncCommitPhase(boolean)`
 * `TransactionConfigurationBuilder.syncRollbackPhase(boolean)`
 
-== Deprecated all the dummy related transaction classes.
+=== Deprecated all the dummy related transaction classes.
 The following classes have been deprecated and they will be removed in the future:
 
 * `DummyBaseTransactionManager`: replaced by `EmbeddedBasedTransactionManager`;
@@ -1520,36 +1524,36 @@ The following classes have been deprecated and they will be removed in the futur
 * `DummyTransactionManagerLookup` and `RecoveryDummyTransactionManagerLookup`: replaced by `EmbeddedTransactionManagerLookup`;
 * `DummyUserTransaction`: replaced by `EmbeddedUserTransaction`;
 
-== Clustering configuration changes
+=== Clustering configuration changes
 The `mode` attribute in the XML declaration of clustered caches is no longer mandatory. It defaults to SYNC.
 
-== Default Cache changes
+=== Default Cache changes
 Up to Infinispan 8.x, the default cache always implicitly existed, even if not declared in the XML configuration.
 Additionally, the default cache configuration affected all other cache configurations, acting as some kind of base template.
 Since 9.0, the default cache only exists if it has been explicitly configured. Additionally, even if it has been specified,
 it will never act as base template for other caches.
 
-== Marshalling Enhancements and Store Compatibility
+=== Marshalling Enhancements and Store Compatibility
 Internally Infinispan 9.x has introduced many improvements to its marshalling codebase in order to improve performance
 and allow for greater flexibility. Consequently, data marshalled and persisted by Infinispan 8.x is no longer compatible with Infinispan 9.0.
 To aid you in migrating your existing stores to 9.0, we have provided a Store Migrator, however at present this only allows the migration of JDBC stores.
 
-== New Cloud module for library mode
+=== New Cloud module for library mode
 In Infinispan 8.x, cloud related configuration were added to `infinispan-core` module. Since 9.0 they were moved to `infinispan-cloud` module.
 
-== Entry Retriever is now removed
+=== Entry Retriever is now removed
 The entry retriever feature has been removed.  Please update to use the new Streams feature detailed in the User Guide.
 The `org.infinispan.filter.CacheFilters` class can be used to convert `KeyValueFilter` and `Converter` instances
-into proper Stream operations that are able to be marshalled.
+into proper Stream operations that can be marshalled.
 
-== Map / Reduce is now removed
+=== Map / Reduce is now removed
 Map reduce has been removed in favor of the new Streams feature which should provide more features and performance.
 There are no bridge classes to convert to the new streams and all references must be rewritten.
 
-== Spring 4 support is now removed
+=== Spring 4 support is now removed
 Spring 4 is no longer supported.
 
-== Function classes have moved packages
+=== Function classes have moved packages
 The class `SerializableSupplier` has moved from the `org.infinispan.stream`
 package to the `org.infinispan.util.function` package.
 
@@ -1560,12 +1564,12 @@ The classes `TriConsumer`, `CloseableSupplier`, `SerializableRunnable`,
 `SerializableFunction` & `SerializableCallable` have all been moved from
 the `org.infinispan.util` package to the `org.infinispan.util.function` package.
 
-== SegmentCompletionListener interface has moved
+=== SegmentCompletionListener interface has moved
 The interface `SegmentCompletionListener` has moved from the interface
 `org.infinispan.CacheStream` to the new `org.infinispan.BaseCacheStream`.
 
-== Spring module dependency changes
-All Infinispan, Spring and Logger dependencies are now in the `provided` scope. One can decide whether to use small jars or uber jars but they need to be added to the classpath of the application.
+=== Spring module dependency changes
+All Infinispan, Spring and Logger dependencies are now in the `provided` scope. One can decide whether to use small jars or uber jars, but they need to be added to the classpath of the application.
 It also gives one freedom in choosing Spring (or Spring Boot) version.
 
 Here is an example:
@@ -1591,12 +1595,12 @@ Here is an example:
 </dependencies>
 ----
 
-Additionally there is no Logger implementation specified (since this may vary depending on use case).
+Additionally, there is no `Logger` implementation specified (since this may vary depending on use case).
 
-== Total order executor is now removed
+=== Total order executor is now removed
 The total order protocol now uses the `remote-command-executor`. The attribute `total-order-executor` in `<container>` tag is removed.
 
-== HikariCP is now the default implementation for JDBC PooledConnectionFactory
+=== HikariCP is now the default implementation for JDBC PooledConnectionFactory
 link:https://github.com/brettwooldridge/HikariCP[HikariCP] offers superior performance to c3p0 and is now the default implementation.
 Additional properties for HikariCP can be provided by placing a `hikari.properties` file on the classpath or by specifying
 the path to the file via `PooledConnectionFactoryConfiguration.propertyFile` or `properties-file` in the connection pool's
@@ -1607,107 +1611,107 @@ always override the values loaded from a properties file.
 Support for c3p0 has been deprecated and will be removed in a future release. Users can force c3p0 to be utilised as before
 by providing the system property `-Dinfinispan.jdbc.c3p0.force=true`.
 
-== RocksDB in place of LevelDB
-The LevelDB cache store was replaced with a link:http//rocksdb.org[RocksDB]. RocksDB is a fork of LevelDB which provides
+=== RocksDB in place of LevelDB
+The LevelDB cache store was replaced with a link:https://rocksdb.org[RocksDB]. RocksDB is a fork of LevelDB which provides
 superior performance in high concurrency scenarios. The new cache store can parse old LevelDB configurations but will always use
 the RocksDB implementation.
 
-== JDBC Mixed and Binary stores removed
+=== JDBC Mixed and Binary stores removed
 The JDBC Mixed and Binary stores have been removed due to the poor performance associated with storing entries in buckets.
 Storing entries in buckets is non-optimal as each read/write to the store requires an existing bucket for a given hash to be retrieved,
 deserialised, updated, serialised and then re-inserted back into the db.  If you were previously using one of the removed
 stores, we have provided a migrator tool to assist in migrating data from an existing binary table to a JDBC string based
 store.
 
-== @Store Annotation Introduced
+=== @Store Annotation Introduced
 A new annotation, `@Store`, has been added for persistence stores. This allows a store's properties to be
 explicitly defined and validated against the provided store configuration.  Existing stores should be updated to use this
 annotation and the store's configuration class should also declare the `@ConfigurationFor` annotation.  If neither of these
 annotations are present on the store or configuration class, then a your store will continue to function as before, albeit
 with a warning that additional store validation cannot be completed.
 
-== Server authentication changes
+=== Server authentication changes
 The no-anonymous policy is now automatically enabled for Hot Rod authentication unless explicitly specified.
 
-== Package org.infinispan.util.concurrent.jdk8backported has been removed
-=== Moved classes
+=== Package org.infinispan.util.concurrent.jdk8backported has been removed
+==== Moved classes
 Classes regarding EntrySizeCalculator have now been moved down to the org.infinispan.util package.
 
-=== Removed classes
-The *ConcurrentHashMapV8 classes and their supporting classes have all been removed. The
-CollectionFactory#makeBoundedConcurrentMap method should be used if you desire to have a
-bounded ConcurrentMap.
+==== Removed classes
+The `ConcurrentHashMapV8` classes and their supporting classes have all been removed. The
+`CollectionFactory#makeBoundedConcurrentMap` method should be used if you desire to have a
+bounded `ConcurrentMap`.
 
-== Store as Binary is deprecated
+=== Store as Binary is deprecated
 Store as Binary configuration is now deprecated and will be removed in a future release. This is replaced by
 the new memory configuration.
 
-== DataContainer collection methods are deprecated
-The keySet, entrySet and values methods on DataContainer have been deprecated. These behavior of these methods
-are very inconsistent and will be removed later. It is recommended to update references to use iterator or
-iteratorIncludingExpired methods instead.
+=== DataContainer collection methods are deprecated
+The `keySet`, `entrySet` and `values` methods on `DataContainer` have been deprecated. These behavior of these methods
+are very inconsistent and will be removed later. It is recommended to update references to use `iterator` or
+`iteratorIncludingExpired` methods instead.
 
-= Upgrading from 8.1 to 8.2
-== Entry Retriever is deprecated
+== Upgrading from 8.1 to 8.2
+=== Entry Retriever is deprecated
 Entry Retriever is now deprecated and will be removed in Infinispan 9.  This is replaced by the new Streams feature.
 
-== Map / Reduce is deprecated
+=== Map / Reduce is deprecated
 Map reduce is now deprecated and will be removed in Infinispan 9.  This is replaced by the new Streams feature.
 
-= Upgrading from 8.x to 8.1
-== Packaging changes
-=== CDI module split
+== Upgrading from 8.x to 8.1
+=== Packaging changes
+==== CDI module split
 CDI module (GroupId:ArtifactId `org.infinispan:infinispan-cdi`) has been split into `org.infinispan:infinispan-cdi-embedded` and `org.infinispan:infinispan-cdi-remote`. Please make sure that you use proper artifact.
 
-=== Spring module split
+==== Spring module split
 Spring module (GroupId:ArtifactId `org.infinispan:infinispan-spring5`) has been split into `org.infinispan:infinispan-spring5-embedded` and `org.infinispan:infinispan-spring5-remote`. Please make sure that you use proper artifact.
 
-== Spring 3 support is deprecated
+=== Spring 3 support is deprecated
 Spring 3 support (GroupId:ArtifactId `org.infinispan:infinispan-spring`) is deprecated. Please consider migrating into Spring 4 support.
 
-= Upgrading from 7.x to 8.0
-== Configuration changes
-=== Removal of Async Marshalling
+== Upgrading from 7.x to 8.0
+=== Configuration changes
+==== Removal of Async Marshalling
 Async marshalling has been entirely dropped since it was never reliable enough. The "async-marshalling" attribute has been removed from the 8.0 XML schema and will be ignored when parsing 7.x configuration files. The programmatic configuration methods related to asyncMarshalling/syncMarshalling are now deprecated and have no effect aside from producing a WARN message in the logs.
 
-=== Reenabling of isolation level configurations in server
+==== Re-enabling of isolation level configurations in server
 Because of the inability to configure write skew in the server, the isolation level attribute was ignored and defaulted to READ_COMMITTED. Now, when enabling REPEATABLE_READ together with optimistic locking, write skew is enabled by default in local and synchronous configurations.
 
-=== Subsystem renaming in server
+==== Subsystem renaming in server
 In order to avoid conflict and confusion with the similar subsystems in WildFly, we have renamed the following subsystems in server:
-* infinispan -> datagrid-infinispan
-* jgroups -> datagrid-jgroups
-* endpoint -> datagrid-infinispan-endpoint
+* `infinispan` -> `datagrid-infinispan`
+* `jgroups` -> `datagrid-jgroups`
+* `endpoint` -> `datagrid-infinispan-endpoint`
 
-=== Server domain mode
+==== Server domain mode
 We no longer support the use of standalone mode for running clusters of servers. Domain mode (bin/domain.sh) should be used instead.
 
-= Upgrading from 6.0 to 7.0
-== API Changes
+== Upgrading from 6.0 to 7.0
+=== API Changes
 
-=== Cache Loader
-To be more inline with JCache and java.util.collections interfaces we have changed the first argument type for the CacheLoader.load & CacheLoader.contains methods to be Object from type K.
+==== Cache Loader
+To be more inline with JCache and `java.util.collections` interfaces we have changed the first argument type for the `CacheLoader.load` and `CacheLoader.contains` methods to be `Object` from the generic type `K`.
 
-=== Cache Writer
-To be more inline with JCache and java.util.collections interfaces we have changed the first argument type for the CacheWriter.delete method to be Object from type K.
+==== Cache Writer
+To be more inline with JCache and java.util.collections interfaces we have changed the first argument type for the `CacheWriter.delete` method to be Object from type K.
 
-=== Filters
+==== Filters
 
 Over time Infinispan added 2 interfaces with identical names and almost identical methods.  The org.infinispan.notifications.KeyFilter and org.infinispan.persistence.spi.AdvancedCacheLoader$KeyFilter interfaces.
 
-Both of these interfaces are used for the sole purpose of filtering an entry by it's given key.  Infinispan 7.0 has also introduced the KeyValueFilter which is similar to both but also can filter on the entries value and/or metadata.
+Both of these interfaces are used for the sole purpose of filtering an entry by its given key.  Infinispan 7.0 has also introduced the `KeyValueFilter` which is similar to both but also can filter on the entries value and/or metadata.
 
-As such all of these classes have been moved into a new package org.infinispan.filter and all of their related helper classes.
+As such all of these classes have been moved into a new package `org.infinispan.filter` and all of their related helper classes.
 
-The new org.infinispan.filter.KeyFilter interface has replaced both of the previous interfaces and all previous references use the new interface.
+The new `org.infinispan.filter.KeyFilter` interface has replaced both of the previous interfaces and all previous references use the new interface.
 
-== Declarative configuration
+=== Declarative configuration
 
 The XML schema for the embedded configuration has changed to more closely follow the server configuration. Use the `config-converter.sh` or `config-converter.bat` scripts to convert an Infinispan 6.0 to the current format.
 
-= Upgrading from 5.3 to 6.0
-== Declarative configuration
-In order to use all of the latest features, make sure you change the namespace declaration at the top of your XML configuration files as follows:
+== Upgrading from 5.3 to 6.0
+=== Declarative configuration
+In order to use all the latest features, make sure you change the namespace declaration at the top of your XML configuration files as follows:
 
 [source,xml]
 ----
@@ -1716,7 +1720,7 @@ In order to use all of the latest features, make sure you change the namespace d
 </infinispan>
 ----
 
-== Deprecated API removal
+=== Deprecated API removal
 
 * Class `org.infinispan.persistence.remote.wrapperEntryWrapper`.
 
@@ -1750,9 +1754,9 @@ Please use instead `GridFile.delete()`.
 * JMX attribute `long getLocallyInterruptedTransactions()` from class
 `org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager`.
 
-=  Upgrading from 5.2 to 5.3
-== Declarative configuration
-In order to use all of the latest features, make sure you change the namespace declaration at the top of your XML configuration files as follows:
+==  Upgrading from 5.2 to 5.3
+=== Declarative configuration
+In order to use all the latest features, make sure you change the namespace declaration at the top of your XML configuration files as follows:
 
 [source,xml]
 ----
@@ -1761,9 +1765,9 @@ In order to use all of the latest features, make sure you change the namespace d
 </infinispan>
 ----
 
-= Upgrading from 5.1 to 5.2
-== Declarative configuration
-In order to use all of the latest features, make sure you change the namespace declaration at the top of your XML configuration files as follows:
+== Upgrading from 5.1 to 5.2
+=== Declarative configuration
+In order to use all the latest features, make sure you change the namespace declaration at the top of your XML configuration files as follows:
 
 [source,xml]
 ----
@@ -1772,7 +1776,7 @@ In order to use all of the latest features, make sure you change the namespace d
 </infinispan>
 ----
 
-== Transaction
+=== Transaction
 
 The default transaction enlistment model has changed ( link:https://issues.jboss.org/browse/ISPN-1284[ISPN-1284] ) from link:{jdkdocroot}/javax/transaction/xa/XAResource.html[`XAResource`] to link:{jdkdocroot}/javax/transaction/Synchronization.html[`Synchronization`].
 Also now, if the `XAResource` enlistment is used, then recovery is enabled by default.
@@ -1790,20 +1794,20 @@ or the programmatic configuration equivalent:
 
 [source,java]
 ----
-ConfigurationBuilder builder = new ConfigurationBuilder();
-builder.transaction().useSynchronization(false).recovery().enabled(false)
+ConfigurationBuilder builder = new ConfigurationBuilder().
+   transaction().useSynchronization(false).recovery().enabled(false);
 ----
 
-== Cache Loader and Store configuration
+=== Cache Loader and Store configuration
 
 Cache Loader and Store configuration has changed greatly in Infinispan 5.2.
 
-== Virtual Nodes and Segments
+=== Virtual Nodes and Segments
 
 The concept of Virtual Nodes doesn't exist anymore in Infinispan 5.2 and has been replaced by Segments.
 
-=  Upgrading from 5.0 to 5.1
-== API
+==  Upgrading from 5.0 to 5.1
+=== API
 
 The cache and Cache Manager hierarchies have changed slightly in 5.1 with the introduction of
 link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/api/BasicCache.html[`BasicCache`]
@@ -1823,7 +1827,7 @@ So previous code that was written like this will no longer compile.
 import org.infinispan.Cache;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-...
+// ...
 CacheContainer cacheContainer = new RemoteCacheManager();
 Cache cache = cacheContainer.getCache();
 ----
@@ -1836,7 +1840,7 @@ Instead, if Hot Rod clients want to continue using interfaces higher up the hier
 import org.infinispan.BasicCache;
 import org.infinispan.manager.BasicCacheContainer;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-...
+// ...
 BasicCacheContainer cacheContainer = new RemoteCacheManager();
 BasicCache cache = cacheContainer.getCache();
 ----
@@ -1853,29 +1857,29 @@ RemoteCacheManager cacheContainer = new RemoteCacheManager();
 RemoteCache cache = cacheContainer.getCache();
 ----
 
-== Eviction and Expiration
+=== Eviction and Expiration
 
 * The eviction XML element no longer defines the `wakeUpInterval` attribute. This is now configured via the `expiration` element:
 
 [source,xml]
 ----
-<expiration wakeUpInterval="60000"... />
+<expiration wakeUpInterval="60000" />
 ----
 
 Eviction's `maxEntries` is used as guide for the entire cache, but eviction happens on a per cache segment, so when the segment is full, the segment is evicted. That's why `maxEntries` is a theoretical limit but in practical terms, it'll be a bit less than that. This is done for performance reasons.
 
-== Transactions
+=== Transactions
 
-* A cache marked as `TRANSACTIONAL` cannot be accessed outside of a transaction, and a `NON_TRANSACTIONAL` cache cannot be accessed within a transaction. In 5.0, a transactional cache would support non-transactional calls as well.  This change was done to be in-line with expectations set out in link:https://github.com/jsr107[JSR-107] as well as to provide more consistent behavior.
+* A cache marked as `TRANSACTIONAL` cannot be accessed outside a transaction, and a `NON_TRANSACTIONAL` cache cannot be accessed within a transaction. In 5.0, a transactional cache would support non-transactional calls as well.  This change was done to be in-line with expectations set out in link:https://github.com/jsr107[JSR-107] as well as to provide more consistent behavior.
 
 * In 5.0, commit and rollback phases were asynchronous by default. Starting with 5.1, these are now synchronous by default, to provide the guarantees required by a single lock-owner model.
 
-== State transfer
+=== State transfer
 One of the big changes we made in 5.1 was to use the same push-based state transfer we introduced in 5.0 both for rehashing in distributed mode and for state retrieval in replicated mode. We even borrow the consistent hash concept in replicated mode to transfer state from all previous cache members at once in order to speed up transfer.
 
 As a consequence we've unified the state transfer configuration as well, there is now a `stateTransfer` element containing a simplified state transfer configuration. The corresponding attributes in the `stateRetrieval` and `hash` elements have been deprecated, as have been some attributes that are no longer used.
 
-== Configuration
+=== Configuration
 If you use XML to configure Infinispan, you shouldn't notice any change, except a much faster startup, courtesy of the link:http://en.wikipedia.org/wiki/StAX[StAX] based parser. However, if you use programmatic configuration, read on for the important differences.
 
 Configuration is now packaged in `org.infinispan.configuration`, and you must use a fluent, builder style:
@@ -1943,7 +1947,7 @@ The schema documentation has changed format, as it is now produced using the sta
 
 We are in the process of adding in support for this configuration style for modules (such as cache stores). In the meantime, please use the old configuration or XML if you require support for cache store module configuration.
 
-== Flags and ClassLoaders
+=== Flags and ClassLoaders
 
 The `Flags` and `ClassLoader` API has changed. In the past, the following would work:
 
@@ -1961,6 +1965,6 @@ cache.withFlags(f1, f2).withClassLoader(cl).put(k, v);
 
 The above pattern has always been the intention of this API anyway.
 
-== JGroups Bind Address
+=== JGroups Bind Address
 
 Since upgrading to JGroups 3.x, `-Dbind.address` is ignored. This should be replaced with `-Djgroups.bind_addr`.
