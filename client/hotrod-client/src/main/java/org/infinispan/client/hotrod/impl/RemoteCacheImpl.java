@@ -59,6 +59,7 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.near.NearCacheService;
 import org.infinispan.commons.api.query.ContinuousQuery;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
@@ -67,7 +68,6 @@ import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.query.dsl.Query;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
