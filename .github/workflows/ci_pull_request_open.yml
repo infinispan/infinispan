@@ -17,7 +17,7 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          java-version: 21
+          java-version: 17
           distribution: oracle
           cache: maven
       - run: mvn --version
