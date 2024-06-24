@@ -43,10 +43,10 @@ jobs:
         env:
           TOKEN: ${{ secrets.JIRA_API_TOKEN }}
           RUNNER_DEBUG: 1
-          FLAKY_TEST_GLOB: **/target/*-reports*/**/TEST-*FLAKY.xml
-          PROJECT_KEY: ISPN
-          TYPE: Bug
-          JENKINS_JOB_URL: $BUILD_URL
-          TARGET_BRANCH: ${TARGET_BRANCH}
+          FLAKY_TEST_GLOB: "**/target/*-reports*/**/TEST-*FLAKY.xml"
+          PROJECT_KEY: "ISPN"
+          TYPE: "Bug"
+          JENKINS_JOB_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          TARGET_BRANCH: ${{ github.base_ref }}
         run: bin/jira/track_flaky_tests.sh
 
