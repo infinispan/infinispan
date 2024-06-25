@@ -1,8 +1,16 @@
 [id='enabling-jmx_{context}']
 = Registering JMX MBeans
+
 {brandname} can register JMX MBeans that you can use to collect statistics and
 perform administrative operations.
 You must also enable statistics otherwise {brandname} provides `0` values for all statistic attributes in JMX MBeans.
+
+[IMPORTANT]
+====
+Use JMX Mbeans for collecting statistics only when {brandname} is embedded in applications and not with a remote {brandname} server.
+
+When you use JMX Mbeans for collecting statistics from a remote {brandname} server, the data received from JMX Mbeans might differ from the data received from other APIs such as REST. In such cases the data received from the other APIs is more accurate.
+====
 
 .Procedure
 
