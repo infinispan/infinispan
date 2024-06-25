@@ -1,0 +1,10 @@
+respCache:
+  distributedCache:
+    aliases:
+      - "0"
+    owners: "2"
+    keyPartitioner: "org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner"
+    mode: "SYNC"
+    statistics: "true"
+    encoding:
+      mediaType: "application/octet-stream"
