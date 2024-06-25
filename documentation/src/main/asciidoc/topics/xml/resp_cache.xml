@@ -1,0 +1,5 @@
+<distributed-cache name="respCache" aliases="0" owners="2"
+                   key-partitioner="org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner"
+                   mode="SYNC" remote-timeout="17500" statistics="true">
+	<encoding media-type="application/octet-stream"/>
+</distributed-cache>
