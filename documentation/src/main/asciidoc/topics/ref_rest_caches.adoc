@@ -719,7 +719,7 @@ You can set the availability of internal caches but this is subject to change in
 [id='rest_v2_caches_set_topology_stable']
 = Set a Stable Topology
 By default, after a cluster shutdown, {brandname} waits for all nodes to join the cluster and restore the topology.
-However, it is possible to define the current cluster topology as stable for a specific cache using the REST operation.
+However, you can define the current cluster topology as stable for a specific cache using a REST operation.
 
 [source,options="nowrap",subs=attributes+]
 ----

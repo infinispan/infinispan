@@ -4,6 +4,12 @@
 By default, after a cluster shutdown, {brandname} waits for all nodes to join the cluster and restore the topology.
 However, we offer a CLI command to mark the current topology stable for a specific cache.
 
+[IMPORTANT]
+====
+Manually installing a topology can lead to data loss, only perform this operation if the initial topology cannot be recreated.
+====
+
+
 .Procedure
 
 . Create a CLI connection to {brandname}.
@@ -16,16 +22,18 @@ However, we offer a CLI command to mark the current topology stable for a specif
 topology set-stable cacheName
 ----
 +
-* If the current topology is missing more nodes than the number of owners, the force flag is necessary to confirm the operation.
+* If the number of nodes missing from the current topology is more than or equal to the number of owners, the force flag is necessary to confirm the operation.
 +
 [source,options="nowrap",subs=attributes+]
 ----
 topology set-stable cacheName -f
 ----
-
-For more information about the [command]`topology set-stable` command, run [command]`topology set-stable -h`.
-
++
+If all the caches do not have the same number of owners, `numOwners`, then only some caches are affected. You can examine only the caches with a different number of owners and set the topology as stable for those caches. Note that the command only sets the topology for a single cache.  
++
 [IMPORTANT]
 ====
-Manually installing a topology can lead to data loss, only perform this operation if the initial topology cannot be recreated.
+If you use the force flag, you might lose data.
 ====
+
+For more information about the [command]`topology set-stable` command, run [command]`topology set-stable -h`.
