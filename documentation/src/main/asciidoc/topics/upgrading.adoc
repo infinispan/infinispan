@@ -136,7 +136,7 @@ Additionally, setting the `sni_host_name` is now required when hostname validati
 
 [cols="2,1,1"]
 |===
-|Property |{brandname} 14 |Previous versions
+|Property |{brandname} 15 |Previous versions
 
 | `connect_timeout`
 | *2000 ms / 2 seconds*
@@ -155,8 +155,8 @@ Additionally, setting the `sni_host_name` is now required when hostname validati
 | 1800000 ms / 30 minutes
 
 | `sasl_mechanism`
-| *SCRAM-SHA-512*
-| SCRAM-SHA-256
+| *SCRAM-SHA-256*
+| SCRAM-SHA-512
 |===
 
 == RESP Endpoint
