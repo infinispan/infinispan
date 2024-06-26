@@ -21,7 +21,7 @@ The command does not operate on internal caches. There will be a loss of functio
 topology set-stable cacheName
 ----
 +
-* If the current topology is missing more nodes than the number of owners, the force flag is necessary to confirm the operation.
+* If the number of nodes missing from the current topology is more than or equal to the number of owners, the force flag is necessary to confirm the operation.
 +
 [source,options="nowrap",subs=attributes+]
 ----
