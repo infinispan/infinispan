@@ -39,6 +39,7 @@ import org.infinispan.server.configuration.security.TrustStoreRealmConfiguration
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
+import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.security.PasswordCredentialSource;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.util.RegexNameRewriter;
@@ -278,6 +279,7 @@ public class ServerConfigurationSerializer
       writer.writeStartElement(Element.ENDPOINTS);
       for (EndpointConfiguration endpoint : endpoints.endpoints()) {
          writer.writeStartElement(Element.ENDPOINT);
+         endpoint.singlePortRouter().attributes().write(writer);
          endpoint.attributes().write(writer);
          for (ProtocolServerConfiguration connector : endpoint.connectors()) {
             if (connector instanceof HotRodServerConfiguration) {
@@ -286,6 +288,8 @@ public class ServerConfigurationSerializer
                writeConnector(writer, (RestServerConfiguration) connector);
             } else if (connector instanceof MemcachedServerConfiguration) {
                writeConnector(writer, (MemcachedServerConfiguration) connector);
+            } else if (connector instanceof RespServerConfiguration resp) {
+               writeConnector(writer, resp);
             }
          }
          writer.writeEndElement();
@@ -330,6 +334,12 @@ public class ServerConfigurationSerializer
       if (connector.isImplicit()) {
          return;
       }
+      connector.write(writer);
+   }
+
+   private void writeConnector(ConfigurationWriter writer, RespServerConfiguration connector) {
+      if (connector.isImplicit()) return;
+
       connector.write(writer);
    }
 
