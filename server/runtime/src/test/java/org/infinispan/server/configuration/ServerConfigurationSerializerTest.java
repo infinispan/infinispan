@@ -35,6 +35,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.server.Server;
+import org.infinispan.server.configuration.endpoint.EndpointConfiguration;
 import org.infinispan.server.security.KeyStoreUtils;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -102,6 +103,15 @@ public class ServerConfigurationSerializerTest {
       compare(serverBefore.security.realms().realms(), serverAfter.security.realms().realms());
       compare(serverBefore.transport(), serverAfter.transport(), org.infinispan.server.configuration.Attribute.SECURITY_REALM.toString());
       compare(serverBefore.endpoints.endpoints(), serverAfter.endpoints.endpoints());
+
+      for (int i = 0; i < serverBefore.endpoints.endpoints().size(); i++) {
+         EndpointConfiguration endpointBefore = serverBefore.endpoints.endpoints().get(i);
+         EndpointConfiguration endpointAfter = serverAfter.endpoints.endpoints().get(i);
+
+         compare(endpointBefore, endpointAfter);
+         compare(endpointBefore.connectors(), endpointAfter.connectors());
+         compare(endpointBefore.singlePortRouter(), endpointAfter.singlePortRouter());
+      }
    }
 
    <T extends ConfigurationElement> void compare(List<T> before, List<T> after) {
