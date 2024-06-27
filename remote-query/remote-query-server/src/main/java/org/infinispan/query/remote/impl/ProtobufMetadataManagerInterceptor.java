@@ -145,7 +145,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       @Override
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) {
          registerSingleProtoFile(command.getKey(), command.getNewValue());
-         return null;
+         return Boolean.TRUE;
       }
 
       @Override
@@ -399,8 +399,9 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             .thenApply(ctx, command, (rCtx, rCommand, rv) -> {
                assert rCtx.isOriginLocal();
                return rCommand.isSuccessful() ?
-                     handleLocalProtoFileRegister(rCtx, validateKey(rCommand.getKey()), validateValue(rCommand.getNewValue()), copyFlags(rCommand)) :
-                     InvocationStage.completedNullStage();
+                     handleLocalProtoFileRegister(rCtx, validateKey(rCommand.getKey()), validateValue(rCommand.getNewValue()), copyFlags(rCommand))
+                           .thenReturn(rCtx, rCommand, Boolean.TRUE) :
+                     InvocationStage.completedFalseStage();
             });
    }
 

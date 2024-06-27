@@ -2,6 +2,8 @@ package org.infinispan.client.hotrod.query.schema;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -94,6 +96,26 @@ public class SchemaUpdateMetadataTest extends SingleHotRodServerTest {
       assertThat(kResult.count().value()).isEqualTo(1);
 
       queryIsOnTheCache(true);
+   }
+
+   @Test
+   public void testSchemaReplace() {
+      RemoteCache<String, String> protobufMetadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+      protobufMetadataCache.putIfAbsent(PROGRAMMER_SCHEMA.getProtoFileName(), PROGRAMMER_SCHEMA.getProtoFile());
+
+      var existing = protobufMetadataCache.getWithMetadata(PROGRAMMER_SCHEMA.getProtoFileName());
+
+      // should succeed, version match
+      assertTrue(protobufMetadataCache.replaceWithVersion(PROGRAMMER_SCHEMA.getProtoFileName(), PROGRAMMER_SCHEMA.getProtoFile(), existing.getVersion()));
+
+      // should fail, version should not match
+      assertFalse(protobufMetadataCache.replaceWithVersion(PROGRAMMER_SCHEMA.getProtoFileName(), "should-never-be-parser", existing.getVersion()));
+
+      // should succeed
+      assertTrue(protobufMetadataCache.replace(PROGRAMMER_SCHEMA.getProtoFileName(), PROGRAMMER_SCHEMA.getProtoFile(), PROGRAMMER_SCHEMA.getProtoFile()));
+
+      // should fail, old value is not equals
+      assertFalse(protobufMetadataCache.replace(PROGRAMMER_SCHEMA.getProtoFileName(), "for-equals-to-fail", "should-never-be-parser"));
    }
 
    private void queryIsOnTheCache(boolean isPresent) {

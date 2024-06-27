@@ -11,6 +11,8 @@ import org.infinispan.context.InvocationContext;
  */
 public class SyncInvocationStage extends InvocationStage {
    static SyncInvocationStage COMPLETED_NULL_STAGE = new SyncInvocationStage();
+   static SyncInvocationStage COMPLETED_TRUE_STAGE = new SyncInvocationStage(Boolean.TRUE);
+   static SyncInvocationStage COMPLETED_FALSE_STAGE = new SyncInvocationStage(Boolean.FALSE);
 
    private final Object rv;
 
