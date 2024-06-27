@@ -1,0 +1,7 @@
+<dependency>
+  <groupId>org.infinispan</groupId>
+  <artifactId>infinispan-bom</artifactId>
+  <version>${version.infinispan.bom}</version>
+  <type>pom</type>
+  <scope>import</scope>
+</dependency>
