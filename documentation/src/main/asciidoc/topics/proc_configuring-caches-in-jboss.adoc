@@ -1,0 +1,38 @@
+:_newdoc-version: 2.18.2
+:_template-generated: 2024-08-23
+:_mod-docs-content-type: PROCEDURE
+
+[id="configuring-caches-in-jboss_{context}"]
+= Configuring {brandname} caches in {wildflybrandname}
+
+Create {brandname} caches in {wildflybrandname}.
+
+.Prerequisites
+
+* {wildflybrandname} is running
+
+.Procedure
+. Connect to the {wildflybrandname} management CLI.
++
+[source,options="nowrap"]
+----
+$ jboss-cli.sh --connect
+----
+
+. Create a cache container.
++
+[source,options="nowrap"]
+----
+/subsystem=infinispan/cache-container=exampleCacheContainer:add(statistics-enabled=true)
+----
++
+This creates a cache container called `exampleCacheContainer` with statistics enabled.
+
+. Add a cache to the cache container.
++
+[source,options="nowrap"]
+----
+/subsystem=infinispan/cache-container=exampleCacheContainer/local-cache=exampleCache:add(statistics-enabled=true)
+----
++
+This creates a local cache named `exampleCache` in the `exampleCacheContainer` cache container with statistics enabled.
