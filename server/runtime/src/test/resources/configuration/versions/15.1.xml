@@ -20,6 +20,7 @@
          <socket-binding name="memcached" port="11221"/>
          <socket-binding name="memcached-2" port="12221"/>
          <socket-binding name="rest" port="8080"/>
+         <socket-binding name="resp" port="6379" />
       </socket-bindings>
 
       <security>
@@ -180,6 +181,7 @@
             <memcached-connector name="memcached" socket-binding="memcached" io-threads="1"
                                  idle-timeout="1" tcp-nodelay="true" tcp-keepalive="true" send-buffer-size="3"
                                  receive-buffer-size="3" cache="string" client-encoding="application/json"/>
+            <resp-connector name="resp" cache="resp" socket-binding="resp" />
          </endpoint>
       </endpoints>
    </server>

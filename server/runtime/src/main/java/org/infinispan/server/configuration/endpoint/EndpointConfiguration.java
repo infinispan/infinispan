@@ -14,7 +14,6 @@ import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
  * @since 12.0
  */
 public class EndpointConfiguration extends ConfigurationElement<EndpointConfiguration> {
-   static final AttributeDefinition<String> SOCKET_BINDING = AttributeDefinition.builder(Attribute.SOCKET_BINDING, null, String.class).build();
    static final AttributeDefinition<String> SECURITY_REALM = AttributeDefinition.builder(Attribute.SECURITY_REALM, null, String.class).build();
    static final AttributeDefinition<Boolean> ADMIN = AttributeDefinition.builder(Attribute.ADMIN, true, Boolean.class).build();
    static final AttributeDefinition<Boolean> METRICS_AUTH = AttributeDefinition.builder(Attribute.METRICS_AUTH, true, Boolean.class).build();
@@ -22,7 +21,7 @@ public class EndpointConfiguration extends ConfigurationElement<EndpointConfigur
    private final SinglePortRouterConfiguration singlePort;
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(EndpointConfiguration.class, SOCKET_BINDING, SECURITY_REALM, ADMIN, METRICS_AUTH);
+      return new AttributeSet(EndpointConfiguration.class, SECURITY_REALM, ADMIN, METRICS_AUTH);
    }
 
    EndpointConfiguration(AttributeSet attributes,
@@ -50,7 +49,7 @@ public class EndpointConfiguration extends ConfigurationElement<EndpointConfigur
    }
 
    public String socketBinding() {
-      return attributes.attribute(SOCKET_BINDING).get();
+      return singlePortRouter().socketBinding();
    }
 
    public String securityReam() {
