@@ -5,6 +5,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.OS;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
@@ -28,6 +29,11 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.maxRetries(1).connectionPool().maxActive(1);
       applyDefaultConfiguration(builder);
+
+      if (OS.getCurrentOs().equals(OS.MAC_OS) || OS.getCurrentOs().equals(OS.WINDOWS)) {
+         builder.clientIntelligence(ClientIntelligence.BASIC);
+      }
+
       this.clientConfiguration = builder;
    }
 
