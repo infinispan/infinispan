@@ -168,6 +168,20 @@ public abstract class InvocationStage {
    }
 
    /**
+    * @return an {@code InvocationStage} instance completed successfully with value {@code true}.
+    */
+   public static InvocationStage completedTrueStage() {
+      return SyncInvocationStage.COMPLETED_TRUE_STAGE;
+   }
+
+   /**
+    * @return an {@code InvocationStage} instance completed successfully with value {@code false}.
+    */
+   public static InvocationStage completedFalseStage() {
+      return SyncInvocationStage.COMPLETED_FALSE_STAGE;
+   }
+
+   /**
     * Overrides the return value of this {@link InvocationStage} if it is completed successfully.
     *
     * The result may be either {@code rv}, a new {@link InvocationStage} or {@code this}
