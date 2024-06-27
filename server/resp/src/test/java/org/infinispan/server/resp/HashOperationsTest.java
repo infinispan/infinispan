@@ -266,6 +266,7 @@ public class HashOperationsTest extends SingleNodeRespBaseTest {
       RedisCommands<String, String> redis = redisConnection.sync();
 
       assertThat(redis.hrandfield("something")).isNull();
+      assertThat(redis.hrandfield("something", 10)).isEmpty();
 
       Map<String, String> map = Map.of("key1", "value1", "key2", "value2", "key3", "value3");
       assertThat(redis.hset("hrand-operations", map)).isEqualTo(3);
@@ -283,6 +284,8 @@ public class HashOperationsTest extends SingleNodeRespBaseTest {
 
       assertThat(redis.hrandfield("hrand-operations", -20)).hasSize(20);
       assertThat(redis.hrandfieldWithvalues("hrand-operations", -20)).hasSize(20);
+
+      assertThat(redis.hrandfield("hrand-operations")).matches(map::containsKey);
 
       assertWrongType(() -> redis.set("plain", "string"), () -> redis.hrandfield("plain"));
    }
