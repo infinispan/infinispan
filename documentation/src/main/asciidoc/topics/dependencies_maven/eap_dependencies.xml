@@ -4,24 +4,5 @@
     <artifactId>infinispan-core</artifactId>
     <scope>provided</scope>
   </dependency>
-  <dependency>
-    <groupId>org.infinispan</groupId>
-    <artifactId>infinispan-cachestore-jdbc</artifactId>
-    <scope>provided</scope>
-  </dependency>
 </dependencies>
-<build>
-  <plugins>
-     <plugin>
-       <groupId>org.apache.maven.plugins</groupId>
-       <artifactId>maven-war-plugin</artifactId>
-       <configuration>
-         <archive>
-           <manifestEntries>
-             <Dependencies>org.infinispan:{infinispanslot} services</Dependencies>
-           </manifestEntries>
-         </archive>
-      </configuration>
-    </plugin>
-  </plugins>
-</build>
+

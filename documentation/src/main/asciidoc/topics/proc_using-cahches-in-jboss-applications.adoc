@@ -1,0 +1,51 @@
+:_newdoc-version: 2.18.2
+:_template-generated: 2024-08-23
+:_mod-docs-content-type: PROCEDURE
+
+[id="using-cahches-in-jboss-applications_{context}"]
+= Using {brandname} caches in {wildflybrandname} applications
+
+You can access {brandname} caches in your applications through resource lookup.
+
+.Prerequisites
+
+* {wildflybrandname} is running.
+* You have created {brandname} cahches in {wildflybrandname}.
+
+.Procedure
+
+. You can lookup {brandname} caches in your applications like this:
++
+[source,java,options="nowrap"]
+----
+@Resource(lookup = "java:jboss/infinispan/cache/exampleCacheContainer/exampleCache")
+private Cache<String, String> ispnCache;
+---- 
++
+This defines a `Cache` called `ispnCache`.
+
+. You can put, get and remove entries from the cache as follows:
++
+.Get value of a key
+[source,java,options="nowrap"]
+----
+String value = ispnCache.get(key);
+---- 
++
+This retrieves the value of the key in the cache. If the key is not found, `null` is returned.
++
+.Put value in a key
+[source,java,options="nowrap"]
+----
+String oldValue = ispnCache.put(key,value);
+---- 
++
+This defines a new key if it does not already exist and associates the value passed. If the key already exists, the original value is replaced.
++
+.Remove a key
+[source,java,options="nowrap"]
+----
+String value = ispnCache.remove(key);
+---- 
++
+This removes the key from the cache.
