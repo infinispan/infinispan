@@ -10,15 +10,9 @@
                 <locking concurrency-level="1000" acquire-timeout="15000" striping="false"/>
                 <state-transfer timeout="60000"/>
             </distributed-cache-configuration>
-            <invalidation-cache-configuration name="org.infinispan.INVALIDATION_ASYNC" mode="ASYNC" statistics="true">
-                <locking concurrency-level="1000" acquire-timeout="15000" striping="false"/>
-            </invalidation-cache-configuration>
             <local-cache-configuration name="org.infinispan.LOCAL" statistics="true">
                 <locking concurrency-level="1000" acquire-timeout="15000" striping="false"/>
             </local-cache-configuration>
-            <invalidation-cache-configuration name="org.infinispan.INVALIDATION_SYNC" mode="SYNC" remote-timeout="17500" statistics="true">
-                <locking concurrency-level="1000" acquire-timeout="15000" striping="false"/>
-            </invalidation-cache-configuration>
             <replicated-cache-configuration name="org.infinispan.REPL_SYNC" mode="SYNC" remote-timeout="17500" statistics="true">
                 <locking concurrency-level="1000" acquire-timeout="15000" striping="false"/>
                 <state-transfer timeout="60000"/>
