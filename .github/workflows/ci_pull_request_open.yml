@@ -44,8 +44,8 @@ jobs:
         with:
           name: flaky-test-report
           path: |
-            "**/target/*-reports*/**/TEST-*FLAKY.xml"
-            "target-branch.txt"
+            **/target/*-reports*/**/TEST-*FLAKY.xml
+            target-branch.txt
 #      - name: Publish Test Report
 #        if: success() || failure()
 #        uses: ScaCap/action-surefire-report@v1
