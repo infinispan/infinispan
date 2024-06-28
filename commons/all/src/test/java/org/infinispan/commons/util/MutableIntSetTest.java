@@ -59,6 +59,27 @@ public class MutableIntSetTest {
     }
 
    @Test
+   public void testFlaky1() {
+        double r = Math.random();
+        if (r < 0.3) {
+            fail("oops");
+        }
+    }
+
+   @Test
+   public void testFlaky2() {
+      double r = Math.random();
+      if (r < 0.3) {
+            fail("oops2");
+      }
+   }
+
+   @Test
+   public void Fail() {
+      fail("always fails");
+   }
+
+   @Test
    public void testIsEmpty() {
       assertTrue(intSet.isEmpty());
       intSet.add(1);
