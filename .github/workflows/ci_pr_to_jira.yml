@@ -10,23 +10,32 @@ jobs:
         - name: Checkout
           uses: actions/checkout@v4
         - name: Install xmlstarlet tool
-          if: success() || failure()
           shell: bash
           run: |
              sudo apt-get update
              sudo apt-get install -y xmlstarlet
-        - name: 'Download artifact'
+# Downloading flaky artifact containing
+# zip file with flaky test reports and file
+# container PR target branch
+        - name: Download artifact
+          id: download-artifact
           uses: actions/github-script@v7
           with:
+            result-encoding: string
             script: |
               let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
                  owner: context.repo.owner,
                  repo: context.repo.repo,
                  run_id: context.payload.workflow_run.id,
               });
+              try {
               let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
                 return artifact.name == "flaky-test-report"
               })[0];
+              } catch (error) {
+               // No flaky test artifact found
+               return "No Flaky"
+               }
               let download = await github.rest.actions.downloadArtifact({
                  owner: context.repo.owner,
                  repo: context.repo.repo,
@@ -35,11 +44,12 @@ jobs:
               });
               let fs = require('fs');
               fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/flaky-test-report.zip`, Buffer.from(download.data));
-        - name: 'Unzip artifact'
+              return "Flaky Found"
+        - if: steps.download-artifact.outputs.result == 'Flaky Found'
+          name: Unzip artifact
           run: unzip flaky-test-report.zip
-        - name: Extract Target Branch
-          run: targetBranch=$(cat target-branch.txt) >> GITHUB_ENV
-        - name: 'Create Jira'
+        - if: steps.download-artifact.outputs.result == 'Flaky Found'
+          name: Create Jira
           env:
             TOKEN: ${{ secrets.JIRA_API_TOKEN }}
             RUNNER_DEBUG: 1
