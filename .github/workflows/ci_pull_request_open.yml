@@ -30,15 +30,16 @@ jobs:
             -Dmaven.test.failure.ignore=true -Dansi.strip=true
             -pl :infinispan-component-annotations,:infinispan-logging-annotations,:infinispan-checkstyle,commons,:infinispan-defaults-maven-plugin,:infinispan-logging-processor,:infinispan-commons-spi,:infinispan-component-processor,:infinispan-commons-test,:infinispan-api,:infinispan-commons
 # Create artifact with branch name and surefile flaky test report
-      - name: Archive base_ref
-        env:
-          TARGET_BRANCH: ${{ github.base_ref }}
-        run: echo -n $TARGET_BRANCH > target-branch.txt
       - name: Check flaky report existence
         id: check_files
         uses: andstor/file-existence-action@v3
         with:
           files: "**/target/*-reports*/**/TEST-*FLAKY.xml"
+      - name: Archive base_ref
+        if: (success() || failure()) && steps.check_files.outputs.files_exists == 'true'
+        env:
+          TARGET_BRANCH: ${{ github.base_ref }}
+        run: echo -n $TARGET_BRANCH > target-branch.txt
       - name: Archive flaky test report
         if: (success() || failure()) && steps.check_files.outputs.files_exists == 'true'
         uses: actions/upload-artifact@v4
