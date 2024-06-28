@@ -47,7 +47,6 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
 
    public EndpointConfigurationBuilder(ServerConfigurationBuilder serverConfigurationBuilder, String socketBindingName) {
       this.attributes = EndpointConfiguration.attributeDefinitionSet();
-      attributes.attribute(EndpointConfiguration.SOCKET_BINDING).set(socketBindingName);
       singlePortBuilder.socketBinding(socketBindingName);
    }
 
@@ -124,7 +123,7 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
 
    public EndpointConfiguration create(SocketBindingsConfiguration bindingsConfiguration, SecurityConfiguration securityConfiguration) {
       boolean implicitSecurity = implicitConnectorSecurity && securityRealm() != null;
-      bindingsConfiguration.applySocketBinding(attributes.attribute(EndpointConfiguration.SOCKET_BINDING).get(), singlePortBuilder, singlePortBuilder);
+      bindingsConfiguration.applySocketBinding(singlePortBuilder.socketBinding(), singlePortBuilder, singlePortBuilder);
       List<ProtocolServerConfiguration<?, ?>> connectors = new ArrayList<>(connectorBuilders.size());
       for (ProtocolServerConfigurationBuilder<?, ?, ?> builder : connectorBuilders) {
          bindingsConfiguration.applySocketBinding(builder.socketBinding(), builder, singlePortBuilder);
