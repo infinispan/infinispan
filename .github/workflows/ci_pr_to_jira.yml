@@ -41,5 +41,6 @@ jobs:
             PROJECT_KEY: "ISPN"
             TYPE: "Bug"
             JENKINS_JOB_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow.id }}"
-            TARGET_BRANCH: ${{ env.targetBranch }}
-          run: bin/jira/track_flaky_tests.sh
+          run: |
+            cat target-branch.txt
+            TARGET_BRANCH=$(cat target-branch.txt) bin/jira/track_flaky_tests.sh
