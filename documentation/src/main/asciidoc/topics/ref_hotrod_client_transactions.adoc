@@ -39,6 +39,11 @@ Hot Rod transactions have their own recovery mechanism.
 Transactional {rc} are configured per-cache basis.
 The exception is the transaction's `timeout` which is global, because a single transaction can interact with multiple {rc}s.
 
+[NOTE]
+====
+Embedded {brandname} supports pessimistic locks but Hot Rod clients do not. Therefore, the transaction result obtained from using pessimistic locks in {brandname} server might differ from the result obtained from Hot Rod client.
+====
+
 The following example shows how to configure a transactional {rc} for cache `my-cache`:
 
 [source,java]
