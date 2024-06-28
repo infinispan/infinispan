@@ -27,10 +27,8 @@ jobs:
               });
               let fs = require('fs');
               fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/flaky-test-report.zip`, Buffer.from(download.data));
-
         - name: 'Unzip artifact'
-          run: unzip flake-test-report.zip
-
+          run: unzip flaky-test-report.zip
         - name: 'Create Jira'
           env:
             TOKEN: ${{ secrets.JIRA_API_TOKEN }}
