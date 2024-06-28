@@ -1,5 +1,7 @@
 package org.infinispan.query.remote.client;
 
+import org.infinispan.commons.internal.InternalCacheNames;
+
 /**
  * Useful constants used by the Protobuf metadata cache.
  *
@@ -11,7 +13,7 @@ public interface ProtobufMetadataManagerConstants {
    /**
     * The name of the Protobuf definitions cache.
     */
-   String PROTOBUF_METADATA_CACHE_NAME = "___protobuf_metadata";
+   String PROTOBUF_METADATA_CACHE_NAME = InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME;
 
    /**
     * All error status keys end with this suffix. This is also the name of the global error key.

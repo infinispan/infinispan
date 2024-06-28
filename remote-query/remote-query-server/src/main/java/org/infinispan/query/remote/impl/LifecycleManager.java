@@ -14,6 +14,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
+import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ContentTypeConfiguration;
@@ -123,7 +124,7 @@ public final class LifecycleManager implements ModuleLifecycle {
    }
 
    /**
-    * Registers the interceptor in the ___protobuf_metadata cache before it gets started. Also creates query components
+    * Registers the interceptor in the {@link InternalCacheNames#PROTOBUF_METADATA_CACHE_NAME} cache before it gets started. Also creates query components
     * for user caches.
     */
    @Override

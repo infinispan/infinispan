@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
-import static org.infinispan.scripting.ScriptingManager.SCRIPT_CACHE;
+import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.Assert.assertEquals;
 
@@ -83,7 +83,7 @@ public class ProtobufJsonScriptTest extends MultiHotRodServersTest {
    }
 
    private void registerScript(RemoteCacheManager remoteCacheManager, String script) throws IOException {
-      RemoteCache<String, String> scriptCache = remoteCacheManager.getCache(SCRIPT_CACHE);
+      RemoteCache<String, String> scriptCache = remoteCacheManager.getCache(SCRIPT_CACHE_NAME);
       String string = Util.getResourceAsString("/" + script, getClass().getClassLoader());
       scriptCache.put(SCRIPT_NAME, string);
    }

@@ -1,7 +1,7 @@
 package org.infinispan.scripting.impl;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
-import static org.infinispan.scripting.ScriptingManager.SCRIPT_CACHE;
+import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 import static org.infinispan.scripting.ScriptingManager.SCRIPT_MANAGER_ROLE;
 
 import java.util.EnumSet;
@@ -42,7 +42,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
 
       BasicComponentRegistry bcr = gcr.getComponent(BasicComponentRegistry.class);
       InternalCacheRegistry internalCacheRegistry = bcr.getComponent(InternalCacheRegistry.class).wired();
-      internalCacheRegistry.registerInternalCache(SCRIPT_CACHE, getScriptCacheConfiguration(gc).build(),
+      internalCacheRegistry.registerInternalCache(SCRIPT_CACHE_NAME, getScriptCacheConfiguration(gc).build(),
                                                   EnumSet.of(InternalCacheRegistry.Flag.USER,
                                                              InternalCacheRegistry.Flag.PROTECTED,
                                                              InternalCacheRegistry.Flag.PERSISTENT,
@@ -57,7 +57,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
 
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName) {
-      if (SCRIPT_CACHE.equals(cacheName)) {
+      if (SCRIPT_CACHE_NAME.equals(cacheName)) {
          BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
          ScriptingInterceptor scriptingInterceptor = new ScriptingInterceptor();
          bcr.registerComponent(ScriptingInterceptor.class, scriptingInterceptor, true);

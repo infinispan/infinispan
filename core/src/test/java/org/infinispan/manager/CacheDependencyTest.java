@@ -1,5 +1,6 @@
 package org.infinispan.manager;
 
+import static org.infinispan.commons.internal.InternalCacheNames.CONFIG_STATE_CACHE_NAME;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;
@@ -8,7 +9,6 @@ import java.util.List;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
@@ -57,7 +57,7 @@ public class CacheDependencyTest extends SingleCacheManagerTest {
       cacheManager.stop();
 
       assertAllTerminated(cacheA, cacheB);
-      assertEquals(Arrays.asList("B", GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME, getDefaultCacheName()), listener.stopOrder);
+      assertEquals(Arrays.asList("B", CONFIG_STATE_CACHE_NAME, getDefaultCacheName()), listener.stopOrder);
    }
 
    @Test
@@ -101,7 +101,7 @@ public class CacheDependencyTest extends SingleCacheManagerTest {
       cacheManager.stop();
 
       assertAllTerminated(cacheA, cacheB, cacheC, cacheD);
-      assertEquals(Arrays.asList("A", "B", "D", "C", GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME, getDefaultCacheName()), listener.stopOrder);
+      assertEquals(Arrays.asList("A", "B", "D", "C", CONFIG_STATE_CACHE_NAME, getDefaultCacheName()), listener.stopOrder);
    }
 
    @Test
@@ -126,7 +126,7 @@ public class CacheDependencyTest extends SingleCacheManagerTest {
       cacheManager.stop();
 
       assertAllTerminated(cacheA, cacheB, cacheC);
-      assertEquals(Arrays.asList("A", "C", GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME, getDefaultCacheName()), listener.stopOrder);
+      assertEquals(Arrays.asList("A", "C", CONFIG_STATE_CACHE_NAME, getDefaultCacheName()), listener.stopOrder);
 
    }
 

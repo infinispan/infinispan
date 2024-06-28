@@ -1,5 +1,7 @@
 package org.infinispan.server.core;
 
+import static org.infinispan.commons.internal.InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -23,8 +25,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.PersistentUUIDManager;
 
 public abstract class BaseServerManagement implements ServerManagement {
-
-   private static final String PROTOBUF_METADATA_CACHE_NAME = "___protobuf_metadata";
 
    @Override
    public Json overviewReport() {

@@ -1,5 +1,6 @@
 package org.infinispan.server.cli;
 
+import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 import static org.infinispan.lock.impl.ClusteredLockModuleLifecycle.CLUSTERED_LOCK_CACHE_NAME;
 
 import java.io.File;
@@ -189,7 +190,7 @@ public class CliIT {
          terminal.assertContains("@@cache@names");
          terminal.clear();
          terminal.send("task exec @@cache@names");
-         terminal.assertContains("\"___script_cache\"");
+         terminal.assertContains("\"" + SCRIPT_CACHE_NAME + "\"");
          terminal.clear();
          File resource = getCliResource("hello.js");
          terminal.send("task upload --file=" + resource.getPath() + " hello");

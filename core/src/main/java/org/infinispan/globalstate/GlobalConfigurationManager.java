@@ -5,6 +5,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
+import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -19,7 +20,9 @@ import org.infinispan.factories.scopes.Scopes;
  */
 @Scope(Scopes.GLOBAL)
 public interface GlobalConfigurationManager {
-   String CONFIG_STATE_CACHE_NAME = "org.infinispan.CONFIG";
+
+   @Deprecated(forRemoval = true, since = "15.0")
+   String CONFIG_STATE_CACHE_NAME = InternalCacheNames.CONFIG_STATE_CACHE_NAME;
 
    default void postStart() {}
 

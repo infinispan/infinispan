@@ -1,5 +1,6 @@
 package org.infinispan.server.cli;
 
+import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.LON;
 import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.NYC;
 
@@ -118,10 +119,10 @@ public class XSiteCliOperations {
          terminal.clear();
 
          //check non xsite cache
-         terminal.send("cd caches/___script_cache");
+         terminal.send("cd caches/" + SCRIPT_CACHE_NAME);
          terminal.clear();
          terminal.send("site state-transfer-mode get --site=" + NYC);
-         terminal.assertContains("Not Found: Cache '___script_cache' does not have backup sites.");
+         terminal.assertContains("Not Found: Cache '" + SCRIPT_CACHE_NAME + "' does not have backup sites.");
          terminal.clear();
 
          //check if --cache overrides the context

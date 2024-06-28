@@ -1,6 +1,7 @@
 package org.infinispan.scripting;
 
 import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
+import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 import static org.infinispan.scripting.utils.ScriptingUtils.loadData;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -98,7 +99,7 @@ public class ScriptingTest extends AbstractScriptingTest {
       String result = CompletionStages.join(scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")));
       assertEquals("a", result);
 
-      cache(ScriptingManager.SCRIPT_CACHE).clear();
+      cache(SCRIPT_CACHE_NAME).clear();
 
       result = CompletionStages.join(scriptingManager.runScript("test.js", new TaskContext().addParameter("a", "a")));
       assertEquals("a", result);
@@ -112,7 +113,7 @@ public class ScriptingTest extends AbstractScriptingTest {
       InputStream is = this.getClass().getResourceAsStream("/test1.js");
       String script = loadFileAsString(is);
 
-      cache(ScriptingManager.SCRIPT_CACHE).replace("test.js", script);
+      cache(SCRIPT_CACHE_NAME).replace("test.js", script);
 
       result = CompletionStages.join(scriptingManager.runScript("test.js"));
       assertEquals("a:modified", result);
@@ -158,7 +159,7 @@ public class ScriptingTest extends AbstractScriptingTest {
       assertNotNull(scriptingManager.getScript("test.js"));
 
       scriptingManager.removeScript("test.js");
-      assertNull(cacheManager.getCache(ScriptingManager.SCRIPT_CACHE).get("test.js"));
+      assertNull(cacheManager.getCache(SCRIPT_CACHE_NAME).get("test.js"));
 
       InputStream is = this.getClass().getResourceAsStream("/test.js");
       String script = loadFileAsString(is);

@@ -5,6 +5,8 @@ import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
+import static org.infinispan.commons.internal.InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME;
+import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
 import static org.infinispan.configuration.cache.CacheMode.LOCAL;
@@ -347,12 +349,12 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
          // Assert that all of the existing caches and templates have a corresponding event
          sseListener.expectEvent("create-template", TEMPLATE_CONFIG);
-         sseListener.expectEvent("create-cache", "___protobuf_metadata");
+         sseListener.expectEvent("create-cache", PROTOBUF_METADATA_CACHE_NAME);
          sseListener.expectEvent("create-cache", CACHE_2);
          sseListener.expectEvent("create-cache", INVALID_CACHE);
          sseListener.expectEvent("create-cache", CACHE_1);
          sseListener.expectEvent("create-cache", DEFAULT_CACHE);
-         sseListener.expectEvent("create-cache", "___script_cache");
+         sseListener.expectEvent("create-cache", SCRIPT_CACHE_NAME);
 
          // Assert that new cache creations create an event
          createCache("{\"local-cache\":{\"encoding\":{\"media-type\":\"text/plain\"}}}", "listen1");
