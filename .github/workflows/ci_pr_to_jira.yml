@@ -31,6 +31,8 @@ jobs:
               fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/flaky-test-report.zip`, Buffer.from(download.data));
         - name: 'Unzip artifact'
           run: unzip flaky-test-report.zip
+        - name: Extract Target Branch
+          run: targetBranch=$(cat target-branch.txt) >> GITHUB_ENV
         - name: 'Create Jira'
           env:
             TOKEN: ${{ secrets.JIRA_API_TOKEN }}
@@ -39,5 +41,5 @@ jobs:
             PROJECT_KEY: "ISPN"
             TYPE: "Bug"
             JENKINS_JOB_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow.id }}"
-            TARGET_BRANCH: ${{ github.base_ref }}
+            TARGET_BRANCH: ${{ targetBranch }}
           run: bin/jira/track_flaky_tests.sh
