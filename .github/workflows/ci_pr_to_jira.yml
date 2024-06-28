@@ -31,7 +31,7 @@ jobs:
               let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
                 return artifact.name == "flaky-test-report"
               })[0];
-              if typeof matchArtifact == 'undefined' {
+              if (typeof matchArtifact == 'undefined') {
                // No flaky test artifact found
                return "No Flaky";
               }
