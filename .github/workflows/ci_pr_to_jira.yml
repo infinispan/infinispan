@@ -28,15 +28,13 @@ jobs:
                  repo: context.repo.repo,
                  run_id: context.payload.workflow_run.id,
               });
-              let matchArtifact;
-              try {
-              matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
+              let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
                 return artifact.name == "flaky-test-report"
               })[0];
-              } catch (error) {
+              if typeof matchArtifact == 'undefined' {
                // No flaky test artifact found
                return "No Flaky";
-               }
+              }
               let download = await github.rest.actions.downloadArtifact({
                  owner: context.repo.owner,
                  repo: context.repo.repo,
