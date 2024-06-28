@@ -35,7 +35,7 @@ jobs:
               })[0];
               } catch (error) {
                // No flaky test artifact found
-               return "No Flaky"
+               return "No Flaky";
                }
               let download = await github.rest.actions.downloadArtifact({
                  owner: context.repo.owner,
@@ -45,7 +45,7 @@ jobs:
               });
               let fs = require('fs');
               fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/flaky-test-report.zip`, Buffer.from(download.data));
-              return "Flaky Found"
+              return "Flaky Found";
         - if: steps.download-artifact.outputs.result == 'Flaky Found'
           name: Unzip artifact
           run: unzip flaky-test-report.zip
