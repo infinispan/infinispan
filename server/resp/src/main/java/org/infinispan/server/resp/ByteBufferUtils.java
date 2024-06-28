@@ -1,14 +1,15 @@
 package org.infinispan.server.resp;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
-import io.netty.util.CharsetUtil;
-import org.infinispan.multimap.impl.ScoredValue;
+import static org.infinispan.server.resp.RespConstants.CRLF;
+import static org.infinispan.server.resp.RespConstants.NIL;
 
 import java.util.Collection;
 
-import static org.infinispan.server.resp.RespConstants.CRLF;
-import static org.infinispan.server.resp.RespConstants.NIL;
+import org.infinispan.multimap.impl.ScoredValue;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
+import io.netty.util.CharsetUtil;
 
 /**
  * Utility class with ByteBuffer Utils
@@ -224,13 +225,17 @@ public final class ByteBufferUtils {
          d = 0;
          x = -x;
       }
-      int p = -10;
-      for (int i = 1; i < 10; i++) {
+      long p = -10;
+      // Iterator up to 18. At 17 the negative value overflows and become positive.
+      // At this point, it is the maximum value possible with a long value, it should have
+      // 19 (positive) or 20 (negative) digits.
+      for (int i = 1; i <= 18; i++) {
          if (x > p)
             return i + d;
+
          p = 10 * p;
       }
-      return 10 + d;
+      return 19 + d;
    }
 
    public static void writeInt(ByteBuf buf, long value) {
