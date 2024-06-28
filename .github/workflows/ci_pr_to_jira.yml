@@ -28,8 +28,9 @@ jobs:
                  repo: context.repo.repo,
                  run_id: context.payload.workflow_run.id,
               });
+              let matchArtifact;
               try {
-              let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
+              matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
                 return artifact.name == "flaky-test-report"
               })[0];
               } catch (error) {
