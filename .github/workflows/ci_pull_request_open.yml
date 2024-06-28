@@ -1,4 +1,4 @@
-name: CI Pull Request Open
+name: Pull Request Open
 on:
   pull_request:
 jobs:
