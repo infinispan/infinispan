@@ -1,0 +1,52 @@
+:_newdoc-version: 2.18.2
+:_template-generated: 2024-06-29
+
+:_mod-docs-content-type: CONCEPT
+
+[id="jvm-settings-for-server_{context}"]
+= JVM settings for {BrandName}
+
+You can define Java Virtual Machine (JVM) settings for {BrandName} either by editing the `server.conf` configuration file, or by setting the `JAVA_OPTS` environment variable .
+
+[IMPORTANT]
+====
+If you are running {BrandName} in a container do not set `Xmx` or `Xms`  because the values are automatically calculated from the container settings to be 50% of the container size.
+====
+
+[discrete]
+== Editing the configuration file
+
+You can edit the required values in the `server.conf` configuration file. For example, to set the options to pass to the JVM, edit the following lines:
+
+----
+JAVA_OPTS="-Xms64m -Xmx512m -XX:MetaspaceSize=64M -Djava.net.preferIPv4Stack=true"
+JAVA_OPTS="$JAVA_OPTS -Djava.awt.headless=true" 
+----
+
+You can uncomment the existing example settings as well. For example, to configure Java Platform Debugger Architecture (JPDA) settings for remote socket debugging, update the file as follows:
+
+----
+# Sample JPDA settings for remote socket debugging
+JAVA_OPTS="$JAVA_OPTS -agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=n"
+----
+
+Additionally, you can add more settings to `JAVA_OPTS` like this:
+
+----
+JAVA_OPTS="$JAVA_OPTS <key_1>=<value_1>, ..., <key_N>=<value_N> "
+----
+
+[discrete]
+== Setting an environment variable
+
+You can override the settings in `server.conf` configuration file by setting the `JAVA_OPTS` environment variable. For example:
+
+.Linux
+----
+export JAVA_OPTS="-Xmx1024M"
+----
+
+.Microsoft Windows
+----
+set JAVA_OPTS="-Xmx1024M"
+----
