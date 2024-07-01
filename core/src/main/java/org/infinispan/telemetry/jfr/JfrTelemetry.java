@@ -16,14 +16,17 @@ public class JfrTelemetry implements InfinispanTelemetry {
    @Override
    public <T> InfinispanSpan<T> startTraceRequest(String operationName, InfinispanSpanAttributes attributes) {
       var event = new JfrSpan<T>(operationName, attributes.cacheName().orElse("n/a"), String.valueOf(attributes.category()));
-      event.begin();
+      if (event.isEnabled()) event.begin();
       return event;
    }
 
    @Override
    public <T> InfinispanSpan<T> startTraceRequest(String operationName, InfinispanSpanAttributes attributes, InfinispanSpanContext context) {
       var event = new JfrSpan<T>(operationName, attributes.cacheName().orElse("n/a"), String.valueOf(attributes.category()));
-      event.begin();
+      if (event.isEnabled()) event.begin();
       return event;
    }
+
+   @Override
+   public void setNodeName(String nodeName) { }
 }

@@ -3,12 +3,16 @@ package org.infinispan.telemetry.jfr;
 import org.infinispan.telemetry.InfinispanSpan;
 import org.infinispan.telemetry.SafeAutoClosable;
 
+import jdk.jfr.Category;
 import jdk.jfr.Description;
 import jdk.jfr.Event;
 import jdk.jfr.Label;
+import jdk.jfr.StackTrace;
 
 @Label("Infinispan Event")
 @Description("Infinispan Tracing Events")
+@Category("infinispan-internal")
+@StackTrace(value = false)
 public class JfrSpan<T> extends Event implements InfinispanSpan<T>, SafeAutoClosable {
 
    @Label("Operation")
@@ -34,7 +38,9 @@ public class JfrSpan<T> extends Event implements InfinispanSpan<T>, SafeAutoClos
    @Override
    public void complete() {
       end();
-      commit();
+      if (shouldCommit()) {
+         commit();
+      }
    }
 
    @Override
