@@ -18,7 +18,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: 17
-          distribution: oracle
+          distribution: temurin
           cache: maven
       - run: mvn --version
       - run: >
