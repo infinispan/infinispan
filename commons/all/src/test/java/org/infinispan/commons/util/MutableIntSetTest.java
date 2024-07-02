@@ -6,6 +6,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -50,6 +51,14 @@ public class MutableIntSetTest {
       intSet.add(4);
       assertEquals(2, intSet.size());
    }
+
+   @Test
+   public void testFlaky1() {
+        double r = Math.random();
+        if (r < 0.5) {
+            fail("oops");
+        }
+    }
 
    @Test
    public void testIsEmpty() {
