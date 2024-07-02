@@ -234,8 +234,15 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    private void putInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value,
                             Metadata metadata, InfinispanSpan<CacheEntry<?, ?>> span) {
-      cache.putAsyncEntry(key, value, metadata)
-            .whenComplete((ce, throwable) -> handlePut(header, ce, throwable))
+      CompletionStage<CacheEntry<byte[], byte[]>> cs;
+      if (header.hasFlag(ProtocolFlag.ForceReturnPreviousValue)) {
+         cs = cache.putAsyncEntry(key, value, metadata);
+      } else {
+         cs = cache.withFlags(Flag.IGNORE_RETURN_VALUES)
+               .putAsync(key, value, metadata)
+               .thenApply(CompletableFutures.toNullFunction());
+      }
+      cs.whenComplete((ce, throwable) -> handlePut(header, ce, throwable))
             .whenComplete(span);
    }
 
