@@ -245,7 +245,7 @@ public class HashOperationsTest extends SingleNodeRespBaseTest {
       // Incrbyfloat only work with numbers.
       assertThatThrownBy(() -> redis.hincrbyfloat("incr-test", "key1", 1))
             .hasCauseInstanceOf(RedisCommandExecutionException.class)
-            .hasMessageContaining("value is not an integer or out of range");
+            .hasMessageContaining("hash value is not a float");
 
       // Since the value has an increment of 0.5, we can't use hincrby anymore, the value is not a long.
       assertThatThrownBy(() -> redis.hincrby("incr-test", "age", 1))
@@ -260,6 +260,24 @@ public class HashOperationsTest extends SingleNodeRespBaseTest {
 
       assertThat(redis.hget("incr-test", "key1")).isEqualTo("value1");
       assertThat(redis.hget("incr-test", "age")).isEqualTo("3.5");
+
+      assertThat(redis.hset("incr-test", "spacing", " 1.349893")).isTrue();
+      assertThatThrownBy(() -> redis.hincrbyfloat("incr-test", "spacing", 2.5))
+            .hasCauseInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("hash value is not a float");
+   }
+
+   public void testIncrementOverflows() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      long base = 17179869184L;
+      assertThat(redis.hset("incr-over", "v", String.valueOf(base))).isTrue();
+      assertThat(redis.hincrby("incr-over", "v", 1)).isEqualTo(base + 1);
+
+      assertThat(redis.hset("incr-over", "v2", String.valueOf(-9223372036854775484L))).isTrue();
+      assertThatThrownBy(() -> redis.hincrby("incr-over", "v2", -1000))
+            .hasCauseInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("increment or decrement would overflow");
    }
 
    public void testHrandField() {

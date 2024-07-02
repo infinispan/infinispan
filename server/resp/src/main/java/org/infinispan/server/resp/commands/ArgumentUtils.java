@@ -39,24 +39,46 @@ public final class ArgumentUtils {
       if (argument == null || argument.length == 0)
          throw new NumberFormatException("Empty argument");
 
-      return toDoubleWithInfinity(new String(argument, offset, argument.length - offset, CharsetUtil.US_ASCII));
+      String s = new String(argument, offset, argument.length - offset, CharsetUtil.US_ASCII);
+      return toDoubleWithInfinity(s, argument, offset);
    }
 
    public static double toDouble(byte[] argument) {
       if (argument == null || argument.length == 0)
          throw new NumberFormatException("Empty argument");
       String sArg = toNumberString(argument);
-      return toDoubleWithInfinity(sArg);
+      return toDoubleWithInfinity(sArg, argument, 0);
    }
 
-   private static double toDoubleWithInfinity(String sArg) {
-      if (sArg.equalsIgnoreCase("Inf") || sArg.equalsIgnoreCase("+Inf")) {
-      sArg="Infinity";
+   private static double toDoubleWithInfinity(String sArg, byte[] number, int offset) {
+      if (sArg.equalsIgnoreCase("Inf")
+            || sArg.equalsIgnoreCase("+Inf")
+            || sArg.equals("Infinity")) {
+         return Double.POSITIVE_INFINITY;
       }
-      if (sArg.equalsIgnoreCase("-Inf")) {
-      sArg="-Infinity";
+
+      if (sArg.equalsIgnoreCase("-Inf") || sArg.equals("-Infinity")) {
+         return Double.NEGATIVE_INFINITY;
       }
+
+      assertNumericString(number, offset);
       return Double.parseDouble(sArg);
+   }
+
+   private static void assertNumericString(byte[] number, int offset) {
+      for (int i = offset; i < number.length; i++) {
+         byte b = number[i];
+         if (!isNumber(b))
+            throw new NumberFormatException("Value is not a number");
+      }
+   }
+
+   private static boolean isNumber(byte b) {
+      return (b >= '0' && b <= '9') || isNumberSymbol(b);
+   }
+
+   private static boolean isNumberSymbol(byte b) {
+      return b == '-' || b == '+' || b == '.' || b == 'e' || b == 'E';
    }
 
    public static long toLong(byte[] argument) {
