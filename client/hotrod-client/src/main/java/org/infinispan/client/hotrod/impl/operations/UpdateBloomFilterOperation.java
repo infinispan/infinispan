@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import java.net.SocketAddress;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -22,7 +23,7 @@ public class UpdateBloomFilterOperation extends HotRodOperation<Void> implements
                                         byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags,
                                         Configuration cfg, SocketAddress address, byte[] bloomBits) {
       super(UPDATE_BLOOM_FILTER_REQUEST, UPDATE_BLOOM_FILTER_RESPONSE, codec, flags, cfg, cacheName, clientTopology, channelFactory);
-      this.address = address;
+      this.address = Objects.requireNonNull(address);
       this.bloomBits = bloomBits;
    }
 
@@ -46,6 +47,11 @@ public class UpdateBloomFilterOperation extends HotRodOperation<Void> implements
       scheduleRead(channel);
       sendArrayOperation(channel, bloomBits);
       releaseChannel(channel);
+   }
+
+   @Override
+   public void writeBytes(Channel channel, ByteBuf buf) {
+      writeArrayOperation(buf, bloomBits);
    }
 
    @Override

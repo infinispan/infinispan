@@ -4,8 +4,6 @@ import java.net.SocketAddress;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
@@ -14,6 +12,9 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.counter.api.CounterListener;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.api.WeakCounter;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 
 /**
  * An add listener operation for {@link StrongCounter#addListener(CounterListener)} and {@link
@@ -91,5 +92,12 @@ public class AddListenerOperation extends BaseCounterOperation<Boolean> {
             decoder.removeListener(listenerId);
          }
       });
+   }
+
+   @Override
+   public void writeBytes(Channel channel, ByteBuf buf) {
+      writeHeaderAndCounterName(buf);
+
+      ByteBufUtil.writeArray(buf, listenerId);
    }
 }

@@ -37,6 +37,11 @@ public class StatsOperation extends RetryOnFailureOperation<ServerStatistics> {
    }
 
    @Override
+   public void writeBytes(Channel channel, ByteBuf buf) {
+      codec.writeHeader(buf, header);
+   }
+
+   @Override
    protected void reset() {
       super.reset();
       result = null;

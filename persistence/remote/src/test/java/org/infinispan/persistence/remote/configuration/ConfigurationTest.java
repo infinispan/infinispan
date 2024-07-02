@@ -16,7 +16,7 @@ public class ConfigurationTest {
       ConfigurationBuilder b = new ConfigurationBuilder();
       b.persistence().addStore(RemoteStoreConfigurationBuilder.class)
          .remoteCacheName("RemoteCache")
-         .protocolVersion(ProtocolVersion.PROTOCOL_VERSION_27)
+         .protocolVersion(ProtocolVersion.PROTOCOL_VERSION_31)
          .fetchPersistentState(true)
          .addServer()
             .host("one").port(12111)
@@ -38,7 +38,7 @@ public class ConfigurationTest {
       assertEquals(ExhaustedAction.EXCEPTION, store.connectionPool().exhaustedAction());
       assertEquals(10_000, store.connectionPool().minEvictableIdleTime());
       assertTrue(store.async().enabled());
-      assertEquals(ProtocolVersion.PROTOCOL_VERSION_27, store.protocol());
+      assertEquals(ProtocolVersion.PROTOCOL_VERSION_31, store.protocol());
 
       b = new ConfigurationBuilder();
       b.persistence().addStore(RemoteStoreConfigurationBuilder.class).read(store);
@@ -51,6 +51,6 @@ public class ConfigurationTest {
       assertEquals(ExhaustedAction.EXCEPTION, store2.connectionPool().exhaustedAction());
       assertEquals(10_000, store2.connectionPool().minEvictableIdleTime());
       assertTrue(store2.async().enabled());
-      assertEquals(ProtocolVersion.PROTOCOL_VERSION_27, store2.protocol());
+      assertEquals(ProtocolVersion.PROTOCOL_VERSION_31, store2.protocol());
    }
 }

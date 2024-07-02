@@ -50,7 +50,6 @@ public class HotRodCacheEvents {
       @Override
       public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
          return Arrays.stream(ProtocolVersion.values())
-               .filter(v -> v != ProtocolVersion.PROTOCOL_VERSION_20) // Listeners were introduced in 2.1
                .map(Arguments::of);
       }
    }

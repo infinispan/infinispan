@@ -689,8 +689,9 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    @Override
    public StreamingRemoteCache<K> streaming() {
-      assertRemoteCacheManagerIsStarted();
-      return new StreamingRemoteCacheImpl<>(this);
+      throw new UnsupportedOperationException("Not supported yet.. need to add new commands for HR 4.1 and make a separate dedicated pool for 4.0?");
+//      assertRemoteCacheManagerIsStarted();
+//      return new StreamingRemoteCacheImpl<>(this);
    }
 
    @Override

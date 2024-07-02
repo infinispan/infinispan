@@ -15,6 +15,6 @@ public class AutomaticVersionTest {
       assertEquals(ProtocolVersion.HIGHEST_PROTOCOL_VERSION, ProtocolVersion.getBestVersion(Integer.MAX_VALUE));
 
       // This should match the exact version, as we know about it
-      assertEquals(ProtocolVersion.PROTOCOL_VERSION_23, ProtocolVersion.getBestVersion(23));
+      assertEquals(ProtocolVersion.PROTOCOL_VERSION_31, ProtocolVersion.getBestVersion(31));
    }
 }

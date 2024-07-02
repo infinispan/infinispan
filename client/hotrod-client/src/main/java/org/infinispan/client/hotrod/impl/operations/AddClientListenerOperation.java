@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 
@@ -74,5 +75,19 @@ public class AddClientListenerOperation extends ClientListenerOperation {
       codec.writeClientListenerParams(buf, clientListener, filterFactoryParams, converterFactoryParams);
       codec.writeClientListenerInterests(buf, ClientEventDispatcher.findMethods(listener).keySet());
       channel.writeAndFlush(buf);
+   }
+
+   @Override
+   public void actualWriteBytes(Channel channel, ByteBuf buf) {
+      this.address = ChannelRecord.of(channel).getUnresolvedAddress();
+      ClientListener clientListener = extractClientListener();
+
+      listenerNotifier.addDispatcher(ClientEventDispatcher.create(this,
+            address, () -> cleanup(channel), remoteCache));
+
+      codec.writeHeader(buf, header);
+      ByteBufUtil.writeArray(buf, listenerId);
+      codec.writeClientListenerParams(buf, clientListener, filterFactoryParams, converterFactoryParams);
+      codec.writeClientListenerInterests(buf, ClientEventDispatcher.findMethods(listener).keySet());
    }
 }

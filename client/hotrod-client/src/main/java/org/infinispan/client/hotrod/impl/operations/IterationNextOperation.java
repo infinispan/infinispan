@@ -136,4 +136,9 @@ public class IterationNextOperation<K, E> extends HotRodOperation<IterationNextR
    private <M> M unmarshallValue(byte[] bytes) {
       return dataFormat().valueToObj(bytes, cfg.getClassAllowList());
    }
+
+   @Override
+   public void writeBytes(Channel channel, ByteBuf buf) {
+      writeArrayOperation(buf, iterationId);
+   }
 }

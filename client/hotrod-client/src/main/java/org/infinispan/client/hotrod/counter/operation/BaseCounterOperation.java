@@ -9,8 +9,6 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
@@ -21,6 +19,9 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.util.Util;
 import org.infinispan.counter.exception.CounterException;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 
 /**
  * A base operation class for the counter's operation.
@@ -63,6 +64,13 @@ abstract class BaseCounterOperation<T> extends RetryOnFailureOperation<T> {
 
       setCacheName();
       return buf;
+   }
+
+   void writeHeaderAndCounterName(ByteBuf buf) {
+      codec.writeHeader(buf, header);
+      ByteBufUtil.writeString(buf, counterName);
+
+      setCacheName();
    }
 
    /**

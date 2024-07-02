@@ -2,7 +2,6 @@ package org.infinispan.persistence.remote;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
-import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -53,16 +52,6 @@ public class RemoteStoreFunctionalTest extends BaseStoreFunctionalTest {
    @Override
    public void testTwoCachesSameCacheStore() {
       //not applicable
-   }
-
-   @Test(expectedExceptions = CacheConfigurationException.class)
-   public void testSegmentedWithUnsupportedVersion() {
-      ConfigurationBuilder cb = new ConfigurationBuilder();
-      cb.persistence()
-            .addStore(RemoteStoreConfigurationBuilder.class)
-            .segmented(true)
-            .protocolVersion(ProtocolVersion.PROTOCOL_VERSION_21);
-      cb.build();
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class)

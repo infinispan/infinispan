@@ -23,7 +23,7 @@ import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.HotRodURI;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
-import org.infinispan.client.hotrod.impl.protocol.Codec27;
+import org.infinispan.client.hotrod.impl.protocol.Codec30;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.IdentityMarshaller;
@@ -282,7 +282,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
    public Flowable<K> publishKeys(IntSet segments, Predicate<? super K> filter) {
       // We assume our segments don't map to the remote node when segmentation is disabled
       IntSet segmentsToUse = configuration.segmented() ? segments : null;
-      Flowable<K> keyFlowable = Flowable.fromPublisher(remoteCache.publishEntries(Codec27.EMPTY_VALUE_CONVERTER,
+      Flowable<K> keyFlowable = Flowable.fromPublisher(remoteCache.publishEntries(Codec30.EMPTY_VALUE_CONVERTER,
                   null, segmentsToUse, 512))
             .observeOn(Schedulers.from(nonBlockingExecutor))
             .map(Map.Entry::getKey)

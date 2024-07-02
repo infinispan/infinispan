@@ -4,8 +4,6 @@ import static org.infinispan.counter.util.EncodeUtil.encodeConfiguration;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
@@ -13,6 +11,9 @@ import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 
 /**
  * A counter define operation for {@link CounterManager#defineCounter(String, CounterConfiguration)}.
@@ -35,6 +36,12 @@ public class DefineCounterOperation extends BaseCounterOperation<Boolean> {
       ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, 28);
       encodeConfiguration(configuration, buf::writeByte, buf::writeLong, i -> ByteBufUtil.writeVInt(buf, i));
       channel.writeAndFlush(buf);
+   }
+
+   @Override
+   public void writeBytes(Channel channel, ByteBuf buf) {
+      writeHeaderAndCounterName(buf);
+      encodeConfiguration(configuration, buf::writeByte, buf::writeLong, i -> ByteBufUtil.writeVInt(buf, i));
    }
 
    @Override

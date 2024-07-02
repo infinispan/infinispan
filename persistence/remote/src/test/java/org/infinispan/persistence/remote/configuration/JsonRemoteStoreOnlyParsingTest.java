@@ -33,7 +33,7 @@ public class JsonRemoteStoreOnlyParsingTest {
             "        \"hotrod-wrapping\":false,\n" +
             "        \"raw-values\":false,\n" +
             "        \"socket-timeout\":60000,\n" +
-            "        \"protocol-version\":\"2.8\",\n" +
+            "        \"protocol-version\":\"3.1\",\n" +
             "        \"remote-server\":[\n" +
             "            {\n" +
             "                \"host\":\"127.0.0.2\",\n" +
@@ -88,7 +88,7 @@ public class JsonRemoteStoreOnlyParsingTest {
       assertFalse(store.hotRodWrapping());
       assertFalse(store.rawValues());
       assertEquals(60000, store.socketTimeout());
-      assertEquals(ProtocolVersion.PROTOCOL_VERSION_28, store.protocol());
+      assertEquals(ProtocolVersion.PROTOCOL_VERSION_31, store.protocol());
 
       List<RemoteServerConfiguration> servers = store.servers();
       RemoteServerConfiguration firstServer = servers.iterator().next();

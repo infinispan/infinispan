@@ -54,6 +54,14 @@ public class ContainsValueMultimapOperation extends RetryOnFailureOperation<Bool
    }
 
    @Override
+   public void writeBytes(Channel channel, ByteBuf buf) {
+      codec.writeHeader(buf, header);
+      codec.writeExpirationParams(buf, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
+      ByteBufUtil.writeArray(buf, value);
+      codec.writeMultimapSupportDuplicates(buf, supportsDuplicates);
+   }
+
+   @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       if (HotRodConstants.isNotExist(status)) {
          complete(Boolean.FALSE);

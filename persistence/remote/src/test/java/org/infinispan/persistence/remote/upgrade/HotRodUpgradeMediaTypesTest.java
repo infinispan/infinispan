@@ -1,7 +1,5 @@
 package org.infinispan.persistence.remote.upgrade;
 
-import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_25;
-import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_28;
 import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_31;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -35,17 +33,9 @@ public class HotRodUpgradeMediaTypesTest extends AbstractInfinispanTest {
    @Factory
    public Object[] factory() {
       return new Object[]{
-            new HotRodUpgradeMediaTypesTest().protocolVersion(PROTOCOL_VERSION_25),
-            new HotRodUpgradeMediaTypesTest().protocolVersion(PROTOCOL_VERSION_28),
             new HotRodUpgradeMediaTypesTest().protocolVersion(PROTOCOL_VERSION_31),
-            new HotRodUpgradeMediaTypesTest().mediaType(MediaType.TEXT_PLAIN).protocolVersion(PROTOCOL_VERSION_25),
-            new HotRodUpgradeMediaTypesTest().mediaType(MediaType.TEXT_PLAIN).protocolVersion(PROTOCOL_VERSION_28),
             new HotRodUpgradeMediaTypesTest().mediaType(MediaType.TEXT_PLAIN).protocolVersion(PROTOCOL_VERSION_31),
-            new HotRodUpgradeMediaTypesTest().mediaType(MediaType.APPLICATION_PROTOSTREAM).protocolVersion(PROTOCOL_VERSION_25),
-            new HotRodUpgradeMediaTypesTest().mediaType(MediaType.APPLICATION_PROTOSTREAM).protocolVersion(PROTOCOL_VERSION_28),
             new HotRodUpgradeMediaTypesTest().mediaType(MediaType.APPLICATION_PROTOSTREAM).protocolVersion(PROTOCOL_VERSION_31),
-            new HotRodUpgradeMediaTypesTest().mediaType(MediaType.APPLICATION_SERIALIZED_OBJECT).protocolVersion(PROTOCOL_VERSION_25),
-            new HotRodUpgradeMediaTypesTest().mediaType(MediaType.APPLICATION_SERIALIZED_OBJECT).protocolVersion(PROTOCOL_VERSION_28),
             new HotRodUpgradeMediaTypesTest().mediaType(MediaType.APPLICATION_SERIALIZED_OBJECT).protocolVersion(PROTOCOL_VERSION_31),
       };
    }

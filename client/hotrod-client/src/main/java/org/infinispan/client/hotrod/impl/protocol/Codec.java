@@ -5,16 +5,20 @@ import java.net.SocketAddress;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.counter.impl.HotRodCounterEvent;
 import org.infinispan.client.hotrod.event.impl.AbstractClientEvent;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelInitializer;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelPool;
 import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
@@ -22,6 +26,7 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IntSet;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.util.concurrent.EventExecutor;
 
 /**
  * A Hot Rod protocol encoder/decoder.
@@ -56,8 +61,6 @@ public interface Codec {
 
    long readMessageId(ByteBuf buf);
 
-   short readOpCode(ByteBuf buf);
-
    /**
     * Reads a response header from the transport and returns the status
     * of the response.
@@ -66,7 +69,7 @@ public interface Codec {
 
    AbstractClientEvent readCacheEvent(ByteBuf buf, Function<byte[], DataFormat> listenerDataFormat, short eventTypeId, ClassAllowList allowList, SocketAddress serverAddress);
 
-   Object returnPossiblePrevValue(ByteBuf buf, short status, DataFormat dataFormat, int flags, ClassAllowList allowList, Marshaller marshaller);
+   Object returnPossiblePrevValue(ByteBuf buf, short status, DataFormat dataFormat, ClassAllowList allowList, Marshaller marshaller);
 
    void writeClientListenerInterests(ByteBuf buf, Set<Class<? extends Annotation>> classes);
 
@@ -171,4 +174,8 @@ public interface Codec {
    default boolean isUnsafeForTheHandshake() {
       return false;
    }
+
+   ChannelPool createPool(EventExecutor executor, SocketAddress address, ChannelInitializer newChannelInvoker,
+                          BiConsumer<ChannelPool, ChannelFactory.ChannelEventType> connectionFailureListener,
+                          Configuration configuration);
 }

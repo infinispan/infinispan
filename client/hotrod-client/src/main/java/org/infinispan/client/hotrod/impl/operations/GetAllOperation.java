@@ -60,6 +60,15 @@ public class GetAllOperation<K, V> extends StatsAffectingRetryingOperation<Map<K
    }
 
    @Override
+   public void writeBytes(Channel channel, ByteBuf buf) {
+      codec.writeHeader(buf, header);
+      ByteBufUtil.writeVInt(buf, keys.size());
+      for (byte[] key : keys) {
+         ByteBufUtil.writeArray(buf, key);
+      }
+   }
+
+   @Override
    protected void reset() {
       super.reset();
       result = null;

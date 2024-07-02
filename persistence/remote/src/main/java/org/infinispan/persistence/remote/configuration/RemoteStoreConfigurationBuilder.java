@@ -243,11 +243,5 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
       if (attributes.attribute(SEGMENTED).get() && builder.clustering().hash().groups().isEnabled()) {
          throw CONFIG.segmentationNotSupportedWithGroups();
       }
-
-      ProtocolVersion version = attributes.attribute(PROTOCOL_VERSION).get();
-      ProtocolVersion minimumVersion = ProtocolVersion.PROTOCOL_VERSION_23;
-      if (attributes.attribute(SEGMENTED).get() && version.compareTo(minimumVersion) < 0) {
-         throw CONFIG.segmentationNotSupportedInThisVersion(minimumVersion);
-      }
    }
 }

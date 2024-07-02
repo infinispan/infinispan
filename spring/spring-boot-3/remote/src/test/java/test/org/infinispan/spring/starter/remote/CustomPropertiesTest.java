@@ -66,7 +66,7 @@ public class CustomPropertiesTest {
       assertThat(configuration.connectionTimeout()).isEqualTo(5000);
       assertThat(configuration.maxRetries()).isEqualTo(42);
       assertThat(configuration.batchSize()).isEqualTo(90);
-      assertThat(configuration.version()).isEqualTo(ProtocolVersion.PROTOCOL_VERSION_28);
+      assertThat(configuration.version()).isEqualTo(ProtocolVersion.PROTOCOL_VERSION_40);
 
       // Connection pool properties
       assertThat(configuration.connectionPool().maxActive()).isEqualTo(91);

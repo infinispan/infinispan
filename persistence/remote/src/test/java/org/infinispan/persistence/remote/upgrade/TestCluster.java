@@ -1,7 +1,6 @@
 package org.infinispan.persistence.remote.upgrade;
 
 import static org.infinispan.client.hotrod.ProtocolVersion.DEFAULT_PROTOCOL_VERSION;
-import static org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_23;
 import static org.infinispan.test.AbstractCacheTest.getDefaultClusteredCacheConfig;
 import static org.infinispan.test.TestingUtil.waitForNoRebalanceAcrossManagers;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
@@ -280,9 +279,6 @@ class TestCluster {
                   store.remoteSecurity().ssl().keyStoreFileName(builder.keyStoreFileName).keyStorePassword(builder.keyStorePassword);
                }
                if (builder.segmented) {
-                  if (protocolVersion.compareTo(PROTOCOL_VERSION_23) < 0) {
-                     throw new AssertionError("Protocol version less than 2.3 cannot be segmented");
-                  }
                   store.segmented(true);
                } else {
                   store.segmented(false);
