@@ -8,9 +8,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
+import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.ByteBufferUtils;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -45,8 +47,10 @@ public class HRANDFIELD extends RespCommand implements Resp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
       byte[] key = arguments.get(0);
       int count = 1;
+      boolean countDefined = false;
       if (arguments.size() > 1) {
          count = ArgumentUtils.toInt(arguments.get(1));
+         countDefined = true;
       }
 
       if (count == 0) {
@@ -65,20 +69,45 @@ public class HRANDFIELD extends RespCommand implements Resp3Command {
       }
 
       EmbeddedMultimapPairCache<byte[], byte[], byte[]> multimap = handler.getHashMapMultimap();
-      int finalCount = count;
-      boolean finalWithValues = withValues;
-      CompletionStage<Collection<byte[]>> cs = multimap.subSelect(key, Math.abs(count))
-            .thenApply(e -> e == null ? null : readRandomFields(e, finalCount, finalWithValues));
-      return handler.stageToReturn(cs, ctx, Consumers.GET_ARRAY_BICONSUMER);
+      BiConsumer<Map<byte[], byte[]>, ByteBufPool> consumer = consumeResponse(count, withValues, countDefined);
+      return handler.stageToReturn(multimap.subSelect(key, Math.abs(count)), ctx, consumer);
    }
 
-   private Collection<byte[]> readRandomFields(Map<byte[], byte[]> values, int count, boolean withValues) {
+   private BiConsumer<Map<byte[], byte[]>, ByteBufPool> consumeResponse(int count, boolean withValues, boolean countDefined) {
+      return (res, alloc) -> {
+         if (res == null) {
+            ByteBufferUtils.stringToByteBufAscii("$-1\r\n", alloc);
+            return;
+         }
+
+         Collection<Collection<byte[]>> parsed = readRandomFields(res, count, withValues);
+         // When the number of entries is restricted, we return a list of elements.
+         if (countDefined) {
+            // In case the return contains the values, we return a list of lists.
+            // Each sub-list has two elements, the key and the value.
+            if (withValues) {
+               Resp3Handler.writeArrayPrefix(parsed.size(), alloc);
+               for (Collection<byte[]> bytes : parsed) {
+                  Consumers.GET_ARRAY_BICONSUMER.accept(bytes, alloc);
+               }
+            } else {
+               // Otherwise, we return just a single list containing the keys.
+               Consumers.GET_ARRAY_BICONSUMER.accept(parsed.stream().flatMap(Collection::stream).toList(), alloc);
+            }
+         } else {
+            // Otherwise, we return a bulk string with a single key.
+            Collection<byte[]> bytes = parsed.iterator().next();
+            Consumers.GET_BICONSUMER.accept(bytes.iterator().next(), alloc);
+         }
+      };
+   }
+
+   private Collection<Collection<byte[]>> readRandomFields(Map<byte[], byte[]> values, int count, boolean withValues) {
       if (count > 0) {
          return values.entrySet().stream()
                .map(entry -> withValues
                      ? List.of(entry.getKey(), entry.getValue())
                      : List.of(entry.getKey()))
-               .flatMap(Collection::stream)
                .collect(Collectors.toList());
       }
 
@@ -92,7 +121,6 @@ public class HRANDFIELD extends RespCommand implements Resp3Command {
                      ? List.of(entry.getKey(), entry.getValue())
                      : List.of(entry.getKey());
             })
-            .flatMap(Collection::stream)
             .collect(Collectors.toList());
    }
 }
