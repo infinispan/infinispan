@@ -10,23 +10,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up Maven
-        uses: stCarolas/setup-maven@v5
-        with:
-          maven-version: 3.9.6
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           java-version: 17
           distribution: temurin
           cache: maven
-      - run: mvn --version
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '17'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: mvnw --version
       - run: >
-            mvn -s maven-settings.xml clean install -DskipTests
+            mvnw -s maven-settings.xml clean install -DskipTests -Pnative
             -pl :infinispan-component-annotations,:infinispan-logging-annotations,:infinispan-checkstyle,commons,:infinispan-defaults-maven-plugin,:infinispan-logging-processor,:infinispan-commons-spi,:infinispan-component-processor,:infinispan-commons-test,:infinispan-api,:infinispan-commons
       - name: Test with Maven
         run: >
-            mvn -s maven-settings.xml verify -B -e -DrerunFailingTestsCount=2
+            mvnw -s maven-settings.xml verify -B -e -DrerunFailingTestsCount=2 -Pnative
             -fae -Dansi.strip=true
             -pl :infinispan-component-annotations,:infinispan-logging-annotations,:infinispan-checkstyle,commons,:infinispan-defaults-maven-plugin,:infinispan-logging-processor,:infinispan-commons-spi,:infinispan-component-processor,:infinispan-commons-test,:infinispan-api,:infinispan-commons
       - name: Publish Test Report
