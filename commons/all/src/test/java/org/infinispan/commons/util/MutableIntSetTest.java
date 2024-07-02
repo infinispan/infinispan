@@ -75,11 +75,6 @@ public class MutableIntSetTest {
    }
 
    @Test
-   public void Fail() {
-      fail("always fails");
-   }
-
-   @Test
    public void testIsEmpty() {
       assertTrue(intSet.isEmpty());
       intSet.add(1);
