@@ -93,6 +93,10 @@
             <include name="mit-0.txt"/>
          </fileset>
       </copy>
+      <delete dir="${output.dir}/static/console/META-INF"/>
+      <delete>
+         <fileset dir="${output.dir}/static/console" includes="*.LICENSE.txt"/>
+      </delete>
    </target>
 
    <target name="default">
