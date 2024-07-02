@@ -31,6 +31,11 @@ jobs:
 
       - run: ./mvnw --version
 
+      - name: Getting project properties
+        run: |
+            ./mvnw properties:write-project-properties -Dproperties.outputFile=mvn-write-project.properties
+            grep -E 'infinispan.brand.version|infinispan.brand.prefix' mvn-write-project.properties >> "$GITHUB_OUTPUT"
+        id: properties
       - name: Maven build (PR)
         if: ${{github.event_name == 'pull_request'}}
         run: >
@@ -79,10 +84,11 @@ jobs:
               **/target/*-reports*/**/TEST-*FLAKY.xml
               target-branch.txt
               event_name.txt
-      - name: Archive server distro
+      - name: ${}
         if: ${{ github.event_name}} == 'push'
         uses: actions/upload-artifact@v4
         with:
-          name: server distro
+          name: ${{ steps.properties.outputs.infinispan.brand.prefix }}-${{ steps.properties.outputs.infinispan.brand.version }}
+          overwrite: true
           path: |
             distribution/target/distribution/infinispan*.zip
