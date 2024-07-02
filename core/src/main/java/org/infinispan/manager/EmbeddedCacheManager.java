@@ -3,6 +3,7 @@ package org.infinispan.manager;
 import java.io.Closeable;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 
 import javax.security.auth.Subject;
 
@@ -225,6 +226,8 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
     * @return a cache instance identified by cacheName
     */
    <K, V> Cache<K, V> getCache(String cacheName);
+
+   <K, V> CompletionStage<Cache<K, V>> getCacheAsync(String cacheName);
 
    /**
     * Creates a cache on the local node using the supplied configuration.

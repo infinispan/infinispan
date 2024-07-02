@@ -1,5 +1,7 @@
 package org.infinispan.manager;
 
+import java.util.concurrent.CompletionStage;
+
 import javax.security.auth.Subject;
 
 import org.infinispan.Cache;
@@ -24,10 +26,19 @@ public interface EmbeddedCacheManagerAdmin extends CacheContainerAdmin<EmbeddedC
     * @param template the template to use for the cache. If null, the configuration marked as default on the container
     *                 will be used
     * @return the cache
-    *
     * @throws org.infinispan.commons.CacheException if a cache with the same name already exists
     */
    <K, V> Cache<K, V> createCache(String name, String template);
+
+   /**
+    * Asynchronous version of {@link #createCache(String, String)}
+    *
+    * @param name     the name of the cache to create
+    * @param template the template to use for the cache. If null, the configuration marked as default on the container
+    *                 will be used
+    * @return a {@link CompletionStage} holding the cache
+    */
+   <K, V> CompletionStage<Cache<K, V>> createCacheAsync(String name, String template);
 
    /**
     * Retrieves an existing cache or creates one using the specified template if it doesn't exist
@@ -44,15 +55,25 @@ public interface EmbeddedCacheManagerAdmin extends CacheContainerAdmin<EmbeddedC
     * it will automatically be created there. This method will wait for the cache to be created on all nodes before
     * returning.
     *
-    * @param name the name of the cache
+    * @param name          the name of the cache
     * @param configuration the configuration to use. It must be a clustered configuration (e.g. distributed)
-    * @param <K> the generic type of the key
-    * @param <V> the generic type of the value
+    * @param <K>           the generic type of the key
+    * @param <V>           the generic type of the value
     * @return the cache
-    *
     * @throws org.infinispan.commons.CacheException if a cache with the same name already exists
     */
    <K, V> Cache<K, V> createCache(String name, Configuration configuration);
+
+   /**
+    * Asynchronous version of {@link #createCache(String, Configuration)}
+    * @param name          the name of the cache
+    * @param configuration the configuration to use. It must be a clustered configuration (e.g. distributed)
+    * @param <K>           the generic type of the key
+    * @param <V>           the generic type of the value
+    * @return a {@link CompletionStage} holding the cache
+    * @throws org.infinispan.commons.CacheException if a cache with the same name already exists
+    */
+   <K, V> CompletionStage<Cache<K, V>> createCacheAsync(String name, Configuration configuration);
 
    /**
     * Retrieves an existing cache or creates one across the cluster using the specified configuration.
@@ -60,10 +81,10 @@ public interface EmbeddedCacheManagerAdmin extends CacheContainerAdmin<EmbeddedC
     * it will automatically be created there. This method will wait for the cache to be created on all nodes before
     * returning.
     *
-    * @param name the name of the cache
+    * @param name          the name of the cache
     * @param configuration the configuration to use. It must be a clustered configuration (e.g. distributed)
-    * @param <K> the generic type of the key
-    * @param <V> the generic type of the value
+    * @param <K>           the generic type of the key
+    * @param <V>           the generic type of the value
     * @return the cache
     */
    <K, V> Cache<K, V> getOrCreateCache(String name, Configuration configuration);
@@ -74,11 +95,20 @@ public interface EmbeddedCacheManagerAdmin extends CacheContainerAdmin<EmbeddedC
     * it will automatically be created there. This method will wait for the template to be created on all nodes before
     * returning.
     *
-    * @param name the name of the template
+    * @param name          the name of the template
     * @param configuration the configuration to use. It must be a clustered configuration (e.g. distributed)
     * @throws org.infinispan.commons.CacheConfigurationException if a template with the same name already exists
     */
    void createTemplate(String name, Configuration configuration);
+
+   /**
+    * Asynchronous version of {@link #createTemplate(String, Configuration)}
+    *
+    * @param name
+    * @param configuration
+    * @return a {@link CompletionStage<Void>}
+    */
+   CompletionStage<Void> createTemplateAsync(String name, Configuration configuration);
 
    /**
     * Retrieves an existing template or creates one across the cluster using the specified configuration.
@@ -86,11 +116,20 @@ public interface EmbeddedCacheManagerAdmin extends CacheContainerAdmin<EmbeddedC
     * it will automatically be created there. This method will wait for the template to be created on all nodes before
     * returning.
     *
-    * @param name the name of the template
+    * @param name          the name of the template
     * @param configuration the configuration to use. It must be a clustered configuration (e.g. distributed)
     * @return the template configuration
     */
    Configuration getOrCreateTemplate(String name, Configuration configuration);
+
+   /**
+    * Asynchronous version of {@link #getOrCreateTemplate(String, Configuration)}
+    *
+    * @param name          the name of the template
+    * @param configuration the configuration to use. It must be a clustered configuration (e.g. distributed)
+    * @return a {@link CompletionStage} holding the template configuration
+    */
+   CompletionStage<Configuration> getOrCreateTemplateAsync(String name, Configuration configuration);
 
    /**
     * Removes a template from the cache container. Any persisted data will be cleared.
@@ -98,6 +137,14 @@ public interface EmbeddedCacheManagerAdmin extends CacheContainerAdmin<EmbeddedC
     * @param name the name of the template to remove
     */
    void removeTemplate(String name);
+
+   /**
+    * Asynchronously removes a template from the cache container. Any persisted data will be cleared.
+    *
+    * @param name the name of the template to remove
+    */
+   CompletionStage<Void> removeTemplateAsync(String name);
+
 
    /**
     * Performs any cache manager operations using the specified {@link Subject}. Only applies to cache managers with authorization

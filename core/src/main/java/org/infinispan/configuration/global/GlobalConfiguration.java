@@ -28,7 +28,7 @@ import org.infinispan.factories.scopes.Scopes;
  */
 @Scope(Scopes.GLOBAL)
 @SurvivesRestarts
-public class GlobalConfiguration {
+public class GlobalConfiguration implements org.infinispan.api.configuration.Configuration {
 
    private final Map<Class<?>, ?> modules;
    private final SiteConfiguration site;

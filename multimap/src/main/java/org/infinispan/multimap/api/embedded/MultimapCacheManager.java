@@ -4,7 +4,7 @@ import org.infinispan.commons.util.Experimental;
 import org.infinispan.configuration.cache.Configuration;
 
 @Experimental
-public interface MultimapCacheManager<K, V> {
+public interface MultimapCacheManager {
 
    /**
     * Defines a named multimap cache's configuration by using the provided configuration
@@ -25,7 +25,7 @@ public interface MultimapCacheManager<K, V> {
     * @return null if no configuration exists as per rules set above, otherwise returns a multimap cache instance
     * identified by cacheName and doesn't support duplicates
     */
-   default MultimapCache<K, V> get(String name) {
+   default <K, V> MultimapCache<K, V> get(String name) {
       return get(name, false);
    }
 
@@ -37,5 +37,5 @@ public interface MultimapCacheManager<K, V> {
     * @return null if no configuration exists as per rules set above, otherwise returns a multimap cache instance
     * identified by cacheName
     */
-   MultimapCache<K, V> get(String name, boolean supportsDuplicates);
+   <K,V> MultimapCache<K, V> get(String name, boolean supportsDuplicates);
 }
