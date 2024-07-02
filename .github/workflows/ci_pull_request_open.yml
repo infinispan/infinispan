@@ -37,7 +37,6 @@ jobs:
           fail_on_test_failures: true
 # Create artifact with branch name and surefile flaky test report
       - name: Check flaky report existence
-        if: success() || failure()
         id: check_files
         uses: andstor/file-existence-action@v3
         with:
