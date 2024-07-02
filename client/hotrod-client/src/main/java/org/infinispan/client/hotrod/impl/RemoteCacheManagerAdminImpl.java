@@ -53,7 +53,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
 
    @Override
    public <K, V> RemoteCache<K, V> createCache(String name, DefaultTemplate template) throws HotRodClientException {
-      return createCache(name, template.getTemplateName());
+      return createCache(name, template.getConfiguration());
    }
 
    @Override
@@ -78,7 +78,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
 
    @Override
    public <K, V> RemoteCache<K, V> getOrCreateCache(String name, DefaultTemplate template) throws HotRodClientException {
-      return getOrCreateCache(name, template.getTemplateName());
+      return getOrCreateCache(name, template.getConfiguration());
    }
 
    @Override

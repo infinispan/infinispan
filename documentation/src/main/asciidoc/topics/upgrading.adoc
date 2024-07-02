@@ -40,6 +40,9 @@ The following metrics have been renamed:
 - `get_num_ucast_msgs_received` -> `get_num_ucasts_received`
 - `get_num_ucast_msgs_sent` - `get_num_ucasts_sent`
 
+== Server templates
+
+The internal server templates have been removed.
 
 == Upgrading from 14.0 to 15.0
 
