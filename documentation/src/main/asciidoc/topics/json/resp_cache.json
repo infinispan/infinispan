@@ -1,0 +1,14 @@
+{
+   "respCache": {
+     "distributed-cache": {
+       "aliases": ["0"],
+       "owners": "2",
+       "key-partitioner": "org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner",
+       "mode": "SYNC",
+       "statistics": true,
+       "encoding": {
+         "media-type": "application/octet-stream"
+       }
+     }
+   }
+ }

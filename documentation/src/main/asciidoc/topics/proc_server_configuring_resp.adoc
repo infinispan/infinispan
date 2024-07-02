@@ -49,8 +49,34 @@ The RESP endpoint automatically configures and starts a `respCache` cache. This 
 * `application/octet-stream` encoding for both keys and values.
 * `RESPHashFunctionPartitioner` hash partitioner, which supports the CRC16 hashing used by Redis clients
 
-The cache configuration cannot enable capabilities that violate the RESP protocol.
-For example, specifying an incompatible hash partitioning function or a key encoding different from `application/octet-stream`.
+[discrete]
+=== Explicit configuration for cache
+
+It is possible to supply a custom configuration for the cache, as long as it does not violate the requirements of the RESP connector, in which case the server will raise an exception and will not start.
+Main constraints are:
+
+* hash partitioning function must be `org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner`.
+* key encoding must be `application/octet-stream`.
+
+Example of explicit cache configuration follows.
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/resp_cache.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/resp_cache.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/resp_cache.yaml[]
+----
 
 [TIP]
 ====
@@ -58,9 +84,9 @@ Configure your cache value encoding with Protobuf encoding if you want to view c
 ====
 
 [discrete]
-=== RESP endpoint configuration
+=== Explicit RESP endpoint configuration
 
-If the implicit configuration used by the single-port endpoint does not fit your needs, use explicit configuration.
+If the implicit configuration used by the single-port endpoint does not fit your needs, explicit configuration is available.
 
 .XML
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
