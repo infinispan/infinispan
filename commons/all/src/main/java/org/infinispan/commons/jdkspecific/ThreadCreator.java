@@ -14,7 +14,7 @@ public class ThreadCreator {
    private static final org.infinispan.commons.spi.ThreadCreator INSTANCE = getInstance();
 
    public static boolean useVirtualThreads() {
-      return Boolean.getBoolean("org.infinispan.threads.virtual");
+      return Boolean.parseBoolean(System.getProperty("org.infinispan.threads.virtual", "true"));
    }
 
    private static org.infinispan.commons.spi.ThreadCreator getInstance() {
@@ -39,6 +39,10 @@ public class ThreadCreator {
       return INSTANCE.newVirtualThreadPerTaskExecutor();
    }
 
+   public static boolean isVirtual(Thread thread) {
+      return INSTANCE.isVirtual(thread);
+   }
+
    static class ThreadCreatorImpl implements org.infinispan.commons.spi.ThreadCreator {
 
       @Override
@@ -49,6 +53,11 @@ public class ThreadCreator {
       @Override
       public Optional<ExecutorService> newVirtualThreadPerTaskExecutor() {
          return Optional.empty();
+      }
+
+      @Override
+      public boolean isVirtual(Thread thread) {
+         return false;
       }
    }
 }

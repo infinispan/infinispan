@@ -2,11 +2,14 @@ package org.infinispan.test.fwk;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.commons.jdkspecific.ThreadCreator;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.test.TestingUtil;
 import org.jgroups.conf.ClassConfigurator;
 import org.jgroups.protocols.relay.RELAY2;
+import org.jgroups.protocols.relay.Relayer2;
 import org.jgroups.protocols.relay.config.RelayConfig;
 
 /**
@@ -39,5 +42,16 @@ public class TEST_RELAY2 extends RELAY2 {
             bridges.set(i, new RelayConfig.PropertiesBridgeConfig(clusterName, config));
          }
       });
+   }
+
+   @Override
+   protected void startRelayer(Relayer2 rel, String bridge_name) {
+      // startRelayer blocks the carrier thread.
+      // I suspect we are running ouf of threads in the common pool because we run tests in parallel.
+      if (ThreadCreator.isVirtual(Thread.currentThread())) {
+         CompletableFuture.runAsync(() -> super.startRelayer(rel, bridge_name));
+      } else {
+         super.startRelayer(rel, bridge_name);
+      }
    }
 }

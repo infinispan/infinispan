@@ -10,4 +10,6 @@ public interface ThreadCreator {
    Thread createThread(ThreadGroup threadGroup, Runnable target, boolean lightweight);
 
    Optional<ExecutorService> newVirtualThreadPerTaskExecutor();
+
+   boolean isVirtual(Thread thread);
 }
