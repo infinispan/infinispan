@@ -45,7 +45,7 @@ jobs:
       - name: Maven build (Branch)
         if: ${{github.event_name == 'push'}}
         run: >
-            ./mvnw -s maven-settings.xml clean install -DskipTests -Pnative -Pdistribution
+            ./mvnw -s maven-settings.xml clean install -DskipTests -Pdistribution
       - name: Publish Test Report
         if: success() || failure()
         uses: ScaCap/action-surefire-report@v1
