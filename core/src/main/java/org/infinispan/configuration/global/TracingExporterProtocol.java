@@ -24,6 +24,12 @@ public enum TracingExporterProtocol {
     * Tracing will be exported for a Prometheus collector.
     * This option will require the Prometheus exporter as extra dependency.
     */
-   PROMETHEUS;
+   PROMETHEUS,
+
+   /**
+    * Tracing will be exported with Java Flight Recorder.
+    * This option requires enabling JFR to capture the events. JFR can start recording any time.
+    */
+   JFR;
 
 }

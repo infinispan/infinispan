@@ -16,12 +16,14 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.server.core.telemetry.inmemory.InMemoryTelemetryService;
+import org.infinispan.server.core.telemetry.jfr.JfrSpanProcessor;
 import org.infinispan.telemetry.InfinispanTelemetry;
 import org.infinispan.telemetry.impl.DisabledInfinispanTelemetry;
 import org.jboss.logging.Logger;
 
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk;
+import io.opentelemetry.sdk.trace.SdkTracerProviderBuilder;
 
 @Scope(Scopes.GLOBAL)
 @DefaultFactoryFor(classes = InfinispanTelemetry.class)
@@ -49,6 +51,7 @@ public class TelemetryServiceFactory extends AbstractComponentFactory implements
       try {
          OpenTelemetry openTelemetry = AutoConfiguredOpenTelemetrySdk.builder()
                .addPropertiesSupplier(() -> autoConfigureOpenTelemetryProperties(tracing))
+               .addTracerProviderCustomizer((builder, ignore) -> configureTracerProvider(builder, tracing))
                .build()
                .getOpenTelemetrySdk();
 
@@ -91,7 +94,19 @@ public class TelemetryServiceFactory extends AbstractComponentFactory implements
                throw log.errorOnParsingPrometheusURLForTracing(e);
             }
             break;
+         case JFR:
+            result.put("otel.traces.exporter", "none");
+            result.put("otel.exporter.otlp.protocol", "none");
+            break;
       }
       return result;
+   }
+
+   private SdkTracerProviderBuilder configureTracerProvider(SdkTracerProviderBuilder builder, GlobalTracingConfiguration configuration) {
+      if (configuration.exporterProtocol() == TracingExporterProtocol.JFR) {
+         builder.addSpanProcessor(new JfrSpanProcessor());
+      }
+
+      return builder;
    }
 }
