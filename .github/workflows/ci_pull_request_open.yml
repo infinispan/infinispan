@@ -110,4 +110,4 @@ jobs:
            branch: ${{ github.ref_name }}
            repository: rigazilla/infinispan-images
            ispnVersion: ${{ github.ref_name }}
-           releaseId: ${{ github.job.ci-build-test-pr.steps.create-release.outputs.id }}
+           releaseId: ${{ github.ref_name }}-devel
