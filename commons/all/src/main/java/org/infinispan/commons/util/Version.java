@@ -26,6 +26,7 @@ public class Version {
    public static final String INFINISPAN_VERSION = "infinispan.version";
    public static final String INFINISPAN_BRAND_NAME = "infinispan.brand.name";
    public static final String INFINISPAN_BRAND_VERSION = "infinispan.brand.version";
+   public static final String INFINISPAN_UNBRANDED_VERSION = "infinispan.unbranded.version";
    public static final String INFINISPAN_CODENAME = "infinispan.codename";
    public static final String INFINISPAN_CORE_SCHEMA_VERSION = "infinispan.core.schema.version";
    public static final String INFINISPAN_MODULE_SLOT_PREFIX = "infinispan.module.slot.prefix";
@@ -44,6 +45,7 @@ public class Version {
    private final String major;
    private final String minor;
    private final Properties properties;
+   private final String unbrandedVersion;
 
    private Version() {
       this(Version.class.getResourceAsStream("/META-INF/infinispan-version.properties"));
@@ -73,6 +75,7 @@ public class Version {
       majorMinor = String.format("%s.%s", parts[0], parts[1]);
       major = parts[0];
       minor = parts[1];
+      unbrandedVersion = properties.getProperty(INFINISPAN_UNBRANDED_VERSION, version);
    }
 
    public static Version from(InputStream is) {
@@ -160,6 +163,10 @@ public class Version {
       if (parts.length > 2)
          c = Integer.parseInt(parts[2]);
       return encodeVersion(a, b, c);
+   }
+
+   public static String getUnbrandedVersion() {
+      return INSTANCE.unbrandedVersion;
    }
 
    private static short encodeVersion(int major, int minor, int patch) {
