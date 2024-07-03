@@ -1,20 +1,11 @@
 {
   "definitions" : [ {
-    "protopath" : "generated:/:persistence.rocksdb.proto",
+    "protopath" : "generated:/:persistence.jdbc.proto",
     "def" : {
       "enums" : [ ],
       "messages" : [ {
-        "name" : "ExpiryBucket",
-        "type_id" : 5100,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "entries",
-          "type" : "bytes",
-          "is_repeated" : true
-        } ]
-      }, {
         "name" : "MetadataImpl",
-        "type_id" : 5101,
+        "type_id" : 5800,
         "fields" : [ {
           "id" : 1,
           "name" : "version",
@@ -24,10 +15,19 @@
             "name" : "default",
             "value" : "-1"
           } ]
+        }, {
+          "id" : 2,
+          "name" : "segments",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
         } ]
       } ],
       "package" : {
-        "name" : "org.infinispan.persistence.rocksdb"
+        "name" : "org.infinispan.persistence.jdbc"
       }
     }
   } ]

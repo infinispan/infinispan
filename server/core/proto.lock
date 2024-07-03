@@ -5,6 +5,7 @@
       "enums" : [ ],
       "messages" : [ {
         "name" : "CounterBackupEntry",
+        "type_id" : 5402,
         "fields" : [ {
           "id" : 1,
           "name" : "name",
@@ -27,6 +28,7 @@
         } ]
       }, {
         "name" : "CacheBackupEntry",
+        "type_id" : 5401,
         "fields" : [ {
           "id" : 1,
           "name" : "key",

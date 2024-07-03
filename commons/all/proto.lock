@@ -5,6 +5,7 @@
       "enums" : [ ],
       "messages" : [ {
         "name" : "NullValue",
+        "type_id" : 128,
         "fields" : [ ]
       } ],
       "package" : {
@@ -12,10 +13,41 @@
       }
     }
   }, {
+    "protopath" : "generated:/:global.commons.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "KeyValueWithPrevious",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "wrappedKey",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "wrappedValue",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "wrappedPrev",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "org/infinispan/protostream/message-wrapping.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.global.commons"
+      }
+    }
+  }, {
     "protopath" : "generated:/:persistence.commons.proto",
     "def" : {
       "enums" : [ {
         "name" : "CounterState",
+        "type_id" : 4000,
         "enum_fields" : [ {
           "name" : "VALID"
         }, {
@@ -27,6 +59,7 @@
         } ]
       }, {
         "name" : "Storage",
+        "type_id" : 4003,
         "enum_fields" : [ {
           "name" : "VOLATILE"
         }, {
@@ -35,6 +68,7 @@
         } ]
       }, {
         "name" : "CounterType",
+        "type_id" : 4002,
         "enum_fields" : [ {
           "name" : "UNBOUNDED_STRONG"
         }, {
@@ -47,6 +81,7 @@
       } ],
       "messages" : [ {
         "name" : "MediaType",
+        "type_id" : 12,
         "fields" : [ {
           "id" : 1,
           "name" : "tree",
@@ -55,6 +90,7 @@
         } ]
       }, {
         "name" : "CounterConfiguration",
+        "type_id" : 4001,
         "fields" : [ {
           "id" : 1,
           "name" : "initialValue",
@@ -113,6 +149,7 @@
         } ]
       }, {
         "name" : "WrappedByteArray",
+        "type_id" : 1,
         "fields" : [ {
           "id" : 1,
           "name" : "bytes",
@@ -122,36 +159,6 @@
       } ],
       "package" : {
         "name" : "org.infinispan.persistence.commons"
-      }
-    }
-  }, {
-    "protopath" : "generated:/:global.commons.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "KeyValueWithPrevious",
-        "fields" : [ {
-          "id" : 1,
-          "name" : "wrappedKey",
-          "type" : "org.infinispan.protostream.WrappedMessage",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "wrappedValue",
-          "type" : "org.infinispan.protostream.WrappedMessage",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "wrappedPrev",
-          "type" : "org.infinispan.protostream.WrappedMessage",
-          "optional" : true
-        } ]
-      } ],
-      "imports" : [ {
-        "path" : "org/infinispan/protostream/message-wrapping.proto"
-      } ],
-      "package" : {
-        "name" : "org.infinispan.global.commons"
       }
     }
   } ]

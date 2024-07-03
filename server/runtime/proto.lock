@@ -1,10 +1,76 @@
 {
   "definitions" : [ {
+    "protopath" : "generated:/:persistence.servertasks.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "TaskContext",
+        "type_id" : 4804,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "parameters",
+          "type" : "TaskContext.TaskParameter",
+          "is_repeated" : true
+        }, {
+          "id" : 2,
+          "name" : "subject",
+          "type" : "Subject",
+          "optional" : true
+        } ],
+        "messages" : [ {
+          "name" : "TaskParameter",
+          "type_id" : 4803,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "key",
+            "type" : "string",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "value",
+            "type" : "string",
+            "optional" : true
+          } ]
+        } ]
+      }, {
+        "name" : "DistributedServerTask",
+        "type_id" : 4802,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "taskName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "context",
+          "type" : "TaskContext",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "Subject",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "principals",
+          "type" : "string",
+          "is_repeated" : true
+        } ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.servertasks"
+      }
+    }
+  }, {
     "protopath" : "generated:/:persistence.event_logger.proto",
     "def" : {
       "enums" : [ ],
       "messages" : [ {
         "name" : "ServerEventImpl",
+        "type_id" : 5200,
         "fields" : [ {
           "id" : 1,
           "name" : "when",
@@ -59,73 +125,12 @@
       }
     }
   }, {
-    "protopath" : "generated:/:persistence.servertasks.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "TaskContext",
-        "fields" : [ {
-          "id" : 1,
-          "name" : "parameters",
-          "type" : "TaskContext.TaskParameter",
-          "is_repeated" : true
-        }, {
-          "id" : 2,
-          "name" : "subject",
-          "type" : "Subject",
-          "optional" : true
-        } ],
-        "messages" : [ {
-          "name" : "TaskParameter",
-          "fields" : [ {
-            "id" : 1,
-            "name" : "key",
-            "type" : "string",
-            "optional" : true
-          }, {
-            "id" : 2,
-            "name" : "value",
-            "type" : "string",
-            "optional" : true
-          } ]
-        } ]
-      }, {
-        "name" : "DistributedServerTask",
-        "fields" : [ {
-          "id" : 1,
-          "name" : "taskName",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "cacheName",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "context",
-          "type" : "TaskContext",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "Subject",
-        "fields" : [ {
-          "id" : 1,
-          "name" : "principals",
-          "type" : "string",
-          "is_repeated" : true
-        } ]
-      } ],
-      "package" : {
-        "name" : "org.infinispan.persistence.servertasks"
-      }
-    }
-  }, {
     "protopath" : "generated:/:persistence.server_state.proto",
     "def" : {
       "enums" : [ ],
       "messages" : [ {
         "name" : "IgnoredCaches",
+        "type_id" : 5400,
         "fields" : [ {
           "id" : 1,
           "name" : "caches",
@@ -134,6 +139,7 @@
         } ]
       }, {
         "name" : "IpFilterRules",
+        "type_id" : 5403,
         "fields" : [ {
           "id" : 1,
           "name" : "rules",
@@ -142,6 +148,7 @@
         } ]
       }, {
         "name" : "IpFilterRule",
+        "type_id" : 5404,
         "fields" : [ {
           "id" : 1,
           "name" : "cidr",
