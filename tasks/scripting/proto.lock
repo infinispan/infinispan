@@ -4,6 +4,7 @@
     "def" : {
       "enums" : [ {
         "name" : "ExecutionMode",
+        "type_id" : 4800,
         "enum_fields" : [ {
           "name" : "LOCAL"
         }, {
@@ -13,6 +14,7 @@
       } ],
       "messages" : [ {
         "name" : "ScriptMetadata",
+        "type_id" : 4801,
         "fields" : [ {
           "id" : 1,
           "name" : "name",
