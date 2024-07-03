@@ -5,6 +5,7 @@
       "enums" : [ ],
       "messages" : [ {
         "name" : "MemcachedMetadata",
+        "type_id" : 5000,
         "fields" : [ {
           "id" : 1,
           "name" : "numericVersion",

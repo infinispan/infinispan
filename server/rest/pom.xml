@@ -235,7 +235,7 @@
          </plugin>
 
          <plugin>
-            <groupId>org.infinispan.maven-plugins</groupId>
+            <groupId>org.infinispan.protostream</groupId>
             <artifactId>proto-schema-compatibility-maven-plugin</artifactId>
             <executions>
                <execution>

@@ -2232,9 +2232,9 @@
                <version>${version.maven.os}</version>
             </plugin>
             <plugin>
-               <groupId>org.infinispan.maven-plugins</groupId>
+               <groupId>org.infinispan.protostream</groupId>
                <artifactId>proto-schema-compatibility-maven-plugin</artifactId>
-               <version>${version.infinispan.maven-plugins}</version>
+               <version>${version.protostream}</version>
                <configuration>
                   <commitProtoLock>${commitProtoLockChanges}</commitProtoLock>
                </configuration>

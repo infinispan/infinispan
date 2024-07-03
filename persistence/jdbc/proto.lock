@@ -5,6 +5,7 @@
       "enums" : [ ],
       "messages" : [ {
         "name" : "MetadataImpl",
+        "type_id" : 5800,
         "fields" : [ {
           "id" : 1,
           "name" : "version",
