@@ -7,6 +7,10 @@ import org.infinispan.configuration.cache.Configuration;
 
 public class InfinispanSpanAttributes {
 
+   public static final String CATEGORY = "category";
+   public static final String SERVER_ADDRESS = "server.address";
+   public static final String CACHE_NAME = "cache";
+
    private final String cacheName;
    private final Configuration cacheConfiguration;
    private final SpanCategory category;

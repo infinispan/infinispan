@@ -12,6 +12,7 @@ import io.opentelemetry.context.Scope;
 public class OpenTelemetrySpan<T> implements InfinispanSpan<T> {
 
    private final Span span;
+   private volatile boolean failed;
 
    public OpenTelemetrySpan(Span span) {
       this.span = Objects.requireNonNull(span);
@@ -26,11 +27,13 @@ public class OpenTelemetrySpan<T> implements InfinispanSpan<T> {
 
    @Override
    public void complete() {
+      if (!failed) span.setStatus(StatusCode.OK);
       span.end();
    }
 
    @Override
    public void recordException(Throwable throwable) {
+      failed = true;
       span.setStatus(StatusCode.ERROR, "Error during the cache request processing");
       span.recordException(throwable);
    }
