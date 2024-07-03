@@ -84,6 +84,7 @@ jobs:
               **/target/*-reports*/**/TEST-*FLAKY.xml
               target-branch.txt
               event_name.txt
+
       - name: Archive server distro
         if: ${{ github.event_name}} == 'push'
         uses: actions/upload-artifact@v4
@@ -92,3 +93,9 @@ jobs:
           overwrite: true
           path: |
             distribution/target/distribution/infinispan*.zip
+
+      - uses: ncipollo/release-action@v1
+        with:
+          name: ${{ steps.properties.outputs.infinispan_brand_version }}-devel
+          allowUpdates: true
+          artifacts: distribution/target/distribution/infinispan*.zip
