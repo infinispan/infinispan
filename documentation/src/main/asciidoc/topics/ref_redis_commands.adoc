@@ -10,6 +10,8 @@ The {brandname} RESP endpoint implements the following Redis commands:
 
 * link:https://redis.io/commands/blpop[BLPOP]
 
+* https://redis.io/docs/latest/commands/blmpop[BLMPOP]
+
 * link:https://redis.io/commands/brpop[BRPOP]
 
 * link:https://redis.io/commands/client-getname[CLIENT GETNAME]
@@ -25,6 +27,9 @@ The {brandname} RESP endpoint implements the following Redis commands:
 * link:https://redis.io/commands/client-setname[CLIENT SETNAME]
 
 * link:https://redis.io/commands/command[COMMAND]
+
+* link:https://redis.io/commands/config[CONFIG]
+* https://redis.io/docs/latest/commands/cluster-keyslot/[CLUSTER KEYSLOT]
 
 * link:https://redis.io/commands/cluster-nodes/[CLUSTER NODES]
 +
@@ -83,6 +88,8 @@ NOTE: This command is deprecated. Use the `SET` command with the appropriate fla
 * link:https://redis.io/commands/hexists[HEXISTS]
 
 * link:https://redis.io/commands/hget[HGET]
+
+* https://redis.io/docs/latest/commands/hgetall[HGETALL]
 
 * link:https://redis.io/commands/hincrby[HINCRBY]
 
@@ -152,12 +159,12 @@ NOTE: The current implementation is atomic for rotation when the source and dest
 
 * link:https://redis.io/commands/ltrim[LTRIM]
 
-* link:https://redis.io/commands/memory-info[MEMORY-USAGE]
+* link:https://redis.io/commands/memory-info[MEMORY USAGE]
 + 
 NOTE: This command will return the memory used by the key and the value. It doesn't include the memory used by additional metadata associated with the entry.
 
 
-* link:https://redis.io/commands/memory-stats[MEMORY-STATS]
+* link:https://redis.io/commands/memory-stats[MEMORY STATS]
 +
 NOTE: This command will return the same fields as a real Redis server, but all values will be set to `0`.
 
@@ -178,7 +185,11 @@ provides a read-uncommitted isolation.
 
 * link:https://redis.io/commands/persist[PERSIST]
 
+* link:https://redis.io/docs/latest/commands/pfadd[PFADD]
+
 * link:https://redis.io/commands/pexpire[PEXPIRE]
+
+* link:https://redis.io/docs/latest/commands/pexpireat[PEXPIREAT]
 
 * link:https://redis.io/commands/pexpiretime[PEXPIRETIME]
 
@@ -270,6 +281,8 @@ NOTE: This command is deprecated. Use the `SET` command with the appropriate fla
 
 * link:https://redis.io/commands/srandmember[SRANDMEMBER]
 
+* https://redis.io/docs/latest/commands/srem[SREM]
+
 * link:https://redis.io/commands/sscan[SSCAN]
 
 * link:https://redis.io/commands/strlen[STRLEN]
@@ -285,6 +298,8 @@ NOTE: This command is deprecated. Use the `GETRANGE` command instead.
 * link:https://redis.io/commands/sunionstore[SUNIONSTORE]
 
 * link:https://redis.io/commands/time[TIME]
+
+* link:https://redis.io/docs/latest/commands/touch[TOUCH]
 
 * link:https://redis.io/commands/ttl[TTL]
 
@@ -318,6 +333,8 @@ NOTE: This command is deprecated. Use the `GETRANGE` command instead.
 
 * link:https://redis.io/commands/zmpop[ZMPOP]
 
+* https://redis.io/docs/latest/commands/zmscore[ZMSCORE]
+
 * link:https://redis.io/commands/zpopmax[ZPOPMAX]
 
 * link:https://redis.io/commands/zpopmin[ZPOPMIN]
@@ -342,6 +359,8 @@ NOTE: This command is deprecated. Use the `GETRANGE` command instead.
 
 * link:https://redis.io/commands/zrangestore[ZRANGESTORE]
 
+* https://redis.io/docs/latest/commands/zrank[ZRANK]
+
 * link:https://redis.io/commands/zrem[ZREM]
 
 * link:https://redis.io/commands/zremrangebylex[ZREMRANGEBYLEX]
@@ -349,6 +368,8 @@ NOTE: This command is deprecated. Use the `GETRANGE` command instead.
 * link:https://redis.io/commands/zremrangebyrank[ZREMRANGEBYRANK]
 
 * link:https://redis.io/commands/zremrangebyscore[ZREMRANGEBYSCORE]
+
+* https://redis.io/docs/latest/commands/zrevrank[ZREVRANK]
 
 * link:https://redis.io/commands/zscore[ZSCAN]
 
