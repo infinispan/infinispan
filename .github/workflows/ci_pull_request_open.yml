@@ -100,7 +100,7 @@ jobs:
           name: ${{ steps.properties.outputs.infinispan_brand_version }}-devel
           allowUpdates: true
           artifacts: distribution/target/distribution/infinispan*.zip
-          tag: ${{ github.ref_name }}
+          tag: ${{ github.ref_name }}-devel
   images:
       needs: ci-build-test-pr
       if: ${{ github.event_name}} == 'push'
