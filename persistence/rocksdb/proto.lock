@@ -5,6 +5,7 @@
       "enums" : [ ],
       "messages" : [ {
         "name" : "ExpiryBucket",
+        "type_id" : 5100,
         "fields" : [ {
           "id" : 1,
           "name" : "entries",
@@ -13,6 +14,7 @@
         } ]
       }, {
         "name" : "MetadataImpl",
+        "type_id" : 5101,
         "fields" : [ {
           "id" : 1,
           "name" : "version",

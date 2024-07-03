@@ -5,6 +5,7 @@
       "enums" : [ ],
       "messages" : [ {
         "name" : "NodeDistributionInfo",
+        "type_id" : 6001,
         "fields" : [ {
           "id" : 1,
           "name" : "name",
@@ -36,6 +37,7 @@
         } ]
       }, {
         "name" : "CacheDistributionInfo",
+        "type_id" : 6000,
         "fields" : [ {
           "id" : 1,
           "name" : "name",
@@ -76,6 +78,7 @@
         } ]
       }, {
         "name" : "KeyDistributionInfo",
+        "type_id" : 6002,
         "fields" : [ {
           "id" : 1,
           "name" : "name",

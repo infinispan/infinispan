@@ -5,6 +5,7 @@
       "enums" : [ ],
       "messages" : [ {
         "name" : "SessionAttribute",
+        "type_id" : 5902,
         "fields" : [ {
           "id" : 1,
           "name" : "name",
@@ -23,6 +24,7 @@
         } ]
       }, {
         "name" : "MapSession",
+        "type_id" : 5901,
         "fields" : [ {
           "id" : 1,
           "name" : "id",
@@ -68,6 +70,7 @@
         } ]
       }, {
         "name" : "SessionUpdateRemappingFunction",
+        "type_id" : 5903,
         "fields" : [ {
           "id" : 1,
           "name" : "lastAccessedTime",

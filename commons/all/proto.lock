@@ -1,5 +1,18 @@
 {
   "definitions" : [ {
+    "protopath" : "generated:/:user.commons.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "NullValue",
+        "type_id" : 128,
+        "fields" : [ ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.commons"
+      }
+    }
+  }, {
     "protopath" : "generated:/:global.commons.proto",
     "def" : {
       "enums" : [ ],
@@ -34,6 +47,7 @@
     "def" : {
       "enums" : [ {
         "name" : "CounterState",
+        "type_id" : 4000,
         "enum_fields" : [ {
           "name" : "VALID"
         }, {
@@ -45,6 +59,7 @@
         } ]
       }, {
         "name" : "Storage",
+        "type_id" : 4003,
         "enum_fields" : [ {
           "name" : "VOLATILE"
         }, {
@@ -53,6 +68,7 @@
         } ]
       }, {
         "name" : "CounterType",
+        "type_id" : 4002,
         "enum_fields" : [ {
           "name" : "UNBOUNDED_STRONG"
         }, {
@@ -65,6 +81,7 @@
       } ],
       "messages" : [ {
         "name" : "MediaType",
+        "type_id" : 12,
         "fields" : [ {
           "id" : 1,
           "name" : "tree",
@@ -73,6 +90,7 @@
         } ]
       }, {
         "name" : "CounterConfiguration",
+        "type_id" : 4001,
         "fields" : [ {
           "id" : 1,
           "name" : "initialValue",
@@ -131,6 +149,7 @@
         } ]
       }, {
         "name" : "WrappedByteArray",
+        "type_id" : 1,
         "fields" : [ {
           "id" : 1,
           "name" : "bytes",
@@ -140,18 +159,6 @@
       } ],
       "package" : {
         "name" : "org.infinispan.persistence.commons"
-      }
-    }
-  }, {
-    "protopath" : "generated:/:user.commons.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "NullValue",
-        "fields" : [ ]
-      } ],
-      "package" : {
-        "name" : "org.infinispan.commons"
       }
     }
   } ]

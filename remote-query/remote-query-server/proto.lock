@@ -5,6 +5,7 @@
       "enums" : [ ],
       "messages" : [ {
         "name" : "ProtobufValueWrapper",
+        "type_id" : 11,
         "fields" : [ {
           "id" : 1,
           "name" : "binary",

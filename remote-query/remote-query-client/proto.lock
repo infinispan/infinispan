@@ -19,6 +19,7 @@
       } ],
       "messages" : [ {
         "name" : "FilterResult",
+        "type_id" : 4402,
         "fields" : [ {
           "id" : 1,
           "name" : "instance",
@@ -37,6 +38,7 @@
         } ]
       }, {
         "name" : "ContinuousQueryResult",
+        "type_id" : 4403,
         "fields" : [ {
           "id" : 1,
           "name" : "resultType",
@@ -60,6 +62,7 @@
         } ]
       }, {
         "name" : "QueryRequest",
+        "type_id" : 4400,
         "fields" : [ {
           "id" : 1,
           "name" : "queryString",
@@ -111,6 +114,7 @@
         } ]
       }, {
         "name" : "QueryResponse",
+        "type_id" : 4401,
         "fields" : [ {
           "id" : 1,
           "name" : "numResults",
