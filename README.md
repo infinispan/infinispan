@@ -6,7 +6,7 @@
 
 # Infinispan, In-Memory Distributed Data Store #
 
-Infinispan is an open-source in-memory data grid that offers flexible deployment options and 
+Ifinispan is an open-source in-memory data grid that offers flexible deployment options and 
 robust capabilities for storing, managing, and processing data. 
 
 Infinispan provides a key/value data store that can hold all types of data, 
