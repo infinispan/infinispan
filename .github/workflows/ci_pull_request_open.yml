@@ -95,8 +95,19 @@ jobs:
             distribution/target/distribution/infinispan*.zip
 
       - uses: ncipollo/release-action@v1
+        id: create-release
         with:
           name: ${{ steps.properties.outputs.infinispan_brand_version }}-devel
           allowUpdates: true
           artifacts: distribution/target/distribution/infinispan*.zip
           tag: ${{ github.ref_name }}
+  images:
+      needs: ci-build-test-pr
+      if: ${{ github.event_name}} == 'push'
+      uses: rigazilla/infinispan-images/.github/workflows/ci-release.yml@main
+      secrets: inherit
+      with:
+           branch: ${{ github.ref_name }}
+           repository: rigazilla/infinispan-images
+           ispnVersion: ${{ github.ref_name }}
+           releaseId: ${{ steps.create-release.outputs.id }}
