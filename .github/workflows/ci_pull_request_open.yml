@@ -12,8 +12,6 @@ jobs:
     env:
       MAVEN_OPTS: "-Xmx1500m -XX:+HeapDumpOnOutOfMemoryError"
       GH_TOKEN: ${{ github.token }}
-    outputs:
-      properties: ${{ steps.properties.outputs }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
