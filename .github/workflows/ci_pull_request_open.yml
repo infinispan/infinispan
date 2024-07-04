@@ -12,6 +12,8 @@ jobs:
     env:
       MAVEN_OPTS: "-Xmx1500m -XX:+HeapDumpOnOutOfMemoryError"
       GH_TOKEN: ${{ github.token }}
+    outputs:
+      server-distro-name: ${{ steps.properties.outputs.infinispan_brand_prefix }}-${{ steps.properties.outputs.infinispan_brand_version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -88,7 +90,7 @@ jobs:
       - name: Archive server distro
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ github.run_id }}
+          name: ${{ steps.properties.outputs.infinispan_brand_prefix }}-${{ steps.properties.outputs.infinispan_brand_version }}
           overwrite: true
           path: |
             distribution/target/distribution/infinispan-server*.zip
@@ -109,4 +111,4 @@ jobs:
       with:
            repository: ${{ github.repository }}
            run-id: ${{ github.run_id }}
-           name: ${{ github.run_id }}
+           name: ${{ needs.ci-build-test-pr.outputs.server-distro-name }}
