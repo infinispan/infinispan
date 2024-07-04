@@ -12,6 +12,8 @@ jobs:
     env:
       MAVEN_OPTS: "-Xmx1500m -XX:+HeapDumpOnOutOfMemoryError"
       GH_TOKEN: ${{ github.token }}
+    outputs:
+      properties: ${{ steps.properties.outputs }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -86,15 +88,15 @@ jobs:
               event_name.txt
 
       - name: Archive server distro
-        if: ${{ github.event_name}} == 'push'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.properties.outputs.infinispan_brand_prefix }}-${{ steps.properties.outputs.infinispan_brand_version }}
+          name: ${{ github.run_id }}
           overwrite: true
           path: |
-            distribution/target/distribution/infinispan*.zip
+            distribution/target/distribution/infinispan-server*.zip
 
       - uses: ncipollo/release-action@v1
+        if: ${{ github.event_name}} == 'push'
         id: create-release
         with:
           name: ${{ steps.properties.outputs.infinispan_brand_version }}-devel
@@ -107,7 +109,6 @@ jobs:
       uses: rigazilla/infinispan-images/.github/workflows/ci-release.yml@main
       secrets: inherit
       with:
-           branch: ${{ github.ref_name }}
-           repository: rigazilla/infinispan-images
-           ispnVersion: ${{ github.ref_name }}
-           releaseId: ${{ github.ref_name }}-devel
+           repository: ${{ github.repository }}
+           run-id: ${{ github.run_id }}
+           name: ${{ github.run_id }}
