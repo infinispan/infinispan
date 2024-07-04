@@ -82,7 +82,9 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
                   "org.wildfly.security.sasl.gs2.WildFlyElytronSaslGs2Provider",
 
                   "org.infinispan.client.hotrod.event.impl.ContinuousQueryImpl$ClientEntryListener",
-                  "org.infinispan.client.hotrod.near.NearCacheService$InvalidatedNearCacheListener"
+                  "org.infinispan.client.hotrod.near.NearCacheService$InvalidatedNearCacheListener",
+
+                  "java.time.ZoneRegion"
             );
    }
 }
