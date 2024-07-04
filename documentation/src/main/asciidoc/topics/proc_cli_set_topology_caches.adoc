@@ -4,6 +4,11 @@
 By default, after a cluster shutdown, {brandname} waits for all nodes to join the cluster and restore the topology.
 However, we offer a CLI command to mark the current topology stable for a specific cache.
 
+[IMPORTANT]
+====
+The command does not operate on internal caches. There will be a loss of functionality for caches requiring access to the internal caches with missing members. For example, users will be unable to upload schemas to the internal cache for Protobuf schemas when there are missing nodes. Script execution and upload, and distributed locks are similarly affected.
+====
+
 .Procedure
 
 . Create a CLI connection to {brandname}.
