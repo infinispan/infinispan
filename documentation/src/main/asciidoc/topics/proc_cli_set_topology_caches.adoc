@@ -6,9 +6,8 @@ However, we offer a CLI command to mark the current topology stable for a specif
 
 [IMPORTANT]
 ====
-Manually installing a topology can lead to data loss, only perform this operation if the initial topology cannot be recreated.
+The command does not operate on internal caches. There will be a loss of functionality for caches requiring access to the internal caches with missing members. For example, users will be unable to upload schemas to the internal cache for Protobuf schemas when there are missing nodes. Script execution and upload, and distributed locks are similarly affected.
 ====
-
 
 .Procedure
 
