@@ -111,6 +111,7 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
       caffeine(reflection);
       jgroups(reflection);
       infinispan(reflection);
+      protostream(reflection);
       return reflection;
    }
 
@@ -261,5 +262,9 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
       MapExternalizer.getSupportedPrivateClasses().forEach(processor::addClasses);
       EnumExternalizer.INSTANCE.getTypeClasses().forEach(processor::addClasses);
       new EnumSetExternalizer().getTypeClasses().forEach(processor::addClasses);
+   }
+
+   private void protostream(ReflectionProcessor processor) {
+      processor.addClasses("java.time.ZoneRegion");
    }
 }
