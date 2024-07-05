@@ -365,7 +365,10 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       // Check negative range
       assertThat(redis.getrange(key, 10, -2)).isEqualTo("ing for testin");
       // Test large range
-      assertThat(redis.getrange(key, 0, 4999)).isEqualTo("A long string for testing");
+      assertThat(redis.getrange(key, 0, Long.MAX_VALUE)).isEqualTo("A long string for testing");
+      assertThat(redis.getrange(key, Long.MIN_VALUE, Long.MAX_VALUE)).isEqualTo("A long string for testing");
+      assertThat(redis.getrange(key, 0, -Long.MAX_VALUE)).isEqualTo("");
+      assertThat(redis.getrange(key, Long.MAX_VALUE, -Long.MAX_VALUE)).isEqualTo("");
       // Empty range
       assertThat(redis.getrange(key, 0, 0)).isEqualTo("");
       // End before beginning
