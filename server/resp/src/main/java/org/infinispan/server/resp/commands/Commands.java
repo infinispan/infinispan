@@ -146,6 +146,7 @@ import org.infinispan.server.resp.commands.string.GETSET;
 import org.infinispan.server.resp.commands.string.INCR;
 import org.infinispan.server.resp.commands.string.INCRBY;
 import org.infinispan.server.resp.commands.string.INCRBYFLOAT;
+import org.infinispan.server.resp.commands.string.LCS;
 import org.infinispan.server.resp.commands.string.MGET;
 import org.infinispan.server.resp.commands.string.MSET;
 import org.infinispan.server.resp.commands.string.MSETNX;
@@ -186,7 +187,7 @@ public final class Commands {
       ALL_COMMANDS[7] = new RespCommand[]{new HELLO(), new HGET(), new HSET(), new HLEN(), new HEXISTS(), new HDEL(), new HMGET(), new HSETNX(), new HKEYS(), new HVALS(), new HSCAN(), new HGETALL(), new HMSET(), new HINCRBY(), new HINCRBYFLOAT(), new HRANDFIELD(), new HSTRLEN()};
       ALL_COMMANDS[8] = new RespCommand[]{new INCR(), new INCRBY(), new INCRBYFLOAT(), new INFO()};
       ALL_COMMANDS[10] = new RespCommand[]{new KEYS()};
-      ALL_COMMANDS[11] = new RespCommand[]{new LINDEX(), new LINSERT(), new LPUSH(), new LPUSHX(), new LPOP(), new LRANGE(), new LLEN(), new LPOS(), new LREM(), new LSET(), new LTRIM(), new LMOVE(), new LMPOP() };
+      ALL_COMMANDS[11] = new RespCommand[]{new LINDEX(), new LINSERT(), new LPUSH(), new LPUSHX(), new LPOP(), new LRANGE(), new LLEN(), new LPOS(), new LREM(), new LSET(), new LTRIM(), new LMOVE(), new LMPOP(), new LCS()};
       ALL_COMMANDS[12] = new RespCommand[]{new MGET(), new MSET(), new MSETNX(), new MULTI(), new MODULE(), new MEMORY()};
       ALL_COMMANDS[15] = new RespCommand[]{new PUBLISH(), new PING(), new PSUBSCRIBE(), new PUNSUBSCRIBE(), new PUBSUB(), new PTTL(), new PEXPIREAT(), new PEXPIRE(), new PEXPIRETIME(), new PERSIST(), new PFADD(), new PSETEX()};
       ALL_COMMANDS[16] = new RespCommand[]{new QUIT()};

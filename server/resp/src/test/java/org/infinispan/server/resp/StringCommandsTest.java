@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.withPrecision;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -248,6 +249,25 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       RedisCommands<String, String> redis = redisConnection.sync();
       String key = "strlen-notpresent";
       assertThat(redis.strlen(key)).isEqualTo(0);
+   }
+
+   @Test
+   public void testLcsCommand() {
+      String key1 = "lcs-test-k1";
+      String key2 = "lcs-test-k2";
+
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(key1, "ohmytext");
+      redis.set(key2, "mynewtext");
+
+      CustomStringCommands commands = CustomStringCommands.instance(redisConnection);
+
+      byte[] k1 = key1.getBytes(StandardCharsets.US_ASCII);
+      byte[] k2 = key2.getBytes(StandardCharsets.US_ASCII);
+
+      byte[] match = commands.lcs(k1, k2);
+      assertThat(new String(match, StandardCharsets.US_ASCII)).isEqualTo("mytext");
+      assertThat(commands.lcsLen(k1, k2)).isEqualTo(6);
    }
 
    @Test(dataProvider = "lcsCases")
