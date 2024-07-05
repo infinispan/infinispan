@@ -121,6 +121,7 @@ jobs:
          repository: ${{ github.repository }}
          run-id: ${{ github.run_id }}
          name: ${{ needs.ci-build-test-pr.outputs.server-distro-name-branch }}
+         art-name: ${{ needs.ci-build-test-pr.outputs.server-distro-name-branch }}
   images-pr:
       if: github.event_name == 'pull_request'
       needs: ci-build-test-pr
@@ -129,4 +130,5 @@ jobs:
       with:
          repository: ${{ github.repository }}
          run-id: ${{ github.run_id }}
-         name: ${{ needs.ci-build-test-pr.outputs.server-distro-name-pr }}
+         name: ${{ needs.ci-build-test-pr.outputs.server-distro-name-branch }}
+         art-name: ${{ needs.ci-build-test-pr.outputs.server-distro-name-pr }}
