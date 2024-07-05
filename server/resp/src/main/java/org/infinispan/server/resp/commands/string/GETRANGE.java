@@ -40,14 +40,14 @@ public class GETRANGE extends RespCommand implements Resp3Command {
          ChannelHandlerContext ctx,
          List<byte[]> arguments) {
       byte[] keyBytes = arguments.get(0);
-      int beginIndex = ArgumentUtils.toInt(arguments.get(1));
-      int lastIndex =  ArgumentUtils.toInt(arguments.get(2));
+      long beginIndex = ArgumentUtils.toLong(arguments.get(1));
+      long lastIndex =  ArgumentUtils.toLong(arguments.get(2));
       CompletionStage<byte[]> objectCompletableFuture = handler.cache().getAsync(keyBytes)
             .thenApply(value -> subrange(value, beginIndex, lastIndex));
       return handler.stageToReturn(objectCompletableFuture, ctx, Consumers.BULK_BICONSUMER);
    }
 
-   private byte[] subrange(byte[] arr, int begin, int end) {
+   private byte[] subrange(byte[] arr, long begin, long end) {
       if (arr == null) return Util.EMPTY_BYTE_ARRAY;
 
       // Deal with negative
@@ -63,6 +63,10 @@ public class GETRANGE extends RespCommand implements Resp3Command {
       if (begin >= end || begin >= arr.length) {
          return Util.EMPTY_BYTE_ARRAY;
       }
-      return Arrays.copyOfRange(arr, begin, end + 1);
+
+      // Since we limit the indexes within the bounds of the array, we are certain this cast works.
+      int b = (int) begin;
+      int e = (int) end;
+      return Arrays.copyOfRange(arr, b, e + 1);
    }
 }
