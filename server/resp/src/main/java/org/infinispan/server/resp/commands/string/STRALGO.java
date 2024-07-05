@@ -24,7 +24,7 @@ public class STRALGO extends RespCommand implements Resp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
          ChannelHandlerContext ctx,
          List<byte[]> arguments) {
-      return handler.stageToReturn(LCSOperation.performOperation(handler.cache(), arguments), ctx, Consumers.LCS_BICONSUMER);
+      return handler.stageToReturn(LCSOperation.performOperation(handler.cache(), arguments, false), ctx, Consumers.LCS_BICONSUMER);
    }
 
 

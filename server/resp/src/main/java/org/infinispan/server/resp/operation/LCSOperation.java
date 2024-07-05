@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
@@ -14,14 +13,9 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.server.resp.response.LCSResponse;
 
 public class LCSOperation {
-   private static final CompletionStage<LCSResponse> MISSING_ARGUMENTS = CompletableFuture
-         .failedFuture(new IllegalStateException("Missing arguments"));
 
-   public static CompletionStage<LCSResponse> performOperation(AdvancedCache<byte[], byte[]> cache,
-         List<byte[]> arguments) {
-      if (arguments.size() < 4)
-         return MISSING_ARGUMENTS;
-      LCSOperationContext lcsCtx = new LCSOperationContext(arguments);
+   public static CompletionStage<LCSResponse> performOperation(AdvancedCache<byte[], byte[]> cache, List<byte[]> arguments, boolean isLcs) {
+      LCSOperationContext lcsCtx = new LCSOperationContext(arguments, isLcs);
       lcsCtx.cache = cache;
       return lcsCtx.cache.getAllAsync(Set.of(lcsCtx.key1, lcsCtx.key2))
             .thenApply((m) -> {
@@ -56,6 +50,7 @@ public class LCSOperation {
    }
 
    protected static class LCSOperationContext {
+      private final boolean isLcs;
       private final List<byte[]> arguments;
       AdvancedCache<byte[], byte[]> cache;
       private byte[] key1;
@@ -79,9 +74,10 @@ public class LCSOperation {
          this.matchLen = matchLen;
          this.minMatchLen = minMatchLen;
          this.result = new LCSResponse();
+         this.isLcs = false;
       }
 
-      public LCSOperationContext(List<byte[]> arguments) {
+      public LCSOperationContext(List<byte[]> arguments, boolean isLcs) {
          this.arguments = arguments;
          this.key1 = null;
          this.key2 = null;
@@ -89,18 +85,22 @@ public class LCSOperation {
          this.justLen = false;
          this.minMatchLen = 0;
          this.result = new LCSResponse();
+         this.isLcs = isLcs;
          parseAndLoadOptions();
       }
 
       private void parseAndLoadOptions() {
-         if (!(new String(arguments.get(0), StandardCharsets.US_ASCII)).equals("LCS")) {
-            throw new IllegalArgumentException("Unknown argument for LCS operation");
+         int offset = 0;
+         if (!isLcs) {
+            if (!(new String(arguments.get(offset++), StandardCharsets.US_ASCII)).equals("LCS")) {
+               throw new IllegalArgumentException("Unknown argument for LCS operation");
+            }
+            if (!(new String(arguments.get(offset++), StandardCharsets.US_ASCII)).equals("KEYS")) {
+               throw new IllegalArgumentException("Unknown argument for LCS operation");
+            }
          }
-         if (!(new String(arguments.get(1), StandardCharsets.US_ASCII)).equals("KEYS")) {
-            throw new IllegalArgumentException("Unknown argument for LCS operation");
-         }
-         this.key1 = arguments.get(2);
-         this.key2 = arguments.get(3);
+         this.key1 = arguments.get(offset++);
+         this.key2 = arguments.get(offset++);
 
          // Below here we parse the optional arguments for the LCS command:
          //
@@ -108,7 +108,7 @@ public class LCSOperation {
          // IDX: returns the index position of each matching excludes LEN)
          // MINMATCHLEN: returns indexes only for matching longer than
          // WITHMATCHLEN: returns length of each match
-         for (int i = 4; i < arguments.size(); i++) {
+         for (int i = offset; i < arguments.size(); i++) {
             byte[] arg = arguments.get(i);
             switch (new String(arg, StandardCharsets.US_ASCII)) {
                case "LEN":
