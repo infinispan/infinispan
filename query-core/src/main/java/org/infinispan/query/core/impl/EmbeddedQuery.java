@@ -148,8 +148,7 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
 
       @Override
       public Integer apply(Object key) {
-         key = cache.getKeyDataConversion().fromStorage(key);
-         return cache.remove(key) == null ? 0 : 1;
+         return cache.withStorageMediaType().remove(key) == null ? 0 : 1;
       }
    }
 
