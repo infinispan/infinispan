@@ -113,7 +113,7 @@ jobs:
           artifacts: distribution/target/distribution/infinispan*.zip
           tag: ${{ github.ref_name }}-devel
   images-branch:
-      if: ${{ github.event_name}} == 'push'
+      if: github.event_name == 'push'
       needs: ci-build-test-pr
       uses: rigazilla/infinispan-images/.github/workflows/ci-release.yml@main
       secrets: inherit
@@ -122,7 +122,7 @@ jobs:
          run-id: ${{ github.run_id }}
          name: ${{ needs.ci-build-test-pr.outputs.server-distro-name-branch }}
   images-pr:
-      if: ${{ github.event_name}} == 'pull_request'
+      if: github.event_name == 'pull_request'
       needs: ci-build-test-pr
       uses: rigazilla/infinispan-images/.github/workflows/ci-release.yml@main
       secrets: inherit
