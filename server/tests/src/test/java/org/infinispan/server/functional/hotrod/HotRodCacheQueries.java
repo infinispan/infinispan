@@ -241,6 +241,22 @@ public class HotRodCacheQueries {
       }
    }
 
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testDeleteStatement(boolean indexed) {
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
+      remoteCache.put(1, createUser1());
+      remoteCache.put(2, createUser2());
+
+      // get user back from remote cache and check its attributes
+      User fromCache = remoteCache.get(1);
+      assertUser1(fromCache);
+
+      // get user back from remote cache via query and check its attributes
+      Query<User> query = remoteCache.query("DELETE FROM sample_bank_account.User WHERE name = 'Tom'");
+      assertEquals(1, query.executeStatement());
+   }
+
    @Test
    public void testVectorSearch() {
       RemoteCache<String, KeywordVector> remoteCache = createQueryableCache(SERVERS, true,
