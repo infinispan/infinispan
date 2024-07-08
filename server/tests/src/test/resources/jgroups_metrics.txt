@@ -43,7 +43,6 @@ _tcp_get_num_ucast_bytes_received
 _tcp_get_num_ucast_bytes_sent
 _tcp_get_num_ucasts_received
 _tcp_get_num_ucasts_sent
-_tcp_get_number_of_thread_dumps
 _tcp_get_open_connections
 _tcp_get_thread_pool_size
 _tcp_get_thread_pool_size_active
