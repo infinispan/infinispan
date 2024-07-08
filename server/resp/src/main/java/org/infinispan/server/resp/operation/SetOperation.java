@@ -77,7 +77,7 @@ public class SetOperation {
                   return CompletableFuture.completedFuture(new SetResponse(null, options.isReturningPrevious(), false));
                }
 
-               long exp = -1;
+               long exp = options.expirationMs;
                if (options.isKeepingTtl()) {
                   exp = extractCurrentTTL(e, timeService);
                }
