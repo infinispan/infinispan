@@ -12,6 +12,7 @@ The following metrics have been removed:
 
 * Protocols `org.jgroups.protocols.SHARED_LOOPBACK`, `org.jgroups.protocols.TCP, org.jgroups.protocols.TCP_NIO2`, `org.jgroups.protocols.TUNNEL`, and `org.jgroups.protocols.UDP`
 - `get_num_rejected_msgs`
+- `get_number_of_thread_dumps`
 
 * Protocol `org.jgroups.protocols.RED`
 - `get_dropped_messages`
