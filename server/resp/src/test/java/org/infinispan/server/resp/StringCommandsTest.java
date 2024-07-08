@@ -484,6 +484,28 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testSetWithXX() throws InterruptedException {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "setxx";
+      String value = "getex-value";
+      var args = new SetArgs().xx();
+      assertThat(redis.set(key, value, args)).isNull();
+      redis.set(key, value);
+      assertThat(redis.set(key, value, args)).isEqualTo("OK");
+   }
+
+   @Test
+   public void testSetWithXXWithTTL() throws InterruptedException {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "setxx";
+      String value = "getex-value";
+      redis.set(key, value);
+      var args = new SetArgs().xx().px(10000);
+      assertThat(redis.set(key, value, args)).isEqualTo("OK");
+      assertThat(redis.ttl(key)).isEqualTo(10);
+   }
+
+   @Test
    public void testMsetnx() {
       RedisCommands<String, String> redis = redisConnection.sync();
       Map<String, String> values = new HashMap<String,String>();
