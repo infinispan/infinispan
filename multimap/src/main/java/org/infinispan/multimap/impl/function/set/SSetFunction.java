@@ -33,6 +33,12 @@ public final class SSetFunction<K, V> implements SetBucketBaseFunction<K, V, Lon
 
    @Override
    public Long apply(EntryView.ReadWriteEntryView<K, SetBucket<V>> entryView) {
+      if (values.isEmpty()) {
+         if (entryView.peek().isPresent()) {
+            entryView.remove();
+         }
+         return 0L;
+      }
       var set = new SetBucket<V>(new HashSet<>(values));
       entryView.set(set);
       return (long) set.size();
