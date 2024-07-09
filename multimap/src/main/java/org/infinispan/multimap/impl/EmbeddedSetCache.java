@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -11,6 +12,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.FunctionalMap;
@@ -18,6 +20,7 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.multimap.impl.function.set.SAddFunction;
 import org.infinispan.multimap.impl.function.set.SGetFunction;
+import org.infinispan.multimap.impl.function.set.SMIsMember;
 import org.infinispan.multimap.impl.function.set.SPopFunction;
 import org.infinispan.multimap.impl.function.set.SRemoveFunction;
 import org.infinispan.multimap.impl.function.set.SSetFunction;
@@ -163,15 +166,19 @@ public class EmbeddedSetCache<K, V> {
    }
 
    /**
-    * Returns if a set contains an element
+    * Returns a list L of 0/1. L(i) = 1 if the set contains elements(i)
     *
-    * @param key, the name of the set
-    * @param element, the element
-    * @return {@link CompletionStage} containing a boolean
+    * @param key,      the name of the set
+    * @param elements, list of elements
+    * @return {@link CompletionStage} containing a List<Long> or null if elements
+    *         null or empty
     */
-   public CompletionStage<Boolean> contains(K key, V element) {
+   public CompletionStage<List<Long>> mIsMember(K key, V... elements) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
-      return cache.getAsync(key).thenApply(b -> b == null ? false : b.contains(element));
+      if (elements == null || elements.length == 0) {
+         return CompletableFutures.completedNull();
+      }
+      return readWriteMap.eval(key, new SMIsMember<>(elements));
    }
 
 }

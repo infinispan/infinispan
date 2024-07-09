@@ -45,4 +45,5 @@ public interface ExternalizerIds {
    Integer SET_REMOVE_FUNCTION = 2083;
    Integer SET_POP_FUNCTION = 2084;
    Integer REPLACE_LIST_FUNCTION = 2085;
+   Integer SET_MISMEMBER_FUNCTION = 2086;
 }
