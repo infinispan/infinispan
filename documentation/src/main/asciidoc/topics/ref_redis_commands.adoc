@@ -275,6 +275,8 @@ NOTE: This command is deprecated. Use the `SET` command with the appropriate fla
 
 * link:https://redis.io/commands/members[SMEMBERS]
 
+* link:https://redis.io/commands/smismember[SMISMEMBER]
+
 * link:https://redis.io/commands/smove[SMOVE]
 
 * link:https://redis.io/commands/spop[SPOP]
