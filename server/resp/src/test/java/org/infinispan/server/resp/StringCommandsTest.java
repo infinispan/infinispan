@@ -562,6 +562,16 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testMsetnxSameKey() {
+      // Needs custom command to allow byte[] args
+      CustomStringCommands commands = CustomStringCommands.instance(redisConnection);
+      Long l = commands.msetnxSameKey(new byte[]{'k','1'}, new byte[]{'v','1'}, new byte[]{'v','2'}, new byte[]{'v','3'}, new byte[]{'v','4'});
+      assertThat(l).isEqualTo(1);
+      String actual = redisConnection.sync().get("k1");
+      assertThat(actual).isEqualTo("v4");
+   }
+
+   @Test
    public void testSetex() {
       RedisCommands<String, String> redis = redisConnection.sync();
 
