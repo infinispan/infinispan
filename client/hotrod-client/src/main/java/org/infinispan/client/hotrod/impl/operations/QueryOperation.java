@@ -17,6 +17,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.remote.client.impl.BaseQueryResponse;
 import org.infinispan.query.remote.client.impl.QueryRequest;
 
 import io.netty.buffer.ByteBuf;
@@ -27,14 +28,14 @@ import io.netty.channel.Channel;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public final class QueryOperation extends RetryOnFailureOperation<Object> {
+public final class QueryOperation<T> extends RetryOnFailureOperation<BaseQueryResponse<T>> {
 
-   private final RemoteQuery<?> remoteQuery;
+   private final RemoteQuery<T> remoteQuery;
    private final QuerySerializer querySerializer;
    private final boolean withHitCount;
 
    public QueryOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicReference<ClientTopology> clientTopology,
-                         int flags, Configuration cfg, RemoteQuery<?> remoteQuery, DataFormat dataFormat, boolean withHitCount) {
+                         int flags, Configuration cfg, RemoteQuery<T> remoteQuery, DataFormat dataFormat, boolean withHitCount) {
       super(QUERY_REQUEST, QUERY_RESPONSE, codec, channelFactory, cacheName, clientTopology, flags, cfg, dataFormat, null);
       this.remoteQuery = remoteQuery;
       this.querySerializer = QuerySerializer.findByMediaType(dataFormat.getValueType());
@@ -110,6 +111,6 @@ public final class QueryOperation extends RetryOnFailureOperation<Object> {
    @Override
    public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
       byte[] responseBytes = ByteBufUtil.readArray(buf);
-      complete(querySerializer.readQueryResponse(channelFactory.getMarshaller(), remoteQuery, responseBytes));
+      complete((BaseQueryResponse<T>) querySerializer.readQueryResponse(channelFactory.getMarshaller(), remoteQuery, responseBytes));
    }
 }
