@@ -48,10 +48,14 @@ public final class SPopFunction<K, V> implements SetBucketBaseFunction<K, V, Col
          if (remove) {
             s.removeAll(popped);
          }
+         if (s.isEmpty()) {
+            entryView.remove();
+         }
          return popped;
       }
       var list = s.toList();
-      return ThreadLocalRandom.current().ints(-count, 0, s.size()).mapToObj(i -> list.get(i)).collect(Collectors.toList());
+      return ThreadLocalRandom.current().ints(-count, 0, s.size()).mapToObj(i -> list.get(i))
+            .collect(Collectors.toList());
    }
 
    public static <T> Collection<T> getRandomSubset(List<T> list, long count) {

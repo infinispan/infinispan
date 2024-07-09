@@ -541,4 +541,60 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       assertWrongType(() -> redis.rpush("listleads", "tristan"),
             () -> redis.sdiffstore("dest", "listleads", "william"));
    }
+
+   @Test
+   public void testRemoveEmptySet() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String dest = "dest";
+      String key = "key";
+      String key1 = "key1";
+
+      // All popped, check set deleted
+      redis.sadd(key, "e1", "e2", "e3");
+      redis.spop(key,3);
+      assertThat(redis.exists(key)).isEqualTo(0L);
+
+      // difference b/w empty sets, check dest deleted/not created
+      redis.sadd(dest, "bedeleted");
+      redis.sdiffstore(dest, key, key);
+      assertThat(redis.exists(dest)).isEqualTo(0L);
+      redis.sdiffstore(dest, key, key);
+      assertThat(redis.exists(dest)).isEqualTo(0L);
+
+      // difference b/w same set
+      redis.sadd(dest, "bedeleted");
+      redis.sadd(key, "e1", "e2", "e3");
+      redis.sdiffstore(dest, key, key);
+      assertThat(redis.exists(dest)).isEqualTo(0L);
+      redis.sdiffstore(dest, key, key);
+      assertThat(redis.exists(dest)).isEqualTo(0L);
+      redis.del(key);
+
+      // union b/w empty sets
+      redis.sadd(dest, "bedeleted");
+      redis.sunionstore(dest, key, key);
+      assertThat(redis.exists(dest)).isEqualTo(0L);
+      redis.sunionstore(dest, key, key);
+      assertThat(redis.exists(dest)).isEqualTo(0L);
+      redis.del(key);
+
+      // inters b/w empty sets
+      redis.sadd(dest, "bedeleted");
+      redis.sinterstore(dest, key, key);
+      assertThat(redis.exists(dest)).isEqualTo(0L);
+      redis.sinterstore(dest, key, key);
+      assertThat(redis.exists(dest)).isEqualTo(0L);
+      redis.del(key);
+
+      // inters b/w disjunct sets
+      redis.sadd(dest, "bedeleted");
+      redis.sadd(key, "e1", "e2", "e3");
+      redis.sadd(key1, "e11", "e21", "e31");
+      redis.sinterstore(dest, key, key1);
+      assertThat(redis.exists(dest)).isEqualTo(0L);
+      redis.sinterstore(dest, key, key1);
+      assertThat(redis.exists(dest)).isEqualTo(0L);
+      redis.del(key);
+
+   }
 }
