@@ -13,15 +13,13 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * {@link} https://redis.io/commands/sismember/
- *
- * Returns 1 if element is member of the set stored at key, 0 otherwise
+ * {@link} https://redis.io/commands/smismember/
  *
  * @since 15.0
  */
-public class SISMEMBER extends RespCommand implements Resp3Command {
-   public SISMEMBER() {
-      super(3, 1, 1, 1);
+public class SMISMEMBER extends RespCommand implements Resp3Command {
+   public SMISMEMBER() {
+      super(-3, 1, 1, 1);
    }
 
    @Override
@@ -29,7 +27,8 @@ public class SISMEMBER extends RespCommand implements Resp3Command {
          ChannelHandlerContext ctx,
          List<byte[]> arguments) {
       EmbeddedSetCache<byte[], byte[]> esc = handler.getEmbeddedSetCache();
-      var resultStage = esc.mIsMember(arguments.get(0), arguments.get(1)).thenApply(v -> v.get(0));
-      return handler.stageToReturn(resultStage, ctx, Consumers.LONG_BICONSUMER);
+      byte[][] ba = arguments.subList(1, arguments.size()).toArray(byte[][]::new);
+      var resultStage = esc.mIsMember(arguments.get(0), ba);
+      return handler.stageToReturn(resultStage, ctx, Consumers.COLLECTION_LONG_BICONSUMER);
    }
 }
