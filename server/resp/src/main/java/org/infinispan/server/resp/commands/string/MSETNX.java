@@ -2,9 +2,12 @@ package org.infinispan.server.resp.commands.string;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.server.resp.ByteBufferUtils;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -39,12 +42,14 @@ public class MSETNX extends RespCommand implements Resp3Command {
          return handler.myStage();
       }
       Log.SERVER.msetnxConsistencyMessage();
-      var entries = new HashMap<byte[], byte[]>();
+      // Using WBA so equals() ensures same key has only one entry with the last value in the map
+      var entriesWBA = new HashMap<WrappedByteArray, byte[]>();
       for (int i = 0; i < arguments.size(); i++) {
-         entries.put(arguments.get(i), arguments.get(++i));
+         entriesWBA.put(new WrappedByteArray(arguments.get(i)), arguments.get(++i));
       }
       // Change to loop?
-      var existingEntries = handler.cache().getAll(entries.keySet());
+      Map<byte[],byte[]> entries = entriesWBA.entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getBytes(), e -> e.getValue()));
+      var existingEntries = handler.cache().getAll(entriesWBA.keySet());
       if (existingEntries.isEmpty()) {
          return handler.stageToReturn(handler.cache().putAllAsync(entries).thenApply(v -> 1L), ctx,
                Consumers.LONG_BICONSUMER);
