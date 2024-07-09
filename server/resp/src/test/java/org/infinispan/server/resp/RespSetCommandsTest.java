@@ -69,6 +69,15 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testSmismember() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "simsmember";
+      redis.sadd(key, "e1", "e2", "e3");
+      assertThat(redis.smismember(key, "e1", "e4", "e3", "e1")).containsExactly(true, false, true, true);
+      assertThat(redis.smismember("notexistent", "e1", "e4", "e3", "e1")).containsExactly(false, false, false, false);
+   }
+
+   @Test
    public void testScard() {
       RedisCommands<String, String> redis = redisConnection.sync();
       String key = "smembers";
