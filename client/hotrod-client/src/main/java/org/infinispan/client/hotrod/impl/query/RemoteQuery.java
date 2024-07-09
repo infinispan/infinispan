@@ -5,16 +5,17 @@ import static org.infinispan.client.hotrod.impl.Util.await;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
-import org.infinispan.client.hotrod.impl.operations.QueryOperation;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.QueryResult;
@@ -53,38 +54,17 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
 
    @Override
    public List<T> list() {
-      BaseQueryResponse<T> response = executeRemotely(false);
-      try {
-         return response.extractResults(serializationContext);
-      } catch (IOException e) {
-         throw new HotRodClientException(e);
-      }
+      return awaitQueryResult(listAsync());
    }
 
    @Override
    public QueryResult<T> execute() {
-      BaseQueryResponse<T> response = executeRemotely(true);
-      return new QueryResult<>() {
-         @Override
-         public TotalHitCount count() {
-            return new TotalHitCount(response.hitCount(), response.hitCountExact());
-         }
-
-         @Override
-         public List<T> list() {
-            try {
-               return response.extractResults(serializationContext);
-            } catch (IOException e) {
-               throw new HotRodClientException(e);
-            }
-         }
-      };
+      return awaitQueryResult(executeAsync());
    }
 
    @Override
    public int executeStatement() {
-      BaseQueryResponse<?> response = executeRemotely(false);
-      return response.hitCount();
+      return awaitQueryResult(executeStatementAsync());
    }
 
    @Override
@@ -97,15 +77,26 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
 
    @Override
    public int getResultSize() {
-      BaseQueryResponse<?> response = executeRemotely(true);
-      return response.hitCount();
+      return awaitQueryResult(executeRemotelyAsync(true)).hitCount();
    }
 
-   private BaseQueryResponse<T> executeRemotely(boolean withHitCount) {
+   public CompletionStage<QueryResult<T>> executeAsync() {
+      return internalExecuteAsync().thenApply(CompletableFutures.identity());
+   }
+
+   public CompletionStage<Integer> executeStatementAsync() {
+      return executeRemotelyAsync(false).thenApply(BaseQueryResponse::hitCount);
+   }
+
+   public CompletionStage<List<T>> listAsync() {
+      return executeRemotelyAsync(false).thenApply(this::extractResults);
+   }
+
+   private CompletableFuture<BaseQueryResponse<T>> executeRemotelyAsync(boolean withHitCount) {
       validateNamedParameters();
-      QueryOperation op = cache.getOperationsFactory().newQueryOperation(this, cache.getDataFormat(), withHitCount);
-      return (BaseQueryResponse<T>) (timeout != -1 ? await(op.execute(), TimeUnit.NANOSECONDS.toMillis(timeout)) :
-            await(op.execute()));
+      return cache.getOperationsFactory()
+            .newQueryOperation(this, cache.getDataFormat(), withHitCount)
+            .execute();
    }
 
    /**
@@ -119,6 +110,22 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
       return cache;
    }
 
+   private <R> List<R> extractResults(BaseQueryResponse<R> response) {
+      try {
+         return response.extractResults(serializationContext);
+      } catch (IOException e) {
+         throw new HotRodClientException(e);
+      }
+   }
+
+   private <R> R awaitQueryResult(CompletionStage<R> rsp) {
+      return timeout == -1 ? await(rsp) : await(rsp.toCompletableFuture(), timeout);
+   }
+
+   private CompletionStage<QueryResultAdapter<T>> internalExecuteAsync() {
+      return executeRemotelyAsync(true).thenApply(QueryResultAdapter<T>::new);
+   }
+
    @Override
    public String toString() {
       return "RemoteQuery{" +
@@ -128,5 +135,24 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
             ", maxResults=" + maxResults +
             ", timeout=" + timeout +
             '}';
+   }
+
+   private class QueryResultAdapter<R> implements QueryResult<R> {
+
+      private final BaseQueryResponse<R> queryResponse;
+
+      QueryResultAdapter(BaseQueryResponse<R> queryResponse) {
+         this.queryResponse = queryResponse;
+      }
+
+      @Override
+      public TotalHitCount count() {
+         return new TotalHitCount(queryResponse.hitCount(), queryResponse.hitCountExact());
+      }
+
+      @Override
+      public List<R> list() {
+         return extractResults(queryResponse);
+      }
    }
 }
