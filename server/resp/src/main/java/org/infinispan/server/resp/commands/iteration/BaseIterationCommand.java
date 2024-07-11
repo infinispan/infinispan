@@ -4,7 +4,6 @@ import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
@@ -20,6 +19,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.util.concurrent.BlockingManager;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -50,8 +50,7 @@ public abstract class BaseIterationCommand extends RespCommand implements Resp3C
          return initializeAndIterate(handler, ctx, manager, args, null);
       }
 
-      iterate(handler, manager, cursor, args);
-      return handler.myStage();
+      return iterate(handler, ctx, manager, cursor, args);
    }
 
    private CompletionStage<RespRequestHandler> initializeAndIterate(Resp3Handler handler, ChannelHandlerContext ctx,
@@ -63,29 +62,21 @@ public abstract class BaseIterationCommand extends RespCommand implements Resp3C
             false, DeliveryGuarantee.AT_LEAST_ONCE, iic);
       iterationState.getReaper().registerChannel(ctx.channel());
 
-      if (!ctx.executor().inEventLoop()) {
-         return CompletableFuture.supplyAsync(() -> {
-            iterate(handler, manager, iterationState.getId(), arguments);
-            return handler;
-         }, ctx.executor());
-      }
-
-      iterate(handler, manager, iterationState.getId(), arguments);
-      return handler.myStage();
+      return iterate(handler, ctx, manager, iterationState.getId(), arguments);
    }
 
-   private void iterate(Resp3Handler handler, IterationManager manager, String cursor,
-                                                       IterationArguments arguments) {
-      if (manager == null) {
-         ByteBufferUtils.stringToByteBufAscii("*2\r\n$1\r\n0\r\n*0\r\n", handler.allocator());
-         return;
-      }
+   private CompletionStage<RespRequestHandler> iterate(Resp3Handler handler, ChannelHandlerContext ctx, IterationManager manager, String cursor, IterationArguments arguments) {
+      // Acquire next iteration result with the blocking manager and handle result on the event loop.
+      CompletionStage<IterableIterationResult> cs = acquireNext(handler.getBlockingManager(), manager, cursor, arguments.getCount());
+      return cs.thenAcceptAsync(result -> handleIterationResult(result, handler, manager, cursor), ctx.executor())
+            .thenApply(ignore -> handler);
+   }
 
-      IterableIterationResult result = manager.next(cursor, arguments.getCount());
+   private void handleIterationResult(IterableIterationResult result, Resp3Handler handler, IterationManager manager, String cursor) {
       IterableIterationResult.Status status = result.getStatusCode();
       if (status == IterableIterationResult.Status.InvalidIteration) {
          // Let's just return 0
-         ByteBufferUtils.stringToByteBufAscii("*2\r\n$1\r\n0\r\n*0\r\n", handler.allocator());
+         emptyIterationResponse(handler);
       } else {
          if (writeCursor()) {
             StringBuilder response = new StringBuilder();
@@ -105,7 +96,14 @@ public abstract class BaseIterationCommand extends RespCommand implements Resp3C
          }
          ByteBufferUtils.bytesToResult(writeResponse(result.getEntries()), handler.allocator());
       }
-      return;
+   }
+
+   private CompletionStage<IterableIterationResult> acquireNext(BlockingManager bm, IterationManager manager, String cursor, int count) {
+      return bm.supplyBlocking(() -> manager.next(cursor, count), "resp-iter-" + cursor);
+   }
+
+   private void emptyIterationResponse(Resp3Handler handler) {
+      ByteBufferUtils.stringToByteBufAscii("*2\r\n$1\r\n0\r\n*0\r\n", handler.allocator());
    }
 
    protected boolean writeCursor() {

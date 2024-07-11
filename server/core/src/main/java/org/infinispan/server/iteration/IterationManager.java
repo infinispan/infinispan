@@ -17,6 +17,17 @@ public interface IterationManager {
                         List<byte[]> filterConverterParams, MediaType valueMediaType, int batch, boolean metadata,
                         DeliveryGuarantee guarantee, IterationInitializationContext ctx);
 
+   /**
+    * Reds the next batch from the iterator associated with {@param iterationId}.
+    *
+    * <p>
+    * <b>Warning:</b> This method can block.
+    * </p>
+    *
+    * @param iterationId: The iterator identifier.
+    * @param batch: The maximum number of entries to include in the batch.
+    * @return An {@link IterableIterationResult} object with the current data and metadata about the iterator.
+    */
    IterableIterationResult next(String iterationId, int batch);
 
    IterationState close(String iterationId);

@@ -14,6 +14,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.context.Flag;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
@@ -23,6 +24,7 @@ import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.util.concurrent.BlockingManager;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
@@ -36,15 +38,18 @@ public class Resp3Handler extends Resp3AuthHandler {
    protected EmbeddedSetCache<byte[], byte[]> embeddedSetCache;
    protected EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetMultimap;
    protected final ScheduledExecutorService scheduler;
+   protected final BlockingManager blockingManager;
 
    private final MediaType valueMediaType;
 
    Resp3Handler(RespServer respServer, MediaType valueMediaType) {
       super(respServer);
       this.valueMediaType = valueMediaType;
-      this.scheduler = SecurityActions.getGlobalComponentRegistry(cache.getCacheManager()).getComponent(
-            ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR);
-         }
+
+      GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cache.getCacheManager());
+      this.scheduler = gcr.getComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR);
+      this.blockingManager = gcr.getComponent(BlockingManager.class);
+   }
 
    @Override
    public void setCache(AdvancedCache<byte[], byte[]> cache) {
@@ -75,6 +80,10 @@ public class Resp3Handler extends Resp3AuthHandler {
 
    public ScheduledExecutorService getScheduler() {
       return scheduler;
+   }
+
+   public BlockingManager getBlockingManager() {
+      return blockingManager;
    }
 
    @Override
