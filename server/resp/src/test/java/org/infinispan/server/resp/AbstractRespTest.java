@@ -106,12 +106,16 @@ public abstract class AbstractRespTest extends MultipleCacheManagersTest {
    @AfterClass(alwaysRun = true)
    @Override
    protected void destroy() {
-      for (AbstractRedisClient client : clients) {
-         killClient(client);
+      if (clients != null) {
+         for (AbstractRedisClient client : clients) {
+            killClient(client);
+         }
       }
 
-      for (RespServer server : servers) {
-         killServer(server);
+      if (servers != null) {
+         for (RespServer server : servers) {
+            killServer(server);
+         }
       }
 
       super.destroy();
