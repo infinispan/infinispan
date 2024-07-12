@@ -11,7 +11,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.server.test.core.Containers;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
-import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
@@ -23,7 +23,7 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
 public class ContainerDatabase extends Database {
    private final static Log log = LogFactory.getLog(ContainerDatabase.class);
    private final static String ENV_PREFIX = "database.container.env.";
-   private final GenericContainer container;
+   private final JdbcContainerAdapter<?> container;
    private final int port;
 
    ContainerDatabase(String type, Properties properties) {
@@ -39,8 +39,9 @@ public class ContainerDatabase extends Database {
                      .env(env)
                      .build();
             });
-      container = new GenericContainer(image)
+      this.container = new JdbcContainerAdapter<>(image, this)
             .withExposedPorts(port)
+            .withInitScript(initSqlFile())
             .withPrivilegedMode(true)
             .waitingFor(Wait.forListeningPort());
 
@@ -87,5 +88,40 @@ public class ContainerDatabase extends Database {
    public String password() {
       Properties props = new Properties();
       return StringPropertyReplacer.replaceProperties(super.password(), props);
+   }
+
+   static class JdbcContainerAdapter<SELF extends JdbcContainerAdapter<SELF>> extends JdbcDatabaseContainer<SELF> {
+
+      final Database database;
+
+      JdbcContainerAdapter(ImageFromDockerfile image, Database database) {
+         super(image);
+         this.database = database;
+      }
+
+      @Override
+      public String getDriverClassName() {
+         return database.driverClassName();
+      }
+
+      @Override
+      public String getJdbcUrl() {
+         return database.jdbcUrl();
+      }
+
+      @Override
+      public String getUsername() {
+         return database.username();
+      }
+
+      @Override
+      public String getPassword() {
+         return database.password();
+      }
+
+      @Override
+      protected String getTestQueryString() {
+         return database.testQuery();
+      }
    }
 }

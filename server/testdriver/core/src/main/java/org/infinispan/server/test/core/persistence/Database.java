@@ -56,6 +56,10 @@ public abstract class Database {
       return properties.getProperty("database.test.query");
    }
 
+   public String initSqlFile() {
+      return properties.getProperty("database.test.sql-file");
+   }
+
    public static Database fromProperties(String type, Properties properties) {
       String mode = properties.getProperty("database.mode");
       switch (mode) {
