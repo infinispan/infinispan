@@ -9,6 +9,14 @@
                           new-connection-sql="SELECT 1" />
       <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
    </data-source>
+   <data-source name="mssql" jndi-name="jdbc/mssql" statistics="true">
+      <connection-factory driver="${org.infinispan.server.test.database.mssql.driver:com.microsoft.sqlserver.jdbc.SQLServerDriver}"
+                          username="${org.infinispan.server.test.database.mssql.username:test}"
+                          password="${org.infinispan.server.test.database.mssql.password:test}"
+                          url="${org.infinispan.server.test.database.mssql.jdbcUrl}"
+                          new-connection-sql="SELECT 1" />
+      <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
+   </data-source>
    <data-source name="mysql" jndi-name="jdbc/mysql" statistics="true">
       <connection-factory driver="${org.infinispan.server.test.database.mysql.driver:com.mysql.cj.jdbc.Driver}"
                           username="${org.infinispan.server.test.database.mysql.username:test}"

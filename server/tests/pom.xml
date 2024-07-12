@@ -117,10 +117,13 @@
       <dependency>
          <groupId>org.postgresql</groupId>
          <artifactId>postgresql</artifactId>
-         <version>${versionx.com.postgresqldatabase.postgresql}</version>
          <scope>test</scope>
       </dependency>
-
+      <dependency>
+         <groupId>com.microsoft.sqlserver</groupId>
+         <artifactId>mssql-jdbc</artifactId>
+         <scope>test</scope>
+      </dependency>
       <dependency>
          <groupId>org.assertj</groupId>
          <artifactId>assertj-core</artifactId>
