@@ -42,7 +42,7 @@ public class PersistenceIT extends InfinispanSuite {
    static final String EXTERNAL_JDBC_DRIVER = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_EXTERNAL_DRIVERS);
    static final String JDBC_DRIVER_FROM_FILE = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_DRIVERS_FILE, "target/test-classes/database/jdbc-drivers.txt");
 
-   public static final DatabaseServerListener DATABASE_LISTENER = new DatabaseServerListener("h2", "mysql", "postgres");
+   public static final DatabaseServerListener DATABASE_LISTENER = new DatabaseServerListener("h2", "mssql", "mysql", "postgres");
 
    @RegisterExtension
    public static InfinispanServerExtension SERVERS =
