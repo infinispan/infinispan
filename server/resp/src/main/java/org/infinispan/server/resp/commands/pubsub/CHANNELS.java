@@ -1,15 +1,13 @@
 package org.infinispan.server.resp.commands.pubsub;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.infinispan.commons.util.GlobUtils;
+import org.infinispan.commons.util.GlobMatcher;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.resp.Consumers;
@@ -64,10 +62,6 @@ class CHANNELS extends RespCommand implements Resp3Command {
    }
 
    private Predicate<byte[]> globFilter(byte[] glob) {
-      Pattern pattern = Pattern.compile(GlobUtils.globToRegex(new String(glob, StandardCharsets.US_ASCII)));
-      return channel -> {
-         String converted = new String(channel, StandardCharsets.US_ASCII);
-         return pattern.matcher(converted).matches();
-      };
+      return channel -> GlobMatcher.match(glob, channel);
    }
 }

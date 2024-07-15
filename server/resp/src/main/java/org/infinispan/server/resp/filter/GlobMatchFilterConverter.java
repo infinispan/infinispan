@@ -1,10 +1,9 @@
 package org.infinispan.server.resp.filter;
 
 import java.nio.charset.StandardCharsets;
-import java.util.regex.Pattern;
 
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.util.GlobUtils;
+import org.infinispan.commons.util.GlobMatcher;
 import org.infinispan.commons.util.Util;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.metadata.Metadata;
@@ -25,13 +24,13 @@ public class GlobMatchFilterConverter<K, V> extends AbstractKeyValueFilterConver
 
    @ProtoField(number = 2, defaultValue = "false")
    final boolean returnValue;
-   private transient final Pattern pattern;
+   private transient final byte[] pattern;
 
    @ProtoFactory
    GlobMatchFilterConverter(String glob, boolean returnValue) {
       this.glob = glob;
       this.returnValue = returnValue;
-      this.pattern = Pattern.compile(GlobUtils.globToRegex(glob));
+      this.pattern = glob.getBytes(StandardCharsets.US_ASCII);
    }
 
    @Override
@@ -41,8 +40,7 @@ public class GlobMatchFilterConverter<K, V> extends AbstractKeyValueFilterConver
 
    @Override
    public byte[] filterAndConvert(byte[] key, V value, Metadata metadata) {
-      String k = new String(key, StandardCharsets.UTF_8);
-      if (pattern.matcher(k).matches()) {
+      if (GlobMatcher.match(pattern, key)) {
          return returnValue ? (byte[]) value : Util.EMPTY_BYTE_ARRAY;
       } else {
          return null;
