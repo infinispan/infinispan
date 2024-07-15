@@ -543,6 +543,17 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testLargeScanMatch() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThat(redis.set("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "value")).isEqualTo(OK);
+
+      ScanArgs args = ScanArgs.Builder.matches("a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*b");
+      KeyScanCursor<String> cursor = redis.scan(args);
+      assertThat(cursor.getKeys()).isEmpty();
+      assertThat(cursor.isFinished()).isTrue();
+   }
+
+   @Test
    public void testScanFilters() {
       RedisCommands<String, String> redis = redisConnection.sync();
       Set<String> all = new HashSet<>();
