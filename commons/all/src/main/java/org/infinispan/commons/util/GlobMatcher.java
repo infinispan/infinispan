@@ -134,8 +134,9 @@ public final class GlobMatcher {
                      if (c >= start && c <= end) match = true;
 
                   // Else, we check for a direct match between the characters in the range and the string.
+                  // While within the range, just a single match is enough to consider the range valid.
                   } else {
-                     match = pattern[patternPos] == string[stringPos];
+                     match |= pattern[patternPos] == string[stringPos];
                   }
 
                   patternPos++;
