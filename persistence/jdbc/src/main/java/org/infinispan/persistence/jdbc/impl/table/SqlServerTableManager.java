@@ -10,11 +10,11 @@ import org.infinispan.util.logging.LogFactory;
  * @author Ryan Emerson
  * @since 9.0
  */
-class TableOperations extends AbstractTableManager {
+class SqlServerTableManager extends AbstractTableManager {
 
    private static final Log log = LogFactory.getLog(MyTableOperations.class, Log.class);
 
-   TableOperations(InitializationContext ctx, ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config, DbMetaData metaData, String cacheName) {
+   SqlServerTableManager(InitializationContext ctx, ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config, DbMetaData metaData, String cacheName) {
       super(ctx, connectionFactory, config, metaData, cacheName, log);
    }
 
@@ -42,8 +42,8 @@ class TableOperations extends AbstractTableManager {
 
    @Override
    protected String initSelectOnlyExpiredRowsSql() {
-      String loadAll = String.format("%s WITH (UPDLOCK)", getLoadAllRowsSql());
-      return String.format("%1$s WHERE %2$s < ? AND %2$s > 0", loadAll, config.timestampColumnName());
+      return String.format("SELECT %1$s, %2$s, %3$s FROM %4$s WITH (UPDLOCK) WHERE %3$s < ? AND %3$s > 0",
+            config.dataColumnName(), config.idColumnName(), config.timestampColumnName(), dataTableName);
    }
 
    @Override
