@@ -59,6 +59,8 @@ public class GlobMatcherTest {
       assertFalse(GlobMatcher.match("a*[k\\-0-9]b", "aHb"));
       assertFalse(GlobMatcher.match("a*[0-9]b", "aHRb"));
       assertTrue(GlobMatcher.match("a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*b", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"));
+      assertTrue(GlobMatcher.match("hello_[24]", "hello_4"));
+      assertTrue(GlobMatcher.match("hello_[24]", "hello_2"));
    }
 
    @Test
