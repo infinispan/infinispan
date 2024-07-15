@@ -51,7 +51,7 @@ public class TableManagerFactory {
          case SYBASE:
             return new SybaseTableManager(ctx, connectionFactory, config, metaData, cacheName);
          case SQL_SERVER:
-            return new TableOperations(ctx, connectionFactory, config, metaData, cacheName);
+            return new SqlServerTableManager(ctx, connectionFactory, config, metaData, cacheName);
          default:
             return new GenericTableManager(ctx, connectionFactory, config, metaData, cacheName);
       }
