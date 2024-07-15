@@ -31,7 +31,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
  *
  */
 @Category(Persistence.class)
-public class JdbcStringBasedCacheStorePassivation {
+public class JdbcStringBasedCacheStoreIT {
 
     @RegisterExtension
     public static InfinispanServerExtension SERVERS = PersistenceIT.SERVERS;
@@ -172,6 +172,27 @@ public class JdbcStringBasedCacheStorePassivation {
             assertEquals(1, list.size());
             Map.Entry<String, String> entry = list.get(0);
             assertEquals(entry.getValue().substring(1), entry.getKey().substring(1));
+        }
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(Common.DatabaseProvider.class)
+    public void testExpiration(Database database) {
+        var jdbcUtil = new JdbcConfigurationUtil(CacheMode.LOCAL, database, false, false);
+        var configBuilder = jdbcUtil.getConfigurationBuilder();
+        configBuilder.expiration()
+              .lifespan(1)
+              .wakeUpInterval(10);
+        RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(configBuilder).create();
+        cache.put("Key", "Value");
+        Eventually.eventually(cache::isEmpty);
+        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration())) {
+            table.countAllRows();
+            Eventually.eventually(() -> {
+                var rows = table.countAllRows();
+                System.out.println(rows);
+                return rows == 0;
+            });
         }
     }
 
