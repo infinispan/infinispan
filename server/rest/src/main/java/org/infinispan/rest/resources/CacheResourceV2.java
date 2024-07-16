@@ -566,35 +566,39 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       FullHttpRequest nettyRequest = ((NettyRestRequest) request).getFullHttpRequest();
       DefaultHttpDataFactory factory = new DefaultHttpDataFactory(false);
       HttpPostMultipartRequestDecoder decoder = new HttpPostMultipartRequestDecoder(factory, nettyRequest);
-      List<InterfaceHttpData> datas = decoder.getBodyHttpDatas();
-      if (datas.size() != 2) {
-         throw Log.REST.cacheCompareWrongContent();
-      }
-      MemoryAttribute one = (MemoryAttribute) datas.get(0);
-      MemoryAttribute two = (MemoryAttribute) datas.get(1);
-      String s1 = one.content().toString(UTF_8);
-      String s2 = two.content().toString(UTF_8);
-      ParserRegistry parserRegistry = invocationHelper.getParserRegistry();
-      Map<String, ConfigurationBuilder> b1 = parserRegistry.parse(s1, null).getNamedConfigurationBuilders();
-      Map<String, ConfigurationBuilder> b2 = parserRegistry.parse(s2, null).getNamedConfigurationBuilders();
-      if (b1.size() != 1 || b2.size() != 1) {
-         throw Log.REST.cacheCompareWrongContent();
-      }
-      Configuration c1 = b1.values().iterator().next().build();
-      Configuration c2 = b2.values().iterator().next().build();
-      boolean result;
-      if (ignoreMutable) {
-         try {
-            c1.validateUpdate(null, c2);
-            result = true;
-         } catch (Throwable t) {
-            result = false;
-            responseBuilder.entity(unwrapExceptionMessage(filterCause(t)));
+      try {
+         List<InterfaceHttpData> datas = decoder.getBodyHttpDatas();
+         if (datas.size() != 2) {
+            throw Log.REST.cacheCompareWrongContent();
          }
-      } else {
-         result = c1.equals(c2);
+         MemoryAttribute one = (MemoryAttribute) datas.get(0);
+         MemoryAttribute two = (MemoryAttribute) datas.get(1);
+         String s1 = one.content().toString(UTF_8);
+         String s2 = two.content().toString(UTF_8);
+         ParserRegistry parserRegistry = invocationHelper.getParserRegistry();
+         Map<String, ConfigurationBuilder> b1 = parserRegistry.parse(s1, null).getNamedConfigurationBuilders();
+         Map<String, ConfigurationBuilder> b2 = parserRegistry.parse(s2, null).getNamedConfigurationBuilders();
+         if (b1.size() != 1 || b2.size() != 1) {
+            throw Log.REST.cacheCompareWrongContent();
+         }
+         Configuration c1 = b1.values().iterator().next().build();
+         Configuration c2 = b2.values().iterator().next().build();
+         boolean result;
+         if (ignoreMutable) {
+            try {
+               c1.validateUpdate(null, c2);
+               result = true;
+            } catch (Throwable t) {
+               result = false;
+               responseBuilder.entity(unwrapExceptionMessage(filterCause(t)));
+            }
+         } else {
+            result = c1.equals(c2);
+         }
+         return CompletableFuture.completedFuture(responseBuilder.status(result ? NO_CONTENT : CONFLICT).build());
+      } finally {
+         decoder.destroy();
       }
-      return CompletableFuture.completedFuture(responseBuilder.status(result ? NO_CONTENT : CONFLICT).build());
    }
 
    private CompletionStage<RestResponse> streamKeys(RestRequest request) {
