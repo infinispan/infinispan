@@ -93,6 +93,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    private final String[] volumes;
    private String name;
    ImageFromDockerfile image;
+   private final NettyLeakDetectionLoggingConsumer leakDetectionLoggingConsumer = new NettyLeakDetectionLoggingConsumer();
 
    static {
       // Ensure there are no left-overs from previous runs
@@ -143,6 +144,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          args.add("-Dcom.sun.management.jmxremote.authenticate=false");
          args.add("-Dcom.sun.management.jmxremote.ssl=false");
       }
+      args.add("-Dio.netty.leakDetection.level=paranoid");
 
       String logFile = System.getProperty(INFINISPAN_TEST_SERVER_LOG_FILE);
       if (logFile != null) {
@@ -329,6 +331,9 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       }
       // See https://github.com/testcontainers/testcontainers-java/issues/2276
       ThreadLeakChecker.ignoreThreadsContaining("docker-java-stream-");
+      if (leakDetectionLoggingConsumer.leakDetected()) {
+         throw new IllegalStateException("Leak detected");
+      }
    }
 
    @Override

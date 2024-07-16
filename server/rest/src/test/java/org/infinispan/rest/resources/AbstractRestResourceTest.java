@@ -60,7 +60,11 @@ import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import io.netty.buffer.ByteBufUtil;
+import io.netty.util.ResourceLeakDetector;
 
 @Test(groups = "functional")
 public class AbstractRestResourceTest extends MultipleCacheManagersTest {
@@ -180,6 +184,16 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
    }
 
    protected void defineCaches(EmbeddedCacheManager cm) {
+   }
+
+   @BeforeClass(alwaysRun = true)
+   public void beforeClass() {
+      ByteBufUtil.setLeakListener(new ResourceLeakDetector.LeakListener() {
+         @Override
+         public void onLeak(String resourceType, String records) {
+            throw new RuntimeException(resourceType + ": " + records);
+         }
+      });
    }
 
    @AfterClass
