@@ -39,7 +39,6 @@ import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
 import io.netty.handler.codec.http.multipart.DiskAttribute;
 import io.netty.handler.codec.http.multipart.DiskFileUpload;
 import io.netty.handler.codec.http.multipart.HttpPostMultipartRequestDecoder;
-import io.netty.handler.codec.http.multipart.InterfaceHttpPostRequestDecoder;
 
 /**
  * A helper class for common functionality related to the {@link BackupManager}.
@@ -162,18 +161,19 @@ class BackupManagerResource {
       Json resourcesJson = Json.object();
       MediaType contentType = request.contentType();
       boolean uploadedBackup = contentType.match(MediaType.MULTIPART_FORM_DATA);
+      final HttpPostMultipartRequestDecoder decoder;
       try {
          if (uploadedBackup) {
             FullHttpRequest nettyRequest = ((NettyRestRequest) request).getFullHttpRequest();
             DefaultHttpDataFactory factory = new DefaultHttpDataFactory(true);
-            InterfaceHttpPostRequestDecoder decoder = new HttpPostMultipartRequestDecoder(factory, nettyRequest);
+            decoder = new HttpPostMultipartRequestDecoder(factory, nettyRequest);
             DiskFileUpload backup = (DiskFileUpload) decoder.getBodyHttpData("backup");
             path = backup.getFile().toPath();
-
             DiskAttribute resources = (DiskAttribute) decoder.getBodyHttpData("resources");
             if (resources != null)
                resourcesJson = Json.read(resources.getString());
          } else if (contentType.match(MediaType.APPLICATION_JSON)) {
+            decoder = null;
             // Attempt to parse body as json
             Json json = Json.read(request.contents().asString());
             Json resources = json.at(RESOURCES_KEY);
@@ -199,6 +199,8 @@ class BackupManagerResource {
                         Files.delete(path);
                      } catch (IOException e) {
                         LOG.warnf(e, "Unable to delete uploaded backup file '%s'", path);
+                     } finally {
+                        decoder.destroy();
                      }
                   }
                }

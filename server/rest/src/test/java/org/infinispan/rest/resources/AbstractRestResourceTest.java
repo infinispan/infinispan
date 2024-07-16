@@ -29,6 +29,7 @@ import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -57,10 +58,13 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import io.netty.buffer.ByteBufUtil;
+import io.netty.util.ResourceLeakDetector;
 
 @Test(groups = "functional")
 public class AbstractRestResourceTest extends MultipleCacheManagersTest {
@@ -180,6 +184,16 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
    }
 
    protected void defineCaches(EmbeddedCacheManager cm) {
+   }
+
+   @BeforeClass(alwaysRun = true)
+   public void beforeClass() {
+      ByteBufUtil.setLeakListener(new ResourceLeakDetector.LeakListener() {
+         @Override
+         public void onLeak(String resourceType, String records) {
+            throw new RuntimeException(resourceType + ": " + records);
+         }
+      });
    }
 
    @AfterClass
