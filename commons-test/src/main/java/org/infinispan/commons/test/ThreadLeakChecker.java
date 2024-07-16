@@ -330,7 +330,7 @@ public class ThreadLeakChecker {
     * Ignore a running thread.
     */
    public static void ignoreThread(Thread thread) {
-      LeakInfo leakInfo = runningThreads.computeIfAbsent(thread, k -> new LeakInfo(thread, IGNORED));
+      runningThreads.computeIfAbsent(thread, k -> new LeakInfo(thread, IGNORED));
    }
 
    /**
