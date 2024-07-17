@@ -3,10 +3,8 @@ package org.infinispan.commons.util;
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
-import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +34,7 @@ public class FileSystemLockTest {
       assertTrue(lock.tryLock());
       assertTrue(lock.isAcquired());
 
-      assertThrows(OverlappingFileLockException.class, lock::tryLock);
+      assertFalse(lock.tryLock());
 
       lock.unlock();
       assertFalse(lock.isAcquired());
@@ -60,8 +58,6 @@ public class FileSystemLockTest {
                   if (lock.tryLock()) {
                      counter.inc();
                   }
-               } catch (OverlappingFileLockException ignore) {
-                  // Something holding the lock already.
                } catch (Exception e) {
                   throw new RuntimeException(e);
                }
@@ -75,7 +71,7 @@ public class FileSystemLockTest {
          assertEquals(1, counter.get());
 
          // Assert it is still locked.
-         assertThrows(OverlappingFileLockException.class, lock::tryLock);
+         assertFalse(lock.tryLock());
          lock.unlock();
       } finally {
          executor.shutdown();
