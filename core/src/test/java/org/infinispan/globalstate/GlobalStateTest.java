@@ -1,5 +1,6 @@
 package org.infinispan.globalstate;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
@@ -9,13 +10,18 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.fail;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.Writer;
 import java.lang.reflect.Method;
+import java.nio.channels.FileLock;
+import java.util.Properties;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -31,6 +37,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
@@ -207,6 +214,79 @@ public class GlobalStateTest extends AbstractInfinispanTest {
       } finally {
          TestingUtil.killCacheManagers(cm);
       }
+   }
+
+   public void testUncleanShutdownAction() throws Throwable {
+      String state = tmpDirectory(this.getClass().getSimpleName(), CallerId.getCallerMethodName(1));
+
+      // Test the default FAIL action by creating a "dangling" lock file
+      GlobalConfigurationBuilder global = statefulGlobalBuilder(state, true);
+      global.globalState().uncleanShutdownAction(UncleanShutdownAction.FAIL);
+      runHoldingFileLock(state, () -> {
+         EmbeddedCacheManager cmFail = TestCacheManagerFactory.createClusteredCacheManager(false, global, null, new TransportFlags());
+         Exceptions.expectException("ISPN000693:.*", cmFail::start, EmbeddedCacheManagerStartupException.class, CacheConfigurationException.class);
+      });
+
+      global.transport().defaultTransport();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false, global, null, new TransportFlags());
+      try {
+         cm.start();
+      } finally {
+         TestingUtil.killCacheManagers(cm);
+      }
+
+      File globalScopeFile = new File(state, ScopedPersistentState.GLOBAL_SCOPE + ".state");
+      Properties properties = new Properties();
+      try (FileReader reader = new FileReader(globalScopeFile)) {
+         properties.load(reader);
+      }
+      ByRef<String> uuid = new ByRef<>(properties.getProperty("uuid"));
+
+      // Test the PURGE action by creating a dangling lock file
+      global.globalState().uncleanShutdownAction(UncleanShutdownAction.PURGE);
+      runHoldingFileLock(state, () -> {
+         EmbeddedCacheManager cmPurge = TestCacheManagerFactory.createClusteredCacheManager(false, global, null, new TransportFlags());
+         try {
+            cmPurge.start();
+         } finally {
+            TestingUtil.killCacheManagers(cmPurge);
+         }
+         properties.clear();
+         try (FileReader reader = new FileReader(globalScopeFile)) {
+            properties.load(reader);
+         }
+         assertNotEquals(uuid.get(), properties.getProperty("uuid"), "uuids should be different");
+         uuid.set(properties.getProperty("uuid"));
+      });
+
+      // Test the IGNORE action
+      global.globalState().uncleanShutdownAction(UncleanShutdownAction.IGNORE);
+      runHoldingFileLock(state, () -> {
+         EmbeddedCacheManager cmIgnore = TestCacheManagerFactory.createClusteredCacheManager(false, global, null, new TransportFlags());
+         try {
+            cmIgnore.start();
+         } finally {
+            TestingUtil.killCacheManagers(cmIgnore);
+         }
+         properties.clear();
+         try (FileReader reader = new FileReader(globalScopeFile)) {
+            properties.load(reader);
+         }
+         assertEquals("uuids should be the same", uuid.get(), properties.getProperty("uuid"));
+      });
+   }
+
+   private void runHoldingFileLock(String state, Assert.ThrowingRunnable runnable) throws Throwable {
+      File globalLockFile = new File(state, ScopedPersistentState.GLOBAL_SCOPE + ".lck");
+      globalLockFile.getParentFile().mkdirs();
+      globalLockFile.createNewFile();
+
+      try (FileOutputStream fos = new FileOutputStream(globalLockFile); FileLock fl = fos.getChannel().lock()) {
+         assertThat(fl.isValid()).isTrue();
+         runnable.run();
+      }
+
+      globalLockFile.delete();
    }
 
    public void testCacheManagerNotifications(Method m) {

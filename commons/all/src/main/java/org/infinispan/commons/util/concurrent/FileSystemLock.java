@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Path;
 
 import org.infinispan.commons.util.Util;
@@ -122,8 +123,13 @@ public class FileSystemLock {
 
       lockFile.getParentFile().mkdirs();
       globalLockFile = new FileOutputStream(lockFile);
-      globalLock = globalLockFile.getChannel().tryLock();
-      return globalLock.isValid();
+
+      try {
+         globalLock = globalLockFile.getChannel().tryLock();
+         return globalLock.isValid();
+      } catch (OverlappingFileLockException ignore) {
+         return false;
+      }
    }
 
    private String lockFileName() {
