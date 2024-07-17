@@ -1,6 +1,5 @@
 package org.infinispan.query.dsl.embedded.impl;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.util.Date;
@@ -22,7 +21,6 @@ import org.infinispan.objectfilter.impl.syntax.parser.ReflectionPropertyHelper;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.CacheValuePropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
-import org.infinispan.objectfilter.impl.util.ReflectionHelper;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.search.mapper.mapping.SearchMapping;
