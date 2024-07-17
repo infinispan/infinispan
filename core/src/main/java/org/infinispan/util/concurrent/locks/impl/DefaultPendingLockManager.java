@@ -7,8 +7,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -30,6 +33,7 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.concurrent.locks.DeadlockDetection;
 import org.infinispan.util.concurrent.locks.PendingLockListener;
 import org.infinispan.util.concurrent.locks.PendingLockManager;
 import org.infinispan.util.concurrent.locks.PendingLockPromise;
@@ -50,9 +54,12 @@ public class DefaultPendingLockManager implements PendingLockManager {
 
    private static final Log log = LogFactory.getLog(DefaultPendingLockManager.class);
    private static final int NO_PENDING_CHECK = -2;
+   private final Set<PendingLockPromise> pendingPromises = ConcurrentHashMap.newKeySet();
+
    @Inject TransactionTable transactionTable;
    @Inject TimeService timeService;
    @Inject DistributionManager distributionManager;
+   @Inject DeadlockDetection deadlockDetection;
    @Inject @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService timeoutExecutor;
 
@@ -88,6 +95,11 @@ public class DefaultPendingLockManager implements PendingLockManager {
                            time, unit);
    }
 
+   @Override
+   public void onPendingPromises(Consumer<PendingLockPromise> consumer) {
+      pendingPromises.forEach(consumer);
+   }
+
    private PendingLockPromise createPromise(Collection<PendingTransaction> transactions,
                                             GlobalTransaction globalTransaction, long time, TimeUnit unit) {
       if (transactions.isEmpty()) {
@@ -103,6 +115,7 @@ public class DefaultPendingLockManager implements PendingLockManager {
       PendingLockPromiseImpl pendingLockPromise = new PendingLockPromiseImpl(globalTransaction, time, unit, transactions);
       pendingLockPromise.scheduleTimeoutTask();
       pendingLockPromise.registerListenerInCacheTransactions();
+      pendingLockPromise.tryStartDeadlockDetection();
       return pendingLockPromise;
    }
 
@@ -241,7 +254,14 @@ public class DefaultPendingLockManager implements PendingLockManager {
       }
 
       @Override
+      public Object keyOwner() {
+         return globalTransaction;
+      }
+
+      @Override
       public InvocationStage toInvocationStage() {
+         pendingPromises.add(this);
+         addListener(() -> pendingPromises.remove(PendingLockPromiseImpl.this));
          return new SimpleAsyncInvocationStage(notifier);
       }
 
@@ -305,6 +325,8 @@ public class DefaultPendingLockManager implements PendingLockManager {
             if (log.isTraceEnabled()) log.tracef("Timed out waiting for pending transaction %s for transaction %s", timedOutTransaction, globalTransaction);
             notifier.completeExceptionally(timeout(timedOutTransaction, globalTransaction, timeoutNanos, TimeUnit.NANOSECONDS));
          }
+
+         pendingPromises.remove(this);
       }
 
       void registerListenerInCacheTransactions() {
@@ -330,6 +352,39 @@ public class DefaultPendingLockManager implements PendingLockManager {
          } catch (java.util.concurrent.TimeoutException e) {
             //ignore
          }
+      }
+
+      void tryStartDeadlockDetection() {
+         if (!deadlockDetection.isEnabled()) return;
+
+         // For each of the promise's pending transaction, we probe on behalf of the originator.
+         // This promise is waiting on the pendingTransactions to complete. That is, the originator is waiting on the
+         // pending transactions.
+         for (PendingTransaction pendingTransaction : pendingTransactions) {
+            CacheTransaction ct = pendingTransaction.cacheTransaction;
+            // Only probe nodes which are holding transactions.
+            if (!ct.getLockedKeys().isEmpty() || !pendingTransaction.keyReleased.isEmpty()) {
+               deadlockDetection.initializeDeadlockDetection(globalTransaction, ct.getGlobalTransaction());
+            }
+         }
+      }
+
+      @Override
+      public void completeExceptionally(Throwable t) {
+         notifier.completeExceptionally(t);
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+         PendingLockPromiseImpl that = (PendingLockPromiseImpl) o;
+         return Objects.equals(globalTransaction, that.globalTransaction);
+      }
+
+      @Override
+      public int hashCode() {
+         return Objects.hashCode(globalTransaction);
       }
    }
 }

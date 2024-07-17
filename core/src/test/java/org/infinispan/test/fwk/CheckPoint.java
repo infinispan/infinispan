@@ -105,7 +105,7 @@ public class CheckPoint {
       lock.lock();
       try {
          long waitNanos = unit.toNanos(timeout);
-         while (waitNanos > 0) {
+         do {
             for (String event : expectedEvents) {
                EventStatus status = events.get(event);
                if (status != null && status.available >= 1) {
@@ -117,9 +117,9 @@ public class CheckPoint {
                break;
 
             waitNanos = unblockCondition.awaitNanos(waitNanos);
-         }
+         } while (waitNanos > 0);
 
-         if (waitNanos <= 0) {
+         if (found == null) {
             log.tracef("%sPeek did not receive any of %s", id, Arrays.toString(expectedEvents));
             return null;
          }

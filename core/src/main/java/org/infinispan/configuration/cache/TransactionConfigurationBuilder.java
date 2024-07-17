@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.configuration.cache.TransactionConfiguration.AUTO_COMMIT;
 import static org.infinispan.configuration.cache.TransactionConfiguration.CACHE_STOP_TIMEOUT;
 import static org.infinispan.configuration.cache.TransactionConfiguration.COMPLETED_TX_TIMEOUT;
+import static org.infinispan.configuration.cache.TransactionConfiguration.DEADLOCK_DETECTION;
 import static org.infinispan.configuration.cache.TransactionConfiguration.LOCKING_MODE;
 import static org.infinispan.configuration.cache.TransactionConfiguration.NOTIFICATIONS;
 import static org.infinispan.configuration.cache.TransactionConfiguration.REAPER_WAKE_UP_INTERVAL;
@@ -226,6 +227,17 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     */
    public TransactionConfigurationBuilder notifications(boolean enabled) {
       attributes.attribute(NOTIFICATIONS).set(enabled);
+      return this;
+   }
+
+   /**
+    * Defines if deadlock detection is enabled or disabled.
+    *
+    * @param value: Whether to enable or disable deadlock detection.
+    * @return This instance.
+    */
+   public TransactionConfigurationBuilder deadlockDetection(boolean value) {
+      attributes.attribute(DEADLOCK_DETECTION).set(value);
       return this;
    }
 

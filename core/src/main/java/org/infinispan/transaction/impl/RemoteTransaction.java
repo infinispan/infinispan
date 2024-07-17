@@ -37,6 +37,8 @@ public class RemoteTransaction extends AbstractCacheTransaction {
    // Default value of MAX_VALUE basically means it hasn't yet received what topology id this is for the entries
    private volatile int lookedUpEntriesTopology = Integer.MAX_VALUE;
 
+   private volatile boolean seenDeadlock;
+
    private final AtomicReference<CompletableFuture<Void>> synchronization =
          new AtomicReference<>(INITIAL_FUTURE);
 
@@ -96,10 +98,19 @@ public class RemoteTransaction extends AbstractCacheTransaction {
             ", lookedUpEntries=" + lookedUpEntries +
             ", lockedKeys=" + toStr(getLockedKeys()) +
             ", backupKeyLocks=" + toStr(getBackupLockedKeys()) +
+            ", inspectedKeys=" + getInspectedKeys() +
             ", lookedUpEntriesTopology=" + lookedUpEntriesTopology +
             ", isMarkedForRollback=" + isMarkedForRollback() +
             ", tx=" + tx +
             '}';
+   }
+
+   public void markAsDeadlock() {
+      this.seenDeadlock = true;
+   }
+
+   public boolean hasReceivedDeadlock() {
+      return seenDeadlock;
    }
 
    public void setLookedUpEntriesTopology(int lookedUpEntriesTopology) {

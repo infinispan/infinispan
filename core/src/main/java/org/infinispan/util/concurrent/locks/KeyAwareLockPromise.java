@@ -31,6 +31,8 @@ public interface KeyAwareLockPromise extends LockPromise {
          return InvocationStage.completedNullStage();
       }
 
+      @Override
+      public void completeExceptionally(LockState state) { }
    };
 
    /**
@@ -43,4 +45,15 @@ public interface KeyAwareLockPromise extends LockPromise {
     */
    void addListener(KeyAwareLockListener listener);
 
+   /**
+    * Completes the promise exceptionally with the given lock state.
+    * <p>
+    * Exceptionally means the promise is canceled. Therefore, locks might fail during {@link #lock()} calls.
+    * If the promise is already complete, this method has no effect.
+    * </p>
+    *
+    * @param state: Exceptional state to complete. One of {@link LockState#ILLEGAL}, {@link LockState#DEADLOCKED}, or
+    *             {@link LockState#TIMED_OUT}.
+    */
+   void completeExceptionally(LockState state);
 }

@@ -15,6 +15,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationSuccessFunction;
+import org.infinispan.util.concurrent.locks.deadlock.DeadlockProbeCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -81,5 +82,10 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       throw new InvalidCacheUsageException("Explicit locking is not allowed with optimistic caches!");
+   }
+
+   @Override
+   public Object visitDeadlockProbeCommand(TxInvocationContext ctx, DeadlockProbeCommand command) throws Throwable {
+      throw new IllegalStateException("Optimistic locking does not perform deadlock detection");
    }
 }

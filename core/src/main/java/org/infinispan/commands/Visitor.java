@@ -35,6 +35,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.expiration.impl.TouchCommand;
+import org.infinispan.util.concurrent.locks.deadlock.DeadlockProbeCommand;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -95,6 +96,8 @@ public interface Visitor {
 
    // locking commands
    Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable;
+
+   Object visitDeadlockProbeCommand(TxInvocationContext ctx, DeadlockProbeCommand command) throws Throwable;
 
    /**
     * @deprecated since 11.0 will be removed in the next major version with no direct replacement. There is no reason

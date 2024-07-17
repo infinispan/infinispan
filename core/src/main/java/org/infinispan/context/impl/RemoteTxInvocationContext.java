@@ -1,8 +1,8 @@
 package org.infinispan.context.impl;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.transaction.impl.RemoteTransaction;
+
+import jakarta.transaction.Transaction;
 
 /**
  * Context to be used for transaction that originated remotely.
@@ -28,6 +28,12 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext<Remot
    public final boolean isTransactionValid() {
       // this is always true since we are governed by the originator's transaction
       return true;
+   }
+
+   @Override
+   public boolean isTransactionRolledBack() {
+      // This is controlled by the originator's local transaction.
+      return getCacheTransaction().hasReceivedDeadlock();
    }
 
    @Override

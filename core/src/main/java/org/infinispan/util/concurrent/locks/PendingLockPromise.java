@@ -18,6 +18,11 @@ public interface PendingLockPromise {
 
    PendingLockPromise NO_OP = new PendingLockPromise() {
       @Override
+      public Object keyOwner() {
+         return null;
+      }
+
+      @Override
       public boolean isReady() {
          return true;
       }
@@ -46,7 +51,15 @@ public interface PendingLockPromise {
       public String toString() {
          return "NO_OP";
       }
+
+      @Override
+      public void completeExceptionally(Throwable t) { }
    };
+
+   /**
+    * @return the object utilized to hold the key.
+    */
+   Object keyOwner();
 
    /**
     * @return {@code true} when the transaction has finished the waiting.
@@ -81,4 +94,11 @@ public interface PendingLockPromise {
     * @return an {@link InvocationStage} for this lock.
     */
    InvocationStage toInvocationStage();
+
+   /**
+    * Completes this promise exceptionally as it was not possible to provide the lock.
+    *
+    * @param t: The exception to complete.
+    */
+   void completeExceptionally(Throwable t);
 }

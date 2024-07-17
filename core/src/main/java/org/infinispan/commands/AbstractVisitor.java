@@ -36,6 +36,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.expiration.impl.TouchCommand;
+import org.infinispan.util.concurrent.locks.deadlock.DeadlockProbeCommand;
 
 /**
  * An abstract implementation of a Visitor that delegates all visit calls to a default handler which can be overridden.
@@ -180,6 +181,11 @@ public abstract class AbstractVisitor implements Visitor {
 
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+      return handleDefault(ctx, command);
+   }
+
+   @Override
+   public Object visitDeadlockProbeCommand(TxInvocationContext ctx, DeadlockProbeCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 

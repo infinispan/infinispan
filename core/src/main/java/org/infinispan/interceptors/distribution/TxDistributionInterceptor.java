@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,8 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
@@ -75,9 +78,8 @@ import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.CacheTopologyUtil;
-import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.util.concurrent.locks.deadlock.DeadlockProbeCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -185,6 +187,12 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             return null;
          }));
       }
+      return invokeNext(ctx, command);
+   }
+
+   @Override
+   public Object visitDeadlockProbeCommand(TxInvocationContext ctx, DeadlockProbeCommand command) throws Throwable {
+      CacheTopologyUtil.checkTopology(command, getCacheTopology());
       return invokeNext(ctx, command);
    }
 
@@ -330,8 +338,16 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    private Collection<Address> getCommitNodes(TxInvocationContext ctx, TopologyAffectedCommand command) {
       LocalTransaction localTx = (LocalTransaction) ctx.getCacheTransaction();
       LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
-      Collection<Address> affectedNodes =
-            isReplicated ? null : cacheTopology.getWriteOwners(ctx.getAffectedKeys());
+      // Utilize all the keys to identify the nodes.
+      // Otherwise, a local transaction transferred remotely by other node during state transfer might not be completed.
+      Collection<Address> affectedNodes = null;
+      if (!isReplicated) {
+         affectedNodes = cacheTopology.getWriteOwners(ctx.getAffectedKeys());
+         if (!ctx.getInspectedKeys().isEmpty()) {
+            affectedNodes = new HashSet<>(affectedNodes);
+            affectedNodes.addAll(cacheTopology.getWriteOwners(ctx.getInspectedKeys()));
+         }
+      }
       return localTx.getCommitNodes(affectedNodes, cacheTopology);
    }
 

@@ -3,6 +3,8 @@ package org.infinispan.util.concurrent.locks.impl;
 import static java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater;
 import static org.infinispan.commons.util.concurrent.CompletableFutures.await;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
@@ -15,6 +17,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.time.TimeService;
@@ -360,8 +363,17 @@ public class InfinispanLock {
       pendingRequest.forEach(consumer);
    }
 
+   Collection<Object> pending() {
+      if (pendingRequest == null)
+         return Collections.emptyList();
+
+      return pendingRequest.stream()
+            .map(LockRequest::getRequestor)
+            .collect(Collectors.toSet());
+   }
+
    private static void checkValidCancelState(LockState state) {
-      if (state != LockState.TIMED_OUT && state != LockState.DEADLOCKED) {
+      if (state != LockState.TIMED_OUT && state != LockState.DEADLOCKED && state != LockState.ILLEGAL) {
          throw new IllegalArgumentException("LockState " + state + " is not valid to cancel.");
       }
    }
@@ -430,6 +442,9 @@ public class InfinispanLock {
                case DEADLOCKED:
                   cleanup();
                   throw new DeadlockDetectedException("DeadLock detected");
+               case ILLEGAL:
+                  cleanup();
+                  throw new IllegalStateException("Lock in illegal state");
                default:
                   throw new IllegalStateException("Unknown lock state: " + currentState);
             }
@@ -467,6 +482,7 @@ public class InfinispanLock {
                case TIMED_OUT:
                case DEADLOCKED:
                case RELEASED:
+               case ILLEGAL:
                   return; //no-op, the lock is in final state.
                default:
                   throw new IllegalStateException("Unknown lock state " + currentState);
@@ -530,6 +546,7 @@ public class InfinispanLock {
                case ACQUIRED:
                case TIMED_OUT:
                case DEADLOCKED:
+               case ILLEGAL:
                   if (casState(state, LockState.RELEASED)) {
                      cleanup();
                      return true;
@@ -555,6 +572,9 @@ public class InfinispanLock {
             case DEADLOCKED:
                cleanup();
                return exception.apply(new DeadlockDetectedException("DeadLock detected"));
+            case ILLEGAL:
+               cleanup();
+               return exception.apply(new IllegalStateException("Lock in illegal state"));
             default:
                return exception.apply(new IllegalStateException("Unknown lock state: " + state));
          }

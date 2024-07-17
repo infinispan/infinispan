@@ -2394,4 +2394,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Received new cross-site event, site(s) %s: %s", id = 976)
    @Description("A cluster has either joined or left the global cluster view.")
    void crossSiteViewEvent(String action, String sites);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Aborting transaction due to deadlock: %s", id = 977)
+   void deadlockIdentified(Object o);
 }

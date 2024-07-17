@@ -142,8 +142,7 @@ public class NoLockLostOnLongTxTest extends MultipleCacheManagersTest {
 
       tm.commit();
 
-      GlobalTransaction nonExistingGtx = new GlobalTransaction(remoteAddress, false);
-      nonExistingGtx.setId(-1);
+      GlobalTransaction nonExistingGtx = new GlobalTransaction(-1, remoteAddress, false);
 
       Collection<GlobalTransaction> list = Collections.singletonList(nonExistingGtx);
 

@@ -16,6 +16,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.server.hotrod.logging.HotRodAccessLogging;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.topology.MissingMembersException;
+import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -155,6 +156,6 @@ public class BaseRequestProcessor {
    }
 
    private boolean isExceptionTrace(Throwable t) {
-      return t instanceof MissingMembersException;
+      return t instanceof MissingMembersException || DeadlockDetectedException.isDeadlockDetectedException(t);
    }
 }

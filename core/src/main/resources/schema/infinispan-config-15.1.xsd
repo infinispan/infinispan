@@ -1412,6 +1412,14 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="deadlock-detection" type="xs:boolean" default="${Transaction.deadlock-detection}">
+      <xs:annotation>
+        <xs:documentation>
+          Enables or disables deadlock detection during the lock acquisition phase in transactions. Disabled by default.
+          This functionality only applies to pessimistic transactions.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="encodingType" abstract="true">

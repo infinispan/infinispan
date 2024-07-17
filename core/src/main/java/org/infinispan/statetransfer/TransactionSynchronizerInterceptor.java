@@ -8,6 +8,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.transaction.impl.RemoteTransaction;
+import org.infinispan.util.concurrent.locks.deadlock.DeadlockProbeCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -41,6 +42,13 @@ public class TransactionSynchronizerInterceptor extends BaseAsyncInterceptor {
          return invokeNext(ctx, command);
       }
 
+      // Some commands must be able to bypass the synchronization and guarantee progress.
+      // In some cases, the LockControlCommand might stall until the timeout elapses, and it holds the synchronization
+      // future the whole time.
+      if (bypassSynchronization(command)) {
+         return invokeNext(ctx, command);
+      }
+
       CompletableFuture<Void> releaseFuture = new CompletableFuture<>();
       RemoteTransaction remoteTransaction = ((TxInvocationContext<RemoteTransaction>) ctx).getCacheTransaction();
       Object result = asyncInvokeNext(ctx, command, remoteTransaction.enterSynchronizationAsync(releaseFuture));
@@ -48,5 +56,10 @@ public class TransactionSynchronizerInterceptor extends BaseAsyncInterceptor {
                log.tracef("Completing tx command release future for %s", remoteTransaction);
                releaseFuture.complete(null);
             });
+   }
+
+   private static boolean bypassSynchronization(VisitableCommand command) {
+      // Deadlock command can proceed to identify lock cycles between transactions.
+      return command instanceof DeadlockProbeCommand;
    }
 }

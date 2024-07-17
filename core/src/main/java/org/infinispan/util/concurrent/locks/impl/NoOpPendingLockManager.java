@@ -2,6 +2,7 @@ package org.infinispan.util.concurrent.locks.impl;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.util.concurrent.locks.PendingLockManager;
@@ -31,6 +32,9 @@ public class NoOpPendingLockManager implements PendingLockManager {
    public PendingLockPromise checkPendingTransactionsForKeys(TxInvocationContext<?> ctx, Collection<Object> keys, long time, TimeUnit unit) {
       return PendingLockPromise.NO_OP;
    }
+
+   @Override
+   public void onPendingPromises(Consumer<PendingLockPromise> consumer) { }
 
    private static class Wrapper {
       private static final NoOpPendingLockManager INSTANCE = new NoOpPendingLockManager();

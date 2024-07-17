@@ -39,13 +39,14 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
    public static final AttributeDefinition<TimeQuantity> REAPER_WAKE_UP_INTERVAL = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.REAPER_WAKE_UP_INTERVAL, TimeQuantity.valueOf("30s")).parser(TimeQuantity.PARSER).immutable().build();
    public static final AttributeDefinition<TimeQuantity> COMPLETED_TX_TIMEOUT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.COMPLETED_TX_TIMEOUT, TimeQuantity.valueOf("1m")).parser(TimeQuantity.PARSER).immutable().build();
    public static final AttributeDefinition<Boolean> NOTIFICATIONS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.NOTIFICATIONS, true).immutable().build();
+   public static final AttributeDefinition<Boolean> DEADLOCK_DETECTION = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.DEADLOCK_DETECTION, false).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(TransactionConfiguration.class, Element.TRANSACTION.toString(), null,
             new AttributeDefinition[]{
                   AUTO_COMMIT, CACHE_STOP_TIMEOUT, LOCKING_MODE,
                   TRANSACTION_MANAGER_LOOKUP, TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP, TRANSACTION_MODE, USE_SYNCHRONIZATION, USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS,
-                  REAPER_WAKE_UP_INTERVAL, COMPLETED_TX_TIMEOUT, NOTIFICATIONS
+                  REAPER_WAKE_UP_INTERVAL, COMPLETED_TX_TIMEOUT, NOTIFICATIONS, DEADLOCK_DETECTION,
             },
             new AttributeSet.RemovedAttribute[]{new AttributeSet.RemovedAttribute(org.infinispan.configuration.parsing.Attribute.TRANSACTION_PROTOCOL, 11, 0)});
    }
@@ -61,6 +62,7 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
    private final Attribute<TimeQuantity> reaperWakeUpInterval;
    private final Attribute<TimeQuantity> completedTxTimeout;
    private final Attribute<Boolean> notifications;
+   private final Attribute<Boolean> deadlockDetection;
    private final RecoveryConfiguration recovery;
 
    TransactionConfiguration(AttributeSet attributes, RecoveryConfiguration recovery, boolean invocationBatching) {
@@ -76,6 +78,7 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
       reaperWakeUpInterval = attributes.attribute(REAPER_WAKE_UP_INTERVAL);
       completedTxTimeout = attributes.attribute(COMPLETED_TX_TIMEOUT);
       notifications = attributes.attribute(NOTIFICATIONS);
+      deadlockDetection = attributes.attribute(DEADLOCK_DETECTION);
       this.recovery = recovery;
    }
 
@@ -210,5 +213,14 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
     */
    public boolean notifications() {
       return notifications.get();
+   }
+
+   /**
+    * Whether deadlock detection is enabled.
+    *
+    * @return <code>true</code> if can detect deadlock, <code>false</code>, otherwise.
+    */
+   public boolean deadlockDetectionEnabled() {
+      return deadlockDetection.get();
    }
 }

@@ -95,6 +95,7 @@ import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherComman
 import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
 import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.locks.deadlock.DeadlockProbeCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
 import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
@@ -462,6 +463,9 @@ public class RemoteCommandsFactory {
                break;
             case SizeCommand.COMMAND_ID:
                command = new SizeCommand(cacheName);
+               break;
+            case DeadlockProbeCommand.COMMAND_ID:
+               command = new DeadlockProbeCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

@@ -100,6 +100,21 @@ public abstract class AbstractTxInvocationContext<T extends AbstractCacheTransac
    }
 
    @Override
+   public void addAllInspectedKeys(Collection<?> keys) {
+      cacheTransaction.addAllInspectedKeys(keys);
+   }
+
+   @Override
+   public void addInspectedKey(Object key) {
+      cacheTransaction.addInspectedKey(key);
+   }
+
+   @Override
+   public Set<Object> getInspectedKeys() {
+      return cacheTransaction.getInspectedKeys();
+   }
+
+   @Override
    public final void putLookedUpEntry(Object key, CacheEntry e) {
       cacheTransaction.putLookedUpEntry(key, e);
    }

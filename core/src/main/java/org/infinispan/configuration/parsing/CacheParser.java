@@ -590,6 +590,10 @@ public class CacheParser implements ConfigurationParser {
                builder.transaction().notifications(ParseUtils.parseBoolean(reader, i, value));
                break;
             }
+            case DEADLOCK_DETECTION: {
+               builder.transaction().deadlockDetection(ParseUtils.parseBoolean(reader, i, value));
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }
