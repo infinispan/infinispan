@@ -1,8 +1,11 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.lucene.document.DateTools;
 import org.hibernate.search.engine.backend.metamodel.IndexDescriptor;
@@ -10,6 +13,7 @@ import org.hibernate.search.engine.backend.metamodel.IndexFieldDescriptor;
 import org.hibernate.search.engine.backend.metamodel.IndexValueFieldDescriptor;
 import org.hibernate.search.engine.backend.metamodel.IndexValueFieldTypeDescriptor;
 import org.hibernate.search.engine.backend.types.IndexFieldTraits;
+import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
@@ -18,6 +22,7 @@ import org.infinispan.objectfilter.impl.syntax.parser.ReflectionPropertyHelper;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.CacheValuePropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
+import org.infinispan.objectfilter.impl.util.ReflectionHelper;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.search.mapper.mapping.SearchMapping;
@@ -91,10 +96,19 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
    @Override
    public boolean isNestedIndexStructure(Class<?> entityType, String[] propertyPath) {
       IndexFieldDescriptor fieldDescriptor = getFieldDescriptor(entityType, propertyPath);
-      if (fieldDescriptor == null || fieldDescriptor.type() == null) {
-         return false;
+
+      if (fieldDescriptor != null) {
+         // TODO replace reflection with direct call to type().traits()
+         // currently direct call to type() will fail the quarkus build
+         // https://hibernate.atlassian.net/browse/HSEARCH-3909 check it
+         Method typeMethod = ReflectionUtil.findMethod(fieldDescriptor.getClass(), "type");
+         Object type = ReflectionUtil.invokeMethod(fieldDescriptor, typeMethod, new Object[]{});
+         Method traitsMethod = ReflectionUtil.findMethod(type.getClass(), "traits");
+         Set<String> traits = (Set<String>) ReflectionUtil.invokeMethod(type, traitsMethod, new Object[]{});
+
+         return traits.contains(IndexFieldTraits.Predicates.NESTED);
       }
-      return fieldDescriptor.type().traits().contains(IndexFieldTraits.Predicates.NESTED);
+      return false;
    }
 
    @Override
