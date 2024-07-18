@@ -144,7 +144,7 @@ abstract class RESPAuthorizationTest {
             .compose(ignore -> ctx.assertFailure(redis.rpush(List.of("leads", "william")))
                   .onFailure(t -> ctx.verify(() -> assertThat(t)
                         .isInstanceOf(ErrorType.class)
-                        .hasMessageContaining("ERRWRONGTYPE")))
+                        .hasMessageContaining("WRONGTYPE")))
             ).onComplete(ignore -> ctx.completeNow());
    }
 
@@ -218,7 +218,7 @@ abstract class RESPAuthorizationTest {
             .compose(ignore -> ctx.assertFailure(redis.hmset(List.of("plain", "k1", "v1")))
                   .onFailure(t -> ctx.verify(() -> assertThat(t)
                         .isInstanceOf(ErrorType.class)
-                        .hasMessageContaining("ERRWRONGTYPE"))))
+                        .hasMessageContaining("WRONGTYPE"))))
             .onComplete(ignore -> ctx.completeNow());
    }
 

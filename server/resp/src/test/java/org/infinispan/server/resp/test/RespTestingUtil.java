@@ -121,6 +121,6 @@ public class RespTestingUtil {
       assertThatThrownBy(() -> {
          command2.run();
       }).isInstanceOf(RedisCommandExecutionException.class)
-            .hasMessageContaining("ERRWRONGTYPE");
+            .hasMessageContaining("WRONGTYPE");
    }
 }
