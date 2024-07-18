@@ -169,7 +169,7 @@ public class CacheParser implements ConfigurationParser {
             break;
          }
          case ALIASES: {
-            builder.aliases(ParseUtils.getListAttributeValue(value));
+            builder.aliases(reader.getListAttributeValue(index));
             break;
          }
          case SIMPLE_CACHE: {
