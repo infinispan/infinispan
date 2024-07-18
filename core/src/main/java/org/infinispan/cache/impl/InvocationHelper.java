@@ -4,11 +4,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
-import jakarta.transaction.InvalidTransactionException;
-import jakarta.transaction.Synchronization;
-import jakarta.transaction.SystemException;
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 
@@ -20,6 +15,7 @@ import org.infinispan.commons.tx.AsyncXaResource;
 import org.infinispan.commons.tx.TransactionImpl;
 import org.infinispan.commons.tx.TransactionResourceConverter;
 import org.infinispan.commons.tx.XidImpl;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.context.InvocationContext;
@@ -30,10 +26,15 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import jakarta.transaction.InvalidTransactionException;
+import jakarta.transaction.Synchronization;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 /**
  * It invokes the {@link VisitableCommand} through this cache {@link AsyncInterceptorChain}.
@@ -259,7 +260,12 @@ public class InvocationHelper implements TransactionResourceConverter {
    private <T> CompletableFuture<T> commitInjectedTransactionAsync(CompletionStage<T> cf, TransactionImpl transaction) {
       return cf.handle((result, throwable) -> {
                if (throwable != null) {
-                  return transaction.rollbackAsync(InvocationHelper.this).thenApply(__ -> result);
+                  return transaction.rollbackAsync(InvocationHelper.this)
+                        .exceptionally(t -> {
+                           throwable.addSuppressed(t);
+                           return null;
+                        })
+                        .thenCompose(ignore -> CompletableFuture.<T>failedFuture(throwable));
                } else {
                   return transaction.commitAsync(InvocationHelper.this).thenApply(__ -> result);
                }
