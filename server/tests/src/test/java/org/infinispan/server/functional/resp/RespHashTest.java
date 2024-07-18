@@ -50,7 +50,7 @@ public class RespHashTest extends AbstractRespTest {
             .compose(ignore -> ctx.assertFailure(redis.hmset(List.of("plain", "k1", "v1")))
                   .onFailure(t -> ctx.verify(() -> assertThat(t)
                         .isInstanceOf(ErrorType.class)
-                        .hasMessageContaining("ERRWRONGTYPE"))))
+                        .hasMessageContaining("WRONGTYPE"))))
             .onComplete(ignore -> ctx.completeNow());
    }
 
@@ -113,7 +113,7 @@ public class RespHashTest extends AbstractRespTest {
             .onComplete(res -> {
                ctx.verify(() -> assertThat(res.failed()).isTrue());
                ctx.verify(() -> assertThat(res.cause())
-                     .isInstanceOfSatisfying(ErrorType.class, e -> assertThat(e.is("ERRWRONGTYPE")).isTrue()));
+                     .isInstanceOfSatisfying(ErrorType.class, e -> assertThat(e.is("WRONGTYPE")).isTrue()));
                ctx.completeNow();
             });
    }

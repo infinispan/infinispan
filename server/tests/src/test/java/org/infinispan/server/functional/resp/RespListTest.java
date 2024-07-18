@@ -36,7 +36,7 @@ public class RespListTest extends AbstractRespTest {
             .compose(ignore -> ctx.assertFailure(redis.rpush(List.of("leads", "william")))
                   .onFailure(t -> ctx.verify(() -> assertThat(t)
                         .isInstanceOf(ErrorType.class)
-                        .hasMessageContaining("ERRWRONGTYPE")))
+                        .hasMessageContaining("WRONGTYPE")))
             ).onComplete(ignore -> ctx.completeNow());
    }
 
@@ -88,7 +88,7 @@ public class RespListTest extends AbstractRespTest {
             .onComplete(res -> {
                ctx.verify(() -> assertThat(res.failed()).isTrue());
                ctx.verify(() -> assertThat(res.cause())
-                     .isInstanceOfSatisfying(ErrorType.class, e -> assertThat(e.is("ERRWRONGTYPE")).isTrue()));
+                     .isInstanceOfSatisfying(ErrorType.class, e -> assertThat(e.is("WRONGTYPE")).isTrue()));
                ctx.completeNow();
             });
    }
