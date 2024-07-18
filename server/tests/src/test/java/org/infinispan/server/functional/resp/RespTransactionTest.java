@@ -150,7 +150,7 @@ public class RespTransactionTest extends AbstractRespTest {
                            assertThat(mt)
                                  .hasSize(2)
                                  .satisfies(ignore -> assertThat(mt.get(0).toString()).isEqualTo("OK"))
-                                 .satisfies(ignore -> assertThat(mt.get(1).toString()).isEqualTo("ERRWRONGTYPE Operation against a key holding the wrong kind of value"))
+                                 .satisfies(ignore -> assertThat(mt.get(1).toString()).isEqualTo("WRONGTYPE Operation against a key holding the wrong kind of value"))
                      ));
                return standalone.get("key-0-w");
             })

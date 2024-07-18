@@ -96,7 +96,7 @@ public class RespSetTest extends AbstractRespTest {
             .onComplete(res -> {
                ctx.verify(() -> assertThat(res.failed()).isTrue());
                ctx.verify(() -> assertThat(res.cause())
-                     .isInstanceOfSatisfying(ErrorType.class, e -> assertThat(e.is("ERRWRONGTYPE")).isTrue()));
+                     .isInstanceOfSatisfying(ErrorType.class, e -> assertThat(e.is("WRONGTYPE")).isTrue()));
                ctx.completeNow();
             });
    }
