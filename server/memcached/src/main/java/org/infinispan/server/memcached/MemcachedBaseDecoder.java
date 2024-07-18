@@ -173,7 +173,7 @@ public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
    protected Metadata touchMetadata(CacheEntry<?, ?> entry, int expiration) {
       return new MemcachedMetadata.Builder()
             .merge(entry.getMetadata())
-            .lifespan(toMillis(expiration))
+            .lifespan(expiration > 0 ? toMillis(expiration) : -1)
             .build();
    }
 
