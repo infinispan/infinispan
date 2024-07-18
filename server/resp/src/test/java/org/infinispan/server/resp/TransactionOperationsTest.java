@@ -78,7 +78,7 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
       TransactionResult result = redis.exec();
       assertThat(result.<String>get(0)).isEqualTo(OK);
       assertThat(result.<Throwable>get(1))
-            .hasMessage("ERRWRONGTYPE Operation against a key holding the wrong kind of value");
+            .hasMessage("WRONGTYPE Operation against a key holding the wrong kind of value");
       assertThat(result.<String>get(2)).isEqualTo(OK);
 
       assertThat(redisConnection.isMulti()).isFalse();

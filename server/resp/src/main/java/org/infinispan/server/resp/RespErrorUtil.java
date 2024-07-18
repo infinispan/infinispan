@@ -29,7 +29,7 @@ public final class RespErrorUtil {
 
    public static void wrongType(ByteBufPool allocatorToUse) {
       ByteBufferUtils.stringToByteBufAscii(
-            "-ERRWRONGTYPE Operation against a key holding the wrong kind of value\r\n", allocatorToUse);
+            "-WRONGTYPE Operation against a key holding the wrong kind of value\r\n", allocatorToUse);
 
    }
 
