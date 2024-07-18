@@ -143,6 +143,18 @@ public abstract class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertNull(client.get(k(m)));
    }
 
+   public void testTouch0(Method m) throws ExecutionException, InterruptedException, TimeoutException {
+      OperationFuture<Boolean> f = client.set(k(m), 1, "Value");
+      assertTrue(f.get(timeout, TimeUnit.SECONDS));
+      assertEquals("Value", client.get(k(m)));
+      f = client.touch(k(m), 0);
+      assertTrue(f.get(timeout, TimeUnit.SECONDS));
+      timeService.advance(1100);
+      assertEquals("Value", client.get(k(m)));
+      f = client.touch(k(m), 3);
+      assertTrue(f.get(timeout, TimeUnit.SECONDS));
+   }
+
    public void testGetAndTouchMiss(Method m) {
       CASValue<Object> v = client.getAndTouch(k(m), 1);
       assertNull(v);
