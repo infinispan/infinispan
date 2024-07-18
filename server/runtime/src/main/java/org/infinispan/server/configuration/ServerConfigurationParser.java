@@ -1347,12 +1347,12 @@ public class ServerConfigurationParser implements ConfigurationParser {
                builder.failCache(ParseUtils.parseLong(reader, i, value));
                break;
             case MECHANISM_NAMES:
-               for (String name : ParseUtils.getListAttributeValue(value)) {
+               for (String name : reader.getListAttributeValue(i)) {
                   builder.addMechanismName(name);
                }
                break;
             case MECHANISM_OIDS:
-               for (String oid : ParseUtils.getListAttributeValue(value)) {
+               for (String oid : reader.getListAttributeValue(i)) {
                   builder.addMechanismOid(oid);
                }
                break;
