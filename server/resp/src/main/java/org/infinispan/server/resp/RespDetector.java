@@ -16,7 +16,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class RespDetector extends ProtocolDetector {
    public static final String NAME = "resp-detector";
-   private static final Pattern RESP3_HANDSHAKE = Pattern.compile("^(?is)\\*[1-9]\r\n\\$[1-9]\r\n(HELLO|AUTH|COMMAND)\r\n.*");
+   private static final Pattern RESP3_HANDSHAKE = Pattern.compile("^(?is)\\*[1-9]\r\n\\$[1-9]\r\n(HELLO|AUTH|COMMAND|SELECT)\r\n.*");
 
    public RespDetector(RespServer server) {
       super(server);
