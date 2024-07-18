@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import javax.naming.NamingException;
 
@@ -158,8 +157,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Created datasource '%s' bound to JNDI '%s'", id = 80038)
    void dataSourceCreated(String name, String jndiName);
 
-   @Message(value = "Invalid Unicode sequence '%s'", id = 80039)
-   IOException invalidUnicodeSequence(String sequence, @Cause NoSuchElementException e);
+   //@Message(value = "Invalid Unicode sequence '%s'", id = 80039)
+   //IOException invalidUnicodeSequence(String sequence, @Cause NoSuchElementException e);
 
    @Message(value = "No realm name found in users property file - non-plain-text users file must contain \"#$REALM_NAME=RealmName$\" line", id = 80040)
    RealmUnavailableException noRealmFoundInProperties();
@@ -279,4 +278,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = Logger.Level.WARN)
    @Message(value = "The '%2$s' certificate in keystore '%1$s' does not have the subjectAltName extension as recommended by RFC2818.", id = 80075)
    void serverCertificateWithoutSAN(String keyStoreFileName, String alias);
+
+   @Message(value = "Malformed entry in user properties file at line %d", id = 80076)
+   IllegalStateException malformedUserProperties(int line);
 }

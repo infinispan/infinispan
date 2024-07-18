@@ -216,7 +216,9 @@ public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm,
       if (usersStream != null) {
          try (BufferedReader reader = new BufferedReader(new InputStreamReader(usersStream, StandardCharsets.UTF_8))) {
             String currentLine;
+            int line = 0;
             while ((currentLine = reader.readLine()) != null) {
+               line++;
                final String trimmed = currentLine.trim();
                if (trimmed.startsWith(COMMENT_PREFIX1) && trimmed.contains(REALM_COMMENT_PREFIX)) {
                   // this is the line that contains the realm name.
@@ -253,8 +255,9 @@ public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm,
                                  hex.appendCodePoint(it.next());
                                  hex.appendCodePoint(it.next());
                                  builder.appendCodePoint((char) Integer.parseInt(hex.toString(), 16));
-                              } catch (NoSuchElementException nsee) {
-                                 throw Server.log.invalidUnicodeSequence(hex.toString(), nsee);
+                              } catch (NoSuchElementException e) {
+                                 Server.log.debugf(e, "At line %d", line);
+                                 throw Server.log.malformedUserProperties(line);
                               }
                            }
                         } else if (username == null && (cp == '=' || cp == ':')) { // username-password delimiter
@@ -271,13 +274,17 @@ public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm,
                               String[] passwords = builder.toString().trim().split(";");
                               for (String password : passwords) {
                                  int colon = password.indexOf(':');
+                                 if (colon < 0) {
+                                    throw Server.log.malformedUserProperties(line);
+                                 }
                                  byte[] passwordBytes = CodePointIterator.ofChars(password.substring(colon + 1).toCharArray()).base64Decode().drain();
                                  PasswordFactory factory = getPasswordFactory(password.substring(0, colon));
                                  PasswordSpec passwordSpec = BasicPasswordSpecEncoding.decode(passwordBytes);
                                  try {
                                     credentials.add(new PasswordCredential(factory.generatePassword(passwordSpec)));
                                  } catch (InvalidKeySpecException e) {
-                                    throw new IOException(e);
+                                    Server.log.debugf(e, "At line %d", line);
+                                    throw Server.log.malformedUserProperties(line);
                                  }
                               }
                               break;
@@ -286,7 +293,8 @@ public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm,
                               try {
                                  credentials.add(new PasswordCredential(factory.generatePassword(new ClearPasswordSpec(builder.toString().trim().toCharArray()))));
                               } catch (InvalidKeySpecException e) {
-                                 throw new IOException(e);
+                                 Server.log.debugf(e, "At line %d", line);
+                                 throw Server.log.malformedUserProperties(line);
                               }
                               break;
                         }
