@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
@@ -33,5 +34,12 @@ public class JsonParsingTest extends AbstractInfinispanTest {
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true, System.getProperties());
       ConfigurationBuilderHolder holder = parserRegistry.parseFile("configs/tracing-endpoint-wrong.json");
       Exceptions.expectException("^ISPN000972:.*Tracing collector endpoint 'sdjsd92k2..21232' is not valid.*", () -> holder.getGlobalConfigurationBuilder().build(), CacheConfigurationException.class);
+   }
+
+   public void testAliasTest() throws IOException {
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true, System.getProperties());
+      ConfigurationBuilderHolder holder = parserRegistry.parseFile("configs/aliases-test.json");
+      Configuration cache = holder.getNamedConfigurationBuilders().get("another-resp-cache").build();
+      assertEquals(List.of("1"), cache.aliases());
    }
 }

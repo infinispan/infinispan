@@ -309,10 +309,6 @@ public final class ParseUtils {
         return null;
     }
 
-    public static String[] getListAttributeValue(String value) {
-        return value.split("\\s+");
-    }
-
     public static String resolvePath(String path, String relativeTo) {
         if (path == null) {
             return null;

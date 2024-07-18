@@ -16,7 +16,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -67,7 +66,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       Properties properties = new Properties();
       properties.put("jboss.server.temp.dir", System.getProperty("java.io.tmpdir"));
       ParserRegistry registry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), false, properties);
-      List<Path> paths = Files.list(configDir).collect(Collectors.toList());
+      List<Path> paths = Files.list(configDir).toList();
       return paths.stream().flatMap(p -> typesFor(p).stream().map(t -> new Object[]{new Parameter(p, t, registry)})).toArray(Object[][]::new);
    }
 

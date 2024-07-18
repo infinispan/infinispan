@@ -1250,7 +1250,7 @@ public class Parser extends CacheParser {
                   break;
                }
                case RAFT_MEMBERS:
-                  transport.raftMembers(ParseUtils.getListAttributeValue(value));
+                  transport.raftMembers(reader.getListAttributeValue(i));
                   break;
                default: {
                   throw ParseUtils.unexpectedAttribute(reader, i);
