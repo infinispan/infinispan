@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -293,10 +294,12 @@ public class JdbcStringBasedStore<K, V> extends BaseJdbcStore<K, V, JdbcStringBa
    }
 
    static class PossibleExpirationNotification {
+      private final long expiryTime;
       private final String key;
       private final MarshalledValue is;
 
-      PossibleExpirationNotification(String key, MarshalledValue is) {
+      PossibleExpirationNotification(Long expiryTime, String key, MarshalledValue is) {
+         this.expiryTime = expiryTime;
          this.key = key;
          this.is = is;
       }
@@ -306,100 +309,121 @@ public class JdbcStringBasedStore<K, V> extends BaseJdbcStore<K, V, JdbcStringBa
    public Publisher<MarshallableEntry<K, V>> purgeExpired() {
       return Flowable.defer(() -> {
          UnicastProcessor<MarshallableEntry<K, V>> unicastProcessor = UnicastProcessor.create();
-         blockingManager.runBlocking(() -> {
-            TableManager<K, V> tableManager = getTableManager();
-            Connection conn = null;
-            PreparedStatement ps = null;
-            ResultSet rs = null;
-            try {
-               String sql = tableManager.getSelectOnlyExpiredRowsSql();
-               conn = connectionFactory.getConnection();
-               conn.setAutoCommit(false);
-               ps = conn.prepareStatement(sql);
-               ps.setLong(1, timeService.wallClockTime());
-               rs = ps.executeQuery();
-               int batchSize = configuration.maxBatchSize();
-               List<PossibleExpirationNotification> list;
-
-               if (key2StringMapper instanceof TwoWayKey2StringMapper) {
-                  list = new ArrayList<>(batchSize);
-               } else {
-                  list = null;
-                  PERSISTENCE.twoWayKey2StringMapperIsMissing(TwoWayKey2StringMapper.class.getSimpleName());
-               }
-               long purgedAmount = 0;
-
-               try (PreparedStatement batchDelete = conn.prepareStatement(tableManager.getDeleteRowWithExpirationSql())) {
-                  long possibleAmount = 0;
-                  while (rs.next()) {
-                     String keyStr = rs.getString(2);
-                     batchDelete.setString(1, keyStr);
-                     long expiryTime = rs.getLong(3);
-                     batchDelete.setLong(2, expiryTime);
-                     batchDelete.addBatch();
-
-                     if (list != null) {
-                        InputStream inputStream = rs.getBinaryStream(1);
-                        MarshalledValue value = unmarshall(inputStream, marshaller);
-                        list.add(new PossibleExpirationNotification(keyStr, value));
-                     }
-
-                     if (++possibleAmount == batchSize) {
-                        purgedAmount += runBatchAndNotify(list, batchDelete, unicastProcessor);
-                        possibleAmount = 0;
-                     }
-                  }
-
-                  if (list == null || !list.isEmpty()) {
-                     purgedAmount += runBatchAndNotify(list, batchDelete, unicastProcessor);
-                  }
-
-                  if (log.isTraceEnabled()) {
-                     log.tracef("Successfully purged %d rows.", purgedAmount);
-                  }
-                  conn.commit();
-                  unicastProcessor.onComplete();
-               }
-            } catch (SQLException e) {
-               log.failedClearingJdbcCacheStore(e);
-               try {
-                  conn.rollback();
-               } catch (SQLException ex) {
-                  log.sqlFailureTxRollback(ex);
-               }
-               unicastProcessor.onError(e);
-            } finally {
-               JdbcUtil.safeClose(rs);
-               JdbcUtil.safeClose(ps);
-               connectionFactory.releaseConnection(conn);
-            }
-         }, "jdbcstringstore-purge");
+         this.blockingManager.runBlocking(() -> purgeExpiredInBlockingThread(unicastProcessor), "jdbcstringstore-purge");
          return unicastProcessor;
       });
    }
 
-   private long runBatchAndNotify(List<PossibleExpirationNotification> possible, PreparedStatement batchDelete,
-         FlowableProcessor<MarshallableEntry<K, V>> flowable) throws SQLException {
-      long purgeAmount = 0;
-      int[] results = batchDelete.executeBatch();
-      if (possible != null) {
-         for (int i = 0; i < results.length; ++i) {
-            PossibleExpirationNotification notification = possible.get(i);
-            if (results[i] != Statement.EXECUTE_FAILED) {
-               Object key = ((TwoWayKey2StringMapper) key2StringMapper).getKeyMapping(notification.key);
-               flowable.onNext(marshalledEntryFactory.create(key, notification.is));
-
-               purgeAmount++;
-            } else {
-               log.tracef("Unable to remove expired entry for key %s, most likely concurrent update", notification.key);
-            }
+   private void purgeExpiredInBlockingThread(UnicastProcessor<MarshallableEntry<K, V>> unicastProcessor) {
+      try {
+         boolean key2StringMapperIsAvailable = key2StringMapper instanceof TwoWayKey2StringMapper;
+         if (!key2StringMapperIsAvailable) {
+            PERSISTENCE.twoWayKey2StringMapperIsMissing(TwoWayKey2StringMapper.class.getSimpleName());
          }
-         possible.clear();
-      } else {
-         purgeAmount += results.length;
+         long purgedAmount = 0L;
+         List<PossibleExpirationNotification> entriesToBeDeleted;
+         int[] deleteResults;  // after call of deleteEntries the same length as entriesToBeDeleted
+         do {
+            entriesToBeDeleted = getEntriesToBeDeleted();
+
+            if (!entriesToBeDeleted.isEmpty()) {
+               deleteResults = deleteEntries(entriesToBeDeleted);
+               if (deleteResults != null) {
+                  if (key2StringMapperIsAvailable) {
+                     if (deleteResults.length == entriesToBeDeleted.size()) {
+                        purgedAmount += doNotify(entriesToBeDeleted, deleteResults, unicastProcessor);
+                     } else {
+                        log.errorf("Expected %d entries to be deleted, but deleteresult contains only %d entries");
+                     }
+                  }
+               } else {
+                  log.errorf("Expected %d entries to be deleted, but deleteresult is empty");
+               }
+            }
+         } while (!entriesToBeDeleted.isEmpty());
+         if (purgedAmount > 0) {
+            log.infof("Successfully purged %d rows of table %s.", purgedAmount, getTableManager().getDataTableName());
+         }
+         unicastProcessor.onComplete();
+      } catch (SQLException e) {
+         log.failedClearingJdbcCacheStore(e);
+         unicastProcessor.onError(e);
       }
+   }
+
+   private List<PossibleExpirationNotification> getEntriesToBeDeleted() throws SQLException {
+      int batchSize = this.configuration.maxBatchSize();
+      String sql = this.getTableManager().getSelectOnlyExpiredRowsSql();
+      try (var conn = this.connectionFactory.getConnection()) {
+         conn.setAutoCommit(false);
+         try(PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, this.timeService.wallClockTime());
+            try(ResultSet rs = ps.executeQuery()) {
+               List<PossibleExpirationNotification> result = new ArrayList<>();
+               while (rs.next() && (batchSize > 0)) {
+                  batchSize--;
+                  String keyStr = rs.getString(2);
+                  long expiryTime = rs.getLong(3);
+                  InputStream inputStream = rs.getBinaryStream(1);
+                  MarshalledValue value = JdbcUtil.unmarshall(inputStream, this.marshaller);
+                  result.add(new PossibleExpirationNotification(expiryTime, keyStr, value));
+               }
+               return Collections.unmodifiableList(result);
+            }
+         } finally {
+            conn.commit();
+            conn.setAutoCommit(true);
+         }
+      }
+   }
+
+   private int[] deleteEntries(List<PossibleExpirationNotification> result) throws SQLException {
+      int[] deleteResults;
+      try (var conn = this.connectionFactory.getConnection()) {
+         conn.setAutoCommit(false);
+         try (PreparedStatement batchDelete = conn.prepareStatement(this.getTableManager().getDeleteRowWithExpirationSql())) {
+            for (PossibleExpirationNotification notification : result) {
+               batchDelete.setString(1, notification.key);
+               batchDelete.setLong(2, notification.expiryTime);
+               batchDelete.addBatch();
+            }
+            deleteResults = batchDelete.executeBatch();
+            if (log.isTraceEnabled()) {
+               int purgedAmount = Arrays.stream(deleteResults).sequential().filter(r -> r != Statement.EXECUTE_FAILED).sum();
+               log.tracef("Successfully purged %d rows.", purgedAmount);
+            }
+         } catch (Exception ex) {
+            try {
+               conn.rollback();
+            } catch (SQLException rollbackException) {
+               log.sqlFailureTxRollback(rollbackException);
+            }
+            throw ex;
+         } finally {
+            conn.commit();
+            conn.setAutoCommit(true);
+         }
+      }
+      return deleteResults;
+   }
+
+   private long doNotify(List<PossibleExpirationNotification> possible, int[] deleteResults, FlowableProcessor<MarshallableEntry<K, V>> flowable)  {
+      long purgeAmount = 0L;
+      assert possible.size() == deleteResults.length;
+      for(int i = 0; i < deleteResults.length; ++i) {
+         PossibleExpirationNotification notification = possible.get(i);
+         if (deleteResults[i] != Statement.EXECUTE_FAILED) {
+            Object key = ((TwoWayKey2StringMapper)this.key2StringMapper).getKeyMapping(notification.key);
+            flowable.onNext(this.marshalledEntryFactory.create(key, notification.is));
+            ++purgeAmount;
+         } else {
+            log.tracef("Unable to remove expired entry for key %s, most likely concurrent update", notification.key);
+         }
+      }
+
       return purgeAmount;
    }
+
 
    private void enforceTwoWayMapper(String where) throws PersistenceException {
       if (!(key2StringMapper instanceof TwoWayKey2StringMapper)) {
