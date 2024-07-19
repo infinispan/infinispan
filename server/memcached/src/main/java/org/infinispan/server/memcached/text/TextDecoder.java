@@ -38,8 +38,8 @@ abstract class TextDecoder extends MemcachedBaseDecoder {
    }
 
    @Override
-   public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-      super.channelUnregistered(ctx);
+   protected void handlerRemoved0(ChannelHandlerContext ctx) throws Exception {
+      super.handlerRemoved0(ctx);
       if (this.reader != null) reader.release();
    }
 
