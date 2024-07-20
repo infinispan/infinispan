@@ -62,44 +62,6 @@
       }
     }
   }, {
-    "protopath" : "generated:/:persistence.server_state.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "IgnoredCaches",
-        "fields" : [ {
-          "id" : 1,
-          "name" : "caches",
-          "type" : "string",
-          "is_repeated" : true
-        } ]
-      }, {
-        "name" : "IpFilterRules",
-        "fields" : [ {
-          "id" : 1,
-          "name" : "rules",
-          "type" : "IpFilterRule",
-          "is_repeated" : true
-        } ]
-      }, {
-        "name" : "IpFilterRule",
-        "fields" : [ {
-          "id" : 1,
-          "name" : "cidr",
-          "type" : "string",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "type",
-          "type" : "string",
-          "optional" : true
-        } ]
-      } ],
-      "package" : {
-        "name" : "org.infinispan.persistence.server_state"
-      }
-    }
-  }, {
     "protopath" : "generated:/:persistence.event_logger.proto",
     "def" : {
       "enums" : [ ],
@@ -156,6 +118,44 @@
       } ],
       "package" : {
         "name" : "org.infinispan.persistence.event_logger"
+      }
+    }
+  }, {
+    "protopath" : "generated:/:persistence.server_state.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "IgnoredCaches",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "caches",
+          "type" : "string",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "IpFilterRules",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "rules",
+          "type" : "IpFilterRule",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "IpFilterRule",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cidr",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "type",
+          "type" : "string",
+          "optional" : true
+        } ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.server_state"
       }
     }
   } ]
