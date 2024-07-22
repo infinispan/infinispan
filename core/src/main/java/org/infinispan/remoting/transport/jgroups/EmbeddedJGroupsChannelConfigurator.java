@@ -15,6 +15,7 @@ import org.jgroups.JChannel;
 import org.jgroups.conf.ProtocolConfiguration;
 import org.jgroups.conf.ProtocolStackConfigurator;
 import org.jgroups.protocols.JDBC_PING;
+import org.jgroups.protocols.JDBC_PING2;
 import org.jgroups.protocols.relay.RELAY2;
 import org.jgroups.protocols.relay.config.RelayConfig;
 import org.jgroups.stack.Protocol;
@@ -84,14 +85,22 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
 
    @Override
    public void afterCreation(Protocol protocol) {
-      if (protocol instanceof RELAY2) {
-         setupRELAY2((RELAY2) protocol);
-      } else if (protocol instanceof JDBC_PING) {
-         setupJDBC_PING((JDBC_PING) protocol);
+      if (protocol instanceof RELAY2 relay) {
+         setupRELAY2(relay);
+      } else if (protocol instanceof JDBC_PING jdbc_ping) {
+         setupJDBC_PING(jdbc_ping);
+      } else if (protocol instanceof JDBC_PING2 jdbc_ping) {
+         setupJDBC_PING2(jdbc_ping);
       }
    }
 
    private void setupJDBC_PING(JDBC_PING jdbc_ping) {
+      if (dataSource != null) {
+         jdbc_ping.setDataSource(dataSource);
+      }
+   }
+
+   private void setupJDBC_PING2(JDBC_PING2 jdbc_ping) {
       if (dataSource != null) {
          jdbc_ping.setDataSource(dataSource);
       }
