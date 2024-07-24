@@ -1,6 +1,7 @@
 package org.infinispan.server.resp;
 
 import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
+import static org.infinispan.server.resp.RespConstants.NULL;
 import static org.infinispan.server.resp.RespConstants.OK;
 import static org.infinispan.server.resp.RespConstants.QUEUED_REPLY;
 
@@ -48,7 +49,7 @@ public final class Consumers {
       if (innerValueBytes != null) {
          ByteBufferUtils.bytesToResult(innerValueBytes, alloc);
       } else {
-         ByteBufferUtils.stringToByteBufAscii("$-1\r\n", alloc);
+         ByteBufferUtils.stringToByteBufAscii("_\r\n", alloc);
       }
    };
 
@@ -60,7 +61,7 @@ public final class Consumers {
       if (innerValueBytes != null) {
          ByteBufferUtils.bytesToResult(innerValueBytes, alloc);
       } else {
-         ByteBufferUtils.stringToByteBufAscii("$-1\r\n", alloc);
+         alloc.acquire(NULL.length).writeBytes(NULL);
       }
    };
 
@@ -73,7 +74,7 @@ public final class Consumers {
       if (innerValueBytes != null) {
          ByteBufferUtils.bytesToResultWrapped(innerValueBytes, alloc);
       } else {
-         ByteBufferUtils.stringToByteBufAscii("$-1\r\n", alloc);
+         alloc.acquire(NULL.length).writeBytes(NULL);
       }
    };
 
@@ -90,7 +91,7 @@ public final class Consumers {
 
    public static final BiConsumer<Map<byte[], Collection<byte[]>>, ByteBufPool> MAP_CONSUMER = (res, alloc) -> {
       if (res == null) {
-         ByteBufferUtils.stringToByteBufAscii("$-1\r\n", alloc);
+         alloc.acquire(NULL.length).writeBytes(NULL);
          return;
       }
 

@@ -57,8 +57,8 @@ public class MGET extends RespCommand implements Resp3Command {
                      resultBytesSize.addAndGet(2 + 2);
                   }
                } else {
-                  // $-1
-                  resultBytesSize.addAndGet(3);
+                  // _
+                  resultBytesSize.addAndGet(1);
                }
                // /r/n
                resultBytesSize.addAndGet(2);
