@@ -1,6 +1,7 @@
 package org.infinispan.server.resp.commands.cluster;
 
 import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
+import static org.infinispan.server.resp.RespConstants.NULL_STRING;
 import static org.infinispan.server.resp.commands.cluster.CLUSTER.findPhysicalAddress;
 import static org.infinispan.server.resp.commands.cluster.CLUSTER.findPort;
 import static org.infinispan.server.resp.commands.cluster.CLUSTER.getOnlyIp;
@@ -212,7 +213,7 @@ public class SHARDS extends RespCommand implements Resp3Command {
       if (leader != null) {
          output.append(leader).append("$4\r\nrole\r\n$6\r\nmaster\r\n");
       } else {
-         output.append("$-1\r\n");
+         output.append(NULL_STRING);
       }
 
       // Now any backups, if available.

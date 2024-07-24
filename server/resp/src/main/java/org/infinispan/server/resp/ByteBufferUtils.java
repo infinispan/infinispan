@@ -1,7 +1,7 @@
 package org.infinispan.server.resp;
 
 import static org.infinispan.server.resp.RespConstants.CRLF;
-import static org.infinispan.server.resp.RespConstants.NIL;
+import static org.infinispan.server.resp.RespConstants.NULL;
 
 import java.util.Collection;
 
@@ -9,7 +9,6 @@ import org.infinispan.multimap.impl.ScoredValue;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
-import io.netty.util.CharsetUtil;
 
 /**
  * Utility class with ByteBuffer Utils
@@ -77,7 +76,7 @@ public final class ByteBufferUtils {
 
    public static ByteBuf writeLong(Long result, ByteBufPool alloc) {
       if (result == null) {
-         return alloc.acquire(NIL.length).writeBytes(NIL);
+         return alloc.acquire(NULL.length).writeBytes(NULL);
       }
       // : + number of digits + \r\n
       int size = 1 + stringSize(result) + 2;
@@ -95,8 +94,8 @@ public final class ByteBufferUtils {
       for (ScoredValue<byte[]> result: results) {
          int length;
          if (result == null) {
-            // $-1
-            resultBytesSize += 3;
+            // _
+            resultBytesSize += 1;
          } else if ((length = result.getValue().length) > 0) {
             // $ + digit length (log10 + 1) + \r\n + byte length
             resultBytesSize += (1 + stringSize(length) + 2 + length);
@@ -118,8 +117,8 @@ public final class ByteBufferUtils {
       for (byte[] result: results) {
          int length;
          if (result == null) {
-            // $-1
-            resultBytesSize += 3;
+            // _
+            resultBytesSize += 1;
          } else if ((length = result.length) > 0) {
             // $ + digit length (log10 + 1) + \r\n + byte length
             resultBytesSize += (1 + stringSize(length) + 2 + length);
@@ -144,7 +143,7 @@ public final class ByteBufferUtils {
       byteBuf.writeBytes(CRLF);
       for (byte[] value : results) {
          if (value == null) {
-            byteBuf.writeCharSequence("$-1", CharsetUtil.US_ASCII);
+            byteBuf.writeByte('_');
          } else {
             byteBuf.writeByte('$');
             setIntChars(value.length, stringSize(value.length), byteBuf);
@@ -167,7 +166,7 @@ public final class ByteBufferUtils {
       byteBuf.writeBytes(CRLF);
       for (ScoredValue<byte[]> scoredValue : results) {
          if (scoredValue == null) {
-            byteBuf.writeCharSequence("$-1", CharsetUtil.US_ASCII);
+            byteBuf.writeByte('_');
          } else {
             byteBuf.writeByte('$');
             setIntChars(scoredValue.getValue().length, stringSize(scoredValue.getValue().length), byteBuf);
