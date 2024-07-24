@@ -2,6 +2,7 @@ package org.infinispan.server.resp;
 
 import static org.infinispan.server.resp.RespConstants.CRLF;
 import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
+import static org.infinispan.server.resp.RespConstants.NULL;
 
 import java.util.Collection;
 import java.util.List;
@@ -175,7 +176,7 @@ public class Resp3Handler extends Resp3AuthHandler {
    }
 
    private static void handleNullResult(ByteBufPool alloc) {
-      ByteBufferUtils.stringToByteBufAscii("$-1\r\n", alloc);
+      alloc.acquire(NULL.length).writeBytes(NULL);
    }
 
    protected static void handleBulkResult(byte[] result, ByteBufPool alloc) {

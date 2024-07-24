@@ -1,5 +1,7 @@
 package org.infinispan.server.resp.commands.hash;
 
+import static org.infinispan.server.resp.RespConstants.NULL;
+
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -76,7 +78,7 @@ public class HRANDFIELD extends RespCommand implements Resp3Command {
    private BiConsumer<Map<byte[], byte[]>, ByteBufPool> consumeResponse(int count, boolean withValues, boolean countDefined) {
       return (res, alloc) -> {
          if (res == null) {
-            ByteBufferUtils.stringToByteBufAscii("$-1\r\n", alloc);
+            alloc.acquire(NULL.length).writeBytes(NULL);
             return;
          }
 
