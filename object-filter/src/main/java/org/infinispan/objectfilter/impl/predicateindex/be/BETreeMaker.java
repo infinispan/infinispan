@@ -18,6 +18,7 @@ import org.infinispan.objectfilter.impl.syntax.ConstantBooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.ConstantValueExpr;
 import org.infinispan.objectfilter.impl.syntax.IsNullExpr;
 import org.infinispan.objectfilter.impl.syntax.LikeExpr;
+import org.infinispan.objectfilter.impl.syntax.NestedExpr;
 import org.infinispan.objectfilter.impl.syntax.NotExpr;
 import org.infinispan.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.objectfilter.impl.syntax.PrimaryPredicateExpr;
@@ -71,6 +72,8 @@ public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
          makeBooleanOperatorNode((OrExpr) child, nodes, treeCounters, new OrNode(parent), namedParameters);
       } else if (child instanceof AndExpr) {
          makeBooleanOperatorNode((AndExpr) child, nodes, treeCounters, new AndNode(parent), namedParameters);
+      } else if (child instanceof NestedExpr) {
+         throw new UnsupportedOperationException("Nested expression is currently only supported in indexed queries!");
       } else {
          throw new IllegalStateException("Unexpected *Expr node type: " + child);
       }

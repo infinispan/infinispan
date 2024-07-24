@@ -125,6 +125,45 @@ public class ExpressionBuilderTest {
    }
 
    @Test
+   public void testNestedExpressionQuery() {
+      TestPropertyHelper propertyHelper = new TestPropertyHelper(new ReflectionEntityNamesResolver(null), true);
+      builder = new ExpressionBuilder<>(propertyHelper);
+      builder.setEntityType(TestEntity.class);
+      builder.pushAnd();
+      builder.addNestedComparison(PropertyPath.make("embedded.title"), ComparisonExpr.Type.EQUAL, "dummy1", "a", PropertyPath.make("embedded"));
+      builder.addNestedComparison(PropertyPath.make("anotherEmbedded.title"), ComparisonExpr.Type.EQUAL, "dummy3", "b", PropertyPath.make("embedded"));
+      builder.pop();
+      BooleanExpr query = builder.build();
+
+      assertEquals("AND(NESTED(EQUAL(PROP(embedded.title), CONST(\"dummy1\"))), NESTED(EQUAL(PROP(anotherEmbedded.title), CONST(\"dummy3\"))))", query.toString());
+   }
+
+   @Test
+   public void testNestedExpressionOnNonEmbeddedFieldQuery() {
+      TestPropertyHelper propertyHelper = new TestPropertyHelper(new ReflectionEntityNamesResolver(null), false);
+      builder = new ExpressionBuilder<>(propertyHelper);
+      builder.setEntityType(TestEntity.class);
+      builder.pushAnd();
+      builder.addNestedComparison(PropertyPath.make("embedded.title"), ComparisonExpr.Type.EQUAL, "dummy1", "a", PropertyPath.make("embedded"));
+      builder.addNestedComparison(PropertyPath.make("anotherEmbedded.title"), ComparisonExpr.Type.EQUAL, "dummy3", "b", PropertyPath.make("embedded"));
+      builder.pop();
+      BooleanExpr query = builder.build();
+
+      assertEquals("AND(EQUAL(PROP(embedded.title), CONST(\"dummy1\")), EQUAL(PROP(anotherEmbedded.title), CONST(\"dummy3\")))", query.toString());
+   }
+
+   @Test
+   public void testMultiLevelNestedExpressionQuery() {
+      TestPropertyHelper propertyHelper = new TestPropertyHelper(new ReflectionEntityNamesResolver(null), true);
+      builder = new ExpressionBuilder<>(propertyHelper);
+      builder.setEntityType(TestEntity.class);
+      builder.addNestedComparison(PropertyPath.make("embedded.anotherEmbedded.name"), ComparisonExpr.Type.EQUAL, "foo", "a", PropertyPath.make("embedded"));
+      BooleanExpr query = builder.build();
+
+      assertEquals("NESTED(EQUAL(PROP(embedded.anotherEmbedded.name), CONST(\"foo\")))", query.toString());
+   }
+
+   @Test
    public void testNestedLogicalPredicatesQuery() {
       builder.setEntityType(TestEntity.class);
       builder.pushAnd();
@@ -161,9 +200,30 @@ public class ExpressionBuilderTest {
       public double d;
 
       public EmbeddedTestEntity embedded;
+      public EmbeddedTestEntity anotherEmbedded;
 
       static class EmbeddedTestEntity {
          public String title;
+         public DeepEmbeddedTestEntity deepEmbedded;
+      }
+
+      static class DeepEmbeddedTestEntity {
+         public String name;
+      }
+   }
+
+   static class TestPropertyHelper extends ReflectionPropertyHelper{
+
+      boolean isNested;
+
+      public TestPropertyHelper(EntityNameResolver<Class<?>> entityNameResolver, boolean isNested) {
+         super(entityNameResolver);
+         this.isNested = isNested;
+      }
+
+      @Override
+      public boolean isNestedIndexStructure(Class<?> entityType, String[] propertyPath) {
+         return isNested;
       }
    }
 }

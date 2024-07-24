@@ -61,7 +61,7 @@ public class EngineConfigTest extends AbstractInfinispanTest {
 
       // Storage
       assertEquals("local-filesystem", properties.get("hibernate.search.backend.directory.type"));
-      assertEquals(tempDir.toString() +  File.separator + "baseDir", properties.get("hibernate.search.backend.directory.root"));
+      assertEquals(tempDir.toString() + File.separator + "baseDir", properties.get("hibernate.search.backend.directory.root"));
 
       // reader
       assertEquals(5000L, properties.get("hibernate.search.backend.io.refresh_interval"));
@@ -94,7 +94,7 @@ public class EngineConfigTest extends AbstractInfinispanTest {
 
       Map<String, Object> properties = resolveIndexingProperties(gcb, builder);
 
-      assertEquals(tempDir.getPath() + "/defaultcache", properties.get("hibernate.search.backend.directory.root"));
+      assertEquals(tempDir.getPath() + File.separator + "defaultcache", properties.get("hibernate.search.backend.directory.root"));
    }
 
    @Test
@@ -103,7 +103,7 @@ public class EngineConfigTest extends AbstractInfinispanTest {
       builder.indexing().enable().addIndexedEntity(Person.class).enable();
 
       Map<String, Object> properties = resolveIndexingProperties(new GlobalConfigurationBuilder(), builder);
-      assertEquals(System.getProperty("user.dir")  + "/defaultcache", properties.get("hibernate.search.backend.directory.root"));
+      assertEquals(System.getProperty("user.dir") + File.separator + "defaultcache", properties.get("hibernate.search.backend.directory.root"));
 
    }
 

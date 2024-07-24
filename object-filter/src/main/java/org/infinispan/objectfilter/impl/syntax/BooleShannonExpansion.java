@@ -113,6 +113,14 @@ public final class BooleShannonExpansion {
       }
 
       @Override
+      public BooleanExpr visit(NestedExpr nestedExpr) {
+         for (BooleanExpr c : nestedExpr.getChildren()) {
+            c.acceptVisitor(this);
+         }
+         return nestedExpr;
+      }
+
+      @Override
       public BooleanExpr visit(ConstantBooleanExpr constantBooleanExpr) {
          return constantBooleanExpr;
       }

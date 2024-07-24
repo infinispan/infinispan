@@ -44,4 +44,7 @@ public interface Visitor<BE, VE> {
    VE visit(PropertyValueExpr propertyValueExpr);
 
    VE visit(AggregationExpr aggregationExpr);
+
+   BE visit(NestedExpr nestedExpr);
+
 }

@@ -17,6 +17,8 @@ public class Company {
 
    private String name;
 
+   private String vatNumber;
+
    private Set<Employee> employees;
 
    private Address address;
@@ -24,6 +26,11 @@ public class Company {
    @Keyword(projectable = true)
    public String getName() {
       return name;
+   }
+
+   @Keyword(projectable = true)
+   public String getVatNumber() {
+      return vatNumber;
    }
 
    public Set<Employee> getEmployees() {

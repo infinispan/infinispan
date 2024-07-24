@@ -1,6 +1,7 @@
 package org.infinispan.objectfilter.impl.syntax.parser;
 
 import java.util.List;
+import java.util.Map;
 
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.ql.PropertyPath;
@@ -21,11 +22,16 @@ public class VirtualExpressionBuilder<TypeMetadata> {
 
    private final ExpressionBuilder<TypeMetadata> filteringBuilder;
 
-   public VirtualExpressionBuilder(QueryRendererDelegateImpl<TypeMetadata> owner, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
+   private final Map<String, PropertyPath<TypeDescriptor<TypeMetadata>>> joinAliasPropertyPath;
+
+   public VirtualExpressionBuilder(QueryRendererDelegateImpl<TypeMetadata> owner,
+                                   ObjectPropertyHelper<TypeMetadata> propertyHelper,
+                                   Map<String, PropertyPath<TypeDescriptor<TypeMetadata>>> joinAliasPropertyPath) {
       this.owner = owner;
       this.whereBuilder = new ExpressionBuilder<>(propertyHelper);
       this.havingBuilder = new ExpressionBuilder<>(propertyHelper);
       this.filteringBuilder = new ExpressionBuilder<>(propertyHelper);
+      this.joinAliasPropertyPath = joinAliasPropertyPath;
    }
 
    public void setEntityType(TypeMetadata targetEntityMetadata) {
@@ -58,8 +64,12 @@ public class VirtualExpressionBuilder<TypeMetadata> {
       builder().pushNot();
    }
 
-   public void addComparison(PropertyPath<TypeDescriptor<TypeMetadata>> property, ComparisonExpr.Type comparisonType, Object comparisonValue) {
-      builder().addComparison(property, comparisonType, comparisonValue);
+   public void addComparison(PropertyPath<TypeDescriptor<TypeMetadata>> property, ComparisonExpr.Type comparisonType, Object comparisonValue, String alias) {
+      if (joinAliasPropertyPath.containsKey(alias)) {
+         builder().addNestedComparison(property, comparisonType, comparisonValue, alias, joinAliasPropertyPath.get(alias));
+      } else {
+         builder().addComparison(property, comparisonType, comparisonValue);
+      }
    }
 
    public void addIn(PropertyPath<TypeDescriptor<TypeMetadata>> property, List<Object> values) {

@@ -1,14 +1,18 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.lucene.document.DateTools;
 import org.hibernate.search.engine.backend.metamodel.IndexDescriptor;
 import org.hibernate.search.engine.backend.metamodel.IndexFieldDescriptor;
 import org.hibernate.search.engine.backend.metamodel.IndexValueFieldDescriptor;
 import org.hibernate.search.engine.backend.metamodel.IndexValueFieldTypeDescriptor;
+import org.hibernate.search.engine.backend.types.IndexFieldTraits;
+import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
@@ -88,6 +92,24 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
    }
 
    @Override
+   public boolean isNestedIndexStructure(Class<?> entityType, String[] propertyPath) {
+      IndexFieldDescriptor fieldDescriptor = getFieldDescriptor(entityType, propertyPath);
+
+      if (fieldDescriptor != null) {
+         // TODO replace reflection with direct call to type().traits()
+         // currently direct call to type() will fail the quarkus build
+         // https://hibernate.atlassian.net/browse/HSEARCH-3909 check it
+         Method typeMethod = ReflectionUtil.findMethod(fieldDescriptor.getClass(), "type");
+         Object type = ReflectionUtil.invokeMethod(fieldDescriptor, typeMethod, new Object[]{});
+         Method traitsMethod = ReflectionUtil.findMethod(type.getClass(), "traits");
+         Set<String> traits = (Set<String>) ReflectionUtil.invokeMethod(type, traitsMethod, new Object[]{});
+
+         return traits.contains(IndexFieldTraits.Predicates.NESTED);
+      }
+      return false;
+   }
+
+   @Override
    public boolean isRepeatedProperty(Class<?> entityType, String[] propertyPath) {
       IndexFieldDescriptor fieldDescriptor = getFieldDescriptor(entityType, propertyPath);
       if (fieldDescriptor == null) {
@@ -114,8 +136,8 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       }
 
       if (propertyPath.length == 1 && (propertyPath[0].equals(KEY) || propertyPath[0].equals(VALUE) ||
-            propertyPath[0].equals(VERSION) || propertyPath[0].equals(SCORE)) ) {
-            return true;
+            propertyPath[0].equals(VERSION) || propertyPath[0].equals(SCORE))) {
+         return true;
       }
 
       return super.hasProperty(entityType, propertyPath);

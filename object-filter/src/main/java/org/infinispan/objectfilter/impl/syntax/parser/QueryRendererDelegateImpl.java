@@ -74,7 +74,10 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
     * Persister space: keep track of aliases and entity names.
     */
    private final Map<String, String> aliasToEntityType = new HashMap<>();
-
+   /**
+    * Map containing alias as a key and propertyPath as value
+    * Currently, only registerJoinAlias populates this, so it will only contain join aliases
+    */
    private final Map<String, PropertyPath<TypeDescriptor<TypeMetadata>>> aliasToPropertyPath = new HashMap<>();
 
    private String alias;
@@ -100,7 +103,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    QueryRendererDelegateImpl(String queryString, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
       this.queryString = queryString;
       this.propertyHelper = propertyHelper;
-      this.expressionBuilder = new VirtualExpressionBuilder<>(this, propertyHelper);
+      this.expressionBuilder = new VirtualExpressionBuilder<>(this, propertyHelper, aliasToPropertyPath);
    }
 
    /**
@@ -262,9 +265,10 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       if (property.isEmpty()) {
          throw log.getPredicatesOnEntityAliasNotAllowedException(propertyPath.asStringPath());
       }
+      String rootAlias = propertyPath.getFirst().getPropertyName();
       Object comparisonValue = parameterValue(value);
       checkAnalyzed(property, false);
-      expressionBuilder.addComparison(property, comparisonType, comparisonValue);
+      expressionBuilder.addComparison(property, comparisonType, comparisonValue, rootAlias);
    }
 
    @Override

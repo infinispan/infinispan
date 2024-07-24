@@ -34,7 +34,11 @@ public class Employee {
 
    public Company author;
 
+   public Company nestedAuthor;
+
    public List<ContactDetails> contactDetails = new ArrayList<>();
+
+   public List<ContactDetails> nestedContactDetails = new ArrayList<>();
 
    public List<ContactDetails> alternativeContactDetails = new ArrayList<>();
 
@@ -89,6 +93,16 @@ public class Employee {
    @Embedded(structure = Structure.FLATTENED)
    public List<ContactDetails> getContactDetails() {
       return contactDetails;
+   }
+
+   @Embedded(structure = Structure.NESTED)
+   public Company getNestedAuthor() {
+      return nestedAuthor;
+   }
+
+   @Embedded(structure = Structure.NESTED)
+   public List<ContactDetails> getNestedContactDetails() {
+      return nestedContactDetails;
    }
 
    @Embedded(structure = Structure.FLATTENED)
