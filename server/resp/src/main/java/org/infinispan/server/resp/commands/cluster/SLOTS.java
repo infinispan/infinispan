@@ -1,6 +1,7 @@
 package org.infinispan.server.resp.commands.cluster;
 
 import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
+import static org.infinispan.server.resp.RespConstants.NULL_STRING;
 
 import java.util.List;
 import java.util.Map;
@@ -141,7 +142,7 @@ public class SLOTS extends RespCommand implements Resp3Command {
 
       if (ref == null) {
          // Handle with basic information.
-         return "$-1\r\n";
+         return NULL_STRING;
       }
 
       // An array with network information.
@@ -159,7 +160,7 @@ public class SLOTS extends RespCommand implements Resp3Command {
          String host = transport.getHostName();
          sb.append("*1\r\n").append('$').append(host.length()).append(CRLF_STRING).append(host).append(CRLF_STRING);
       } else {
-         sb.append("$-1\r\n");
+         sb.append(NULL_STRING);
       }
       return sb.toString();
    }
