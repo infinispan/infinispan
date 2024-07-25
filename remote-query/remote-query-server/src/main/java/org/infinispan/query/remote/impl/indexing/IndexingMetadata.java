@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
 
 /**
  * @author anistor@redhat.com
@@ -155,6 +156,10 @@ public final class IndexingMetadata {
    }
 
    public static <T> T findProcessedAnnotation(Descriptor descriptor, String name) {
+      return descriptor.getProcessedAnnotation(name);
+   }
+
+   public static <T> T findProcessedAnnotation(FieldDescriptor descriptor, String name) {
       return descriptor.getProcessedAnnotation(name);
    }
 

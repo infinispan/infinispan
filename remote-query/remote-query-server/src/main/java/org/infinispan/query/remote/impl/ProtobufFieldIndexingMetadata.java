@@ -12,6 +12,8 @@ import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.query.remote.impl.indexing.FieldMapping;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
+import org.infinispan.query.remote.impl.indexing.infinispan.IndexingMetadataHolder;
+import org.infinispan.query.remote.impl.indexing.infinispan.InfinispanAnnotations;
 import org.infinispan.query.remote.impl.mapping.reference.MessageReferenceProvider;
 
 /**
@@ -106,7 +108,8 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
 
    private boolean getFlag(String[] propertyPath, BiFunction<IndexingMetadata, String, Boolean> metadataFun) {
       Descriptor md = messageDescriptor;
-      for (int i=0; i<propertyPath.length; i++) {
+      IndexingMetadataHolder indexingMetadataHolder = null;
+      for (int i = 0; i < propertyPath.length; i++) {
          String property = propertyPath[i];
          FieldDescriptor field = md.findFieldByName(property);
          if (field == null) {
@@ -121,8 +124,11 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
          }
 
          IndexingMetadata indexingMetadata = findProcessedAnnotation(md, IndexingMetadata.INDEXED_ANNOTATION);
-         if (indexingMetadata == null || !indexingMetadata.isIndexed()){
-            return false;
+         if (indexingMetadata == null || !indexingMetadata.isIndexed()) {
+            if (indexingMetadataHolder == null || indexingMetadataHolder.getIndexingMetadata() == null) {
+               return false;
+            }
+            indexingMetadata = indexingMetadataHolder.getIndexingMetadata();
          }
 
          if (field.getJavaType() == JavaType.MESSAGE &&
@@ -133,6 +139,7 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
             }
 
             md = field.getMessageType();
+            indexingMetadataHolder = findProcessedAnnotation(field, InfinispanAnnotations.EMBEDDED_ANNOTATION);
             continue;
          }
 
