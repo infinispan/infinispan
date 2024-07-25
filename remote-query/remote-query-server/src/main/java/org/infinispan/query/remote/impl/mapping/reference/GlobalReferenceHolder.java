@@ -86,7 +86,9 @@ public class GlobalReferenceHolder {
          IndexingMetadata indexingMetadata = Search5MetadataCreator.createForEmbeddedType(descriptor);
          return new MessageReferenceProvider(descriptor, indexingMetadata);
       });
-      return messageReferenceProviders.get(typeFullName);
+      MessageReferenceProvider provider = messageReferenceProviders.get(typeFullName);
+      embedded.indexingMetadata(provider.indexingMetadata());
+      return provider;
    }
 
    public static class RootMessageInfo {

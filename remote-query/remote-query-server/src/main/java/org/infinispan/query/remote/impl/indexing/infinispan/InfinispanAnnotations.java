@@ -152,6 +152,7 @@ public class InfinispanAnnotations {
                   .packageName(ANNOTATIONS_OPTIONS_PACKAGE)
                   .allowedValues(structureAllowedValues())
                   .defaultValue(Structure.NESTED.name())
+               .metadataCreator(new IndexingMetadataHolderFactory())
             .annotation(VECTOR_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
                .attribute(NAME_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.STRING)

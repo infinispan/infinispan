@@ -19,6 +19,7 @@ import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.query.remote.impl.indexing.FieldMapping;
 import org.infinispan.query.remote.impl.indexing.IndexingKeyMetadata;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
+import org.infinispan.query.remote.impl.indexing.infinispan.IndexingMetadataHolder;
 
 /**
  * Provides indexing information about a {@link Descriptor}.
@@ -30,6 +31,7 @@ public class MessageReferenceProvider {
    public static final Set<String> COMMON_MESSAGE_TYPES =
          new HashSet<>(Arrays.asList(FieldReferenceProvider.COMMON_MESSAGE_TYPES));
 
+   private final IndexingMetadata indexingMetadata;
    private final List<FieldReferenceProvider> fields;
    private final List<Embedded> embedded;
    private final String keyMessageName;
@@ -40,6 +42,7 @@ public class MessageReferenceProvider {
    }
 
    public MessageReferenceProvider(Descriptor descriptor, IndexingMetadata indexingMetadata) {
+      this.indexingMetadata = indexingMetadata;
       this.fields = new ArrayList<>(descriptor.getFields().size());
       this.embedded = new ArrayList<>();
       // Skip if not annotated with @Indexed
@@ -64,7 +67,7 @@ public class MessageReferenceProvider {
             if (fieldMapping.searchable()) {
                // Hibernate Search can handle the @Field regardless of its attributes
                embedded.add(new Embedded(fieldName, fieldDescriptor.getMessageType().getFullName(),
-                     fieldDescriptor.isRepeated(), fieldMapping));
+                     fieldDescriptor.isRepeated(), fieldMapping, fieldDescriptor.getProcessedAnnotation("Embedded")));
             }
             continue;
          }
@@ -111,20 +114,27 @@ public class MessageReferenceProvider {
       return keyPropertyName;
    }
 
+   public IndexingMetadata indexingMetadata() {
+      return indexingMetadata;
+   }
+
    public static class Embedded {
       private final String fieldName;
       private final String typeFullName;
       private final boolean repeated;
       private final Integer includeDepth;
       private final ObjectStructure structure;
+      private final IndexingMetadataHolder holder;
 
-      public Embedded(String fieldName, String typeFullName, boolean repeated, FieldMapping fieldMapping) {
+      public Embedded(String fieldName, String typeFullName, boolean repeated, FieldMapping fieldMapping,
+                      IndexingMetadataHolder holder) {
          this.fieldName = fieldName;
          this.typeFullName = typeFullName;
          this.repeated = repeated;
          this.includeDepth = fieldMapping.includeDepth();
          this.structure = (fieldMapping.structure() == null) ? null:
                (Structure.NESTED.equals(fieldMapping.structure())) ? ObjectStructure.NESTED : ObjectStructure.FLATTENED;
+         this.holder = holder;
       }
 
       // typically invoked to create an index-embedded for the cache key
@@ -134,6 +144,7 @@ public class MessageReferenceProvider {
          this.repeated = false;
          this.includeDepth = includeDepth;
          this.structure = ObjectStructure.DEFAULT; // use the Hibernate Search Lucene backend value
+         this.holder = null;
       }
 
       public String getFieldName() {
@@ -154,6 +165,12 @@ public class MessageReferenceProvider {
 
       public ObjectStructure getStructure() {
          return structure;
+      }
+
+      public void indexingMetadata(IndexingMetadata indexingMetadata) {
+         if (holder != null) {
+            holder.setIndexingMetadata(indexingMetadata);
+         }
       }
 
       @Override
