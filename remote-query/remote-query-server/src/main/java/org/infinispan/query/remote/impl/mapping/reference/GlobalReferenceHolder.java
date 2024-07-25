@@ -11,12 +11,14 @@ import java.util.Set;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
+import org.infinispan.query.remote.impl.indexing.search5.Search5MetadataCreator;
 
 public class GlobalReferenceHolder {
 
    private final Map<String, MessageReferenceProvider> messageReferenceProviders = new HashMap<>();
    private final Set<RootMessageInfo> rootMessages = new LinkedHashSet<>();
    private final Map<String, Descriptor> rootDescriptors = new HashMap<>();
+   private final Map<String, Descriptor> notRootDescriptors = new HashMap<>();
 
    public GlobalReferenceHolder(Map<String, GenericDescriptor> descriptors) {
       HashSet<Descriptor> messageTypes = new HashSet<>();
@@ -24,14 +26,14 @@ public class GlobalReferenceHolder {
 
       for (Map.Entry<String, GenericDescriptor> entry : descriptors.entrySet()) {
          GenericDescriptor genericDescriptor = entry.getValue();
-         if (!(genericDescriptor instanceof Descriptor)) {
+         if (!(genericDescriptor instanceof Descriptor descriptor)) {
             // skip enum types, they are mapped as strings
             continue;
          }
 
-         Descriptor descriptor = (Descriptor) genericDescriptor;
          MessageReferenceProvider messageReferenceProvider = new MessageReferenceProvider(descriptor);
          if (messageReferenceProvider.isEmpty()) {
+            notRootDescriptors.put(descriptor.getFullName(), descriptor);
             // skip not indexed types
             continue;
          }
@@ -75,6 +77,16 @@ public class GlobalReferenceHolder {
    @Override
    public String toString() {
       return messageReferenceProviders.toString();
+   }
+
+   public MessageReferenceProvider messageProviderForEmbeddedType(MessageReferenceProvider.Embedded embedded) {
+      String typeFullName = embedded.getTypeFullName();
+      messageReferenceProviders.computeIfAbsent(typeFullName, (key) -> {
+         Descriptor descriptor = notRootDescriptors.get(typeFullName);
+         IndexingMetadata indexingMetadata = Search5MetadataCreator.createForEmbeddedType(descriptor);
+         return new MessageReferenceProvider(descriptor, indexingMetadata);
+      });
+      return messageReferenceProviders.get(typeFullName);
    }
 
    public static class RootMessageInfo {

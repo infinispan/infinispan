@@ -36,10 +36,12 @@ public class MessageReferenceProvider {
    private final String keyPropertyName;
 
    public MessageReferenceProvider(Descriptor descriptor) {
+      this(descriptor, findProcessedAnnotation(descriptor, IndexingMetadata.INDEXED_ANNOTATION));
+   }
+
+   public MessageReferenceProvider(Descriptor descriptor, IndexingMetadata indexingMetadata) {
       this.fields = new ArrayList<>(descriptor.getFields().size());
       this.embedded = new ArrayList<>();
-
-      IndexingMetadata indexingMetadata = findProcessedAnnotation(descriptor, IndexingMetadata.INDEXED_ANNOTATION);
       // Skip if not annotated with @Indexed
       if (indexingMetadata == null) {
          keyMessageName = null;
@@ -57,9 +59,9 @@ public class MessageReferenceProvider {
 
          if (Type.MESSAGE.equals(fieldDescriptor.getType()) &&
                !COMMON_MESSAGE_TYPES.contains(fieldDescriptor.getTypeName())) {
-            // If a protobuf field is a Message reference, only take it into account
-            // if the Message is @Indexed and has at least one @Field annotation
-            if (fieldMapping.searchable() && isIndexable(fieldDescriptor.getMessageType())) {
+            // To map the embedded we only require that the embedded field is searchable,
+            // embedded types non-root-indexed are also allowed. (see ISPN-16314)
+            if (fieldMapping.searchable()) {
                // Hibernate Search can handle the @Field regardless of its attributes
                embedded.add(new Embedded(fieldName, fieldDescriptor.getMessageType().getFullName(),
                      fieldDescriptor.isRepeated(), fieldMapping));
@@ -82,24 +84,6 @@ public class MessageReferenceProvider {
          keyMessageName = null;
          keyPropertyName = null;
       }
-   }
-
-   /**
-    * Checks if a Descriptors has the @Indexed annotation and at least one @Field
-    */
-   private boolean isIndexable(Descriptor descriptor) {
-      IndexingMetadata indexingMetadata = findProcessedAnnotation(descriptor, IndexingMetadata.INDEXED_ANNOTATION);
-      if ( indexingMetadata == null ) {
-         return false;
-      }
-
-      for (FieldDescriptor fieldDescriptor : descriptor.getFields()) {
-         FieldMapping fieldMapping = indexingMetadata.getFieldMapping(fieldDescriptor.getName());
-         if (fieldMapping != null) {
-            return true;
-         }
-      }
-      return false;
    }
 
    public boolean isEmpty() {
