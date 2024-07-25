@@ -72,12 +72,8 @@ public class ProtobufMessageBinder implements TypeBinder {
                   currentState.path + "." + embedded.getFieldName();
 
             maxDepth = embedded.getIncludeDepth();
-
-            String typeName = embedded.getTypeFullName();
-            MessageReferenceProvider messageReferenceProvider = globalReferenceHolder.getMessageReferenceProviders().get(typeName);
-            if (messageReferenceProvider == null) {
-               throw log.unknownType(typeName);
-            }
+            MessageReferenceProvider messageReferenceProvider = globalReferenceHolder
+                  .messageProviderForEmbeddedType(embedded);
 
             ObjectStructure structure = embedded.getStructure();
             if (structure == null) {

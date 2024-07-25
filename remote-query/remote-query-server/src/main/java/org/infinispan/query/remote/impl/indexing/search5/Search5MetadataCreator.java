@@ -28,7 +28,7 @@ import org.infinispan.search.mapper.mapping.impl.DefaultAnalysisConfigurer;
  * @author anistor@redhat.com
  * @since 7.0
  */
-final class Search5MetadataCreator implements AnnotationMetadataCreator<IndexingMetadata, Descriptor> {
+public final class Search5MetadataCreator implements AnnotationMetadataCreator<IndexingMetadata, Descriptor> {
 
    private static final Log log = LogFactory.getLog(Search5MetadataCreator.class, Log.class);
 
@@ -50,22 +50,7 @@ final class Search5MetadataCreator implements AnnotationMetadataCreator<Indexing
          }
       }
 
-      Map<String, FieldMapping> fields = new HashMap<>(descriptor.getFields().size());
-      for (FieldDescriptor fd : descriptor.getFields()) {
-         Map<String, AnnotationElement.Annotation> annotations = fd.getAnnotations();
-
-         FieldMapping fieldMapping = InfinispanMetadataCreator.fieldMapping(fd, annotations);
-         if (fieldMapping != null) {
-            fields.put(fd.getName(), fieldMapping);
-            continue;
-         }
-
-         fieldMapping = search5FieldMapping(fd, annotations);
-         if (fieldMapping != null) {
-            fields.put(fd.getName(), fieldMapping);
-         }
-      }
-
+      Map<String, FieldMapping> fields = fieldsMapping(descriptor);
       String keyEntity = (String) annotation.getAttributeValue(InfinispanAnnotations.KEY_ENTITY_ATTRIBUTE).getValue();
       IndexingKeyMetadata indexingKeyMetadata = null;
       if (!keyEntity.isEmpty()) {
@@ -83,6 +68,34 @@ final class Search5MetadataCreator implements AnnotationMetadataCreator<Indexing
          log.debugf("Descriptor name=%s indexingMetadata=%s", descriptor.getFullName(), indexingMetadata);
       }
       return indexingMetadata;
+   }
+
+   public static IndexingMetadata createForEmbeddedType(Descriptor descriptor) {
+      Map<String, FieldMapping> fields = fieldsMapping(descriptor);
+      IndexingMetadata indexingMetadata = new IndexingMetadata(false, null, null, fields, null);
+      if (log.isDebugEnabled()) {
+         log.debugf("Descriptor name=%s indexingMetadata=%s", descriptor.getFullName(), indexingMetadata);
+      }
+      return indexingMetadata;
+   }
+
+   private static Map<String, FieldMapping> fieldsMapping(Descriptor descriptor) {
+      Map<String, FieldMapping> fields = new HashMap<>(descriptor.getFields().size());
+      for (FieldDescriptor fd : descriptor.getFields()) {
+         Map<String, AnnotationElement.Annotation> annotations = fd.getAnnotations();
+
+         FieldMapping fieldMapping = InfinispanMetadataCreator.fieldMapping(fd, annotations);
+         if (fieldMapping != null) {
+            fields.put(fd.getName(), fieldMapping);
+            continue;
+         }
+
+         fieldMapping = search5FieldMapping(fd, annotations);
+         if (fieldMapping != null) {
+            fields.put(fd.getName(), fieldMapping);
+         }
+      }
+      return fields;
    }
 
    private static FieldMapping search5FieldMapping(FieldDescriptor fd, Map<String, AnnotationElement.Annotation> annotations) {
