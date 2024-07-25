@@ -243,7 +243,7 @@ public class XSiteEventsManagerImpl implements XSiteEventsManager {
       public Void apply(Throwable throwable) {
          var step = nextBackOffStep();
          if (step >= BACK_OFF_DELAYS.length) {
-            log.debugf(throwable, "Failed to send %s to %s", cmd, cmd);
+            log.debugf(throwable, "Failed to send %s to %s", cmd, backup);
             return null;
          }
          log.debugf(throwable, "Sending %s to %s with delay of %s milliseconds", cmd, backup, BACK_OFF_DELAYS[step]);

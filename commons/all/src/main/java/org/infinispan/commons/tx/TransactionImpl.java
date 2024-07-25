@@ -198,7 +198,7 @@ public class TransactionImpl implements Transaction {
 
    public CompletionStage<Void> rollbackAsync(TransactionResourceConverter converter) {
       if (log.isTraceEnabled()) {
-         log.tracef("Transaction.commit() invoked in transaction with Xid=%s", xid);
+         log.tracef("Transaction.rollback() invoked in transaction with Xid=%s", xid);
       }
       if (isDone()) {
          return CompletableFuture.failedFuture(new IllegalStateException("Transaction is done. Cannot commit transaction."));
