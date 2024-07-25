@@ -78,7 +78,11 @@ public class HRANDFIELD extends RespCommand implements Resp3Command {
    private BiConsumer<Map<byte[], byte[]>, ByteBufPool> consumeResponse(int count, boolean withValues, boolean countDefined) {
       return (res, alloc) -> {
          if (res == null) {
-            alloc.acquire(NULL.length).writeBytes(NULL);
+            if (countDefined) {
+               Consumers.GET_ARRAY_BICONSUMER.accept(Collections.emptyList(), alloc);
+            } else {
+               alloc.acquire(NULL.length).writeBytes(NULL);
+            }
             return;
          }
 
