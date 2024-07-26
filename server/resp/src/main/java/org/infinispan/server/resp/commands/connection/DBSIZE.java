@@ -3,11 +3,11 @@ package org.infinispan.server.resp.commands.connection;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -24,6 +24,6 @@ public class DBSIZE extends RespCommand implements Resp3Command {
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
-      return handler.stageToReturn(handler.cache().sizeAsync(), ctx, Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(handler.cache().sizeAsync(), ctx, Resp3Response.INTEGER);
    }
 }

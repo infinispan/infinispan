@@ -4,11 +4,11 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.multimap.impl.EmbeddedSetCache;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -31,6 +31,6 @@ public class SADD extends RespCommand implements Resp3Command {
       byte[] key = arguments.get(0);
       EmbeddedSetCache<byte[],byte[]> esc = handler.getEmbeddedSetCache();
       CompletionStage<Long> result = esc.add(key, arguments.subList(1, arguments.size()));
-      return handler.stageToReturn(result, ctx, Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(result, ctx, Resp3Response.INTEGER);
    }
 }

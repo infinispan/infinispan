@@ -1,20 +1,20 @@
 package org.infinispan.server.resp.commands.set;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.multimap.impl.EmbeddedSetCache;
 import org.infinispan.multimap.impl.SetBucket;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -42,18 +42,16 @@ public class SDIFF extends RespCommand implements Resp3Command {
       // Wrapping to exclude duplicate keys
       var uniqueKeys = SINTER.getUniqueKeys(handler, arguments);
       var allEntries = esc.getAll(uniqueKeys);
-      return handler.stageToReturn(
-            allEntries
-                  .thenApply(entriesMap -> diff(arguments.get(0), entriesMap, diffItself)),
-            ctx, Consumers.COLLECTION_BULK_BICONSUMER);
+      return handler.stageToReturn(allEntries.thenApply(entriesMap -> diff(arguments.get(0), entriesMap, diffItself)),
+            ctx, Resp3Response.SET_BULK_STRING);
    }
 
-   public static Collection<byte[]> diff(byte[] key, Map<byte[], SetBucket<byte[]>> buckets, boolean diffItself) {
-      List<byte[]> minuend = Collections.emptyList();
+   public static Set<byte[]> diff(byte[] key, Map<byte[], SetBucket<byte[]>> buckets, boolean diffItself) {
+      Set<byte[]> minuend = Collections.emptySet();
       if (!diffItself) {
          byte[] kInMap = getKeyForMap(key, buckets);
          if (kInMap != null) {
-            minuend = buckets.get(kInMap).toList();
+            minuend = buckets.get(kInMap).toSet();
          }
          buckets.remove(kInMap);
       }

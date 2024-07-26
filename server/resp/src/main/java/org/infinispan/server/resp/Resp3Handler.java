@@ -1,15 +1,10 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.RespConstants.CRLF;
-import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
-import static org.infinispan.server.resp.RespConstants.NULL;
+import static org.infinispan.server.resp.serialization.RespConstants.CRLF_STRING;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -27,8 +22,6 @@ import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.util.concurrent.BlockingManager;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 
 public class Resp3Handler extends Resp3AuthHandler {
@@ -97,122 +90,6 @@ public class Resp3Handler extends Resp3AuthHandler {
       return super.actualHandleRequest(ctx, type, arguments);
    }
 
-   protected static void handleLongResult(Long result, ByteBufPool alloc) {
-      ByteBufferUtils.writeLong(result, alloc);
-   }
-
-   protected static void handleDoubleResult(Double result, ByteBufPool alloc) {
-      // TODO: this can be optimized to avoid the String allocation
-      if (result == null) {
-         handleNullResult(alloc);
-      } else {
-         handleBulkAsciiResult(Double.toString(result), alloc);
-      }
-   }
-
-   protected static void handleCollectionDoubleResult(Collection<Double> collection, ByteBufPool alloc) {
-      if (collection == null) {
-         handleNullResult(alloc);
-      } else {
-         writeArrayPrefix(collection.size(), alloc);
-         for(Double d: collection) {
-            if (d == null) {
-               handleNullResult(alloc);
-            } else{
-               handleDoubleResult(d, alloc);
-            }
-         }
-      }
-   }
-
-   protected static void handleCollectionLongResult(Collection<Long> collection, ByteBufPool alloc) {
-      if (collection == null) {
-         handleNullResult(alloc);
-      } else {
-         String result = "*" + collection.size() + CRLF_STRING
-               + collection.stream().map(value -> ":" + value + CRLF_STRING).collect(Collectors.joining());
-         ByteBufferUtils.stringToByteBufAscii(result, alloc);
-      }
-   }
-
-   public static void handleBulkResult(CharSequence result, ByteBufPool alloc) {
-      if (result == null) {
-         handleNullResult(alloc);
-      } else {
-         int resultLength = ByteBufUtil.utf8Bytes(result);
-         int resultSizeLength = ByteBufferUtils.stringSize(resultLength);
-         ByteBuf buf = alloc.acquire(1 + resultSizeLength + 2 + resultLength + 2);
-         buf.writeByte('$');
-         ByteBufferUtils.setIntChars(resultLength, resultSizeLength, buf);
-         buf.writeBytes(CRLF);
-         ByteBufUtil.writeUtf8(buf, result);
-         buf.writeBytes(CRLF);
-      }
-   }
-
-   public static void handleBulkAsciiResult(CharSequence result, ByteBufPool alloc) {
-      if (result == null) {
-         handleNullResult(alloc);
-      } else {
-         int resultLength = result.length();
-         int resultSizeLength = ByteBufferUtils.stringSize(resultLength);
-         ByteBuf buf = alloc.acquire(1 + resultSizeLength + 2 + resultLength + 2);
-         buf.writeByte('$');
-         ByteBufferUtils.setIntChars(resultLength, resultSizeLength, buf);
-         buf.writeBytes(CRLF);
-         ByteBufUtil.writeAscii(buf, result);
-         buf.writeBytes(CRLF);
-      }
-   }
-
-   public static void handleCollectionBulkResult(Collection<byte[]> collection, ByteBufPool alloc) {
-      if (collection == null) {
-         handleNullResult(alloc);
-         return;
-      }
-      int dataLength = collection.stream().mapToInt(ba -> ba.length + 5 + lenghtInChars(ba.length)).sum();
-      var buffer = allocAndWriteLengthPrefix('*', collection.size(), alloc, dataLength);
-      collection.forEach(wba -> writeBulkResult(wba, buffer));
-   }
-
-   private static void handleNullResult(ByteBufPool alloc) {
-      alloc.acquire(NULL.length).writeBytes(NULL);
-   }
-
-   protected static void handleBulkResult(byte[] result, ByteBufPool alloc) {
-      if (result == null) {
-         handleNullResult(alloc);
-         return;
-      }
-      var buffer = allocAndWriteLengthPrefix('$', result.length, alloc, result.length + 2);
-      buffer.writeBytes(result);
-      buffer.writeBytes(CRLF_BYTES);
-   }
-
-   private static void writeBulkResult(byte[] result, ByteBuf buffer) {
-      writeLengthPrefix('$', result.length, buffer);
-      buffer.writeBytes(result);
-      buffer.writeBytes(CRLF_BYTES);
-   }
-
-   protected static void handleThrowable(ByteBufPool alloc, Throwable t) {
-      Consumer<ByteBufPool> writer = RespErrorUtil.handleException(t);
-      if (writer != null) {
-         writer.accept(alloc);
-      } else {
-         ByteBufferUtils.stringToByteBuf("-ERR " + extractExceptionMessage(t) + CRLF_STRING, alloc);
-      }
-   }
-
-   private static String extractExceptionMessage(Throwable t) {
-      Throwable r = t;
-      while (r.getCause() != null) {
-         r = r.getCause();
-      }
-
-      return r.getMessage();
-   }
-
    public AdvancedCache<byte[], byte[]> ignorePreviousValuesCache() {
       return ignorePreviousValueCache;
    }
@@ -229,35 +106,4 @@ public class Resp3Handler extends Resp3AuthHandler {
          authorizationManager.checkPermission(authorizationPermission);
       }
    }
-
-   public static void writeArrayPrefix(int size, ByteBufPool alloc) {
-      allocAndWriteLengthPrefix('*', size, alloc, 0);
-   }
-
-   public static void writeMapPrefix(int size, ByteBufPool alloc) {
-      allocAndWriteLengthPrefix('%', size, alloc, 0);
-   }
-
-   private static ByteBuf allocAndWriteLengthPrefix(char type, int size, ByteBufPool alloc, int additionalBytes) {
-      int strLength = lenghtInChars(size);
-      ByteBuf buffer = alloc.acquire(strLength + additionalBytes + 3);
-      buffer.writeByte(type);
-      ByteBufferUtils.setIntChars(size, strLength, buffer);
-      buffer.writeBytes(CRLF_BYTES);
-      return buffer;
-   }
-
-   private static int lenghtInChars(int size) {
-      int strLength = size == 0 ? 1 : (int) Math.log10(size) + 1;
-      return strLength;
-   }
-
-   private static ByteBuf writeLengthPrefix(char type, int size, ByteBuf buffer) {
-      int strLength = lenghtInChars(size);
-      buffer.writeByte(type);
-      ByteBufferUtils.setIntChars(size, strLength, buffer);
-      buffer.writeBytes(CRLF_BYTES);
-      return buffer;
-   }
-
 }

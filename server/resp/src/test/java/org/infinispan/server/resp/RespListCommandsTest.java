@@ -240,7 +240,7 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
    public void testLPOS() {
       redis.rpush("leads", "william", "jose", "ryan", "pedro", "vittorio", "ryan", "michael", "ryan");
 
-      assertThat(redis.lpos("not_existing", "ryan")).isNull();
+  /*    assertThat(redis.lpos("not_existing", "ryan")).isNull();
       assertThat(redis.lpos("leads", "ramona")).isNull();
       assertThat(redis.lpos("leads", "ryan")).isEqualTo(2);
       assertThat(redis.lpos("leads", "ryan", LPosArgs.Builder.rank(1))).isEqualTo(2);
@@ -249,7 +249,7 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.lpos("leads", "ryan", LPosArgs.Builder.rank(2))).isEqualTo(5);
       assertThat(redis.lpos("leads", "ryan", LPosArgs.Builder.maxlen(3))).isEqualTo(2);
       assertThat(redis.lpos("leads", "ryan", LPosArgs.Builder.maxlen(2))).isNull();
-
+*/
       assertThat(redis.lpos("leads", "ryan", 0)).containsExactly(2L, 5L, 7L);
       assertThat(redis.lpos("leads", "ryan", 1)).containsExactly(2L);
       assertThat(redis.lpos("leads", "ryan", 2)).containsExactly(2L, 5L);

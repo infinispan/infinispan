@@ -2,7 +2,7 @@ package org.infinispan.server.resp.commands;
 
 import java.nio.charset.StandardCharsets;
 
-import org.infinispan.server.resp.ByteBufferUtils;
+import org.infinispan.server.resp.serialization.ByteBufferUtils;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

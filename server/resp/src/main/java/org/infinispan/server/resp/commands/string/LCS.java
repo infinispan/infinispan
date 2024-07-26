@@ -3,12 +3,12 @@ package org.infinispan.server.resp.commands.string;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.operation.LCSOperation;
+import org.infinispan.server.resp.response.LCSResponse;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -27,6 +27,6 @@ public class LCS extends RespCommand implements Resp3Command {
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
-      return handler.stageToReturn(LCSOperation.performOperation(handler.cache(), arguments, true), ctx, Consumers.LCS_BICONSUMER);
+      return handler.stageToReturn(LCSOperation.performOperation(handler.cache(), arguments, true), ctx, LCSResponse.SERIALIZER);
    }
 }
