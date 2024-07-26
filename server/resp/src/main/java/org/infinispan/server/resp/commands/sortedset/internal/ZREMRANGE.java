@@ -1,8 +1,9 @@
 package org.infinispan.server.resp.commands.sortedset.internal;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
@@ -10,9 +11,9 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Common ZREMRANGE commands
@@ -72,6 +73,6 @@ public abstract class ZREMRANGE extends RespCommand implements Resp3Command {
          removeAllCall = sortedSetCache.removeAll(name, from, to);
       }
 
-      return handler.stageToReturn(removeAllCall, ctx, Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(removeAllCall, ctx, Resp3Response.INTEGER);
    }
 }

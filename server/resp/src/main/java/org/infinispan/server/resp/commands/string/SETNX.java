@@ -5,13 +5,12 @@ import static org.infinispan.server.resp.operation.SetOperation.NX_BYTES;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.operation.SetOperation;
-import org.infinispan.server.resp.response.SetResponse;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -38,7 +37,8 @@ public class SETNX extends RespCommand implements Resp3Command {
       byte[] value = arguments.get(1);
 
       // Despite the recommended command to replace, the return of SETNX is a boolean instead of an OK.
-      CompletionStage<SetResponse> cs = SetOperation.performOperation(handler.cache(), List.of(key, value, NX_BYTES), handler.respServer().getTimeService(), getName());
-      return handler.stageToReturn(cs, ctx, (res, alloc) -> Consumers.BOOLEAN_BICONSUMER.accept(res.isSuccess(), alloc));
+      CompletionStage<Integer> cs = SetOperation.performOperation(handler.cache(), List.of(key, value, NX_BYTES), handler.respServer().getTimeService(), getName())
+            .thenApply(r -> r.isSuccess() ? 1 : 0);
+      return handler.stageToReturn(cs, ctx, Resp3Response.INTEGER);
    }
 }

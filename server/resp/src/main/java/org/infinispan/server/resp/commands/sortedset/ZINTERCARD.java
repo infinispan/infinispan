@@ -1,23 +1,24 @@
 package org.infinispan.server.resp.commands.sortedset;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
-import org.infinispan.multimap.impl.ScoredValue;
-import org.infinispan.server.resp.Consumers;
-import org.infinispan.server.resp.Resp3Handler;
-import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
-import org.infinispan.server.resp.RespRequestHandler;
-import org.infinispan.server.resp.commands.ArgumentUtils;
-import org.infinispan.server.resp.commands.Resp3Command;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.infinispan.multimap.impl.SortedSetBucket.AggregateFunction.SUM;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.infinispan.multimap.impl.SortedSetBucket.AggregateFunction.SUM;
+import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
+import org.infinispan.multimap.impl.ScoredValue;
+import org.infinispan.server.resp.Resp3Handler;
+import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespErrorUtil;
+import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.commands.ArgumentUtils;
+import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
+
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * This command is similar to {@link ZINTER}, but instead of returning the resulting sorted set,
@@ -111,9 +112,8 @@ public class ZINTERCARD extends RespCommand implements Resp3Command {
                : sortedSetCache.inter(setName, c1, 1, SUM));
       }
 
-      return handler.stageToReturn(aggValues, ctx, (res, alloc) -> {
-         Consumers.LONG_BICONSUMER.accept(cardinalityResult(res.size(), finalLimit), alloc);
-      });
+      CompletionStage<Long> cs = aggValues.thenApply(res -> cardinalityResult(res.size(), finalLimit));
+      return handler.stageToReturn(cs, ctx, Resp3Response.INTEGER);
    }
 
    private static boolean isLimitReached(int interResultSize, int finalLimit) {

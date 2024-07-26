@@ -7,16 +7,18 @@ import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.server.resp.Consumers;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.commands.TransactionResp3Command;
+import org.infinispan.server.resp.serialization.ByteBufferUtils;
+import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.RespConstants;
 import org.infinispan.server.resp.tx.RespTransactionHandler;
 import org.infinispan.server.resp.tx.TransactionCommand;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -69,7 +71,7 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
       if (commands == null) {
          // Should write `(nil)` since the transaction is aborted.
          return CompletableFuture.supplyAsync(() -> {
-            Consumers.GET_BICONSUMER.accept(null, curr.allocator());
+            Resp3Response.nulls(curr.allocator());
             return null;
          }, ctx.executor());
       }
@@ -85,7 +87,8 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
          cache.startBatch();
       }
       return CompletableFuture.supplyAsync(() -> {
-         Resp3Handler.writeArrayPrefix(commands.size(), curr.allocator());
+         // Unfortunately, we need to manually write the prefix before proceeding with each operation.
+         ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, commands.size(), curr.allocator());
          return orderlyExecution(next, ctx, commands, 0, CompletableFutures.completedNull())
                .whenComplete((ignore, t) -> {
                   if (batchEnabled)

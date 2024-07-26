@@ -21,7 +21,6 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -30,6 +29,7 @@ import org.infinispan.server.resp.filter.EventListenerConverter;
 import org.infinispan.server.resp.filter.EventListenerKeysFilter;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.server.resp.meta.ClientMetadata;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -68,7 +68,7 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
          return (v != null && !v.isEmpty())
                ? CompletableFuture.completedFuture(v)
                : addSubscriber(configuration, handler);
-      }), ctx, Consumers.COLLECTION_BULK_BICONSUMER);
+      }), ctx, Resp3Response.ARRAY_BULK_STRING);
    }
 
    private CompletableFuture<Collection<byte[]>> addSubscriber(PopConfiguration configuration, Resp3Handler handler) {

@@ -1,16 +1,17 @@
 package org.infinispan.server.resp.commands.sortedset;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.server.resp.Consumers;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * When all the elements in a sorted set are inserted with the same score, in order to force lexicographical
@@ -41,10 +42,10 @@ public class ZLEXCOUNT extends RespCommand implements Resp3Command {
       }
       if (lexFrom.unboundedMax || lexTo.unboundedMin) {
          // minLex + or maxLex -,return 0 without performing any call
-         return handler.stageToReturn(CompletableFuture.completedFuture(0L), ctx, Consumers.LONG_BICONSUMER);
+         return handler.stageToReturn(CompletableFuture.completedFuture(0L), ctx, Resp3Response.INTEGER);
       }
 
       return handler.stageToReturn(handler.getSortedSeMultimap()
-            .count(name, lexFrom.value, lexFrom.include, lexTo.value, lexTo.include), ctx, Consumers.LONG_BICONSUMER);
+            .count(name, lexFrom.value, lexFrom.include, lexTo.value, lexTo.include), ctx, Resp3Response.INTEGER);
    }
 }

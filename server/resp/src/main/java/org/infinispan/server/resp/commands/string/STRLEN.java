@@ -1,15 +1,16 @@
 package org.infinispan.server.resp.commands.string;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.Consumers;
-import org.infinispan.server.resp.Resp3Handler;
-import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespRequestHandler;
-
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+
+import org.infinispan.server.resp.Resp3Handler;
+import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
+
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * STRLEN Resp Command
@@ -30,6 +31,6 @@ public class STRLEN extends RespCommand implements Resp3Command {
 
       CompletableFuture<Long> strLenAsync = handler.cache().getAsync(keyBytes)
       .thenApply(buff -> buff!=null ? buff.length : 0L);
-      return handler.stageToReturn(strLenAsync, ctx, Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(strLenAsync, ctx, Resp3Response.INTEGER);
    }
 }

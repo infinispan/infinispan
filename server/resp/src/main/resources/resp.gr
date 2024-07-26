@@ -5,7 +5,7 @@ namespace resp3x;
 class org.infinispan.server.resp.RespDecoder extends BaseRespDecoder;
 
 // static final field values are literals
-constants org.infinispan.server.resp.RespConstants;
+constants org.infinispan.server.resp.serialization.RespConstants;
 
 // methods simpleString, bulkString, byteArray, byte...
 intrinsics org.infinispan.server.resp.Intrinsics;

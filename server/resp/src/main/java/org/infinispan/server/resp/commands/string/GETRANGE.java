@@ -5,12 +5,12 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.Util;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -44,7 +44,7 @@ public class GETRANGE extends RespCommand implements Resp3Command {
       long lastIndex =  ArgumentUtils.toLong(arguments.get(2));
       CompletionStage<byte[]> objectCompletableFuture = handler.cache().getAsync(keyBytes)
             .thenApply(value -> subrange(value, beginIndex, lastIndex));
-      return handler.stageToReturn(objectCompletableFuture, ctx, Consumers.BULK_BICONSUMER);
+      return handler.stageToReturn(objectCompletableFuture, ctx, Resp3Response.BULK_STRING_BYTES);
    }
 
    private byte[] subrange(byte[] arr, long begin, long end) {

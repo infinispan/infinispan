@@ -1,23 +1,24 @@
 package org.infinispan.server.resp.commands.sortedset;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
-import org.infinispan.multimap.impl.ScoredValue;
-import org.infinispan.multimap.impl.SortedSetAddArgs;
-import org.infinispan.server.resp.Consumers;
-import org.infinispan.server.resp.Resp3Handler;
-import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
-import org.infinispan.server.resp.RespRequestHandler;
-import org.infinispan.server.resp.commands.ArgumentUtils;
-import org.infinispan.server.resp.commands.Resp3Command;
+import static org.infinispan.multimap.impl.SortedSetAddArgs.ADD_AND_UPDATE_ONLY_INCOMPATIBLE_ERROR;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
-import static org.infinispan.multimap.impl.SortedSetAddArgs.ADD_AND_UPDATE_ONLY_INCOMPATIBLE_ERROR;
+import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
+import org.infinispan.multimap.impl.ScoredValue;
+import org.infinispan.multimap.impl.SortedSetAddArgs;
+import org.infinispan.server.resp.Resp3Handler;
+import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespErrorUtil;
+import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.commands.ArgumentUtils;
+import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
+
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Adds all the specified members with the specified scores to the sorted set stored at key.
@@ -126,11 +127,10 @@ public class ZADD extends RespCommand implements Resp3Command {
 
       if (sortedSetAddArgs.incr) {
          return handler.stageToReturn(sortedSetCache.incrementScore(name, scoredValues.get(0).score(), scoredValues.get(0).getValue(), sortedSetAddArgs),
-               ctx, Consumers.DOUBLE_BICONSUMER);
+               ctx, Resp3Response.DOUBLE);
       }
 
-      return handler.stageToReturn(sortedSetCache.addMany(name, scoredValues, sortedSetAddArgs),
-            ctx, Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(sortedSetCache.addMany(name, scoredValues, sortedSetAddArgs), ctx, Resp3Response.INTEGER);
    }
 
    private void parseArgument(SortedSetAddArgs.Builder addManyArgs, String argument) {
