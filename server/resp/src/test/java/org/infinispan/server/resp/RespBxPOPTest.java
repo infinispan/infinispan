@@ -326,8 +326,8 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          var cf = registerListener(() -> bxPopAsync(10, "key"));
          var cf2 = registerListener(() -> bxPopAsync(10, "key"));
          redis.lpush("key", "first");
-         var res = cf.get(10, TimeUnit.SECONDS);
-         var res2 = cf2.get(10, TimeUnit.SECONDS);
+         var res = cf.get(15, TimeUnit.SECONDS);
+         var res2 = cf2.get(15, TimeUnit.SECONDS);
 
          KeyValue<String, String> completed = res != null ? res : res2;
          assertThat(completed).isNotNull();

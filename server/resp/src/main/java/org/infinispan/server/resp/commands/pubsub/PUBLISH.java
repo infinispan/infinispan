@@ -1,21 +1,26 @@
 package org.infinispan.server.resp.commands.pubsub;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.server.resp.ByteBufferUtils;
-import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.Resp3Handler;
-import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespRequestHandler;
-
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+
+import org.infinispan.server.resp.Resp3Handler;
+import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
+
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/publish/
  * @since 14.0
  */
 public class PUBLISH extends RespCommand implements Resp3Command {
+
+   private static final Function<Object, Long> CONVERT = ignore -> 0L;
+
    public PUBLISH() {
       super(3, 0, 0, 0);
    }
@@ -27,9 +32,9 @@ public class PUBLISH extends RespCommand implements Resp3Command {
       // TODO: should we return the # of subscribers on this node?
       // We use expiration to remove the event values eventually while preventing them during high periods of
       // updates
-      return handler.stageToReturn(handler.ignorePreviousValuesCache()
-            .putAsync(KeyChannelUtils.keyToChannel(arguments.get(0)), arguments.get(1), 3, TimeUnit.SECONDS), ctx,
-            (ignore, alloc) -> ByteBufferUtils.stringToByteBufAscii(":0\r\n", alloc)
-      );
+      CompletionStage<Long> cs = handler.ignorePreviousValuesCache()
+            .putAsync(KeyChannelUtils.keyToChannel(arguments.get(0)), arguments.get(1), 3, TimeUnit.SECONDS)
+            .thenApply(CONVERT);
+      return handler.stageToReturn(cs, ctx, Resp3Response.INTEGER);
    }
 }

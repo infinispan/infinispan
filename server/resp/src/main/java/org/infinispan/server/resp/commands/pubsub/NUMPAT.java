@@ -6,11 +6,11 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.security.actions.SecurityActions;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -41,7 +41,7 @@ class NUMPAT extends RespCommand implements Resp3Command {
             .filter(Objects::nonNull)
             .filter(PUBSUB.deduplicate())
             .count();
-      Consumers.LONG_BICONSUMER.accept(patterns, handler.allocator());
+      Resp3Response.integers(patterns, handler.allocator());
       return handler.myStage();
    }
 }

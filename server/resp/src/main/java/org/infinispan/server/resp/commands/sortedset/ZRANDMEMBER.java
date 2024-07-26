@@ -1,18 +1,19 @@
 package org.infinispan.server.resp.commands.sortedset;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
 import org.infinispan.multimap.impl.ScoredValue;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * When called with just the key argument, return a random element from the sorted set value stored at key.
@@ -77,9 +78,9 @@ public class ZRANDMEMBER extends RespCommand implements Resp3Command {
 
       CompletionStage<List<ScoredValue<byte[]>>> randomMembers = sortedSetCache.randomMembers(name, count);
       if (arguments.size() == 1) {
-         return handler.stageToReturn(randomMembers.thenApply(r -> r.isEmpty() ? null : r.get(0).getValue()), ctx, Consumers.GET_BICONSUMER);
+         return handler.stageToReturn(randomMembers.thenApply(r -> r.isEmpty() ? null : r.get(0).getValue()), ctx, Resp3Response.BULK_STRING_BYTES);
       }
 
-      return handler.stageToReturn(randomMembers.thenApply(r -> ZSetCommonUtils.mapResultsToArrayList(r, withScores)), ctx, Consumers.GET_ARRAY_BICONSUMER);
+      return handler.stageToReturn(randomMembers.thenApply(r -> ZSetCommonUtils.response(r, withScores)), ctx, Resp3Response.CUSTOM);
    }
 }

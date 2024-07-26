@@ -10,8 +10,9 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.infinispan.server.resp.commands.connection.QUIT;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.server.resp.commands.connection.QUIT;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.AttributeKey;
@@ -23,7 +24,7 @@ public abstract class RespRequestHandler {
    public static final AttributeKey<ByteBufPool> BYTE_BUF_POOL_ATTRIBUTE_KEY = AttributeKey.newInstance("buffer-pool");
    private final BiFunction<RespRequestHandler, Throwable, RespRequestHandler> HANDLE_FAILURE = (h, t) -> {
       if (t != null) {
-         Resp3Handler.handleThrowable(allocator(), t);
+         Resp3Response.error(t, allocator());
          // If exception, never use handler
          return this;
       }
@@ -185,7 +186,7 @@ public abstract class RespRequestHandler {
             }
             biConsumer.accept(result, allocatorToUse);
          } catch (Throwable t) {
-            Resp3Handler.handleThrowable(allocatorToUse, t);
+            Resp3Response.error(t, allocator());
             return myStage();
          }
          return myStage;
@@ -195,7 +196,7 @@ public abstract class RespRequestHandler {
          // until this request completes, meaning the thenApply will always be invoked in the event loop as well
          return CompletionStages.handleAndComposeAsync(stage, (e, t) -> {
             if (t != null) {
-               Resp3Handler.handleThrowable(allocatorToUse, t);
+               Resp3Response.error(t, allocator());
             } else {
                try {
                   biConsumer.accept(e, allocatorToUse);
@@ -208,7 +209,7 @@ public abstract class RespRequestHandler {
       }
       return stage.handleAsync((value, t) -> {
          if (t != null) {
-            Resp3Handler.handleThrowable(allocatorToUse, t);
+            Resp3Response.error(t, allocator());
             // If exception, never use handler
             return this;
          }

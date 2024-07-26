@@ -6,12 +6,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.multimap.impl.EmbeddedSetCache;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.logging.Log;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -44,10 +44,10 @@ public class SMOVE extends RespCommand implements Resp3Command {
       if (!sameList) {
          // warn when different sets
          Log.SERVER.smoveConsistencyMessage();
-         return handler.stageToReturn(moveElement(esc, element, source, destination), ctx, Consumers.LONG_BICONSUMER);
+         return handler.stageToReturn(moveElement(esc, element, source, destination), ctx, Resp3Response.INTEGER);
       }
       return handler.stageToReturn(esc.get(source)
-            .thenApply((bucket) -> bucket.contains(element) ? 1L : 0L), ctx, Consumers.LONG_BICONSUMER);
+            .thenApply((bucket) -> bucket.contains(element) ? 1L : 0L), ctx, Resp3Response.INTEGER);
    }
 
    private CompletionStage<Long> moveElement(EmbeddedSetCache<byte[], byte[]> cache, byte[] element, byte[] srcKey, byte[] destKey) {

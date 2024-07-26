@@ -4,13 +4,13 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.infinispan.server.resp.Consumers;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -29,8 +29,8 @@ public class EXISTS extends RespCommand implements Resp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
          ChannelHandlerContext ctx,
          List<byte[]> arguments) {
-      AggregateCompletionStage<Void> acs = CompletionStages.aggregateCompletionStage();
       AtomicLong presentCount = new AtomicLong(arguments.size());
+      AggregateCompletionStage<AtomicLong> acs = CompletionStages.aggregateCompletionStage(presentCount);
       for (byte[] bs : arguments) {
          acs.dependsOn(handler.cache().touch(bs, false).thenApply((v) -> {
             if (!v) {
@@ -39,7 +39,6 @@ public class EXISTS extends RespCommand implements Resp3Command {
             return null;
          }));
       }
-      return handler.stageToReturn(acs.freeze().thenApply(v -> presentCount.get()), ctx,
-            Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(acs.freeze(), ctx, Resp3Response.INTEGER);
    }
 }

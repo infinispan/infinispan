@@ -4,11 +4,11 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -18,7 +18,7 @@ import io.netty.channel.ChannelHandlerContext;
  * Get the value of key. If the key does not exist the special value nil is returned.
  * An error is returned if the value stored at key is not a string, because GET only handles string values.
  *
- * @link https://redis.io/commands/get/
+ * @see <a href="https://redis.io/commands/get/">Redis documentation</a>
  * @since 14.0
  */
 public class GET extends RespCommand implements Resp3Command {
@@ -33,6 +33,6 @@ public class GET extends RespCommand implements Resp3Command {
       byte[] keyBytes = arguments.get(0);
 
       CompletableFuture<byte[]> async = handler.cache().getAsync(keyBytes);
-      return handler.stageToReturn(async, ctx, Consumers.GET_BICONSUMER);
+      return handler.stageToReturn(async, ctx, Resp3Response.BULK_STRING_BYTES);
    }
 }

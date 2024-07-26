@@ -1,16 +1,17 @@
 package org.infinispan.server.resp.commands.generic;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.server.resp.Consumers;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
+
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-import java.util.stream.Collectors;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Alters the last access time of a key(s). A key is ignored if it does not exist.
@@ -32,6 +33,6 @@ public class TOUCH extends RespCommand implements Resp3Command {
             k -> handler.cache().touch(k, false),
             Collectors.summingLong(touched -> touched ? 1 : 0));
 
-      return handler.stageToReturn(totalTouchCount, ctx, Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(totalTouchCount, ctx, Resp3Response.INTEGER);
    }
 }

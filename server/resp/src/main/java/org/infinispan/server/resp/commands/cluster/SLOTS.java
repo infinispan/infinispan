@@ -1,12 +1,12 @@
 package org.infinispan.server.resp.commands.cluster;
 
-import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
-import static org.infinispan.server.resp.RespConstants.NULL_STRING;
-
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -20,13 +20,18 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.transport.NettyTransport;
-import org.infinispan.server.resp.ByteBufferUtils;
+import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.RespServer;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.ByteBufferUtils;
+import org.infinispan.server.resp.serialization.JavaObjectSerializer;
+import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.Resp3Type;
+import org.infinispan.server.resp.serialization.RespConstants;
 import org.infinispan.topology.CacheTopology;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -46,8 +51,15 @@ import net.jcip.annotations.GuardedBy;
  */
 public class SLOTS extends RespCommand implements Resp3Command {
 
+   private static final BiConsumer<List<SlotInformation>, ByteBufPool> SERIALIZER = (res, alloc) -> {
+      ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, res.size(), alloc);
+      for (SlotInformation si : res) {
+         Resp3Response.write(si, alloc, si);
+      }
+   };
+
    @GuardedBy("this")
-   private CompletionStage<CharSequence> lastExecution = null;
+   private CompletionStage<List<SlotInformation>> lastExecution = null;
 
    @GuardedBy("this")
    private ConsistentHash lastAcceptedHash = null;
@@ -80,14 +92,13 @@ public class SLOTS extends RespCommand implements Resp3Command {
          }
       }
 
-      return handler.stageToReturn(lastExecution, ctx, ByteBufferUtils::stringToByteBuf);
+      return handler.stageToReturn(lastExecution, ctx, SERIALIZER);
    }
 
-   private static CompletionStage<CharSequence> getSlotsInformation(Resp3Handler handler, ConsistentHash hash) {
+   private static CompletionStage<List<SlotInformation>> getSlotsInformation(Resp3Handler handler, ConsistentHash hash) {
       return requestNodesNetworkInformation(hash.getMembers(), handler)
             .thenApply(information -> {
-               StringBuilder builder = new StringBuilder();
-               int size = 0;
+               List<SlotInformation> response = new ArrayList<>();
 
                SegmentSlotRelation ssr = handler.respServer().segmentSlotRelation();
 
@@ -102,27 +113,24 @@ public class SLOTS extends RespCommand implements Resp3Command {
 
                   if (!currentOwners.equals(ownersForSegment) || i == (totalSegmentCount - 1)) {
                      if (ownersForSegment != null) {
-                        builder.append('*').append(2 + ownersForSegment.size()).append(CRLF_STRING);
                         int start = previousOwnedSegment * slotWidth;
                         int end = (i * slotWidth) - 1;
-                        builder.append(':').append(start).append(CRLF_STRING);
-                        builder.append(':').append(end).append(CRLF_STRING);
+                        List<NodeInformation> nodes = new ArrayList<>();
                         for (Address owner: ownersForSegment) {
-                           String info = information.get(owner);
-                           builder.append(info);
+                           nodes.add(NodeInformation.create(information.get(owner)));
                         }
-                        size++;
+                        response.add(new SlotInformation(start, end, nodes));
                      }
                      ownersForSegment = currentOwners;
                      previousOwnedSegment = i;
                   }
                }
-               return "*" + size + CRLF_STRING + builder;
+               return response;
             });
    }
 
-   private static CompletionStage<Map<Address, String>> requestNodesNetworkInformation(List<Address> members, Resp3Handler handler) {
-      Map<Address, String> responses = new ConcurrentHashMap<>(members.size());
+   private static CompletionStage<Map<Address, List<Object>>> requestNodesNetworkInformation(List<Address> members, Resp3Handler handler) {
+      Map<Address, List<Object>> responses = new ConcurrentHashMap<>(members.size());
       ClusterExecutor executor = SecurityActions.getClusterExecutor(handler.cache());
       String name = handler.respServer().getQualifiedName();
       return executor.filterTargets(members)
@@ -134,34 +142,68 @@ public class SLOTS extends RespCommand implements Resp3Command {
             }).thenApply(ignore -> responses);
    }
 
-   private static String readLocalInformation(String serverName, EmbeddedCacheManager ecm) {
-      StringBuilder sb = new StringBuilder();
+   private static List<Object> readLocalInformation(String serverName, EmbeddedCacheManager ecm) {
+      List<Object> response = new ArrayList<>();
       ComponentRef<RespServer> ref = SecurityActions.getGlobalComponentRegistry(ecm)
             .getComponent(BasicComponentRegistry.class)
             .getComponent(serverName, RespServer.class);
 
       if (ref == null) {
          // Handle with basic information.
-         return NULL_STRING;
+         return null;
       }
 
       // An array with network information.
-      sb.append("*4\r\n");
       RespServer server = ref.running();
       CacheManagerInfo info = ecm.getCacheManagerInfo();
 
-      sb.append('$').append(server.getHost().length()).append(CRLF_STRING).append(server.getHost()).append(CRLF_STRING);
-      sb.append(':').append(server.getPort()).append(CRLF_STRING);
-      sb.append('$').append(info.getNodeName().length()).append(CRLF_STRING).append(info.getNodeName()).append(CRLF_STRING);
+      response.add(server.getHost());
+      response.add(server.getPort());
+      response.add(info.getNodeName());
 
       // The last element is for additional metadata. For example, hostnames or something like that.
       NettyTransport transport = server.getTransport();
       if (transport != null) {
          String host = transport.getHostName();
-         sb.append("*1\r\n").append('$').append(host.length()).append(CRLF_STRING).append(host).append(CRLF_STRING);
+         response.add(List.of(host));
       } else {
-         sb.append(NULL_STRING);
+         response.add(Collections.emptyList());
       }
-      return sb.toString();
+      return response;
+   }
+
+   private record SlotInformation(int start, int end, List<NodeInformation> info) implements JavaObjectSerializer<SlotInformation> {
+
+      @Override
+      public void accept(SlotInformation si, ByteBufPool alloc) {
+         int size = 2 + si.info.size();
+         ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, size, alloc);
+
+         Resp3Response.integers(si.start(), alloc);
+         Resp3Response.integers(si.end(), alloc);
+         for (NodeInformation ni : si.info) {
+            Resp3Response.write(ni, alloc, ni);
+         }
+      }
+   }
+
+   private record NodeInformation(String host, Integer port, String name, List<String> metadata) implements JavaObjectSerializer<NodeInformation> {
+      @Override
+      public void accept(NodeInformation ignore, ByteBufPool alloc) {
+         ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, 4, alloc);
+         Resp3Response.string(host, alloc);
+         Resp3Response.integers(port, alloc);
+         Resp3Response.string(name, alloc);
+         Resp3Response.array(metadata, alloc, Resp3Type.BULK_STRING);
+      }
+
+      private static NodeInformation create(List<Object> values) {
+         return new NodeInformation(
+               (String) values.get(0),
+               (Integer) values.get(1),
+               (String) values.get(2),
+               (List<String>) values.get(3)
+         );
+      }
    }
 }

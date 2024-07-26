@@ -4,13 +4,14 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.commands.TransactionResp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.RespConstants;
 import org.infinispan.server.resp.tx.RespTransactionHandler;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -19,7 +20,7 @@ import io.netty.channel.ChannelHandlerContext;
  * `<code>MULTI</code>` command.
  * <p>
  * This command marks the start of a transaction block. Subsequent operations are queued for later execution and receive
- * a {@link org.infinispan.server.resp.RespConstants#QUEUED_REPLY} response. Each operation is verified for errors,
+ * a {@link RespConstants#QUEUED_REPLY} response. Each operation is verified for errors,
  * for example, the number of arguments. Flawed operations receive the corresponding error reply and are discarded.
  * Although, these errors do not abort the transaction.
  * <p>
@@ -45,7 +46,7 @@ public class MULTI extends RespCommand implements Resp3Command, TransactionResp3
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
-      Consumers.OK_BICONSUMER.accept(null, handler.allocator());
+      Resp3Response.ok(handler.allocator());
       return CompletableFuture.completedFuture(new RespTransactionHandler(handler.respServer()));
    }
 

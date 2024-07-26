@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.server.resp.CacheRespRequestHandler;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -16,6 +15,7 @@ import org.infinispan.server.resp.commands.pubsub.PSUBSCRIBE;
 import org.infinispan.server.resp.commands.pubsub.SUBSCRIBE;
 import org.infinispan.server.resp.commands.tx.UNWATCH;
 import org.infinispan.server.resp.commands.tx.WATCH;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -77,7 +77,7 @@ public class RespTransactionHandler extends CacheRespRequestHandler {
          return command.handleException(this, t);
       }
 
-      return stageToReturn(myStage(), ctx, Consumers.QUEUED_BICONSUMER);
+      return stageToReturn(myStage(), ctx, Resp3Response::queued);
    }
 
    @Override

@@ -1,15 +1,16 @@
 package org.infinispan.server.resp.commands.sortedset;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Returns the sorted set number of elements.
@@ -30,6 +31,6 @@ public class ZCARD extends RespCommand implements Resp3Command {
 
       byte[] name = arguments.get(0);
       EmbeddedMultimapSortedSetCache<byte[], ?> sortedSetCache = handler.getSortedSeMultimap();
-      return handler.stageToReturn(sortedSetCache.size(name), ctx, Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(sortedSetCache.size(name), ctx, Resp3Response.INTEGER);
    }
 }

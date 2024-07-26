@@ -9,11 +9,11 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -60,7 +60,7 @@ public class TTL extends RespCommand implements Resp3Command {
 
             return ttl;
          }
-      }), ctx, Consumers.LONG_BICONSUMER);
+      }), ctx, Resp3Response.INTEGER);
    }
 
    protected enum ExpirationOption {
