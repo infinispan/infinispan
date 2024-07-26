@@ -10,11 +10,11 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Util;
 import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -47,7 +47,7 @@ public class HMGET extends RespCommand implements Resp3Command {
                }
                return result;
             });
-      return handler.stageToReturn(cs, ctx, Consumers.GET_ARRAY_BICONSUMER);
+      return handler.stageToReturn(cs, ctx, Resp3Response.ARRAY_BULK_STRING);
    }
 
    private Map<WrappedByteArray, byte[]> wrapKeys(Map<byte[], byte[]> original) {

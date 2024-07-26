@@ -1,14 +1,16 @@
 package org.infinispan.server.resp.commands.hash;
 
+import static org.infinispan.server.resp.commands.hash.HEXISTS.CONVERTER;
+
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -24,6 +26,8 @@ public class HSETNX extends RespCommand implements Resp3Command {
       byte[] key = arguments.get(0);
       byte[] propKey = arguments.get(1);
       byte[] propVal = arguments.get(2);
-      return handler.stageToReturn(mmap.setIfAbsent(key, propKey, propVal), ctx, Consumers.BOOLEAN_BICONSUMER);
+      CompletionStage<Long> cs = mmap.setIfAbsent(key, propKey, propVal).thenApply(CONVERTER);
+      // Yes, use integers as booleans.
+      return handler.stageToReturn(cs, ctx, Resp3Response.INTEGER);
    }
 }

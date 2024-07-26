@@ -1,16 +1,17 @@
 package org.infinispan.server.resp.commands.sortedset;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.server.resp.Consumers;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Returns the number of elements in the sorted set at key with a score between min and max.
@@ -51,7 +52,7 @@ public class ZCOUNT extends RespCommand implements Resp3Command {
       }
       if (maxScore.unboundedMin || minScore.unboundedMax) {
          // minScore +inf or maxScore is -inf, return 0 without performing any call
-         return handler.stageToReturn(CompletableFuture.completedFuture(0L), ctx, Consumers.LONG_BICONSUMER);
+         return handler.stageToReturn(CompletableFuture.completedFuture(0L), ctx, Resp3Response.INTEGER);
       }
 
       if (minScore.value == null) {
@@ -63,6 +64,6 @@ public class ZCOUNT extends RespCommand implements Resp3Command {
       }
 
       return handler.stageToReturn(handler.getSortedSeMultimap()
-            .count(name, minScore.value, minScore.include, maxScore.value, maxScore.include), ctx, Consumers.LONG_BICONSUMER);
+            .count(name, minScore.value, minScore.include, maxScore.value, maxScore.include), ctx, Resp3Response.INTEGER);
    }
 }

@@ -5,6 +5,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 public final class RespErrorUtil {
 
@@ -12,83 +13,86 @@ public final class RespErrorUtil {
    }
 
    public static void unauthorized(ByteBufPool allocator) {
-      ByteBufferUtils.stringToByteBufAscii("-WRONGPASS invalid username-password pair or user is disabled.\r\n",
+      simpleErrorResponse("-WRONGPASS invalid username-password pair or user is disabled.",
             allocator);
    }
 
    public static void noSuchKey(ByteBufPool allocatorToUse) {
-      ByteBufferUtils.stringToByteBufAscii(
-            "-ERR no such key\r\n", allocatorToUse);
+      simpleErrorResponse(
+            "-ERR no such key", allocatorToUse);
    }
 
    public static void indexOutOfRange(ByteBufPool allocatorToUse) {
-      ByteBufferUtils.stringToByteBufAscii(
-            "-ERR index out of range\r\n", allocatorToUse);
+      simpleErrorResponse(
+            "-ERR index out of range", allocatorToUse);
 
    }
 
    public static void wrongType(ByteBufPool allocatorToUse) {
-      ByteBufferUtils.stringToByteBufAscii(
-            "-WRONGTYPE Operation against a key holding the wrong kind of value\r\n", allocatorToUse);
+      simpleErrorResponse(
+            "-WRONGTYPE Operation against a key holding the wrong kind of value", allocatorToUse);
 
    }
 
    public static void wrongArgumentNumber(RespCommand command, ByteBufPool allocatorToUse) {
-      ByteBufferUtils.stringToByteBufAscii(
-            "-ERR wrong number of arguments for '" + command.getName().toLowerCase() + "' command\r\n", allocatorToUse);
+      simpleErrorResponse(
+            "-ERR wrong number of arguments for '" + command.getName().toLowerCase() + "' command", allocatorToUse);
    }
 
    public static void unknownCommand(ByteBufPool allocator) {
-      ByteBufferUtils.stringToByteBufAscii("-ERR unknown command\r\n", allocator);
+      simpleErrorResponse("-ERR unknown command", allocator);
    }
 
    public static void mustBePositive(ByteBufPool allocator) {
-      ByteBufferUtils.stringToByteBufAscii(
-            "-ERR value is out of range, must be positive\r\n", allocator);
+      simpleErrorResponse("-ERR value is out of range, must be positive", allocator);
    }
 
    public static void mustBePositive(ByteBufPool allocator, String argumentName) {
-      ByteBufferUtils.stringToByteBufAscii(
-            "-ERR value for ' " + argumentName + "' is out of range, must be positive\r\n", allocator);
+      simpleErrorResponse(
+            "-ERR value for ' " + argumentName + "' is out of range, must be positive", allocator);
    }
 
    public static void syntaxError(ByteBufPool allocator) {
-      ByteBufferUtils.stringToByteBufAscii("-ERR syntax error\r\n", allocator);
+      simpleErrorResponse("-ERR syntax error", allocator);
    }
 
    public static void wrongArgumentCount(RespCommand command, ByteBufPool allocator) {
-      ByteBufferUtils.stringToByteBufAscii(
-            "ERR wrong number of arguments for '" + command.getName().toLowerCase() + "' command\r\n", allocator);
+      simpleErrorResponse(
+            "ERR wrong number of arguments for '" + command.getName().toLowerCase() + "' command", allocator);
    }
 
    public static void valueNotInteger(ByteBufPool allocator) {
-      ByteBufferUtils.stringToByteBufAscii("-ERR value is not an integer or out of range\r\n", allocator);
+      simpleErrorResponse("-ERR value is not an integer or out of range", allocator);
    }
 
    public static void valueNotAValidFloat(ByteBufPool allocator) {
-      ByteBufferUtils.stringToByteBufAscii("-ERR value is not a valid float\r\n", allocator);
+      simpleErrorResponse("-ERR value is not a valid float", allocator);
    }
 
    public static void minOrMaxNotAValidFloat(ByteBufPool allocator) {
-      ByteBufferUtils.stringToByteBufAscii("-ERR min or max is not a float\r\n", allocator);
+      simpleErrorResponse("-ERR min or max is not a float", allocator);
    }
 
    public static void nanOrInfinity(ByteBufPool allocator) {
-      ByteBufferUtils.stringToByteBufAscii("-ERR increment would produce NaN or Infinity\r\n", allocator);
+      simpleErrorResponse("-ERR increment would produce NaN or Infinity", allocator);
    }
 
    public static void minOrMaxNotAValidStringRange(ByteBufPool allocator) {
-      ByteBufferUtils.stringToByteBufAscii("-ERR min or max not valid string range item\r\n", allocator);
+      simpleErrorResponse("-ERR min or max not valid string range item", allocator);
    }
 
    public static void transactionAborted(ByteBufPool allocatorToUse) {
-      ByteBufferUtils.stringToByteBufAscii(
-            "-EXECABORT Transaction discarded because of previous errors.\r\n", allocatorToUse);
+      simpleErrorResponse(
+            "-EXECABORT Transaction discarded because of previous errors.", allocatorToUse);
    }
 
    public static void customError(String message, ByteBufPool allocatorToUse) {
-      ByteBufferUtils.stringToByteBuf(
-            "-ERR " + message + "\r\n", allocatorToUse);
+      simpleErrorResponse(
+            "-ERR " + message, allocatorToUse);
+   }
+
+   public static void customRawError(String message, ByteBufPool alloc) {
+      simpleErrorResponse(message, alloc);
    }
 
    public static Consumer<ByteBufPool> handleException(Throwable t) {
@@ -125,5 +129,9 @@ public final class RespErrorUtil {
       return t instanceof ClassCastException ||
             (t instanceof IllegalArgumentException &&
                   t.getMessage().contains("No marshaller registered for object of Java type"));
+   }
+
+   private static void simpleErrorResponse(CharSequence string, ByteBufPool alloc) {
+      Resp3Response.error(string, alloc);
    }
 }

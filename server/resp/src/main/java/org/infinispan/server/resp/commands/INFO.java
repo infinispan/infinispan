@@ -1,7 +1,6 @@
 package org.infinispan.server.resp.commands;
 
-import static org.infinispan.server.resp.Resp3Handler.handleBulkAsciiResult;
-import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
+import static org.infinispan.server.resp.serialization.RespConstants.CRLF_STRING;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -16,6 +15,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.meta.ClientMetadata;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -312,7 +312,7 @@ public class INFO extends RespCommand implements Resp3Command {
          sb.append("# Keyspace\r\n");
          sb.append("db0:keys=0,expires=0,avg_ttl=0\r\n");
       }
-      handleBulkAsciiResult(sb, handler.allocator());
+      Resp3Response.string(sb, handler.allocator());
       return handler.myStage();
    }
 

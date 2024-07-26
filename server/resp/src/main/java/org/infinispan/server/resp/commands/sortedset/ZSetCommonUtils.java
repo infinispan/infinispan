@@ -1,15 +1,16 @@
 package org.infinispan.server.resp.commands.sortedset;
 
-import org.infinispan.multimap.impl.ScoredValue;
-import org.infinispan.server.resp.Util;
-import org.infinispan.server.resp.commands.ArgumentUtils;
-
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+
+import org.infinispan.multimap.impl.ScoredValue;
+import org.infinispan.server.resp.ByteBufPool;
+import org.infinispan.server.resp.Util;
+import org.infinispan.server.resp.commands.ArgumentUtils;
+import org.infinispan.server.resp.serialization.ByteBufferUtils;
+import org.infinispan.server.resp.serialization.JavaObjectSerializer;
+import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.RespConstants;
 
 public final class ZSetCommonUtils {
    public static final byte[] WITHSCORES = "WITHSCORES".getBytes();
@@ -100,18 +101,27 @@ public final class ZSetCommonUtils {
     * - limit results
     * @param scoredValues, scoresValues retrieved
     * @param withScores, return with scores
-    * @return byte[] list to be returned by the command
+    * @return The Z operation response object to serialize in the RESP3 format.
     */
-   public static List<byte[]> mapResultsToArrayList(Collection<ScoredValue<byte[]>> scoredValues, boolean withScores) {
-      List<byte[]> elements = new ArrayList<>();
-      Iterator<ScoredValue<byte[]>> ite = scoredValues.iterator();
-      while (ite.hasNext()) {
-         ScoredValue<byte[]> item = ite.next();
-         elements.add(item.getValue());
-         if (withScores) {
-            elements.add(Double.toString(item.score()).getBytes(StandardCharsets.US_ASCII));
+   public static ZOperationResponse response(Collection<ScoredValue<byte[]>> scoredValues, boolean withScores) {
+      return new ZOperationResponse(scoredValues, withScores);
+   }
+
+   public record ZOperationResponse(Collection<ScoredValue<byte[]>> values, boolean withScores) implements JavaObjectSerializer<ZOperationResponse> {
+
+      @Override
+      public void accept(ZOperationResponse ignore, ByteBufPool alloc) {
+         ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, values.size(), alloc);
+
+         for (ScoredValue<byte[]> sv : values) {
+            if (withScores) {
+               ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, 2, alloc);
+               Resp3Response.string(sv.getValue(), alloc);
+               Resp3Response.doubles(sv.score(), alloc);
+            } else {
+               Resp3Response.string(sv.getValue(), alloc);
+            }
          }
       }
-      return elements;
    }
 }

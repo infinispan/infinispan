@@ -1,26 +1,35 @@
 package org.infinispan.server.resp.commands.connection;
 
-import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
-
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.server.resp.ByteBufferUtils;
+import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Commands;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.ByteBufferUtils;
+import org.infinispan.server.resp.serialization.JavaObjectSerializer;
+import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.RespConstants;
 
-import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/command/
+ * @see <a href="https://redis.io/commands/command/">Redis documentation</a>
  * @since 14.0
  */
 public class COMMAND extends RespCommand implements Resp3Command {
    public static final String NAME = "COMMAND";
+   private static final JavaObjectSerializer<Object> SERIALIZER = (ignore, alloc) -> {
+      List<RespCommand> commands = Commands.all();
+      ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, commands.size(), alloc);
+      for (RespCommand command : commands) {
+         describeCommand(command, alloc);
+      }
+   };
 
    public COMMAND() {
       super(NAME, -1, 0, 0, 0);
@@ -31,35 +40,38 @@ public class COMMAND extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
       if (!arguments.isEmpty()) {
-         ByteBufferUtils.stringToByteBufAscii("-ERR COMMAND does not currently support arguments\r\n", handler.allocator());
+         RespErrorUtil.customError("COMMAND does not currently support arguments", handler.allocator());
       } else {
-         StringBuilder commandBuilder = new StringBuilder();
-         List<RespCommand> commands = Commands.all();
-         commandBuilder.append("*");
-         commandBuilder.append(commands.size());
-         commandBuilder.append(CRLF_STRING);
-         for (RespCommand command : commands){
-            addCommand(commandBuilder, command);
-         }
          // If we ever support a command that isn't ASCII this will need to change
-         ByteBufferUtils.stringToByteBufAscii(commandBuilder.toString(), handler.allocator());
+         Resp3Response.write(handler.allocator(), SERIALIZER);
       }
       return handler.myStage();
    }
 
-   private void addCommand(StringBuilder builder, RespCommand command) {
-      builder.append("*6\r\n");
+   private static void describeCommand(RespCommand command, ByteBufPool alloc) {
+      // Each command has 10 subsections.
+      ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, 10, alloc);
       // Name
-      builder.append("$").append(ByteBufUtil.utf8Bytes(command.getName())).append(CRLF_STRING).append(command.getName()).append(CRLF_STRING);
+      Resp3Response.simpleString(command.getName(), alloc);
       // Arity
-      builder.append(":").append(command.getArity()).append(CRLF_STRING);
-      // Flags
-      builder.append("*0\r\n");
+      Resp3Response.integers(command.getArity(), alloc);
+      // Flags, a set
+      Resp3Response.emptySet(alloc);
       // First key
-      builder.append(":").append(command.getFirstKeyPos()).append(CRLF_STRING);
-      // Second key
-      builder.append(":").append(command.getLastKeyPos()).append(CRLF_STRING);
+      Resp3Response.integers(command.getFirstKeyPos(), alloc);
+      // Last key
+      Resp3Response.integers(command.getLastKeyPos(), alloc);
       // Step
-      builder.append(":").append(command.getSteps()).append(CRLF_STRING);
+      Resp3Response.integers(command.getSteps(), alloc);
+
+      // Additional command metadata
+      // ACL categories
+      Resp3Response.emptySet(alloc);
+      // Tips
+      Resp3Response.emptySet(alloc);
+      // Key specifications
+      Resp3Response.emptySet(alloc);
+      // Subcommands
+      Resp3Response.emptySet(alloc);
    }
 }

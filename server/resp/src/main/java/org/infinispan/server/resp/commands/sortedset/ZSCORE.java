@@ -1,16 +1,16 @@
 package org.infinispan.server.resp.commands.sortedset;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Returns the score of member in the sorted set at key.
@@ -35,10 +35,6 @@ public class ZSCORE extends RespCommand implements Resp3Command {
       byte[] name = arguments.get(0);
       byte[] member = arguments.get(1);
       EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetCache = handler.getSortedSeMultimap();
-
-      CompletionStage<byte[]> score = sortedSetCache.score(name, member)
-            .thenApply(r -> r == null ? null : Double.toString(r).getBytes(StandardCharsets.US_ASCII));
-
-      return handler.stageToReturn(score, ctx, Consumers.GET_BICONSUMER);
+      return handler.stageToReturn(sortedSetCache.score(name, member), ctx, Resp3Response.DOUBLE);
    }
 }

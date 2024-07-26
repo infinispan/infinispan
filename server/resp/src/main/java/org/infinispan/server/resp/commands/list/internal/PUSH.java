@@ -4,11 +4,11 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -30,7 +30,7 @@ public abstract class PUSH extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
 
-      return handler.stageToReturn(pushAndReturn(handler, arguments), ctx, Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(pushAndReturn(handler, arguments), ctx, Resp3Response.INTEGER);
    }
 
    protected CompletionStage<Long> pushAndReturn(Resp3Handler handler, List<byte[]> arguments) {

@@ -1,11 +1,11 @@
 package org.infinispan.server.resp.commands.string;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.server.resp.commands.ArgumentUtils;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 final class CounterIncOrDec {
    private CounterIncOrDec() {
@@ -45,7 +45,7 @@ final class CounterIncOrDec {
             });
    }
 
-   static CompletionStage<Double> counterIncByDouble(Cache<byte[], byte[]> cache, byte[] key, Double by) {
+   static CompletionStage<Double> counterIncByDouble(Cache<byte[], byte[]> cache, byte[] key, double by) {
       return cache.getAsync(key)
             .thenCompose(currentValueBytes -> {
                if (currentValueBytes != null) {

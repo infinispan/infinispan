@@ -1,6 +1,6 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.RespConstants.CRLF;
+import static org.infinispan.server.resp.serialization.RespConstants.CRLF;
 import static org.infinispan.server.resp.commands.Commands.ALL_COMMANDS;
 
 import java.nio.charset.StandardCharsets;
@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.server.resp.logging.Log;
+import org.infinispan.server.resp.serialization.ByteBufferUtils;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;

@@ -7,11 +7,11 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.multimap.impl.EmbeddedSetCache;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -45,6 +45,6 @@ public class SINTERSTORE extends RespCommand implements Resp3Command {
       return handler.stageToReturn(
             allEntries.thenCompose(sets -> handler.getEmbeddedSetCache().set(destination, SINTER.intersect(sets.values(), 0))),
             ctx,
-            Consumers.LONG_BICONSUMER);
+            Resp3Response.INTEGER);
    }
 }

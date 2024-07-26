@@ -1,17 +1,18 @@
 package org.infinispan.server.resp.commands.generic;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.server.resp.Consumers;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.Util;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * <a href="https://redis.io/commands/flushdb/">FLUSHDB</a>
@@ -33,16 +34,16 @@ public class FLUSHDB extends RespCommand implements Resp3Command {
       if (arguments.size() == 1) {
          byte[] mode = arguments.get(0);
          if (Util.isAsciiBytesEquals(SYNC_BYTES, mode)) {
-            return handler.stageToReturn(handler.cache().clearAsync(), ctx, Consumers.OK_BICONSUMER);
+            return handler.stageToReturn(handler.cache().clearAsync(), ctx, Resp3Response.OK);
          } else if (Util.isAsciiBytesEquals(ASYNC_BYTES, mode)) {
             handler.cache().clearAsync();
-            Consumers.OK_BICONSUMER.accept(null, handler.allocator());
+            Resp3Response.ok(handler.allocator());
             return handler.myStage();
          } else {
             RespErrorUtil.syntaxError(handler.allocator());
             return handler.myStage();
          }
       }
-      return handler.stageToReturn(handler.cache().clearAsync(), ctx, Consumers.OK_BICONSUMER);
+      return handler.stageToReturn(handler.cache().clearAsync(), ctx, Resp3Response.OK);
    }
 }

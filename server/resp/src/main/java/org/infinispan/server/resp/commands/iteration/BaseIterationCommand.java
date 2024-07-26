@@ -1,7 +1,5 @@
 package org.infinispan.server.resp.commands.iteration;
 
-import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -14,11 +12,14 @@ import org.infinispan.server.iteration.IterableIterationResult;
 import org.infinispan.server.iteration.IterationInitializationContext;
 import org.infinispan.server.iteration.IterationManager;
 import org.infinispan.server.iteration.IterationState;
-import org.infinispan.server.resp.ByteBufferUtils;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.ByteBufferUtils;
+import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.Resp3Type;
+import org.infinispan.server.resp.serialization.RespConstants;
 import org.infinispan.util.concurrent.BlockingManager;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -78,23 +79,25 @@ public abstract class BaseIterationCommand extends RespCommand implements Resp3C
          // Let's just return 0
          emptyIterationResponse(handler);
       } else {
-         if (writeCursor()) {
-            StringBuilder response = new StringBuilder();
-            response.append("*2\r\n");
-            if (status == IterableIterationResult.Status.Finished) {
-               // We've reached the end of iteration, return a 0 cursor
-               response.append("$1\r\n0\r\n");
-               manager.close(cursor);
-            } else {
-               response.append('$');
-               response.append(cursor.length());
-               response.append(CRLF_STRING);
-               response.append(cursor);
-               response.append(CRLF_STRING);
-            }
-            ByteBufferUtils.stringToByteBufAscii(response, handler.allocator());
+         if (!writeCursor()) {
+            Resp3Response.array(writeResponse(result.getEntries()), handler.allocator(), Resp3Type.BULK_STRING);
+            return;
          }
-         ByteBufferUtils.bytesToResult(writeResponse(result.getEntries()), handler.allocator());
+
+         String replyCursor;
+         if (status == IterableIterationResult.Status.Finished) {
+            // We've reached the end of iteration, return a 0 cursor
+            replyCursor = INITIAL_CURSOR;
+            manager.close(cursor);
+         } else {
+            replyCursor = cursor;
+         }
+         // Array mixes bulk string and arrays.
+         Resp3Response.write(handler.allocator(), (res, alloc) -> {
+            ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, 2, alloc);
+            Resp3Response.string(replyCursor, alloc);
+            Resp3Response.array(writeResponse(result.getEntries()), alloc, Resp3Type.BULK_STRING);
+         });
       }
    }
 
@@ -103,7 +106,12 @@ public abstract class BaseIterationCommand extends RespCommand implements Resp3C
    }
 
    private void emptyIterationResponse(Resp3Handler handler) {
-      ByteBufferUtils.stringToByteBufAscii("*2\r\n$1\r\n0\r\n*0\r\n", handler.allocator());
+      // Array mixes a bulk string at first position and an array.
+      Resp3Response.write(handler.allocator(), (res, alloc) -> {
+         ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, 2, alloc);
+         Resp3Response.string(INITIAL_CURSOR, alloc);
+         Resp3Response.arrayEmpty(alloc);
+      });
    }
 
    protected boolean writeCursor() {
