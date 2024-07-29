@@ -42,15 +42,13 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class OperationsFactory implements HotRodConstants {
 
-   private final ThreadLocal<Integer> flagsMap = new ThreadLocal<>();
+   private final int flags;
 
    private final ChannelFactory channelFactory;
 
    private final byte[] cacheNameBytes;
 
    private final AtomicReference<ClientTopology> clientTopologyRef;
-
-   private final boolean forceReturnValue;
 
    private final ClientListenerNotifier listenerNotifier;
 
@@ -62,23 +60,26 @@ public class OperationsFactory implements HotRodConstants {
 
    private final TelemetryService telemetryService;
 
-   public OperationsFactory(ChannelFactory channelFactory, String cacheName, boolean forceReturnValue, ClientListenerNotifier listenerNotifier, Configuration cfg, ClientStatistics clientStatistics) {
+   public OperationsFactory(ChannelFactory channelFactory, String cacheName, boolean forceReturnValue,
+                            ClientListenerNotifier listenerNotifier, Configuration cfg, ClientStatistics clientStatistics,
+                            int flags) {
       this.channelFactory = channelFactory;
       this.cacheNameBytes = cacheName == null ? DEFAULT_CACHE_NAME_BYTES : RemoteCacheManager.cacheNameBytes(cacheName);
       this.cacheName = cacheName;
       clientTopologyRef = channelFactory != null
             ? channelFactory.createTopologyId(cacheNameBytes)
             : new AtomicReference<>(new ClientTopology(-1, cfg.clientIntelligence()));
-      this.forceReturnValue = forceReturnValue;
 
       this.listenerNotifier = listenerNotifier;
       this.cfg = cfg;
       this.clientStatistics = clientStatistics;
       this.telemetryService = TelemetryServiceFactory.INSTANCE.telemetryService(cfg.tracingPropagationEnabled());
+      this.flags = forceReturnValue ? flags | Flag.FORCE_RETURN_VALUE.getFlagInt() : flags;
    }
 
-   public OperationsFactory(ChannelFactory channelFactory, ClientListenerNotifier listenerNotifier, Configuration cfg) {
-      this(channelFactory, null, false, listenerNotifier, cfg, null);
+   public OperationsFactory(ChannelFactory channelFactory, ClientListenerNotifier listenerNotifier, Configuration cfg,
+                            int flags) {
+      this(channelFactory, null, false, listenerNotifier, cfg, null, flags);
    }
 
    public ClientListenerNotifier getListenerNotifier() {
@@ -273,32 +274,11 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public int flags() {
-      Integer threadLocalFlags = this.flagsMap.get();
-      this.flagsMap.remove();
-      int intFlags = 0;
-      if (threadLocalFlags != null) {
-         intFlags |= threadLocalFlags;
-      }
-      if (forceReturnValue) {
-         intFlags |= Flag.FORCE_RETURN_VALUE.getFlagInt();
-      }
-      return intFlags;
-   }
-
-   public void setFlags(Flag[] flags) {
-      int intFlags = 0;
-      for (Flag flag : flags)
-         intFlags |= flag.getFlagInt();
-      this.flagsMap.set(intFlags);
-   }
-
-   public void setFlags(int intFlags) {
-      this.flagsMap.set(intFlags);
+      return flags;
    }
 
    public boolean hasFlag(Flag flag) {
-      Integer threadLocalFlags = this.flagsMap.get();
-      return threadLocalFlags != null && (threadLocalFlags & flag.getFlagInt()) != 0;
+      return (flags & flag.getFlagInt()) != 0;
    }
 
    public CacheTopologyInfo getCacheTopologyInfo() {

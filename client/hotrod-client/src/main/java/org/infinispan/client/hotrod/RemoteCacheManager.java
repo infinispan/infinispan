@@ -263,7 +263,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    @Override
    public Set<String> getCacheNames() {
-      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, listenerNotifier, configuration);
+      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, listenerNotifier, configuration, 0);
       String names = await(operationsFactory.newAdminOperation("@@cache@names", Collections.emptyMap()).execute());
       Set<String> cacheNames = new TreeSet<>();
       // Simple pattern that matches the result which is represented as a JSON string array, e.g. ["cache1","cache2"]
@@ -527,7 +527,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
                return null;
             }
             // Create and re-ping
-            OperationsFactory adminOperationsFactory = new OperationsFactory(channelFactory, listenerNotifier, configuration);
+            OperationsFactory adminOperationsFactory = new OperationsFactory(channelFactory, listenerNotifier, configuration, 0);
             pingResponse = await(adminOperationsFactory.newAdminOperation("@@cache@getorcreate", params).execute().thenCompose(s -> operationsFactory.newFaultTolerantPingOperation().execute()));
          }
       } else {
@@ -625,7 +625,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
     * @return an instance of {@link RemoteCacheManagerAdmin} which can perform administrative operations on the server.
     */
    public RemoteCacheManagerAdmin administration() {
-      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, listenerNotifier, configuration);
+      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, listenerNotifier, configuration, 0);
       return new RemoteCacheManagerAdminImpl(this, operationsFactory, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
             name -> {
                synchronized (cacheName2RemoteCache) {
@@ -742,10 +742,15 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       return channelFactory.getRetries();
    }
 
-   private OperationsFactory createOperationFactory(String cacheName, boolean forceReturnValue,
-                                                    ClientStatistics stats) {
+   OperationsFactory createOperationFactory(String cacheName, boolean forceReturnValue,
+                                                   ClientStatistics stats) {
+      return createOperationFactory(cacheName, forceReturnValue, stats, 0);
+   }
+
+   public OperationsFactory createOperationFactory(String cacheName, boolean forceReturnValue,
+                                                    ClientStatistics stats, int flags) {
       return new OperationsFactory(channelFactory, cacheName, forceReturnValue, listenerNotifier, configuration,
-            stats);
+            stats, flags);
    }
 
    public ExecutorService getAsyncExecutorService() {

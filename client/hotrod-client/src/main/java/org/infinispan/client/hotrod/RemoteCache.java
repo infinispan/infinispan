@@ -467,9 +467,16 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     *    remoteCache.withFlags(Flag.FORCE_RETURN_VALUE).put("hello", "world");
     * </pre>
     * @param flags
-    * @return the current RemoteCache instance to continue running operations on.
+    * @return a RemoteCache instance with the flag added if necessary
     */
    RemoteCache<K, V> withFlags(Flag... flags);
+
+   /**
+    * Resets all applied flags back to the defaults. Note that {@link Flag#FORCE_RETURN_VALUE} will be cleared as well
+    * even if it was set via configuration.
+    * @return a RemoteCache instance with no flags applied to it
+    */
+   RemoteCache<K, V> noFlags();
 
    /**
     * Returns the {@link org.infinispan.client.hotrod.RemoteCacheContainer} that created this cache.

@@ -66,6 +66,7 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.reactivestreams.Publisher;
@@ -597,8 +598,31 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    @Override
    public InternalRemoteCache<K, V> withFlags(Flag... flags) {
-      operationsFactory.setFlags(flags);
-      return this;
+      if (flags.length == 0) {
+         return this;
+      }
+      int existingFlags = operationsFactory.flags();
+      int newFlags = 0;
+      for (Flag flag : flags) {
+         newFlags |= flag.getFlagInt();
+      }
+      int resultingFlags = (int) EnumUtil.mergeBitSets(existingFlags, newFlags);
+      if (resultingFlags == existingFlags) {
+         return this;
+      }
+      RemoteCacheImpl<K, V> instance = newInstance(resultingFlags);
+      instance.dataFormat = dataFormat;
+      return instance;
+   }
+
+   @Override
+   public InternalRemoteCache<K, V> noFlags() {
+      if (operationsFactory.flags() == 0) {
+         return this;
+      }
+      RemoteCacheImpl<K, V> instance = newInstance(0);
+      instance.dataFormat = dataFormat;
+      return instance;
    }
 
    @Override
@@ -705,6 +729,14 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    private <T, U> RemoteCacheImpl<T, U> newInstance() {
       RemoteCacheImpl<T, U> copy = new RemoteCacheImpl<>(this.remoteCacheManager, name, clientStatistics);
       copy.init(this.operationsFactory, this.batchSize);
+      return copy;
+   }
+
+   private <T, U> RemoteCacheImpl<T, U> newInstance(int flags) {
+      RemoteCacheImpl<T, U> copy = new RemoteCacheImpl<>(this.remoteCacheManager, name, clientStatistics);
+      OperationsFactory newOperationsFactory = remoteCacheManager.createOperationFactory(name,
+            remoteCacheManager.getConfiguration().forceReturnValues(), clientStatistics, flags);
+      copy.init(newOperationsFactory, this.batchSize);
       return copy;
    }
 

@@ -53,12 +53,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       this.cacheWithoutStats = cache;
 
       this.cache = new RemoteCacheWithStats<>(new RemoteCacheWithSyncListeners<>(cacheForceReturnValue, notifier, this), stats);
-      this.cacheWithCacheStore = new RemoteCacheWithCacheStore<K, V>(this.cache, jcacheLoader, jcacheWriter, configuration) {
-         @Override
-         protected void onLoad(K key, V value) {
-            JCache.this.put(JCache.this.cache, JCache.this.cache, key, value, false);
-         }
-      };
+      this.cacheWithCacheStore = new RemoteCacheWithCacheStorePut();
 
       addConfigurationListeners();
 
@@ -515,5 +510,19 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    @Override
    protected void addCacheWriterAdapter(CacheWriter<? super K, ? super V> cacheWriter) {
       //Nothing to do.
+   }
+
+   private class RemoteCacheWithCacheStorePut extends RemoteCacheWithCacheStore<K, V> {
+      public RemoteCacheWithCacheStorePut() {super(JCache.this.cache, JCache.this.jcacheLoader, JCache.this.jcacheWriter, JCache.this.configuration);}
+
+      @Override
+      protected void onLoad(K key, V value) {
+         JCache.this.put(JCache.this.cache, JCache.this.cache, key, value, false);
+      }
+
+      @Override
+      RemoteCacheWrapper<K, V> newWrapper(RemoteCache<K, V> newDelegate) {
+         throw new UnsupportedOperationException("JCache remote cache does not support flags!");
+      }
    }
 }

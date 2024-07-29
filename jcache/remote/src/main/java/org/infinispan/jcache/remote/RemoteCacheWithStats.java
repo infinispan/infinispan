@@ -13,6 +13,11 @@ public class RemoteCacheWithStats<K, V> extends RemoteCacheWrapper<K, V> {
    }
 
    @Override
+   RemoteCacheWrapper<K, V> newWrapper(RemoteCache<K, V> newDelegate) {
+      return new RemoteCacheWithStats<>(newDelegate, stats);
+   }
+
+   @Override
    public V get(Object key) {
       V v = delegate.get(key);
       if (v == null) {
