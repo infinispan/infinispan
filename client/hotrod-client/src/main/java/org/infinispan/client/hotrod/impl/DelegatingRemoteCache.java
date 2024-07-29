@@ -81,6 +81,15 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    }
 
    @Override
+   public InternalRemoteCache<K, V> noFlags() {
+      InternalRemoteCache<K, V> newCache = delegate.noFlags();
+      if (newCache != delegate) {
+         return newDelegatingCache(newCache);
+      }
+      return this;
+   }
+
+   @Override
    public RemoteCacheContainer getRemoteCacheContainer() {
       return delegate.getRemoteCacheContainer();
    }

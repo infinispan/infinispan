@@ -175,7 +175,7 @@ public class ChannelFactory {
          }
          clusters = List.copyOf(clustersDefinitions);
          topologyInfo = new TopologyInfo(configuration, mainCluster);
-         operationsFactory = new OperationsFactory(this, listenerNotifier, configuration);
+         operationsFactory = new OperationsFactory(this, listenerNotifier, configuration, 0);
          maxRetries = configuration.maxRetries();
 
          WrappedByteArray defaultCacheName = wrapBytes(RemoteCacheManager.cacheNameBytes());

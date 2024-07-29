@@ -41,6 +41,9 @@ public interface InternalRemoteCache<K, V> extends RemoteCache<K, V> {
    InternalRemoteCache<K, V> withFlags(Flag... flags);
 
    @Override
+   InternalRemoteCache<K, V> noFlags();
+
+   @Override
    <T, U> InternalRemoteCache<T, U> withDataFormat(DataFormat dataFormat);
 
    boolean hasForceReturnFlag();

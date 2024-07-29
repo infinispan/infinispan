@@ -35,6 +35,8 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
       this.delegate = delegate;
    }
 
+   abstract RemoteCacheWrapper<K, V> newWrapper(RemoteCache<K, V> newDelegate);
+
    @Override
    public void addClientListener(Object listener) {
       delegate.addClientListener(listener);
@@ -522,8 +524,20 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
 
    @Override
    public RemoteCache<K, V> withFlags(Flag... flags) {
-      delegate.withFlags(flags);
-      return this;
+      RemoteCache<K, V> newDelegate = delegate.withFlags(flags);
+      if (newDelegate == delegate) {
+         return this;
+      }
+      return newWrapper(newDelegate);
+   }
+
+   @Override
+   public RemoteCache<K, V> noFlags() {
+      RemoteCache<K, V> newDelegate = delegate.noFlags();
+      if (newDelegate == delegate) {
+         return this;
+      }
+      return newWrapper(newDelegate);
    }
 
    @Override
@@ -583,7 +597,11 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
 
    @Override
    public RemoteCache<K, V> withDataFormat(DataFormat dataFormat) {
-      return delegate.withDataFormat(dataFormat);
+      RemoteCache<K, V> newDelegate = delegate.withDataFormat(dataFormat);
+      if (newDelegate == delegate) {
+         return this;
+      }
+      return newWrapper(newDelegate);
    }
 
    @Override

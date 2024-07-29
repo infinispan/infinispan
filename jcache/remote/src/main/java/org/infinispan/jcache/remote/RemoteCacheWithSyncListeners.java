@@ -29,6 +29,11 @@ public class RemoteCacheWithSyncListeners<K, V> extends RemoteCacheWrapper<K, V>
    }
 
    @Override
+   RemoteCacheWrapper<K, V> newWrapper(RemoteCache<K, V> newDelegate) {
+      return new RemoteCacheWithSyncListeners<>(newDelegate, notifier, cache);
+   }
+
+   @Override
    public V put(final K key, final V value) {
       return withSyncListeners(notifier.hasSyncCreatedListener(), key, value, () -> delegate.put(key, value));
    }

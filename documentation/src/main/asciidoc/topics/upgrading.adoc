@@ -42,6 +42,20 @@ The following metrics have been renamed:
 - `get_num_ucast_msgs_sent` - `get_num_ucasts_sent`
 
 
+=== Java HotRod Client Changes
+
+==== RemoteCache withFlags no longer uses ThreadLocal
+
+Previously a RemoteCache would store its Flag settings in a ThreadLocal
+which was then cleared when an invocation of the cache was done.
+This does not work with Virtual Threads and is very error prone if the
+same RemoteCache is shared between threads.
+
+Instead now withFlags will return a new instance if new flags are applied
+and the previous instance will be untouched.
+This allows for thread and virtual thread safety.
+
+
 == Upgrading from 14.0 to 15.0
 
 === Deprecations, removals and moved classes
