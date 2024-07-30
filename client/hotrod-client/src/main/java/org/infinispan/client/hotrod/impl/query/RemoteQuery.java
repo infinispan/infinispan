@@ -54,12 +54,12 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
 
    @Override
    public List<T> list() {
-      return awaitQueryResult(listAsync());
+      return execute().list();
    }
 
    @Override
    public QueryResult<T> execute() {
-      return awaitQueryResult(executeAsync());
+      return (QueryResult<T>) awaitQueryResult(executeAsync());
    }
 
    @Override
@@ -80,16 +80,14 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
       return awaitQueryResult(executeRemotelyAsync(true)).hitCount();
    }
 
-   public CompletionStage<QueryResult<T>> executeAsync() {
+   @Override
+   public CompletionStage<org.infinispan.commons.api.query.QueryResult<T>> executeAsync() {
       return internalExecuteAsync().thenApply(CompletableFutures.identity());
    }
 
+   @Override
    public CompletionStage<Integer> executeStatementAsync() {
       return executeRemotelyAsync(false).thenApply(BaseQueryResponse::hitCount);
-   }
-
-   public CompletionStage<List<T>> listAsync() {
-      return executeRemotelyAsync(false).thenApply(this::extractResults);
    }
 
    private CompletableFuture<BaseQueryResponse<T>> executeRemotelyAsync(boolean withHitCount) {
