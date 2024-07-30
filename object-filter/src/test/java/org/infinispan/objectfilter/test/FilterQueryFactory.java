@@ -2,6 +2,7 @@ package org.infinispan.objectfilter.test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.impl.logging.Log;
@@ -93,7 +94,17 @@ final class FilterQueryFactory extends BaseQueryFactory {
       }
 
       @Override
+      public CompletionStage<org.infinispan.commons.api.query.QueryResult<T>> executeAsync() {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
       public int executeStatement() {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public CompletionStage<Integer> executeStatementAsync() {
          throw new UnsupportedOperationException();
       }
 

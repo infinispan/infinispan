@@ -3,6 +3,7 @@ package org.infinispan.query.dsl;
 //todo [anistor] We need to deprecate the 'always caching' behaviour and provide a clearCachedResults method
 
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -18,6 +19,14 @@ public interface Query<T> extends org.infinispan.commons.api.query.Query<T> {
 
    @Override
    QueryResult<T> execute();
+
+   /**
+    * Due to Generic limitations the erased type must stay as the commons QueryResult.
+    * Feel free to cast to {@link QueryResult} as needed in chained operations on the stage.
+    * @return a stage when complete has the results
+    */
+   @Override
+   CompletionStage<org.infinispan.commons.api.query.QueryResult<T>> executeAsync();
 
    /**
     * Gets the total number of results matching the query, ignoring pagination (startOffset, maxResults).
