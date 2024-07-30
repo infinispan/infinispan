@@ -2,6 +2,7 @@ package org.infinispan.query.dsl.embedded.impl;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -86,9 +87,19 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
    }
 
    @Override
+   public CompletionStage<org.infinispan.commons.api.query.QueryResult<T>> executeAsync() {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
    public int executeStatement() {
       IndexedQuery<T> indexedQuery = getOrCreateIndexedQuery(false);
       return indexedQuery.executeStatement();
+   }
+
+   @Override
+   public CompletionStage<Integer> executeStatementAsync() {
+      throw new UnsupportedOperationException();
    }
 
    @Override

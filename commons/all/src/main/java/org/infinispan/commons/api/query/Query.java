@@ -2,9 +2,13 @@ package org.infinispan.commons.api.query;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.api.query.impl.QueryPublisher;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.Experimental;
+import org.reactivestreams.Publisher;
 
 /**
  * @since 15.0
@@ -24,6 +28,24 @@ public interface Query<T> extends Iterable<T> {
    List<T> list();
 
    /**
+    * Reactive based query for {@link #list()}. Will stream data as requested. The query will poll data
+    * from the underlying engine in <b>batchSize</b> blocks of items to satisfy the subscription
+    * <p>
+    * If {@link #startOffset(long)} or {@link #maxResults(int)} will affect the query by either not
+    * returning the first <b>startOffset</b> number of matches and will not return more than <b>maxResults</b>.
+    * <p>
+    * Note: due to current API limitations it is not safe to use this Query instance while there is an active
+    * subscription to the returned Publisher and it is only safe to use one subscription at a time.
+    * @param maxBatchSize the maximum amount of entries that will be retrieved at once. Note that a smaller batch size
+    *                     may be queried to ensure memory safety.
+    * @return a Publisher that when subscribed will query
+    */
+   @Experimental
+   default Publisher<T> publish(int maxBatchSize) {
+      return new QueryPublisher<>(this, maxBatchSize);
+   }
+
+   /**
     *  Executes the query (a SELECT statement). Subsequent invocations cause the query to be re-executed.
     *  <p>
     *  Executing a DELETE is also allowed. In this case, no results will be returned, but the number of affected entries
@@ -34,6 +56,17 @@ public interface Query<T> extends Iterable<T> {
    QueryResult<T> execute();
 
    /**
+    * Reactive version of {@link #execute()}.
+    * <p>
+    * Note: due to current API limitations until this stage completes it is not safe to use this Query
+    * instance for any other invocations while there is an outstanding Publisher subscription or to have more than
+    * one subscription at a time.
+    * @return a Stage that when complete contains the query results
+    */
+   @Experimental
+   CompletionStage<QueryResult<T>> executeAsync();
+
+   /**
     * Executes a data modifying statement (typically a DELETE) that does not return results; instead it returns the
     * count of affected entries. This method cannot be used to execute a SELECT.
     * <p>
@@ -42,6 +75,13 @@ public interface Query<T> extends Iterable<T> {
     * @return the number of affected (deleted) entries
     */
    int executeStatement();
+
+   /**
+    * Reactive version of {@link #executeStatement()}
+    * @return a Stage that when complete contains the affected (deleted) entries
+    */
+   @Experimental
+   CompletionStage<Integer> executeStatementAsync();
 
    /**
     * Indicates if the parsed query has projections (a SELECT clause) and consequently, the returned results will
