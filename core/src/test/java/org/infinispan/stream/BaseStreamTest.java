@@ -210,6 +210,24 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       list.parallelStream().forEach(e -> assertEquals(cache.get(e.getKey()), e.getValue()));
    }
 
+   public void testObjSortedList() {
+      Cache<Integer, String> cache = getCache(0);
+      int range = 10;
+      // First populate the cache with a bunch of values
+      IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
+
+      CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
+
+      List<Map.Entry<Integer, String>> list = createStream(entrySet).sorted(
+            (e1, e2) -> Integer.compare(e1.getKey(), e2.getKey())).toList();
+      assertEquals(cache.size(), list.size());
+      AtomicInteger i = new AtomicInteger();
+      list.forEach(e -> {
+         assertEquals(i.getAndIncrement(), e.getKey().intValue());
+         assertEquals(cache.get(e.getKey()), e.getValue());
+      });
+   }
+
    public void testObjSortedCollector() {
       Cache<Integer, String> cache = getCache(0);
       int range = 10;

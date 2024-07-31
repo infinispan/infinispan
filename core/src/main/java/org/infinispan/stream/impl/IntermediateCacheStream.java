@@ -318,7 +318,7 @@ public class IntermediateCacheStream<Original, R> implements CacheStream<R> {
 
    @Override
    public Object[] toArray() {
-      return new Object[0];
+      return localStream.toArray();
    }
 
    @Override
