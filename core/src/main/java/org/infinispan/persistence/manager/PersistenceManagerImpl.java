@@ -1400,7 +1400,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
          TriPredicate<? super WCT, Object, MVCCEntry<?, ?>> commandKeyPredicate) {
       //noinspection unchecked
       MVCCEntry<K, V> entry = (MVCCEntry<K, V>) ctx.lookupEntry(key);
-      if (commandKeyPredicate != null && !commandKeyPredicate.test(command, key, entry) || !entry.isChanged()) {
+      if (commandKeyPredicate != null && !commandKeyPredicate.test(command, key, entry)
+            // Defensive null check for ISPN-16284
+            || entry == null || !entry.isChanged()) {
          return null;
       }
       return entry;
