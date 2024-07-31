@@ -33,7 +33,8 @@ public class PassivationWriterInterceptor extends CacheWriterInterceptor {
    @Override
    protected InvocationStage store(TxInvocationContext<AbstractCacheTransaction> ctx) throws Throwable {
       CompletionStage<Long> batchStage = persistenceManager.performBatch(ctx, ((writeCommand, k, v) ->
-         isProperWriter(ctx, writeCommand, k) && v.isRemoved()));
+            // Defensive null check for ISPN-16284
+         isProperWriter(ctx, writeCommand, k) && v != null && v.isRemoved()));
       return asyncValue(batchStage);
    }
 
