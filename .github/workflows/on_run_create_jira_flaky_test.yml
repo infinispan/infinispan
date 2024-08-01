@@ -1,10 +1,11 @@
-name: PR to Jira. Flaky
+name: On Run Create Jira for Flaky Test
 on:
    workflow_run:
-     workflows: [Pull Request Open]
+     workflows: [On PR Open or Push Do Build and Test]
      types: [completed]
 jobs:
    download:
+      name: Downloading Flaky test report
       runs-on: ubuntu-latest
       steps:
         - name: Checkout
