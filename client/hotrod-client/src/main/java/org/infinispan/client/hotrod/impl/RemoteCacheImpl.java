@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl;
 import static org.infinispan.client.hotrod.filter.Filters.makeFactoryParams;
 import static org.infinispan.client.hotrod.impl.Util.await;
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+import static org.infinispan.commons.internal.InternalCacheNames.GLOBAL_STATE_INTERNAL_CACHES;
 
 import java.net.SocketAddress;
 import java.util.Collections;
@@ -766,7 +767,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
          // This means that the client DOES NOT have a marshaller capable of converting to the server key type.
          // Therefore, it will utilize the default fallback and NOT convert the object.
          // This could cause additional redirections on the server side and poor performance for the client.
-         if (remoteCacheManager.getMarshallerRegistry().getMarshaller(key) == null) {
+         if (!GLOBAL_STATE_INTERNAL_CACHES.contains(name) && remoteCacheManager.getMarshallerRegistry().getMarshaller(key) == null) {
             log.serverKeyTypeNotRecognized(key);
          }
       }
