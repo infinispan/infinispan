@@ -9,11 +9,13 @@ jobs:
       steps:
         - name: Checkout
           uses: actions/checkout@v4
+
         - name: Install xmlstarlet tool
           shell: bash
           run: |
              sudo apt-get update
              sudo apt-get install -y xmlstarlet
+
 # Downloading flaky artifact containing
 # zip file with flaky test reports and file
 # containing PR target branch
@@ -44,9 +46,11 @@ jobs:
               let fs = require('fs');
               fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/flaky-test-report.zip`, Buffer.from(download.data));
               return "Flaky Found";
+
         - if: steps.download-artifact.outputs.result == 'Flaky Found'
           name: Unzip artifact
           run: unzip flaky-test-report.zip
+
         - if: steps.download-artifact.outputs.result == 'Flaky Found'
           name: Create Jira
           env:
