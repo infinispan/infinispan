@@ -86,7 +86,7 @@ jobs:
               target-branch.txt
               event_name.txt
 
-      - name: Archive server distro
+      - name: Archive server distro ${{ steps.properties.outputs.infinispan_brand_version }}
         if: ${{github.event_name == 'push'}}
         uses: actions/upload-artifact@v4
         with:
@@ -95,7 +95,7 @@ jobs:
           path: |
             distribution/target/distribution/infinispan-server*.zip
 
-      - name: Archive server distro
+      - name: Archive PR server distro ${{ steps.properties.outputs.infinispan_brand_version }}-${{ github.event.pull_request.number }}
         if: ${{github.event_name == 'pull_request'}}
         uses: actions/upload-artifact@v4
         with:
