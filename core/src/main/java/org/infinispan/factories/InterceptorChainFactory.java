@@ -318,12 +318,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    }
 
    private boolean hasAsyncStore() {
-      List<StoreConfiguration> loaderConfigs = configuration.persistence().stores();
-      for (StoreConfiguration loaderConfig : loaderConfigs) {
-         if (loaderConfig.async().enabled())
-            return true;
-      }
-      return false;
+      return configuration.persistence().usingAsyncStore();
    }
 
    @Override

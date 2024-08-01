@@ -77,11 +77,7 @@ public class PersistenceConfiguration extends ConfigurationElement<PersistenceCo
     * Loops through all individual cache loader configs and checks if preload is set on any of them
     */
    public Boolean preload() {
-      for (StoreConfiguration c : stores) {
-         if (c.preload())
-            return true;
-      }
-      return false;
+      return stores.stream().anyMatch(StoreConfiguration::preload);
    }
 
    public boolean usingStores() {
@@ -89,11 +85,7 @@ public class PersistenceConfiguration extends ConfigurationElement<PersistenceCo
    }
 
    public boolean usingAsyncStore() {
-      for (StoreConfiguration c : stores) {
-         if (c.async().enabled())
-            return true;
-      }
-      return false;
+      return stores.stream().map(StoreConfiguration::async).anyMatch(AsyncStoreConfiguration::enabled);
    }
 
    /**
@@ -102,10 +94,6 @@ public class PersistenceConfiguration extends ConfigurationElement<PersistenceCo
     * @return true if any configured store is segmented, otherwise false
     */
    public boolean usingSegmentedStore() {
-      for (StoreConfiguration c : stores) {
-         if (c.segmented())
-            return true;
-      }
-      return false;
+      return stores.stream().anyMatch(StoreConfiguration::segmented);
    }
 }
