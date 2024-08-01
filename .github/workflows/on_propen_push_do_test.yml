@@ -1,4 +1,4 @@
-name: Pull Request Open
+name: On PR Open or Push Do Build and Test
 on:
   pull_request:
   push:
@@ -8,6 +8,7 @@ on:
       - 14.0.x
 jobs:
   ci-build-test-pr:
+    name: Maven Build and Test
     runs-on: ubuntu-latest
     env:
       MAVEN_OPTS: "-Xmx1500m -XX:+HeapDumpOnOutOfMemoryError"
@@ -113,6 +114,7 @@ jobs:
           artifacts: distribution/target/distribution/infinispan*.zip
           tag: ${{ github.ref_name }}-devel
   images-branch:
+      name: Build branch image ${{ needs.ci-build-test-pr.outputs.server-distro-name-branch }} using infinispan-image
       if: github.event_name == 'push'
       needs: ci-build-test-pr
       uses: rigazilla/infinispan-images/.github/workflows/ci-release.yml@main
@@ -123,6 +125,7 @@ jobs:
          name: ${{ needs.ci-build-test-pr.outputs.server-distro-name-branch }}
          art-name: ${{ needs.ci-build-test-pr.outputs.server-distro-name-branch }}
   images-pr:
+      name: Build PR image ${{ needs.ci-build-test-pr.outputs.server-distro-name-branch }} using infinispan-image
       if: github.event_name == 'pull_request'
       needs: ci-build-test-pr
       uses: rigazilla/infinispan-images/.github/workflows/ci-release.yml@main
