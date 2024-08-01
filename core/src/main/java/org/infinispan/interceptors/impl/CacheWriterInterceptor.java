@@ -32,7 +32,9 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -55,8 +57,6 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -186,14 +186,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
                !isProperWriter(rCtx, removeCommand, removeCommand.getKey())) {
             return rv;
          }
-
-         Object key = removeCommand.getKey();
-         CompletionStage<?> stage = persistenceManager.deleteFromAllStores(key, removeCommand.getSegment(), BOTH);
-         if (log.isTraceEnabled()) {
-            stage = stage.thenAccept(removed ->
-                  getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, removed));
-         }
-         return delayedValue(stage, rv);
+         return delayedValue(removeEntry(rCtx, removeCommand.getKey(), removeCommand.getSegment(), removeCommand), rv);
       });
    }
 
@@ -218,7 +211,15 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
-      return visitDataWriteCommandToStore(ctx, command);
+      return invokeNextThenApply(ctx, command, (rCtx, cmd, rv) -> {
+         var key = cmd.getKey();
+         if (!isStoreEnabled(cmd) || !cmd.shouldReplicate(rCtx, true))
+            return rv;
+         if (!isProperWriter(rCtx, cmd, key))
+            return rv;
+
+         return delayedValue(cmd.isRemove() ? removeEntry(rCtx, key, cmd.getSegment(), cmd) : storeEntry(rCtx, key, cmd), rv);
+      });
    }
 
    @Override
@@ -482,6 +483,19 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       return CompletableFutures.completedNull();
    }
 
+   CompletionStage<?> removeEntry(InvocationContext ctx, Object key, int segment, FlagAffectedCommand command) {
+      if (persistenceManager.isReadOnly())
+         return CompletableFutures.completedNull();
+
+      CompletionStage<?> stage = persistenceManager.deleteFromAllStores(key, segment, skipSharedStores(ctx, key, command) ? PRIVATE : BOTH);
+      if (log.isTraceEnabled()) {
+         stage = stage.thenAccept(removed ->
+               getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, removed));
+      }
+      return stage;
+   }
+
+
    MarshallableEntry<Object, Object> marshalledEntry(InvocationContext ctx, Object key) {
       InternalCacheValue<?> sv = entryFactory.getValueFromCtx(key, ctx);
       return sv != null ? marshalledEntryFactory.create(key, (InternalCacheValue) sv) : null;
@@ -494,7 +508,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
    private Object visitDataWriteCommandToStore(InvocationContext ctx, DataWriteCommand command) {
       return invokeNextThenApply(ctx, command, (rCtx, cmd, rv) -> {
-         if (!isStoreEnabled(cmd) || rCtx.isInTxScope() || !cmd.shouldReplicate(ctx, true))
+         if (!isStoreEnabled(cmd) || rCtx.isInTxScope() || !cmd.shouldReplicate(rCtx, true))
             return rv;
          if (!isProperWriter(rCtx, cmd, cmd.getKey()))
             return rv;

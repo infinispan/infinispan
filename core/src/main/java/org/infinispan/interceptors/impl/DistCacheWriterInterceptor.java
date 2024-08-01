@@ -9,7 +9,6 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
-import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -71,19 +70,6 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    }
 
    @Override
-   public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
-      return invokeNextThenApply(ctx, command, (rCtx, cmd, rv) -> {
-         Object key = cmd.getKey();
-         if (!isStoreEnabled(cmd) || !cmd.shouldReplicate(rCtx, true))
-            return rv;
-         if (!isProperWriter(rCtx, cmd, cmd.getKey()))
-            return rv;
-
-         return delayedValue(storeEntry(rCtx, key, cmd), rv);
-      });
-   }
-
-   @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       if (!isStoreEnabled(command) || ctx.isInTxScope())
          return invokeNext(ctx, command);
@@ -114,14 +100,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
             return rv;
          if (!isProperWriter(rCtx, removeCommand, key))
             return rv;
-
-         CompletionStage<?> stage = persistenceManager.deleteFromAllStores(key, removeCommand.getSegment(),
-               skipSharedStores(rCtx, key, removeCommand) ? PRIVATE : BOTH);
-         if (log.isTraceEnabled()) {
-            stage = stage.thenAccept(removed ->
-                  getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, removed));
-         }
-         return delayedValue(stage, rv);
+         return delayedValue(removeEntry(rCtx, removeCommand.getKey(), removeCommand.getSegment(), removeCommand), rv);
       });
    }
 

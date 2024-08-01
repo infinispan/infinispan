@@ -68,9 +68,11 @@ public class IsMarshallableInterceptor extends DDAsyncInterceptor {
    public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
       if (isUsingAsyncStore(ctx, command)) {
          checkMarshallable(command.getKey());
-         checkMarshallable(command.getValue());
-         checkMarshallable(command.getMetadata());
          checkMarshallable(command.getInternalMetadata());
+         if (!command.isRemove()) {
+            checkMarshallable(command.getValue());
+            checkMarshallable(command.getMetadata());
+         }
       }
       return invokeNext(ctx, command);
    }
