@@ -1,6 +1,9 @@
-name: Report flaky test
-description: Finds flaky tests and uploads reports
-
+name: Comment PR for flaky test
+description: This action comments on PR for flaky test
+inputs:
+  pr_number:
+    description: PR number
+    required: true
 runs:
   using: composite
   steps:
@@ -14,7 +17,7 @@ runs:
       #if: github.repository == 'infinispan/infinispan'
       shell: bash
       run: |
-        PR="${{ github.event.number }}"
+        PR="${{ inputs.pr_number }}"
         if [ "$PR" != "" ]; then
           shopt -s nullglob globstar
           FLAKY_TEST_GLOB="**/target/*-reports*/**/TEST-*FLAKY.xml"

@@ -59,22 +59,24 @@ jobs:
 # Create artifact with branch name and surefile flaky test report
       - name: Check flaky report existence
         if: success() || failure()
-        id: check_files
+        id: check_flaky_report
         uses: andstor/file-existence-action@v3
         with:
           files: "**/target/*-reports*/**/TEST-*FLAKY.xml"
 
       - name: Archive base_ref
-        if: (success() || failure()) && steps.check_files.outputs.files_exists == 'true'
+        if: (success() || failure()) && steps.check_flaky_report.outputs.files_exists == 'true'
         env:
           TARGET_BRANCH: ${{ github.base_ref }}
           EVENT_NAME: ${{ github.event_name }}
+          EVENT_NUMBER: ${{ github.event.number }}
         run: |
           echo -n $TARGET_BRANCH > target-branch.txt
           echo -n $EVENT_NAME > event_name.txt
+          echo -n $EVENT_NUMBER > event_number.txt
 
       - name: Archive flaky test report
-        if: (success() || failure()) && steps.check_files.outputs.files_exists == 'true'
+        if: (success() || failure()) && steps.check_flaky_report.outputs.files_exists == 'true'
         uses: actions/upload-artifact@v4
         with:
             name: flaky-test-report
@@ -82,6 +84,7 @@ jobs:
               **/target/*-reports*/**/TEST-*FLAKY.xml
               target-branch.txt
               event_name.txt
+              event_number.txt
 
       - name: Archive server distro ${{ steps.properties.outputs.infinispan_brand_version }}
         if: ${{github.event_name == 'push'}}

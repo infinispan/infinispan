@@ -66,6 +66,24 @@ jobs:
             TARGET_BRANCH=$(cat target-branch.txt) bin/jira/track_flaky_tests.sh
 
         - if: steps.download-artifact.outputs.result == 'Flaky Found'
+          name: Get event name
+          id: event_name
+          uses: juliangruber/read-file-action@v1
+          with:
+            path: ./event_name.txt
+
+        - if: steps.download-artifact.outputs.result == 'Flaky Found'
+          name: Get PR number
+          id: pr_number
+          uses: juliangruber/read-file-action@v1
+          with:
+            path: ./event_number.txt
+
+        - if: >
+            steps.download-artifact.outputs.result == 'Flaky Found' &&
+            steps.event_name.outputs.content == 'pull_request'
           name: Comment PR
           uses: ./.github/actions/comment-pr-flaky-test
+          with:
+            pr_number: ${{ steps.pr_number.outputs.content }}
 
