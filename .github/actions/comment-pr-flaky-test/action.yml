@@ -12,8 +12,6 @@ runs:
     - id: setup-env
       name: Setup Env Vars
       run: |
-        shopt -s nullglob globstar
-        export FLAKY_TEST_GLOB="**/target/*-reports*/**/TEST-*FLAKY.xml"
     - id: flaky-tests
       name: Find flaky tests
       #if: github.repository == 'infinispan/infinispan'
@@ -21,6 +19,9 @@ runs:
       run: |
         PR="${{ github.event.number }}"
         if [ "$PR" != "" ]; then
+          shopt -s nullglob globstar
+          FLAKY_TEST_GLOB="**/target/*-reports*/**/TEST-*FLAKY.xml"
+          TESTS=(${FLAKY_TEST_GLOB})
           for TEST in "${TESTS[@]}"
           do
             TEST_CLASS=$(xmlstarlet sel --template --value-of '/testsuite/testcase/@classname' ${TEST})
