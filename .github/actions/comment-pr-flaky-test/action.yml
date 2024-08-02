@@ -29,7 +29,7 @@ runs:
             FULL_TEST_NAME=$(xmlstarlet sel -T -t -m "/testsuite/testcase" -o '   - '\
              -v "concat(@classname,'#',@name)" -n ${TEST} \
              | sed 's/(Flaky Test)//' | sed 's/\[[0-9]\]//')
-            FLAKES_PR_COMMENT="$FLAKES_PR_COMMENT   - $FULL_TEST_NAME\n"
+            FLAKES_PR_COMMENT="$FLAKES_PR_COMMENT$FULL_TEST_NAME\n"
           done
           if [ "$FLAKES_PR_COMMENT" != "" ]; then
             pr_url=https://github.com/${{ github.repository }}/pull/$PR
