@@ -26,11 +26,10 @@ runs:
             TEST_NAME=${TEST_NAME% (Flaky Test)}
             TEST_NAME=${TEST_NAME%%[*}
             TEST_NAME_NO_PARAMS=${TEST_NAME%%\\*}
-            FLAKES_PR_COMMENT="   - $FLAKES_PR_COMMENT""\n""$TEST_CLASS#$TEST_NAME_NO_PARAM"
+            FLAKES_PR_COMMENT="   - $FLAKES_PR_COMMENT\n$TEST_CLASS#$TEST_NAME_NO_PARAM"
           done
           if [ "$FLAKES_PR_COMMENT" != "" ]; then
-            FLAKES_PR_COMMENT="__FLAKY TESTS__\n"$FLAKES_PR_COMMENT"
             pr_url=https://github.com/${{ github.repository }}/pull/$PR
-            printf "__FLAKY TESTS__\n\n%s" "$FLAKES_PR_COMMENT" | gh pr comment $pr_url -F -
+            printf "__FLAKY TESTS__\n%s" "$FLAKES_PR_COMMENT" | gh pr comment $pr_url -F -
           fi
         fi
