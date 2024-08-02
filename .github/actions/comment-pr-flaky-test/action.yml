@@ -13,6 +13,8 @@ runs:
         sudo apt-get update
         sudo apt-get install xmlstarlet
     - id: flaky-tests
+      env:
+        GH_TOKEN: ${{ github.token }}
       name: Find flaky tests
       #if: github.repository == 'infinispan/infinispan'
       shell: bash
