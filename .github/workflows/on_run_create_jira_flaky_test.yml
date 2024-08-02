@@ -67,5 +67,5 @@ jobs:
 
         - if: steps.download-artifact.outputs.result == 'Flaky Found'
           name: Comment PR
-          uses: comment-pr-flaky-test@main
+          uses: actions/comment-pr-flaky-test@main
 
