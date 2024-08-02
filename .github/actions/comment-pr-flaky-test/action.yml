@@ -26,9 +26,9 @@ runs:
           TESTS=(${FLAKY_TEST_GLOB})
           for TEST in "${TESTS[@]}"
           do
-            FULL_TEST_NAME=xmlstarlet sel -T -t -m "/testsuite/testcase" -o '   - '\
+            FULL_TEST_NAME=$(xmlstarlet sel -T -t -m "/testsuite/testcase" -o '   - '\
              -v "concat(@classname,'#',@name)" -n ${TEST} \
-             | sed 's/(Flaky Test)//' | sed 's/\[[0-9]\]//'
+             | sed 's/(Flaky Test)//' | sed 's/\[[0-9]\]//')
             FLAKES_PR_COMMENT="$FLAKES_PR_COMMENT   - $FULL_TEST_NAME\n"
           done
           if [ "$FLAKES_PR_COMMENT" != "" ]; then
