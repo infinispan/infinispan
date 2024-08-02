@@ -9,9 +9,6 @@ runs:
       run: |
         sudo apt-get update
         sudo apt-get install xmlstarlet
-    - id: setup-env
-      name: Setup Env Vars
-      run: |
     - id: flaky-tests
       name: Find flaky tests
       #if: github.repository == 'infinispan/infinispan'
