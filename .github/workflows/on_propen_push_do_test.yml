@@ -104,7 +104,6 @@ jobs:
             path: |
                distribution/target/distribution/infinispan-server*.zip
 
-
       - uses: ncipollo/release-action@v1
         if: ${{ github.event_name}} == 'push'
         id: create-release

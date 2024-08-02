@@ -64,3 +64,8 @@ jobs:
           run: |
             cat target-branch.txt
             TARGET_BRANCH=$(cat target-branch.txt) bin/jira/track_flaky_tests.sh
+
+        - if: steps.download-artifact.outputs.result == 'Flaky Found'
+          name: Comment PR
+          uses: comment-pr-flaky-test@main
+
