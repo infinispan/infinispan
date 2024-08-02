@@ -31,7 +31,7 @@ runs:
             TEST_NAME="${TEST_NAME% (Flaky Test)}"
             TEST_NAME="${TEST_NAME%%[*}"
             TEST_NAME_NO_PARAMS="${TEST_NAME%%\\*}"
-            FLAKES_PR_COMMENT="   - $FLAKES_PR_COMMENT$TEST_CLASS#$TEST_NAME_NO_PARAMS\n"
+            FLAKES_PR_COMMENT="$FLAKES_PR_COMMENT   - $TEST_CLASS#$TEST_NAME_NO_PARAMS\n"
           done
           if [ "$FLAKES_PR_COMMENT" != "" ]; then
             pr_url=https://github.com/${{ github.repository }}/pull/$PR
