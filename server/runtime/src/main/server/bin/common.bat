@@ -63,6 +63,12 @@ goto ARGS_LOOP_START
 :ARGS_LOOP_END
 set "JAVA_OPTS=--add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.util.concurrent=ALL-UNNAMED %JAVA_OPTS% %JAVA_OPTS_EXTRA%"
 
+rem Change back default value of java.security.manager (needed for JDK 18+)
+"%JAVA%" -Djava.security.manager=allow -version >nul 2>&1 && (set ENHANCED_SM=true) || (set ENHANCED_SM=false)
+if "!ENHANCED_SM!" == "true" (
+  set "JAVA_OPTS=-Djava.security.manager=allow %JAVA_OPTS%"
+)
+
 rem Set debug settings if not already set
 if "%DEBUG_MODE%" == "true" (
    echo "%JAVA_OPTS%" | findstr /I "\-agentlib:jdwp" > nul
