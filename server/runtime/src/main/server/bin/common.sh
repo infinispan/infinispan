@@ -299,6 +299,11 @@ if [ "$PRESERVE_JAVA_OPTS" != "true" ]; then
         PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.util.concurrent=ALL-UNNAMED"
     fi
 
+    if [ "$JAVA_VERSION" -ge 18 ]; then
+        # Change back default value of java.security.manager (needed for JDK 18+)
+        PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS -Djava.security.manager=allow"
+    fi
+
     if [ "$GC_LOG" = "true" ]; then
         # Enable rotating GC logs if the JVM supports it and GC logs are not already enabled
         mkdir -p "$ISPN_LOG_DIR"
