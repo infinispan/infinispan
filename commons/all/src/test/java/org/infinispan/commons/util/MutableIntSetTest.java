@@ -53,6 +53,10 @@ public class MutableIntSetTest {
    private static double r;
    private static double r1;
    @Test
+   public void testFail1() {
+            fail("oops fail");
+   }
+   @Test
    public void testFlaky1() {
         if (r < 0.5) {
           r=1;
