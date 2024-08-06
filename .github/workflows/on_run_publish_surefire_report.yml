@@ -1,0 +1,55 @@
+name: On Run Publish Surefire Report
+on:
+   workflow_run:
+     workflows: [On PR Open or Push Do Build and Test]
+     types: [completed]
+jobs:
+   download:
+      name: Downloading Surefire report
+      runs-on: ubuntu-latest
+      steps:
+
+# Downloading flaky artifact containing
+# zip file with flaky test reports and file
+# containing PR target branch
+        - name: Download artifact
+          id: download-artifact
+          uses: actions/github-script@v7
+          with:
+            result-encoding: string
+            script: |
+              let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
+                 owner: context.repo.owner,
+                 repo: context.repo.repo,
+                 run_id: context.payload.workflow_run.id,
+              });
+              let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
+                return artifact.name == "surefire-test-report"
+              })[0];
+              if (typeof matchArtifact == 'undefined') {
+               // No surefire report artifact found
+               return "No Report";
+              }
+              let download = await github.rest.actions.downloadArtifact({
+                 owner: context.repo.owner,
+                 repo: context.repo.repo,
+                 artifact_id: matchArtifact.id,
+                 archive_format: 'zip',
+              });
+              let fs = require('fs');
+              fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/surefire-test-report.zip`, Buffer.from(download.data));
+              return "Report Found";
+
+        - if: steps.download-artifact.outputs.result == 'Report Found'
+          name: Unzip artifact
+          run: unzip surefire-test-report.zip
+
+        - name: Publish Test Report
+          if: success() || failure()
+          uses: ScaCap/action-surefire-report@v1
+          with:
+            report_paths: |
+              **/surefire-reports/TEST-*.xml
+              **/*.dump*
+              **/hs_err_*
+
