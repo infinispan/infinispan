@@ -50,6 +50,7 @@ public class MutableIntSetTest {
       intSet.add(4);
       assertEquals(2, intSet.size());
    }
+
    private static double r;
    private static double r1;
    @Test
