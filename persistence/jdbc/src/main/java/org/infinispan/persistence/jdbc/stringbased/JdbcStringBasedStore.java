@@ -322,22 +322,22 @@ public class JdbcStringBasedStore<K, V> extends BaseJdbcStore<K, V, JdbcStringBa
          }
          long purgedAmount = 0L;
          List<PossibleExpirationNotification> entriesToBeDeleted;
-         int[] deleteResults;  // after call of deleteEntries the same length as entriesToBeDeleted
          do {
             entriesToBeDeleted = getEntriesToBeDeleted();
 
             if (!entriesToBeDeleted.isEmpty()) {
-               deleteResults = deleteEntries(entriesToBeDeleted);
+               int[] deleteResults = deleteEntries(entriesToBeDeleted); // after call of deleteEntries the same length as entriesToBeDeleted
                if (deleteResults != null) {
                   if (key2StringMapperIsAvailable) {
                      if (deleteResults.length == entriesToBeDeleted.size()) {
                         purgedAmount += doNotify(entriesToBeDeleted, deleteResults, unicastProcessor);
                      } else {
-                        log.errorf("Expected %d entries to be deleted, but deleteresult contains only %d entries");
+                        log.errorf("Expected %d entries to be deleted, but deleteresult contains only %d entries",
+                              entriesToBeDeleted.size(), deleteResults.length);
                      }
                   }
                } else {
-                  log.errorf("Expected %d entries to be deleted, but deleteresult is empty");
+                  log.errorf("Expected %d entries to be deleted, but deleteresult is empty", entriesToBeDeleted.size());
                }
             }
          } while (!entriesToBeDeleted.isEmpty());
@@ -355,10 +355,9 @@ public class JdbcStringBasedStore<K, V> extends BaseJdbcStore<K, V, JdbcStringBa
       int batchSize = this.configuration.maxBatchSize();
       String sql = this.getTableManager().getSelectOnlyExpiredRowsSql();
       try (var conn = this.connectionFactory.getConnection()) {
-         conn.setAutoCommit(false);
-         try(PreparedStatement ps = conn.prepareStatement(sql)) {
+         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, this.timeService.wallClockTime());
-            try(ResultSet rs = ps.executeQuery()) {
+            try (ResultSet rs = ps.executeQuery()) {
                List<PossibleExpirationNotification> result = new ArrayList<>();
                while (rs.next() && (batchSize > 0)) {
                   batchSize--;
@@ -370,9 +369,6 @@ public class JdbcStringBasedStore<K, V> extends BaseJdbcStore<K, V, JdbcStringBa
                }
                return Collections.unmodifiableList(result);
             }
-         } finally {
-            conn.commit();
-            conn.setAutoCommit(true);
          }
       }
    }
@@ -380,7 +376,10 @@ public class JdbcStringBasedStore<K, V> extends BaseJdbcStore<K, V, JdbcStringBa
    private int[] deleteEntries(List<PossibleExpirationNotification> result) throws SQLException {
       int[] deleteResults;
       try (var conn = this.connectionFactory.getConnection()) {
-         conn.setAutoCommit(false);
+         boolean wasAutoCommit = conn.getAutoCommit();
+         if (wasAutoCommit) {
+            conn.setAutoCommit(false);
+         }
          try (PreparedStatement batchDelete = conn.prepareStatement(this.getTableManager().getDeleteRowWithExpirationSql())) {
             for (PossibleExpirationNotification notification : result) {
                batchDelete.setString(1, notification.key);
@@ -392,6 +391,7 @@ public class JdbcStringBasedStore<K, V> extends BaseJdbcStore<K, V, JdbcStringBa
                int purgedAmount = Arrays.stream(deleteResults).sequential().filter(r -> r != Statement.EXECUTE_FAILED).sum();
                log.tracef("Successfully purged %d rows.", purgedAmount);
             }
+            conn.commit();
          } catch (Exception ex) {
             try {
                conn.rollback();
@@ -400,20 +400,21 @@ public class JdbcStringBasedStore<K, V> extends BaseJdbcStore<K, V, JdbcStringBa
             }
             throw ex;
          } finally {
-            conn.commit();
-            conn.setAutoCommit(true);
+            if (wasAutoCommit) {
+               conn.setAutoCommit(true);
+            }
          }
       }
       return deleteResults;
    }
 
-   private long doNotify(List<PossibleExpirationNotification> possible, int[] deleteResults, FlowableProcessor<MarshallableEntry<K, V>> flowable)  {
+   private long doNotify(List<PossibleExpirationNotification> possible, int[] deleteResults, FlowableProcessor<MarshallableEntry<K, V>> flowable) {
       long purgeAmount = 0L;
       assert possible.size() == deleteResults.length;
-      for(int i = 0; i < deleteResults.length; ++i) {
+      for (int i = 0; i < deleteResults.length; ++i) {
          PossibleExpirationNotification notification = possible.get(i);
          if (deleteResults[i] != Statement.EXECUTE_FAILED) {
-            Object key = ((TwoWayKey2StringMapper)this.key2StringMapper).getKeyMapping(notification.key);
+            Object key = ((TwoWayKey2StringMapper) this.key2StringMapper).getKeyMapping(notification.key);
             flowable.onNext(this.marshalledEntryFactory.create(key, notification.is));
             ++purgeAmount;
          } else {
