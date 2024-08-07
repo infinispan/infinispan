@@ -71,14 +71,14 @@ jobs:
           id: event_name
           uses: juliangruber/read-file-action@v1
           with:
-            path: ./event_name.txt
+            path: ./event-name.txt
 
         - if: steps.download-artifact.outputs.result == 'Flaky Found'
           name: Get PR number
           id: pr_number
           uses: juliangruber/read-file-action@v1
           with:
-            path: ./event_number.txt
+            path: ./event-number.txt
 
         - if: >
             steps.download-artifact.outputs.result == 'Flaky Found' &&
