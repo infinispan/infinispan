@@ -135,16 +135,14 @@ public abstract class AbstractIracLocalSiteInterceptor extends DDAsyncIntercepto
 
    protected boolean skipEntryCommit(InvocationContext ctx, WriteCommand command, Object key) {
       LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
-      switch (cacheTopology.getSegmentDistribution(getSegment(command, key)).writeOwnership()) {
-         case NON_OWNER:
-            //not a write owner, we do nothing
-            return true;
-         case BACKUP:
-            //if it is local, we do nothing.
-            //the update happens in the remote context after the primary validated the write
-            return ctx.isOriginLocal();
-      }
-      return false;
+      return switch (cacheTopology.getSegmentDistribution(getSegment(command, key)).writeOwnership()) {
+         //not a write owner, we do nothing
+         case NON_OWNER -> true;
+         //if it is local, we do nothing.
+         //the update happens in the remote context after the primary validated the write
+         case BACKUP -> ctx.isOriginLocal();
+         default -> false;
+      };
    }
 
    protected Object visitNonTxDataWriteCommand(InvocationContext ctx, DataWriteCommand command) {
@@ -192,52 +190,15 @@ public abstract class AbstractIracLocalSiteInterceptor extends DDAsyncIntercepto
    @SuppressWarnings("unused")
    private void handleNonTxDataWriteCommand(InvocationContext ctx, DataWriteCommand command, Object rv, Throwable t) {
       final Object key = command.getKey();
-      if (!command.shouldReplicate(ctx, true) || skipEntryCommit(ctx, command, key)) {
+      if (!command.isSuccessful() || skipEntryCommit(ctx, command, key)) {
+         if (log.isTraceEnabled()) {
+            log.tracef("[IRAC] Ignoring command, not going to be committed in this node: %s", command);
+         }
          return;
       }
       setMetadataToCacheEntry(ctx.lookupEntry(key), command.getSegment(), command.getInternalMetadata(key).iracMetadata());
    }
 
-   static class StreamData {
-      final Object key;
-      final WriteCommand command;
-      final int segment;
-
-
-      public StreamData(Object key, WriteCommand command, int segment) {
-         this.key = key;
-         this.command = command;
-         this.segment = segment;
-      }
-
-      @Override
-      public String toString() {
-         return "StreamData{" +
-               "key=" + key +
-               ", command=" + command +
-               ", segment=" + segment +
-               '}';
-      }
-
-      @Override
-      public boolean equals(Object o) {
-         if (this == o) {
-            return true;
-         }
-         if (o == null || getClass() != o.getClass()) {
-            return false;
-         }
-
-         StreamData data = (StreamData) o;
-
-         return segment == data.segment && key.equals(data.key);
-      }
-
-      @Override
-      public int hashCode() {
-         int result = key.hashCode();
-         result = 31 * result + segment;
-         return result;
-      }
+   protected record StreamData(Object key, WriteCommand command, int segment) {
    }
 }

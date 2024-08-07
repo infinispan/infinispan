@@ -92,13 +92,13 @@ public class OptimisticTxIracLocalSiteInterceptor extends AbstractIracLocalSiteI
          StreamData data = iterator.next();
          IracMetadata metadata;
          if (isPrimaryOwner(data)) {
-            IracEntryVersion versionSeen = getIracVersionFromCacheEntry(ctx.lookupEntry(data.key));
-            metadata = segmentMetadata.computeIfAbsent(data.segment, segment -> iracVersionGenerator.generateNewMetadata(segment, versionSeen));
+            IracEntryVersion versionSeen = getIracVersionFromCacheEntry(ctx.lookupEntry(data.key()));
+            metadata = segmentMetadata.computeIfAbsent(data.segment(), segment -> iracVersionGenerator.generateNewMetadata(segment, versionSeen));
          } else {
-            metadata = segmentMetadata.computeIfAbsent(data.segment, prepareResponse::getIracMetadata);
+            metadata = segmentMetadata.computeIfAbsent(data.segment(), prepareResponse::getIracMetadata);
          }
          assert metadata != null : "[IRAC] metadata is null after successful prepare! Data=" + data;
-         updateCommandMetadata(data.key, data.command, metadata);
+         updateCommandMetadata(data.key(), data.command(), metadata);
       }
    }
 
@@ -115,11 +115,11 @@ public class OptimisticTxIracLocalSiteInterceptor extends AbstractIracLocalSiteI
       Map<Integer, IracEntryVersion> maxVersionSeen = new HashMap<>();
       while (iterator.hasNext()) {
          StreamData data = iterator.next();
-         IracEntryVersion versionSeen = getIracVersionFromCacheEntry(ctx.lookupEntry(data.key));
+         IracEntryVersion versionSeen = getIracVersionFromCacheEntry(ctx.lookupEntry(data.key()));
          if (versionSeen != null) {
-            maxVersionSeen.merge(data.segment, versionSeen, IracEntryVersion::merge);
+            maxVersionSeen.merge(data.segment(), versionSeen, IracEntryVersion::merge);
          } else {
-            maxVersionSeen.putIfAbsent(data.segment, null);
+            maxVersionSeen.putIfAbsent(data.segment(), null);
          }
       }
       Map<Integer, IracMetadata> segmentMetadata = new HashMap<>();
@@ -140,11 +140,11 @@ public class OptimisticTxIracLocalSiteInterceptor extends AbstractIracLocalSiteI
       Iterator<StreamData> iterator = streamKeysFromModifications(ctx.getModifications()).iterator();
       while (iterator.hasNext()) {
          StreamData data = iterator.next();
-         IracMetadata metadata = data.command.getInternalMetadata(data.key).iracMetadata();
+         IracMetadata metadata = data.command().getInternalMetadata(data.key()).iracMetadata();
 
-         command.addIracMetadata(data.segment, metadata);
+         command.addIracMetadata(data.segment(), metadata);
          if (isWriteOwner(data)) {
-            setMetadataToCacheEntry(ctx.lookupEntry(data.key), data.segment, metadata);
+            setMetadataToCacheEntry(ctx.lookupEntry(data.key()), data.segment(), metadata);
          }
       }
       return invokeNext(ctx, command);
@@ -160,8 +160,8 @@ public class OptimisticTxIracLocalSiteInterceptor extends AbstractIracLocalSiteI
             .iterator();
       while (iterator.hasNext()) {
          StreamData data = iterator.next();
-         IracMetadata metadata = command.getIracMetadata(data.segment);
-         setMetadataToCacheEntry(ctx.lookupEntry(data.key), data.segment, metadata);
+         IracMetadata metadata = command.getIracMetadata(data.segment());
+         setMetadataToCacheEntry(ctx.lookupEntry(data.key()), data.segment(), metadata);
       }
       return invokeNext(ctx, command);
    }
