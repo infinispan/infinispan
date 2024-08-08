@@ -18,6 +18,7 @@ import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listenable;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.remoting.transport.raft.RaftManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.Authorizer;
@@ -173,5 +174,9 @@ public class SecurityActions {
          cacheManager.stop();
          return null;
       });
+   }
+
+   public static RaftManager getRaftManager(EmbeddedCacheManager ecm) {
+      return doPrivileged(new GetRaftManagerAction(ecm));
    }
 }

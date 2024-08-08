@@ -1,7 +1,11 @@
 package org.infinispan.remoting.transport.jgroups;
 
+import static org.infinispan.commons.util.concurrent.CompletableFutures.toNullFunction;
+
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -11,6 +15,8 @@ import java.util.function.Supplier;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.remoting.transport.raft.RaftChannel;
 import org.infinispan.remoting.transport.raft.RaftChannelConfiguration;
@@ -22,6 +28,7 @@ import org.jgroups.JChannel;
 import org.jgroups.fork.ForkChannel;
 import org.jgroups.protocols.FORK;
 import org.jgroups.protocols.pbcast.GMS;
+import org.jgroups.protocols.raft.DynamicMembership;
 import org.jgroups.protocols.raft.ELECTION;
 import org.jgroups.protocols.raft.FileBasedLog;
 import org.jgroups.protocols.raft.InMemoryLog;
@@ -55,7 +62,7 @@ class JGroupsRaftManager implements RaftManager {
          throw log.forkProtocolRequired();
       }
       this.mainChannel = mainChannel;
-      raftMembers = globalConfiguration.transport().raftMembers();
+      raftMembers = new HashSet<>(globalConfiguration.transport().raftMembers());
       raftId = globalConfiguration.transport().nodeName();
       persistenceDirectory = globalConfiguration.globalState().enabled() ?
             globalConfiguration.globalState().persistentLocation() :
@@ -86,6 +93,29 @@ class JGroupsRaftManager implements RaftManager {
    @Override
    public String raftId() {
       return raftId;
+   }
+
+   @Override
+   public CompletionStage<Void> addMember(String raftId) {
+      AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+      raftStateMachineMap.values().forEach(raftChannel -> stage.dependsOn(raftChannel.addMember(raftId)));
+      return stage.freeze().whenComplete((ignore, t) -> {
+         if (t == null) raftMembers.add(raftId);
+      });
+   }
+
+   @Override
+   public CompletionStage<Void> removeMembers(String raftId) {
+      AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+      raftStateMachineMap.values().forEach(raftChannel -> stage.dependsOn(raftChannel.removeMember(raftId)));
+      return stage.freeze().whenComplete((ignore, t) -> {
+         if (t == null) raftMembers.remove(raftId);
+      });
+   }
+
+   @Override
+   public Collection<String> raftMembers() {
+      return Collections.unmodifiableCollection(raftMembers);
    }
 
    private <T extends RaftStateMachine> JgroupsRaftChannel<T> createRaftChannel(String name, RaftChannelConfiguration configuration, Supplier<? extends T> supplier) {
@@ -168,11 +198,13 @@ class JGroupsRaftManager implements RaftManager {
       private final RaftHandle raftHandle;
       private final String channelName;
       private final JChannel forkedChannel;
+      private final DynamicMembership dynamicMembership;
 
       JgroupsRaftChannel(String channelName, JChannel forkedChannel, RaftStateMachine stateMachine) {
          this.channelName = channelName;
          this.forkedChannel = forkedChannel;
          raftHandle = new RaftHandle(forkedChannel, new JGroupsStateMachineAdapter<>(stateMachine));
+         dynamicMembership = Objects.requireNonNull(RAFT.findProtocol(DynamicMembership.class, forkedChannel.getProtocolStack().getTopProtocol(), true));
       }
 
       @Override
@@ -205,6 +237,23 @@ class JGroupsRaftManager implements RaftManager {
          // removes the forked channel from FORK
          forkedChannel.disconnect();
       }
+
+      CompletionStage<Void> addMember(String raftId) {
+         try {
+            return dynamicMembership.addServer(raftId).thenApply(toNullFunction());
+         } catch (Exception e) {
+            return CompletableFuture.failedFuture(e);
+         }
+      }
+
+      CompletionStage<Void> removeMember(String raftId) {
+         try {
+            return dynamicMembership.removeServer(raftId).thenApply(toNullFunction());
+         } catch (Exception e) {
+            return CompletableFuture.failedFuture(e);
+         }
+      }
+
    }
 
 }
