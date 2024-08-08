@@ -59,6 +59,12 @@ public class ArgumentUtilsTest {
       // Invalid values.
       assertInvalidNumber(() -> ArgumentUtils.toLong("string".getBytes(StandardCharsets.US_ASCII)));
       assertInvalidNumber(() -> ArgumentUtils.toLong(Double.toString(1.2398).getBytes(StandardCharsets.US_ASCII)));
+
+      // Overflows.
+      assertInvalidNumber(() -> ArgumentUtils.toLong("9223372036854775808".getBytes(StandardCharsets.US_ASCII)));
+      assertInvalidNumber(() -> ArgumentUtils.toLong("10000000000000000000".getBytes(StandardCharsets.US_ASCII)));
+      assertInvalidNumber(() -> ArgumentUtils.toLong("-9223372036854775809".getBytes(StandardCharsets.US_ASCII)));
+      assertInvalidNumber(() -> ArgumentUtils.toLong("-10000000000000000000".getBytes(StandardCharsets.US_ASCII)));
    }
 
    private void assertInvalidNumber(ThrowableAssert.ThrowingCallable callable) {

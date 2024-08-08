@@ -260,12 +260,26 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.lpos("leads", "ryan", 2, LPosArgs.Builder.rank(1))).containsExactly(2L, 5L);
       assertThat(redis.lpos("leads", "ramona", 0)).isEmpty();
 
-      // LPOS on an existing key that contains a String, not a Collection!
+      // LPOS with RANK=0 throws exception
       assertThatThrownBy(() -> {
          redis.lpos("leads", "ryan", LPosArgs.Builder.rank(0));
       }).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessageContaining("ERR RANK can't be zero");
 
+      // LPOS with RANK=-9223372036854775808 throws exception with ad hoc message
+      assertThatThrownBy(() -> {
+         redis.lpos("leads", "ryan", LPosArgs.Builder.rank(-9223372036854775808L));
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR value is out of range, value must between"
+                  +" -9223372036854775807 and 9223372036854775807");
+
+      // LPOS with RANK value out of Long range
+      CustomStringCommands commands = CustomStringCommands.instance(redisConnection);
+      assertThatThrownBy(() -> {
+         commands.lposRank("leads".getBytes(), "1".getBytes(), "92233720368547758081".getBytes());
+      }).isInstanceOf(RedisCommandExecutionException.class)
+      .hasMessageContaining("ERR value is not an integer or out of range");
+      // LPOS on an existing key that contains a String, not a Collection!
       assertWrongType(() -> redis.set("another", "tristan"), () -> redis.lpos("another", "tristan"));
    }
 

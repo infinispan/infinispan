@@ -90,25 +90,38 @@ public final class ArgumentUtils {
       if (argument[0] < '0') {
          if ((argument[0] != '-' && argument[0] != '+') || argument.length == 1)
             throw new NumberFormatException("Invalid character: " + argument[0]);
-
-         negative = true;
+         if (argument[0] == '-') {
+            negative = true;
+         }
          i = 1;
       }
 
-      long result;
+      long result = 0;
       byte b = argument[i++];
       if (b < '0' || b > '9')
          throw new NumberFormatException("Invalid character: " + b);
+      // Summing negative number (48-b) so we can handle -9223372036854775808
+      result = (result << 3) + (result << 1) + (48 - b);
 
-      result = (b - 48);
       for (; i < argument.length; i++) {
          b = argument[i];
          if (b < '0' || b > '9')
             throw new NumberFormatException("Invalid character: " + b);
-
-         result = (result << 3) + (result << 1) + (b - 48);
+         result = (result << 3) + (result << 1) + (48 - b);
+         // Check if overflow happened, result*10 turns > 0
+         if (result >= -9) {
+            throw new NumberFormatException("Value out of range: " + ArgumentUtils.toNumberString(argument));
+         }
       }
-      return negative ? -result : result;
+
+      if (negative) {
+         return result;
+      }
+      // Check if can't change sign
+      if (result == Long.MIN_VALUE) {
+         throw new NumberFormatException("Value out of range: " + ArgumentUtils.toNumberString(argument));
+      }
+      return -result;
    }
 
    public static int toInt(byte[] argument) {
