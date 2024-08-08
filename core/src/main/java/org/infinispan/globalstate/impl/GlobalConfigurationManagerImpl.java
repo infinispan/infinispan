@@ -300,7 +300,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    CompletionStage<Void> createTemplateLocally(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
-      log.debugf("Creating template %s from global state", name);
+      log.infof("Creating template %s from global state", name);
       return localConfigurationManager.createTemplate(name, configuration, flags)
             .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, "template", name))
             .toCompletableFuture();
@@ -312,7 +312,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    CompletionStage<Void> createCacheLocally(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
-      log.debugf("Creating cache %s from global state", name);
+      log.infof("Creating cache %s from global state", name);
       return localConfigurationManager.createCache(name, template, configuration, flags)
             .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, "cache", name))
             .toCompletableFuture();
