@@ -1,0 +1,14 @@
+[id='configure_ispn_modules']
+= Configuring Applications to Use {brandname} Modules
+
+To use {brandname} in  {wildflybrandname} applications, add {brandname} dependency in the application's pom.xml file. 
+
+.Procedure
+
+* In your project `pom.xml` file, mark the required {brandname} dependencies as _compile_.
++
+.pom.xml
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/eap_dependencies.xml[]
+----
