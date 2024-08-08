@@ -86,6 +86,11 @@ public class LPOS extends RespCommand implements Resp3Command {
                         + "2 from the second ... or use negative to start from the end of the list", handler.allocator());
                   return handler.myStage();
                }
+               if (rank == Long.MIN_VALUE) {
+                  RespErrorUtil.customError("value is out of range, "
+                        +"value must between -9223372036854775807 and 9223372036854775807", handler.allocator());
+                  return handler.myStage();
+               }
                break;
             case MAXLEN:
                maxLen = argumentValue;
