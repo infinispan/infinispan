@@ -738,6 +738,9 @@ public class ServerConfigurationParser implements ConfigurationParser {
                ParseUtils.removedSince(reader, 13, 0);
                ldapRealmConfigBuilder.identityMapping().searchBaseDn(value);
                break;
+            case CLIENT_SSL_CONTEXT:
+               ldapRealmConfigBuilder.clientSSLContext(value);
+               break;
             case RDN_IDENTIFIER:
                ParseUtils.removedSince(reader, 13, 0);
                ldapRealmConfigBuilder.identityMapping().rdnIdentifier(value);
