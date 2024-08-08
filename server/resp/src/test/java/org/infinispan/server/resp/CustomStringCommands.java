@@ -19,6 +19,11 @@ public interface CustomStringCommands extends Commands {
                              @Param("v2") byte[] v2, @Param("v3") byte[] v3,
                              @Param("v4") byte[] v4);
 
+   @Command("LPOS :k1 :k2 RANK :k3")
+      Long lposRank(@Param("k1") byte[] k1, @Param("k2") byte[] k2, @Param("k3") byte[] k3);
+
+
+
    static CustomStringCommands instance(StatefulConnection<String, String> conn) {
       RedisCommandFactory factory = new RedisCommandFactory(conn);
       return factory.getCommands(CustomStringCommands.class);
