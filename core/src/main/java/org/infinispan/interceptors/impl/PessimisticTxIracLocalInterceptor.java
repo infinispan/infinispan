@@ -226,7 +226,7 @@ public class PessimisticTxIracLocalInterceptor extends AbstractIracLocalSiteInte
       Iterator<StreamData> iterator = streamKeysFromModifications(command.getModifications().stream()).iterator();
       while (iterator.hasNext()) {
          StreamData data = iterator.next();
-         CompletionStage<IracMetadata> rsp = ctx.getIracMetadata(data.key);
+         CompletionStage<IracMetadata> rsp = ctx.getIracMetadata(data.key());
          allStages.dependsOn(rsp.thenAccept(iracMetadata -> setMetadataBeforeSendingPrepare(ctx, data, iracMetadata)));
       }
       return asyncInvokeNext(ctx, command, allStages.freeze());
@@ -239,17 +239,17 @@ public class PessimisticTxIracLocalInterceptor extends AbstractIracLocalSiteInte
             .iterator();
       while (iterator.hasNext()) {
          StreamData data = iterator.next();
-         setMetadataToCacheEntry(ctx.lookupEntry(data.key), data.segment, data.command.getInternalMetadata(data.key).iracMetadata());
+         setMetadataToCacheEntry(ctx.lookupEntry(data.key()), data.segment(), data.command().getInternalMetadata(data.key()).iracMetadata());
       }
       return invokeNext(ctx, command);
    }
 
    private void setMetadataBeforeSendingPrepare(LocalTxInvocationContext ctx, StreamData data, IracMetadata metadata) {
-      CacheEntry<?, ?> entry = ctx.lookupEntry(data.key);
+      CacheEntry<?, ?> entry = ctx.lookupEntry(data.key());
       assert entry != null;
-      updateCommandMetadata(data.key, data.command, metadata);
+      updateCommandMetadata(data.key(), data.command(), metadata);
       if (isWriteOwner(data)) {
-         setMetadataToCacheEntry(entry, data.segment, metadata);
+         setMetadataToCacheEntry(entry, data.segment(), metadata);
       }
    }
 

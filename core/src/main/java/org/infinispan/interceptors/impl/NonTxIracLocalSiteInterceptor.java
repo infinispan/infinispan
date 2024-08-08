@@ -153,8 +153,10 @@ public class NonTxIracLocalSiteInterceptor extends AbstractIracLocalSiteIntercep
     */
    @SuppressWarnings("unused")
    private void handleWriteCommand(InvocationContext ctx, WriteCommand command, Object rv, Throwable t) {
-      // TODO: this is another to look into
-      if (!command.shouldReplicate(ctx, true)) {
+      if (!command.isSuccessful()) {
+         if (log.isTraceEnabled()) {
+            log.tracef("[IRAC] Ignoring command, not going to be committed in this node: %s", command);
+         }
          return;
       }
       for (Object key : command.getAffectedKeys()) {
