@@ -1,6 +1,5 @@
 package org.infinispan.server.hotrod;
 
-import javax.security.auth.Subject;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +10,8 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
+
+import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
@@ -84,8 +85,10 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void get(HotRodHeader header, Subject subject, byte[] key) {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-
-      getInternal(header, cache, key);
+      InfinispanSpan<CacheEntry<?, ?>> span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
+      try (var ignored = span.makeCurrent()) {
+         getInternal(header, cache, key).whenComplete(span);
+      }
    }
 
    void updateBloomFilter(HotRodHeader header, Subject subject, byte[] bloomArray) {
@@ -111,13 +114,14 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       }
    }
 
-   private void getInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key) {
+   private CompletionStage<CacheEntry<byte[], byte[]>> getInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key) {
       CompletableFuture<CacheEntry<byte[], byte[]>> get = cache.getCacheEntryAsync(key);
       if (get.isDone() && !get.isCompletedExceptionally()) {
          handleGet(header, get.join(), null);
       } else {
-         get.whenComplete((result, throwable) -> handleGet(header, result, throwable));
+         return get.whenComplete((result, throwable) -> handleGet(header, result, throwable));
       }
+      return get;
    }
 
    void addToFilter(String cacheName, byte[] key) {

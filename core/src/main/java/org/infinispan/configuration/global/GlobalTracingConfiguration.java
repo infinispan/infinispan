@@ -48,7 +48,9 @@ public class GlobalTracingConfiguration {
     * @return Whether the tracing is enabled
     */
    public boolean enabled() {
-      return collectorEndpoint() != null && attributes.attribute(ENABLED).get();
+      if (!attributes.attribute(ENABLED).get()) return false;
+      if (collectorEndpoint() != null) return true;
+      return exporterProtocol() == TracingExporterProtocol.JFR;
    }
 
    /**

@@ -1,5 +1,9 @@
 package org.infinispan.server.core.telemetry;
 
+import static org.infinispan.telemetry.InfinispanSpanAttributes.CACHE_NAME;
+import static org.infinispan.telemetry.InfinispanSpanAttributes.CATEGORY;
+import static org.infinispan.telemetry.InfinispanSpanAttributes.SERVER_ADDRESS;
+
 import org.infinispan.telemetry.InfinispanSpan;
 import org.infinispan.telemetry.InfinispanSpanAttributes;
 import org.infinispan.telemetry.InfinispanSpanContext;
@@ -65,9 +69,9 @@ public class OpenTelemetryService implements InfinispanTelemetry, TextMapGetter<
    }
 
    private <T> InfinispanSpan<T> createOpenTelemetrySpan(SpanBuilder builder, InfinispanSpanAttributes attributes) {
-      attributes.cacheName().ifPresent(cacheName -> builder.setAttribute("cache", cacheName));
-      builder.setAttribute("category", attributes.category().toString());
-      builder.setAttribute("server.address", nodeName);
+      attributes.cacheName().ifPresent(cacheName -> builder.setAttribute(CACHE_NAME, cacheName));
+      builder.setAttribute(CATEGORY, attributes.category().toString());
+      builder.setAttribute(SERVER_ADDRESS, nodeName);
       return new OpenTelemetrySpan<>(builder.startSpan());
    }
 
