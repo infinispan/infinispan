@@ -2,10 +2,12 @@ package org.infinispan.commons.util.concurrent;
 
 import static java.util.Objects.requireNonNull;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;

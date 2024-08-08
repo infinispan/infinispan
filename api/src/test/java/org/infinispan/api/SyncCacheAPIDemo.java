@@ -64,7 +64,7 @@ public class SyncCacheAPIDemo {
          mycache.entries().forEach(e -> System.out.printf("key=%s, value=%s%n", e.key(), e.value()));
 
          // Event handling
-         mycache.listen((SyncCacheEntryCreatedListener<String, String>) event -> {
+         AutoCloseable listener = mycache.listen((SyncCacheEntryCreatedListener<String, String>) event -> {
             // Handle create event
          });
 
@@ -92,15 +92,15 @@ public class SyncCacheAPIDemo {
       }
    }
 
-   public static class NullListener implements SyncCacheEntryUpdatedListener, SyncCacheEntryRemovedListener {
+   public static class NullListener<K, V> implements SyncCacheEntryUpdatedListener<K, V>, SyncCacheEntryRemovedListener<K, V> {
 
       @Override
-      public void onRemove(CacheEntryEvent event) {
+      public void onRemove(CacheEntryEvent<K, V> event) {
 
       }
 
       @Override
-      public void onUpdate(CacheEntryEvent event) {
+      public void onUpdate(CacheEntryEvent<K, V> event) {
 
       }
    }

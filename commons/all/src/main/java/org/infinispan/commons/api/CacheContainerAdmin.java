@@ -1,6 +1,7 @@
 package org.infinispan.commons.api;
 
 import java.util.EnumSet;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.configuration.BasicConfiguration;
 
@@ -104,6 +105,13 @@ public interface CacheContainerAdmin<C extends CacheContainerAdmin, A extends Ba
     * @param name the name of the cache to remove
     */
    void removeCache(String name);
+
+   /**
+    * Asynchronously removes a cache from the cache container. Any persisted data will be cleared.
+    *
+    * @param name the name of the cache to remove
+    */
+   CompletionStage<Void> removeCacheAsync(String name);
 
    /**
     * Sets any additional {@link AdminFlag}s to be used when performing administrative operations.

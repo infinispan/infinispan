@@ -12,6 +12,7 @@ import java.util.concurrent.TimeoutException;
 
 import javax.transaction.xa.Xid;
 
+import org.infinispan.api.common.CacheOptions;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.hotrod.exceptions.HotRodClientException;
@@ -41,14 +42,18 @@ public class Util {
    private Util() {
    }
 
-   public static <T> T await(CompletionStage<T> cf) {
-      return await(cf.toCompletableFuture());
+   public static <T> T await(CompletionStage<T> cf, CacheOptions options) {
+      return await(cf.toCompletableFuture(), options);
    }
 
-   public static <T> T await(CompletableFuture<T> cf) {
+   public static <T> T await(CompletableFuture<T> cf, CacheOptions options) {
       try {
-         // timed wait does not do busy waiting
-         return cf.get(BIG_DELAY_NANOS, TimeUnit.NANOSECONDS);
+         if (options.timeout().isPresent()) {
+            return cf.get(options.timeout().get().toNanos(), TimeUnit.NANOSECONDS);
+         } else {
+            // timed wait does not do busy waiting
+            return cf.get(BIG_DELAY_NANOS, TimeUnit.NANOSECONDS);
+         }
       } catch (InterruptedException e) {
          // Need to restore interrupt status because InterruptedException cannot be sent back as is
          Thread.currentThread().interrupt();
