@@ -135,7 +135,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = Logger.Level.INFO)
    @Message(value = "Logging configuration: %s", id = 80032)
-   void loggingConfiguration(String absolutePath);
+   void loggingConfiguration(String path);
 
    @Message(value = "Cannot find a network address which matches the supplied configuration", id = 80033)
    CacheConfigurationException invalidNetworkConfiguration();

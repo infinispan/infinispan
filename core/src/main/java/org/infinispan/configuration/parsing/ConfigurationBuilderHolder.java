@@ -75,6 +75,13 @@ public class ConfigurationBuilderHolder implements ConfigurationReaderContext {
       }
    }
 
+   public void read(ConfigurationBuilderHolder other) {
+      globalConfigurationBuilder.read(other.globalConfigurationBuilder.build());
+      for (Map.Entry<String, ConfigurationBuilder> entry : other.getNamedConfigurationBuilders().entrySet()) {
+         newConfigurationBuilder(entry.getKey()).read(entry.getValue().build());
+      }
+   }
+
    void pushScope(Enum<?> scope) {
       pushScope(scope.name());
    }

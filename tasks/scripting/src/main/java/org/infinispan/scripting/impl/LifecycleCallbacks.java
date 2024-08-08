@@ -76,7 +76,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
          globalAuthz.addRole(GlobalAuthorizationConfiguration.DEFAULT_ROLES.get(SCRIPT_MANAGER_ROLE));
          AuthorizationConfigurationBuilder authorization = cfg.security().authorization().enable();
          // Copy all global roles
-         globalAuthz.roles().keySet().forEach(role -> authorization.role(role));
+         globalAuthz.roles().keySet().forEach(authorization::role);
          // Add a special module which translates permissions
          cfg.addModule(CreatePermissionConfigurationBuilder.class);
       }

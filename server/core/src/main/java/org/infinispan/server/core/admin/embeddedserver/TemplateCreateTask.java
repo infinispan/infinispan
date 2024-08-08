@@ -1,8 +1,6 @@
 package org.infinispan.server.core.admin.embeddedserver;
 
-import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,10 +25,7 @@ public class TemplateCreateTask extends CacheCreateTask {
    private static final Set<String> PARAMETERS;
 
    static {
-      Set<String> params = new HashSet<>(2);
-      params.add("name");
-      params.add("configuration");
-      PARAMETERS = Collections.unmodifiableSet(params);
+      PARAMETERS = Set.of("name", "configuration");
    }
 
    @Override

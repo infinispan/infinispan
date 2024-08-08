@@ -166,6 +166,7 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
     * @param template the template to use
     * @return an instance of the builder
     */
+   @Deprecated(forRemoval = true)
    public RemoteCacheConfigurationBuilder templateName(DefaultTemplate template) {
       attributes.attribute(TEMPLATE_NAME).set(template.getTemplateName());
       return this;
