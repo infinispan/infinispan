@@ -38,7 +38,17 @@ public class SINTERCARD extends RespCommand implements Resp3Command {
          ChannelHandlerContext ctx,
          List<byte[]> arguments) {
       EmbeddedSetCache<byte[], byte[]> esc = handler.getEmbeddedSetCache();
-      var keysNum = ArgumentUtils.toInt(arguments.get(0));
+      int keysNum = 0;
+      try {
+         keysNum = ArgumentUtils.toInt(arguments.get(0));
+      } catch (NumberFormatException ex) {
+      }
+
+      // Wrong numKey value
+      if (keysNum==0) {
+         RespErrorUtil.customError("numkeys should be greater than 0", handler.allocator());
+         return handler.myStage();
+      }
 
       final int limit = processArgs(keysNum, arguments, handler);
       if (limit < 0) { // Wrong args
@@ -75,12 +85,12 @@ public class SINTERCARD extends RespCommand implements Resp3Command {
             optVal = ArgumentUtils.toInt(arguments.get(keysNum + 2));
             if (optVal < 0) {
                // Negative limit provided
-               RespErrorUtil.mustBePositive(handler.allocator());
+               RespErrorUtil.customError("LIMIT can't be negative", handler.allocator());
                return -1;
             }
          } catch (NumberFormatException ex) {
-            // Limit provided not an integer
-            RespErrorUtil.valueNotInteger(handler.allocator());
+            // Limit provided not an integer. sending same message as Redis
+            RespErrorUtil.customError("LIMIT can't be negative", handler.allocator());
             return -1;
          }
       }
