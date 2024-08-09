@@ -120,6 +120,12 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
          redis.rpop("leads", -42);
       }).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessageContaining("ERR value is out of range, must be positive");
+
+      CustomStringCommands commands = CustomStringCommands.instance(redisConnection);
+      assertThatThrownBy(() -> {
+         commands.rpopWrongArgNum("leads".getBytes(), "1".getBytes(), "2".getBytes());
+         }).isInstanceOf(RedisCommandExecutionException.class)
+         .hasMessageContaining("ERR wrong number of arguments for 'rpop' command");
    }
 
    public void testLPOP() {
@@ -142,8 +148,14 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       // RPOP the count argument is negative
       assertThatThrownBy(() -> {
          redis.lpop("leads", -42);
-      }).isInstanceOf(RedisCommandExecutionException.class)
+         }).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessageContaining("ERR value is out of range, must be positive");
+
+      CustomStringCommands commands = CustomStringCommands.instance(redisConnection);
+      assertThatThrownBy(() -> {
+         commands.lpopWrongArgNum("leads".getBytes(), "1".getBytes(), "2".getBytes());
+         }).isInstanceOf(RedisCommandExecutionException.class)
+         .hasMessageContaining("ERR wrong number of arguments for 'lpop' command");
    }
 
    public void testLINDEX() {
