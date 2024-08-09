@@ -1,6 +1,7 @@
 package org.infinispan.server.resp;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
 import java.util.HashSet;
@@ -8,6 +9,7 @@ import java.util.Set;
 
 import org.testng.annotations.Test;
 
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.ScanArgs;
 import io.lettuce.core.ValueScanCursor;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -140,6 +142,38 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       // SINTERCARD on an existing key that contains a List, not a Set!
       // Create a List
       assertWrongType(() -> redis.rpush("listleads", "tristan"), () -> redis.sintercard("listleads", "william"));
+
+      CustomStringCommands command = CustomStringCommands.instance(redisConnection);
+
+      assertThatThrownBy(() -> {
+         command.sintercard5Args("0".getBytes(),"a".getBytes(),"b".getBytes(),"c".getBytes(),"d".getBytes());
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageStartingWith("ERR numkeys");
+
+      assertThatThrownBy(() -> {
+         command.sintercard5Args("notnum".getBytes(),"a".getBytes(),"b".getBytes(),"c".getBytes(),"d".getBytes());
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageStartingWith("ERR numkeys");
+
+      assertThatThrownBy(() -> {
+         command.sintercard5Args("5".getBytes(),"a".getBytes(),"b".getBytes(),"c".getBytes(),"d".getBytes());
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageStartingWith("ERR Number of keys");
+
+      assertThatThrownBy(() -> {
+         command.sintercard5Args("1".getBytes(),"a".getBytes(),"b".getBytes(),"c".getBytes(),"d".getBytes());
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageStartingWith("ERR syntax error");
+
+      assertThatThrownBy(() -> {
+         command.sintercard5Args("3".getBytes(),"a".getBytes(),"b".getBytes(),"LIMIT".getBytes(),"-1".getBytes());
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageStartingWith("ERR syntax error");
+
+      assertThatThrownBy(() -> {
+         redis.sintercard(-1,"a","b");
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageStartingWith("ERR LIMIT can't be negative");
    }
 
    @Test

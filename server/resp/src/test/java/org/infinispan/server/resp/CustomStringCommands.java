@@ -25,6 +25,11 @@ public interface CustomStringCommands extends Commands {
    @Command("RPOP :k1 :k2 :k3")
    Long rpopWrongArgNum(@Param("k1") byte[] k1, @Param("k2") byte[] k2, @Param("k3") byte[] k3);
 
+   @Command("SINTERCARD :k1 :k2 :k3 :k4 :k5")
+   Long sintercard5Args(@Param("k1") byte[] k1, @Param("k2") byte[] k2,
+                             @Param("k3") byte[] k3, @Param("k4") byte[] k4,
+                             @Param("k5") byte[] k5);
+
    static CustomStringCommands instance(StatefulConnection<String, String> conn) {
       RedisCommandFactory factory = new RedisCommandFactory(conn);
       return factory.getCommands(CustomStringCommands.class);
