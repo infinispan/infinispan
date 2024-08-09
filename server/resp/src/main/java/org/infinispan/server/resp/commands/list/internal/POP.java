@@ -49,14 +49,20 @@ public abstract class POP extends RespCommand implements Resp3Command {
                                                                List<byte[]> arguments) {
       byte[] key = arguments.get(0);
       final long count;
-      if (arguments.size() > 1) {
-         count = ArgumentUtils.toLong(arguments.get(1));
-         if (count < 0) {
-            RespErrorUtil.mustBePositive(handler.allocator());
+      switch (arguments.size()) {
+         case 1:
+            count = 1;
+            break;
+         case 2:
+            count = ArgumentUtils.toLong(arguments.get(1));
+            if (count < 0) {
+               RespErrorUtil.mustBePositive(handler.allocator());
+               return handler.myStage();
+            }
+            break;
+         default:
+            RespErrorUtil.wrongArgumentNumber(this, handler.allocator());
             return handler.myStage();
-         }
-      } else {
-         count = 1;
       }
 
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
