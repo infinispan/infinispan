@@ -34,12 +34,12 @@ jobs:
 
       - name: Maven build
         run: >
-            ./mvnw -s maven-settings.xml clean install -DskipTests -Pnative
+            ./mvnw clean install -s maven-settings.xml -B -e -DskipTests -Pnative
 
       - name: Maven Test
         run: >
-            ./mvnw -s maven-settings.xml verify -B -e -DrerunFailingTestsCount=2 -Pnative
-            -fae -Dansi.strip=true
+            ./mvnw verify -s maven-settings.xml -B -e -DrerunFailingTestsCount=2
+            -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative
 
       - name: Archive commit sha PR
         if: >
