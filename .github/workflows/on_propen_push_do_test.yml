@@ -34,7 +34,7 @@ jobs:
 
       - name: Maven build
         run: >
-            ./mvnw clean install -B -e -DskipTests -Pnative
+            ./mvnw clean install -s maven-settings.xml -B -e -DskipTests -Pnative
 
       - name: Maven Test
         run: >
