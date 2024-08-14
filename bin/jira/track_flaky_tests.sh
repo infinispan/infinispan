@@ -14,30 +14,33 @@ ISSUE_TYPE_ID=$(echo ${PROJECT} | jq -r ".issueTypes[] | select(.name==\"${TYPE}
 shopt -s nullglob globstar
 TESTS=(${FLAKY_TEST_GLOB})
 for TEST in "${TESTS[@]}"; do
-  TEST_CLASS=$(xmlstarlet sel --template --value-of '/testsuite/testcase/@classname' ${TEST})
-  TEST_NAME=$(xmlstarlet sel --template --value-of '/testsuite/testcase/@name' ${TEST})
-  # Removing (Flaky Test) text
-  TEST_NAME=${TEST_NAME% (Flaky Test)}
-  # Removing square brakets with execution counter i.e. flakyTest[1]
-  TEST_NAME=${TEST_NAME%%[*}
-  TEST_NAME_NO_PARAMS=${TEST_NAME%%\\*}
-  STACK_TRACE=$(xmlstarlet sel --template --value-of '/testsuite/testcase/failure' ${TEST})
+  TEST_CLASS_NAMES=$(xmlstarlet sel -t --value-of '/testsuite/testcase/@classname'  ${TEST})
+  declare -i i
+  for TEST_CLASS in $TEST_CLASS_NAMES; do
+    i=i+1
+    TEST_NAME=$(xmlstarlet sel --template --value-of '/testsuite/testcase['$i']/@name' ${TEST})
+    # Removing (Flaky Test) text
+    TEST_NAME=${TEST_NAME% (Flaky Test)}
+    # Removing square brakets with execution counter i.e. flakyTest[1]
+    TEST_NAME=${TEST_NAME%%[*}
+    TEST_NAME_NO_PARAMS=${TEST_NAME%%\\*}
+    STACK_TRACE=$(xmlstarlet sel --template --value-of '/testsuite/testcase/failure['$i']' ${TEST})
 
-  # Create Issue for Test Class+TestName
-  SUMMARY="Flaky test: ${TEST_CLASS}#${TEST_NAME_NO_PARAMS}"
-  echo ${SUMMARY}
-  JQL="project = ${PROJECT_KEY} AND summary ~ '${SUMMARY}'"
-  # Search issues for existing Jira issue
-  ISSUES="$(curl ${API_URL}/search -G --data-urlencode "jql=${JQL}")"
-  TOTAL_ISSUES=$(echo "${ISSUES}" | jq -r .total)
-  if [ ${TOTAL_ISSUES} -gt 1 ]; then
-    echo "Multiple Jiras found in '${PROJECT_KEY}' with summary ~ '${SUMMARY}'"
-    exit 1
-  fi
+    # Create Issue for Test Class+TestName
+    SUMMARY="Flaky test: ${TEST_CLASS}#${TEST_NAME_NO_PARAMS}"
+    echo ${SUMMARY}
+    JQL="project = ${PROJECT_KEY} AND summary ~ '${SUMMARY}'"
+    # Search issues for existing Jira issue
+    ISSUES="$(curl ${API_URL}/search -G --data-urlencode "jql=${JQL}")"
+    TOTAL_ISSUES=$(echo "${ISSUES}" | jq -r .total)
+    if [ ${TOTAL_ISSUES} -gt 1 ]; then
+      echo "Multiple Jiras found in '${PROJECT_KEY}' with summary ~ '${SUMMARY}'"
+      exit 1
+    fi
 
-  if [ ${TOTAL_ISSUES} == 0 ]; then
-    echo "Existing Jira not found, creating a new one"
-    cat << EOF | tee create-jira.json
+    if [ ${TOTAL_ISSUES} == 0 ]; then
+      echo "Existing Jira not found, creating a new one"
+      cat << EOF | tee create-jira.json
     {
       "fields": {
         "project": {
@@ -53,16 +56,16 @@ for TEST in "${TESTS[@]}"; do
       }
     }
 EOF
-    # We retry on error here as for some reason the Jira server occasionally responds with 400 errors
-    export ISSUE_KEY=$(curl --retry 5 --retry-all-errors --data @create-jira.json $API_URL/issue | jq -r .key)
-  else
-    export ISSUE_KEY=$(echo "${ISSUES}" | jq -r '.issues[0].key')
-    # Re-open the issue if it was previously resolved
-    TRANSITION="New" ${SCRIPT_DIR}/transition.sh
-  fi
+      # We retry on error here as for some reason the Jira server occasionally responds with 400 errors
+      export ISSUE_KEY=$(curl --retry 5 --retry-all-errors --data @create-jira.json $API_URL/issue | jq -r .key)
+    else
+      export ISSUE_KEY=$(echo "${ISSUES}" | jq -r '.issues[0].key')
+      # Re-open the issue if it was previously resolved
+      TRANSITION="New" ${SCRIPT_DIR}/transition.sh
+    fi
 
-  COMMENT=$(
-  cat << EOF
+    COMMENT=$(
+    cat << EOF
   h1. ${TEST_NAME}
   Target Branch: ${TARGET_BRANCH}
   [Jenkins Job|${JENKINS_JOB_URL}]
@@ -70,9 +73,10 @@ EOF
   ${STACK_TRACE}
   {code}
 EOF
-  )
-  export COMMENT=$(echo "${COMMENT}" | jq -sR)
+    )
+    export COMMENT=$(echo "${COMMENT}" | jq -sR)
 
-  # Add details of flaky failure as a new Jira comment
-  ${SCRIPT_DIR}/add_comment.sh
+    # Add details of flaky failure as a new Jira comment
+    ${SCRIPT_DIR}/add_comment.sh
+  done
 done
