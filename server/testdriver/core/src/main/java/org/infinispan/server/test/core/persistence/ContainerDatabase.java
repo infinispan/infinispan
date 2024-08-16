@@ -1,7 +1,10 @@
 package org.infinispan.server.test.core.persistence;
 
+import static org.infinispan.server.test.core.Containers.DOCKER_CLIENT;
+
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -9,12 +12,18 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.StringPropertyReplacer;
+import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.core.Containers;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
+
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.model.Mount;
+import com.github.dockerjava.api.model.MountType;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -22,28 +31,38 @@ import org.testcontainers.images.builder.ImageFromDockerfile;
  **/
 public class ContainerDatabase extends Database {
    private final static Log log = LogFactory.getLog(ContainerDatabase.class);
-   private final static String ENV_PREFIX = "database.container.env.";
-   private final JdbcContainerAdapter<?> container;
+   public final static String DB_PREFIX = "database.container.";
+   private final static String ENV_PREFIX = DB_PREFIX + "env.";
    private final int port;
+   private final String volumeName;
+   private volatile JdbcContainerAdapter<?> container;
 
-   ContainerDatabase(String type, Properties properties) {
+   public ContainerDatabase(String type, Properties properties) {
       super(type, properties);
+      this.port = Integer.parseInt(dbProp(properties, "port"));
+      this.volumeName = Util.threadLocalRandomUUID().toString();
+      this.container = createContainer(true);
+   }
+
+   private JdbcContainerAdapter<?> createContainer(boolean createVolume) {
       Map<String, String> env = properties.entrySet().stream().filter(e -> e.getKey().toString().startsWith(ENV_PREFIX))
             .collect(Collectors.toMap(e -> e.getKey().toString().substring(ENV_PREFIX.length()), e -> e.getValue().toString()));
-      port = Integer.parseInt(properties.getProperty("database.container.port"));
       ImageFromDockerfile image = new ImageFromDockerfile()
             .withDockerfileFromBuilder(builder -> {
                builder
-                     .from(properties.getProperty("database.container.name") + ":" + properties.getProperty("database.container.tag"))
+                     .from(dbProp(properties, "name") + ":" + dbProp(properties, "tag"))
                      .expose(port)
                      .env(env)
                      .build();
             });
       this.container = new JdbcContainerAdapter<>(image, this)
             .withExposedPorts(port)
-            .withInitScript(initSqlFile())
             .withPrivilegedMode(true)
             .waitingFor(Wait.forListeningPort());
+
+      var initSql = initSqlFile();
+      if (createVolume && initSql != null)
+         container.withInitScript(initSql);
 
       String logMessageWaitStrategy = properties.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_LOG_MESSAGE);
       if (logMessageWaitStrategy != null) {
@@ -51,6 +70,22 @@ public class ContainerDatabase extends Database {
                .withRegEx(logMessageWaitStrategy)
                .withStartupTimeout(Duration.of(10, ChronoUnit.MINUTES)));
       }
+
+      var volumeRequired = Boolean.parseBoolean(dbProp(properties, "volume"));
+      if (volumeRequired) {
+         if (createVolume) DOCKER_CLIENT.createVolumeCmd().withName(volumeName).exec();
+         var volumeMount = dbProp(properties, "volumeMount");
+         container.withCreateContainerCmdModifier(cmd ->
+               cmd.getHostConfig().withMounts(
+                     List.of(new Mount().withSource(volumeName).withTarget(volumeMount).withType(MountType.VOLUME))
+               )
+         );
+      }
+      return container;
+   }
+
+   private String dbProp(Properties props, String prop) {
+      return props.getProperty(DB_PREFIX + prop);
    }
 
    @Override
@@ -64,6 +99,12 @@ public class ContainerDatabase extends Database {
       log.infof("Stopping database %s", getType());
       container.stop();
       log.infof("Stopped database %s", getType());
+   }
+
+   public void restart() {
+      if (container.isRunning()) stop();
+      container = createContainer(false);
+      container.start();
    }
 
    public int getPort() {
@@ -88,6 +129,10 @@ public class ContainerDatabase extends Database {
    public String password() {
       Properties props = new Properties();
       return StringPropertyReplacer.replaceProperties(super.password(), props);
+   }
+
+   private DockerClient dockerClient() {
+      return DockerClientFactory.instance().client();
    }
 
    static class JdbcContainerAdapter<SELF extends JdbcContainerAdapter<SELF>> extends JdbcDatabaseContainer<SELF> {

@@ -3,6 +3,7 @@
                  xmlns="urn:infinispan:config:15.0"
                  name="default" statistics="true"
                  xmlns:server="urn:infinispan:server:15.0">
+   <global-state unclean-shutdown-action="IGNORE" />
    <transport cluster="${infinispan.cluster.name:cluster}" stack="test-jdbc" server:data-source="mysql" />
    <serialization>
       <allow-list>
