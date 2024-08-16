@@ -22,6 +22,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Mount;
 import com.github.dockerjava.api.model.MountType;
 
@@ -35,12 +36,14 @@ public class ContainerDatabase extends Database {
    private final static String ENV_PREFIX = DB_PREFIX + "env.";
    private final int port;
    private final String volumeName;
+   private final boolean volumeRequired;
    private volatile JdbcContainerAdapter<?> container;
 
    public ContainerDatabase(String type, Properties properties) {
       super(type, properties);
       this.port = Integer.parseInt(dbProp(properties, "port"));
       this.volumeName = Util.threadLocalRandomUUID().toString();
+      this.volumeRequired = Boolean.parseBoolean(dbProp(properties, "volume"));
       this.container = createContainer(true);
    }
 
@@ -71,9 +74,12 @@ public class ContainerDatabase extends Database {
                .withStartupTimeout(Duration.of(10, ChronoUnit.MINUTES)));
       }
 
-      var volumeRequired = Boolean.parseBoolean(dbProp(properties, "volume"));
       if (volumeRequired) {
-         if (createVolume) DOCKER_CLIENT.createVolumeCmd().withName(volumeName).exec();
+         if (createVolume) {
+            log.infof("Creating volume '%s'", volumeName);
+            DOCKER_CLIENT.createVolumeCmd().withName(volumeName).exec();
+            log.infof("Created volume '%s'", volumeName);
+         }
          var volumeMount = dbProp(properties, "volumeMount");
          container.withCreateContainerCmdModifier(cmd ->
                cmd.getHostConfig().withMounts(
@@ -96,13 +102,26 @@ public class ContainerDatabase extends Database {
 
    @Override
    public void stop() {
+      stop(true);
+   }
+
+   public void stop(boolean deleteVolume) {
       log.infof("Stopping database %s", getType());
       container.stop();
       log.infof("Stopped database %s", getType());
+      if (volumeRequired && deleteVolume) {
+         log.infof("Removing volume '%s'", volumeName);
+         try {
+            dockerClient().removeVolumeCmd(volumeName).exec();
+         } catch (NotFoundException e) {
+            log.infof("Volume '%s' not found", volumeName);
+         }
+         log.infof("Removed volume '%s'", volumeName);
+      }
    }
 
    public void restart() {
-      if (container.isRunning()) stop();
+      if (container.isRunning()) stop(false);
       container = createContainer(false);
       container.start();
    }

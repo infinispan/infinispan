@@ -87,7 +87,7 @@ public class JGroupsJdbcPing2IT {
          assertEquals(2, c1.view().size());
          assertEquals(2, c2.view().size());
 
-         db.stop();
+         db.stop(false);
          CountDownLatch reqLatch = new CountDownLatch(1);
          CountDownLatch successLatch = new CountDownLatch(2);
          c1.getProtocolStack().insertProtocol(new DiscoveryListener(reqLatch, successLatch), ProtocolStack.Position.ABOVE, JDBC_PING2.class);
@@ -95,6 +95,8 @@ public class JGroupsJdbcPing2IT {
          assertEquals(2, successLatch.getCount());
          db.restart();
          assertTrue(successLatch.await(10, TimeUnit.MINUTES));
+      } finally {
+         db.stop();
       }
    }
 
