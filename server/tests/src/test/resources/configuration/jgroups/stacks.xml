@@ -19,6 +19,14 @@
       <FD_SOCK2 connect_timeout="3000"/>
       <FD_ALL3 timeout="3000"
                interval="1000"/>
-      <JDBC_PING stack.combine="REPLACE" stack.position="MPING" />
+      <JDBC_PING2 stack.combine="REPLACE" stack.position="MPING"
+                  remove_all_data_on_view_change="true"
+                  register_shutdown_hook="true"
+                  return_entire_cache="false"
+      />
+      <pbcast.GMS print_local_addr="false"
+                  join_timeout="1000"
+                  max_join_attempts="10"
+      />
    </stack>
 </jgroups>
