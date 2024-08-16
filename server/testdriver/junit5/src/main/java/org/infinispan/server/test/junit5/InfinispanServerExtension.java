@@ -77,8 +77,10 @@ public class InfinispanServerExtension extends AbstractServerExtension implement
    public void afterAll(ExtensionContext extensionContext) {
       cleanupSuiteClasses(extensionContext);
       // Only stop the extension resources when all tests in a Suite have been completed
-      if (suiteTestClasses.isEmpty() && testServer.isDriverInitialized()) {
-         stopTestServer(extensionContext, testServer);
+      if (suiteTestClasses.isEmpty()) {
+         if (testServer.isDriverInitialized())
+            stopTestServer(extensionContext, testServer);
+         testServer.afterListeners();
       }
    }
 
