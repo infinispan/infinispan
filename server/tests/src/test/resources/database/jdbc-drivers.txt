@@ -3,3 +3,4 @@ com.mysql:mysql-connector-j:${versionx.com.mysqldatabase.mysql}
 org.postgresql:postgresql:${versionx.com.postgresqldatabase.postgresql}
 org.mariadb.jdbc:mariadb-java-client:${versionx.org.mariadb.jdbc}
 com.microsoft.sqlserver:mssql-jdbc:${versionx.com.microsoft.sqlserver}
+com.oracle.ojdbc:ojdbc8:${versionx.com.oracle.ojdbc.ojdbc8}

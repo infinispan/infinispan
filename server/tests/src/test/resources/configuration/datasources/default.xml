@@ -41,4 +41,12 @@
                           new-connection-sql="SELECT 1" />
       <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
    </data-source>
+   <data-source name="oracle" jndi-name="jdbc/oracle" statistics="true">
+      <connection-factory driver="${org.infinispan.server.test.database.oracle.driver:oracle.jdbc.OracleDriver}"
+                          username="${org.infinispan.server.test.database.oracle.username}"
+                          password="${org.infinispan.server.test.database.oracle.password}"
+                          url="${org.infinispan.server.test.database.oracle.jdbcUrl}"
+                          new-connection-sql="SELECT 1" />
+      <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
+   </data-source>
 </data-sources>
