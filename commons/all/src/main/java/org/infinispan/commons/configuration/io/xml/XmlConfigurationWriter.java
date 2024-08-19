@@ -234,12 +234,37 @@ public class XmlConfigurationWriter extends AbstractConfigurationWriter {
          writer.write(rename ? naming.convert(name) : name);
          writer.write("=\"");
          if (value != null) {
-            writer.write(value.replaceAll("&", "&amp;"));
+            writer.write(escapeXML(value));
          }
          writer.write('"');
       } catch (IOException e) {
          throw new ConfigurationWriterException(e);
       }
+   }
+
+   private static String escapeXML(String s) {
+      StringBuilder sb = null;
+      for (int i = 0; i < s.length(); i++) {
+         char ch = s.charAt(i);
+         switch (ch) {
+            case '\'' -> sb = escapeAppend(sb, s, i, "&#39;");
+            case '"' -> sb = escapeAppend(sb, s, i, "&#34;");
+            case '&' -> sb = escapeAppend(sb, s, i, "&#38;");
+            case '<' -> sb = escapeAppend(sb, s, i, "&#60;");
+            case '>' -> sb = escapeAppend(sb, s, i, "&#62;");
+            default -> {
+               if (sb != null) sb.append(ch);
+            }
+         }
+      }
+      return sb == null ? s : sb.toString();
+   }
+
+   private static StringBuilder escapeAppend(StringBuilder sb, String s, int i, String append) {
+      if (sb == null) {
+         sb = new StringBuilder(s.substring(0, i));
+      }
+      return sb.append(append);
    }
 
    @Override
@@ -276,7 +301,7 @@ public class XmlConfigurationWriter extends AbstractConfigurationWriter {
    public void writeCharacters(String chars) {
       try {
          closeCurrentTag(false);
-         writer.write(chars);
+         writer.write(escapeXML(chars));
          skipIndentClose = true;
       } catch (IOException e) {
          throw new ConfigurationWriterException(e);
