@@ -37,16 +37,4 @@ public class XmlPullParserException extends RuntimeException {
    public int getColumnNumber() {
       return column;
    }
-
-   public void printStackTrace() {
-      if (detail == null) {
-         super.printStackTrace();
-      } else {
-         synchronized (System.err) {
-            System.err.println(super.getMessage() + "; nested exception is:");
-            detail.printStackTrace();
-         }
-      }
-   }
-
 }

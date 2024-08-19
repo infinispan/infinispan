@@ -16,6 +16,7 @@
     "item7": [
       "v7",
       "v8"
-    ]
+    ],
+    "item8": "a string with \"escapes\" in it"
   }
 }

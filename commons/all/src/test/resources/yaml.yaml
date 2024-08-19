@@ -39,3 +39,4 @@ item1:
       c:
         d: 2
       e: 3
+  item12: a string with \"escapes\" and more
