@@ -64,7 +64,8 @@ class JsonQuerySerializer implements QuerySerializer<JsonQueryResponse> {
             for (int i = 0; i < projections.length; i++) {
                String projectionKey = projections[i];
                Object value = result[i];
-               if (CacheValuePropertyPath.VALUE_PROPERTY_NAME.equals(projectionKey)) {
+               if (CacheValuePropertyPath.VALUE_PROPERTY_NAME.equals(projectionKey)
+                     && value instanceof WrappedMessage) {
                   value = new EntityProjection(transcoderFromStorage.transcode(((WrappedMessage) value).getValue(),
                         storageMediaTye, APPLICATION_JSON));
                   p.put(JsonQueryResponse.ENTITY_PROJECTION_KEY, value);
