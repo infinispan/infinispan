@@ -35,10 +35,11 @@ public class JsonConfigurationReaderTest {
          json.nextElement();
          json.require(ConfigurationReader.ElementType.START_ELEMENT, DEFAULT_NAMESPACE, "item1");
          assertLocation(json, 3, 5);
-         assertEquals(3, json.getAttributeCount());
+         assertEquals(4, json.getAttributeCount());
          assertAttribute(json, "item5", "v5");
          assertAttribute(json, "item6", "v6");
          assertAttribute(json, "item7", new String[] {"v7", "v8"});
+         assertAttribute(json, "item8", "a string with \"escapes\" in it");
          json.nextElement();
          json.require(ConfigurationReader.ElementType.START_ELEMENT, DEFAULT_NAMESPACE, "item2");
          assertLocation(json, 4, 7);
@@ -69,7 +70,6 @@ public class JsonConfigurationReaderTest {
       Location location = json.getLocation();
       assertEquals("Line", line, location.getLineNumber());
       assertEquals("Column", col, location.getColumnNumber());
-      System.out.println(location);
    }
 
    private void assertAttribute(JsonConfigurationReader json, String name, String value) {
