@@ -157,7 +157,7 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
          writer.write(rename ? naming.convert(name) : name);
          if (value != null) {
             writer.write(": \"");
-            writer.write(value);
+            writer.write(escapeYAML(value));
             writer.write('"');
          } else {
             writer.write(": ~");
@@ -188,7 +188,7 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
             for (String value : values) {
                tab();
                writer.write("- \"");
-               writer.write(value);
+               writer.write(escapeYAML(value));
                writer.write('"');
                nl();
             }
@@ -197,6 +197,20 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
       } catch (IOException e) {
          throw new ConfigurationWriterException(e);
       }
+   }
+
+   private static String escapeYAML(String s) {
+      StringBuilder sb = new StringBuilder(s.length());
+      for (int i = 0; i < s.length(); i++) {
+         char ch = s.charAt(i);
+         switch (ch) {
+            case '\'' -> sb.append("\\'");
+            case '"' -> sb.append("\\\"");
+            case '\\' -> sb.append("\\\\");
+            default -> sb.append(ch);
+         }
+      }
+      return sb.toString();
    }
 
    @Override
@@ -209,7 +223,7 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
             while (it.hasNext()) {
                tab();
                writer.write("- \"");
-               writer.write(it.next());
+               writer.write(escapeYAML(it.next()));
                writer.write('"');
                nl();
             }

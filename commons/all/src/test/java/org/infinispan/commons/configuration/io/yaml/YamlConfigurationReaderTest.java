@@ -103,10 +103,11 @@ public class YamlConfigurationReaderTest {
          yaml.require(ConfigurationReader.ElementType.START_DOCUMENT);
          yaml.nextElement();
          yaml.require(ConfigurationReader.ElementType.START_ELEMENT, DEFAULT_NAMESPACE, "item1");
-         assertEquals(3, yaml.getAttributeCount());
+         assertEquals(4, yaml.getAttributeCount());
          assertAttribute(yaml, "item5", "v5");
          assertAttribute(yaml, "item6", "v6");
          assertAttribute(yaml, "item10", "some idiot thought this was a good idea");
+         assertAttribute(yaml, "item12", "a string with \"escapes\" and more");
          yaml.nextElement();
          yaml.require(ConfigurationReader.ElementType.START_ELEMENT, DEFAULT_NAMESPACE, "item2");
          assertEquals(4, yaml.getAttributeCount());
@@ -192,14 +193,14 @@ public class YamlConfigurationReaderTest {
       }
    }
 
-   private void assertAttribute(YamlConfigurationReader yaml, String name, String value) {
-      for (int i = 0; i < yaml.getAttributeCount(); i++) {
-         if (name.equals(yaml.getAttributeName(i))) {
-            assertEquals(value, yaml.getAttributeValue(i));
+   public static void assertAttribute(ConfigurationReader reader, String name, String value) {
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         if (name.equals(reader.getAttributeName(i))) {
+            assertEquals(value, reader.getAttributeValue(i));
             return;
          }
       }
-      fail("Could not find attribute '" + name + " in element '" + yaml.getLocalName() + "'");
+      fail("Could not find attribute '" + name + " in element '" + reader.getLocalName() + "'");
    }
 
    @Test

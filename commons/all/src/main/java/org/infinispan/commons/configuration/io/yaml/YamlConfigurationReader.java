@@ -263,6 +263,10 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                   if (i + 1 == length) {
                      throw new ConfigurationReaderException("Incomplete escape sequence", new Location(getName(), row, i));
                   } else {
+                     if (state == 2) {
+                        state = 3;
+                        start = i;
+                     }
                      i++;
                   }
                   break;
@@ -333,7 +337,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                }
             } else {
                // It's probably a continuation of the previous line
-               parsed.value = s.substring(start).trim();
+               parsed.value = unescape(s.substring(start).trim());
             }
          } else if (state == 3) { // we reached the end of the line
             String val = s.substring(start).trim();
@@ -346,11 +350,37 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
                   parsed.value = null;
                   return parsed;
                default:
-                  parsed.value = val;
+                  parsed.value = unescape(val);
             }
          }
          return parsed;
       }
+   }
+
+   private static String unescape(String s) {
+      StringBuilder sb = null; // avoid allocating if there are no escapes
+      for (int i = 0; i < s.length(); i++) {
+         char ch = s.charAt(i);
+         if (ch == '\\') {
+            if (sb == null) {
+               sb = new StringBuilder(s.substring(0, i));
+            }
+            i++;
+            ch = s.charAt(i);
+            ch = switch (ch) {
+               case 'b' -> '\b';
+               case 'f' -> '\f';
+               case 'n' -> '\n';
+               case 'r' -> '\r';
+               case 't' -> '\t';
+               default -> ch;
+            };
+         }
+         if (sb != null) {
+            sb.append(ch);
+         }
+      }
+      return sb == null ? s : sb.toString();
    }
 
    private void parseKey(Parsed p, String s) {
