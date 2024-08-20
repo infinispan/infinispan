@@ -145,7 +145,7 @@ public final class IckleParsingResult<TypeMetadata> {
       }
       String[] projections = new String[projectedPaths.length];
       for (int i = 0; i < projectedPaths.length; i++) {
-         projections[i] = projectedPaths[i].asStringPath();
+         projections[i] = projectedPaths[i].toString();
       }
       return projections;
    }
