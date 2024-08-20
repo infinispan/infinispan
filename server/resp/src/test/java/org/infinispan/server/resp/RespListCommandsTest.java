@@ -405,6 +405,19 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
 
       assertThat(redis.exists("leads")).isEqualTo(0);
       assertWrongType(() -> redis.set("another", "tristan"), () -> redis.lmpop(left(), "another"));
+
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      assertThatThrownBy(() ->
+              // lmpop 1 mylist left count 1 count 2
+              redis.dispatch(CommandType.LMPOP, new IntegerOutput<>(codec),
+                      new CommandArgs<>(codec).add(1)
+                              .addKey("mylist")
+                              .add("left")
+                              .add("count")
+                              .add(1)
+                              .add("count")
+                              .add(2))).isInstanceOf(RedisCommandExecutionException.class)
+              .hasMessageContaining("ERR syntax error");
    }
 
    @Test
