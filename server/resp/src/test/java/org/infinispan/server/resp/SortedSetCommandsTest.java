@@ -3,6 +3,7 @@ package org.infinispan.server.resp;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.Limit;
 import io.lettuce.core.Range;
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.ScanArgs;
 import io.lettuce.core.ScoredValue;
 import io.lettuce.core.ZAddArgs;
@@ -32,6 +33,7 @@ import static io.lettuce.core.ZAggregateArgs.Builder.min;
 import static io.lettuce.core.ZAggregateArgs.Builder.sum;
 import static io.lettuce.core.ZAggregateArgs.Builder.weights;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
 /**
@@ -42,6 +44,8 @@ import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 @Test(groups = "functional", testName = "server.resp.SortedSetCommandsTest")
 public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
 
+   public static final String ERR_XX_AND_NX_OPTIONS_AT_THE_SAME_TIME_ARE_NOT_COMPATIBLE = "ERR XX and NX options at the same time are not compatible";
+   public static final String ERR_GT_LT_AND_OR_NX_OPTIONS_AT_THE_SAME_TIME_ARE_NOT_COMPATIBLE = "ERR GT, LT, and/or NX options at the same time are not compatible";
    RedisCommands<String, String> redis;
 
    @BeforeMethod
@@ -124,6 +128,52 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
                   just(13.4, "tristan"), just(21.9, "marc"));
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zadd("another", 2.3, "tristan"));
       assertWrongType(() -> redis.zadd("data", 2.3, "tristan"), () -> redis.get("data"));
+   }
+
+   @Test
+   public void testIncompatibleArgsError() {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      assertThatThrownBy(() ->
+         redis.dispatch(CommandType.ZADD, new IntegerOutput<>(codec),
+                 new CommandArgs<>(codec).addKey("ztmp")
+                         .add("xx")
+                         .add("nx")
+                         .add(10)
+                         .addValue("x")
+      )).isInstanceOf(RedisCommandExecutionException.class)
+              .hasMessageContaining(
+                      ERR_XX_AND_NX_OPTIONS_AT_THE_SAME_TIME_ARE_NOT_COMPATIBLE);
+
+      assertThatThrownBy(() ->
+              redis.dispatch(CommandType.ZADD, new IntegerOutput<>(codec),
+                      new CommandArgs<>(codec).addKey("ztmp")
+                              .add("lt")
+                              .add("gt")
+                              .add(10)
+                              .addValue("x")
+              )).isInstanceOf(RedisCommandExecutionException.class)
+              .hasMessageContaining(
+                      ERR_GT_LT_AND_OR_NX_OPTIONS_AT_THE_SAME_TIME_ARE_NOT_COMPATIBLE);
+
+      assertThatThrownBy(() ->
+              redis.dispatch(CommandType.ZADD, new IntegerOutput<>(codec),
+                      new CommandArgs<>(codec).addKey("ztmp")
+                              .add("nx")
+                              .add("lt")
+                              .add(10)
+                              .addValue("x")
+              )).isInstanceOf(RedisCommandExecutionException.class)
+              .hasMessageContaining(ERR_GT_LT_AND_OR_NX_OPTIONS_AT_THE_SAME_TIME_ARE_NOT_COMPATIBLE);
+
+      assertThatThrownBy(() ->
+              redis.dispatch(CommandType.ZADD, new IntegerOutput<>(codec),
+                      new CommandArgs<>(codec).addKey("ztmp")
+                              .add("nx")
+                              .add("gt")
+                              .add(10)
+                              .addValue("x")
+              )).isInstanceOf(RedisCommandExecutionException.class)
+              .hasMessageContaining(ERR_GT_LT_AND_OR_NX_OPTIONS_AT_THE_SAME_TIME_ARE_NOT_COMPATIBLE);
    }
 
    @Test
