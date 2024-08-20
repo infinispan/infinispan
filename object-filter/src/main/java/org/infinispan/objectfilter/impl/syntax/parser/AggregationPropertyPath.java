@@ -5,6 +5,7 @@ import java.util.List;
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.ql.AggregationFunction;
 import org.infinispan.objectfilter.impl.ql.PropertyPath;
+import org.infinispan.objectfilter.impl.syntax.parser.projection.CacheValuePropertyPath;
 import org.jboss.logging.Logger;
 
 /**
@@ -53,6 +54,10 @@ public class AggregationPropertyPath<TypeMetadata> extends PropertyPath<TypeDesc
 
    @Override
    public String toString() {
-      return aggregationFunction.name() + "(" + asStringPath() + ")";
+      String stringPath = asStringPath();
+      if (CacheValuePropertyPath.VALUE_PROPERTY_NAME.equals(stringPath)) {
+         stringPath = "*";
+      }
+      return aggregationFunction.name() + "(" + stringPath + ")";
    }
 }

@@ -63,7 +63,6 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
    private static final int ENTRIES = 50;
 
-   private static final String CACHE_NAME = "search-rest";
    private static final String PROTO_FILE_NAME = "person.proto";
 
    protected RestClient client;
@@ -234,10 +233,10 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       Json hits = results.at("hits");
 
       Json males = hits.at(0);
-      assertEquals(males.at(HIT).at("name").asInteger(), 3);
+      assertEquals(males.at(HIT).at("COUNT(name)").asInteger(), 3);
 
       Json females = hits.at(1);
-      assertEquals(females.at(HIT).at("name").asInteger(), 1);
+      assertEquals(females.at(HIT).at("COUNT(name)").asInteger(), 1);
    }
 
    @Test(dataProvider = "HttpMethodProvider")
