@@ -99,7 +99,7 @@ public class LMPOP extends RespCommand implements Resp3Command {
             if (!Util.isAsciiBytesEquals(COUNT, arguments.get(pos++))) {
                throw new IllegalArgumentException("the value should be COUNT here");
             }
-            countArgValue = arguments.get(pos);
+            countArgValue = arguments.get(pos++);
          } catch (Exception ex) {
             RespErrorUtil.syntaxError(handler.allocator());
             return handler.myStage();
@@ -115,6 +115,12 @@ public class LMPOP extends RespCommand implements Resp3Command {
             RespErrorUtil.syntaxError(handler.allocator());
             return handler.myStage();
          }
+      }
+
+      // if the user sends more arguments at this point, syntax error
+      if (arguments.size() > pos) {
+         RespErrorUtil.syntaxError(handler.allocator());
+         return handler.myStage();
       }
 
       CompletionStage<List<Object>> cs = asyncCalls(CompletableFutures.completedNull(), null, listNames.iterator(), count, isLeft, ctx, handler);
