@@ -415,6 +415,14 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       redis.set(key, "A long string for testing");
       assertThat(redis.setrange(key, 2, "tiny")).isEqualTo(25);
       assertThat(redis.get(key)).isEqualTo("A tiny string for testing");
+      // SETRANGE setrange 0 ""
+      assertThat(redis.setrange("setrange", 0, "")).isEqualTo(25);
+      // EXISTS setrange
+      assertThat(redis.exists("setrange")).isEqualTo(1);
+      // SETRANGE unkexisting 0 ""
+      assertThat(redis.setrange("unkexisting", 0, "")).isEqualTo(0);
+      // EXISTS unkexisting
+      assertThat(redis.exists("unkexisting")).isEqualTo(0);
    }
 
    @Test

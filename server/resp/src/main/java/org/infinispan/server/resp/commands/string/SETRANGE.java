@@ -32,12 +32,16 @@ public class SETRANGE extends RespCommand implements Resp3Command {
       byte[] keyBytes = arguments.get(0);
       int offset = ArgumentUtils.toInt(arguments.get(1));
       byte[] patch = arguments.get(2);
-      CompletionStage<Long> objectCompletableFuture = handler.cache().computeAsync(keyBytes, (ignoredKey, value) -> setrange(value, patch, offset)).thenApply(newValue -> (long)newValue.length);
+      CompletionStage<Long> objectCompletableFuture = handler.cache().computeAsync(keyBytes, (ignoredKey, value) -> setrange(value, patch, offset)).thenApply(newValue -> newValue == null ? 0L : (long)newValue.length);
       return handler.stageToReturn(objectCompletableFuture, ctx, Consumers.LONG_BICONSUMER);
    }
 
    private static byte[] setrange(byte[] value, byte[] patch, int offset) {
-      if (value==null) {
+      if (patch.length == 0) {
+         return value;
+      }
+
+      if (value == null) {
          value = Util.EMPTY_BYTE_ARRAY;
       }
 
