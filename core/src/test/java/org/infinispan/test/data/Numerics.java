@@ -10,11 +10,12 @@ public class Numerics {
    public Numerics() { }
 
    @ProtoFactory
-   public Numerics(int keyColumn, long simpleLong, float simpleFloat, double simpleDouble) {
+   public Numerics(int keyColumn, long simpleLong, float simpleFloat, double simpleDouble, long largeInteger) {
       this.keyColumn = keyColumn;
       this.simpleLong = simpleLong;
       this.simpleFloat = simpleFloat;
       this.simpleDouble = simpleDouble;
+      this.largeInteger = largeInteger;
    }
 
    @ProtoField(number = 1, defaultValue = "0")
@@ -28,6 +29,9 @@ public class Numerics {
 
    @ProtoField(number = 4, defaultValue = "0")
    double simpleDouble;
+
+   @ProtoField(number = 5, defaultValue = "0")
+   long largeInteger;
 
    public int simpleInt() {
       return keyColumn;
@@ -45,6 +49,10 @@ public class Numerics {
       return simpleDouble;
    }
 
+   public long largeInteger() {
+      return largeInteger;
+   }
+
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
@@ -53,12 +61,13 @@ public class Numerics {
       return keyColumn == numerics.keyColumn
             && simpleLong == numerics.simpleLong
             && Float.compare(simpleFloat, numerics.simpleFloat) == 0
-            && Double.compare(simpleDouble, numerics.simpleDouble) == 0;
+            && Double.compare(simpleDouble, numerics.simpleDouble) == 0
+            && largeInteger == numerics.largeInteger;
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(keyColumn, simpleLong, simpleFloat, simpleDouble);
+      return Objects.hash(keyColumn, simpleLong, simpleFloat, simpleDouble, largeInteger);
    }
 
    @Override
@@ -68,6 +77,7 @@ public class Numerics {
             ", simpleLong=" + simpleLong +
             ", simpleFloat=" + simpleFloat +
             ", simpleDouble=" + simpleDouble +
+            ", largeInteger=" + largeInteger +
             '}';
    }
 }

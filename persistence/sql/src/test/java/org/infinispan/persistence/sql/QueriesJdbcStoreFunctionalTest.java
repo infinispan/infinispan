@@ -132,10 +132,10 @@ public class QueriesJdbcStoreFunctionalTest extends AbstractSQLStoreFunctionalTe
                .delete("DELETE FROM " + tableName + " WHERE sex = :sex");
       } else if (cacheName.equalsIgnoreCase("TESTNUMERICCOLUMNS")) {
          storeBuilder.queries()
-               .select("SELECT " + KEY_COLUMN + ", simpleLong, simpleFloat, simpleDouble FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
-               .selectAll("SELECT " + KEY_COLUMN + ", simpleLong, simpleFloat, simpleDouble FROM " + tableName)
+               .select("SELECT " + KEY_COLUMN + ", simpleLong, simpleFloat, simpleDouble, largeInteger FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
+               .selectAll("SELECT " + KEY_COLUMN + ", simpleLong, simpleFloat, simpleDouble, largeInteger FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList(KEY_COLUMN),
-                     Arrays.asList(KEY_COLUMN, "simpleLong", "simpleFloat", "simpleDouble")))
+                     Arrays.asList(KEY_COLUMN, "simpleLong", "simpleFloat", "simpleDouble", "largeInteger")))
                .delete("DELETE FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN);
       } else {
          storeBuilder.queries()
