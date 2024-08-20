@@ -60,7 +60,7 @@ public class GETRANGE extends RespCommand implements Resp3Command {
          end = Math.min(arr.length - 1, end);
       }
       // Quick return for oo range
-      if (begin >= end || begin >= arr.length) {
+      if (begin > end || begin >= arr.length) {
          return Util.EMPTY_BYTE_ARRAY;
       }
 

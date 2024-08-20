@@ -380,6 +380,7 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
    void testGetRange() {
       RedisCommands<String, String> redis = redisConnection.sync();
       String key = "getrange";
+      // SET mykey "A long string for testing"
       redis.set(key, "A long string for testing");
       assertThat(redis.getrange(key, 1, 7)).isEqualTo(" long s");
       // Check negative range
@@ -389,8 +390,15 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.getrange(key, Long.MIN_VALUE, Long.MAX_VALUE)).isEqualTo("A long string for testing");
       assertThat(redis.getrange(key, 0, -Long.MAX_VALUE)).isEqualTo("");
       assertThat(redis.getrange(key, Long.MAX_VALUE, -Long.MAX_VALUE)).isEqualTo("");
-      // Empty range
-      assertThat(redis.getrange(key, 0, 0)).isEqualTo("");
+      // Test single character
+      // GETRANGE mykey 0 0
+      assertThat(redis.getrange(key, 0, 0)).isEqualTo("A");
+      // GETRANGE mykey -1 -1
+      assertThat(redis.getrange(key, -1, -1)).isEqualTo("g");
+      // GETRANGE mykey 4 4
+      assertThat(redis.getrange(key, 4, 4)).isEqualTo("n");
+      // GETRANGE mykey -5 -5
+      assertThat(redis.getrange(key, -5, -5)).isEqualTo("s");
       // End before beginning
       assertThat(redis.getrange(key, 3, 2)).isEqualTo("");
       // Non-existent entry
