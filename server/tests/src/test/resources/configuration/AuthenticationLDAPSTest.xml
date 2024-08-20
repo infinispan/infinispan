@@ -10,7 +10,7 @@
 
    <xi:include href="cache-container/clustered.xml"/>
 
-   <server xmlns="urn:infinispan:server:15.1">
+   <server xmlns="urn:infinispan:server:15.0">
 
       <xi:include href="interfaces/default.xml"/>
 
