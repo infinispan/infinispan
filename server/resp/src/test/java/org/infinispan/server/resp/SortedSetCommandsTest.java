@@ -198,6 +198,25 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zaddincr("another", 2.3, "tristan"));
    }
 
+   @Test
+   public void testZADDwithLTOrGTAndUpdateOption() {
+      //  zadd ztmp 10 x 20 y 30 z
+      redis.zadd("ztmp", just(10, "x"), just(20, "y"), just(30, "z"));
+      // zadd ztmp lt xx ch 5 foo 10 x 21 y 29 z
+      redis.zadd("ztmp", ZAddArgs.Builder.lt().xx().ch(),
+              just(5, "foo"), just(10, "x"), just(21, "y"), just(29, "z"));
+
+      assertThat(redis.zrangeWithScores("ztmp", 0, -1))
+              .containsExactly(just(10, "x"), just(20, "y"), just(29, "z"));
+
+      //  zadd ztmp 10 x 20 y 30 z
+      redis.zadd("ztmp", just(10, "x"), just(20, "y"), just(30, "z"));
+
+      // zadd ztmp gt xx ch 5 foo 10 x 21 y 29 z
+      redis.zadd("ztmp", ZAddArgs.Builder.gt().xx().ch(),
+              just(5, "foo"), just(10, "x"), just(21, "y"), just(30, "z"));
+   }
+
    public void testZCARD() {
       assertThat(redis.zcard("not_existing")).isEqualTo(0);
       assertThat(redis.zadd("people", ZAddArgs.Builder.ch(),
