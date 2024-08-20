@@ -88,8 +88,7 @@ public class RestQueryAggregationCountTest extends SingleCacheManagerTest {
             "select status, count(code) from Sale where day >= 45 and day <= 54 group by status order by status", 10, 0);
       assertThat(response).isOk();
       Json body = Json.read(response.toCompletableFuture().get().body());
-      // TODO ISPN-15336 the label for count(code)/count(s.code) is code
-      String hits = "[{\"hit\":{\"code\":164,\"status\":\"BLOCKED\"}},{\"hit\":{\"code\":143,\"status\":\"CLOSE\"}},{\"hit\":{\"code\":178,\"status\":\"IN_PROGRESS\"}},{\"hit\":{\"code\":141,\"status\":\"OPEN\"}},{\"hit\":{\"code\":174,\"status\":\"WAITING\"}}]";
+      String hits = "[{\"hit\":{\"COUNT(code)\":164,\"status\":\"BLOCKED\"}},{\"hit\":{\"COUNT(code)\":143,\"status\":\"CLOSE\"}},{\"hit\":{\"COUNT(code)\":178,\"status\":\"IN_PROGRESS\"}},{\"hit\":{\"COUNT(code)\":141,\"status\":\"OPEN\"}},{\"hit\":{\"COUNT(code)\":174,\"status\":\"WAITING\"}}]";
       Assertions.assertThat(body.at("hits")).isEqualTo(Json.read(hits));
 
       response = cacheClient.query(
@@ -117,16 +116,14 @@ public class RestQueryAggregationCountTest extends SingleCacheManagerTest {
             "select status, count(code) from Sale group by status", 10, 0);
       assertThat(response).isOk();
       body = Json.read(response.toCompletableFuture().get().body());
-      // TODO ISPN-15336 the label for count(code) is code
-      hits = "[{\"hit\":{\"code\":2082,\"status\":\"BLOCKED\"}},{\"hit\":{\"code\":1929,\"status\":\"CLOSE\"}},{\"hit\":{\"code\":2005,\"status\":\"IN_PROGRESS\"}},{\"hit\":{\"code\":1931,\"status\":\"OPEN\"}},{\"hit\":{\"code\":2053,\"status\":\"WAITING\"}}]";
+      hits = "[{\"hit\":{\"COUNT(code)\":2082,\"status\":\"BLOCKED\"}},{\"hit\":{\"COUNT(code)\":1929,\"status\":\"CLOSE\"}},{\"hit\":{\"COUNT(code)\":2005,\"status\":\"IN_PROGRESS\"}},{\"hit\":{\"COUNT(code)\":1931,\"status\":\"OPEN\"}},{\"hit\":{\"COUNT(code)\":2053,\"status\":\"WAITING\"}}]";
       Assertions.assertThat(body.at("hits")).isEqualTo(Json.read(hits));
 
       response = cacheClient.query(
             "select s.status, count(s) from Sale s where s.day >= 45 and s.day <= 54 group by s.status order by s.status", 10, 0);
       assertThat(response).isOk();
       body = Json.read(response.toCompletableFuture().get().body());
-      // TODO ISPN-15336 the label for count(*)/count(s) is __HSearch_This
-      hits = "[{\"hit\":{\"__HSearch_This\":207,\"status\":\"BLOCKED\"}},{\"hit\":{\"__HSearch_This\":185,\"status\":\"CLOSE\"}},{\"hit\":{\"__HSearch_This\":216,\"status\":\"IN_PROGRESS\"}},{\"hit\":{\"__HSearch_This\":179,\"status\":\"OPEN\"}},{\"hit\":{\"__HSearch_This\":213,\"status\":\"WAITING\"}}]";
+      hits = "[{\"hit\":{\"COUNT(*)\":207,\"status\":\"BLOCKED\"}},{\"hit\":{\"COUNT(*)\":185,\"status\":\"CLOSE\"}},{\"hit\":{\"COUNT(*)\":216,\"status\":\"IN_PROGRESS\"}},{\"hit\":{\"COUNT(*)\":179,\"status\":\"OPEN\"}},{\"hit\":{\"COUNT(*)\":213,\"status\":\"WAITING\"}}]";
       Assertions.assertThat(body.at("hits")).isEqualTo(Json.read(hits));
 
       response = cacheClient.query(
