@@ -245,12 +245,12 @@ public class SortedSetBucket<V> implements SortableBucket<V> {
       for (ScoredValue<V> scoredValue : scoredValues) {
          if (addOnly) {
             addOnly(scoredValue);
-         } else if (updateOnly) {
+         } else if (updateOnly && !updateGreaterScoresOnly && !updateLessScoresOnly) {
             updateOnly(addResult, scoredValue);
          } else if (updateGreaterScoresOnly) {
-            addOrUpdateGreaterScores(addResult, scoredValue);
+            addOrUpdateGreaterScores(updateOnly, addResult, scoredValue);
          } else if (updateLessScoresOnly) {
-            addOrUpdateLessScores(addResult, scoredValue);
+            addOrUpdateLessScores(updateOnly, addResult, scoredValue);
          } else {
             addOrUpdate(addResult, scoredValue);
          }
@@ -291,21 +291,21 @@ public class SortedSetBucket<V> implements SortableBucket<V> {
       }
    }
 
-   private void addOrUpdateGreaterScores(AddOrUpdatesCounters addResult, ScoredValue<V> scoredValue) {
+   private void addOrUpdateGreaterScores(boolean updateOnly, AddOrUpdatesCounters addResult, ScoredValue<V> scoredValue) {
       Double existingScore = entries.get(scoredValue.wrappedValue());
-      if (existingScore == null) {
+      if (existingScore == null && !updateOnly) {
          addScoredValue(scoredValue);
-      } else if (scoredValue.score() > existingScore) {
+      } else if (existingScore != null && scoredValue.score() > existingScore) {
          updateScoredValue(scoredValue, existingScore);
          addResult.updated++;
       }
    }
 
-   private void addOrUpdateLessScores(AddOrUpdatesCounters addResult, ScoredValue<V> scoredValue) {
+   private void addOrUpdateLessScores(boolean updateOnly, AddOrUpdatesCounters addResult, ScoredValue<V> scoredValue) {
       Double existingScore = entries.get(scoredValue.wrappedValue());
-      if (existingScore == null) {
+      if (existingScore == null && !updateOnly) {
          addScoredValue(scoredValue);
-      } else if (scoredValue.score() < existingScore) {
+      } else if (existingScore != null && scoredValue.score() < existingScore) {
          updateScoredValue(scoredValue, existingScore);
          addResult.updated++;
       }
