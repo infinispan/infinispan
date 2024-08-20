@@ -15,6 +15,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import static org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils.isWithScoresArg;
+
 /**
  * Returns the rank of member in the sorted set stored at key, with the scores ordered from high to low.
  * The rank (or index) is 0-based, which means that the member with the lowest score has rank 0.
@@ -51,7 +53,7 @@ public class ZRANK  extends RespCommand implements Resp3Command {
       byte[] member = arguments.get(1);
       boolean withScore = false;
       if (arguments.size() > 2) {
-         withScore = "WITHSCORE".equals(new String(arguments.get(2)));
+         withScore = isWithScoresArg(arguments.get(2));
          if (!withScore) {
             RespErrorUtil.syntaxError(handler.allocator());
             return handler.myStage();
