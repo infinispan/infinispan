@@ -5,6 +5,11 @@ import io.lettuce.core.LMoveArgs;
 import io.lettuce.core.LPosArgs;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.IntegerOutput;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandType;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -400,5 +405,17 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
 
       assertThat(redis.exists("leads")).isEqualTo(0);
       assertWrongType(() -> redis.set("another", "tristan"), () -> redis.lmpop(left(), "another"));
+   }
+
+   @Test
+   public void testLMPOPWithLowerCase() {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      // lmpop 1 mylist left count 1
+      redis.dispatch(CommandType.LMPOP, new IntegerOutput<>(codec),
+              new CommandArgs<>(codec).add(1)
+                      .addKey("mylist")
+                      .add("left")
+                      .add("count")
+                      .add(1));
    }
 }

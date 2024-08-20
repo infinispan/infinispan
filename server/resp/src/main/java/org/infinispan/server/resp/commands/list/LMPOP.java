@@ -14,6 +14,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.Util;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.jgroups.util.CompletableFutures;
@@ -43,9 +44,9 @@ public class LMPOP extends RespCommand implements Resp3Command {
       else Consumers.LMPOP_BICONSUMER.accept(res, buff);
    };
 
-   public static final String COUNT = "COUNT";
-   public static final String LEFT = "LEFT";
-   public static final String RIGHT = "RIGHT";
+   public static final byte[] COUNT = "COUNT".getBytes();
+   public static final byte[] LEFT = "LEFT".getBytes();
+   public static final byte[] RIGHT = "RIGHT".getBytes();
 
    public LMPOP() {
       super(-4, 0, 0, 0);
@@ -82,11 +83,11 @@ public class LMPOP extends RespCommand implements Resp3Command {
          return handler.myStage();
       }
 
-      String leftOrRight = new String(arguments.get(pos++));
+      byte[] leftOrRight = arguments.get(pos++);
       boolean isLeft = false;
-      if (LEFT.equals(leftOrRight)) {
+      if (Util.isAsciiBytesEquals(LEFT, leftOrRight)) {
          isLeft = true;
-      } else if (!RIGHT.equals(leftOrRight)) {
+      } else if (!Util.isAsciiBytesEquals(RIGHT, leftOrRight)) {
          // we need to chose between LEFT OR RIGHT
          RespErrorUtil.syntaxError(handler.allocator());
          return handler.myStage();
@@ -95,7 +96,7 @@ public class LMPOP extends RespCommand implements Resp3Command {
       if (arguments.size() > pos ) {
          byte[] countArgValue;
          try {
-            if (!COUNT.equals(new String(arguments.get(pos++)))) {
+            if (!Util.isAsciiBytesEquals(COUNT, arguments.get(pos++))) {
                throw new IllegalArgumentException("the value should be COUNT here");
             }
             countArgValue = arguments.get(pos);
