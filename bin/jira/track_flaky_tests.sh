@@ -17,7 +17,8 @@ for TEST in "${TESTS[@]}"; do
   TEST_CLASS_NAMES=$(xmlstarlet sel -t --value-of '/testsuite/testcase/@classname'  ${TEST})
   declare -i i
   for TEST_CLASS in $TEST_CLASS_NAMES; do
-    i=i+1
+    # just get the first one for now
+    i=1
     TEST_NAME=$(xmlstarlet sel --template --value-of '/testsuite/testcase['$i']/@name' ${TEST})
     # Removing (Flaky Test) text
     TEST_NAME=${TEST_NAME% (Flaky Test)}
