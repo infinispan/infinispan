@@ -19,7 +19,7 @@ public final class ZSetCommonUtils {
    }
 
    public static boolean isWithScoresArg(byte[] arg) {
-      return Util.isAsciiBytesEquals(arg, WITHSCORES);
+      return Util.isAsciiBytesEquals(WITHSCORES, arg);
    }
 
    private static boolean isInf(byte[] arg, char sign) {
