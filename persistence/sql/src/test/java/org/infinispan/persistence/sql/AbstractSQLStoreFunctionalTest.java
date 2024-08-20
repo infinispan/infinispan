@@ -367,18 +367,14 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
    }
 
    public void testNumericColumns(Method m) {
-      Number key = Integer.MAX_VALUE;
-
-      if (DB_TYPE.equals(SQLITE))
-         key = key.longValue();
-
+      long key = Integer.MAX_VALUE;
       String cacheName = m.getName();
       schemaConsumer = builder ->
             builder.schema()
                   .embeddedKey(true)
                   .messageName("Numerics")
                   .packageName("org.infinispan.test.core");
-      Numerics v = new Numerics(Integer.MAX_VALUE, Long.MAX_VALUE, Float.MAX_VALUE, Double.MAX_VALUE);
+      Numerics v = new Numerics(Integer.MAX_VALUE, Long.MAX_VALUE, Float.MAX_VALUE, Double.MAX_VALUE, 9_000_000_000L);
 
       // This test might operate in memory.
       testSimpleGetAndPut(cacheName, key, v);
@@ -624,6 +620,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
                "simpleLong " + longType() + ", " +
                "simpleFloat " + floatType() + ", " +
                "simpleDouble " + doubleType() + ", " +
+               "largeInteger " + integerType() + ", " +
                "PRIMARY KEY (keycolumn))";
       } else {
          tableCreation = "CREATE TABLE " + tableName + " (" +
