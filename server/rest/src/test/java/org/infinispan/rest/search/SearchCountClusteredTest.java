@@ -356,7 +356,9 @@ public class SearchCountClusteredTest extends MultiNodeRestTest {
    private int getFieldAggregationValue(CompletionStage<RestResponse> response, String field) {
       RestResponse restResponse = await(response);
       String body = restResponse.body();
-      return Json.read(body).at("hits").asJsonList().get(0).at("hit").at(field).asInteger();
+      Json hits = Json.read(body).at("hits").asJsonList().get(0);
+      String aggregationKey = "COUNT(" + field + ")";
+      return hits.at("hit").at(aggregationKey).asInteger();
    }
 
    private RestCacheClient indexedCache() {
