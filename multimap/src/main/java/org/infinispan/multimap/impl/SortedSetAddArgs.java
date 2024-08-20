@@ -79,14 +79,14 @@ public class SortedSetAddArgs {
       public SortedSetAddArgs build(){
          // validate
          if (updateOnly && addOnly) {
-            throw new IllegalStateException(ADD_AND_UPDATE_ONLY_INCOMPATIBLE_ERROR);
+            throw new IllegalArgumentException(ADD_AND_UPDATE_ONLY_INCOMPATIBLE_ERROR);
          }
 
          if ((addOnly && updateGreaterScoresOnly)
                || (addOnly && updateLessScoresOnly)
                || (updateGreaterScoresOnly && updateLessScoresOnly)
          ) {
-            throw new IllegalStateException(ADD_AND_UPDATE_OPTIONS_INCOMPATIBLE_ERROR);
+            throw new IllegalArgumentException(ADD_AND_UPDATE_OPTIONS_INCOMPATIBLE_ERROR);
          }
          return new SortedSetAddArgs(this);
       }
