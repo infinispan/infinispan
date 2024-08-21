@@ -436,8 +436,8 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
 
       writeKeyStore(getCertificateFile(name + extension), type, providerName, ks -> {
          try {
-            ks.setCertificateEntry("ca", caCertificate);
             ks.setKeyEntry(name, signingKey, KEY_PASSWORD.toCharArray(), new X509Certificate[]{certificate, caCertificate});
+            //ks.setCertificateEntry("ca", caCertificate);
          } catch (KeyStoreException e) {
             throw new RuntimeException(e);
          }
