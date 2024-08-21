@@ -67,17 +67,17 @@ public class EmbeddedMultimapSortedSetCacheTest extends SingleCacheManagerTest {
       assertThat(SortedSetAddArgs.create().addOnly().build().addOnly).isTrue();
       assertThat(SortedSetAddArgs.create().updateOnly().build().updateOnly).isTrue();
       assertThatThrownBy(() -> SortedSetAddArgs.create().addOnly().updateOnly().build()).isInstanceOf(
-            IllegalStateException.class).hasMessageContaining(SortedSetAddArgs.ADD_AND_UPDATE_ONLY_INCOMPATIBLE_ERROR);
+              IllegalArgumentException.class).hasMessageContaining(SortedSetAddArgs.ADD_AND_UPDATE_ONLY_INCOMPATIBLE_ERROR);
 
       //  updateGt, updateLt and addOnly can't be all true
       assertThat(SortedSetAddArgs.create().updateGreaterScoresOnly().build().updateGreaterScoresOnly).isTrue();
       assertThat(SortedSetAddArgs.create().updateLessScoresOnly().build().updateLessScoresOnly).isTrue();
       assertThatThrownBy(() -> SortedSetAddArgs.create().addOnly().updateLessScoresOnly().build()).isInstanceOf(
-            IllegalStateException.class).hasMessageContaining(SortedSetAddArgs.ADD_AND_UPDATE_OPTIONS_INCOMPATIBLE_ERROR);
+              IllegalArgumentException.class).hasMessageContaining(SortedSetAddArgs.ADD_AND_UPDATE_OPTIONS_INCOMPATIBLE_ERROR);
       assertThatThrownBy(() -> SortedSetAddArgs.create().addOnly().updateGreaterScoresOnly().build()).isInstanceOf(
-            IllegalStateException.class).hasMessageContaining(SortedSetAddArgs.ADD_AND_UPDATE_OPTIONS_INCOMPATIBLE_ERROR);
+              IllegalArgumentException.class).hasMessageContaining(SortedSetAddArgs.ADD_AND_UPDATE_OPTIONS_INCOMPATIBLE_ERROR);
       assertThatThrownBy(() -> SortedSetAddArgs.create().updateLessScoresOnly().updateGreaterScoresOnly().build()).isInstanceOf(
-            IllegalStateException.class).hasMessageContaining(SortedSetAddArgs.ADD_AND_UPDATE_OPTIONS_INCOMPATIBLE_ERROR);
+            IllegalArgumentException.class).hasMessageContaining(SortedSetAddArgs.ADD_AND_UPDATE_OPTIONS_INCOMPATIBLE_ERROR);
 
    }
 
