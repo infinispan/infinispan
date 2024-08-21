@@ -34,7 +34,7 @@ However, if you want to use adapter classes as marshallable fields in ProtoStrea
 
 [source,java,options="nowrap",subs=attributes+]
 ----
-@ProtoSchema(dependsOn = {org.infinispan.protostream.types.java.CommonTypes, org.infinispan.protostream.types.java.CommonContainerTypes}, schemaFileName = "library.proto", schemaFilePath = "proto", schemaPackageName = "example")
+@ProtoSchema(dependsOn = {org.infinispan.protostream.types.java.CommonTypes.class, org.infinispan.protostream.types.java.CommonContainerTypes.class}, schemaFileName = "library.proto", schemaFilePath = "proto", schemaPackageName = "example")
 public interface LibraryInitalizer extends SerializationContextInitializer {
 }
 ----
