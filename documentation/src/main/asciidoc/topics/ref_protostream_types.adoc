@@ -43,7 +43,7 @@ public interface LibraryInitalizer extends SerializationContextInitializer {
 
 [source,java,options="nowrap",subs=attributes+]
 ----
-@ProtoSchema(includeClasses = { Author.class, Book.class, UUIDAdapter.class, java.math.BigInteger }, schemaFileName = "library.proto", schemaFilePath = "proto", schemaPackageName = "library")
+@ProtoSchema(includeClasses = { Author.class, Book.class, UUIDAdapter.class, org.infinispan.protostream.types.java.math.BigIntegerAdapter.class }, schemaFileName = "library.proto", schemaFilePath = "proto", schemaPackageName = "library")
 public interface LibraryInitalizer extends SerializationContextInitializer {
 
 }
