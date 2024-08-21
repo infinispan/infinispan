@@ -60,6 +60,7 @@
                    --add-opens=java.base/java.lang=ALL-UNNAMED
                     -Dinfinispan.server.integration.data-source=${infinispan.server.integration.data-source}
                     -Djava.net.preferIPv4Stack=true
+                    -Djgroups.bind.address=localhost
                 </property>
                 <property name="serverConfig">standalone-test.xml</property>
             </configuration>
@@ -76,6 +77,7 @@
                     -Dinfinispan.server.integration.data-source=${infinispan.server.integration.data-source}
                     -Djava.net.preferIPv4Stack=true
                     -Djboss.socket.binding.port-offset=100
+                    -Djgroups.bind.address=localhost
                 </property>
                 <property name="managementPort">10090</property>
                 <property name="serverConfig">standalone-test.xml</property>
