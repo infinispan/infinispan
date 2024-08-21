@@ -3,8 +3,10 @@ package org.infinispan.commons.util;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.Test;
@@ -18,18 +20,25 @@ public class GlobMatcherTest {
 
       int cycles = 10_000_000;
       while (cycles-- > 0) {
-         ThreadLocalRandom.current().nextBytes(str);
-         nextBytes(pat);
-         GlobMatcher.match(str, pat);
+         nextAsciiBytes(str);
+         nextAsciiBytes(pat);
+
+         try {
+            GlobMatcher.match(str, pat);
+         } catch (Throwable t) {
+            fail(String.format("Failed fuzz:\nstr: %s\npat: %s\nException: %s", Arrays.toString(str), Arrays.toString(pat), t));
+         }
       }
    }
 
-   private void nextBytes(byte[] bytes) {
+   private void nextAsciiBytes(byte[] bytes) {
       for (int i = 0, len = bytes.length; i < len; )
-         for (int rnd = ThreadLocalRandom.current().nextInt(0x80),
-              n = Math.min(len - i, Integer.SIZE/Byte.SIZE);
-              n-- > 0;)
-            bytes[i++] = (byte) rnd;
+         for (int n = Math.min(len - i, Integer.SIZE/Byte.SIZE); n-- > 0;)
+            bytes[i++] = nextAsciiByte();
+   }
+
+   private byte nextAsciiByte() {
+      return (byte) ThreadLocalRandom.current().nextInt(0x80);
    }
 
    @Test
@@ -53,6 +62,8 @@ public class GlobMatcherTest {
       assertFalse(GlobMatcher.match("a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*a*b", "a".repeat(55)));
 
       assertTrue(GlobMatcher.match("a*a*b", "aaa7b"));
+      assertTrue(GlobMatcher.match("a*a*b[", "aaa7b["));
+      assertFalse(GlobMatcher.match("a*a*b[", "aaa7b[c"));
       assertTrue(GlobMatcher.match("a*[0-9]b", "aH5b"));
       assertTrue(GlobMatcher.match("a*[k\\-0-9]b", "aHk5b"));
       assertTrue(GlobMatcher.match("a*[k\\-0-9]b", "aH-5b"));
