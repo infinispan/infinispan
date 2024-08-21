@@ -3,7 +3,6 @@ package org.infinispan.query.remote.impl.access;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.api.query.EntityEntry;
@@ -47,17 +46,7 @@ public class RemoteQueryAccessQuery<T> implements Query<T> {
    }
 
    @Override
-   public CompletionStage<QueryResult<T>> executeAsync() {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
    public int executeStatement() {
-      throw new UnsupportedOperationException("Not implemented!");
-   }
-
-   @Override
-   public CompletionStage<Integer> executeStatementAsync() {
       throw new UnsupportedOperationException("Not implemented!");
    }
 

@@ -9,7 +9,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
-import java.util.concurrent.CompletionStage;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -83,16 +82,6 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
       if (queryStatistics.isEnabled()) recordQuery(start);
 
       return result;
-   }
-
-   @Override
-   public CompletionStage<org.infinispan.commons.api.query.QueryResult<T>> executeAsync() {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public CompletionStage<Integer> executeStatementAsync() {
-      throw new UnsupportedOperationException();
    }
 
    @Override

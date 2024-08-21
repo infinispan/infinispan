@@ -32,19 +32,10 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
  * be emitted by invoking the {@link #onNext(Object)} method for each value. Note that the return of {@code onNext}
  * should be checked in case if the {@code Subscriber} has cancelled the publishing of values in the middle.
  * <p>
- * The publisher will continue to send requests to the <b>initialTarget</b> provided in the constructor. When that
- * target no longer has any more entries to retrieve the implementation should invoke {@link #targetComplete()} to signal
- * it is complete. After this is invoked the <b>supplier</b> provided in the constructor will be invoked to have the
- * next target to send to. This will repeat until the <b>supplier</b> returns <b>null</b> which is the signal to this
- * class that there are no more entries left to retrieve.
- * <p>
  * A command may also encounter a Throwable and it is possible to customize what happens by implementing the
  * {@link #handleThrowableInResponse(Throwable, Object)} method. For example you may want to skip the given
  * <p>
- * <p>The user is required to supply a <b>maxBatchSize</b> argument to the constructor. This setting will ensure that
- * this handler will never have more than this amount of entries enqueued at once. However, we may request less than
- * this batch size from the underlying target(s).
- * Each request is provided a {@code batchSize} argument and the underlying resource should adhere to,
+ * Each request is provided a {@code batchSize} argument and the underlying resource should adhere to this,
  * failure to do so may cause an {@link OutOfMemoryError}, since entries are only emitted to the Subscriber based on the
  * requested amount, and any additional are enqueued.
  * <p>
@@ -76,15 +67,10 @@ public abstract class AbstractAsyncPublisherHandler<Target, Output, InitialRespo
    private final InitialBiConsumer initialBiConsumer = new InitialBiConsumer();
    private final NextBiConsumer nextBiConsumer = new NextBiConsumer();
 
-   protected AbstractAsyncPublisherHandler(int maxBatchSize, Supplier<Target> supplier, Target firstTarget) {
-      if (maxBatchSize  <= 0) {
-         throw new IllegalArgumentException("maxBatchSize  must be greater than 0");
-      }
-      // Do not create too large of a batch, we limit it to 8196 so UnicastProcessor doesn't create too
-      // large of an array
-      this.batchSize = Math.min(maxBatchSize, 1 << 16);
+   protected AbstractAsyncPublisherHandler(int batchSize, Supplier<Target> supplier, Target firstTarget) {
+      this.batchSize = batchSize;
       this.supplier = supplier;
-      this.flowableProcessor = UnicastProcessor.create(this.batchSize);
+      this.flowableProcessor = UnicastProcessor.create(batchSize);
 
       this.currentTarget = firstTarget;
    }

@@ -4,8 +4,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.api.query.EntityEntry;
@@ -116,18 +114,8 @@ class DummyQuery<T> implements Query<T> {
    }
 
    @Override
-   public CompletionStage<org.infinispan.commons.api.query.QueryResult<T>> executeAsync() {
-      return CompletableFuture.completedFuture(execute());
-   }
-
-   @Override
    public int executeStatement() {
       return 0;
-   }
-
-   @Override
-   public CompletionStage<Integer> executeStatementAsync() {
-      return CompletableFuture.completedFuture(0);
    }
 
    @Override
