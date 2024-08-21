@@ -27,6 +27,7 @@ import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
+import org.infinispan.rest.RestRequestHandler;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.framework.ContentSource;
 import org.infinispan.rest.framework.ResourceHandler;
@@ -113,16 +114,25 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
 
       CompletableFuture<Object> putSchema;
       if (create) {
-         putSchema = cache.putIfAbsentAsync(schemaName, contents.asString()).thenApply(result -> {
-            if (result == null) {
+         putSchema = cache.putIfAbsentAsync(schemaName, contents.asString()).whenComplete((result, ex) -> {
+            if (ex != null) {
+               builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR).entity(RestRequestHandler.filterCause(ex));
+            } else if (result == null) {
                builder.status(HttpResponseStatus.CREATED);
             } else {
                builder.status(HttpResponseStatus.CONFLICT);
             }
-            return result;
          });
       } else {
-         putSchema = cache.putAsync(schemaName, contents.asString()).thenApply(result -> builder.status(HttpResponseStatus.OK));
+         putSchema = cache.putAsync(schemaName, contents.asString())
+                 .whenComplete((result, ex) -> {
+                    if (ex == null) {
+                       builder.status(HttpResponseStatus.OK);
+                    } else {
+                       builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR)
+                               .entity(RestRequestHandler.filterCause(ex));
+                    }
+                 });
       }
 
       return putSchema.thenCompose(r -> {
