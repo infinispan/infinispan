@@ -91,6 +91,15 @@ public final class GlobMatcher {
             case '[':
                patternPos++;
 
+               // Reached the end of the pattern *before* ending the range.
+               // We do a character comparison.
+               if (patternPos == pattern.length) {
+                  patternPos--;
+                  if (pattern[patternPos] == string[stringPos]) stringPos++;
+                  else return false;
+                  break;
+               }
+
                // Check for the negation character at the start of the range.
                boolean notOp = pattern[patternPos] == '^';
                if (notOp) {
