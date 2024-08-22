@@ -32,6 +32,7 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.commands.TransactionResp3Command;
 import org.infinispan.server.resp.filter.EventListenerKeysFilter;
+import org.infinispan.server.resp.meta.ClientMetadata;
 import org.infinispan.server.resp.tx.RespTransactionHandler;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -66,12 +67,17 @@ public class WATCH extends RespCommand implements Resp3Command, TransactionResp3
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
       AdvancedCache<byte[], byte[]> cache = handler.cache();
-      TxKeysListener listener = new TxKeysListener();
       byte[][] keys = arguments.toArray(Util.EMPTY_BYTE_ARRAY_ARRAY);
+      TxKeysListener listener = new TxKeysListener(keys.length);
 
       CacheEventFilter<Object, Object> filter = new EventListenerKeysFilter(keys);
       CompletionStage<Void> cs = cache.addListenerAsync(listener, filter, new TxEventConverterEmpty())
-            .thenAccept(ignore -> register(ctx, listener));
+            .thenAccept(ignore -> register(ctx, listener))
+            .thenAccept(ignore -> {
+               ClientMetadata metadata = handler.respServer().metadataRepository().client();
+               metadata.incrementWatchingClients();
+               metadata.recordWatchedKeys(keys.length);
+            });
       return handler.stageToReturn(cs, ctx, Consumers.OK_BICONSUMER);
    }
 
@@ -94,6 +100,11 @@ public class WATCH extends RespCommand implements Resp3Command, TransactionResp3
    @Listener(clustered = true)
    public static class TxKeysListener {
       private final AtomicBoolean hasEvent = new AtomicBoolean(false);
+      private final int numberOfKeys;
+
+      public TxKeysListener(int numberOfKeys) {
+         this.numberOfKeys = numberOfKeys;
+      }
 
       @CacheEntryCreated
       @CacheEntryModified
@@ -106,6 +117,10 @@ public class WATCH extends RespCommand implements Resp3Command, TransactionResp3
 
       public boolean hasSeenEvents() {
          return hasEvent.get();
+      }
+
+      public int getNumberOfKeys() {
+         return numberOfKeys;
       }
    }
 

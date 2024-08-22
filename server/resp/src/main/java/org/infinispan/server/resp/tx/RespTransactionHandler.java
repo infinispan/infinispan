@@ -129,6 +129,6 @@ public class RespTransactionHandler extends CacheRespRequestHandler {
    }
 
    public CompletionStage<List<WATCH.TxKeysListener>> unregisterListeners(ChannelHandlerContext ctx) {
-      return UNWATCH.deregister(ctx, cache());
+      return UNWATCH.deregister(ctx, cache(), respServer().metadataRepository().client());
    }
 }

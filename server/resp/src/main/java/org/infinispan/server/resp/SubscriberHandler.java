@@ -25,6 +25,7 @@ import org.infinispan.server.resp.commands.PubSubResp3Command;
 import org.infinispan.server.resp.commands.pubsub.KeyChannelUtils;
 import org.infinispan.server.resp.commands.pubsub.RespCacheListener;
 import org.infinispan.server.resp.logging.Log;
+import org.infinispan.server.resp.meta.ClientMetadata;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -155,6 +156,7 @@ public class SubscriberHandler extends CacheRespRequestHandler {
    }
 
    public CompletionStage<RespRequestHandler> unsubscribeAll(ChannelHandlerContext ctx) {
+      ClientMetadata metadata = respServer().metadataRepository().client();
       var aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
       List<byte[]> channels = new ArrayList<>(specificChannelSubscribers.size());
       for (Iterator<Map.Entry<WrappedByteArray, RespCacheListener>> iterator = specificChannelSubscribers.entrySet().iterator(); iterator.hasNext(); ) {
@@ -165,6 +167,7 @@ public class SubscriberHandler extends CacheRespRequestHandler {
          channels.add(keyChannel);
          aggregateCompletionStage.dependsOn(handleStageListenerError(stage, keyChannel, false));
          iterator.remove();
+         metadata.decrementPubSubClients();
       }
       return sendSubscriptions(ctx, aggregateCompletionStage.freeze(), channels, false);
    }
