@@ -45,10 +45,6 @@ final class CounterIncOrDec {
             });
    }
 
-   static CompletionStage<Double> counterIncByDouble(Cache<byte[], byte[]> cache, byte[] key, String by) {
-      return counterIncByDouble(cache, key, Double.parseDouble(by));
-   }
-
    static CompletionStage<Double> counterIncByDouble(Cache<byte[], byte[]> cache, byte[] key, Double by) {
       return cache.getAsync(key)
             .thenCompose(currentValueBytes -> {
@@ -59,6 +55,10 @@ final class CounterIncOrDec {
                   } catch (NumberFormatException e) {
                      throw new CacheException("value is not a valid float");
                   }
+
+                  if (Double.isNaN(prevDoubleValue) || Double.isInfinite(prevDoubleValue))
+                     throw new IllegalStateException("increment would produce NaN or Infinity");
+
                   byte[] newValueBytes = ArgumentUtils.toByteArray(prevDoubleValue);
                   return cache.replaceAsync(key, currentValueBytes, newValueBytes)
                         .thenCompose(replaced -> {

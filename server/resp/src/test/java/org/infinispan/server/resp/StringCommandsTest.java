@@ -86,6 +86,21 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       assertThat(nextValue.longValue()).isEqualTo(10L);
    }
 
+   public void testIncrResultsNan() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "incr-to-nan";
+
+      redis.set(key, "inf");
+      assertThatThrownBy(() -> redis.incrbyfloat(key, -100))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR increment would produce NaN or Infinity");
+
+      redis.set(key, "1");
+      assertThatThrownBy(() -> redis.incrbyfloat(key, Double.POSITIVE_INFINITY))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR increment would produce NaN or Infinity");
+   }
+
    @Test
    public void testIncrbyNotPresent() {
       RedisCommands<String, String> redis = redisConnection.sync();
