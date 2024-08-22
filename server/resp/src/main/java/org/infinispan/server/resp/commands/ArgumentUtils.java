@@ -133,4 +133,8 @@ public final class ArgumentUtils {
       }
       return toByteArray(value.longValue());
    }
+
+   public static boolean isFloatValid(double value) {
+      return !Double.isNaN(value) && !Double.isInfinite(value);
+   }
 }

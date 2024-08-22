@@ -73,6 +73,10 @@ public final class RespErrorUtil {
       ByteBufferUtils.stringToByteBufAscii("-ERR min or max is not a float\r\n", allocator);
    }
 
+   public static void nanOrInfinity(ByteBufPool allocator) {
+      ByteBufferUtils.stringToByteBufAscii("-ERR increment would produce NaN or Infinity\r\n", allocator);
+   }
+
    public static void minOrMaxNotAValidStringRange(ByteBufPool allocator) {
       ByteBufferUtils.stringToByteBufAscii("-ERR min or max not valid string range item\r\n", allocator);
    }
