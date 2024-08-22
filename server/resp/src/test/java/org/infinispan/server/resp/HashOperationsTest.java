@@ -265,6 +265,10 @@ public class HashOperationsTest extends SingleNodeRespBaseTest {
       assertThatThrownBy(() -> redis.hincrbyfloat("incr-test", "spacing", 2.5))
             .hasCauseInstanceOf(RedisCommandExecutionException.class)
             .hasMessageContaining("hash value is not a float");
+
+      assertThatThrownBy(() -> redis.hincrbyfloat("incr-test", "age", Double.POSITIVE_INFINITY))
+            .hasCauseInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR increment would produce NaN or Infinity");
    }
 
    public void testIncrementOverflows() {

@@ -200,8 +200,17 @@ public class Resp3Handler extends Resp3AuthHandler {
       if (writer != null) {
          writer.accept(alloc);
       } else {
-         ByteBufferUtils.stringToByteBuf("-ERR " + t.getMessage() + CRLF_STRING, alloc);
+         ByteBufferUtils.stringToByteBuf("-ERR " + extractExceptionMessage(t) + CRLF_STRING, alloc);
       }
+   }
+
+   private static String extractExceptionMessage(Throwable t) {
+      Throwable r = t;
+      while (r.getCause() != null) {
+         r = r.getCause();
+      }
+
+      return r.getMessage();
    }
 
    public AdvancedCache<byte[], byte[]> ignorePreviousValuesCache() {
