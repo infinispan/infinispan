@@ -23,6 +23,7 @@ import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.resp.filter.ComposedFilterConverterFactory;
 import org.infinispan.server.resp.filter.GlobMatchFilterConverterFactory;
 import org.infinispan.server.resp.filter.RespTypeFilterConverterFactory;
+import org.infinispan.server.resp.meta.MetadataRepository;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInboundHandler;
@@ -40,6 +41,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    private static final Log log = LogFactory.getLog(RespServer.class);
    public static final String RESP_SERVER_FEATURE = "resp-server";
    public static final MediaType RESP_KEY_MEDIA_TYPE = MediaType.APPLICATION_OCTET_STREAM;
+   private MetadataRepository metadataRepository;
    private MediaType configuredValueType = MediaType.APPLICATION_OCTET_STREAM;
    private DefaultIterationManager iterationManager;
    private ExternalSourceIterationManager dataStructureIterationManager;
@@ -60,6 +62,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
       iterationManager.addKeyValueFilterConverterFactory(RespTypeFilterConverterFactory.class.getName(), new RespTypeFilterConverterFactory());
       iterationManager.addKeyValueFilterConverterFactory(ComposedFilterConverterFactory.class.getName(), new ComposedFilterConverterFactory());
       dataStructureIterationManager.addKeyValueFilterConverterFactory(GlobMatchFilterConverterFactory.class.getName(), new GlobMatchFilterConverterFactory(true));
+      metadataRepository = new MetadataRepository();
       if (!cacheManager.getCacheManagerConfiguration().features().isAvailable(RESP_SERVER_FEATURE)) {
          throw CONFIG.featureDisabled(RESP_SERVER_FEATURE);
       }
@@ -164,5 +167,9 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
 
    public SegmentSlotRelation segmentSlotRelation() {
       return segmentSlots;
+   }
+
+   public MetadataRepository metadataRepository() {
+      return metadataRepository;
    }
 }
