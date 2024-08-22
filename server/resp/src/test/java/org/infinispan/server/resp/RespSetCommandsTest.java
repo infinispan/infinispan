@@ -195,6 +195,13 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.smove(samesrc, samesrc, "4")).isFalse();
    }
 
+   public void testSmoveFailures() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      redis.sadd("smove-failures", "1", "2", "3");
+      assertWrongType(() -> redis.set("x", "10"), () -> redis.smove("smove-failures", "x", "foo"));
+   }
+
    @Test
    public void testSrem() {
       RedisCommands<String, String> redis = redisConnection.sync();

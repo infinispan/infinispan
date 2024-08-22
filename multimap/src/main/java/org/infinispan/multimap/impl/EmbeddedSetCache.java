@@ -62,7 +62,18 @@ public class EmbeddedSetCache<K, V> {
     * @return the set with values if such exist, or null if the key is not present
     */
    public CompletionStage<Set<V>> getAsSet(K key) {
-      return readWriteMap.eval(key, new SGetFunction<K, V>()).thenApply(v->v.toSet());
+      return readWriteMap.eval(key, new SGetFunction<K, V>()).thenApply(SetBucket::toSet);
+   }
+
+   /**
+    * Check whether the given set exists.
+    *
+    * @param key: The name of the set.
+    * @return <code>true</code>, if it exists, <code>false</code>, otherwise.
+    */
+   public CompletionStage<Boolean> exists(K key) {
+      // Lambda function might throw CCE in case entry is not a bucket.
+      return readWriteMap.eval(key, view -> view.peek().filter(v -> v instanceof SetBucket<V>).isPresent());
    }
 
    /**

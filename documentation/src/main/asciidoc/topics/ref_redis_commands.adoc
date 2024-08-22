@@ -278,6 +278,9 @@ NOTE: This command is deprecated. Use the `SET` command with the appropriate fla
 * link:https://redis.io/commands/smismember[SMISMEMBER]
 
 * link:https://redis.io/commands/smove[SMOVE]
++
+NOTE: The current implementation has a relaxed isolation level. A client can see the source and destination set without
+the element. The operation is not atomic, it could remove the element from source and fails to insert to the target set.
 
 * link:https://redis.io/commands/spop[SPOP]
 
