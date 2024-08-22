@@ -16,14 +16,15 @@ import org.infinispan.server.resp.logging.Log;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * SMOVE implementation, see:
- * {@link} https://redis.io/commands/smove/
+ * SMOVE implementation
+ * <p>
  * Atomicity warning:
  * Derogating to the above description, this implementation is not atomic:
  * is it possible that, moving an existing element in source, at a given
  * time a client
  * can observe that element doesn't exists both in source and destination.
  * @since 15.0
+ * @see <a href="https://redis.io/commands/smove/">Redis documentation</a>
  */
 public class SMOVE extends RespCommand implements Resp3Command {
    public SMOVE() {
@@ -40,15 +41,28 @@ public class SMOVE extends RespCommand implements Resp3Command {
 
       boolean sameList = Arrays.equals(source, destination);
       EmbeddedSetCache<byte[], byte[]> esc = handler.getEmbeddedSetCache();
-      CompletionStage<Long> resultStage = null;
       if (!sameList) {
          // warn when different sets
          Log.SERVER.smoveConsistencyMessage();
-         resultStage = esc.remove(source, element).thenCompose(
-               (removed) -> removed == 0 ? CompletableFuture.completedFuture(removed) : esc.add(destination, element));
-         return handler.stageToReturn(resultStage, ctx, Consumers.LONG_BICONSUMER);
+         return handler.stageToReturn(moveElement(esc, element, source, destination), ctx, Consumers.LONG_BICONSUMER);
       }
       return handler.stageToReturn(esc.get(source)
             .thenApply((bucket) -> bucket.contains(element) ? 1L : 0L), ctx, Consumers.LONG_BICONSUMER);
+   }
+
+   private CompletionStage<Long> moveElement(EmbeddedSetCache<byte[], byte[]> cache, byte[] element, byte[] srcKey, byte[] destKey) {
+      // Check whether the destination set is a set structure.
+      // Under concurrent load, this might malfunction as the entry is created concurrently elsewhere.
+      return cache.exists(destKey)
+            .thenCompose(ignore -> removeAndAdd(cache, element, srcKey, destKey));
+   }
+
+   private CompletionStage<Long> removeAndAdd(EmbeddedSetCache<byte[], byte[]> cache, byte[] element, byte[] srcKey, byte[] destKey) {
+      return cache.remove(srcKey, element)
+            .thenCompose(removed -> {
+               if (removed == 0) return CompletableFuture.completedFuture(0L);
+
+               return cache.add(destKey, element);
+            });
    }
 }
