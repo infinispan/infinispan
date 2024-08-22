@@ -6,14 +6,15 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.server.resp.meta.ClientMetadata;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -34,11 +35,11 @@ public class UNWATCH extends RespCommand implements Resp3Command {
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
-      CompletionStage<?> cs = deregister(ctx, handler.cache());
+      CompletionStage<?> cs = deregister(ctx, handler.cache(), handler.respServer().metadataRepository().client());
       return handler.stageToReturn(cs, ctx, Consumers.OK_BICONSUMER);
    }
 
-   public static CompletionStage<List<WATCH.TxKeysListener>> deregister(ChannelHandlerContext ctx, AdvancedCache<byte[], byte[]> cache) {
+   public static CompletionStage<List<WATCH.TxKeysListener>> deregister(ChannelHandlerContext ctx, AdvancedCache<byte[], byte[]> cache, ClientMetadata metadata) {
       List<WATCH.TxKeysListener> watchers = ctx.channel().attr(WATCHER_KEY).getAndSet(null);
       if (watchers == null) {
          return CompletableFutures.completedNull();
@@ -46,6 +47,8 @@ public class UNWATCH extends RespCommand implements Resp3Command {
 
       AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
       for (WATCH.TxKeysListener watcher : watchers) {
+         metadata.recordWatchedKeys(-watcher.getNumberOfKeys());
+         metadata.decrementWatchingClients();
          stage.dependsOn(cache.removeListenerAsync(watcher));
       }
 

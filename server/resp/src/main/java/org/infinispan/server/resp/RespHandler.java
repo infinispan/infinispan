@@ -4,10 +4,10 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.server.resp.logging.AccessLoggerManager;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.server.resp.logging.RespAccessLogger;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
@@ -90,6 +90,7 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
       this.accessLogger = traceAccess
             ? new AccessLoggerManager(ctx, requestHandler.respServer().getTimeService())
             : null;
+      requestHandler.respServer().metadataRepository().client().incrementConnectedClients();
       super.channelRegistered(ctx);
    }
 
@@ -98,6 +99,7 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
       super.channelUnregistered(ctx);
       requestHandler.handleChannelDisconnect(ctx);
       if (traceAccess) accessLogger.close();
+      requestHandler.respServer().metadataRepository().client().decrementConnectedClients();
    }
 
    @Override

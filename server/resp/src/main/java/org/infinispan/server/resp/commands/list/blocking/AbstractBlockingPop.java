@@ -29,6 +29,7 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.filter.EventListenerConverter;
 import org.infinispan.server.resp.filter.EventListenerKeysFilter;
 import org.infinispan.server.resp.logging.Log;
+import org.infinispan.server.resp.meta.ClientMetadata;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -92,6 +93,13 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
          // Start a timer if required
          pubSubListener.startTimer(configuration.timeout());
          pubSubListener.synchronizer.onListenerAdded();
+      });
+      ClientMetadata metadata = handler.respServer().metadataRepository().client();
+      metadata.incrementBlockedClients();
+      metadata.recordBlockedKeys(configuration.keys().size());
+      pubSubListener.getFuture().whenComplete((ignore, t) -> {
+         metadata.decrementBlockedClients();
+         metadata.recordBlockedKeys(-configuration.keys().size());
       });
       return pubSubListener.getFuture();
    }

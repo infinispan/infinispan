@@ -15,6 +15,7 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.meta.ClientMetadata;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -111,16 +112,7 @@ public class INFO extends RespCommand implements Resp3Command {
          sb.append(CRLF_STRING);
       }
       if (sections.contains(Section.CLIENTS)) {
-         sb.append("# Clients\r\n");
-         sb.append("connected_clients:1\r\n");
-         sb.append("cluster_connections:1\r\n");
-         sb.append("maxclients:10000\r\n");
-         sb.append("client_recent_max_input_buffer:0\r\n");
-         sb.append("client_recent_max_output_buffer:0\r\n");
-         sb.append("blocked_clients:0\r\n");
-         sb.append("tracking_clients:0\r\n");
-         sb.append("clients_in_timeout_table:0\r\n");
-         sb.append(CRLF_STRING);
+         appendClientSection(sb, handler.respServer().metadataRepository().client());
       }
       if (sections.contains(Section.MEMORY)) {
          sb.append("# Memory\r\n");
@@ -363,5 +355,24 @@ public class INFO extends RespCommand implements Resp3Command {
       EnumSet<Section> implies() {
          return EnumSet.of(this);
       }
+   }
+
+   private void appendClientSection(StringBuilder sb, ClientMetadata metadata) {
+      sb.append("# Clients\r\n");
+
+      long connections = metadata.getConnectedClients();
+      sb.append("connected_clients:").append(connections).append(CRLF_STRING);
+      sb.append("cluster_connections:").append(connections).append(CRLF_STRING);
+      sb.append("maxclients:10000\r\n");
+      sb.append("client_recent_max_input_buffer:0\r\n");
+      sb.append("client_recent_max_output_buffer:0\r\n");
+      sb.append("blocked_clients:").append(metadata.getBlockedClients()).append(CRLF_STRING);
+      sb.append("tracking_clients:0\r\n");
+      sb.append("pubsub_clients:").append(metadata.getPubSubClients()).append(CRLF_STRING);
+      sb.append("watching_clients:").append(metadata.getWatchingClients()).append(CRLF_STRING);
+      sb.append("clients_in_timeout_table:0\r\n");
+      sb.append("total_watched_keys:").append(metadata.getWatchedKeys()).append(CRLF_STRING);
+      sb.append("total_blocking_keys:").append(metadata.getBlockedKeys()).append(CRLF_STRING);
+      sb.append(CRLF_STRING);
    }
 }
