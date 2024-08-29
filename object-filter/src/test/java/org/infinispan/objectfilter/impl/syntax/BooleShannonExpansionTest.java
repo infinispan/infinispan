@@ -20,21 +20,27 @@ public class BooleShannonExpansionTest {
 
    private final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
 
-   private final BooleShannonExpansion booleShannonExpansion = new BooleShannonExpansion(3, new IndexedFieldProvider.FieldIndexingMetadata<>() {
+   private final IndexedFieldProvider.FieldIndexingMetadata<?> dummyFieldIndexingMetadata = new IndexedFieldProvider.FieldIndexingMetadata<>() {
+      @Override
+      public boolean hasProperty(String[] propertyPath) {
+         throw new UnsupportedOperationException("Dummy implementation; should never be invoked during test.");
+      }
+
       @Override
       public boolean isSearchable(String[] propertyPath) {
+         // report that everything is indexed except 'license' and 'number' fields
          String last = propertyPath[propertyPath.length - 1];
          return !"number".equals(last) && !"license".equals(last);
       }
 
       @Override
       public boolean isAnalyzed(String[] propertyPath) {
-         return false;
+         throw new UnsupportedOperationException("Dummy implementation; should never be invoked during test.");
       }
 
       @Override
       public boolean isNormalized(String[] propertyPath) {
-         return false;
+         throw new UnsupportedOperationException("Dummy implementation; should never be invoked during test.");
       }
 
       @Override
@@ -44,7 +50,7 @@ public class BooleShannonExpansionTest {
 
       @Override
       public boolean isAggregable(String[] propertyPath) {
-         return false;
+         throw new UnsupportedOperationException("Dummy implementation; should never be invoked during test.");
       }
 
       @Override
@@ -54,19 +60,26 @@ public class BooleShannonExpansionTest {
 
       @Override
       public boolean isVector(String[] propertyPath) {
-         return false;
+         throw new UnsupportedOperationException("Dummy implementation; should never be invoked during test.");
+      }
+
+      @Override
+      public boolean isSpatial(String[] propertyPath) {
+         throw new UnsupportedOperationException("Dummy implementation; should never be invoked during test.");
       }
 
       @Override
       public Object getNullMarker(String[] propertyPath) {
-         return null;
+         throw new UnsupportedOperationException("Dummy implementation; should never be invoked during test.");
       }
 
       @Override
       public Object keyType(String property) {
-         return null;
+         throw new UnsupportedOperationException("Dummy implementation; should never be invoked during test.");
       }
-   });
+   };
+
+   private final BooleShannonExpansion booleShannonExpansion = new BooleShannonExpansion(3, dummyFieldIndexingMetadata);
 
    /**
     * @param queryString     the input query to parse and expand

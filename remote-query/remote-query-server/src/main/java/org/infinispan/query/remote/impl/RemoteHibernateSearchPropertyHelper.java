@@ -6,6 +6,7 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.lucene.document.DateTools;
 import org.hibernate.search.engine.backend.metamodel.IndexDescriptor;
@@ -27,7 +28,7 @@ import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 
-public class RemoteHibernateSearchPropertyHelper extends ProtobufPropertyHelper {
+public final class RemoteHibernateSearchPropertyHelper extends ProtobufPropertyHelper {
 
    public static RemoteHibernateSearchPropertyHelper create(SerializationContext serializationContext,
                                                             SearchMapping searchMapping) {
@@ -53,15 +54,15 @@ public class RemoteHibernateSearchPropertyHelper extends ProtobufPropertyHelper 
       }
 
       Class<?> type = fieldDescriptor.type().dslArgumentClass();
-      if (Date.class != type) {
-         return super.convertToPropertyType(entityType, propertyPath, value);
+      if (Date.class == type) {
+         try {
+            return DateTools.stringToDate(value);
+         } catch (ParseException e) {
+            throw new ParsingException(e);
+         }
       }
 
-      try {
-         return DateTools.stringToDate(value);
-      } catch (ParseException e) {
-         throw new ParsingException(e);
-      }
+      return super.convertToPropertyType(entityType, propertyPath, value);
    }
 
    @Override
@@ -196,7 +197,7 @@ public class RemoteHibernateSearchPropertyHelper extends ProtobufPropertyHelper 
       }
    }
 
-   public static class SearchFieldIndexingMetadata implements IndexedFieldProvider.FieldIndexingMetadata<Descriptor> {
+   public static final class SearchFieldIndexingMetadata implements IndexedFieldProvider.FieldIndexingMetadata<Descriptor> {
 
       private final Descriptor messageDescriptor;
       private final IndexDescriptor indexDescriptor;
@@ -217,6 +218,11 @@ public class RemoteHibernateSearchPropertyHelper extends ProtobufPropertyHelper 
             keyProperty = null;
             keyMessageDescriptor = null;
          }
+      }
+
+      @Override
+      public boolean hasProperty(String[] propertyPath) {
+         return getField(propertyPath) != null;
       }
 
       @Override
@@ -286,6 +292,19 @@ public class RemoteHibernateSearchPropertyHelper extends ProtobufPropertyHelper 
       @Override
       public Descriptor keyType(String property) {
          return (property.equals(keyProperty)) ? keyMessageDescriptor : null;
+      }
+
+      @Override
+      public boolean isSpatial(String[] propertyPath) {
+         IndexValueFieldTypeDescriptor field = getField(propertyPath);
+         if (field == null) {
+            return false;
+         }
+
+         Set<String> traits = field.traits();
+         return  (traits.contains(IndexFieldTraits.Predicates.SPATIAL_WITHIN_BOUNDING_BOX) ||
+               traits.contains(IndexFieldTraits.Predicates.SPATIAL_WITHIN_CIRCLE) ||
+               traits.contains(IndexFieldTraits.Predicates.SPATIAL_WITHIN_POLYGON));
       }
 
       private IndexValueFieldTypeDescriptor getField(String[] propertyPath) {

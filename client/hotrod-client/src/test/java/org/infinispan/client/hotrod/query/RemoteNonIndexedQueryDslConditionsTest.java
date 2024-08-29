@@ -26,13 +26,13 @@ public class RemoteNonIndexedQueryDslConditionsTest extends RemoteQueryDslCondit
       org.infinispan.query.Search.getIndexer(getEmbeddedCache());
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: The cache must be indexed in order to use full-text queries.")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: The cache must be indexed in order to use full-text or spatial queries.")
    @Override
    public void testFullTextTerm() {
       super.testFullTextTerm();
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: The cache must be indexed in order to use full-text queries.")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: The cache must be indexed in order to use full-text or spatial queries.")
    @Override
    public void testFullTextPhrase() {
       super.testFullTextPhrase();

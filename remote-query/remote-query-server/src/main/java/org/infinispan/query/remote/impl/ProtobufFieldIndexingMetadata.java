@@ -45,6 +45,12 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
    }
 
    @Override
+   public boolean hasProperty(String[] propertyPath) {
+      // TODO ISPN-8238 Implement it
+      return true;
+   }
+
+   @Override
    public boolean isSearchable(String[] propertyPath) {
       return getFlag(propertyPath, IndexingMetadata::isFieldSearchable);
    }
@@ -77,6 +83,12 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
    @Override
    public boolean isVector(String[] propertyPath) {
       return getFlag(propertyPath, IndexingMetadata::isVectorField);
+   }
+
+   @Override
+   public boolean isSpatial(String[] propertyPath) {
+      // TODO ISPN-8238 Implement it
+      return false;
    }
 
    @Override

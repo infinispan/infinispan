@@ -1,7 +1,5 @@
 package org.infinispan.objectfilter.impl.syntax.parser;
 
-import org.infinispan.objectfilter.impl.util.StringHelper;
-
 /**
  * @author anistor@redhat.com
  * @since 7.0
@@ -28,11 +26,11 @@ class EntityTypeDescriptor<TypeMetadata> implements TypeDescriptor<TypeMetadata>
    }
 
    public String[] makePath(String propName) {
-      return StringHelper.split(propName);
+      return new String[]{propName};
    }
 
    @Override
    public String toString() {
-      return typeName;
+      return "EntityTypeDescriptor{typeName='" + typeName + "'}";
    }
 }

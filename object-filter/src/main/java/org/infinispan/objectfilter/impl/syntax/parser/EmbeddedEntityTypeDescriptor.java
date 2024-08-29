@@ -32,6 +32,6 @@ final class EmbeddedEntityTypeDescriptor<TypeMetadata> extends EntityTypeDescrip
 
    @Override
    public String toString() {
-      return propertyPath.toString();
+      return "EmbeddedEntityTypeDescriptor{typeName=" + getTypeName() + ", propertyPath=" + propertyPath + '}';
    }
 }

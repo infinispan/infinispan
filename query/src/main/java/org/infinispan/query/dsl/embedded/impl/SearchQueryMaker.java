@@ -65,6 +65,7 @@ import org.infinispan.objectfilter.impl.syntax.NestedExpr;
 import org.infinispan.objectfilter.impl.syntax.NotExpr;
 import org.infinispan.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
+import org.infinispan.objectfilter.impl.syntax.SpatialWithinCircleExpr;
 import org.infinispan.objectfilter.impl.syntax.Visitor;
 import org.infinispan.objectfilter.impl.syntax.parser.AggregationPropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.CacheValueAggregationPropertyPath;
@@ -439,6 +440,12 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
          knnPredicateOptions.filter(predicateFinalStep);
       }
       return knnPredicateOptions;
+   }
+
+   @Override
+   public PredicateFinalStep visit(SpatialWithinCircleExpr spatialWithinCircleExpr) {
+      // TODO ISPN-8238 Implement it
+      return null;
    }
 
    @Override

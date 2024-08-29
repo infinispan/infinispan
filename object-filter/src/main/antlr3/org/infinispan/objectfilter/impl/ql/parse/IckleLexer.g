@@ -42,6 +42,7 @@ tokens {
   NOT_IN;
   NOT_LIKE;
   NOT_MEMBER_OF;
+  NOT_WITHIN;
   ORDER_SPEC;
   PATH;
   PERSISTER_JOIN;
@@ -74,8 +75,11 @@ tokens {
   AS;
   AVG;
   BETWEEN;
+  BOUNDINGBOX;
+  CIRCLE;
   COUNT;
   CROSS;
+  DISTANCE;
   DISTINCT;
   DELETE;
   ELEMENTS;
@@ -106,6 +110,7 @@ tokens {
   OR;
   ORDER_BY;
   OUTER;
+  POLYGON;
   PROPERTIES;
   RIGHT;
   SCORE;
@@ -113,9 +118,10 @@ tokens {
   SIZE;
   SOME;
   SUM;
+  VERSION;
   WHERE;
   WITH;
-  VERSION;
+  WITHIN;
 }
 
 @header {

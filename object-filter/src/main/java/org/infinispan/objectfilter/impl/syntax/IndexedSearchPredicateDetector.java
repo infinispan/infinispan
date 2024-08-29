@@ -1,14 +1,21 @@
 package org.infinispan.objectfilter.impl.syntax;
 
 /**
- * Checks if there are any full-text predicates in a query.
+ * Checks if there are any full-text or spatial predicates in a query. These search predicates require indexing.
  *
  * @author anistor@redhat.com
  * @since 9.0
  */
-public final class FullTextVisitor implements Visitor<Boolean, Boolean> {
+public final class IndexedSearchPredicateDetector implements Visitor<Boolean, Boolean> {
 
-   public static final FullTextVisitor INSTANCE = new FullTextVisitor();
+   private static final IndexedSearchPredicateDetector INSTANCE = new IndexedSearchPredicateDetector();
+
+   private IndexedSearchPredicateDetector() {
+   }
+
+   public static boolean checkIndexingRequired(BooleanExpr expr) {
+      return expr.acceptVisitor(INSTANCE);
+   }
 
    @Override
    public Boolean visit(FullTextOccurExpr fullTextOccurExpr) {
@@ -32,6 +39,11 @@ public final class FullTextVisitor implements Visitor<Boolean, Boolean> {
 
    @Override
    public Boolean visit(FullTextRangeExpr fullTextRangeExpr) {
+      return Boolean.TRUE;
+   }
+
+   @Override
+   public Boolean visit(SpatialWithinCircleExpr spatialWithinCircleExpr) {
       return Boolean.TRUE;
    }
 
