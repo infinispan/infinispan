@@ -139,6 +139,20 @@ public class GrammarTest extends TestBase {
    }
 
    @Test
+   public void testSpatial() {
+      String expectedFrom = "(QUERY (QUERY_SPEC (SELECT_FROM (from (PERSISTER_SPACE (ENTITY_PERSISTER_REF Cat cat))) ";
+
+      expectParserSuccess("from Cat cat where cat.location within circle(45.6, 39.4, 100)",
+            expectedFrom + "(SELECT (SELECT_LIST (SELECT_ITEM cat)))) (where (within (PATH (. cat location)) (circle 45.6 39.4 100)))))");
+
+      expectParserSuccess("from Cat cat where cat.location within circle(45.6, 39.4, 100) order by distance(cat.location, 40.3, 30.99)",
+            expectedFrom + "(SELECT (SELECT_LIST (SELECT_ITEM cat)))) (where (within (PATH (. cat location)) (circle 45.6 39.4 100)))) (order (SORT_SPEC (distance (PROPERTY_REFERENCE (. cat location)) 40.3 30.99) asc)))");
+
+      expectParserSuccess("select distance(cat.location, 40.3, 30.99) from Cat cat where cat.location within circle(45.6, 39.4, 100)",
+            expectedFrom + "(select (SELECT_LIST (SELECT_ITEM (distance (PROPERTY_REFERENCE (. cat location)) 40.3 30.99))))) (where (within (PATH (. cat location)) (circle 45.6 39.4 100)))))");
+   }
+
+   @Test
    public void testFtRange() {
       String expectedFrom = "(QUERY (QUERY_SPEC (SELECT_FROM (from (PERSISTER_SPACE (ENTITY_PERSISTER_REF Cat cat))) (SELECT (SELECT_LIST (SELECT_ITEM cat)))) ";
 
