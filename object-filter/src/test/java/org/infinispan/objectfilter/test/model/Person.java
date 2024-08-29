@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.infinispan.protostream.annotations.ProtoComment;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoField;
 
@@ -42,6 +43,8 @@ public class Person {
    private Date _lastUpdate;
 
    private boolean _deleted;
+
+   private Integer _location;
 
    @ProtoField(value = 1, defaultValue = "0")
    public int getId() {
@@ -143,6 +146,16 @@ public class Person {
       this._deleted = deleted;
    }
 
+   @ProtoField(value = 12)
+   @ProtoComment("Not an actual spatial property! Just makes the test fail with a meaningful message.")
+   public Integer getLocation() {
+      return _location;
+   }
+
+   public void setLocation(Integer location) {
+      this._location = location;
+   }
+
    @Override
    public String toString() {
       return "Person{" +
@@ -157,6 +170,7 @@ public class Person {
             ", gender=" + _gender +
             ", lastUpdate=" + _lastUpdate +
             ", deleted=" + _deleted +
+            ", location=" + _location +
             '}';
    }
 }

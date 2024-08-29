@@ -25,7 +25,7 @@ import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 
-public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
+public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
 
    public static final String KEY = "__ISPN_Key";
    public static final String VALUE = CacheValuePropertyPath.VALUE_PROPERTY_NAME;
@@ -47,15 +47,15 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       }
 
       Class<?> type = fieldDescriptor.type().dslArgumentClass();
-      if (Date.class != type) {
-         return super.convertToPropertyType(entityType, propertyPath, value);
+      if (Date.class == type) {
+         try {
+            return DateTools.stringToDate(value);
+         } catch (ParseException e) {
+            throw new ParsingException(e);
+         }
       }
 
-      try {
-         return DateTools.stringToDate(value);
-      } catch (ParseException e) {
-         throw new ParsingException(e);
-      }
+      return super.convertToPropertyType(entityType, propertyPath, value);
    }
 
    @Override
@@ -183,12 +183,17 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       return indexedEntity.indexManager().descriptor();
    }
 
-   private static class SearchFieldIndexingMetadata implements IndexedFieldProvider.FieldIndexingMetadata<Class<?>> {
+   private static final class SearchFieldIndexingMetadata implements IndexedFieldProvider.FieldIndexingMetadata<Class<?>> {
 
       private final IndexDescriptor indexDescriptor;
 
       public SearchFieldIndexingMetadata(IndexDescriptor indexDescriptor) {
          this.indexDescriptor = indexDescriptor;
+      }
+
+      @Override
+      public boolean hasProperty(String[] propertyPath) {
+         return getField(propertyPath) != null;
       }
 
       @Override
@@ -243,6 +248,12 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       @Override
       public Class<?> keyType(String property) {
          return null;
+      }
+
+      @Override
+      public boolean isSpatial(String[] propertyPath) {
+         IndexValueFieldTypeDescriptor field = getField(propertyPath);
+         return field != null && field.projectable(); //TODO [anistor]
       }
 
       private IndexValueFieldTypeDescriptor getField(String[] propertyPath) {
