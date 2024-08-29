@@ -31,7 +31,7 @@ public class AggregationPropertyPath<TypeMetadata> extends PropertyPath<TypeDesc
          case COUNT:
             break;
          default:
-            throw log.getAggregationTypeNotSupportedException(aggregationFunction.name());
+            throw log.aggregationTypeNotSupportedException(aggregationFunction.name());
       }
       this.aggregationFunction = aggregationFunction;
    }
