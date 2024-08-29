@@ -6,6 +6,7 @@ import org.hibernate.search.engine.backend.document.IndexObjectFieldReference;
 import org.infinispan.protostream.TagHandler;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.MapDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.query.remote.impl.indexing.aggregator.BigDecimalAggregator;
 import org.infinispan.query.remote.impl.indexing.aggregator.BigIntegerAggregator;
@@ -81,12 +82,18 @@ public final class IndexingTagHandler implements TagHandler {
 
    @Override
    public void onStartNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
+      if (fieldDescriptor instanceof MapDescriptor) {
+         return;
+      }
       messageContext.markField(fieldNumber);
       pushContext(fieldDescriptor, fieldDescriptor.getMessageType());
    }
 
    @Override
    public void onEndNested(int fieldNumber, FieldDescriptor fieldDescriptor) {
+      if (fieldDescriptor instanceof MapDescriptor) {
+         return;
+      }
       popContext();
    }
 
