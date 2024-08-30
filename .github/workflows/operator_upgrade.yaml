@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - '*.0.x'
+  workflow_dispatch:
 
 jobs:
   image:
