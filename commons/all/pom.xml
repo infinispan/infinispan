@@ -79,6 +79,12 @@
          <artifactId>metainf-services</artifactId>
       </dependency>
 
+      <dependency>
+         <groupId>io.netty</groupId>
+         <artifactId>netty-buffer</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
       <!-- Test dependencies -->
       <dependency>
          <groupId>junit</groupId>

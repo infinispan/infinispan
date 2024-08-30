@@ -6,6 +6,7 @@ import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.transaction.manager.RemoteXid;
+import org.infinispan.commons.netty.VarintEncodeDecode;
 import org.infinispan.commons.util.Util;
 
 import io.netty.buffer.ByteBuf;
@@ -68,11 +69,7 @@ public final class ByteBufUtil {
    }
 
    public static void writeVInt(ByteBuf buf, int i) {
-      while ((i & ~0x7F) != 0) {
-         buf.writeByte((byte) ((i & 0x7f) | 0x80));
-         i >>>= 7;
-      }
-      buf.writeByte((byte) i);
+      VarintEncodeDecode.writeVInt(buf, i);
    }
 
    public static void writeSignedVInt(ByteBuf buf, int i) {
@@ -80,11 +77,7 @@ public final class ByteBufUtil {
    }
 
    public static void writeVLong(ByteBuf buf, long i) {
-      while ((i & ~0x7F) != 0) {
-         buf.writeByte((byte) ((i & 0x7f) | 0x80));
-         i >>>= 7;
-      }
-      buf.writeByte((byte) i);
+      VarintEncodeDecode.writeVLong(buf, i);
    }
 
    public static int estimateVLongSize(long value) {
@@ -92,23 +85,19 @@ public final class ByteBufUtil {
    }
 
    public static long readVLong(ByteBuf buf) {
-      byte b = buf.readByte();
-      long i = b & 0x7F;
-      for (int shift = 7; (b & 0x80) != 0; shift += 7) {
-         b = buf.readByte();
-         i |= (b & 0x7FL) << shift;
-      }
-      return i;
+      int before = buf.readerIndex();
+      long value = VarintEncodeDecode.readVLong(buf);
+      if (before == buf.readerIndex())
+         throw HintedReplayingDecoder.REPLAY;
+      return value;
    }
 
    public static int readVInt(ByteBuf buf) {
-      byte b = buf.readByte();
-      int i = b & 0x7F;
-      for (int shift = 7; (b & 0x80) != 0; shift += 7) {
-         b = buf.readByte();
-         i |= (b & 0x7FL) << shift;
-      }
-      return i;
+      int before = buf.readerIndex();
+      int value = VarintEncodeDecode.readVInt(buf);
+      if (before == buf.readerIndex())
+         throw HintedReplayingDecoder.REPLAY;
+      return value;
    }
 
    public static String limitedHexDump(ByteBuf buf) {

@@ -1,6 +1,9 @@
 package org.infinispan.server.core.transport;
 
+import org.infinispan.commons.netty.VarintEncodeDecode;
+
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.CorruptedFrameException;
 
 /**
  * Reads and writes unsigned variable length long values. Even though it's deprecated, do not
@@ -13,27 +16,14 @@ import io.netty.buffer.ByteBuf;
 public class VLong {
 
    public static void write(ByteBuf out, long i) {
-      if ((i & ~0x7F) == 0) out.writeByte((byte) i);
-      else {
-         out.writeByte((byte) ((i & 0x7f) | 0x80));
-         write(out, i >>> 7);
-      }
+      VarintEncodeDecode.writeVLong(out, i);
    }
 
    public static long read(ByteBuf in) {
-      byte b = in.readByte();
-      return read(in, b, 7, b & 0x7F, 1);
-   }
-
-   private static long read(ByteBuf in, byte b, int shift, long i, int count) {
-      if ((b & 0x80) == 0) return i;
-      else {
-         if (count > 9)
-            throw new IllegalStateException(
-               "Stream corrupted.  A variable length long cannot be longer than 9 bytes.");
-
-         byte bb = in.readByte();
-         return read(in, bb, shift + 7, i | (bb & 0x7FL) << shift, count + 1);
-      }
+      int b = in.readerIndex();
+      long v = VarintEncodeDecode.readVLong(in);
+      if (b == in.readerIndex())
+         throw new CorruptedFrameException("Not enough bytes for long");
+      return v;
    }
 }

@@ -2,6 +2,7 @@ package org.infinispan.server.core.transport;
 
 import java.nio.charset.StandardCharsets;
 
+import org.infinispan.commons.netty.VarintEncodeDecode;
 import org.infinispan.commons.util.Util;
 
 import io.netty.buffer.ByteBuf;
@@ -27,17 +28,7 @@ public class ExtendedByteBufJava {
 
    public static long readMaybeVLong(ByteBuf buf) {
       if (buf.readableBytes() > 0) {
-         byte b = buf.readByte();
-         long i = b & 0x7F;
-         for (int shift = 7; (b & 0x80) != 0; shift += 7) {
-            if (buf.readableBytes() == 0) {
-               buf.resetReaderIndex();
-               return Long.MIN_VALUE;
-            }
-            b = buf.readByte();
-            i |= (b & 0x7FL) << shift;
-         }
-         return i;
+         return VarintEncodeDecode.readVLong(buf);
       } else {
          buf.resetReaderIndex();
          return Long.MIN_VALUE;
@@ -45,15 +36,7 @@ public class ExtendedByteBufJava {
    }
 
    public static int readMaybeVInt(ByteBuf buf) {
-      int i = 0;
-      for (int shift = 0; buf.isReadable(); shift += 7) {
-         byte b = buf.readByte();
-         i |= (b & 0x7FL) << shift;
-         if ((b & 0x80) == 0)
-            return i;
-      }
-      buf.resetReaderIndex();
-      return Integer.MIN_VALUE;
+      return VarintEncodeDecode.readVInt(buf);
    }
 
    public static String readString(ByteBuf bf) {
