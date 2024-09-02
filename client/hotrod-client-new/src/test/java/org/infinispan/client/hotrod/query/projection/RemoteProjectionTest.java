@@ -55,5 +55,11 @@ public class RemoteProjectionTest extends SingleHotRodServerTest {
       result = query.execute();
       assertThat(result.list()).extracting(array -> array[0]).extracting("name").containsExactly("bla3");
       assertThat(result.list()).extracting(array -> array[1]).containsExactly("bla bla3");
+
+      query = games.query("select g, g.description, score(g) from Game g where g.description : 'bla3'");
+      result = query.execute();
+      assertThat(result.list()).extracting(array -> array[0]).extracting("name").containsExactly("bla3");
+      assertThat(result.list()).extracting(array -> array[1]).containsExactly("bla bla3");
+      assertThat(result.list()).extracting(array -> array[2]).hasOnlyElementsOfType(Float.class).isNotNull().allMatch(o -> !o.equals(Float.NaN));
    }
 }
