@@ -33,7 +33,7 @@ public class IndexStartupModeTest extends AbstractInfinispanTest {
       execute(IndexStorage.FILESYSTEM, false, IndexStartupMode.PURGE, () -> {
          verifyMatches(0, "fax4ever");
 
-         cache.put("fabio", new Developer("fax4ever", "fax@redmail.io", "Infinispan developer", 0));
+         cache.put("fabio", new Developer("fax4ever", "fax@redmail.io", "Infinispan developer", 0, "Infinispan developer"));
 
          verifyMatches(1, "fax4ever");
       });
@@ -50,7 +50,7 @@ public class IndexStartupModeTest extends AbstractInfinispanTest {
          // with the initial purge the persisted indexes are wiped out at cache startup
          verifyMatches(0, "fax4ever");
 
-         cache.put("fabio", new Developer("fax4ever", "fax@redmail.io", "Infinispan developer", 0));
+         cache.put("fabio", new Developer("fax4ever", "fax@redmail.io", "Infinispan developer", 0, "Infinispan developer"));
 
          // recreate the index for the next executions
          verifyMatches(1, "fax4ever");
@@ -74,7 +74,7 @@ public class IndexStartupModeTest extends AbstractInfinispanTest {
       execute(IndexStorage.LOCAL_HEAP, true, IndexStartupMode.NONE, () -> {
          verifyMatches(0, "fax4ever");
 
-         cache.put("fabio", new Developer("fax4ever", "fax@redmail.io", "Infinispan developer", 0));
+         cache.put("fabio", new Developer("fax4ever", "fax@redmail.io", "Infinispan developer", 0, "Infinispan developer"));
 
          verifyMatches(1, "fax4ever");
       });
