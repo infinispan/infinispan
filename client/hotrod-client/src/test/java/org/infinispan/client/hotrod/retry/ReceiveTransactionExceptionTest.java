@@ -24,7 +24,7 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.testng.annotations.Test;
 
-@Test(testName = "client.hotrod.retry.DeadlockTransactionTest", groups = "smoke")
+@Test(testName = "client.hotrod.retry.ReceiveTransactionExceptionTest", groups = "functional")
 public class ReceiveTransactionExceptionTest extends MultiHotRodServersTest {
 
    @Override
