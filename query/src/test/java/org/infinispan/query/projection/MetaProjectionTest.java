@@ -34,18 +34,23 @@ public class MetaProjectionTest extends SingleCacheManagerTest {
    public void testVersionProjection() {
       Cache<Object, Developer> cache = cacheManager.getCache();
 
+      Developer dev = new Developer("iamopen", "iamopen@redmail.io", "Infinispan developer", 2000, "Infinispan developer");
       cache.getAdvancedCache()
-            .put("open-contributor", new Developer("iamopen", "iamopen@redmail.io", "Infinispan developer", 2000),
+            .put("open-contributor", dev,
             new EmbeddedMetadata.Builder().version(new NumericVersion(1)).build());
 
       cache.put("another-contributor", new Developer("mycodeisopen", "mycodeisopen@redmail.io", "Infinispan engineer",
-            799));
+            799, "Infinispan engineer"));
 
-      String ickle = String.format(
+      Query<Object[]> query;
+      List<Object[]> list;
+      String ickle;
+
+      ickle = String.format(
             "select d.nick, version(d), d.email, d.biography, d.contributions from %s d where d.biography : 'Infinispan' order by d.email",
             Developer.class.getName());
-      Query<Object[]> query = cache.query(ickle);
-      List<Object[]> list = query.execute().list();
+      query = cache.query(ickle);
+      list = query.execute().list();
 
       assertThat(list).hasSize(2);
       assertThat(list.get(0)).containsExactly("iamopen", new NumericVersion(1), "iamopen@redmail.io",
@@ -81,5 +86,26 @@ public class MetaProjectionTest extends SingleCacheManagerTest {
       assertThat(list).hasSize(2);
       assertThat(list.get(0)[0]).isNotNull().isInstanceOf(Developer.class);
       assertThat(list.get(0)[1]).isEqualTo(new NumericVersion(1));
+
+      // non indexed
+
+      ickle = String.format(
+            "select d.nick, version(d), d.email, d.biography, d.contributions from %s d where d.nonIndexed = 'Infinispan developer'",
+            Developer.class.getName());
+      query = cache.query(ickle);
+      list = query.execute().list();
+
+      assertThat(list).hasSize(1);
+      assertThat(list.get(0)).containsExactly("iamopen", new NumericVersion(1), "iamopen@redmail.io",
+            "Infinispan developer", 2000);
+
+      ickle = String.format(
+            "select d, version(d) from %s d where d.nonIndexed = 'Infinispan developer'",
+            Developer.class.getName());
+      query = cache.query(ickle);
+      list = query.execute().list();
+
+      assertThat(list).hasSize(1);
+      assertThat(list.get(0)).containsExactly(dev, new NumericVersion(1));
    }
 }
