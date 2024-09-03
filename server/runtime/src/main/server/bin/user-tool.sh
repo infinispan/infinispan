@@ -1,6 +1,6 @@
 #!/bin/sh
 
-DIRNAME=`dirname "$0"`
+DIRNAME=$(dirname "$0")
 
 >&2 echo "This tool is deprecated and will be removed in the future. Please use \"cli.sh user create\" instead"
 
