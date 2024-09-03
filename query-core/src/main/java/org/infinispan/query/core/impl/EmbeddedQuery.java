@@ -122,6 +122,8 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
          throw CONTAINER.deleteStatementsCannotUsePaging();
       }
 
+      long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
+
       IckleFilterAndConverter<Object, Object> ickleFilter = (IckleFilterAndConverter<Object, Object>) createFilter();
       AdvancedCache<Object, Object> cache = (AdvancedCache<Object, Object>) (isLocal() ? this.cache.withFlags(Flag.CACHE_MODE_LOCAL) : this.cache);
 
@@ -137,6 +139,9 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
 
       Optional<Integer> count = filteredKeyStream.map(new DeleteFunction()).reduce(Integer::sum);
       filteredKeyStream.close();
+
+      if (queryStatistics.isEnabled()) recordQuery(System.nanoTime() - start);
+
       return count.orElse(0);
    }
 
