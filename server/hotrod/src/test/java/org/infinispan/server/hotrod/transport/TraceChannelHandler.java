@@ -1,7 +1,5 @@
 package org.infinispan.server.hotrod.transport;
 
-import static org.infinispan.server.core.transport.ExtendedByteBuf.hexDump;
-
 import java.net.SocketAddress;
 
 import org.infinispan.commons.logging.LogFactory;
@@ -53,6 +51,10 @@ public class TraceChannelHandler extends ChannelDuplexHandler {
       String msgString = msg instanceof ByteBuf ? hexDump(((ByteBuf) msg)) : Util.toStr(msg);
       log.tracef("%s write: %s", ctx.channel(), msgString);
       super.write(ctx, msg, promise);
+   }
+
+   private static String hexDump(ByteBuf buf) {
+      return Util.hexDump(buf::getByte, buf.readerIndex(), buf.readableBytes());
    }
 
 }

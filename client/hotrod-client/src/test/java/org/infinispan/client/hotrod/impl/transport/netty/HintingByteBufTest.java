@@ -1,24 +1,18 @@
-package org.infinispan.server.core;
+package org.infinispan.client.hotrod.impl.transport.netty;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import org.infinispan.commons.util.Util;
-import org.infinispan.server.core.transport.VInt;
-import org.infinispan.server.core.transport.VLong;
+import java.util.List;
+
 import org.testng.annotations.Test;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.handler.codec.CorruptedFrameException;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.Signal;
 
-/**
- * Variable length number test.
- *
- * @author Galder Zamarreño
- * @since 4.1
- */
-@Test(groups = "functional", testName = "server.hotrod.VariableLengthTest")
-public class VariableLengthTest {
+@Test(groups = "unit", testName = "client.hotrod.impl.transport.netty.HintingByteBufTest")
+public class HintingByteBufTest {
 
    public void test2pow7minus1() {
       writeReadInt(127, 1);
@@ -88,45 +82,44 @@ public class VariableLengthTest {
       writeReadLong(9223372036854775807L, 9);
    }
 
-   @Test(expectedExceptions = CorruptedFrameException.class)
+   @Test(expectedExceptions = Signal.class)
    public void testTooLongInt() {
-      ByteBuf buffer = Unpooled.directBuffer(1024);
-      assert(buffer.writerIndex() == 0);
-      VLong.write(buffer, 9223372036854775807L);
-      VInt.read(buffer);
-      buffer.release();
+      ByteBuf writer = Unpooled.directBuffer(1024);
+      ByteBuf reader = alloc(writer);
+      assert(writer.writerIndex() == 0);
+      ByteBufUtil.writeVLong(writer, 9223372036854775807L);
+      ByteBufUtil.readVInt(reader);
+      writer.release();
    }
-
-   @Test(groups = "unstable")
-   public void testPrintHexadecimalVint() {
-      ByteBuf buffer = Unpooled.directBuffer(1024);
-      assert(buffer.writerIndex() == 0);
-      VLong.write(buffer, 512);
-      System.out.println(Util.hexDump(buffer.nioBuffer()));
-      System.out.println();
-      buffer.release();
-   }
-
-//   public void test2pow63() {
-//      writeReadLong(9223372036854775808L, 10)
-//   }
 
    private void writeReadInt(int num, int expected) {
-      ByteBuf buffer = Unpooled.directBuffer(1024);
-      assert(buffer.writerIndex() == 0);
-      VInt.write(buffer, num);
-      assertEquals(buffer.writerIndex(), expected);
-      assertEquals(VInt.read(buffer), num);
-      buffer.release();
+      ByteBuf writer = Unpooled.directBuffer(1024);
+      ByteBuf reader = alloc(writer);
+      assert(writer.writerIndex() == 0);
+      ByteBufUtil.writeVInt(writer, num);
+      assertEquals(writer.writerIndex(), expected);
+      assertEquals(ByteBufUtil.readVInt(reader), num);
+      writer.release();
    }
 
    private void writeReadLong(long num, int expected) {
-      ByteBuf buffer = Unpooled.directBuffer(1024);
-      assert(buffer.writerIndex() == 0);
-      VLong.write(buffer, num);
-      assertEquals(expected, buffer.writerIndex());
-      assertEquals(num, VLong.read(buffer));
-      buffer.release();
+      ByteBuf writer = Unpooled.directBuffer(1024);
+      ByteBuf reader = alloc(writer);
+      assert(writer.writerIndex() == 0);
+      ByteBufUtil.writeVLong(writer, num);
+      assertEquals(expected, writer.writerIndex());
+      assertEquals(num, ByteBufUtil.readVLong(reader));
+      writer.release();
    }
 
+   private ByteBuf alloc(ByteBuf buf) {
+      HintingByteBuf replayable = new HintingByteBuf(new HintedReplayingDecoder<Long>() {
+         @Override
+         protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
+            throw new IllegalArgumentException("Should not execute");
+         }
+      });
+      replayable.setCumulation(buf);
+      return replayable;
+   }
 }

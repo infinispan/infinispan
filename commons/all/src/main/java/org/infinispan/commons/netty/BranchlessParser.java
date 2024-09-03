@@ -10,6 +10,10 @@ final class BranchlessParser {
       return buffer.writerIndex() - buffer.readerIndex();
    }
 
+   private static boolean hasCapacity(ByteBuf buf, int size) {
+      return size + buf.readerIndex() <= buf.capacity();
+   }
+
    /**
     * Reads the buffer for an integer value encoded as Varint.
     *
@@ -79,10 +83,10 @@ final class BranchlessParser {
     * @see #readRawVarint32(ByteBuf)
     */
    public static long readRawVarint64(ByteBuf buffer) {
-      if (readableBytes(buffer) <= Integer.BYTES)
+      if (readableBytes(buffer) <= Integer.BYTES || !hasCapacity(buffer, Long.BYTES))
          return readRawVarint32(buffer);
 
-      long wholeOrMore = buffer.getLongLE(buffer.readerIndex());
+      long wholeOrMore = getLongLE(buffer);
       long firstOneOnStop = ~wholeOrMore & 0x8080808080808080L;
 
       // The value occupies all the bytes. We just unroll it and consume everything.
@@ -97,6 +101,13 @@ final class BranchlessParser {
       // Create a mask and create the continuation bytes for decoding.
       long mask = firstOneOnStop ^ (firstOneOnStop - 1);
       return readLong(wholeOrMore & mask);
+   }
+
+   private static long getLongLE(ByteBuf buffer) {
+      if (buffer instanceof ReplayableByteBuf rbb)
+         return getLongLE(rbb.internal());
+
+      return buffer.getLongLE(buffer.readerIndex());
    }
 
    private static long readRawVarInt72(ByteBuf buffer, long wholeOrMore) {

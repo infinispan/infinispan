@@ -1,10 +1,10 @@
 package org.infinispan.server.hotrod.test;
 
 import static org.infinispan.server.core.test.ServerTestingUtil.killServer;
+import static org.infinispan.server.hotrod.test.ByteBufTestUtil.readString;
+import static org.infinispan.server.hotrod.test.ByteBufTestUtil.readUnsignedLong;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.host;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readString;
-import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readUnsignedLong;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsignedLong;
 
 import java.util.ArrayList;

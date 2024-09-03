@@ -15,16 +15,7 @@ import io.netty.buffer.ByteBuf;
  */
 public class ExtendedByteBufJava {
 
-   private ExtendedByteBufJava() {
-   }
-
-   public static long readUnsignedMaybeLong(ByteBuf buf) {
-      if (buf.readableBytes() < 8) {
-         buf.resetReaderIndex();
-         return Long.MIN_VALUE;
-      }
-      return buf.readLong();
-   }
+   private ExtendedByteBufJava() { }
 
    public static long readMaybeVLong(ByteBuf buf) {
       if (buf.readableBytes() > 0) {
@@ -40,8 +31,9 @@ public class ExtendedByteBufJava {
    }
 
    public static String readString(ByteBuf bf) {
+      int index = bf.readerIndex();
       int length = readMaybeVInt(bf);
-      if (length == Integer.MIN_VALUE) {
+      if (index == bf.readerIndex()) {
          return null;
       } else if (length == 0) {
          return "";
@@ -58,8 +50,9 @@ public class ExtendedByteBufJava {
    }
 
    public static byte[] readMaybeRangedBytes(ByteBuf bf) {
+      int index = bf.readerIndex();
       int length = readMaybeVInt(bf);
-      if (length == Integer.MIN_VALUE) {
+      if (index == bf.readerIndex()) {
          return null;
       }
       return readMaybeRangedBytes(bf, length);

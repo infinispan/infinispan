@@ -1,7 +1,7 @@
 package org.infinispan.server.hotrod.counter.response;
 
 import static java.util.Collections.emptyList;
-import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readString;
+import static org.infinispan.server.hotrod.test.ByteBufTestUtil.readString;
 
 import java.util.ArrayList;
 import java.util.Collection;

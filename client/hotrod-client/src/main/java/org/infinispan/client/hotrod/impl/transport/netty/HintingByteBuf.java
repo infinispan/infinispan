@@ -11,6 +11,8 @@ import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.ScatteringByteChannel;
 import java.nio.charset.Charset;
 
+import org.infinispan.commons.netty.ReplayableByteBuf;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.SwappedByteBuf;
@@ -22,7 +24,7 @@ import io.netty.util.internal.StringUtil;
  * Copy-paste of {@link io.netty.handler.codec.ReplayingDecoderByteBuf} which hints {@link HintedReplayingDecoder}
  * to not try decoding until requested bytes are received.
  */
-public class HintingByteBuf extends ByteBuf {
+public class HintingByteBuf extends ByteBuf implements ReplayableByteBuf {
    private final HintedReplayingDecoder<?> decoder;
    private ByteBuf buffer;
    private boolean terminated;
@@ -38,6 +40,11 @@ public class HintingByteBuf extends ByteBuf {
 
    void terminate() {
       terminated = true;
+   }
+
+   @Override
+   public ByteBuf internal() {
+      return buffer;
    }
 
    @Override

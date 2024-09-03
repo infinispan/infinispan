@@ -8,8 +8,8 @@ import org.infinispan.counter.api.CounterEvent;
 import org.infinispan.counter.api.CounterState;
 import org.infinispan.server.hotrod.HotRodOperation;
 import org.infinispan.server.hotrod.OperationStatus;
+import org.infinispan.server.hotrod.test.ByteBufTestUtil;
 import org.infinispan.server.hotrod.test.TestResponse;
-import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
 
 import io.netty.buffer.ByteBuf;
 
@@ -27,8 +27,8 @@ public class TestCounterEventResponse extends TestResponse {
 
    public TestCounterEventResponse(byte version, long messageId, HotRodOperation operation, ByteBuf buffer) {
       super(version, messageId, "", (byte) 0, operation, OperationStatus.Success, 0, null);
-      counterName = ExtendedByteBuf.readString(buffer);
-      listenerId = new WrappedByteArray(ExtendedByteBuf.readRangedBytes(buffer));
+      counterName = ByteBufTestUtil.readString(buffer);
+      listenerId = new WrappedByteArray(ByteBufTestUtil.readRangedBytes(buffer));
       byte counterState = buffer.readByte();
       counterEvent = new CounterEventImpl(buffer.readLong(), decodeOldState(counterState), buffer.readLong(),
             decodeNewState(counterState));

@@ -3,8 +3,6 @@ package org.infinispan.server.memcached.text;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.failedFuture;
 import static org.infinispan.commons.util.concurrent.CompletableFutures.asCompletionException;
-import static org.infinispan.server.core.transport.ExtendedByteBuf.buffer;
-import static org.infinispan.server.core.transport.ExtendedByteBuf.wrappedBuffer;
 import static org.infinispan.server.memcached.MemcachedStats.CAS_BADVAL;
 import static org.infinispan.server.memcached.MemcachedStats.CAS_HITS;
 import static org.infinispan.server.memcached.MemcachedStats.CAS_MISSES;
@@ -46,7 +44,9 @@ import javax.security.auth.Subject;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Version;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
@@ -56,10 +56,9 @@ import org.infinispan.server.memcached.MemcachedMetadata;
 import org.infinispan.server.memcached.MemcachedResponse;
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.ParseUtil;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 /**
  * @since 15.0
@@ -68,6 +67,14 @@ public abstract class TextOpDecoder extends TextDecoder {
 
    protected TextOpDecoder(MemcachedServer server, Subject subject) {
       super(server, subject);
+   }
+
+   public static ByteBuf wrappedBuffer(byte[]... arrays) {
+      return Unpooled.wrappedBuffer(arrays);
+   }
+
+   public static ByteBuf buffer(int capacity) {
+      return Unpooled.buffer(capacity);
    }
 
    protected MemcachedResponse get(TextHeader header, List<byte[]> keys, boolean withVersions) {

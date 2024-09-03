@@ -8,9 +8,9 @@ import static org.infinispan.server.hotrod.HotRodConstants.GET_WITH_VERSION;
 import static org.infinispan.server.hotrod.OperationStatus.NotExecutedWithPrevious;
 import static org.infinispan.server.hotrod.OperationStatus.Success;
 import static org.infinispan.server.hotrod.OperationStatus.SuccessWithPrevious;
-import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readString;
-import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readUnsignedInt;
-import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readUnsignedShort;
+import static org.infinispan.server.hotrod.test.ByteBufTestUtil.readString;
+import static org.infinispan.server.hotrod.test.ByteBufTestUtil.readUnsignedInt;
+import static org.infinispan.server.hotrod.test.ByteBufTestUtil.readUnsignedShort;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeRangedBytes;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeString;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsignedInt;
@@ -67,7 +67,6 @@ import org.infinispan.server.hotrod.counter.response.CounterNamesTestResponse;
 import org.infinispan.server.hotrod.counter.response.CounterValueTestResponse;
 import org.infinispan.server.hotrod.counter.response.RecoveryTestResponse;
 import org.infinispan.server.hotrod.logging.Log;
-import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
 import org.infinispan.util.KeyValuePair;
 
 import io.netty.bootstrap.Bootstrap;
@@ -100,7 +99,7 @@ import io.netty.util.concurrent.Future;
  * @since 4.1
  */
 public class HotRodClient implements Closeable {
-   public static final int DEFAULT_TIMEOUT_SECONDS = 60;
+   public static final int DEFAULT_TIMEOUT_SECONDS = 10;
 
    private static final Log log = LogFactory.getLog(HotRodClient.class, Log.class);
    final static AtomicLong idCounter = new AtomicLong();
@@ -736,7 +735,7 @@ class Decoder extends ReplayingDecoder<Void> {
    @Override
    protected void decode(ChannelHandlerContext ctx, ByteBuf buf, List<Object> out) {
       buf.readUnsignedByte(); // magic byte
-      long id = ExtendedByteBuf.readUnsignedLong(buf);
+      long id = ByteBufTestUtil.readUnsignedLong(buf);
       HotRodOperation opCode = HotRodOperation.fromResponseOpCode((byte) buf.readUnsignedByte());
       OperationStatus status = OperationStatus.fromCode((byte) buf.readUnsignedByte());
       short topologyChangeMarker = buf.readUnsignedByte();
@@ -823,7 +822,7 @@ class Decoder extends ReplayingDecoder<Void> {
          case GET_WITH_VERSION:
             if (status == Success) {
                long version = buf.readLong();
-               Optional<byte[]> data = Optional.of(ExtendedByteBuf.readRangedBytes(buf));
+               Optional<byte[]> data = Optional.of(ByteBufTestUtil.readRangedBytes(buf));
                resp = new TestGetWithVersionResponse(op.version, id, op.cacheName,
                      op.clientIntel, opCode, status, op.topologyId, topologyChangeResponse, data, version);
             } else {
@@ -848,7 +847,7 @@ class Decoder extends ReplayingDecoder<Void> {
                   maxIdle = readUnsignedInt(buf);
                }
                long version = buf.readLong();
-               Optional<byte[]> data = Optional.of(ExtendedByteBuf.readRangedBytes(buf));
+               Optional<byte[]> data = Optional.of(ByteBufTestUtil.readRangedBytes(buf));
                resp = new TestGetWithMetadataResponse(op.version, id, op.cacheName,
                      op.clientIntel, opCode, status, op.topologyId, topologyChangeResponse, data, version,
                      created, lifespan, lastUsed, maxIdle);
@@ -860,7 +859,7 @@ class Decoder extends ReplayingDecoder<Void> {
             break;
          case GET:
             if (status == Success) {
-               Optional<byte[]> data = Optional.of(ExtendedByteBuf.readRangedBytes(buf));
+               Optional<byte[]> data = Optional.of(ByteBufTestUtil.readRangedBytes(buf));
                resp = new TestGetResponse(op.version, id, op.cacheName, op.clientIntel,
                      opCode, status, op.topologyId, topologyChangeResponse, data);
             } else {
@@ -872,7 +871,7 @@ class Decoder extends ReplayingDecoder<Void> {
             byte done = buf.readByte();
             Map<byte[], byte[]> bulkBuffer = new HashMap<>();
             while (done == 1) {
-               bulkBuffer.put(ExtendedByteBuf.readRangedBytes(buf), ExtendedByteBuf.readRangedBytes(buf));
+               bulkBuffer.put(ByteBufTestUtil.readRangedBytes(buf), ByteBufTestUtil.readRangedBytes(buf));
                done = buf.readByte();
             }
             resp = new TestBulkGetResponse(op.version, id, op.cacheName, op.clientIntel,
@@ -882,14 +881,14 @@ class Decoder extends ReplayingDecoder<Void> {
             done = buf.readByte();
             Set<byte[]> bulkKeys = new HashSet<>();
             while (done == 1) {
-               bulkKeys.add(ExtendedByteBuf.readRangedBytes(buf));
+               bulkKeys.add(ByteBufTestUtil.readRangedBytes(buf));
                done = buf.readByte();
             }
             resp = new TestBulkGetKeysResponse(op.version, id, op.cacheName, op.clientIntel,
                   op.topologyId, topologyChangeResponse, bulkKeys);
             break;
          case QUERY:
-            byte[] result = ExtendedByteBuf.readRangedBytes(buf);
+            byte[] result = ByteBufTestUtil.readRangedBytes(buf);
             resp = new TestQueryResponse(op.version, id, op.cacheName, op.clientIntel,
                   op.topologyId, topologyChangeResponse, result);
             break;
@@ -904,7 +903,7 @@ class Decoder extends ReplayingDecoder<Void> {
             break;
          case AUTH: {
             boolean complete = buf.readBoolean();
-            byte[] challenge = ExtendedByteBuf.readRangedBytes(buf);
+            byte[] challenge = ByteBufTestUtil.readRangedBytes(buf);
             resp = new TestAuthResponse(op.version, id, op.cacheName, op.clientIntel,
                   op.topologyId, topologyChangeResponse, complete, challenge);
             break;
@@ -912,15 +911,15 @@ class Decoder extends ReplayingDecoder<Void> {
          case CACHE_ENTRY_CREATED_EVENT:
          case CACHE_ENTRY_MODIFIED_EVENT:
          case CACHE_ENTRY_REMOVED_EVENT:
-            byte[] listenerId = ExtendedByteBuf.readRangedBytes(buf);
+            byte[] listenerId = ByteBufTestUtil.readRangedBytes(buf);
             byte isCustom = buf.readByte();
             boolean isRetried = buf.readByte() == 1;
             if (isCustom == 1 || isCustom == 2) {
-               byte[] eventData = ExtendedByteBuf.readRangedBytes(buf);
+               byte[] eventData = ByteBufTestUtil.readRangedBytes(buf);
                resp = new TestCustomEvent(client.protocolVersion, id, client.defaultCacheName, opCode, listenerId,
                      isRetried, eventData);
             } else {
-               byte[] key = ExtendedByteBuf.readRangedBytes(buf);
+               byte[] key = ByteBufTestUtil.readRangedBytes(buf);
                if (opCode == HotRodOperation.CACHE_ENTRY_REMOVED_EVENT) {
                   resp = new TestKeyEvent(client.protocolVersion, id, client.defaultCacheName, listenerId, isRetried, key);
                } else {
@@ -931,7 +930,7 @@ class Decoder extends ReplayingDecoder<Void> {
             }
             break;
          case SIZE:
-            long lsize = ExtendedByteBuf.readUnsignedLong(buf);
+            long lsize = ByteBufTestUtil.readUnsignedLong(buf);
             resp = new TestSizeResponse(op.version, id, op.cacheName, op.clientIntel,
                   op.topologyId, topologyChangeResponse, lsize);
             break;
