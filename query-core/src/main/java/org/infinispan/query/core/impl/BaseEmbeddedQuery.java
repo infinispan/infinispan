@@ -79,7 +79,7 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
 
       QueryResult<T> result = executeInternal(getComparator());
 
-      if (queryStatistics.isEnabled()) recordQuery(start);
+      if (queryStatistics.isEnabled()) recordQuery(System.nanoTime() - start);
 
       return result;
    }
