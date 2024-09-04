@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.objectfilter.impl.MetadataAdapter;
 import org.infinispan.objectfilter.impl.predicateindex.MetadataProjectable;
 
@@ -46,14 +47,29 @@ abstract public class MetadataProjectableAdapter<TypeMetadata, AttributeMetadata
    }
 
    @Override
-   public Object projection(Object key, AttributeId attribute) {
-      CacheEntry<?, ?> cacheEntry = cache.getCacheEntry(key);
-      if (cacheEntry == null) {
-         return null;
+   public Object projection(Object key, Object metadata, AttributeId attribute) {
+      if (isValueProjection(attribute)) {
+         CacheEntry<?, ?> cacheEntry = cache.getCacheEntry(key);
+         if (cacheEntry == null) {
+            return null;
+         }
+         return valueProjection(cacheEntry.getValue());
       }
-      return projection(cacheEntry, attribute);
+
+      Metadata meta;
+      if (metadata != null) {
+         meta = (Metadata) metadata;
+      } else {
+         CacheEntry<?, ?> cacheEntry = cache.getCacheEntry(key);
+         meta = cacheEntry.getMetadata();
+      }
+      return metadataProjection(meta, attribute);
    }
 
-   public abstract Object projection(CacheEntry<?, ?> cacheEntry, AttributeId attribute);
+   public abstract boolean isValueProjection(AttributeId attribute);
+
+   public abstract Object valueProjection(Object rawValue);
+
+   public abstract Object metadataProjection(Metadata metadata, AttributeId attribute);
 
 }

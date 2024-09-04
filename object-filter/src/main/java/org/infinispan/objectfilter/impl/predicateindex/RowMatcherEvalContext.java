@@ -11,7 +11,7 @@ public final class RowMatcherEvalContext extends MatcherEvalContext<RowPropertyH
    private final RowPropertyHelper.RowMetadata rowMetadata;
 
    public RowMatcherEvalContext(Object userContext, Object eventType, Object key, Object instance, RowPropertyHelper.RowMetadata rowMetadata) {
-      super(userContext, eventType, key, instance);
+      super(userContext, eventType, key, instance, null);
       this.rowMetadata = rowMetadata;
    }
 

@@ -111,7 +111,7 @@ public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConvert
       if (value == null) {
          return null;
       }
-      return getObjectFilter().filter(key, value);
+      return getObjectFilter().filter(key, value, metadata);
    }
 
    @Override

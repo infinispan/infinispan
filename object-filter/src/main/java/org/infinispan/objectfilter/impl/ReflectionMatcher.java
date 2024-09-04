@@ -31,7 +31,7 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
    protected ReflectionMatcherEvalContext startMultiTypeContext(boolean isDeltaFilter, Object userContext, Object eventType, Object instance) {
       FilterRegistry<Class<?>, ReflectionHelper.PropertyAccessor, String> filterRegistry = getFilterRegistryForType(isDeltaFilter, instance.getClass());
       if (filterRegistry != null) {
-         ReflectionMatcherEvalContext context = new ReflectionMatcherEvalContext(userContext, eventType, null, instance);
+         ReflectionMatcherEvalContext context = new ReflectionMatcherEvalContext(userContext, eventType, null, instance, null);
          context.initMultiFilterContext(filterRegistry);
          return context;
       }
@@ -40,9 +40,10 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
 
    @Override
    protected ReflectionMatcherEvalContext startSingleTypeContext(Object userContext, Object eventType, Object key,
-                                                                 Object instance, MetadataAdapter<Class<?>, ReflectionHelper.PropertyAccessor, String> metadataAdapter) {
+                                                                 Object instance, Object metadata,
+                                                                 MetadataAdapter<Class<?>, ReflectionHelper.PropertyAccessor, String> metadataAdapter) {
       if (metadataAdapter.getTypeMetadata() == instance.getClass()) {
-         return new ReflectionMatcherEvalContext(userContext, eventType, key, instance);
+         return new ReflectionMatcherEvalContext(userContext, eventType, key, instance, metadata);
       } else {
          return null;
       }

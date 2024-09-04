@@ -269,7 +269,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
     * @return the MatcherEvalContext or {@code null} if no filter was registered for the instance
     */
    protected abstract MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> startSingleTypeContext(
-         Object userContext, Object eventType, Object key, Object instance,
+         Object userContext, Object eventType, Object key, Object instance, Object metadata,
          MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter);
 
    protected abstract MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> createMetadataAdapter(TypeMetadata entityType);
