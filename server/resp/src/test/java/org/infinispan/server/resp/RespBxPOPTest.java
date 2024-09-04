@@ -323,8 +323,8 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
    public void testBxpopTwoListenersOneTimeout() throws Exception {
       RedisCommands<String, String> redis = redisConnection.sync();
       try {
-         var cf = registerListener(() -> bxPopAsync(10, "key"));
-         var cf2 = registerListener(() -> bxPopAsync(10, "key"));
+         var cf = registerListener(() -> bxPopAsync(5, "key"));
+         var cf2 = registerListener(() -> bxPopAsync(5, "key"));
          redis.lpush("key", "first");
          var res = cf.get(10, TimeUnit.SECONDS);
          var res2 = cf2.get(10, TimeUnit.SECONDS);
