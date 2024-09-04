@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
 
 import com.redhat.insights.reports.InsightsReport;
 
-@Test(groups = "functional", testName = "server.insights.InsightsActivationTest", dataProvider = "optOut")
+@Test(groups = "functional", testName = "server.insights.InsightsActivationTest")
 public class InsightsActivationTest extends AbstractInfinispanTest {
 
    private static final String RHEL_MACHINE_ID_FILE_PATH
@@ -35,6 +35,7 @@ public class InsightsActivationTest extends AbstractInfinispanTest {
    private static final String OPT_OUT
          = InfinispanInsightsConfiguration.ENV_OPT_OUT.toLowerCase().replace('_', '.');
 
+   @Test(dataProvider = "optOut")
    public void enabled(boolean optOut) throws Exception {
       Path tmpDir = Paths.get(System.getProperty("java.io.tmpdir"), "blablabla");
       Files.createDirectories(tmpDir);
@@ -67,6 +68,7 @@ public class InsightsActivationTest extends AbstractInfinispanTest {
       }
    }
 
+   @Test(dataProvider = "optOut")
    public void locallyEnabled(boolean optOut) throws Exception {
       System.setProperty(InsightsModule.REDHAT_INSIGHTS_ACTIVATION_PROPERTY_NAME, InsightsActivation.LOCAL.name());
       System.setProperty(OPT_OUT, optOut + "");
@@ -93,6 +95,7 @@ public class InsightsActivationTest extends AbstractInfinispanTest {
       }
    }
 
+   @Test(dataProvider = "optOut")
    public void notEnabled(boolean optOut) throws Exception {
       System.setProperty(InsightsModule.REDHAT_INSIGHTS_ACTIVATION_PROPERTY_NAME, InsightsActivation.DISABLED.name());
       System.setProperty(OPT_OUT, optOut + "");
