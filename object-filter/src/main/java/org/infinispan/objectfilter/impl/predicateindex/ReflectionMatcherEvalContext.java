@@ -12,8 +12,9 @@ public final class ReflectionMatcherEvalContext extends MatcherEvalContext<Class
 
    private final Class<?> entityType;
 
-   public ReflectionMatcherEvalContext(Object userContext, Object eventType, Object key, Object instance) {
-      super(userContext, eventType, key, instance);
+   public ReflectionMatcherEvalContext(Object userContext, Object eventType, Object key, Object instance,
+                                       Object metadata) {
+      super(userContext, eventType, key, instance, metadata);
       entityType = instance.getClass();
    }
 
@@ -30,7 +31,7 @@ public final class ReflectionMatcherEvalContext extends MatcherEvalContext<Class
          } else {
             ReflectionHelper.PropertyAccessor accessor = childAttribute.getMetadata();
             if (accessor == null) {
-               Object attributeValue = node.cacheMetadataProjection(key, childAttribute.getAttribute());
+               Object attributeValue = node.cacheMetadataProjection(key, metadata, childAttribute.getAttribute());
                if (attributeValue != null) {
                   processAttribute(childAttribute, attributeValue);
                }

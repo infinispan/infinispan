@@ -33,9 +33,10 @@ public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descrip
 
    private final SerializationContext serializationContext;
 
-   public ProtobufMatcherEvalContext(Object userContext, Object eventType, Object key, Object instance,
+   public ProtobufMatcherEvalContext(Object userContext, Object eventType, Object key, Object instance, Object metadata,
                                      Descriptor wrappedMessageDescriptor, SerializationContext serializationContext) {
-      super(userContext, eventType, key, instance);
+      super(userContext, eventType, key, instance, metadata);
+      this.metadata = metadata;
       this.serializationContext = serializationContext;
       try {
          ProtobufParser.INSTANCE.parse(this, wrappedMessageDescriptor, (byte[]) getInstance());
@@ -161,7 +162,7 @@ public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descrip
          ProtobufParser.INSTANCE.parse(this, payloadMessageDescriptor, payload);
          for (AttributeNode<FieldDescriptor, Integer> childAttribute : node.getChildren()) {
             if (childAttribute.getAttribute() >= ProtobufPropertyHelper.MIN_METADATA_FIELD_ATTRIBUTE_ID) {
-               Object attributeValue = node.cacheMetadataProjection(key, childAttribute.getAttribute());
+               Object attributeValue = node.cacheMetadataProjection(key, metadata, childAttribute.getAttribute());
                childAttribute.processValue(attributeValue, this);
             }
          }

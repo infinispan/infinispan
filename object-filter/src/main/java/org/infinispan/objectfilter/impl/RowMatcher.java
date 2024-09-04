@@ -33,8 +33,8 @@ public final class RowMatcher extends BaseMatcher<RowPropertyHelper.RowMetadata,
    }
 
    @Override
-   protected RowMatcherEvalContext startSingleTypeContext(Object userContext, Object eventType, Object key,
-                                                          Object instance, MetadataAdapter<RowPropertyHelper.RowMetadata, RowPropertyHelper.ColumnMetadata, Integer> metadataAdapter) {
+   protected RowMatcherEvalContext startSingleTypeContext(Object userContext, Object eventType, Object key, Object instance, Object metadata,
+                                                          MetadataAdapter<RowPropertyHelper.RowMetadata, RowPropertyHelper.ColumnMetadata, Integer> metadataAdapter) {
       if (Object[].class == instance.getClass()) {
          return new RowMatcherEvalContext(userContext, eventType, key, instance, rowMetadata);
       } else {

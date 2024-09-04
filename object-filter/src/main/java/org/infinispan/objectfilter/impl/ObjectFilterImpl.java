@@ -190,7 +190,7 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
    }
 
    @Override
-   public FilterResult filter(Object key, Object instance) {
+   public FilterResult filter(Object key, Object instance, Object metadata) {
       if (filterSubscription == null) {
          throw new IllegalStateException("Parameter values were not bound yet.");
       }
@@ -199,7 +199,8 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
          throw new IllegalArgumentException("instance cannot be null");
       }
 
-      MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> matcherEvalContext = matcher.startSingleTypeContext(null, null, key, instance, filterSubscription.getMetadataAdapter());
+      MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> matcherEvalContext = matcher
+            .startSingleTypeContext(null, null, key, instance, metadata, filterSubscription.getMetadataAdapter());
       if (matcherEvalContext != null) {
          FilterEvalContext filterEvalContext = matcherEvalContext.initSingleFilterContext(filterSubscription);
          if (acc != null) {

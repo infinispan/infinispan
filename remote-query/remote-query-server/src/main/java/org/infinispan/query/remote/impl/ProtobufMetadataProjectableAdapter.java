@@ -1,7 +1,6 @@
 package org.infinispan.query.remote.impl;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
@@ -20,12 +19,17 @@ public class ProtobufMetadataProjectableAdapter extends MetadataProjectableAdapt
    }
 
    @Override
-   public Object projection(CacheEntry<?, ?> cacheEntry, Integer attribute) {
-      if (ProtobufPropertyHelper.VALUE_FIELD_ATTRIBUTE_ID == attribute) {
-         return new WrappedMessage(cacheEntry.getValue());
-      }
+   public boolean isValueProjection(Integer attribute) {
+      return attribute.equals(ProtobufPropertyHelper.VALUE_FIELD_ATTRIBUTE_ID);
+   }
 
-      Metadata metadata = cacheEntry.getMetadata();
+   @Override
+   public Object valueProjection(Object rawValue) {
+      return new WrappedMessage(rawValue);
+   }
+
+   @Override
+   public Object metadataProjection(Metadata metadata, Integer attribute) {
       if (attribute.equals(ProtobufPropertyHelper.VERSION_FIELD_ATTRIBUTE_ID)) {
          EntryVersion version = metadata.version();
          if (version instanceof NumericVersion) {

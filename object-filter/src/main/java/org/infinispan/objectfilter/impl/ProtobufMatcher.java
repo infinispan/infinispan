@@ -29,7 +29,8 @@ public class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescriptor, In
 
    @Override
    protected ProtobufMatcherEvalContext startMultiTypeContext(boolean isDeltaFilter, Object userContext, Object eventType, Object instance) {
-      ProtobufMatcherEvalContext context = new ProtobufMatcherEvalContext(userContext, eventType, null, instance, wrappedMessageDescriptor, serializationContext);
+      ProtobufMatcherEvalContext context = new ProtobufMatcherEvalContext(userContext, eventType, null, instance, null,
+            wrappedMessageDescriptor, serializationContext);
       if (context.getEntityType() != null) {
          FilterRegistry<Descriptor, FieldDescriptor, Integer> filterRegistry = getFilterRegistryForType(isDeltaFilter, context.getEntityType());
          if (filterRegistry != null) {
@@ -42,8 +43,10 @@ public class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescriptor, In
 
    @Override
    protected ProtobufMatcherEvalContext startSingleTypeContext(Object userContext, Object eventType, Object key,
-                                                               Object instance, MetadataAdapter<Descriptor, FieldDescriptor, Integer> metadataAdapter) {
-      ProtobufMatcherEvalContext ctx = new ProtobufMatcherEvalContext(userContext, eventType, key, instance, wrappedMessageDescriptor, serializationContext);
+                                                               Object instance, Object metadata,
+                                                               MetadataAdapter<Descriptor, FieldDescriptor, Integer> metadataAdapter) {
+      ProtobufMatcherEvalContext ctx = new ProtobufMatcherEvalContext(userContext, eventType, key, instance, metadata,
+            wrappedMessageDescriptor, serializationContext);
       return ctx.getEntityType() != null && ctx.getEntityType().getFullName().equals(metadataAdapter.getTypeName()) ? ctx : null;
    }
 

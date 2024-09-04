@@ -24,7 +24,7 @@ final class RejectObjectFilter<TypeMetadata> extends ObjectFilterBase<TypeMetada
    }
 
    @Override
-   public FilterResult filter(Object key, Object value) {
+   public FilterResult filter(Object key, Object value, Object metadata) {
       if (value == null) {
          throw new IllegalArgumentException("instance cannot be null");
       }
