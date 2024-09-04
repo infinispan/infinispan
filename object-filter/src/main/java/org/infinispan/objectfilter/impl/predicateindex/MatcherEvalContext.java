@@ -33,6 +33,8 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
 
    private final Object instance;
 
+   protected Object metadata;
+
    private final Object eventType;
 
    private FilterEvalContext singleFilterContext;
@@ -46,7 +48,7 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
 
    private Map<Predicate<?>, Counter> suspendedPredicateSubscriptionCounts;
 
-   protected MatcherEvalContext(Object userContext, Object eventType, Object key, Object instance) {
+   protected MatcherEvalContext(Object userContext, Object eventType, Object key, Object instance, Object metadata) {
       if (instance == null) {
          throw new IllegalArgumentException("instance cannot be null");
       }
@@ -54,6 +56,7 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
       this.eventType = eventType;
       this.key = key;
       this.instance = instance;
+      this.metadata = metadata;
    }
 
    public abstract TypeMetadata getEntityType();

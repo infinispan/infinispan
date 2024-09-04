@@ -76,7 +76,20 @@ public interface ObjectFilter {
     * @param value the instance to test; this is never {@code null}
     * @return a {@link FilterResult} if there is a match or {@code null} otherwise
     */
-   FilterResult filter(Object key, Object value);
+   default FilterResult filter(Object key, Object value) {
+      return filter(key, value, null);
+   }
+
+   /**
+    * Tests if an object matches the filter. The given key is optional (can be null) and will be returned to
+    * the user in the {@link FilterResult}.
+    *
+    * @param key   the (optional) key; this can be {@code null} if it is of no interest
+    * @param value the instance to test; this is never {@code null}
+    * @param metadata the (optional) metadata; this can be {@code null} if it is of no interest
+    * @return a {@link FilterResult} if there is a match or {@code null} otherwise
+    */
+   FilterResult filter(Object key, Object value, Object metadata);
 
    /**
     * The output of the {@link ObjectFilter#filter} method.
