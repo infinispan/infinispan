@@ -24,7 +24,7 @@ for TEST in "${TESTS[@]}"; do
     TEST_NAME=${TEST_NAME% (Flaky Test)}
     # Removing square brakets with execution counter i.e. flakyTest[1]
     TEST_NAME=${TEST_NAME%%[*}
-    TEST_NAME_NO_PARAMS=${TEST_NAME%%\\*}
+    TEST_NAME_NO_PARAMS=${TEST_NAME%%\(*}
     STACK_TRACE=$(xmlstarlet sel --template --value-of '/testsuite/testcase/failure['$i']' ${TEST})
 
     # Create Issue for Test Class+TestName
