@@ -1,7 +1,5 @@
 package org.infinispan.query.backend;
 
-import static java.util.concurrent.CompletableFuture.allOf;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,6 +34,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
@@ -62,7 +61,10 @@ import org.infinispan.search.mapper.scope.SearchWorkspace;
 import org.infinispan.search.mapper.work.SearchIndexer;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.LogFactory;
+
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * This interceptor will be created when the System Property "infinispan.query.indexLocalOnly" is "false"
@@ -208,7 +210,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
             }
             return rv;
          } else {
-            return delayedValue(allOf(cmd.getAffectedKeys().stream().map(key -> indexIfNeeded(rCtx, cmd, unreliablePrevious, key)).toArray(CompletableFuture[]::new)), rv);
+            return delayedValue(CompletionStages.performConcurrently(cmd.getAffectedKeys(), 100,
+                  Schedulers.from(new WithinThreadExecutor()), key -> indexIfNeeded(rCtx, cmd, unreliablePrevious, key)), rv);
          }
       });
    }
