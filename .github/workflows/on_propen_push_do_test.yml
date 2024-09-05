@@ -65,6 +65,7 @@ jobs:
             **/*.dump*
             **/hs_err_*
             github-sha.txt
+            !**/target/*-reports*/**/TEST-*FLAKY.xml
 
 # Create artifact with branch name and surefile flaky test report
       - name: Check flaky report existence
