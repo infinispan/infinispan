@@ -1,9 +1,14 @@
 package org.infinispan.xsite.irac;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.lang.reflect.Method;
 import java.util.Collections;
+import java.util.Map;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.configuration.cache.BackupConfiguration;
@@ -110,6 +115,9 @@ public class IracExponentialBackOffTest extends SingleCacheManagerTest {
 
       backOff.eventually("Backoff event on first try.", ControlledExponentialBackOff.Event.BACK_OFF);
 
+      // Wait for keys to be ready before releasing.
+      assertKeysEnterRetry(cache);
+
       //the release should trigger another back off event
       backOff.release();
       backOff.eventually("Backoff event on second try.", ControlledExponentialBackOff.Event.BACK_OFF);
@@ -122,5 +130,18 @@ public class IracExponentialBackOffTest extends SingleCacheManagerTest {
       //backOff.eventually("Reset event after successful try operations", ControlledExponentialBackOff.Event.RESET);
       backOff.eventually("Reset event after successful try", ControlledExponentialBackOff.Event.RESET);
       backOff.assertNoEvents();
+   }
+
+   private void assertKeysEnterRetry(Cache<?, ?> c) {
+      DefaultIracManager dim = (DefaultIracManager) TestingUtil.extractComponent(c, IracManager.class);
+      Map<Object, IracManagerKeyState> keys = TestingUtil.extractField(dim, "updatedKeys");
+      assertThat(keys)
+            .withFailMessage("Wrong size: " + keys)
+            .hasSize(1);
+      Predicate<IracManagerKeyState> predicate = state -> {
+         IracManagerKeyChangedState.Status status = TestingUtil.extractField(state, "status");
+         return status == IracManagerKeyChangedState.Status.READY;
+      };
+      eventually(() -> keys.values().stream().allMatch(predicate));
    }
 }
