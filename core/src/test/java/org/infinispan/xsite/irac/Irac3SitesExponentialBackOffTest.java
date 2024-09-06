@@ -1,11 +1,14 @@
 package org.infinispan.xsite.irac;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.infinispan.Cache;
@@ -149,7 +152,12 @@ public class Irac3SitesExponentialBackOffTest extends AbstractMultipleSitesTest 
       backOffMap.get(siteName(2)).release();
 
       // Only one site sends the keys, so only a single event here.
+      backOffMap.get(siteName(1)).assertNoEvents();
       backOffMap.get(siteName(2)).eventually("Backoff event after release.", ControlledExponentialBackOff.Event.BACK_OFF);
+      backOffMap.get(siteName(2)).assertNoEvents();
+
+      // Wait for keys enter in retry mode.
+      assertKeysEnterRetry(c);
 
       // Operation now should succeed.
       transport.throwableSupplier = NO_EXCEPTION;
@@ -160,5 +168,18 @@ public class Irac3SitesExponentialBackOffTest extends AbstractMultipleSitesTest 
 
       // No other event was issued.
       backOffMap.values().forEach(ControlledExponentialBackOff::assertNoEvents);
+   }
+
+   private void assertKeysEnterRetry(Cache<?, ?> c) {
+      DefaultIracManager dim = (DefaultIracManager) TestingUtil.extractComponent(c, IracManager.class);
+      Map<Object, IracManagerKeyState> keys = TestingUtil.extractField(dim, "updatedKeys");
+      assertThat(keys)
+            .withFailMessage("Wrong size: " + keys)
+            .hasSize(1);
+      Predicate<IracManagerKeyState> predicate = state -> {
+         IracManagerKeyChangedState.Status status = TestingUtil.extractField(state, "status");
+         return status == IracManagerKeyChangedState.Status.READY;
+      };
+      eventually(() -> keys.values().stream().allMatch(predicate));
    }
 }

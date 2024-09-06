@@ -149,7 +149,8 @@ class IracManagerKeyChangedState implements IracManagerKeyState {
       return result;
    }
 
-   private enum Status {
+   // Package-private for testing purposes.
+   enum Status {
       READY,
       SENDING,
       DONE
