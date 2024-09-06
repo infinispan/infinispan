@@ -43,8 +43,9 @@ public class ControlledExponentialBackOff implements ExponentialBackOff {
    }
 
    void release() {
-      backOff.complete(null);
-      this.backOff = new CompletableFuture<>();
+      CompletableFuture<Void> cs = backOff;
+      backOff = new CompletableFuture<>();
+      cs.complete(null);
    }
 
    void cleanupEvents() {
