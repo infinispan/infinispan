@@ -47,13 +47,9 @@ abstract public class MetadataProjectableAdapter<TypeMetadata, AttributeMetadata
    }
 
    @Override
-   public Object projection(Object key, Object metadata, AttributeId attribute) {
+   public Object projection(Object key, Object instance, Object metadata, AttributeId attribute) {
       if (isValueProjection(attribute)) {
-         CacheEntry<?, ?> cacheEntry = cache.getCacheEntry(key);
-         if (cacheEntry == null) {
-            return null;
-         }
-         return valueProjection(cacheEntry.getValue());
+         return valueProjection(instance);
       }
 
       Metadata meta;
