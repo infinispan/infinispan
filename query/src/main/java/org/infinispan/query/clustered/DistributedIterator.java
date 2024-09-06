@@ -16,13 +16,14 @@ import org.apache.lucene.search.TopFieldDocs;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.actions.SecurityActions;
 
 /**
  * Iterates on the results of a distributed query returning the values. Subclasses can customize this by overriding the
- * {@link #decorate(Object, Object, float)} method.
+ * {@link #decorate(Object, Object, float, Metadata)} method.
  *
  * @param <T> The return type of the iterator
  * @author Israel Lacerra &lt;israeldl@gmail.com&gt;
@@ -32,7 +33,7 @@ import org.infinispan.security.actions.SecurityActions;
  */
 class DistributedIterator<T> implements CloseableIterator<T> {
 
-   private final AdvancedCache<Object, Object> cache;
+   protected final AdvancedCache<Object, Object> cache;
 
    private int currentIndex = -1;
 
@@ -46,7 +47,7 @@ class DistributedIterator<T> implements CloseableIterator<T> {
 
    private int valueIndex;
    private final int batchSize;
-   private final List<T> values;
+   protected final List<T> values;
 
    DistributedIterator(LocalQueryStatistics queryStatistics, Sort sort, int resultSize, int maxResults,
                        int firstResult, Map<Address, NodeTopDocs> topDocsResponses, AdvancedCache<?, ?> cache) {
@@ -115,7 +116,7 @@ class DistributedIterator<T> implements CloseableIterator<T> {
    /**
     * Extension point for subclasses.
     */
-   protected T decorate(Object key, Object value, float score) {
+   protected T decorate(Object key, Object value, float score, Metadata metadata) {
       return (T) value;
    }
 
@@ -157,13 +158,13 @@ class DistributedIterator<T> implements CloseableIterator<T> {
       queryStatistics.entityLoaded(timeService.timeDuration(start, TimeUnit.NANOSECONDS));
    }
 
-   private void getAllAndStore(List<KeyAndScore> keysAndScores) {
+   protected void getAllAndStore(List<KeyAndScore> keysAndScores) {
       var keySet = keysAndScores.stream()
             .map(keyAndScore -> keyAndScore.key)
             .collect(Collectors.toSet());
       Map<Object, Object> map = cache.getAll(keySet);
       keysAndScores.stream()
-            .map(keyAndScore -> decorate(keyAndScore.key, map.get(keyAndScore.key), keyAndScore.score))
+            .map(keyAndScore -> decorate(keyAndScore.key, map.get(keyAndScore.key), keyAndScore.score, null))
             .forEach(values::add);
    }
 
@@ -205,6 +206,8 @@ class DistributedIterator<T> implements CloseableIterator<T> {
    static class KeyAndScore {
       final Object key;
       final float score;
+
+      Object covertedKey;
 
       KeyAndScore(Object key, float score) {
          this.key = key;

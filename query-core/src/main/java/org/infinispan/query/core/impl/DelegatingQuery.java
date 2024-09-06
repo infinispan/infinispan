@@ -132,8 +132,8 @@ final class DelegatingQuery<TypeMetadata, T> extends BaseQuery<T> {
    }
 
    @Override
-   public <K> CloseableIterator<EntityEntry<K, T>> entryIterator() {
-      return createQuery().entryIterator();
+   public <K> CloseableIterator<EntityEntry<K, T>> entryIterator(boolean withMetadata) {
+      return createQuery().entryIterator(withMetadata);
    }
 
    @Override

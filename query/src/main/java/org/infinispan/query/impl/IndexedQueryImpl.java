@@ -108,7 +108,7 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
       long start = queryStatistics.isEnabled() ? System.nanoTime(): 0;
       SearchQuery<?> searchQuery = queryDefinition.getSearchQueryBuilder().build();
 
-      MappingIterator<?, Object> iterator = new MappingIterator<>(iterator(searchQuery))
+      MappingIterator<?, Object> iterator = new MappingIterator<>(iterator(searchQuery, false))
             .skip(queryDefinition.getFirstResult())
             .limit(queryDefinition.getMaxResults());
 
@@ -118,7 +118,7 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
    }
 
    @Override
-   public <K> CloseableIterator<EntityEntry<K, E>> entryIterator() {
+   public <K> CloseableIterator<EntityEntry<K, E>> entryIterator(boolean withMetadata) {
       partitionHandlingSupport.checkCacheAvailable();
       long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
 
@@ -129,9 +129,10 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
       }
 
       SearchQuery<List<Object>> searchQuery = (queryDefinition.isScoreRequired()) ?
-            searchQueryBuilder.keyEntityAndScore() : searchQueryBuilder.keyAndEntity();
+            searchQueryBuilder.keyEntityAndScore(withMetadata) : searchQueryBuilder.keyAndEntity(withMetadata);
 
-      MappingIterator<List<Object>, EntityEntry<K, E>> iterator = new MappingIterator<>(iterator(searchQuery), this::mapToEntry);
+      MappingIterator<List<Object>, EntityEntry<K, E>> iterator =
+            new MappingIterator<>(iterator(searchQuery, withMetadata), this::mapToEntry);
       iterator.skip(queryDefinition.getFirstResult())
             .limit(queryDefinition.getMaxResults());
 
@@ -142,8 +143,10 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
 
    private <K, V> EntityEntry<K, V> mapToEntry(List<Object> projection) {
       float score = (projection.size() > 2) ? (float) projection.get(2) : NaN;
-      return new EntityEntry<>((K) ((EntityReference) projection.get(0)).id(),
-            ((EntityLoaded<V>)projection.get(1)).entity(), score);
+      EntityReference entityReference = (EntityReference) projection.get(0);
+      EntityLoaded<V> entityLoaded = (EntityLoaded<V>) projection.get(1);
+      return new EntityEntry<>((K) entityReference.id(),
+            entityLoaded.entity(), score, entityLoaded.metadata());
    }
 
    @Override
@@ -168,8 +171,8 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
                // the hit count cannot exceed the cache size
                new TotalHitCount((int) searchResult.total().hitCountLowerBound(), searchResult.total().isHitCountExact()),
                searchResult.hits().stream().map(origin -> {
-                  if (origin instanceof EntityLoaded) {
-                     return ((EntityLoaded<?>) origin).entity();
+                  if (origin instanceof EntityLoaded<?> entityLoaded) {
+                     return entityLoaded.entity();
                   }
                   return origin;
                }).collect(Collectors.toList()));
@@ -247,7 +250,7 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
       }
    }
 
-   private <T> CloseableIterator<T> iterator(SearchQuery<T> searchQuery) {
+   private <T> CloseableIterator<T> iterator(SearchQuery<T> searchQuery, boolean withMetadata) {
       try {
          return new ScrollerIteratorAdaptor<>(searchQuery.scroll(SCROLL_CHUNK));
       } catch (org.hibernate.search.util.common.SearchTimeoutException timeoutException) {

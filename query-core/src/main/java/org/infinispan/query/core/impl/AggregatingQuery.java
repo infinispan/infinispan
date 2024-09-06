@@ -67,7 +67,7 @@ public final class AggregatingQuery<T> extends HybridQuery<T, Object[]> {
    }
 
    @Override
-   public <K> CloseableIterator<EntityEntry<K, T>> entryIterator() {
+   public <K> CloseableIterator<EntityEntry<K, T>> entryIterator(boolean withMetadata) {
       throw new UnsupportedOperationException();
    }
 

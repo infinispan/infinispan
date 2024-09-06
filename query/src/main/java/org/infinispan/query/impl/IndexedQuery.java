@@ -52,7 +52,7 @@ public interface IndexedQuery<E> {
     * <p>
     * <b>NOTE:</b> The query must not contain any projections or an exception will be thrown.
     */
-   <K> CloseableIterator<EntityEntry<K, E>> entryIterator();
+   <K> CloseableIterator<EntityEntry<K, E>> entryIterator(boolean withMetadata);
 
    /**
     * Executes an Ickle statement returning results (query aka. SELECT). If the statement happens to be a DELETE it

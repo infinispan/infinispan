@@ -109,8 +109,8 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
    }
 
    @Override
-   public <K> CloseableIterator<EntityEntry<K, T>> entryIterator() {
-      return new MappingIterator(getOrCreateIndexedQuery(true).entryIterator(), null);
+   public <K> CloseableIterator<EntityEntry<K, T>> entryIterator(boolean withMetadata) {
+      return new MappingIterator(getOrCreateIndexedQuery(true).entryIterator(withMetadata), null);
    }
 
    @Override
