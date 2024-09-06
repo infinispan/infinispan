@@ -58,8 +58,9 @@ public class ChannelCloseAndInactiveTest extends AbstractRetryTest {
       eventually(() -> firstChannelRef.get() != null);
       Channel firstChannel = firstChannelRef.get();
 
+      // Eventually the Noop operation is registered.
       HeaderDecoder firstDecoder = ((HeaderDecoder) firstChannel.pipeline().get(HeaderDecoder.NAME));
-      assertThat(firstDecoder.registeredOperations()).isOne();
+      eventually(() -> firstDecoder.registeredOperations() == 1);
 
       // The first channel does not return to the pool. We submit the second operation to create a new channel.
       CrashMidOperationTest.NoopRetryingOperation secondOperation = new CrashMidOperationTest.NoopRetryingOperation(1, channelFactory, remoteCacheManager.getConfiguration(),
