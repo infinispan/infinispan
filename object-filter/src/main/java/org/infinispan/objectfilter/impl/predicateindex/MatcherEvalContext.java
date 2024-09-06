@@ -33,7 +33,7 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
 
    private final Object instance;
 
-   protected Object metadata;
+   protected final Object metadata;
 
    private final Object eventType;
 

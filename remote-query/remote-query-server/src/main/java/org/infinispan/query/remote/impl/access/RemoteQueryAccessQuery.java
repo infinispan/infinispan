@@ -122,7 +122,7 @@ public class RemoteQueryAccessQuery<T> implements Query<T> {
    }
 
    @Override
-   public <K> CloseableIterator<EntityEntry<K, T>> entryIterator() {
+   public <K> CloseableIterator<EntityEntry<K, T>> entryIterator(boolean withMetadata) {
       throw new UnsupportedOperationException("Not implemented!");
    }
 

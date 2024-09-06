@@ -79,8 +79,10 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
 
       long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
 
-      try (CloseableIterator<EntityEntry<Object, S>> entryIterator = baseQuery.startOffset(0).maxResults(-1).local(local).entryIterator()) {
-         Iterator<ObjectFilter.FilterResult> it = new MappingIterator<>(entryIterator, e -> objectFilter.filter(e.key(), e.value()));
+      try (CloseableIterator<EntityEntry<Object, S>> entryIterator =
+                 baseQuery.startOffset(0).maxResults(-1).local(local).entryIterator(false)) {
+         Iterator<ObjectFilter.FilterResult> it =
+               new MappingIterator<>(entryIterator, e -> objectFilter.filter(e.key(), e.value(), null));
          int count = 0;
          while (it.hasNext()) {
             ObjectFilter.FilterResult fr = it.next();

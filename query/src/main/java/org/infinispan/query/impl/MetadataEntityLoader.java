@@ -2,8 +2,6 @@ package org.infinispan.query.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -12,9 +10,7 @@ import java.util.Set;
 import org.hibernate.search.engine.common.timing.Deadline;
 import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionEntityLoader;
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.encoding.DataConversion;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 
 /**
@@ -26,22 +22,24 @@ public final class MetadataEntityLoader<E> implements PojoSelectionEntityLoader<
 
    private final AdvancedCache<?, E> cache;
    private final LocalQueryStatistics queryStatistics;
+   private final QueryKeyConverter queryKeyConverter;
 
    MetadataEntityLoader(AdvancedCache<?, E> cache, LocalQueryStatistics queryStatistics) {
       this.cache = cache;
       this.queryStatistics = queryStatistics;
+      queryKeyConverter = new QueryKeyConverter(cache);
    }
 
    @Override
    public List<EntityLoaded<E>> loadBlocking(List<?> identifiers, Deadline deadline) {
       if (identifiers.isEmpty()) return Collections.emptyList();
 
-      Set<Object> keys = convertKeys(identifiers);
+      Set<Object> keys = queryKeyConverter.convertKeys(identifiers);
       long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
 
       // getAll instead of multiple gets to get all the results in the same call
       Map<?, ? extends CacheEntry<?, E>> entries = cache.getAllCacheEntries(keys);
-      Map<?, ? extends CacheEntry<?, E>> values = convertEntries(entries);
+      Map<?, ? extends CacheEntry<?, E>> values = queryKeyConverter.convertEntries(entries);
 
       if (queryStatistics.isEnabled()) queryStatistics.entityLoaded(System.nanoTime() - start);
 
@@ -59,35 +57,6 @@ public final class MetadataEntityLoader<E> implements PojoSelectionEntityLoader<
       }
 
       return result;
-   }
-
-   private Set<Object> convertKeys(List<?> identifiers) {
-      DataConversion keyDataConversion = cache.getKeyDataConversion();
-      LinkedHashSet<Object> keys = new LinkedHashSet<>(identifiers.size());
-      for (Object identifier : identifiers) {
-         Object key = (useStorageEncoding()) ?
-               keyDataConversion.toStorage(identifier) :
-               keyDataConversion.fromStorage(identifier);
-         keys.add(key);
-      }
-      return keys;
-   }
-
-   private <V> Map<?, V> convertEntries(Map<?, V> entries) {
-      if (!useStorageEncoding()) {
-         return entries;
-      }
-
-      DataConversion keyDataConversion = cache.getKeyDataConversion();
-      LinkedHashMap<Object, V> converted = new LinkedHashMap<>();
-      for (Map.Entry<?, V> entry : entries.entrySet()) {
-         converted.put(keyDataConversion.toStorage(entry.getKey()), entry.getValue());
-      }
-      return converted;
-   }
-
-   private boolean useStorageEncoding() {
-      return MediaType.APPLICATION_PROTOSTREAM.equals(cache.getKeyDataConversion().getRequestMediaType());
    }
 
    @Override
