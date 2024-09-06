@@ -59,25 +59,13 @@ public interface ObjectFilter {
    Comparator<Comparable<?>[]> getComparator();
 
    /**
-    * Tests if an object matches the filter. A shorthand for {@code filter(null, value)}.
+    * Tests if an object matches the filter. A shorthand for {@code filter(null, value, null)}.
     *
     * @param value the instance to test; this is never {@code null}
     * @return a {@link FilterResult} if there is a match or {@code null} otherwise
     */
    default FilterResult filter(Object value) {
-      return filter(null, value);
-   }
-
-   /**
-    * Tests if an object matches the filter. The given key is optional (can be null) and will be returned to
-    * the user in the {@link FilterResult}.
-    *
-    * @param key   the (optional) key; this can be {@code null} if it is of no interest
-    * @param value the instance to test; this is never {@code null}
-    * @return a {@link FilterResult} if there is a match or {@code null} otherwise
-    */
-   default FilterResult filter(Object key, Object value) {
-      return filter(key, value, null);
+      return filter(null, value, null);
    }
 
    /**
