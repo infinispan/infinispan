@@ -39,6 +39,7 @@ import org.infinispan.configuration.cache.CustomStoreConfiguration;
 import org.infinispan.configuration.cache.GroupsConfiguration;
 import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.configuration.cache.IndexMergeConfiguration;
+import org.infinispan.configuration.cache.IndexReaderConfiguration;
 import org.infinispan.configuration.cache.IndexWriterConfiguration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
@@ -703,10 +704,12 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          attributes.write(writer, IndexingConfiguration.PATH, Attribute.PATH);
          attributes.write(writer, IndexingConfiguration.INDEXING_MODE, Attribute.INDEXING_MODE);
          attributes.write(writer, IndexingConfiguration.USE_JAVA_EMBEDDED_ENTITIES, Attribute.USE_JAVA_EMBEDDED_ENTITIES);
-         long refreshInterval = indexing.reader().getRefreshInterval();
-         if (refreshInterval != 0) {
+         Long refreshInterval = indexing.reader().getRefreshInterval();
+         if (refreshInterval != null) {
+            IndexReaderConfiguration indexReader = indexing.reader();
+            AttributeSet readerAttributes = indexReader.attributes();
             writer.writeStartElement(Element.INDEX_READER);
-            writer.writeAttribute(Attribute.REFRESH_INTERVAL, Long.toString(refreshInterval));
+            readerAttributes.write(writer, IndexReaderConfiguration.REFRESH_INTERVAL, Attribute.REFRESH_INTERVAL);
             writer.writeEndElement();
          }
          Integer shards = indexing.sharding().getShards();
