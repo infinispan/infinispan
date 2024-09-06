@@ -57,7 +57,7 @@ public class IndexWriterConfiguration extends ConfigurationElement<IndexWriterCo
 
    public Integer getCommitInterval() {
       // Preserve backwards compatibility, but potentially lose resolution
-      return (int) attributes.attribute(INDEX_COMMIT_INTERVAL).get().longValue();
+      return attributes.attribute(INDEX_COMMIT_INTERVAL).get().intValue();
    }
 
    public Integer getRamBufferSize() {

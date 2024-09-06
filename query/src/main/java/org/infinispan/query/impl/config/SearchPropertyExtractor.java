@@ -80,8 +80,8 @@ public class SearchPropertyExtractor {
          props.put(DIRECTORY_ROOT_KEY, location.toFile().getPath());
       }
       IndexReaderConfiguration readerConfiguration = configuration.reader();
-      long refreshInterval = readerConfiguration.getRefreshInterval();
-      if (refreshInterval != 0) {
+      Long refreshInterval = readerConfiguration.getRefreshInterval();
+      if (refreshInterval != null) {
          props.put(REFRESH_INTERVAL_KEY, refreshInterval);
       }
 

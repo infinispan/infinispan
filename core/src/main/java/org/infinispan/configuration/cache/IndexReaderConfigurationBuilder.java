@@ -6,6 +6,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 
 /**
  * @since 12.0
@@ -14,7 +15,7 @@ public class IndexReaderConfigurationBuilder extends AbstractIndexingConfigurati
       implements Builder<IndexReaderConfiguration> {
 
    private final AttributeSet attributes;
-   private final Attribute<Long> refreshInterval;
+   private final Attribute<TimeQuantity> refreshInterval;
 
    IndexReaderConfigurationBuilder(IndexingConfigurationBuilder builder) {
       super(builder);
@@ -27,8 +28,13 @@ public class IndexReaderConfigurationBuilder extends AbstractIndexingConfigurati
       return attributes;
    }
 
-   public IndexReaderConfigurationBuilder refreshInterval(long valueMillis) {
-      refreshInterval.set(valueMillis);
+   public IndexReaderConfigurationBuilder refreshInterval(int value) {
+      refreshInterval.set(TimeQuantity.valueOf(value));
+      return this;
+   }
+
+   public IndexReaderConfigurationBuilder refreshInterval(long value) {
+      refreshInterval.set(TimeQuantity.valueOf(value));
       return this;
    }
 
