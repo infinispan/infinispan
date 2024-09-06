@@ -31,7 +31,7 @@ public final class ReflectionMatcherEvalContext extends MatcherEvalContext<Class
          } else {
             ReflectionHelper.PropertyAccessor accessor = childAttribute.getMetadata();
             if (accessor == null) {
-               Object attributeValue = node.cacheMetadataProjection(key, metadata, childAttribute.getAttribute());
+               Object attributeValue = node.cacheMetadataProjection(key, instance, metadata, childAttribute.getAttribute());
                if (attributeValue != null) {
                   processAttribute(childAttribute, attributeValue);
                }
