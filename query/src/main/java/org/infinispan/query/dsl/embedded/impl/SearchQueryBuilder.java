@@ -60,12 +60,12 @@ public final class SearchQueryBuilder {
    }
 
    public LuceneSearchQuery<?> build() {
-      return (aggregation == null) ? build(projectionInfo.getProjection()) :
+      return (aggregation == null) ? build(projectionInfo.getProjection(), false) :
             buildWithAggregation(projectionInfo.getProjection(), aggregation);
    }
 
    public LuceneSearchQuery<Object> ids() {
-      return build(scope.projection().id().toProjection());
+      return build(scope.projection().id().toProjection(), false);
    }
 
    public LuceneSearchQuery<List<Object>> idAndScore() {
@@ -74,26 +74,26 @@ public final class SearchQueryBuilder {
             projectionFactory.id().toProjection(),
             projectionFactory.score().toProjection()
       };
-      return build((SearchProjection<List<Object>>) SearchProjectionInfo.composite(projectionFactory, searchProjections).getProjection());
+      return build((SearchProjection<List<Object>>) SearchProjectionInfo.composite(projectionFactory, searchProjections).getProjection(), false);
    }
 
-   public LuceneSearchQuery<List<Object>> keyAndEntity() {
+   public LuceneSearchQuery<List<Object>> keyAndEntity(boolean withMetadata) {
       SearchProjectionFactory<EntityReference, ?> projectionFactory = scope.projection();
       SearchProjection<?>[] searchProjections = new SearchProjection<?>[]{
             projectionFactory.entityReference().toProjection(),
             projectionFactory.entity().toProjection()
       };
-      return build((SearchProjection<List<Object>>) SearchProjectionInfo.composite(projectionFactory, searchProjections).getProjection());
+      return build((SearchProjection<List<Object>>) SearchProjectionInfo.composite(projectionFactory, searchProjections).getProjection(), withMetadata);
    }
 
-   public LuceneSearchQuery<List<Object>> keyEntityAndScore() {
+   public LuceneSearchQuery<List<Object>> keyEntityAndScore(boolean withMetadata) {
       SearchProjectionFactory<EntityReference, ?> projectionFactory = scope.projection();
       SearchProjection<?>[] searchProjections = new SearchProjection<?>[]{
             projectionFactory.entityReference().toProjection(),
             projectionFactory.entity().toProjection(),
             projectionFactory.score().toProjection()
       };
-      return build((SearchProjection<List<Object>>) SearchProjectionInfo.composite(projectionFactory, searchProjections).getProjection());
+      return build((SearchProjection<List<Object>>) SearchProjectionInfo.composite(projectionFactory, searchProjections).getProjection(), withMetadata);
    }
 
    public void routeOnSegments(BitSet segments) {
@@ -125,7 +125,7 @@ public final class SearchQueryBuilder {
       return aggregation;
    }
 
-   private <T> LuceneSearchQuery<T> build(SearchProjection<T> searchProjection) {
+   private <T> LuceneSearchQuery<T> build(SearchProjection<T> searchProjection, boolean withMetadata) {
       LuceneSearchQueryOptionsStep<T, InfinispanSelectionLoadingOptionsStep> queryOptionsStep =
             (LuceneSearchQueryOptionsStep<T, InfinispanSelectionLoadingOptionsStep>) querySession.search(scope)
             .extension(LuceneExtension.get())
@@ -138,8 +138,7 @@ public final class SearchQueryBuilder {
          queryOptionsStep = queryOptionsStep.failAfter(timeout, timeUnit);
       }
       queryOptionsStep = queryOptionsStep.totalHitCountThreshold(hitCountAccuracy);
-      // TODO ISPN-16489 Differentiate the entity loading here
-      queryOptionsStep.loading(l -> l.withMetadata(false));
+      queryOptionsStep.loading(l -> l.withMetadata(withMetadata));
 
       return queryOptionsStep.toQuery();
    }

@@ -107,7 +107,7 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
    }
 
    @Override
-   public <K> CloseableIterator<EntityEntry<K, E>> entryIterator() {
+   public <K> CloseableIterator<EntityEntry<K, E>> entryIterator(boolean withMetadata) {
       partitionHandlingSupport.checkCacheAvailable();
       queryDefinition.setMaxResults(getNodeMaxResults());
 
@@ -120,7 +120,7 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
       }
 
       return new DistributedEntryIterator<>(queryStatistics, queryDefinition.getSearchQueryBuilder().getLuceneSort(),
-            resultSize, maxResults, firstResult, topDocsResponses, cache);
+            resultSize, maxResults, firstResult, topDocsResponses, cache, withMetadata);
    }
 
    // number of results of each node of cluster

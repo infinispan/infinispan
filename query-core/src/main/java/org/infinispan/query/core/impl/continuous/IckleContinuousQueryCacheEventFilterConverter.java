@@ -114,8 +114,8 @@ public class IckleContinuousQueryCacheEventFilterConverter<K, V, C> extends Abst
       }
 
       ObjectFilter objectFilter = getObjectFilter();
-      ObjectFilter.FilterResult f1 = oldValue == null ? null : objectFilter.filter(key, oldValue);
-      ObjectFilter.FilterResult f2 = newValue == null ? null : objectFilter.filter(key, newValue);
+      ObjectFilter.FilterResult f1 = oldValue == null ? null : objectFilter.filter(key, oldValue, oldMetadata);
+      ObjectFilter.FilterResult f2 = newValue == null ? null : objectFilter.filter(key, newValue, newMetadata);
       if (f1 == null) {
          if (f2 != null) {
             // result joining

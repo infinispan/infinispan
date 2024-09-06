@@ -114,7 +114,19 @@ public interface Query<T> extends Iterable<T> {
     *
     * @return the results of the query as an iterator.
     */
-   <K> CloseableIterator<EntityEntry<K, T>> entryIterator();
+   default <K> CloseableIterator<EntityEntry<K, T>> entryIterator() {
+      return entryIterator(false);
+   }
+
+   /**
+    * Returns a {@link CloseableIterator} over the results, including both key and value. Close the iterator when
+    * you are done with processing the results. The query cannot use projections.
+    *
+    * @param withMetadata Whether the cache entry metadata needs to be retrieved
+    *
+    * @return the results of the query as an iterator.
+    */
+   <K> CloseableIterator<EntityEntry<K, T>> entryIterator(boolean withMetadata);
 
    /**
     * Set the timeout for this query. If the query hasn't finished processing before the timeout,
