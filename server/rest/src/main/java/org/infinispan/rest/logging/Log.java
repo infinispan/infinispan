@@ -21,6 +21,7 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.ValidIdRange;
 
 /**
  * Log abstraction for the REST server module. For this module, message ids ranging from 12001 to 13000 inclusively have
@@ -30,6 +31,7 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 5.0
  */
 @MessageLogger(projectCode = "ISPN")
+@ValidIdRange(min = 12001, max = 13000)
 public interface Log extends BasicLogger {
    Log REST = Logger.getMessageLogger(Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "REST");
 

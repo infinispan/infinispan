@@ -8,7 +8,7 @@ import org.hibernate.search.engine.reporting.EntityIndexingFailureContext;
 import org.hibernate.search.engine.reporting.FailureHandler;
 import org.hibernate.search.util.common.SearchException;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.query.logging.Log;
+import org.infinispan.query.core.impl.Log;
 import org.infinispan.search.mapper.common.impl.EntityReferenceImpl;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.util.logging.LogFactory;
@@ -74,7 +74,7 @@ class MassIndexerProgressNotifier {
       if (firstFailure == null) {
          return null;
       }
-      return log.massIndexingEntityFailures(entityIndexingFailureCount.longValue(), firstFailure.entityReference, firstFailure.throwable.getMessage(), firstFailure.throwable);
+      return new SearchException(log.massIndexingEntityFailures(entityIndexingFailureCount.longValue(), firstFailure.entityReference, firstFailure.throwable.getMessage()), firstFailure.throwable);
    }
 
    private static class RecordedEntityIndexingFailure {

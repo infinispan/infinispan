@@ -1,6 +1,6 @@
 package org.infinispan.query.backend;
 
-import static org.infinispan.query.logging.Log.CONTAINER;
+import static org.infinispan.query.core.impl.Log.CONTAINER;
 
 import java.util.Base64;
 import java.util.Map;

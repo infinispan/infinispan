@@ -8,15 +8,16 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.ValidIdRange;
 
 /**
- * Log abstraction for the Memcached server module. For this module, message ids
- * ranging from 11001 to 12000 inclusively have been reserved.
+ * Log abstraction for the Memcached server module.
  *
  * @author Galder Zamarreño
  * @since 5.0
  */
 @MessageLogger(projectCode = "ISPN")
+@ValidIdRange(min = 11001, max = 12000)
 public interface Log extends BasicLogger {
    Log SERVER = Logger.getMessageLogger(Log.class, "org.infinispan.SERVER");;
 

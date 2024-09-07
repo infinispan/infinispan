@@ -1,7 +1,7 @@
 package org.infinispan.server.router.configuration.builder;
 
 import org.infinispan.server.router.configuration.RestRouterConfiguration;
-import org.infinispan.server.router.logging.RouterLogger;
+import org.infinispan.server.router.logging.Log;
 
 /**
  * Configuration builder for REST.
@@ -27,7 +27,7 @@ public class RestRouterBuilder extends AbstractRouterBuilder {
             try {
                 validate();
             } catch (Exception e) {
-                throw RouterLogger.SERVER.configurationValidationError(e);
+                throw Log.SERVER.configurationValidationError(e);
             }
             return new RestRouterConfiguration(ip, port);
         }

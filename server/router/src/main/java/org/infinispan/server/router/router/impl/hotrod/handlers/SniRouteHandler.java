@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.infinispan.server.router.RoutingTable;
-import org.infinispan.server.router.logging.RouterLogger;
+import org.infinispan.server.router.logging.Log;
 import org.infinispan.server.router.routes.Route;
 import org.infinispan.server.router.routes.SniRouteSource;
 import org.infinispan.server.router.routes.hotrod.HotRodServerRouteDestination;
@@ -43,16 +43,16 @@ public class SniRouteHandler extends SniHandler {
         if (isHandShaked()) {
             // At this point Netty has replaced SNIHandler (formally this) with SSLHandler in the pipeline.
             // Now we need to add other handlers at the tail of the queue
-            RouterLogger.SERVER.debugf("Handshaked with hostname %s", hostname());
+            Log.SERVER.debugf("Handshaked with hostname %s", hostname());
             Optional<Route<SniRouteSource, HotRodServerRouteDestination>> route = routingTable.streamRoutes(SniRouteSource.class, HotRodServerRouteDestination.class)
                     .filter(r -> r.getRouteSource().getSniHostName().equals(this.hostname()))
                     .findAny();
 
-            HotRodServerRouteDestination routeDestination = route.orElseThrow(() -> RouterLogger.SERVER.noRouteFound()).getRouteDestination();
+            HotRodServerRouteDestination routeDestination = route.orElseThrow(() -> Log.SERVER.noRouteFound()).getRouteDestination();
             ChannelInitializer<Channel> channelInitializer = routeDestination.getProtocolServer().getInitializer();
 
             ctx.pipeline().addLast(channelInitializer);
-            RouterLogger.SERVER.debug("Replaced with route destination's handlers");
+            Log.SERVER.debug("Replaced with route destination's handlers");
         }
     }
 

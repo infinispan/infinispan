@@ -11,14 +11,14 @@ import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.ValidIdRange;
 
 /**
- * range: 29501 - 30000
- *
  * @author Pedro Ruivo
  * @since 9.0
  */
 @MessageLogger(projectCode = "ISPN")
+@ValidIdRange(min = 29501, max = 30000)
 public interface Log extends BasicLogger {
    String LOG_ROOT = "org.infinispan.";
    Log CONTAINER = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONTAINER");

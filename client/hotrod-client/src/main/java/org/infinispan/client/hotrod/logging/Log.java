@@ -31,17 +31,18 @@ import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Once;
 import org.jboss.logging.annotations.Param;
+import org.jboss.logging.annotations.ValidIdRange;
 
 import io.netty.channel.Channel;
 
 /**
- * Log abstraction for the hot rod client. For this module, message ids
- * ranging from 4001 to 5000 inclusively have been reserved.
+ * Log abstraction for the hot rod client.
  *
  * @author Galder Zamarreño
  * @since 5.0
  */
 @MessageLogger(projectCode = "ISPN")
+@ValidIdRange(min = 4001, max = 5000)
 public interface Log extends BasicLogger {
    String LOG_ROOT = "org.infinispan.";
    Log HOTROD = Logger.getMessageLogger(Log.class, LOG_ROOT + "HOTROD");
@@ -88,9 +89,9 @@ public interface Log extends BasicLogger {
    @Message(value = "New server added(%s), adding to the pool.", id = 4014)
    void newServerAdded(SocketAddress server);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Failed adding new server %s", id = 4015)
-   void failedAddingNewServer(SocketAddress server, @Cause Throwable e);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Failed adding new server %s", id = 4015)
+//   void failedAddingNewServer(SocketAddress server, @Cause Throwable e);
 
    @LogMessage(level = INFO)
    @Message(value = "Server not in cluster anymore(%s), removing from the pool.", id = 4016)

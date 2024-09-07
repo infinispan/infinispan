@@ -29,16 +29,18 @@ import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Param;
+import org.jboss.logging.annotations.ValidIdRange;
 
 import io.netty.channel.Channel;
 
+
 /**
- * Log abstraction for the hot rod client. For this module, message ids
- * ranging from 4001 to 5000 inclusively have been reserved.
+ * Log abstraction for the hot rod client.
  *
  * @since 14.0
  */
 @MessageLogger(projectCode = "ISPN")
+@ValidIdRange(min = 4001, max = 5000)
 public interface Log extends BasicLogger {
    String LOG_ROOT = "org.infinispan.";
    Log HOTROD = Logger.getMessageLogger(Log.class, LOG_ROOT + "HOTROD");

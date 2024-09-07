@@ -6,7 +6,7 @@ import java.net.InetSocketAddress;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.router.RoutingTable;
 import org.infinispan.server.router.configuration.RestRouterConfiguration;
-import org.infinispan.server.router.logging.RouterLogger;
+import org.infinispan.server.router.logging.Log;
 import org.infinispan.server.router.router.EndpointRouter;
 import org.infinispan.server.router.router.impl.rest.handlers.ChannelInboundHandlerDelegatorInitializer;
 
@@ -51,10 +51,10 @@ public class RestEndpointRouter implements EndpointRouter {
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
       } catch (Exception e) {
-         throw RouterLogger.SERVER.restRouterStartFailed(e);
+         throw Log.SERVER.restRouterStartFailed(e);
       }
 
-      RouterLogger.SERVER.debugf("REST EndpointRouter listening on %s:%d", ip, port);
+      Log.SERVER.debugf("REST EndpointRouter listening on %s:%d", ip, port);
    }
 
    @Override
@@ -65,7 +65,7 @@ public class RestEndpointRouter implements EndpointRouter {
          masterGroupShutdown.get();
          workerGroupShutdown.get();
       } catch (Exception e) {
-         RouterLogger.SERVER.errorWhileShuttingDown(e);
+         Log.SERVER.errorWhileShuttingDown(e);
       }
       port = null;
       ip = null;

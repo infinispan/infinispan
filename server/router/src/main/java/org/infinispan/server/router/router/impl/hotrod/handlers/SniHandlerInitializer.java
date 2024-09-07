@@ -3,7 +3,7 @@ package org.infinispan.server.router.router.impl.hotrod.handlers;
 import java.util.Optional;
 
 import org.infinispan.server.router.RoutingTable;
-import org.infinispan.server.router.logging.RouterLogger;
+import org.infinispan.server.router.logging.Log;
 import org.infinispan.server.router.router.impl.hotrod.handlers.util.SslUtils;
 import org.infinispan.server.router.routes.RouteDestination;
 import org.infinispan.server.router.routes.SniRouteSource;
@@ -42,7 +42,7 @@ public class SniHandlerInitializer extends ChannelInitializer<Channel> {
 
         Mapping<String, SslContext> domainNameMapping = domainMappingBuilder.build();
 
-        RouterLogger.SERVER.debugf("Using SNI Handler with domain mapping %s", domainNameMapping);
+        Log.SERVER.debugf("Using SNI Handler with domain mapping %s", domainNameMapping);
 
         channel.pipeline().addLast(new SniRouteHandler(domainNameMapping, routingTable));
     }

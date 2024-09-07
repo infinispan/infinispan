@@ -2,6 +2,7 @@ package org.infinispan.server.hotrod;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.util.CounterEncodeUtil.encodeConfiguration;
+import static org.infinispan.server.core.logging.Log.SERVER;
 import static org.infinispan.server.core.transport.VInt.write;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeString;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsignedInt;
@@ -603,7 +604,7 @@ class Encoder2x implements VersionedEncoder {
    private void writeTopologyUpdate(TopologyAwareResponse t, ByteBuf buffer, InetAddress localAddress) {
       Map<Address, ServerAddress> topologyMap = t.serverEndpointsMap;
       if (topologyMap.isEmpty()) {
-         log.noMembersInTopology();
+         SERVER.noMembersInTopology();
          buffer.writeByte(0); // Topology not changed
       } else {
          if (log.isTraceEnabled()) log.tracef("Write topology change response header %s", t);
@@ -636,7 +637,7 @@ class Encoder2x implements VersionedEncoder {
       }
 
       if (members.isEmpty()) {
-         log.noMembersInHashTopology(ch, h.serverEndpointsMap.toString());
+         SERVER.noMembersInHashTopology(ch, h.serverEndpointsMap.toString());
          buf.writeByte(0); // Topology not changed
       } else {
          if (log.isTraceEnabled()) log.tracef("Write hash distribution change response header %s", h);

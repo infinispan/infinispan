@@ -15,8 +15,7 @@ import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.ValidIdRange;
 
 /**
- * Log abstraction for the remote query module. For this module, message ids ranging from 28001 to 28500 inclusively
- * have been reserved.
+ * Log abstraction for the remote query module.
  *
  * @author anistor@redhat.com
  * @since 6.0

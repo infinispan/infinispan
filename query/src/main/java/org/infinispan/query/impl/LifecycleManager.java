@@ -1,7 +1,7 @@
 package org.infinispan.query.impl;
 
+import static org.infinispan.query.core.impl.Log.CONTAINER;
 import static org.infinispan.query.impl.config.SearchPropertyExtractor.extractProperties;
-import static org.infinispan.query.logging.Log.CONTAINER;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -85,6 +85,7 @@ import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.logging.Log;
 
 /**
  * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down at cache stop. Each cache
@@ -267,7 +268,7 @@ public class LifecycleManager implements ModuleLifecycle {
       for (String entityName : indexedEntities) {
          Class<?> indexedClass = Util.loadClass(entityName, classLoader);
          if (searchMapping.indexedEntity(indexedClass) == null) {
-            throw CONTAINER.classNotIndexable(entityName);
+            throw Log.CONTAINER.classNotIndexable(entityName);
          }
       }
    }

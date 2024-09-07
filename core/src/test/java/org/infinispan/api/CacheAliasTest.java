@@ -33,7 +33,7 @@ public class CacheAliasTest extends SingleCacheManagerTest {
    }
 
    public void testAliasConflict() {
-      Exceptions.expectException(CacheConfigurationException.class, "^ISPN000975:.*", () ->
+      Exceptions.expectException(CacheConfigurationException.class, "^ISPN000702:.*", () ->
             cacheManager.defineConfiguration("cacheC", new ConfigurationBuilder().aliases("0").build())
       );
    }

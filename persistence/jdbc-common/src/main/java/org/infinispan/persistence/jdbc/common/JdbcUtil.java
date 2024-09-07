@@ -13,6 +13,7 @@ import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.marshall.StreamAwareMarshaller;
+import org.infinispan.util.logging.Log;
 
 /**
  * Contains common methods used by JDBC CacheStores.
@@ -57,7 +58,7 @@ public class JdbcUtil {
          Thread.currentThread().interrupt();
          throw new MarshallingException(e);
       } catch (IOException e) {
-         PERSISTENCE.errorMarshallingObject(e, obj);
+         Log.PERSISTENCE.errorMarshallingObject(e, obj);
          throw new MarshallingException("I/O failure while marshalling object: " + obj, e);
       }
    }

@@ -11,8 +11,7 @@ import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.ValidIdRange;
 
 /**
- * Log abstraction for the search mapper module. For this module, message ids ranging from 14501 to 14800 inclusively
- * have been reserved.
+ * Log abstraction for the search mapper module.
  *
  * @since 12.0
  */

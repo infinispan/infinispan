@@ -18,22 +18,19 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.ValidIdRange;
 
 /**
- * Log abstraction for the JDBC cache store. For this module, message ids
- * ranging from 8001 to 9000 inclusively have been reserved.
+ * Log abstraction for the JDBC cache store.
  *
  * @author Galder Zamarreño
  * @since 5.0
  */
 @MessageLogger(projectCode = "ISPN")
+@ValidIdRange(min = 8001, max = 9000)
 public interface Log extends BasicLogger {
    Log CONFIG = Logger.getMessageLogger(Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "CONFIG");
    Log PERSISTENCE = Logger.getMessageLogger(Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "PERSISTENCE");
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Exception while marshalling object: %s", id = 65)
-   void errorMarshallingObject(@Cause Throwable ioe, Object obj);
 
    @LogMessage(level = ERROR)
    @Message(value = "Failed clearing cache store", id = 8001)
@@ -43,9 +40,9 @@ public interface Log extends BasicLogger {
 //   @Message(value = "I/O failure while integrating state into store", id = 8002)
 //   void ioErrorIntegratingState(@Cause IOException e);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "SQL failure while integrating state into store", id = 8003)
-   void sqlFailureIntegratingState(@Cause SQLException e);
+//   @LogMessage(level = ERROR)
+//   @Message(value = "SQL failure while integrating state into store", id = 8003)
+//   void sqlFailureIntegratingState(@Cause SQLException e);
 
 //   @LogMessage(level = ERROR)
 //   @Message(value = "Class not found while integrating state into store", id = 8004)

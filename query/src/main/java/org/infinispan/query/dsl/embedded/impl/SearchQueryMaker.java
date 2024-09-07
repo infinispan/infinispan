@@ -1,9 +1,9 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import static org.infinispan.query.core.impl.Log.CONTAINER;
 import static org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper.KEY;
-import static org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper.VALUE;
 import static org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper.SCORE;
-import static org.infinispan.query.logging.Log.CONTAINER;
+import static org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper.VALUE;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -21,6 +21,7 @@ import org.hibernate.search.backend.lucene.search.predicate.dsl.LuceneSearchPred
 import org.hibernate.search.engine.backend.common.spi.FieldPaths;
 import org.hibernate.search.engine.backend.metamodel.IndexFieldDescriptor;
 import org.hibernate.search.engine.backend.metamodel.IndexValueFieldDescriptor;
+import org.hibernate.search.engine.common.EntityReference;
 import org.hibernate.search.engine.search.aggregation.SearchAggregation;
 import org.hibernate.search.engine.search.predicate.SearchPredicate;
 import org.hibernate.search.engine.search.predicate.dsl.BooleanPredicateClausesStep;
@@ -69,8 +70,7 @@ import org.infinispan.objectfilter.impl.syntax.parser.AggregationPropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.CacheValueAggregationPropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
-import org.infinispan.query.logging.Log;
-import org.hibernate.search.engine.common.EntityReference;
+import org.infinispan.query.core.impl.Log;
 import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.scope.SearchScope;

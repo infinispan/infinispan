@@ -408,7 +408,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       );
 
       InputStream is = new ByteArrayInputStream(config.getBytes());
-      expectException(CacheConfigurationException.class, "ISPN000972:.*", () -> TestCacheManagerFactory.parseStream(is, false));
+      expectException(CacheConfigurationException.class, "ISPN000699:.*", () -> TestCacheManagerFactory.parseStream(is, false));
    }
 
    public void testNodeNameNotInRaftMembers() {

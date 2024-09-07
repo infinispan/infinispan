@@ -10,7 +10,7 @@ import javax.cache.event.CacheEntryListenerException;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.jcache.AbstractJCacheNotifier;
-import org.infinispan.jcache.remote.logging.Log;
+import org.infinispan.jcache.logging.Log;
 
 public class RemoteCacheWithSyncListeners<K, V> extends RemoteCacheWrapper<K, V> {
    private static final boolean DONT_EXPECT_EVENT_ON_NULL_RESULT = false;

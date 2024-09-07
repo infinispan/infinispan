@@ -68,7 +68,7 @@ public class SingleServerRemoteIteratorTest extends SingleHotRodServerTest {
       }
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN006016.*")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN005060.*")
    public void testEmptyFilter() {
       try (CloseableIterator<Entry<Object, Object>> iterator = remoteCacheManager.getCache().retrieveEntries("", null, 100)) {
          assertFalse(iterator.hasNext());

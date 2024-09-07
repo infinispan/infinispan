@@ -13,7 +13,7 @@ import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.logging.Log;
+import org.infinispan.query.core.impl.Log;
 import org.infinispan.query.model.TypeA;
 import org.infinispan.query.model.TypeB;
 import org.infinispan.query.model.TypeC;

@@ -5,11 +5,10 @@ import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.ValidIdRange;
 
-/**
- * This module reserves range 30001 - 30500
- */
 @MessageLogger(projectCode = "ISPN")
+@ValidIdRange(min = 30001, max = 30500)
 public interface Log extends BasicLogger {
    Log CONFIG = Logger.getMessageLogger(Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "CONFIG");
 
