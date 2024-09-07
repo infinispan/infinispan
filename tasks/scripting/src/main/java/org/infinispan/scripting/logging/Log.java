@@ -5,15 +5,16 @@ import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.ValidIdRange;
 
 /**
- * Log abstraction for the Scripting module. For this module, message ids ranging from 27501 to
- * 28000 inclusively have been reserved.
+ * Log abstraction for the Scripting module.
  *
  * @author Tristan Tarrant
  * @since 7.2
  */
 @MessageLogger(projectCode = "ISPN")
+@ValidIdRange(min = 27501, max = 28000)
 public interface Log extends BasicLogger {
 //   @LogMessage(level = ERROR)
 //   @Message(value = "Could not register interpreter MBean", id = 27501)

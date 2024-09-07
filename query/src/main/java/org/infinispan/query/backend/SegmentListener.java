@@ -10,7 +10,7 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
-import org.infinispan.query.logging.Log;
+import org.infinispan.query.core.impl.Log;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.LogFactory;

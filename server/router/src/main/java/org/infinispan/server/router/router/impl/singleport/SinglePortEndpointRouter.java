@@ -16,7 +16,7 @@ import org.infinispan.server.core.transport.NettyInitializers;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.router.RoutingTable;
 import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
-import org.infinispan.server.router.logging.RouterLogger;
+import org.infinispan.server.router.logging.Log;
 import org.infinispan.server.router.router.EndpointRouter;
 import org.infinispan.server.router.routes.hotrod.HotRodServerRouteDestination;
 import org.infinispan.server.router.routes.memcached.MemcachedServerRouteDestination;
@@ -65,7 +65,7 @@ public class SinglePortEndpointRouter extends AbstractProtocolServer<SinglePortR
          throw re;
       }
       registerMetrics();
-      RouterLogger.SERVER.debugf("REST EndpointRouter listening on %s:%d", transport.getHostName(), transport.getPort());
+      Log.SERVER.debugf("REST EndpointRouter listening on %s:%d", transport.getHostName(), transport.getPort());
    }
 
    @Override

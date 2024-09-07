@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.query.logging.Log;
+import org.infinispan.query.core.impl.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**

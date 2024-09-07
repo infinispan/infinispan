@@ -32,6 +32,8 @@ import javax.management.MBeanServer;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ExpirationConfiguration;
 import org.infinispan.context.Flag;
@@ -58,12 +60,10 @@ import org.infinispan.jcache.embedded.functions.Remove;
 import org.infinispan.jcache.embedded.functions.RemoveConditionally;
 import org.infinispan.jcache.embedded.functions.Replace;
 import org.infinispan.jcache.embedded.functions.ReplaceConditionally;
-import org.infinispan.jcache.embedded.logging.Log;
+import org.infinispan.jcache.logging.Log;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -79,7 +79,6 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
          LogFactory.getLog(JCache.class, Log.class);
 
    private final AdvancedCache<K, V> cache;
-   private final AdvancedCache<K, V> skipCacheLoadCache;
    private final AdvancedCache<K, V> skipCacheLoadAndStatsCache;
    private final AdvancedCache<K, V> skipListenerCache;
    private final ReadWriteMap<K, V> rwMap;
@@ -90,7 +89,6 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    public JCache(AdvancedCache<K, V> cache, CacheManager cacheManager, ConfigurationAdapter<K, V> c) {
       super(adjustConfiguration(c.getConfiguration(), cache), cacheManager, new JCacheNotifier<>());
       this.cache = cache;
-      this.skipCacheLoadCache = cache.withFlags(Flag.SKIP_CACHE_LOAD);
       this.skipCacheLoadAndStatsCache = cache.withFlags(Flag.SKIP_CACHE_LOAD, Flag.SKIP_STATISTICS);
       // Typical use cases of the SKIP_LISTENER_NOTIFICATION is when trying
       // to comply with specifications such as JSR-107, which mandate that

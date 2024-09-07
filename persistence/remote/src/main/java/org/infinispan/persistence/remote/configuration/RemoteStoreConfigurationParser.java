@@ -1,7 +1,7 @@
 package org.infinispan.persistence.remote.configuration;
 
+import static org.infinispan.configuration.parsing.ParseUtils.ignoreAttribute;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationParser.NAMESPACE;
-import static org.infinispan.persistence.remote.logging.Log.CONFIG;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
@@ -400,7 +400,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
                builder.port(Integer.parseInt(value));
                break;
             case OUTBOUND_SOCKET_BINDING:
-               CONFIG.ignoreXmlAttribute(attribute);
+               ignoreAttribute(reader, i);
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);

@@ -10,7 +10,7 @@ import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfigurationBuilder;
 import org.infinispan.server.router.configuration.HotRodRouterConfiguration;
 import org.infinispan.server.router.configuration.SinglePortRouterConfiguration;
-import org.infinispan.server.router.logging.RouterLogger;
+import org.infinispan.server.router.logging.Log;
 
 /**
  * Configuration builder for Single Port.
@@ -41,7 +41,7 @@ public class SinglePortRouterBuilder extends AbstractRouterBuilder {
             try {
                 validate();
             } catch (Exception e) {
-                throw RouterLogger.SERVER.configurationValidationError(e);
+                throw Log.SERVER.configurationValidationError(e);
             }
             SslConfigurationBuilder sslConfigurationBuilder = new SslConfigurationBuilder(null);
             if (sslContext != null) {

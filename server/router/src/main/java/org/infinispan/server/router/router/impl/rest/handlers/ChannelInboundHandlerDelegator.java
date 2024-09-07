@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import org.infinispan.rest.RestRequestHandler;
 import org.infinispan.server.router.RoutingTable;
-import org.infinispan.server.router.logging.RouterLogger;
+import org.infinispan.server.router.logging.Log;
 import org.infinispan.server.router.routes.PrefixedRouteSource;
 import org.infinispan.server.router.routes.Route;
 import org.infinispan.server.router.routes.rest.RestServerRouteDestination;
@@ -30,16 +30,16 @@ public class ChannelInboundHandlerDelegator extends SimpleChannelInboundHandler<
       String[] uriSplitted = msg.uri().split("/");
       //we are paring something like this: /rest/<context or prefix>/...
       if (uriSplitted.length < 2) {
-         throw RouterLogger.SERVER.noRouteFound();
+         throw Log.SERVER.noRouteFound();
       }
       String context = uriSplitted[2];
 
-      RouterLogger.SERVER.debugf("Decoded context %s", context);
+      Log.SERVER.debugf("Decoded context %s", context);
       Optional<Route<PrefixedRouteSource, RestServerRouteDestination>> route = routingTable.streamRoutes(PrefixedRouteSource.class, RestServerRouteDestination.class)
             .filter(r -> r.getRouteSource().getRoutePrefix().equals(context))
             .findAny();
 
-      RestServerRouteDestination routeDestination = route.orElseThrow(RouterLogger.SERVER::noRouteFound).getRouteDestination();
+      RestServerRouteDestination routeDestination = route.orElseThrow(Log.SERVER::noRouteFound).getRouteDestination();
       RestRequestHandler restHandler = (RestRequestHandler) routeDestination.getProtocolServer().getRestChannelInitializer().getRestHandler();
 
       //before passing it to REST Handler, we need to replace path. The handler should not be aware of additional context

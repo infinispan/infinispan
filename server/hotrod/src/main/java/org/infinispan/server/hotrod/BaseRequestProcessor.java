@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod;
 
 import static java.lang.String.format;
+import static org.infinispan.server.core.logging.Log.SERVER;
 
 import java.io.IOException;
 import java.util.LinkedHashSet;
@@ -47,15 +48,15 @@ public class BaseRequestProcessor {
       String msg = cause.toString();
       OperationStatus status;
       if (cause instanceof InvalidMagicIdException) {
-         log.exceptionReported(cause);
+         SERVER.exceptionReported(cause);
          status = OperationStatus.InvalidMagicOrMsgId;
       } else if (cause instanceof HotRodUnknownOperationException) {
-         log.exceptionReported(cause);
+         SERVER.exceptionReported(cause);
          HotRodUnknownOperationException hruoe = (HotRodUnknownOperationException) cause;
          header = hruoe.toHeader();
          status = OperationStatus.UnknownOperation;
       } else if (cause instanceof UnknownVersionException) {
-         log.exceptionReported(cause);
+         SERVER.exceptionReported(cause);
          UnknownVersionException uve = (UnknownVersionException) cause;
          header = uve.toHeader();
          status = OperationStatus.UnknownVersion;
@@ -63,7 +64,7 @@ public class BaseRequestProcessor {
          if (cause instanceof CacheNotFoundException)
             log.debug(cause.getMessage());
          else
-            log.exceptionReported(cause);
+            SERVER.exceptionReported(cause);
 
          msg = cause.getCause() == null ? cause.toString() : format("%s: %s", cause.getMessage(), cause.getCause().toString());
          RequestParsingException rpe = (RequestParsingException) cause;
@@ -78,7 +79,7 @@ public class BaseRequestProcessor {
             log.trace("Exception reported", cause);
          } else {
             // Some internal server code could throw this, so make sure it's logged
-            log.exceptionReported(cause);
+            SERVER.exceptionReported(cause);
          }
          if (header != null) {
             status = header.encoder().errorStatus(cause);
@@ -88,11 +89,11 @@ public class BaseRequestProcessor {
          }
       } else if (header != null) {
          if (cause instanceof MissingMembersException) log.warn(cause.getMessage());
-         else log.exceptionReported(cause);
+         else SERVER.exceptionReported(cause);
          status = header.encoder().errorStatus(cause);
          msg = createErrorMsg(cause);
       } else {
-         log.exceptionReported(cause);
+         SERVER.exceptionReported(cause);
          status = OperationStatus.ServerError;
       }
       if (header == null) {

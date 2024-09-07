@@ -18,7 +18,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.query.SearchTimeoutException;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
-import org.infinispan.query.logging.Log;
+import org.infinispan.query.core.impl.Log;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;

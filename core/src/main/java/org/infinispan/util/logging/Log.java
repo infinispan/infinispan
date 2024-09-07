@@ -66,6 +66,7 @@ import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Once;
 import org.jboss.logging.annotations.Param;
+import org.jboss.logging.annotations.ValidIdRange;
 import org.jgroups.View;
 
 import jakarta.transaction.TransactionManager;
@@ -104,6 +105,7 @@ import jakarta.transaction.TransactionManager;
  * @since 4.0
  */
 @MessageLogger(projectCode = "ISPN")
+@ValidIdRange(min = 1, max = 900)
 public interface Log extends BasicLogger {
    String LOG_ROOT = "org.infinispan.";
    Log CONFIG = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONFIG");
@@ -306,9 +308,9 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Problems creating the directory: %s", id = 64)
 //   void problemsCreatingDirectory(File dir);
 
-//   @LogMessage(level = ERROR)
-//   @Message(value = "Exception while marshalling object: %s", id = 65)
-//   void errorMarshallingObject(@Cause Throwable ioe, Object obj);
+     @LogMessage(level = ERROR)
+     @Message(value = "Exception while marshalling object: %s", id = 65)
+     void errorMarshallingObject(@Cause Throwable ioe, Object obj);
 
 //   @LogMessage(level = ERROR)
 //   @Message(value = "Unable to read version id from first two bytes of stream, barfing.", id = 66)
@@ -1413,8 +1415,8 @@ public interface Log extends BasicLogger {
          "classes or protobuf message types annotated with '@Indexed'", id = 403)
    CacheConfigurationException noIndexableClassesDefined();
 
-//   @Message(value = "The configured entity class %s is not indexable. Please remove it from the indexing configuration.", id = 404)
-//   CacheConfigurationException classNotIndexable(String className);
+   @Message(value = "The configured entity class %s is not indexable. Please remove it from the indexing configuration.", id = 404)
+   CacheConfigurationException classNotIndexable(String className);
 
    @LogMessage(level = ERROR)
    @Message(value = "Caught exception while invoking a cache manager listener!", id = 405)
@@ -2368,30 +2370,30 @@ public interface Log extends BasicLogger {
    @Message(value = "Query module not found. Add infinispan-query or infinispan-query-core to the classpath.", id = 695)
    CacheException queryNotSupported();
 
-   @Message(value = "Simple caches do not support queries. Use standard caches for querying.", id = 969)
+   @Message(value = "Simple caches do not support queries. Use standard caches for querying.", id = 696)
    CacheException querySimpleCacheNotSupported();
 
    @LogMessage(level = WARN)
-   @Message(value = "Failed to register metrics with id %s. Reason: %s", id = 970)
+   @Message(value = "Failed to register metrics with id %s. Reason: %s", id = 697)
    void metricRegistrationFailed(String id, String reason);
 
-   @Message(value = "Cannot handle cross-site request from site '%s'. CacheManager isn't started yet.", id = 971)
+   @Message(value = "Cannot handle cross-site request from site '%s'. CacheManager isn't started yet.", id = 698)
    CrossSiteIllegalLifecycleStateException xsiteCacheManagerDoesNotAllowInvocations(String origin);
 
-   @Message(value = "Tracing collector endpoint '%s' is not valid.", id = 972)
+   @Message(value = "Tracing collector endpoint '%s' is not valid.", id = 699)
    CacheConfigurationException invalidTracingCollectorEndpoint(String collectorEndpoint, @Cause Throwable e);
 
-   @Message(value = "Cannot use id %d for commands, as it is already in use by %s", id = 973)
+   @Message(value = "Cannot use id %d for commands, as it is already in use by %s", id = 700)
    IllegalArgumentException commandIdAlreadyInUse(byte id, String name);
 
-   @Message(value = "Security container cannot be enabled/disabled at cache level, since it is configured globally.", id = 974)
+   @Message(value = "Security container cannot be enabled/disabled at cache level, since it is configured globally.", id = 701)
    CacheConfigurationException securityCacheTracing();
 
-   @Message(value = "The alias '%s' is already being used by cache '%s'", id = 975)
+   @Message(value = "The alias '%s' is already being used by cache '%s'", id = 702)
    CacheConfigurationException duplicateAliasName(String alias, String cacheName);
 
    @LogMessage(level = INFO)
-   @Message(value = "Received new cross-site event, site(s) %s: %s", id = 976)
+   @Message(value = "Received new cross-site event, site(s) %s: %s", id = 703)
    @Description("A cluster has either joined or left the global cluster view.")
    void crossSiteViewEvent(String action, String sites);
 }

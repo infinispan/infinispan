@@ -59,13 +59,13 @@ public class JCacheCreateCachePredefinedTest extends SingleHotRodServerTest {
       super.teardown();
    }
 
-   @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*ISPN021015:.*")
+   @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*ISPN019015:.*")
    public void testCreateCachePredefinedTouched() {
       jcacheManager.getCache(CACHE_NAME_TOUCHED); // touch it
       jcacheManager.createCache(CACHE_NAME_TOUCHED, new MutableConfiguration<>());
    }
 
-   @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*ISPN021052:.*", enabled = false, description = "ISPN-9237")
+   @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = ".*ISPN019052:.*", enabled = false, description = "ISPN-9237")
    public void testCreateCachePredefinedUntouched() {
          jcacheManager.createCache(CACHE_NAME_UNTOUCHED, new MutableConfiguration<>());
    }

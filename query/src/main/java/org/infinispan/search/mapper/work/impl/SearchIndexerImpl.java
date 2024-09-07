@@ -15,7 +15,7 @@ import org.hibernate.search.mapper.pojo.work.spi.PojoIndexer;
 import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.query.backend.QueryInterceptor;
-import org.infinispan.query.logging.Log;
+import org.infinispan.query.core.impl.Log;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 import org.infinispan.search.mapper.session.impl.InfinispanIndexedTypeContext;
 import org.infinispan.search.mapper.session.impl.InfinispanTypeContextProvider;

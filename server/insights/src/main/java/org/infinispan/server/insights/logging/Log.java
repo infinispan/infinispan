@@ -8,15 +8,16 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.ValidIdRange;
 
 /**
- * Log abstraction for the Insights server module. For this module, message ids
- * ranging from 32001 to 32500 inclusively have been reserved.
+ * Log abstraction for the Insights server module.
  *
  * @author Fabio Massimo Ercoli
  * @since 14.0
  */
 @MessageLogger(projectCode = "ISPN")
+@ValidIdRange(min = 32001, max = 32500)
 public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)

@@ -7,6 +7,7 @@ import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.ValidIdRange;
 
 /**
  * Log messages for the object filter parser backend. For this module, message ids ranging
@@ -16,6 +17,7 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 7.0
  */
 @MessageLogger(projectCode = "ISPN")
+@ValidIdRange(min = 28501, max = 29000)
 public interface Log extends BasicLogger {
 
    @Message(id = 28501, value = "The type %s does not have an accessible property named '%s'.")

@@ -7,8 +7,6 @@ import java.net.SocketAddress;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.EncodingException;
-import org.infinispan.counter.exception.CounterException;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.server.hotrod.MissingFactoryException;
 import org.jboss.logging.BasicLogger;
@@ -18,6 +16,7 @@ import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Once;
+import org.jboss.logging.annotations.ValidIdRange;
 
 /**
  * Log abstraction for the Hot Rod server module. For this module, message ids ranging from 6001 to 7000 inclusively
@@ -27,19 +26,9 @@ import org.jboss.logging.annotations.Once;
  * @since 5.0
  */
 @MessageLogger(projectCode = "ISPN")
+@ValidIdRange(min = 6001, max = 7000)
 public interface Log extends BasicLogger {
    Log CONFIG = Logger.getMessageLogger(Log.class, "org.infinispan.CONFIG");
-
-   @LogMessage(level = ERROR)
-   @Message(value = "Exception reported", id = 5003)
-   void exceptionReported(@Cause Throwable t);
-   @LogMessage(level = WARN)
-   @Message(value = "No members for new topology after applying consistent hash %s filtering into base topology %s", id = 5019)
-   void noMembersInHashTopology(ConsistentHash ch, String topologyMap);
-
-   @LogMessage(level = WARN)
-   @Message(value = "No members in new topology", id = 5020)
-   void noMembersInTopology();
 
    @LogMessage(level = ERROR)
    @Message(value = "Error detecting crashed member", id = 6002)
@@ -86,30 +75,25 @@ public interface Log extends BasicLogger {
    @Message(value = "Cache '%s' must have REPEATABLE_READ isolation level", id = 6021)
    IllegalStateException unexpectedIsolationLevel(String cacheName);
 
-   @Message(value = "Expects a STRONG counter for '%s'", id = 28023)
-   CounterException invalidWeakCounter(String name);
-
    @LogMessage(level = WARN)
-   @Message(value = "Not wrapping custom marshaller with media type '%s' since the format is already supported by the server", id = 28024)
+   @Message(value = "Not wrapping custom marshaller with media type '%s' since the format is already supported by the server", id = 6022)
    @Once
    void skippingMarshallerWrapping(String mediaType);
 
-   @Message(value = "Error serializing script response '%s'", id = 28025)
+   @Message(value = "Error serializing script response '%s'", id = 6023)
    EncodingException errorSerializingResponse(Object o);
 
-   /* Moved to server-core
-   @LogMessage(level = WARN)
-   @Message(value = "Removed unclosed iterator '%s'", id = 28026)
-   void removedUnclosedIterator(String iteratorId);
-   */
+//   @LogMessage(level = WARN)
+//   @Message(value = "Removed unclosed iterator '%s'", id = 28026)
+//   void removedUnclosedIterator(String iteratorId);
 
-   @Message(value = "Invalid credentials", id = 28027)
+   @Message(value = "Invalid credentials", id = 6024)
    SecurityException authenticationException(@Cause Throwable cause);
 
-   @Message(value = "Invalid mech '%s'", id = 28028)
+   @Message(value = "Invalid mech '%s'", id = 6025)
    IllegalArgumentException invalidMech(String mech);
 
    @LogMessage(level = WARN)
-   @Message(value = "Client %s keeps providing outdated topology %s", id = 28029)
+   @Message(value = "Client %s keeps providing outdated topology %s", id = 6026)
    void clientNotUpdatingTopology(SocketAddress socketAddress, int topologyId);
 }

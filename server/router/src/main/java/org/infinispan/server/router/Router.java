@@ -5,7 +5,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.infinispan.server.router.configuration.RouterConfiguration;
-import org.infinispan.server.router.logging.RouterLogger;
+import org.infinispan.server.router.logging.Log;
 import org.infinispan.server.router.router.EndpointRouter;
 import org.infinispan.server.router.router.impl.hotrod.HotRodEndpointRouter;
 import org.infinispan.server.router.router.impl.rest.RestEndpointRouter;
@@ -43,7 +43,7 @@ public class Router {
     */
    public void start() {
       endpointRouters.forEach(r -> r.start(routerConfiguration.routingTable(), null));
-      RouterLogger.SERVER.printOutRoutingTable(routerConfiguration.routingTable());
+      Log.SERVER.printOutRoutingTable(routerConfiguration.routingTable());
    }
 
    /**

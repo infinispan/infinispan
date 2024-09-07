@@ -1,6 +1,7 @@
 package org.infinispan.server.core.logging;
 
 import static org.jboss.logging.Logger.Level.DEBUG;
+import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
@@ -13,6 +14,7 @@ import java.util.Set;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.server.core.dataconversion.TranscodingException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -20,6 +22,7 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.ValidIdRange;
 
 import io.netty.channel.Channel;
 import io.netty.handler.ipfilter.IpFilterRule;
@@ -32,11 +35,17 @@ import io.netty.handler.ipfilter.IpFilterRule;
  * @since 5.0
  */
 @MessageLogger(projectCode = "ISPN")
+@ValidIdRange(min = 5001, max = 6000)
 public interface Log extends BasicLogger {
    String LOG_ROOT = "org.infinispan.";
    Log CONFIG = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONFIG");
    Log SECURITY = Logger.getMessageLogger(Log.class, LOG_ROOT + "SECURITY");
    Log SERVER = Logger.getMessageLogger(Log.class, LOG_ROOT + "SERVER");
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Exception reported", id = 5003)
+   void exceptionReported(@Cause Throwable t);
+
 //   @LogMessage(level = WARN)
 //   @Message(value = "Server channel group did not completely unbind", id = 5004)
 //   void serverDidNotUnbind();
@@ -76,6 +85,14 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot configure custom KeyStore and/or TrustStore when specifying a SSLContext", id = 5018)
    CacheConfigurationException xorSSLContext();
+
+   @LogMessage(level = WARN)
+   @Message(value = "No members for new topology after applying consistent hash %s filtering into base topology %s", id = 5019)
+   void noMembersInHashTopology(ConsistentHash ch, String topologyMap);
+
+   @LogMessage(level = WARN)
+   @Message(value = "No members in new topology", id = 5020)
+   void noMembersInTopology();
 
    @LogMessage(level = DEBUG)
    @Message(value = "Using Netty SocketChannel %s for %s", id = 5025)
@@ -193,18 +210,17 @@ public interface Log extends BasicLogger {
    @Message(value = "EXTERNAL SASL mechanism not allowed without SSL client certificate", id = 5059)
    SecurityException externalMechNotAllowedWithoutSSLClientCert();
 
-   // Out-of-order log messages. Moved here from the server-hotrod module
-   @Message(value = "Factory '%s' not found in server", id = 6016)
+   @Message(value = "Factory '%s' not found in server", id = 5060)
    IllegalStateException missingKeyValueFilterConverterFactory(String name);
 
    @LogMessage(level = WARN)
-   @Message(value = "Removed unclosed iterator '%s'", id = 28026)
+   @Message(value = "Removed unclosed iterator '%s'", id = 5061)
    void removedUnclosedIterator(String iteratorId);
 
    @LogMessage(level = INFO)
-   @Message(value = "Flushed cache for security realm '%s'", id = 28027)
+   @Message(value = "Flushed cache for security realm '%s'", id = 5062)
    void flushRealmCache(String name);
 
-   @Message(value = "Unable to read backup '%s'", id = 28028)
+   @Message(value = "Unable to read backup '%s'", id = 5063)
    CacheException unableToReadBackup(Path backup, @Cause IOException e);
 }

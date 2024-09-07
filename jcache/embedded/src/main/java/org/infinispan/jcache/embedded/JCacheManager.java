@@ -25,7 +25,7 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.jcache.AbstractJCache;
 import org.infinispan.jcache.AbstractJCacheManager;
-import org.infinispan.jcache.embedded.logging.Log;
+import org.infinispan.jcache.logging.Log;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;

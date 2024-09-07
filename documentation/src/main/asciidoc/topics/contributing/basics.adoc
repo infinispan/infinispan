@@ -215,41 +215,46 @@ The last thing to figure out is which id to give to the message. Each module tha
 [options="header"]
 |===============
 |Module name|Id range
-|core|1 - 1000
-|tree|2001 - 3000
-|bdbje cache store|2001 - 3000
+|core|1 - 900
+|commons|901-2000
+|[unused, was tree]|2001 - 3000
+|[unused, was bdbje cache store]|2001 - 3000
 |cassandra cache store|3001 - 4000
 |hotrod client|4001 - 5000
 |server core|5001 - 6000
 |server hotrod|6001 - 7000
 |cloud cache store|7001 - 8000
 |jdbc cache store|8001 - 9000
-|jdbm cache store|9001 - 10000
+|[unused, was jdbm cache store]|9001 - 10000
 |remote cache store|10001 - 11000
 |server memcached|11001 - 12000
 |server rest|12001 - 13000
-|server websocket|13001 - 14000
-|query|14001 - 14800
+|server resp|13001 - 14000
+|query-core|14001 - 14500
+|search mapper|14501-14800
 |query-dsl|14801 - 15000
-|lucene directory|15001 - 16000
-|<no longer used>|16001 - 17000
+|server router|15001 - 16000
+|clustered locks|16001 - 17000
 |cdi integration|17001 - 18000
 |hbase cache store|18001 - 19000
-|cli interpreter|19001 - 20000
-|cli client|20001 - 21000
+|jcache|19001 - 20000
+|[unused, was cli client]|20001 - 21000
 |mongodb cache store|21001 - 22000
 |rest cache store|22001 - 23000
-|leveldb cache store|23001 - 24000 [unused]
+|rocksdb cache store|23001 - 24000
 |couchbase cache store|24001 - 25000
 |redis cache store|25001 - 26000
-|extended statistics|25001 - 26000
-|infinispan directory provider|26001 - 27000
+|[unused, was extended statistics]|25001 - 26000
+|[unused, was directory provider]|26001 - 27000
 |tasks|27001 - 27500
 |scripting|27501 - 28000
 |remote query server|28001 - 28500
 |object filter|28501 - 29000
 |soft-index file store|29001 - 29500
 |clustered counter|29501 - 30000
+|anchored keys|30001-30500
+|insights|32001 - 32500
+|server|80000-81000
 |===============
 
 NOTE: When editing the above table, remember to update the README-i18n.txt file in the project sources!

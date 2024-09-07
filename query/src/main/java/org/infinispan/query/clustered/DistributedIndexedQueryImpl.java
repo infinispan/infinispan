@@ -29,7 +29,7 @@ import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
 import org.infinispan.query.impl.IndexedQuery;
 import org.infinispan.query.impl.IndexedQueryImpl;
 import org.infinispan.query.impl.QueryDefinition;
-import org.infinispan.query.logging.Log;
+import org.infinispan.query.core.impl.Log;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.LogFactory;
 

@@ -6,6 +6,7 @@ import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.ValidIdRange;
 
 /**
  * Log abstraction for the query DSL. For this module, message ids ranging from 14801 to 15000 inclusively have been
@@ -15,6 +16,7 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 8.2
  */
 @MessageLogger(projectCode = "ISPN")
+@ValidIdRange(min = 14801, max = 15000)
 public interface Log extends BasicLogger {
 
    @Message(value = "Argument cannot be null", id = 14801)

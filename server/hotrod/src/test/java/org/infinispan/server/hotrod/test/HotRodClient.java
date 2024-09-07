@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod.test;
 
 import static org.infinispan.commons.util.CounterEncodeUtil.decodeConfiguration;
+import static org.infinispan.server.core.logging.Log.SERVER;
 import static org.infinispan.server.hotrod.HotRodConstants.CONTAINS_KEY_REQUEST;
 import static org.infinispan.server.hotrod.HotRodConstants.GET_REQUEST;
 import static org.infinispan.server.hotrod.HotRodConstants.GET_WITH_METADATA;
@@ -1021,7 +1022,7 @@ class Decoder extends ReplayingDecoder<Void> {
 
    @Override
    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-      log.exceptionReported(cause);
+      SERVER.exceptionReported(cause);
    }
 
    private AbstractTestTopologyAwareResponse read2xHashDistAwareHeader(ByteBuf buf, int topologyId, Op op) {

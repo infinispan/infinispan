@@ -3,8 +3,7 @@ package org.infinispan.query.impl.massindex;
 import java.util.concurrent.CompletableFuture;
 
 import org.hibernate.search.util.common.impl.Futures;
-
-import org.infinispan.query.logging.Log;
+import org.infinispan.query.core.impl.Log;
 import org.infinispan.util.logging.LogFactory;
 
 public class MassIndexerProgressState {

@@ -4,12 +4,13 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.ValidIdRange;
 
 /**
- * Log abstraction for the RocksDB cache store. For this module, message ids ranging from 23001 to
- * 24000 inclusively have been reserved.
+ * Log abstraction for the RocksDB cache store.
  */
 @MessageLogger(projectCode = "ISPN")
+@ValidIdRange(min = 23001, max = 24000)
 public interface Log extends BasicLogger {
 //   @LogMessage(level = ERROR)
 //   @Message(value = "Error executing parallel store task", id = 252)
@@ -19,6 +20,6 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Ignoring XML attribute %s, please remove from configuration file", id = 293)
 //   void ignoreXmlAttribute(Object attribute);
 
-   @Message(value = "RocksDB properties %s, contains an unknown property", id = 294)
+   @Message(value = "RocksDB properties %s, contains an unknown property", id = 23001)
    CacheConfigurationException rocksDBUnknownPropertiesSupplied(String properties);
 }
