@@ -2400,7 +2400,7 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="wait-time" type="xs:long" default="${XSiteStateTransfer.wait-time}">
+          <xs:attribute name="wait-time" type="xs:string" default="${XSiteStateTransfer.wait-time}">
             <xs:annotation>
               <xs:documentation>
                 Sets the amount of time, in milliseconds, to wait between retry attempts for push state failures. You must specify a value of 1 or more. The default value is 2000.
@@ -2439,7 +2439,7 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="timeout" type="xs:long" default="${Backup.timeout}">
+    <xs:attribute name="timeout" type="xs:string" default="${Backup.timeout}">
       <xs:annotation>
         <xs:documentation>
           Specifies timeout, in milliseconds, for synchronous and asynchronous backup operations.
@@ -2475,7 +2475,7 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="min-wait" type="xs:long" default="0">
+    <xs:attribute name="min-wait" type="xs:string" default="0">
       <xs:annotation>
         <xs:documentation>
           Sets the minimum time to wait, in milliseconds, before sites go

@@ -6,6 +6,7 @@ import static org.infinispan.configuration.cache.TakeOfflineConfiguration.MIN_TI
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 
 /**
  * @author Mircea Markus
@@ -44,7 +45,28 @@ public class TakeOfflineConfigurationBuilder extends AbstractConfigurationChildB
     * #afterFailures(int)}.
     */
    public TakeOfflineConfigurationBuilder minTimeToWait(long minTimeToWait) {
-      attributes.attribute(MIN_TIME_TO_WAIT).set(minTimeToWait);
+      attributes.attribute(MIN_TIME_TO_WAIT).set(TimeQuantity.valueOf(minTimeToWait));
+      return this;
+   }
+
+   /**
+    * The minimal number of milliseconds to wait before taking this site offline. It defaults to 0ms (zero milliseconds).
+    * Set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days)
+    * <p>
+    * A zero or negative value will disable any waiting time and use only {@link #afterFailures(int)}.
+    * <p>
+    * The switch to offline status happens after a failed request (times-out or network failure) and {@code
+    * minTimeToWait} is already elapsed.
+    * <p>
+    * When a request fails (after a successful request) the timer is set and it is stopped and reset after a successful
+    * request.
+    * <p>
+    * Check the <a href="https://infinispan.org/docs/stable/titles/xsite/xsite.html#taking_a_site_offline">Infinispan
+    * Cross-Site documentation</a> for more information about {@link #minTimeToWait(long)} and {@link
+    * #afterFailures(int)}.
+    */
+   public TakeOfflineConfigurationBuilder minTimeToWait(String minTimeToWait) {
+      attributes.attribute(MIN_TIME_TO_WAIT).set(TimeQuantity.valueOf(minTimeToWait));
       return this;
    }
 

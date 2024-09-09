@@ -72,16 +72,17 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
    /**
     * Timeout(millis) used for replicating calls to other sites.
     */
-   public BackupConfigurationBuilder replicationTimeout(long replicationTimeout) {
-      attributes.attribute(REPLICATION_TIMEOUT).set(TimeQuantity.valueOf(replicationTimeout));
+   public BackupConfigurationBuilder replicationTimeout(long milliseconds) {
+      attributes.attribute(REPLICATION_TIMEOUT).set(TimeQuantity.valueOf(milliseconds));
       return this;
    }
 
    /**
     * Same as {@link #replicationTimeout(long)} but supporting time units.
+    *
     */
-   public BackupConfigurationBuilder replicationTimeout(String replicationTimeout) {
-      attributes.attribute(REPLICATION_TIMEOUT).set(TimeQuantity.valueOf(replicationTimeout));
+   public BackupConfigurationBuilder replicationTimeout(String timeQuantity) {
+      attributes.attribute(REPLICATION_TIMEOUT).set(TimeQuantity.valueOf(timeQuantity));
       return this;
    }
 
