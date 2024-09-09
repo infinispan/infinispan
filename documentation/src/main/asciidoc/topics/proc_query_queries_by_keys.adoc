@@ -1,15 +1,13 @@
 [id='queries_by_keys_{context}']
 = Queries by keys
 
-If a key of a cache entry has an indexed type, it is possible to index the key fields as well the the value fields,
-so that also the formers could be used in the `Ickle` queries.
+You can define the key of a cache entry as `Indexed` type to index the key fields as well the value fields allowing the keys to be used in Ickle queries.
 
-This can be done specifying the fully qualified name of the ProtocolBuffer message type to use as key type
-in the `keyEntity` attribute of the `@Indexed` annotation.
+To define an `Indexed` key, specify the fully qualified name of the ProtocolBuffer message type to use as the key type in the `keyEntity` attribute of the `@Indexed` annotation.
 
 [NOTE]
 ====
-This feature is at the moment available only with indexed remote queries.
+This feature is available only with indexed remote queries.
 ====
 
 .Specify the `keyEntity` of an indexed entity
@@ -36,14 +34,11 @@ select s.key.column from model.Structure s where s.key.zone = 'z7'
 
 If the value already has a property named `key`, the definition of the key entity could create a naming conflict
 with the properties.
-For this reason but also in general,
+For this reason, and also in general,
 it is possible to change the name to assign as a prefix for the property keys changing the attribute `keyPropertyName`
 of the `@Indexed` annotation.
 
 == Key include depth
 
-Since the entity key can have embedded entities we can limit the depth for the embedded entity fields
-that will be indexed changing the attribute `keyIncludeDepth`.
-
-The default for this value is 3.
+An entity key can have embedded entities. You can limit the depth for the embedded entity fields that are indexed by changing the attribute `keyIncludeDepth`, which defaults to `3`.
 
