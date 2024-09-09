@@ -10,6 +10,7 @@ import static org.infinispan.util.logging.Log.CONFIG;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -41,10 +42,10 @@ public class XSiteStateTransferConfigurationBuilder extends AbstractConfiguratio
       if (chunkSize <= 0) {
          throw CONFIG.invalidChunkSize(chunkSize);
       }
-      if (attributes.attribute(TIMEOUT).get() <= 0) {
+      if (attributes.attribute(TIMEOUT).get().longValue() <= 0) {
          throw CONFIG.invalidXSiteStateTransferTimeout();
       }
-      if (attributes.attribute(WAIT_TIME).get() <= 0) {
+      if (attributes.attribute(WAIT_TIME).get().longValue() <= 0) {
          throw CONFIG.invalidXSiteStateTransferWaitTime();
       }
       XSiteStateTransferMode mode = attributes.attribute(MODE).get();
@@ -72,16 +73,25 @@ public class XSiteStateTransferConfigurationBuilder extends AbstractConfiguratio
 
    /**
     * The time (in milliseconds) to wait for the backup site acknowledge the state chunk received and applied. Default
-    * value is 20 min.
+    * value is {@link XSiteStateTransferConfiguration#TIMEOUT }.
     */
-   public final XSiteStateTransferConfigurationBuilder timeout(long timeout) {
-      attributes.attribute(TIMEOUT).set(timeout);
+   public final XSiteStateTransferConfigurationBuilder timeout(long milliseconds) {
+      attributes.attribute(TIMEOUT).set(TimeQuantity.valueOf(milliseconds));
+      return this;
+   }
+
+   /**
+    * Same as {@link #timeout(long)} but supporting time units.
+    * Set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days)
+    */
+   public final XSiteStateTransferConfigurationBuilder timeout(String timeQuantity) {
+      attributes.attribute(TIMEOUT).set(TimeQuantity.valueOf(timeQuantity));
       return this;
    }
 
    /**
     * The maximum number of retries when a push state command fails. A value &le; 0 (zero) means that the command does
-    * not retry. Default value is 30.
+    * not retry. Default value is {@link XSiteStateTransferConfiguration#DEFAULT_MAX_RETRIES }.
     */
    public final XSiteStateTransferConfigurationBuilder maxRetries(int maxRetries) {
       attributes.attribute(MAX_RETRIES).set(maxRetries);
@@ -89,11 +99,20 @@ public class XSiteStateTransferConfigurationBuilder extends AbstractConfiguratio
    }
 
    /**
-    * The wait time, in milliseconds, between each retry. The value should be &gt; 0 (zero). Default value is 2
-    * seconds.
+    * The wait time, in milliseconds, between each retry. The value should be &gt; 0 (zero).
+    * Default value is {@link XSiteStateTransferConfiguration#DEFAULT_WAIT_TIME }.
     */
-   public final XSiteStateTransferConfigurationBuilder waitTime(long waitingTimeBetweenRetries) {
-      attributes.attribute(WAIT_TIME).set(waitingTimeBetweenRetries);
+   public final XSiteStateTransferConfigurationBuilder waitTime(long milliseconds) {
+      attributes.attribute(WAIT_TIME).set(TimeQuantity.valueOf(milliseconds));
+      return this;
+   }
+
+   /**
+    * Same as {@link #waitTime(long)} but supporting time units.
+    * Set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days)
+    */
+   public final XSiteStateTransferConfigurationBuilder waitTime(String timeQuantity) {
+      attributes.attribute(WAIT_TIME).set(TimeQuantity.valueOf(timeQuantity));
       return this;
    }
 
