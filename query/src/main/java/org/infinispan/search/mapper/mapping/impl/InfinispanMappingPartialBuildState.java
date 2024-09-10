@@ -2,9 +2,9 @@ package org.infinispan.search.mapper.mapping.impl;
 
 import org.hibernate.search.engine.mapper.mapping.building.spi.MappingPartialBuildState;
 import org.hibernate.search.engine.mapper.mapping.spi.MappingImplementor;
-import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionEntityLoader;
 import org.hibernate.search.mapper.pojo.mapping.spi.PojoMappingDelegate;
 import org.infinispan.query.concurrent.FailureCounter;
+import org.infinispan.query.impl.EntityLoaderFactory;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -13,7 +13,7 @@ public class InfinispanMappingPartialBuildState implements MappingPartialBuildSt
 
    private final PojoMappingDelegate mappingDelegate;
    private final InfinispanTypeContextContainer typeContextContainer;
-   private final PojoSelectionEntityLoader<?> entityLoader;
+   private final EntityLoaderFactory<?> entityLoader;
    private final EntityConverter entityConverter;
    private final BlockingManager blockingManager;
    private final FailureCounter failureCounter;
@@ -21,7 +21,7 @@ public class InfinispanMappingPartialBuildState implements MappingPartialBuildSt
 
    InfinispanMappingPartialBuildState(PojoMappingDelegate mappingDelegate,
                                       InfinispanTypeContextContainer typeContextContainer,
-                                      PojoSelectionEntityLoader<?> entityLoader,
+                                      EntityLoaderFactory<?> entityLoader,
                                       EntityConverter entityConverter,
                                       BlockingManager blockingManager,
                                       FailureCounter failureCounter, int maxConcurrency) {

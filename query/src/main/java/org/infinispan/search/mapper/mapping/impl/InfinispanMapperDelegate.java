@@ -1,12 +1,12 @@
 package org.infinispan.search.mapper.mapping.impl;
 
-import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionEntityLoader;
 import org.hibernate.search.mapper.pojo.mapping.building.spi.PojoContainedTypeExtendedMappingCollector;
 import org.hibernate.search.mapper.pojo.mapping.building.spi.PojoIndexedTypeExtendedMappingCollector;
 import org.hibernate.search.mapper.pojo.mapping.building.spi.PojoMapperDelegate;
 import org.hibernate.search.mapper.pojo.mapping.spi.PojoMappingDelegate;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeModel;
 import org.infinispan.query.concurrent.FailureCounter;
+import org.infinispan.query.impl.EntityLoaderFactory;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 import org.infinispan.util.concurrent.BlockingManager;
 
@@ -14,13 +14,13 @@ public final class InfinispanMapperDelegate implements PojoMapperDelegate<Infini
 
    private final InfinispanTypeContextContainer.Builder typeContextContainerBuilder =
          new InfinispanTypeContextContainer.Builder();
-   private final PojoSelectionEntityLoader<?> entityLoader;
+   private final EntityLoaderFactory<?> entityLoader;
    private final EntityConverter entityConverter;
    private final BlockingManager blockingManager;
    private final FailureCounter failureCounter;
    private final int maxConcurrency;
 
-   public InfinispanMapperDelegate(PojoSelectionEntityLoader<?> entityLoader, EntityConverter entityConverter,
+   public InfinispanMapperDelegate(EntityLoaderFactory<?> entityLoader, EntityConverter entityConverter,
                                    BlockingManager blockingManager, FailureCounter failureCounter, int maxConcurrency) {
       this.entityLoader = entityLoader;
       this.entityConverter = entityConverter;

@@ -22,7 +22,7 @@ public final class EntityLoader<E> implements PojoSelectionEntityLoader<E> {
    private final AdvancedCache<?, E> cache;
    private final LocalQueryStatistics queryStatistics;
 
-   public EntityLoader(AdvancedCache<?, E> cache, LocalQueryStatistics queryStatistics) {
+   EntityLoader(AdvancedCache<?, E> cache, LocalQueryStatistics queryStatistics) {
       this.cache = cache;
       this.queryStatistics = queryStatistics;
    }
