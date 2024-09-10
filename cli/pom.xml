@@ -97,6 +97,10 @@
          <optional>true</optional>
       </dependency>
       <dependency>
+         <artifactId>HdrHistogram</artifactId>
+         <groupId>org.hdrhistogram</groupId>
+      </dependency>
+      <dependency>
          <groupId>junit</groupId>
          <artifactId>junit</artifactId>
          <scope>test</scope>
