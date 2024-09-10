@@ -4,15 +4,14 @@ import java.util.Collection;
 
 import org.hibernate.search.engine.common.EntityReference;
 import org.hibernate.search.engine.search.query.dsl.SearchQuerySelectStep;
-import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionEntityLoader;
 import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionLoadingContext;
 import org.hibernate.search.mapper.pojo.session.spi.AbstractPojoSearchSession;
 import org.hibernate.search.mapper.pojo.work.spi.ConfiguredSearchIndexingPlanFilter;
 import org.hibernate.search.mapper.pojo.work.spi.PojoIndexer;
+import org.infinispan.query.impl.EntityLoaderFactory;
 import org.infinispan.search.mapper.model.impl.InfinispanRuntimeIntrospector;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.scope.impl.SearchScopeImpl;
-import org.infinispan.search.mapper.search.loading.context.impl.InfinispanLoadingContext;
 import org.infinispan.search.mapper.session.SearchSession;
 
 /**
@@ -23,10 +22,10 @@ public class InfinispanSearchSession extends AbstractPojoSearchSession implement
    private static final ConfiguredSearchIndexingPlanFilter ACCEPT_ALL = typeIdentifier -> true;
 
    private final InfinispanSearchSessionMappingContext mappingContext;
-   private final PojoSelectionEntityLoader<?> entityLoader;
+   private final EntityLoaderFactory<?> entityLoader;
 
    public InfinispanSearchSession(InfinispanSearchSessionMappingContext mappingContext,
-                                  PojoSelectionEntityLoader<?> entityLoader) {
+                                  EntityLoaderFactory<?> entityLoader) {
       super(mappingContext);
       this.mappingContext = mappingContext;
       this.entityLoader = entityLoader;
@@ -73,7 +72,7 @@ public class InfinispanSearchSession extends AbstractPojoSearchSession implement
 
    @Override
    public PojoSelectionLoadingContext defaultLoadingContext() {
-      return new InfinispanLoadingContext.Builder<>(entityLoader).build();
+      return entityLoader.create();
    }
 
    @Override

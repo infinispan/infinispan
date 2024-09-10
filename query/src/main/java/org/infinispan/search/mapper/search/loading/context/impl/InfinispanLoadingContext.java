@@ -28,22 +28,31 @@ public final class InfinispanLoadingContext<E> implements PojoSelectionLoadingCo
       return new InfinispanRuntimeIntrospector();
    }
 
-   public static final class Builder<E> implements PojoSelectionLoadingContextBuilder<Void> {
+   public static final class Builder<E> implements PojoSelectionLoadingContextBuilder<InfinispanSelectionLoadingOptionsStep>, InfinispanSelectionLoadingOptionsStep {
       private final PojoSelectionEntityLoader<E> entityLoader;
+      private final PojoSelectionEntityLoader<E> metadataEntityLoader;
 
-      public Builder(PojoSelectionEntityLoader<E> entityLoader) {
+      boolean withMetadata = false;
+
+      public Builder(PojoSelectionEntityLoader<E> entityLoader, PojoSelectionEntityLoader<E> metadataEntityLoader) {
          this.entityLoader = entityLoader;
+         this.metadataEntityLoader = metadataEntityLoader;
       }
 
       @Override
-      public Void toAPI() {
-         // loading options are not used by ISPN
-         return null;
+      public InfinispanSelectionLoadingOptionsStep toAPI() {
+         return this;
       }
 
       @Override
-      public InfinispanLoadingContext build() {
-         return new InfinispanLoadingContext(entityLoader);
+      public void withMetadata(boolean value) {
+         withMetadata = value;
+      }
+
+      @Override
+      public InfinispanLoadingContext<E> build() {
+         return (withMetadata) ?  new InfinispanLoadingContext<>(metadataEntityLoader) :
+               new InfinispanLoadingContext<>(entityLoader);
       }
    }
 }

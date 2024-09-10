@@ -15,7 +15,6 @@ import org.hibernate.search.engine.common.EntityReference;
 import org.hibernate.search.engine.common.spi.SearchIntegration;
 import org.hibernate.search.engine.environment.thread.spi.ThreadPoolProvider;
 import org.hibernate.search.engine.reporting.FailureHandler;
-import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionEntityLoader;
 import org.hibernate.search.mapper.pojo.mapping.spi.AbstractPojoMappingImplementor;
 import org.hibernate.search.mapper.pojo.mapping.spi.PojoMappingDelegate;
 import org.hibernate.search.mapper.pojo.massindexing.spi.PojoMassIndexerAgent;
@@ -26,6 +25,7 @@ import org.hibernate.search.util.common.AssertionFailure;
 import org.hibernate.search.util.common.impl.Closer;
 import org.hibernate.search.util.common.logging.impl.LoggerFactory;
 import org.infinispan.query.concurrent.FailureCounter;
+import org.infinispan.query.impl.EntityLoaderFactory;
 import org.infinispan.search.mapper.common.impl.EntityReferenceImpl;
 import org.infinispan.search.mapper.log.impl.Log;
 import org.infinispan.search.mapper.mapping.EntityConverter;
@@ -48,7 +48,7 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
    private static final Log log = LoggerFactory.make(Log.class, MethodHandles.lookup());
 
    private final InfinispanTypeContextContainer typeContextContainer;
-   private final PojoSelectionEntityLoader<?> entityLoader;
+   private final EntityLoaderFactory<?> entityLoader;
    private final EntityConverter entityConverter;
    private final SearchSession mappingSession;
    private final SearchIndexer searchIndexer;
@@ -61,7 +61,7 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
    private boolean close = false;
 
    InfinispanMapping(PojoMappingDelegate mappingDelegate, InfinispanTypeContextContainer typeContextContainer,
-                     PojoSelectionEntityLoader<?> entityLoader, EntityConverter entityConverter,
+                     EntityLoaderFactory<?> entityLoader, EntityConverter entityConverter,
                      BlockingManager blockingManager, FailureCounter failureCounter, int maxConcurrency) {
       super(mappingDelegate);
       this.typeContextContainer = typeContextContainer;
