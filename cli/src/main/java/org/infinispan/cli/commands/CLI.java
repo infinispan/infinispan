@@ -63,6 +63,7 @@ import org.infinispan.cli.commands.rest.Shutdown;
 import org.infinispan.cli.commands.rest.Site;
 import org.infinispan.cli.commands.rest.Task;
 import org.infinispan.cli.commands.rest.Topology;
+import org.infinispan.cli.commands.troubleshoot.Troubleshoot;
 import org.infinispan.cli.completers.ContextAwareCompleterInvocationProvider;
 import org.infinispan.cli.connection.RegexHostnameVerifier;
 import org.infinispan.cli.impl.AeshDelegatingShell;
@@ -137,6 +138,7 @@ import org.wildfly.security.keystore.KeyStoreUtil;
             Site.class,
             Task.class,
             Topology.class,
+            Troubleshoot.class,
             User.class,
             Version.class
       }, resultHandler = ExitCodeResultHandler.class)
