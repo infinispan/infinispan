@@ -81,7 +81,6 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.health.CacheHealth;
 import org.infinispan.health.HealthStatus;
-import org.infinispan.health.impl.CacheHealthImpl;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
@@ -178,14 +177,16 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("entries").handleWith(this::streamEntries)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("listen").handleWith(this::cacheListen)
 
-            // Config and statistics
-            .invocation().methods(GET, HEAD).path("/v2/caches/{cacheName}").withAction("config").handleWith(this::getCacheConfig)
-            .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("stats").handleWith(this::getCacheStats)
-            .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("stats-reset").permission(AuthorizationPermission.ADMIN).handleWith(this::resetCacheStats)
-            .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("distribution").handleWith(this::getCacheDistribution)
+            // Config
+            .invocation().methods(GET, HEAD).path("/v2/caches/{cacheName}").withAction("config").permission(AuthorizationPermission.ADMIN).handleWith(this::getCacheConfig)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("get-mutable-attributes").permission(AuthorizationPermission.ADMIN).handleWith(this::getCacheConfigMutableAttributes)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("get-mutable-attribute").permission(AuthorizationPermission.ADMIN).handleWith(this::getCacheConfigMutableAttribute)
             .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("set-mutable-attribute").permission(AuthorizationPermission.ADMIN).handleWith(this::setCacheConfigMutableAttribute)
+
+              // Stats
+            .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("stats").handleWith(this::getCacheStats)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("stats-reset").permission(AuthorizationPermission.ADMIN).handleWith(this::resetCacheStats)
+            .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("distribution").handleWith(this::getCacheDistribution)
 
             // List
             .invocation().methods(GET).path("/v2/caches/").handleWith(this::getCacheNames)
@@ -962,17 +963,9 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       if (!invocationHelper.getRestCacheManager().getInstance().getCacheConfigurationNames().contains(cacheName)) {
          responseBuilder.status(NOT_FOUND).build();
       }
-      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-      if (cache == null)
-         return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
-
-      AuthorizationManager authorizationManager = SecurityActions.getCacheAuthorizationManager(cache.getAdvancedCache());
-      if (authorizationManager == null || authorizationManager.isPermissive()) {
-         // Cache is not secured, use the global authz
-         invocationHelper.getRestCacheManager().getAuthorizer().checkPermission(AuthorizationPermission.ADMIN);
-      }
-      Configuration cacheConfiguration = cache.getCacheConfiguration();
-
+      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
+      EmbeddedCacheManager subjectCacheManager = cacheManager.withSubject(request.getSubject());
+      Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(subjectCacheManager, cacheName);
       ByteArrayOutputStream entity = new ByteArrayOutputStream();
       try (ConfigurationWriter writer = ConfigurationWriter.to(entity).withType(accept).prettyPrint(pretty).build()) {
          parserRegistry.serialize(writer, cacheName, cacheConfiguration);
@@ -1132,13 +1125,17 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       RestCacheManager<?> restCacheManager = invocationHelper.getRestCacheManager();
       if (!restCacheManager.cacheExists(cacheName))
          return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
+      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
+      EmbeddedCacheManager subjectCacheManager = cacheManager.withSubject(request.getSubject());
+      List<CacheHealth> cachesHealth = SecurityActions.getHealth(subjectCacheManager).getCacheHealth(Set.of(cacheName));
+      if (cachesHealth.isEmpty()) {
+         return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
+      }
 
-      AdvancedCache<?, ?> cache = restCacheManager.getCache(cacheName, request);
-      ComponentRegistry cr = SecurityActions.getCacheComponentRegistry(cache);
       return completedFuture(
             invocationHelper.newResponse(request)
                   .contentType(TEXT_PLAIN)
-                  .entity(new CacheHealthImpl(cr).getStatus().toString())
+                  .entity(cachesHealth.get(0).getStatus().toString())
                   .status(OK)
                   .build()
       );
