@@ -19,6 +19,7 @@ import org.hibernate.search.engine.search.projection.SearchProjection;
 import org.hibernate.search.engine.search.projection.dsl.SearchProjectionFactory;
 import org.hibernate.search.engine.search.sort.SearchSort;
 import org.infinispan.search.mapper.scope.SearchScope;
+import org.infinispan.search.mapper.search.loading.context.impl.InfinispanSelectionLoadingOptionsStep;
 import org.infinispan.search.mapper.session.SearchSession;
 
 /**
@@ -125,7 +126,8 @@ public final class SearchQueryBuilder {
    }
 
    private <T> LuceneSearchQuery<T> build(SearchProjection<T> searchProjection) {
-      LuceneSearchQueryOptionsStep<T, ?> queryOptionsStep = querySession.search(scope)
+      LuceneSearchQueryOptionsStep<T, InfinispanSelectionLoadingOptionsStep> queryOptionsStep =
+            (LuceneSearchQueryOptionsStep<T, InfinispanSelectionLoadingOptionsStep>) querySession.search(scope)
             .extension(LuceneExtension.get())
             .select(searchProjection)
             .where(predicate)
@@ -136,6 +138,8 @@ public final class SearchQueryBuilder {
          queryOptionsStep = queryOptionsStep.failAfter(timeout, timeUnit);
       }
       queryOptionsStep = queryOptionsStep.totalHitCountThreshold(hitCountAccuracy);
+      // TODO ISPN-16489 Differentiate the entity loading here
+      queryOptionsStep.loading(l -> l.withMetadata(false));
 
       return queryOptionsStep.toQuery();
    }

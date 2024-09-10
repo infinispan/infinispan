@@ -18,7 +18,7 @@ import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.core.impl.QueryCache;
-import org.infinispan.query.impl.EntityLoader;
+import org.infinispan.query.impl.EntityLoaderFactory;
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.query.remote.impl.mapping.SerializationContextSearchMapping;
 import org.infinispan.query.remote.impl.util.LazyRef;
@@ -42,7 +42,7 @@ public class LazySearchMapping implements SearchMapping {
    private final Cache<?, ?> cache;
    private final ProtobufMetadataManagerImpl protobufMetadataManager;
    private final SearchMappingCommonBuilding commonBuilding;
-   private final EntityLoader<?> entityLoader;
+   private final EntityLoaderFactory<?> entityLoader;
    private final SerializationContext serCtx;
    private final QueryCache queryCache;
 
@@ -51,7 +51,7 @@ public class LazySearchMapping implements SearchMapping {
 
    private volatile boolean restarting = false;
 
-   public LazySearchMapping(SearchMappingCommonBuilding commonBuilding, EntityLoader<?> entityLoader,
+   public LazySearchMapping(SearchMappingCommonBuilding commonBuilding, EntityLoaderFactory<?> entityLoader,
                             SerializationContext serCtx, AdvancedCache<?, ?> cache,
                             ProtobufMetadataManagerImpl protobufMetadataManager, QueryCache queryCache) {
       this.commonBuilding = commonBuilding;

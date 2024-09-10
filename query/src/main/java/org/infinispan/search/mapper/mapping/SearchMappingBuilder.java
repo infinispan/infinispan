@@ -14,12 +14,12 @@ import org.hibernate.search.engine.common.spi.SearchIntegrationFinalizer;
 import org.hibernate.search.engine.common.spi.SearchIntegrationPartialBuildState;
 import org.hibernate.search.engine.environment.bean.BeanReference;
 import org.hibernate.search.mapper.pojo.bridge.IdentifierBridge;
-import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionEntityLoader;
 import org.hibernate.search.mapper.pojo.mapping.definition.programmatic.ProgrammaticMappingConfigurationContext;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
 import org.hibernate.search.util.common.impl.SuppressingCloser;
 import org.hibernate.search.util.common.reflect.spi.ValueReadHandleFactory;
 import org.infinispan.query.concurrent.FailureCounter;
+import org.infinispan.query.impl.EntityLoaderFactory;
 import org.infinispan.search.mapper.impl.InfinispanMappingInitiator;
 import org.infinispan.search.mapper.mapping.impl.ClassLoaderServiceImpl;
 import org.infinispan.search.mapper.mapping.impl.IndexProperties;
@@ -99,7 +99,7 @@ public final class SearchMappingBuilder {
       return this;
    }
 
-   public SearchMappingBuilder setEntityLoader(PojoSelectionEntityLoader<?> entityLoader) {
+   public SearchMappingBuilder setEntityLoader(EntityLoaderFactory<?> entityLoader) {
       mappingInitiator.setEntityLoader(entityLoader);
       return this;
    }
