@@ -33,8 +33,23 @@ jobs:
       - run: ./mvnw --version
 
       - name: Maven build
+        if: (github.event_name == 'pull_request') && !contains(github.event.pull_request.labels.*.name, 'Image Required')
         run: >
             ./mvnw clean install -s maven-settings.xml -B -e -DskipTests -Pnative
+
+      - name: Maven build Distribution
+        if: (github.event_name != 'pull_request') || contains(github.event.pull_request.labels.*.name, 'Image Required')
+        run: >
+            ./mvnw clean install -s maven-settings.xml -B -e -DskipTests -Pnative -Pdistribution
+
+      - name: Server artifact
+        if: (github.event_name != 'pull_request') || contains(github.event.pull_request.labels.*.name, 'Image Required')
+        uses: actions/upload-artifact@v4
+        with:
+          name: infinispan-server
+          compression-level: 0
+          path: |
+            distribution/target/distribution/infinispan-server-*.zip
 
       - name: Maven Test
         run: >
