@@ -4,12 +4,12 @@ import java.util.Collection;
 
 import org.hibernate.search.engine.mapper.mapping.building.spi.MappingBuildContext;
 import org.hibernate.search.engine.mapper.mapping.building.spi.MappingConfigurationCollector;
-import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionEntityLoader;
 import org.hibernate.search.mapper.pojo.mapping.building.spi.PojoMapperDelegate;
 import org.hibernate.search.mapper.pojo.mapping.building.spi.PojoTypeMetadataContributor;
 import org.hibernate.search.mapper.pojo.mapping.spi.AbstractPojoMappingInitiator;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
 import org.infinispan.query.concurrent.FailureCounter;
+import org.infinispan.query.impl.EntityLoaderFactory;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 import org.infinispan.search.mapper.mapping.MappingConfigurationContext;
 import org.infinispan.search.mapper.mapping.ProgrammaticSearchMappingProvider;
@@ -26,7 +26,7 @@ public class InfinispanMappingInitiator extends AbstractPojoMappingInitiator<Inf
    private final FailureCounter failureCounter;
    private final int maxConcurrency;
 
-   private PojoSelectionEntityLoader<?> entityLoader;
+   private EntityLoaderFactory<?> entityLoader;
    private EntityConverter entityConverter;
 
    public InfinispanMappingInitiator(PojoBootstrapIntrospector introspector,
@@ -45,7 +45,7 @@ public class InfinispanMappingInitiator extends AbstractPojoMappingInitiator<Inf
       typeConfigurationContributor.addEntityType(type, entityName);
    }
 
-   public void setEntityLoader(PojoSelectionEntityLoader<?> entityLoader) {
+   public void setEntityLoader(EntityLoaderFactory<?> entityLoader) {
       this.entityLoader = entityLoader;
    }
 

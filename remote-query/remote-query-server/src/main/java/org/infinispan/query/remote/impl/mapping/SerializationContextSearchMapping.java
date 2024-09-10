@@ -2,9 +2,9 @@ package org.infinispan.query.remote.impl.mapping;
 
 import java.util.Set;
 
-import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionEntityLoader;
 import org.hibernate.search.mapper.pojo.mapping.definition.programmatic.ProgrammaticMappingConfigurationContext;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.impl.EntityLoaderFactory;
 import org.infinispan.query.remote.impl.indexing.ProtobufEntityConverter;
 import org.infinispan.query.remote.impl.mapping.model.ProtobufBootstrapIntrospector;
 import org.infinispan.query.remote.impl.mapping.reference.GlobalReferenceHolder;
@@ -18,7 +18,7 @@ public final class SerializationContextSearchMapping {
    }
 
    public static SearchMappingBuilder createBuilder(SearchMappingCommonBuilding commonBuilding,
-                                                    PojoSelectionEntityLoader<?> entityLoader,
+                                                    EntityLoaderFactory<?> entityLoader,
                                                     Set<String> indexedEntityTypes,
                                                     SerializationContext serializationContext) {
       GlobalReferenceHolder globalReferenceHolder = new GlobalReferenceHolder(serializationContext.getGenericDescriptors());

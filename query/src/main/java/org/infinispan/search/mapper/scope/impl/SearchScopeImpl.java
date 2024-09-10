@@ -8,23 +8,22 @@ import org.hibernate.search.engine.search.predicate.dsl.SearchPredicateFactory;
 import org.hibernate.search.engine.search.projection.dsl.SearchProjectionFactory;
 import org.hibernate.search.engine.search.query.dsl.SearchQuerySelectStep;
 import org.hibernate.search.engine.search.sort.dsl.SearchSortFactory;
-import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionEntityLoader;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.hibernate.search.mapper.pojo.scope.spi.PojoScopeDelegate;
 import org.hibernate.search.mapper.pojo.scope.spi.PojoScopeSessionContext;
+import org.infinispan.query.impl.EntityLoaderFactory;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.scope.SearchWorkspace;
-import org.infinispan.search.mapper.search.loading.context.impl.InfinispanLoadingContext;
 
 public class SearchScopeImpl<E> implements SearchScope<E> {
 
    private final BackendMappingContext mappingContext;
    private final PojoScopeDelegate<EntityReference, E, PojoRawTypeIdentifier<? extends E>> delegate;
-   private final PojoSelectionEntityLoader<E> entityLoader;
+   private final EntityLoaderFactory<E> entityLoader;
 
    public SearchScopeImpl(BackendMappingContext mappingContext,
                           PojoScopeDelegate<EntityReference, E, PojoRawTypeIdentifier<? extends E>> delegate,
-                          PojoSelectionEntityLoader<E> entityLoader) {
+                          EntityLoaderFactory<E> entityLoader) {
       this.mappingContext = mappingContext;
       this.delegate = delegate;
       this.entityLoader = entityLoader;
@@ -56,6 +55,6 @@ public class SearchScopeImpl<E> implements SearchScope<E> {
    }
 
    public SearchQuerySelectStep<?, EntityReference, E, ?, ?, ?> search(PojoScopeSessionContext sessionContext) {
-      return delegate.search(sessionContext, new InfinispanLoadingContext.Builder<>(entityLoader));
+      return delegate.search(sessionContext, entityLoader.builder());
    }
 }

@@ -32,7 +32,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
-import org.infinispan.query.impl.EntityLoader;
+import org.infinispan.query.impl.EntityLoaderFactory;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.impl.Externalizers.QueryRequestExternalizer;
 import org.infinispan.query.remote.client.impl.GlobalContextInitializerImpl;
@@ -158,7 +158,7 @@ public final class LifecycleManager implements ModuleLifecycle {
             AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache().withStorageMediaType()
                   .withWrapping(ByteArrayWrapper.class, ProtobufWrapper.class);
 
-            EntityLoader<?> entityLoader = new EntityLoader<>(cache, queryStatistics);
+            EntityLoaderFactory<?> entityLoader = new EntityLoaderFactory<>(cache, queryStatistics);
 
             QueryCache queryCache = cr.getGlobalComponentRegistry().getComponent(QueryCache.class);
             searchMapping = new LazySearchMapping(commonBuilding, entityLoader, serCtx, cache, protobufMetadataManager,
