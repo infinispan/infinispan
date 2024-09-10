@@ -831,6 +831,13 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       CompletionStage<RestResponse> healthResponse = client.container().health();
       assertThat(healthResponse).isOk().containsReturnedText("{\"status\":\"FAILED\",\"cache_name\":\"CACHE\"}");
 
+      CompletionStage<RestResponse> cacheHealthResponse = client.cache("CACHE").health();
+      assertThat(cacheHealthResponse).isOk();
+
+      // we need admin for this one
+      CompletionStage<RestResponse> configResponse = adminClient.cache("CACHE").configuration();
+      assertThat(configResponse).isOk();
+
       // The only way to recover from a broken cache is to delete it
       response = client.cache("CACHE").delete();
       assertThat(response).isOk();
