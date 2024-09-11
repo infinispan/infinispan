@@ -37,13 +37,13 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
 
    private final NearCacheConfiguration config;
    private final ClientListenerNotifier listenerNotifier;
-   private final AtomicInteger nearCacheRemovals = new AtomicInteger();
    private Object listener;
    private byte[] listenerId;
    private NearCache<K, V> cache;
    private Runnable invalidationCallback;
-   private int bloomFilterBits = -1;
-   private int bloomFilterUpdateThreshold;
+   private final int bloomFilterBits;
+   private final int bloomFilterUpdateThreshold;
+   private final AtomicInteger nearCacheRemovals;
    private InternalRemoteCache<K, V> remote;
 
    private SocketAddress listenerAddress;
@@ -51,6 +51,21 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    protected NearCacheService(NearCacheConfiguration config, ClientListenerNotifier listenerNotifier) {
       this.config = config;
       this.listenerNotifier = listenerNotifier;
+
+      int maxEntries = config.maxEntries();
+      if (maxEntries > 0 && config.bloomFilter()) {
+         bloomFilterBits = determineBloomFilterBits(maxEntries);
+         // We want to scale the update frequency of the bloom filter to be based on the number of max entries
+         // This number along with default values of 3 hash algorithms and 4x bit size we end up with
+         // between 14.689 and 16.573 percent hits per entry.
+         bloomFilterUpdateThreshold = maxEntries / 16 + 3;
+         nearCacheRemovals = new AtomicInteger();
+      } else {
+         bloomFilterBits = -1;
+         // Set to max so the threshold can never be hit
+         bloomFilterUpdateThreshold = Integer.MAX_VALUE;
+         nearCacheRemovals = null;
+      }
    }
 
    public SocketAddress start(InternalRemoteCache<K, V> remote) {
@@ -59,13 +74,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
          cache = createNearCache(config, this::entryRemovedFromNearCache);
          // Add a listener that updates the near cache
          listener = new InvalidatedNearCacheListener<>(this);
-         int maxEntries = config.maxEntries();
-         if (maxEntries > 0 && config.bloomFilter()) {
-            bloomFilterBits = determineBloomFilterBits(maxEntries);
-            // We want to scale the update frequency of the bloom filter to be based on the number of max entries
-            // This number along with default values of 3 hash algorithms and 4x bit size we end up with
-            // between 14.689 and 16.573 percent hits per entry.
-            bloomFilterUpdateThreshold = maxEntries / 16 + 3;
+         if (bloomFilterBits > 0) {
             listenerAddress = remote.addNearCacheListener(listener, bloomFilterBits);
          } else {
             remote.addClientListener(listener);
@@ -83,15 +92,20 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    }
 
    void entryRemovedFromNearCache(K key, MetadataValue<V> value) {
+      if (nearCacheRemovals == null) {
+         return;
+      }
 
       while (true) {
          int removals = nearCacheRemovals.get();
          if (removals >= bloomFilterUpdateThreshold) {
             if (nearCacheRemovals.compareAndSet(removals, 0)) {
+               log.tracef("Updating bloom filter due to reaching update threshold with %d for %s", removals, remote.getName());
                remote.updateBloomFilter();
                break;
             }
          } else if (nearCacheRemovals.compareAndSet(removals, removals + 1)) {
+            log.tracef("Incremented nearCacheRemovals to %d for %s", removals + 1, remote.getName());
             break;
          }
       }
@@ -183,6 +197,9 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    @Override
    public void clear() {
       cache.clear();
+      if (nearCacheRemovals != null) {
+         nearCacheRemovals.set(0);
+      }
       if (log.isTraceEnabled()) log.tracef("Cleared near cache (listenerId=%s)", Util.printArray(listenerId));
    }
 

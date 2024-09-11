@@ -30,6 +30,8 @@ final class BoundedConcurrentMapNearCache<K, V> implements NearCache<K, V> {
                                                BiConsumer<? super K, ? super MetadataValue<V>> removedConsumer) {
       Cache<K, MetadataValue<V>> cache = Caffeine.newBuilder()
             .maximumSize(config.maxEntries())
+            // Always run in the same thread to make operations synchronous
+            .executor(Runnable::run)
             .<K, MetadataValue<V>>removalListener((key, value, cause) -> removedConsumer.accept(key, value))
             .build();
       return new BoundedConcurrentMapNearCache<>(cache);
