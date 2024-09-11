@@ -111,3 +111,25 @@ jobs:
             target-branch.txt
             event_name.txt
             event_number.txt
+  images-branch:
+    if: github.event_name == 'push'
+    needs: ci-build-test-pr
+    uses: rigazilla/infinispan-images/.github/workflows/ci-release.yml@publish-image
+    secrets: inherit
+    with:
+      repository: ${{ github.repository }}
+      run-id: ${{ github.run_id }}
+      name: ${{ needs.ci-build-test-pr.outputs.server-distro-name-branch }}
+      art-name: ${{ needs.ci-build-test-pr.outputs.server-distro-name-branch }}
+      tags: quay.io/infinispan-test/server:gh-${{ github.event.base_ref }}
+  images-pr:
+    if: github.event_name == 'pull_request'
+    needs: ci-build-test-pr
+    uses: rigazilla/infinispan-images/.github/workflows/ci-release.yml@publish-image
+    secrets: inherit
+    with:
+      repository: ${{ github.repository }}
+      run-id: ${{ github.run_id }}
+      name: ${{ needs.ci-build-test-pr.outputs.server-distro-name-branch }}
+      art-name: ${{ needs.ci-build-test-pr.outputs.server-distro-name-pr }}
+      tags: quay.io/infinispan-test/server:${{ github.event.pull_request.number }}
