@@ -101,7 +101,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       this.nameBytes = name.getBytes(StandardCharsets.UTF_8);
       this.remoteCacheManager = rcm;
       this.dataFormat = DataFormat.builder().build();
-      this.clientStatistics = new ClientStatistics(timeService, nearCacheService);
+      this.clientStatistics = new ClientStatistics(timeService, nearCacheService, rcm.getConfiguration().metricRegistry().withCache(name));
       this.operationsFactory = factoryFunction.apply(this);
       this.clientListenerNotifier = rcm.getListenerNotifier();
       this.flagInt = rcm.getConfiguration().forceReturnValues() ? Flag.FORCE_RETURN_VALUE.getFlagInt() : 0;
@@ -534,6 +534,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    @Override
    public void stop() {
       unregisterMBean();
+      remoteCacheManager.getConfiguration().metricRegistry().removeCache(name);
    }
 
    @Override

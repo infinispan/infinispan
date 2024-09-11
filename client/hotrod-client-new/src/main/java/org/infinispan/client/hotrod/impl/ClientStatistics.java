@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
@@ -8,31 +9,49 @@ import java.util.function.Function;
 import org.infinispan.client.hotrod.impl.operations.CacheOperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.StatsOperationsFactory;
 import org.infinispan.client.hotrod.jmx.RemoteCacheClientStatisticsMXBean;
+import org.infinispan.client.hotrod.metrics.HotRodClientMetricsRegistry;
 import org.infinispan.client.hotrod.near.NearCacheService;
+import org.infinispan.commons.stat.CounterTracker;
+import org.infinispan.commons.stat.TimerTracker;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.concurrent.StripedCounters;
 
 public final class ClientStatistics implements RemoteCacheClientStatisticsMXBean {
    private final AtomicLong startNanoseconds = new AtomicLong(0);
    private final AtomicLong resetNanoseconds = new AtomicLong(0);
-   private final NearCacheService nearCacheService;
+   private final NearCacheService<?, ?> nearCacheService;
    private final TimeService timeService;
    private final StripedCounters<StripeB> counters = new StripedCounters<>(StripeC::new);
+   private final TimerTracker readHitTimes;
+   private final TimerTracker readMissTimes;
+   private final TimerTracker writeTimes;
+   private final TimerTracker removeTimes;
+   private final CounterTracker nearCacheHits;
+   private final CounterTracker nearCacheMisses;
+   private final CounterTracker nearCacheInvalidations;
 
    public static <K, V> Function<InternalRemoteCache<K, V>, CacheOperationsFactory> functionFor(
          Function<InternalRemoteCache<K, V>, CacheOperationsFactory> delegate) {
       return irc -> new StatsOperationsFactory(delegate.apply(irc), irc.clientStatistics());
    }
 
-   ClientStatistics(TimeService timeService, NearCacheService nearCacheService) {
+   ClientStatistics(TimeService timeService, NearCacheService<?, ?> nearCacheService, HotRodClientMetricsRegistry metricRegistry) {
       this.timeService = timeService;
       this.nearCacheService = nearCacheService;
       if (nearCacheService != null)
          nearCacheService.setInvalidationCallback(this::incrementNearCacheInvalidations);
+      readHitTimes = metricRegistry.createTimer("reads.hit", "The read hits duration", Map.of(), null);
+      readMissTimes = metricRegistry.createTimer("reads.miss", "The read misses duration", Map.of(), null);
+      writeTimes = metricRegistry.createTimer("writes", "The writes duration", Map.of(), null);
+      removeTimes = metricRegistry.createTimer("removes", "The remove durations", Map.of(), null);
+      nearCacheHits = metricRegistry.createCounter("nearCache.hits", "The number of near-cache read hits", Map.of(), null);
+      nearCacheMisses = metricRegistry.createCounter("nearCache.misses", "The number of near-cache misses", Map.of(), null);
+      nearCacheInvalidations = metricRegistry.createCounter("nearCache.invalidations", "The number of near-cache invalidations", Map.of(), null);
+      metricRegistry.createGauge("nearCache.size", "The current number of entries stored in the near-cache", this::getNearCacheSize, Map.of(), null);
    }
 
    ClientStatistics(TimeService timeService) {
-      this(timeService, null);
+      this(timeService, null, HotRodClientMetricsRegistry.DISABLED);
    }
 
    @Override
@@ -124,9 +143,11 @@ public final class ClientStatistics implements RemoteCacheClientStatisticsMXBean
       if (foundValue) {
          counters.add(StripeB.remoteCacheHitsTimeFieldUpdater, stripe, duration);
          counters.add(StripeB.remoteCacheHitsFieldUpdater, stripe, count);
+         readHitTimes.update(duration, TimeUnit.NANOSECONDS);
       } else {
          counters.add(StripeB.remoteCacheMissesTimeFieldUpdater, stripe, duration);
          counters.add(StripeB.remoteCacheMissesFieldUpdater, stripe, count);
+         readMissTimes.update(duration, TimeUnit.NANOSECONDS);
       }
    }
 
@@ -135,6 +156,7 @@ public final class ClientStatistics implements RemoteCacheClientStatisticsMXBean
       StripeB stripe = counters.stripeForCurrentThread();
       counters.add(StripeB.remoteCacheStoresTimeFieldUpdater, stripe, duration);
       counters.add(StripeB.remoteCacheStoresFieldUpdater, stripe, count);
+      writeTimes.update(duration, TimeUnit.NANOSECONDS);
    }
 
    public void dataRemove(long startTimeNanoSeconds, int count) {
@@ -142,18 +164,22 @@ public final class ClientStatistics implements RemoteCacheClientStatisticsMXBean
       StripeB stripe = counters.stripeForCurrentThread();
       counters.add(StripeB.remoteCacheRemovesTimeFieldUpdater, stripe, duration);
       counters.add(StripeB.remoteCacheRemovesFieldUpdater, stripe, count);
+      removeTimes.update(duration, TimeUnit.NANOSECONDS);
    }
 
    public void incrementNearCacheMisses() {
       counters.increment(StripeB.nearCacheMissesFieldUpdater, counters.stripeForCurrentThread());
+      nearCacheMisses.increment();
    }
 
    public void incrementNearCacheHits() {
       counters.increment(StripeB.nearCacheHitsFieldUpdater, counters.stripeForCurrentThread());
+      nearCacheHits.increment();
    }
 
    public void incrementNearCacheInvalidations() {
       counters.increment(StripeB.nearCacheInvalidationsFieldUpdater, counters.stripeForCurrentThread());
+      nearCacheInvalidations.increment();
    }
 
    @Override

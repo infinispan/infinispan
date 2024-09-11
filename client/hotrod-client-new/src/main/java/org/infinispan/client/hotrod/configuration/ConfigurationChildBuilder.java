@@ -12,6 +12,7 @@ import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.TransportFactory;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
+import org.infinispan.client.hotrod.metrics.RemoteCacheManagerMetricsRegistry;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.protostream.SerializationContextInitializer;
 
@@ -256,6 +257,15 @@ public interface ConfigurationChildBuilder {
     * Configures this builder using the specified properties. See {@link ConfigurationBuilder} for a list.
     */
    ConfigurationBuilder withProperties(Properties properties);
+
+   /**
+    * Sets the {@link RemoteCacheManagerMetricsRegistry}.
+    * <p>
+    * The Hot Rod client will register metrics about connection pool and cache accesses using that instance.
+    *
+    * @param metricRegistry The {@link RemoteCacheManagerMetricsRegistry} implementation.
+    */
+   ConfigurationBuilder withMetricRegistry(RemoteCacheManagerMetricsRegistry metricRegistry);
 
    /**
     * Builds a configuration object

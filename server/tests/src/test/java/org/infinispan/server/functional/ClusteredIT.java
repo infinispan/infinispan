@@ -27,6 +27,7 @@ import org.infinispan.server.functional.hotrod.HotRodCacheContinuousQueries;
 import org.infinispan.server.functional.hotrod.HotRodCacheEvents;
 import org.infinispan.server.functional.hotrod.HotRodCacheOperations;
 import org.infinispan.server.functional.hotrod.HotRodCacheQueries;
+import org.infinispan.server.functional.hotrod.HotRodClientMetrics;
 import org.infinispan.server.functional.hotrod.HotRodCounterOperations;
 import org.infinispan.server.functional.hotrod.HotRodListenerWithDslFilter;
 import org.infinispan.server.functional.hotrod.HotRodMultiMapOperations;
@@ -72,7 +73,8 @@ import org.junit.platform.suite.api.Suite;
       RestLoggingResource.class,
       ScriptingTasks.class,
       ServerTasks.class,
-      PojoMarshalling.class
+      PojoMarshalling.class,
+      HotRodClientMetrics.class
 })
 public class ClusteredIT extends InfinispanSuite {
 

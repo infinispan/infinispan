@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl.transport.netty;
 import java.io.File;
 import java.net.SocketAddress;
 import java.security.Provider;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -86,6 +87,8 @@ public class ChannelHandler {
                null, ClientAuth.NONE, null, false);
          this.watcher = null;
       }
+
+      configuration.metricRegistry().createGauge("connection.pool.size", "The total number of connections", channels::size, Map.of(), null);
    }
 
    public <E> CompletionStage<E> submitOperation(HotRodOperation<E> operation, SocketAddress socketAddress) {

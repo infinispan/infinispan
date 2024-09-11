@@ -51,6 +51,7 @@ import org.infinispan.client.hotrod.impl.topology.CacheInfo;
 import org.infinispan.client.hotrod.impl.topology.ClusterInfo;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.stat.CounterTracker;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 
 import io.netty.channel.Channel;
@@ -97,6 +98,7 @@ public class OperationDispatcher {
    private final ChannelHandler channelHandler;
 
    private final ClientListenerNotifier clientListenerNotifier;
+   private final CounterTracker totalRetriesMetric;
 
    public OperationDispatcher(Configuration configuration, ExecutorService executorService,
                               ClientListenerNotifier clientListenerNotifier, Consumer<ChannelPipeline> pipelineDecorator) {
@@ -144,6 +146,7 @@ public class OperationDispatcher {
             this, pipelineDecorator);
 
       topologyInfo.getOrCreateCacheInfo(HotRodConstants.DEFAULT_CACHE_NAME);
+      totalRetriesMetric = configuration.metricRegistry().createCounter("connection.pool.retries", "The total number of retries", Map.of(), null);
    }
 
    public CacheInfo getCacheInfo(String cacheName) {
@@ -752,6 +755,7 @@ public class OperationDispatcher {
          if (log.isTraceEnabled()) {
             log.tracef(t, "Exception encountered in %s. Retry %d out of %d", this, retryAttempt, maxRetries);
          }
+         totalRetriesMetric.increment();
          retryCounter.incrementAndGet();
          op.reset();
          return true;
