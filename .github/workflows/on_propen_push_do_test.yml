@@ -114,7 +114,7 @@ jobs:
   images-branch:
     if: github.event_name == 'push'
     needs: ci-build-test-pr
-    uses: rigazilla/infinispan-images/.github/workflows/ci-release.yml@publish-image
+    uses: infinispan/infinispan-images/.github/workflows/ci-release.yml@publish-image
     secrets: inherit
     with:
       repository: ${{ github.repository }}
@@ -124,7 +124,7 @@ jobs:
   images-pr:
     if: github.event_name == 'pull_request'
     needs: ci-build-test-pr
-    uses: rigazilla/infinispan-images/.github/workflows/ci-release.yml@publish-image
+    uses: infinispan/infinispan-images/.github/workflows/ci-release.yml@publish-image
     secrets: inherit
     with:
       repository: ${{ github.repository }}
