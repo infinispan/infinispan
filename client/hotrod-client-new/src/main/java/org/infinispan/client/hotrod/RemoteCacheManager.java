@@ -476,6 +476,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
          asyncExecutorService.shutdown();
       }
       unregisterMBean();
+      configuration.metricRegistry().close();
       started = false;
    }
 

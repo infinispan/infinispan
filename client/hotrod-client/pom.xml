@@ -201,6 +201,12 @@
       </dependency>
 
       <dependency>
+         <groupId>io.micrometer</groupId>
+         <artifactId>micrometer-core</artifactId>
+         <optional>true</optional>
+      </dependency>
+
+      <dependency>
          <groupId>org.infinispan.protostream</groupId>
          <artifactId>protostream-processor</artifactId>
          <scope>test</scope>

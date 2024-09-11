@@ -57,6 +57,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -68,6 +69,7 @@ import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.TransportFactory;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.metrics.RemoteCacheManagerMetricsRegistry;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.marshall.Marshaller;
@@ -119,6 +121,7 @@ public class Configuration {
    private final int dnsResolverMinTTL;
    private final int dnsResolverMaxTTL;
    private final int dnsResolverNegativeTTL;
+   private final RemoteCacheManagerMetricsRegistry metricRegistry;
 
    public Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory, ClassLoader classLoader,
                         ClientIntelligence clientIntelligence, ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl,
@@ -131,7 +134,7 @@ public class Configuration {
                         TransactionConfiguration transaction, StatisticsConfiguration statistics, Features features,
                         List<SerializationContextInitializer> contextInitializers,
                         Map<String, RemoteCacheConfiguration> remoteCaches,
-                        TransportFactory transportFactory, boolean tracingPropagationEnabled) {
+                        TransportFactory transportFactory, boolean tracingPropagationEnabled, RemoteCacheManagerMetricsRegistry metricRegistry) {
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategyFactory = balancingStrategyFactory;
       this.maxRetries = maxRetries;
@@ -166,6 +169,7 @@ public class Configuration {
       this.remoteCaches = remoteCaches;
       this.transportFactory = transportFactory;
       this.tracingPropagationEnabled = tracingPropagationEnabled;
+      this.metricRegistry = Objects.requireNonNullElse(metricRegistry, RemoteCacheManagerMetricsRegistry.DISABLED);
    }
 
    public ExecutorFactoryConfiguration asyncExecutorFactory() {
@@ -384,6 +388,13 @@ public class Configuration {
       return tracingPropagationEnabled;
    }
 
+   /**
+    * @return The {@link RemoteCacheManagerMetricsRegistry} implementation to use for metrics.
+    */
+   public RemoteCacheManagerMetricsRegistry metricRegistry() {
+      return metricRegistry;
+   }
+
    @Override
    public String toString() {
       return "Configuration [asyncExecutorFactory=" + asyncExecutorFactory + ", balancingStrategyFactory=()->" + balancingStrategyFactory.get()
@@ -398,6 +409,7 @@ public class Configuration {
             + ", remoteCaches= " + remoteCaches
             + ", transaction=" + transaction
             + ", statistics=" + statistics
+            + ", metricRegistry=" + metricRegistry
             + "]";
    }
 
