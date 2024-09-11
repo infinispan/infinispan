@@ -59,6 +59,7 @@ import org.infinispan.commons.io.FileWatcher;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
+import org.infinispan.commons.stat.CounterTracker;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.SslContextFactory;
 
@@ -115,6 +116,7 @@ public class ChannelFactory {
    private AddressResolverGroup<?> dnsResolver;
    private SslContext sslContext;
    private FileWatcher watcher;
+   private CounterTracker totalRetriesMetric = CounterTracker.NO_OP;
 
    public ChannelFactory(CodecHolder codecHolder) {
       this.codecHolder = codecHolder;
@@ -180,12 +182,18 @@ public class ChannelFactory {
 
          WrappedByteArray defaultCacheName = wrapBytes(RemoteCacheManager.cacheNameBytes());
          topologyInfo.getOrCreateCacheInfo(defaultCacheName);
+         registerMetrics();
       } finally {
          lock.writeLock().unlock();
       }
       pingServersIgnoreException();
    }
 
+   private void registerMetrics() {
+      var metricsRegistry = configuration.metricRegistry();
+      totalRetriesMetric = metricsRegistry.createCounter("connection.pool.retries", "The total number of retries", Map.of(), null);
+      metricsRegistry.createGauge("connection.pool.size", "The total number of connections", () -> getNumActive() + getNumIdle(), Map.of(), null);
+   }
 
    private SslContext initSslContext() {
       SslConfiguration ssl = configuration.security().ssl();
@@ -295,7 +303,8 @@ public class ChannelFactory {
       return new ChannelPool(bootstrap.config().group().next(), address, channelInitializer,
             configuration.connectionPool().exhaustedAction(), this::onConnectionEvent,
             configuration.connectionPool().maxWait(), maxConnections,
-            configuration.connectionPool().maxPendingRequests());
+            configuration.connectionPool().maxPendingRequests(),
+            configuration.metricRegistry());
    }
 
    protected final OperationsFactory getOperationsFactory() {
@@ -887,6 +896,7 @@ public class ChannelFactory {
 
    public void incrementRetryCount() {
       totalRetries.increment();
+      totalRetriesMetric.increment();
    }
 
    public ClientIntelligence getClientIntelligence() {

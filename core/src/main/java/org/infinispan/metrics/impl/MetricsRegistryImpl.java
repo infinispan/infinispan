@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.stat.CounterMetricInfo;
@@ -13,8 +14,12 @@ import org.infinispan.commons.stat.DistributionSummaryMetricInfo;
 import org.infinispan.commons.stat.FunctionTimerMetricInfo;
 import org.infinispan.commons.stat.GaugeMetricInfo;
 import org.infinispan.commons.stat.MetricInfo;
+import org.infinispan.commons.stat.SimpleTimerTracker;
 import org.infinispan.commons.stat.TimeGaugeMetricInfo;
 import org.infinispan.commons.stat.TimerMetricInfo;
+import org.infinispan.commons.stat.micrometer.MicrometerCounterTracker;
+import org.infinispan.commons.stat.micrometer.MicrometerDistributionSummary;
+import org.infinispan.commons.stat.micrometer.MicrometerTimerTracker;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -27,6 +32,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.FunctionTimer;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -250,14 +256,14 @@ public class MetricsRegistryImpl implements MetricsRegistry {
             .description(info.getDescription())
             .tags(createTags(info.getTags(), tags))
             .register(registry.registry());
-      info.accept(instance, new CounterTrackerImpl(counter));
+      info.accept(instance, new MicrometerCounterTracker(counter));
       return counter.getId();
    }
 
    private Meter.Id createFunctionTimer(Object instance, String prefix, FunctionTimerMetricInfo<Object> info, Map<String, String> tags) {
-      FunctionTimerTrackerImpl timerTracker = new FunctionTimerTrackerImpl();
+      var timerTracker = new SimpleTimerTracker();
       info.accept(instance, timerTracker);
-      return timerTracker.create(metricName(prefix, info))
+      return FunctionTimer.builder(metricName(prefix, info), timerTracker, SimpleTimerTracker::count, SimpleTimerTracker::totalTime, TimeUnit.NANOSECONDS)
             .description(info.getDescription())
             .tags(createTags(info.getTags(), tags))
             .register(registry.registry())
@@ -270,7 +276,7 @@ public class MetricsRegistryImpl implements MetricsRegistry {
             .publishPercentileHistogram(true)
             .tags(createTags(info.getTags(), tags))
             .register(registry.registry());
-      info.accept(instance, new TimerTrackerImpl(timer));
+      info.accept(instance, new MicrometerTimerTracker(timer));
       return timer.getId();
    }
 
@@ -280,7 +286,7 @@ public class MetricsRegistryImpl implements MetricsRegistry {
             .publishPercentileHistogram(true)
             .tags(createTags(info.getTags(), tags))
             .register(registry.registry());
-      info.accept(instance, new DistributionSummaryTrackerImpl(summary));
+      info.accept(instance, new MicrometerDistributionSummary(summary));
       return summary.getId();
    }
 

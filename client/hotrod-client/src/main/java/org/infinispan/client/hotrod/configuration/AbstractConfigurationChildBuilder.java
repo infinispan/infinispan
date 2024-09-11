@@ -9,6 +9,7 @@ import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.TransportFactory;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
+import org.infinispan.client.hotrod.metrics.RemoteCacheManagerMetricsRegistry;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.protostream.SerializationContextInitializer;
 
@@ -222,6 +223,11 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    @Override
    public ConfigurationBuilder transportFactory(TransportFactory transportFactory) {
       return builder.transportFactory(transportFactory);
+   }
+
+   @Override
+   public ConfigurationBuilder withMetricRegistry(RemoteCacheManagerMetricsRegistry metricRegistry) {
+      return builder.withMetricRegistry(metricRegistry);
    }
 
    @Override
