@@ -8,6 +8,7 @@ jobs:
       runs-on: ubuntu-latest
       outputs:
          pullRequestNumber: ${{ steps.source-run-info.outputs.pullRequestNumber }}
+         targetBranch: ${{ steps.source-run-info.outputs.targetBranch }}
       steps:
          - name: "Get information about the origin 'CI' run"
            uses: potiuk/get-workflow-origin@v1_1
@@ -17,17 +18,18 @@ jobs:
             sourceRunId: ${{ github.event.workflow_run.id }}
    images-branch:
       if: github.event_name == 'push'
-      uses: infinispan/infinispan-images/.github/workflows/ci-release.yml@publish-image
+      needs: get-workflow-info
+      uses: infinispan/infinispan-images/.github/workflows/ci-release.yml@rz-publish-image
       secrets: inherit
       with:
         repository: ${{ github.repository }}
         run-id: ${{ github.event.workflow_run }}
         art-name: infinispan-server
-        tags: quay.io/infinispan-test/server:gh-${{ github.event.base_ref }}
+        tags: quay.io/infinispan-test/server:gh-${{ needs.get-workflow-info.outputs.targetBranch }}
    images-pr:
       if: github.event_name == 'pull_request'
       needs: get-workflow-info
-      uses: infinispan/infinispan-images/.github/workflows/ci-release.yml@publish-image
+      uses: infinispan/infinispan-images/.github/workflows/ci-release.yml@rz-publish-image
       secrets: inherit
       with:
         repository: ${{ github.repository }}
