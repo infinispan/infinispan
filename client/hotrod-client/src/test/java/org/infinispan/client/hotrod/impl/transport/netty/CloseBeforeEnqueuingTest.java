@@ -24,6 +24,7 @@ import org.infinispan.client.hotrod.impl.protocol.CodecHolder;
 import org.infinispan.client.hotrod.retry.AbstractRetryTest;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
+import org.infinispan.client.hotrod.metrics.RemoteCacheManagerMetricsRegistry;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.fwk.CheckPoint;
@@ -275,7 +276,8 @@ public class CloseBeforeEnqueuingTest extends AbstractRetryTest {
          return new ChannelPool(bootstrap.config().group().next(), address, channelInitializer,
                configuration.connectionPool().exhaustedAction(), this::onConnectionEvent,
                configuration.connectionPool().maxWait(), maxConnections,
-               configuration.connectionPool().maxPendingRequests()) {
+               configuration.connectionPool().maxPendingRequests(),
+               RemoteCacheManagerMetricsRegistry.DISABLED) {
 
             @Override
             boolean executeDirectlyIfPossible(ChannelOperation callback, boolean checkCallback) {

@@ -33,6 +33,7 @@ import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.client.hotrod.metrics.RemoteCacheManagerMetricsRegistry;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -98,6 +99,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private int dnsResolverMinTTL = 0;
    private int dnsResolverMaxTTL = Integer.MAX_VALUE;
    private int dnsResolverNegativeTTL = 0;
+   private RemoteCacheManagerMetricsRegistry metricRegistry;
 
 
    public ConfigurationBuilder() {
@@ -406,6 +408,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       return this;
    }
 
+   @Override
+   public ConfigurationBuilder withMetricRegistry(RemoteCacheManagerMetricsRegistry metricRegistry) {
+      this.metricRegistry = metricRegistry;
+      return this;
+   }
+
    public ConfigurationBuilder disableTracingPropagation() {
       this.tracingPropagationEnabled = false;
       return this;
@@ -626,7 +634,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
             forceReturnValues, keySizeEstimate, buildMarshaller, buildMarshallerClass, protocolVersion, servers, socketTimeout,
             security.create(), tcpNoDelay, tcpKeepAlive, valueSizeEstimate, maxRetries, nearCache.create(),
             serverClusterConfigs, allowListRegExs, batchSize, transaction.create(), statistics.create(), features,
-            contextInitializers, remoteCaches, transportFactory, tracingPropagationEnabled);
+            contextInitializers, remoteCaches, transportFactory, tracingPropagationEnabled, metricRegistry);
    }
 
    // Method that handles default marshaller - needed as a placeholder
