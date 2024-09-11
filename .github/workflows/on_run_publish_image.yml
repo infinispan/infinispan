@@ -1,0 +1,36 @@
+name: On Run Publish CI
+on:
+   workflow_run:
+     workflows: [On PR Open or Push Do Build and Test]
+     types: [completed]
+jobs:
+   get-workflow-info:
+      runs-on: ubuntu-latest
+      outputs:
+         pullRequestNumber: ${{ steps.source-run-info.outputs.pullRequestNumber }}
+      steps:
+         - name: "Get information about the origin 'CI' run"
+           uses: potiuk/get-workflow-origin@v1_1
+           id: source-run-info
+           with:
+            token: ${{ secrets.GITHUB_TOKEN }}
+            sourceRunId: ${{ github.event.workflow_run.id }}
+   images-branch:
+      if: github.event_name == 'push'
+      uses: infinispan/infinispan-images/.github/workflows/ci-release.yml@publish-image
+      secrets: inherit
+      with:
+        repository: ${{ github.repository }}
+        run-id: ${{ github.event.workflow_run }}
+        art-name: infinispan-server
+        tags: quay.io/infinispan-test/server:gh-${{ github.event.base_ref }}
+   images-pr:
+      if: github.event_name == 'pull_request'
+      needs: get-workflow-info
+      uses: infinispan/infinispan-images/.github/workflows/ci-release.yml@publish-image
+      secrets: inherit
+      with:
+        repository: ${{ github.repository }}
+        run-id: ${{ github.event.workflow_run }}
+        art-name: infinispan-server
+        tags: quay.io/infinispan-test/server:gh-${{ needs.get-workflow-info.outputs.pullRequestNumber }}
