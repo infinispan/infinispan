@@ -345,9 +345,9 @@ public class JdbcStringBasedStore<K, V> extends BaseJdbcStore<K, V, JdbcStringBa
             log.infof("Successfully purged %d rows of table %s.", purgedAmount, getTableManager().getDataTableName());
          }
          unicastProcessor.onComplete();
-      } catch (SQLException e) {
-         log.failedClearingJdbcCacheStore(e);
-         unicastProcessor.onError(e);
+      } catch (Throwable t) {
+         log.failedClearingJdbcCacheStore(t);
+         unicastProcessor.onError(t);
       }
    }
 
