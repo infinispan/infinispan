@@ -37,7 +37,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = ERROR)
    @Message(value = "Failed clearing cache store", id = 8001)
-   void failedClearingJdbcCacheStore(@Cause Exception e);
+   void failedClearingJdbcCacheStore(@Cause Throwable t);
 
 //   @LogMessage(level = ERROR)
 //   @Message(value = "I/O failure while integrating state into store", id = 8002)
