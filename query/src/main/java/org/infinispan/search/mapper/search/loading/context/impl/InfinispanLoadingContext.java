@@ -4,6 +4,7 @@ import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionEntityLoader;
 import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionLoadingContext;
 import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionLoadingContextBuilder;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRuntimeIntrospector;
+import org.infinispan.query.impl.EntityLoaded;
 import org.infinispan.search.mapper.model.impl.InfinispanRuntimeIntrospector;
 
 
@@ -12,9 +13,9 @@ import org.infinispan.search.mapper.model.impl.InfinispanRuntimeIntrospector;
  */
 public final class InfinispanLoadingContext<E> implements PojoSelectionLoadingContext  {
 
-   public final PojoSelectionEntityLoader<E> entityLoader;
+   public final PojoSelectionEntityLoader<EntityLoaded<E>> entityLoader;
 
-   public InfinispanLoadingContext(PojoSelectionEntityLoader<E> entityLoader) {
+   public InfinispanLoadingContext(PojoSelectionEntityLoader<EntityLoaded<E>> entityLoader) {
       this.entityLoader = entityLoader;
    }
 
@@ -29,12 +30,12 @@ public final class InfinispanLoadingContext<E> implements PojoSelectionLoadingCo
    }
 
    public static final class Builder<E> implements PojoSelectionLoadingContextBuilder<InfinispanSelectionLoadingOptionsStep>, InfinispanSelectionLoadingOptionsStep {
-      private final PojoSelectionEntityLoader<E> entityLoader;
-      private final PojoSelectionEntityLoader<E> metadataEntityLoader;
+      private final PojoSelectionEntityLoader<EntityLoaded<E>> entityLoader;
+      private final PojoSelectionEntityLoader<EntityLoaded<E>> metadataEntityLoader;
 
       boolean withMetadata = false;
 
-      public Builder(PojoSelectionEntityLoader<E> entityLoader, PojoSelectionEntityLoader<E> metadataEntityLoader) {
+      public Builder(PojoSelectionEntityLoader<EntityLoaded<E>> entityLoader, PojoSelectionEntityLoader<EntityLoaded<E>> metadataEntityLoader) {
          this.entityLoader = entityLoader;
          this.metadataEntityLoader = metadataEntityLoader;
       }
