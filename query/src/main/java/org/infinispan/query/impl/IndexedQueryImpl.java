@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.backend.lucene.search.query.LuceneSearchQuery;
@@ -141,7 +142,8 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
 
    private <K, V> EntityEntry<K, V> mapToEntry(List<Object> projection) {
       float score = (projection.size() > 2) ? (float) projection.get(2) : NaN;
-      return new EntityEntry<>((K) ((EntityReference) projection.get(0)).id(), (V) projection.get(1), score);
+      return new EntityEntry<>((K) ((EntityReference) projection.get(0)).id(),
+            ((EntityLoaded<V>)projection.get(1)).entity(), score);
    }
 
    @Override
@@ -158,14 +160,19 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
          }
 
          long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
-         SearchQuery<E> searchQuery = (SearchQuery<E>) searchQueryBuilder.build();
-         SearchResult<E> searchResult = searchQuery.fetch(queryDefinition.getFirstResult(), queryDefinition.getMaxResults());
+         SearchQuery<?> searchQuery = searchQueryBuilder.build();
+         SearchResult<?> searchResult = searchQuery.fetch(queryDefinition.getFirstResult(), queryDefinition.getMaxResults());
          if (queryStatistics.isEnabled()) recordQuery(System.nanoTime() - start);
 
          return new QueryResultImpl<>(
                // the hit count cannot exceed the cache size
                new TotalHitCount((int) searchResult.total().hitCountLowerBound(), searchResult.total().isHitCountExact()),
-               searchResult.hits());
+               searchResult.hits().stream().map(origin -> {
+                  if (origin instanceof EntityLoaded) {
+                     return ((EntityLoaded<?>) origin).entity();
+                  }
+                  return origin;
+               }).collect(Collectors.toList()));
       } catch (org.hibernate.search.util.common.SearchTimeoutException timeoutException) {
          throw new SearchTimeoutException();
       }
