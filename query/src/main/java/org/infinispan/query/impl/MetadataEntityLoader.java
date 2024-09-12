@@ -22,7 +22,7 @@ import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
  * @author Marko Luksa
  * @since 5.0
  */
-public final class MetadataEntityLoader<E> implements PojoSelectionEntityLoader<E> {
+public final class MetadataEntityLoader<E> implements PojoSelectionEntityLoader<EntityLoaded<E>> {
 
    private final AdvancedCache<?, E> cache;
    private final LocalQueryStatistics queryStatistics;
@@ -33,7 +33,7 @@ public final class MetadataEntityLoader<E> implements PojoSelectionEntityLoader<
    }
 
    @Override
-   public List<E> loadBlocking(List<?> identifiers, Deadline deadline) {
+   public List<EntityLoaded<E>> loadBlocking(List<?> identifiers, Deadline deadline) {
       if (identifiers.isEmpty()) return Collections.emptyList();
 
       Set<Object> keys = convertKeys(identifiers);
@@ -45,14 +45,14 @@ public final class MetadataEntityLoader<E> implements PojoSelectionEntityLoader<
 
       if (queryStatistics.isEnabled()) queryStatistics.entityLoaded(System.nanoTime() - start);
 
-      ArrayList<E> result = new ArrayList<>(keys.size());
+      ArrayList<EntityLoaded<E>> result = new ArrayList<>(keys.size());
       for (Object key : keys) {
          // if the entity was present at indexing time and
          // it is not present anymore now at searching time,
          // we will add a null here
          CacheEntry<?, E> cacheEntry = values.get(key);
          if (cacheEntry != null) {
-            result.add(cacheEntry.getValue());
+            result.add(new EntityLoaded<>(cacheEntry.getValue(), cacheEntry.getMetadata()));
          } else {
             result.add(null);
          }

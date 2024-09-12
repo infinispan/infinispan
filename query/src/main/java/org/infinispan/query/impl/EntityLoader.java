@@ -17,7 +17,7 @@ import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
  * @author Marko Luksa
  * @since 5.0
  */
-public final class EntityLoader<E> implements PojoSelectionEntityLoader<E> {
+public final class EntityLoader<E> implements PojoSelectionEntityLoader<EntityLoaded<E>> {
 
    private final AdvancedCache<?, E> cache;
    private final LocalQueryStatistics queryStatistics;
@@ -28,7 +28,7 @@ public final class EntityLoader<E> implements PojoSelectionEntityLoader<E> {
    }
 
    @Override
-   public List<E> loadBlocking(List<?> identifiers, Deadline deadline) {
+   public List<EntityLoaded<E>> loadBlocking(List<?> identifiers, Deadline deadline) {
       if (identifiers.isEmpty()) return Collections.emptyList();
 
       int entitiesSize = identifiers.size();
@@ -44,12 +44,12 @@ public final class EntityLoader<E> implements PojoSelectionEntityLoader<E> {
 
       if (queryStatistics.isEnabled()) queryStatistics.entityLoaded(System.nanoTime() - start);
 
-      ArrayList<E> result = new ArrayList<>(entitiesSize);
+      ArrayList<EntityLoaded<E>> result = new ArrayList<>(entitiesSize);
       for (Object key : keys) {
          // if the entity was present at indexing time and
          // it is not present anymore now at searching time,
          // we will add a null here
-         result.add(values.get(key));
+         result.add(new EntityLoaded<>(values.get(key), null));
       }
 
       return result;
