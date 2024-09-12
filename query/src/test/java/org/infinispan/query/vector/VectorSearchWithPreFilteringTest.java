@@ -68,7 +68,7 @@ public class VectorSearchWithPreFilteringTest extends SingleCacheManagerTest {
             .toQuery();
       SearchResult<List<?>> result = nativeQuery.fetch(100);
       assertThat(result.hits()).extracting(objects -> objects.get(1))
-            .extracting("code").containsExactly("c7", "c8", "c1");
+            .extracting("entity").extracting("code").containsExactly("c7", "c8", "c1");
    }
 
    @Test

@@ -14,6 +14,7 @@ import org.infinispan.query.core.impl.QueryResultImpl;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.dsl.impl.BaseQuery;
+import org.infinispan.query.impl.EntityLoaded;
 import org.infinispan.query.impl.IndexedQuery;
 
 
@@ -163,7 +164,12 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
    }
 
    private Object convertResult(Object result) {
-      if (projection == null) return result;
+      if (projection == null) {
+         if (result instanceof EntityLoaded) {
+            return ((EntityLoaded<?>) result).entity();
+         }
+         return result;
+      }
 
       Object[] array;
       if (result instanceof Object[]) {
