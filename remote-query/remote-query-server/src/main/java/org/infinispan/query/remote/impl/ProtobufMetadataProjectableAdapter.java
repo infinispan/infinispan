@@ -1,6 +1,5 @@
 package org.infinispan.query.remote.impl;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
@@ -14,8 +13,8 @@ import org.infinispan.query.dsl.embedded.impl.MetadataProjectableAdapter;
 
 public class ProtobufMetadataProjectableAdapter extends MetadataProjectableAdapter<Descriptor, FieldDescriptor, Integer> {
 
-   public ProtobufMetadataProjectableAdapter(MetadataAdapter<Descriptor, FieldDescriptor, Integer> baseAdapter, AdvancedCache<?, ?> cache) {
-      super(baseAdapter, cache);
+   public ProtobufMetadataProjectableAdapter(MetadataAdapter<Descriptor, FieldDescriptor, Integer> baseAdapter) {
+      super(baseAdapter);
    }
 
    @Override

@@ -65,7 +65,7 @@ final class Target_org_infinispan_query_impl_LifecycleManager {
       InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
       if (!icr.isInternalCache(cacheName) || icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.QUERYABLE)) {
          AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
-         cr.registerComponent(ObjectReflectionMatcher.create(cache, new ReflectionEntityNamesResolver(getClass().getClassLoader()),null), ObjectReflectionMatcher.class);
+         cr.registerComponent(ObjectReflectionMatcher.create(new ReflectionEntityNamesResolver(getClass().getClassLoader()),null), ObjectReflectionMatcher.class);
          cr.registerComponent(new QueryEngine<>(cache, false), QueryEngine.class);
       }
    }
