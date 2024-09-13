@@ -148,7 +148,7 @@ public class LifecycleManager implements ModuleLifecycle {
             }
          }
 
-         cr.registerComponent(ObjectReflectionMatcher.create(cache,
+         cr.registerComponent(ObjectReflectionMatcher.create(
                new ReflectionEntityNamesResolver(aggregatedClassLoader), searchMapping),
                ObjectReflectionMatcher.class);
          QueryEngine<Object> engine = new QueryEngine<>(cache, isIndexed);

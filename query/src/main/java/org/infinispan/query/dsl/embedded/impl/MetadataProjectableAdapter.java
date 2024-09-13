@@ -2,8 +2,6 @@ package org.infinispan.query.dsl.embedded.impl;
 
 import java.util.List;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.objectfilter.impl.MetadataAdapter;
 import org.infinispan.objectfilter.impl.predicateindex.MetadataProjectable;
@@ -13,12 +11,9 @@ abstract public class MetadataProjectableAdapter<TypeMetadata, AttributeMetadata
       MetadataProjectable<AttributeId> {
 
    private final MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> baseAdapter;
-   private final AdvancedCache<?, ?> cache;
 
-   public MetadataProjectableAdapter(MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> baseAdapter,
-                                     AdvancedCache<?, ?> cache) {
+   public MetadataProjectableAdapter(MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> baseAdapter) {
       this.baseAdapter = baseAdapter;
-      this.cache = cache;
    }
 
    @Override
@@ -52,13 +47,7 @@ abstract public class MetadataProjectableAdapter<TypeMetadata, AttributeMetadata
          return valueProjection(instance);
       }
 
-      Metadata meta;
-      if (metadata != null) {
-         meta = (Metadata) metadata;
-      } else {
-         CacheEntry<?, ?> cacheEntry = cache.getCacheEntry(key);
-         meta = cacheEntry.getMetadata();
-      }
+      Metadata meta = (Metadata) metadata;
       return metadataProjection(meta, attribute);
    }
 
