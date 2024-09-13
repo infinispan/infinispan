@@ -31,7 +31,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "rest.search.aggregation.RestQueryAggregationCountTest", enabled = false)
+@Test(groups = "functional", testName = "rest.search.aggregation.RestQueryAggregationCountTest")
 public class RestQueryAggregationCountTest extends SingleCacheManagerTest {
 
    private static final String CACHE_NAME = "items";
@@ -153,6 +153,7 @@ public class RestQueryAggregationCountTest extends SingleCacheManagerTest {
       }
       for (CompletionStage<RestResponse> response : responses) {
          assertThat(response).isOk();
+         assertThat(response).hasNoContent();
       }
    }
 }
