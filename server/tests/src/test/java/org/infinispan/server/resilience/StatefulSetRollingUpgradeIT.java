@@ -1,22 +1,21 @@
 package org.infinispan.server.resilience;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
+import static org.infinispan.server.test.core.Common.assertStatus;
+
+import java.util.stream.IntStream;
+
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.categories.Unstable;
 import org.infinispan.server.test.core.InfinispanServerDriver;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
-import org.junit.experimental.categories.Category;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.util.stream.IntStream;
-
-import static org.infinispan.server.test.core.Common.assertStatus;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Start cluster (0..numServers) redeploy after upgrade. Rolling upgrades always occur in the order numServers...0 and
@@ -25,7 +24,6 @@ import static org.infinispan.server.test.core.Common.assertStatus;
  * @author Ryan Emerson
  * @since 11.0
  */
-@Category(Unstable.class)
 public class StatefulSetRollingUpgradeIT {
 
    private static final int NUM_ROLLING_UPGRADES = 4;

@@ -23,8 +23,8 @@ import java.util.stream.Stream;
 
 import javax.sql.DataSource;
 
-import org.infinispan.server.test.core.category.Persistence;
 import org.infinispan.server.test.core.persistence.ContainerDatabase;
+import org.infinispan.server.test.core.tags.Database;
 import org.jgroups.Event;
 import org.jgroups.JChannel;
 import org.jgroups.protocols.FD_ALL3;
@@ -44,7 +44,6 @@ import org.jgroups.protocols.pbcast.NAKACK2;
 import org.jgroups.protocols.pbcast.STABLE;
 import org.jgroups.stack.Protocol;
 import org.jgroups.stack.ProtocolStack;
-import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -57,7 +56,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
  * JChannel based JDBC_PING2 tests. If an Infinispan server is required for a test, {@link JdbcPing2IT} should be
  * used instead.
  */
-@Category(Persistence.class)
+@Database
 public class JGroupsJdbcPing2IT {
 
    public static class DatabaseProvider implements ArgumentsProvider {

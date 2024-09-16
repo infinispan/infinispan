@@ -19,10 +19,9 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.configuration.RestClientConfigurationProperties;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.Common;
-import org.infinispan.server.test.core.category.Security;
+import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
-import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -42,7 +41,7 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
  * @since 12.0
  **/
 
-@Category(Security.class)
+@Security
 public class AuthenticationMultiEndpointIT {
    @RegisterExtension
    public static InfinispanServerExtension SERVERS =

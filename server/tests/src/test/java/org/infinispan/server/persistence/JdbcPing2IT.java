@@ -3,6 +3,7 @@ package org.infinispan.server.persistence;
 import static org.infinispan.server.persistence.PersistenceIT.getJavaArchive;
 import static org.infinispan.server.persistence.PersistenceIT.getJdbcDrivers;
 import static org.infinispan.server.test.core.Common.sync;
+import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_TYPES;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -15,12 +16,12 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.Eventually;
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.core.category.Persistence;
 import org.infinispan.server.test.core.persistence.ContainerDatabase;
 import org.infinispan.server.test.core.persistence.DatabaseServerListener;
+import org.infinispan.server.test.core.tags.Database;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.condition.DisabledIf;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -32,7 +33,8 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
  * Integration tests for JDBC_PING2 to ensure that the various failure scenarios work as expected with the Infinispan server.
  * Tests not reliant on the Infinispan server should be added to {@link JGroupsJdbcPing2IT}.
  */
-@Category(Persistence.class)
+@Database
+@DisabledIf("customDatabaseTypes")
 public class JdbcPing2IT {
 
    static final DatabaseServerListener DATABASE_LISTENER = new DatabaseServerListener("mysql");
@@ -56,6 +58,14 @@ public class JdbcPing2IT {
                .filter(ContainerDatabase.class::isInstance)
                .map(Arguments::of);
       }
+   }
+
+   static boolean customDatabaseTypes() {
+      // Ignore execution for all types other than mysql as this test is only concerned with Infinispan server and
+      // JDBC_PING2's ability to recover in the scenario. DB specific tests are located in JGroupsJdbcPing2IT.
+      // Necessary to ignore the test when explicitly configuring the 'org.infinispan.test.database.types' property.
+      String property = System.getProperty(INFINISPAN_TEST_CONTAINER_DATABASE_TYPES);
+      return property != null && !"mysql".equals(property);
    }
 
    @ParameterizedTest
