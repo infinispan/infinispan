@@ -57,6 +57,12 @@ public class RemoteMetaProjectionTest extends SingleHotRodServerTest {
       Query<Object[]> query;
       List<Object[]> list;
 
+      query = remoteCache.query("select version(d), d from io.dev.Developer d where d.biography : 'Infinispan'");
+      list = query.list();
+
+      assertThat(list).extracting(item -> item[0]).containsExactlyInAnyOrder(version1, version2);
+      assertThat(list).extracting(item -> item[1]).containsExactlyInAnyOrder(dev1, dev2);
+
       query = remoteCache.query(
             "select d.nick, version(d), d.email, d.biography, d.contributions from io.dev.Developer d where d.biography : 'Infinispan' order by d.email");
       list = query.execute().list();

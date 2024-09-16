@@ -39,7 +39,8 @@ public final class AggregatingQuery<T> extends HybridQuery<T, Object[]> {
                            ObjectFilter objectFilter,
                            long startOffset, int maxResults,
                            BaseQuery<?> baseQuery, LocalQueryStatistics queryStatistics, boolean local) {
-      super(queryFactory, cache, queryString, IckleParsingResult.StatementType.SELECT, namedParameters, objectFilter, startOffset, maxResults, baseQuery, queryStatistics, local);
+      super(queryFactory, cache, queryString, IckleParsingResult.StatementType.SELECT, namedParameters, objectFilter,
+            startOffset, maxResults, baseQuery, queryStatistics, local, false);
       if (!baseQuery.hasProjections()) {
          throw new IllegalArgumentException("Base query must use projections");
       }

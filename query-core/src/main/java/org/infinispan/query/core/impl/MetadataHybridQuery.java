@@ -22,8 +22,9 @@ public class MetadataHybridQuery<T, S> extends HybridQuery<T, S> {
    public MetadataHybridQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString,
                               IckleParsingResult.StatementType statementType, Map<String, Object> namedParameters,
                               ObjectFilter objectFilter, long startOffset, int maxResults, Query<?> baseQuery,
-                              LocalQueryStatistics queryStatistics, boolean local) {
-      super(queryFactory, cache, queryString, statementType, namedParameters, objectFilter, startOffset, maxResults, baseQuery, queryStatistics, local);
+                              LocalQueryStatistics queryStatistics, boolean local, boolean allSortFieldsAreStored) {
+      super(queryFactory, cache, queryString, statementType, namedParameters, objectFilter, startOffset, maxResults,
+            baseQuery, queryStatistics, local, allSortFieldsAreStored);
 
       scoreProjections = new BitSet();
       String[] projection = objectFilter.getProjection();
@@ -47,7 +48,7 @@ public class MetadataHybridQuery<T, S> extends HybridQuery<T, S> {
    @Override
    protected CloseableIterator<ObjectFilter.FilterResult> getInternalIterator() {
       CloseableIterator<EntityEntry<Object, S>> iterator = baseQuery
-            .startOffset(0).maxResults(Integer.MAX_VALUE).local(local)
+            .startOffset(0).maxResults(hybridMaxResult()).local(local)
             .scoreRequired(scoreProjections.cardinality() > 0).entryIterator(versionProjection);
       return new MappingEntryIterator<>(iterator, this::filter);
    }

@@ -34,12 +34,15 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
 
    protected final Query<S> baseQuery;
 
+   private final boolean allSortFieldsAreStored;
+
    public HybridQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String queryString, IckleParsingResult.StatementType statementType,
                       Map<String, Object> namedParameters, ObjectFilter objectFilter, long startOffset, int maxResults,
-                      Query<?> baseQuery, LocalQueryStatistics queryStatistics, boolean local) {
+                      Query<?> baseQuery, LocalQueryStatistics queryStatistics, boolean local, boolean allSortFieldsAreStored) {
       super(queryFactory, cache, queryString, statementType, namedParameters, objectFilter.getProjection(), startOffset, maxResults, queryStatistics, local);
       this.objectFilter = objectFilter;
       this.baseQuery = (Query<S>) baseQuery;
+      this.allSortFieldsAreStored = allSortFieldsAreStored;
    }
 
    @Override
@@ -58,8 +61,13 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
    }
 
    protected CloseableIterator<?> getBaseIterator() {
-      // Hybrid query, as they are, they require an unbounded max results, another reason to avoid using them
-      return baseQuery.startOffset(0).maxResults(Integer.MAX_VALUE).local(local).iterator();
+      return baseQuery.startOffset(0).maxResults(hybridMaxResult()).local(local).iterator();
+   }
+
+   protected int hybridMaxResult() {
+      // Hybrid query, if all sort fields are not index-sortable, they require an unbounded max results, another reason to avoid using them.
+      // The other doesn't!
+      return (allSortFieldsAreStored) ? getMaxResults() + (int) getStartOffset() : Integer.MAX_VALUE;
    }
 
    @Override
