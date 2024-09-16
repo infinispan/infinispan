@@ -1,5 +1,6 @@
 package org.infinispan.commons.configuration.attributes;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -161,6 +162,18 @@ public class AttributeTest {
       setB.attribute("global2").set("A");
       assertFalse(setA.matches(setB));
       assertNotEquals(setA, setB);
+   }
+
+   @Test
+   public void testAttributeFromString() {
+      AttributeDefinition<String[]> stringArrayDef = AttributeDefinition.builder("stringArray", new String[]{}).build();
+      Attribute<String[]> stringArray = new Attribute<>(stringArrayDef);
+      stringArray.fromString("a b c");
+      assertArrayEquals(new String[]{"a", "b", "c"}, stringArray.get());
+      stringArray.fromString("d");
+      assertArrayEquals(new String[]{"d"}, stringArray.get());
+      stringArray.fromString("");
+      assertArrayEquals(new String[]{}, stringArray.get());
    }
 
    static class Holder<T> {

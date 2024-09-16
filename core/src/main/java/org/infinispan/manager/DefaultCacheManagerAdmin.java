@@ -8,6 +8,8 @@ import java.util.EnumSet;
 import javax.security.auth.Subject;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.security.AuthorizationPermission;
@@ -106,5 +108,16 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    @Override
    public EmbeddedCacheManagerAdmin withSubject(Subject subject) {
       return new DefaultCacheManagerAdmin(cacheManager, authorizer, flags, subject, clusterConfigurationManager);
+   }
+
+   @Override
+   public void updateConfigurationAttribute(String cacheName, String attributeName, String attributeValue) {
+      authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
+      Cache<Object, Object> cache = cacheManager.getCache(cacheName);
+      Configuration config = cache.getCacheConfiguration();
+      Attribute<?> attribute = config.findAttribute(attributeName);
+      attribute.fromString(attributeValue);
+      flags.add(CacheContainerAdmin.AdminFlag.UPDATE);
+      join(clusterConfigurationManager.getOrCreateCache(cacheName, config, flags));
    }
 }

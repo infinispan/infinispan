@@ -5,10 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
-import org.infinispan.commons.configuration.attributes.Attribute;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.admin.AdminServerTask;
 
@@ -52,15 +49,7 @@ public class CacheUpdateConfigurationAttributeTask extends AdminServerTask<Void>
       String attributeName = requireParameter(parameters, "attribute");
       String attributeValue = requireParameter(parameters, "value");
 
-      Cache<Object, Object> cache = cacheManager.getCache(cacheName);
-      Configuration config = cache.getCacheConfiguration();
-      Attribute<?> attribute = config.findAttribute(attributeName);
-      attribute.fromString(attributeValue);
-
-      flags.add(CacheContainerAdmin.AdminFlag.UPDATE);
-
-      // doing what is done on CacheGetOrCreateTask
-      cacheManager.administration().withFlags(flags).getOrCreateCache(cacheName, config);
+      cacheManager.administration().withFlags(flags).updateConfigurationAttribute(cacheName, attributeName, attributeValue);
 
       return null;
    }

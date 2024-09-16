@@ -1,10 +1,12 @@
 package org.infinispan.server.functional.hotrod;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.RemoteCacheManagerAdmin;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.test.Exceptions;
@@ -74,5 +76,36 @@ public class HotRodAdmin {
 
       rcm.administration().removeTemplate(templateName);
       Exceptions.expectException(HotRodClientException.class, () -> rcm.administration().createCache("anotherCache", templateName));
+   }
+
+   @Test
+   public void testAlias() {
+      RemoteCacheManager rcm = SERVERS.hotrod().createRemoteCacheManager();
+      RemoteCacheManagerAdmin admin = rcm.administration();
+      RemoteCache<String, String> wuMing1 = admin.createCache("wu-ming-1",
+            new StringConfiguration("""
+                  {
+                     "distributed-cache" : {
+                        "aliases": ["wu-ming"]
+                     }
+                  }
+                  """));
+      RemoteCache<String, String> wuMing2 = admin.createCache("wu-ming-2",
+            new StringConfiguration("""
+                  {"distributed-cache" : {}}
+                  """));
+      RemoteCache<String, String> wuMing = rcm.getCache("wu-ming");
+
+      // Write different data in the two backing caches
+      wuMing1.put("key", "v1");
+      wuMing2.put("key", "v2");
+
+      assertEquals("v1", wuMing.get("key"));
+
+      // Flip the alias
+      admin.updateConfigurationAttribute("wu-ming-1", "aliases", "");
+      admin.updateConfigurationAttribute("wu-ming-2", "aliases", "wu-ming");
+
+      assertEquals("v2", wuMing.get("key"));
    }
 }

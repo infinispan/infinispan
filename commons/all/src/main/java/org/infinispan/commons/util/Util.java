@@ -29,6 +29,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -1056,6 +1057,9 @@ public final class Util {
    }
 
    public static Object fromString(Class<?> klass, String value) {
+      if (value == null) {
+         return null;
+      }
       if (klass == Character.class) {
          if (value.length() == 1) {
             return value.charAt(0);
@@ -1075,11 +1079,11 @@ public final class Util {
       } else if (klass == String.class) {
          return value;
       } else if (klass == String[].class) {
-         return value != null ? value.split(" ") : null;
+         return value.isEmpty() ? new String[]{} : value.split(" ");
       } else if (klass == Set.class) {
-         return value != null ? new HashSet<>(Arrays.asList(value.split(" "))) : null;
+         return value.isEmpty() ? new HashSet<>() : new HashSet<>(Arrays.asList(value.split(" ")));
       } else if (klass == List.class) {
-         return value != null ? Arrays.asList(value.split(" ")) : null;
+         return value.isEmpty() ? new ArrayList<>() : Arrays.asList(value.split(" "));
       } else if (klass == char[].class) {
          return value.toCharArray();
       } else if (klass == Float.class) {
@@ -1108,20 +1112,11 @@ public final class Util {
    }
 
    public static boolean parseBoolean(String value) {
-      switch (value.toLowerCase()) {
-         case "true":
-         case "yes":
-         case "y":
-         case "on":
-            return true;
-         case "false":
-         case "no":
-         case "n":
-         case "off":
-            return false;
-         default:
-            throw Log.CONFIG.illegalBooleanValue(value);
-      }
+      return switch (value.toLowerCase()) {
+         case "true", "yes", "y", "on" -> true;
+         case "false", "no", "n", "off" -> false;
+         default -> throw Log.CONFIG.illegalBooleanValue(value);
+      };
    }
 
    public static <T extends Enum<T>> T parseEnum(Class<T> enumClass, String value) {

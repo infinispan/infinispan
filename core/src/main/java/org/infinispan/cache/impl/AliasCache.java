@@ -16,7 +16,7 @@ public class AliasCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    @SuppressWarnings("rawtypes")
    @Override
    public AdvancedCache rewrap(AdvancedCache newDelegate) {
-      throw new UnsupportedOperationException("Alias caches should not delegate wrapping operations");
+      return new AliasCache(newDelegate, alias);
    }
 
    @Override

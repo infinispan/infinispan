@@ -107,4 +107,13 @@ public interface EmbeddedCacheManagerAdmin extends CacheContainerAdmin<EmbeddedC
     * @return an {@link EmbeddedCacheManagerAdmin} instance on which a real operation is to be invoked, using the specified subject
     */
    EmbeddedCacheManagerAdmin withSubject(Subject subject);
+
+   /**
+    * Updates a mutable configuration attribute for the given cache.
+    *
+    * @param cacheName the name of the cache on which the attribute will be updated
+    * @param attribute the path of the attribute we want to change
+    * @param value the new value to apply to the attribute
+    */
+   void updateConfigurationAttribute(String cacheName, String attribute, String value);
 }
