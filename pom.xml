@@ -2764,15 +2764,6 @@
          </build>
       </profile>
       <profile>
-         <id>java13-test</id>
-         <activation>
-            <jdk>[13,)</jdk>
-         </activation>
-         <properties>
-            <testjvm.blockHoundRedefinitionArgs>-XX:+AllowRedefinitionToAddDeleteMethods</testjvm.blockHoundRedefinitionArgs>
-         </properties>
-      </profile>
-      <profile>
          <id>java21-test</id>
          <activation>
             <jdk>[21,)</jdk>
