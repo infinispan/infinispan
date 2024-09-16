@@ -65,6 +65,7 @@ import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
+import org.infinispan.configuration.cache.ExpirationConfiguration;
 import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
@@ -177,7 +178,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V>
    @Inject ComponentRef<AdvancedCache> encoderCache;
    @Inject GroupManager groupManager;
 
-   protected Metadata defaultMetadata;
+   protected volatile Metadata defaultMetadata;
    private final String name;
    private volatile boolean stopping = false;
    private boolean transactional;
@@ -196,9 +197,16 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V>
    public void preStart() {
       // We have to do this before start, since some components may start before the actual cache and they
       // have to have access to the default metadata on some operations
-      defaultMetadata = Configurations.newDefaultMetadata(config);
+      updateDefaultMetadata();
+      // Listen for changes to the defaults
+      config.expiration().attributes().attribute(ExpirationConfiguration.LIFESPAN).addListener((attribute, oldValue) -> updateDefaultMetadata());
+      config.expiration().attributes().attribute(ExpirationConfiguration.MAX_IDLE).addListener((attribute, oldValue) -> updateDefaultMetadata());
       transactional = config.transaction().transactionMode().isTransactional();
       batchingEnabled = config.invocationBatching().enabled();
+   }
+
+   private void updateDefaultMetadata() {
+      defaultMetadata = Configurations.newDefaultMetadata(config);
    }
 
    @Override
