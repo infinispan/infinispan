@@ -23,7 +23,7 @@ import org.junit.platform.suite.api.Suite;
  * @author Gustavo Lira
  * @since 11.0
  */
-@Suite
+@Suite(failIfNoTests = false)
 @SelectClasses({
       XSiteRestMetricsOperations.class,
       XSiteHotRodCacheOperations.class,

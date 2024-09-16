@@ -23,10 +23,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.Krb5ConfPropertyExtension;
 import org.infinispan.server.test.core.LdapServerListener;
-import org.infinispan.server.test.core.category.Security;
+import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
-import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -39,7 +38,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.1
  **/
-@Category(Security.class)
+@Security
 @ExtendWith(Krb5ConfPropertyExtension.class)
 public class AuthenticationKerberosIT {
    @RegisterExtension

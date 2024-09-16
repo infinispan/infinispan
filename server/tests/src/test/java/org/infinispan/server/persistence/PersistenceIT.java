@@ -29,7 +29,7 @@ import org.junit.platform.suite.api.Suite;
  * @author Gustavo Lira &lt;glira@redhat.com&gt;
  * @since 10.0
  **/
-@Suite
+@Suite(failIfNoTests = false)
 @SelectClasses({
       PooledConnectionOperations.class,
       ManagedConnectionOperations.class,

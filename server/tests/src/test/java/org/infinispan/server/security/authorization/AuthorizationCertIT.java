@@ -7,11 +7,10 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.core.category.Security;
+import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.infinispan.server.test.junit5.InfinispanSuite;
-import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
@@ -25,9 +24,9 @@ import io.vertx.redis.client.RedisOptions;
  * @author Ryan Emerson
  * @since 13.0
  */
-@Suite
+@Suite(failIfNoTests = false)
 @SelectClasses({AuthorizationCertIT.HotRod.class, AuthorizationCertIT.Resp.class, AuthorizationCertIT.Rest.class})
-@Category(Security.class)
+@Security
 public class AuthorizationCertIT extends InfinispanSuite {
 
    @RegisterExtension
