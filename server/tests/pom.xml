@@ -165,7 +165,7 @@
          <plugin>
             <artifactId>maven-failsafe-plugin</artifactId>
             <configuration>
-               <groups combine.self="override"/>
+               <groups combine.self="override">${defaultTestGroup}</groups>
                <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
                <parallel>none</parallel>
                <threadCount>${infinispan.test.parallel.threads}</threadCount>

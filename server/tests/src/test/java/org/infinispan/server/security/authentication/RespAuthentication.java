@@ -8,10 +8,9 @@ import java.util.List;
 
 import io.lettuce.core.RedisURI;
 import org.infinispan.commons.test.Exceptions;
-import org.infinispan.server.test.core.category.Security;
+import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.junit.jupiter.api.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.lettuce.core.KeyValue;
@@ -27,7 +26,7 @@ import io.lettuce.core.protocol.CommandType;
 /**
  * @since 14.0
  **/
-@Category(Security.class)
+@Security
 public class RespAuthentication {
 
    @RegisterExtension

@@ -9,19 +9,17 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.test.Eventually;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.core.category.Resilience;
+import org.infinispan.server.test.core.tags.Resilience;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.junit.jupiter.api.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-
-@Category(Resilience.class)
+@Resilience
 public class ResilienceIT {
 
    @RegisterExtension
