@@ -156,6 +156,7 @@ public enum Attribute {
     RAFT_MEMBERS,
     READ_ONLY,
     REAPER_WAKE_UP_INTERVAL("reaper-interval"),
+    REBATCH_REQUESTS_SIZE,
     RECOVERY_INFO_CACHE_NAME("recovery-cache"),
     REFRESH_INTERVAL,
     RELATIVE_TO,

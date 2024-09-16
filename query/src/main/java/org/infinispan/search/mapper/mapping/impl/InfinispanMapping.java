@@ -26,6 +26,7 @@ import org.hibernate.search.util.common.AssertionFailure;
 import org.hibernate.search.util.common.impl.Closer;
 import org.hibernate.search.util.common.logging.impl.LoggerFactory;
 import org.infinispan.query.concurrent.FailureCounter;
+import org.infinispan.query.impl.IndexerConfig;
 import org.infinispan.search.mapper.common.impl.EntityReferenceImpl;
 import org.infinispan.search.mapper.log.impl.Log;
 import org.infinispan.search.mapper.mapping.EntityConverter;
@@ -62,14 +63,14 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
 
    InfinispanMapping(PojoMappingDelegate mappingDelegate, InfinispanTypeContextContainer typeContextContainer,
                      PojoSelectionEntityLoader<?> entityLoader, EntityConverter entityConverter,
-                     BlockingManager blockingManager, FailureCounter failureCounter, int maxConcurrency) {
+                     BlockingManager blockingManager, FailureCounter failureCounter, IndexerConfig indexerConfig) {
       super(mappingDelegate);
       this.typeContextContainer = typeContextContainer;
       this.entityLoader = entityLoader;
       this.entityConverter = entityConverter;
       mappingSession = new InfinispanSearchSession(this, entityLoader);
       searchIndexer = new SearchIndexerImpl(mappingSession.createIndexer(), entityConverter, typeContextContainer,
-            blockingManager, maxConcurrency);
+            blockingManager, indexerConfig);
       this.failureCounter = failureCounter;
       allIndexedEntityNames = typeContextContainer.allIndexed().stream()
             .map(SearchIndexedEntity::name).collect(Collectors.toSet());

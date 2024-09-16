@@ -30,7 +30,6 @@ import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.IndexShardingConfiguration;
-import org.infinispan.configuration.cache.IndexWriterConfiguration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.IndexingMode;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -331,18 +330,11 @@ public class LifecycleManager implements ModuleLifecycle {
          numberOfShards = sharding.getShards();
       }
 
-      IndexWriterConfiguration writer = cache.getCacheConfiguration().indexing().writer();
-      Integer queueSize = writer.getQueueSize();
-      Integer queueCount = writer.getQueueCount();
-
-      // we **guess** that the distribution of the hash functions applied to the document id as keys to be 67% of the optimal
-      int maxConcurrency = queueCount == 1 ? queueSize : (int) (queueCount * queueSize * 0.67);
-
       SearchMappingCommonBuilding commonBuilding = new SearchMappingCommonBuilding(
             KeyTransformationHandlerIdentifierBridge.createReference(keyTransformationHandler),
             extractProperties(globalConfiguration, cache.getName(), indexingConfiguration, aggregatedClassLoader),
             aggregatedClassLoader, mappingProviders, blockingManager, luceneWorkExecutorProvider,
-            numberOfShards, maxConcurrency);
+            numberOfShards, new IndexerConfig(cache));
       Set<Class<?>> types = new HashSet<>(indexedClasses.values());
 
       if (!types.isEmpty()) {

@@ -15,6 +15,7 @@ import org.hibernate.search.mapper.pojo.work.spi.PojoIndexer;
 import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.query.backend.QueryInterceptor;
+import org.infinispan.query.impl.IndexerConfig;
 import org.infinispan.query.logging.Log;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 import org.infinispan.search.mapper.session.impl.InfinispanIndexedTypeContext;
@@ -39,7 +40,7 @@ public class SearchIndexerImpl implements SearchIndexer {
    private final EntityConverter entityConverter;
    private final InfinispanTypeContextProvider typeContextProvider;
    private final BlockingManager blockingManager;
-   private final int maxConcurrency;
+   private final IndexerConfig indexerConfig;
    private final ConcurrentMap<Supplier<Flowable<?>>, CompletableFuture<?>> submittedTasks;
 
    private Disposable processorDisposer;
@@ -48,12 +49,12 @@ public class SearchIndexerImpl implements SearchIndexer {
 
    public SearchIndexerImpl(PojoIndexer delegate, EntityConverter entityConverter,
                             InfinispanTypeContextProvider typeContextProvider, BlockingManager blockingManager,
-                            int maxConcurrency) {
+                            IndexerConfig indexerConfig) {
       this.delegate = delegate;
       this.entityConverter = entityConverter;
       this.typeContextProvider = typeContextProvider;
       this.blockingManager = blockingManager;
-      this.maxConcurrency = maxConcurrency;
+      this.indexerConfig = indexerConfig;
 
       this.submittedTasks = new ConcurrentHashMap<>();
    }
@@ -72,9 +73,9 @@ public class SearchIndexerImpl implements SearchIndexer {
             })
             // We give HS some extra buffer room before we start throwing back pressure exceptions if
             // the flatMap operations can't keep up
-            .rebatchRequests(10_000)
+            .rebatchRequests(indexerConfig.rebatchRequestsSize())
             // This will only request up to maxConcurrency items at the same time
-            .flatMap(Supplier::get, maxConcurrency)
+            .flatMap(Supplier::get, indexerConfig.maxConcurrency())
             // Clear the submittedTasks on error/completion/cancel just in case
             .doFinally(submittedTasks::clear)
             .subscribe(Functions.emptyConsumer(),
