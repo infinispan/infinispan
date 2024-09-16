@@ -431,7 +431,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       HybridQuery<?, ?> projectingAggregatingQuery = new HybridQuery<>(queryFactory, cache,
             secondPhaseQueryStr, parsingResult.getStatementType(), namedParameters,
             getObjectFilter(matcher, secondPhaseQueryStr, namedParameters, secondPhaseAccumulators),
-            startOffset, maxResults, baseQuery, queryStatistics, local);
+            startOffset, maxResults, baseQuery, queryStatistics, local, false);
 
       StringBuilder thirdPhaseQuery = new StringBuilder();
       thirdPhaseQuery.append("SELECT ");
@@ -607,14 +607,18 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
                IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, null, null, null, sortFields);
                Query<?> indexQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, startOffset, maxResults, local);
                String projectionQueryStr = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), parsingResult.getProjectedPaths(), null, null, null);
-               return new MetadataHybridQuery<>(queryFactory, cache, projectionQueryStr, parsingResult.getStatementType(), null, getObjectFilter(matcher, projectionQueryStr, null, null), startOffset, maxResults, indexQuery, queryStatistics, local);
+               return new MetadataHybridQuery<>(queryFactory, cache, projectionQueryStr, parsingResult.getStatementType(),
+                     null, getObjectFilter(matcher, projectionQueryStr, null, null), startOffset, maxResults, indexQuery,
+                     queryStatistics, local, allSortFieldsAreStored);
             }
          } else {
             // projections may be stored but some sort fields are not so we need to query the index and then execute in-memory sorting and projecting in a second phase
             IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, null, null, null, null);
             Query<?> indexQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, -1, -1, local);
             String projectionQueryStr = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), parsingResult.getProjectedPaths(), null, null, sortFields);
-            return new MetadataHybridQuery<>(queryFactory, cache, projectionQueryStr, parsingResult.getStatementType(), null, getObjectFilter(matcher, projectionQueryStr, null, null), startOffset, maxResults, indexQuery, queryStatistics, local);
+            return new MetadataHybridQuery<>(queryFactory, cache, projectionQueryStr, parsingResult.getStatementType(),
+                  null, getObjectFilter(matcher, projectionQueryStr, null, null), startOffset, maxResults, indexQuery,
+                  queryStatistics, local, allSortFieldsAreStored);
          }
       }
 
@@ -628,7 +632,9 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       // some fields are indexed, run a hybrid query
       IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, expansion, null, null, null, null);
       Query<?> expandedQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, -1, -1, local);
-      return new MetadataHybridQuery<>(queryFactory, cache, queryString, parsingResult.getStatementType(), namedParameters, getObjectFilter(matcher, queryString, namedParameters, null), startOffset, maxResults, expandedQuery, queryStatistics, local);
+      return new MetadataHybridQuery<>(queryFactory, cache, queryString, parsingResult.getStatementType(),
+            namedParameters, getObjectFilter(matcher, queryString, namedParameters, null), startOffset, maxResults,
+            expandedQuery, queryStatistics, local, allSortFieldsAreStored);
    }
 
    /**
