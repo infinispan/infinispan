@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -27,7 +28,6 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.time.ControlledTimeService;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -37,7 +37,6 @@ public class ExpiryTest extends AbstractInfinispanTest {
 
    public static final int EXPIRATION_TIMEOUT = 3000;
    public static final int IDLE_TIMEOUT = 3000;
-   public static final int EXPIRATION_CHECK_TIMEOUT = 2000;
    CacheContainer cm;
 
    protected ControlledTimeService timeService;
@@ -374,7 +373,6 @@ public class ExpiryTest extends AbstractInfinispanTest {
       // Values come as a Collection, but comparison of HashMap#Values is done
       // by reference equality, so wrap the collection around to set to make
       // testing easier, given that we know that there are dup values.
-      Collection<String> values;
       Map<Integer, String> dataIn = new HashMap<>();
       dataIn.put(1, v(m, 1));
       dataIn.put(2, v(m, 2));
