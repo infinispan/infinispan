@@ -71,7 +71,7 @@ jobs:
 
   tests:
     needs: image
-    uses: infinispan/infinispan-operator/.github/workflows/upgrade_tests.yaml@main
+    uses: infinispan/infinispan-operator/.github/workflows/test_upgrades.yml@main
     with:
       operand: localhost:5001/server:${{ github.sha }}
       operandArtifact: operand-image
