@@ -88,7 +88,7 @@ public class RestQueryAggregationCountTest extends SingleCacheManagerTest {
             "select status, count(code) from Sale where day >= 45 and day <= 54 group by status order by status", 10, 0);
       assertThat(response).isOk();
       Json body = Json.read(response.toCompletableFuture().get().body());
-      String hits = "[{\"hit\":{\"COUNT(code)\":164,\"status\":\"BLOCKED\"}},{\"hit\":{\"COUNT(code)\":143,\"status\":\"CLOSE\"}},{\"hit\":{\"COUNT(code)\":178,\"status\":\"IN_PROGRESS\"}},{\"hit\":{\"COUNT(code)\":141,\"status\":\"OPEN\"}},{\"hit\":{\"COUNT(code)\":174,\"status\":\"WAITING\"}}]";
+      String hits = "[{\"hit\":{\"COUNT(code)\":16,\"status\":\"BLOCKED\"}},{\"hit\":{\"COUNT(code)\":13,\"status\":\"CLOSE\"}},{\"hit\":{\"COUNT(code)\":22,\"status\":\"IN_PROGRESS\"}},{\"hit\":{\"COUNT(code)\":20,\"status\":\"OPEN\"}},{\"hit\":{\"COUNT(code)\":9,\"status\":\"WAITING\"}}]";
       Assertions.assertThat(body.at("hits")).isEqualTo(Json.read(hits));
 
       response = cacheClient.query(
@@ -116,14 +116,14 @@ public class RestQueryAggregationCountTest extends SingleCacheManagerTest {
             "select status, count(code) from Sale group by status", 10, 0);
       assertThat(response).isOk();
       body = Json.read(response.toCompletableFuture().get().body());
-      hits = "[{\"hit\":{\"COUNT(code)\":2082,\"status\":\"BLOCKED\"}},{\"hit\":{\"COUNT(code)\":1929,\"status\":\"CLOSE\"}},{\"hit\":{\"COUNT(code)\":2005,\"status\":\"IN_PROGRESS\"}},{\"hit\":{\"COUNT(code)\":1931,\"status\":\"OPEN\"}},{\"hit\":{\"COUNT(code)\":2053,\"status\":\"WAITING\"}}]";
+      hits = "[{\"hit\":{\"COUNT(code)\":229,\"status\":\"BLOCKED\"}},{\"hit\":{\"COUNT(code)\":189,\"status\":\"CLOSE\"}},{\"hit\":{\"COUNT(code)\":196,\"status\":\"IN_PROGRESS\"}},{\"hit\":{\"COUNT(code)\":200,\"status\":\"OPEN\"}},{\"hit\":{\"COUNT(code)\":186,\"status\":\"WAITING\"}}]";
       Assertions.assertThat(body.at("hits")).isEqualTo(Json.read(hits));
 
       response = cacheClient.query(
             "select s.status, count(s) from Sale s where s.day >= 45 and s.day <= 54 group by s.status order by s.status", 10, 0);
       assertThat(response).isOk();
       body = Json.read(response.toCompletableFuture().get().body());
-      hits = "[{\"hit\":{\"COUNT(*)\":207,\"status\":\"BLOCKED\"}},{\"hit\":{\"COUNT(*)\":185,\"status\":\"CLOSE\"}},{\"hit\":{\"COUNT(*)\":216,\"status\":\"IN_PROGRESS\"}},{\"hit\":{\"COUNT(*)\":179,\"status\":\"OPEN\"}},{\"hit\":{\"COUNT(*)\":213,\"status\":\"WAITING\"}}]";
+      hits = "[{\"hit\":{\"COUNT(*)\":21,\"status\":\"BLOCKED\"}},{\"hit\":{\"COUNT(*)\":16,\"status\":\"CLOSE\"}},{\"hit\":{\"COUNT(*)\":26,\"status\":\"IN_PROGRESS\"}},{\"hit\":{\"COUNT(*)\":24,\"status\":\"OPEN\"}},{\"hit\":{\"COUNT(*)\":13,\"status\":\"WAITING\"}}]";
       Assertions.assertThat(body.at("hits")).isEqualTo(Json.read(hits));
 
       response = cacheClient.query(

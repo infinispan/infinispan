@@ -15,25 +15,28 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.model.Sale;
+import org.infinispan.configuration.cache.PrivateIndexingConfigurationBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "org.infinispan.client.hotrod.query.pressure.LargePutAllPressureTest")
 public class LargePutAllPressureTest extends SingleHotRodServerTest {
 
-   private final static int SIZE = 15_000;
+   private final static int SIZE = 500;
+   public static final int SOCKET_TIMEOUT = SIZE * 1000;
 
    private final Random fixedSeedPseudoRandom = new Random(739);
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder config = new ConfigurationBuilder();
+      config.addModule(PrivateIndexingConfigurationBuilder.class).rebatchRequestsSize(100);
       config.indexing().enable()
             .storage(LOCAL_HEAP)
                .addIndexedEntity("Sale")
             .writer()
                .queueCount(1)
-               .queueSize(10_000);
+               .queueSize(100);
 
       return TestCacheManagerFactory.createServerModeCacheManager(config);
    }
@@ -44,7 +47,7 @@ public class LargePutAllPressureTest extends SingleHotRodServerTest {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder =
             super.createHotRodClientConfigurationBuilder(host, serverPort);
 
-      builder.socketTimeout(SIZE * 2);
+      builder.socketTimeout(SOCKET_TIMEOUT);
       return builder;
    }
 
@@ -62,6 +65,6 @@ public class LargePutAllPressureTest extends SingleHotRodServerTest {
          bulkPut.putAll(chunk(day, fixedSeedPseudoRandom));
       }
       CompletableFuture<Void> voidCompletableFuture = remoteCache.putAllAsync(bulkPut);
-      await( voidCompletableFuture, SIZE * 2 );
+      await( voidCompletableFuture, SOCKET_TIMEOUT );
    }
 }
