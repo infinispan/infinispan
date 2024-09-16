@@ -23,7 +23,7 @@ import org.junit.platform.suite.api.Suite;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 11.0
  **/
-@Suite
+@Suite(failIfNoTests = false)
 @SelectClasses({AuthorizationPropertiesIT.HotRod.class, AuthorizationPropertiesIT.Resp.class, AuthorizationPropertiesIT.Rest.class})
 public class AuthorizationPropertiesIT extends InfinispanSuite {
 

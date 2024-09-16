@@ -53,7 +53,7 @@ import org.junit.platform.suite.api.Suite;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-@Suite
+@Suite(failIfNoTests = false)
 @SelectClasses({
       HotRodCacheOperations.class,
       RestOperations.class,
