@@ -63,7 +63,7 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
       return this;
    }
 
-   public void set(T value) {
+   public Attribute<T> set(T value) {
       if (protect) {
          throw Log.CONFIG.protectedAttribute(definition.name());
       }
@@ -71,9 +71,10 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
       this.value = value;
       this.modified = true;
       this.fireValueChanged(oldValue);
+      return this;
    }
 
-   public void setImplied(T value) {
+   public Attribute<T> setImplied(T value) {
       if (protect) {
          throw Log.CONFIG.protectedAttribute(definition.name());
       }
@@ -81,10 +82,11 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
       this.value = value;
       this.modified = false;
       this.fireValueChanged(oldValue);
+      return this;
    }
 
-   public void fromString(String value) {
-      set(definition.parse(value));
+   public Attribute<T> fromString(String value) {
+      return set(definition.parse(value));
    }
 
    public T computeIfAbsent(Supplier<T> supplier) {
@@ -109,7 +111,7 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
       return definition.isRepeated();
    }
 
-   public void addListener(AttributeListener<T> listener) {
+   public Attribute<T> addListener(AttributeListener<T> listener) {
       if (isImmutable() && isProtect()) {
          throw new UnsupportedOperationException();
       }
@@ -117,16 +119,19 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
          listeners = new ArrayList<>();
       }
       listeners.add(listener);
+      return this;
    }
 
-   public void removeListener(AttributeListener<T> listener) {
+   public Attribute<T> removeListener(AttributeListener<T> listener) {
       if (listeners != null) {
          listeners.remove(listener);
       }
+      return this;
    }
 
-   public void removeListener(Predicate<AttributeListener<T>> filter) {
+   public Attribute<T> removeListener(Predicate<AttributeListener<T>> filter) {
       listeners.removeIf(filter);
+      return this;
    }
 
    public boolean isNull() {
@@ -164,7 +169,7 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
       }
    }
 
-   public void read(Attribute<T> other) {
+   public Attribute<T> read(Attribute<T> other) {
       AttributeCopier<T> copier = definition.copier();
       if (copier == null) {
          Attribute<T> clone = other.clone();
@@ -173,12 +178,14 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
          this.value = copier.copyAttribute(other.value);
       }
       this.modified = other.modified;
+      return this;
    }
 
-   public void merge(Attribute<T> other) {
+   public Attribute<T> merge(Attribute<T> other) {
       Collection<Object> collection = (Collection<Object>) other.value;
       ((Collection<Object>) this.value).addAll(collection);
       this.modified = !collection.isEmpty();
+      return this;
    }
 
    @Override
@@ -288,12 +295,13 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
       return definition.name() + "=" + value;
    }
 
-   public void reset() {
+   public Attribute<T> reset() {
       if (protect) {
          throw new IllegalStateException("Cannot reset a protected Attribute");
       }
       value = definition.getDefaultValue();
       modified = false;
+      return this;
    }
 
    void write(ConfigurationWriter writer, String name) {

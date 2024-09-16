@@ -69,6 +69,7 @@ public class CacheManagerInfo implements JsonSerialization {
 
    public Set<String> getCacheConfigurationNames() {
       Set<String> names = new TreeSet<>(configurationManager.getDefinedConfigurations());
+      names.addAll(configurationManager.getAliases());
       internalCacheRegistry.filterPrivateCaches(names);
       if (names.isEmpty())
          return Collections.emptySet();

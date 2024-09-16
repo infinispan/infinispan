@@ -37,6 +37,9 @@ import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -66,7 +69,9 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFact
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
+import org.infinispan.notifications.cachemanagerlistener.annotation.ConfigurationChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
+import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.actions.SecurityActions;
@@ -85,8 +90,6 @@ import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
 import org.infinispan.server.iteration.DefaultIterationManager;
 import org.infinispan.server.iteration.IterationManager;
 import org.infinispan.util.KeyValuePair;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -110,7 +113,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    public static final int LISTENERS_CHECK_INTERVAL = 10;
 
    private boolean hasDefaultCache;
-   private Address clusterAddress;
    private ServerAddress address;
    private Cache<Address, ServerAddress> addressCache;
    private final Map<String, ExtendedCacheInfo> knownCaches = new ConcurrentHashMap<>();
@@ -121,11 +123,13 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private CrashedMemberDetectorListener viewChangeListener;
    private ReAddMyAddressListener topologyChangeListener;
    private IterationManager iterationManager;
-   private RemoveCacheListener removeCacheListener;
+   private ServerCacheListener serverCacheListener;
    private ClientCounterManagerNotificationManager clientCounterNotificationManager;
    private final HotRodAccessLogging accessLogging = new HotRodAccessLogging();
    private ScheduledExecutorService scheduledExecutor;
    private TimeService timeService;
+   private InternalCacheRegistry internalCacheRegistry;
+   private ConfigurationManager configurationManager;
 
    public HotRodServer() {
       super("HotRod");
@@ -234,6 +238,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    @Override
    protected void startInternal() {
       GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cacheManager);
+      internalCacheRegistry = gcr.getComponent(InternalCacheRegistry.class);
+      configurationManager = gcr.getComponent(ConfigurationManager.class);
       this.iterationManager = new DefaultIterationManager(gcr.getTimeService());
       this.hasDefaultCache = configuration.defaultCacheName() != null || cacheManager.getCacheManagerConfiguration().defaultCacheName().isPresent();
 
@@ -256,8 +262,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       DefaultThreadFactory factory = new DefaultThreadFactory(getQualifiedName() + "-Scheduled");
       scheduledExecutor = Executors.newSingleThreadScheduledExecutor(factory);
 
-      removeCacheListener = new RemoveCacheListener();
-      SecurityActions.addListener(cacheManager, removeCacheListener);
+      serverCacheListener = new ServerCacheListener();
+      SecurityActions.addListener(cacheManager, serverCacheListener);
 
       // Start default cache and the endpoint before adding self to
       // topology in order to avoid topology updates being used before
@@ -323,7 +329,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    private void addSelfToTopologyView(EmbeddedCacheManager cacheManager) {
       addressCache = cacheManager.getCache(configuration.topologyCacheName());
-      clusterAddress = cacheManager.getAddress();
+      Address clusterAddress = cacheManager.getAddress();
       address = ServerAddress.forAddress(configuration.publicHost(), configuration.publicPort(), configuration.networkPrefixOverride());
       clusterExecutor = cacheManager.executor();
 
@@ -411,27 +417,24 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    }
 
    private boolean checkCacheIsAvailable(String cacheName, byte hotRodVersion, long messageId) {
-      InternalCacheRegistry icr = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(InternalCacheRegistry.class);
-      boolean keep;
-      if (icr.isPrivateCache(cacheName)) {
+      if (internalCacheRegistry.isPrivateCache(cacheName)) {
          throw new RequestParsingException(
             String.format("Remote requests are not allowed to private caches. Do no send remote requests to cache '%s'",
                           cacheName),
             hotRodVersion, messageId);
-      } else if (icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.PROTECTED)) {
+      } else if (internalCacheRegistry.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.PROTECTED)) {
          // We want to make sure the cache access is checked every time, so don't store it as a "known" cache.
          // More expensive, but these caches should not be accessed frequently
-         keep = false;
-      } else if (!cacheName.isEmpty() && !cacheManager.getCacheNames().contains(cacheName)) {
+         return false;
+      } else if (!cacheName.isEmpty() && !cacheManager.getCacheNames().contains(cacheName) && !configurationManager.getAliases().contains(cacheName)) {
          throw new CacheNotFoundException(
                String.format("Cache with name '%s' not found amongst the configured caches", cacheName),
                hotRodVersion, messageId);
       } else if (cacheName.isEmpty() && !hasDefaultCache) {
          throw new CacheNotFoundException("Default cache requested but not configured", hotRodVersion, messageId);
       } else {
-         keep = true;
+         return true;
       }
-      return keep;
    }
 
    public void updateCacheInfo(ExtendedCacheInfo info) {
@@ -521,8 +524,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          log.debugf("Stopping server %s listening at %s:%d", getQualifiedName(), configuration.host(), configuration.port());
 
       AggregateCompletionStage<Void> removeAllStage = CompletionStages.aggregateCompletionStage();
-      if (removeCacheListener != null) {
-         removeAllStage.dependsOn(SecurityActions.removeListenerAsync(cacheManager, removeCacheListener));
+      if (serverCacheListener != null) {
+         removeAllStage.dependsOn(SecurityActions.removeListenerAsync(cacheManager, serverCacheListener));
       }
       if (viewChangeListener != null) {
          removeAllStage.dependsOn(SecurityActions.removeListenerAsync(cacheManager, viewChangeListener));
@@ -679,10 +682,15 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    }
 
    @Listener
-   class RemoveCacheListener {
+   class ServerCacheListener {
       @CacheStopped
       public void cacheStopped(CacheStoppedEvent event) {
          knownCaches.remove(event.getCacheName());
+      }
+
+      @ConfigurationChanged
+      public void configurationChanged(ConfigurationChangedEvent event) {
+         knownCaches.clear(); // TODO: be less aggressive
       }
    }
 

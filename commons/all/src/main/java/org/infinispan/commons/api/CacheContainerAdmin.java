@@ -141,4 +141,13 @@ public interface CacheContainerAdmin<C extends CacheContainerAdmin, A extends Ba
     * @param name the name of the template to remove
     */
    void removeTemplate(String name);
+
+   /**
+    * Updates a mutable configuration attribute for the given cache.
+    *
+    * @param cacheName the name of the cache on which the attribute will be updated
+    * @param attribute the path of the attribute we want to change
+    * @param value the new value to apply to the attribute
+    */
+   void updateConfigurationAttribute(String cacheName, String attribute, String value);
 }

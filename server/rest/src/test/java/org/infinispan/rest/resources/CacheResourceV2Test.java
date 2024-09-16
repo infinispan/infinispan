@@ -312,53 +312,59 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
    @Test
    public void testCreateAndAlterCache() {
-      String cacheConfig = "{\n" +
-            "  \"distributed-cache\" : {\n" +
-            "    \"mode\" : \"SYNC\",\n" +
-            "    \"statistics\" : true,\n" +
-            "    \"encoding\" : {\n" +
-            "      \"key\" : {\n" +
-            "        \"media-type\" : \"application/x-protostream\"\n" +
-            "      },\n" +
-            "      \"value\" : {\n" +
-            "        \"media-type\" : \"application/x-protostream\"\n" +
-            "      }\n" +
-            "    },\n" +
-            "    \"expiration\" : {\n" +
-            "      \"lifespan\" : \"60000\"\n" +
-            "    },\n" +
-            "    \"memory\" : {\n" +
-            "      \"max-count\" : \"1000\",\n" +
-            "      \"when-full\" : \"REMOVE\"\n" +
-            "    }\n" +
-            "  }\n" +
-            "}\n";
-      String cacheConfigAlter = "{\n" +
-            "  \"distributed-cache\" : {\n" +
-            "    \"mode\" : \"SYNC\",\n" +
-            "    \"statistics\" : true,\n" +
-            "    \"encoding\" : {\n" +
-            "      \"key\" : {\n" +
-            "        \"media-type\" : \"application/x-protostream\"\n" +
-            "      },\n" +
-            "      \"value\" : {\n" +
-            "        \"media-type\" : \"application/x-protostream\"\n" +
-            "      }\n" +
-            "    },\n" +
-            "    \"expiration\" : {\n" +
-            "      \"lifespan\" : \"30000\"\n" +
-            "    },\n" +
-            "    \"memory\" : {\n" +
-            "      \"max-count\" : \"2000\",\n" +
-            "      \"when-full\" : \"REMOVE\"\n" +
-            "    }\n" +
-            "  }\n" +
-            "}\n";
-      String cacheConfigConflict = "{\n" +
-            "  \"distributed-cache\" : {\n" +
-            "    \"mode\" : \"ASYNC\"\n" +
-            "  }\n" +
-            "}\n";
+      String cacheConfig = """
+            {
+              "distributed-cache" : {
+                "mode" : "SYNC",
+                "statistics" : true,
+                "encoding" : {
+                  "key" : {
+                    "media-type" : "application/x-protostream"
+                  },
+                  "value" : {
+                    "media-type" : "application/x-protostream"
+                  }
+                },
+                "expiration" : {
+                  "lifespan" : "60000"
+                },
+                "memory" : {
+                  "max-count" : "1000",
+                  "when-full" : "REMOVE"
+                }
+              }
+            }
+            """;
+      String cacheConfigAlter = """
+            {
+              "distributed-cache" : {
+                "mode" : "SYNC",
+                "statistics" : true,
+                "encoding" : {
+                  "key" : {
+                    "media-type" : "application/x-protostream"
+                  },
+                  "value" : {
+                    "media-type" : "application/x-protostream"
+                  }
+                },
+                "expiration" : {
+                  "lifespan" : "30000"
+                },
+                "memory" : {
+                  "max-count" : "2000",
+                  "when-full" : "REMOVE"
+                }
+              }
+            }
+            """;
+      String cacheConfigConflict = """
+            {
+              "distributed-cache" : {
+                "mode" : "ASYNC"
+              }
+            }
+            """;
 
       RestCacheClient cacheClient = client.cache("mutable");
       CompletionStage<RestResponse> response = cacheClient.createWithConfiguration(RestEntity.create(APPLICATION_JSON, cacheConfig));
@@ -406,6 +412,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(attributes.at("indexing.indexed-entities").at("value").asList()).isEmpty();
    }
 
+   @Test
    public void testUpdateConfigurationAttribute() {
       String protoSchema = """
             package org.infinispan;
@@ -813,18 +820,19 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
    @Test
    public void testCreateInvalidCache() {
-      String invalidConfig = "<infinispan>\n" +
-            " <cache-container>\n" +
-            "   <replicated-cache name=\"books\">\n" +
-            "     <encoding media-type=\"application/x-java-object\"/>\n" +
-            "     <indexing>\n" +
-            "       <indexed-entities>\n" +
-            "         <indexed-entity>Dummy</indexed-entity>\n" +
-            "        </indexed-entities>\n" +
-            "     </indexing>\n" +
-            "   </replicated-cache>\n" +
-            " </cache-container>\n" +
-            "</infinispan>";
+      String invalidConfig = """
+            <infinispan>
+             <cache-container>
+               <replicated-cache name="books">
+                 <encoding media-type="application/x-java-object"/>
+                 <indexing>
+                   <indexed-entities>
+                     <indexed-entity>Dummy</indexed-entity>
+                    </indexed-entities>
+                 </indexing>
+               </replicated-cache>
+             </cache-container>
+            </infinispan>""";
 
       CompletionStage<RestResponse> response = client.cache("CACHE").createWithConfiguration(RestEntity.create(APPLICATION_XML, invalidConfig));
       assertThat(response).isBadRequest().containsReturnedText("Cannot instantiate class 'Dummy'");
@@ -849,24 +857,27 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       response = client.cache("CACHE").exists();
       assertThat(response).isNotFound();
 
-      invalidConfig = "<distributed-cache>\n" +
-            "   <encoding>\n" +
-            "      <key media-type=\"application/x-protostream\"/>\n" +
-            "      <value media-type=\"application/x-protostream\"/>\n" +
-            "   </encoding\n" +
-            "</distributed-cache>\n";
+      invalidConfig = """
+            <distributed-cache>
+               <encoding>
+                  <key media-type="application/x-protostream"/>
+                  <value media-type="application/x-protostream"/>
+               </encoding
+            </distributed-cache>
+            """;
       response = client.cache("CACHE").createWithConfiguration(RestEntity.create(APPLICATION_XML, invalidConfig));
       assertThat(response).isBadRequest().hasReturnedText("expected > to finish end tag not < from line 2 (position: TEXT seen ...<value media-type=\"application/x-protostream\"/>\\n   </encoding\\n<... @6:2) ");
 
       response = client.cache("CACHE").exists();
       assertThat(response).isNotFound();
 
-      invalidConfig = "<distributed-cache>\n" +
-            "   <encoding>\n" +
-            "      <key media-type=\"application/x-protostream\"/>\n" +
-            "      <value media-type=\"application/x-protostrea\"/>\n" +
-            "   </encoding>\n" +
-            "</distributed-cache>";
+      invalidConfig = """
+            <distributed-cache>
+               <encoding>
+                  <key media-type="application/x-protostream"/>
+                  <value media-type="application/x-protostrea"/>
+               </encoding>
+            </distributed-cache>""";
       response = client.cache("CACHE").createWithConfiguration(RestEntity.create(APPLICATION_XML, invalidConfig));
       assertThat(response).isBadRequest().hasReturnedText("ISPN000492: Cannot find transcoder between 'application/x-java-object' to 'application/x-protostrea'");
 
@@ -1935,6 +1946,22 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
          ResponseAssertion.assertThat(join(adminClient.cachesByRole("ADMIN"))).isNotFound();
          ResponseAssertion.assertThat(join(client.cachesByRole("ADMIN"))).isNotFound();
       }
+   }
+
+   @Test
+   public void testCacheAliases() {
+      String cacheJson = """
+            { "distributed-cache" : { "statistics":true, "aliases": ["butch-cassidy"] } }
+            """;
+      RestCacheClient cacheClient = client.cache("robert-parker");
+
+      RestEntity jsonEntity = RestEntity.create(APPLICATION_JSON, cacheJson);
+      CompletionStage<RestResponse> response = cacheClient.createWithConfiguration(jsonEntity, VOLATILE);
+      assertThat(response).isOk();
+      assertThat(client.cache("butch-cassidy").exists()).isOk();
+      response = client.cache("impostor").createWithConfiguration(jsonEntity, VOLATILE);
+      assertThat(response).isBadRequest();
+      assertThat(response).containsReturnedText("ISPN000975: The alias 'butch-cassidy' is already being used by cache 'robert-parker'");
    }
 
    private void assertBadResponse(RestCacheClient client, String config) {

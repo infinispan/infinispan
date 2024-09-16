@@ -118,6 +118,10 @@ public class ConfigurationManager {
             .map(Map.Entry::getKey).toList();
    }
 
+   public Collection<String> getAliases() {
+      return aliases.keySet();
+   }
+
    public Collection<String> getDefinedConfigurations() {
       return Collections.unmodifiableCollection(namedConfiguration.keySet());
    }
