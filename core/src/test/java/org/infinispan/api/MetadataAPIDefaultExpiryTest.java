@@ -6,14 +6,16 @@ import static org.testng.AssertJUnit.assertNull;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.ExpirationConfiguration;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.time.ControlledTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "api.MetadataAPIDefaultExpiryTest")
@@ -78,6 +80,23 @@ public class MetadataAPIDefaultExpiryTest extends SingleCacheManagerTest {
       f = cache().getAdvancedCache().putAsync(2, "v2", new EmbeddedMetadata.Builder().build());
       f.get(10, TimeUnit.SECONDS);
       expectCachedThenExpired(2, "v2");
+   }
+
+   public void updateExpiration() {
+      cache().put(1, "value");
+      CacheEntry<Object, Object> entry = cache().getAdvancedCache().getCacheEntry(1);
+      assertEquals(EXPIRATION_TIMEOUT, entry.getLifespan());
+      assertEquals(-1, entry.getMaxIdle());
+      cache().getCacheConfiguration().expiration().attributes().attribute(ExpirationConfiguration.LIFESPAN).set(EXPIRATION_TIMEOUT * 2L);
+      cache().put(2, "value");
+      entry = cache().getAdvancedCache().getCacheEntry(2);
+      assertEquals(EXPIRATION_TIMEOUT * 2, entry.getLifespan());
+      assertEquals(-1, entry.getMaxIdle());
+      cache().getCacheConfiguration().expiration().attributes().attribute(ExpirationConfiguration.MAX_IDLE).set(EXPIRATION_TIMEOUT * 3L);
+      cache().put(3, "value");
+      entry = cache().getAdvancedCache().getCacheEntry(3);
+      assertEquals(EXPIRATION_TIMEOUT * 2, entry.getLifespan());
+      assertEquals(EXPIRATION_TIMEOUT * 3, entry.getMaxIdle());
    }
 
    private void expectCachedThenExpired(Integer key, String value) {
