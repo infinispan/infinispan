@@ -32,11 +32,7 @@ jobs:
           path: server
 
       - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: maven
+        uses: ./server/.github/actions/setup-java
 
       - name: Build Infinispan
         working-directory: server
