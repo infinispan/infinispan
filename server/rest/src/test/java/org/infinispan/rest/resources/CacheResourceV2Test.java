@@ -736,6 +736,9 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
       List<String> tracing = find(jsonNode, "tracing");
       Assert.assertFalse(tracing.isEmpty());
+
+      List<String> aliases = find(jsonNode, "aliases");
+      Assert.assertFalse(aliases.isEmpty());
    }
 
    private List<String> find(Json array, String name) {
@@ -758,6 +761,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(document.at("secured")).isNotNull();
       assertThat(document.at("tracing")).isNotNull();
       assertThat(document.at("indexing_in_progress")).isNotNull();
+      assertThat(document.at("aliases")).isNotNull();
       assertThat(document.at("queryable")).isNotNull();
       assertThat(document.at("rebalancing_enabled")).isNotNull();
       assertThat(document.at("key_storage").asString()).isEqualTo("application/x-protostream");

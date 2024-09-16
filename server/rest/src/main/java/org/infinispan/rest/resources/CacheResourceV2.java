@@ -314,6 +314,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       cacheInfo.indexed = cacheConfiguration.indexing().enabled();
       cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasBackups();
       cacheInfo.tracing = cacheConfiguration.tracing().enabled();
+      cacheInfo.aliases = cacheConfiguration.aliases();
 
       // If the cache is ignored, status is IGNORED
       if (ignoredCaches.contains(cacheName)) {
@@ -368,6 +369,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       public boolean tracing;
       public HealthStatus health;
       public Boolean rebalancing_enabled;
+      public List<String> aliases;
 
       @Override
       public Json toJson() {
@@ -383,7 +385,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
                .set("indexed", indexed)
                .set("has_remote_backup", hasRemoteBackup)
                .set("tracing", tracing)
-               .set("health", health);
+               .set("health", health)
+               .set("aliases", aliases);
 
          if (rebalancing_enabled != null) {
             payload.set("rebalancing_enabled", rebalancing_enabled);
@@ -944,6 +947,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       fullDetail.valueStorage = cache.getAdvancedCache().getValueDataConversion().getStorageMediaType();
       fullDetail.mode = configuration.clustering().cacheModeString();
       fullDetail.tracing = globalTracingEnabled && configuration.tracing().enabled();
+      fullDetail.aliases = configuration.aliases();
       return addEntityAsJson(fullDetail.toJson(), invocationHelper.newResponse(request), pretty).build();
    }
 
@@ -1231,6 +1235,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       public StorageType storageType;
       public String maxSize;
       public long maxSizeBytes;
+      public List<String> aliases;
 
       @Override
       public Json toJson() {
@@ -1281,6 +1286,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
                .set("statistics", statistics)
                .set("key_storage", keyStorage)
                .set("value_storage", valueStorage)
+               .set("aliases", aliases)
                .set("mode", mode);
       }
    }
