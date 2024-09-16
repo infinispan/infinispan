@@ -6,8 +6,24 @@ on:
       - main
       - 15.[0-9]+.x
       - 14.0.x
+
+concurrency:
+  # Only cancel jobs for PR updates
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Infinispan
+        uses: ./.github/actions/build-infinispan
+
   ci-build-test-pr:
+    needs: build
     name: Maven Build and Test
     runs-on: ubuntu-latest
     env:
@@ -18,11 +34,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: 21
-          distribution: temurin
-          cache: maven
+        uses: ./.github/actions/setup-java
 
       - uses: graalvm/setup-graalvm@v1
         with:
@@ -30,15 +42,12 @@ jobs:
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: ./mvnw --version
-
-      - name: Maven build
-        run: >
-            ./mvnw clean install -s maven-settings.xml -B -e -DskipTests -Pnative
+      - name: Extract Maven Artifacts
+        uses: ./.github/actions/extract-maven-artifacts
 
       - name: Maven Test
         run: >
-            ./mvnw verify -s maven-settings.xml -B -e -DrerunFailingTestsCount=2
+            ./mvnw verify -s maven-settings.xml -V -B -e -DrerunFailingTestsCount=2
             -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative
 
       - name: Archive commit sha PR
@@ -96,3 +105,42 @@ jobs:
             target-branch.txt
             event-name.txt
             event-number.txt
+
+  db:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dbs:
+          - mssql
+          - oracle
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: ./.github/actions/setup-java
+
+      - name: Extract Maven Artifacts
+        uses: ./.github/actions/extract-maven-artifacts
+
+      - name: Infinispan Version
+        run: echo "ISPN_VERSION=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+
+      - name: Download Infinispan Server
+        uses: actions/download-artifact@v4
+        with:
+          name: infinispan-dist
+
+      - name: Extract Infinispan Server
+        run: |
+          cd /tmp
+          unzip ${GITHUB_WORKSPACE}/infinispan-server-${ISPN_VERSION}.zip
+
+      - name: Test
+        run: |
+          ./mvnw verify -s maven-settings.xml -B -e -pl server/tests --fail-at-end \
+            -Dansi.strip=true \
+            -DdefaultTestGroup=database \
+            -Dorg.infinispan.test.database.types=${{ matrix.dbs }} \
+            -Dorg.infinispan.test.server.dir=/tmp/infinispan-server-${ISPN_VERSION}
