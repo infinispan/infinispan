@@ -89,7 +89,7 @@ public class RestEndpointRouterTest {
         int port = router.getRouter(EndpointRouter.Protocol.REST).get().getPort();
 
         //when
-        ServerConfigurationBuilder builder = new RestClientConfigurationBuilder().addServer().host("127.0.0.1").port(port);
+        ServerConfigurationBuilder builder = new RestClientConfigurationBuilder().pingOnCreate(false).addServer().host("127.0.0.1").port(port);
         restClient = RestClient.forConfiguration(builder.build());
         RestRawClient rawClient = restClient.raw();
 

@@ -22,6 +22,7 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -60,23 +61,14 @@ public class RestQueryAggregationCountTest extends SingleCacheManagerTest {
       restClient = RestClient.forConfiguration(new RestClientConfigurationBuilder().addServer()
             .host(restServer.getHost()).port(restServer.getPort()).protocol(Protocol.HTTP_20)
             .build());
-
       return cacheManager;
    }
 
    @Override
    protected void teardown() {
-      try {
-         restClient.close();
-      } catch (Exception ex) {
-         // ignore it
-      } finally {
-         try {
-            restServer.stop();
-         } finally {
-            super.teardown();
-         }
-      }
+      Util.close(restClient);
+      restServer.stop();
+      super.teardown();
    }
 
    @Test

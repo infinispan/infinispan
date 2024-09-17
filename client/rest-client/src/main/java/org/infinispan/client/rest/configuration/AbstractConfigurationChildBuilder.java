@@ -46,6 +46,11 @@ public abstract class AbstractConfigurationChildBuilder implements RestClientCon
    }
 
    @Override
+   public RestClientConfigurationBuilder pingOnCreate(boolean pingOnCreate) {
+      return builder.pingOnCreate(pingOnCreate);
+   }
+
+   @Override
    public RestClientConfigurationBuilder socketTimeout(long socketTimeout) {
       return builder.socketTimeout(socketTimeout);
    }

@@ -24,6 +24,7 @@ public class RestClientConfigurationProperties {
    public static final String SO_TIMEOUT = ICR + "socket_timeout";
    public static final String CONNECT_TIMEOUT = ICR + "connect_timeout";
    public static final String USER_AGENT = Version.printVersion();
+   public static final String PING_ON_CREATE = ICR + "ping_on_create";
 
    // Encryption properties
    public static final String USE_SSL = ICR + "use_ssl";
@@ -259,5 +260,13 @@ public class RestClientConfigurationProperties {
 
    public String getServerList() {
       return props.getProperty(SERVER_LIST);
+   }
+
+   public void setPingOnCreate(boolean pingOnCreate) {
+      props.setProperty(PING_ON_CREATE, pingOnCreate);
+   }
+
+   public boolean getPingOnCreate() {
+      return props.getBooleanProperty(PING_ON_CREATE, true);
    }
 }
