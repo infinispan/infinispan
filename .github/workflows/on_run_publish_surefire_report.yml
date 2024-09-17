@@ -8,6 +8,11 @@ jobs:
       name: Downloading Surefire report
       runs-on: ubuntu-latest
       steps:
+        - name: Install xmlstarlet tool
+          shell: bash
+          run: |
+             sudo apt-get update
+             sudo apt-get install -y xmlstarlet
 
 # Downloading surefire report artifact containing
 # zip file with reports and file
@@ -49,6 +54,14 @@ jobs:
           uses: juliangruber/read-file-action@v1
           with:
             path: ./github-sha.txt
+
+        - name: Remove flaky tests from failure report
+          if: (success() || failure())
+          run: |
+               find . -name "TEST-*Test.xml" | while read f
+                   do
+                      xmlstarlet ed --inplace -d "//testcase[flakyFailure]" $f
+                   done
 
         - name: Publish Test Report
           if: success() || failure()
