@@ -4,8 +4,8 @@ import java.util.BitSet;
 import java.util.Map;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
-import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
@@ -46,11 +46,11 @@ public class MetadataHybridQuery<T, S> extends HybridQuery<T, S> {
    }
 
    @Override
-   protected CloseableIterator<ObjectFilter.FilterResult> getInternalIterator() {
-      CloseableIterator<EntityEntry<Object, S>> iterator = baseQuery
+   protected ClosableIteratorWithCount<ObjectFilter.FilterResult> getInternalIterator() {
+      ClosableIteratorWithCount<EntityEntry<Object, S>> iterator = baseQuery
             .startOffset(0).maxResults(hybridMaxResult()).local(local)
             .scoreRequired(scoreProjections.cardinality() > 0).entryIterator(versionProjection);
-      return new MappingEntryIterator<>(iterator, this::filter);
+      return new MappingEntryIterator<>(iterator, this::filter, iterator.count());
    }
 
    private ObjectFilter.FilterResult filter(EntityEntry<Object, S> entry) {

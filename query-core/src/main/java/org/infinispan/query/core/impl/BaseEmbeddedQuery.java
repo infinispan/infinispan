@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.objectfilter.ObjectFilter.FilterResult;
@@ -109,8 +110,11 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
 
    private QueryResult<T> executeInternal(Comparator<Comparable<?>[]> comparator) {
       List<Object> results;
-      try (CloseableIterator<FilterResult> iterator = getInternalIterator()) {
+      try (ClosableIteratorWithCount<FilterResult> iterator = getInternalIterator()) {
          if (!iterator.hasNext()) {
+            if (iterator.count() != null) {
+               return new QueryResultImpl<>(iterator.count(), Collections.emptyList());
+            }
             return (QueryResult<T>) QueryResultImpl.EMPTY;
          } else {
             if (comparator == null) {
@@ -119,6 +123,9 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
                results = StreamSupport.stream(spliteratorUnknownSize(iterator, 0), false)
                      .map(this::mapFilterResult)
                      .collect(collector);
+               if (iterator.count() != null) {
+                  return new QueryResultImpl(iterator.count(), results);
+               }
                return new QueryResultImpl((int) collector.getCount(), results);
             } else {
                log.warnPerfSortedNonIndexed(queryString);
@@ -169,12 +176,16 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
     * #getComparator()} returns a non-null {@link Comparator}. Please note this it not the same iterator as the one
     * retuend by {@link #iterator()}.
     */
-   protected abstract CloseableIterator<FilterResult> getInternalIterator();
+   protected abstract ClosableIteratorWithCount<FilterResult> getInternalIterator();
 
    @Override
    public int getResultSize() {
       int count = 0;
-      try (CloseableIterator<?> iterator = getInternalIterator()) {
+      try (ClosableIteratorWithCount<?> iterator = getInternalIterator()) {
+         if (iterator.count() != null) {
+            return iterator.count().value();
+         }
+
          while (iterator.hasNext()) {
             iterator.next();
             count++;

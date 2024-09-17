@@ -72,7 +72,7 @@ public class PaginationTest extends SingleCacheManagerTest {
       query.maxResults(0);
       QueryResult<Object[]> result = query.execute();
       assertThat( result.list() ).isEmpty();
-      assertThat( result.count().value() ).isZero();
+      assertThat( result.count().value() ).isEqualTo(10);
    }
 
    static void hybrids_max3(Cache<Object, Object> cache) {
@@ -85,7 +85,7 @@ public class PaginationTest extends SingleCacheManagerTest {
       String nonIndexed = dev.getNonIndexed();
       assertThat( result.list() ).extracting(item -> item[0] ).containsExactly(nonIndexed, nonIndexed, nonIndexed);
       assertThat( result.list() ).extracting(item -> item[1] ).containsExactly(dev, dev, dev);
-      assertThat( result.count().value() ).isEqualTo(3);
+      assertThat( result.count().value() ).isEqualTo(10);
    }
 
    static void entityProjection(Cache<Object, Object> cache) {
@@ -95,7 +95,7 @@ public class PaginationTest extends SingleCacheManagerTest {
       query.maxResults(0);
       QueryResult<Object[]> result = query.execute();
       assertThat( result.list() ).isEmpty();
-      assertThat( result.count().value() ).isZero();
+      assertThat( result.count().value() ).isEqualTo(10);
    }
 
    static void entityProjection_max3(Cache<Object, Object> cache) {
@@ -106,7 +106,7 @@ public class PaginationTest extends SingleCacheManagerTest {
       Developer dev = getDev();
       QueryResult<Object[]> result = query.execute();
       assertThat( result.list() ).extracting(item -> item[0]).containsExactly(dev, dev, dev);
-      assertThat( result.count().value() ).isEqualTo(3);
+      assertThat( result.count().value() ).isEqualTo(10);
    }
 
    static void defaultProjection(Cache<Object, Object> cache) {
