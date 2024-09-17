@@ -44,6 +44,8 @@ public interface RestClientConfigurationChildBuilder {
     */
    RestClientConfigurationBuilder socketTimeout(long socketTimeout);
 
+   RestClientConfigurationBuilder pingOnCreate(boolean pingOnCreate);
+
    /**
     * Security Configuration
     */

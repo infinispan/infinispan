@@ -46,7 +46,7 @@ public class RestAccessLoggingTest extends SingleCacheManagerTest {
       restServer = new RestServerHelper(cacheManager);
       restServer.start(TestResourceTracker.getCurrentTestShortName());
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
-      builder.addServer().host(restServer.getHost()).port(restServer.getPort()).protocol(Protocol.HTTP_11);
+      builder.addServer().host(restServer.getHost()).port(restServer.getPort()).protocol(Protocol.HTTP_11).pingOnCreate(false);
       restClient = RestClient.forConfiguration(builder.create());
       cacheClient = restClient.cache("default");
    }
