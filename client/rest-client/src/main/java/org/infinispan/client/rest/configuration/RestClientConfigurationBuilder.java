@@ -43,6 +43,7 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
    private String contextPath = RestClientConfigurationProperties.DEFAULT_CONTEXT_PATH;
    private boolean priorKnowledge;
    private boolean followRedirects = true;
+   private boolean pingOnCreate = true;
    private final Map<String, String> headers = new HashMap<>();
    private ExecutorService executorService;
 
@@ -119,6 +120,12 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
    @Override
    public RestClientConfigurationBuilder connectionTimeout(long connectionTimeout) {
       this.connectionTimeout = connectionTimeout;
+      return this;
+   }
+
+   @Override
+   public RestClientConfigurationBuilder pingOnCreate(boolean pingOnCreate) {
+      this.pingOnCreate = pingOnCreate;
       return this;
    }
 
@@ -207,7 +214,7 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
       }
 
       return new RestClientConfiguration(servers, protocol, connectionTimeout, socketTimeout, security.create(),
-            tcpNoDelay, tcpKeepAlive, contextPath, priorKnowledge, followRedirects, headers, executorService);
+            tcpNoDelay, tcpKeepAlive, contextPath, priorKnowledge, followRedirects, pingOnCreate, headers, executorService);
    }
 
 

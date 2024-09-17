@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -119,6 +120,13 @@ public class RestRawClientJDK implements RestRawClient, AutoCloseable {
       }
       ServerConfiguration server = configuration.servers().get(0);
       baseURL = String.format("%s://%s:%d", ssl.enabled() ? "https" : "http", server.host(), server.port());
+      if (configuration.pingOnCreate()) {
+         try {
+            head("/").toCompletableFuture().get();
+         } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+         }
+      }
    }
 
    @Override
