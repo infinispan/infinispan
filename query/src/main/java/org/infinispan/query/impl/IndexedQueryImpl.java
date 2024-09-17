@@ -20,6 +20,7 @@ import org.hibernate.search.engine.search.query.SearchQuery;
 import org.hibernate.search.engine.search.query.SearchResult;
 import org.hibernate.search.util.common.SearchException;
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
@@ -108,7 +109,7 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
       long start = queryStatistics.isEnabled() ? System.nanoTime(): 0;
       SearchQuery<?> searchQuery = queryDefinition.getSearchQueryBuilder().build();
 
-      MappingIterator<?, Object> iterator = new MappingIterator<>(iterator(searchQuery, false))
+      MappingIterator<?, Object> iterator = new MappingIterator<>(iterator(searchQuery))
             .skip(queryDefinition.getFirstResult())
             .limit(queryDefinition.getMaxResults());
 
@@ -118,7 +119,7 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
    }
 
    @Override
-   public <K> CloseableIterator<EntityEntry<K, E>> entryIterator(boolean withMetadata) {
+   public <K> ClosableIteratorWithCount<EntityEntry<K, E>> entryIterator(boolean withMetadata) {
       partitionHandlingSupport.checkCacheAvailable();
       long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
 
@@ -131,8 +132,9 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
       SearchQuery<List<Object>> searchQuery = (queryDefinition.isScoreRequired()) ?
             searchQueryBuilder.keyEntityAndScore(withMetadata) : searchQueryBuilder.keyAndEntity(withMetadata);
 
+      ClosableIteratorWithCount<List<Object>> closableIteratorWithCount = iterator(searchQuery);
       MappingIterator<List<Object>, EntityEntry<K, E>> iterator =
-            new MappingIterator<>(iterator(searchQuery, withMetadata), this::mapToEntry);
+            new MappingIterator<>(closableIteratorWithCount, this::mapToEntry, closableIteratorWithCount.count());
       iterator.skip(queryDefinition.getFirstResult())
             .limit(queryDefinition.getMaxResults());
 
@@ -250,7 +252,7 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
       }
    }
 
-   private <T> CloseableIterator<T> iterator(SearchQuery<T> searchQuery, boolean withMetadata) {
+   private <T> ClosableIteratorWithCount<T> iterator(SearchQuery<T> searchQuery) {
       try {
          return new ScrollerIteratorAdaptor<>(searchQuery.scroll(SCROLL_CHUNK));
       } catch (org.hibernate.search.util.common.SearchTimeoutException timeoutException) {

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
@@ -68,7 +69,7 @@ public final class AggregatingQuery<T> extends HybridQuery<T, Object[]> {
    }
 
    @Override
-   public <K> CloseableIterator<EntityEntry<K, T>> entryIterator(boolean withMetadata) {
+   public <K> ClosableIteratorWithCount<EntityEntry<K, T>> entryIterator(boolean withMetadata) {
       throw new UnsupportedOperationException();
    }
 

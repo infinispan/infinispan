@@ -15,8 +15,8 @@ import static org.infinispan.query.core.impl.Log.CONTAINER;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheStream;
+import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -88,7 +88,7 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
    }
 
    @Override
-   protected CloseableIterator<ObjectFilter.FilterResult> getInternalIterator() {
+   protected ClosableIteratorWithCount<ObjectFilter.FilterResult> getInternalIterator() {
       IckleFilterAndConverter<Object, Object> ickleFilter = (IckleFilterAndConverter<Object, Object>) createFilter();
       AdvancedCache<Object, Object> cache = (AdvancedCache<Object, Object>) (isLocal() ? this.cache.withFlags(Flag.CACHE_MODE_LOCAL) : this.cache);
 
@@ -100,7 +100,7 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
       if (timeout > 0) {
          resultStream = resultStream.timeout(timeout, TimeUnit.NANOSECONDS);
       }
-      return Closeables.iterator(resultStream);
+      return Closeables.iteratorWithCount(resultStream);
    }
 
    @Override

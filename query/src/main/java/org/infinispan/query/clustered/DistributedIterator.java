@@ -14,10 +14,12 @@ import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.TopFieldDocs;
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.api.query.ClosableIteratorWithCount;
+import org.infinispan.commons.api.query.HitCount;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
+import org.infinispan.query.dsl.TotalHitCount;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.actions.SecurityActions;
 
@@ -31,7 +33,7 @@ import org.infinispan.security.actions.SecurityActions;
  * @author Sanne Grinovero
  * @since 5.1
  */
-class DistributedIterator<T> implements CloseableIterator<T> {
+class DistributedIterator<T> implements ClosableIteratorWithCount<T> {
 
    protected final AdvancedCache<Object, Object> cache;
 
@@ -201,6 +203,11 @@ class DistributedIterator<T> implements CloseableIterator<T> {
          return null;
       }
       return new KeyAndScore(keyFromStorage(nodeTopDocs.keys[pos]), scoreDoc.score);
+   }
+
+   @Override
+   public HitCount count() {
+      return new TotalHitCount(resultSize, true);
    }
 
    static class KeyAndScore {

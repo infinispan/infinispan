@@ -6,7 +6,9 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
+import org.infinispan.commons.api.query.HitCount;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryResult;
@@ -54,8 +56,13 @@ class DummyQuery<T> implements Query<T> {
    }
 
    @Override
-   public <K> CloseableIterator<EntityEntry<K, T>> entryIterator(boolean withMetadata) {
-      return new CloseableIterator<EntityEntry<K, T>>() {
+   public <K> ClosableIteratorWithCount<EntityEntry<K, T>> entryIterator(boolean withMetadata) {
+      return new ClosableIteratorWithCount<EntityEntry<K, T>>() {
+
+         @Override
+         public HitCount count() {
+            return null;
+         }
 
          @Override
          public void close() {

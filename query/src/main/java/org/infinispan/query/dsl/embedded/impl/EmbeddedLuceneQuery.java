@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
@@ -98,8 +99,10 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
    }
 
    @Override
-   public <K> CloseableIterator<EntityEntry<K, T>> entryIterator(boolean withMetadata) {
-      return new MappingIterator(getOrCreateIndexedQuery(true).entryIterator(withMetadata), null);
+   public <K> ClosableIteratorWithCount<EntityEntry<K, T>> entryIterator(boolean withMetadata) {
+      ClosableIteratorWithCount<EntityEntry<Object, T>> closableIterator =
+            getOrCreateIndexedQuery(true).entryIterator(withMetadata);
+      return new MappingIterator<>(closableIterator, null, closableIterator.count());
    }
 
    @Override
