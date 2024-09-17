@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
@@ -121,7 +122,7 @@ final class DelegatingQuery<TypeMetadata, T> extends BaseQuery<T> {
    }
 
    @Override
-   public <K> CloseableIterator<EntityEntry<K, T>> entryIterator(boolean withMetadata) {
+   public <K> ClosableIteratorWithCount<EntityEntry<K, T>> entryIterator(boolean withMetadata) {
       return createQuery().entryIterator(withMetadata);
    }
 

@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.util.common.SearchException;
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
@@ -107,7 +108,7 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
    }
 
    @Override
-   public <K> CloseableIterator<EntityEntry<K, E>> entryIterator(boolean withMetadata) {
+   public <K> ClosableIteratorWithCount<EntityEntry<K, E>> entryIterator(boolean withMetadata) {
       partitionHandlingSupport.checkCacheAvailable();
       queryDefinition.setMaxResults(getNodeMaxResults());
 

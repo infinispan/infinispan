@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.ObjectFilter;
@@ -56,7 +57,7 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
    }
 
    @Override
-   protected CloseableIterator<ObjectFilter.FilterResult> getInternalIterator() {
+   protected ClosableIteratorWithCount<ObjectFilter.FilterResult> getInternalIterator() {
       return new MappingIterator<>(getBaseIterator(), objectFilter::filter);
    }
 

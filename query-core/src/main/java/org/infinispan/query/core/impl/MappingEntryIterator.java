@@ -3,13 +3,16 @@ package org.infinispan.query.core.impl;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
 
+import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
+import org.infinispan.commons.api.query.HitCount;
 import org.infinispan.commons.util.CloseableIterator;
 
-public class MappingEntryIterator<K, S, T> implements CloseableIterator<T> {
+public class MappingEntryIterator<K, S, T> implements ClosableIteratorWithCount<T> {
 
    private final CloseableIterator<EntityEntry<K, S>> entryIterator;
    private final Function<EntityEntry<K, S>, T> mapper;
+   private final HitCount count;
 
    private long skip = 0;
    private long max = -1;
@@ -17,9 +20,11 @@ public class MappingEntryIterator<K, S, T> implements CloseableIterator<T> {
    private T current;
    private long index;
 
-   public MappingEntryIterator(CloseableIterator<EntityEntry<K, S>> entryIterator, Function<EntityEntry<K, S>, T> mapper) {
+   public MappingEntryIterator(CloseableIterator<EntityEntry<K, S>> entryIterator, Function<EntityEntry<K, S>, T> mapper,
+                               HitCount count) {
       this.entryIterator = entryIterator;
       this.mapper = mapper;
+      this.count = count;
    }
 
    @Override
@@ -76,5 +81,10 @@ public class MappingEntryIterator<K, S, T> implements CloseableIterator<T> {
    @Override
    public void close() {
       entryIterator.close();
+   }
+
+   @Override
+   public HitCount count() {
+      return count;
    }
 }

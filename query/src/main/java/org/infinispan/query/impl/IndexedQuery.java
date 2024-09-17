@@ -3,6 +3,7 @@ package org.infinispan.query.impl;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.dsl.QueryResult;
@@ -52,7 +53,7 @@ public interface IndexedQuery<E> {
     * <p>
     * <b>NOTE:</b> The query must not contain any projections or an exception will be thrown.
     */
-   <K> CloseableIterator<EntityEntry<K, E>> entryIterator(boolean withMetadata);
+   <K> ClosableIteratorWithCount<EntityEntry<K, E>> entryIterator(boolean withMetadata);
 
    /**
     * Executes an Ickle statement returning results (query aka. SELECT). If the statement happens to be a DELETE it

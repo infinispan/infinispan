@@ -6,7 +6,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.api.query.ClosableIteratorWithCount;
+import org.infinispan.commons.api.query.HitCount;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
@@ -41,8 +42,13 @@ public final class EmptyResultQuery<T> extends BaseEmbeddedQuery<T> {
    }
 
    @Override
-   protected CloseableIterator<ObjectFilter.FilterResult> getInternalIterator() {
-      return new CloseableIterator<ObjectFilter.FilterResult>() {
+   protected ClosableIteratorWithCount<ObjectFilter.FilterResult> getInternalIterator() {
+      return new ClosableIteratorWithCount<ObjectFilter.FilterResult>() {
+
+         @Override
+         public HitCount count() {
+            return null;
+         }
 
          @Override
          public void close() {

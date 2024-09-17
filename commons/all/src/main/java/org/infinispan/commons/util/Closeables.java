@@ -8,6 +8,8 @@ import java.util.stream.BaseStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.infinispan.commons.api.query.ClosableIteratorWithCount;
+import org.infinispan.commons.api.query.HitCount;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -88,6 +90,14 @@ public class Closeables {
          return (CloseableIterator<E>) iterator;
       }
       return new IteratorAsCloseableIterator<>(iterator);
+   }
+
+   public static <R> ClosableIteratorWithCount<R> iteratorWithCount(BaseStream<R, Stream<R>> stream) {
+      Iterator<R> iterator = stream.iterator();
+      if (iterator instanceof ClosableIteratorWithCount) {
+         return (ClosableIteratorWithCount<R>) iterator;
+      }
+      return new StreamToCloseableIteratorWithoutCount<>(stream, iterator);
    }
 
    /**
@@ -204,6 +214,19 @@ public class Closeables {
       @Override
       public void close() {
          stream.close();
+      }
+   }
+
+   private static class StreamToCloseableIteratorWithoutCount<E> extends StreamToCloseableIterator<E>
+         implements ClosableIteratorWithCount<E> {
+
+      public StreamToCloseableIteratorWithoutCount(BaseStream<E, Stream<E>> stream, Iterator<E> iterator) {
+         super(stream, iterator);
+      }
+
+      @Override
+      public HitCount count() {
+         return null;
       }
    }
 
