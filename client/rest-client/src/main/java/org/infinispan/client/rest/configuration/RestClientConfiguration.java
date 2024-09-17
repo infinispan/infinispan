@@ -30,8 +30,9 @@ public class RestClientConfiguration {
    private final boolean followRedirects;
    private final Map<String, String> headers;
    private final ExecutorService executorService;
+   private final boolean pingOnCreate;
 
-   RestClientConfiguration(List<ServerConfiguration> servers, Protocol protocol, long connectionTimeout, long socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive, String contextPath, boolean priorKnowledge, boolean followRedirects, Map<String, String> headers, ExecutorService executorService) {
+   RestClientConfiguration(List<ServerConfiguration> servers, Protocol protocol, long connectionTimeout, long socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive, String contextPath, boolean priorKnowledge, boolean followRedirects, boolean pingOnCreate, Map<String, String> headers, ExecutorService executorService) {
       this.servers = Collections.unmodifiableList(servers);
       this.protocol = protocol;
       this.connectionTimeout = connectionTimeout;
@@ -44,6 +45,7 @@ public class RestClientConfiguration {
       this.followRedirects = followRedirects;
       this.headers = headers;
       this.executorService = executorService;
+      this.pingOnCreate = pingOnCreate;
    }
 
    public Protocol protocol() {
@@ -103,10 +105,11 @@ public class RestClientConfiguration {
       properties.setProperty(RestClientConfigurationProperties.TCP_KEEP_ALIVE, tcpKeepAlive());
       properties.setProperty(RestClientConfigurationProperties.CONTEXT_PATH, contextPath());
       properties.setProperty(RestClientConfigurationProperties.USER_AGENT, headers.get("User-Agent"));
+      properties.setProperty(RestClientConfigurationProperties.PING_ON_CREATE, pingOnCreate());
 
       StringBuilder servers = new StringBuilder();
       for (ServerConfiguration server : servers()) {
-         if (servers.length() > 0) {
+         if (!servers.isEmpty()) {
             servers.append(";");
          }
          servers.append(server.host()).append(":").append(server.port());
@@ -147,6 +150,10 @@ public class RestClientConfiguration {
       return properties;
    }
 
+   public boolean pingOnCreate() {
+      return pingOnCreate;
+   }
+
    public String toURI() {
       StringBuilder sb = new StringBuilder("http");
       if (security.ssl().enabled()) {
@@ -175,6 +182,7 @@ public class RestClientConfiguration {
             ", socketTimeout=" + socketTimeout +
             ", tcpNoDelay=" + tcpNoDelay +
             ", tcpKeepAlive=" + tcpKeepAlive +
+            ", pingOnCreate=" + pingOnCreate +
             ", protocol=" + protocol +
             ", contextPath='" + contextPath + '\'' +
             ", priorKnowledge=" + priorKnowledge +
