@@ -2,6 +2,8 @@ package org.infinispan.query.dsl;
 
 import java.util.OptionalLong;
 
+import org.infinispan.commons.api.query.HitCount;
+
 /**
  * Represents the result of a {@link Query}.
  * <p>
@@ -23,7 +25,7 @@ public interface QueryResult<E> extends org.infinispan.commons.api.query.QueryRe
     */
    @Deprecated
    default OptionalLong hitCount() {
-      TotalHitCount count = count();
+      HitCount count = count();
       return count.isExact() ? OptionalLong.of(count.value()) : OptionalLong.empty();
    }
 
@@ -31,6 +33,6 @@ public interface QueryResult<E> extends org.infinispan.commons.api.query.QueryRe
     * @return An object containing information about the number of hits from the query, ignoring pagination.
     */
    @Override
-   TotalHitCount count();
+   HitCount count();
 
 }

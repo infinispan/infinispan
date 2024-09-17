@@ -5,14 +5,16 @@ import java.util.NoSuchElementException;
 
 import org.hibernate.search.engine.search.query.SearchScroll;
 import org.hibernate.search.engine.search.query.SearchScrollResult;
-import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.api.query.ClosableIteratorWithCount;
+import org.infinispan.commons.api.query.HitCount;
+import org.infinispan.query.dsl.TotalHitCount;
 
 /**
  * Adaptor to use a link {@link SearchScroll} as an iterator.
  *
  * @since 12.0
  */
-public class ScrollerIteratorAdaptor<E> implements CloseableIterator<E> {
+public class ScrollerIteratorAdaptor<E> implements ClosableIteratorWithCount<E> {
    private final SearchScroll<E> scroll;
    private SearchScrollResult<E> scrollResult;
    private List<E> chunk;
@@ -49,5 +51,10 @@ public class ScrollerIteratorAdaptor<E> implements CloseableIterator<E> {
    @Override
    public void close() {
       scroll.close();
+   }
+
+   @Override
+   public HitCount count() {
+      return new TotalHitCount((int) scrollResult.total().hitCountLowerBound(), scrollResult.total().isHitCountExact());
    }
 }
