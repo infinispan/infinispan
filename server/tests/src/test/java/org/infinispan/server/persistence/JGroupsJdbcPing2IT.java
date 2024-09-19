@@ -80,22 +80,23 @@ public class JGroupsJdbcPing2IT {
 
       var clusterName = "test";
       var datasource = new DummyDataSource(db.jdbcUrl(), db.username(), db.password());
-      var c1 = createChannel(databaseType, 7800, datasource);
-      var c2 = createChannel(databaseType, 7801, datasource);
-      c1.connect(clusterName);
-      c2.connect(clusterName);
+      try (var c1 = createChannel(databaseType, 7800, datasource);
+           var c2 = createChannel(databaseType, 7801, datasource)) {
+         c1.connect(clusterName);
+         c2.connect(clusterName);
 
-      assertEquals(2, c1.view().size());
-      assertEquals(2, c2.view().size());
+         assertEquals(2, c1.view().size());
+         assertEquals(2, c2.view().size());
 
-      db.stop();
-      CountDownLatch reqLatch = new CountDownLatch(1);
-      CountDownLatch successLatch = new CountDownLatch(2);
-      c1.getProtocolStack().insertProtocol(new DiscoveryListener(reqLatch, successLatch), ProtocolStack.Position.ABOVE, JDBC_PING2.class);
-      assertTrue(reqLatch.await(10, TimeUnit.MINUTES));
-      assertEquals(2, successLatch.getCount());
-      db.restart();
-      assertTrue(successLatch.await(10, TimeUnit.MINUTES));
+         db.stop();
+         CountDownLatch reqLatch = new CountDownLatch(1);
+         CountDownLatch successLatch = new CountDownLatch(2);
+         c1.getProtocolStack().insertProtocol(new DiscoveryListener(reqLatch, successLatch), ProtocolStack.Position.ABOVE, JDBC_PING2.class);
+         assertTrue(reqLatch.await(10, TimeUnit.MINUTES));
+         assertEquals(2, successLatch.getCount());
+         db.restart();
+         assertTrue(successLatch.await(10, TimeUnit.MINUTES));
+      }
    }
 
    private ContainerDatabase initDatabase(String databaseType) {
