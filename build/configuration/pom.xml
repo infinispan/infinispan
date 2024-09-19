@@ -209,7 +209,7 @@
       <version.testng.engine>1.0.5</version.testng.engine>
 
       <!-- these versions must be kept in sync with ${version.micrometer}: -->
-      <version.io.prometheus>0.15.0</version.io.prometheus>
+      <version.io.prometheus>0.16.0</version.io.prometheus>
       <version.hdrhistogram>2.1.12</version.hdrhistogram>
       <version.latencyutils>2.0.3</version.latencyutils>
 
