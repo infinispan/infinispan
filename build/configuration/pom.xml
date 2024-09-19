@@ -177,7 +177,7 @@
       <version.junit>4.13.2</version.junit>
       <version.junit.platform>1.11.0</version.junit.platform>
       <version.junit5>5.11.0</version.junit5>
-      <version.log4j>2.23.1</version.log4j>
+      <version.log4j>2.24.0</version.log4j>
       <version.lucene>9.9.2</version.lucene>
       <version.metainf-services>1.11</version.metainf-services>
       <version.micrometer>1.12.10</version.micrometer>
