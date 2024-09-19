@@ -94,5 +94,5 @@ jobs:
           path: |
             **/target/*-reports*/**/TEST-*FLAKY.xml
             target-branch.txt
-            event_name.txt
-            event_number.txt
+            event-name.txt
+            event-number.txt
