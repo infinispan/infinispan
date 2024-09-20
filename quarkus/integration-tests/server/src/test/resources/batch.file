@@ -1,1 +1,1 @@
-create cache --template=org.infinispan.DIST_SYNC mybatch
+create cache --file=target/test-classes/dcache.json mybatch
