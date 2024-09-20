@@ -63,7 +63,6 @@ jobs:
                    do
                       xmlstarlet ed --inplace -d "//testcase[flakyFailure]" $f
                    done
-
         - name: Publish Test Report
           if: success() || failure()
           uses: ScaCap/action-surefire-report@v1
@@ -73,3 +72,21 @@ jobs:
             report_paths: |
               **/surefire-reports/TEST-*.xml
 
+        - name: Check test number
+          if: success() || failure()
+          env:
+            MIN_TEST_NUM: 30000
+            GH_TOKEN: ${{ github.token }}
+          run: |
+            COUNT=$(find . -name "TEST-*Test.xml" | while read f; do xmlstarlet sel -t -c  "count(//testcase)" -n $f; done | awk '{s+=$1} END {print s}')
+            if [ "$COUNT" -lt "$MIN_TEST_NUM" ]; then
+               gh api -X POST -H "Accept: application/vnd.github+json" \
+                  -H "X-GitHub-Api-Version: 2022-11-28" \
+                  -f 'name=Check number tests ran' \
+                  -f 'head_sha=${{ steps.github_sha.outputs.content }}' \
+                  -f 'status=completed' \
+                  -f 'conclusion=failure' \
+                  -f 'output[title]=Check number tests ran' \
+                  -f "output[summary]=Fail. $COUNT test ran, minimum required is $MIN_TEST_NUM" \
+                     /repos/${{ github.repository }}/check-runs
+            fi
