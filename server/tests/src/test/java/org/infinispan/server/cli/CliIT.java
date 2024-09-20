@@ -70,7 +70,8 @@ public class CliIT {
          terminal.send("stats");
          terminal.assertContains("required_minimum_number_of_nodes");
          terminal.clear();
-         terminal.send("create cache --template=org.infinispan.DIST_SYNC dcache");
+         terminal.send("create cache --file=" + getCliResource("dtemplate.xml").getPath() + " dtemplate");
+         terminal.send("create cache --template=dtemplate dcache");
          terminal.send("cd caches/dcache");
          terminal.assertContains("//containers/default/caches/dcache]>");
          terminal.send("put k1 v1");

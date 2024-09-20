@@ -117,8 +117,7 @@ public class RestOperations {
 
       try (Closeable ignored = client.raw().listen("/rest/v2/container?action=listen", Collections.emptyMap(), sseListener)) {
          assertTrue(sseListener.await(10, TimeUnit.SECONDS));
-
-         assertThat(client.cache("caching-listen").createWithTemplate("org.infinispan.DIST_SYNC")).isOk();
+         assertThat(client.cache("caching-listen").createWithConfiguration(RestEntity.create(MediaType.APPLICATION_JSON, "{\"distributed-cache\":{}}"))).isOk();
 
          sseListener.expectEvent("create-cache", "caching-listen");
          sseListener.expectEvent("lifecycle-event", "ISPN100002");

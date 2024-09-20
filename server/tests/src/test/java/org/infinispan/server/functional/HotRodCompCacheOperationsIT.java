@@ -15,6 +15,7 @@ import org.infinispan.client.hotrod.multimap.RemoteMultimapCache;
 import org.infinispan.client.hotrod.multimap.RemoteMultimapCacheManagerFactory;
 import org.infinispan.client.hotrod.transaction.lookup.RemoteTransactionManagerLookup;
 import org.infinispan.commons.configuration.StringConfiguration;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.CounterType;
@@ -53,7 +54,9 @@ public class HotRodCompCacheOperationsIT {
 
    @Test
    public void testHotRodOperations() {
-      RemoteCache<String, String> cache = SERVERS.hotrod().create();
+      org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(builder).create();
       cache.put("k1", "v1");
       assertEquals(1, cache.size());
       assertEquals("v1", cache.get("k1"));
