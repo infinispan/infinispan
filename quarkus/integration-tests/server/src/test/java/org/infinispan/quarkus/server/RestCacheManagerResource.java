@@ -6,9 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestContainerClient;
+import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.junit.jupiter.api.Test;
@@ -75,7 +77,7 @@ public class RestCacheManagerResource {
    public void testCacheInfo() throws Exception {
       RestClient client = SERVERS.rest().create();
       String cacheName = "test";
-      RestResponse restResponse = sync(client.cache(cacheName).createWithTemplate("org.infinispan.LOCAL"));
+      RestResponse restResponse = sync(client.cache(cacheName).createWithConfiguration(RestEntity.create(MediaType.APPLICATION_JSON, "{\"local-cache\":{}}")));
       assertEquals(200, restResponse.status());
 
       restResponse = sync(client.raw().get("/rest/v2/cache-managers/default/caches"));

@@ -137,7 +137,7 @@ class InfinispanServerProcessor {
       // TODO: not sure why this is required for native runtime...
       reflectionClass.produce(new ReflectiveClassBuildItem(false, false, NoTypePermission.class.getName()));
 
-      resources.produce(new NativeImageResourceBuildItem("infinispan-defaults.xml",
+      resources.produce(new NativeImageResourceBuildItem("infinispan-server-templates.xml",
             "proto/generated/persistence.counters.proto",
             "proto/generated/persistence.query.proto",
             "proto/generated/persistence.query.core.proto",
