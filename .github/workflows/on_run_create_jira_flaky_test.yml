@@ -4,7 +4,8 @@ on:
      workflows: [On PR Open or Push Do Build and Test]
      types: [completed]
 jobs:
-   download:
+   jiraForFlakyTest:
+      if: ${{ github.event.workflow_run.conclusion == 'success' }}
       name: Downloading Flaky test report
       runs-on: ubuntu-latest
       steps:
