@@ -189,6 +189,7 @@
                     <systemPropertyVariables>
                         <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
                     </systemPropertyVariables>
+                    <reportNameSuffix>native</reportNameSuffix>
                 </configuration>
                 <executions>
                     <execution>
