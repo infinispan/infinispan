@@ -1,17 +1,22 @@
 package org.infinispan.client.hotrod.query.pressure;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.client.hotrod.impl.Util.await;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.query.aggregation.QueryAggregationCountTest.CHUNK_SIZE;
 import static org.infinispan.query.aggregation.QueryAggregationCountTest.chunk;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -37,7 +42,7 @@ public class LargePutAllPressureTest extends SingleHotRodServerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      ConfigurationBuilder config = new ConfigurationBuilder();
+      ConfigurationBuilder config = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.LOCAL, useTransactions()));
       config.indexing().enable()
             .storage(LOCAL_HEAP)
                .addIndexedEntity("Sale")
@@ -46,6 +51,10 @@ public class LargePutAllPressureTest extends SingleHotRodServerTest {
                .queueSize(10_000);
 
       return TestCacheManagerFactory.createServerModeCacheManager(config);
+   }
+
+   protected boolean useTransactions() {
+      return false;
    }
 
    @Override
@@ -83,6 +92,10 @@ public class LargePutAllPressureTest extends SingleHotRodServerTest {
       await( voidCompletableFuture, TIMEOUT );
 
       long end = System.currentTimeMillis();
-      log.info("test executed in " + (end - start) + "ms");
+      log.info("massive put all executed in " + (end - start) + "ms");
+
+      Query<Object[]> query = remoteCache.query("select count(s) from Sale s");
+      List<Object[]> list = query.list();
+      assertThat(list).extracting(array -> array[0]).containsExactly((long) SIZE);
    }
 }

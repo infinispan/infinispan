@@ -16,6 +16,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collector;
+import java.util.stream.Stream;
 
 import org.infinispan.commons.reactive.RxJavaInterop;
 
@@ -303,7 +304,17 @@ public class CompletionStages {
 
    public static <I> CompletionStage<Void> performConcurrently(Iterable<I> iterable, int parallelism, Scheduler scheduler,
                                                                Function<? super I, CompletionStage<?>> function) {
-      return Flowable.fromIterable(iterable)
+      return performConcurrently(Flowable.fromIterable(iterable), parallelism, scheduler, function);
+   }
+
+   public static <I> CompletionStage<Void> performConcurrently(Stream<I> stream, int parallelism, Scheduler scheduler,
+                                                               Function<? super I, CompletionStage<?>> function) {
+      return performConcurrently(Flowable.fromStream(stream), parallelism, scheduler, function);
+   }
+
+   private static <I> CompletionStage<Void> performConcurrently(Flowable<I> flowable, int parallelism, Scheduler scheduler,
+                                                                Function<? super I, CompletionStage<?>> function) {
+      return flowable
             .parallel(parallelism)
             .runOn(scheduler)
             .concatMap(i -> RxJavaInterop.voidCompletionStageToFlowable(function.apply(i)))
