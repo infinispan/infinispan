@@ -2,16 +2,11 @@ package org.infinispan.commons.dataconversion.internal;
 
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 import com.jayway.jsonpath.InvalidJsonException;
 import com.jayway.jsonpath.JsonPathException;
 import com.jayway.jsonpath.spi.json.AbstractJsonProvider;
 import com.jayway.jsonpath.spi.json.JsonProvider;
-
-import netscape.javascript.JSObject;
 
 public class InfinispanJsonProvider extends AbstractJsonProvider {
 
@@ -81,52 +76,50 @@ public class InfinispanJsonProvider extends AbstractJsonProvider {
     }
 
 
-//    @Override
-//    public boolean isArray(Object obj) {
-//       return (obj instanceof Json.ArrayJson) || (obj instanceof List);
-//    }
+   @Override
+   public boolean isArray(Object obj) {
+      return (obj instanceof Json.ArrayJson) || super.isArray(obj);
+   }
 
-//    /**
-//     * Get the length of an array or object
-//     *
-//     * @param obj an array or an object
-//     * @return the number of entries in the array or object
-//     */
-//    @SuppressWarnings("rawtypes")
-//    public int length(Object obj) {
-//       if (super.isArray(obj)) {
-//             return super.length(obj);
-//          }
-//       if (isArray(obj)) {
-//             return ((Json.ArrayJson)obj).asJsonList().size();
-//       } else if (isMap(obj)) {
-//          return ((Json.ObjectJson)obj).asJsonMap().size();
-//       } else if (obj instanceof String) {
-//          return ((String) obj).length();
-//       }
-//       if (obj instanceof List) {
-//          return ((List) obj).size();
-//       }
-//       throw new JsonPathException("length operation cannot be applied to " + (obj != null ? obj.getClass().getName()
-//             : "null"));
-//    }
+   /**
+    * Get the length of an array or object
+    *
+    * @param obj an array or an object
+    * @return the number of entries in the array or object
+    */
+   public int length(Object obj) {
+      if (super.isArray(obj)) {
+            return super.length(obj);
+         }
+      if (isArray(obj)) {
+            return ((Json.ArrayJson)obj).asJsonList().size();
+      }
+      if (isMap(obj)) {
+         return ((Json.ObjectJson)obj).asJsonMap().size();
+      }
+      if (obj instanceof String) {
+         return ((String) obj).length();
+      }
+      throw new JsonPathException("length operation cannot be applied to " + (obj != null ? obj.getClass().getName()
+            : "null"));
+   }
 
-//        /**
-//      * Extracts a value from an array
-//      *
-//      * @param obj an array
-//      * @param idx index
-//      * @return the entry at the given index
-//      */
-//     public Object getArrayIndex(Object obj, int idx) {
-//       if (super.isArray(obj)) {
-//          return super.getArrayIndex(obj, idx);
-//       }
-//       if (isArray(obj)) {
-//          return ((Json.ArrayJson) obj).at(idx);
-//       }
-//       throw new UnsupportedOperationException();
-//   }
+       /**
+     * Extracts a value from an array
+     *
+     * @param obj an array
+     * @param idx index
+     * @return the entry at the given index
+     */
+    public Object getArrayIndex(Object obj, int idx) {
+      if (super.isArray(obj)) {
+         return super.getArrayIndex(obj, idx);
+      }
+      if (isArray(obj)) {
+         return ((Json.ArrayJson) obj).at(idx);
+      }
+      throw new UnsupportedOperationException();
+  }
 
 //   @SuppressWarnings("unchecked")
 //   public void setArrayIndex(Object array, int index, Object newValue) {
