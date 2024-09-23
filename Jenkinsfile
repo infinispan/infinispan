@@ -202,10 +202,11 @@ pipeline {
                 pmdParser(pattern: '**/target/pmd.xml'),
                 cpd(pattern: '**/target/cpd.xml')
             ]
-
-            script {
-               env.TARGET_BRANCH = env.BRANCH_NAME.startsWith('PR-') ? env.CHANGE_TARGET : env.BRANCH_NAME
-               sh 'FLAKY_TEST_GLOB="**/target/*-reports*/**/TEST-*FLAKY.xml" PROJECT_KEY=ISPN TYPE=Bug JENKINS_JOB_URL=$BUILD_URL TARGET_BRANCH=${TARGET_BRANCH} ./bin/jira/track_flaky_tests.sh'
+            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+               script {
+                  env.TARGET_BRANCH = env.BRANCH_NAME.startsWith('PR-') ? env.CHANGE_TARGET : env.BRANCH_NAME
+                  sh 'FLAKY_TEST_GLOB="**/target/*-reports*/**/TEST-*FLAKY.xml" PROJECT_KEY=ISPN TYPE=Bug JENKINS_JOB_URL=$BUILD_URL TARGET_BRANCH=${TARGET_BRANCH} ./bin/jira/track_flaky_tests.sh'
+               }
             }
         }
 

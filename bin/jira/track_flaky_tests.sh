@@ -22,8 +22,11 @@ for TEST in "${TESTS[@]}"; do
     TEST_NAME=$(xmlstarlet sel --template --value-of '/testsuite/testcase['$i']/@name' ${TEST})
     # Removing (Flaky Test) text
     TEST_NAME=${TEST_NAME% (Flaky Test)}
-    # Removing square brakets with execution counter i.e. flakyTest[1]
+    # Some tests have arguments with backslash, ie testReplace\[NO_TX, P_TX\]. Removing
+    TEST_NAME=${TEST_NAME%%\[*}
+    # Some tests have it without backslash or have fail counter, ie testContainsAll[1]. Removing
     TEST_NAME=${TEST_NAME%%[*}
+    # Some tests end with \(. Removing
     TEST_NAME_NO_PARAMS=${TEST_NAME%%\(*}
     STACK_TRACE=$(xmlstarlet sel --template --value-of '/testsuite/testcase/failure['$i']' ${TEST})
 
