@@ -38,6 +38,12 @@ public class LargeTermTest extends SingleHotRodServerTest {
    }
 
    @Override
+   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
+      // Make the timeout longer
+      return super.createHotRodClientConfigurationBuilder(host, serverPort).socketTimeout(15_000);
+   }
+
+   @Override
    protected SerializationContextInitializer contextInitializer() {
       return KeywordEntity.KeywordSchema.INSTANCE;
    }
