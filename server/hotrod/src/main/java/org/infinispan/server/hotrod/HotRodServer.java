@@ -79,6 +79,7 @@ import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.CacheInfo;
 import org.infinispan.server.core.QueryFacade;
 import org.infinispan.server.core.ServerConstants;
+import org.infinispan.server.core.transport.FlushConsolidationInitializer;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
@@ -289,9 +290,11 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    public ChannelInitializer<Channel> getInitializer() {
       if (configuration.idleTimeout() > 0)
          return new NettyInitializers(new NettyChannelInitializer(this, transport, getEncoder(), this::getDecoder),
+                                      new FlushConsolidationInitializer(),
                                       new TimeoutEnabledChannelInitializer<>(this));
       else // Idle timeout logic is disabled with -1 or 0 values
-         return new NettyInitializers(new NettyChannelInitializer(this, transport, getEncoder(), this::getDecoder));
+         return new NettyInitializers(new NettyChannelInitializer(this, transport, getEncoder(), this::getDecoder),
+               new FlushConsolidationInitializer());
    }
 
    private <T> void loadFilterConverterFactories(Class<T> c, BiConsumer<String, T> biConsumer) {
