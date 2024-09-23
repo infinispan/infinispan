@@ -86,8 +86,6 @@
       <maven.compiler.target>17</maven.compiler.target>
       <maven.compiler.release>17</maven.compiler.release>
       <maven.javadoc.skip>false</maven.javadoc.skip>
-      <transform.skip>true</transform.skip>
-      <transform.tests.skip>true</transform.tests.skip>
 
       <!-- === Branding Configuration === -->
       <infinispan.brand.name>Infinispan</infinispan.brand.name>
@@ -251,7 +249,6 @@
       <version.org.jboss.galleon>6.0.3.Final</version.org.jboss.galleon>
       <version.org.wildfly.galleon-plugins>7.0.0.Final</version.org.wildfly.galleon-plugins>
       <version.sonatype.nexus-staging-plugin>1.6.14</version.sonatype.nexus-staging-plugin>
-      <version.eclipse.transformer>0.5.0</version.eclipse.transformer>
       <!-- overwrite version in jboss-parent -->
       <version.pmd.plugin>3.21.2</version.pmd.plugin>
       <version.owasp-dependency-check-plugin>9.0.10</version.owasp-dependency-check-plugin>
@@ -329,11 +326,6 @@
                   </execution>
                </executions>
             </plugin>
-            <plugin>
-               <groupId>org.eclipse.transformer</groupId>
-               <artifactId>transformer-maven-plugin</artifactId>
-               <version>${version.eclipse.transformer}</version>
-            </plugin>
          </plugins>
       </pluginManagement>
    </build>
@@ -356,32 +348,6 @@
                      <skip>${maven.javadoc.skip}</skip>
                      <detectOfflineLinks>false</detectOfflineLinks>
                   </configuration>
-               </plugin>
-               <plugin>
-                  <groupId>org.eclipse.transformer</groupId>
-                  <artifactId>transformer-maven-plugin</artifactId>
-                  <configuration>
-                     <rules>
-                        <jakartaDefaults>true</jakartaDefaults>
-                     </rules>
-                  </configuration>
-                  <executions>
-                     <execution>
-                        <id>javadoc-jar</id>
-                        <goals>
-                           <goal>jar</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-                           <artifact>
-                              <groupId>${project.groupId}</groupId>
-                              <artifactId>${original.artifactId}</artifactId>
-                              <version>${project.version}</version>
-                              <classifier>javadoc</classifier>
-                           </artifact>
-                        </configuration>
-                     </execution>
-                  </executions>
                </plugin>
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
