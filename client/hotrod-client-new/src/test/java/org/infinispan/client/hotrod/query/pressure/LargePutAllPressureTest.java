@@ -8,6 +8,7 @@ import static org.infinispan.query.aggregation.QueryAggregationCountTest.chunk;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
@@ -15,13 +16,22 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.model.Sale;
+import org.infinispan.server.core.test.ServerTestingUtil;
+import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
+import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "org.infinispan.client.hotrod.query.pressure.LargePutAllPressureTest")
 public class LargePutAllPressureTest extends SingleHotRodServerTest {
 
-   private final static int SIZE = 15_000;
+   private static final Log log = LogFactory.getLog(LargePutAllPressureTest.class);
+
+   private static final int SIZE = 15_000;
+   private static final int TIMEOUT = (int) TimeUnit.MINUTES.toMillis(1) ;
 
    private final Random fixedSeedPseudoRandom = new Random(739);
 
@@ -39,12 +49,18 @@ public class LargePutAllPressureTest extends SingleHotRodServerTest {
    }
 
    @Override
+   protected HotRodServer createHotRodServer() {
+      return HotRodTestingUtil.startHotRodServer(cacheManager, "127.0.0.1", ServerTestingUtil.findFreePort(),
+            new HotRodServerConfigurationBuilder(), false);
+   }
+
+   @Override
    protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder
       createHotRodClientConfigurationBuilder(String host, int serverPort) {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder =
             super.createHotRodClientConfigurationBuilder(host, serverPort);
 
-      builder.socketTimeout(SIZE * 2);
+      builder.socketTimeout(TIMEOUT);
       return builder;
    }
 
@@ -55,6 +71,8 @@ public class LargePutAllPressureTest extends SingleHotRodServerTest {
 
    @Test
    public void test() {
+      long start = System.currentTimeMillis();
+
       RemoteCache<Object, Object> remoteCache = remoteCacheManager.getCache();
       int days = SIZE / CHUNK_SIZE;
       HashMap<String, Sale> bulkPut = new HashMap<>(SIZE);
@@ -62,6 +80,9 @@ public class LargePutAllPressureTest extends SingleHotRodServerTest {
          bulkPut.putAll(chunk(day, fixedSeedPseudoRandom));
       }
       CompletableFuture<Void> voidCompletableFuture = remoteCache.putAllAsync(bulkPut);
-      await( voidCompletableFuture, SIZE * 2 );
+      await( voidCompletableFuture, TIMEOUT );
+
+      long end = System.currentTimeMillis();
+      log.info("test executed in " + (end - start) + "ms");
    }
 }
