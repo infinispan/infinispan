@@ -529,6 +529,7 @@ public class Server extends BaseServerManagement implements AutoCloseable {
          serverStateManager.start();
          // Change status
          this.status = ComponentStatus.RUNNING;
+         protocolServers.forEach((ignore, s) -> s.postStart());
          log.serverStarted(Version.getBrandName(), Version.getBrandVersion(), timeService.timeDuration(startTime, TimeUnit.MILLISECONDS));
       } catch (Exception e) {
          r.completeExceptionally(e);
