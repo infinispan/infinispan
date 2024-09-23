@@ -263,6 +263,11 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       // topology in order to avoid topology updates being used before
       // endpoint is available.
       super.startInternal();
+   }
+
+   @Override
+   public void internalPostStart() {
+      super.internalPostStart();
 
       // Add self to topology cache last, after everything is initialized
       if (Configurations.isClustered(SecurityActions.getCacheManagerConfiguration(cacheManager))) {

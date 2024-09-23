@@ -180,6 +180,7 @@ public class HotRodTestingUtil {
       builder.ioThreads(3);
       try {
          server.start(builder.build(), manager);
+         server.postStart();
          return server;
       } catch (Throwable t) {
          server.stop();
