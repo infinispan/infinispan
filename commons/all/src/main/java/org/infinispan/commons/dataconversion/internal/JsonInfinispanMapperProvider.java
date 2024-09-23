@@ -1,15 +1,12 @@
 package org.infinispan.commons.dataconversion.internal;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.List;
 
 import org.infinispan.commons.dataconversion.internal.Json.NumberJson;
 import org.infinispan.commons.dataconversion.internal.Json.StringJson;
 
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.TypeRef;
-import com.jayway.jsonpath.spi.mapper.JsonSmartMappingProvider;
 import com.jayway.jsonpath.spi.mapper.MappingException;
 import com.jayway.jsonpath.spi.mapper.MappingProvider;
 public class JsonInfinispanMapperProvider implements MappingProvider {
