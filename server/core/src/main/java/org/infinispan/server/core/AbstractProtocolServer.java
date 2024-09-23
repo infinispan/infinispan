@@ -71,6 +71,8 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
          startTransport();
    }
 
+   protected void internalPostStart() { }
+
    private void registerAdminOperationsHandler() {
       if (configuration.adminOperationsHandler() != null) {
          TaskManager taskManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(TaskManager.class);
@@ -118,6 +120,16 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
       try {
          startInternal();
       } catch (RuntimeException t) {
+         stop();
+         throw t;
+      }
+   }
+
+   @Override
+   public final void postStart() {
+      try {
+         internalPostStart();
+      } catch (Throwable t) {
          stop();
          throw t;
       }

@@ -26,6 +26,11 @@ public interface ProtocolServer<C extends ProtocolServerConfiguration> extends A
    void start(C configuration, EmbeddedCacheManager cacheManager);
 
    /**
+    * Run hooks after the server's transport has started.
+    */
+   void postStart();
+
+   /**
     * Stops the server.
     */
    void stop();
