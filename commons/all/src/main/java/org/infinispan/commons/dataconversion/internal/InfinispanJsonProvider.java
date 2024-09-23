@@ -2,6 +2,8 @@ package org.infinispan.commons.dataconversion.internal;
 
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.Collection;
+import java.util.List;
 
 import com.jayway.jsonpath.InvalidJsonException;
 import com.jayway.jsonpath.JsonPathException;
@@ -43,15 +45,15 @@ public class InfinispanJsonProvider extends AbstractJsonProvider {
    public boolean isMap(Object obj) {
       if (obj instanceof Json j) {
          return j.isObject();
-      } return false;
-      // return super.isMap(obj);
+      }
+    return super.isMap(obj);
    }
 
    @Override
    public Object getMapValue(Object obj, String key) {
-      // if (super.isMap(obj)) {
-      //    return super.getMapValue(obj, key);
-      // }
+      if (super.isMap(obj)) {
+         return super.getMapValue(obj, key);
+      }
       if (isMap(obj)) {
          var map = ((Json)obj).asJsonMap();
          if (map.containsKey(key)) {
@@ -121,59 +123,42 @@ public class InfinispanJsonProvider extends AbstractJsonProvider {
       throw new UnsupportedOperationException();
   }
 
-//   @SuppressWarnings("unchecked")
-//   public void setArrayIndex(Object array, int index, Object newValue) {
-//      if (array instanceof List) {
-//         @SuppressWarnings("rawtypes")
-//         List l = (List) array;
-//         if (index == l.size()) {
-//            l.add(newValue);
-//         } else {
-//            l.set(index, newValue);
-//         }
-//         return;
-//      }
-//      if (isArray(array)) {
-//         var l = (Json.ArrayJson) array;
-//         if (index == l.asJsonList().size()) {
-//            l.add(newValue);
-//         } else {
-//            l.set(index, newValue);
-//         }
-//      }
-//      throw new UnsupportedOperationException();
-//   }
-//       /**
-//      * Sets a value in an object
-//      *
-//      * @param obj   an object
-//      * @param key   a String key
-//      * @param value the value to set
-//      */
-//     public void setProperty(Object obj, Object key, Object value) {
-//         if (isMap(obj)) {
-//             ((Json)obj).set(key.toString(), value);
-//         }
-//         else {
-//             throw new JsonPathException("setProperty operation cannot be used with " + obj!=null?obj.getClass().getName():"null");
-//         }
-//       }
-
-//       /**
-//        * Returns the keys from the given object
-//        *
-//        * @param obj an object
-//        * @return the keys for an object
-//        */
-//       @SuppressWarnings("unchecked")
-//       public Collection<String> getPropertyKeys(Object obj) {
-//          if (isArray(obj)) {
-//             throw new UnsupportedOperationException();
-//          } else {
-//             if (super.isMap(obj)) {
-//                return super.getPropertyKeys(obj);
-//             }
-//             return ((Json.ObjectJson) obj).asJsonMap().keySet();
-//          }
-//       }
+  @SuppressWarnings("unchecked")
+  public void setArrayIndex(Object array, int index, Object newValue) {
+     if (array instanceof List) {
+        @SuppressWarnings("rawtypes")
+        List l = (List) array;
+        if (index == l.size()) {
+           l.add(newValue);
+        } else {
+           l.set(index, newValue);
+        }
+        return;
+     }
+     if (isArray(array)) {
+        var l = (Json.ArrayJson) array;
+        if (index == l.asJsonList().size()) {
+           l.add(newValue);
+        } else {
+           l.set(index, newValue);
+        }
+     }
+     throw new UnsupportedOperationException();
+  }
+      /**
+       * Returns the keys from the given object
+       *
+       * @param obj an object
+       * @return the keys for an object
+       */
+      public Collection<String> getPropertyKeys(Object obj) {
+         if (isArray(obj)) {
+            throw new UnsupportedOperationException();
+         } else {
+            if (super.isMap(obj)) {
+               return super.getPropertyKeys(obj);
+            }
+            return ((Json.ObjectJson) obj).asJsonMap().keySet();
+         }
+      }
    }

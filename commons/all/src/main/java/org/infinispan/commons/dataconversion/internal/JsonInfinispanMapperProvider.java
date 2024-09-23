@@ -39,8 +39,7 @@ public class JsonInfinispanMapperProvider implements MappingProvider {
             if (targetType.isAssignableFrom(String.class)) {
                return (T) configuration.jsonProvider().toJson(source);
             }
-            throw new MappingException("no mapping 2");
-            //return (T) JSONValue.parse(s, targetType);
+            throw new MappingException("no mapping available");
         } catch (Exception e) {
             throw new MappingException(e);
         }

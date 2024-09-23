@@ -17,7 +17,6 @@ import org.junit.Test;
 
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Predicate;
 import com.jayway.jsonpath.internal.Path;
 import com.jayway.jsonpath.internal.path.PredicateContextImpl;
@@ -104,54 +103,33 @@ public class InfinispanJsonProviderTest extends JsonProviderBaseTest {
    @Test
    public void list_of_numbers() {
       DocumentContext documentContext = using(INFINISPAN_ORG_CONFIGURATION).parse(JSON_DOCUMENT);
-      var objs = documentContext.read("$.store.book[*].display-price");
+      ArrayList<Json> objs = documentContext.read("$.store.book[*].display-price");
       List<Double> actual = new ArrayList<>();
-      // for (Json obj : objs) {
-      //    actual.add(obj.asDouble());
-      // }
-      // assertArrayEquals(actual.toArray(new Double[0]), new Double[] { 8.95D, 12.99D, 8.99D, 22.99D });
+      for (Json obj : objs) {
+         actual.add(obj.asDouble());
+      }
+      assertArrayEquals(actual.toArray(new Double[0]), new Double[] { 8.95D, 12.99D, 8.99D, 22.99D });
    }
 
    @SuppressWarnings("unchecked")
    @Test
    public void list_of_numbers_as_list() {
       DocumentContext documentContext = using(INFINISPAN_ORG_CONFIGURATION).parse(JSON_DOCUMENT);
-      /*List<Double>*/ var objs = documentContext.read("$.store.book[*].display-price", ArrayList.class);
-      assertArrayEquals(objs.toArray(new Double[0]), new Double[] { 8.95D, 12.99D, 8.99D, 22.99D });
-
-      var objs22 = documentContext.read("$[*].display-price", ArrayList.class);
+      List<Json> oList = documentContext.read("$.store.book[*].display-price", ArrayList.class);
+      List<Double> dList = oList.stream().map(Json::asDouble).toList();
+      assertArrayEquals(dList.toArray(new Double[0]), new Double[] { 8.95D, 12.99D, 8.99D, 22.99D });
 
       // Let's see if our ouput is good for input
       String s = documentContext.read("$.store.book", String.class);
-      // //List<String> actual1 = objs1.stream().map(HashMap::toString).toList();
       DocumentContext booksContext = using(INFINISPAN_ORG_CONFIGURATION).parse(s);
-      List<Double> objs2 = booksContext.read("$[*].display-price", ArrayList.class);
-      assertArrayEquals(objs2.toArray(new Double[0]), new Double[] { 8.95D, 12.99D, 8.99D, 22.99D });
-      List<String> objs1 = booksContext.read("$[*].category", ArrayList.class);
-      // assertArrayEquals(actual1.toArray(new Double[0]), new Double[]{8.95D, 12.99D,
+      List<Json> oList2 = booksContext.read("$[*].display-price", ArrayList.class);
+      List<Double> dList2 = oList2.stream().map(Json::asDouble).toList();
+      assertArrayEquals(dList2.toArray(new Double[0]), new Double[] { 8.95D, 12.99D, 8.99D, 22.99D });
+      List<Json> oList3 = booksContext.read("$[*].category", ArrayList.class);
+      List<String> sList3 = oList3.stream().map(Json::asString).toList();
+      // assertArrayEquals(actua l1.toArray(new Double[0]), new Double[]{8.95D, 12.99D,
       // 8.99D, 22.99D});
-      assertArrayEquals(objs1.toArray(new String[0]), new String[] { "reference", "fiction", "classic", "fiction" });
-   }
-
-   @Test
-   @SuppressWarnings("unchecked")
-   public void list_of_numbers_as_list_default() {
-      DocumentContext documentContext = JsonPath.parse(JSON_DOCUMENT);
-      List<Double> objs = documentContext.read("$.store.book[*].display-price", ArrayList.class);
-      List<Double> objs2 = documentContext.read("$[*].display-price", ArrayList.class);
-
-      assertArrayEquals(objs.toArray(new Double[0]), new Double[] { 8.95D, 12.99D, 8.99D, 22.99D });
-      // // Let's see if our ouput is good for input
-      var objs1 = documentContext.read("$.store.book", ArrayList.class);
-      // String s = documentContext.read("$.store.book", String.class);
-      // //List<String> actual1 = objs1.stream().map(HashMap::toString).toList();
-      // DocumentContext booksContext = using(INFINISPAN_ORG_CONFIGURATION).parse(s);
-      // objs1 = booksContext.read("$[*].category", ArrayList.class);
-      // // actual1 = objs1.stream().map(Json::toString).toList();
-      // // assertArrayEquals(actual1.toArray(new Double[0]), new Double[]{8.95D,
-      // 12.99D, 8.99D, 22.99D});
-      // // assertArrayEquals(actual1.toArray(new String[0]), new
-      // String[]{"reference", "fiction", "classic", "fiction"});
+      assertArrayEquals(sList3.toArray(new String[0]), new String[] { "reference", "fiction", "classic", "fiction" });
    }
 
     @Test
