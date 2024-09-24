@@ -258,6 +258,13 @@
          </dependency>
 
          <dependency>
+            <groupId>org.junit</groupId>
+            <artifactId>junit-bom</artifactId>
+            <version>${version.junit5}</version>
+            <type>pom</type>
+            <scope>import</scope>
+         </dependency>
+         <dependency>
             <groupId>ant-contrib</groupId>
             <artifactId>ant-contrib</artifactId>
             <version>${version.ant-contrib}</version>
@@ -669,41 +676,6 @@
             <artifactId>junit</artifactId>
             <version>${version.junit}</version>
             <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${version.junit5}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${version.junit5}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-commons</artifactId>
-            <version>${version.junit.platform}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-engine</artifactId>
-            <version>${version.junit.platform}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-suite</artifactId>
-            <version>${version.junit.platform}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <version>${version.junit5}</version>
          </dependency>
          <dependency>
             <groupId>org.junit.support</groupId>

@@ -138,8 +138,7 @@
       <version.jgroups.raft>1.0.14.Final</version.jgroups.raft>
       <version.jsr107>1.1.0</version.jsr107>
       <version.junit>4.13.2</version.junit>
-      <version.junit.platform>1.10.5</version.junit.platform>
-      <version.junit5>5.10.5</version.junit5>
+      <version.junit5>5.12.2</version.junit5>
       <version.log4j>2.23.1</version.log4j>
       <version.lucene>9.9.2</version.lucene>
       <version.metainf-services>1.11</version.metainf-services>

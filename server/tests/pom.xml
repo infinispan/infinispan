@@ -34,25 +34,21 @@
       <dependency>
          <groupId>org.junit.jupiter</groupId>
          <artifactId>junit-jupiter-api</artifactId>
-         <version>${version.junit5}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.junit.jupiter</groupId>
          <artifactId>junit-jupiter-engine</artifactId>
-         <version>${version.junit5}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.junit.jupiter</groupId>
          <artifactId>junit-jupiter-params</artifactId>
-         <version>${version.junit5}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.junit.platform</groupId>
          <artifactId>junit-platform-suite</artifactId>
-         <version>${version.junit.platform}</version>
          <scope>test</scope>
       </dependency>
       <dependency>

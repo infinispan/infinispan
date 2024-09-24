@@ -75,7 +75,6 @@
       <dependency>
          <groupId>org.junit.platform</groupId>
          <artifactId>junit-platform-launcher</artifactId>
-         <version>${version.junit.platform}</version>
          <scope>test</scope>
       </dependency>
    </dependencies>
