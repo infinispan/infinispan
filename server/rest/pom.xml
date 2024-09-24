@@ -234,6 +234,10 @@
                      </properties>
                      <parallel>none</parallel>
                      <groups>tracing</groups>
+                     <systemPropertyVariables>
+                        <!-- differentiate the log file -->
+                        <infinispan.module-suffix>${infinispan.module-suffix}-serial</infinispan.module-suffix>
+                     </systemPropertyVariables>
                   </configuration>
                </execution>
             </executions>
