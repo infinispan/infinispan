@@ -572,6 +572,11 @@ public class DefaultCacheManager extends InternalCacheManager {
    }
 
    @Override
+   public boolean cacheConfigurationExists(String name) {
+      return configurationManager.getDefinedConfigurations().contains(name) || configurationManager.getAliases().contains(name);
+   }
+
+   @Override
    public <K, V> Cache<K, V> getCache(String cacheName, boolean createIfAbsent) {
       boolean cacheExists = cacheExists(cacheName);
       if (!cacheExists && !createIfAbsent)

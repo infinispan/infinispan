@@ -148,6 +148,11 @@ public class AbstractDelegatingEmbeddedCacheManager extends InternalCacheManager
    }
 
    @Override
+   public boolean cacheConfigurationExists(String name) {
+      return cm.cacheConfigurationExists(name);
+   }
+
+   @Override
    public EmbeddedCacheManagerAdmin administration() {
       return cm.administration();
    }

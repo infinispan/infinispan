@@ -121,7 +121,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
    private Configuration getCache1Config() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.statistics().enable().clustering().cacheMode(DIST_SYNC).partitionHandling().whenSplit(DENY_READ_WRITES);
+      builder.statistics().enable().clustering().cacheMode(DIST_SYNC).partitionHandling().whenSplit(DENY_READ_WRITES).aliases("alias");
       return builder.build();
    }
 
@@ -278,7 +278,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       try (Closeable ignored = adminClient.raw().listen("/rest/v2/container/config?action=listen&includeCurrentState=true", Collections.emptyMap(), sseListener)) {
          assertTrue(sseListener.await(10, TimeUnit.SECONDS));
 
-         // Assert that all of the existing caches and templates have a corresponding event
+         // Assert that all the existing caches and templates have a corresponding event
          List<String> elements = List.of(TEMPLATE_CONFIG, CACHE_1, CACHE_2, CACHE_3, DEFAULT_CACHE,
                INVALID_CACHE, PROTOBUF_METADATA_CACHE_NAME, SCRIPT_CACHE_NAME);
          List<KeyValuePair<String, String>> events = sseListener.poll(elements.size());
