@@ -204,6 +204,13 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    boolean cacheExists(String cacheName);
 
    /**
+    * Returns true if a cache configuration or an alias exists for the specified name
+    * @param name the name to check
+    * @return <tt>true</tt> if a configuration or an alias with the given name exists
+    */
+   boolean cacheConfigurationExists(String name);
+
+   /**
     * Retrieves the default cache associated with this cache container.
     *
     * @return the default cache.

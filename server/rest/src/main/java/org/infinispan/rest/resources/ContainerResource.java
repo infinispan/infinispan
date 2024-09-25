@@ -56,7 +56,6 @@ import org.infinispan.rest.EventStream;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.ServerSentEvent;
-import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.framework.ContentSource;
 import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
@@ -67,7 +66,6 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.BackupManager;
-import org.infinispan.server.core.ServerStateManager;
 import org.infinispan.util.logging.annotation.impl.Logged;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
@@ -84,18 +82,14 @@ public class ContainerResource implements ResourceHandler {
    private final InternalCacheRegistry internalCacheRegistry;
    private final ParserRegistry parserRegistry = new ParserRegistry();
    private final String cacheManagerName;
-   private final RestCacheManager<Object> restCacheManager;
-   private final ServerStateManager serverStateManager;
 
    public ContainerResource(InvocationHelper invocationHelper) {
       this.invocationHelper = invocationHelper;
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
-      this.restCacheManager = invocationHelper.getRestCacheManager();
       GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
       this.cacheManagerName = globalConfiguration.cacheManagerName();
       GlobalComponentRegistry globalComponentRegistry = SecurityActions.getGlobalComponentRegistry(cacheManager);
       this.internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
-      this.serverStateManager = globalComponentRegistry.getComponent(ServerStateManager.class);
    }
 
    @Override

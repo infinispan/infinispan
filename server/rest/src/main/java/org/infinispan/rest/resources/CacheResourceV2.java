@@ -774,7 +774,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       String cacheName = request.variables().get("cacheName");
 
-      if (!invocationHelper.getRestCacheManager().getInstance().getCacheConfigurationNames().contains(cacheName)) {
+      if (!invocationHelper.getRestCacheManager().getInstance().cacheConfigurationExists(cacheName)) {
          responseBuilder.status(NOT_FOUND);
       } else {
          responseBuilder.status(NO_CONTENT);
