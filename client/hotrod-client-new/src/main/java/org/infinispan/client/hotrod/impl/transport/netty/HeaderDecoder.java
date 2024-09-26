@@ -341,11 +341,11 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
          operation = null;
          dispatcher.handleResponse(op, receivedMessageId, ctx.channel(), null, cause);
       } else {
+         TransportException transportException = log.errorFromUnknownOperation(ctx.channel(), cause, ctx.channel().remoteAddress());
          if (log.isTraceEnabled()) {
-            TransportException transportException = log.errorFromUnknownOperation(ctx.channel(), cause, ctx.channel().remoteAddress());
             log.tracef(transportException, "Requesting %s close due to exception", ctx.channel());
          }
-         handleClosing(ctx, cause);
+         handleClosing(ctx, transportException);
          ctx.close();
       }
    }

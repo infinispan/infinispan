@@ -34,7 +34,6 @@ import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
-import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.TopologyInfo;
 import org.infinispan.client.hotrod.impl.Util;
@@ -701,7 +700,7 @@ public class OperationDispatcher {
    }
 
    private RetryingHotRodOperation<?> checkException(Throwable cause, SocketAddress unresolvedAddress, HotRodOperation<?> op) {
-      while ((cause instanceof DecoderException || cause instanceof TransportException) && cause.getCause() != null) {
+      while (cause instanceof DecoderException && cause.getCause() != null) {
          cause = cause.getCause();
       }
       if (!op.supportRetry() || isServerError(cause) &&

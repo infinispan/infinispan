@@ -11,6 +11,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.security.simple.SimpleSaslAuthenticator;
@@ -63,12 +64,12 @@ public class AuthenticationTest extends AbstractAuthenticationTest {
    }
 
 
-   @Test(expectedExceptions = TransportException.class)
+   @Test
    public void testAuthenticationFailWrongAuth() {
       ConfigurationBuilder clientBuilder = newClientBuilder();
       clientBuilder.security().authentication().callbackHandler(new TestCallbackHandler("user", "realm", "foobar"));
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-      remoteCacheManager.getCache();
+      Exceptions.expectException(TransportException.class, HotRodClientException.class, ".*Invalid response.*", remoteCacheManager::getCache);
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN006017:.*")
@@ -103,4 +104,17 @@ public class AuthenticationTest extends AbstractAuthenticationTest {
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
    }
 
+   @Test
+   public void testAuthenticationWithUnsupportedMech() {
+      ConfigurationBuilder clientBuilder = newClientBuilder();
+      clientBuilder.security().authentication().saslMechanism("SCRAM-SHA-256");
+      clientBuilder.security().authentication().username("user").password("password");
+      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+      Exceptions.expectException(TransportException.class, SecurityException.class, ".*not among the supported server mechanisms.*",
+            () -> {
+               RemoteCache<String, String> defaultRemote = remoteCacheManager.getCache();
+               defaultRemote.put("a", "a");
+               assertEquals("a", defaultRemote.get("a"));
+            });
+   }
 }

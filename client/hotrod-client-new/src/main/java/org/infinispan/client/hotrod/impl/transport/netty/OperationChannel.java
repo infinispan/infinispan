@@ -180,8 +180,9 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
    }
 
    private void sendOperations() {
-      assert channel.eventLoop().inEventLoop();
-      if (!acceptingRequests || queue.isEmpty()) {
+      Channel channel = this.channel;
+      assert channel == null || channel.eventLoop().inEventLoop();
+      if (!acceptingRequests || queue.isEmpty() || channel == null) {
          return;
       }
 

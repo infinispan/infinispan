@@ -49,7 +49,7 @@ public class AuthHandler extends ActivationHandler {
       operationChannel.sendOperation(op);
       op.thenCompose(serverMechs -> {
          if (!serverMechs.contains(authentication.saslMechanism())) {
-            throw new HotRodClientException(HOTROD.unsupportedMech(authentication.saslMechanism(), serverMechs));
+            throw HOTROD.unsupportedMech(authentication.saslMechanism(), serverMechs);
          }
          if (log.isTraceEnabled()) {
             log.tracef("Authenticating using mech: %s", authentication.saslMechanism());
