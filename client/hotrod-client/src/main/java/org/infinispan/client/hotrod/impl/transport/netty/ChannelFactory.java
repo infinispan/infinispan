@@ -21,6 +21,9 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -88,6 +91,9 @@ public class ChannelFactory {
    public static final String DEFAULT_CLUSTER_NAME = "___DEFAULT-CLUSTER___";
    private static final Log log = LogFactory.getLog(ChannelFactory.class, Log.class);
 
+   private static final int RECONNECT_ATTEMPTS = 5;
+   private static final long RECONNECT_INITIAL_DELAY_MS = 500;
+
    private final ReadWriteLock lock = new ReentrantReadWriteLock();
    private final ConcurrentMap<SocketAddress, ChannelPool> channelPoolMap = new ConcurrentHashMap<>();
    private final Function<SocketAddress, ChannelPool> newPool = this::newPool;
@@ -111,10 +117,13 @@ public class ChannelFactory {
    // Servers for which the last connection attempt failed and which have no established connections
    @GuardedBy("lock")
    private final Set<SocketAddress> failedServers = new HashSet<>();
+   private final Map<SocketAddress, Integer> failedServersReconnectAttempts = new ConcurrentHashMap<>();
+   private final Map<SocketAddress, ScheduledFuture<?>> failedServersReconnectFutures = new ConcurrentHashMap<>();
    private final CodecHolder codecHolder;
    private AddressResolverGroup<?> dnsResolver;
    private SslContext sslContext;
    private FileWatcher watcher;
+   private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
    public ChannelFactory(CodecHolder codecHolder) {
       this.codecHolder = codecHolder;
@@ -600,13 +609,17 @@ public class ChannelFactory {
          // TODO Replace with a simpler "pool healthy/unhealthy" event?
          if (type == ChannelEventType.CONNECTED) {
             failedServers.remove(pool.getAddress());
+            cancelScheduleReconnect(pool.getAddress());
             return;
          } else if (type == ChannelEventType.CONNECT_FAILED) {
             if (pool.getConnected() == 0) {
                failedServers.add(pool.getAddress());
+               tryScheduleReconnect(pool.getAddress());
             }
          } else {
-            // Nothing to do
+            log.tracef("Received ChannelEventType %s, have %d servers with no established connections: %s",
+                    failedServers.size(), failedServers);
+            cancelScheduleReconnect(pool.getAddress());
             return;
          }
 
@@ -623,6 +636,32 @@ public class ChannelFactory {
 
       if (allInitialServersFailed && !clusters.isEmpty()) {
          trySwitchCluster();
+      }
+   }
+
+   private void cancelScheduleReconnect(SocketAddress server) {
+      ScheduledFuture<?> reconnectFuture = failedServersReconnectFutures.remove(server);
+      if (reconnectFuture != null) {
+         reconnectFuture.cancel(true);
+      }
+      failedServersReconnectAttempts.remove(server);
+   }
+
+   private void tryScheduleReconnect(SocketAddress server) {
+      int attempt = failedServersReconnectAttempts.merge(server, 1, Integer::sum);
+      if (attempt <= RECONNECT_ATTEMPTS) {
+         long delay = RECONNECT_INITIAL_DELAY_MS * (int) Math.pow(2, attempt - 1);
+         log.tracef("Scheduling reconnect attempt for server %s in %d ms", server, delay);
+         ScheduledFuture<?> previous = failedServersReconnectFutures.put(server, scheduledExecutorService.schedule(() -> {
+            fetchChannelAndInvoke(server, operationsFactory.newPingOperation(true));
+         }, delay, TimeUnit.MILLISECONDS));
+         if (previous != null) {
+            previous.cancel(true);
+         }
+      } else {
+         log.warnf("Exhausted reconnect attempts for server %s", server);
+         failedServersReconnectFutures.remove(server);
+         failedServersReconnectAttempts.remove(server);
       }
    }
 
