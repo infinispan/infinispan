@@ -18,16 +18,19 @@ import org.infinispan.client.hotrod.impl.query.RemoteQuery;
 import org.infinispan.client.hotrod.impl.transaction.entry.Modification;
 import org.infinispan.client.hotrod.impl.transaction.operations.PrepareTransactionOperation;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.Util;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
-public class DefaultCacheOperationsFactory implements CacheOperationsFactory {
+public final class DefaultCacheOperationsFactory implements CacheOperationsFactory {
    private final InternalRemoteCache<?, ?> remoteCache;
 
    public DefaultCacheOperationsFactory(InternalRemoteCache<?, ?> remoteCache) {
       this.remoteCache = Objects.requireNonNull(remoteCache);
    }
 
+   @Override
    public InternalRemoteCache<?, ?> getRemoteCache() {
       return remoteCache;
    }
@@ -191,9 +194,42 @@ public class DefaultCacheOperationsFactory implements CacheOperationsFactory {
    }
 
    @Override
+   public HotRodOperation<GetStreamStartResponse> newGetStreamStartOperation(Object key, int batchSize) {
+      return new GetStreamStartOperation(remoteCache, remoteCache.getDataFormat().keyToBytes(key), batchSize);
+   }
+
+   @Override
+   public HotRodOperation<GetStreamNextResponse> newGetStreamNextOperation(int id, Channel channel) {
+      return new GetStreamNextOperation(remoteCache, id, channel);
+   }
+
+   @Override
+   public GetStreamEndOperation newGetStreamEndOperation(int id) {
+      return new GetStreamEndOperation(remoteCache, id);
+   }
+
+   @Override
+   public HotRodOperation<PutStreamResponse> newPutStreamStartOperation(Object key, long version, long lifespan,
+                                                                        TimeUnit lifespanUnit, long maxIdleTime,
+                                                                        TimeUnit maxIdleTimeUnit) {
+      return new PutStreamStartOperation(remoteCache, remoteCache.getDataFormat().keyToBytes(key),
+            version, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+   }
+
+   @Override
+   public PutStreamNextOperation newPutStreamNextOperation(int id, boolean lastChunk, ByteBuf valueBytes, Channel channel) {
+      return new PutStreamNextOperation(remoteCache, id, lastChunk, valueBytes, channel);
+   }
+
+   @Override
+   public PutStreamEndOperation newPutStreamEndOperation(int id) {
+      return new PutStreamEndOperation(remoteCache, id);
+   }
+
+   @Override
    public byte[][] marshallParams(Object[] params) {
       if (params == null)
-         return org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY_ARRAY;
+         return Util.EMPTY_BYTE_ARRAY_ARRAY;
 
       byte[][] marshalledParams = new byte[params.length][];
       for (int i = 0; i < marshalledParams.length; i++) {

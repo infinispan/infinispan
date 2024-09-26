@@ -69,6 +69,19 @@ public class RoutingCacheOperationsFactory extends DelegatingCacheOperationsFact
    }
 
    @Override
+   public HotRodOperation<GetStreamStartResponse> newGetStreamStartOperation(Object key, int batchSize) {
+      return new RoutingObjectOperation<>(super.newGetStreamStartOperation(key, batchSize), key);
+   }
+
+   @Override
+   public HotRodOperation<PutStreamResponse> newPutStreamStartOperation(Object key, long version, long lifespan,
+                                                                        TimeUnit lifespanUnit, long maxIdleTime,
+                                                                        TimeUnit maxIdleTimeUnit) {
+      return new RoutingObjectOperation<>(super.newPutStreamStartOperation(key, version, lifespan, lifespanUnit,
+            maxIdleTime, maxIdleTimeUnit), key);
+   }
+
+   @Override
    protected DelegatingCacheOperationsFactory newFactoryFor(CacheOperationsFactory factory) {
       return new RoutingCacheOperationsFactory(factory);
    }

@@ -6,6 +6,7 @@ import javax.transaction.xa.Xid;
 import org.infinispan.client.hotrod.impl.operations.AbstractNoCacheHotRodOperation;
 import org.infinispan.client.hotrod.impl.operations.CacheUnmarshaller;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
@@ -36,7 +37,7 @@ public class CompleteTransactionOperation extends AbstractNoCacheHotRodOperation
 
    @Override
    public Integer createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
-      if (status == NO_ERROR_STATUS) {
+      if (status == HotRodConstants.NO_ERROR_STATUS) {
          return buf.readInt();
       }
       return XAException.XA_HEURRB;
@@ -44,11 +45,11 @@ public class CompleteTransactionOperation extends AbstractNoCacheHotRodOperation
 
    @Override
    public short requestOpCode() {
-      return commit ? COMMIT_REQUEST : ROLLBACK_REQUEST;
+      return commit ? HotRodConstants.COMMIT_REQUEST : HotRodConstants.ROLLBACK_REQUEST;
    }
 
    @Override
    public short responseOpCode() {
-      return commit ? COMMIT_RESPONSE : ROLLBACK_RESPONSE;
+      return commit ? HotRodConstants.COMMIT_RESPONSE : HotRodConstants.ROLLBACK_RESPONSE;
    }
 }

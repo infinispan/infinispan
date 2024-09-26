@@ -17,6 +17,7 @@ import org.infinispan.client.hotrod.impl.transaction.entry.Modification;
 import org.infinispan.client.hotrod.impl.transaction.operations.PrepareTransactionOperation;
 import org.infinispan.commons.util.IntSet;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
 public abstract class DelegatingCacheOperationsFactory implements CacheOperationsFactory {
@@ -164,6 +165,38 @@ public abstract class DelegatingCacheOperationsFactory implements CacheOperation
    @Override
    public AddClientListenerOperation newAddClientListenerOperation(Object listener, Object[] filterFactoryParams, Object[] converterFactoryParams) {
       return delegate.newAddClientListenerOperation(listener, filterFactoryParams, converterFactoryParams);
+   }
+
+   @Override
+   public HotRodOperation<GetStreamStartResponse> newGetStreamStartOperation(Object key, int batchSize) {
+      return delegate.newGetStreamStartOperation(key, batchSize);
+   }
+
+   @Override
+   public HotRodOperation<GetStreamNextResponse> newGetStreamNextOperation(int id, Channel channel) {
+      return delegate.newGetStreamNextOperation(id, channel);
+   }
+
+   @Override
+   public GetStreamEndOperation newGetStreamEndOperation(int id) {
+      return delegate.newGetStreamEndOperation(id);
+   }
+
+   @Override
+   public HotRodOperation<PutStreamResponse> newPutStreamStartOperation(Object key, long version, long lifespan,
+                                                                        TimeUnit lifespanUnit, long maxIdleTime,
+                                                                        TimeUnit maxIdleTimeUnit) {
+      return delegate.newPutStreamStartOperation(key, version, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+   }
+
+   @Override
+   public HotRodOperation<Boolean> newPutStreamNextOperation(int id, boolean lastChunk, ByteBuf valueBytes, Channel channel) {
+      return delegate.newPutStreamNextOperation(id, lastChunk, valueBytes, channel);
+   }
+
+   @Override
+   public PutStreamEndOperation newPutStreamEndOperation(int id) {
+      return delegate.newPutStreamEndOperation(id);
    }
 
    @Override

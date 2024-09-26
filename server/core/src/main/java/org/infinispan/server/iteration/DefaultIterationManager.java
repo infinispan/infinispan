@@ -39,6 +39,7 @@ import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.logging.Log;
+import org.infinispan.server.core.transport.OnChannelCloseReaper;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 
@@ -88,10 +89,10 @@ class DefaultIterationState implements IterationState, Closeable {
    final boolean metadata;
    final Function<Object, Object> resultFunction;
    private final String id;
-   private final IterationReaper reaper;
+   private final OnChannelCloseReaper reaper;
 
    DefaultIterationState(String id, IterationSegmentsListener listener, Iterator<CacheEntry<Object, Object>> iterator, CacheStream<CacheEntry<Object, Object>> stream,
-                         int batch, boolean metadata, Function<Object, Object> resultFunction, IterationReaper reaper) {
+                         int batch, boolean metadata, Function<Object, Object> resultFunction, OnChannelCloseReaper reaper) {
       this.id = id;
       this.listener = listener;
       this.iterator = iterator;
@@ -114,7 +115,7 @@ class DefaultIterationState implements IterationState, Closeable {
    }
 
    @Override
-   public IterationReaper getReaper() {
+   public OnChannelCloseReaper getReaper() {
       return reaper;
    }
 }
@@ -188,7 +189,8 @@ public class DefaultIterationManager implements IterationManager {
       }
       Iterator<CacheEntry<Object, Object>> iterator = filteredStream.iterator();
 
-      DefaultIterationState iterationState = new DefaultIterationState(iterationId, segmentListener, iterator, stream, batch, metadata, resultTransformer, new IterationReaper(this, iterationId));
+      DefaultIterationState iterationState = new DefaultIterationState(iterationId, segmentListener, iterator, stream,
+            batch, metadata, resultTransformer, new OnChannelCloseReaper(___ -> close(iterationId)));
 
       iterationStateMap.put(iterationId, iterationState);
       if (log.isTraceEnabled()) log.tracef("Started iteration %s", iterationId);

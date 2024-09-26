@@ -8,6 +8,7 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
 public class StatsOperationsFactory extends DelegatingCacheOperationsFactory {
@@ -70,6 +71,24 @@ public class StatsOperationsFactory extends DelegatingCacheOperationsFactory {
    @Override
    public <K, V> HotRodOperation<Map<K, V>> newGetAllBytesOperation(Set<byte[]> keys) {
       return new StatisticOperation<>(super.newGetAllBytesOperation(keys), statistics);
+   }
+
+   @Override
+   public HotRodOperation<Boolean> newPutStreamNextOperation(int id, boolean lastChunk, ByteBuf valueBytes, Channel channel) {
+      // Here solely to document this is done in the StreamingRemoteCacheImpl
+      return super.newPutStreamNextOperation(id, lastChunk, valueBytes, channel);
+   }
+
+   @Override
+   public HotRodOperation<GetStreamStartResponse> newGetStreamStartOperation(Object key, int batchSize) {
+      // Here solely to document this is done in the StreamingRemoteCacheImpl
+      return super.newGetStreamStartOperation(key, batchSize);
+   }
+
+   @Override
+   public HotRodOperation<GetStreamNextResponse> newGetStreamNextOperation(int id, Channel channel) {
+      // Here solely to document this is done in the StreamingRemoteCacheImpl
+      return super.newGetStreamNextOperation(id, channel);
    }
 
    //   @Override

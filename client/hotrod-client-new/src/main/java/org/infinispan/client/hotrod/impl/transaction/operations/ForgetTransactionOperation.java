@@ -6,6 +6,7 @@ import javax.transaction.xa.Xid;
 import org.infinispan.client.hotrod.impl.operations.AbstractNoCacheHotRodOperation;
 import org.infinispan.client.hotrod.impl.operations.CacheUnmarshaller;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
@@ -39,12 +40,12 @@ public class ForgetTransactionOperation extends AbstractNoCacheHotRodOperation<V
 
    @Override
    public short requestOpCode() {
-      return FORGET_TX_REQUEST;
+      return HotRodConstants.FORGET_TX_REQUEST;
    }
 
    @Override
    public short responseOpCode() {
-      return FORGET_TX_RESPONSE;
+      return HotRodConstants.FORGET_TX_RESPONSE;
    }
 
    @Override

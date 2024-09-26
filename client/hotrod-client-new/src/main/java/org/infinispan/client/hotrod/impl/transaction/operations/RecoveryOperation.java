@@ -10,6 +10,7 @@ import javax.transaction.xa.Xid;
 import org.infinispan.client.hotrod.impl.operations.AbstractNoCacheHotRodOperation;
 import org.infinispan.client.hotrod.impl.operations.CacheUnmarshaller;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.transaction.manager.RemoteXid;
@@ -46,11 +47,11 @@ public class RecoveryOperation extends AbstractNoCacheHotRodOperation<Collection
 
    @Override
    public short requestOpCode() {
-      return FETCH_TX_RECOVERY_REQUEST;
+      return HotRodConstants.FETCH_TX_RECOVERY_REQUEST;
    }
 
    @Override
    public short responseOpCode() {
-      return FETCH_TX_RECOVERY_RESPONSE;
+      return HotRodConstants.FETCH_TX_RECOVERY_RESPONSE;
    }
 }
