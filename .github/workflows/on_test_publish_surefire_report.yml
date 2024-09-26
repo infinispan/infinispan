@@ -1,12 +1,12 @@
-name: On Run Publish Surefire Report
+name: On Test Publish Surefire Report
 on:
    workflow_run:
-     workflows: [On PR Open or Push Do Build and Test]
+     workflows: [On Build Do Test]
      types: [completed]
 jobs:
    publish:
       if: ${{ github.event.workflow_run.conclusion == 'success' }}
-      name: Downloading Surefire report
+      name: Publish Surefire Report
       runs-on: ubuntu-latest
       steps:
         - name: Install xmlstarlet tool

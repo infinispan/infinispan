@@ -1,0 +1,27 @@
+name: Download Infinispan Artifacts
+description: Download Infinispan Artifacts uploaded by the build-infinispan action
+inputs:
+  run-id:
+    description: Run id if different than current run (i.e. using workflow_run)
+    default: ""
+  github-token:
+    description: The GitHub token used to authenticate with the GitHub API. This is required when downloading artifacts from a different workflow run.
+outputs:
+  server-version:
+    description: Server version found in the artifacts
+    value: ${{ steps.server-version.outputs.server-version }}
+runs:
+  using: composite
+  steps:
+    - name: Download Infinispan Server
+      uses: actions/download-artifact@v4
+      with:
+        name: infinispan-dist
+        run-id: ${{ inputs.run-id }}
+        github-token: ${{ inputs.github-token }}
+    - name: Extract Infinispan Version
+      id: server-version
+      shell: bash
+      run: >
+        echo "server-version="$(ls infinispan-server-*.zip
+        | sed -n 's/infinispan-server-\([1-9].*\)\.zip/\1/p') >> "$GITHUB_OUTPUT"

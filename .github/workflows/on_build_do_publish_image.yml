@@ -1,0 +1,68 @@
+name: On Build Do Publish Image
+on:
+   workflow_run:
+      workflows: [On PR Open or Push Do Build]
+      types: [completed]
+env:
+   IMAGE_NAME: ${{ vars.QUAY_IMAGE_NAME  || 'quay.io/infinispan-test/server' }}
+
+concurrency:
+  # Only cancel jobs for PR updates
+  group: ci-publish-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  get-info:
+     name: Get Origin Workflow Info
+     runs-on: ubuntu-latest
+     outputs:
+        source-head-sha: ${{ github.event.workflow_run.head_sha }}
+        pull-request-number: ${{ steps.workflow-run-info.outputs.pull-request-number }}
+        sourceEvent: ${{ github.event.workflow_run.event }}
+        image-tag: ${{ steps.workflow-run-info.outputs.image-tag }}
+        publish-image: ${{ steps.publish-image-info.outputs.publish-image }}
+     steps:
+        - id: workflow-run-info
+          uses: rigazilla/infinispan/.github/actions/get-origin-info@main
+          with:
+           head-sha: ${{ github.event.workflow_run.head_sha }}
+           head-branch: ${{ github.event.workflow_run.head_branch }}
+           event: ${{ github.event.workflow_run.event }}
+
+        - if: ${{ github.event.workflow_run.event == 'pull_request' }}
+          name: Get Labels Action
+          uses: snnaplab/get-labels-action@v1.0.1
+          with:
+            number: ${{ steps.workflow-run-info.outputs.pull-request-number }}
+
+        - if: ${{ github.event.workflow_run.event == 'pull_request' && contains(fromJSON(env.LABELS), 'Image Required') }}
+          id: publish-image-info
+          run: echo "publish-image=true" >> $GITHUB_OUTPUT
+
+  get-image-name:
+   name: "Get Image Name"
+   runs-on: ubuntu-latest
+   outputs:
+      image-name: ${{ steps.step1.outputs.image-name }}
+   steps:
+      - name: Propagate env vars
+        id: step1
+        run: echo "image-name=$IMAGE_NAME" >> $GITHUB_OUTPUT
+
+  publish-image:
+      needs:
+         - get-info
+         - get-image-name
+      if: >
+         needs.get-info.outputs.sourceEvent != 'pull_request' ||
+         needs.get-info.outputs.publish-image == 'true'
+      uses: infinispan/infinispan-images/.github/workflows/publish_image.yml@main
+      secrets:
+         token: ${{ secrets.GITHUB_TOKEN }}
+         quayUser: ${{ secrets.QUAY_USERNAME }}
+         quayPass: ${{ secrets.QUAY_TOKEN }}
+      with:
+         repository: ${{ github.repository }}
+         runId: ${{ github.event.workflow_run.id }}
+         serverArtifact: infinispan-dist
+         tags:  ${{ needs.get-image-name.outputs.image-name }}:gh-${{ needs.get-info.outputs.image-tag }}
