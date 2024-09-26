@@ -17,21 +17,14 @@ updates:
       interval: daily
     open-pull-requests-limit: 10
     rebase-strategy: disabled
-  # 14.0.x
+  # 14.0.x Security Updates Only
   - package-ecosystem: maven
     directory: "/"
     schedule:
       interval: daily
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0
     rebase-strategy: disabled
     target-branch: "14.0.x"
-    ignore:
-      - dependency-name: "*"
-        # Only create PRs for new patch releases
-        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
-      - dependency-name: "com.amazonaws:aws-java-sdk-core"
-        # This is updated daily
-      - dependency-name: "io.opentelemetry:opentelemetry-api"
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
