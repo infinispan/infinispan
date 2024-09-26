@@ -26,13 +26,13 @@ import org.testng.annotations.Test;
  * @author Tristan Tarrant
  * @since 9.0
  */
-@Test(testName = "client.hotrod.StreamingOpsTest", groups = "functional", enabled = false)
+@Test(testName = "client.hotrod.StreamingOpsTest", groups = "functional")
 public class StreamingOpsTest extends SingleCacheManagerTest {
 
    private static final Log log = LogFactory.getLog(StreamingOpsTest.class);
 
    private static final String CACHE_NAME = "theCache";
-   private static final int V1_SIZE = 2_000;
+   private static final int V1_SIZE = 20_000;
    private static final int V2_SIZE = 1_000;
 
    RemoteCache<String, byte[]> remoteCache;
@@ -97,6 +97,19 @@ public class StreamingOpsTest extends SingleCacheManagerTest {
       }
    }
 
+   private void writeDataToStreamBulk(OutputStream os, int length) throws Exception {
+      byte[] bytes = new byte[1024];
+      for (int i = 0; i < length; i++) {
+         int offset = i % 1024;
+         bytes[i % 1024] = (byte) (i % 256);
+         if (offset == 1023) {
+            os.write(bytes, 0, 1024);
+         }
+      }
+
+      os.write(bytes, 0, length % 1024);
+   }
+
    public void testPutGetStream() throws Exception {
       OutputStream k1os = streamingRemoteCache.put("k1");
       writeDataToStream(k1os, V1_SIZE);
@@ -104,6 +117,16 @@ public class StreamingOpsTest extends SingleCacheManagerTest {
 
       InputStream k1is = streamingRemoteCache.get("k1");
       int count = readAndCheckDataFromStream(k1is);
+      assertEquals(V1_SIZE, count);
+   }
+
+   public void testPutGetStreamBulk() throws Exception {
+      OutputStream k1os = streamingRemoteCache.put("k1");
+      writeDataToStreamBulk(k1os, V1_SIZE);
+      k1os.close();
+
+      InputStream k1is = streamingRemoteCache.get("k1");
+      int count = readAndCheckDataFromStreamBulk(k1is);
       assertEquals(V1_SIZE, count);
    }
 
@@ -119,6 +142,20 @@ public class StreamingOpsTest extends SingleCacheManagerTest {
       return count;
    }
 
+   private int readAndCheckDataFromStreamBulk(InputStream k1is) throws IOException {
+      int count = 0;
+      byte[] bytes = new byte[1024];
+      try (k1is) {
+         int readAmount;
+         while ((readAmount = k1is.read(bytes)) != -1) {
+            for (int i = 0; i < readAmount; ++i) {
+               assertEquals((byte) (count + i) % 256, bytes[i]);
+            }
+            count += readAmount;
+         }
+      }
+      return count;
+   }
 
    public void testGetStreamWithMetadata() throws Exception {
       InputStream k1is = streamingRemoteCache.get("k1");

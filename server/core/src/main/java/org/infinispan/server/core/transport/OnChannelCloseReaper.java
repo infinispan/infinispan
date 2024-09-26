@@ -1,4 +1,6 @@
-package org.infinispan.server.iteration;
+package org.infinispan.server.core.transport;
+
+import java.util.function.Consumer;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -9,20 +11,18 @@ import io.netty.util.concurrent.GenericFutureListener;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class IterationReaper implements GenericFutureListener<Future<? super Void>> {
+public class OnChannelCloseReaper implements GenericFutureListener<Future<? super Void>> {
 
-   private final IterationManager iterationManager;
-   private final String iterationId;
+   private final Consumer<Future<? super Void>> consumer;
    private ChannelFuture channelFuture;
 
-   public IterationReaper(IterationManager iterationManager, String iterationId) {
-      this.iterationManager = iterationManager;
-      this.iterationId = iterationId;
+   public OnChannelCloseReaper(Consumer<Future<? super Void>> consumer) {
+      this.consumer = consumer;
    }
 
    @Override
    public void operationComplete(Future<? super Void> future) {
-      iterationManager.close(iterationId);
+      consumer.accept(future);
    }
 
    public void registerChannel(Channel channel) {
@@ -31,6 +31,8 @@ public class IterationReaper implements GenericFutureListener<Future<? super Voi
    }
 
    public void dispose() {
-      channelFuture.removeListener(this);
+      if (channelFuture != null) {
+         channelFuture.removeListener(this);
+      }
    }
 }

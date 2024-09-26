@@ -17,6 +17,7 @@ import org.infinispan.client.hotrod.impl.transaction.entry.Modification;
 import org.infinispan.client.hotrod.impl.transaction.operations.PrepareTransactionOperation;
 import org.infinispan.commons.util.IntSet;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
 public interface CacheOperationsFactory {
@@ -102,6 +103,19 @@ public interface CacheOperationsFactory {
 
    AddClientListenerOperation newAddClientListenerOperation(Object listener, Object[] filterFactoryParams,
                                                             Object[] converterFactoryParams);
+
+   HotRodOperation<GetStreamStartResponse> newGetStreamStartOperation(Object key, int batchSize);
+
+   HotRodOperation<GetStreamNextResponse> newGetStreamNextOperation(int id, Channel channel);
+
+   GetStreamEndOperation newGetStreamEndOperation(int id);
+
+   HotRodOperation<PutStreamResponse> newPutStreamStartOperation(Object key, long version, long lifespan,
+                                                                 TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
+
+   HotRodOperation<Boolean> newPutStreamNextOperation(int id, boolean lastChunk, ByteBuf valueBytes, Channel channel);
+
+   PutStreamEndOperation newPutStreamEndOperation(int id);
 
    byte[][] marshallParams(Object[] params);
 

@@ -19,6 +19,7 @@ import org.infinispan.client.hotrod.counter.operation.RemoveListenerOperation;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.event.impl.CounterEventDispatcher;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.logging.Log;
@@ -85,9 +86,9 @@ public class NotificationManager {
       clientListeners.computeIfAbsent(counterName, name -> {
          AddListenerOperation op = factory.newAddListenerOperation(counterName, listenerId);
          if (address == null) {
-            Channel channel = await(operationDispatcher.executeOnSingleAddress(op, address));
+            Channel channel = await(operationDispatcher.execute(op));
             channel.pipeline().get(HeaderDecoder.class).addListener(listenerId);
-            this.dispatcher = new CounterEventDispatcher(listenerId, clientListeners, channel.remoteAddress(), this::failover, () ->
+            this.dispatcher = new CounterEventDispatcher(listenerId, clientListeners, ChannelRecord.of(channel), this::failover, () ->
                channel.eventLoop().execute(() -> {
                   if (log.isTraceEnabled()) {
                      log.tracef("Cleanup for %s on %s", this, channel);

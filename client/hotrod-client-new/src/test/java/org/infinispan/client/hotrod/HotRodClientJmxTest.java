@@ -35,7 +35,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "client.hotrod.HotRodClientJmxTest", enabled = false)
+@Test(groups = "functional", testName = "client.hotrod.HotRodClientJmxTest")
 public class HotRodClientJmxTest extends AbstractInfinispanTest {
 
    private static final String JMX_DOMAIN = HotRodClientJmxTest.class.getSimpleName();
@@ -136,16 +136,16 @@ public class HotRodClientJmxTest extends AbstractInfinispanTest {
       OutputStream os = remoteCache.streaming().put("s");
       os.write('s');
       os.close();
-      assertEquals(6L, mbeanServer.getAttribute(objectName, "RemoteStores"));
+      assertEquals(1L, mbeanServer.getAttribute(objectName, "RemoteStores"));
 
       InputStream is = remoteCache.streaming().get("s");
       while (is.read() >= 0) {
          //consume
       }
       is.close();
-      assertEquals(6L, mbeanServer.getAttribute(objectName, "RemoteHits"));
+      assertEquals(1L, mbeanServer.getAttribute(objectName, "RemoteHits"));
 
       assertNull(remoteCache.streaming().get("t"));
-      assertEquals(6L, mbeanServer.getAttribute(objectName, "RemoteHits"));
+      assertEquals(1L, mbeanServer.getAttribute(objectName, "RemoteHits"));
    }
 }

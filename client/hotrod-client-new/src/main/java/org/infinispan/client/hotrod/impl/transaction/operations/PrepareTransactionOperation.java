@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.operations.AbstractCacheOperation;
 import org.infinispan.client.hotrod.impl.operations.CacheUnmarshaller;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transaction.entry.Modification;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
@@ -53,22 +54,22 @@ public class PrepareTransactionOperation extends AbstractCacheOperation<Integer>
 
    @Override
    public Integer createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
-      if (status == NO_ERROR_STATUS) {
+      if (status == HotRodConstants.NO_ERROR_STATUS) {
          return buf.readInt();
       } else {
-         retry = status == NOT_PUT_REMOVED_REPLACED_STATUS;
+         retry = status == HotRodConstants.NOT_PUT_REMOVED_REPLACED_STATUS;
          return 0;
       }
    }
 
    @Override
    public short requestOpCode() {
-      return PREPARE_TX_2_REQUEST;
+      return HotRodConstants.PREPARE_TX_2_REQUEST;
    }
 
    @Override
    public short responseOpCode() {
-      return PREPARE_TX_2_RESPONSE;
+      return HotRodConstants.PREPARE_TX_2_RESPONSE;
    }
 
    @Override

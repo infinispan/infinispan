@@ -1,5 +1,6 @@
 package org.infinispan.server.hotrod;
 
+import java.io.StreamCorruptedException;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,8 @@ import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.hotrod.HotRodServer.ExtendedCacheInfo;
 import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.server.hotrod.streaming.GetStreamResponse;
+import org.infinispan.server.hotrod.streaming.StreamingState;
 import org.infinispan.server.iteration.IterableIterationResult;
 import org.infinispan.server.iteration.IterationState;
 import org.infinispan.stats.ClusterCacheStats;
@@ -662,20 +665,104 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       try {
          byte[] value = new byte[buf.readableBytes()];
          buf.readBytes(value);
-         if (version == 0) { // Normal put
-            put(header, subject, key, value, metadata);
-         } else if (version < 0) { // putIfAbsent
-            putIfAbsent(header, subject, key, value, metadata);
-         } else { // versioned replace
-            replaceIfUnmodified(header, subject, key, version, value, metadata);
-         }
+         putStream(header, subject, key, value, version, metadata);
       } finally {
          buf.release();
       }
    }
 
+   private void putStream(HotRodHeader header, Subject subject, byte[] key, byte[] value, long version, Metadata.Builder metadata) {
+      if (version == 0) { // Normal put
+         put(header, subject, key, value, metadata);
+      } else if (version < 0) { // putIfAbsent
+         putIfAbsent(header, subject, key, value, metadata);
+      } else { // versioned replace
+         replaceIfUnmodified(header, subject, key, version, value, metadata);
+      }
+   }
+
    private <T> InfinispanSpan<T> requestStart(HotRodHeader header, InfinispanSpanAttributes spanAttributes) {
       return telemetryService.startTraceRequest(header.op.name(), spanAttributes, header);
+   }
+
+   public void putStreamStart(HotRodHeader header, Subject subject, byte[] key, Metadata.Builder metadata, long version) {
+      try {
+         int id = server.getStreamingManager().startPutStream(key, channel, metadata, version);
+         writeResponse(header, header.encoder().putStreamStartResponse(header, server, channel, id));
+      } catch (Throwable t) {
+         writeException(header, t);
+      }
+   }
+
+   public void putStreamNext(HotRodHeader header, Subject subject, int streamId, boolean lastChunk, ByteBuf chunk) {
+      log.tracef("Received chunk for streamId %s", streamId);
+      try {
+         StreamingState state = server.getStreamingManager().nextPutStream(streamId, lastChunk, chunk);
+         if (state == null) {
+            writeException(header, new StreamCorruptedException("Iteration " + streamId + " is not present on the server"));
+         } else if (lastChunk) {
+            putStream(header, subject, state.getKey(), state.valueForPut(), state.versionForPut(), state.metadataForPut());
+         } else {
+            writeSuccess(header);
+         }
+      } catch (Throwable t) {
+         writeException(header, t);
+      }
+   }
+
+   public void putStreamEnd(HotRodHeader header, Subject subject, int streamId) {
+      try {
+         server.getStreamingManager().closePutStream(streamId);
+         // Don't care if close didn't actually close anything, just write success
+         writeSuccess(header);
+      } catch (Throwable t) {
+         writeException(header, t);
+      }
+   }
+
+   public void getStreamStart(HotRodHeader header, Subject subject, byte[] key, int chunkSize) {
+      AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
+      try {
+         cache.getAdvancedCache().getCacheEntryAsync(key)
+               .whenComplete((entry, t) -> {
+                  if (t != null) {
+                     writeException(header, t);
+                     return;
+                  } else if (entry == null) {
+                     writeNotExist(header);
+                     return;
+                  }
+                  var gsr = server.getStreamingManager().startGetStream(key, entry.getValue(), channel, chunkSize);
+                  writeResponse(header, header.encoder().
+                        getStreamStartResponse(header, server, channel, entry, gsr));
+               });
+      } catch (Throwable t) {
+         writeException(header, t);
+      }
+   }
+
+   public void getStreamNext(HotRodHeader header, Subject subject, int streamId) {
+      try {
+         GetStreamResponse gsr = server.getStreamingManager().nextGetStream(streamId);
+         if (gsr == null) {
+            writeException(header, new StreamCorruptedException("StreamId " + streamId + " is not present on the server"));
+            return;
+         }
+         // Just reuse startResponse - it is only an extra int for the id
+         writeResponse(header, header.encoder().getStreamStartResponse(header, server, channel, null, gsr));
+      } catch (Throwable t) {
+         writeException(header, t);
+      }
+   }
+
+   public void getStreamEnd(HotRodHeader header, Subject subject, int streamId) {
+      try {
+         server.getStreamingManager().closeGetStream(streamId);
+         // Don't care if close didn't actually close anything, just write success
+         writeSuccess(header);
+      } catch (Throwable t) {
+         writeException(header, t);
+      }
    }
 
    private static class ConditionalResponse {

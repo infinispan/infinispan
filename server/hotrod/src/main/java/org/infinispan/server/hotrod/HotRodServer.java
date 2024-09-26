@@ -90,6 +90,7 @@ import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
 import org.infinispan.server.iteration.DefaultIterationManager;
 import org.infinispan.server.iteration.IterationManager;
+import org.infinispan.server.hotrod.streaming.StreamingManager;
 import org.infinispan.util.KeyValuePair;
 
 import io.netty.channel.Channel;
@@ -124,6 +125,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private CrashedMemberDetectorListener viewChangeListener;
    private ReAddMyAddressListener topologyChangeListener;
    private IterationManager iterationManager;
+   private StreamingManager streamingManager;
    private ServerCacheListener serverCacheListener;
    private ClientCounterManagerNotificationManager clientCounterNotificationManager;
    private final HotRodAccessLogging accessLogging = new HotRodAccessLogging();
@@ -242,6 +244,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       internalCacheRegistry = gcr.getComponent(InternalCacheRegistry.class);
       configurationManager = gcr.getComponent(ConfigurationManager.class);
       this.iterationManager = new DefaultIterationManager(gcr.getTimeService());
+      this.streamingManager = new StreamingManager(gcr.getTimeService());
       this.hasDefaultCache = configuration.defaultCacheName() != null || cacheManager.getCacheManagerConfiguration().defaultCacheName().isPresent();
 
       // Initialize query-specific stuff
@@ -503,6 +506,10 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    public IterationManager getIterationManager() {
       return iterationManager;
+   }
+
+   public StreamingManager getStreamingManager() {
+      return streamingManager;
    }
 
    private static KeyValuePair<MediaType, MediaType> getRequestMediaTypes(HotRodHeader header,

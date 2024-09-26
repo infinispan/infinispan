@@ -16,6 +16,7 @@ public interface HotRodConstants {
    byte VERSION_30 = HotRodVersion.HOTROD_30.getVersion();
    byte VERSION_31 = HotRodVersion.HOTROD_31.getVersion();
    byte VERSION_40 = HotRodVersion.HOTROD_40.getVersion();
+   byte VERSION_41 = HotRodVersion.HOTROD_41.getVersion();
 
    //requests
    byte PUT_REQUEST = 0x01;
@@ -79,8 +80,14 @@ public interface HotRodConstants {
    byte CONTAINS_KEY_MULTIMAP_REQUEST = 0x75;
    byte CONTAINS_VALUE_MULTIMAP_REQUEST = 0x77;
    byte COUNTER_GET_AND_SET_REQUEST = 0x7F;
-
    //0x79 FORGET_TX
    //0x7B FETCH_TX_RECOVERY
    //0x7D PREPARE_TX_2
+
+   byte START_PUT_STREAM_REQUEST = -0x11;
+   byte NEXT_PUT_STREAM_REQUEST = -0x13;
+   byte END_PUT_STREAM_REQUEST = -0x15;
+   byte START_GET_STREAM_REQUEST = -0x17;
+   byte NEXT_GET_STREAM_REQUEST = -0x19;
+   byte END_GET_STREAM_REQUEST = -0x1B;
 }

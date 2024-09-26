@@ -23,6 +23,7 @@ public interface HotRodConstants {
    byte VERSION_30 = 30;
    byte VERSION_31 = 31;
    byte VERSION_40 = 40;
+   byte VERSION_41 = 41;
 
    //requests
    byte ILLEGAL_OP_CODE = 0x00;
@@ -77,6 +78,14 @@ public interface HotRodConstants {
    byte FETCH_TX_RECOVERY_REQUEST = 0x7B;
    byte PREPARE_TX_2_REQUEST = 0x7D;
    byte COUNTER_GET_AND_SET_REQUEST = 0x7F;
+
+   // We reserve the 0xF* range for errors
+   short START_PUT_STREAM_REQUEST = 0xEF;
+   short NEXT_PUT_STREAM_REQUEST = 0xED;
+   short END_PUT_STREAM_REQUEST = 0xEB;
+   short START_GET_STREAM_REQUEST = 0xE9;
+   short NEXT_GET_STREAM_REQUEST = 0xE7;
+   short END_GET_STREAM_REQUEST = 0xE5;
 
    //responses
    byte PUT_RESPONSE = 0x02;
@@ -134,6 +143,13 @@ public interface HotRodConstants {
    byte COUNTER_GET_NAMES_RESPONSE = 0x65;
    byte COUNTER_EVENT_RESPONSE = 0x66;
    short COUNTER_GET_AND_SET_RESPONSE = 0x80;
+
+   short START_PUT_STREAM_RESPONSE = 0xEE;
+   short NEXT_PUT_STREAM_RESPONSE = 0xEC;
+   short END_PUT_STREAM_RESPONSE = 0xEA;
+   short START_GET_STREAM_RESPONSE = 0xE8;
+   short NEXT_GET_STREAM_RESPONSE = 0xE6;
+   short END_GET_STREAM_RESPONSE = 0xE4;
 
    //response status
    byte NO_ERROR_STATUS = 0x00;
@@ -212,7 +228,14 @@ public interface HotRodConstants {
          int maxId = Stream.concat(Stream.of(HotRodConstants.class.getFields()),
                      Stream.of(MultimapHotRodConstants.class.getFields()))
                .filter(filterRequestsResponses)
-               .mapToInt(f -> ReflectionUtil.getIntAccessibly(f, null))
+               .mapToInt(f -> {
+                  int id = ReflectionUtil.getIntAccessibly(f, null);
+                  // Bytes go from -128 to 127
+                  if (id < 0) {
+                     id += 256;
+                  }
+                  return id;
+               })
                .max().orElse(0);
          NAMES = new String[maxId + 1];
          Stream.concat(Stream.of(HotRodConstants.class.getFields()),
@@ -220,6 +243,10 @@ public interface HotRodConstants {
                .filter(filterRequestsResponses)
                .forEach(f -> {
                   int id = ReflectionUtil.getIntAccessibly(f, null);
+                  // Bytes go from -128 to 127
+                  if (id < 0) {
+                     id += 256;
+                  }
                   assert NAMES[id] == null;
                   NAMES[id] = f.getName();
                });
@@ -230,7 +257,7 @@ public interface HotRodConstants {
       }
 
       public static String of(short opCode) {
-         return NAMES[opCode];
+         return NAMES[opCode < 0 ? 256 + opCode : opCode];
       }
    }
 }

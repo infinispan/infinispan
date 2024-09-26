@@ -158,6 +158,7 @@ maxIdleLong
 
 timeUnits : byte;
 entryVersion: long;
+intValue: int;
 scope: vInt;
 queryBytes: array;
 authMech: string;
@@ -233,8 +234,13 @@ chunkBytes returns ByteBuf
 // .buffer(0, 0) does not do any allocation and returns static empty buffer
    | { cacheProcessor.channel().alloc().buffer(0, 0); }
    ;
+retainedChunk returns ByteBuf
+   : { chunkLength > 0 }? retained[chunkLength]
+   | { throw new RequestParsingException("Retained chunk requires a chunk length greater than 0", version, messageId) }
+   ;
 chunk
-   : chunkLength chunkBytes { chunkedValue.writeBytes(chunkBytes, chunkBytes.readerIndex() - chunkLength, chunkLength) }
+   : { version >= VERSION_41 }? chunkLength retainedChunk
+   | chunkLength chunkBytes { chunkedValue.writeBytes(chunkBytes, chunkBytes.readerIndex() - chunkLength, chunkLength); }
    ;
 // The use of #chunkLength exploits the way counters are implemented by initializing that to 1 as we know
 // that the value will be decremented immediately after, and reset by reading chunkLength.
@@ -255,6 +261,8 @@ branchId returns byte[]
    :  { branchLength > 0 }? fixedArray[branchLength]
    |  { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
    ;
+
+lastPut: bool;
 
 onePhaseCommit: bool;
 recoverable: bool;
@@ -335,6 +343,12 @@ parameters switch opCode
    | { GET_STREAM_REQUEST }? key offset { cacheProcessor.getWithMetadata(getHeader(), auth.getSubject(operation), key, offset); }
    | { PUT_STREAM_REQUEST }? key expiration entryVersion chunkedValue { cacheProcessor.putStream(getHeader(), auth.getSubject(operation), key, chunkedValue, entryVersion, expiration) }
    | { UPDATE_BLOOM_FILTER_REQUEST }? bloomArray { cacheProcessor.updateBloomFilter(getHeader(), auth.getSubject(operation), bloomArray); }
+   | { START_PUT_STREAM_REQUEST }? key expiration entryVersion { cacheProcessor.putStreamStart(getHeader(), auth.getSubject(operation), key, expiration, entryVersion); }
+   | { NEXT_PUT_STREAM_REQUEST }? intValue lastPut chunk { cacheProcessor.putStreamNext(getHeader(), auth.getSubject(operation), intValue, lastPut, retainedChunk); }
+   | { END_PUT_STREAM_REQUEST }? intValue { cacheProcessor.putStreamEnd(getHeader(), auth.getSubject(operation), intValue); }
+   | { START_GET_STREAM_REQUEST }? key chunkLength { cacheProcessor.getStreamStart(getHeader(), auth.getSubject(operation), key, chunkLength); }
+   | { NEXT_GET_STREAM_REQUEST }? intValue { cacheProcessor.getStreamNext(getHeader(), auth.getSubject(operation), intValue); }
+   | { END_GET_STREAM_REQUEST }? intValue { cacheProcessor.getStreamEnd(getHeader(), auth.getSubject(operation), intValue); }
 
 // Transactions
    | { PREPARE_TX }? xid onePhaseCommit modifications { cacheProcessor.prepareTransaction(getHeader(), auth.getSubject(operation), xid, onePhaseCommit, modifications, false, 60000); }

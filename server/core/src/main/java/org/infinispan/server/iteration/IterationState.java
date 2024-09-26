@@ -1,5 +1,7 @@
 package org.infinispan.server.iteration;
 
+import org.infinispan.server.core.transport.OnChannelCloseReaper;
+
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
@@ -7,5 +9,5 @@ package org.infinispan.server.iteration;
 public interface IterationState {
    String getId();
 
-   IterationReaper getReaper();
+   OnChannelCloseReaper getReaper();
 }

@@ -34,6 +34,13 @@ public class Intrinsics {
       } else return 0;
    }
 
+   public static int int_(ByteBuf buffer) {
+      if (buffer.readableBytes() >= 4) {
+         return buffer.readInt();
+      }
+      return 0;
+   }
+
    public static boolean bool(ByteBuf buffer) {
       if (buffer.isReadable()) {
          return buffer.readByte() != 0;
@@ -85,6 +92,14 @@ public class Intrinsics {
       if (buf.readableBytes() >= length) {
          buf.readerIndex(buf.readerIndex() + length);
          return buf;
+      } else {
+         return null;
+      }
+   }
+
+   public static ByteBuf retained(ByteBuf buf, int length) {
+      if (buf.readableBytes() >= length) {
+         return buf.readRetainedSlice(length);
       } else {
          return null;
       }

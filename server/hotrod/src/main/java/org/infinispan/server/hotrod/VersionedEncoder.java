@@ -13,6 +13,7 @@ import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.hotrod.Events.Event;
 import org.infinispan.server.hotrod.counter.listener.ClientCounterEvent;
 import org.infinispan.server.iteration.IterableIterationResult;
+import org.infinispan.server.hotrod.streaming.GetStreamResponse;
 import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.stats.Stats;
 
@@ -59,6 +60,14 @@ public interface VersionedEncoder {
    ByteBuf getWithMetadataResponse(HotRodHeader header, HotRodServer server, Channel channel, CacheEntry<byte[], byte[]> entry);
 
    ByteBuf getStreamResponse(HotRodHeader header, HotRodServer server, Channel channel, int offset, CacheEntry<byte[], byte[]> entry);
+
+   default ByteBuf getStreamStartResponse(HotRodHeader header, HotRodServer server, Channel channel, CacheEntry<?, ?> entry, GetStreamResponse getStreamResponse) {
+      throw new UnsupportedOperationException("iterationNextResponse requires HR 4.1 or newer!");
+   }
+
+   default ByteBuf putStreamStartResponse(HotRodHeader header, HotRodServer server, Channel channel, int id) {
+      throw new UnsupportedOperationException("iterationNextResponse requires HR 4.1 or newer!");
+   }
 
    ByteBuf getAllResponse(HotRodHeader header, HotRodServer server, Channel channel, Map<byte[], byte[]> map);
 
