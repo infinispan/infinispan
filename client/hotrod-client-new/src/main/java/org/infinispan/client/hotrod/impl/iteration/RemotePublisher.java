@@ -79,7 +79,7 @@ public class RemotePublisher<K, E> implements Publisher<Map.Entry<K, E>> {
       if (segments == null) {
          AtomicBoolean shouldRetry = new AtomicBoolean(true);
 
-         RemoteInnerPublisherHandler<K, E> innerHandler = new RemoteInnerPublisherHandler<K, E>(this,
+         RemoteInnerPublisherHandler<K, E> innerHandler = new RemoteInnerPublisherHandler<>(this,
                batchSize, () -> {
             // Note that this publisher will continue to return empty entries until it has completed a given
             // target without encountering a Throwable

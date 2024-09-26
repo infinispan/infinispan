@@ -118,7 +118,7 @@ public class IterationNextOperation<K, E> extends AbstractCacheOperation<Iterati
       if (HotRodConstants.isInvalidIteration(status)) {
          throw HOTROD.errorRetrievingNext(new String(iterationId, HOTROD_STRING_CHARSET));
       }
-      return new IterationNextResponse<>(status, entries, finishedSegmentSet, entriesSize > 0);
+      return new IterationNextResponse<>(status, entries, finishedSegmentSet, true);
    }
 
    @Override

@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateExcept
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.operations.IterationNextResponse;
 import org.infinispan.client.hotrod.impl.operations.IterationStartResponse;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.reactive.AbstractAsyncPublisherHandler;
@@ -89,7 +90,13 @@ class RemoteInnerPublisherHandler<K, E> extends AbstractAsyncPublisherHandler<Ma
       if (!nextResponse.hasMore()) {
          // server doesn't clean up when complete
          sendCancel(target);
-         publisher.completeSegments(target.getValue());
+         // Don't complete the segments if it was an invalid iteration
+         if (nextResponse.getStatus() != HotRodConstants.INVALID_ITERATION) {
+            log.tracef("No more entries retrieved, so completing segments %s from %s", target.getValue(), target.getKey());
+            publisher.completeSegments(target.getValue());
+         } else {
+            log.tracef("Invalid iteration response, so must retry segments %s", target.getValue());
+         }
          targetComplete();
       }
       IntSet completedSegments = nextResponse.getCompletedSegments();
@@ -98,6 +105,8 @@ class RemoteInnerPublisherHandler<K, E> extends AbstractAsyncPublisherHandler<Ma
          if (targetSegments != null) {
             targetSegments.removeAll(completedSegments);
          }
+         log.tracef("Completed segments: %s still have %s left for %s", completedSegments, targetSegments,
+               target.getKey());
       }
       publisher.completeSegments(completedSegments);
       List<Map.Entry<K, E>> entries = nextResponse.getEntries();
