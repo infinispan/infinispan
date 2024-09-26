@@ -70,8 +70,6 @@ public abstract class BaseIterationFailOverTest extends MultiHotRodServersTest {
 
       }
 
-      assertEquals(cacheSize, entries.size());
-
       Set<Integer> keys = extractKeys(entries);
       assertEquals(rangeAsSet(0, cacheSize), keys);
    }

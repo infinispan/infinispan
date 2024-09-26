@@ -30,7 +30,7 @@ class Util {
    }
 
    static <T> void populateCache(int numElements, Function<Integer, T> supplier, RemoteCache<Integer, T> remoteCache) {
-      IntStream.range(0, numElements).parallel().forEach(i -> remoteCache.put(i, supplier.apply(i)));
+      IntStream.range(0, numElements).forEach(i -> remoteCache.put(i, supplier.apply(i)));
    }
 
    static <T> void assertForAll(Collection<T> elements, Predicate<? super T> condition) {

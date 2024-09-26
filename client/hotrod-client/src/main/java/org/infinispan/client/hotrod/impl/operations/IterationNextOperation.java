@@ -130,7 +130,7 @@ public class IterationNextOperation<K, E> extends HotRodOperation<IterationNextR
       if (HotRodConstants.isInvalidIteration(status)) {
          throw HOTROD.errorRetrievingNext(new String(iterationId, HOTROD_STRING_CHARSET));
       }
-      complete(new IterationNextResponse<>(status, entries, finishedSegmentSet, entriesSize > 0));
+      complete(new IterationNextResponse<>(status, entries, finishedSegmentSet, true));
    }
 
    private <M> M unmarshallValue(byte[] bytes) {
