@@ -1,0 +1,59 @@
+name: Get Origin Info
+description: Get information about the origin workflow
+inputs:
+  head-sha:
+    description: Head sha related to the origin workflow
+    required: true
+  head-branch:
+    description: Head branch related to the origin workflow
+    required: true
+  event:
+    description: Event type related to the origin workflow
+    required: true
+outputs:
+  pull-request-number:
+    description: Pull request number that triggered the original workflow
+    value: ${{ steps.workflow-run-info.outputs.pull-request-number }}
+  source-head-branch:
+    description: Source head branch related to the original workflow
+    value: ${{ steps.workflow-run-info.outputs.source-head-branch }}
+  image-tag:
+    description: >
+      Tag to be applied to the image. Head branch name in case of push event,
+      pull request number in case of pull request event
+    value: ${{ steps.workflow-run-info.outputs.image-tag }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/github-script@v7.0.1
+      id: workflow-run-info
+      env:
+       HEAD_SHA: ${{ inputs.head-sha }}
+       HEAD_BRANCH: ${{ inputs.head-branch }}
+       EVENT: ${{ inputs.event }}
+      with:
+       script: |
+          const { HEAD_SHA, HEAD_BRANCH, EVENT } = process.env
+          headBranch = HEAD_BRANCH
+          imageTag = HEAD_BRANCH
+          const owner = context.repo.owner
+          const repo = context.repo.repo
+          const pullRequests = await github.paginate(
+            'GET /repos/{owner}/{repo}/pulls',
+            {
+              owner,
+              repo
+            }
+          )
+          for (const pullRequest of pullRequests) {
+              if (pullRequest.head.sha === HEAD_SHA ) {
+                core.setOutput("pull-request-number", pullRequest.number)
+              if ( EVENT === 'pull_request' || EVENT === 'pull_request_target') {
+                headBranch = pullRequest.head.ref
+                imageTag = pullRequest.number
+              }
+              break;
+            }
+          }
+          core.setOutput("source-head-branch", headBranch)
+          core.setOutput("image-tag", imageTag)

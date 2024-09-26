@@ -1,0 +1,38 @@
+name: Build
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - 15.[0-9]+.x
+      - 14.0.x
+
+concurrency:
+  # Only cancel jobs for PR updates
+  group: ci-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Infinispan
+        uses: ./.github/actions/build-infinispan
+
+      - run: echo Build Completed ${{ github.run_id }} > server-version.txt
+
+      - name: Server version
+        run: >
+          mvn -q -Dexec.executable=echo -Dexec.args='-n ${project.version}'
+          --non-recursive exec:exec > server-version.txt
+
+      - name: Archive server version
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-version
+          path: |
+            server-version.txt
+

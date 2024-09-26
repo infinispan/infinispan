@@ -1,7 +1,7 @@
 name: Comment PR for flaky test
 description: This action comments on PR for flaky test
 inputs:
-  pr_number:
+  pr-number:
     description: PR number
     required: true
 runs:
@@ -19,7 +19,7 @@ runs:
       #if: github.repository == 'infinispan/infinispan'
       shell: bash
       run: |
-        PR="${{ inputs.pr_number }}"
+        PR="${{ inputs.pr-number }}"
         if [ "$PR" != "" ]; then
           shopt -s nullglob globstar
           FLAKY_TEST_GLOB="**/target/*-reports*/**/TEST-*FLAKY.xml"
