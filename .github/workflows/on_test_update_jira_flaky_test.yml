@@ -1,12 +1,12 @@
-name: On Run Create Jira for Flaky Test
+name: Update Jira Flaky
 on:
    workflow_run:
-     workflows: [On PR Open or Push Do Build and Test]
+     workflows: [Test]
      types: [completed]
 jobs:
    jiraForFlakyTest:
       if: ${{ github.event.workflow_run.conclusion == 'success' }}
-      name: Downloading Flaky test report
+      name: Flaky Test To Jira
       runs-on: ubuntu-latest
       steps:
         - name: Checkout
@@ -78,10 +78,10 @@ jobs:
 
         - if: steps.download-artifact.outputs.result == 'Flaky Found'
           name: Get PR number
-          id: pr_number
+          id: pr-number
           uses: juliangruber/read-file-action@v1
           with:
-            path: ./event-number.txt
+            path: ./pr-number.txt
 
         - if: >
             steps.download-artifact.outputs.result == 'Flaky Found' &&
@@ -89,5 +89,5 @@ jobs:
           name: Comment PR
           uses: ./.github/actions/comment-pr-flaky-test
           with:
-            pr_number: ${{ steps.pr_number.outputs.content }}
+            pr-number: ${{ steps.pr-number.outputs.content }}
 

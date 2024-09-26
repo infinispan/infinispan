@@ -1,12 +1,12 @@
-name: On Run Publish Surefire Report
+name: Publish Test Report
 on:
    workflow_run:
-     workflows: [On PR Open or Push Do Build and Test]
+     workflows: [Test]
      types: [completed]
 jobs:
    publish:
       if: ${{ github.event.workflow_run.conclusion == 'success' }}
-      name: Downloading Surefire report
+      name: Publish Surefire Report
       runs-on: ubuntu-latest
       steps:
         - name: Install xmlstarlet tool
@@ -61,14 +61,14 @@ jobs:
           run: |
                find . -name "TEST-*Test.xml" | while read f
                    do
-                      xmlstarlet ed --inplace -d "//testcase[flakyFailure]" $f
+                      xmlstarlet ed --inplace -d "//testcase[flakyFailure]" "$f"
                    done
         - name: Publish Test Report
           if: success() || failure()
           uses: ScaCap/action-surefire-report@v1
           with:
             commit: ${{ steps.github_sha.outputs.content }}
-            check_name: check-ci test report
+            check_name: Test Report Result
             report_paths: |
               **/surefire-reports/TEST-*.xml
 
@@ -86,7 +86,7 @@ jobs:
                   -f 'head_sha=${{ steps.github_sha.outputs.content }}' \
                   -f 'status=completed' \
                   -f 'conclusion=failure' \
-                  -f 'output[title]=Check number tests ran' \
+                  -f 'output[title]=Number Tests Executed' \
                   -f "output[summary]=Fail. $COUNT test ran, minimum required is $MIN_TEST_NUM" \
                      /repos/${{ github.repository }}/check-runs
             fi
