@@ -356,7 +356,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
          executorFactory = Util.getInstance(configuration.asyncExecutorFactory().factoryClass());
       }
       asyncExecutorService = executorFactory.getExecutor(configuration.asyncExecutorFactory().properties());
-      channelFactory.start(configuration, marshaller, asyncExecutorService,
+      channelFactory.start(marshaller, asyncExecutorService,
                            listenerNotifier, marshallerRegistry);
       counterManager.start(channelFactory, configuration, listenerNotifier);
 
@@ -418,7 +418,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    }
 
    public ChannelFactory createChannelFactory() {
-      return new ChannelFactory(new CodecHolder(configuration.version().getCodec()));
+      return new ChannelFactory(configuration, new CodecHolder(configuration.version().getCodec()));
    }
 
    @Override

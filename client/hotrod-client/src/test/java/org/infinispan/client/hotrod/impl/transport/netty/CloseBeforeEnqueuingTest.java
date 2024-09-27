@@ -258,7 +258,7 @@ public class CloseBeforeEnqueuingTest extends AbstractRetryTest {
       private Supplier<Boolean> executeInstead;
 
       public CustomChannelFactory(Configuration cfg) {
-         super(new CodecHolder(cfg.version().getCodec()));
+         super(cfg, new CodecHolder(cfg.version().getCodec()));
          this.configuration = cfg;
          this.executeInstead = null;
       }

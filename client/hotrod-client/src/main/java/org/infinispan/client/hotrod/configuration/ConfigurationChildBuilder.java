@@ -1,10 +1,11 @@
 package org.infinispan.client.hotrod.configuration;
 
-import javax.transaction.xa.XAResource;
 import java.net.URI;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+
+import javax.transaction.xa.XAResource;
 
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.ProtocolVersion;
@@ -194,6 +195,17 @@ public interface ConfigurationChildBuilder {
     * Zero means no retry will made in case of a network failure. It defaults to 10.
     */
    ConfigurationBuilder maxRetries(int maxRetries);
+
+   /**
+    * The time for a failed server to be cleared allowing for it to attempt to reconnect at a later point.
+    * <p>
+    * If the value is less than or equal to 0 it will be disabled, meaning a failed server will not be reconnected to
+    * until all configured servers have failed or a topology update ({@link ClientIntelligence#TOPOLOGY_AWARE} and
+    * {@link ClientIntelligence#HASH_DISTRIBUTION_AWARE}  only)
+    * @param timeoutInMilliseconds the timeout to attempt to clear a failed server in milliseconds
+    * @return this builder
+    */
+   ConfigurationBuilder serverFailureTimeout(int timeoutInMilliseconds);
 
    /**
     * List of regular expressions for classes that can be deserialized using standard Java deserialization
