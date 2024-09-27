@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl.transport.netty;
 
 import java.net.SocketAddress;
 
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.CodecHolder;
 
 import io.netty.bootstrap.Bootstrap;
@@ -9,8 +10,8 @@ import io.netty.channel.Channel;
 import io.netty.handler.codec.FixedLengthFrameDecoder;
 
 public class TestChannelFactory extends ChannelFactory {
-   public TestChannelFactory(CodecHolder codecHolder) {
-      super(codecHolder);
+   public TestChannelFactory(Configuration configuration, CodecHolder codecHolder) {
+      super(configuration, codecHolder);
    }
 
    @Override

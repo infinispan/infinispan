@@ -84,6 +84,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private boolean tcpKeepAlive = false;
    private int valueSizeEstimate = ConfigurationProperties.DEFAULT_VALUE_SIZE;
    private int maxRetries = ConfigurationProperties.DEFAULT_MAX_RETRIES;
+   private int serverFailureTimeout = ConfigurationProperties.DEFAULT_SERVER_FAILURE_TIMEOUT;
    private final NearCacheConfigurationBuilder nearCache;
    private final List<String> allowListRegExs = new ArrayList<>();
    private int batchSize = ConfigurationProperties.DEFAULT_BATCH_SIZE;
@@ -358,6 +359,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
+   public ConfigurationBuilder serverFailureTimeout(int timeoutInMilliseconds) {
+      this.serverFailureTimeout = timeoutInMilliseconds;
+      return this;
+   }
+
+   @Override
    public ConfigurationBuilder addJavaSerialAllowList(String... regEx) {
       this.allowListRegExs.addAll(Arrays.asList(regEx));
       return this;
@@ -484,6 +491,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       }
       if (typed.containsKey(ConfigurationProperties.MAX_RETRIES)) {
          this.maxRetries(typed.getIntProperty(ConfigurationProperties.MAX_RETRIES, maxRetries, true));
+      }
+      if (typed.containsKey(ConfigurationProperties.SERVER_FAILURE_TIMEOUT)) {
+         this.serverFailureTimeout(typed.getIntProperty(ConfigurationProperties.SERVER_FAILURE_TIMEOUT, serverFailureTimeout, true));
       }
       if (typed.containsKey(ConfigurationProperties.DNS_RESOLVER_MIN_TTL)) {
          this.dnsResolverMinTTL(typed.getIntProperty(ConfigurationProperties.DNS_RESOLVER_MIN_TTL, dnsResolverMinTTL, true));
@@ -626,7 +636,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
             forceReturnValues, keySizeEstimate, buildMarshaller, buildMarshallerClass, protocolVersion, servers, socketTimeout,
             security.create(), tcpNoDelay, tcpKeepAlive, valueSizeEstimate, maxRetries, nearCache.create(),
             serverClusterConfigs, allowListRegExs, batchSize, transaction.create(), statistics.create(), features,
-            contextInitializers, remoteCaches, transportFactory, tracingPropagationEnabled);
+            contextInitializers, remoteCaches, transportFactory, tracingPropagationEnabled, serverFailureTimeout);
    }
 
    // Method that handles default marshaller - needed as a placeholder
