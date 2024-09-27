@@ -4,6 +4,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.ASYNC_EX
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_CALLBACK_HANDLER;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_CLIENT_SUBJECT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_SERVER_NAME;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.BASIC_FAILED_TIMEOUT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.BATCH_SIZE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CACHE_CONFIGURATION_SUFFIX;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CACHE_MARSHALLER;
@@ -119,6 +120,7 @@ public class Configuration {
    private final int dnsResolverMinTTL;
    private final int dnsResolverMaxTTL;
    private final int dnsResolverNegativeTTL;
+   private final int basicFailedServerTimeout;
 
    public Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory, ClassLoader classLoader,
                         ClientIntelligence clientIntelligence, ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl,
@@ -131,7 +133,7 @@ public class Configuration {
                         TransactionConfiguration transaction, StatisticsConfiguration statistics, Features features,
                         List<SerializationContextInitializer> contextInitializers,
                         Map<String, RemoteCacheConfiguration> remoteCaches,
-                        TransportFactory transportFactory, boolean tracingPropagationEnabled) {
+                        TransportFactory transportFactory, boolean tracingPropagationEnabled, int basicFailedServerTimeout) {
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategyFactory = balancingStrategyFactory;
       this.maxRetries = maxRetries;
@@ -166,6 +168,7 @@ public class Configuration {
       this.remoteCaches = remoteCaches;
       this.transportFactory = transportFactory;
       this.tracingPropagationEnabled = tracingPropagationEnabled;
+      this.basicFailedServerTimeout = basicFailedServerTimeout;
    }
 
    public ExecutorFactoryConfiguration asyncExecutorFactory() {
@@ -384,6 +387,15 @@ public class Configuration {
       return tracingPropagationEnabled;
    }
 
+   /**
+    * Controls how long a server is marked as failed when using BASIC intelligence in milliseconds.
+    * Default is 30_000 milliseconds or 30 seconds.
+    * @return time in milliseconds
+    */
+   public int basicFailedServerTimeout() {
+      return basicFailedServerTimeout;
+   }
+
    @Override
    public String toString() {
       return "Configuration [asyncExecutorFactory=" + asyncExecutorFactory + ", balancingStrategyFactory=()->" + balancingStrategyFactory.get()
@@ -398,6 +410,7 @@ public class Configuration {
             + ", remoteCaches= " + remoteCaches
             + ", transaction=" + transaction
             + ", statistics=" + statistics
+            + ", basicFailedServerTime=" + basicFailedServerTimeout
             + "]";
    }
 
@@ -432,6 +445,7 @@ public class Configuration {
       properties.setProperty(VALUE_SIZE_ESTIMATE, valueSizeEstimate());
       properties.setProperty(MAX_RETRIES, maxRetries());
       properties.setProperty(STATISTICS, statistics().enabled());
+      properties.setProperty(BASIC_FAILED_TIMEOUT, basicFailedServerTimeout());
 
       properties.setProperty(DNS_RESOLVER_MIN_TTL, dnsResolverMinTTL);
       properties.setProperty(DNS_RESOLVER_MAX_TTL, dnsResolverMaxTTL);
