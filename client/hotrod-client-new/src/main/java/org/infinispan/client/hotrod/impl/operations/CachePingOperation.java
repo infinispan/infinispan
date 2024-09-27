@@ -8,11 +8,9 @@ import io.netty.handler.codec.DecoderException;
 
 public class CachePingOperation extends NoCachePingOperation {
    private final String cacheName;
-   private final boolean requireAuth;
 
-   public CachePingOperation(String cacheName, boolean requireAuth) {
+   public CachePingOperation(String cacheName) {
       this.cacheName = cacheName;
-      this.requireAuth = requireAuth;
    }
 
 
@@ -34,11 +32,6 @@ public class CachePingOperation extends NoCachePingOperation {
    @Override
    public byte[] getCacheNameBytes() {
       return cacheName.getBytes(StandardCharsets.UTF_8);
-   }
-
-   @Override
-   public boolean forceSend() {
-      return !requireAuth;
    }
 
    @Override

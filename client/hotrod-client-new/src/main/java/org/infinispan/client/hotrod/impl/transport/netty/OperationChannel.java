@@ -21,6 +21,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.AttributeKey;
 import io.netty.util.internal.shaded.org.jctools.queues.MessagePassingQueue;
 import io.netty.util.internal.shaded.org.jctools.queues.MpscUnboundedArrayQueue;
@@ -125,19 +126,19 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
       });
    }
 
-   HotRodOperation<?> forceSendOperation(HotRodOperation<?> operation) {
-      log.tracef("Immediately sending operation %s to channel %s", operation, channel);
-      if (channel.eventLoop().inEventLoop()) {
-         actualForceSingleOperation(operation);
-      } else {
-         channel.eventLoop().submit(() -> actualForceSingleOperation(operation));
+   /**
+    * Allows sending a command directly without enqueuing. Note that this method should only be invoked after
+    * the channel has been started and notified via the {@link ActivationHandler#ACTIVATION_EVENT} and after all netty
+    * channel handlers have been {@link io.netty.channel.ChannelInboundHandler#channelActive(ChannelHandlerContext)}.
+    * @param operation operation to send immediately, usually for login purposes
+    */
+   public void forceSendOperation(HotRodOperation<?> operation) {
+      if (!channel.eventLoop().inEventLoop()) {
+         throw new IllegalArgumentException("Force sent operation " + operation + " are required to be sent in the event loop only " + channel.eventLoop());
       }
-      return operation;
-   }
-
-   private void actualForceSingleOperation(HotRodOperation<?> operation) {
-      assert channel.eventLoop().inEventLoop();
+      log.tracef("Immediately sending operation %s to channel %s", operation, channel);
       long messageId = headerDecoder.registerOperation(operation);
+      Channel channel = this.channel;
       ByteBuf buffer = channel.alloc().buffer();
       codec.writeHeader(buffer, messageId, currentCacheTopologyFunction.apply(operation.getCacheName()), operation);
       operation.writeOperationRequest(channel, buffer, codec);
@@ -145,21 +146,14 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
    }
 
    public void sendOperation(HotRodOperation<?> operation) {
+      queue.offer(operation);
       Channel channel = this.channel;
       if (channel != null) {
-         if (operation.forceSend()) {
-            forceSendOperation(operation);
-            return;
-         }
-         log.tracef("Enqueueing operation %s to send to channel %s", operation, channel);
-      } else {
-         log.tracef("Enqueueing operation %s to send to address %s when connected", operation, address);
-      }
-      queue.offer(operation);
-      // TODO: maybe implement a way to only submit if required
-      if (channel != null) {
+         log.tracef("Enqueued operation %s to send to channel %s", operation, channel);
+         // TODO: maybe implement a way to only submit if required
          channel.eventLoop().execute(SEND_OPERATIONS);
       } else {
+         log.tracef("Enqueued operation %s to send to address %s when connected", operation, address);
          attemptConnect();
       }
    }

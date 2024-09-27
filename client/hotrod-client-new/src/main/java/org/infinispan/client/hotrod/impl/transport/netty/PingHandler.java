@@ -19,7 +19,7 @@ public class PingHandler extends ChannelInboundHandlerAdapter {
             ctx.channel()
                   .attr(OperationChannel.OPERATION_CHANNEL_ATTRIBUTE_KEY)
                   .get()
-                  .sendOperation(pingOperation);
+                  .forceSendOperation(pingOperation);
          }
       }
    }

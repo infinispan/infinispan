@@ -18,16 +18,6 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
       // Do nothing by default
    }
 
-   /**
-    * Marks the operation as allowing it to be forced to be sent. That is it can be sent before authentication is
-    * complete and will immediately be sent and not enqueued.
-    * @return whether the command is forcibly sent without authentication or queueing.
-    */
-
-   public boolean forceSend() {
-      return false;
-   }
-
    public abstract T createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller);
 
    public abstract short requestOpCode();

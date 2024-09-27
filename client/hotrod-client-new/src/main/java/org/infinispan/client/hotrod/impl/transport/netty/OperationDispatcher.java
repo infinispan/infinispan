@@ -179,8 +179,7 @@ public class OperationDispatcher {
             sa -> channelHandler.startChannelIfNeeded(sa)
                   .exceptionally(t -> {
                      if (log.isTraceEnabled())
-                        log.tracef(t, "Ignoring exception establishing a connection to initial server %s",
-                              sa);
+                        log.tracef(t, "Ignoring exception establishing a connection to initial server %s", sa);
                      return null;
                   })));
    }
@@ -268,10 +267,9 @@ public class OperationDispatcher {
    }
 
    public <E> CompletionStage<E> executeOnSingleAddress(HotRodOperation<E> operation, SocketAddress socketAddress) {
-      if (connectionFailedServers.contains(socketAddress)) {
-         if (log.isTraceEnabled()) {
-            log.tracef("Server %s is suspected, trying another for %s", socketAddress, operation);
-         }
+      // We do an empty check, as contains will perform hashCode on the socketAddress creating a String object
+      if (!connectionFailedServers.isEmpty() && connectionFailedServers.contains(socketAddress)) {
+         log.tracef("Server %s is suspected, trying another for %s", socketAddress, operation);
          socketAddress = getBalancer(operation.getCacheName()).nextServer(connectionFailedServers);
       }
       log.tracef("Dispatching %s to %s", operation, socketAddress);

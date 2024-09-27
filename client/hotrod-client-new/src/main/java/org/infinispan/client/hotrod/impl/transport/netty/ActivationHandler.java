@@ -27,7 +27,7 @@ class ActivationHandler extends ChannelInboundHandlerAdapter {
          log.tracef("Activating channel %s", channel);
       }
       NoCachePingOperation ping = new NoCachePingOperation();
-      operationChannel.sendOperation(ping);
+      operationChannel.forceSendOperation(ping);
       ping.whenComplete((r, t) -> {
          ctx.pipeline().remove(this);
          if (t != null) {

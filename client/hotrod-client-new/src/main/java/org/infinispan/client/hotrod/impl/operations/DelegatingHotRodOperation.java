@@ -67,11 +67,6 @@ public abstract class DelegatingHotRodOperation<T> extends HotRodOperation<T> {
    }
 
    @Override
-   public boolean forceSend() {
-      return delegate.forceSend();
-   }
-
-   @Override
    public Object getRoutingObject() {
       return delegate.getRoutingObject();
    }

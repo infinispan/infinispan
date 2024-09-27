@@ -41,9 +41,4 @@ public class NoCachePingOperation extends AbstractNoCacheHotRodOperation<PingRes
    public short responseOpCode() {
       return HotRodConstants.PING_RESPONSE;
    }
-
-   @Override
-   public boolean forceSend() {
-      return true;
-   }
 }
