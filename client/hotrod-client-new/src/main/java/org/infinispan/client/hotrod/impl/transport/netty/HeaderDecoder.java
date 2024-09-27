@@ -369,11 +369,16 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
       }
       closing = true;
       dispatcher.handleChannelFailure(ctx.channel(), t);
-      for (HotRodOperation<?> op : incomplete.values()) {
+      for (Map.Entry<Long, HotRodOperation<?>> entry : incomplete.entrySet()) {
+         HotRodOperation<?> op = entry.getValue();
          try {
             dispatcher.handleResponse(op, -1, ctx.channel(), null, t);
          } catch (Throwable innerT) {
             HOTROD.errorf(t, "Failed to complete %s", op);
+         }
+         ScheduledFuture<?> f = timeouts.remove(entry.getKey());
+         if (f != null) {
+            f.cancel(false);
          }
       }
       failoverClientListeners();
