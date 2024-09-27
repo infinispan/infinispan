@@ -58,6 +58,31 @@ include::code_examples/HotRodClientIntelligenceCluster.java[]
 include::properties/hotrod-client-intelligence-cluster.properties[]
 ----
 
+
+[discrete]
+== Failed Server Timeout
+
+If a server does not report the topology as BASIC, or the client is unable to connect to a server due to network issues, the client will mark the server as failed.
+A client does not attempt to connect to a server marked as failed until the client receives an updated topology.
+Because BASIC topology never sends an update, the client will not re-attempt connection.
+
+To avoid such a situation, you can use the `serverFailureTimeout` setting that clears the failed server status after a defined period of time.
+{brandname} will try to reconnect to the server after the defined timeout. If the server is still unreachable, it is marked as failed again and the connection will be re-attempted after the defined timeout.
+You can disabled reconnection attempts by setting the `serverFailureTimeout` value to `-1`.
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="primary"]
+----
+include::code_examples/HotRodClientFailedServerTimeout.java[]
+----
+
+.hotrod-client.properties
+[source,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::properties/hotrod-client-failed-server-timeout.properties[]
+----
+
 [role="_additional-resources"]
 .Additional resources
 * link:{javadocroot}/org/infinispan/client/hotrod/configuration/ClientIntelligence.html[org.infinispan.client.hotrod.configuration.ClientIntelligence]
+
