@@ -8,9 +8,6 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -222,17 +219,6 @@ public class MemcachedTextFunctionalTest extends MemcachedFunctionalTest {
       OperationFuture<Boolean> f = client.set(k(m), 0, "0");
       assertTrue(f.get(timeout, TimeUnit.SECONDS));
       sendNoWait("quit\r\n");
-   }
-
-   public void testBufferOverflowCausesUnknownException() throws Exception {
-      List<String> keys = Files.readAllLines(
-            Paths.get(getClass().getClassLoader().getResource("keys.txt").toURI()),
-            StandardCharsets.UTF_8
-      );
-
-      for (String key : keys) {
-         assertTrue(client.set(key, 0, "ISPN005003: UnknownOperationException").get());
-      }
    }
 
    public void testDeleteNoReply(Method m) throws InterruptedException, ExecutionException, TimeoutException, IOException {

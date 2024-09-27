@@ -16,12 +16,18 @@ import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.server.core.security.simple.SimpleSaslAuthenticator;
+import org.infinispan.server.core.test.transport.TestHandlersChannelInitializer;
+import org.infinispan.server.core.transport.NettyChannelInitializer;
+import org.infinispan.server.core.transport.NettyInitializers;
+import org.infinispan.server.memcached.MemcachedChannelInitializer;
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.configuration.MemcachedProtocol;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
 import org.infinispan.server.memcached.logging.Log;
 
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelInitializer;
 import net.spy.memcached.ClientMode;
 import net.spy.memcached.ConnectionFactoryBuilder;
 import net.spy.memcached.MemcachedClient;
@@ -42,6 +48,21 @@ public class MemcachedTestingUtil {
    private static final String REALM = "default";
    private static final String PASSWORD = "secret";
    private static final long TIMEOUT = 10_000;
+
+   public static MemcachedServer createMemcachedServer(boolean useTestHandlers) {
+      if (!useTestHandlers) return new MemcachedServer();
+
+      return new MemcachedServer() {
+         @Override
+         public ChannelInitializer<Channel> getInitializer() {
+            return new NettyInitializers(
+                  new NettyChannelInitializer<>(this, transport, getEncoder(), null),
+                  new MemcachedChannelInitializer(this),
+                  new TestHandlersChannelInitializer()
+            );
+         }
+      };
+   }
 
    public static MemcachedClient createMemcachedClient(MemcachedServer server) throws IOException {
       MemcachedServerConfiguration configuration = server.getConfiguration();

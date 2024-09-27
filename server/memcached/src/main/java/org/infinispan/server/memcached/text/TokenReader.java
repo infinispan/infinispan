@@ -4,6 +4,7 @@ import java.util.BitSet;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.util.ByteProcessor;
+import io.netty.util.Signal;
 
 /**
  * Reads the next token from the buffer, accepting only valid characters. If a non-valid character is found, the
@@ -11,6 +12,7 @@ import io.netty.util.ByteProcessor;
  */
 public class TokenReader implements ByteProcessor {
 
+   static final Signal INVALID_TOKEN = Signal.valueOf(TokenReader.class.getName() + ".INVALID");
    private final ByteBuf output;
    private BitSet token;
    private boolean found;
@@ -69,7 +71,8 @@ public class TokenReader implements ByteProcessor {
       }
 
       if (!token.get(b & 0xFF)) {
-         return false;
+         bytesRead--;
+         throw INVALID_TOKEN;
       }
 
       output.writeByte(b);

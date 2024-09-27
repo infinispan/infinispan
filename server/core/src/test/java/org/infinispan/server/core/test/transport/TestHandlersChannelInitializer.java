@@ -1,4 +1,4 @@
-package org.infinispan.server.hotrod.transport;
+package org.infinispan.server.core.test.transport;
 
 import org.infinispan.server.core.transport.NettyInitializer;
 

@@ -1,12 +1,12 @@
-package org.infinispan.server.hotrod.transport;
+package org.infinispan.server.core.test.transport;
 
 import static org.infinispan.server.core.transport.ExtendedByteBuf.hexDump;
 
 import java.net.SocketAddress;
 
+import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
-import org.infinispan.server.hotrod.logging.Log;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelDuplexHandler;
@@ -27,6 +27,12 @@ public class TraceChannelHandler extends ChannelDuplexHandler {
                        ChannelPromise promise) throws Exception {
       log.tracef("Channel %s connect", ctx.channel());
       super.connect(ctx, remoteAddress, localAddress, promise);
+   }
+
+   @Override
+   public void channelActive(ChannelHandlerContext ctx) throws Exception {
+      log.tracef("Channel %s active", ctx.channel());
+      super.channelActive(ctx);
    }
 
    @Override

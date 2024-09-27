@@ -34,7 +34,7 @@ public class TextResponse extends MemcachedResponse {
    public void writeFailure(Throwable throwable, ByteBufPool allocator) {
       Throwable cause = CompletableFutures.extractException(throwable);
       String error;
-      if (cause instanceof IOException || cause instanceof IllegalArgumentException) {
+      if (cause == TokenReader.INVALID_TOKEN || cause instanceof IOException || cause instanceof IllegalArgumentException) {
          error = CLIENT_ERROR_BAD_FORMAT + " " + cause.getMessage() + CRLF;
       } else if (cause instanceof UnsupportedOperationException) {
          error = "ERROR" + CRLF;
