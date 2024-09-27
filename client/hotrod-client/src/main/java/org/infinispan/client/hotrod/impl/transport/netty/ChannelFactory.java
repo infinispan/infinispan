@@ -11,6 +11,7 @@ import java.security.Provider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -63,6 +64,8 @@ import org.infinispan.commons.stat.CounterTracker;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.SslContextFactory;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
@@ -95,7 +98,6 @@ public class ChannelFactory {
    private EventLoopGroup eventLoopGroup;
    private ExecutorService executorService;
    private OperationsFactory operationsFactory;
-   private Configuration configuration;
    private int maxRetries;
    private Marshaller marshaller;
    private ClientListenerNotifier listenerNotifier;
@@ -111,24 +113,31 @@ public class ChannelFactory {
    private CompletableFuture<Void> clusterSwitchStage;
    // Servers for which the last connection attempt failed and which have no established connections
    @GuardedBy("lock")
-   private final Set<SocketAddress> failedServers = new HashSet<>();
+   private final Set<SocketAddress> failedServers;
+   private final Configuration configuration;
    private final CodecHolder codecHolder;
    private AddressResolverGroup<?> dnsResolver;
    private SslContext sslContext;
    private FileWatcher watcher;
    private CounterTracker totalRetriesMetric = CounterTracker.NO_OP;
 
-   public ChannelFactory(CodecHolder codecHolder) {
+   public ChannelFactory(Configuration configuration, CodecHolder codecHolder) {
+      this.configuration = configuration;
       this.codecHolder = codecHolder;
+
+      this.failedServers = configuration.clientIntelligence() == ClientIntelligence.BASIC && configuration.basicFailedServerTimeout() > 0 ?
+            Collections.newSetFromMap(Caffeine.newBuilder()
+                  .expireAfterWrite(configuration.basicFailedServerTimeout(), TimeUnit.MILLISECONDS)
+                  .<SocketAddress, Boolean>build().asMap())
+            : new HashSet<>();
    }
 
-   public void start(Configuration configuration, Marshaller marshaller, ExecutorService executorService,
+   public void start(Marshaller marshaller, ExecutorService executorService,
                      ClientListenerNotifier listenerNotifier, MarshallerRegistry marshallerRegistry) {
       this.marshallerRegistry = marshallerRegistry;
       lock.writeLock().lock();
       try {
          this.marshaller = marshaller;
-         this.configuration = configuration;
          this.executorService = executorService;
          this.listenerNotifier = listenerNotifier;
          int asyncThreads = maxAsyncThreads(executorService, configuration);
@@ -888,6 +897,10 @@ public class ChannelFactory {
 
    public Configuration getConfiguration() {
       return configuration;
+   }
+
+   public Set<SocketAddress> getFailedServers() {
+      return failedServers;
    }
 
    public long getRetries() {
