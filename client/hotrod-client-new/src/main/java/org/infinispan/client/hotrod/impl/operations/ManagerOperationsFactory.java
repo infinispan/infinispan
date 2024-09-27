@@ -30,7 +30,7 @@ public class ManagerOperationsFactory {
     * @return
     */
    public HotRodOperation<PingResponse> newPingOperation(String cacheName) {
-      return new CachePingOperation(cacheName, true);
+      return new CachePingOperation(cacheName);
    }
 
    public HotRodOperation<String> executeOperation(String taskName, Map<String, byte[]> marshalledParams) {

@@ -34,13 +34,12 @@ public class DefaultCacheOperationsFactory implements CacheOperationsFactory {
 
    @Override
    public <V> HotRodOperation<V> newGetOperation(Object key) {
-      // TODO: need to support when storage is object based
       return new GetOperation<>(remoteCache, remoteCache.getDataFormat().keyToBytes(key));
    }
 
    @Override
    public HotRodOperation<PingResponse> newPingOperation() {
-      return new CachePingOperation(remoteCache.getName(), false);
+      return new CachePingOperation(remoteCache.getName());
    }
 
    @Override

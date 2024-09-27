@@ -46,9 +46,4 @@ public class AuthOperation extends AbstractNoCacheHotRodOperation<byte[]> {
    public short responseOpCode() {
       return HotRodConstants.AUTH_RESPONSE;
    }
-
-   @Override
-   public boolean forceSend() {
-      return true;
-   }
 }

@@ -37,9 +37,4 @@ public class AuthMechListOperation extends AbstractNoCacheHotRodOperation<List<S
    public short responseOpCode() {
       return HotRodConstants.AUTH_MECH_LIST_RESPONSE;
    }
-
-   @Override
-   public boolean forceSend() {
-      return true;
-   }
 }
