@@ -100,4 +100,11 @@ public abstract class DelegatingHotRodOperation<T> extends HotRodOperation<T> {
    void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, T responseValue) {
       delegate.handleStatsCompletion(statistics, startTime, status, responseValue);
    }
+
+   @Override
+   public String toString() {
+      return "getClass().getSimpleName(){" +
+            "delegate=" + delegate +
+            '}';
+   }
 }

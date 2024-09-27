@@ -111,6 +111,11 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
       this.codec = codec;
    }
 
+   public boolean isAcceptingRequests() {
+      var f = attemptedConnect.get();
+      return f != null && f.isDone();
+   }
+
    public void markAcceptingRequests() {
       channel.eventLoop().submit(() -> {
          // We can't mark it as complete until we are authenticated
