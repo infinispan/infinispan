@@ -58,7 +58,7 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
       // Default is operation does nothing
    }
 
-                              @Override
+   @Override
    public String toString() {
       String cn = getCacheName() == null || getCacheName().length() == 0 ? "(default)" : getCacheName();
       StringBuilder sb = new StringBuilder(64);

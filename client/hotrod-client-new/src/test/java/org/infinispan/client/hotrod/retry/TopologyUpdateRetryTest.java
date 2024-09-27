@@ -35,6 +35,9 @@ public class TopologyUpdateRetryTest extends AbstractRetryTest {
 
       CountDownLatch latch = new CountDownLatch(1);
 
+      // Don't block the event loop until it can accept requests
+      eventually(opChannel::isAcceptingRequests);
+
       // Block the event loop which will prevent the operations from being processed
       opChannel.getChannel().eventLoop().submit(() -> latch.await(10, TimeUnit.SECONDS));
 
