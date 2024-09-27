@@ -80,6 +80,12 @@
  *          <td>The {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#connectionTimeout(int) timeout} for connections</td>
  *       </tr>
  *       <tr>
+ *          <td><b>infinispan.client.hotrod.server_failure_timeout</b></td>
+ *          <td>Integer</td>
+ *          <td>30000</td>
+ *          <td>The {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#serverFailureTimeout(int) timeout} for a failed server when it is retried</td>
+ *       </tr>
+ *       <tr>
  *          <td><b>infinispan.client.hotrod.max_retries</b></td>
  *          <td>Integer</td>
  *          <td>2</td>

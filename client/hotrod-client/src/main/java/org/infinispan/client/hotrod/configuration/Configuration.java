@@ -38,6 +38,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_BALANCING_STRATEGY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SASL_MECHANISM;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SASL_PROPERTIES_PREFIX;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_FAILURE_TIMEOUT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_LIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SNI_HOST_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SO_TIMEOUT;
@@ -122,6 +123,7 @@ public class Configuration {
    private final int dnsResolverMaxTTL;
    private final int dnsResolverNegativeTTL;
    private final RemoteCacheManagerMetricsRegistry metricRegistry;
+   private final int serverFailureTimeout;
 
    public Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory, ClassLoader classLoader,
                         ClientIntelligence clientIntelligence, ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl,
@@ -134,7 +136,8 @@ public class Configuration {
                         TransactionConfiguration transaction, StatisticsConfiguration statistics, Features features,
                         List<SerializationContextInitializer> contextInitializers,
                         Map<String, RemoteCacheConfiguration> remoteCaches,
-                        TransportFactory transportFactory, boolean tracingPropagationEnabled, RemoteCacheManagerMetricsRegistry metricRegistry) {
+                        TransportFactory transportFactory, boolean tracingPropagationEnabled, RemoteCacheManagerMetricsRegistry metricRegistry,
+                        int serverFailureTimeout) {
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategyFactory = balancingStrategyFactory;
       this.maxRetries = maxRetries;
@@ -170,6 +173,7 @@ public class Configuration {
       this.transportFactory = transportFactory;
       this.tracingPropagationEnabled = tracingPropagationEnabled;
       this.metricRegistry = Objects.requireNonNullElse(metricRegistry, RemoteCacheManagerMetricsRegistry.DISABLED);
+      this.serverFailureTimeout = serverFailureTimeout;
    }
 
    public ExecutorFactoryConfiguration asyncExecutorFactory() {
@@ -395,6 +399,15 @@ public class Configuration {
       return metricRegistry;
    }
 
+   /**
+    * Controls how long a server is marked as failed in milliseconds.
+    * Default is 30_000 milliseconds or 30 seconds.
+    * @return time in milliseconds
+    */
+   public int serverFailureTimeout() {
+      return serverFailureTimeout;
+   }
+
    @Override
    public String toString() {
       return "Configuration [asyncExecutorFactory=" + asyncExecutorFactory + ", balancingStrategyFactory=()->" + balancingStrategyFactory.get()
@@ -410,6 +423,7 @@ public class Configuration {
             + ", transaction=" + transaction
             + ", statistics=" + statistics
             + ", metricRegistry=" + metricRegistry
+            + ", serverFailureTimeout=" + serverFailureTimeout
             + "]";
    }
 
@@ -444,6 +458,7 @@ public class Configuration {
       properties.setProperty(VALUE_SIZE_ESTIMATE, valueSizeEstimate());
       properties.setProperty(MAX_RETRIES, maxRetries());
       properties.setProperty(STATISTICS, statistics().enabled());
+      properties.setProperty(SERVER_FAILURE_TIMEOUT, serverFailureTimeout());
 
       properties.setProperty(DNS_RESOLVER_MIN_TTL, dnsResolverMinTTL);
       properties.setProperty(DNS_RESOLVER_MAX_TTL, dnsResolverMaxTTL);

@@ -53,6 +53,7 @@ public class ConfigurationProperties {
    public static final String CONNECT_TIMEOUT = ICH + "connect_timeout";
    public static final String PROTOCOL_VERSION = ICH + "protocol_version";
    public static final String TRANSPORT_FACTORY = ICH + "transport_factory";
+   public static final String SERVER_FAILURE_TIMEOUT = ICH + "server_failure_timeout";
    // Encryption properties
    public static final String USE_SSL = ICH + "use_ssl";
    public static final String KEY_STORE_FILE_NAME = ICH + "key_store_file_name";
@@ -155,6 +156,7 @@ public class ConfigurationProperties {
    public static final int DEFAULT_MAX_WAIT = -1;
    public static final int DEFAULT_MIN_IDLE = -1;
    public static final boolean DEFAULT_TRACING_PROPAGATION_ENABLED = true;
+   public static final int DEFAULT_SERVER_FAILURE_TIMEOUT = 30_000;
 
    private final TypedProperties props;
 
