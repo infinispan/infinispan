@@ -1961,7 +1961,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(client.cache("butch-cassidy").exists()).isOk();
       response = client.cache("impostor").createWithConfiguration(jsonEntity, VOLATILE);
       assertThat(response).isBadRequest();
-      assertThat(response).containsReturnedText("ISPN000975: The alias 'butch-cassidy' is already being used by cache 'robert-parker'");
+      assertThat(response).containsReturnedText("The alias 'butch-cassidy' is already being used by cache 'robert-parker'");
    }
 
    private void assertBadResponse(RestCacheClient client, String config) {
