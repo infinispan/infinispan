@@ -4,11 +4,13 @@ import static java.nio.charset.StandardCharsets.US_ASCII;
 
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.server.core.transport.ExtendedByteBufJava;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.util.Signal;
 
 public class TextIntrinsics {
    // [0-9]
@@ -29,20 +31,32 @@ public class TextIntrinsics {
       return ExtendedByteBufJava.readMaybeRangedBytes(b, length);
    }
 
-   private static Void consumeLine(ByteBuf buf) {
-      buf.markReaderIndex();
+   private static boolean consumeLine(ByteBuf buf) {
+      int index = buf.readerIndex();
       while (buf.isReadable()) {
          byte b = buf.readByte();
          if (b == 10) {
-            return null;
+            return true;
          }
       }
-      buf.resetReaderIndex();
-      return null;
+      buf.readerIndex(index);
+      return false;
+   }
+
+   private static int readBuf(ByteBuf buf, TokenReader reader) {
+      try {
+         return buf.forEachByte(reader);
+      } catch (Signal s) {
+         if (!consumeLine(buf)) {
+            return 0;
+         }
+
+         throw s;
+      }
    }
 
    private static ByteBuf token(ByteBuf buf, TokenReader reader) {
-      int offset = buf.forEachByte(reader);
+      int offset = readBuf(buf, reader);
       if (offset <= 0) return null;
 
       try {
@@ -53,35 +67,48 @@ public class TextIntrinsics {
    }
 
    public static long long_number(ByteBuf buf, TokenReader reader) {
+      int index = buf.readerIndex();
       ByteBuf s = token(buf, reader.forToken(NUMBERS));
       if (s == null) {
          return 0;
       } else if (s.isReadable()) {
          return Long.parseUnsignedLong(s.toString(US_ASCII));
       } else {
-         consumeLine(buf);
-         throw new IllegalArgumentException("Expected number");
+         if (!consumeLine(buf)) {
+            buf.readerIndex(index);
+            return 0;
+         }
+         throw TokenReader.INVALID_TOKEN;
       }
    }
 
    public static int int_number(ByteBuf buf, TokenReader reader) {
+      int index = buf.readerIndex();
       ByteBuf s = token(buf, reader.forToken(NUMBERS));
       if (s == null) {
          return 0;
       } else if (s.isReadable()) {
          return parseUnsignedInt(s);
       } else {
-         consumeLine(buf);
-         throw new IllegalArgumentException("Expected number");
+         if (!consumeLine(buf)) {
+            buf.readerIndex(index);
+            return 0;
+         }
+
+         throw TokenReader.INVALID_TOKEN;
       }
    }
 
    public static TextCommand command(ByteBuf buf, TokenReader reader) {
+      int index = buf.readerIndex();
       ByteBuf id = token(buf, reader.forToken(LETTERS));
       try {
          return id == null ? null : TextCommand.valueOf(id);
       } catch (IllegalArgumentException e) {
-         consumeLine(buf);
+         if (!consumeLine(buf)) {
+            buf.readerIndex(index);
+            return null;
+         }
          throw new UnsupportedOperationException(id.toString(US_ASCII));
       }
    }
@@ -98,11 +125,15 @@ public class TextIntrinsics {
    }
 
    public static byte[] text_key(ByteBuf buf, TokenReader reader) {
+      int index = buf.readerIndex();
       ByteBuf s = token(buf, reader.forToken(TEXT));
       if (s == null || !s.isReadable()) {
          return null;
       } else if (s.readableBytes() > 250) {
-         consumeLine(buf);
+         if (!consumeLine(buf)) {
+            buf.readerIndex(index);
+            return null;
+         }
          throw new IllegalArgumentException("Key length over the 250 character limit");
       } else {
          byte[] b = new byte[s.readableBytes()];
@@ -112,16 +143,28 @@ public class TextIntrinsics {
    }
 
    public static List<byte[]> text_list(ByteBuf buf, TokenReader reader) {
-      List<byte[]> list = new ArrayList<>();
-      for (byte[] b = text(buf, reader); b != null; b = text(buf, reader)) {
-         list.add(b);
-      }
-      return list;
+      return readByteList(buf, reader);
    }
 
    public static List<byte[]> text_key_list(ByteBuf buf, TokenReader reader) {
+      return readByteList(buf, reader);
+   }
+
+   private static List<byte[]> readByteList(ByteBuf buf, TokenReader reader) {
+      buf.markReaderIndex();
       List<byte[]> list = new ArrayList<>();
-      for (byte[] b = text_key(buf, reader); b != null; b = text_key(buf, reader)) {
+      while (true) {
+         int r = buf.readerIndex();
+         byte[] b = text_key(buf, reader);
+         if (b == null) {
+            // If element is null and still same index on reader, the buffer is not complete to read the next element.
+            if (buf.readerIndex() == r) {
+               buf.resetReaderIndex();
+               return Collections.emptyList();
+            }
+            break;
+         }
+
          list.add(b);
       }
       return list;
@@ -139,16 +182,23 @@ public class TextIntrinsics {
             while (buf.readableBytes() > 0) {
                b = buf.readUnsignedByte();
                if (b != TextConstants.NOREPLY[pos]) {
-                  consumeLine(buf);
-                  throw new IllegalArgumentException();
+                  if (!consumeLine(buf)) {
+                     buf.resetReaderIndex();
+                     return false;
+                  }
+                  throw TokenReader.INVALID_TOKEN;
                }
                if (++pos == TextConstants.NOREPLY.length) {
                   return true;
                }
             }
          } else {
-            consumeLine(buf);
-            throw new IllegalArgumentException();
+            if (!consumeLine(buf)) {
+               buf.resetReaderIndex();
+               return false;
+            }
+
+            throw TokenReader.INVALID_TOKEN;
          }
       }
       buf.resetReaderIndex();

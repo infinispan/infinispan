@@ -27,6 +27,7 @@ public abstract class MemcachedMultiNodeTest extends MultipleCacheManagersTest {
 
    protected static String cacheName = "MemcachedReplSync";
    protected int nodeCount = 2;
+   protected boolean replayDecoder = true;
 
    protected List<MemcachedServer> servers = new ArrayList<>(nodeCount);
    protected List<MemcachedClient> clients = new ArrayList<>(nodeCount);
@@ -42,10 +43,10 @@ public abstract class MemcachedMultiNodeTest extends MultipleCacheManagersTest {
 
       waitForClusterToForm();
       MemcachedServerConfigurationBuilder builder = serverBuilder().defaultCacheName(cacheName).protocol(getProtocol());
-      MemcachedServer server1 = new MemcachedServer();
+      MemcachedServer server1 = MemcachedTestingUtil.createMemcachedServer(replayDecoder);
       server1.start(builder.build(), cacheManagers.get(0));
       servers.add(server1);
-      MemcachedServer server2 = new MemcachedServer();
+      MemcachedServer server2 = MemcachedTestingUtil.createMemcachedServer(replayDecoder);
       server2.start(builder.port(server1.getPort() + 50).build(), cacheManagers.get(1));
       servers.add(server2);
       servers.forEach(s -> {

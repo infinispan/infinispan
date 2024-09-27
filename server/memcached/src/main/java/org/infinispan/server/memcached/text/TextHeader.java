@@ -27,7 +27,7 @@ public class TextHeader extends Header {
 
    @Override
    public String getOp() {
-      return op.name();
+      return op != null ? op.name() : null;
    }
 
    @Override
