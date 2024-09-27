@@ -197,7 +197,12 @@ public abstract class AbstractAsyncPublisherHandler<Target, Output, InitialRespo
       @Override
       public void accept(Type response, Throwable throwable) {
          if (throwable != null) {
-            handleThrowableInResponse(throwable, currentTarget);
+            try {
+               handleThrowableInResponse(throwable, currentTarget);
+            } catch (Throwable innerT) {
+               // If there was an exception while processing an exception immediately set it on the flowable
+               flowableProcessor.onError(innerT);
+            }
             return;
          }
          try {

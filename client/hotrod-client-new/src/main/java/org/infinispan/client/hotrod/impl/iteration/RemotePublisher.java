@@ -144,7 +144,10 @@ public class RemotePublisher<K, E> implements Publisher<Map.Entry<K, E>> {
    }
 
    void erroredServer(SocketAddress socketAddress) {
-      failedServers.add(socketAddress);
+      // socketAddress is null if we don't have a CH or if the CH contains an address that is already in failedServers
+      if (socketAddress != null) {
+         failedServers.add(socketAddress);
+      }
    }
 
    CompletionStage<Void> sendCancel(byte[] iterationId, SocketAddress socketAddress) {
