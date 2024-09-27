@@ -148,7 +148,7 @@
                         <phase>integration-test</phase>
                         <configuration>
                            <buildArgs>
-                              -J-Xmx5g
+                              -J-Xmx10g
                               -Ob
                               -J-Djava.util.logging.manager=org.jboss.logmanager.LogManager
                               -H:+AllowDeprecatedBuilderClassesOnImageClasspath
