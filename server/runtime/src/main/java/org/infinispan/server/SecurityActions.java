@@ -3,6 +3,7 @@ package org.infinispan.server;
 import static org.infinispan.security.Security.doPrivileged;
 
 import java.security.Provider;
+import java.util.Collection;
 import java.util.function.Supplier;
 
 import javax.naming.NamingException;
@@ -59,6 +60,12 @@ final class SecurityActions {
       doPrivileged(() -> {
          server.start(configuration, cacheManager);
          return null;
+      });
+   }
+
+   static void postStartProtocolServer(Collection<ProtocolServer> servers) {
+      doPrivileged(() -> {
+         servers.forEach(ProtocolServer::postStart);
       });
    }
 
