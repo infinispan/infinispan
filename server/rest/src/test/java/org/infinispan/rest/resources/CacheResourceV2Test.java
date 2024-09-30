@@ -416,7 +416,6 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    public void testUpdateConfigurationAttribute() {
       String protoSchema = """
             package org.infinispan;
-
             /**
              * @Indexed
              */
@@ -1450,12 +1449,12 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
       String xml = String.format(
             """
-               <%s name="cacheName" mode="SYNC" configuration="parent">
-                  <memory storage="OBJECT" max-count="20"/>
-                  <persistence>
-                     <file-store/>
-                  </persistence>
-               </%s>""", root, root
+                  <%s name="cacheName" mode="SYNC" configuration="parent">
+                     <memory storage="OBJECT" max-count="20"/>
+                     <persistence>
+                        <file-store/>
+                     </persistence>
+                  </%s>""", root, root
       );
 
       CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=convert", Map.of(ACCEPT, APPLICATION_JSON_TYPE), RestEntity.create(APPLICATION_XML, xml));
@@ -1988,6 +1987,28 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       response = client.cache("impostor").createWithConfiguration(jsonEntity, VOLATILE);
       assertThat(response).isBadRequest();
       assertThat(response).containsReturnedText("The alias 'butch-cassidy' is already being used by cache 'robert-parker'");
+   }
+
+   @Test
+   public void testCacheAliasesSwitch() {
+      RestCacheClient wuMing1 = client.cache("wu-ming-1");
+      assertThat(wuMing1.createWithConfiguration(RestEntity.create(APPLICATION_JSON, """
+            { "distributed-cache" : { "statistics":true, "aliases": ["wu-ming"] } }
+            """), VOLATILE)).isOk();
+      RestCacheClient wuMing2 = client.cache("wu-ming-2");
+      assertThat(wuMing2.createWithConfiguration(RestEntity.create(APPLICATION_JSON, """
+            { "distributed-cache" : { "statistics":true } }
+            """), VOLATILE)).isOk();
+
+      // Write different data in the two backing caches
+      assertThat(wuMing1.put("key", "v1")).isOk();
+      assertThat(wuMing2.put("key", "v2")).isOk();
+
+      RestCacheClient wuMing = client.cache("wu-ming");
+      assertThat(wuMing.get("key")).isOk().hasReturnedText("v1");
+      // Flip the alias
+      assertThat(adminClient.cache("wu-ming-2").assignAlias("wu-ming")).isOk();
+      assertThat(wuMing.get("key")).isOk().hasReturnedText("v2");
    }
 
    @Test

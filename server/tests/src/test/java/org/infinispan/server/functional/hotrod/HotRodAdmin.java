@@ -103,8 +103,7 @@ public class HotRodAdmin {
       assertEquals("v1", wuMing.get("key"));
 
       // Flip the alias
-      admin.updateConfigurationAttribute("wu-ming-1", "aliases", "");
-      admin.updateConfigurationAttribute("wu-ming-2", "aliases", "wu-ming");
+      admin.assignAlias("wu-ming", "wu-ming-2");
 
       assertEquals("v2", wuMing.get("key"));
    }

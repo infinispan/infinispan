@@ -2,11 +2,13 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.commons.configuration.attributes.AttributeSerializer.STRING_COLLECTION;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.infinispan.commons.configuration.BasicConfiguration;
 import org.infinispan.commons.configuration.attributes.Attribute;
@@ -24,9 +26,9 @@ public class Configuration extends ConfigurationElement<Configuration> implement
    public static final AttributeDefinition<String> CONFIGURATION = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CONFIGURATION, null, String.class).immutable().build();
    public static final AttributeDefinition<Boolean> SIMPLE_CACHE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.SIMPLE_CACHE, false).immutable().build();
    @SuppressWarnings("unchecked")
-   public static final AttributeDefinition<List<String>> ALIASES = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ALIASES, null, (Class<List<String>>) (Class<?>) List.class)
+   public static final AttributeDefinition<Set<String>> ALIASES = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ALIASES, null, (Class<Set<String>>) (Class<?>) Set.class)
          .since(15, 0)
-         .initializer(ArrayList::new)
+         .initializer(HashSet::new)
          // Ignore attribute in match comparison
          .matcher(AttributeMatcher.alwaysTrue())
          .serializer(STRING_COLLECTION)
@@ -112,7 +114,7 @@ public class Configuration extends ConfigurationElement<Configuration> implement
       this.moduleConfiguration = Map.copyOf(modulesMap);
    }
 
-   public List<String> aliases() {
+   public Collection<String> aliases() {
       return attributes.attribute(ALIASES).get();
    }
 

@@ -5,9 +5,13 @@ import static org.infinispan.util.logging.Log.CONFIG;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
@@ -31,7 +35,6 @@ public class ConfigurationManager {
    private final GlobalConfiguration globalConfiguration;
    private final Map<String, Configuration> namedConfiguration;
    private final Map<String, String> aliases;
-
 
    public ConfigurationManager(GlobalConfiguration globalConfiguration) {
       this.globalConfiguration = globalConfiguration;
@@ -94,7 +97,7 @@ public class ConfigurationManager {
 
    public Configuration putConfiguration(String cacheName, Configuration configuration) {
       // This will fail if the names are already in use
-      addAliases(cacheName, configuration.aliases());
+      addAliases(cacheName, configuration.aliases(), false);
       namedConfiguration.put(cacheName, configuration);
       configuration.attributes().attribute(Configuration.ALIASES).addListener(new AliasListener(cacheName));
       return configuration;
@@ -107,7 +110,7 @@ public class ConfigurationManager {
    public void removeConfiguration(String cacheName) {
       Configuration removed = namedConfiguration.remove(cacheName);
       if (removed != null) {
-         removed.attributes().attribute(Configuration.ALIASES).removeListener(f -> f.getClass() == AliasListener.class);
+         removed.attributes().attribute(Configuration.ALIASES).removeListener(AliasListener.FILTER);
          removeAliases(removed.aliases());
       }
    }
@@ -135,7 +138,7 @@ public class ConfigurationManager {
       return holder;
    }
 
-   private void addAliases(String cacheName, Collection<String> aliases) {
+   private Map<String, String> addAliases(String cacheName, Collection<String> aliases, boolean force) {
       synchronized (this.aliases) {
          for (String alias : aliases) {
             // Ensure there are no cache name conflicts
@@ -143,14 +146,19 @@ public class ConfigurationManager {
                throw CONFIG.duplicateCacheName(alias);
             }
             // Ensure there are no alias name conflicts
-            if (this.aliases.containsKey(alias)) {
+            if (!force && this.aliases.containsKey(alias)) {
                throw CONFIG.duplicateAliasName(alias, this.aliases.get(alias));
             }
          }
+         Map<String, String> oldOwners = new HashMap<>();
          // Now we can register the aliases
          for (String alias : aliases) {
-            this.aliases.put(alias, cacheName);
+            String old = this.aliases.put(alias, cacheName);
+            if (old != null) {
+               oldOwners.put(alias, old);
+            }
          }
+         return oldOwners;
       }
    }
 
@@ -164,23 +172,38 @@ public class ConfigurationManager {
       return aliases.getOrDefault(cacheName, cacheName);
    }
 
-   class AliasListener implements AttributeListener<List<String>> {
+   class AliasListener implements AttributeListener<Set<String>> {
+      static final Predicate<AttributeListener<Set<String>>> FILTER = f -> f.getClass() == AliasListener.class;
       private final String cacheName;
 
       AliasListener(String cacheName) {
          this.cacheName = cacheName;
       }
 
-      public void attributeChanged(Attribute<List<String>> attribute, List<String> oldValues) {
+      public void attributeChanged(Attribute<Set<String>> attribute, Set<String> oldValues) {
+         Map<String, String> oldOwners;
          synchronized (aliases) {
             // Ensure that any new aliases aren't registered yet
             List<String> newValues = new ArrayList<>(attribute.get());
             newValues.removeAll(oldValues);
-            addAliases(cacheName, newValues);
+            oldOwners = addAliases(cacheName, newValues, true);
             // Now remove the ones that are no longer needed
             List<String> removedValues = new ArrayList<>(oldValues);
             removedValues.removeAll(attribute.get());
             removeAliases(removedValues);
+         }
+         // alter all the old owners, removing the aliases from their configuration
+         for (Map.Entry<String, String> oldOwner : oldOwners.entrySet()) {
+            String otherCacheName = oldOwner.getValue();
+            Configuration otherConfiguration = ConfigurationManager.this.namedConfiguration.get(otherCacheName);
+            Attribute<Set<String>> otherAliases = otherConfiguration.attributes().attribute(Configuration.ALIASES);
+            // Remove the other listener
+            otherAliases.removeListener(FILTER);
+            Set<String> list = new HashSet<>(otherAliases.get());
+            list.remove(oldOwner.getKey());
+            otherAliases.set(list);
+            // Reinstall the listener
+            otherAliases.addListener(new AliasListener(otherCacheName));
          }
       }
    }

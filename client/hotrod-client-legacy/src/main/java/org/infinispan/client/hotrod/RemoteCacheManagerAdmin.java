@@ -117,6 +117,26 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
     */
    void updateIndexSchema(String cacheName) throws HotRodClientException;
 
+   /**
+    * Updates a mutable configuration attribute for the given cache.
+    *
+    * @param cacheName the name of the cache on which the attribute will be updated
+    * @param attribute the path of the attribute we want to change
+    * @param value the new value to apply to the attribute
+    * @throws HotRodClientException
+    */
    @Override
    void updateConfigurationAttribute(String cacheName, String attribute, String value) throws HotRodClientException;
+
+   /**
+    * Assign an alias to a cache. If the alias was already associated with another cache, the association will be reassigned to the specified cache.
+    * If the alias was not associated with any cache, it is created and associated to the specified cache. If the alias was already associated with the
+    * specified cache, this operation does nothing.
+    *
+    * @param aliasName the name of the alias
+    * @param cacheName the name of the cache to which the alias should be associated
+    * @throws HotRodClientException
+    */
+   @Override
+   void assignAlias(String aliasName, String cacheName) throws HotRodClientException;
 }

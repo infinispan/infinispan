@@ -37,6 +37,4 @@ public class CacheAliasTest extends SingleCacheManagerTest {
             cacheManager.defineConfiguration("cacheC", new ConfigurationBuilder().aliases("0").build())
       );
    }
-
-
 }

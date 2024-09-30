@@ -4,6 +4,8 @@ import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.security.auth.Subject;
 
@@ -118,7 +120,22 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
       Configuration config = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
       Attribute<?> attribute = config.findAttribute(attributeName);
       attribute.fromString(attributeValue);
-      flags.add(CacheContainerAdmin.AdminFlag.UPDATE);
-      join(clusterConfigurationManager.getOrCreateCache(cacheName, config, flags));
+      EnumSet<AdminFlag> newFlags = flags.clone();
+      newFlags.add(CacheContainerAdmin.AdminFlag.UPDATE);
+      join(clusterConfigurationManager.getOrCreateCache(cacheName, config, newFlags));
+   }
+
+   @Override
+   public void assignAlias(String aliasName, String cacheName) {
+      authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
+      Cache<Object, Object> cache = cacheManager.getCache(cacheName);
+      Configuration config = cache.getCacheConfiguration();
+      Attribute<Set<String>> attribute = config.attributes().attribute(Configuration.ALIASES);
+      Set<String> aliases = new HashSet<>(attribute.get());
+      aliases.add(aliasName);
+      attribute.set(aliases);
+      EnumSet<AdminFlag> newFlags = flags.clone();
+      newFlags.add(CacheContainerAdmin.AdminFlag.UPDATE);
+      join(clusterConfigurationManager.getOrCreateCache(cacheName, config, newFlags));
    }
 }

@@ -19,6 +19,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionInfo;
@@ -31,7 +32,9 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
+import org.infinispan.notifications.cachemanagerlistener.annotation.ConfigurationChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
+import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -52,7 +55,6 @@ import org.infinispan.telemetry.SpanCategory;
 import org.infinispan.telemetry.impl.CacheSpanAttribute;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.KeyValuePair;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.LogFactory;
 
@@ -316,6 +318,11 @@ public class RestCacheManager<V> {
       @CacheStopped
       public void cacheStopped(CacheStoppedEvent event) {
          resetCacheInfo(event.getCacheName());
+      }
+
+      @ConfigurationChanged
+      public void configurationChanged(ConfigurationChangedEvent event) {
+         knownCaches.clear(); // TODO: be less aggressive
       }
    }
 

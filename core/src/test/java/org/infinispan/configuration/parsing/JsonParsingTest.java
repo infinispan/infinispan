@@ -42,7 +42,7 @@ public class JsonParsingTest extends AbstractInfinispanTest {
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true, System.getProperties());
       ConfigurationBuilderHolder holder = parserRegistry.parseFile("configs/aliases-test.json");
       Configuration cache = holder.getNamedConfigurationBuilders().get("anotherRespCache").build();
-      assertEquals(List.of("1"), cache.aliases());
+      assertEquals(Set.of("1"), cache.aliases());
    }
 
    public void testNaming() {
