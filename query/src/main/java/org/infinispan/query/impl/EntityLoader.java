@@ -1,14 +1,9 @@
 package org.infinispan.query.impl;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Set;
 
-import org.hibernate.search.engine.common.timing.Deadline;
-import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionEntityLoader;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 
@@ -17,54 +12,20 @@ import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
  * @author Marko Luksa
  * @since 5.0
  */
-public final class EntityLoader<E> implements PojoSelectionEntityLoader<EntityLoaded<E>> {
+public final class EntityLoader<E> extends BaseEntityLoader<E, Object> {
 
-   private final AdvancedCache<?, E> cache;
-   private final LocalQueryStatistics queryStatistics;
 
-   EntityLoader(AdvancedCache<?, E> cache, LocalQueryStatistics queryStatistics) {
-      this.cache = cache;
-      this.queryStatistics = queryStatistics;
+   EntityLoader(AdvancedCache<Object, Object> cache, LocalQueryStatistics queryStatistics) {
+      super(cache, queryStatistics);
    }
 
    @Override
-   public List<EntityLoaded<E>> loadBlocking(List<?> identifiers, Deadline deadline) {
-      if (identifiers.isEmpty()) return Collections.emptyList();
-
-      int entitiesSize = identifiers.size();
-      LinkedHashSet<Object> keys = new LinkedHashSet<>(entitiesSize);
-      for (Object identifier : identifiers) {
-         keys.add(cache.getKeyDataConversion().fromStorage(identifier));
-      }
-
-      long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
-
-      // getAll instead of multiple gets to get all the results in the same call
-      Map<?, E> values = cache.getAll(keys);
-
-      if (queryStatistics.isEnabled()) queryStatistics.entityLoaded(System.nanoTime() - start);
-
-      ArrayList<EntityLoaded<E>> result = new ArrayList<>(entitiesSize);
-      for (Object key : keys) {
-         // if the entity was present at indexing time and
-         // it is not present anymore now at searching time,
-         // we will add a null here
-         result.add(new EntityLoaded<>(values.get(key), null));
-      }
-
-      return result;
+   Map<Object, Object> loadEntries(List<?> keys) {
+      return cache.withStorageMediaType().getAll(Set.copyOf(keys));
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      EntityLoader<?> that = (EntityLoader<?>) o;
-      return Objects.equals(cache, that.cache) && Objects.equals(queryStatistics, that.queryStatistics);
-   }
-
-   @Override
-   public int hashCode() {
-      return Objects.hash(cache, queryStatistics);
+   EntityLoaded<E> toEntityLoader(Object value) {
+      return value == null ? null : new EntityLoaded<>(fromStorage(value), null);
    }
 }

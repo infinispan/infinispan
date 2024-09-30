@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -161,13 +162,14 @@ class DistributedIterator<T> implements ClosableIteratorWithCount<T> {
    }
 
    protected void getAllAndStore(List<KeyAndScore> keysAndScores) {
-      var keySet = keysAndScores.stream()
-            .map(keyAndScore -> keyAndScore.key)
-            .collect(Collectors.toSet());
-      Map<Object, Object> map = cache.getAll(keySet);
+      var map = cache.getAll(toKeySet(keysAndScores));
       keysAndScores.stream()
-            .map(keyAndScore -> decorate(keyAndScore.key, map.get(keyAndScore.key), keyAndScore.score, null))
+            .map(keyAndScore -> decorate(keyAndScore.key(), map.get(keyAndScore.key()), keyAndScore.score(), null))
             .forEach(values::add);
+   }
+
+   protected static Set<Object> toKeySet(List<KeyAndScore> keysAndScores) {
+      return keysAndScores.stream().map(KeyAndScore::key).collect(Collectors.toSet());
    }
 
    private Object keyFromStorage(Object key) {
@@ -210,15 +212,6 @@ class DistributedIterator<T> implements ClosableIteratorWithCount<T> {
       return new TotalHitCount(resultSize, true);
    }
 
-   static class KeyAndScore {
-      final Object key;
-      final float score;
-
-      Object covertedKey;
-
-      KeyAndScore(Object key, float score) {
-         this.key = key;
-         this.score = score;
-      }
+   record KeyAndScore(Object key, float score) {
    }
 }
