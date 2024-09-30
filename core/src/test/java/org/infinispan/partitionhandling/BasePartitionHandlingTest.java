@@ -24,7 +24,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.TestResourceTracker;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.conflict.EntryMergePolicy;
@@ -495,28 +494,6 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       // Otherwise broadcasts from the first partition would be visible in the other partitions
       for (Partition p : partitions) {
          p.partition();
-      }
-   }
-
-   protected void asymmetricSplitCluster(int[] part) {
-      log.tracef("Creating asymmetric split with sub group of %s", Util.toStr(part));
-      List<Address> allMembers = channel(0).getView().getMembers();
-      partitions = new Partition[2];
-      {
-         Partition p = new Partition(allMembers);
-         for (int j : part) {
-            p.addNode(channel(j));
-         }
-         partitions[0] = p;
-         p.discardOtherMembers();
-         p.partition();
-      }
-      {
-         Partition p = new Partition(allMembers);
-         partitions[1] = p;
-         for (int i = 0; i < allMembers.size(); ++i) {
-            p.addNode(channel(i));
-         }
       }
    }
 
