@@ -30,6 +30,8 @@ import java.util.stream.StreamSupport;
 import javax.security.auth.Subject;
 import javax.transaction.xa.XAResource;
 
+import jakarta.transaction.TransactionManager;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
@@ -50,7 +52,9 @@ import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.SpliteratorMapper;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.container.DataContainer;
@@ -95,13 +99,9 @@ import org.infinispan.stream.impl.local.EntryStreamSupplier;
 import org.infinispan.stream.impl.local.KeyStreamSupplier;
 import org.infinispan.stream.impl.local.LocalCacheStream;
 import org.infinispan.util.DataContainerRemoveIterator;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import jakarta.transaction.TransactionManager;
 
 /**
  * Simple local cache without interceptor stack.
@@ -1090,7 +1090,32 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache
 
    @Override
    public CompletableFuture<V> getAsync(K key) {
-      return CompletableFuture.completedFuture(get(key));
+      InternalCacheEntry<K, V> e = getDataContainer().peek(key);
+      if (e == null) return CompletableFutures.completedNull();
+      if (!e.canExpire())
+         return CompletableFuture.completedFuture(get(key));
+
+      long currentTimeMs = timeService.wallClockTime();
+      if (!e.isExpired(currentTimeMs))
+         return invokeGetListener(e).thenApply(ignore -> e.getValue()).toCompletableFuture();
+
+      InternalExpirationManager<K, V> iem = (InternalExpirationManager<K, V>) getExpirationManager();
+      return iem.entryExpiredInMemory(e, currentTimeMs, false)
+            .thenApply(expired -> {
+               if (expired) return null;
+               return e.getValue();
+            })
+            .thenCompose(v -> v != null
+                  ? invokeGetListener(e).thenApply(ignore -> v)
+                  : CompletableFutures.completedNull());
+   }
+
+   private CompletionStage<Void> invokeGetListener(InternalCacheEntry<K, V> e) {
+      if (!hasListeners) return CompletableFutures.completedNull();
+
+      return cacheNotifier.notifyCacheEntryVisited(e.getKey(), e.getValue(), true, ImmutableContext.INSTANCE, null)
+            .thenCompose(ignore ->
+                  cacheNotifier.notifyCacheEntryVisited(e.getKey(), e.getValue(), false, ImmutableContext.INSTANCE, null));
    }
 
    @Override
