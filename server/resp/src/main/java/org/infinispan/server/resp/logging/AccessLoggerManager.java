@@ -44,7 +44,7 @@ public class AccessLoggerManager implements IntConsumer {
 
    public void track(RespCommand req, List<byte[]> arguments) {
       // Unknown command.
-      if (req == null) return;
+      if (req == null) req = UnknownCommand.UNKNOWN_COMMAND;
 
       tracker.track(req, arguments);
    }
@@ -125,6 +125,14 @@ public class AccessLoggerManager implements IntConsumer {
       @Override
       public void operationComplete(ChannelProgressiveFuture future) {
          data.log(future);
+      }
+   }
+
+   private static final class UnknownCommand extends RespCommand {
+      private static final UnknownCommand UNKNOWN_COMMAND = new UnknownCommand();
+
+      private UnknownCommand() {
+         super("UNKNOWN_COMMAND", 0, 0, 0, 0);
       }
    }
 }
