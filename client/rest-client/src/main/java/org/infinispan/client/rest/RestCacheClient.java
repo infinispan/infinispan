@@ -158,11 +158,11 @@ public interface RestCacheClient {
    /**
     * PUT an entry with metadata.
     *
-    * @param key The key
+    * @param key            The key
     * @param keyContentType The {@link MediaType} of the key
-    * @param value a {@link RestEntity} containing the value and its MediaType
-    * @param ttl The time to live value
-    * @param maxIdle The max idle value
+    * @param value          a {@link RestEntity} containing the value and its MediaType
+    * @param ttl            The time to live value
+    * @param maxIdle        The max idle value
     * @return
     */
    CompletionStage<RestResponse> put(String key, String keyContentType, RestEntity value, long ttl, long maxIdle);
@@ -483,7 +483,7 @@ public interface RestCacheClient {
     *
     * @deprecated Use {@link #searchStats()} instead.
     */
-   @Deprecated(forRemoval=true, since = "12.0")
+   @Deprecated(forRemoval = true, since = "12.0")
    CompletionStage<RestResponse> queryStats();
 
    /**
@@ -491,7 +491,7 @@ public interface RestCacheClient {
     *
     * @deprecated Use {@link #searchStats()} instead.
     */
-   @Deprecated(forRemoval=true, since = "12.0")
+   @Deprecated(forRemoval = true, since = "12.0")
    CompletionStage<RestResponse> indexStats();
 
    /**
@@ -499,7 +499,7 @@ public interface RestCacheClient {
     *
     * @deprecated Use {@link #searchStats()} and {@link #clearSearchStats()}.
     */
-   @Deprecated(forRemoval=true, since = "12.0")
+   @Deprecated(forRemoval = true, since = "12.0")
    CompletionStage<RestResponse> clearQueryStats();
 
 
@@ -550,6 +550,15 @@ public interface RestCacheClient {
     * Retrieves all available configuration attributes for this cache optionally including values and types
     */
    CompletionStage<RestResponse> configurationAttributes(boolean full);
+
+   /**
+    * Assign an alias to a cache. If the alias was already associated with another cache, the association will be reassigned to the specified cache.
+    * If the alias was not associated with any cache, it is created and associated to the specified cache. If the alias was already associated with the
+    * specified cache, this operation does nothing.
+    *
+    * @param alias the name of the alias
+    */
+   CompletionStage<RestResponse> assignAlias(String alias);
 
    /**
     * Retrieves the Cache's Availability status.

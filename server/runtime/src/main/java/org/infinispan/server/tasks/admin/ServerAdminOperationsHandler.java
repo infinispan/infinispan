@@ -2,6 +2,7 @@ package org.infinispan.server.tasks.admin;
 
 import org.infinispan.server.core.admin.AdminOperationsHandler;
 import org.infinispan.server.core.admin.AdminServerTask;
+import org.infinispan.server.core.admin.embeddedserver.CacheAssignAliasTask;
 import org.infinispan.server.core.admin.embeddedserver.CacheNamesTask;
 import org.infinispan.server.core.admin.embeddedserver.CacheReindexTask;
 import org.infinispan.server.core.admin.embeddedserver.CacheRemoveTask;
@@ -26,6 +27,7 @@ public class ServerAdminOperationsHandler extends AdminOperationsHandler {
       String includeLoggingResource = System.getProperty("infinispan.server.resource.logging", "true");
       if (Boolean.parseBoolean(includeLoggingResource)) {
          return new AdminServerTask[]{
+               new CacheAssignAliasTask(),
                new CacheCreateTask(),
                new CacheGetOrCreateTask(),
                new CacheNamesTask(),
@@ -47,6 +49,7 @@ public class ServerAdminOperationsHandler extends AdminOperationsHandler {
    // Infinispan as well
    private static AdminServerTask<?>[] generateTasksWithoutLogging() {
       return new AdminServerTask[]{
+            new CacheAssignAliasTask(),
             new CacheCreateTask(),
             new CacheGetOrCreateTask(),
             new CacheNamesTask(),

@@ -207,6 +207,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("get-mutable-attributes").permission(AuthorizationPermission.ADMIN).handleWith(this::getCacheConfigMutableAttributes)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("get-mutable-attribute").permission(AuthorizationPermission.ADMIN).handleWith(this::getCacheConfigMutableAttribute)
             .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("set-mutable-attribute").permission(AuthorizationPermission.ADMIN).handleWith(this::setCacheConfigMutableAttribute)
+            .invocation().methods(POST).path("/v2/caches/{cacheName}").withAction("assign-alias").permission(AuthorizationPermission.ADMIN).handleWith(this::assignAlias)
 
               // Stats
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("stats").handleWith(this::getCacheStats)
@@ -402,7 +403,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       Boolean rebalancingEnabled;
       long rebalancingRequested;
       long rebalancingInflight;
-      List<String> aliases;
+      Collection<String> aliases;
       Stats stats;
       Integer size;
       String configuration;
@@ -1193,6 +1194,22 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       EmbeddedCacheManagerAdmin administration = invocationHelper.getRestCacheManager().getCacheManagerAdmin(request);
       return CompletableFuture.supplyAsync(() -> {
          administration.updateConfigurationAttribute(cacheName, attributeName, attributeValue);
+         return responseBuilder.status(OK).build();
+      }, invocationHelper.getExecutor());
+   }
+
+   private CompletionStage<RestResponse> assignAlias(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
+      String alias = request.getParameter("alias");
+      String cacheName = request.variables().get("cacheName");
+      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
+      if (cache == null) {
+         return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
+      }
+      invocationHelper.getRestCacheManager().getCacheManagerAdmin(request);
+      EmbeddedCacheManagerAdmin administration = invocationHelper.getRestCacheManager().getCacheManagerAdmin(request);
+      return CompletableFuture.supplyAsync(() -> {
+         administration.assignAlias(alias, cacheName);
          return responseBuilder.status(OK).build();
       }, invocationHelper.getExecutor());
    }

@@ -481,7 +481,7 @@ public class RestCacheClientJDK implements RestCacheClient {
       StringBuilder sb = new StringBuilder(path);
       sb.append("?action=set-mutable-attribute&attribute-name=");
       sb.append(sanitize(attribute));
-      for(String v : value) {
+      for (String v : value) {
          sb.append("&attribute-value=");
          sb.append(sanitize(v));
       }
@@ -496,6 +496,11 @@ public class RestCacheClientJDK implements RestCacheClient {
    @Override
    public CompletionStage<RestResponse> configurationAttributes(boolean full) {
       return client.get(path + "?action=get-mutable-attributes" + (full ? "&full=true" : ""));
+   }
+
+   @Override
+   public CompletionStage<RestResponse> assignAlias(String alias) {
+      return client.post(path + "?action=assign-alias&alias=" + sanitize(alias));
    }
 
    @Override

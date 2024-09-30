@@ -107,7 +107,6 @@ public interface CacheContainerAdmin<C extends CacheContainerAdmin, A extends Ba
 
    /**
     * Sets any additional {@link AdminFlag}s to be used when performing administrative operations.
-    *
     * <b>Note:</b> whether an operation supports a certain flag or not is dependent on the configuration and environment.
     * If a flag cannot be honored, the operation will fail with an exception.
     *
@@ -118,7 +117,6 @@ public interface CacheContainerAdmin<C extends CacheContainerAdmin, A extends Ba
 
    /**
     * Sets any additional {@link AdminFlag}s to be used when performing administrative operations.
-    *
     * <b>Note:</b> whether an operation supports a certain flag or not is dependent on the configuration and environment.
     * If a flag cannot be honored, the operation will fail with an exception.
     *
@@ -150,4 +148,14 @@ public interface CacheContainerAdmin<C extends CacheContainerAdmin, A extends Ba
     * @param value the new value to apply to the attribute
     */
    void updateConfigurationAttribute(String cacheName, String attribute, String value);
+
+   /**
+    * Assign an alias to a cache. If the alias was already associated with another cache, the association will be reassigned to the specified cache.
+    * If the alias was not associated with any cache, it is created and associated to the specified cache. If the alias was already associated with the
+    * specified cache, this operation does nothing.
+    *
+    * @param aliasName the name of the alias
+    * @param cacheName the name of the cache to which the alias should be associated
+    */
+   void assignAlias(String aliasName, String cacheName);
 }

@@ -25,6 +25,7 @@ import org.infinispan.commons.configuration.BasicConfiguration;
  */
 public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
    public static final String CACHE_NAME = "name";
+   public static final String ALIAS_NAME = "alias";
    public static final String CACHE_TEMPLATE = "template";
    public static final String CACHE_CONFIGURATION = "configuration";
    public static final String ATTRIBUTE = "attribute";
@@ -157,6 +158,17 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       params.put(CACHE_NAME, string(name));
       if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
       await(operationDispatcher.execute(operationsFactory.executeOperation("@@template@remove", params)));
+   }
+
+   @Override
+   public void assignAlias(String aliasName, String cacheName) throws HotRodClientException {
+      Map<String, byte[]> params = new HashMap<>(4);
+      params.put(CACHE_NAME, string(cacheName));
+      params.put(ALIAS_NAME, string(aliasName));
+      if (flags != null && !flags.isEmpty()) {
+         params.put(FLAGS, flags(flags));
+      }
+      await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@assignAlias", params)));
    }
 
    private static byte[] flags(EnumSet<AdminFlag> flags) {

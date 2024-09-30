@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
@@ -61,7 +62,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
 
    @Override
    public ConfigurationBuilder aliases(String... aliases) {
-      List<String> existing = attributes.attribute(ALIASES).get();
+      Set<String> existing = attributes.attribute(ALIASES).get();
       Collections.addAll(existing, aliases);
       attributes.attribute(ALIASES).set(existing);
       return this;
