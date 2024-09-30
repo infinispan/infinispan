@@ -1,6 +1,7 @@
 package org.infinispan.server.resp.logging;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Map;
 
@@ -62,6 +63,10 @@ public class RespAccessLoggingTest extends SingleNodeRespBaseTest {
       // MSET uses multiple keys with values.
       redis.mset(Map.of("k1", "v1", "k2", "v2", "k3", "v3"));
 
+      // Unknown command.
+      assertThatThrownBy(() -> redis.xadd("something", "kv1", "kv2"))
+            .hasMessageContaining("unknown command");
+
       server.getTransport().stop();
 
       assertThat(logAppender.getLog(0))
@@ -92,5 +97,9 @@ public class RespAccessLoggingTest extends SingleNodeRespBaseTest {
       assertThat(logAppender.getLog(size + 3))
             // We invoke MSET with 3 keys.
             .matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"MSET /\\[?(\\[B0x\\w+[,\\]]){3} RESP\" OK \\d+ \\d+ \\d+$");
+
+      assertThat(logAppender.getLog(size + 4))
+            // We invoke an unknown command.
+            .matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"UNKNOWN_COMMAND /\\[] RESP\" OK \\d+ \\d+ \\d+$");
    }
 }
