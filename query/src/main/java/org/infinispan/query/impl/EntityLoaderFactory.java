@@ -10,9 +10,10 @@ public class EntityLoaderFactory<E> {
    private final EntityLoader<E> entityLoader;
    private final MetadataEntityLoader<E> metadataEntityLoader;
 
-   public EntityLoaderFactory(AdvancedCache<?, E> cache, LocalQueryStatistics queryStatistics) {
-      this.entityLoader = new EntityLoader<>(cache, queryStatistics);
-      this.metadataEntityLoader = new MetadataEntityLoader<>(cache, queryStatistics);
+   @SuppressWarnings("unchecked")
+   public EntityLoaderFactory(AdvancedCache<?, ?> cache, LocalQueryStatistics queryStatistics) {
+      this.entityLoader = new EntityLoader<>((AdvancedCache<Object, Object>) cache, queryStatistics);
+      this.metadataEntityLoader = new MetadataEntityLoader<>((AdvancedCache<Object, Object>) cache, queryStatistics);
    }
 
    public InfinispanLoadingContext.Builder<E> builder() {

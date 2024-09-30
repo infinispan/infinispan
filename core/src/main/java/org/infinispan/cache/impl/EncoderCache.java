@@ -150,13 +150,12 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    private Map<K, CacheEntry<K, V>> decodeEntryMapForRead(Map<K, CacheEntry<K, V>> map) {
       Map<K, CacheEntry<K, V>> entryMap = new HashMap<>(map.size());
-      map.values().forEach(v -> {
-         K originalKey = v.getKey();
-         K unwrappedKey = keyFromStorage(originalKey);
+      map.forEach((k, v) -> {
+         K unwrappedKey = keyFromStorage(k);
          V originalValue = v.getValue();
          V unwrappedValue = valueFromStorage(originalValue);
          CacheEntry<K, V> entryToPut;
-         if (unwrappedKey != originalKey || unwrappedValue != originalValue) {
+         if (unwrappedKey != k || unwrappedValue != originalValue) {
             entryToPut = convertEntry(unwrappedKey, unwrappedValue, v);
          } else {
             entryToPut = v;
@@ -943,8 +942,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
          V value = entry.getValue();
          V newValue = valueToStorage(value);
          if (key != newKey || value != newValue) {
-            if (o instanceof CacheEntry) {
-               CacheEntry returned = (CacheEntry) o;
+            if (o instanceof CacheEntry returned) {
                return convertEntry(newKey, newValue, returned);
             } else {
                return entryFactory.create(newKey, newValue, (Metadata) null);
