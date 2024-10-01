@@ -64,6 +64,19 @@ pipeline {
             }
         }
 
+        stage('Deploy snapshot') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    // from Jenkins docs: Note that the build result can only get worse, so you cannot change the result to SUCCESS if the current result is UNSTABLE or worse
+                    script {
+                        if (!env.BRANCH_NAME.startsWith('PR-')) {
+                            sh "$MAVEN_HOME/bin/mvn deploy -B -e -Pdistribution -Drelease-mode=upstream -DdeployServerZip=true -DskipTests -Dcheckstyle.skip=true"
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Image') {
             when {
                 expression {
@@ -174,19 +187,6 @@ pipeline {
                 sh 'find . -name "hs_err_*" -exec echo {} \\; -exec grep "^# " {} \\;'
             }
         }
-
-        stage('Deploy snapshot') {
-            steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    // from Jenkins docs: Note that the build result can only get worse, so you cannot change the result to SUCCESS if the current result is UNSTABLE or worse
-                    script {
-                        if (!env.BRANCH_NAME.startsWith('PR-')) {
-                            sh "$MAVEN_HOME/bin/mvn deploy -B -e -Pdistribution -Drelease-mode=upstream -DdeployServerZip=true -DskipTests -Dcheckstyle.skip=true"
-                        }
-                    }
-                }
-            }
-        }
     }
 
     post {
@@ -196,17 +196,17 @@ pipeline {
                          skipBlames: true,
                          quiet: true,
                          tools: [
-                mavenConsole(), java(), javaDoc(),
-                checkStyle(),
-                spotBugs(),
-                pmdParser(pattern: '**/target/pmd.xml'),
-                cpd(pattern: '**/target/cpd.xml')
-            ]
+                             mavenConsole(), java(), javaDoc(),
+                             checkStyle(),
+                             spotBugs(),
+                             pmdParser(pattern: '**/target/pmd.xml'),
+                             cpd(pattern: '**/target/cpd.xml')
+                         ]
             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-               script {
-                  env.TARGET_BRANCH = env.BRANCH_NAME.startsWith('PR-') ? env.CHANGE_TARGET : env.BRANCH_NAME
-                  sh 'FLAKY_TEST_GLOB="**/target/*-reports*/**/TEST-*FLAKY.xml" PROJECT_KEY=ISPN TYPE=Bug JENKINS_JOB_URL=$BUILD_URL TARGET_BRANCH=${TARGET_BRANCH} ./bin/jira/track_flaky_tests.sh'
-               }
+                script {
+                    env.TARGET_BRANCH = env.BRANCH_NAME.startsWith('PR-') ? env.CHANGE_TARGET : env.BRANCH_NAME
+                    sh 'FLAKY_TEST_GLOB="**/target/*-reports*/**/TEST-*FLAKY.xml" PROJECT_KEY=ISPN TYPE=Bug JENKINS_JOB_URL=$BUILD_URL TARGET_BRANCH=${TARGET_BRANCH} ./bin/jira/track_flaky_tests.sh'
+                }
             }
         }
 
