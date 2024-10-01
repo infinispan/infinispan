@@ -5,9 +5,12 @@ import static org.infinispan.configuration.parsing.ParseUtils.ignoreElement;
 import static org.infinispan.configuration.parsing.Parser.NAMESPACE;
 import static org.infinispan.util.logging.Log.CONFIG;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfiguredBy;
@@ -1477,10 +1480,9 @@ public class CacheParser implements ConfigurationParser {
                builder.tracing().enabled(ParseUtils.parseBoolean(reader, i, value));
                break;
             case CATEGORIES:
-               for (String p : reader.getListAttributeValue(i)) {
-                  SpanCategory spanCategory = SpanCategory.fromString(p);
-                  builder.tracing().enableCategory(spanCategory);
-               }
+               Stream<SpanCategory> spanCategories = Arrays.stream(reader.getListAttributeValue(i))
+                     .map(SpanCategory::fromString);
+               builder.tracing().spanCategories(spanCategories.collect(Collectors.toSet()));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);

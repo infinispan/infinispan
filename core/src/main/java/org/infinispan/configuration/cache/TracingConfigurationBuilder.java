@@ -73,6 +73,11 @@ public class TracingConfigurationBuilder extends AbstractConfigurationChildBuild
       return this;
    }
 
+   public void spanCategories(Set<SpanCategory> spanCategories) {
+      Attribute<Set<SpanCategory>> attribute = attributes.attribute(TracingConfiguration.CATEGORIES);
+      attribute.set(spanCategories);
+   }
+
    /**
     * Disable tracing for the given category on the given cache.
     * This property can be used to enable tracing at runtime.
@@ -120,8 +125,9 @@ public class TracingConfigurationBuilder extends AbstractConfigurationChildBuild
       INSTANCE;
 
       @Override
-      public Set<SpanCategory> parse(Class klass, String value) {
-         LinkedHashSet<SpanCategory> spanCategories = Arrays.stream(value.split(",")).sequential().map(String::trim)
+      public Set<SpanCategory> parse(Class<?> klass, String value) {
+         String[] split = (value.contains(",")) ? value.split(",") : value.split(" ");
+         LinkedHashSet<SpanCategory> spanCategories = Arrays.stream(split).sequential().map(String::trim)
                .map(SpanCategory::fromString)
                .collect(Collectors.toCollection(LinkedHashSet::new));
          if (spanCategories.contains(SpanCategory.SECURITY)) {
