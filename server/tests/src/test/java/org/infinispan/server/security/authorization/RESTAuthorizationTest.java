@@ -9,6 +9,9 @@ import static org.infinispan.client.rest.RestResponse.NOT_MODIFIED;
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.client.rest.RestResponse.TEMPORARY_REDIRECT;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
+import static org.infinispan.rest.tracing.RestTracingAttributeChangeTest.CACHE_DEFINITION;
+import static org.infinispan.rest.tracing.RestTracingAttributeChangeTest.CACHE_NAME;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.assertStatusAndBodyEquals;
 import static org.infinispan.server.test.core.Common.awaitStatus;
@@ -636,6 +639,20 @@ abstract class RESTAuthorizationTest {
          restClient = ext.rest().withClientConfiguration(restBuilders.get(type)).get();
          assertStatus(FORBIDDEN, restClient.server().overviewReport());
       }
+   }
+
+   @Test
+   public void updateConfigurationAttribute() {
+      RestEntity config = RestEntity.create(APPLICATION_XML, CACHE_DEFINITION);
+
+      RestCacheClient userCache = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN))
+            .get().cache(CACHE_NAME);
+      CompletionStage<RestResponse> createCache = userCache.createWithConfiguration(config);
+      ResponseAssertion.assertThat(createCache).isOk();
+
+      CompletionStage<RestResponse> categories = userCache
+            .updateConfigurationAttribute("tracing.categories", "cluster x-site");
+      ResponseAssertion.assertThat(categories).isOk();
    }
 
    private void createIndexedCache() {
