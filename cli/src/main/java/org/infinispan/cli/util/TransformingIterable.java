@@ -9,7 +9,7 @@ import java.util.function.Function;
  **/
 public class TransformingIterable<S, T> implements Iterable<T> {
 
-   public static Function<Map<String, String>, String> SINGLETON_MAP_VALUE = m -> m.values().iterator().next();
+   public static final Function<Map<String, String>, String> SINGLETON_MAP_VALUE = m -> m.values().iterator().next();
 
    private final Iterable<S> iterable;
    private final Function<S, T> transformer;

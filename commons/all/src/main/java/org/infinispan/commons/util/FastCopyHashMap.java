@@ -1,9 +1,11 @@
 package org.infinispan.commons.util;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
@@ -29,6 +31,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
    /**
     * Serialization ID
     */
+   @Serial
    private static final long serialVersionUID = 10929568968762L;
 
    /**
@@ -87,8 +90,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
 
    @SuppressWarnings("unchecked")
    public FastCopyHashMap(Map<? extends K, ? extends V> map) {
-      if (map instanceof FastCopyHashMap) {
-         FastCopyHashMap<? extends K, ? extends V> fast = (FastCopyHashMap<? extends K, ? extends V>) map;
+      if (map instanceof FastCopyHashMap<? extends K, ? extends V> fast) {
          this.table = (Entry<K, V>[]) fast.table.clone();
          this.loadFactor = fast.loadFactor;
          this.size = fast.size;
@@ -354,8 +356,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
    public void clear() {
       modCount++;
       Entry<K, V>[] table = this.table;
-      for (int i = 0; i < table.length; i++)
-         table[i] = null;
+      Arrays.fill(table, null);
 
       size = 0;
    }
@@ -406,6 +407,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
       System.out.println(" Max Distance:    " + maxSkew);
    }
 
+   @Serial
    @SuppressWarnings("unchecked")
    private void readObject(java.io.ObjectInputStream s) throws IOException, ClassNotFoundException {
       s.defaultReadObject();
@@ -421,7 +423,6 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
       }
    }
 
-   @SuppressWarnings("unchecked")
    private void putForCreate(K key, V value) {
       Entry<K, V>[] table = this.table;
       int hash = hash(key);
@@ -437,6 +438,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
       table[index] = new Entry<K, V>(key, hash, value);
    }
 
+   @Serial
    private void writeObject(java.io.ObjectOutputStream s) throws IOException {
       s.defaultWriteObject();
       s.writeInt(size);
@@ -454,14 +456,14 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
       private int expectedCount = modCount;
       private int current = -1;
       private boolean hasNext;
-      Entry<K, V> table[] = FastCopyHashMap.this.table;
+      Entry<K, V>[] table = FastCopyHashMap.this.table;
 
       @Override
       public boolean hasNext() {
          if (hasNext)
             return true;
 
-         Entry<K, V> table[] = this.table;
+         Entry<K, V>[] table = this.table;
          for (int i = next; i < table.length; i++) {
             if (table[i] != null) {
                next = i;

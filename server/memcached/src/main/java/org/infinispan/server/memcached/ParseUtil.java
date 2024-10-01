@@ -30,7 +30,7 @@ public class ParseUtil {
          '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
    };
 
-   public static byte[] ZERO = new byte[] { '0' };
+   public static final byte[] ZERO = new byte[] { '0' };
 
    public static long readLong(byte[] in) {
       if (in == null || in.length == 0)

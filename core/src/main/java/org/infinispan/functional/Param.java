@@ -226,7 +226,7 @@ public interface Param<P> {
 
 
       public static final int ID = ParamIds.REPLICATION_MODE_ID;
-      public static final ReplicationMode[] CACHED_VALUES = values();
+      static final ReplicationMode[] CACHED_VALUES = values();
 
       @Override
       public int id() {

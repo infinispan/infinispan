@@ -20,8 +20,8 @@ import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.server.resp.ExternalizerIds;
 @Scope(Scopes.NONE)
 public class EventListenerConverter<K, V, C> implements CacheEventConverter<K, V, C> {
-   public static AdvancedExternalizer<EventListenerConverter> EXTERNALIZER = new EventListenerConverter.Externalizer();
-   private DataConversion dc;
+   public static final AdvancedExternalizer<EventListenerConverter> EXTERNALIZER = new EventListenerConverter.Externalizer();
+   private final DataConversion dc;
 
    public EventListenerConverter(DataConversion dc) {
       this.dc = dc;

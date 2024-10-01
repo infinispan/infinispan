@@ -25,7 +25,7 @@ import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.server.resp.ExternalizerIds;
 
 public class EventListenerKeysFilter implements CacheEventFilter<Object, Object> {
-   public static AdvancedExternalizer<EventListenerKeysFilter> EXTERNALIZER = new EventListenerKeysFilter.Externalizer();
+   public static final AdvancedExternalizer<EventListenerKeysFilter> EXTERNALIZER = new EventListenerKeysFilter.Externalizer();
 
    private final Map<Integer, List<byte[]>> keys;
 

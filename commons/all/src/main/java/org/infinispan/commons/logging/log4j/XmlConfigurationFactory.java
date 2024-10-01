@@ -14,7 +14,7 @@ public class XmlConfigurationFactory extends ConfigurationFactory {
     /**
      * Valid file extensions for XML files.
      */
-    public static final String[] SUFFIXES = new String[] {".xml", "*"};
+    static final String[] SUFFIXES = new String[] {".xml", "*"};
 
     /**
      * Returns the Configuration.
