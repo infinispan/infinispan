@@ -288,7 +288,7 @@ public class MXParser implements XmlPullParser {
    protected int bufLoadFactor = 95;  // 99%
    //protected int bufHardLimit;  // only matters when expanding
 
-   protected char buf[] = new char[
+   protected char[] buf = new char[
          Runtime.getRuntime().freeMemory() > 1000000L ? READ_CHUNK_SIZE : 256];
    protected int bufSoftLimit = (bufLoadFactor * buf.length) / 100; // desirable size of buffer
    protected boolean preventBufferCompaction;
@@ -611,6 +611,7 @@ public class MXParser implements XmlPullParser {
       throw new XmlPullParserException("no content available to check for white spaces");
    }
 
+   @Override
    public String getText() {
       if (eventType == START_DOCUMENT || eventType == END_DOCUMENT) {
          return null;
@@ -627,6 +628,7 @@ public class MXParser implements XmlPullParser {
       return text;
    }
 
+   @Override
    public char[] getTextCharacters(int[] holderForStartAndLength) {
       if (eventType == TEXT) {
          if (usePC) {
@@ -637,7 +639,6 @@ public class MXParser implements XmlPullParser {
             holderForStartAndLength[0] = posStart;
             holderForStartAndLength[1] = posEnd - posStart;
             return buf;
-
          }
       } else if (eventType == START_TAG
             || eventType == END_TAG
@@ -669,6 +670,7 @@ public class MXParser implements XmlPullParser {
       //      return cb;
    }
 
+   @Override
    public String getNamespace() {
       if (eventType == START_TAG) {
          //return processNamespaces ? elUri[ depth - 1 ] : NO_NAMESPACE;
@@ -679,6 +681,7 @@ public class MXParser implements XmlPullParser {
       return null;
    }
 
+   @Override
    public String getName() {
       if (eventType == START_TAG) {
          //return elName[ depth - 1 ] ;
@@ -695,6 +698,7 @@ public class MXParser implements XmlPullParser {
       }
    }
 
+   @Override
    public String getPrefix() {
       if (eventType == START_TAG) {
          return elPrefix[depth];
@@ -704,17 +708,20 @@ public class MXParser implements XmlPullParser {
       return null;
    }
 
+   @Override
    public boolean isEmptyElementTag() throws XmlPullParserException {
       if (eventType != START_TAG) throw new XmlPullParserException(
             "parser must be on START_TAG to check for empty element", this, null);
       return emptyElementTag;
    }
 
+   @Override
    public int getAttributeCount() {
       if (eventType != START_TAG) return -1;
       return attributeCount;
    }
 
+   @Override
    public String getAttributeNamespace(int index) {
       if (eventType != START_TAG) throw new IndexOutOfBoundsException(
             "only START_TAG can have attributes");
@@ -724,6 +731,7 @@ public class MXParser implements XmlPullParser {
       return attributeUri[index];
    }
 
+   @Override
    public String getAttributeName(int index) {
       if (eventType != START_TAG) throw new IndexOutOfBoundsException(
             "only START_TAG can have attributes");
@@ -732,6 +740,7 @@ public class MXParser implements XmlPullParser {
       return attributeName[index];
    }
 
+   @Override
    public String getAttributePrefix(int index) {
       if (eventType != START_TAG) throw new IndexOutOfBoundsException(
             "only START_TAG can have attributes");
@@ -741,6 +750,7 @@ public class MXParser implements XmlPullParser {
       return attributePrefix[index];
    }
 
+   @Override
    public String getAttributeType(int index) {
       if (eventType != START_TAG) throw new IndexOutOfBoundsException(
             "only START_TAG can have attributes");
@@ -749,6 +759,7 @@ public class MXParser implements XmlPullParser {
       return "CDATA";
    }
 
+   @Override
    public boolean isAttributeDefault(int index) {
       if (eventType != START_TAG) throw new IndexOutOfBoundsException(
             "only START_TAG can have attributes");
@@ -757,6 +768,7 @@ public class MXParser implements XmlPullParser {
       return false;
    }
 
+   @Override
    public String getAttributeValue(int index) {
       if (eventType != START_TAG) throw new IndexOutOfBoundsException(
             "only START_TAG can have attributes");
@@ -765,6 +777,7 @@ public class MXParser implements XmlPullParser {
       return attributeValue[index];
    }
 
+   @Override
    public String getAttributeValue(String namespace,
                                    String name) {
       if (eventType != START_TAG) throw new IndexOutOfBoundsException(
@@ -802,12 +815,13 @@ public class MXParser implements XmlPullParser {
       return null;
    }
 
-
+   @Override
    public int getEventType()
          throws XmlPullParserException {
       return eventType;
    }
 
+   @Override
    public void require(int type, String namespace, String name)
          throws XmlPullParserException, IOException {
       if (!processNamespaces && namespace != null) {
@@ -858,6 +872,7 @@ public class MXParser implements XmlPullParser {
       }
    }
 
+   @Override
    public String nextText() throws XmlPullParserException, IOException {
       if (getEventType() != START_TAG) {
          throw new XmlPullParserException(
@@ -881,6 +896,7 @@ public class MXParser implements XmlPullParser {
       }
    }
 
+   @Override
    public int nextTag() throws XmlPullParserException, IOException {
       next();
       if (eventType == TEXT && isWhitespace()) {  // skip whitespace
@@ -893,12 +909,14 @@ public class MXParser implements XmlPullParser {
       return eventType;
    }
 
+   @Override
    public int next()
          throws XmlPullParserException, IOException {
       tokenize = false;
       return nextImpl();
    }
 
+   @Override
    public int nextToken()
          throws XmlPullParserException, IOException {
       tokenize = true;
@@ -1141,7 +1159,6 @@ public class MXParser implements XmlPullParser {
          }
       }
    }
-
 
    protected int parseProlog()
          throws XmlPullParserException, IOException {
@@ -2268,11 +2285,11 @@ public class MXParser implements XmlPullParser {
    //    protected final static char[] YES = {'y','e','s'};
    //    protected final static char[] NO = {'n','o'};
 
-   protected final static char[] VERSION = "version".toCharArray();
-   protected final static char[] NCODING = "ncoding".toCharArray();
-   protected final static char[] TANDALONE = "tandalone".toCharArray();
-   protected final static char[] YES = "yes".toCharArray();
-   protected final static char[] NO = "no".toCharArray();
+   final static char[] VERSION = "version".toCharArray();
+   final static char[] NCODING = "ncoding".toCharArray();
+   final static char[] TANDALONE = "tandalone".toCharArray();
+   final static char[] YES = "yes".toCharArray();
+   final static char[] NO = "no".toCharArray();
 
 
    protected void parseXmlDecl(char ch)
@@ -2829,8 +2846,8 @@ public class MXParser implements XmlPullParser {
    protected static final char LOOKUP_MAX_CHAR = (char) LOOKUP_MAX;
    //    protected static int lookupNameStartChar[] = new int[ LOOKUP_MAX_CHAR / 32 ];
    //    protected static int lookupNameChar[] = new int[ LOOKUP_MAX_CHAR / 32 ];
-   protected static boolean[] lookupNameStartChar = new boolean[LOOKUP_MAX];
-   protected static boolean[] lookupNameChar = new boolean[LOOKUP_MAX];
+   private static final boolean[] lookupNameStartChar = new boolean[LOOKUP_MAX];
+   private static final boolean[] lookupNameChar = new boolean[LOOKUP_MAX];
 
    private static void setName(char ch)
    //{ lookupNameChar[ (int)ch / 32 ] |= (1 << (ch % 32)); }

@@ -285,7 +285,7 @@ public interface XmlPullParser {
     * example, the value of TYPES[START_TAG] is the string "START_TAG".
     * <p>
     * This array is intended for diagnostic output only. Relying on the contents of the array may be dangerous since
-    * malicous applications may alter the array, although it is final, due to limitations of the Java language.
+    * malicious applications may alter the array, although it is final, due to limitations of the Java language.
     */
    String[] TYPES = {
          "START_DOCUMENT",

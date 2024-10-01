@@ -6,9 +6,10 @@ import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.operations.CacheOperationsFactory;
 
 public class NoOpTelemetryService implements TelemetryService {
-   public static NoOpTelemetryService INSTANCE = new NoOpTelemetryService();
+   public static final NoOpTelemetryService INSTANCE = new NoOpTelemetryService();
 
-   private NoOpTelemetryService() { }
+   private NoOpTelemetryService() {
+   }
 
    @Override
    public <K, V> Function<InternalRemoteCache<K, V>, CacheOperationsFactory> wrapWithTelemetry(

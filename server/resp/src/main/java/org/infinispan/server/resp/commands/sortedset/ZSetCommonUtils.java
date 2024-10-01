@@ -1,9 +1,5 @@
 package org.infinispan.server.resp.commands.sortedset;
 
-import org.infinispan.multimap.impl.ScoredValue;
-import org.infinispan.server.resp.Util;
-import org.infinispan.server.resp.commands.ArgumentUtils;
-
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,9 +7,13 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import org.infinispan.multimap.impl.ScoredValue;
+import org.infinispan.server.resp.Util;
+import org.infinispan.server.resp.commands.ArgumentUtils;
+
 public final class ZSetCommonUtils {
    public static final byte[] WITHSCORES = "WITHSCORES".getBytes();
-   public static byte EXCLUDE = ((byte)'(');
+   public static final byte EXCLUDE = ((byte)'(');
 
    private ZSetCommonUtils() {
    }

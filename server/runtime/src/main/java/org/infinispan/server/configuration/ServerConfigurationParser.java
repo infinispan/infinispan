@@ -86,7 +86,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
    private static final org.infinispan.util.logging.Log coreLog = org.infinispan.util.logging.LogFactory.getLog(ServerConfigurationParser.class);
    static final String NAMESPACE = "urn:infinispan:server:";
    public static final EnumSet<Element> CREDENTIAL_TYPES = EnumSet.of(Element.CREDENTIAL_REFERENCE, Element.CLEAR_TEXT_CREDENTIAL, Element.MASKED_CREDENTIAL, Element.COMMAND_CREDENTIAL);
-   public static String ENDPOINTS_SCOPE = "ENDPOINTS";
+   public static final String ENDPOINTS_SCOPE = "ENDPOINTS";
 
    @Override
    public Namespace[] getNamespaces() {
