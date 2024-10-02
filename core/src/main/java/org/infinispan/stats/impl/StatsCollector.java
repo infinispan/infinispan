@@ -2,20 +2,20 @@ package org.infinispan.stats.impl;
 
 import static org.infinispan.util.logging.Log.CONTAINER;
 
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.stat.MetricInfo;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalMetricsConfiguration;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.offheap.OffHeapMemoryAllocator;
 import org.infinispan.context.Flag;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.AbstractNamedCacheComponentFactory;
 import org.infinispan.factories.AutoInstantiableFactory;
 import org.infinispan.factories.ComponentRegistry;
@@ -33,6 +33,8 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Units;
+import org.infinispan.metrics.impl.CustomMetricsSupplier;
+import org.infinispan.metrics.impl.helper.KeyMetrics;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.stats.Stats;
 
@@ -41,8 +43,7 @@ import org.infinispan.stats.Stats;
  */
 @MBean(objectName = "Statistics", description = "General statistics such as timings, hit/miss ratio, etc.")
 @Scope(Scopes.NAMED_CACHE)
-public final class StatsCollector implements Stats, JmxStatisticsExposer {
-   public static final IntSet SEGMENT_0 = IntSets.immutableSet(0);
+public final class StatsCollector implements Stats, JmxStatisticsExposer, CustomMetricsSupplier {
    private final LongAdder hitTimes = new LongAdder();
    private final LongAdder missTimes = new LongAdder();
    private final LongAdder storeTimes = new LongAdder();
@@ -55,6 +56,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    private final AtomicLong resetNanoseconds = new AtomicLong(0);
    private final LongAdder removeHits = new LongAdder();
    private final LongAdder removeMisses = new LongAdder();
+   private final KeyMetrics<StatsCollector> keyMetrics = new KeyMetrics<>();
 
    @Inject ComponentRef<AdvancedCache<?, ?>> cache;
    @Inject TimeService timeService;
@@ -71,6 +73,12 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
 
    // probably it's not *that* important to have perfect stats to make this variable volatile
    private boolean statisticsEnabled = false;
+
+   @Override
+   public Collection<MetricInfo> getCustomMetrics(GlobalMetricsConfiguration configuration) {
+      return keyMetrics.getMetrics(configuration.histograms(), statsCollector -> statsCollector.keyMetrics, true);
+   }
+
 
    @ManagedAttribute(
          description = "Number of cache attribute hits",
@@ -332,7 +340,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    )
    @Override
    public long getDataMemoryUsed() {
-      if (configuration.memory().isEvictionEnabled() && configuration.memory().evictionType() == EvictionType.MEMORY) {
+      if (configuration.memory().isEvictionEnabled() && configuration.memory().maxSizeBytes() > 0) {
          return dataContainer.running().evictionSize();
       }
       return -1L;
@@ -369,11 +377,13 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    public void recordMisses(int misses, long time) {
       this.misses.add(misses);
       this.missTimes.add(time);
+      keyMetrics.recordMiss(time);
    }
 
    public void recordHits(int hits, long time) {
       this.hits.add(hits);
       this.hitTimes.add(time);
+      keyMetrics.recordHit(time);
    }
 
    public void recordEviction() {
@@ -387,15 +397,18 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
    public void recordStores(int stores, long time) {
       this.stores.add(stores);
       this.storeTimes.add(time);
+      keyMetrics.recordStore(time);
    }
 
    public void recordRemoveHits(int removes, long time) {
       this.removeHits.add(removes);
       this.removeTimes.add(time);
+      keyMetrics.recordRemoveHit(time);
    }
 
-   public void recordRemoveMisses(int removes) {
+   public void recordRemoveMisses(int removes, long time) {
       this.removeMisses.add(removes);
+      keyMetrics.recordRemoveMiss(time);
    }
 
    @Override
