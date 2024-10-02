@@ -452,6 +452,10 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(11000, localConfiguration.expiration().wakeUpInterval());
             assertEquals(10, localTemplate.expiration().lifespan());
             assertEquals(10, localConfiguration.expiration().lifespan());
+            assertEquals(MediaType.APPLICATION_PROTOSTREAM, localTemplate.encoding().keyDataType().mediaType());
+            assertEquals(MediaType.APPLICATION_PROTOSTREAM, localConfiguration.encoding().keyDataType().mediaType());
+            assertEquals(MediaType.APPLICATION_PROTOSTREAM, localTemplate.encoding().valueDataType().mediaType());
+            assertEquals(MediaType.APPLICATION_PROTOSTREAM, localConfiguration.encoding().valueDataType().mediaType());
 
             Configuration replTemplate = getConfiguration(holder, "repl-template");
             Configuration replConfiguration = getConfiguration(holder, "repl-instance");
@@ -459,6 +463,17 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(32000, replConfiguration.locking().lockAcquisitionTimeout());
             assertEquals(3000, replTemplate.locking().concurrencyLevel());
             assertEquals(3000, replConfiguration.locking().concurrencyLevel());
+            assertEquals(MediaType.APPLICATION_PROTOSTREAM, replTemplate.encoding().keyDataType().mediaType());
+            assertEquals(MediaType.APPLICATION_OBJECT, replConfiguration.encoding().keyDataType().mediaType());
+            assertEquals(MediaType.APPLICATION_PROTOSTREAM, replTemplate.encoding().valueDataType().mediaType());
+            assertEquals(MediaType.APPLICATION_OBJECT, replConfiguration.encoding().valueDataType().mediaType());
+
+            Configuration distTemplate = getConfiguration(holder, "dist-template");
+            Configuration distConfiguration = getConfiguration(holder, "dist-instance");
+            assertEquals(MediaType.APPLICATION_PROTOSTREAM, distTemplate.encoding().keyDataType().mediaType());
+            assertEquals(MediaType.APPLICATION_PROTOSTREAM, distConfiguration.encoding().keyDataType().mediaType());
+            assertEquals(MediaType.APPLICATION_PROTOSTREAM, distTemplate.encoding().valueDataType().mediaType());
+            assertEquals(MediaType.APPLICATION_OBJECT, distConfiguration.encoding().valueDataType().mediaType());
          }
       },
 
