@@ -130,7 +130,7 @@ public class CacheParser implements ConfigurationParser {
          case SCATTERED_CACHE:
          case SCATTERED_CACHE_CONFIGURATION: {
             ParseUtils.removedSince(reader, 15, 0);
-            parseScatteredCache(reader, holder, element);
+            parseScatteredCache(reader, element);
             break;
          }
          default:
@@ -1564,10 +1564,10 @@ public class CacheParser implements ConfigurationParser {
       builder.indexing().addIndexedEntities(entities);
    }
 
-   protected void parseScatteredCache(ConfigurationReader reader, ConfigurationBuilderHolder holder, Element element) {
+   protected void parseScatteredCache(ConfigurationReader reader, Element element) {
       ignoreElement(reader, element);
-      // Throwaway ConfigurationBuilder instance as we ignore the provided config
-      ConfigurationBuilder builder = new ConfigurationBuilder();
+      ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
+      ConfigurationBuilder builder = holder.newConfigurationBuilder("throwaway");
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));

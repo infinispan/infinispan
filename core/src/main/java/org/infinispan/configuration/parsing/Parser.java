@@ -776,7 +776,7 @@ public class Parser extends CacheParser {
             case SCATTERED_CACHE:
             case SCATTERED_CACHE_CONFIGURATION: {
                ParseUtils.removedSince(reader, 15, 0);
-               parseScatteredCache(reader, holder, element);
+               parseScatteredCache(reader, element);
                break;
             }
             case SERIALIZATION: {
@@ -843,7 +843,7 @@ public class Parser extends CacheParser {
                break;
             case SCATTERED_CACHE:
             case SCATTERED_CACHE_CONFIGURATION:
-               parseScatteredCache(reader, holder, type);
+               parseScatteredCache(reader, type);
                break;
             default:
                throw ParseUtils.unexpectedElement(reader, type);
