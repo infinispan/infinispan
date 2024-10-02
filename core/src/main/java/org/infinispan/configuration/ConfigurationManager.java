@@ -43,7 +43,7 @@ public class ConfigurationManager {
       this(holder.getGlobalConfigurationBuilder().build());
 
       holder.getNamedConfigurationBuilders()
-            .forEach((name, builder) -> namedConfiguration.put(name, builder.build(globalConfiguration)));
+            .forEach((name, builder) -> putConfiguration(name, builder.build(globalConfiguration)));
    }
 
    public GlobalConfiguration getGlobalConfiguration() {
