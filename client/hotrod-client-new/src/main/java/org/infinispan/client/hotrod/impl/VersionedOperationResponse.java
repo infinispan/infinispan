@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl;
 
+import org.infinispan.client.hotrod.MetadataValue;
+
 /**
 * @author Mircea.Markus@jboss.com
 * @since 4.1
@@ -19,18 +21,22 @@ public class VersionedOperationResponse<V> {
       }
    }
 
-   private final V value;
+   private final MetadataValue<V> metadata;
 
    private final RspCode code;
 
 
-   public VersionedOperationResponse(V value, RspCode code) {
-      this.value = value;
+   public VersionedOperationResponse(MetadataValue<V> metadata, RspCode code) {
+      this.metadata = metadata;
       this.code = code;
    }
 
    public V getValue() {
-      return value;
+      return metadata == null ? null : metadata.getValue();
+   }
+
+   public MetadataValue<V> getMetadata() {
+      return metadata;
    }
 
    public RspCode getCode() {

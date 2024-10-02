@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -17,15 +18,15 @@ import net.jcip.annotations.Immutable;
  * @since 4.1
  */
 @Immutable
-public class RemoveOperation<V> extends AbstractKeyOperation<V> {
+public class RemoveOperation<V> extends AbstractKeyOperation<MetadataValue<V>> {
 
    public RemoveOperation(InternalRemoteCache<?, ?> cache, byte[] keyBytes) {
       super(cache, keyBytes);
    }
 
    @Override
-   public V createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
-      V result = returnPossiblePrevValue(buf, status, codec, unmarshaller);
+   public MetadataValue<V> createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
+      MetadataValue<V> result = returnMetadataValue(buf, status, codec, unmarshaller);
       if (HotRodConstants.isNotExist(status)) {
          return null;
       }
@@ -33,7 +34,7 @@ public class RemoveOperation<V> extends AbstractKeyOperation<V> {
    }
 
    @Override
-   public void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, V responseValue) {
+   public void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, MetadataValue<V> responseValue) {
       statistics.dataRemove(startTime, 1);
    }
 

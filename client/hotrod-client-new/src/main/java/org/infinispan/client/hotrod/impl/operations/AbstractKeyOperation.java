@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -27,8 +28,13 @@ public abstract class AbstractKeyOperation<V> extends AbstractCacheOperation<V> 
       return keyBytes;
    }
 
+   @SuppressWarnings("unchecked")
    protected <T> T returnPossiblePrevValue(ByteBuf buf, short status, Codec codec, CacheUnmarshaller unmarshaller) {
       return (T) codec.returnPossiblePrevValue(buf, status, unmarshaller);
+   }
+
+   protected <T> MetadataValue<T> returnMetadataValue(ByteBuf buf, short status, Codec codec, CacheUnmarshaller unmarshaller) {
+      return codec.returnMetadataValue(buf, status, unmarshaller);
    }
 
    protected <E> VersionedOperationResponse<E> returnVersionedOperationResponse(ByteBuf buf, short status, Codec codec,
@@ -43,7 +49,7 @@ public abstract class AbstractKeyOperation<V> extends AbstractCacheOperation<V> 
       } else {
          throw new IllegalStateException("Unknown response status: " + Integer.toHexString(status));
       }
-      Object prevValue = returnPossiblePrevValue(buf, status, codec, unmarshaller);
-      return new VersionedOperationResponse<E>((E) prevValue, code);
+      MetadataValue<E> metadata = returnMetadataValue(buf, status, codec, unmarshaller);
+      return new VersionedOperationResponse<>(metadata, code);
    }
 }

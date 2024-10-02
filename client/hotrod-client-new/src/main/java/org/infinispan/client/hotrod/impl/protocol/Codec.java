@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.infinispan.client.hotrod.DataFormat;
+import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.counter.impl.HotRodCounterEvent;
 import org.infinispan.client.hotrod.event.impl.AbstractClientEvent;
@@ -54,6 +55,8 @@ public interface Codec {
    AbstractClientEvent readCacheEvent(ByteBuf buf, long messageId, Function<byte[], DataFormat> listenerDataFormat, short eventTypeId, ClassAllowList allowList, SocketAddress serverAddress);
 
    Object returnPossiblePrevValue(ByteBuf buf, short status, CacheUnmarshaller unmarshaller);
+
+   <V> MetadataValue<V> returnMetadataValue(ByteBuf buf, short status, CacheUnmarshaller unmarshaller);
 
    void writeClientListenerInterests(ByteBuf buf, Set<Class<? extends Annotation>> classes);
 

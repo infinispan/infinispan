@@ -89,6 +89,11 @@ public abstract class DelegatingHotRodOperation<T> implements HotRodOperation<T>
    }
 
    @Override
+   public long timeout() {
+      return delegate.timeout();
+   }
+
+   @Override
    public String toString() {
       return "getClass().getSimpleName(){" +
             "delegate=" + delegate +

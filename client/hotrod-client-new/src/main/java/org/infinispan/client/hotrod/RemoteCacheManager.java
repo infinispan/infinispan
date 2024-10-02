@@ -29,6 +29,8 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.transaction.xa.XAResource;
 
+import jakarta.transaction.TransactionManager;
+
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
@@ -86,7 +88,6 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
 
 import io.netty.channel.ChannelPipeline;
-import jakarta.transaction.TransactionManager;
 
 /**
  * <p>Factory for {@link RemoteCache}s.</p>

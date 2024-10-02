@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
@@ -91,14 +92,14 @@ public final class DefaultCacheOperationsFactory implements CacheOperationsFacto
    }
 
    @Override
-   public <V, K> HotRodOperation<V> newPutKeyValueOperation(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+   public <K, V> HotRodOperation<MetadataValue<V>> newPutKeyValueOperation(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       // TODO: need to support when storage is object based
       return new PutOperation<>(remoteCache, remoteCache.getDataFormat().keyToBytes(key),
             remoteCache.getDataFormat().valueToBytes(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    @Override
-   public <V> HotRodOperation<V> newRemoveOperation(Object key) {
+   public <V> HotRodOperation<MetadataValue<V>> newRemoveOperation(Object key) {
       return new RemoveOperation<>(remoteCache, remoteCache.getDataFormat().keyToBytes(key));
    }
 
@@ -108,21 +109,21 @@ public final class DefaultCacheOperationsFactory implements CacheOperationsFacto
    }
 
    @Override
-   public <V, K> HotRodOperation<V> newReplaceOperation(K key, V value, long lifespan, TimeUnit lifespanUnit,
+   public <K, V> HotRodOperation<V> newReplaceOperation(K key, V value, long lifespan, TimeUnit lifespanUnit,
                                                         long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       return new ReplaceOperation<>(remoteCache, remoteCache.getDataFormat().keyToBytes(key),
             remoteCache.getDataFormat().valueToBytes(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    @Override
-   public <V, K> HotRodOperation<V> newPutIfAbsentOperation(K key, V value, long lifespan, TimeUnit lifespanUnit,
+   public <K, V> HotRodOperation<MetadataValue<V>> newPutIfAbsentOperation(K key, V value, long lifespan, TimeUnit lifespanUnit,
                                                             long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       return new PutIfAbsentOperation<>(remoteCache, remoteCache.getDataFormat().keyToBytes(key),
             remoteCache.getDataFormat().valueToBytes(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    @Override
-   public <V, K> HotRodOperation<V> newPutIfAbsentOperation(K key, V value, long lifespan, TimeUnit lifespanUnit,
+   public <K, V> HotRodOperation<MetadataValue<V>> newPutIfAbsentOperation(K key, V value, long lifespan, TimeUnit lifespanUnit,
                                                             long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
       return new PutIfAbsentOperation<>(remoteCache.withFlags(flags), remoteCache.getDataFormat().keyToBytes(key),
             remoteCache.getDataFormat().valueToBytes(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
@@ -139,12 +140,12 @@ public final class DefaultCacheOperationsFactory implements CacheOperationsFacto
    }
 
    @Override
-   public <V, K> HotRodOperation<GetWithMetadataOperation.GetWithMetadataResult<V>> newGetWithMetadataOperation(K key, Channel channel) {
+   public <K, V> HotRodOperation<GetWithMetadataOperation.GetWithMetadataResult<V>> newGetWithMetadataOperation(K key, Channel channel) {
       return new GetWithMetadataOperation<>(remoteCache, remoteCache.getDataFormat().keyToBytes(key), channel);
    }
 
    @Override
-   public <V, K> HotRodOperation<VersionedOperationResponse<V>> newReplaceIfUnmodifiedOperation(K key, V value, long lifespan,
+   public <K, V> HotRodOperation<VersionedOperationResponse<V>> newReplaceIfUnmodifiedOperation(K key, V value, long lifespan,
                                                                                                 TimeUnit lifespanTimeUnit, long maxIdle,
                                                                                                 TimeUnit maxIdleTimeUnit, long version) {
       return new ReplaceIfUnmodifiedOperation<>(remoteCache, remoteCache.getDataFormat().keyToBytes(key),
@@ -152,7 +153,7 @@ public final class DefaultCacheOperationsFactory implements CacheOperationsFacto
    }
 
    @Override
-   public <V, K> HotRodOperation<VersionedOperationResponse<V>> newRemoveIfUnmodifiedOperation(K key, long version) {
+   public <K, V> HotRodOperation<VersionedOperationResponse<V>> newRemoveIfUnmodifiedOperation(K key, long version) {
       return new RemoveIfUnmodifiedOperation<>(remoteCache, remoteCache.getDataFormat().keyToBytes(key), version);
    }
 

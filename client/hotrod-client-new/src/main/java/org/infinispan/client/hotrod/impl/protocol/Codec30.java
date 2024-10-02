@@ -15,6 +15,7 @@ import java.util.function.Function;
 import java.util.function.IntConsumer;
 
 import org.infinispan.client.hotrod.DataFormat;
+import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
@@ -32,6 +33,7 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.impl.MetadataValueImpl;
 import org.infinispan.client.hotrod.impl.operations.CacheUnmarshaller;
 import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
@@ -137,6 +139,14 @@ public class Codec30 implements Codec {
       } else {
          return null;
       }
+   }
+
+   @Override
+   public <V> MetadataValue<V> returnMetadataValue(ByteBuf buf, short status, CacheUnmarshaller unmarshaller) {
+      if (!HotRodConstants.hasPrevious(status)) return null;
+
+      V value = unmarshaller.readValue(buf);
+      return new MetadataValueImpl<>(-1, -1, -1, -1, 0, value);
    }
 
    protected AbstractClientEvent createRemovedEvent(byte[] listenerId, Object key, boolean isRetried) {

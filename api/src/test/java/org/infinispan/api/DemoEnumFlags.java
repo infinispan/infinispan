@@ -36,4 +36,9 @@ public class DemoEnumFlags implements Flags<DemoEnumFlag, DemoEnumFlags> {
       this.flags.addAll(theFlags.flags);
       return this;
    }
+
+   @Override
+   public int toInt() {
+      return 0;
+   }
 }

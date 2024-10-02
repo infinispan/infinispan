@@ -39,4 +39,6 @@ public interface HotRodOperation<T> {
    void reset();
 
    CompletableFuture<T> asCompletableFuture();
+
+   long timeout();
 }
