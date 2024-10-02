@@ -6,7 +6,6 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * @since 9.2
@@ -60,6 +59,10 @@ public class ContentTypeConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    @Override
-   public void validate(GlobalConfiguration globalConfig) {
+   public String toString() {
+      return "ContentTypeConfigurationBuilder{" +
+            "element=" + element +
+            ", attributes=" + attributes +
+            '}';
    }
 }
