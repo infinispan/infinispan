@@ -222,7 +222,7 @@ public class StatsCollectingCache<K, V> extends SimpleCacheImpl<K, V> {
          if (ret != null) {
             statsCollector.recordRemoveHits(1, end - start);
          } else {
-            statsCollector.recordRemoveMisses(1);
+            statsCollector.recordRemoveMisses(1, end - start);
          }
       }
       return ret;
@@ -241,7 +241,7 @@ public class StatsCollectingCache<K, V> extends SimpleCacheImpl<K, V> {
          if (removed) {
             statsCollector.recordRemoveHits(1, end - start);
          } else {
-            statsCollector.recordRemoveMisses(1);
+            statsCollector.recordRemoveMisses(1, end - start);
          }
       }
       return removed;
