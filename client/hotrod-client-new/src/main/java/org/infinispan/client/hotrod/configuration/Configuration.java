@@ -82,7 +82,7 @@ import org.infinispan.protostream.SerializationContextInitializer;
  * @since 5.3
  */
 @BuiltBy(ConfigurationBuilder.class)
-public class Configuration {
+public class Configuration implements org.infinispan.api.configuration.Configuration {
 
    private final ExecutorFactoryConfiguration asyncExecutorFactory;
    private final Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory;

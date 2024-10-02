@@ -111,11 +111,12 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
    }
 
    private void scheduleTimeout(HotRodOperation<?> op, Long messageIdLong) {
+      long timeout = op.timeout() > 0 ? op.timeout() : configuration.socketTimeout();
       ScheduledFuture<?> future = channel.eventLoop().schedule(() -> {
          timeouts.remove(messageIdLong);
          dispatcher.handleResponse(op, messageIdLong, channel, null,
                new SocketTimeoutException(this + " timed out after " + configuration.socketTimeout() + " ms"));
-      }, configuration.socketTimeout(), TimeUnit.MILLISECONDS);
+      }, timeout, TimeUnit.MILLISECONDS);
       timeouts.put(messageIdLong, future);
    }
 

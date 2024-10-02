@@ -31,6 +31,13 @@ public class Codec40 extends Codec31 {
    }
 
    @Override
+   public <V> MetadataValue<V> returnMetadataValue(ByteBuf buf, short status, CacheUnmarshaller unmarshaller) {
+      if (!HotRodConstants.hasPrevious(status)) return null;
+
+      return GetWithMetadataOperation.readMetadataValue(buf, status, unmarshaller);
+   }
+
+   @Override
    protected void writeHeader(ByteBuf buf, long messageId, ClientTopology clientTopology, HotRodOperation<?> operation, byte version) {
       super.writeHeader(buf, messageId, clientTopology, operation, version);
       writeOtherParams(buf, operation.additionalParameters());

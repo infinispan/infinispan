@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
@@ -42,20 +43,20 @@ public interface CacheOperationsFactory {
 
    HotRodOperation<Void> newClearOperation();
 
-   <V, K> HotRodOperation<V> newPutKeyValueOperation(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
+   <K, V> HotRodOperation<MetadataValue<V>> newPutKeyValueOperation(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
 
-   <V> HotRodOperation<V> newRemoveOperation(Object key);
+   <V> HotRodOperation<MetadataValue<V>> newRemoveOperation(Object key);
 
    <K> HotRodOperation<Boolean> newContainsKeyOperation(K key);
 
-   <V, K> HotRodOperation<V> newReplaceOperation(K key, V valueBytes, long lifespan, TimeUnit lifespanUnit,
+   <K, V> HotRodOperation<V> newReplaceOperation(K key, V valueBytes, long lifespan, TimeUnit lifespanUnit,
                                                  long maxIdleTime, TimeUnit maxIdleTimeUnit);
 
-   <V, K> HotRodOperation<V> newPutIfAbsentOperation(K key, V value, long lifespan, TimeUnit lifespanUnit,
-                                                     long maxIdleTime, TimeUnit maxIdleTimeUnit);
+   <K, V> HotRodOperation<MetadataValue<V>> newPutIfAbsentOperation(K key, V value, long lifespan, TimeUnit lifespanUnit,
+                                                                    long maxIdleTime, TimeUnit maxIdleTimeUnit);
 
-   <V, K> HotRodOperation<V> newPutIfAbsentOperation(K key, V value, long lifespan, TimeUnit lifespanUnit,
-                                                     long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags);
+   <K, V> HotRodOperation<MetadataValue<V>> newPutIfAbsentOperation(K key, V value, long lifespan, TimeUnit lifespanUnit,
+                                                                    long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags);
 
    HotRodOperation<ServerStatistics> newStatsOperation();
 
@@ -84,13 +85,13 @@ public interface CacheOperationsFactory {
     */
    <K, V> HotRodOperation<Map<K, V>> newGetAllBytesOperation(Set<byte[]> keys);
 
-   <V, K> HotRodOperation<GetWithMetadataOperation.GetWithMetadataResult<V>> newGetWithMetadataOperation(K key, Channel channel);
+   <K, V> HotRodOperation<GetWithMetadataOperation.GetWithMetadataResult<V>> newGetWithMetadataOperation(K key, Channel channel);
 
-   <V, K> HotRodOperation<VersionedOperationResponse<V>> newReplaceIfUnmodifiedOperation(K key, V value, long lifespan,
+   <K, V> HotRodOperation<VersionedOperationResponse<V>> newReplaceIfUnmodifiedOperation(K key, V value, long lifespan,
                                                                                          TimeUnit lifespanTimeUnit, long maxIdle,
                                                                                          TimeUnit maxIdleTimeUnit, long version);
 
-   <V, K> HotRodOperation<VersionedOperationResponse<V>> newRemoveIfUnmodifiedOperation(K key, long version);
+   <K, V> HotRodOperation<VersionedOperationResponse<V>> newRemoveIfUnmodifiedOperation(K key, long version);
 
    HotRodOperation<Void> newUpdateBloomFilterOperation(byte[] bloomFilterBits);
 

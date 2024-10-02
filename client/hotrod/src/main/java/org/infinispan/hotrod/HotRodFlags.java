@@ -42,6 +42,7 @@ public class HotRodFlags implements Flags<HotRodFlag, HotRodFlags> {
       return this;
    }
 
+   @Override
    public int toInt() {
       return flags;
    }

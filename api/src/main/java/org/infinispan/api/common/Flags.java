@@ -9,4 +9,6 @@ public interface Flags<F extends Flag, SELF> {
    boolean contains(F flag);
 
    SELF addAll(Flags<F, SELF> flags);
+
+   int toInt();
 }

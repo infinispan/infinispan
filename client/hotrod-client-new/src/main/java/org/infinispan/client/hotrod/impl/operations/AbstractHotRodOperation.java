@@ -18,6 +18,11 @@ public abstract class AbstractHotRodOperation<T> extends CompletableFuture<T> im
    }
 
    @Override
+   public long timeout() {
+      return -1;
+   }
+
+   @Override
    public Object getRoutingObject() {
       return null;
    }

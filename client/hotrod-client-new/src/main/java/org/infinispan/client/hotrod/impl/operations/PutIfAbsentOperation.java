@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -19,7 +20,7 @@ import io.netty.buffer.ByteBuf;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class PutIfAbsentOperation<V> extends AbstractKeyValueOperation<V> {
+public class PutIfAbsentOperation<V> extends AbstractKeyValueOperation<MetadataValue<V>> {
 
    private static final BasicLogger log = LogFactory.getLog(PutIfAbsentOperation.class);
 
@@ -29,9 +30,9 @@ public class PutIfAbsentOperation<V> extends AbstractKeyValueOperation<V> {
    }
 
    @Override
-   public V createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
+   public MetadataValue<V> createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
       if (HotRodConstants.isNotExecuted(status)) {
-         V prevValue = returnPossiblePrevValue(buf, status, codec, unmarshaller);
+         MetadataValue<V> prevValue = returnMetadataValue(buf, status, codec, unmarshaller);
          if (log.isTraceEnabled()) {
             log.tracef("Returning from putIfAbsent: %s", prevValue);
          }
@@ -41,7 +42,7 @@ public class PutIfAbsentOperation<V> extends AbstractKeyValueOperation<V> {
    }
 
    @Override
-   public void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, Object responseValue) {
+   public void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, MetadataValue<V> responseValue) {
       if (HotRodConstants.isNotExecuted(status)) {
          if (HotRodConstants.hasPrevious(status)) {
             statistics.dataRead(true, startTime, 1);
