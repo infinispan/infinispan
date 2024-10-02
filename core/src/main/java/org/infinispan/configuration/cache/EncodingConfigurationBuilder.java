@@ -15,8 +15,8 @@ import org.infinispan.configuration.parsing.Element;
  */
 public class EncodingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<EncodingConfiguration> {
 
-   private ContentTypeConfigurationBuilder keyContentTypeBuilder = new ContentTypeConfigurationBuilder(Element.KEY_DATA_TYPE, this);
-   private ContentTypeConfigurationBuilder valueContentTypeBuilder = new ContentTypeConfigurationBuilder(Element.VALUE_DATA_TYPE, this);
+   private final ContentTypeConfigurationBuilder keyContentTypeBuilder = new ContentTypeConfigurationBuilder(Element.KEY_DATA_TYPE, this);
+   private final ContentTypeConfigurationBuilder valueContentTypeBuilder = new ContentTypeConfigurationBuilder(Element.VALUE_DATA_TYPE, this);
    private final Attribute<MediaType> mediaType;
 
    private final AttributeSet attributes;
@@ -95,8 +95,8 @@ public class EncodingConfigurationBuilder extends AbstractConfigurationChildBuil
    @Override
    public Builder<?> read(EncodingConfiguration template, Combine combine) {
       this.attributes.read(template.attributes(), combine);
-      this.keyContentTypeBuilder = new ContentTypeConfigurationBuilder(Element.KEY_DATA_TYPE, this).read(template.keyDataType(), combine);
-      this.valueContentTypeBuilder = new ContentTypeConfigurationBuilder(Element.VALUE_DATA_TYPE, this).read(template.valueDataType(), combine);
+      this.keyContentTypeBuilder.read(template.keyDataType(), combine);
+      this.valueContentTypeBuilder.read(template.valueDataType(), combine);
       return this;
    }
 
