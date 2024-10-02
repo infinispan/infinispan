@@ -22,11 +22,11 @@ public class KeyMetrics<C> {
       Arrays.stream(Metric.values()).forEach(metric -> metrics.put(metric, new KeyMetric()));
    }
 
-   public List<MetricInfo> getMetrics(boolean histograms, Function<C, KeyMetrics<C>> transformer) {
+   public List<MetricInfo> getMetrics(boolean histograms, Function<C, KeyMetrics<C>> transformer, boolean skipOwnershipMetrics) {
       var values = Metric.values();
       List<MetricInfo> metrics = new ArrayList<>(values.length * 4);
       for (var v : values) {
-         v.addMetricInfo(metrics, histograms, transformer);
+         v.addMetricInfo(metrics, histograms, transformer, skipOwnershipMetrics);
       }
       return metrics;
    }
@@ -63,6 +63,10 @@ public class KeyMetrics<C> {
       recordSingle(Metric.REMOVE_HITS, nanos, ownership);
    }
 
+   public void recordRemoveMiss(long nanos) {
+      recordWithoutOwnership(Metric.REMOVE_MISSES, nanos);
+   }
+
    public void recordRemoveMiss(long nanos, Ownership ownership) {
       recordSingle(Metric.REMOVE_MISSES, nanos, ownership);
    }
@@ -97,10 +101,12 @@ public class KeyMetrics<C> {
          this.description = description;
       }
 
-      <C> void addMetricInfo(List<MetricInfo> metrics, boolean histograms, Function<C, KeyMetrics<C>> transformer) {
-         metrics.add(MetricUtils.<C>createCounter(name + "PrimaryOwner", "The number of single key " + description + " when this node is the primary owner", (o, t) -> transformer.apply(o).metrics.get(this).primaryOwner = t, null));
-         metrics.add(MetricUtils.<C>createCounter(name + "BackupOwner", "The number of single key " + description + " when this node is the backup owner", (o, t) -> transformer.apply(o).metrics.get(this).backupOwner = t, null));
-         metrics.add(MetricUtils.<C>createCounter(name + "NonOwner", "The number of single key " + description + " when this node is not an owner", (o, t) -> transformer.apply(o).metrics.get(this).nonOwner = t, null));
+      <C> void addMetricInfo(List<MetricInfo> metrics, boolean histograms, Function<C, KeyMetrics<C>> transformer, boolean skipOwnershipMetrics) {
+         if (!skipOwnershipMetrics) {
+            metrics.add(MetricUtils.<C>createCounter(name + "PrimaryOwner", "The number of single key " + description + " when this node is the primary owner", (o, t) -> transformer.apply(o).metrics.get(this).primaryOwner = t, null));
+            metrics.add(MetricUtils.<C>createCounter(name + "BackupOwner", "The number of single key " + description + " when this node is the backup owner", (o, t) -> transformer.apply(o).metrics.get(this).backupOwner = t, null));
+            metrics.add(MetricUtils.<C>createCounter(name + "NonOwner", "The number of single key " + description + " when this node is not an owner", (o, t) -> transformer.apply(o).metrics.get(this).nonOwner = t, null));
+         }
          if (histograms) {
             metrics.add(MetricUtils.<C>createTimer(name + "Times", "The " + description + " times", (o, t) -> transformer.apply(o).metrics.get(this).times = t, null));
          } else {
