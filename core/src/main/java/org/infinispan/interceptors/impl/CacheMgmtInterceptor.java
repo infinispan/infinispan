@@ -105,7 +105,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
 
    @Override
    public Collection<MetricInfo> getCustomMetrics(GlobalMetricsConfiguration configuration) {
-      return keyMetrics.getMetrics(configuration.histograms(), cacheMgmtInterceptor -> cacheMgmtInterceptor.keyMetrics);
+      return keyMetrics.getMetrics(configuration.histograms(), cacheMgmtInterceptor -> cacheMgmtInterceptor.keyMetrics, distributionManager == null);
    }
 
    @Override
