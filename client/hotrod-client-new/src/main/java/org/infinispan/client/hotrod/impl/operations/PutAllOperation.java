@@ -50,7 +50,7 @@ public class PutAllOperation extends AbstractCacheOperation<Void> {
    }
 
    @Override
-   void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, Void responseValue) {
+   public void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, Void responseValue) {
       statistics.dataStore(startTime, map.size());
    }
 

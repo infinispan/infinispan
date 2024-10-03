@@ -33,7 +33,7 @@ public class RemoveOperation<V> extends AbstractKeyOperation<V> {
    }
 
    @Override
-   void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, V responseValue) {
+   public void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, V responseValue) {
       statistics.dataRemove(startTime, 1);
    }
 

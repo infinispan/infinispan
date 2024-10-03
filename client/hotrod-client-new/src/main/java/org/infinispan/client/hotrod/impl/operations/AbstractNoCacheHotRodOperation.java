@@ -3,7 +3,7 @@ package org.infinispan.client.hotrod.impl.operations;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 
-public abstract class AbstractNoCacheHotRodOperation<E> extends HotRodOperation<E> {
+public abstract class AbstractNoCacheHotRodOperation<E> extends AbstractHotRodOperation<E> {
    @Override
    public String getCacheName() {
       return HotRodConstants.DEFAULT_CACHE_NAME;

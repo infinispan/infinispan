@@ -44,7 +44,7 @@ public class ReplaceIfUnmodifiedOperation<V> extends AbstractKeyValueOperation<V
    }
 
    @Override
-   void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, VersionedOperationResponse<V> responseValue) {
+   public void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, VersionedOperationResponse<V> responseValue) {
       if (HotRodConstants.isSuccess(status)) {
          statistics.dataStore(startTime, 1);
       }

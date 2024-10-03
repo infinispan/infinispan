@@ -573,11 +573,12 @@ public class OperationDispatcher {
       // it won't try to null out the op set as the lock is not reentrant.
       set.add(NoHotRodOperation.instance());
       channelHandler.gatherOperations().forEach(op -> {
-         if (op.isDone()) {
+         CompletionStage<?> stage = op.asCompletableFuture();
+         if (CompletionStages.isCompletedSuccessfully(stage)) {
             return;
          }
          set.add(op);
-         op.whenComplete((e, t) -> {
+         stage.whenComplete((e, t) -> {
             set.remove(op);
             if (set.isEmpty()) {
                long stamp = lock.writeLock();
@@ -642,7 +643,7 @@ public class OperationDispatcher {
             }
          }
       } else {
-         op.complete(returnValue);
+         op.asCompletableFuture().complete(returnValue);
       }
    }
 
@@ -705,13 +706,13 @@ public class OperationDispatcher {
             // Server can throw this when it is shutting down, just retry in next block
             ! (cause instanceof RemoteIllegalLifecycleStateException
                   || cause instanceof RemoteNodeSuspectException)) {
-         op.completeExceptionally(cause);
+         op.asCompletableFuture().completeExceptionally(cause);
          return null;
       } else {
          if (Thread.interrupted()) {
             InterruptedException e = new InterruptedException();
             e.addSuppressed(cause);
-            op.completeExceptionally(e);
+            op.asCompletableFuture().completeExceptionally(e);
             return null;
          }
          var retrying = RetryingHotRodOperation.retryingOp(op);
@@ -757,7 +758,7 @@ public class OperationDispatcher {
          return true;
       } else {
          HOTROD.exceptionAndNoRetriesLeft(retryAttempt, maxRetries, t);
-         op.completeExceptionally(t);
+         op.asCompletableFuture().completeExceptionally(t);
          return false;
       }
    }

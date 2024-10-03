@@ -62,7 +62,7 @@ public class GetAllOperation<K, V> extends AbstractCacheOperation<Map<K, V>> {
    }
 
    @Override
-   void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, Map<K, V> responseValue) {
+   public void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, Map<K, V> responseValue) {
       statistics.dataRead(true, startTime, responseValue.size());
       statistics.dataRead(false, startTime, keys.size() - responseValue.size());
    }

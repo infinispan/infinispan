@@ -43,7 +43,7 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<GetWithMet
    }
 
    @Override
-   void handleStatsCompletion(ClientStatistics statistics, long startTime, short status,
+   public void handleStatsCompletion(ClientStatistics statistics, long startTime, short status,
                               GetWithMetadataOperation.GetWithMetadataResult<V> responseValue) {
       statistics.dataRead(responseValue.value != null, startTime, 1);
    }

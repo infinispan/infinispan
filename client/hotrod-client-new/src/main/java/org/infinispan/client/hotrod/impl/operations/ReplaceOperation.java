@@ -32,7 +32,7 @@ public class ReplaceOperation<V> extends AbstractKeyValueOperation<V> {
    }
 
    @Override
-   void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, Object responseValue) {
+   public void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, Object responseValue) {
       if (HotRodConstants.isNotExist(status)) {
          statistics.dataStore(startTime, 1);
       }

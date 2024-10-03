@@ -335,7 +335,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
 
    @Override
    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-      if (operation != null && !operation.isDone()) {
+      if (operation != null && !operation.asCompletableFuture().isDone()) {
          HotRodOperation<?> op = operation;
          // we null out the operation, just in case the response handling generates another exception
          operation = null;
