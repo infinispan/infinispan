@@ -20,7 +20,9 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.Predicate;
 import com.jayway.jsonpath.internal.Path;
 import com.jayway.jsonpath.internal.path.PredicateContextImpl;
+import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
 import com.jayway.jsonpath.spi.json.JsonSmartJsonProvider;
+import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import com.jayway.jsonpath.spi.mapper.JsonSmartMappingProvider;
 
 public class InfinispanJsonProviderTest extends JsonProviderBaseTest {
@@ -153,6 +155,15 @@ public class InfinispanJsonProviderTest extends JsonProviderBaseTest {
       assertArrayEquals(actual.toArray(new Double[0]), new Double[] { 10D, 20D, 30D });
    }
 
+   @SuppressWarnings("unchecked")
+   @Test
+   public void canUseJackson() {
+      DocumentContext documentContext = using(JACKSON_CONFIGURATION).parse("{\"val\": [1,2,3,4]}");
+      documentContext.set("val", Arrays.asList(10, 20, 30));
+      @SuppressWarnings("rawtypes")
+      List read = documentContext.read("val");
+      assertArrayEquals(read.toArray(new Integer[0]), new Integer[] { 10, 20, 30 });
+   }
    // @Test
    // public void an_object_can_be_mapped_to_pojo() {
 
@@ -248,11 +259,11 @@ class JsonProviderBaseTest {
    // .jsonProvider(new GsonJsonProvider())
    // .build();
 
-   // public static final Configuration JACKSON_CONFIGURATION = Configuration
-   // .builder()
-   // .mappingProvider(new JacksonMappingProvider())
-   // .jsonProvider(new JacksonJsonProvider())
-   // .build();
+   public static final Configuration JACKSON_CONFIGURATION = Configuration
+   .builder()
+   .mappingProvider(new JacksonMappingProvider())
+   .jsonProvider(new JacksonJsonProvider())
+   .build();
 
    // public static final Configuration JACKSON_JSON_NODE_CONFIGURATION =
    // Configuration
