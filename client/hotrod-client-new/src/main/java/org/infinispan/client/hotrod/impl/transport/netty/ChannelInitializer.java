@@ -35,7 +35,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.timeout.IdleStateHandler;
 
 class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
    private static final Log log = LogFactory.getLog(ChannelInitializer.class);
@@ -101,7 +100,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
       }
 
       // TODO: make the reader and writer idle time configurable
-      channel.pipeline().addLast("idleStateHandler", new IdleStateHandler(60, 30, 0));
+      channel.pipeline().addLast("idleStateHandler", new IdleStateHandlerNoUnvoid(60, 30, 0));
       channel.pipeline().addLast("pingHandler", new PingHandler());
       channel.pipeline().addLast(HeaderDecoder.NAME, new HeaderDecoder(configuration, dispatcher));
 
