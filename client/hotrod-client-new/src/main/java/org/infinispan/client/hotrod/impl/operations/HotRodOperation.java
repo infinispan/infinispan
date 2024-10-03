@@ -6,65 +6,37 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
-// Extends CompletableFuture to reduce allocation size by not needed additional object header info
-public abstract class HotRodOperation<T> extends CompletableFuture<T> implements HotRodConstants {
-   public void writeOperationRequest(Channel channel, ByteBuf buf, Codec codec) {
-      // Do nothing by default
-   }
+public interface HotRodOperation<T> {
+   void writeOperationRequest(Channel channel, ByteBuf buf, Codec codec);
 
-   public abstract T createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller);
+   T createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller);
 
-   public abstract short requestOpCode();
+   short requestOpCode();
 
-   public abstract short responseOpCode();
+   short responseOpCode();
 
-   public abstract int flags();
+   int flags();
 
-   public abstract byte[] getCacheNameBytes();
+   byte[] getCacheNameBytes();
 
-   public abstract String getCacheName();
+   String getCacheName();
 
-   public abstract DataFormat getDataFormat();
+   DataFormat getDataFormat();
 
-   public Object getRoutingObject() {
-      return null;
-   }
+   Object getRoutingObject();
 
-   public boolean supportRetry() {
-      return true;
-   }
+   boolean supportRetry();
 
-   public Map<String, byte[]> additionalParameters() {
-      return null;
-   }
+   Map<String, byte[]> additionalParameters();
 
-   void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, T responseValue) {
-      // Default is operation does nothing
-   }
+   void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, T responseValue);
 
-   @Override
-   public String toString() {
-      String cn = getCacheName() == null || getCacheName().length() == 0 ? "(default)" : getCacheName();
-      StringBuilder sb = new StringBuilder(64);
-      sb.append(getClass().getSimpleName()).append('{').append(cn);
-      addParams(sb);
-      sb.append(", flags=").append(Integer.toHexString(flags()));
-      sb.append('}');
+   void reset();
 
-      sb.append("- CompletableFuture[");
-      sb.append(super.toString());
-      sb.append("]");
-
-      return sb.toString();
-   }
-
-   protected void addParams(StringBuilder sb) { }
-
-   public void reset() { }
+   CompletableFuture<T> asCompletableFuture();
 }

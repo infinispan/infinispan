@@ -6,7 +6,7 @@ import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 
-public abstract class AbstractCacheOperation<V> extends HotRodOperation<V> {
+public abstract class AbstractCacheOperation<V> extends AbstractHotRodOperation<V> {
    protected final InternalRemoteCache<?, ?> internalRemoteCache;
 
    protected AbstractCacheOperation(InternalRemoteCache<?, ?> internalRemoteCache) {

@@ -605,7 +605,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       }
       HotRodOperation<Void> op = operationsFactory.newRemoveClientListenerOperation(listener);
       // By registering this here, we are guaranteed this will be ran on the event loop for this listener
-      CompletableFuture<Void> removalStage = op.thenAccept(___ -> {
+      CompletableFuture<Void> removalStage = op.asCompletableFuture().thenAccept(___ -> {
          clientListenerNotifier.removeClientListener(listenerId);
          dispatcher.removeListener(sa, listenerId);
       });
@@ -661,7 +661,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       assertRemoteCacheManagerIsStarted();
       HotRodOperation<V> op = operationsFactory.newGetOperation(key);
       if (log.isTraceEnabled()) {
-         op.thenAccept(value -> log.tracef("For key(%s) returning %s", key, value));
+         op.asCompletableFuture().thenAccept(value -> log.tracef("For key(%s) returning %s", key, value));
       }
       return dispatcher.execute(op).toCompletableFuture();
    }

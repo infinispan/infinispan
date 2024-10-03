@@ -22,7 +22,7 @@ public class GetOperation<V> extends AbstractKeyOperation<V> {
    }
 
    @Override
-   void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, Object responseValue) {
+   public void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, Object responseValue) {
       statistics.dataRead(!HotRodConstants.isNotExist(status) && HotRodConstants.isSuccess(status), startTime, 1);
    }
 

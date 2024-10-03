@@ -94,7 +94,7 @@ public class ChannelHandler {
          operationChannel = channels.computeIfAbsent(socketAddress, newOpChannel);
       }
       operationChannel.sendOperation(operation);
-      return operation;
+      return operation.asCompletableFuture();
    }
 
    public CompletionStage<Void> startChannelIfNeeded(SocketAddress socketAddress) {

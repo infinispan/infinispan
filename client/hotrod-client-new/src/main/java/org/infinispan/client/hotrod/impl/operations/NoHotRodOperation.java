@@ -7,7 +7,7 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
-public class NoHotRodOperation<E> extends HotRodOperation<E> {
+public class NoHotRodOperation<E> extends AbstractHotRodOperation<E> {
 
    private NoHotRodOperation() {
 

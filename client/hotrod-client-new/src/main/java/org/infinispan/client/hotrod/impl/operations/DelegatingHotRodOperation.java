@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
@@ -10,20 +11,11 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
-public abstract class DelegatingHotRodOperation<T> extends HotRodOperation<T> {
+public abstract class DelegatingHotRodOperation<T> implements HotRodOperation<T> {
    protected final HotRodOperation<T> delegate;
 
    protected DelegatingHotRodOperation(HotRodOperation<T> delegate) {
       this.delegate = delegate;
-      // TODO: maybe someday HotRodOperation won't extend CompletableFuture and we won't need this but it
-      // saves an extra allocation on the happy path
-      whenComplete((v, t) -> {
-         if (t != null) {
-            delegate.completeExceptionally(t);
-         } else {
-            delegate.complete(v);
-         }
-      });
    }
 
    @Override
@@ -77,11 +69,6 @@ public abstract class DelegatingHotRodOperation<T> extends HotRodOperation<T> {
    }
 
    @Override
-   protected void addParams(StringBuilder sb) {
-      delegate.addParams(sb);
-   }
-
-   @Override
    public void reset() {
       delegate.reset();
    }
@@ -92,8 +79,13 @@ public abstract class DelegatingHotRodOperation<T> extends HotRodOperation<T> {
    }
 
    @Override
-   void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, T responseValue) {
+   public void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, T responseValue) {
       delegate.handleStatsCompletion(statistics, startTime, status, responseValue);
+   }
+
+   @Override
+   public CompletableFuture<T> asCompletableFuture() {
+      return delegate.asCompletableFuture();
    }
 
    @Override

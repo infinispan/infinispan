@@ -41,7 +41,7 @@ public class PutIfAbsentOperation<V> extends AbstractKeyValueOperation<V> {
    }
 
    @Override
-   void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, Object responseValue) {
+   public void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, Object responseValue) {
       if (HotRodConstants.isNotExecuted(status)) {
          if (HotRodConstants.hasPrevious(status)) {
             statistics.dataRead(true, startTime, 1);
