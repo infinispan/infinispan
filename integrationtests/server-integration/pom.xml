@@ -74,65 +74,6 @@
                     </dependency>
                 </dependencies>
             </plugin>
-            <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>generate-distros-and-configs</id>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-                            <skip>${skipTests}</skip>
-                            <target>
-                                <ant antfile="${ispnserver.project.dir}/src/main/ant/infinispan-server.xml" target="create-distro">
-                                    <property name="server.build.dist" value="${server.build.dist}" />
-                                    <property name="server.dist" value="${ispnserver.dist}" />
-                                    <property name="ispn.config.file" value="${ispn.config.file}" />
-                                </ant>
-                            </target>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>infinispan-server-startup</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skipTests}</skip>
-                            <target>
-                                <ant antfile="${ispnserver.project.dir}/src/main/ant/infinispan-server.xml" target="kill-server">
-                                    <property name="hotrod.port" value="11222" />
-                                </ant>
-                                <ant antfile="${ispnserver.project.dir}/src/main/ant/infinispan-server.xml" target="start-server">
-                                    <property name="server.dist" value="${ispnserver.dist}" />
-                                    <property name="port.offset" value="0" />
-                                    <property name="hotrod.port" value="11222" />
-                                    <property name="jboss.node.name" value="ispn-server" />
-                                    <property name="jboss.config.file" value="infinispan-custom.xml" />
-                                </ant>
-                            </target>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>infinispan-server-shutdown</id>
-                        <phase>post-integration-test</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skipTests}</skip>
-                            <target>
-                                <ant antfile="${ispnserver.project.dir}/src/main/ant/infinispan-server.xml" target="kill-server">
-                                    <property name="hotrod.port" value="11222" />
-                                </ant>
-                            </target>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 </project>
