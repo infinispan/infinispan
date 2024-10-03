@@ -372,10 +372,12 @@ public class Codec30 implements Codec {
          }
          Map<String, String> parameters = mediaType.getParameters();
          ByteBufUtil.writeVInt(buf, parameters.size());
-         parameters.forEach((key, value) -> {
-            ByteBufUtil.writeString(buf, key);
-            ByteBufUtil.writeString(buf, value);
-         });
+         if (!parameters.isEmpty()) {
+            parameters.forEach((key, value) -> {
+               ByteBufUtil.writeString(buf, key);
+               ByteBufUtil.writeString(buf, value);
+            });
+         }
       }
    }
 }
