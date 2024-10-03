@@ -1,7 +1,8 @@
 [![Infinispan](https://design.jboss.org/infinispan/logo/final/PNG/infinispan_logo_rgb_lightbluewhite_darkblue_600px.png)](https://infinispan.org/)
 
 [![Version](https://img.shields.io/maven-central/v/org.infinispan/infinispan-core?logo=apache-maven&style=for-the-badge)](https://search.maven.org/artifact/org.infinispan/infinispan-core)
-[![License](https://img.shields.io/github/license/quarkusio/quarkus?style=for-the-badge&logo=apache)](https://www.apache.org/licenses/LICENSE-2.0)
+![Supported JVM Versions](https://img.shields.io/badge/JVM-17--21-brightgreen.svg?style=for-the-badge&logo=openjdk)
+[![License](https://img.shields.io/github/license/infinispan/infinispan?style=for-the-badge&logo=apache)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Project Chat](https://img.shields.io/badge/zulip-join_chat-brightgreen.svg?style=for-the-badge&logo=zulip)](https://infinispan.zulipchat.com/)
 
 # Infinispan, In-Memory Distributed Data Store #
