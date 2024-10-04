@@ -114,3 +114,13 @@ jobs:
           asset_path: ./quarkus/cli/target/infinispan-cli-${{github.ref_name}}.zip
           asset_name: infinispan-cli-${{github.ref_name}}-${{ matrix.asset_name }}.zip
           asset_content_type: application/zip
+
+  operator:
+    needs: images
+    if: contains(github.ref_name, '.Final')
+    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@main
+    secrets: inherit
+    with:
+      image: quay.io/infinispan/server:${{ github.ref_name }}
+      ref: main
+      repository: infinispan/infinispan-operator
