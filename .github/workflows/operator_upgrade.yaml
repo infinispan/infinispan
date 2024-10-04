@@ -47,7 +47,7 @@ jobs:
           zip -r ${GITHUB_WORKSPACE}/server.zip infinispan-server-${SERVER_VERSION}
 
       - name: Install CEKit
-        uses: cekit/actions-setup-cekit@v1.1.5
+        uses: cekit/actions-setup-cekit@v1.1.7
 
       - name: Create Dockerfile
         run: |
