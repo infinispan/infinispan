@@ -114,6 +114,13 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
       excludedCommands.addAll(Arrays.asList(excluded));
    }
 
+   public final void addExcludedCommand(Class<? extends ReplicableCommand> excluded) {
+      if (stopped) {
+         throw new IllegalStateException("Trying to exclude commands but we already stopped intercepting");
+      }
+      excludedCommands.add(excluded);
+   }
+
    public void stopBlocking() {
       log.debugf("Stopping intercepting RPC calls on %s", realOne.getAddress());
       stopped = true;
@@ -168,8 +175,11 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
       waiters.add(future);
       return future.thenApply(request -> {
          log.tracef("Blocked command %s", request.command);
-         assertTrue("Expecting a " + expectedCommandClass.getName() + ", got " + request.getCommand(),
-                    expectedCommandClass.isInstance(request.getCommand()));
+         log.tracef("Expected command %s", expectedCommandClass);
+         var req = new BlockedRequest<>(request);
+         if (!expectedCommandClass.isInstance(request.getCommand())) {
+            req.fail(new IllegalStateException("Expected " + expectedCommandClass + " but got " + request.getCommand()));
+         }
          return new BlockedRequest<>(request);
       });
    }
