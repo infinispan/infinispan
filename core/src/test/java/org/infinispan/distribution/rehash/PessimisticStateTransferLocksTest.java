@@ -12,6 +12,7 @@ import java.util.Collections;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.remoting.inboundhandler.OffloadInboundInvocationHandler;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -28,9 +29,9 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 /**
- * Tests that state transfer properly replicates locks in a pessimistic cache, when the
- * originator of the transaction is/was the primary owner.
- *
+ * Tests that state transfer properly replicates locks in a pessimistic cache, when the originator of the transaction
+ * is/was the primary owner.
+ * <p>
  * See ISPN-4091, ISPN-4108
  *
  * @author Dan Berindei
@@ -47,7 +48,7 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
    }
 
    private StateSequencer sequencer;
-   private ControlledConsistentHashFactory consistentHashFactory;
+   private ControlledConsistentHashFactory<?> consistentHashFactory;
 
    @AfterMethod(alwaysRun = true)
    public void printSequencerState() {
@@ -58,6 +59,7 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
       }
    }
 
+   @SuppressWarnings("resource")
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder c = getConfigurationBuilder();
@@ -66,6 +68,7 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
       addClusterEnabledCacheManager(c);
       addClusterEnabledCacheManager(c);
       waitForClusterToForm();
+      cacheManagers.forEach(OffloadInboundInvocationHandler::replaceOn);
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {
@@ -132,7 +135,7 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
       sequencer.logicalThread("tx", "tx:perform_op", "tx:check_locks", "tx:before_commit", "tx:after_commit");
       sequencer.logicalThread("rebalance", "rebalance:before_get_tx", "rebalance:after_get_tx",
             "rebalance:before_confirm", "rebalance:end");
-      sequencer.order("rebalance:after_get_tx", "tx:perform_op",  "tx:check_locks",
+      sequencer.order("rebalance:after_get_tx", "tx:perform_op", "tx:check_locks",
             "rebalance:before_confirm", "rebalance:end", "tx:before_commit");
 
       startRebalance();
