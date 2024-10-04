@@ -460,6 +460,7 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
             //so the XSiteStateTransferManager gets the new RpcManager
             var cache = cacheName == null ? manager.getCache() : manager.getCache(cacheName);
             var rpcManager = ControlledRpcManager.replaceRpcManager(cache, excludedCommands);
+            rpcManager.addExcludedCommand(IracCleanupKeysCommand.class);
             var stateTransferManager = ControlledXSiteStateTransferManager.extract(cache);
             cleanupTasks.add(() -> {
                try {
