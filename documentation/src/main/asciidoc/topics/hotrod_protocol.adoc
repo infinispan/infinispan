@@ -19,6 +19,8 @@ the custom TCP client/server Hot Rod protocol.
 * link:#hot_rod_protocol_2_9[Hot Rod Protocol 2.9 (Infinispan 9.4)]
 * link:#hot_rod_protocol_3_0[Hot Rod Protocol 3.0 (Infinispan 10.0)]
 * link:#hot_rod_protocol_3_1[Hot Rod Protocol 3.1 (Infinispan 12.0)]
+* link:#hot_rod_protocol_4_0[Hot Rod Protocol 4.0 (Infinispan 14.0)]
+* link:#hot_rod_protocol_4_1[Hot Rod Protocol 4.1 (Infinispan 15.1)]
 
 == Hot Rod Protocol 1.0
 
@@ -3260,3 +3262,285 @@ Response Header `Status` possible values:
 * `0x04`: The counter reached its boundary.
 Only possible for `STRONG` counters.
 * See the link:#hot_rod_response_header[Response Header] for error codes.
+
+== Hot Rod Protocol 4.0
+
+.Infinispan versions
+TIP: This version of the protocol is implemented since Infinispan 14.0
+
+To better support the new API previous return values now include metadata information.
+
+This affects the following operations:
+
+* put
+* putIfAbsent
+* remove
+* replace
+* removeIfUnmodified
+* replaceIfUnmodified
+
+Now these commands can return the version information for a prior value, which can be useful to a given API.
+
+The following replaces the Value Length and Value entries for the operations above.
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Response header
+| Flag                | 1 byte     | A flag indicating whether the response
+contains expiration information. The value of the flag is obtained as a
+bitwise OR operation between +INFINITE_LIFESPAN (0x01)+ and
+`INFINITE_MAXIDLE (0x02)`.
+| Created             | Long       | (optional) a Long representing the
+timestamp when the entry was created on the server. This value is returned
+only if the flag's +INFINITE_LIFESPAN+ bit is not set.
+| Lifespan            | vInt       | (optional) a vInt representing the
+lifespan of the entry in seconds. This value is returned only if the flag's
++INFINITE_LIFESPAN+ bit is not set.
+| LastUsed            | Long       | (optional) a Long representing the
+timestamp when the entry was last accessed on the server. This value is
+returned only if the flag's `INFINITE_MAXIDLE` bit is not set.
+| MaxIdle             | vInt       | (optional) a vInt representing the
+maxIdle of the entry in seconds. This value is returned only if the flag's
+`INFINITE_MAXIDLE` bit is not set.
+| Entry Version       | 8 bytes    | Unique value of an existing entry's modification.
+The protocol does not mandate that entry_version values are sequential.
+They just need to be unique per update at the key level.
+| Value Length        | vInt       | If success, length of value
+| Value               | byte array | If success, the requested value
+|==============================================================================
+
+
+== Hot Rod Protocol 4.1
+
+.Infinispan Versions
+TIP: This version of the protocol is implemented since Infinispan 15.1
+
+This version officially drops support for the previous GET_STREAM and PUT_STREAM operations added in 2.6.
+
+Instead new operations have been added to support stream commands without having to dedicate
+a socket for the entirety of the get or set operation.
+
+* GetStreamStart for starting a remote streamed get operation
+* GetStreamNext for retrieving the next chunk of the value
+* GetStreamEnd for closing the remote get stream operation
+* PutStreamStart for starting a remote streamed put operation
+* PutStreamNext for sending the next chunko of the value
+* PutStreamEnd for closing the remote put stream operation
+
+.GetStreamStart
+
+Starts a get stream on a remote server returning it in chunks based on the
+provided batch size. Returns the first chunk in the reponse along with
+metadata. If the first chunk is the entirety of the value the Complete
+boolean should be true as well.
+
+Request (0xE9):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Request header
+| Key Length          | vInt       | Length of key. Note that the size of a
+vint can be up to 5 bytes which in theory can produce bigger numbers than
+Integer.MAX_VALUE. However, Java cannot create a single array that’s bigger
+than Integer.MAX_VALUE, hence the protocol is limiting vint array lengths to
+Integer.MAX_VALUE.
+| Key                 | byte array | Byte array containing the key whose value is being requested.
+| Batch Size          | vInt       | How many bytes to retrieve per request.
+|==============================================================================
+
+Response (0xE8):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Response header
+| Response status     | 1 byte     |
++0x00+ = success, if key retrieved +
++0x02+ = if key does not exist +
+| Stream ID           | Int        | If success, Identifier for remote get stream started
+| Complete            | Boolean    | Whether the retrieval is already complete
+| Flag                | 1 byte     | A flag indicating whether the response
+contains expiration information. The value of the flag is obtained as a
+bitwise OR operation between +INFINITE_LIFESPAN (0x01)+ and
+`INFINITE_MAXIDLE (0x02)`.
+| Created             | Long       | (optional) a Long representing the
+timestamp when the entry was created on the server. This value is returned
+only if the flag's +INFINITE_LIFESPAN+ bit is not set.
+| Lifespan            | vInt       | (optional) a vInt representing the
+lifespan of the entry in seconds. This value is returned only if the flag's
++INFINITE_LIFESPAN+ bit is not set.
+| LastUsed            | Long       | (optional) a Long representing the
+timestamp when the entry was last accessed on the server. This value is
+returned only if the flag's `INFINITE_MAXIDLE` bit is not set.
+| MaxIdle             | vInt       | (optional) a vInt representing the
+maxIdle of the entry in seconds. This value is returned only if the flag's
+`INFINITE_MAXIDLE` bit is not set.
+| Entry Version       | 8 bytes    | Unique value of an existing entry's modification.
+The protocol does not mandate that entry_version values are sequential.
+They just need to be unique per update at the key level.
+| Value Length        | vInt       | If success, length of value
+| Value               | byte array | If success, the requested value
+|==============================================================================
+
+.GetStreamNext
+
+This operation is retrieve the next chunk of bytes from the remote server for
+the get stream. If complete is true then this is the last chunk.
+
+Request (0xE7):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Request header
+| Stream ID           | Int        | Stream identifier retrieved from GetStreamStart.
+|==============================================================================
+
+Response (0xE6):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Response header
+| Response status     | 1 byte     |
++0x00+ = success, if key retrieved +
++0x02+ = if key does not exist +
+| Stream ID           | Int        | If success, Identifier for remote get stream started
+| Complete            | Boolean    | If success, whether all bytes have been retrieved
+| Value Length        | vInt       | If success, length of value
+| Value               | byte array | If success, the requested value
+|==============================================================================
+
+.GetStreamEnd
+
+This operation is used to close a get stream that was opened on a remote server.
+
+Request (0xE4):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Request header
+| Stream ID           | Int        | Stream identifier retrieved from GetStreamStart.
+|==============================================================================
+
+Response (0xE4):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Response header
+| Response status     | 1 byte     |
++0x00+ = success, if closed +
++0x02+ = if ID does not exist +
+|==============================================================================
+
+.PutStreamStart
+
+Opens a put stream on a remote server where it will then accept chunks of data.
+This is useful to not have to have a client hold onto the entire contents
+of a written value at any one time.
+
+Request (0xEF)
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Request header
+| Key Length          | vInt       | Length of key. Note that the size of a
+vint can be up to 5 bytes which in theory can produce bigger numbers than
+Integer.MAX_VALUE. However, Java cannot create a single array that?s bigger
+than Integer.MAX_VALUE, hence the protocol is limiting vint array lengths to
+Integer.MAX_VALUE.
+| Key                 | byte array | Byte array containing the key whose value is being requested.
+| Flag                | 1 byte     | A flag indicating whether the response
+contains expiration information. The value of the flag is obtained as a
+bitwise OR operation between +INFINITE_LIFESPAN (0x01)+ and
+`INFINITE_MAXIDLE (0x02)`.
+| Created             | Long       | (optional) a Long representing the
+timestamp when the entry was created on the server. This value is returned
+only if the flag's +INFINITE_LIFESPAN+ bit is not set.
+| Lifespan            | vInt       | (optional) a vInt representing the
+lifespan of the entry in seconds. This value is returned only if the flag's
++INFINITE_LIFESPAN+ bit is not set.
+| LastUsed            | Long       | (optional) a Long representing the
+timestamp when the entry was last accessed on the server. This value is
+returned only if the flag's `INFINITE_MAXIDLE` bit is not set.
+| MaxIdle             | vInt       | (optional) a vInt representing the
+maxIdle of the entry in seconds. This value is returned only if the flag's
+`INFINITE_MAXIDLE` bit is not set.
+| Entry Version       | 8 bytes    | Unique value of an existing entry's modification.
+The protocol does not mandate that entry_version values are sequential.
+They just need to be unique per update at the key level.
+|| Entry Version       | 8 bytes    | Possible values +
+0 = Unconditional put +
+-1 = Put If Absent +
+Other values =  pass a version obtained by `GetWithMetadata` operation to perform a conditional replace.
+|==============================================================================
+
+Response (0xEE):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header    | variable | Response header
+| Stream ID | Int      | Identifier for remote get stream started
+|==============================================================================
+
+.PutStreamNext
+
+This operation is used to push a chunk of the value bytes to the remote server.
+When complete is true the remote server will perform the operation based
+upon the version supplied in the PutStreamStart operation.
+
+Request (0xED)
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Request header
+| Stream ID           | Int        | Stream ID retrieved from Start
+| Complete            | Boolean    | If this is the last chunk for the value
+| Chunk length        | vInt       | Length of the chunk for the values
+| Value Chunk         | byte array | Byte array consisting of the chunk of data
+|==============================================================================
+
+Response (0xEC):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header    | variable | Response header
+|==============================================================================
+
+.PutStreamEnd
+
+This operation is used to close a put stream that was opened on a remote server.
+
+Request (0xEB):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Request header
+| Stream ID           | Int        | Stream identifier retrieved from GetStreamStart.
+|==============================================================================
+
+Response (0xEA):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Response header
+|==============================================================================
