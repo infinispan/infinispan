@@ -224,8 +224,6 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
       this.channel = channel;
       if (channel == null)
          throw new IllegalArgumentException("Cannot deal with a null channel!");
-      if (channel.isConnected())
-         throw new IllegalArgumentException("Channel passed in cannot already be connected!");
    }
 
    public JGroupsTransport() {
