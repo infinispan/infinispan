@@ -54,7 +54,7 @@ public class InternalRemoteCacheManager extends RemoteCacheManager {
    @Override
    public ChannelFactory createChannelFactory() {
       if (customChannelFactory != null) return customChannelFactory;
-      if (testReplay) return new TestChannelFactory(new CodecHolder(getConfiguration().version().getCodec()));
+      if (testReplay) return new TestChannelFactory(getConfiguration(), new CodecHolder(getConfiguration().version().getCodec()));
       return super.createChannelFactory();
    }
 }

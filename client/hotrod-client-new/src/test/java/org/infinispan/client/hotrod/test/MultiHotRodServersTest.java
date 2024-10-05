@@ -37,6 +37,14 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
    protected boolean testReplay = true;
 
    protected void createHotRodServers(int num, ConfigurationBuilder defaultBuilder) {
+      createHotRodServersWithoutClients(num, defaultBuilder);
+
+      for (int i = 0; i < num; i++) {
+         clients.add(createClient(i));
+      }
+   }
+
+   protected void createHotRodServersWithoutClients(int num, ConfigurationBuilder defaultBuilder) {
       // Start Hot Rod servers
       for (int i = 0; i < num; i++) addHotRodServer(defaultBuilder);
       // Verify that default caches should be started
@@ -47,10 +55,6 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
       for (int i = 0; i < num; i++) {
          blockUntilCacheStatusAchieved(
                manager(i).getCache(), ComponentStatus.RUNNING, 10000);
-      }
-
-      for (int i = 0; i < num; i++) {
-         clients.add(createClient(i));
       }
    }
 
