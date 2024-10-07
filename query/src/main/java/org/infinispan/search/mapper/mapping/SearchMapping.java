@@ -9,6 +9,7 @@ import java.util.Set;
 import org.hibernate.search.engine.reporting.FailureHandler;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
 import org.infinispan.query.concurrent.FailureCounter;
+import org.infinispan.query.impl.IndexerConfig;
 import org.infinispan.search.mapper.mapping.metamodel.IndexMetamodel;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.session.SearchSession;
@@ -116,9 +117,9 @@ public interface SearchMapping extends AutoCloseable {
 
    static SearchMappingBuilder builder(PojoBootstrapIntrospector introspector, ClassLoader aggregatedClassLoader,
                                        Collection<ProgrammaticSearchMappingProvider> mappingProviders,
-                                       BlockingManager blockingManager, FailureCounter failureCounter, int maxConcurrency) {
+                                       BlockingManager blockingManager, FailureCounter failureCounter, IndexerConfig indexerConfig) {
       return new SearchMappingBuilder(introspector, aggregatedClassLoader, mappingProviders, blockingManager,
-            failureCounter, maxConcurrency);
+            failureCounter, indexerConfig);
    }
 
 }

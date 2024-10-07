@@ -7,6 +7,7 @@ import org.hibernate.search.mapper.pojo.mapping.spi.PojoMappingDelegate;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeModel;
 import org.infinispan.query.concurrent.FailureCounter;
 import org.infinispan.query.impl.EntityLoaderFactory;
+import org.infinispan.query.impl.IndexerConfig;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 import org.infinispan.util.concurrent.BlockingManager;
 
@@ -18,15 +19,16 @@ public final class InfinispanMapperDelegate implements PojoMapperDelegate<Infini
    private final EntityConverter entityConverter;
    private final BlockingManager blockingManager;
    private final FailureCounter failureCounter;
-   private final int maxConcurrency;
+   private final IndexerConfig indexerConfig;
 
    public InfinispanMapperDelegate(EntityLoaderFactory<?> entityLoader, EntityConverter entityConverter,
-                                   BlockingManager blockingManager, FailureCounter failureCounter, int maxConcurrency) {
+                                   BlockingManager blockingManager, FailureCounter failureCounter,
+                                   IndexerConfig indexerConfig) {
       this.entityLoader = entityLoader;
       this.entityConverter = entityConverter;
       this.blockingManager = blockingManager;
       this.failureCounter = failureCounter;
-      this.maxConcurrency = maxConcurrency;
+      this.indexerConfig = indexerConfig;
    }
 
    @Override
@@ -50,6 +52,6 @@ public final class InfinispanMapperDelegate implements PojoMapperDelegate<Infini
    @Override
    public InfinispanMappingPartialBuildState prepareBuild(PojoMappingDelegate mappingDelegate) {
       return new InfinispanMappingPartialBuildState(mappingDelegate, typeContextContainerBuilder.build(),
-            entityLoader, entityConverter, blockingManager, failureCounter, maxConcurrency);
+            entityLoader, entityConverter, blockingManager, failureCounter, indexerConfig);
    }
 }
