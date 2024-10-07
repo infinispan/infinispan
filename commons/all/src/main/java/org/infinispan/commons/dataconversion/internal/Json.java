@@ -20,10 +20,12 @@ package org.infinispan.commons.dataconversion.internal;
  */
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.text.CharacterIterator;
@@ -435,10 +437,10 @@ public class Json implements java.io.Serializable {
       //Json generate(Json options);
    }
 
-   static String fetchContent(URL url) {
-      java.io.Reader reader = null;
+   static String fetchContent(java.io.InputStream is, Charset cs) {
+      InputStreamReader reader = null;
       try {
-         reader = new java.io.InputStreamReader((java.io.InputStream) url.getContent(), StandardCharsets.UTF_8);
+         reader = new InputStreamReader(is, cs);
          StringBuilder content = new StringBuilder();
          char[] buf = new char[1024];
          for (int n = reader.read(buf); n > -1; n = reader.read(buf))
@@ -451,6 +453,14 @@ public class Json implements java.io.Serializable {
             reader.close();
          } catch (Throwable t) {
          }
+      }
+   }
+
+   static String fetchContent(URL url) {
+      try {
+         return fetchContent((java.io.InputStream) url.getContent(), StandardCharsets.UTF_8);
+      } catch (IOException e) {
+         throw new RuntimeException(e);
       }
    }
 
