@@ -8,6 +8,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
@@ -34,6 +35,8 @@ import org.testng.annotations.Test;
 @Test(testName = "client.hotrod.query.MultiHotRodServerQueryTest", groups = "functional")
 public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
 
+   private static final int TIMEOUT = (int) TimeUnit.MINUTES.toMillis(1) ;
+
    protected RemoteCache<Integer, User> remoteCache0;
    protected RemoteCache<Integer, User> remoteCache1;
 
@@ -59,6 +62,16 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
 
       remoteCache0 = client(0).getCache();
       remoteCache1 = client(1).getCache();
+   }
+
+   @Override
+   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder
+   createHotRodClientConfigurationBuilder(String host, int serverPort) {
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder =
+            super.createHotRodClientConfigurationBuilder(host, serverPort);
+
+      builder.socketTimeout(TIMEOUT);
+      return builder;
    }
 
    @Override
