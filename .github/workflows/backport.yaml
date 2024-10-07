@@ -18,7 +18,7 @@ jobs:
         with:
           target-branch: 13.0.x
           pull-request: ${{ github.event.pull_request.url }}
-          auth: ${{ secrets.GITHUB_TOKEN }}
+          auth: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
           no-squash: true
 
       - if: always() && contains(github.event.pull_request.labels.*.name, '14.0.x')
@@ -27,7 +27,7 @@ jobs:
         with:
           target-branch: 14.0.x
           pull-request: ${{ github.event.pull_request.url }}
-          auth: ${{ secrets.GITHUB_TOKEN }}
+          auth: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
           no-squash: true
 
       - if: always() && contains(github.event.pull_request.labels.*.name, '15.0.x')
@@ -36,5 +36,5 @@ jobs:
         with:
           target-branch: 15.0.x
           pull-request: ${{ github.event.pull_request.url }}
-          auth: ${{ secrets.GITHUB_TOKEN }}
+          auth: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
           no-squash: true
