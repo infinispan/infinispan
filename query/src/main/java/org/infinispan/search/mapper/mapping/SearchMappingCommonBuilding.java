@@ -8,6 +8,7 @@ import org.hibernate.search.engine.environment.bean.BeanReference;
 import org.hibernate.search.mapper.pojo.bridge.IdentifierBridge;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
 import org.infinispan.query.concurrent.InfinispanIndexingFailureHandler;
+import org.infinispan.query.impl.IndexerConfig;
 import org.infinispan.util.concurrent.BlockingManager;
 
 /**
@@ -22,14 +23,14 @@ public class SearchMappingCommonBuilding {
    private final BlockingManager blockingManager;
    private final LuceneWorkExecutorProvider luceneWorkExecutorProvider;
    private final Integer numberOfShards;
-   private final int maxConcurrency;
+   private final IndexerConfig indexerConfig;
 
    public SearchMappingCommonBuilding(BeanReference<? extends IdentifierBridge<Object>> identifierBridge,
                                       Map<String, Object> properties, ClassLoader aggregatedClassLoader,
                                       Collection<ProgrammaticSearchMappingProvider> mappingProviders,
                                       BlockingManager blockingManager,
                                       LuceneWorkExecutorProvider luceneWorkExecutorProvider, Integer numberOfShards,
-                                      int maxConcurrency) {
+                                      IndexerConfig indexerConfig) {
       this.identifierBridge = identifierBridge;
       this.properties = properties;
       this.aggregatedClassLoader = aggregatedClassLoader;
@@ -37,14 +38,14 @@ public class SearchMappingCommonBuilding {
       this.blockingManager = blockingManager;
       this.luceneWorkExecutorProvider = luceneWorkExecutorProvider;
       this.numberOfShards = numberOfShards;
-      this.maxConcurrency = maxConcurrency;
+      this.indexerConfig = indexerConfig;
    }
 
    public SearchMappingBuilder builder(PojoBootstrapIntrospector introspector) {
       InfinispanIndexingFailureHandler indexingFailureHandler = new InfinispanIndexingFailureHandler();
 
       SearchMappingBuilder builder = SearchMapping.builder(introspector, aggregatedClassLoader, mappingProviders,
-                  blockingManager, indexingFailureHandler.failureCounter(), maxConcurrency)
+                  blockingManager, indexingFailureHandler.failureCounter(), indexerConfig)
             .setProvidedIdentifierBridge(identifierBridge)
             .setProperties(properties)
             .setProperty("backend_work_executor_provider", luceneWorkExecutorProvider)

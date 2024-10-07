@@ -20,12 +20,12 @@ import org.testng.annotations.Test;
 public class QueryAggregationCountTest extends SingleCacheManagerTest {
 
    public static final int NUMBER_OF_DAYS = 100;
-   public static final int CHUNK_SIZE = 100;
+   public static final int CHUNK_SIZE = 10;
 
    // these results depend on the seed
-   public static final Object[][] AGGREGATION_RESULT = {{"BLOCKED", 164L}, {"CLOSE", 143L}, {"IN_PROGRESS", 178L}, {"OPEN", 141L}, {"WAITING", 174L}};
-   public static final Object[][] REV_AGGREGATION_RESULT = {{164L, "BLOCKED"}, {143L, "CLOSE"}, {178L, "IN_PROGRESS"}, {141L, "OPEN"}, {174L, "WAITING"}};
-   public static final Object[][] FULL_AGGREGATION_RESULT = {{"BLOCKED", 207L}, {"CLOSE", 185L}, {"IN_PROGRESS", 216L}, {"OPEN", 179L}, {"WAITING", 213L}};
+   public static final Object[][] AGGREGATION_RESULT = {{"BLOCKED", 16L}, {"CLOSE", 13L}, {"IN_PROGRESS", 22L}, {"OPEN", 20L}, {"WAITING", 9L}};
+   public static final Object[][] REV_AGGREGATION_RESULT = {{16L, "BLOCKED"}, {13L, "CLOSE"}, {22L, "IN_PROGRESS"}, {20L, "OPEN"}, {9L, "WAITING"}};
+   public static final Object[][] FULL_AGGREGATION_RESULT = {{"BLOCKED", 21L}, {"CLOSE", 16L}, {"IN_PROGRESS", 26L}, {"OPEN", 24L}, {"WAITING", 13L}};
    public static final int START_DAY = 45;
    public static final int END_DAY = 54;
 

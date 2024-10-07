@@ -5,6 +5,7 @@ import org.hibernate.search.engine.mapper.mapping.spi.MappingImplementor;
 import org.hibernate.search.mapper.pojo.mapping.spi.PojoMappingDelegate;
 import org.infinispan.query.concurrent.FailureCounter;
 import org.infinispan.query.impl.EntityLoaderFactory;
+import org.infinispan.query.impl.IndexerConfig;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -17,21 +18,21 @@ public class InfinispanMappingPartialBuildState implements MappingPartialBuildSt
    private final EntityConverter entityConverter;
    private final BlockingManager blockingManager;
    private final FailureCounter failureCounter;
-   private final int maxConcurrency;
+   private final IndexerConfig indexerConfig;
 
    InfinispanMappingPartialBuildState(PojoMappingDelegate mappingDelegate,
                                       InfinispanTypeContextContainer typeContextContainer,
                                       EntityLoaderFactory<?> entityLoader,
                                       EntityConverter entityConverter,
                                       BlockingManager blockingManager,
-                                      FailureCounter failureCounter, int maxConcurrency) {
+                                      FailureCounter failureCounter, IndexerConfig indexerConfig) {
       this.mappingDelegate = mappingDelegate;
       this.typeContextContainer = typeContextContainer;
       this.entityLoader = entityLoader;
       this.entityConverter = entityConverter;
       this.blockingManager = blockingManager;
       this.failureCounter = failureCounter;
-      this.maxConcurrency = maxConcurrency;
+      this.indexerConfig = indexerConfig;
    }
 
    @Override
@@ -41,7 +42,7 @@ public class InfinispanMappingPartialBuildState implements MappingPartialBuildSt
 
    public MappingImplementor<SearchMapping> finalizeMapping() {
       InfinispanMapping mapping = new InfinispanMapping(mappingDelegate, typeContextContainer, entityLoader, entityConverter,
-            blockingManager, failureCounter, maxConcurrency);
+            blockingManager, failureCounter, indexerConfig);
       mapping.start();
       return mapping;
    }

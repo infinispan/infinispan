@@ -20,6 +20,7 @@ import org.hibernate.search.util.common.impl.SuppressingCloser;
 import org.hibernate.search.util.common.reflect.spi.ValueReadHandleFactory;
 import org.infinispan.query.concurrent.FailureCounter;
 import org.infinispan.query.impl.EntityLoaderFactory;
+import org.infinispan.query.impl.IndexerConfig;
 import org.infinispan.search.mapper.impl.InfinispanMappingInitiator;
 import org.infinispan.search.mapper.mapping.impl.ClassLoaderServiceImpl;
 import org.infinispan.search.mapper.mapping.impl.IndexProperties;
@@ -44,12 +45,12 @@ public final class SearchMappingBuilder {
 
    SearchMappingBuilder(PojoBootstrapIntrospector introspector, ClassLoader aggregatedClassLoader,
                         Collection<ProgrammaticSearchMappingProvider> mappingProviders,
-                        BlockingManager blockingManager, FailureCounter failureCounter, int maxConcurrency) {
+                        BlockingManager blockingManager, FailureCounter failureCounter, IndexerConfig indexerConfig) {
       propertyChecker = ConfigurationPropertyChecker.create();
       propertySource = indexProperties.createPropertySource(propertyChecker);
 
       mappingKey = new InfinispanMappingKey();
-      mappingInitiator = new InfinispanMappingInitiator(introspector, mappingProviders, blockingManager, failureCounter, maxConcurrency);
+      mappingInitiator = new InfinispanMappingInitiator(introspector, mappingProviders, blockingManager, failureCounter, indexerConfig);
 
       // Enable annotated type discovery by default
       mappingInitiator.annotatedTypeDiscoveryEnabled(true);

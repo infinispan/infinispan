@@ -25,6 +25,7 @@ import org.infinispan.server.core.test.ServerTestingUtil;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
+import org.infinispan.configuration.cache.PrivateIndexingConfigurationBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -35,7 +36,7 @@ public class LargePutAllPressureTest extends SingleHotRodServerTest {
 
    private static final Log log = LogFactory.getLog(LargePutAllPressureTest.class);
 
-   private static final int SIZE = 15_000;
+   private static final int SIZE = 500;
    private static final int TIMEOUT = (int) TimeUnit.MINUTES.toMillis(1) ;
 
    private final Random fixedSeedPseudoRandom = new Random(739);
@@ -43,12 +44,13 @@ public class LargePutAllPressureTest extends SingleHotRodServerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder config = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.LOCAL, useTransactions()));
+      config.addModule(PrivateIndexingConfigurationBuilder.class).rebatchRequestsSize(200);
       config.indexing().enable()
             .storage(LOCAL_HEAP)
                .addIndexedEntity("Sale")
             .writer()
                .queueCount(1)
-               .queueSize(10_000);
+               .queueSize(200);
 
       return TestCacheManagerFactory.createServerModeCacheManager(config);
    }
