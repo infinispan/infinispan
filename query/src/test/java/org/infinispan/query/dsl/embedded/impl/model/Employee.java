@@ -10,12 +10,19 @@ import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Keyword;
 import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.api.annotations.indexing.option.Structure;
+import org.hibernate.search.engine.backend.types.Projectable;
+import org.hibernate.search.engine.backend.types.Sortable;
+import org.hibernate.search.mapper.pojo.bridge.builtin.annotation.GeoPointBinding;
+import org.hibernate.search.mapper.pojo.bridge.builtin.annotation.Latitude;
+import org.hibernate.search.mapper.pojo.bridge.builtin.annotation.Longitude;
 
 /**
  * @author anistor@redhat.com
  * @since 9.0
  */
 @Indexed
+@GeoPointBinding(fieldName = "location", markerSet = "location", projectable = Projectable.YES, sortable = Sortable.YES)
+@GeoPointBinding(fieldName = "officeLocation", markerSet = "officeLocation", projectable = Projectable.YES, sortable = Sortable.YES)
 public class Employee {
 
    public String id;
@@ -41,6 +48,18 @@ public class Employee {
    public List<ContactDetails> nestedContactDetails = new ArrayList<>();
 
    public List<ContactDetails> alternativeContactDetails = new ArrayList<>();
+
+   @Latitude(markerSet = "location")
+   private Double locationLat;
+
+   @Longitude(markerSet = "location")
+   private Double locationLon;
+
+   @Latitude(markerSet = "officeLocation")
+   private Double officeLocationLat;
+
+   @Longitude(markerSet = "officeLocation")
+   private Double officeLocationLon;
 
    // When an entity is created with Infinispan,
    // the document id is reserved to link the cache entry key to the value.

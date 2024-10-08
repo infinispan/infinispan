@@ -234,4 +234,14 @@ public class RemoteQueryStringTest extends QueryStringTest {
    public void testDeleteWithPaging() {
       super.testDeleteWithPaging();
    }
+
+   @Override
+   public void testSpatialPredicate() {
+      // TODO ISPN-8238 Support remote geo queries
+   }
+
+   @Override
+   protected boolean testGeoLocalQueries() {
+      return false;
+   }
 }

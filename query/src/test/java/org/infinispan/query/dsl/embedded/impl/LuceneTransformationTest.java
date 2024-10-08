@@ -13,6 +13,9 @@ import org.hibernate.search.util.common.SearchException;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.ParsingException;
+import org.infinispan.objectfilter.impl.ql.Function;
+import org.infinispan.objectfilter.impl.ql.PropertyPath;
+import org.infinispan.objectfilter.impl.syntax.parser.FunctionPropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
@@ -801,6 +804,59 @@ public class LuceneTransformationTest extends SingleCacheManagerTest {
             .isEqualTo("+(+contactDetails.address.postCode:EA123 +alternativeContactDetails.email:ninja647@mailinator.com) #__HSEARCH_type:main");
 
       assertThat(parsed.getProjections()).containsOnly("contactDetails.email");
+   }
+
+   @Test
+   public void testSpatialPredicate() {
+      IckleParsingResult<Class<?>> parsed = parse(
+            "SELECT e.contactDetails.email" +
+                  " FROM org.infinispan.query.dsl.embedded.impl.model.Employee e " +
+                  " WHERE e.location WITHIN CIRCLE(46.7716, 23.5895, 100) AND e.location NOT WITHIN CIRCLE(46.7716, 23.5895, 10)");
+      SearchQuery<?> query = transform(parsed);
+
+      assertThat(query.queryString())
+            .isEqualTo("+(+location:46.7716,23.5895 +/- 100.0 meters -location:46.7716,23.5895 +/- 10.0 meters) #__HSEARCH_type:main");
+
+      assertThat(parsed.getProjections()).containsExactly("contactDetails.email");
+   }
+
+   @Test
+   public void testSpatialProjection() {
+      IckleParsingResult<Class<?>> parsed = parse(
+            "SELECT e.contactDetails.email, distance(e.location, 37.7608, 140.4748) " +
+                  " FROM org.infinispan.query.dsl.embedded.impl.model.Employee e " +
+                  " WHERE e.location WITHIN CIRCLE(46.7716, 23.5895, 100) AND e.location NOT WITHIN CIRCLE(46.7716, 23.5895, 10)");
+      SearchQuery<?> query = transform(parsed);
+
+      assertThat(query.queryString())
+            .isEqualTo("+(+location:46.7716,23.5895 +/- 100.0 meters -location:46.7716,23.5895 +/- 10.0 meters) #__HSEARCH_type:main");
+
+      assertThat(parsed.getProjectedPaths()).hasSize(2);
+      assertThat(parsed.getProjectedPaths()[0]).isInstanceOf(PropertyPath.class);
+      assertThat(parsed.getProjectedPaths()[0].asStringPathWithoutAlias()).isEqualTo("contactDetails.email");
+      assertThat(parsed.getProjectedPaths()[1]).isInstanceOf(FunctionPropertyPath.class);
+      assertThat(parsed.getProjectedPaths()[1].asStringPathWithoutAlias()).isEqualTo("location");
+      assertThat(((FunctionPropertyPath<?>) parsed.getProjectedPaths()[1]).getFunction()).isEqualTo(Function.DISTANCE);
+      assertThat(((FunctionPropertyPath<?>) parsed.getProjectedPaths()[1]).getArgs()).containsExactly(37.7608d, 140.4748d);
+   }
+
+   @Test
+   public void testSpatialOrderBy() {
+      IckleParsingResult<Class<?>> parsed = parse(
+            "SELECT e.contactDetails.email " +
+                  " FROM org.infinispan.query.dsl.embedded.impl.model.Employee e " +
+                  " ORDER BY distance(e.location, 37.7608, 140.4748)");
+      SearchQuery<?> query = transform(parsed);
+
+      assertThat(query.queryString()).isEqualTo("+*:* #__HSEARCH_type:main");
+
+      assertThat(parsed.getProjections()).containsExactly("contactDetails.email");
+
+      assertThat(parsed.getSortFields()).hasSize(1);
+      assertThat(parsed.getSortFields()[0].getPath()).isInstanceOf(FunctionPropertyPath.class);
+      assertThat(parsed.getSortFields()[0].getPath().asStringPathWithoutAlias()).isEqualTo("location");
+      assertThat(((FunctionPropertyPath<?>) parsed.getSortFields()[0].getPath()).getFunction()).isEqualTo(Function.DISTANCE);
+      assertThat(((FunctionPropertyPath<?>) parsed.getSortFields()[0].getPath()).getArgs()).containsExactly(37.7608d, 140.4748d);
    }
 
    private void assertGeneratedLuceneQuery(String queryString, String expectedLuceneQuery) {
