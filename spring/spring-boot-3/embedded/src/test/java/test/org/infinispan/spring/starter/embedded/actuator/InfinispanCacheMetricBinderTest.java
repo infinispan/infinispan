@@ -1,27 +1,27 @@
 package test.org.infinispan.spring.starter.embedded.actuator;
 
-import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
-import io.micrometer.core.instrument.binder.cache.CacheMeterBinderCompatibilityKit;
+import static java.util.Collections.emptyList;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.starter.embedded.actuator.InfinispanCacheMeterBinder;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 
-import static java.util.Collections.emptyList;
+import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
+import io.micrometer.core.instrument.binder.cache.CacheMeterBinderCompatibilityKit;
 
 public class InfinispanCacheMetricBinderTest extends CacheMeterBinderCompatibilityKit<Cache<String, String>> {
 
-   private static EmbeddedCacheManager cacheManager;
-   private InfinispanCacheMeterBinder binder;
+   private EmbeddedCacheManager cacheManager;
 
-   @AfterAll
-   public static void cleanup() {
-      cacheManager.stop();
+   @AfterEach
+   public void cleanup() {
+      Util.close(cacheManager);
    }
 
    @Override
@@ -34,9 +34,8 @@ public class InfinispanCacheMetricBinderTest extends CacheMeterBinderCompatibili
    }
 
    @Override
-   public CacheMeterBinder binder() {
-      binder = new InfinispanCacheMeterBinder(cache, emptyList());
-      return binder;
+   public CacheMeterBinder<Cache<String, String>> binder() {
+      return new InfinispanCacheMeterBinder(cache, emptyList());
    }
 
    @Override
@@ -49,8 +48,10 @@ public class InfinispanCacheMetricBinderTest extends CacheMeterBinderCompatibili
       return cache.get(key);
    }
 
-   @Test
-   void dereferencedCacheIsGarbageCollected() {
-     // We can't remove cache ref from the manager only by setting the cache property to null
+   @Override
+   public void dereferenceCache() {
+      super.dereferenceCache();
+      Util.close(cacheManager);
+      cacheManager = null;
    }
 }

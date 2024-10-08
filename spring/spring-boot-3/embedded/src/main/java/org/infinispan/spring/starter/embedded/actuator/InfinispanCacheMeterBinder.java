@@ -1,12 +1,13 @@
 package org.infinispan.spring.starter.embedded.actuator;
 
+import java.util.concurrent.TimeUnit;
+
+import org.infinispan.Cache;
+
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
-import org.infinispan.Cache;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * Implements {@link CacheMeterBinder} to expose Infinispan embedded metrics
@@ -16,51 +17,48 @@ import java.util.concurrent.TimeUnit;
  */
 public class InfinispanCacheMeterBinder<K, V> extends CacheMeterBinder<Cache<K, V>> {
 
-   private final Cache cache;
-
-   public InfinispanCacheMeterBinder(Cache cache, Iterable<Tag> tags) {
+   public InfinispanCacheMeterBinder(Cache<K, V> cache, Iterable<Tag> tags) {
       super(cache, cache.getName(), tags);
-      this.cache = cache;
    }
 
    @Override
    protected Long size() {
-      if (cache == null) return 0L;
+      if (getCache() == null) return 0L;
 
       return checkNegativeStat(getCache().getAdvancedCache().getStats().getApproximateEntriesInMemory());
    }
 
    @Override
    protected long hitCount() {
-      if (cache == null) return 0L;
+      if (getCache() == null) return 0L;
 
       return checkNegativeStat(getCache().getAdvancedCache().getStats().getHits());
    }
 
    @Override
    protected Long missCount() {
-      if (cache == null) return 0L;
+      if (getCache() == null) return 0L;
 
       return checkNegativeStat(getCache().getAdvancedCache().getStats().getMisses());
    }
 
    @Override
    protected Long evictionCount() {
-      if (cache == null) return 0L;
+      if (getCache() == null) return 0L;
 
       return checkNegativeStat(getCache().getAdvancedCache().getStats().getEvictions());
    }
 
    @Override
    protected long putCount() {
-      if (cache == null) return 0L;
+      if (getCache() == null) return 0L;
 
       return checkNegativeStat(getCache().getAdvancedCache().getStats().getStores());
    }
 
    @Override
    protected void bindImplementationSpecificMetrics(MeterRegistry registry) {
-      if (cache == null) return;
+      if (getCache() == null) return;
 
       Gauge.builder("cache.start", getCache(), cache -> checkNegativeStat(cache.getAdvancedCache().getStats().getTimeSinceStart()))
             .baseUnit(TimeUnit.SECONDS.name())
