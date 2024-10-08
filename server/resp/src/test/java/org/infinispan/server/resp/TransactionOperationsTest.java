@@ -7,14 +7,20 @@ import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
+import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.RedisFuture;
 import io.lettuce.core.TransactionResult;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 
 @Test(groups = "functional", testName = "server.resp.TransactionOperationsTest")
@@ -23,6 +29,7 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
    @Override
    protected void amendConfiguration(ConfigurationBuilder configurationBuilder) {
       configurationBuilder.invocationBatching().enable(true);
+      configurationBuilder.transaction().lockingMode(LockingMode.PESSIMISTIC);
    }
 
    @Test
@@ -315,5 +322,53 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
             .hasMessage("EXECABORT Transaction discarded because of previous errors.");
 
       assertThat(redis.get(k())).isNull();
+   }
+
+   public void testBlockingPopWithTx() throws Throwable {
+      testBlockingPopWithTx(TestingUtil::k);
+   }
+
+   protected final void testBlockingPopWithTx(Supplier<String> keyFactory) throws Throwable {
+      SkipTestNG.skipIf(!cache.getCacheConfiguration().transaction().transactionMode().isTransactional(), "Test does not have batching enabled.");
+      String key = keyFactory.get();
+
+      // Utilize a different connection for listener.
+      RedisAsyncCommands<String, String> async = newConnection().async();
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      RedisFuture<KeyValue<String, String>> listener = async.blpop(0, key);
+
+      assertThat(listener.isDone()).isFalse();
+
+      assertThat(redis.multi()).isEqualTo("OK");
+      assertThat(redisConnection.isMulti()).isTrue();
+
+      // Add to the listened key
+      redis.lpush(key, "value");
+
+      // Listener is still blocked as transaction not executed.
+      assertThat(listener.isDone()).isFalse();
+
+      // We remove the queue. The listener should still be blocked.
+      redis.del(key);
+
+      // Before the commit, still not done!
+      assertThat(listener.isDone()).isFalse();
+
+      TransactionResult result = redis.exec();
+      assertThat(result.wasDiscarded()).isFalse();
+      assertThat(result).hasSize(2)
+            .allMatch(elem -> elem.equals(1L));
+
+      // Since the queue is removed, the listener still blocked.
+      assertThat(listener.isDone()).isFalse();
+
+      // Release listener.
+      redis.lpush(key, "added-later");
+      eventually(listener::isDone);
+
+      KeyValue<String, String> kv = listener.get();
+      assertThat(kv.getKey()).isEqualTo(key);
+      assertThat(kv.getValue()).isEqualTo("added-later");
    }
 }
