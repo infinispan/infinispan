@@ -9,8 +9,15 @@
    </parent>
 
    <artifactId>infinispan-hibernate-cache-v62</artifactId>
-   <name>Infinispan Hibernate 6.2 Cache</name>
-   <description>Infinispan Hibernate 6.2 Cache module</description>
+   <name>Infinispan Hibernate 6.2+ Cache</name>
+   <description>Infinispan Hibernate 6.2+ Cache module</description>
+
+   <properties>
+      <!-- We only test with supported Hibernate releases: 6.2, 6.4 (default), 6.5 and 6.6 -->
+      <version.hibernate.orm.6.2>6.2.32.Final</version.hibernate.orm.6.2>
+      <version.hibernate.orm.6.5>6.5.3.Final</version.hibernate.orm.6.5>
+      <version.hibernate.orm.6.6>6.6.1.Final</version.hibernate.orm.6.6>
+   </properties>
 
    <dependencies>
       <dependency>
@@ -100,6 +107,7 @@
                </dependency>
             </dependencies>
             <executions>
+               <!-- The default execution uses Hibernate 6.4 -->
                <execution>
                   <id>hibernate-6.2</id>
                   <goals>
@@ -122,12 +130,12 @@
                         <additionalClasspathDependency>
                            <groupId>org.hibernate.orm</groupId>
                            <artifactId>hibernate-core</artifactId>
-                           <version>6.2.22.Final</version>
+                           <version>${version.hibernate.orm.6.2}</version>
                         </additionalClasspathDependency>
                         <additionalClasspathDependency>
                            <groupId>org.hibernate.orm</groupId>
                            <artifactId>hibernate-testing</artifactId>
-                           <version>6.2.22.Final</version>
+                           <version>${version.hibernate.orm.6.2}</version>
                            <exclusions>
                               <exclusion>
                                  <groupId>*</groupId>
@@ -145,7 +153,7 @@
 
    <profiles>
       <profile>
-         <id>hibernate-devel</id>
+         <id>hibernate-matrix</id>
          <activation>
             <activeByDefault>false</activeByDefault>
          </activation>
@@ -156,7 +164,46 @@
                   <artifactId>maven-surefire-plugin</artifactId>
                   <executions>
                      <execution>
-                        <id>hibernate-6.4</id>
+                        <id>hibernate-6.3</id>
+                        <goals>
+                           <goal>test</goal>
+                        </goals>
+                        <phase>test</phase>
+                        <configuration>
+                           <reportNameSuffix>6_3</reportNameSuffix>
+                           <classpathDependencyExcludes>
+                              <classpathDependencyExclude>org.hibernate.orm:hibernate-core</classpathDependencyExclude>
+                              <classpathDependencyExclude>org.hibernate.orm:hibernate-testing</classpathDependencyExclude>
+                              <!-- org.hibernate.orm:hibernate-core transitives -->
+                              <classpathDependencyExclude>org.antlr:antlr4-runtime</classpathDependencyExclude>
+                              <classpathDependencyExclude>org.glassfish.jaxb:jaxb-runtime</classpathDependencyExclude>
+                              <classpathDependencyExclude>com.sun.istack:istack-commons-runtime</classpathDependencyExclude>
+                              <classpathDependencyExclude>io.smallrye:jandex</classpathDependencyExclude>
+                              <classpathDependencyExclude>org.glassfish.jaxb:jaxb-core</classpathDependencyExclude>
+                              <classpathDependencyExclude>org.glassfish.jaxb:txw2</classpathDependencyExclude>
+                           </classpathDependencyExcludes>
+                           <additionalClasspathDependencies>
+                              <additionalClasspathDependency>
+                                 <groupId>org.hibernate.orm</groupId>
+                                 <artifactId>hibernate-core</artifactId>
+                                 <version>${version.hibernate.orm.6.3}</version>
+                              </additionalClasspathDependency>
+                              <additionalClasspathDependency>
+                                 <groupId>org.hibernate.orm</groupId>
+                                 <artifactId>hibernate-testing</artifactId>
+                                 <version>${version.hibernate.orm.6.3}</version>
+                                 <exclusions>
+                                    <exclusion>
+                                       <groupId>*</groupId>
+                                       <artifactId>*</artifactId>
+                                    </exclusion>
+                                 </exclusions>
+                              </additionalClasspathDependency>
+                           </additionalClasspathDependencies>
+                        </configuration>
+                     </execution>
+                     <execution>
+                        <id>hibernate-6.5</id>
                         <goals>
                            <goal>test</goal>
                         </goals>
@@ -178,12 +225,56 @@
                               <additionalClasspathDependency>
                                  <groupId>org.hibernate.orm</groupId>
                                  <artifactId>hibernate-core</artifactId>
-                                 <version>6.5.0-SNAPSHOT</version>
+                                 <version>${version.hibernate.orm.6.5}</version>
                               </additionalClasspathDependency>
                               <additionalClasspathDependency>
                                  <groupId>org.hibernate.orm</groupId>
                                  <artifactId>hibernate-testing</artifactId>
-                                 <version>6.5.0-SNAPSHOT</version>
+                                 <version>${version.hibernate.orm.6.5}</version>
+                                 <exclusions>
+                                    <exclusion>
+                                       <groupId>*</groupId>
+                                       <artifactId>*</artifactId>
+                                    </exclusion>
+                                 </exclusions>
+                              </additionalClasspathDependency>
+                           </additionalClasspathDependencies>
+                        </configuration>
+                     </execution>
+                     <execution>
+                        <id>hibernate-6.6</id>
+                        <goals>
+                           <goal>test</goal>
+                        </goals>
+                        <phase>test</phase>
+                        <configuration>
+                           <reportNameSuffix>6_6</reportNameSuffix>
+                           <classpathDependencyExcludes>
+                              <classpathDependencyExclude>org.hibernate.orm:hibernate-core</classpathDependencyExclude>
+                              <classpathDependencyExclude>org.hibernate.orm:hibernate-testing</classpathDependencyExclude>
+                              <!-- org.hibernate.orm:hibernate-core transitives -->
+                              <classpathDependencyExclude>org.antlr:antlr4-runtime</classpathDependencyExclude>
+                              <classpathDependencyExclude>org.glassfish.jaxb:jaxb-runtime</classpathDependencyExclude>
+                              <classpathDependencyExclude>com.sun.istack:istack-commons-runtime</classpathDependencyExclude>
+                              <classpathDependencyExclude>io.smallrye:jandex</classpathDependencyExclude>
+                              <classpathDependencyExclude>org.glassfish.jaxb:jaxb-core</classpathDependencyExclude>
+                              <classpathDependencyExclude>org.glassfish.jaxb:txw2</classpathDependencyExclude>
+                           </classpathDependencyExcludes>
+                           <additionalClasspathDependencies>
+                              <additionalClasspathDependency>
+                                 <groupId>org.junit.jupiter</groupId>
+                                 <artifactId>junit-jupiter-engine</artifactId>
+                                 <version>${version.junit5}</version>
+                              </additionalClasspathDependency>
+                              <additionalClasspathDependency>
+                                 <groupId>org.hibernate.orm</groupId>
+                                 <artifactId>hibernate-core</artifactId>
+                                 <version>${version.hibernate.orm.6.6}</version>
+                              </additionalClasspathDependency>
+                              <additionalClasspathDependency>
+                                 <groupId>org.hibernate.orm</groupId>
+                                 <artifactId>hibernate-testing</artifactId>
+                                 <version>${version.hibernate.orm.6.6}</version>
                                  <exclusions>
                                     <exclusion>
                                        <groupId>*</groupId>
