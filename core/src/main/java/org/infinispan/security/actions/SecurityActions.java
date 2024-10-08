@@ -17,7 +17,6 @@ import org.infinispan.health.Health;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listenable;
-import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.transport.raft.RaftManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
@@ -121,8 +120,8 @@ public class SecurityActions {
       doPrivileged(new AddCacheDependencyAction(cacheManager, from, to));
    }
 
-   public static PersistenceManager getPersistenceManager(final EmbeddedCacheManager cacheManager, String cacheName) {
-      final GetPersistenceManagerAction action = new GetPersistenceManagerAction(cacheManager, cacheName);
+   public static <C> C getCacheComponent(final EmbeddedCacheManager cacheManager, String cacheName, Class<C> klass) {
+      final GetCacheComponentAction<C> action = new GetCacheComponentAction<>(cacheManager, cacheName, klass);
       return doPrivileged(action);
    }
 
