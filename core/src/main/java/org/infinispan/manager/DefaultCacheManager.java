@@ -333,7 +333,7 @@ public class DefaultCacheManager extends InternalCacheManager {
     * @throws java.io.IOException if there is a problem with the configuration file.
     */
    public DefaultCacheManager(String configurationFile, boolean start) throws IOException {
-      this(FileLookupFactory.newInstance().lookupFileStrict(configurationFile, Thread.currentThread().getContextClassLoader()), start);
+      this(FileLookupFactory.newInstance().lookupFileLocationStrict(configurationFile, Thread.currentThread().getContextClassLoader()), start);
    }
 
    /**

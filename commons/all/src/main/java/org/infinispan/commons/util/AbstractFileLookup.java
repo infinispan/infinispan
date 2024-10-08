@@ -101,6 +101,16 @@ public abstract class AbstractFileLookup implements FileLookup {
       return u;
    }
 
+   @Override
+   public URL lookupFileLocationStrict(String filename, ClassLoader cl) throws FileNotFoundException {
+      URL url = lookupFileLocation(filename, cl);
+      if (url == null) {
+         throw new FileNotFoundException(filename);
+      } else {
+         return url;
+      }
+   }
+
    protected abstract URL getAsURLFromClassLoader(String filename, ClassLoader cl);
 
    @Override
