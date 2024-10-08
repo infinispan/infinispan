@@ -57,7 +57,7 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
       return next.stageToReturn(cs, ctx, ignore -> next);
    }
 
-   private CompletionStage<?> perform(List<TransactionCommand> commands, RespTransactionHandler curr, Resp3Handler next, ChannelHandlerContext ctx) {
+   private CompletionStage<Void> perform(List<TransactionCommand> commands, RespTransactionHandler curr, Resp3Handler next, ChannelHandlerContext ctx) {
       // An error happened while in transaction context. This error means more of a setup error, failed enqueueing, etc.
       // One such example, trying to WATCH while in transaction context. This is not a command failed to execute yet.
       // See: https://redis.io/docs/interact/transactions/#errors-inside-a-transaction
@@ -77,15 +77,16 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
          }, ctx.executor());
       }
 
-      AdvancedCache<byte[], byte[]> cache = curr.cache();
+      AdvancedCache<byte[], byte[]> cache = next.cache();
 
-      // Redis has a serializable isolation. Without batching we have read-uncomitted.
-      // Using the batching API we have a few more useful features.
-      boolean batchEnabled = cache.getCacheConfiguration().invocationBatching().enabled();
-      if (!batchEnabled) {
-         log.multiKeyOperationUseBatching();
+      // Redis has a serializable isolation. Verify the cache is transactional to manually create the context.
+      boolean transactional = cache.getCacheConfiguration().transaction().transactionMode().isTransactional();
+      final TransactionDecorator.TransactionResume resume;
+      if (!transactional) {
+         log.enableTransactionForMultiExec();
+         resume = null;
       } else {
-         cache.startBatch();
+         resume = TransactionDecorator.beginTransaction(next, cache);
       }
       return CompletableFuture.supplyAsync(() -> {
          // Mark the commands are executing from within a transaction context.
@@ -93,25 +94,18 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
 
          // Unfortunately, we need to manually write the prefix before proceeding with each operation.
          ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, commands.size(), curr.allocator());
-         return orderlyExecution(next, ctx, commands, 0, CompletableFutures.completedNull())
-               .whenComplete((ignore, t) -> {
-                  if (batchEnabled)
-                     cache.endBatch(true);
-
-                  TransactionContext.endTransactionContext(ctx);
-               });
+         return CompletionStages.handleAndCompose(orderlyExecution(next, ctx, commands), (ignore, t) -> {
+            TransactionContext.endTransactionContext(ctx);
+            return transactional
+                  ? TransactionDecorator.completeTransaction(resume, t == null)
+                  : CompletableFutures.completedNull();
+         });
       }, ctx.executor()).thenCompose(Function.identity());
    }
 
-   private CompletionStage<?> orderlyExecution(Resp3Handler handler, ChannelHandlerContext ctx,
-                                               List<TransactionCommand> commands, int index,
-                                               CompletionStage<?> current) {
-      if (index == commands.size()) {
-         return current;
-      }
-
-      TransactionCommand command = commands.get(index);
-      return CompletionStages.handleAndCompose(current, (r, ignore) ->
-            orderlyExecution(handler, ctx, commands, index + 1, command.perform(handler, ctx)));
+   private CompletionStage<Void> orderlyExecution(Resp3Handler handler, ChannelHandlerContext ctx,
+                                               List<TransactionCommand> commands) {
+      return CompletionStages.performSequentially(commands.iterator(),
+            cmd -> cmd.perform(handler, ctx).thenApply(CompletableFutures.toNullFunction()));
    }
 }

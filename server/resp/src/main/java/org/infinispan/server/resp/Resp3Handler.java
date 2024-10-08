@@ -1,7 +1,5 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.serialization.RespConstants.CRLF_STRING;
-
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
@@ -25,7 +23,7 @@ import org.infinispan.util.concurrent.BlockingManager;
 import io.netty.channel.ChannelHandlerContext;
 
 public class Resp3Handler extends Resp3AuthHandler {
-   private static final byte[] CRLF_BYTES = CRLF_STRING.getBytes();
+
    protected AdvancedCache<byte[], byte[]> ignorePreviousValueCache;
    protected EmbeddedMultimapListCache<byte[], byte[]> listMultimap;
    protected EmbeddedMultimapPairCache<byte[], byte[], byte[]> mapMultimap;
