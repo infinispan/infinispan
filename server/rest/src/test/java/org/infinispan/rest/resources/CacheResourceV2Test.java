@@ -1446,9 +1446,13 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       RestRawClient rawClient = client.raw();
 
       String xml = String.format(
-            "<%s name=\"cacheName\" mode=\"SYNC\" configuration=\"parent\">\n" +
-                  "  <memory storage=\"OBJECT\" max-count=\"20\"/>\n" +
-                  "</%s>", root, root
+            """
+               <%s name="cacheName" mode="SYNC" configuration="parent">
+                  <memory storage="OBJECT" max-count="20"/>
+                  <persistence>
+                     <file-store/>
+                  </persistence>
+               </%s>""", root, root
       );
 
       CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=convert", Map.of(ACCEPT, APPLICATION_JSON_TYPE), RestEntity.create(APPLICATION_XML, xml));
@@ -1469,7 +1473,20 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    private void testConversionFromJSON0(String root) throws Exception {
       RestRawClient rawClient = client.raw();
 
-      String json = String.format("{\"%s\":{\"configuration\":\"parent\",\"mode\":\"SYNC\",\"memory\":{\"storage\":\"OBJECT\",\"max-count\":\"20\"}}}", root);
+      String json = String.format("""
+            {
+               "%s": {
+                  "configuration":"parent",
+                  "mode":"SYNC",
+                  "memory":{
+                     "storage":"OBJECT","max-count":"20"
+                  },
+                  "persistence": {
+                     "file-store": {}
+                  }
+               }
+            }
+            """, root);
 
       CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap(ACCEPT, APPLICATION_XML_TYPE), RestEntity.create(APPLICATION_JSON, json));
       assertThat(response).isOk();
@@ -1489,12 +1506,16 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    private void testConversionFromYAML0(String root) throws Exception {
       RestRawClient rawClient = client.raw();
 
-      String yaml = String.format("%s:\n" +
-            "  mode: 'SYNC'\n" +
-            "  configuration: 'parent'\n" +
-            "  memory:\n" +
-            "    storage: 'OBJECT'\n" +
-            "    maxCount: 20", root);
+      String yaml = String.format("""
+            %s:
+              mode: 'SYNC'
+              configuration: 'parent'
+              memory:
+                storage: 'OBJECT'
+                maxCount: 20
+              persistence:
+                fileStore: ~
+            """, root);
 
       CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap(ACCEPT, APPLICATION_XML_TYPE), RestEntity.create(APPLICATION_YAML, yaml));
       assertThat(response).isOk();
