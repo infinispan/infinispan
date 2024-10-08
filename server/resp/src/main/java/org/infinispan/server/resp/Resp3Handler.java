@@ -1,13 +1,12 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.serialization.RespConstants.CRLF_STRING;
-
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.cache.impl.DecoratedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -25,7 +24,7 @@ import org.infinispan.util.concurrent.BlockingManager;
 import io.netty.channel.ChannelHandlerContext;
 
 public class Resp3Handler extends Resp3AuthHandler {
-   private static final byte[] CRLF_BYTES = CRLF_STRING.getBytes();
+
    protected AdvancedCache<byte[], byte[]> ignorePreviousValueCache;
    protected EmbeddedMultimapListCache<byte[], byte[]> listMultimap;
    protected EmbeddedMultimapPairCache<byte[], byte[], byte[]> mapMultimap;
@@ -49,11 +48,18 @@ public class Resp3Handler extends Resp3AuthHandler {
    public void setCache(AdvancedCache<byte[], byte[]> cache) {
       super.setCache(cache);
       ignorePreviousValueCache = cache.withFlags(Flag.SKIP_CACHE_LOAD, Flag.IGNORE_RETURN_VALUES);
-      Cache toMultimap = cache.withMediaType(MediaType.APPLICATION_OCTET_STREAM, valueMediaType);
-      listMultimap = new EmbeddedMultimapListCache<>(toMultimap);
-      mapMultimap = new EmbeddedMultimapPairCache<>(toMultimap);
-      embeddedSetCache = new EmbeddedSetCache<>(toMultimap);
-      sortedSetMultimap = new EmbeddedMultimapSortedSetCache<>(toMultimap);
+      listMultimap = new EmbeddedMultimapListCache<>(getCache(cache));
+      mapMultimap = new EmbeddedMultimapPairCache<>(getCache(cache));
+      embeddedSetCache = new EmbeddedSetCache<>(getCache(cache));
+      sortedSetMultimap = new EmbeddedMultimapSortedSetCache<>(getCache(cache));
+   }
+
+   @SuppressWarnings({"unchecked", "rawtypes"})
+   private <K, V> Cache<K, V> getCache(AdvancedCache cache) {
+      if (cache instanceof DecoratedCache<?,?>)
+         return cache.<K, V>withMediaType(MediaType.APPLICATION_OCTET_STREAM, valueMediaType);
+
+      return (Cache<K, V>) typedCache(valueMediaType);
    }
 
    public EmbeddedMultimapListCache<byte[], byte[]> getListMultimap() {

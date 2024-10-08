@@ -4,8 +4,10 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.cache.impl.DecoratedCache;
+import org.infinispan.cache.impl.InternalCache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.util.Experimental;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -23,6 +25,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 @Experimental
 public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
 
+   private final DecoratedCache<K, V> decorated;
    final Params params;
    final AdvancedCache<K, V> cache;
    final AsyncInterceptorChain chain;
@@ -84,6 +87,18 @@ public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
       commandsFactory = componentRegistry.getComponent(CommandsFactory.class);
       notifier = componentRegistry.getComponent(FunctionalNotifier.class);
       keyPartitioner = componentRegistry.getComponent(KeyPartitioner.class);
+      this.decorated = decoratedCache;
+   }
+
+   boolean delegateContextCreation() {
+      return decorated != null && decorated.bypassInvocationContextFactory();
+   }
+
+   InvocationContext createInvocationContext(boolean isWrite, int size) {
+      assert decorated != null : "Decorated cache is null";
+      return isWrite
+            ? InternalCache.writeContext(decorated, size)
+            : InternalCache.readContext(decorated, size);
    }
 
    @Override
