@@ -52,11 +52,13 @@ import org.infinispan.client.hotrod.impl.topology.ClusterInfo;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.stat.CounterTracker;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.DecoderException;
+import io.reactivex.rxjava3.core.Completable;
 import net.jcip.annotations.GuardedBy;
 
 /**
@@ -96,12 +98,14 @@ public class OperationDispatcher {
    @GuardedBy("lock")
    private final Set<SocketAddress> connectionFailedServers = ConcurrentHashMap.newKeySet();
    private final ChannelHandler channelHandler;
+   private final TimeService timeService;
 
    private final ClientListenerNotifier clientListenerNotifier;
    private final CounterTracker totalRetriesMetric;
 
-   public OperationDispatcher(Configuration configuration, ExecutorService executorService,
+   public OperationDispatcher(Configuration configuration, ExecutorService executorService, TimeService timeService,
                               ClientListenerNotifier clientListenerNotifier, Consumer<ChannelPipeline> pipelineDecorator) {
+      this.timeService = timeService;
       this.clientListenerNotifier = clientListenerNotifier;
       this.maxRetries = configuration.maxRetries();
 
@@ -173,6 +177,10 @@ public class OperationDispatcher {
       }
    }
 
+   public TimeService getTimeService() {
+      return timeService;
+   }
+
    public ClientListenerNotifier getClientListenerNotifier() {
       return clientListenerNotifier;
    }
@@ -200,7 +208,7 @@ public class OperationDispatcher {
    }
 
    public <E> CompletionStage<E> execute(HotRodOperation<E> operation) {
-      assert !(operation instanceof ClientListenerOperation);
+      assert !(operation.isInstanceOf(ClientListenerOperation.class));
       return execute(operation, Set.of());
    }
 
@@ -572,29 +580,25 @@ public class OperationDispatcher {
       } else {
          set = this.priorAgeOperations;
       }
-      // We use this as a placeholder so that if the forEach encounters operations that are all complete, that
-      // it won't try to null out the op set as the lock is not reentrant.
-      set.add(NoHotRodOperation.instance());
-      channelHandler.gatherOperations().forEach(op -> {
-         CompletionStage<?> stage = op.asCompletableFuture();
-         if (CompletionStages.isCompletedSuccessfully(stage)) {
-            return;
-         }
-         set.add(op);
-         stage.whenComplete((e, t) -> {
-            set.remove(op);
-            if (set.isEmpty()) {
-               long stamp = lock.writeLock();
-               try {
-                  this.priorAgeOperations = null;
-               } finally {
-                  lock.unlockWrite(stamp);
+      var endPlaceholder = NoHotRodOperation.instance();
+      set.add(endPlaceholder);
+      channelHandler.pendingOperationFlowable()
+            .concatMapCompletable(op -> {
+               set.add(op);
+               return Completable.fromCompletionStage(op.asCompletableFuture()
+                     .whenComplete((___, t) -> set.remove(op)));
+            })
+            .subscribe(() -> {
+               if (set.isEmpty()) {
+                  long stamp = lock.writeLock();
+                  try {
+                     this.priorAgeOperations = null;
+                  } finally {
+                     lock.unlockWrite(stamp);
+                  }
                }
-            }
-         });
-      });
-      set.remove(NoHotRodOperation.instance());
-      // If there were no commands in prior age, immediately remove the Set while holding the lock
+            }, t -> log.fatal("Problem occurred while configuring prior age operations for cluster failover", t));
+      set.remove(endPlaceholder);
       if (set.isEmpty()) {
          this.priorAgeOperations = null;
       }

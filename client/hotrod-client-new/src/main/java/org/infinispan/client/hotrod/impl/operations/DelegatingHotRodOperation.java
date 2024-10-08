@@ -94,8 +94,13 @@ public abstract class DelegatingHotRodOperation<T> implements HotRodOperation<T>
    }
 
    @Override
+   public boolean isInstanceOf(Class<? extends HotRodOperation<?>> klass) {
+      return delegate.isInstanceOf(klass);
+   }
+
+   @Override
    public String toString() {
-      return "getClass().getSimpleName(){" +
+      return getClass().getSimpleName() + "{" +
             "delegate=" + delegate +
             '}';
    }

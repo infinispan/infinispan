@@ -372,7 +372,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
          executorFactory = Util.getInstance(configuration.asyncExecutorFactory().factoryClass());
       }
       asyncExecutorService = executorFactory.getExecutor(configuration.asyncExecutorFactory().properties());
-      dispatcher = new OperationDispatcher(configuration, asyncExecutorService, listenerNotifier, pipelineWrapper());
+      dispatcher = new OperationDispatcher(configuration, asyncExecutorService, timeService, listenerNotifier, pipelineWrapper());
       counterManager.start(dispatcher, listenerNotifier);
 
       dispatcher.start();
