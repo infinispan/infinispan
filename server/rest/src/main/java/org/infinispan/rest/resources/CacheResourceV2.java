@@ -128,6 +128,7 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Role;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.ServerStateManager;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.stats.Stats;
 import org.infinispan.telemetry.InfinispanTelemetry;
@@ -327,7 +328,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       cacheInfo.type = cacheConfiguration.clustering().cacheMode().toCacheType();
       boolean isPersistent = false;
       if (chHealth.getStatus() != HealthStatus.FAILED) {
-         PersistenceManager pm = SecurityActions.getPersistenceManager(cacheManager, cacheName);
+         PersistenceManager pm = SecurityActions.getCacheComponent(cacheManager, cacheName, PersistenceManager.class);
          isPersistent = pm.isEnabled();
       }
       cacheInfo.simpleCache = cacheConfiguration.simpleCache();
@@ -366,6 +367,11 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             // if the global rebalancing is enabled, retrieve each cache status
             try {
                perCacheRebalancing = finalLocalTopologyManager.isCacheRebalancingEnabled(cacheName);
+               if (perCacheRebalancing) {
+                  StateTransferManager stateTransferManager = SecurityActions.getCacheComponent(cacheManager, cacheName, StateTransferManager.class);
+                  cacheInfo.rebalancingRequested = stateTransferManager.getInflightSegmentTransferCount();
+                  cacheInfo.rebalancingInflight = stateTransferManager.getInflightTransactionalSegmentCount();
+               }
             } catch (Exception ex) {
                // There was an error retrieving this value. Just ignore
             }
@@ -374,31 +380,46 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             perCacheRebalancing = Boolean.FALSE;
          }
 
-         cacheInfo.rebalancing_enabled = perCacheRebalancing;
+         cacheInfo.rebalancingEnabled = perCacheRebalancing;
       }
 
       return cacheInfo;
    }
 
    static class CacheInfo implements JsonSerialization {
-      public String status;
-      public String name;
-      public String type;
-      public boolean simpleCache;
-      public boolean transactional;
-      public boolean persistent;
-      public boolean bounded;
-      public boolean indexed;
-      public boolean secured;
-      public boolean hasRemoteBackup;
-      public boolean tracing;
-      public HealthStatus health;
-      public Boolean rebalancing_enabled;
-      public List<String> aliases;
+      String status;
+      String name;
+      String type;
+      boolean simpleCache;
+      boolean transactional;
+      boolean persistent;
+      boolean bounded;
+      boolean indexed;
+      boolean secured;
+      boolean hasRemoteBackup;
+      boolean tracing;
+      HealthStatus health;
+      Boolean rebalancingEnabled;
+      long rebalancingRequested;
+      long rebalancingInflight;
+      List<String> aliases;
+      Stats stats;
+      Integer size;
+      String configuration;
+      Boolean rehashInProgress;
+      Boolean indexingInProgress;
+      boolean statistics;
+      Boolean queryable;
+      MediaType keyStorage;
+      MediaType valueStorage;
+      String mode;
+      StorageType storageType;
+      String maxSize;
+      long maxSizeBytes;
 
       @Override
       public Json toJson() {
-         Json payload = Json.object()
+         Json json = Json.object()
                .set("status", status)
                .set("name", name)
                .set("type", type)
@@ -411,13 +432,42 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
                .set("has_remote_backup", hasRemoteBackup)
                .set("tracing", tracing)
                .set("health", health)
-               .set("aliases", aliases);
+               .set("aliases", aliases)
+               .set("statistics", statistics)
+               .set("key_storage", keyStorage)
+               .set("value_storage", valueStorage)
+               .set("aliases", aliases)
+               .set("mode", mode);
 
-         if (rebalancing_enabled != null) {
-            payload.set("rebalancing_enabled", rebalancing_enabled);
+         if (stats != null) {
+            json.set("stats", stats.toJson());
          }
-
-         return payload;
+         if (size != null) {
+            json.set("size", size);
+         }
+         if (rehashInProgress != null) {
+            json.set("rehash_in_progress", rehashInProgress);
+         }
+         if (indexingInProgress != null) {
+            json.set("indexing_in_progress", indexingInProgress);
+         }
+         if (queryable != null) {
+            json.set("queryable", queryable);
+         }
+         if (rebalancingEnabled != null) {
+            json.set("rebalancing_enabled", rebalancingEnabled);
+            json.set("rebalancing_requested", rebalancingRequested);
+            json.set("rebalancing_inflight", rebalancingInflight);
+         }
+         if (configuration != null) {
+            json.set("configuration", Json.factory().raw(configuration));
+         }
+         if (storageType != null) {
+            json.set("storage_type", storageType)
+                  .set("max_size", maxSize == null ? "" : maxSize)
+                  .set("max_size_bytes", maxSizeBytes);
+         }
+         return json;
       }
    }
 
@@ -429,7 +479,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
 
       PersistenceManager persistenceManager =
-            SecurityActions.getPersistenceManager(invocationHelper.getRestCacheManager().getInstance(), cache.getName());
+            SecurityActions.getCacheComponent(invocationHelper.getRestCacheManager().getInstance(), cache.getName(), PersistenceManager.class);
 
       List<RemoteStore> remoteStores = new ArrayList<>(persistenceManager.getStores(RemoteStore.class));
 
@@ -894,14 +944,15 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       Configuration configuration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
-      PersistenceManager persistenceManager = SecurityActions.getPersistenceManager(cacheManager, cache.getName());
+      PersistenceManager persistenceManager = SecurityActions.getCacheComponent(cacheManager, cache.getName(), PersistenceManager.class);
       Stats stats = null;
       Boolean rehashInProgress = null;
       Boolean indexingInProgress = null;
       Boolean queryable = null;
 
+      ComponentRegistry ccr = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
       try {
-         stats = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache()).getComponent(ClusterCacheStats.class);
+         stats = ccr.getComponent(ClusterCacheStats.class);
          DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
          rehashInProgress = distributionManager != null && distributionManager.isRehashInProgress();
       } catch (SecurityException ex) {
@@ -909,11 +960,15 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       }
 
       Boolean rebalancingEnabled = null;
+      long rebalancingRequested = 0;
+      long rebalancingInflight = 0;
       try {
-         LocalTopologyManager localTopologyManager = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache())
-               .getComponent(LocalTopologyManager.class);
+         LocalTopologyManager localTopologyManager = ccr.getComponent(LocalTopologyManager.class);
          if (localTopologyManager != null) {
             rebalancingEnabled = localTopologyManager.isCacheRebalancingEnabled(cache.getName());
+            StateTransferManager stateTransferManager = ccr.getComponent(StateTransferManager.class);
+            rebalancingRequested = stateTransferManager.getInflightSegmentTransferCount();
+            rebalancingInflight = stateTransferManager.getInflightTransactionalSegmentCount();
          }
       } catch (Exception ex) {
          // Getting rebalancing status might raise an exception
@@ -936,7 +991,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       boolean statistics = configuration.statistics().enabled();
       boolean indexed = configuration.indexing().enabled();
 
-      CacheFullDetail fullDetail = new CacheFullDetail();
+      CacheInfo fullDetail = new CacheInfo();
       fullDetail.stats = stats;
       StringBuilderWriter sw = new StringBuilderWriter();
       try (ConfigurationWriter w = ConfigurationWriter.to(sw).withType(APPLICATION_JSON).prettyPrint(pretty).build()) {
@@ -973,6 +1028,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       fullDetail.statistics = statistics;
       fullDetail.queryable = queryable;
       fullDetail.rebalancingEnabled = rebalancingEnabled;
+      fullDetail.rebalancingRequested = rebalancingRequested;
+      fullDetail.rebalancingInflight = rebalancingInflight;
       fullDetail.keyStorage = cache.getAdvancedCache().getKeyDataConversion().getStorageMediaType();
       fullDetail.valueStorage = cache.getAdvancedCache().getValueDataConversion().getStorageMediaType();
       fullDetail.mode = configuration.clustering().cacheModeString();
@@ -1233,84 +1290,6 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       }, invocationHelper.getExecutor())
           .thenCompose(Function.identity())
           .thenApply(Function.identity());
-   }
-
-   private static class CacheFullDetail implements JsonSerialization {
-      public Stats stats;
-      public Integer size;
-      public String configuration;
-      public Boolean rehashInProgress;
-      public boolean bounded;
-      public boolean indexed;
-      public boolean persistent;
-      public boolean transactional;
-      public boolean secured;
-      public boolean hasRemoteBackup;
-      public boolean tracing;
-      public Boolean indexingInProgress;
-      public boolean statistics;
-      public Boolean queryable;
-      public Boolean rebalancingEnabled;
-      public MediaType keyStorage;
-      public MediaType valueStorage;
-      public String mode;
-      public StorageType storageType;
-      public String maxSize;
-      public long maxSizeBytes;
-      public List<String> aliases;
-
-      @Override
-      public Json toJson() {
-         Json json = Json.object();
-
-         if (stats != null) {
-            json.set("stats", stats.toJson());
-         }
-
-         if (size != null) {
-            json.set("size", size);
-         }
-
-         if (rehashInProgress != null) {
-            json.set("rehash_in_progress", rehashInProgress);
-         }
-
-         if (indexingInProgress != null) {
-            json.set("indexing_in_progress", indexingInProgress);
-         }
-
-         if (queryable != null) {
-            json.set("queryable", queryable);
-         }
-
-         if (rebalancingEnabled != null) {
-            json.set("rebalancing_enabled", rebalancingEnabled);
-         }
-
-         if (configuration != null) {
-            json.set("configuration", Json.factory().raw(configuration));
-         }
-
-         if (storageType != null) {
-            json.set("storage_type", storageType)
-                  .set("max_size", maxSize == null ? "" : maxSize)
-                  .set("max_size_bytes", maxSizeBytes);
-         }
-
-         return json
-               .set("bounded", bounded)
-               .set("indexed", indexed)
-               .set("persistent", persistent)
-               .set("transactional", transactional)
-               .set("secured", secured)
-               .set("has_remote_backup", hasRemoteBackup)
-               .set("tracing", tracing)
-               .set("statistics", statistics)
-               .set("key_storage", keyStorage)
-               .set("value_storage", valueStorage)
-               .set("aliases", aliases)
-               .set("mode", mode);
-      }
    }
 
    public static abstract class BaseCacheListener {

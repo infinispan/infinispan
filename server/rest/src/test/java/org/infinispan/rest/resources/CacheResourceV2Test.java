@@ -771,6 +771,8 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(document.at("aliases")).isNotNull();
       assertThat(document.at("queryable")).isNotNull();
       assertThat(document.at("rebalancing_enabled")).isNotNull();
+      assertThat(document.at("rebalancing_requested")).isNotNull();
+      assertThat(document.at("rebalancing_inflight")).isNotNull();
       assertThat(document.at("key_storage").asString()).isEqualTo("application/x-protostream");
       assertThat(document.at("value_storage").asString()).isEqualTo("application/x-protostream");
       assertThat(document.at("mode").asString()).isEqualTo("DIST_SYNC");

@@ -4,23 +4,24 @@ import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.manager.PersistenceManager;
 
-public class GetPersistenceManagerAction extends AbstractEmbeddedCacheManagerAction<PersistenceManager> {
+public class GetCacheComponentAction<C> extends AbstractEmbeddedCacheManagerAction<C> {
 
    private final String cacheName;
+   private final Class<C> klass;
 
-   public GetPersistenceManagerAction(EmbeddedCacheManager cacheManager, String cacheName) {
+   public GetCacheComponentAction(EmbeddedCacheManager cacheManager, String cacheName, Class<C> klass) {
       super(cacheManager);
       this.cacheName = cacheName;
+      this.klass = klass;
    }
 
    @Override
-   public PersistenceManager get() {
+   public C get() {
       ComponentRegistry cr = GlobalComponentRegistry.of(cacheManager).getNamedComponentRegistry(cacheName);
       if (cr == null)
          throw new IllegalLifecycleStateException();
 
-      return cr.getComponent(PersistenceManager.class);
+      return cr.getComponent(klass);
    }
 }
