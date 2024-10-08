@@ -6,11 +6,11 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
 
 public abstract class AbstractExternalizerTest<T> {
 
-    protected AbstractExternalizer<T> externalizer;
+    protected AdvancedExternalizer<T> externalizer;
 
     public AbstractExternalizerTest() {
         this.externalizer = createExternalizer();
@@ -29,5 +29,5 @@ public abstract class AbstractExternalizerTest<T> {
         return externalizer.readObject(ois);
     }
 
-    abstract AbstractExternalizer<T> createExternalizer();
+    abstract AdvancedExternalizer<T> createExternalizer();
 }
