@@ -41,4 +41,6 @@ public interface HotRodOperation<T> {
    CompletableFuture<T> asCompletableFuture();
 
    long timeout();
+
+   boolean isInstanceOf(Class<? extends HotRodOperation<?>> klass);
 }
