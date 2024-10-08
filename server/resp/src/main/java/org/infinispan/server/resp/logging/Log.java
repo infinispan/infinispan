@@ -48,10 +48,10 @@ public interface Log extends BasicLogger {
    @Once
    void lmoveConsistencyMessage();
 
-   @Once
-   @LogMessage(level = WARN)
-   @Message(value = "Multi-key operations without batching have a relaxed isolation level. Consider enabling batching.", id = 12007)
-   void multiKeyOperationUseBatching();
+   //@Once
+   //@LogMessage(level = WARN)
+   //@Message(value = "Multi-key operations without batching have a relaxed isolation level. Consider enabling batching.", id = 13007)
+   //void multiKeyOperationUseBatching();
 
    @LogMessage(level = WARN)
    @Message(value = "SMOVE command can't guarantee atomicity and consistency when the source list and the destination set are different", id = 12008)
@@ -63,4 +63,12 @@ public interface Log extends BasicLogger {
    @Once
    void msetnxConsistencyMessage();
 
+   @LogMessage(level = WARN)
+   @Message(value = "PESSIMISTIC locking is preferred instead of '%s'", id = 13010)
+   void utilizePessimisticLocking(String mode);
+
+   @Once
+   @LogMessage(level = WARN)
+   @Message(value = "Multi-Exec operations without transactions have a relaxed isolation level. Consider enabling transaction.", id = 13011)
+   void enableTransactionForMultiExec();
 }

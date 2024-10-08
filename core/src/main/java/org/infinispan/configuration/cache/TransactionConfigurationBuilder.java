@@ -94,7 +94,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       return this;
    }
 
-   LockingMode lockingMode() {
+   public LockingMode lockingMode() {
       return attributes.attribute(LOCKING_MODE).get();
    }
 
