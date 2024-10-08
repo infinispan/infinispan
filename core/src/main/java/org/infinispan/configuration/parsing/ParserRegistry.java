@@ -108,6 +108,7 @@ public class ParserRegistry implements NamespaceMappingParser {
    }
 
    public ConfigurationBuilderHolder parse(URL url) throws IOException {
+      Objects.requireNonNull(url);
       try (InputStream is = url.openStream()) {
          return parse(is, new URLConfigurationResourceResolver(url), MediaType.fromExtension(url.getFile()));
       }

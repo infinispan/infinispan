@@ -35,7 +35,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
    @AfterMethod
    public void tearDown() {
       if (cm != null)
-         Security.doAs(KING,  () -> cm.stop());
+         Security.doAs(KING, () -> cm.stop());
       cm = null;
    }
 
@@ -85,31 +85,29 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
 
    public void testNamedCacheXMLClashingNames() {
       String xml = TestingUtil.wrapXMLWithSchema(
-            "<cache-container default-cache=\"default\">" +
-            "\n" +
-            "   <local-cache name=\"default\">\n" +
-            "        <locking concurrencyLevel=\"100\" lockAcquisitionTimeout=\"1000\" />\n" +
-            "   </local-cache>\n" +
-            "\n" +
-            "   <local-cache name=\"c1\">\n" +
-            "        <transaction transaction-manager-lookup=\"org.infinispan.transaction.lookup.GenericTransactionManagerLookup\"/>\n" +
-            "   </local-cache>\n" +
-            "\n" +
-            "   <replicated-cache name=\"c1\" mode=\"SYNC\" remote-timeout=\"15000\">\n" +
-            "   </replicated-cache>\n" +
-            "</cache-container>");
+            """
+                  <cache-container default-cache="default">
+                     <local-cache name="default">
+                          <locking concurrencyLevel="100" lockAcquisitionTimeout="1000" />
+                     </local-cache>
+                     <local-cache name="c1">
+                          <transaction transaction-manager-lookup="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"/>
+                     </local-cache>
+                     <replicated-cache name="c1" mode="SYNC" remote-timeout="15000">
+                     </replicated-cache>
+                  </cache-container>
+            """);
 
       ByteArrayInputStream bais = new ByteArrayInputStream(xml.getBytes());
       try {
          cm = TestCacheManagerFactory.fromStream(bais);
          assert false : "Should fail";
-      } catch (Throwable expected) {
+      } catch (Exception expected) {
       }
    }
 
    public void testBatchingIsEnabled() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.fromXml("configs/batching.xml");
-      try {
+      try (EmbeddedCacheManager cm = TestCacheManagerFactory.fromXml("configs/batching.xml")) {
          Configuration c = cm.getCacheConfiguration("default");
          assertTrue(c.invocationBatching().enabled());
          assertTrue(c.transaction().transactionMode().isTransactional());
@@ -119,20 +117,26 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
 
          Configuration c2 = cm.getCacheConfiguration("tml");
          assertTrue(c2.transaction().transactionMode().isTransactional());
-      } finally {
-         cm.stop();
       }
    }
 
    public void testXInclude() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.fromXml("configs/include.xml");
-      try {
-         assertEquals("included", cm.getCacheManagerConfiguration().defaultCacheName().get());
-         assertNotNull(cm.getCacheConfiguration("included"));
-         assertEquals(CacheMode.LOCAL, cm.getCacheConfiguration("included").clustering().cacheMode());
-         assertEquals(CacheMode.LOCAL, cm.getCacheConfiguration("another-included").clustering().cacheMode());
-      } finally {
-         cm.stop();
+      try (EmbeddedCacheManager cm = TestCacheManagerFactory.fromXml("configs/include.xml")) {
+         testIncludedConfiguration(cm);
       }
    }
+
+   public void testXIncludeInputStream() throws Exception {
+      try (EmbeddedCacheManager cm = new DefaultCacheManager("configs/include.xml")) {
+         testIncludedConfiguration(cm);
+      }
+   }
+
+   private static void testIncludedConfiguration(EmbeddedCacheManager cm) {
+      assertEquals("included", cm.getCacheManagerConfiguration().defaultCacheName().get());
+      assertNotNull(cm.getCacheConfiguration("included"));
+      assertEquals(CacheMode.LOCAL, cm.getCacheConfiguration("included").clustering().cacheMode());
+      assertEquals(CacheMode.LOCAL, cm.getCacheConfiguration("another-included").clustering().cacheMode());
+   }
+
 }

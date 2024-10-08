@@ -20,7 +20,7 @@ public interface FileLookup {
    /**
     * Looks up the file, see : {@link FileLookupFactory.DefaultFileLookup}.
     *
-    * @param filename might be the name of the file (too look it up in the class path) or an url to a file.
+    * @param filename might be the name of the file (to look it up in the class path) or an url to a file.
     * @return an input stream to the file or null if nothing found through all lookup steps.
     * @throws FileNotFoundException if file cannot be found
     */
@@ -37,7 +37,22 @@ public interface FileLookup {
     */
    InputStream lookupFileStrict(URI uri, ClassLoader cl) throws FileNotFoundException;
 
+   /**
+    * Looks up the file and returns its URL
+    * @param filename
+    * @param cl
+    * @return the URL pointing to the file, null if it cannot be found
+    */
    URL lookupFileLocation(String filename, ClassLoader cl);
+
+   /**
+    * Same as {@link #lookupFileLocation(String, ClassLoader)} but throws a {@link FileNotFoundException} if the file
+    * cannot be found.
+    * @param filename
+    * @param cl
+    * @return
+    */
+   URL lookupFileLocationStrict(String filename, ClassLoader cl) throws FileNotFoundException;
 
    Collection<URL> lookupFileLocations(String filename, ClassLoader cl) throws IOException;
 
