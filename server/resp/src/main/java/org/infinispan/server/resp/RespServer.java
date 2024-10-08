@@ -24,6 +24,7 @@ import org.infinispan.server.resp.filter.ComposedFilterConverterFactory;
 import org.infinispan.server.resp.filter.GlobMatchFilterConverterFactory;
 import org.infinispan.server.resp.filter.RespTypeFilterConverterFactory;
 import org.infinispan.server.resp.meta.MetadataRepository;
+import org.infinispan.transaction.LockingMode;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInboundHandler;
@@ -85,6 +86,12 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
             } else if (!keyMediaType.equals(RESP_KEY_MEDIA_TYPE)) {
                throw CONFIG.respCacheKeyMediaTypeSupplied(cacheName, keyMediaType);
             }
+
+            if (builder.transaction().transactionMode().isTransactional()
+                  && builder.transaction().lockingMode() != LockingMode.PESSIMISTIC) {
+               org.infinispan.server.resp.logging.Log.CONFIG.utilizePessimisticLocking(builder.transaction().lockingMode().name());
+            }
+
          } else {
             if (cacheManager.getCacheManagerConfiguration().isClustered()) { // We are running in clustered mode
                builder.clustering().cacheMode(CacheMode.DIST_SYNC);
