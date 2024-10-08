@@ -1,7 +1,7 @@
 package test.org.infinispan.spring.starter.remote.actuator;
 
-import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
-import io.micrometer.core.instrument.binder.cache.CacheMeterBinderCompatibilityKit;
+import static java.util.Collections.emptyList;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
@@ -12,21 +12,30 @@ import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.infinispan.spring.common.provider.SpringCache;
+import org.infinispan.spring.starter.remote.actuator.RemoteInfinispanCacheMeterBinder;
 import org.infinispan.spring.starter.remote.actuator.RemoteInfinispanCacheMeterBinderProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import static java.util.Collections.emptyList;
+import io.micrometer.core.instrument.binder.cache.CacheMeterBinder;
+import io.micrometer.core.instrument.binder.cache.CacheMeterBinderCompatibilityKit;
 
-public class RemoteCacheMetricBinderTest extends CacheMeterBinderCompatibilityKit {
+public class RemoteCacheMetricBinderTest extends CacheMeterBinderCompatibilityKit<RemoteCache<String, String>> {
 
    @RegisterExtension
    static InfinispanServerExtension infinispanServerExtension = InfinispanServerExtensionBuilder.server();
-
-   private RemoteCache<String, String> cache;
+   private RemoteCacheManager remoteCacheManager;
 
    @Override
-   public CacheMeterBinder binder() {
+   public CacheMeterBinder<RemoteCache<String, String>> binder() {
+      RemoteInfinispanCacheMeterBinderProvider remoteInfinispanCacheMeterBinderProvider =
+            new RemoteInfinispanCacheMeterBinderProvider();
+      return (RemoteInfinispanCacheMeterBinder<String, String>) remoteInfinispanCacheMeterBinderProvider
+            .getMeterBinder(new SpringCache(cache), emptyList());
+   }
+
+   @Override
+   public RemoteCache<String, String> createCache() {
       org.infinispan.configuration.cache.ConfigurationBuilder cacheConfigBuilder =
             new org.infinispan.configuration.cache.ConfigurationBuilder();
       cacheConfigBuilder.clustering().cacheMode(CacheMode.DIST_SYNC);
@@ -42,19 +51,9 @@ public class RemoteCacheMetricBinderTest extends CacheMeterBinderCompatibilityKi
             .username(TestUser.ADMIN.getUser())
             .password(TestUser.ADMIN.getPassword());
 
-      RemoteCacheManager remoteCacheManager =
-            infinispanServerExtension.hotrod().withClientConfiguration(clientBuilder)
-                  .createRemoteCacheManager();
-      cache = remoteCacheManager.administration().getOrCreateCache("mycache", stringConfiguration);
-      RemoteInfinispanCacheMeterBinderProvider remoteInfinispanCacheMeterBinderProvider =
-            new RemoteInfinispanCacheMeterBinderProvider();
-      return (CacheMeterBinder) remoteInfinispanCacheMeterBinderProvider
-            .getMeterBinder(new SpringCache(cache), emptyList());
-   }
-
-   @Override
-   public Object createCache() {
-      return cache;
+      remoteCacheManager = infinispanServerExtension.hotrod().withClientConfiguration(clientBuilder)
+            .createRemoteCacheManager();
+      return remoteCacheManager.administration().getOrCreateCache("mycache", stringConfiguration);
    }
 
    @Test
@@ -72,8 +71,9 @@ public class RemoteCacheMetricBinderTest extends CacheMeterBinderCompatibilityKi
       return cache.get(key);
    }
 
-   @Test
-   void dereferencedCacheIsGarbageCollected() {
-      // Do nothing
+   @Override
+   public void dereferenceCache() {
+      super.dereferenceCache();
+      remoteCacheManager.stop();
    }
 }
