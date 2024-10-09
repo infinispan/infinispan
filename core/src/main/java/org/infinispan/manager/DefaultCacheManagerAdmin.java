@@ -13,6 +13,7 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.security.impl.Authorizer;
 
 /**
@@ -114,7 +115,7 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    public void updateConfigurationAttribute(String cacheName, String attributeName, String attributeValue) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
       Cache<Object, Object> cache = cacheManager.getCache(cacheName);
-      Configuration config = cache.getCacheConfiguration();
+      Configuration config = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
       Attribute<?> attribute = config.findAttribute(attributeName);
       attribute.fromString(attributeValue);
       flags.add(CacheContainerAdmin.AdminFlag.UPDATE);
