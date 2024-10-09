@@ -8,13 +8,17 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.query.concurrent.FailureCounter;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
+import org.infinispan.query.impl.EntityLoaderFactory;
 import org.infinispan.query.impl.IndexerConfig;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
 import org.infinispan.search.mapper.mapping.impl.DefaultAnalysisConfigurer;
 import org.infinispan.search.mapper.model.impl.InfinispanBootstrapIntrospector;
 import org.infinispan.util.concurrent.BlockingManager;
+import org.mockito.Mockito;
 
 public class SearchMappingHelper {
 
@@ -30,11 +34,14 @@ public class SearchMappingHelper {
 
       InfinispanBootstrapIntrospector introspector = SearchMappingBuilder.introspector(MethodHandles.lookup());
 
-      // do not pass any entity loader nor identifier bridges
+      // do not pass any identifier bridges and mock the cache and query statistics: those guys won't be used
+      AdvancedCache<?, ?> cache = Mockito.mock(AdvancedCache.class);
+      LocalQueryStatistics queryStatistics = Mockito.mock(LocalQueryStatistics.class);
       return SearchMapping.builder(introspector, null, Collections.emptyList(), blockingManager, new FailureCounter(),
                   new IndexerConfig(10_000, 10_000))
                    .setProperties(properties)
                    .addEntityTypes(new HashSet<>(Arrays.asList(types)))
+                   .setEntityLoader(new EntityLoaderFactory<>(cache, queryStatistics))
                    .build(Optional.empty());
    }
 }
