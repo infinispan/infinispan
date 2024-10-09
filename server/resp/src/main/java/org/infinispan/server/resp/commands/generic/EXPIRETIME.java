@@ -5,6 +5,6 @@ package org.infinispan.server.resp.commands.generic;
  **/
 public class EXPIRETIME extends TTL {
    public EXPIRETIME() {
-      super(true, false);
+      super(ExpirationOption.UNIX_TIME, ExpirationOption.SECONDS);
    }
 }
