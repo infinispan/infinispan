@@ -43,9 +43,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot instantiate Transformer class %s", id = 14002)
    void couldNotInstantiateTransformerClass(Class<?> transformer, @Cause Exception e);
 
-   @LogMessage(level = INFO)
-   @Message(value = "Registering Query interceptor for cache %s", id = 14003)
-   void registeringQueryInterceptor(String cacheName);
+//   @LogMessage(level = INFO)
+//   @Message(value = "Registering Query interceptor for cache %s", id = 14003)
+//   void registeringQueryInterceptor(String cacheName);
 
 //   @LogMessage(level = DEBUG)
 //   @Message(value = "Custom commands backend initialized backing index %s", id = 14004)

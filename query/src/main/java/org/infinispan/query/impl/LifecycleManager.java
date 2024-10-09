@@ -189,7 +189,7 @@ public class LifecycleManager implements ModuleLifecycle {
 
    private void createQueryInterceptorIfNeeded(ComponentRegistry cr, Configuration cfg, AdvancedCache<?, ?> cache,
                                                Map<String, Class<?>> indexedClasses) {
-      CONTAINER.registeringQueryInterceptor(cache.getName());
+      CONTAINER.debugf("Registering Query interceptor for cache %s", cache.getName());
 
       BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
       ComponentRef<QueryInterceptor> queryInterceptorRef = bcr.getComponent(QueryInterceptor.class);
