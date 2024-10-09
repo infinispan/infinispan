@@ -55,11 +55,11 @@ public final class IncrFunction<K, V> implements SortedSetBucketBaseFunction<K, 
    @Override
    public Double apply(EntryView.ReadWriteEntryView<K, SortedSetBucket<V>> entryView) {
       Optional<SortedSetBucket<V>> existing = entryView.peek();
-      SortedSetBucket bucket = null;
+      SortedSetBucket<V> bucket = null;
       if (existing.isPresent()) {
         bucket = existing.get();
       } else if (!updateOnly){
-         bucket = new SortedSetBucket();
+         bucket = new SortedSetBucket<>();
       }
       Double result = null;
       if (bucket != null) {
