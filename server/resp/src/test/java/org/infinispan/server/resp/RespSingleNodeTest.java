@@ -745,6 +745,10 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       assertThat(redis.ttl(k(1))).isEqualTo(-2);
       redis.set(k(2), v(2), SetArgs.Builder.ex(10_000));
       assertThat(redis.ttl(k(2))).isEqualTo(10_000L);
+
+      timeService.advance(5_000, TimeUnit.SECONDS);
+
+      assertThat(redis.ttl(k(2))).isEqualTo(5_000L);
    }
 
    @Test
@@ -766,6 +770,10 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       redis.hset(k(2), v(2),v(2));
       redis.expire(k(2), 10);
       assertThat(redis.pttl(k(2))).isEqualTo(10_000L);
+
+      timeService.advance(5_000);
+
+      assertThat(redis.pttl(k(2))).isEqualTo(5_000L);
    }
 
    @Test

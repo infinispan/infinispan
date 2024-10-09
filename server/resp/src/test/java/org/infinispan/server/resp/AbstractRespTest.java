@@ -32,7 +32,7 @@ public abstract class AbstractRespTest extends MultipleCacheManagersTest {
    private List<AbstractRedisClient> clients;
 
    protected int timeout = 15_000;
-   protected final TimeService timeService = new ControlledTimeService();
+   protected final ControlledTimeService timeService = new ControlledTimeService();
 
    @Override
    protected void createCacheManagers() {
