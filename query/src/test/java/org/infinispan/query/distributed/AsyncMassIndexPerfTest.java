@@ -32,6 +32,8 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 
 /**
  * Long running test for the async MassIndexer, specially regarding cancellation. Supposed to be run as a main class.
+ * This test is not annotated, since it is supposed to be interactive, thus not suitable for the CI.
+ *
  * @author gustavonalle
  * @since 7.1
  */
