@@ -1,12 +1,14 @@
 package org.infinispan.configuration.parsing;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -39,7 +41,39 @@ public class JsonParsingTest extends AbstractInfinispanTest {
    public void testAliasTest() throws IOException {
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true, System.getProperties());
       ConfigurationBuilderHolder holder = parserRegistry.parseFile("configs/aliases-test.json");
-      Configuration cache = holder.getNamedConfigurationBuilders().get("another-resp-cache").build();
+      Configuration cache = holder.getNamedConfigurationBuilders().get("anotherRespCache").build();
       assertEquals(List.of("1"), cache.aliases());
+   }
+
+   public void testNaming() {
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true, System.getProperties());
+      String configJson = """
+            {
+                "actionTokens": {
+                    "distributed-cache": {
+                        "owners": "2",
+                        "mode": "SYNC",
+                        "encoding": {
+                            "key": {
+                                "media-type": "application/x-java-object"
+                            },
+                            "value": {
+                                "media-type": "application/x-java-object"
+                            }
+                        },
+                        "expiration": {
+                            "lifespan": "-1",
+                            "max-idle": "-1",
+                            "interval": "300000"
+                        },
+                        "memory": {
+                            "max-count": "100"
+                        }
+                    }
+                }
+            }""";
+
+      ConfigurationBuilderHolder configHolder = parserRegistry.parse(configJson, MediaType.APPLICATION_JSON);
+      assertTrue(configHolder.getNamedConfigurationBuilders().containsKey("actionTokens"));
    }
 }

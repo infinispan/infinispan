@@ -245,7 +245,7 @@ public class ParserRegistry implements NamespaceMappingParser {
          // See if we can get a default parser instead
          if (parser == null || !isSupportedNamespaceVersion(parser.namespace, namespace.substring(lastColon + 1)))
             // Parse a possible cache name because the cache name has not a namespace definition in YAML/JSON
-            return parseCacheName(reader, name, namespace);
+            return parseCacheName(reader, reader.getLocalName(NamingStrategy.IDENTITY), namespace);
       }
       return parser;
    }
