@@ -1133,7 +1133,6 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       if (cache == null) {
          return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
       }
-      invocationHelper.getRestCacheManager().getCacheManagerAdmin(request);
       EmbeddedCacheManagerAdmin administration = invocationHelper.getRestCacheManager().getCacheManagerAdmin(request);
       return CompletableFuture.supplyAsync(() -> {
          administration.updateConfigurationAttribute(cacheName, attributeName, attributeValue);
