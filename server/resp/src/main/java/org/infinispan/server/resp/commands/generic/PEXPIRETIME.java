@@ -5,6 +5,6 @@ package org.infinispan.server.resp.commands.generic;
  **/
 public class PEXPIRETIME extends TTL {
    public PEXPIRETIME() {
-      super(true, true);
+      super(ExpirationOption.UNIX_TIME);
    }
 }
