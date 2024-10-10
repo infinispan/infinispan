@@ -20,6 +20,7 @@ jobs:
         pullRequestNumber: ${{ steps.workflow-run-info.outputs.pullRequestNumber }}
         sourceEvent: ${{ github.event.workflow_run.event }}
         imageTag: ${{ steps.workflow-run-info.outputs.imageTag }}
+        publishImage: ${{ steps.publish-image-info.outputs.publishImage }}
      steps:
         - id: workflow-run-info
           uses: infinispan/infinispan/.github/actions/get-origin-info@main
@@ -27,9 +28,15 @@ jobs:
            head_sha: ${{ github.event.workflow_run.head_sha }}
            head_branch: ${{ github.event.workflow_run.head_branch }}
            event: ${{ github.event.workflow_run.event }}
+        - if: ${{ steps.workflow-run-info.outputs.event }} == 'pull_request'
+          name: Get Labels Action
+          uses: snnaplab/get-labels-action@v1.0.1
+        - if: contains(fromJSON(env.LABELS), 'Image Required')
+          id: publish-image-info
+          run: echo "publishImage=true" >> $GITHUB_OUTPUT
 
   get-server-version:
-   name: "Get server version"
+   name: "Get Image Name"
    runs-on: ubuntu-latest
    outputs:
       imageName: ${{ steps.step1.outputs.imageName }}
@@ -48,6 +55,9 @@ jobs:
       needs:
          - get-info
          - get-server-version
+      if: >
+         ${{ needs.get-info.outputs.sourceEvent != 'pull_request'}} ||
+         ${{ needs.get-info.outputs.publishImage == 'true'}}
       uses: infinispan/infinispan-images/.github/workflows/publish_image.yml@main
       secrets:
          token: ${{ secrets.GITHUB_TOKEN }}
