@@ -92,12 +92,12 @@ public class EXPIRE extends RespCommand implements Resp3Command {
                   }
                   break;
                case GT:
-                  if (expiration < ttl) {
+                  if (expiration < ttl || ttl < 0) {
                      return NOT_APPLIED;
                   }
                   break;
                case LT:
-                  if (expiration > ttl) {
+                  if (ttl > 0 && expiration > ttl) {
                      return NOT_APPLIED;
                   }
                   break;
