@@ -22,6 +22,7 @@ import org.testng.annotations.Test;
  * @author anistor@redhat.com
  * @since 9.0
  */
+@Test(groups = "functional", testName = "query.dsl.embedded.impl.HibernateSearchPropertyHelperTest")
 public class HibernateSearchPropertyHelperTest extends SingleCacheManagerTest {
 
    private SearchMapping searchMapping;
