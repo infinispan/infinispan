@@ -4,9 +4,11 @@ import static org.infinispan.query.remote.impl.indexing.IndexingMetadata.findAnn
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.AnnotationMetadataCreator;
+import org.infinispan.protostream.AnnotationParserException;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
@@ -14,6 +16,7 @@ import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.query.remote.impl.indexing.FieldMapping;
 import org.infinispan.query.remote.impl.indexing.IndexingKeyMetadata;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
+import org.infinispan.query.remote.impl.indexing.SpatialFieldMapping;
 import org.infinispan.query.remote.impl.indexing.infinispan.InfinispanAnnotations;
 import org.infinispan.query.remote.impl.indexing.infinispan.InfinispanMetadataCreator;
 import org.infinispan.query.remote.impl.logging.Log;
@@ -50,7 +53,8 @@ public final class Search5MetadataCreator implements AnnotationMetadataCreator<I
          }
       }
 
-      Map<String, FieldMapping> fields = fieldsMapping(descriptor);
+      Map<String, SpatialFieldMapping> spatialFields = spatialFields(descriptor);
+      Map<String, FieldMapping> fields = fieldsMapping(descriptor, spatialFields);
       String keyEntity = (String) annotation.getAttributeValue(InfinispanAnnotations.KEY_ENTITY_ATTRIBUTE).getValue();
       IndexingKeyMetadata indexingKeyMetadata = null;
       if (!keyEntity.isEmpty()) {
@@ -63,7 +67,7 @@ public final class Search5MetadataCreator implements AnnotationMetadataCreator<I
          indexingKeyMetadata = new IndexingKeyMetadata(keyPropertyName, keyEntity, includeDepth);
       }
 
-      IndexingMetadata indexingMetadata = new IndexingMetadata(enabled, indexName, entityAnalyzer, fields, indexingKeyMetadata);
+      IndexingMetadata indexingMetadata = new IndexingMetadata(enabled, indexName, entityAnalyzer, fields, spatialFields, indexingKeyMetadata);
       if (log.isDebugEnabled()) {
          log.debugf("Descriptor name=%s indexingMetadata=%s", descriptor.getFullName(), indexingMetadata);
       }
@@ -71,31 +75,74 @@ public final class Search5MetadataCreator implements AnnotationMetadataCreator<I
    }
 
    public static IndexingMetadata createForEmbeddedType(Descriptor descriptor) {
-      Map<String, FieldMapping> fields = fieldsMapping(descriptor);
-      IndexingMetadata indexingMetadata = new IndexingMetadata(false, null, null, fields, null);
+      Map<String, SpatialFieldMapping> spatialFields = spatialFields(descriptor);
+      Map<String, FieldMapping> fields = fieldsMapping(descriptor, spatialFields);
+      IndexingMetadata indexingMetadata = new IndexingMetadata(false, null, null, fields, spatialFields, null);
       if (log.isDebugEnabled()) {
          log.debugf("Descriptor name=%s indexingMetadata=%s", descriptor.getFullName(), indexingMetadata);
       }
       return indexingMetadata;
    }
 
-   private static Map<String, FieldMapping> fieldsMapping(Descriptor descriptor) {
+   private static Map<String, FieldMapping> fieldsMapping(Descriptor descriptor, Map<String, SpatialFieldMapping> spatialFields) {
       Map<String, FieldMapping> fields = new HashMap<>(descriptor.getFields().size());
       for (FieldDescriptor fd : descriptor.getFields()) {
          Map<String, AnnotationElement.Annotation> annotations = fd.getAnnotations();
 
+         AnnotationElement.Annotation longitudeAnnotation = fd.getAnnotations().get(Search5Annotations.LONGITUDE_ANNOTATION);
+         if (longitudeAnnotation != null) {
+            processLongitude(fd, longitudeAnnotation, spatialFields);
+            //todo [anistor] do we accept other annotations?
+            continue;
+         }
+
+         AnnotationElement.Annotation latitudeAnnotation = fd.getAnnotations().get(Search5Annotations.LATITUDE_ANNOTATION);
+         if (latitudeAnnotation != null) {
+            processLatitude(fd, latitudeAnnotation, spatialFields);
+            //todo [anistor] do we accept other annotations?
+            continue;
+         }
+
+         String fieldName = fd.getName();
+         if (spatialFields.containsKey(fieldName)) {
+            throw new AnnotationParserException("The spatial index field '" + fieldName + "' clashes with the field declared by " + fd.getFullName());
+         }
+
          FieldMapping fieldMapping = InfinispanMetadataCreator.fieldMapping(fd, annotations);
          if (fieldMapping != null) {
-            fields.put(fd.getName(), fieldMapping);
+            FieldMapping existingFieldMapping = fields.put(fieldName, fieldMapping);
+            if (existingFieldMapping != null) {
+               throw new AnnotationParserException("The index field " + fieldName + " was already declared by field " + existingFieldMapping.getFieldDescriptor().getFullName());
+            }
             continue;
          }
 
          fieldMapping = search5FieldMapping(fd, annotations);
          if (fieldMapping != null) {
-            fields.put(fd.getName(), fieldMapping);
+            FieldMapping existingFieldMapping = fields.put(fieldName, fieldMapping);
+            if (existingFieldMapping != null) {
+               throw new AnnotationParserException("The index field " + fieldName + " was already declared by field " + existingFieldMapping.getFieldDescriptor().getFullName());
+            }
          }
       }
       return fields;
+   }
+
+   private static Map<String, SpatialFieldMapping> spatialFields(Descriptor descriptor) {
+      Map<String, SpatialFieldMapping> spatialFields = new HashMap<>();
+      AnnotationElement.Annotation spatialAnnotation = descriptor.getAnnotations().get(Search5Annotations.SPATIAL_ANNOTATION);
+      if (spatialAnnotation != null) {
+         processGeoPointBinding(descriptor, spatialAnnotation, spatialFields);
+      }
+      AnnotationElement.Annotation spatialsAnnotation = descriptor.getAnnotations().get(Search5Annotations.SPATIALS_ANNOTATION);
+      if (spatialsAnnotation != null) {
+         for (AnnotationElement.Value v : ((AnnotationElement.Array) spatialsAnnotation.getDefaultAttributeValue()).getValues()) {
+            processGeoPointBinding(descriptor, (AnnotationElement.Annotation) v, spatialFields);
+         }
+      }
+      //todo [anistor] more validation, if indexed==false do we accept Spatial annotation?
+      //todo [anistor] more validation, if indexed==false do we accept Analyzer annotation?
+      return spatialFields;
    }
 
    private static FieldMapping search5FieldMapping(FieldDescriptor fd, Map<String, AnnotationElement.Annotation> annotations) {
@@ -145,7 +192,7 @@ public final class Search5MetadataCreator implements AnnotationMetadataCreator<I
 
       // field level analyzer should not be specified unless the field is analyzed
       if (!isAnalyzed && fieldLevelAnalyzer != null) {
-         throw new IllegalStateException("Cannot specify an analyzer for field " + fd.getFullName() + " unless the field is analyzed.");
+         throw new AnnotationParserException("Cannot specify an analyzer for field " + fd.getFullName() + " unless the field is analyzed.");
       }
 
       String analyzer = analyzer(fd.getType(), isAnalyzed, fieldLevelAnalyzer);
@@ -177,5 +224,65 @@ public final class Search5MetadataCreator implements AnnotationMetadataCreator<I
 
       return (fieldLevelAnalyzer != null) ? fieldLevelAnalyzer :
             DefaultAnalysisConfigurer.STANDARD_ANALYZER_NAME;
+   }
+
+   private static void processGeoPointBinding(Descriptor descriptor, AnnotationElement.Annotation spatialAnnotation, Map<String, SpatialFieldMapping> spatialFields) {
+      String fieldName = (String) spatialAnnotation.getAttributeValue(Search5Annotations.SPATIAL_FIELD_NAME_ATTRIBUTE).getValue();
+      if (fieldName.isEmpty()) {
+         fieldName = null;
+      }
+      String markerSet = (String) spatialAnnotation.getAttributeValue(Search5Annotations.SPATIAL_MARKER_SET_ATTRIBUTE).getValue();
+      if (markerSet.isEmpty()) {
+         markerSet = null;
+      }
+      //todo [anistor] consider also the DEFAULT values
+      String projectableStr = (String) spatialAnnotation.getAttributeValue(Search5Annotations.SPATIAL_PROJECTABLE_ATTRIBUTE).getValue();
+      boolean projectable = projectableStr.equals(Search5Annotations.PROJECTABLE_YES);
+      String sortableStr = (String) spatialAnnotation.getAttributeValue(Search5Annotations.SPATIAL_PROJECTABLE_ATTRIBUTE).getValue();
+      boolean sortable = sortableStr.equals(Search5Annotations.SORTABLE_YES);
+      SpatialFieldMapping existing = spatialFields.put(fieldName, new SpatialFieldMapping(fieldName, markerSet, projectable, sortable));
+      if (existing != null) {
+         throw new AnnotationParserException("The spatial index field '" + fieldName + "' was declared multiple times by " + descriptor.getFullName());
+      }
+   }
+
+   private static void processLatitude(FieldDescriptor fd, AnnotationElement.Annotation latitudeAnnotation, Map<String, SpatialFieldMapping> spatialFields) {
+      String markerSet = (String) latitudeAnnotation.getAttributeValue(Search5Annotations.LATITUDE_MARKERSET_ATTRIBUTE).getValue();
+      if (markerSet.isEmpty()) {
+         markerSet = null;
+      }
+      SpatialFieldMapping found = null;
+      for (SpatialFieldMapping sf : spatialFields.values()) {
+         if (Objects.equals(sf.markerSet(), markerSet)) {
+            if (found != null) {
+               throw new AnnotationParserException("Found multiple latitude fields with the same marketSet value " + markerSet + " for field " + fd.getFullName());
+            }
+            found = sf;
+         }
+      }
+      if (found == null) {
+         throw new AnnotationParserException("No latitude field found with the marketSet value " + markerSet + " for field " + fd.getFullName());
+      }
+      found.setLatitude(fd);
+   }
+
+   private static void processLongitude(FieldDescriptor fd, AnnotationElement.Annotation longitudeAnnotation, Map<String, SpatialFieldMapping> spatialFields) {
+      String markerSet = (String) longitudeAnnotation.getAttributeValue(Search5Annotations.LONGITUDE_MARKERSET_ATTRIBUTE).getValue();
+      if (markerSet.isEmpty()) {
+         markerSet = null;
+      }
+      SpatialFieldMapping found = null;
+      for (SpatialFieldMapping sf : spatialFields.values()) {
+         if (Objects.equals(sf.markerSet(), markerSet)) {
+            if (found != null) {
+               throw new AnnotationParserException("Found multiple longitude fields with the same marketSet value " + markerSet + " for field " + fd.getFullName());
+            }
+            found = sf;
+         }
+      }
+      if (found == null) {
+         throw new AnnotationParserException("No longitude field found with the marketSet value " + markerSet + " for field " + fd.getFullName());
+      }
+      found.setLongitude(fd);
    }
 }
