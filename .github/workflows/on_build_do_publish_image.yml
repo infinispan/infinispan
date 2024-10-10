@@ -28,9 +28,13 @@ jobs:
            head_sha: ${{ github.event.workflow_run.head_sha }}
            head_branch: ${{ github.event.workflow_run.head_branch }}
            event: ${{ github.event.workflow_run.event }}
+
         - if: ${{ github.event.workflow_run.event }} == 'pull_request'
           name: Get Labels Action
           uses: snnaplab/get-labels-action@v1.0.1
+          with:
+            number: ${{ steps.workflow-run-info.outputs.pullRequestNumber }}
+
         - if: contains(fromJSON(env.LABELS), 'Image Required')
           id: publish-image-info
           run: echo "publishImage=true" >> $GITHUB_OUTPUT
