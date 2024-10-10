@@ -3,6 +3,8 @@ package org.infinispan.server.resp;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.server.resp.test.RespTestingUtil.OK;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
 
 import java.util.concurrent.TimeUnit;
 
@@ -245,5 +247,23 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
       assertThat(result.wasDiscarded()).isFalse();
       assertThat(redisConnection.isMulti()).isFalse();
       assertThat(redis.get("tx-discard-k2")).isEqualTo("value-inside");
+   }
+
+   public void testAbortBecauseOfError() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      assertThat(redis.multi()).isEqualTo(OK);
+      assertThat(redisConnection.isMulti()).isTrue();
+
+      assertThat(redis.set(k(), v())).isNull();
+
+      // Command doesn't exist.
+      redis.xadd(k(1), v(), v(1));
+
+      assertThatThrownBy(redis::exec)
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("EXECABORT Transaction discarded because of previous errors.");
+
+      assertThat(redis.get(k())).isNull();
    }
 }
