@@ -130,7 +130,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
                    /* @Basic */
                    required int32 value=1;
                    optional string description=2;
-                }\
+                }
                """;
    public static final String ACCEPT = "Accept";
 
@@ -433,7 +433,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
             /**
              * @Indexed
              */
-            message Engineer { \s
+            message Engineer {
                /**
                 * @Basic
                 */
@@ -452,6 +452,9 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       // Create the indexed cache
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().enable().storage(LOCAL_HEAP).addIndexedEntities("org.infinispan.Developer");
+      if (isSecurityEnabled()) {
+         builder.security().authorization().roles("ADMIN");
+      }
       String cacheConfig = cacheConfigToJson("developers", builder.build());
 
       RestCacheClient cacheClient = adminClient.cache("developers");
