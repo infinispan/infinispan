@@ -60,6 +60,10 @@ public class Util {
       return new String(b, StandardCharsets.UTF_8);
    }
 
+   public static String ascii(byte[] b) {
+      return new String(b, StandardCharsets.US_ASCII);
+   }
+
    public static long toUnixTime(long time, TimeService timeService) {
       if (time < 0) return time;
       long unixTime = time + timeService.wallClockTime();
