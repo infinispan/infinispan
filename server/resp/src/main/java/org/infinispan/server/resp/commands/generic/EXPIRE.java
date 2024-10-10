@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -91,12 +92,12 @@ public class EXPIRE extends RespCommand implements Resp3Command {
                   }
                   break;
                case GT:
-                  if (expiration < ttl) {
+                  if (expiration < ttl || ttl < 0) {
                      return NOT_APPLIED;
                   }
                   break;
                case LT:
-                  if (expiration > ttl) {
+                  if (ttl > 0 && expiration > ttl) {
                      return NOT_APPLIED;
                   }
                   break;
