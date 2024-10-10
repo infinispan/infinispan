@@ -5,33 +5,38 @@ Hot Rod Java clients collect and expose metrics related to the connection pool a
 Implement the SPI `RemoteCacheManagerMetricsRegistry` to register metrics in the collector of your choice.
 {brandname} provides an implementation using Micrometer.
 
+You can configure generic implementation of Hot Rod client metrics or the provided Micrometer implementation as shown in the following examples.
+
 .Procedure
 
-* Configure Hot Rod client metrics as in the following examples:
-
+* Configure a generic implementation.
++
 .ConfigurationBuilder
 [source,java,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::code_examples/HotRodMetrics.java[]
 ----
 
-== Micrometer implementation
-
+* Configure the Micrometer implementation.
++
 {brandname} provides a Micrometer implementation to collect the metrics.
 This implementation has some configuration options used by Micrometer.
-
++
 .ConfigurationBuilder
 [source,java,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::code_examples/HotRodMicrometerMetrics.java[]
 ----
 <1> The Hot Rod client configuration builder.
-<2> The Micrometer `MeterRegistry` implementation, used by the application.
-<3> Set the `MeterRegistry` implementation in the `Builder` constructor (Must be non-null).
+<2> The Micrometer `MeterRegistry` implementation used by the application.
+<3> Set the `MeterRegistry` implementation in the `Builder` constructor. Must be non-null.
 <4> Enables histograms.
-Micrometer will expose the histogram percentiles with enabled.
+Micrometer will expose the histogram percentiles when enabled.
 <5> Metrics name are in the format `vendor.<prefix>.<name>`.
 The `<prefix>` is configured here and, by default, is `client.hotrod`.
 <6> Adds Micrometer tags to all metrics (for example, an application ID).
-
-WARNING: Histograms may affect resources consumption and may degrade performance.
++
+[WARNING]
+====
+Histograms can affect resources consumption and may degrade performance.
+====
