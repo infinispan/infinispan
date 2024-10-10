@@ -802,8 +802,8 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
          assertThat(redis.pttl(k(i))).isEqualTo(1_000L);
       }
 
-      // FIXME: the entries do not expire.
-      // eventually(() -> redis.dbsize() == 0L);
+      ((ControlledTimeService) timeService).advance(2_000);
+      eventually(() -> redis.dbsize() == 0L);
    }
 
    @Test
@@ -886,6 +886,32 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       redis.set(k(1), v(1));
       assertThat(redis.expire(k(1), 1000, ExpireArgs.Builder.xx())).isFalse();
       assertThat(redis.expire(k(1), 1000, ExpireArgs.Builder.nx())).isTrue();
+
+      // Assert entry is removed with negative expire.
+      assertThat(redis.expire(k(1), -10)).isTrue();
+      assertThat(redis.get(k(1))).isNull();
+   }
+
+   public void testPExpire() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      assertThat(redis.ttl(k())).isEqualTo(-1);
+      assertThat(redis.pexpire(k(), 1000)).isTrue();
+      assertThat(redis.pttl(k())).isEqualTo(1000);
+      assertThat(redis.pexpire(k(), 500, ExpireArgs.Builder.gt())).isFalse();
+      assertThat(redis.pexpire(k(), 1500, ExpireArgs.Builder.gt())).isTrue();
+      assertThat(redis.pexpire(k(), 2000, ExpireArgs.Builder.lt())).isFalse();
+      assertThat(redis.pexpire(k(), 1000, ExpireArgs.Builder.lt())).isTrue();
+      assertThat(redis.pexpire(k(), 1250, ExpireArgs.Builder.xx())).isTrue();
+      assertThat(redis.pexpire(k(), 1000, ExpireArgs.Builder.nx())).isFalse();
+      assertThat(redis.pexpire(k(1), 1000)).isFalse();
+      redis.set(k(1), v(1));
+      assertThat(redis.pexpire(k(1), 1000, ExpireArgs.Builder.xx())).isFalse();
+      assertThat(redis.pexpire(k(1), 1000, ExpireArgs.Builder.nx())).isTrue();
+
+      // Assert entry is removed with negative expire.
+      assertThat(redis.pexpire(k(1), -10)).isTrue();
+      assertThat(redis.get(k(1))).isNull();
    }
 
    @Test
@@ -905,6 +931,10 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       redis.set(k(1), v(1));
       assertThat(redis.expireat(k(1), timeService.wallClockTime() + 1000, ExpireArgs.Builder.xx())).isFalse();
       assertThat(redis.expireat(k(1), timeService.wallClockTime() + 1000, ExpireArgs.Builder.nx())).isTrue();
+
+      // Assert entry is removed when expiring in the past.
+      assertThat(redis.expireat(k(1), TimeUnit.MILLISECONDS.toSeconds(timeService.wallClockTime() - 500))).isTrue();
+      assertThat(redis.get(k(1))).isNull();
    }
 
    @Test
@@ -924,6 +954,10 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       redis.set(k(1), v(1));
       assertThat(redis.pexpireat(k(1), timeService.wallClockTime() + 1000, ExpireArgs.Builder.xx())).isFalse();
       assertThat(redis.pexpireat(k(1), timeService.wallClockTime() + 1000, ExpireArgs.Builder.nx())).isTrue();
+
+      // Assert entry is removed when expiring in the past.
+      assertThat(redis.pexpireat(k(1), timeService.wallClockTime() - 500)).isTrue();
+      assertThat(redis.get(k(1))).isNull();
    }
 
    @Test
