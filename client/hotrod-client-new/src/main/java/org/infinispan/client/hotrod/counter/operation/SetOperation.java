@@ -3,8 +3,7 @@ package org.infinispan.client.hotrod.counter.operation;
 import org.infinispan.client.hotrod.impl.operations.CacheUnmarshaller;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.exception.CounterOutOfBoundsException;
 
@@ -18,7 +17,6 @@ import io.netty.channel.Channel;
  * @since 15
  */
 public class SetOperation extends BaseCounterOperation<Long> {
-   private static final Log commonsLog = LogFactory.getLog(SetOperation.class, Log.class);
 
    private final long value;
 
@@ -44,9 +42,9 @@ public class SetOperation extends BaseCounterOperation<Long> {
    private void assertBoundaries(short status) {
       if (status == NOT_EXECUTED_WITH_PREVIOUS) {
          if (value > 0) {
-            throw commonsLog.counterOurOfBounds(CounterOutOfBoundsException.UPPER_BOUND);
+            throw Log.HOTROD.counterOurOfBounds(CounterOutOfBoundsException.UPPER_BOUND);
          } else {
-            throw commonsLog.counterOurOfBounds(CounterOutOfBoundsException.LOWER_BOUND);
+            throw Log.HOTROD.counterOurOfBounds(CounterOutOfBoundsException.LOWER_BOUND);
          }
       }
    }

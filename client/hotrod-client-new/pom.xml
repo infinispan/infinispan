@@ -24,6 +24,10 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-counter-api</artifactId>
+      </dependency>
+      <dependency>
          <groupId>io.smallrye.reactive</groupId>
          <artifactId>mutiny</artifactId>
       </dependency>

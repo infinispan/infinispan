@@ -74,6 +74,10 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-counter-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-commons</artifactId>
             <type>test-jar</type>
             <scope>test</scope>

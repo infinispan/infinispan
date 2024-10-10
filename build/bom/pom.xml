@@ -189,6 +189,11 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-counter-api</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-hibernate-cache-spi</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>

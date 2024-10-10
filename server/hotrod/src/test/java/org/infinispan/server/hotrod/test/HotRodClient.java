@@ -1,6 +1,6 @@
 package org.infinispan.server.hotrod.test;
 
-import static org.infinispan.commons.util.CounterEncodeUtil.decodeConfiguration;
+import static org.infinispan.counter.api._private.CounterEncodeUtil.decodeConfiguration;
 import static org.infinispan.server.core.logging.Log.SERVER;
 import static org.infinispan.server.hotrod.HotRodConstants.CONTAINS_KEY_REQUEST;
 import static org.infinispan.server.hotrod.HotRodConstants.GET_REQUEST;
