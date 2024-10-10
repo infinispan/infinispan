@@ -890,6 +890,10 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       // Assert entry is removed with negative expire.
       assertThat(redis.expire(k(1), -10)).isTrue();
       assertThat(redis.get(k(1))).isNull();
+
+      redis.set(k(2), v(2));
+      assertThat(redis.expire(k(2), 1000, ExpireArgs.Builder.gt())).isFalse();
+      assertThat(redis.expire(k(2), 1000, ExpireArgs.Builder.lt())).isTrue();
    }
 
    public void testPExpire() {
