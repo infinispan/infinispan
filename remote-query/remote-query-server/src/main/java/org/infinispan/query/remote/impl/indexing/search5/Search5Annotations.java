@@ -13,7 +13,7 @@ public final class Search5Annotations {
    /**
     * Similar to org.hibernate.search.annotations.Fields/Field.
     */
-   public static final String FIELDS_ANNOTATION = "Fields";
+   public static final String FIELDS_ANNOTATION = "Fields"; // the Repeatable container annotation for Field
    public static final String FIELD_ANNOTATION = "Field";
    public static final String FIELD_NAME_ATTRIBUTE = "name";
    public static final String FIELD_INDEX_ATTRIBUTE = "index";
@@ -31,6 +31,36 @@ public final class Search5Annotations {
    public static final String STORE_YES = "Store.YES";
    public static final String STORE_NO = "Store.NO";
 
+   public static final String PROJECTABLE_DEFAULT = "Projectable.DEFAULT";  // translates to either YES or NO depending on the indexing backend
+   public static final String PROJECTABLE_NO = "Projectable.NO";
+   public static final String PROJECTABLE_YES = "Projectable.YES";
+
+   public static final String SORTABLE_DEFAULT = "Sortable.DEFAULT";  // translates to either YES or NO depending on the indexing backend
+   public static final String SORTABLE_NO = "Sortable.NO";
+   public static final String SORTABLE_YES = "Sortable.YES";
+
+   /**
+    * Similar to org.hibernate.search.mapper.pojo.bridge.builtin.annotation.GeoPointBinding.
+    */
+   public static final String SPATIALS_ANNOTATION = "GeoPointBindings"; // the Repeatable for GeoPointBinding
+   public static final String SPATIAL_ANNOTATION = "GeoPointBinding";
+   public static final String SPATIAL_FIELD_NAME_ATTRIBUTE = "fieldName";
+   public static final String SPATIAL_MARKER_SET_ATTRIBUTE = "markerSet";
+   public static final String SPATIAL_PROJECTABLE_ATTRIBUTE = "projectable";
+   public static final String SPATIAL_SORTABLE_ATTRIBUTE = "sortable";
+
+   /**
+    * Similar to org.hibernate.search.mapper.pojo.bridge.builtin.annotation.Latitude.
+    */
+   public static final String LATITUDE_ANNOTATION = "Latitude";
+   public static final String LATITUDE_MARKERSET_ATTRIBUTE = "markerSet";
+
+   /**
+    * Similar to org.hibernate.search.mapper.pojo.bridge.builtin.annotation.Longitude.
+    */
+   public static final String LONGITUDE_ANNOTATION = "Longitude";
+   public static final String LONGITUDE_MARKERSET_ATTRIBUTE = "markerSet";
+
    /**
     * A marker value that indicates nulls should not be indexed.
     */
@@ -42,8 +72,11 @@ public final class Search5Annotations {
    public static final String ANALYZER_ANNOTATION = "Analyzer";
    public static final String ANALYZER_DEFINITION_ATTRIBUTE = "definition";
 
+   /**
+    * Similar to org.hibernate.search.annotations.SortableField/SortableFields.
+    */
    public static final String SORTABLE_FIELD_ANNOTATION = "SortableField";
-   public static final String SORTABLE_FIELDS_ANNOTATION = "SortableFields";
+   public static final String SORTABLE_FIELDS_ANNOTATION = "SortableFields"; // the Repeatable container annotation for SortableField
 
    public static void configure(Configuration.Builder builder) {
       builder.annotationsConfig()
@@ -100,6 +133,30 @@ public final class Search5Annotations {
                   .defaultValue(DO_NOT_INDEX_NULL)
             .annotation(SORTABLE_FIELD_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
                .packageName(LEGACY_ANNOTATION_PACKAGE)
-               .repeatable(SORTABLE_FIELDS_ANNOTATION);
+               .repeatable(SORTABLE_FIELDS_ANNOTATION)
+            .annotation(SPATIAL_ANNOTATION, AnnotationElement.AnnotationTarget.MESSAGE)
+               .repeatable(SPATIALS_ANNOTATION)
+               .attribute(SPATIAL_FIELD_NAME_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.STRING)
+                  .defaultValue("")
+               .attribute(SPATIAL_MARKER_SET_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.STRING)
+                  .defaultValue("")
+               .attribute(SPATIAL_PROJECTABLE_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.IDENTIFIER)
+                  .allowedValues(PROJECTABLE_DEFAULT, PROJECTABLE_NO, PROJECTABLE_YES)
+                  .defaultValue(PROJECTABLE_DEFAULT)
+               .attribute(SPATIAL_SORTABLE_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.IDENTIFIER)
+                  .allowedValues(SORTABLE_DEFAULT, SORTABLE_NO, SORTABLE_YES)
+                  .defaultValue(SORTABLE_DEFAULT)
+                  .annotation(LATITUDE_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
+               .attribute(LATITUDE_MARKERSET_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.STRING)
+                  .defaultValue("")
+                  .annotation(LONGITUDE_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
+               .attribute(LONGITUDE_MARKERSET_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.STRING)
+                  .defaultValue("");
    }
 }
