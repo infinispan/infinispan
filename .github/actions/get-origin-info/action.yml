@@ -1,0 +1,51 @@
+name: Get Origin Info
+description: Get information about the origin workflow
+inputs:
+  head_sha:
+    description: Head sha related to the origin workflow
+    required: true
+  head_branch:
+    description: Head branch related to the origin workflow
+    required: true
+  event:
+    description: Event type related to the origin workflow
+    required: true
+outputs:
+  pullRequestNumber:
+    description: Pull request number that triggered the original workflow
+    value: ${{ steps.workflow-run-info.outputs.pullRequestNumber }}
+  sourceHeadBranch:
+    description: Source head branch related to the original workflow
+    value: ${{ steps.workflow-run-info.outputs.sourceHeadBranch }}
+  imageTag:
+    description: >
+      Tag to be applied to the image. Head branch name in case of push event,
+      pull request number in case of pull request event
+    value: ${{ steps.workflow-run-info.outputs.imageTag }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/github-script@v7.0.1
+      id: workflow-run-info
+      env:
+       HEAD_SHA: ${{ inputs.head_sha }}
+       HEAD_BRANCH: ${{ inputs.head_branch }}
+       EVENT: ${{ inputs.event }}
+      with:
+       script: |
+          const { HEAD_SHA, HEAD_BRANCH, EVENT } = process.env
+          headBranch = HEAD_BRANCH
+          imageTag = HEAD_BRANCH
+          console.log(JSON.stringify(context.payload.workflow_run.pull_requests))
+          for (const pullRequest of context.payload.workflow_run.pull_requests) {
+              if (pullRequest.head.sha === HEAD_SHA ) {
+                core.setOutput("pullRequestNumber", pullRequest.number)
+              }
+              if ( EVENT === 'pull_request' || EVENT === 'pull_request_target') {
+                headBranch = pullRequest.head.ref
+                imageTag = pullRequest.number
+              }
+              break;
+          }
+          core.setOutput("sourceHeadBranch", headBranch)
+          core.setOutput("imageTag", imageTag)

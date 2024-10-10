@@ -21,6 +21,21 @@ public class HashMapTest {
       testCreateWithRemovals(new HopscotchHashMap<>(32));
    }
 
+   @Test
+   public void testFail() {
+      assertEquals(1,2);
+   }
+
+   public static int i=0;
+   @Test
+   public void testFlaky() {
+      if (i==0) {
+         i=1;
+         assertEquals(1,2);
+      }
+      assertEquals(1,1);
+   }
+
    private void testCreate(Map<Integer, Integer> testedMap) {
       HashMap<Integer, Integer> map = new HashMap<>();
       ThreadLocalRandom random = ThreadLocalRandom.current();

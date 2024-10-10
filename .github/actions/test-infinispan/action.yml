@@ -1,0 +1,14 @@
+name: Test Infinispan
+description: |
+    Test Infinispan.
+    This action runs untrusted code (i.e. PRs) for testing: consider
+    security implication if you need to change it.
+
+runs:
+  using: composite
+  steps:
+      - name: Maven Test
+        shell: bash
+        run: >
+            ./mvnw verify -s maven-settings.xml -V -B -e -DrerunFailingTestsCount=2
+            -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative -pl commons/all
