@@ -1,5 +1,6 @@
 package org.infinispan.server.resp.commands.generic;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -14,6 +15,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
+import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
 import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.multimap.impl.SortableBucket;
 import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
@@ -21,6 +23,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.Util;
 import org.infinispan.server.resp.commands.LimitArgument;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.serialization.Resp3Response;
@@ -36,8 +39,9 @@ import io.netty.channel.ChannelHandlerContext;
  * @see <a href="https://redis.io/commands/sort/">Redis Documentation</a>
  */
 public class SORT extends RespCommand implements Resp3Command {
-   public static final char REPLACEMENT = '*';
-   public static final String VALUE_PATTERN = "#";
+   private static final char REPLACEMENT = '*';
+   private static final String VALUE_PATTERN = "#";
+   private static final String HASH_FIELD = "->";
    private boolean readonly = false;
 
    public enum Arg {
@@ -121,84 +125,39 @@ public class SORT extends RespCommand implements Resp3Command {
 
       CompletionStage<List<ScoredValue<byte[]>>> sortedCollection;
       MediaType vmt = handler.cache().getValueDataConversion().getStorageMediaType();
-      AdvancedCache<byte[], byte[]> cache = handler.cache().withMediaType(MediaType.APPLICATION_OCTET_STREAM, vmt);
+      AdvancedCache<byte[], ?> cache = handler.typedCache(vmt);
       if (pattern == null || sortOptions.skipSort) {
-         sortedCollection = cache.getCacheEntryAsync(key).thenApply(e -> {
-                  if (e == null) {
-                     return Collections.emptyList();
-                  }
-                  Object value = e.getValue();
-                  if (value instanceof SortableBucket) {
-                     SortableBucket<byte[]> sortableBucket = (SortableBucket) value;
-                     return sortableBucket.sort(sortOptions);
-                  }
-                  throw new ClassCastException();
+         sortedCollection = cache.getCacheEntryAsync(key)
+               .thenApply(e -> {
+                  if (e == null) return Collections.emptyList();
+
+                  if (!(e.getValue() instanceof SortableBucket<?>))
+                     throw new ClassCastException();
+
+                  @SuppressWarnings("unchecked")
+                  SortableBucket<byte[]> sb = (SortableBucket<byte[]>) e.getValue();
+                  return sb.sort(sortOptions);
                });
       } else {
-         final String finalPattern = pattern;
-         int index = pattern.indexOf(REPLACEMENT);
-         sortedCollection = CompletionStages.handleAndCompose(cache.getCacheEntryAsync(key),
-               (e, t) -> {
-                  if (e == null) {
+         String finalPattern = pattern;
+         sortedCollection = cache.getCacheEntryAsync(key)
+               .thenCompose(entry -> {
+                  if (entry == null)
                      return CompletableFuture.completedFuture(Collections.emptyList());
-                  }
-                  Object value = e.getValue();
-                  if (value instanceof SortableBucket) {
-                     SortableBucket<byte[]> sortableBucket = (SortableBucket) value;
-                     return CompletableFutures.sequence(
-                           sortableBucket.stream().map(wrappedValue -> {
-                              byte[] computedWeightKey = computePatternKey(finalPattern, index, wrappedValue.get());
-                              return handler.cache().getAsync(computedWeightKey).thenApply(w -> {
-                                 if (w == null) {
-                                    return new ScoredValue<>(1d, wrappedValue);
-                                 }
-                                 MultimapObjectWrapper<byte[]> wrappedWeight = new MultimapObjectWrapper<>(w);
-                                 return new ScoredValue<>(wrappedWeight.asDouble(), wrappedValue);
-                              });
-                           }).collect(Collectors.toList()))
-                           .thenApply(list -> sortableBucket.sort(list.stream(), sortOptions));
-                  }
-                  throw new ClassCastException();
+
+                  if (!(entry.getValue() instanceof SortableBucket<?>))
+                     throw new ClassCastException();
+
+                  @SuppressWarnings("unchecked")
+                  SortableBucket<byte[]> sb = (SortableBucket<byte[]>) entry.getValue();
+                  return retrieveExternal(handler, sb, finalPattern, sortOptions);
                });
       }
 
       if (!getObjectsPatterns.isEmpty()) {
-         CompletionStage<List<byte[]>> resultingList = CompletionStages.handleAndCompose(sortedCollection,
-                     (collection, t) -> CompletableFutures.sequence(getObjectsPatterns.stream().map(getPattern -> {
-                        if (getPattern.equals(VALUE_PATTERN)) {
-                           return CompletableFuture.completedFuture(
-                                 collection.stream().map(sv -> sv.getValue()).collect(Collectors.toList()));
-                        }
+         CompletionStage<List<byte[]>> resultingList = sortedCollection
+               .thenCompose(collection -> retrieveExternal(handler, collection, getObjectsPatterns));
 
-                        int index = getPattern.indexOf(REPLACEMENT);
-                        if (index < 0) {
-                           return CompletableFuture.completedFuture(
-                                 Stream.<byte[]>generate(() -> null)
-                                       .limit(collection.size()).collect(Collectors.toList()));
-                        }
-
-                        return CompletableFutures.sequence(collection.stream()
-                              .map(s -> handler.cache().getCacheEntryAsync(computePatternKey(getPattern, index, s.getValue()))
-                                    .thenApply(v -> {
-                                       if (v == null || v.getValue().getClass() != byte[].class) {
-                                          return null;
-                                       }
-                                       return v.getValue();
-                                    })).collect(Collectors.toList()));
-                     }).collect(Collectors.toList())))
-               .thenApply(patternGetResults -> {
-                  if (patternGetResults.isEmpty()) {
-                     return Collections.emptyList();
-                  }
-                  int size = patternGetResults.get(0).size();
-                  List<byte[]> finalResult = new ArrayList<>(patternGetResults.size() * size);
-                  for (int i = 0; i< size; i++) {
-                     for (List<byte[]> current: patternGetResults) {
-                        finalResult.add(current.get(i));
-                     }
-                  }
-                  return finalResult;
-               });
          if (destination != null) {
             return storeV(handler, ctx, destination, resultingList);
          }
@@ -218,9 +177,8 @@ public class SORT extends RespCommand implements Resp3Command {
 
    private static byte[] computePatternKey(String pattern, int index, byte[] value) {
       String computedKey =
-            pattern.substring(0, index) + new String(value) + pattern.substring(
-                  index + 1);
-      return computedKey.getBytes();
+            pattern.substring(0, index) + Util.ascii(value) + pattern.substring(index + 1);
+      return computedKey.getBytes(StandardCharsets.US_ASCII);
    }
 
    private CompletionStage<RespRequestHandler> storeV(Resp3Handler handler,
@@ -240,5 +198,89 @@ public class SORT extends RespCommand implements Resp3Command {
       CompletionStage<Long> cs = sortedList.thenCompose(values ->
             listMultimap.replace(destination, values.stream().map(ScoredValue::getValue).collect(Collectors.toList())));
       return handler.stageToReturn(cs, ctx, Resp3Response.INTEGER);
+   }
+
+   private CompletionStage<List<ScoredValue<byte[]>>> retrieveExternal(Resp3Handler handler, SortableBucket<byte[]> bucket, String pattern, SortableBucket.SortOptions sortOptions) {
+      int index = pattern.indexOf(REPLACEMENT);
+      var cs = CompletionStages.performSequentially(bucket.stream().iterator(),
+            wv -> readScoredValue(handler, wv, pattern, index),
+            Collectors.toList());
+      return cs.thenApply(list -> bucket.sort(list.stream(), sortOptions));
+   }
+
+   private CompletionStage<ScoredValue<byte[]>> readScoredValue(Resp3Handler handler, MultimapObjectWrapper<byte[]> obj, String pattern, int index) {
+      CompletionStage<byte[]> cs = getEntryValue(handler, pattern, index, obj.get());
+      return cs.thenApply(w -> {
+         if (w == null) {
+            return new ScoredValue<>(1d, obj);
+         }
+         MultimapObjectWrapper<byte[]> wrappedWeight = new MultimapObjectWrapper<>(w);
+         return new ScoredValue<>(wrappedWeight.asDouble(), obj);
+      });
+   }
+
+   private CompletionStage<List<byte[]>> retrieveExternal(Resp3Handler handler, List<ScoredValue<byte[]>> collection, Collection<String> patterns) {
+      var cs = CompletionStages.performSequentially(patterns.iterator(), pattern -> {
+         if (pattern.equals(VALUE_PATTERN)) {
+            return CompletableFuture.completedFuture(
+                  collection.stream().map(ScoredValue::getValue).toList());
+         }
+
+         int index = pattern.indexOf(REPLACEMENT);
+         if (index < 0) {
+            return CompletableFuture.completedFuture(
+                  Stream.<byte[]>generate(() -> null).limit(collection.size()).toList());
+         }
+
+         return CompletionStages.performSequentially(collection.iterator(),
+               s -> getEntryValue(handler, pattern, index, s.getValue()),
+               Collectors.toList());
+      }, Collectors.toList());
+
+      return cs.thenApply(patternGetResults -> {
+         if (patternGetResults.isEmpty()) {
+            return Collections.emptyList();
+         }
+         int size = patternGetResults.get(0).size();
+         List<byte[]> finalResult = new ArrayList<>(patternGetResults.size() * size);
+         for (int i = 0; i< size; i++) {
+            for (List<byte[]> current: patternGetResults) {
+               finalResult.add(current.get(i));
+            }
+         }
+         return finalResult;
+      });
+   }
+
+   private CompletionStage<byte[]> getEntryValue(Resp3Handler handler, String pattern, int index, byte[] replacement) {
+      if (pattern.contains(HASH_FIELD)) {
+         String[] split = pattern.split(HASH_FIELD);
+         byte[] hashKey = computePatternKey(split[0], index, replacement);
+         byte[] hashField = split[1].getBytes(StandardCharsets.US_ASCII);
+
+         EmbeddedMultimapPairCache<byte[], byte[], byte[]> hash = handler.getHashMapMultimap();
+         return hash.get(hashKey, hashField);
+      }
+
+      try {
+         AdvancedCache<byte[], ?> cache = handler.cache();
+         return cache.getAsync(computePatternKey(pattern, index, replacement))
+               .handle((v, t) -> {
+                  if (t != null) {
+                     t = CompletableFutures.extractException(t);
+                     if (t instanceof ClassCastException)
+                        return null;
+
+                     throw CompletableFutures.asCompletionException(t);
+                  }
+
+                  if (!(v instanceof byte[] bytes))
+                     return null;
+
+                  return bytes;
+               });
+      } catch (ClassCastException ignore) {
+         return CompletableFutures.completedNull();
+      }
    }
 }

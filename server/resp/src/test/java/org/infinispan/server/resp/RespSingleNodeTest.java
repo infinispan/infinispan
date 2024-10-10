@@ -988,6 +988,13 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       // SORT people BY w_*
       assertThat(redis.sort("people", SortArgs.Builder.by("w_*")))
             .containsExactly( "michael", "pedro", "ryan", "tristan");
+
+      // Insert objects for hash retrieval in sort.
+      redis.hset("h_ryan", Map.of("component", "persistence", "weight", "1"));
+      redis.hset("h_pedro", Map.of("component", "cross-site", "weight", "2"));
+      redis.hset("h_tristan", Map.of("component", "security", "weight", "3"));
+      redis.hset("h_michael", Map.of("weight", "4"));
+
       // SET w_ryan 1
       redis.set("w_ryan", "1");
       // SET w_pedro 2
@@ -996,9 +1003,15 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       redis.set("w_tristan", "3");
       // SET w_michael 4
       redis.set("w_michael", "4");
+
       // SORT people BY w_*
       assertThat(redis.sort("people", SortArgs.Builder.by("w_*")))
             .containsExactly( "ryan", "pedro", "tristan", "michael");
+
+      // SORT people BY h_*->weight
+      assertThat(redis.sort("people", SortArgs.Builder.by("h_*->weight")))
+            .containsExactly( "ryan", "pedro", "tristan", "michael");
+
       // SET o_ryan 1
       redis.set("o_ryan", "persistence");
       // SET o_pedro 2
@@ -1008,14 +1021,30 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       // SORT people BY w_* GET o_*
       assertThat(redis.sort("people", SortArgs.Builder.by("w_*").get("o_*")))
             .containsExactly( "persistence", "cross-site", "security", null);
+
+      // SORT people BY w_* GET h_*->component
+      assertThat(redis.sort("people", SortArgs.Builder.by("w_*").get("h_*->component")))
+            .containsExactly( "persistence", "cross-site", "security", null);
+
       // SORT people BY w_* GET o_* GET #
       assertThat(redis.sort("people", SortArgs.Builder.by("w_*").get("o_*").get("#")))
+            .containsExactly( "persistence", "ryan", "cross-site", "pedro",
+                  "security", "tristan", null, "michael");
+      // SORT people BY w_* GET h_*->component GET #
+      assertThat(redis.sort("people", SortArgs.Builder.by("w_*").get("h_*->component").get("#")))
             .containsExactly( "persistence", "ryan", "cross-site", "pedro",
                   "security", "tristan", null, "michael");
       // SORT people BY w_* GET o GET #
       assertThat(redis.sort("people", SortArgs.Builder.by("w_*").get("o").get("#")))
             .containsExactly( null, "ryan", null, "pedro",
                   null, "tristan", null, "michael");
+
+      // FIXME: Operation against hash keys is a wrong type, should return null.
+      //  The operation succeeds if the storage type is Protostream since it can convert the bucket to byte[].
+      // SORT people BY w_* GET h_* GET #
+      /*assertThat(redis.sort("people", SortArgs.Builder.by("w_*").get("h_*").get("#")))
+            .containsExactly( null, "ryan", null, "pedro",
+                  null, "tristan", null, "michael");*/
 
       // *****
       // Sets
