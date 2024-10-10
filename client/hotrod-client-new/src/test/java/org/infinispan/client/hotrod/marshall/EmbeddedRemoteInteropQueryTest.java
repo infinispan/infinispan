@@ -78,7 +78,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
 
       ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort())
-            .addContextInitializers(TestDomainSCI.INSTANCE, NotIndexedSCI.INSTANCE);
+            .addContextInitializers(TestDomainSCI.INSTANCE, NotIndexedSchema.INSTANCE);
 
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
@@ -497,7 +497,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
    }
 
    @AutoProtoSchemaBuilder(
-         dependsOn = NotIndexedSCI.class,
+         dependsOn = NotIndexedSchema.class,
          includeClasses = {
                AddressHS.class,
                AccountHS.class,

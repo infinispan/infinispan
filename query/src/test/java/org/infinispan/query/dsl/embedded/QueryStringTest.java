@@ -183,10 +183,8 @@ public class QueryStringTest extends AbstractQueryDslTest {
       getCacheForWrite().put("notIndexed1", new NotIndexed("testing 123"));
       getCacheForWrite().put("notIndexed2", new NotIndexed("xyz"));
 
-      if (testGeoLocalQueries()) {
-         getCacheForWrite().put("flightA", new FlightRoute("A", 46.7716, 23.5895, 37.7608, 140.4748));
-         getCacheForWrite().put("flightB", new FlightRoute("B", 43.7716, 20.5895, 34.7608, 137.4748));
-      }
+      getCacheForWrite().put("flightA", new FlightRoute("A", 46.7716, 23.5895, 37.7608, 140.4748));
+      getCacheForWrite().put("flightB", new FlightRoute("B", 43.7716, 20.5895, 34.7608, 137.4748));
    }
 
    public void testParam() {
@@ -523,11 +521,6 @@ public class QueryStringTest extends AbstractQueryDslTest {
 
       list = q.execute().list();
       assertEquals(0, list.size());
-   }
-
-   // TODO ISPN-8238 Remove the method when also remote geo queries are supported
-   protected boolean testGeoLocalQueries() {
-      return true;
    }
 
    protected final <T> Query<T> createQueryFromString(String queryString) {
