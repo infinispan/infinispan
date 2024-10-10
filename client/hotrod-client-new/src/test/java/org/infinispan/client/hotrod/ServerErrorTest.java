@@ -96,7 +96,7 @@ public class ServerErrorTest extends SingleCacheManagerTest {
 
       // Check that the operation was completed
       HeaderDecoder headerDecoder = channel.pipeline().get(HeaderDecoder.class);
-      assertEquals(0, headerDecoder.registeredOperations());
+      assertEquals(0, headerDecoder.registeredOperationsById().size());
 
       // Check that the timeout task was cancelled
       assertEquals(scheduledTasksBaseline, scheduledTaskQueue.size());

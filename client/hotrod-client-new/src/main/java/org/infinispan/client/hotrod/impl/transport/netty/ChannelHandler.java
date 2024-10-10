@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -26,6 +27,7 @@ import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.SslContextFactory;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
@@ -37,6 +39,9 @@ import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.resolver.AddressResolverGroup;
 import io.netty.resolver.dns.DnsNameResolverBuilder;
 import io.netty.resolver.dns.RoundRobinDnsAddressResolverGroup;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.processors.FlowableProcessor;
+import io.reactivex.rxjava3.processors.UnicastProcessor;
 
 public class ChannelHandler {
    private static final Log log = LogFactory.getLog(ChannelHandler.class, Log.class);
@@ -208,6 +213,44 @@ public class ChannelHandler {
       return OperationChannel.createAndStart(address, channelInitializer, dispatcher::getClientTopologyInfo, dispatcher::handleConnectionFailure);
    }
 
+   public Flowable<HotRodOperation<?>> pendingOperationFlowable() {
+      return Flowable.defer(() -> {
+         FlowableProcessor<HotRodOperation<?>> processor = UnicastProcessor.<HotRodOperation<?>>create()
+               .toSerialized();
+         try {
+            AtomicInteger toComplete = new AtomicInteger(1);
+            for (OperationChannel oc : channels.values()) {
+               Channel channel = oc.getChannel();
+               if (channel == null) {
+                  oc.pendingChannelOperations().forEach(processor::onNext);
+               } else {
+                  toComplete.addAndGet(1);
+                  channel.eventLoop().execute(() -> {
+                     try {
+                        oc.pendingChannelOperations().forEach(processor::onNext);
+                        HeaderDecoder decoder = channel.pipeline().get(HeaderDecoder.class);
+                        decoder.registeredOperationsById()
+                              .forEach((k, v) -> processor.onNext(v));
+                        if (toComplete.decrementAndGet() == 0) {
+                           processor.onComplete();
+                        }
+                     } catch (Throwable t) {
+                        processor.onError(t);
+                     }
+                  });
+               }
+               // All the queued ones first as we can miss if we do registered then queued
+            }
+            if (toComplete.decrementAndGet() == 0) {
+               processor.onComplete();
+            }
+         } catch (Throwable t) {
+            processor.onError(t);
+         }
+         return processor;
+      });
+   }
+
    public Stream<HotRodOperation<?>> gatherOperations() {
       return channels.values().stream().flatMap(oc ->
             oc.getChannel() != null ?
@@ -217,16 +260,6 @@ public class ChannelHandler {
                         .values().stream()
                   : Stream.empty()
       );
-   }
-
-   public int pendingOperationCount() {
-      return channels.values().stream().mapToInt(oc ->
-            oc.getChannel() != null ?
-                  oc.getChannel().pipeline()
-                        .get(HeaderDecoder.class)
-                        .registeredOperations()
-                  : 0
-      ).sum();
    }
 
    public OperationChannel getChannelForAddress(SocketAddress socketAddress) {
