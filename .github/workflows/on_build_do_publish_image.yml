@@ -23,7 +23,7 @@ jobs:
         publishImage: ${{ steps.publish-image-info.outputs.publishImage }}
      steps:
         - id: workflow-run-info
-          uses: ${{ github.repository }}/.github/actions/get-origin-info@main
+          uses: rigazilla/infinispan/.github/actions/get-origin-info@main
           with:
            head_sha: ${{ github.event.workflow_run.head_sha }}
            head_branch: ${{ github.event.workflow_run.head_branch }}
