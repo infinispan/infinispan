@@ -8,6 +8,6 @@ package org.infinispan.server.resp.commands.generic;
 public class PTTL extends TTL {
 
    public PTTL() {
-      super(false, true);
+      super(ExpirationOption.REMAINING);
    }
 }

@@ -2,10 +2,13 @@ package org.infinispan.server.resp.commands.generic;
 
 import static org.infinispan.server.resp.Util.toUnixTime;
 
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -21,17 +24,15 @@ import io.netty.channel.ChannelHandlerContext;
  * @since 15.0
  */
 public class TTL extends RespCommand implements Resp3Command {
-   private final boolean unixTime;
-   private final boolean milliseconds;
+   private final EnumSet<ExpirationOption> options;
 
    public TTL() {
-      this(false, false);
+      this(ExpirationOption.REMAINING, ExpirationOption.SECONDS);
    }
 
-   protected TTL(boolean unixTime, boolean milliseconds) {
+   protected TTL(ExpirationOption ... options) {
       super(2, 1, 1, 1);
-      this.unixTime = unixTime;
-      this.milliseconds = milliseconds;
+      this.options = EnumSet.copyOf(Arrays.asList(options));
    }
 
    @Override
@@ -44,16 +45,27 @@ public class TTL extends RespCommand implements Resp3Command {
          if (e == null) {
             return -2L;
          } else {
-            long ttl = e.getLifespan();
-            if (unixTime) {
-               ttl = toUnixTime(ttl, handler.respServer().getTimeService());
-            }
-            if (milliseconds) {
-               return ttl;
-            } else {
-               return ttl < 0 ? ttl : ttl / 1000;
-            }
+            if (e.getLifespan() < 0) return -1;
+
+            TimeService timeService = handler.respServer().getTimeService();
+            long ttl = options.contains(ExpirationOption.REMAINING)
+                  ? e.getLifespan() - (timeService.wallClockTime() - e.getCreated())
+                  : e.getLifespan();
+
+            if (options.contains(ExpirationOption.UNIX_TIME))
+               ttl = toUnixTime(ttl, timeService);
+
+            if (options.contains(ExpirationOption.SECONDS))
+               ttl = ttl / 1_000;
+
+            return ttl;
          }
       }), ctx, Resp3Response.INTEGER);
+   }
+
+   protected enum ExpirationOption {
+      REMAINING,
+      UNIX_TIME,
+      SECONDS;
    }
 }
