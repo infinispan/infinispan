@@ -1089,6 +1089,7 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
    }
 
    public void testZINCRBY() {
+      assertThat(redis.zincrby("huge-score", Double.POSITIVE_INFINITY, "positive").isInfinite()).isTrue();
       assertThat(redis.zincrby("people",  30, "tristan")).isEqualTo(30);
       assertThat(redis.zrangeWithScores("people", 0, -1)).containsExactly(just(30, "tristan"));
       assertThat(redis.zincrby("people",  2, "tristan")).isEqualTo(32);

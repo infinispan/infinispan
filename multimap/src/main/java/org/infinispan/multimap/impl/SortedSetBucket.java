@@ -268,7 +268,7 @@ public class SortedSetBucket<V> implements SortableBucket<V> {
       }
 
       Double newScore = existingScore == null ? incr : existingScore + incr;
-      if (Double.isNaN(newScore) || Double.isInfinite(newScore))
+      if (existingScore != null && (Double.isNaN(newScore + existingScore) || Double.isInfinite(newScore + existingScore)))
          throw new IllegalStateException("increment would produce NaN or Infinity");
 
       if (existingScore != null && ((updateGreaterScoresOnly && newScore <= existingScore) || (updateLessScoresOnly && newScore >= existingScore))) {
