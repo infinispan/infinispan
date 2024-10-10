@@ -57,30 +57,17 @@ jobs:
          run_id: ${{ github.event.workflow_run.id }}
 
       - name: Download Infinispan Server
-        uses: actions/download-artifact@v4
+        id: dis
+        uses: rigazilla/infinispan/.github/actions/download-infinispan@main
         with:
-          name: infinispan-dist
-          run-id: ${{ github.event.workflow_run.id }}
+          run_id: ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
-
-      - name: Download Server Version
-        uses: actions/download-artifact@v4
-        with:
-          name: server-version
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ github.token }}
-
-      - name: Get server version
-        id: server_version
-        uses: juliangruber/read-file-action@v1
-        with:
-           path: ./server-version.txt
 
       - name: Extract Infinispan Source
         run: |
           mkdir test_dir && cd test_dir
-          unzip ${GITHUB_WORKSPACE}/infinispan-${{ steps.server_version.outputs.content }}-src.zip
-          mv infinispan-${{ steps.server_version.outputs.content }}-src infinispan
+          unzip ${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip
+          mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
 
       - name: Maven Test
         shell: bash
@@ -170,17 +157,10 @@ jobs:
          run_id: ${{ github.event.workflow_run.id }}
 
       - name: Download Infinispan Server
-        uses: actions/download-artifact@v4
+        id: dis
+        uses: rigazilla/infinispan/.github/actions/download-infinispan@main
         with:
-          name: infinispan-dist
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ github.token }}
-
-      - name: Download Server Version
-        uses: actions/download-artifact@v4
-        with:
-          name: server-version
-          run-id: ${{ github.event.workflow_run.id }}
+          run_id: ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
 
       - name: Get server version
@@ -192,13 +172,13 @@ jobs:
       - name: Extract Infinispan Server
         run: |
           cd /tmp
-          unzip ${GITHUB_WORKSPACE}/infinispan-server-${{ steps.server_version.outputs.content }}.zip
+          unzip ${GITHUB_WORKSPACE}/infinispan-server-${{ steps.dis.outputs.server-version }}.zip
 
       - name: Extract Infinispan Source
         run: |
           mkdir test_dir && cd test_dir
-          unzip ${GITHUB_WORKSPACE}/infinispan-${{ steps.server_version.outputs.content }}-src.zip
-          mv infinispan-${{ steps.server_version.outputs.content }}-src infinispan
+          unzip ${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip
+          mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
 
       - name: Test
         run: |
@@ -207,4 +187,4 @@ jobs:
             -Dansi.strip=true \
             -DdefaultTestGroup=database \
             -Dorg.infinispan.test.database.types=${{ matrix.dbs }} \
-            -Dorg.infinispan.test.server.dir=/tmp/infinispan-server-${{ steps.server_version.outputs.content }}
+            -Dorg.infinispan.test.server.dir=/tmp/infinispan-server-${{ steps.dis.outputs.server-version }}
