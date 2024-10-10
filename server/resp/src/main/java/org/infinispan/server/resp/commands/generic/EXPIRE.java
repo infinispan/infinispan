@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -68,7 +69,7 @@ public class EXPIRE extends RespCommand implements Resp3Command {
 
    private static CompletionStage<Long> expire(Resp3Handler handler, byte[] key, long expiration, Mode mode, boolean unixTime) {
       MediaType vmt = handler.cache().getValueDataConversion().getStorageMediaType();
-      final AdvancedCache<byte[], Object> acm = handler.cache().<byte[],Object>withMediaType(MediaType.APPLICATION_OCTET_STREAM, vmt);
+      final AdvancedCache<byte[], Object> acm = handler.typedCache(vmt);
       return acm.getCacheEntryAsync(key).thenCompose(e -> {
          if (e == null) {
             return NOT_APPLIED;
@@ -91,18 +92,20 @@ public class EXPIRE extends RespCommand implements Resp3Command {
                   }
                   break;
                case GT:
-                  if (expiration < ttl) {
+                  if (expiration < ttl || ttl < 0) {
                      return NOT_APPLIED;
                   }
                   break;
                case LT:
-                  if (expiration > ttl) {
+                  if (ttl > 0 && expiration > ttl) {
                      return NOT_APPLIED;
                   }
                   break;
             }
             CompletableFuture<Boolean> replace;
-            if (unixTime) {
+            if (expiration <= 0 || (unixTime && isInThePast(expiration, handler.respServer().getTimeService()))) {
+               replace = acm.removeAsync(e.getKey(), e.getValue());
+            } else if (unixTime) {
                replace = acm.replaceAsync(e.getKey(), e.getValue(), e.getValue(), fromUnixTime(expiration, handler.respServer().getTimeService()), TimeUnit.MILLISECONDS);
             } else {
                replace = acm.replaceAsync(e.getKey(), e.getValue(), e.getValue(), expiration, TimeUnit.MILLISECONDS);
@@ -116,5 +119,9 @@ public class EXPIRE extends RespCommand implements Resp3Command {
             });
          }
       });
+   }
+
+   private static boolean isInThePast(long expiration, TimeService timeService) {
+      return expiration <= timeService.wallClockTime();
    }
 }
