@@ -39,9 +39,20 @@ jobs:
           id: publish-image-info
           run: echo "publishImage=true" >> $GITHUB_OUTPUT
 
+  get-image-name:
+   name: "Get Image Name"
+   runs-on: ubuntu-latest
+   outputs:
+      imageName: ${{ steps.step1.outputs.imageName }}
+   steps:
+      - name: Propagate env vars
+        id: step1
+        run: echo "imageName=$IMAGE_NAME" >> $GITHUB_OUTPUT
+
   publish-image:
       needs:
          - get-info
+         - get-image-name
       if: >
          ${{ needs.get-info.outputs.sourceEvent != 'pull_request' ||
           needs.get-info.outputs.publishImage == 'true'}}
@@ -54,4 +65,4 @@ jobs:
          repository: ${{ github.repository }}
          runId: ${{ github.event.workflow_run.id }}
          serverArtifact: infinispan-dist
-         tags:  $IMAGE_NAME:gh-${{ needs.get-info.outputs.imageTag }}
+         tags:  ${{ needs.get-image-name.outputs.imageName }}:gh-${{ needs.get-info.outputs.imageTag }}
