@@ -36,6 +36,7 @@ runs:
           const { HEAD_SHA, HEAD_BRANCH, EVENT } = process.env
           headBranch = HEAD_BRANCH
           imageTag = HEAD_BRANCH
+          console.log(JSON.stringify(context.payload.workflow_run.pull_requests))
           for (const pullRequest of context.payload.workflow_run.pull_requests) {
               if (pullRequest.head.sha === HEAD_SHA ) {
                 core.setOutput("pullRequestNumber", pullRequest.number)
