@@ -60,8 +60,8 @@ jobs:
          - get-info
          - get-server-version
       if: >
-         ${{ needs.get-info.outputs.sourceEvent != 'pull_request'}} ||
-         ${{ needs.get-info.outputs.publishImage == 'true'}}
+         ${{ needs.get-info.outputs.sourceEvent != 'pull_request' ||
+          needs.get-info.outputs.publishImage == 'true'}}
       uses: infinispan/infinispan-images/.github/workflows/publish_image.yml@main
       secrets:
          token: ${{ secrets.GITHUB_TOKEN }}
