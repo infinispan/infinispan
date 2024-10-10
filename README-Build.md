@@ -1,6 +1,4 @@
-You can read more about how to build Infinispan in the documentation:
-
-link:https://infinispan.org/docs/dev/titles/contributing/contributing.html[Infinispan Contributor's Guide]
+You can read more about how to build Infinispan in the documentation: [Infinispan Contributor's Guide](https://infinispan.org/docs/dev/titles/contributing/contributing.html)
 
 Provided you already have the correct versions of Java and Maven installed, you can get started right away.
 For convenience you can use the provided maven-settings.xml file which enables all additional repositories required for
