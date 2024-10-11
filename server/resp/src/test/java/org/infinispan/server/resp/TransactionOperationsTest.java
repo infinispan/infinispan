@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
+import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.TransactionResult;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -247,6 +248,45 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
       assertThat(result.wasDiscarded()).isFalse();
       assertThat(redisConnection.isMulti()).isFalse();
       assertThat(redis.get("tx-discard-k2")).isEqualTo("value-inside");
+   }
+
+   public void testBlpopNotBlocking() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      String key = k();
+      String v0 = v();
+      String v1 = v(1);
+
+      // Add two entries to the list before starting the TX.
+      assertThat(redis.lpush(key, v0, v1)).isEqualTo(2);
+
+      assertThat(redis.multi()).isEqualTo(OK);
+      assertThat(redisConnection.isMulti()).isTrue();
+
+      // Pop 3 values from the list without any timeout.
+      redis.blpop(0, key);
+      redis.blpop(0, key);
+      redis.blpop(0, key);
+
+      // Execute transaction, the command should not block.
+      TransactionResult result = redis.exec();
+      assertThat(result.wasDiscarded()).isFalse();
+      assertThat(result).hasSize(3);
+
+      assertThat((Object) result.get(0))
+            .isInstanceOfSatisfying(KeyValue.class, kv -> {
+               assertThat(kv.getKey()).isEqualTo(key);
+               assertThat(kv.getValue()).isEqualTo(v1);
+            });
+
+      assertThat((Object) result.get(1))
+            .isInstanceOfSatisfying(KeyValue.class, kv -> {
+               assertThat(kv.getKey()).isEqualTo(key);
+               assertThat(kv.getValue()).isEqualTo(v0);
+            });
+
+      // Third pop returns null as there are no more values.
+      assertThat((Object) result.get(2)).isNull();
    }
 
    public void testAbortBecauseOfError() {
