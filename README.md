@@ -1,13 +1,15 @@
 [![Infinispan](https://design.jboss.org/infinispan/logo/final/PNG/infinispan_logo_rgb_lightbluewhite_darkblue_600px.png)](https://infinispan.org/)
 
 [![Version](https://img.shields.io/maven-central/v/org.infinispan/infinispan-core?logo=apache-maven&style=for-the-badge)](https://search.maven.org/artifact/org.infinispan/infinispan-core)
-![Supported JVM Versions](https://img.shields.io/badge/JVM-17--21-brightgreen.svg?style=for-the-badge&logo=openjdk)
+![Supported JVM Versions](https://img.shields.io/badge/JVM-17--23-brightgreen.svg?style=for-the-badge&logo=openjdk)
+[![Commits](https://img.shields.io/github/commit-activity/m/infinispan/infinispan.svg?label=commits&style=for-the-badge&logo=git&logoColor=white)](https://github.com/infinispan/infinispan/pulse)
 [![License](https://img.shields.io/github/license/infinispan/infinispan?style=for-the-badge&logo=apache)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Project Chat](https://img.shields.io/badge/zulip-join_chat-brightgreen.svg?style=for-the-badge&logo=zulip)](https://infinispan.zulipchat.com/)
 
-# Infinispan, In-Memory Distributed Data Store #
 
-Infinispan is an open-source in-memory data grid that offers flexible deployment options and 
+# Infinispan, In-Memory Distributed Database #
+
+Infinispan is an open-source in-memory database that offers flexible deployment options and 
 robust capabilities for storing, managing, and processing data. 
 
 Infinispan provides a key/value data store that can hold all types of data, 
