@@ -110,6 +110,21 @@ public class HotRodHeader implements InfinispanSpanContext {
 
    AdvancedCache<byte[], byte[]> getOptimizedCache(AdvancedCache<byte[], byte[]> c,
                                                    boolean transactional, boolean clustered) {
+      if (clustered && !transactional && op.isConditional()) {
+         log.warnConditionalOperationNonTransactional(op.toString());
+      }
+      // Hot path which avoid EnumSet and flag array allocations
+      if (flag == 0) {
+         if (op.isNotConditionalAndCanReturnPrevious()) {
+            return c.withFlags(Flag.IGNORE_RETURN_VALUES);
+         }
+         return c;
+      }
+      return getOptimizedCacheWithFlags(c, transactional, clustered);
+   }
+
+   private AdvancedCache<byte[], byte[]> getOptimizedCacheWithFlags(AdvancedCache<byte[], byte[]> c,
+                                                                    boolean transactional, boolean clustered) {
       EnumSet<Flag> flags = EnumSet.noneOf(Flag.class);
       if (hasFlag(ProtocolFlag.SkipListenerNotification)) {
          flags.add(Flag.SKIP_LISTENER_NOTIFICATION);
@@ -124,10 +139,6 @@ public class HotRodHeader implements InfinispanSpanContext {
             }
          }
          return c.withFlags(flags);
-      }
-
-      if (clustered && !transactional && op.isConditional()) {
-         log.warnConditionalOperationNonTransactional(op.toString());
       }
 
       if (op.canSkipCacheLoading() && hasFlag(ProtocolFlag.SkipCacheLoader)) {

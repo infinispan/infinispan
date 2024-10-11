@@ -21,6 +21,7 @@ import org.infinispan.topology.MissingMembersException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelPromise;
 
 public class BaseRequestProcessor {
    private static final Log log = LogFactory.getLog(BaseRequestProcessor.class, Log.class);
@@ -139,10 +140,14 @@ public class BaseRequestProcessor {
 
    protected void writeResponse(HotRodHeader header, ByteBuf buf) {
       int responseBytes = buf.readableBytes();
-      ChannelFuture future = channel.writeAndFlush(buf);
+      ChannelPromise channelPromise;
       if (header instanceof AccessLoggingHeader) {
-         accessLogging.logOK(future, (AccessLoggingHeader) header, responseBytes);
+         channelPromise = channel.newPromise();
+         accessLogging.logOK(channelPromise, (AccessLoggingHeader) header, responseBytes);
+      } else {
+         channelPromise = channel.voidPromise();
       }
+      channel.writeAndFlush(buf, channelPromise);
    }
 
    private String createErrorMsg(Throwable t) {
