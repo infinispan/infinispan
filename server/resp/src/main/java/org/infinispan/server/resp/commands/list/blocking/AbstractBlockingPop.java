@@ -30,14 +30,16 @@ import org.infinispan.server.resp.filter.EventListenerKeysFilter;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.server.resp.meta.ClientMetadata;
 import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.tx.TransactionContext;
 
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/blpop/
- *       Derogating to the above documentation, when multiple client are blocked
- *       on a BLPOP, the order in which they will be served is unspecified.
+ *  Derogating to the command documentation, when multiple client are blocked
+ *  on a BLPOP, the order in which they will be served is unspecified.
+ *
  * @since 15.0
+ * @see <a href="https://redis.io/commands/blpop/">Redis documentation</a>
  */
 public abstract class AbstractBlockingPop extends RespCommand implements Resp3Command {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
@@ -61,6 +63,13 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
       // If all the keys are empty or null, create a listener
       // otherwise return the left value of the first non empty list
       var pollStage = pollAllKeys(listMultimap, configuration);
+
+      // Running blocking pop from EXEC should not block.
+      // In this case, we just return whatever the polling has returned and do not install the listener.
+      if (TransactionContext.isInTransactionContext(ctx)) {
+         return handler.stageToReturn(pollStage, ctx, Resp3Response.ARRAY_BULK_STRING);
+      }
+
       // If no value returned, we need subscribers
       return handler.stageToReturn(pollStage.thenCompose(v -> {
          // addSubscriber call can rise exception that needs to be reported

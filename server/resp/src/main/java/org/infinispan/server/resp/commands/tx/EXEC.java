@@ -19,6 +19,7 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import org.infinispan.server.resp.serialization.RespConstants;
 import org.infinispan.server.resp.tx.RespTransactionHandler;
 import org.infinispan.server.resp.tx.TransactionCommand;
+import org.infinispan.server.resp.tx.TransactionContext;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -87,12 +88,17 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
          cache.startBatch();
       }
       return CompletableFuture.supplyAsync(() -> {
+         // Mark the commands are executing from within a transaction context.
+         TransactionContext.startTransactionContext(ctx);
+
          // Unfortunately, we need to manually write the prefix before proceeding with each operation.
          ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, commands.size(), curr.allocator());
          return orderlyExecution(next, ctx, commands, 0, CompletableFutures.completedNull())
                .whenComplete((ignore, t) -> {
                   if (batchEnabled)
                      cache.endBatch(true);
+
+                  TransactionContext.endTransactionContext(ctx);
                });
       }, ctx.executor()).thenCompose(Function.identity());
    }
