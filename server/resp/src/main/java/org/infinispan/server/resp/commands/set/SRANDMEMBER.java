@@ -6,6 +6,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.multimap.impl.EmbeddedSetCache;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
@@ -28,6 +29,10 @@ public class SRANDMEMBER extends RespCommand implements Resp3Command {
          ChannelHandlerContext ctx,
          List<byte[]> arguments) {
       final Long count = (arguments.size() <= 1) ? 1 : ArgumentUtils.toLong(arguments.get(1));
+      if (count == Long.MIN_VALUE) {
+            RespErrorUtil.customError("value is out of range, value must between -9223372036854775807 and 9223372036854775807", handler.allocator());
+            return handler.myStage();
+      }
       final byte[] key = arguments.get(0);
       EmbeddedSetCache<byte[], byte[]> esc = handler.getEmbeddedSetCache();
       return handler.stageToReturn(esc.pop(key, count, false), ctx, Resp3Response.ARRAY_BULK_STRING);
