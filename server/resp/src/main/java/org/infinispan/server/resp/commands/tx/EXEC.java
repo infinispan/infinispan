@@ -7,6 +7,7 @@ import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -16,7 +17,7 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.commands.TransactionResp3Command;
 import org.infinispan.server.resp.tx.RespTransactionHandler;
 import org.infinispan.server.resp.tx.TransactionCommand;
-import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.server.resp.tx.TransactionContext;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -85,11 +86,16 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
          cache.startBatch();
       }
       return CompletableFuture.supplyAsync(() -> {
+         // Mark the commands are executing from within a transaction context.
+         TransactionContext.startTransactionContext(ctx);
+
          Resp3Handler.writeArrayPrefix(commands.size(), curr.allocator());
          return orderlyExecution(next, ctx, commands, 0, CompletableFutures.completedNull())
                .whenComplete((ignore, t) -> {
                   if (batchEnabled)
                      cache.endBatch(true);
+
+                  TransactionContext.endTransactionContext(ctx);
                });
       }, ctx.executor()).thenCompose(Function.identity());
    }
