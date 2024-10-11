@@ -1,5 +1,6 @@
 package org.infinispan.server.persistence;
 
+import static org.infinispan.commons.test.Eventually.eventually;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_PROPERTIES;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_TYPES;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -85,8 +86,8 @@ public class JGroupsJdbcPing2IT {
          c1.connect(clusterName);
          c2.connect(clusterName);
 
-         assertEquals(2, c1.view().size());
-         assertEquals(2, c2.view().size());
+         eventually(() ->c1.view().size() == 2);
+         eventually(() ->c2.view().size() == 2);
 
          db.stop();
          CountDownLatch reqLatch = new CountDownLatch(1);
