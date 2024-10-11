@@ -383,6 +383,18 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testRandmemberMIN_VALUE() {
+      // Testing special case count = Long.MIN_VAL
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "srandmember";
+      redis.sadd(key, "1", "2", "3");
+      assertThatThrownBy(() -> {
+         redis.srandmember(key, Long.MIN_VALUE);
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR value is out of range");
+   }
+
+   @Test
    public void testRandmember() {
       RedisCommands<String, String> redis = redisConnection.sync();
       String key = "srandmember";
