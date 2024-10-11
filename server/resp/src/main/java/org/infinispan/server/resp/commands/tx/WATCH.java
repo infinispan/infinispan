@@ -78,7 +78,6 @@ public class WATCH extends RespCommand implements Resp3Command, TransactionResp3
    @Override
    public CompletionStage<RespRequestHandler> perform(RespTransactionHandler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
       RespErrorUtil.customError("WATCH inside MULTI is not allowed", handler.allocator());
-      handler.errorInTransactionContext();
       return handler.myStage();
    }
 
