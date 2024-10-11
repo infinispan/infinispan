@@ -105,20 +105,30 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
       multi.closeAsync().get(10, TimeUnit.SECONDS);
    }
 
-   @Test
-   public void testTransactionAbortWithError() {
+   @Test(enabled = false, description = "redis/lettuce#3009")
+   public void testWatchInMultiNotAbort() {
       RedisCommands<String, String> redis = redisConnection.sync();
 
       assertThat(redis.multi()).isEqualTo(OK);
       assertThat(redisConnection.isMulti()).isTrue();
 
+      redis.set(k(), v());
+      redis.set(k(1), v(1));
+
       // This returns an -ERR, but lettuce just returns null when in TX context.
       assertThat(redis.watch("something")).isNull();
 
+      redis.set(k(2), v(2));
 
-      assertThatThrownBy(redis::exec)
-            .isInstanceOf(RedisCommandExecutionException.class)
-            .hasMessage("EXECABORT Transaction discarded because of previous errors.");
+      TransactionResult result = redis.exec();
+      assertThat(result.wasDiscarded()).isFalse();
+      assertThat(result)
+            .hasSize(3)
+            .allMatch(OK::equals);
+
+      for (int i = 0; i < 3; i++) {
+         assertThat(redis.get(k(i))).isEqualTo(v(i));
+      }
    }
 
    @Test
