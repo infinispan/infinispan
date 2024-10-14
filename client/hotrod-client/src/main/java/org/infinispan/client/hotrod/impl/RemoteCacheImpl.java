@@ -58,7 +58,6 @@ import org.infinispan.client.hotrod.impl.operations.StatsOperation;
 import org.infinispan.client.hotrod.impl.query.RemoteQueryFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.client.hotrod.metrics.HotRodClientMetricsRegistry;
 import org.infinispan.client.hotrod.near.NearCacheService;
 import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -103,9 +102,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       this.name = name;
       this.remoteCacheManager = rcm;
       this.dataFormat = DataFormat.builder().build();
-      var statsEnabled = rcm.getConfiguration().statistics().enabled();
-      var metrics = statsEnabled ? rcm.getConfiguration().metricRegistry().withCache(name) : HotRodClientMetricsRegistry.DISABLED;
-      this.clientStatistics = new ClientStatistics(statsEnabled, timeService, nearCacheService, metrics);
+      this.clientStatistics = new ClientStatistics(rcm.getConfiguration().statistics().enabled(), timeService, nearCacheService);
    }
 
    protected RemoteCacheImpl(RemoteCacheManager rcm, String name, ClientStatistics clientStatistics) {
@@ -522,7 +519,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    @Override
    public void stop() {
       unregisterMBean();
-      remoteCacheManager.getConfiguration().metricRegistry().removeCache(name);
    }
 
    @Override

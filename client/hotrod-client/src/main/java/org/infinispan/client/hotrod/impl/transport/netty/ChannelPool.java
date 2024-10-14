@@ -2,14 +2,9 @@ package org.infinispan.client.hotrod.impl.transport.netty;
 
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Deque;
-import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -21,7 +16,6 @@ import java.util.function.BiConsumer;
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.client.hotrod.metrics.RemoteCacheManagerMetricsRegistry;
 
 import io.netty.channel.Channel;
 import io.netty.util.concurrent.EventExecutor;
@@ -81,14 +75,12 @@ class ChannelPool {
    private final AtomicInteger active = new AtomicInteger();
    private final AtomicInteger connected = new AtomicInteger();
    private final StampedLock lock = new StampedLock();
-   private final Set<Object> metricsIds = ConcurrentHashMap.newKeySet();
-   private final RemoteCacheManagerMetricsRegistry metricRegistry;
    private volatile boolean terminated = false;
    private volatile boolean suspected = false;
 
    ChannelPool(EventExecutor executor, SocketAddress address, ChannelInitializer newChannelInvoker,
                ExhaustedAction exhaustedAction, BiConsumer<ChannelPool, ChannelEventType> connectionFailureListener,
-               long maxWait, int maxConnections, int maxPendingRequests, RemoteCacheManagerMetricsRegistry metricRegistry) {
+               long maxWait, int maxConnections, int maxPendingRequests) {
       this.connectionFailureListener = connectionFailureListener;
       this.executor = executor;
       this.address = address;
@@ -97,13 +89,6 @@ class ChannelPool {
       this.maxWait = maxWait;
       this.maxConnections = maxConnections;
       this.maxPendingRequests = maxPendingRequests;
-      this.metricRegistry = metricRegistry;
-      Map<String, String> tags = address instanceof InetSocketAddress isa ?
-            Map.of("server", String.format("%s:%s", isa.getHostString(), isa.getPort())) :
-            Map.of("server", UUID.randomUUID().toString());
-      metricRegistry.createGauge("connection.pool.active", "The number of current active connections", this::getActive, tags, metricsIds::add);
-      metricRegistry.createGauge("connection.pool.idle", "The number of idle connections", this::getIdle, tags, metricsIds::add);
-      metricRegistry.createGauge("connection.pool.connected", "The number of connected connections", this::getConnected, tags, metricsIds::add);
    }
 
    public void acquire(ChannelOperation callback) {
@@ -426,8 +411,6 @@ class ChannelPool {
       } finally {
          lock.unlockWrite(stamp);
       }
-      metricsIds.forEach(metricRegistry::removeMetric);
-      metricsIds.clear();
    }
 
    public void inspectPool() {
