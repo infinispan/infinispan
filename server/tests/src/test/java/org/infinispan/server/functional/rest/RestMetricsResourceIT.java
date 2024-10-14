@@ -9,7 +9,6 @@ import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -52,7 +51,7 @@ import io.prometheus.client.exporter.common.TextFormat;
 public class RestMetricsResourceIT {
 
    // copied from regex101.com
-   private static final Pattern PROMETHEUS_PATTERN = Pattern.compile("^(?<metric>[a-zA-Z_:][a-zA-Z0-9_:]*]*)(?<tags>\\{.*})?[\\t ]*(?<value>-?[0-9E.\\-]*)[\\t ]*(?<timestamp>[0-9]+)?$");
+   private static final Pattern PROMETHEUS_PATTERN = Pattern.compile("^(?<metric>[a-zA-Z_:][a-zA-Z0-9_:]*]*)(?<tags>\\{.*})?[\\t ]*(?<value>-?[0-9E.]*)[\\t ]*(?<timestamp>[0-9]+)?$");
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private static final int NUM_SERVERS = 3;
    private static final String[] OWNERSHIP = new String[]{
@@ -313,18 +312,13 @@ public class RestMetricsResourceIT {
       try (RestResponse response = sync(client.metrics())) {
          assertEquals(200, response.status());
          checkIsPrometheus(response.contentType());
-         return parseMetrics(response.body());
+         return response.body().lines()
+               .map(PROMETHEUS_PATTERN::matcher)
+               .filter(Matcher::matches)
+               .map(RestMetricsResourceIT::matcherToMetric)
+               .peek(log::debug)
+               .collect(Collectors.toList());
       }
-   }
-
-   public static List<Metric> parseMetrics(String prometheusScrape) {
-      assertNotNull(prometheusScrape);
-      return prometheusScrape.lines()
-            .map(PROMETHEUS_PATTERN::matcher)
-            .filter(Matcher::matches)
-            .map(RestMetricsResourceIT::matcherToMetric)
-            .peek(log::debug)
-            .toList();
    }
 
    private static Metric findMetric(List<Metric> metrics, String metricName) {
@@ -423,9 +417,11 @@ public class RestMetricsResourceIT {
       @Override
       public int hashCode() {
          int result;
+         long temp;
          result = name.hashCode();
          result = 31 * result + (rawTags != null ? rawTags.hashCode() : 0);
-         result = 31 * result + Double.hashCode(value);
+         temp = Double.doubleToLongBits(value);
+         result = 31 * result + (int) (temp ^ (temp >>> 32));
          return result;
       }
    }

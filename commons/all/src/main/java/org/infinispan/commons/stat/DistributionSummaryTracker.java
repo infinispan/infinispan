@@ -5,11 +5,6 @@ package org.infinispan.commons.stat;
  */
 public interface DistributionSummaryTracker {
 
-   DistributionSummaryTracker NO_OP = amount -> {
-      //no-op
-   };
-
-
    /**
     * Updates the statistics kept by the summary with the specified amount.
     *
