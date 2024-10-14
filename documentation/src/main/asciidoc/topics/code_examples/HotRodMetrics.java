@@ -1,4 +1,4 @@
-RemoteCacheManagerMetricsRegistry registry = ...;
+HotRodMetricRegistry registry = ...;
 ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
 clientBuilder.addServer()
                .host("127.0.0.1")
