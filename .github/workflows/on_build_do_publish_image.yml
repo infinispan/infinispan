@@ -22,8 +22,10 @@ jobs:
         image-tag: ${{ steps.workflow-run-info.outputs.image-tag }}
         publish-image: ${{ steps.publish-image-info.outputs.publish-image }}
      steps:
+        - uses: actions/checkout@v4
+
         - id: workflow-run-info
-          uses: rigazilla/infinispan/.github/actions/get-origin-info@main
+          uses: ./.github/actions/get-origin-info
           with:
            head-sha: ${{ github.event.workflow_run.head_sha }}
            head-branch: ${{ github.event.workflow_run.head_branch }}
