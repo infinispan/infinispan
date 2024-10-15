@@ -48,12 +48,12 @@ runs:
           for (const pullRequest of pullRequests) {
               if (pullRequest.head.sha === HEAD_SHA ) {
                 core.setOutput("pull-request-number", pullRequest.number)
-              }
               if ( EVENT === 'pull_request' || EVENT === 'pull_request_target') {
                 headBranch = pullRequest.head.ref
                 imageTag = pullRequest.number
               }
               break;
+            }
           }
           core.setOutput("source-head-branch", headBranch)
           core.setOutput("image-tag", imageTag)
