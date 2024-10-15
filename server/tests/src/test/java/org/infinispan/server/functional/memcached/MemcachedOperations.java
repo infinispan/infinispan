@@ -20,6 +20,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 import net.spy.memcached.ConnectionFactoryBuilder;
 import net.spy.memcached.MemcachedClient;
+import net.spy.memcached.OperationTimeoutException;
 import net.spy.memcached.internal.GetFuture;
 
 /**
@@ -105,13 +106,31 @@ public class MemcachedOperations {
       }
    }
 
+   @ParameterizedTest
+   @EnumSource(ConnectionFactoryBuilder.Protocol.class)
+   public void testImplicitNoAuthMemcached(ConnectionFactoryBuilder.Protocol protocol)  {
+      ConnectionFactoryBuilder builder = new ConnectionFactoryBuilder();
+      builder.setProtocol(protocol);
+      MemcachedClient client = SERVERS.memcached().withClientConfiguration(builder).withPort(11222).get();
+      try {
+         client.get(k());
+         if (protocol == ConnectionFactoryBuilder.Protocol.TEXT) {
+            throw new RuntimeException("Implicit memcached text request should have failed");
+         }
+      } catch (OperationTimeoutException e) {
+         if (protocol == ConnectionFactoryBuilder.Protocol.BINARY) {
+            throw new RuntimeException("Implicity memcached binary request should have succeeded", e);
+         }
+      }
+   }
+
    private MemcachedClient client(ConnectionFactoryBuilder.Protocol protocol) {
       ConnectionFactoryBuilder builder = new ConnectionFactoryBuilder();
       builder.setProtocol(protocol);
       return SERVERS.memcached().withClientConfiguration(builder).withPort(11221).get();
    }
 
-   public static final String k() {
+   public static String k() {
       return "k-" + KCOUNTER.incrementAndGet();
    }
 }
