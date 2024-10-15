@@ -164,45 +164,6 @@
                   <artifactId>maven-surefire-plugin</artifactId>
                   <executions>
                      <execution>
-                        <id>hibernate-6.3</id>
-                        <goals>
-                           <goal>test</goal>
-                        </goals>
-                        <phase>test</phase>
-                        <configuration>
-                           <reportNameSuffix>6_3</reportNameSuffix>
-                           <classpathDependencyExcludes>
-                              <classpathDependencyExclude>org.hibernate.orm:hibernate-core</classpathDependencyExclude>
-                              <classpathDependencyExclude>org.hibernate.orm:hibernate-testing</classpathDependencyExclude>
-                              <!-- org.hibernate.orm:hibernate-core transitives -->
-                              <classpathDependencyExclude>org.antlr:antlr4-runtime</classpathDependencyExclude>
-                              <classpathDependencyExclude>org.glassfish.jaxb:jaxb-runtime</classpathDependencyExclude>
-                              <classpathDependencyExclude>com.sun.istack:istack-commons-runtime</classpathDependencyExclude>
-                              <classpathDependencyExclude>io.smallrye:jandex</classpathDependencyExclude>
-                              <classpathDependencyExclude>org.glassfish.jaxb:jaxb-core</classpathDependencyExclude>
-                              <classpathDependencyExclude>org.glassfish.jaxb:txw2</classpathDependencyExclude>
-                           </classpathDependencyExcludes>
-                           <additionalClasspathDependencies>
-                              <additionalClasspathDependency>
-                                 <groupId>org.hibernate.orm</groupId>
-                                 <artifactId>hibernate-core</artifactId>
-                                 <version>${version.hibernate.orm.6.3}</version>
-                              </additionalClasspathDependency>
-                              <additionalClasspathDependency>
-                                 <groupId>org.hibernate.orm</groupId>
-                                 <artifactId>hibernate-testing</artifactId>
-                                 <version>${version.hibernate.orm.6.3}</version>
-                                 <exclusions>
-                                    <exclusion>
-                                       <groupId>*</groupId>
-                                       <artifactId>*</artifactId>
-                                    </exclusion>
-                                 </exclusions>
-                              </additionalClasspathDependency>
-                           </additionalClasspathDependencies>
-                        </configuration>
-                     </execution>
-                     <execution>
                         <id>hibernate-6.5</id>
                         <goals>
                            <goal>test</goal>
