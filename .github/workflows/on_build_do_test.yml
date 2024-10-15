@@ -176,8 +176,20 @@ jobs:
       - name: Test
         run: |
           cd test_dir/infinispan &&
-          ./mvnw verify -s maven-settings.xml -B -e -pl server/tests --fail-at-end \
+          ./mvnw verify -s maven-settings.xml -B -e -pl server/tests -Dmaven.test.failure.ignore=true \
             -Dansi.strip=true \
             -DdefaultTestGroup=database \
             -Dorg.infinispan.test.database.types=${{ matrix.dbs }} \
             -Dorg.infinispan.test.server.dir=/tmp/infinispan-server-${{ steps.dis.outputs.server-version }}
+
+      - name: Archive surefire test report
+        if: (success() || failure())
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-test-report-${{ matrix.dbs }}
+          path: |
+            test_dir/infinispan/**/surefire-reports/TEST-*.xml
+            test_dir/infinispan/**/*.dump*
+            test_dir/infinispan/**/hs_err_*
+            github-sha.txt
+            !test_dir/infinispan/**/target/*-reports*/**/TEST-*FLAKY.xml
