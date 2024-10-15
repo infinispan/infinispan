@@ -346,4 +346,8 @@ public class LocalQueryStatistics implements QueryStatisticsSnapshot {
             .set("entity_load", Json.make(getLoads()));
    }
 
+   @Override
+   public String toString() {
+      return toJson().toPrettyString();
+   }
 }
