@@ -188,8 +188,9 @@ jobs:
         with:
           name: surefire-test-report-${{ matrix.dbs }}
           path: |
-            test_dir/infinispan/**/surefire-reports/TEST-*.xml
+            test_dir/infinispan/**/failsafe-reports/TEST-*.xml
             test_dir/infinispan/**/*.dump*
             test_dir/infinispan/**/hs_err_*
+            test_dir/infinispan/**/failsafe-summary.xml
             github-sha.txt
             !test_dir/infinispan/**/target/*-reports*/**/TEST-*FLAKY.xml
