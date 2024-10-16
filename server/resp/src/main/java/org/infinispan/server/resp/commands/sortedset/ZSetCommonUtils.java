@@ -111,6 +111,10 @@ public final class ZSetCommonUtils {
 
       @Override
       public void accept(ZOperationResponse ignore, ByteBufPool alloc) {
+         if (values == null) {
+             ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, 0, alloc);
+             return;
+         }
          ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, values.size(), alloc);
 
          for (ScoredValue<byte[]> sv : values) {
