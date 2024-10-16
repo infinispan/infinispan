@@ -1029,6 +1029,7 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
    }
 
    public void testZDIFF() {
+      assertThat(redis.zdiff("not_existing1")).isEmpty();
       assertThat(redis.zdiff("result", "not_existing1", "not_existing2")).isEmpty();
       // ZADD s1 1 a 2 b 3 c
       redis.zadd("s1", ZAddArgs.Builder.ch(),
