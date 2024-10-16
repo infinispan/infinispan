@@ -1,2 +1,35 @@
-*       @infinispan/community-committers
-
+*                      @infinispan/community-committers
+/api/                  @karesti, @tristantarrant
+/archetypes/           @ryanemerson
+/cli/                  @tristantarrant
+/client/hotrod-client  @wburns
+/client/rest-client/   @tristantarrant
+/commons/              @tristantarrant
+/core/                 @jabolina, @pruivo, @wburns
+/counter/              @pruivo
+/documentation/        @ashwin-rh, @andyuk1986, @Crumby
+/graalvm/              @ryanemerson
+/hibernate/            @wburns
+/integrationtests/     @andyuk1986, @Crumby
+/jboss-marshalling/    @ryanemerson
+/jcache/               @tristantarrant
+/lock/                 @karesti
+/multimap/             @karesti
+/object-filter/        @fax4ever
+/quarkus/              @ryanemerson, @wburns
+/persistence/          @ryanmerson, @wburns
+/query/                @fax4ever
+/query-core/           @fax4ever
+/query-dsl/            @fax4ever
+/remote-query/         @fax4ever
+/server/core/          @wburns
+/server/hotrod/        @wburns
+/server/memcached/     @tristantarrant, @wburns
+/server/resp/          @karesti, @jabolina, @rigazilla, @wburns
+/server/router/        @tristantarrant
+/server/runtime/       @tristantarrant
+/server/tests/         @andyuk1986, @Crumby
+/server/testdriver/    @karesti, @tristantarrant
+/spring/               @karesti
+/tasks/                @tristantarrant
+/tools/                @ryanemerson, @tristantarrant
