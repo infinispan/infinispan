@@ -8,7 +8,7 @@ import org.jboss.shrinkwrap.resolver.api.maven.MavenResolverSystem;
 
 public class GenericDeploymentHelper {
 
-   private static final MavenResolverSystem MAVEN_RESOLVER = Maven.configureResolver().fromFile("../../../maven-settings.xml");
+   private static final MavenResolverSystem MAVEN_RESOLVER = Maven.resolver();
 
    public static void addLibrary(WebArchive war, String canonicalForm) {
       addLibrary(war, MAVEN_RESOLVER

@@ -37,7 +37,7 @@ jobs:
       - name: Build Infinispan
         working-directory: server
         run:  |
-          ./mvnw -s maven-settings.xml install -DskipTests -am -pl server/runtime
+          ./mvnw install -DskipTests -am -pl server/runtime
           SERVER_VERSION=$(./mvnw -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
           cd server/runtime/target
           zip -r ${GITHUB_WORKSPACE}/server.zip infinispan-server-${SERVER_VERSION}

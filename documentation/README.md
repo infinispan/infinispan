@@ -51,7 +51,7 @@ Descriptions should help users identify and resolve errors.
 
 3. Build the distribution.
 ```
-mvn clean install -s maven-settings.xml -Pdistribution -DskipTests
+mvn clean install -Pdistribution -DskipTests
 ```
 
 4. Check the generated HTML at:

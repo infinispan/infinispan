@@ -74,7 +74,7 @@ jobs:
         shell: bash
         run: >
             cd test_dir/infinispan &&
-            ./mvnw verify -s maven-settings.xml -V -B -e -DrerunFailingTestsCount=2
+            ./mvnw verify -V -B -e -DrerunFailingTestsCount=2
             -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative
 
       - name: Archive commit sha PR
@@ -179,7 +179,7 @@ jobs:
       - name: Test
         run: |
           cd test_dir/infinispan &&
-          ./mvnw verify -s maven-settings.xml -B -e -pl server/tests -Dmaven.test.failure.ignore=true \
+          ./mvnw verify -B -e -pl server/tests -Dmaven.test.failure.ignore=true \
             -Dansi.strip=true \
             -DdefaultTestGroup=database \
             -Dorg.infinispan.test.database.types=${{ matrix.dbs }} \

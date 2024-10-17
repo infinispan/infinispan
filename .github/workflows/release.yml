@@ -99,12 +99,12 @@ jobs:
         name: Build native executable
         run: |
           call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
-          mvnw.cmd package -s maven-settings.xml -Pdistribution -Pwindows -Pnative -am -pl quarkus/cli
+          mvnw.cmd package -Pdistribution -Pwindows -Pnative -am -pl quarkus/cli
         shell: cmd
 
       - if: ${{ matrix.os != 'windows-2022' }}
         name: Build native executable
-        run: ./mvnw package -s maven-settings.xml -Pdistribution -Pnative -am -pl quarkus/cli
+        run: ./mvnw package -Pdistribution -Pnative -am -pl quarkus/cli
 
       - name: Upload CLI native executable
         id: upload-cli-native-executable

@@ -30,4 +30,4 @@ jobs:
           distribution: 'temurin'
 
       - name: Build Infinispan
-        run: ./mvnw -B -s maven-settings.xml install -DskipTests
+        run: ./mvnw -B install -DskipTests

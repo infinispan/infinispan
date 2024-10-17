@@ -13,6 +13,7 @@ import static org.junit.Assert.fail;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -40,7 +41,6 @@ import org.infinispan.test.hibernate.cache.commons.functional.entities.NaturalId
 import org.infinispan.test.hibernate.cache.commons.functional.entities.State;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.State_;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
-import org.jboss.util.collection.ConcurrentSet;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -263,12 +263,10 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
 	@Listener
 	public static class MyListener {
 		private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( MyListener.class );
-		private final Set<String> visited = new ConcurrentSet<String>();
-		private final String name;
+		private final Set<String> visited = ConcurrentHashMap.newKeySet();
 
-		public MyListener(String name) {
-			this.name = name;
-		}
+      public MyListener(String name) {
+      }
 
 		public void clear() {
 			visited.clear();
