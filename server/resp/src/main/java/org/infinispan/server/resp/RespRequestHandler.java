@@ -74,7 +74,7 @@ public abstract class RespRequestHandler {
    public final CompletionStage<RespRequestHandler> handleRequest(ChannelHandlerContext ctx, RespCommand command, List<byte[]> arguments) {
       initializeIfNecessary(ctx);
       if (command == null) {
-         RespErrorUtil.unknownCommand(allocatorToUse);
+         commandNotFound();
          return myStage;
       }
 
@@ -97,6 +97,10 @@ public abstract class RespRequestHandler {
          writer.accept(allocatorToUse);
          return myStage();
       }
+   }
+
+   protected void commandNotFound() {
+      RespErrorUtil.unknownCommand(allocatorToUse);
    }
 
    /**

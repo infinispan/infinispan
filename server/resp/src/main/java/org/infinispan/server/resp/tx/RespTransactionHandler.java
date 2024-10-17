@@ -81,6 +81,12 @@ public class RespTransactionHandler extends CacheRespRequestHandler {
    }
 
    @Override
+   protected void commandNotFound() {
+      super.commandNotFound();
+      errorInTransactionContext();
+   }
+
+   @Override
    public void handleChannelDisconnect(ChannelHandlerContext ctx) {
       dropTransaction(ctx);
    }
