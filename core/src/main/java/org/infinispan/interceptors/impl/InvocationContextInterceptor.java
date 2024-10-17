@@ -29,6 +29,7 @@ import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.UserRaisedFunctionalException;
+import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -125,9 +126,10 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
             log.debug("Exception executing call", th);
          } else if (th instanceof OutdatedTopologyException) {
             if (log.isTraceEnabled()) log.tracef("Topology changed, retrying command: %s", th);
+         } else if (DeadlockDetectedException.isDeadlockDetectedException(th)) {
+            if (log.isTraceEnabled()) logExecutionError(ctx, command, th);
          } else if (command.logThrowable(th)) {
-            Collection<?> affectedKeys = extractWrittenKeys(ctx, command);
-            log.executionError(command.getClass().getSimpleName(), getCacheNamePrefix(), toStr(affectedKeys), th);
+            logExecutionError(ctx, command, th);
          } else {
             log.trace("Unexpected exception encountered", th);
          }
@@ -140,6 +142,11 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
          }
          throw th;
       }
+   }
+
+   private void logExecutionError(InvocationContext ctx, VisitableCommand command, Throwable th) {
+      Collection<?> affectedKeys = extractWrittenKeys(ctx, command);
+      log.executionError(command.getClass().getSimpleName(), getCacheNamePrefix(), toStr(affectedKeys), th);
    }
 
    private Collection<?> extractWrittenKeys(InvocationContext ctx, VisitableCommand command) {

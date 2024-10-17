@@ -201,6 +201,37 @@ That is because the optimistic transactions rollback if data has changed between
 On the other hand, pessimistic transactions might be a better fit when there is high contention on the keys and transaction rollbacks are less desirable.
 Pessimistic transactions are more costly by their nature: each write operation potentially involves a RPC for lock acquisition.
 
+=== Deadlock detection and resolution
+
+Utilizing a pessimistic transaction could lead to deadlocks when multiple nodes try to acquire an overlapping set of keys simultaneously.
+By default, the transactions will hang until the lock acquisition timeout elapses, thus releasing the locks and rolling back the transactions.
+
+{brandname} provides a mechanism to detect and resolve deadlocks running alongside the transactions to prevent such scenarios.
+To enable deadlock detection, update the transaction XML element by adding the `deadlock-detection` property:
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+<transaction deadlock-detection="true" />
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+Configuration c = new ConfigurationBuilder()
+   .transaction()
+      .deadlockDetection(true)
+   .build();
+----
+
+The algorithm is an edge-chasing algorithm that identifies deadlock cycles on demand.
+It runs along the transactions and aborts transactions in a deadlock cycle.
+The algorithm aims to roll back the smallest number of transactions possible.
+The algorithm does not identify deadlock cycles during network partition if the cycle includes nodes in different partitions.
+However, cycles within a single partition are detected and resolved.
+
+NOTE: Deadlock detection only enables with pessimistic transactions.
+
 [[tx_write_skew]]
 == Write Skews
 
@@ -212,7 +243,7 @@ When operating in `LOCAL` mode, write skew checks rely on Java object
 references to compare differences, which provides a reliable technique for
 checking for write skews.
 
-=== Forcing write locks on keys in pessimitic transactions
+=== Forcing write locks on keys in pessimistic transactions
 
 To avoid write skews with pessimistic transactions, lock keys at read-time with `Flag.FORCE_WRITE_LOCK`.
 
