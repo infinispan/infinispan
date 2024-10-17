@@ -157,7 +157,7 @@
       <dir.jacoco.merged>../jacoco/merged/</dir.jacoco.merged>
       <dir.jacoco.report>../jacoco/report/</dir.jacoco.report>
       <rerunFailingTestsCount>0</rerunFailingTestsCount>
-      <testjvm.commonArgs>-XX:+UseG1GC -XX:-TieredCompilation -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir} -Djboss.modules.settings.xml.url=${jboss.modules.settings.xml.url} -Dio.netty.leakDetection.level=paranoid</testjvm.commonArgs>
+      <testjvm.commonArgs>-XX:+UseG1GC -XX:-TieredCompilation -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir} -Dio.netty.leakDetection.level=paranoid</testjvm.commonArgs>
       <!--
         java.lang, java.util, java.io, java.lang.invoke, java.lang, reflect, java.util.concurrent, java.time:
           core externalizers for JDK types
