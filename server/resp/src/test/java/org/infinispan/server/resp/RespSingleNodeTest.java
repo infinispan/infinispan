@@ -1088,9 +1088,9 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       // FIXME: Operation against hash keys is a wrong type, should return null.
       //  The operation succeeds if the storage type is Protostream since it can convert the bucket to byte[].
       // SORT people BY w_* GET h_* GET #
-      /*assertThat(redis.sort("people", SortArgs.Builder.by("w_*").get("h_*").get("#")))
-            .containsExactly( null, "ryan", null, "pedro",
-                  null, "tristan", null, "michael");*/
+      //assertThat(redis.sort("people", SortArgs.Builder.by("w_*").get("h_*").get("#")))
+      //      .containsExactly( null, "ryan", null, "pedro",
+      //            null, "tristan", null, "michael");
 
       // *****
       // Sets
@@ -1116,7 +1116,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       // ************
       // Sorted Sets
       // ************
-      // ZADD zset_numbers 1 9 2 8 3 15 4 -4 5 2 6 7 6 -3 6 1
+      // ZADD zset_numbers 1 9 2 8 3 15 4 -4 5 2 5 6 6 7 6 -3 6 1
       redis.zadd("zset_numbers", ZAddArgs.Builder.ch(),
             just(1, "9"),
             just(2, "8"),
@@ -1136,6 +1136,9 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       // SORT zset_numbers ALPHA DESC
       assertThat(redis.sort("zset_numbers", SortArgs.Builder.alpha().desc()))
             .containsExactly("9", "8", "7", "6", "2", "15", "1", "-4", "-3");
+      // SORT zset_numbers by no-sort
+      assertThat(redis.sort("zset_numbers", SortArgs.Builder.by("no-sort")))
+            .containsExactly("9", "8", "15", "-4", "2", "6", "-3", "1", "7");
       // SORT zset_numbers ALPHA DESC STORE result_zset
       assertThat(redis.sortStore("zset_numbers", SortArgs.Builder.alpha().desc(), "result_zset"))
             .isEqualTo(9);
