@@ -1,7 +1,8 @@
 package org.infinispan.server.resp.serialization;
 
+import java.nio.charset.StandardCharsets;
+
 import org.infinispan.server.resp.ByteBufPool;
-import org.infinispan.server.resp.commands.ArgumentUtils;
 
 import io.netty.buffer.ByteBuf;
 
@@ -65,7 +66,7 @@ final class DoubleSerializer implements ResponseSerializer<Double> {
    }
 
    private byte[] serializeDouble(double value) {
-      return ArgumentUtils.toByteArray(value);
+      return Double.toString(value).getBytes(StandardCharsets.US_ASCII);
    }
 
    @Override

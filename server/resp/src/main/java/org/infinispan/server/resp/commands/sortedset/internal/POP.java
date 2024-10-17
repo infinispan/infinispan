@@ -31,7 +31,9 @@ public abstract class POP extends RespCommand implements Resp3Command {
          return;
       }
 
-      Resp3Response.write((ScoredValue<byte[]>) res, alloc, ScoredValueSerializer.INSTANCE);
+      @SuppressWarnings("unchecked")
+      ScoredValue<byte[]> sv = (ScoredValue<byte[]>) res;
+      Resp3Response.write(sv, alloc, ScoredValueSerializer.INSTANCE);
    };
 
    private final boolean min;
@@ -48,10 +50,12 @@ public abstract class POP extends RespCommand implements Resp3Command {
       byte[] name = arguments.get(0);
       EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetCache = handler.getSortedSeMultimap();
 
-      long count = 1;
+      long count;
+      boolean hasCount;
       if (arguments.size() > 1) {
          try {
             count = ArgumentUtils.toLong(arguments.get(1));
+            hasCount = true;
             if (count < 0) {
                RespErrorUtil.mustBePositive(handler.allocator());
                return handler.myStage();
@@ -60,11 +64,13 @@ public abstract class POP extends RespCommand implements Resp3Command {
             RespErrorUtil.mustBePositive(handler.allocator());
             return handler.myStage();
          }
+      } else {
+         count = 1;
+         hasCount = false;
       }
 
-      long finalCount = count;
       CompletionStage<Object> popElements = sortedSetCache.pop(name, min, count).thenApply(r -> {
-         if (r.isEmpty() || finalCount > 1) return r;
+         if (r.isEmpty() || hasCount) return r;
          return r.iterator().next();
       });
       return handler.stageToReturn(popElements, ctx, SERIALIZER);
