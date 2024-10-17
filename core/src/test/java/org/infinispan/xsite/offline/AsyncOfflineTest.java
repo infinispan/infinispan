@@ -159,11 +159,11 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
    private void doTestInNode(String cacheName, int index, int primaryOwnerIndex, String key) {
       Cache<String, String> cache = this.cache(LON, cacheName, index);
       assertOnline(cacheName, index, NYC);
-      assertOnline(cacheName, index, SFO);
+      assertEventuallySFOOnline(cacheName, index);
 
       if (index != primaryOwnerIndex) {
          assertOnline(cacheName, primaryOwnerIndex, NYC);
-         assertOnline(cacheName, primaryOwnerIndex, SFO);
+         assertEventuallySFOOnline(cacheName, primaryOwnerIndex);
       }
 
       for (int i = 0; i < NUM_FAILURES; ++i) {
@@ -175,7 +175,7 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
          assertEventuallyOffline(cacheName, index);
       } else {
          assertOnline(cacheName, index, NYC);
-         assertOnline(cacheName, index, SFO);
+         assertEventuallyOffline(cacheName, index);
 
          assertOnline(cacheName, primaryOwnerIndex, NYC);
          assertEventuallyOffline(cacheName, primaryOwnerIndex);
@@ -194,6 +194,12 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
       OfflineStatus status = takeOfflineManager(LON, cacheName, index).getOfflineStatus(SFO);
       assertTrue(status.isEnabled());
       eventually(() -> "Site " + SFO + " is online. status=" + status, status::isOffline);
+   }
+
+   private void assertEventuallySFOOnline(String cacheName, int index) {
+      OfflineStatus status = takeOfflineManager(LON, cacheName, index).getOfflineStatus(SFO);
+      assertTrue(status.isEnabled());
+      eventually(() -> "Site " + SFO + " is offline. status=" + status, () -> !status.isOffline());
    }
 
    private void assertBringSiteOnline(String cacheName, int index) {

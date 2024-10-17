@@ -194,7 +194,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return new InvocationHelper();
       } else if (componentName.equals(TakeOfflineManager.class.getName())) {
          return configuration.sites().hasBackups() ?
-               new DefaultTakeOfflineManager(componentRegistry.getCacheName()) :
+               new DefaultTakeOfflineManager() :
                NoOpTakeOfflineManager.getInstance();
       } else if (componentName.equals(IracVersionGenerator.class.getName())) {
          return configuration.sites().hasAsyncEnabledBackups() ?
