@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod.counter.operation;
 
-import static org.infinispan.commons.util.CounterEncodeUtil.encodeConfiguration;
+import static org.infinispan.counter.api._private.CounterEncodeUtil.encodeConfiguration;
 
 import java.util.concurrent.atomic.AtomicReference;
 

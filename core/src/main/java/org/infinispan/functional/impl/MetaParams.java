@@ -52,8 +52,8 @@ import net.jcip.annotations.NotThreadSafe;
  * Also, although users can retrieve or update individual {@link MetaParam}
  * instances, they cannot act on the globally at the {@link MetaParams} level,
  * and hence there is no risk of users misusing {@link MetaParams}.
- *
- * This class should not be accessible from user code, therefore it is package-protected.
+ * This class should not be accessible from user code, therefore its constructor
+ * is package-protected.
  *
  * @since 8.0
  */
