@@ -115,24 +115,22 @@ public class SORT extends RespCommand implements Resp3Command {
                return handler.myStage();
          }
       }
-      if ("nosort".equals(pattern) || (pattern != null && !pattern.contains("*"))) {
-         sortOptions.skipSort = true;
-      }
 
       CompletionStage<List<ScoredValue<byte[]>>> sortedCollection;
       MediaType vmt = handler.cache().getValueDataConversion().getStorageMediaType();
-      AdvancedCache<byte[], byte[]> cache = handler.cache().withMediaType(MediaType.APPLICATION_OCTET_STREAM, vmt);
-      if (pattern == null || sortOptions.skipSort) {
-         sortedCollection = cache.getCacheEntryAsync(key).thenApply(e -> {
-                  if (e == null) {
-                     return Collections.emptyList();
-                  }
-                  Object value = e.getValue();
-                  if (value instanceof SortableBucket) {
-                     SortableBucket<byte[]> sortableBucket = (SortableBucket) value;
-                     return sortableBucket.sort(sortOptions);
-                  }
-                  throw new ClassCastException();
+      AdvancedCache<byte[], ?> cache = handler.typedCache(vmt);
+      if (pattern == null || !pattern.contains("*")) {
+         sortOptions.skipSort = pattern != null;
+         sortedCollection = cache.getCacheEntryAsync(key)
+               .thenApply(e -> {
+                  if (e == null) return Collections.emptyList();
+
+                  if (!(e.getValue() instanceof SortableBucket<?>))
+                     throw new ClassCastException();
+
+                  @SuppressWarnings("unchecked")
+                  SortableBucket<byte[]> sb = (SortableBucket<byte[]>) e.getValue();
+                  return sb.sort(sortOptions);
                });
       } else {
          final String finalPattern = pattern;

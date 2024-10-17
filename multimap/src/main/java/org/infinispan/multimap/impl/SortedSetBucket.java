@@ -596,6 +596,10 @@ public class SortedSetBucket<V> implements SortableBucket<V> {
 
    @Override
    public List<ScoredValue<V>> sort(SortOptions sortOptions) {
+      // Skip sort takes precedence over all other options, which means the sorted set is returned as is.
+      if (sortOptions.skipSort)
+         return getScoredEntriesAsList();
+
       Stream<ScoredValue<V>> scoredValueStream;
       if (sortOptions.alpha) {
          scoredValueStream = scoredEntries.stream()
