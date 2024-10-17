@@ -11,6 +11,8 @@ public interface IndexedFieldProvider<TypeMetadata> {
 
    interface FieldIndexingMetadata<TypeMetadata> {
 
+      boolean hasProperty(String[] propertyPath);
+
       /**
        * Checks if the property of the indexed entity is indexed.
        *
@@ -61,6 +63,14 @@ public interface IndexedFieldProvider<TypeMetadata> {
 
       boolean isVector(String[] propertyPath);
 
+      /**
+       * Checks if the property of the indexed entity is a spatial property.
+       *
+       * @param propertyPath the path of the property
+       * @return {@code true} if the property is spatial, {@code false} otherwise.
+       */
+      boolean isSpatial(String[] propertyPath);
+
       Object getNullMarker(String[] propertyPath);
 
       TypeMetadata keyType(String property);
@@ -69,6 +79,10 @@ public interface IndexedFieldProvider<TypeMetadata> {
 
    static <TM> FieldIndexingMetadata<TM> noIndexing() {
       return new FieldIndexingMetadata<>() {
+         @Override
+         public boolean hasProperty(String[] propertyPath) {
+            return false;
+         }
          @Override
          public boolean isSearchable(String[] propertyPath) {
             return false;
@@ -95,6 +109,10 @@ public interface IndexedFieldProvider<TypeMetadata> {
          }
          @Override
          public boolean isVector(String[] propertyPath) {
+            return false;
+         }
+         @Override
+         public boolean isSpatial(String[] propertyPath) {
             return false;
          }
          @Override

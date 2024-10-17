@@ -8,6 +8,7 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
 
 /**
  * A mapping from an object field to an index field and the flags that enable indexing, storage and analysis.
+ * This is used only for non-spatial fields.
  *
  * @author anistor@redhat.com
  * @since 9.0
@@ -163,7 +164,7 @@ public final class FieldMapping {
       if (!isInitialized) {
          if (fieldDescriptor.getType() == null) {
             // this could only happen due to a programming error
-            throw new IllegalStateException("FieldDescriptors are not fully initialised!");
+            throw new IllegalStateException("FieldDescriptor not fully initialised!");
          }
          indexNullAsObj = parseIndexNullAs();
          isInitialized = true;
@@ -200,6 +201,10 @@ public final class FieldMapping {
          }
       }
       return indexNullAs;
+   }
+
+   public FieldDescriptor getFieldDescriptor() {
+      return fieldDescriptor;
    }
 
    @Override
