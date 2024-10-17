@@ -55,8 +55,8 @@ jobs:
       uses: infinispan/infinispan-images/.github/workflows/publish_image.yml@main
       secrets:
          token: ${{ secrets.GITHUB_TOKEN }}
-         quayUser: ${{ secrets.QUAY_USERNAME }}
-         quayPass: ${{ secrets.QUAY_TOKEN }}
+         quayUser: ${{ secrets.QUAY_USERNAME_TEST }}
+         quayPass: ${{ secrets.QUAY_TOKEN_TEST }}
       with:
          repository: ${{ github.repository }}
          runId: ${{ github.event.workflow_run.id }}
@@ -68,9 +68,9 @@ jobs:
       needs:
          - get-info
          - publish-image
+      if: always()
       steps:
       - uses: LouisBrunner/checks-action@v2.0.0
-        if: always()
         with:
            token: ${{ secrets.GITHUB_TOKEN }}
            name: Publish Image
