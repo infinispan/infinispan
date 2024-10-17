@@ -1,8 +1,8 @@
 package org.infinispan.server.functional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.infinispan.server.test.core.Containers.ipAddress;
-import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -44,7 +44,7 @@ public class RequestTracingIT {
 
    @RegisterExtension
    public static final InfinispanServerExtension SERVER =
-         InfinispanServerExtensionBuilder.config("configuration/BasicServerTest-withTracing.xml")
+         InfinispanServerExtensionBuilder.config("configuration/TracingServerTest.xml")
                .runMode(ServerRunMode.EMBEDDED)
                .numServers(2)
                .addListener(new InfinispanServerListener() {
