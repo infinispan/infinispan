@@ -2,10 +2,23 @@ package org.infinispan.xsite;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Supplier;
+
+import org.infinispan.Cache;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.TakeOfflineConfigurationBuilder;
+import org.infinispan.globalstate.ScopedState;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
+import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
+import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.notification.SiteStatusListener;
@@ -14,10 +27,10 @@ import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
 
 /**
- * Keeps state needed for knowing when a site needs to be taken offline.
+ * Keeps the state needed for knowing when a site needs to be taken offline.
  * <p/>
- * Thread safety: This class is updated from multiple threads so the access to it is synchronized by object's intrinsic
- * lock.
+ * Thread safety: This class is updated from multiple threads, so the access to it is synchronized by the object's
+ * intrinsic lock.
  * <p/>
  * Impl detail: As this class's state changes constantly, the equals and hashCode haven't been overridden. This
  * shouldn't affect performance significantly as the number of site backups should be relatively small (1-3).
@@ -27,22 +40,49 @@ import net.jcip.annotations.ThreadSafe;
  * @since 5.2
  */
 @ThreadSafe
-public class OfflineStatus {
+@Listener(observation = Listener.Observation.POST, includeCurrentState = true, sync = false)
+public class OfflineStatus implements CacheEventFilter<Object, Object> {
 
    private static final Log log = LogFactory.getLog(OfflineStatus.class);
    private static final long NO_FAILURE = -1;
+   private static final int MAX_RETRIES = 3;
 
-   private final TimeService timeService;
+   private final Supplier<TimeService> timeService;
    private final SiteStatusListener listener;
+   private final ScopedState key;
+   private final Cache<ScopedState, Long> globalState;
    private volatile TakeOfflineConfiguration takeOffline;
    @GuardedBy("this") private long firstFailureTime = NO_FAILURE;
    @GuardedBy("this") private int failureCount = 0;
-   @GuardedBy("this") private boolean isOffline = false;
+   @GuardedBy("this") private long localStatus = 0;
 
-   public OfflineStatus(TakeOfflineConfiguration takeOfflineConfiguration, TimeService timeService, SiteStatusListener listener) {
+   private static boolean isOnline(long localStatus) {
+      return localStatus % 2 == 0;
+   }
+
+   private static boolean isOffline(long localStatus) {
+      return localStatus % 2 == 1;
+   }
+
+   public OfflineStatus(TakeOfflineConfiguration takeOfflineConfiguration, Supplier<TimeService> timeService, SiteStatusListener listener, ScopedState key, Cache<ScopedState, Long> globalState) {
       this.takeOffline = takeOfflineConfiguration;
       this.timeService = timeService;
       this.listener = listener;
+      this.key = key;
+      this.globalState = globalState;
+   }
+
+   public void start() {
+      globalState.addFilteredListener(this, this, null, Set.of(CacheEntryModified.class, CacheEntryCreated.class));
+      if (globalState.containsKey(key)) {
+         // it will receive the event with the up-to-date value
+         return;
+      }
+      globalState.putIfAbsentAsync(key, 0L);
+   }
+
+   public void stop() {
+      globalState.removeListener(this);
    }
 
    public synchronized void updateOnCommunicationFailure(long sendTimeMillis) {
@@ -54,7 +94,7 @@ public class OfflineStatus {
    }
 
    public synchronized boolean isOffline() {
-      return isOffline;
+      return isOffline(localStatus);
    }
 
    public synchronized boolean minTimeHasElapsed() {
@@ -69,7 +109,7 @@ public class OfflineStatus {
    }
 
    public synchronized boolean bringOnline() {
-      return isOffline && internalReset();
+      return isOffline(localStatus) && internalReset();
    }
 
    public synchronized int getFailureCount() {
@@ -89,11 +129,11 @@ public class OfflineStatus {
    }
 
    public synchronized boolean forceOffline() {
-      if (isOffline) {
+      var status = localStatus;
+      if (isOffline(status)) {
          return false;
       }
-      isOffline = true;
-      listener.siteOffline();
+      switchGlobally(status);
       return true;
    }
 
@@ -103,7 +143,7 @@ public class OfflineStatus {
              "takeOffline=" + takeOffline +
              ", recordingOfflineStatus=" + (firstFailureTime != NO_FAILURE) +
              ", firstFailureTime=" + firstFailureTime +
-             ", isOffline=" + isOffline +
+            ", isOffline=" + isOffline(localStatus) +
              ", failureCount=" + failureCount +
              '}';
    }
@@ -131,7 +171,7 @@ public class OfflineStatus {
 
    @GuardedBy("this")
    private void internalUpdateStatus() {
-      if (isOffline) {
+      if (isOffline(localStatus)) {
          //already offline
          return;
       }
@@ -146,16 +186,14 @@ public class OfflineStatus {
             if (log.isTraceEnabled()) {
                log.tracef("Site is failed: min failures (%s) reached (count=%s).", minFailures, failureCount);
             }
-            listener.siteOffline();
-            isOffline = true;
+            switchGlobally(localStatus);
          }
          //else, afterFailures() not reached yet.
       } else if (hasMinWait) {
          if (log.isTraceEnabled()) {
             log.trace("Site is failed: minTimeToWait elapsed and we don't have a min failure number to wait for.");
          }
-         listener.siteOffline();
-         isOffline = true;
+         switchGlobally(localStatus);
       }
       //else, no afterFailures() neither minTimeToWait() configured
    }
@@ -181,18 +219,60 @@ public class OfflineStatus {
     */
    @GuardedBy("this")
    private boolean internalReset() {
-      boolean wasOffline = isOffline;
+      boolean wasOffline = isOffline(localStatus);
       firstFailureTime = NO_FAILURE;
       failureCount = 0;
-      isOffline = false;
       if (wasOffline) {
-         listener.siteOnline();
+         switchGlobally(localStatus);
       }
       return wasOffline;
    }
 
    @GuardedBy("this")
    private long internalMillisSinceFirstFailure() {
-      return timeService.timeDuration(MILLISECONDS.toNanos(firstFailureTime), MILLISECONDS);
+      return timeService.get().timeDuration(MILLISECONDS.toNanos(firstFailureTime), MILLISECONDS);
+   }
+
+   private void switchGlobally(long currentStatus) {
+      replaceInCache(currentStatus, currentStatus + 1, 0);
+      // optimistically switch assuming the “replace” eventually completes
+      updateLocalStatus(currentStatus + 1);
+   }
+
+   private void replaceInCache(long oldStatus, long newStatus, int retry) {
+      globalState.replaceAsync(key, oldStatus, newStatus).exceptionally(ignored -> {
+         if (retry <= MAX_RETRIES) {
+            replaceInCache(oldStatus, newStatus, retry + 1);
+         }
+         return Boolean.TRUE;
+      });
+   }
+
+   private void updateLocalStatus(long newStatus) {
+      synchronized (this) {
+         if (newStatus <= localStatus) {
+            return;
+         }
+         localStatus = newStatus;
+      }
+      if (isOnline(newStatus)) {
+         listener.siteOnline();
+      } else {
+         listener.siteOffline();
+      }
+   }
+
+   @Override
+   public synchronized boolean accept(Object key, Object oldValue, Metadata oldMetadata, Object newValue, Metadata newMetadata, EventType eventType) {
+      return Objects.equals(key, this.key) && newValue instanceof Long newStatus && newStatus > localStatus;
+   }
+
+   @CacheEntryCreated
+   @CacheEntryModified
+   public void onStatusChanged(CacheEntryEvent<ScopedState, Long> event) {
+      assert !event.isPre();
+      assert event.getValue() != null;
+      assert Objects.equals(key, event.getKey());
+      updateLocalStatus(event.getValue());
    }
 }
