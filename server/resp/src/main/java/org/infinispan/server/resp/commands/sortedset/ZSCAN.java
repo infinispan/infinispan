@@ -1,15 +1,5 @@
 package org.infinispan.server.resp.commands.sortedset;
 
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
-import org.infinispan.multimap.impl.ScoredValue;
-import org.infinispan.server.iteration.IterationInitializationContext;
-import org.infinispan.server.iteration.IterationManager;
-import org.infinispan.server.iteration.list.ListIterationInitializationContext;
-import org.infinispan.server.resp.Resp3Handler;
-import org.infinispan.server.resp.commands.generic.SCAN;
-import org.infinispan.server.resp.commands.iteration.BaseIterationCommand;
-
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,6 +7,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
+
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
+import org.infinispan.multimap.impl.ScoredValue;
+import org.infinispan.server.iteration.IterationInitializationContext;
+import org.infinispan.server.iteration.IterationManager;
+import org.infinispan.server.iteration.list.ListIterationInitializationContext;
+import org.infinispan.server.resp.Resp3Handler;
+import org.infinispan.server.resp.commands.ArgumentUtils;
+import org.infinispan.server.resp.commands.generic.SCAN;
+import org.infinispan.server.resp.commands.iteration.BaseIterationCommand;
 
 /**
  * See {@link SCAN} for {@link ZSCAN} documentation.
@@ -50,8 +51,7 @@ public class ZSCAN extends BaseIterationCommand {
       Iterator<ScoredValue<byte[]>> ite = scoredValues.iterator();
       while (ite.hasNext()) {
         ScoredValue<byte[]> item = ite.next();
-         Map.Entry<Object, Object> entry = Map.entry(item.getValue(),
-               Double.toString(item.score()).getBytes(StandardCharsets.US_ASCII));
+         Map.Entry<Object, Object> entry = Map.entry(item.getValue(), ArgumentUtils.toByteArray(item.score()));
          elements.add(entry);
       }
       return elements;
