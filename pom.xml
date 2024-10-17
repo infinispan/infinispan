@@ -229,7 +229,6 @@
       <testNGListeners>org.infinispan.commons.test.TestNGTestListener,org.infinispan.commons.test.PolarionJUnitXMLReporter</testNGListeners>
       <log4j.configurationFile>${infinispan.root}/etc/log4j2.xml</log4j.configurationFile>
       <uberjar.deps.optional>true</uberjar.deps.optional>
-      <jboss.modules.settings.xml.url>file://${infinispan.root}/maven-settings.xml</jboss.modules.settings.xml.url>
 
       <!-- dependencies version -->
       <versionx.org.infinispan.memcached-client>1.2.3</versionx.org.infinispan.memcached-client>
@@ -1403,6 +1402,16 @@
             <version>${versionx.org.jboss.spec.jboss-jakartaee-8.0}</version>
             <type>pom</type>
             <scope>test</scope>
+            <exclusions>
+               <exclusion>
+                  <groupId>org.apache.taglibs</groupId>
+                  <artifactId>taglibs-standard-spec</artifactId>
+               </exclusion>
+               <exclusion>
+                  <groupId>org.apache.taglibs</groupId>
+                  <artifactId>taglibs-standard-impl</artifactId>
+               </exclusion>
+            </exclusions>
          </dependency>
          <dependency>
             <groupId>org.jboss.spec.javax.ejb</groupId>
