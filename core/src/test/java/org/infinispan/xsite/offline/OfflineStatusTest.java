@@ -7,12 +7,16 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
+import org.infinispan.Cache;
+import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.TakeOfflineConfigurationBuilder;
+import org.infinispan.globalstate.ScopedState;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.xsite.OfflineStatus;
 import org.infinispan.xsite.notification.SiteStatusListener;
+import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 /**
@@ -190,7 +194,12 @@ public class OfflineStatusTest extends AbstractInfinispanTest {
             .afterFailures(afterFailures)
             .minTimeToWait(minWait)
             .create();
-      return new TestContext(new OfflineStatus(c, t, l), t, l);
+      Cache<ScopedState, Long> cache = Mockito.mock(Cache.class);
+      Mockito.doNothing().when(cache).addFilteredListener(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anySet());
+      Mockito.doNothing().when(cache).removeListener(Mockito.any());
+      Mockito.when(cache.get(Mockito.any(ScopedState.class))).thenReturn(0L);
+      Mockito.when(cache.replaceAsync(Mockito.any(ScopedState.class), Mockito.any(), Mockito.any())).thenReturn(CompletableFutures.completedFalse());
+      return new TestContext(new OfflineStatus(c, () -> t, l, new ScopedState("a", "b"), cache), t, l);
    }
 
    private static class TestContext {
