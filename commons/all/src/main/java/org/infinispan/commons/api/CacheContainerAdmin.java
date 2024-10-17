@@ -107,7 +107,6 @@ public interface CacheContainerAdmin<C extends CacheContainerAdmin, A extends Ba
 
    /**
     * Sets any additional {@link AdminFlag}s to be used when performing administrative operations.
-    *
     * <b>Note:</b> whether an operation supports a certain flag or not is dependent on the configuration and environment.
     * If a flag cannot be honored, the operation will fail with an exception.
     *
@@ -118,7 +117,6 @@ public interface CacheContainerAdmin<C extends CacheContainerAdmin, A extends Ba
 
    /**
     * Sets any additional {@link AdminFlag}s to be used when performing administrative operations.
-    *
     * <b>Note:</b> whether an operation supports a certain flag or not is dependent on the configuration and environment.
     * If a flag cannot be honored, the operation will fail with an exception.
     *
