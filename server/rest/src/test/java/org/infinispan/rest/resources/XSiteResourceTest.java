@@ -53,6 +53,7 @@ import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.commands.remote.XSiteRequest;
 import org.infinispan.xsite.commands.remote.XSiteStatePushRequest;
+import org.infinispan.xsite.status.SiteState;
 import org.infinispan.xsite.status.TakeOfflineManager;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -186,23 +187,29 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       site.waitForClusterToForm(CACHE_2);
 
       TakeOfflineManager takeOfflineManager = TestingUtil.extractComponent(cm.getCache(CACHE_1), TakeOfflineManager.class);
+      TakeOfflineManager otherTakeOfflineManager = TestingUtil.extractComponent(site.cacheManagers().get(0).getCache(CACHE_1), TakeOfflineManager.class);
+
       takeOfflineManager.takeSiteOffline(NYC);
+      // status updated asynchronously in the cluster
+      eventuallyEquals(SiteState.OFFLINE, () -> otherTakeOfflineManager.getSiteState(NYC));
 
       String node1 = String.valueOf(site.cacheManagers().get(0).getAddress());
       String node2 = String.valueOf(cm.getAddress());
 
       status = jsonResponseBody(cache.xsiteBackups());
-      assertEquals("mixed", status.at(NYC).at("status").asString());
-      assertEquals(status.at(NYC).at("online").asJsonList().iterator().next().asString(), node1);
-      assertEquals(status.at(NYC).at("offline").asJsonList().iterator().next().asString(), node2);
+      assertEquals("offline", status.at(NYC).at("status").asString());
+      assertFalse(status.at(NYC).has("online"));
+      assertFalse(status.at(NYC).has("offline"));
       assertFalse(status.at(NYC).has("mixed"));
 
       status = jsonResponseBody(cache.backupStatus(NYC));
-      assertEquals(ONLINE, status.at(node1).asString());
+      assertEquals(OFFLINE, status.at(node1).asString());
       assertEquals(OFFLINE, status.at(node2).asString());
 
       // bring NYC online
       takeOfflineManager.bringSiteOnline(NYC);
+      // status updated asynchronously in the cluster
+      eventuallyEquals(SiteState.ONLINE, () -> otherTakeOfflineManager.getSiteState(NYC));
 
       status = jsonResponseBody(cache.xsiteBackups());
       assertEquals(ONLINE, status.at(NYC).at("status").asString());
@@ -485,8 +492,7 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
    private String getFirstCacheManagerAddress(String site) {
       TestSite testSite = sites.stream().filter(t -> t.getSiteName().equals(site)).findFirst().orElse(null);
       if (testSite == null) return null;
-      EmbeddedCacheManager cacheManager = testSite.cacheManagers().iterator().next();
-      return cacheManager.getAddress().toString();
+      return testSite.cacheManagers().get(0).getAddress().toString();
    }
 
    private String getBackupStatus(String site, String backup) {

@@ -114,6 +114,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
             XSiteStateTransferCancelSendCommand.class,
             XSiteStateTransferFinishReceiveCommand.class,
             XSiteStateTransferStatusRequestCommand.class);
+      controlledTransport.excludeCacheCommands();
 
       startStateTransfer();
 
