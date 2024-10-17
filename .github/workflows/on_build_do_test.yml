@@ -7,6 +7,8 @@ on:
 permissions:
   contents: read
   packages: read
+  # Needed to write check run
+  checks: write
 
 concurrency:
   # Only cancel jobs for PR updates
@@ -41,6 +43,13 @@ jobs:
       MAVEN_OPTS: "-Xmx1500m -XX:+HeapDumpOnOutOfMemoryError"
       GH_TOKEN: ${{ github.token }}
     steps:
+      - uses: LouisBrunner/checks-action@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: Test Report Result
+          status: in_progress
+          sha: ${{ needs.get-info.outputs.source-head-sha }}
+
       - uses: actions/checkout@v4
 
       - name: Setup Java
@@ -102,7 +111,7 @@ jobs:
             test_dir/infinispan/**/hs_err_*
             github-sha.txt
             !test_dir/infinispan/**/*-reports*/**/TEST-*FLAKY.xml
-            !test_dir/infinispan/**/*-reports*/TEST-*RocksDBReaderTest*.xml
+            !test_dir/infinispan/**/*-reports*/TEST-*RocksDB*.xml
 
 # Create artifact with branch name and surefile flaky test report
       - name: Check flaky report existence
