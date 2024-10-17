@@ -197,6 +197,21 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder maxRetries(int maxRetries);
 
    /**
+    * The time for a failed server to be cleared when operating in BASIC client intelligence. If operating with any
+    * other client intelligence, this is ignored.
+    * <p>
+    * This value is with BASIC to try to reconnect to a previously failed server after a given time. So this means
+    * it can take up to the configured time to see a newly added server. However, it also means the failed server
+    * can be tried up to the same frequency, with failed connection attempts if it is not running.
+    * <p>
+    * If the value is less than or equal to 0 it will disable, meaning a failed SERVER will not be reconnected to
+    * until all configured servers have failed.
+    * @param timeoutInMilliseconds the timeout to attempt to clear a failed server in milliseconds
+    * @return this bulider
+    */
+   ConfigurationBuilder basicFailedTimeout(int timeoutInMilliseconds);
+
+   /**
     * List of regular expressions for classes that can be deserialized using standard Java deserialization
     * when reading data that might have been stored with a different endpoint, e.g. REST.
     */

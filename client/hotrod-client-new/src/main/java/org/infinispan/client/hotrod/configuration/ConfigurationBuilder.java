@@ -85,6 +85,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private boolean tcpKeepAlive = false;
    private int valueSizeEstimate = ConfigurationProperties.DEFAULT_VALUE_SIZE;
    private int maxRetries = ConfigurationProperties.DEFAULT_MAX_RETRIES;
+   private int basicFailedTimeout = ConfigurationProperties.DEFAULT_BASIC_FAILED_TIMEOUT;
    private final NearCacheConfigurationBuilder nearCache;
    private final List<String> allowListRegExs = new ArrayList<>();
    private int batchSize = ConfigurationProperties.DEFAULT_BATCH_SIZE;
@@ -360,6 +361,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
+   public ConfigurationBuilder basicFailedTimeout(int timeoutInMilliseconds) {
+      this.basicFailedTimeout = timeoutInMilliseconds;
+      return this;
+   }
+
+   @Override
    public ConfigurationBuilder addJavaSerialAllowList(String... regEx) {
       this.allowListRegExs.addAll(Arrays.asList(regEx));
       return this;
@@ -441,7 +448,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       }
       this.connectionPool.withPoolProperties(typed);
       if (typed.containsKey(ConfigurationProperties.CONNECT_TIMEOUT)) {
-         this.connectionTimeout(typed.getIntProperty(ConfigurationProperties.CONNECT_TIMEOUT, connectionTimeout, true));
+         this.connectionTimeout((int) typed.getDurationProperty(ConfigurationProperties.CONNECT_TIMEOUT, connectionTimeout, true));
       }
       if (typed.containsKey(ConfigurationProperties.HASH_FUNCTION_PREFIX + ".1")) {
          log.warn("Hash function version 1 is no longer supported");
@@ -479,7 +486,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          this.addServers(serverList);
       }
       if (typed.containsKey(ConfigurationProperties.SO_TIMEOUT)) {
-         this.socketTimeout(typed.getIntProperty(ConfigurationProperties.SO_TIMEOUT, socketTimeout, true));
+         this.socketTimeout((int) typed.getDurationProperty(ConfigurationProperties.SO_TIMEOUT, socketTimeout, true));
       }
       if (typed.containsKey(ConfigurationProperties.TCP_NO_DELAY)) {
          this.tcpNoDelay(typed.getBooleanProperty(ConfigurationProperties.TCP_NO_DELAY, tcpNoDelay, true));
@@ -493,14 +500,17 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       if (typed.containsKey(ConfigurationProperties.MAX_RETRIES)) {
          this.maxRetries(typed.getIntProperty(ConfigurationProperties.MAX_RETRIES, maxRetries, true));
       }
+      if (typed.containsKey(ConfigurationProperties.BASIC_FAILED_TIMEOUT)) {
+         this.basicFailedTimeout((int) typed.getDurationProperty(ConfigurationProperties.BASIC_FAILED_TIMEOUT, basicFailedTimeout, true));
+      }
       if (typed.containsKey(ConfigurationProperties.DNS_RESOLVER_MIN_TTL)) {
-         this.dnsResolverMinTTL(typed.getIntProperty(ConfigurationProperties.DNS_RESOLVER_MIN_TTL, dnsResolverMinTTL, true));
+         this.dnsResolverMinTTL((int) typed.getDurationProperty(ConfigurationProperties.DNS_RESOLVER_MIN_TTL, dnsResolverMinTTL, true));
       }
       if (typed.containsKey(ConfigurationProperties.DNS_RESOLVER_MAX_TTL)) {
-         this.dnsResolverMaxTTL(typed.getIntProperty(ConfigurationProperties.DNS_RESOLVER_MAX_TTL, dnsResolverMaxTTL, true));
+         this.dnsResolverMaxTTL((int) typed.getDurationProperty(ConfigurationProperties.DNS_RESOLVER_MAX_TTL, dnsResolverMaxTTL, true));
       }
       if (typed.containsKey(ConfigurationProperties.DNS_RESOLVER_NEGATIVE_TTL)) {
-         this.dnsResolverNegativeTTL(typed.getIntProperty(ConfigurationProperties.DNS_RESOLVER_NEGATIVE_TTL, dnsResolverNegativeTTL, true));
+         this.dnsResolverNegativeTTL((int) typed.getDurationProperty(ConfigurationProperties.DNS_RESOLVER_NEGATIVE_TTL, dnsResolverNegativeTTL, true));
       }
       this.security.ssl().withProperties(properties);
       this.security.authentication().withProperties(properties);
@@ -634,7 +644,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
             forceReturnValues, keySizeEstimate, buildMarshaller, buildMarshallerClass, protocolVersion, servers, socketTimeout,
             security.create(), tcpNoDelay, tcpKeepAlive, valueSizeEstimate, maxRetries, nearCache.create(),
             serverClusterConfigs, allowListRegExs, batchSize, transaction.create(), statistics.create(), features,
-            contextInitializers, remoteCaches, transportFactory, tracingPropagationEnabled, metricRegistry);
+            contextInitializers, remoteCaches, transportFactory, tracingPropagationEnabled, metricRegistry, basicFailedTimeout);
    }
 
    // Method that handles default marshaller - needed as a placeholder

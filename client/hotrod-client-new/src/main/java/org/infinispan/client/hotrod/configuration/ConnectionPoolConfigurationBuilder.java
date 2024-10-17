@@ -130,13 +130,13 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
                   typed.getIntProperty("maxActive", maxActive, true),
                   true));
       maxWait(typed.getLongProperty(ConfigurationProperties.CONNECTION_POOL_MAX_WAIT,
-            typed.getLongProperty("maxWait", maxWait, true),
+            typed.getDurationProperty("maxWait", maxWait, true),
             true));
       minIdle(typed.getIntProperty(ConfigurationProperties.CONNECTION_POOL_MIN_IDLE,
             typed.getIntProperty("minIdle", minIdle, true),
             true));
       minEvictableIdleTime(typed.getLongProperty(ConfigurationProperties.CONNECTION_POOL_MIN_EVICTABLE_IDLE_TIME,
-            typed.getLongProperty("minEvictableIdleTimeMillis", minEvictableIdleTime, true),
+            typed.getDurationProperty("minEvictableIdleTimeMillis", minEvictableIdleTime, true),
             true));
       maxPendingRequests(typed.getIntProperty(ConfigurationProperties.CONNECTION_POOL_MAX_PENDING_REQUESTS,
             typed.getIntProperty("maxPendingRequests", maxPendingRequests, true),

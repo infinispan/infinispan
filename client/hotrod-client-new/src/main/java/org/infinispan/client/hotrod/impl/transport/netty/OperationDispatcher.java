@@ -7,6 +7,7 @@ import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.StampedLock;
@@ -54,6 +56,8 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.stat.CounterTracker;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
@@ -96,7 +100,7 @@ public class OperationDispatcher {
    private Set<HotRodOperation<?>> priorAgeOperations = null;
 
    @GuardedBy("lock")
-   private final Set<SocketAddress> connectionFailedServers = ConcurrentHashMap.newKeySet();
+   private final Set<SocketAddress> connectionFailedServers;
    private final ChannelHandler channelHandler;
    private final TimeService timeService;
 
@@ -108,6 +112,12 @@ public class OperationDispatcher {
       this.timeService = timeService;
       this.clientListenerNotifier = clientListenerNotifier;
       this.maxRetries = configuration.maxRetries();
+
+      this.connectionFailedServers = configuration.clientIntelligence() == ClientIntelligence.BASIC && configuration.basicFailedServerTimeout() > 0 ?
+            Collections.newSetFromMap(Caffeine.newBuilder()
+                  .expireAfterWrite(configuration.basicFailedServerTimeout(), TimeUnit.MILLISECONDS)
+                  .<SocketAddress, Boolean>build().asMap())
+            : ConcurrentHashMap.newKeySet();
 
       List<InetSocketAddress> initialServers = new ArrayList<>();
       for (ServerConfiguration server : configuration.servers()) {
