@@ -119,14 +119,12 @@ public class SORT extends RespCommand implements Resp3Command {
                return handler.myStage();
          }
       }
-      if ("nosort".equals(pattern) || (pattern != null && !pattern.contains("*"))) {
-         sortOptions.skipSort = true;
-      }
 
       CompletionStage<List<ScoredValue<byte[]>>> sortedCollection;
       MediaType vmt = handler.cache().getValueDataConversion().getStorageMediaType();
       AdvancedCache<byte[], ?> cache = handler.typedCache(vmt);
-      if (pattern == null || sortOptions.skipSort) {
+      if (pattern == null || !pattern.contains("*")) {
+         sortOptions.skipSort = pattern != null;
          sortedCollection = cache.getCacheEntryAsync(key)
                .thenApply(e -> {
                   if (e == null) return Collections.emptyList();
