@@ -298,4 +298,22 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
       // Third pop returns null as there are no more values.
       assertThat((Object) result.get(2)).isNull();
    }
+
+   public void testAbortBecauseOfError() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      assertThat(redis.multi()).isEqualTo(OK);
+      assertThat(redisConnection.isMulti()).isTrue();
+
+      assertThat(redis.set(k(), v())).isNull();
+
+      // Command doesn't exist.
+      redis.xadd(k(1), v(), v(1));
+
+      assertThatThrownBy(redis::exec)
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("EXECABORT Transaction discarded because of previous errors.");
+
+      assertThat(redis.get(k())).isNull();
+   }
 }
