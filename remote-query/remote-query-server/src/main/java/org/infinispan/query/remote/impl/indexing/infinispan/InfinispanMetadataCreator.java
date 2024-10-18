@@ -159,7 +159,7 @@ public final class InfinispanMetadataCreator {
 
    private static String name(FieldDescriptor fieldDescriptor, AnnotationElement.Annotation fieldAnnotation) {
       String name = (String) fieldAnnotation.getAttributeValue(InfinispanAnnotations.NAME_ATTRIBUTE).getValue();
-      if (name == null) {
+      if (name == null || name.isEmpty()) {
          name = fieldDescriptor.getName();
       }
       return name;

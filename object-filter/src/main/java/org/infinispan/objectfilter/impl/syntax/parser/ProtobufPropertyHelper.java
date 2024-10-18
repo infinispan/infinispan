@@ -26,7 +26,7 @@ import org.jboss.logging.Logger;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descriptor> {
+public class ProtobufPropertyHelper extends ObjectPropertyHelper<Descriptor> {
 
    private static final Log log = Logger.getMessageLogger(Log.class, ProtobufPropertyHelper.class.getName());
 
@@ -277,7 +277,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
    public Object convertToPropertyType(Descriptor entityType, String[] propertyPath, String value) {
       FieldDescriptor field = getField(entityType, propertyPath);
       if (field == null) {
-         throw log.getNoSuchPropertyException(entityType.getFullName(), StringHelper.join(propertyPath));
+         return super.convertToPropertyType(entityType, propertyPath, value);
       }
 
       //todo [anistor] this is just for remote query because enums are handled as integers for historical reasons.
