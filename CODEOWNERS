@@ -6,7 +6,7 @@
 /client/rest-client/   @tristantarrant
 /core/                 @jabolina @pruivo @wburns
 /counter/              @pruivo
-/documentation/        @ashwin-rh @andyuk1986 @Crumby
+/documentation/        @theashiot @andyuk1986 @Crumby
 /graalvm/              @ryanemerson
 /hibernate/            @wburns
 /integrationtests/     @andyuk1986 @Crumby
@@ -16,7 +16,7 @@
 /multimap/             @karesti
 /object-filter/        @fax4ever
 /quarkus/              @ryanemerson @wburns
-/persistence/          @ryanmerson @wburns
+/persistence/          @ryanemerson @wburns
 /query/                @fax4ever
 /query-core/           @fax4ever
 /query-dsl/            @fax4ever
