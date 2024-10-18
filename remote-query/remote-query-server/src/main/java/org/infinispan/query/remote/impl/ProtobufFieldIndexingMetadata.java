@@ -22,7 +22,7 @@ import org.infinispan.query.remote.impl.mapping.reference.MessageReferenceProvid
  * @author anistor@redhat.com
  * @since 8.0
  */
-final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldIndexingMetadata {
+final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldIndexingMetadata<Descriptor> {
 
    private final Descriptor messageDescriptor;
    private final IndexingMetadata indexingMetadata;
