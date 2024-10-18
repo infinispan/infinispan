@@ -12,12 +12,12 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -63,7 +63,7 @@ public class EXPIRE extends RespCommand implements Resp3Command {
          // Handle mode
          mode = Mode.valueOf(new String(arguments.get(2), StandardCharsets.US_ASCII).toUpperCase());
       }
-      return handler.stageToReturn(expire(handler, key, expiration, mode, unixTime), ctx, Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(expire(handler, key, expiration, mode, unixTime), ctx, Resp3Response.INTEGER);
 
    }
 

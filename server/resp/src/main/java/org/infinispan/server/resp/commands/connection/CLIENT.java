@@ -1,10 +1,10 @@
 package org.infinispan.server.resp.commands.connection;
 
-import static org.infinispan.server.resp.Resp3Handler.handleBulkResult;
 import static org.infinispan.server.resp.Util.utf8;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.regex.Pattern;
@@ -13,12 +13,12 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.core.transport.NettyTransport;
-import org.infinispan.server.resp.ByteBufferUtils;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.group.ChannelGroup;
@@ -53,7 +53,7 @@ public class CLIENT extends RespCommand implements Resp3Command {
          case "GETREDIR":
          case "UNBLOCK":
          case "REPLY":
-            ByteBufferUtils.stringToByteBufAscii("-ERR unsupported command\r\n", handler.allocator());
+            RespErrorUtil.customError("unsupported command", handler.allocator());
             break;
          case "SETINFO":
             for (int i = 1; i < arguments.size(); i++) {
@@ -62,7 +62,7 @@ public class CLIENT extends RespCommand implements Resp3Command {
                   case "LIB-NAME":
                      String libName = utf8(arguments.get(++i));
                      if (!CLIENT_SETINFO_PATTERN.matcher(libName).matches()) {
-                        ByteBufferUtils.stringToByteBuf("-ERR lib-name cannot contain spaces, newlines or special characters.\r\n", handler.allocator());
+                        RespErrorUtil.customError("lib-name cannot contain spaces, newlines or special characters.", handler.allocator());
                         return handler.myStage();
                      }
                      metadata.clientLibraryName(libName);
@@ -70,34 +70,34 @@ public class CLIENT extends RespCommand implements Resp3Command {
                   case "LIB-VER":
                      String libVer = utf8(arguments.get(++i));
                      if (!CLIENT_SETINFO_PATTERN.matcher(libVer).matches()) {
-                        ByteBufferUtils.stringToByteBuf("-ERR lib-ver cannot contain spaces, newlines or special characters.\r\n", handler.allocator());
+                        RespErrorUtil.customError("lib-ver cannot contain spaces, newlines or special characters.", handler.allocator());
                         return handler.myStage();
                      }
                      metadata.clientLibraryVersion(libVer);
                      break;
                   default:
-                     ByteBufferUtils.stringToByteBuf("-ERR unsupported attribute " + name + "\r\n", handler.allocator());
+                     RespErrorUtil.customError("unsupported attribute " + name, handler.allocator());
                      return handler.myStage();
                }
             }
-            Consumers.OK_BICONSUMER.accept(null, handler.allocator());
+            Resp3Response.ok(handler.allocator());
             break;
          case "SETNAME":
             metadata.clientName(utf8(arguments.get(1)));
-            Consumers.OK_BICONSUMER.accept(null, handler.allocator());
+            Resp3Response.ok(handler.allocator());
             break;
          case "GETNAME":
             // This could be UTF-8
-            handleBulkResult(metadata.clientName(), handler.allocator());
+            Resp3Response.string(metadata.clientName(), handler.allocator());
             break;
          case "ID":
-            Consumers.LONG_BICONSUMER.accept(metadata.id(), handler.allocator());
+            Resp3Response.integers(metadata.id(), handler.allocator());
             break;
          case "INFO": {
             StringBuilder sb = new StringBuilder();
             addInfo(sb, metadata);
             // This could be UTF-8
-            handleBulkResult(sb, handler.allocator());
+            Resp3Response.string(sb, handler.allocator());
             break;
          }
          case "LIST": {
@@ -114,14 +114,14 @@ public class CLIENT extends RespCommand implements Resp3Command {
                   addInfo(sb, ConnectionMetadata.getInstance(ch));
                }
             });
-            handleBulkResult(sb, handler.allocator());
+            Resp3Response.string(sb, handler.allocator());
             break;
          }
          case "TRACKING":
-            ByteBufferUtils.stringToByteBufAscii("-ERR client tracking not supported\r\n", handler.allocator());
+            RespErrorUtil.customError("client tracking not supported", handler.allocator());
             break;
          case "TRACKINGINFO":
-            ByteBufferUtils.stringToByteBufAscii("*0\r\n", handler.allocator());
+            Resp3Response.map(Collections.emptyMap(), handler.allocator());
             break;
       }
       return handler.myStage();

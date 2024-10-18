@@ -5,11 +5,11 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -38,6 +38,6 @@ public class LINDEX extends RespCommand implements Resp3Command {
 
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
       CompletionStage<byte[]> value = listMultimap.index(key, index);
-      return handler.stageToReturn(value, ctx, Consumers.GET_BICONSUMER);
+      return handler.stageToReturn(value, ctx, Resp3Response.BULK_STRING_BYTES);
    }
 }

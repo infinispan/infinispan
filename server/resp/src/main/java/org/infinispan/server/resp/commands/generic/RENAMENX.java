@@ -6,12 +6,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.server.resp.Consumers;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -42,15 +42,15 @@ public class RENAMENX extends RespCommand implements Resp3Command {
          ChannelHandlerContext ctx) {
       if (Arrays.equals(srcKey, dstKey)) {
          // If src = dest return 0
-         return handler.stageToReturn(CompletableFuture.completedFuture(0L), ctx, Consumers.LONG_BICONSUMER);
+         return handler.stageToReturn(CompletableFuture.completedFuture(0L), ctx, Resp3Response.INTEGER);
       }
 
       return CompletionStages.handleAndComposeAsync(handler.cache().containsKeyAsync(dstKey), (contains, t) -> {
          if (t != null) throw CompletableFutures.asCompletionException(t);
 
          return contains
-               ? handler.stageToReturn(CompletableFuture.completedFuture(0L), ctx, Consumers.LONG_BICONSUMER)
-               : RENAME.rename(handler, srcKey, dstKey, ctx, Consumers.LONG_BICONSUMER);
+               ? handler.stageToReturn(CompletableFuture.completedFuture(0L), ctx, Resp3Response.INTEGER)
+               : RENAME.rename(handler, srcKey, dstKey, ctx, Resp3Response.INTEGER);
       }, ctx.executor());
    }
 }

@@ -8,6 +8,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -30,6 +31,6 @@ public class HLEN extends RespCommand implements Resp3Command {
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
       EmbeddedMultimapPairCache<byte[], byte[], byte[]> multimap = handler.getHashMapMultimap();
-      return handler.stageToReturn(multimap.size(arguments.get(0)), ctx, HSET.CONSUMER);
+      return handler.stageToReturn(multimap.size(arguments.get(0)), ctx, Resp3Response.INTEGER);
    }
 }

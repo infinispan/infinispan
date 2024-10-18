@@ -7,13 +7,14 @@ import java.util.function.BiConsumer;
 
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.ByteBufPool;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.Resp3Type;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -23,10 +24,14 @@ import io.netty.channel.ChannelHandlerContext;
  * @since 15.0
  */
 public abstract class POP extends RespCommand implements Resp3Command {
+   private static final BiConsumer<Object, ByteBufPool> SERIALIZER = (res, alloc) -> {
+      if (res instanceof Collection<?>) {
+         Collection<byte[]> strings = (Collection<byte[]>) res;
+         Resp3Response.array(strings, alloc, Resp3Type.BULK_STRING);
+         return;
+      }
 
-   private static final BiConsumer<Object, ByteBufPool> RESPONSE_HANDLER = (res, buff) -> {
-      if (res == null || res instanceof byte[]) Consumers.GET_BICONSUMER.accept((byte[]) res, buff);
-      else Consumers.GET_ARRAY_BICONSUMER.accept((Collection<byte[]>) res, buff);
+      Resp3Response.string((byte[]) res, alloc);
    };
 
    protected boolean first;
@@ -82,6 +87,6 @@ public abstract class POP extends RespCommand implements Resp3Command {
                return c;
             });
 
-      return handler.stageToReturn(cs, ctx, RESPONSE_HANDLER);
+      return handler.stageToReturn(cs, ctx, SERIALIZER);
    }
 }

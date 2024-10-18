@@ -1,6 +1,7 @@
 package org.infinispan.server.resp.commands.generic;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -11,18 +12,18 @@ import java.util.stream.Stream;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.multimap.impl.SortableBucket;
 import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.LimitArgument;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -202,7 +203,7 @@ public class SORT extends RespCommand implements Resp3Command {
             return storeV(handler, ctx, destination, resultingList);
          }
 
-         return handler.stageToReturn(resultingList, ctx, Consumers.GET_ARRAY_BICONSUMER);
+         return handler.stageToReturn(resultingList, ctx, Resp3Response.ARRAY_BULK_STRING);
       }
 
       // STORE
@@ -210,7 +211,9 @@ public class SORT extends RespCommand implements Resp3Command {
          return store(handler, ctx, destination, sortedCollection);
       }
 
-      return handler.stageToReturn(sortedCollection, ctx, Consumers.GET_OBJ_WRAPPER_ARRAY_BICONSUMER);
+      CompletionStage<Collection<byte[]>> cs = sortedCollection
+            .thenApply(res -> res.stream().map(ScoredValue::getValue).toList());
+      return handler.stageToReturn(cs, ctx, Resp3Response.ARRAY_BULK_STRING);
    }
 
    private static byte[] computePatternKey(String pattern, int index, byte[] value) {
@@ -226,7 +229,7 @@ public class SORT extends RespCommand implements Resp3Command {
                                                      CompletionStage<List<byte[]>> resultingList) {
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
       CompletionStage<Long> cs = resultingList.thenCompose(values -> listMultimap.replace(destination, values));
-      return handler.stageToReturn(cs, ctx, Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(cs, ctx, Resp3Response.INTEGER);
    }
 
    private CompletionStage<RespRequestHandler> store(Resp3Handler handler,
@@ -236,6 +239,6 @@ public class SORT extends RespCommand implements Resp3Command {
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
       CompletionStage<Long> cs = sortedList.thenCompose(values ->
             listMultimap.replace(destination, values.stream().map(ScoredValue::getValue).collect(Collectors.toList())));
-      return handler.stageToReturn(cs, ctx, Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(cs, ctx, Resp3Response.INTEGER);
    }
 }

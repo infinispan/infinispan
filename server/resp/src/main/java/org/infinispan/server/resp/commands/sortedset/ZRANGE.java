@@ -1,18 +1,6 @@
 package org.infinispan.server.resp.commands.sortedset;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
-import org.infinispan.multimap.impl.ScoredValue;
-import org.infinispan.multimap.impl.SortedSetAddArgs;
-import org.infinispan.multimap.impl.SortedSetSubsetArgs;
-import org.infinispan.server.resp.Consumers;
-import org.infinispan.server.resp.Resp3Handler;
-import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
-import org.infinispan.server.resp.RespRequestHandler;
-import org.infinispan.server.resp.commands.ArgumentUtils;
-import org.infinispan.server.resp.commands.LimitArgument;
-import org.infinispan.server.resp.commands.Resp3Command;
+import static org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils.response;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -20,7 +8,20 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
-import static org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils.mapResultsToArrayList;
+import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
+import org.infinispan.multimap.impl.ScoredValue;
+import org.infinispan.multimap.impl.SortedSetAddArgs;
+import org.infinispan.multimap.impl.SortedSetSubsetArgs;
+import org.infinispan.server.resp.Resp3Handler;
+import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespErrorUtil;
+import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.commands.ArgumentUtils;
+import org.infinispan.server.resp.commands.LimitArgument;
+import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
+
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Returns the specified range of elements in the sorted set stored at <key>.
@@ -202,8 +203,8 @@ public class ZRANGE extends RespCommand implements Resp3Command {
          return rangeAndStore(handler, ctx, destination, sortedSetCache, getSortedSetCall);
       }
 
-      CompletionStage<List<byte[]>> list = getSortedSetCall.thenApply(subsetResult -> mapResultsToArrayList(subsetResult, resultOpt.withScores));
-      return handler.stageToReturn(list, ctx, Consumers.GET_ARRAY_BICONSUMER);
+      CompletionStage<ZSetCommonUtils.ZOperationResponse> cs = getSortedSetCall.thenApply(subsetResult -> response(subsetResult, resultOpt.withScores));
+      return handler.stageToReturn(cs, ctx, Resp3Response.CUSTOM);
    }
 
    private CompletionStage<RespRequestHandler> rangeAndStore(Resp3Handler handler,
@@ -213,6 +214,6 @@ public class ZRANGE extends RespCommand implements Resp3Command {
                                                             CompletionStage<Collection<ScoredValue<byte[]>>> getSortedSetCall) {
       CompletionStage<Long> cs = getSortedSetCall
             .thenCompose(scoredValues -> sortedSetCache.addMany(destination, scoredValues, SortedSetAddArgs.create().replace().build()));
-      return handler.stageToReturn(cs, ctx, Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(cs, ctx, Resp3Response.INTEGER);
    }
 }

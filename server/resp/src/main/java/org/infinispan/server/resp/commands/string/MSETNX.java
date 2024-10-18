@@ -8,13 +8,13 @@ import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.server.resp.ByteBufferUtils;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.logging.Log;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -37,8 +37,7 @@ public class MSETNX extends RespCommand implements Resp3Command {
          ChannelHandlerContext ctx,
          List<byte[]> arguments) {
       if (arguments.size() < 2 || arguments.size() % 2 != 0) {
-         ByteBufferUtils.stringToByteBuf("-ERR wrong number of arguments for 'msetnx' command\r\n",
-               handler.allocator());
+         RespErrorUtil.wrongArgumentNumber(this, handler.allocator());
          return handler.myStage();
       }
       Log.SERVER.msetnxConsistencyMessage();
@@ -48,14 +47,13 @@ public class MSETNX extends RespCommand implements Resp3Command {
          entriesWBA.put(new WrappedByteArray(arguments.get(i)), arguments.get(++i));
       }
       // Change to loop?
-      Map<byte[],byte[]> entries = entriesWBA.entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getBytes(), e -> e.getValue()));
+      Map<byte[],byte[]> entries = entriesWBA.entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getBytes(), Map.Entry::getValue));
       var existingEntries = handler.cache().getAll(entriesWBA.keySet());
       if (existingEntries.isEmpty()) {
          return handler.stageToReturn(handler.cache().putAllAsync(entries).thenApply(v -> 1L), ctx,
-               Consumers.LONG_BICONSUMER);
+               Resp3Response.INTEGER);
       }
       return handler
-            .stageToReturn(CompletableFuture.completedFuture(0L),
-                  ctx, Consumers.LONG_BICONSUMER);
+            .stageToReturn(CompletableFuture.completedFuture(0L), ctx, Resp3Response.INTEGER);
    }
 }

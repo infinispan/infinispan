@@ -1,10 +1,8 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.RespConstants.CRLF;
-import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
-
 import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -26,6 +24,10 @@ import org.infinispan.server.resp.commands.pubsub.KeyChannelUtils;
 import org.infinispan.server.resp.commands.pubsub.RespCacheListener;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.server.resp.meta.ClientMetadata;
+import org.infinispan.server.resp.serialization.ByteBufferUtils;
+import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.Resp3Type;
+import org.infinispan.server.resp.serialization.RespConstants;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -73,18 +75,14 @@ public class SubscriberHandler extends CacheRespRequestHandler {
          byte[] key = KeyChannelUtils.channelToKey(unwrap(entryEvent.getKey()));
          byte[] value = entryEvent.getValue();
          if (key.length > 0 && value != null && value.length > 0) {
-            // *3 + \r\n + $7 + \r\n + message + \r\n + $ + keylength (log10 + 1) + \r\n + key + \r\n +
-            // $ + valuelength (log 10 + 1) + \r\n + value + \r\n
-            int byteSize = 2 + 2 + 2 + 2 + 7 + 2 + 1 + (int) Math.log10(key.length) + 1
-                  + 2 + key.length + 2 + 1 + (int) Math.log10(value.length) + 1 + 2 + value.length + 2;
+            // *3 + \r\n + $7 + \r\n + message + \r\n + $ + keylength + \r\n + key + \r\n +
+            // $ + valuelength + \r\n + value + \r\n
+            int byteSize = 2 + 2 + 2 + 2 + 7 + 2 + 1 + ByteBufferUtils.stringSize(key.length)
+                  + 2 + key.length + 2 + 1 + ByteBufferUtils.stringSize(value.length) + 2 + value.length + 2;
             // TODO: this is technically an issue with concurrent events before/after register/unregister message
             ByteBuf byteBuf = channel.alloc().buffer(byteSize, byteSize);
-            byteBuf.writeCharSequence("*3\r\n$7\r\nmessage\r\n$" + key.length + CRLF_STRING, CharsetUtil.US_ASCII);
-            byteBuf.writeBytes(key);
-            byteBuf.writeCharSequence("\r\n$" + value.length + CRLF_STRING, CharsetUtil.US_ASCII);
-            byteBuf.writeBytes(value);
-            byteBuf.writeByte('\r');
-            byteBuf.writeByte('\n');
+            ByteBufPool allocator = ignore -> byteBuf;
+            Resp3Response.array(List.of(PubSubEvents.MESSAGE, key, value), allocator, Resp3Type.BULK_STRING);
             assert byteBuf.writerIndex() == byteSize;
             // TODO: add some back pressure? - something like ClientListenerRegistry?
             channel.writeAndFlush(byteBuf, channel.voidPromise());
@@ -173,29 +171,24 @@ public class SubscriberHandler extends CacheRespRequestHandler {
    }
 
    public CompletionStage<RespRequestHandler> sendSubscriptions(ChannelHandlerContext ctx, CompletionStage<Void> stageToWaitFor,
-         Collection<byte[]> keyChannels, boolean subscribeOrUnsubscribe) {
+                                                                Collection<byte[]> keyChannels, boolean isSubscribe) {
       return stageToReturn(stageToWaitFor, ctx, (__, alloc) -> {
          assert ctx.executor().inEventLoop();
 
          Long counter = ctx.channel().attr(SUBSCRIPTIONS_COUNTER).get();
          if (counter == null) counter = 0L;
 
+         // PubSub events require the object type to be a bulk string.
+         byte[] type = isSubscribe ? PubSubEvents.SUBSCRIBE : PubSubEvents.UNSUBSCRIBE;
          for (byte[] keyChannel : keyChannels) {
-            String initialCharSeq = subscribeOrUnsubscribe ? "*3\r\n$9\r\nsubscribe\r\n$" : "*3\r\n$11\r\nunsubscribe\r\n$";
-            counter = Math.max(0, counter + (subscribeOrUnsubscribe ? 1 : -1));
-
-            // Length of string (all ascii so 1 byte per) + (log10 + 1 = sizes of number as char in bytes) + \r\n + bytes themselves + \r\n + : + countSize + \r\n
-            int countSize = counter == 0 ? 1 : (int) Math.log10(counter) + 1;
-            int sizeRequired = initialCharSeq.length() + (int) Math.log10(keyChannel.length) + 1 + 2 + keyChannel.length + 2 + 1 + countSize + 2;
-            ByteBuf subscribeBuffer = alloc.apply(sizeRequired);
-            int initialPos = subscribeBuffer.writerIndex();
-            subscribeBuffer.writeCharSequence(initialCharSeq + keyChannel.length + CRLF_STRING, CharsetUtil.US_ASCII);
-            subscribeBuffer.writeBytes(keyChannel);
-            subscribeBuffer.writeBytes(CRLF);
-            subscribeBuffer.writeByte(':');
-            ByteBufferUtils.setIntChars(counter, countSize, subscribeBuffer);
-            subscribeBuffer.writeBytes(CRLF);
-            assert subscribeBuffer.writerIndex() - initialPos == sizeRequired;
+            counter = Math.max(0, counter + (isSubscribe ? 1 : -1));
+            long c = counter;
+            Resp3Response.write(alloc, (ignore, a) -> {
+               ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, 3, a);
+               Resp3Response.string(type, a);
+               Resp3Response.string(keyChannel, a);
+               Resp3Response.integers(c, a);
+            });
          }
 
          if (counter == 0) {
@@ -204,5 +197,17 @@ public class SubscriberHandler extends CacheRespRequestHandler {
             ctx.channel().attr(SUBSCRIPTIONS_COUNTER).set(counter);
          }
       });
+   }
+
+   /**
+    * Describe which type of event is present on the pub sub message.
+    * <p>
+    * The type of event is the first element in the array. It <b>must</b> be a bulk string.
+    * </p>
+    */
+   private static final class PubSubEvents {
+      private static final byte[] SUBSCRIBE = "subscribe".getBytes(StandardCharsets.US_ASCII);
+      private static final byte[] UNSUBSCRIBE = "unsubscribe".getBytes(StandardCharsets.US_ASCII);
+      private static final byte[] MESSAGE = "message".getBytes(StandardCharsets.US_ASCII);
    }
 }

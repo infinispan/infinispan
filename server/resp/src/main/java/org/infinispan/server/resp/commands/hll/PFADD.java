@@ -7,13 +7,13 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.hll.HyperLogLog;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -63,10 +63,10 @@ public class PFADD extends RespCommand implements Resp3Command {
       return handler.stageToReturn(cs, ctx, (res, buf) -> {
          switch (res) {
             case NO_CHANGE:
-               Consumers.LONG_BICONSUMER.accept(0L, buf);
+               Resp3Response.integers(0L, buf);
                break;
             case ADDED:
-               Consumers.LONG_BICONSUMER.accept(1L, buf);
+               Resp3Response.integers(1L, buf);
                break;
             case NO_OP:
                RespErrorUtil.wrongType(handler.allocator());

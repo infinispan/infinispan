@@ -3,17 +3,19 @@ package org.infinispan.server.resp.commands.string;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.server.resp.Consumers;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.operation.SetOperation;
+import org.infinispan.server.resp.response.SetResponse;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/set/
+ * @see <a href="https://redis.io/commands/set/">Redis documentation</a>
  * @since 14.0
  */
 public class SET extends RespCommand implements Resp3Command {
@@ -30,12 +32,12 @@ public class SET extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
       if (arguments.size() != 2) {
+         TimeService ts = handler.respServer().getTimeService();
          return handler
-               .stageToReturn(SetOperation.performOperation(handler.cache(), arguments, handler.respServer().getTimeService(), getName()), ctx,
-                     Consumers.SET_BICONSUMER);
+               .stageToReturn(SetOperation.performOperation(handler.cache(), arguments, ts, getName()), ctx, SetResponse.SERIALIZER);
       }
       return handler.stageToReturn(
             handler.ignorePreviousValuesCache().putAsync(arguments.get(0), arguments.get(1)),
-            ctx, Consumers.OK_BICONSUMER);
+            ctx, Resp3Response.OK);
    }
 }

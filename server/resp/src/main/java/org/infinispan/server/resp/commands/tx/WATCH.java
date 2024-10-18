@@ -23,7 +23,6 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.ExternalizerIds;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -33,6 +32,7 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.commands.TransactionResp3Command;
 import org.infinispan.server.resp.filter.EventListenerKeysFilter;
 import org.infinispan.server.resp.meta.ClientMetadata;
+import org.infinispan.server.resp.serialization.Resp3Response;
 import org.infinispan.server.resp.tx.RespTransactionHandler;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -78,7 +78,7 @@ public class WATCH extends RespCommand implements Resp3Command, TransactionResp3
                metadata.incrementWatchingClients();
                metadata.recordWatchedKeys(keys.length);
             });
-      return handler.stageToReturn(cs, ctx, Consumers.OK_BICONSUMER);
+      return handler.stageToReturn(cs, ctx, Resp3Response.OK);
    }
 
    @Override

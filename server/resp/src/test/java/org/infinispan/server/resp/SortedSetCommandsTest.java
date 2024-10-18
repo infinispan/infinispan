@@ -1,5 +1,24 @@
 package org.infinispan.server.resp;
 
+import static io.lettuce.core.Range.Boundary.excluding;
+import static io.lettuce.core.Range.Boundary.including;
+import static io.lettuce.core.Range.Boundary.unbounded;
+import static io.lettuce.core.Range.create;
+import static io.lettuce.core.Range.from;
+import static io.lettuce.core.ScoredValue.just;
+import static io.lettuce.core.ZAggregateArgs.Builder.max;
+import static io.lettuce.core.ZAggregateArgs.Builder.min;
+import static io.lettuce.core.ZAggregateArgs.Builder.sum;
+import static io.lettuce.core.ZAggregateArgs.Builder.weights;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
+
+import java.util.List;
+
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.Limit;
 import io.lettuce.core.Range;
@@ -17,25 +36,6 @@ import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
 
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import java.util.List;
-
-import static io.lettuce.core.Range.Boundary.excluding;
-import static io.lettuce.core.Range.Boundary.including;
-import static io.lettuce.core.Range.Boundary.unbounded;
-import static io.lettuce.core.Range.create;
-import static io.lettuce.core.Range.from;
-import static io.lettuce.core.ScoredValue.just;
-import static io.lettuce.core.ZAggregateArgs.Builder.max;
-import static io.lettuce.core.ZAggregateArgs.Builder.min;
-import static io.lettuce.core.ZAggregateArgs.Builder.sum;
-import static io.lettuce.core.ZAggregateArgs.Builder.weights;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
-
 /**
  * RESP Sorted set commands testing
  *
@@ -51,6 +51,14 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
    @BeforeMethod
    public void initConnection() {
       redis = redisConnection.sync();
+   }
+
+   public void testDoubleLimit() {
+      double d = 179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368.00000000000000000;
+      redis.zadd("blmax", d, "huge");
+      double actual = redis.zscore("blmax", "huge");
+
+      assertThat(actual).isEqualTo(d);
    }
 
    public void testZADD() {

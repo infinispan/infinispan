@@ -1,25 +1,28 @@
 package org.infinispan.server.resp.commands.sortedset.internal;
 
-import static org.infinispan.server.resp.Consumers.LONG_ELSE_COLLECTION;
 import static org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils.isWithScoresArg;
-import static org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils.mapResultsToArrayList;
+import static org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils.response;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
 import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.multimap.impl.SortedSetAddArgs;
+import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -27,6 +30,16 @@ import io.netty.channel.ChannelHandlerContext;
  * Common implementation for ZDIFF commands
  */
 public abstract class DIFF extends RespCommand implements Resp3Command {
+   private static final BiConsumer<Object, ByteBufPool> SERIALIZER = (res, alloc) -> {
+      if (res instanceof Long l) {
+         Resp3Response.integers(l, alloc);
+         return;
+      }
+
+      ZSetCommonUtils.ZOperationResponse zres = (ZSetCommonUtils.ZOperationResponse) res;
+      Resp3Response.write(zres, alloc, zres);
+   };
+
    protected DIFF(int arity, int firstKeyPos, int lastKeyPos, int steps) {
       super(arity, firstKeyPos, lastKeyPos, steps);
    }
@@ -94,9 +107,9 @@ public abstract class DIFF extends RespCommand implements Resp3Command {
             .thenCompose(result -> (CompletionStage<?>)
                   (destination != null
                         ? sortedSetCache.addMany(destination, result, SortedSetAddArgs.create().replace().build())
-                        : CompletableFuture.completedFuture(mapResultsToArrayList(result, withScores))));
+                        : CompletableFuture.completedFuture(response(result, withScores))));
 
-      return handler.stageToReturn(cs, ctx, LONG_ELSE_COLLECTION);
+      return handler.stageToReturn(cs, ctx, SERIALIZER);
    }
 
    private boolean invalidNumberOfKeys(List<byte[]> arguments, int numberOfKeys, boolean withScores) {

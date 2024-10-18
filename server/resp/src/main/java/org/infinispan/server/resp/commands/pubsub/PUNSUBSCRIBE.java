@@ -3,8 +3,8 @@ package org.infinispan.server.resp.commands.pubsub;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.server.resp.ByteBufferUtils;
 import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.SubscriberHandler;
 import org.infinispan.server.resp.commands.PubSubResp3Command;
@@ -24,7 +24,7 @@ public class PUNSUBSCRIBE extends RespCommand implements PubSubResp3Command {
    public CompletionStage<RespRequestHandler> perform(SubscriberHandler handler,
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
-      ByteBufferUtils.stringToByteBufAscii("-ERR not implemented yet\r\n", handler.allocator());
+      RespErrorUtil.customError("not implemented yet", handler.allocator());
       return handler.myStage();
    }
 }

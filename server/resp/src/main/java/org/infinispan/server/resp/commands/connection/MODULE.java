@@ -5,11 +5,12 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.server.resp.ByteBufferUtils;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -30,12 +31,12 @@ public class MODULE extends RespCommand implements Resp3Command {
       String subcommand = new String(arguments.get(0), StandardCharsets.UTF_8).toUpperCase();
       switch (subcommand) {
          case "LIST":
-            ByteBufferUtils.stringToByteBufAscii("*0\r\n", handler.allocator());
+            Resp3Response.arrayEmpty(handler.allocator());
             break;
          case "LOAD":
          case "LOADEX":
          case "UNLOAD":
-            ByteBufferUtils.stringToByteBufAscii("-ERR module loading/unloading unsupported\r\n", handler.allocator());
+            RespErrorUtil.customError("module loading/unloading unsupported", handler.allocator());
             break;
       }
       return handler.myStage();

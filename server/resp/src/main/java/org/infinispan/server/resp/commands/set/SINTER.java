@@ -1,8 +1,8 @@
 package org.infinispan.server.resp.commands.set;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
@@ -11,11 +11,11 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.multimap.impl.EmbeddedSetCache;
 import org.infinispan.multimap.impl.SetBucket;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -42,9 +42,10 @@ public class SINTER extends RespCommand implements Resp3Command {
       var uniqueKeys = getUniqueKeys(handler, arguments);
       var allEntries= esc.getAll(uniqueKeys);
       return handler.stageToReturn(
-            allEntries
-                  .thenApply((sets) -> sets.size()==uniqueKeys.size() ? intersect(sets.values(), 0) : checkTypesAndReturnEmpty(sets.values())),
-            ctx, Consumers.COLLECTION_BULK_BICONSUMER);
+            allEntries.thenApply((sets) -> sets.size()==uniqueKeys.size()
+                  ? intersect(sets.values(), 0)
+                  : checkTypesAndReturnEmpty(sets.values())),
+            ctx, Resp3Response.SET_BULK_STRING);
    }
 
    public static Set<byte[]> getUniqueKeys(Resp3Handler handler, List<byte[]> arguments) {
@@ -52,26 +53,26 @@ public class SINTER extends RespCommand implements Resp3Command {
       return wrappedArgs.stream().map(WrappedByteArray::getBytes).collect(Collectors.toSet());
    }
 
-   public static List<byte[]> checkTypesAndReturnEmpty(Collection<SetBucket<byte[]>> buckets) {
+   public static Set<byte[]> checkTypesAndReturnEmpty(Collection<SetBucket<byte[]>> buckets) {
       var iter = buckets.iterator();
       // access all items to check for error
       while (iter.hasNext()) {
       var aSet = iter.next();
       }
-      return Collections.emptyList();
+      return Collections.emptySet();
    }
 
-   public static List<byte[]> intersect(Collection<SetBucket<byte[]>> buckets,
+   public static Set<byte[]> intersect(Collection<SetBucket<byte[]>> buckets,
          int limit) {
       var iter = buckets.iterator();
 
       // Return empty set if null or empty
       if (!iter.hasNext()) {
-         return Collections.emptyList();
+         return Collections.emptySet();
       }
       var minSet = iter.next();
       if (minSet.isEmpty()) {
-         return Collections.emptyList();
+         return Collections.emptySet();
       }
 
       // Find the smallest set in the sets list
@@ -82,9 +83,9 @@ public class SINTER extends RespCommand implements Resp3Command {
 
       // Build a set with all the elements in minSet and in all the rest of the sets
       // up to limit if non zero
-      var result = new ArrayList<byte[]>();
+      Set<byte[]> result = new HashSet<>();
       for (var el : minSet.toList()) {
-         if (!buckets.stream().anyMatch(set -> !set.contains(el))) {
+         if (buckets.stream().allMatch(set -> set.contains(el))) {
             result.add(el);
             if (limit > 0 && result.size() >= limit) {
                break;

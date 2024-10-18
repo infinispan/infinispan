@@ -5,11 +5,11 @@ import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.multimap.impl.EmbeddedSetCache;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -37,9 +37,7 @@ public class SDIFFSTORE extends RespCommand implements Resp3Command {
       // Wrapping to exclude duplicate keys
       var uniqueKeys = SINTER.getUniqueKeys(handler, minuends);
       var allEntries = esc.getAll(uniqueKeys);
-      return handler.stageToReturn(
-            allEntries
-                  .thenCompose(bucksMap -> esc.set(destination, SDIFF.diff(minuends.get(0), bucksMap, diffItself))),
-            ctx, Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(allEntries.thenCompose(bucksMap -> esc.set(destination, SDIFF.diff(minuends.get(0), bucksMap, diffItself))),
+            ctx, Resp3Response.INTEGER);
    }
 }

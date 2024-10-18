@@ -3,17 +3,15 @@ package org.infinispan.server.resp.commands.hash;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
 
 import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
-import org.infinispan.server.resp.ByteBufPool;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -28,9 +26,6 @@ import io.netty.channel.ChannelHandlerContext;
  * @author José Bolina
  */
 public class HINCRBY extends RespCommand implements Resp3Command {
-
-   private static final BiConsumer<byte[], ByteBufPool> CONVERTER =
-         (value, pool) -> Consumers.LONG_BICONSUMER.accept(ArgumentUtils.toLong(value), pool);
 
    public HINCRBY() {
       super(4, 1, 1, 1);
@@ -60,7 +55,7 @@ public class HINCRBY extends RespCommand implements Resp3Command {
          if (failed.get()) {
             RespErrorUtil.customError("increment or decrement would overflow", alloc);
          } else {
-            CONVERTER.accept(res, alloc);
+            Resp3Response.integers(ArgumentUtils.toLong(res), alloc);
          }
       });
    }

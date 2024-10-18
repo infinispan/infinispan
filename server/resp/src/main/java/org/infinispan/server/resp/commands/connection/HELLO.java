@@ -1,18 +1,18 @@
 package org.infinispan.server.resp.commands.connection;
 
-import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
-
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.Version;
-import org.infinispan.server.resp.ByteBufPool;
-import org.infinispan.server.resp.ByteBufferUtils;
+import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.resp.Resp3AuthHandler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.AuthResp3Command;
+import org.infinispan.server.resp.serialization.ByteBufferUtils;
+import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.RespConstants;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.CharsetUtil;
@@ -48,7 +48,7 @@ public class HELLO extends RespCommand implements AuthResp3Command {
       byte[] respProtocolBytes = arguments.get(0);
       String version = new String(respProtocolBytes, CharsetUtil.UTF_8);
       if (!version.equals("3")) {
-         ByteBufferUtils.stringToByteBufAscii("-NOPROTO sorry this protocol version is not supported\r\n", handler.allocator());
+         RespErrorUtil.customRawError("-NOPROTO sorry this protocol version is not supported", handler.allocator());
          return handler.myStage();
       }
 
@@ -60,15 +60,15 @@ public class HELLO extends RespCommand implements AuthResp3Command {
          // In case authentication is enabled, HELLO must provide the additional arguments to perform the authentication.
          // A similar behavior of running with `--requirepass <password>`.
          if (!handler.isAuthorized()) {
-            ByteBufferUtils.stringToByteBufAscii("-NOAUTH HELLO must be called with the client already authenticated, otherwise the HELLO <proto> AUTH <user> <pass> option can be used to authenticate the client and select the RESP protocol version at the same time\r\n", handler.allocator());
+            RespErrorUtil.customRawError("-NOAUTH HELLO must be called with the client already authenticated, otherwise the HELLO <proto> AUTH <user> <pass> option can be used to authenticate the client and select the RESP protocol version at the same time", handler.allocator());
          } else {
-            helloResponse(handler.allocator());
+            helloResponse(handler, ctx);
          }
       }
 
       if (successStage != null) {
          return handler.stageToReturn(successStage, ctx, success -> {
-            if (success) helloResponse(handler.allocator());
+            if (success) helloResponse(handler, ctx);
             else RespErrorUtil.unauthorized(handler.allocator());
 
             return AUTH.silentCreateAfterAuthentication(success, handler);
@@ -78,17 +78,36 @@ public class HELLO extends RespCommand implements AuthResp3Command {
       return handler.myStage();
    }
 
-   private static void helloResponse(ByteBufPool alloc) {
+   private static void helloResponse(Resp3AuthHandler handler, ChannelHandlerContext ctx) {
       // For better compatibility with different clients, we stick the version to returning only numbers and dots.
       // Returning only X.Y or X.Y.Z
       String versionString = Version.getMajorMinor();
-      ByteBufferUtils.stringToByteBufAscii("%7\r\n" +
-            "$6\r\nserver\r\n$15\r\nInfinispan RESP\r\n" +
-            "$7\r\nversion\r\n$" + versionString.length() + CRLF_STRING + versionString + CRLF_STRING +
-            "$5\r\nproto\r\n:3\r\n" +
-            "$2\r\nid\r\n:184\r\n" +
-            "$4\r\nmode\r\n$7\r\ncluster\r\n" +
-            "$4\r\nrole\r\n$6\r\nmaster\r\n" +
-            "$7\r\nmodules\r\n*0\r\n", alloc);
+      ConnectionMetadata metadata = ConnectionMetadata.getInstance(ctx.channel());
+
+      // Map mixes different types.
+      Resp3Response.write(handler.allocator(), (ignore, alloc) -> {
+         ByteBufferUtils.writeNumericPrefix(RespConstants.MAP, 7, alloc);
+
+         Resp3Response.simpleString("server", alloc);
+         Resp3Response.simpleString("Infinispan RESP", alloc);
+
+         Resp3Response.simpleString("version", alloc);
+         Resp3Response.simpleString(versionString, alloc);
+
+         Resp3Response.simpleString("proto", alloc);
+         Resp3Response.integers(3, alloc);
+
+         Resp3Response.simpleString("id", alloc);
+         Resp3Response.integers(metadata.id(), alloc);
+
+         Resp3Response.simpleString("mode", alloc);
+         Resp3Response.simpleString("cluster", alloc);
+
+         Resp3Response.simpleString("role", alloc);
+         Resp3Response.simpleString("master", alloc);
+
+         Resp3Response.simpleString("modules", alloc);
+         Resp3Response.arrayEmpty(alloc);
+      });
    }
 }

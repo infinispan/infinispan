@@ -1,7 +1,5 @@
 package org.infinispan.server.resp.commands.cluster;
 
-import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
-
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.time.Instant;
@@ -23,13 +21,13 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.actions.SecurityActions;
-import org.infinispan.server.resp.ByteBufferUtils;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.RespServer;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 import org.infinispan.topology.CacheTopology;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -86,7 +84,7 @@ public class NODES extends RespCommand implements Resp3Command {
          }
       }
 
-      return handler.stageToReturn(response, ctx, ByteBufferUtils::stringToByteBuf);
+      return handler.stageToReturn(response, ctx, Resp3Response.BULK_STRING);
    }
 
    protected static CompletionStage<CharSequence> requestClusterInformation(Resp3Handler handler, ChannelHandlerContext ctx,
@@ -141,7 +139,7 @@ public class NODES extends RespCommand implements Resp3Command {
                   serializeSegments(response, owner);
                   response.append('\n');
                }
-               return "$" + response.length() + CRLF_STRING + response + CRLF_STRING;
+               return response;
             });
    }
 

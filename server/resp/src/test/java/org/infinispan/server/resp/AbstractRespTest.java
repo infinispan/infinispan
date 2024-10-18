@@ -5,6 +5,8 @@ import static org.infinispan.server.resp.test.RespTestingUtil.killClient;
 import static org.infinispan.server.resp.test.RespTestingUtil.killServer;
 import static org.infinispan.server.resp.test.RespTestingUtil.startServer;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +27,10 @@ import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
 
 import io.lettuce.core.AbstractRedisClient;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.TimeoutOptions;
+import io.lettuce.core.protocol.ProtocolVersion;
 
 public abstract class AbstractRespTest extends MultipleCacheManagersTest {
 
@@ -52,9 +58,10 @@ public abstract class AbstractRespTest extends MultipleCacheManagersTest {
       }
 
       for (RespServer server : servers) {
-         AbstractRedisClient c = createRedisClient(server.getPort());
+         RedisClient c = createRedisClient(server.getPort());
          if (c == null) continue;
 
+         c.setOptions(defineRespClientOptions());
          clients.add(c);
       }
 
@@ -67,7 +74,14 @@ public abstract class AbstractRespTest extends MultipleCacheManagersTest {
 
    protected void afterSetupFinished() { }
 
-   protected AbstractRedisClient createRedisClient(int port) {
+   protected ClientOptions defineRespClientOptions() {
+      return ClientOptions.builder()
+            .protocolVersion(ProtocolVersion.RESP3)
+            .timeoutOptions(TimeoutOptions.enabled(Duration.of(15, ChronoUnit.SECONDS)))
+            .build();
+   }
+
+   protected RedisClient createRedisClient(int port) {
       return createClient(timeout, port);
    }
 

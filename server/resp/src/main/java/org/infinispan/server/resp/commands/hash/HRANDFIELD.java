@@ -1,11 +1,8 @@
 package org.infinispan.server.resp.commands.hash;
 
-import static org.infinispan.server.resp.RespConstants.NULL;
-
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
@@ -15,8 +12,6 @@ import java.util.stream.Collectors;
 
 import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
 import org.infinispan.server.resp.ByteBufPool;
-import org.infinispan.server.resp.ByteBufferUtils;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
@@ -24,6 +19,8 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.Util;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.Resp3Type;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -56,7 +53,7 @@ public class HRANDFIELD extends RespCommand implements Resp3Command {
       }
 
       if (count == 0) {
-         ByteBufferUtils.bytesToResult(Collections.emptyList(), handler.allocator());
+         Resp3Response.arrayEmpty(handler.allocator());
          return handler.myStage();
       }
 
@@ -72,17 +69,17 @@ public class HRANDFIELD extends RespCommand implements Resp3Command {
 
       EmbeddedMultimapPairCache<byte[], byte[], byte[]> multimap = handler.getHashMapMultimap();
       BiConsumer<Map<byte[], byte[]>, ByteBufPool> consumer = consumeResponse(count, withValues, countDefined);
-      return handler.stageToReturn(multimap.subSelect(key, Math.abs(count)), ctx, consumer);
+      CompletionStage<Map<byte[], byte[]>> cs = multimap.subSelect(key, Math.abs(count));
+      return handler.stageToReturn(cs, ctx, consumer);
    }
 
    private BiConsumer<Map<byte[], byte[]>, ByteBufPool> consumeResponse(int count, boolean withValues, boolean countDefined) {
       return (res, alloc) -> {
          if (res == null) {
-            if (countDefined) {
-               Consumers.GET_ARRAY_BICONSUMER.accept(Collections.emptyList(), alloc);
-            } else {
-               alloc.acquire(NULL.length).writeBytes(NULL);
-            }
+            // The key doesn't exist but the command has the COUNT argument, return an empty list.
+            if (countDefined) Resp3Response.arrayEmpty(alloc);
+               // Otherwise, simply return null.
+            else Resp3Response.nulls(alloc);
             return;
          }
 
@@ -92,19 +89,16 @@ public class HRANDFIELD extends RespCommand implements Resp3Command {
             // In case the return contains the values, we return a list of lists.
             // Each sub-list has two elements, the key and the value.
             if (withValues) {
-               Resp3Handler.writeArrayPrefix(parsed.size(), alloc);
-               for (Collection<byte[]> bytes : parsed) {
-                  Consumers.GET_ARRAY_BICONSUMER.accept(bytes, alloc);
-               }
-            } else {
-               // Otherwise, we return just a single list containing the keys.
-               Consumers.GET_ARRAY_BICONSUMER.accept(parsed.stream().flatMap(Collection::stream).toList(), alloc);
+               Resp3Response.array(parsed, alloc, (c, a) -> Resp3Response.array(c, a, Resp3Type.BULK_STRING));
+               return;
             }
-         } else {
-            // Otherwise, we return a bulk string with a single key.
-            Collection<byte[]> bytes = parsed.iterator().next();
-            Consumers.GET_BICONSUMER.accept(bytes.iterator().next(), alloc);
+            Resp3Response.array(parsed.stream().flatMap(Collection::stream).toList(), alloc, Resp3Type.BULK_STRING);
+            return;
          }
+
+         // Otherwise, we return a bulk string with a single key.
+         Collection<byte[]> bytes = parsed.iterator().next();
+         Resp3Response.string(bytes.iterator().next(), alloc);
       };
    }
 

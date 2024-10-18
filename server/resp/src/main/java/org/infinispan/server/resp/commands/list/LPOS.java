@@ -6,13 +6,14 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.Resp3Type;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -53,8 +54,8 @@ public class LPOS extends RespCommand implements Resp3Command {
       return handler.stageToReturn(cs, ctx, (res, buff) -> {
          if (res == handler) return;
 
-         if (res == null || res instanceof Long) Consumers.LONG_BICONSUMER.accept((Long) res, buff);
-         else Consumers.COLLECTION_LONG_BICONSUMER.accept((Collection<Long>) res, buff);
+         if (res == null || res instanceof Long) Resp3Response.integers((Number) res, buff);
+         else Resp3Response.array((Collection<?>) res, buff, Resp3Type.INTEGER);
       });
    }
 

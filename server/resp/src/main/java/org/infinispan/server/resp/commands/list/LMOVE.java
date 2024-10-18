@@ -7,13 +7,13 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.logging.Log;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -102,7 +102,7 @@ public class LMOVE extends RespCommand implements Resp3Command {
             // rotate from left (head->tail) to right or from right to left (tail->left)
             performedCall = listMultimap.rotate(source, isSourceLeft);
          }
-         return handler.stageToReturn(performedCall, ctx, Consumers.GET_BICONSUMER);
+         return handler.stageToReturn(performedCall, ctx, Resp3Response.BULK_STRING_BYTES);
       }
 
       CompletionStage<Collection<byte[]>> pollCall;
@@ -128,6 +128,6 @@ public class LMOVE extends RespCommand implements Resp3Command {
                return offerCall.thenApply(r -> element);
             });
 
-      return handler.stageToReturn(cs, ctx, Consumers.GET_BICONSUMER);
+      return handler.stageToReturn(cs, ctx, Resp3Response.BULK_STRING_BYTES);
    }
 }

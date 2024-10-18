@@ -4,11 +4,11 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.multimap.impl.EmbeddedSetCache;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -30,6 +30,6 @@ public class SISMEMBER extends RespCommand implements Resp3Command {
          List<byte[]> arguments) {
       EmbeddedSetCache<byte[], byte[]> esc = handler.getEmbeddedSetCache();
       var resultStage = esc.mIsMember(arguments.get(0), arguments.get(1)).thenApply(v -> v.get(0));
-      return handler.stageToReturn(resultStage, ctx, Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(resultStage, ctx, Resp3Response.INTEGER);
    }
 }

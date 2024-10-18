@@ -1,24 +1,41 @@
 package org.infinispan.server.resp.commands.sortedset.internal;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.function.BiConsumer;
+
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
-import org.infinispan.server.resp.Consumers;
+import org.infinispan.multimap.impl.ScoredValue;
+import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.response.ScoredValueSerializer;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Common implementation for ZPOP commands
  */
 public abstract class POP extends RespCommand implements Resp3Command {
+   private static final BiConsumer<Object, ByteBufPool> SERIALIZER = (res, alloc) -> {
+      if (res instanceof Collection<?>) {
+         @SuppressWarnings("unchecked")
+         Collection<ScoredValue<byte[]>> cast = (Collection<ScoredValue<byte[]>>) res;
+         Resp3Response.array(cast, alloc, ScoredValueSerializer.INSTANCE);
+         return;
+      }
+
+      @SuppressWarnings("unchecked")
+      ScoredValue<byte[]> sv = (ScoredValue<byte[]>) res;
+      Resp3Response.write(sv, alloc, ScoredValueSerializer.INSTANCE);
+   };
+
    private final boolean min;
    public POP(boolean min) {
       super(-2, 1, 1, 1);
@@ -33,10 +50,12 @@ public abstract class POP extends RespCommand implements Resp3Command {
       byte[] name = arguments.get(0);
       EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetCache = handler.getSortedSeMultimap();
 
-      long count = 1;
+      long count;
+      boolean hasCount;
       if (arguments.size() > 1) {
          try {
             count = ArgumentUtils.toLong(arguments.get(1));
+            hasCount = true;
             if (count < 0) {
                RespErrorUtil.mustBePositive(handler.allocator());
                return handler.myStage();
@@ -45,17 +64,15 @@ public abstract class POP extends RespCommand implements Resp3Command {
             RespErrorUtil.mustBePositive(handler.allocator());
             return handler.myStage();
          }
+      } else {
+         count = 1;
+         hasCount = false;
       }
 
-      CompletionStage<List<byte[]>> popElements = sortedSetCache.pop(name, min, count).thenApply(r -> {
-         List<byte[]> result = new ArrayList<>();
-         r.stream().forEach(e -> {
-            result.add(e.getValue());
-            result.add(Double.toString(e.score()).getBytes(StandardCharsets.US_ASCII));
-         });
-         return result;
+      CompletionStage<Object> popElements = sortedSetCache.pop(name, min, count).thenApply(r -> {
+         if (r.isEmpty() || hasCount) return r;
+         return r.iterator().next();
       });
-
-      return handler.stageToReturn(popElements, ctx, Consumers.GET_ARRAY_BICONSUMER);
+      return handler.stageToReturn(popElements, ctx, SERIALIZER);
    }
 }

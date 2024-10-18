@@ -6,10 +6,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.function.BiConsumer;
 
 import org.infinispan.server.resp.ByteBufPool;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
@@ -17,6 +15,11 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.Util;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.ByteBufferUtils;
+import org.infinispan.server.resp.serialization.JavaObjectSerializer;
+import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.Resp3Type;
+import org.infinispan.server.resp.serialization.RespConstants;
 import org.jgroups.util.CompletableFutures;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -38,11 +41,6 @@ import io.netty.channel.ChannelHandlerContext;
  * @see <a href="https://redis.io/commands/lmpop">Redis Documentation</a>
  */
 public class LMPOP extends RespCommand implements Resp3Command {
-
-   private static final BiConsumer<List<?>, ByteBufPool> RESPONSE_HANDLER = (res, buff) -> {
-      if (res == null) Consumers.GET_ARRAY_BICONSUMER.accept(null, buff);
-      else Consumers.LMPOP_BICONSUMER.accept(res, buff);
-   };
 
    public static final byte[] COUNT = "COUNT".getBytes();
    public static final byte[] LEFT = "LEFT".getBytes();
@@ -123,11 +121,11 @@ public class LMPOP extends RespCommand implements Resp3Command {
          return handler.myStage();
       }
 
-      CompletionStage<List<Object>> cs = asyncCalls(CompletableFutures.completedNull(), null, listNames.iterator(), count, isLeft, ctx, handler);
-      return handler.stageToReturn(cs, ctx, RESPONSE_HANDLER);
+      CompletionStage<PopResult> cs = asyncCalls(CompletableFutures.completedNull(), null, listNames.iterator(), count, isLeft, ctx, handler);
+      return handler.stageToReturn(cs, ctx, Resp3Response.CUSTOM);
    }
 
-   private CompletionStage<List<Object>> asyncCalls(CompletionStage<Collection<byte[]>> pollValues,
+   private CompletionStage<PopResult> asyncCalls(CompletionStage<Collection<byte[]>> pollValues,
                                                           byte[] prevName,
                                                           Iterator<byte[]> iteNames,
                                                           long count,
@@ -136,10 +134,7 @@ public class LMPOP extends RespCommand implements Resp3Command {
                                                           Resp3Handler handler) {
       return pollValues.thenCompose(c -> {
          if (c != null){
-            List<Object> result = new ArrayList<>(2);
-            result.add(prevName);
-            result.add(c);
-            return CompletableFuture.completedFuture(result);
+            return CompletableFuture.completedFuture(new PopResult(prevName, c));
          }
 
          if (!iteNames.hasNext()) {
@@ -151,4 +146,13 @@ public class LMPOP extends RespCommand implements Resp3Command {
       });
    }
 
+   private record PopResult(byte[] key, Collection<byte[]> values) implements JavaObjectSerializer<PopResult> {
+
+      @Override
+      public void accept(PopResult ignore, ByteBufPool alloc) {
+         ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, 2, alloc);
+         Resp3Response.string(key, alloc);
+         Resp3Response.array(values, alloc, Resp3Type.BULK_STRING);
+      }
+   }
 }

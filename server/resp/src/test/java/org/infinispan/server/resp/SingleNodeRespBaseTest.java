@@ -1,5 +1,7 @@
 package org.infinispan.server.resp;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,7 +11,9 @@ import org.infinispan.server.resp.test.TestSetup;
 import org.testng.annotations.AfterClass;
 
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.protocol.ProtocolVersion;
 
 public abstract class SingleNodeRespBaseTest extends AbstractRespTest {
    protected RedisClient client;
@@ -41,6 +45,12 @@ public abstract class SingleNodeRespBaseTest extends AbstractRespTest {
    @AfterClass(alwaysRun = true)
    @Override
    protected void destroy() {
+      for (StatefulRedisConnection<String, String> connection : connections) {
+         if (connection instanceof StatefulRedisConnectionImpl<?,?> srci) {
+            assertThat(srci.getConnectionState().getNegotiatedProtocolVersion())
+                  .isEqualTo(ProtocolVersion.RESP3);
+         }
+      }
       connections.forEach(StatefulRedisConnection::close);
       super.destroy();
    }

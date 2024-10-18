@@ -4,11 +4,11 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.multimap.impl.EmbeddedSetCache;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -29,6 +29,6 @@ public class SMEMBERS extends RespCommand implements Resp3Command {
          ChannelHandlerContext ctx,
          List<byte[]> arguments) {
       EmbeddedSetCache<byte[], byte[]> esc = handler.getEmbeddedSetCache();
-      return handler.stageToReturn(esc.getAsSet(arguments.get(0)), ctx, Consumers.COLLECTION_BULK_BICONSUMER);
+      return handler.stageToReturn(esc.getAsSet(arguments.get(0)), ctx, Resp3Response.SET_BULK_STRING);
    }
 }

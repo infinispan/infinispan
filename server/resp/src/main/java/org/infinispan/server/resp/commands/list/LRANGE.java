@@ -6,12 +6,12 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -50,6 +50,6 @@ public class LRANGE extends RespCommand implements Resp3Command {
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
       CompletionStage<Collection<byte[]>> cs = listMultimap.subList(key, start, stop)
             .thenApply(c -> c == null ? Collections.emptyList() : c);
-      return handler.stageToReturn(cs, ctx, Consumers.GET_ARRAY_BICONSUMER);
+      return handler.stageToReturn(cs, ctx, Resp3Response.ARRAY_BULK_STRING);
    }
 }

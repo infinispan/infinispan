@@ -4,11 +4,11 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -29,7 +29,7 @@ public class PERSIST extends RespCommand implements Resp3Command {
                                                       List<byte[]> arguments) {
       byte[] keyBytes = arguments.get(0);
 
-      return handler.stageToReturn(persist(handler, keyBytes), ctx, Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(persist(handler, keyBytes), ctx, Resp3Response.INTEGER);
    }
 
    private static CompletableFuture<Long> persist(Resp3Handler handler, byte[] keyBytes) {

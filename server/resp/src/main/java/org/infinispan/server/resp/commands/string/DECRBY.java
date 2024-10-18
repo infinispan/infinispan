@@ -3,12 +3,12 @@ package org.infinispan.server.resp.commands.string;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -25,6 +25,6 @@ public class DECRBY extends RespCommand implements Resp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
-      return handler.stageToReturn(CounterIncOrDec.counterIncOrDecBy(handler.cache(), arguments.get(0), -ArgumentUtils.toLong(arguments.get(1))), ctx, Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(CounterIncOrDec.counterIncOrDecBy(handler.cache(), arguments.get(0), -ArgumentUtils.toLong(arguments.get(1))), ctx, Resp3Response.INTEGER);
    }
 }

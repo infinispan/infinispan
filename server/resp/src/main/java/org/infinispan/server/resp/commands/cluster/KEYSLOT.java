@@ -9,12 +9,12 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.actions.SecurityActions;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -50,6 +50,6 @@ public class KEYSLOT extends RespCommand implements Resp3Command {
       int h = hashPartitioner.getHashForKey(key);
       CompletionStage<Integer> cs = CompletableFuture.completedFuture(handler.respServer().segmentSlotRelation().hashToSlot(h));
 
-      return handler.stageToReturn(cs, ctx, Consumers.INT_BICONSUMER);
+      return handler.stageToReturn(cs, ctx, Resp3Response.INTEGER);
    }
 }

@@ -5,15 +5,15 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.server.core.logging.Log;
-import org.infinispan.server.resp.ByteBufferUtils;
-import org.infinispan.server.resp.Consumers;
-import org.infinispan.server.resp.Resp3Handler;
-import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespRequestHandler;
-import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.server.core.logging.Log;
+import org.infinispan.server.resp.Resp3Handler;
+import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespErrorUtil;
+import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -35,7 +35,7 @@ public class MSET extends RespCommand implements Resp3Command {
       int keyValuePairCount = arguments.size();
       if ((keyValuePairCount & 1) == 1) {
          log.tracef("Received: %s count for keys and values combined, should be even for MSET", keyValuePairCount);
-         ByteBufferUtils.stringToByteBufAscii("-ERR Missing a value for a key\r\n", handler.allocator());
+         RespErrorUtil.customError("Missing a value for a key", handler.allocator());
          return handler.myStage();
       }
       AggregateCompletionStage<Void> setStage = CompletionStages.aggregateCompletionStage();
@@ -44,6 +44,6 @@ public class MSET extends RespCommand implements Resp3Command {
          byte[] valueBytes = arguments.get(i + 1);
          setStage.dependsOn(handler.cache().putAsync(keyBytes, valueBytes));
       }
-      return handler.stageToReturn(setStage.freeze(), ctx, Consumers.OK_BICONSUMER);
+      return handler.stageToReturn(setStage.freeze(), ctx, Resp3Response.OK);
    }
 }

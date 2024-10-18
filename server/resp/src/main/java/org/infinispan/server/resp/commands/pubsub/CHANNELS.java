@@ -10,11 +10,12 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.util.GlobMatcher;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.security.actions.SecurityActions;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.Resp3Type;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -57,7 +58,7 @@ class CHANNELS extends RespCommand implements Resp3Command {
             .filter(filter)
             .collect(Collectors.filtering(PUBSUB.deduplicate(), Collectors.toList()));
 
-      Consumers.COLLECTION_BULK_BICONSUMER.accept(channels, handler.allocator());
+      Resp3Response.array(channels, handler.allocator(), Resp3Type.BULK_STRING);
       return handler.myStage();
    }
 

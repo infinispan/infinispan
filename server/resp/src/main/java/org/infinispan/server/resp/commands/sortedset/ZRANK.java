@@ -1,21 +1,21 @@
 package org.infinispan.server.resp.commands.sortedset;
 
-import io.netty.channel.ChannelHandlerContext;
+import static org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils.isWithScoresArg;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
 import org.infinispan.multimap.impl.SortedSetBucket;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-
-import static org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils.isWithScoresArg;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Returns the rank of member in the sorted set stored at key, with the scores ordered from high to low.
@@ -62,16 +62,15 @@ public class ZRANK  extends RespCommand implements Resp3Command {
 
       EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSet = handler.getSortedSeMultimap();
       if (withScore) {
-         return handler.stageToReturn(sortedSet.indexOf(name, member, isRev).thenApply(r -> mapResult(r)), ctx, Consumers.GET_ARRAY_BICONSUMER);
+         return handler.stageToReturn(sortedSet.indexOf(name, member, isRev).thenApply(ZRANK::mapResult), ctx, Resp3Response.ARRAY_INTEGER);
       }
-      return handler.stageToReturn(sortedSet.indexOf(name, member, isRev).thenApply(r -> r == null? null : r.getValue()), ctx, Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(sortedSet.indexOf(name, member, isRev).thenApply(r -> r == null? null : r.getValue()), ctx, Resp3Response.INTEGER);
    }
 
-   private static Collection<byte[]> mapResult(SortedSetBucket.IndexValue index) {
+   private static Collection<Number> mapResult(SortedSetBucket.IndexValue index) {
       if (index == null) {
          return null;
       }
-      return List.of(Long.toString(index.getValue()).getBytes(StandardCharsets.US_ASCII),
-            Double.toString(index.getScore()).getBytes(StandardCharsets.US_ASCII));
+      return List.of(index.getValue(), index.getScore());
    }
 }

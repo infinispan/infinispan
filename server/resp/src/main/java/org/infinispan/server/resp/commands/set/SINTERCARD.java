@@ -4,13 +4,13 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.multimap.impl.EmbeddedSetCache;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -59,7 +59,7 @@ public class SINTERCARD extends RespCommand implements Resp3Command {
       var allEntries= esc.getAll(uniqueKeys);
       return handler.stageToReturn(allEntries.thenApply((sets) -> sets.size() == uniqueKeys.size() ? (long) SINTER.intersect(sets.values(), limit).size() : SINTER.checkTypesAndReturnEmpty(sets.values()).size()),
             ctx,
-            Consumers.LONG_BICONSUMER);
+            Resp3Response.INTEGER);
    }
 
    private int processArgs(int keysNum, List<byte[]> arguments, Resp3Handler handler) {

@@ -1,15 +1,16 @@
 package org.infinispan.server.resp.commands.string;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.server.resp.Consumers;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.operation.LCSOperation;
+import org.infinispan.server.resp.response.LCSResponse;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/lcs/
@@ -24,7 +25,7 @@ public class STRALGO extends RespCommand implements Resp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
          ChannelHandlerContext ctx,
          List<byte[]> arguments) {
-      return handler.stageToReturn(LCSOperation.performOperation(handler.cache(), arguments, false), ctx, Consumers.LCS_BICONSUMER);
+      return handler.stageToReturn(LCSOperation.performOperation(handler.cache(), arguments, false), ctx, LCSResponse.SERIALIZER);
    }
 
 
