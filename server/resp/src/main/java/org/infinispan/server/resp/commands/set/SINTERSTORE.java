@@ -41,7 +41,7 @@ public class SINTERSTORE extends RespCommand implements Resp3Command {
       var keys = arguments.subList(1, arguments.size());
 
       var uniqueKeys = SINTER.getUniqueKeys(handler, keys);
-      var allEntries= esc.getAll(uniqueKeys);
+      var allEntries= esc.getAll(uniqueKeys).thenApply( sets -> SINTER.checkTypeOrEmpty(sets,uniqueKeys.size()));
       return handler.stageToReturn(
             allEntries.thenCompose(sets -> handler.getEmbeddedSetCache().set(destination, SINTER.intersect(sets.values(), 0))),
             ctx,
