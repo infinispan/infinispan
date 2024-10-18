@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
@@ -40,17 +41,28 @@ public class SINTER extends RespCommand implements Resp3Command {
       EmbeddedSetCache<byte[], byte[]> esc = handler.getEmbeddedSetCache();
       // Wrapping to exclude duplicate keys
       var uniqueKeys = getUniqueKeys(handler, arguments);
-      var allEntries= esc.getAll(uniqueKeys);
+      var allEntries= esc.getAll(uniqueKeys).thenApply( sets -> SINTER.checkTypeOrEmpty(sets,uniqueKeys.size()));
       return handler.stageToReturn(
-            allEntries.thenApply((sets) -> sets.size()==uniqueKeys.size()
-                  ? intersect(sets.values(), 0)
-                  : checkTypesAndReturnEmpty(sets.values())),
+            allEntries.thenApply((sets) -> intersect(sets.values(), 0)),
             ctx, Resp3Response.SET_BULK_STRING);
    }
 
    public static Set<byte[]> getUniqueKeys(Resp3Handler handler, List<byte[]> arguments) {
       var wrappedArgs = arguments.stream().map(WrappedByteArray::new).collect(Collectors.toSet());
       return wrappedArgs.stream().map(WrappedByteArray::getBytes).collect(Collectors.toSet());
+   }
+
+   public static Map<byte[], SetBucket<byte[]>> checkTypeOrEmpty(Map<byte[], SetBucket<byte[]>> m, int count) {
+      boolean empty = false;
+      // Iterate over all elements first to check wrong types
+      for (SetBucket<byte[]> it : m.values()) {
+         empty |= it.isEmpty() || empty;
+      }
+      // If any set is not found shortcut returning empty map
+      if ((m.size() < count) || empty ) {
+         return Collections.emptyMap();
+      }
+      return m;
    }
 
    public static Set<byte[]> checkTypesAndReturnEmpty(Collection<SetBucket<byte[]>> buckets) {

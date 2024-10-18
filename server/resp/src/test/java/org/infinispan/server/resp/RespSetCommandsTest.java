@@ -109,13 +109,15 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       // check intersection between 2 sets
       assertThat(redis.sinter(key, key1)).containsExactlyInAnyOrder("e2", "e3");
 
-      // intersect non existent sets returns empty set
+      // intersect all non existent sets returns empty set
       assertThat(redis.sinter("nonexistent", "nonexistent1")).isEmpty();
       assertThat(redis.sinter(key, key1, "nonexistent")).isEmpty();
 
       // SINTER on an existing key that contains a String, not a Set!
       // Set a String Command
       assertWrongType(() -> redis.set("leads", "tristan"), () -> redis.sinter("leads", key));
+      // SINTER on an existing key that contains a String, not a Set after a missing key
+      assertWrongType(() -> redis.set("leads", "tristan"), () -> redis.sinter("nonexistent", "leads", key));
       // SINTER on an existing key that contains a List, not a Set!
       // Create a List
       assertWrongType(() -> redis.rpush("listleads", "tristan"), () -> redis.sinter("listleads", "william"));
@@ -188,6 +190,11 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.sinterstore("destination", key, key1)).isEqualTo(2);
       assertThat(redis.smembers("destination")).containsExactlyInAnyOrder("e2", "e3");
 
+      // Check a missing key
+      assertThat(redis.sinterstore("destination", key, "nonexistent")).isEqualTo(0);
+      assertThat(redis.smembers("destination")).isEmpty();
+
+      // Check all missing key
       assertThat(redis.sinterstore("destination", "nonexistent", "nonexistent1")).isEqualTo(0);
       assertThat(redis.smembers("destination")).isEmpty();
 
@@ -197,7 +204,10 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       // SINTERSTORE on an existing key that contains a List, not a Set!
       // Create a List
       assertWrongType(() -> redis.rpush("listleads", "tristan"),
-            () -> redis.sinterstore("destination", "listleads", "william"));
+            () -> redis.sinterstore("destination", "listleads", "nonexistent"));
+      // Check wrong type after a missing key
+      assertWrongType(() -> redis.rpush("listleads", "tristan"),
+            () -> redis.sinterstore("destination", "nonexistent", "listleads"));
    }
 
    @Test
