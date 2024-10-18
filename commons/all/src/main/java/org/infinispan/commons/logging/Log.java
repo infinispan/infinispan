@@ -11,8 +11,6 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.counter.exception.CounterException;
-import org.infinispan.counter.exception.CounterOutOfBoundsException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
@@ -299,22 +297,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Error while reloading certificate", id = 970)
    RuntimeException certificateReloadError(@Cause Exception ex);
 
-   //----- counters exceptions // don't use the same id range ------
-
-   @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 29501)
-   CounterOutOfBoundsException counterOurOfBounds(String bound);
-
-   @Message(value = "Invalid counter type. Expected=%s but got %s", id = 29514)
-   CounterException invalidCounterType(String expected, String actual);
-
-   @Message(value = "Counter '%s' is not defined.", id = 29516)
-   CounterException undefinedCounter(String name);
-
-   @Message(value = "WEAK and BOUNDED encoded flag isn't supported!", id = 29522)
-   CounterException invalidCounterTypeEncoded();
-
    @Message(value = "Cannot instantiate class '%s'", id = 29523)
    CacheConfigurationException cannotInstantiateClass(String classname, @Suppressed Throwable t);
-
-   //----- counters exceptions // don't use the same id range  ------
 }

@@ -28,6 +28,7 @@ public class CounterValue {
    private static final CounterValue ZERO = new CounterValue(0, CounterState.VALID);
    private final long value;
    private final CounterState state;
+   private volatile CounterBounds bounds;
 
    @ProtoFactory
    CounterValue(long value, CounterState state) {
