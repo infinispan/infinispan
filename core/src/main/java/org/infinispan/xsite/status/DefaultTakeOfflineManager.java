@@ -12,25 +12,32 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CrossSiteIllegalLifecycleStateException;
+import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.stat.MetricInfo;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalMetricsConfiguration;
 import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.globalstate.ScopedState;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metrics.Constants;
 import org.infinispan.metrics.impl.MetricUtils;
 import org.infinispan.remoting.CacheUnreachableException;
 import org.infinispan.remoting.RemoteException;
-import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.logging.Log;
@@ -46,7 +53,7 @@ import org.jgroups.UnreachableException;
 /**
  * The default implementation of {@link TakeOfflineManager}.
  * <p>
- * It automatically takes a site offline when certain failures condition happens.
+ * It automatically takes a site offline when failures happen.
  *
  * @author Pedro Ruivo
  * @since 11.0
@@ -55,19 +62,15 @@ import org.jgroups.UnreachableException;
 public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteResponse.XSiteResponseCompleted {
 
    private static final Log log = LogFactory.getLog(DefaultTakeOfflineManager.class);
+   private static final String SCOPE = "site_status";
 
-   private final String cacheName;
    private final Map<String, OfflineStatus> offlineStatus;
 
-   @Inject TimeService timeService;
-   @Inject Configuration config;
-   @Inject GlobalConfiguration globalConfig;
-   @Inject EventLogManager eventLogManager;
-   @Inject RpcManager rpcManager;
+   private TimeService timeService;
+   private EventLogger eventLogger;
    @Inject InternalDataContainer<Object, Object> dataContainer;
 
-   public DefaultTakeOfflineManager(String cacheName) {
-      this.cacheName = cacheName;
+   public DefaultTakeOfflineManager() {
       offlineStatus = new ConcurrentHashMap<>(8);
    }
 
@@ -94,16 +97,36 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
             Optional.empty();
    }
 
-   @Start
-   public void start() {
-      String localSiteName = rpcManager.getTransport().localSiteName();
-      config.sites().allBackupsStream()
+   @Inject
+   public void inject(EmbeddedCacheManager cacheManager, Configuration configuration, Transport transport, TimeService timeService, EventLogManager eventLogManager, @ComponentName(KnownComponentNames.CACHE_NAME) String cacheName) {
+      this.timeService = timeService;
+      this.eventLogger = eventLogManager.getEventLogger().context(cacheName).scope(transport.getAddress());
+      if (!offlineStatus.isEmpty()) {
+         // method can be invoked multiple times
+         return;
+      }
+      Supplier<TimeService> timeServiceSupplier = this::getTimeService;
+      var localSiteName = transport.localSiteName();
+      Cache<ScopedState, Long> globalSiteStatus = cacheManager.getCache(InternalCacheNames.CONFIG_STATE_CACHE_NAME);
+      configuration.sites().allBackupsStream()
             .filter(bc -> !localSiteName.equals(bc.site()))
             .forEach(bc -> {
-               String siteName = bc.site();
-               OfflineStatus offline = new OfflineStatus(bc.takeOffline(), timeService, new Listener(siteName));
+               var siteName = bc.site();
+               var offline = new OfflineStatus(bc.takeOffline(), timeServiceSupplier, new Listener(siteName),
+                     new ScopedState(SCOPE, cacheName + ":" + siteName), globalSiteStatus);
                offlineStatus.put(siteName, offline);
             });
+   }
+
+   @Start
+   public void start() {
+      offlineStatus.values().forEach(OfflineStatus::start);
+   }
+
+   @Stop
+   public void stop() {
+      offlineStatus.values().forEach(OfflineStatus::stop);
+      offlineStatus.clear();
    }
 
    @Override
@@ -215,13 +238,12 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
       return offlineStatus.get(siteName);
    }
 
-   @Override
-   public String toString() {
-      return "DefaultTakeOfflineManager{cacheName='" + cacheName + "'}";
+   private EventLogger getEventLogger() {
+      return eventLogger;
    }
 
-   private EventLogger getEventLogger() {
-      return eventLogManager.getEventLogger().context(cacheName).scope(rpcManager.getAddress());
+   public TimeService getTimeService() {
+      return timeService;
    }
 
    private final class Listener implements SiteStatusListener {
