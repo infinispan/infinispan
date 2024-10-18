@@ -371,8 +371,8 @@ public class IndexSchemaNoDowntimeUpgradeTest extends SingleHotRodServerTest {
          // Create second version entities
          ModelUtils.createModelEntities(cache, 5, ModelUtils.createBaseModelWithNameFieldIndexedEntity(2));
 
-         // check there are two entities with 3 in name field
-         doQuery("FROM evolution.Model WHERE name LIKE '%3%'", cache, 2);
+         // check there are one entry with 3 in name field
+         doQuery("FROM evolution.Model WHERE name LIKE '%3%'", cache, 1);
       }
    }
 

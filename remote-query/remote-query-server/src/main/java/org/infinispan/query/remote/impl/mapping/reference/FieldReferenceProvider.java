@@ -39,11 +39,14 @@ public class FieldReferenceProvider {
 
    static final String[] COMMON_MESSAGE_TYPES = {BIG_INTEGER_COMMON_TYPE, BIG_DECIMAL_COMMON_TYPE};
 
+   // Data (Proto)
    private final String name;
    private final Type type;
    private final String typeName;
    private final boolean repeated;
 
+   // Index (Lucene)
+   private final String indexName;
    private final Searchable searchable;
    private final Projectable projectable;
    private final Aggregable aggregable;
@@ -67,6 +70,7 @@ public class FieldReferenceProvider {
       typeName = fieldDescriptor.getTypeName();
       repeated = fieldDescriptor.isRepeated();
 
+      indexName = fieldMapping.name();
       searchable = (fieldMapping.searchable()) ? Searchable.YES : Searchable.NO;
       projectable = (fieldMapping.projectable()) ? Projectable.YES : Projectable.NO;
       aggregable = (fieldMapping.aggregable()) ? Aggregable.YES : Aggregable.NO;
@@ -135,7 +139,7 @@ public class FieldReferenceProvider {
          return null;
       }
 
-      IndexSchemaFieldOptionsStep<?, IndexFieldReference<Object>> step = indexSchemaElement.field(name, this::bind);
+      IndexSchemaFieldOptionsStep<?, IndexFieldReference<Object>> step = indexSchemaElement.field(indexName, this::bind);
       if (repeated && dimension == null) {
          step.multiValued();
       }

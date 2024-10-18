@@ -13,6 +13,7 @@ import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.search.mapper.mapping.SearchMapping;
 
 /**
  * {@link RemoteQueryManager} suitable for caches storing protobuf.
@@ -24,10 +25,11 @@ final class ProtobufRemoteQueryManager extends BaseRemoteQueryManager {
    private final RemoteQueryEngine queryEngine;
    private final Transcoder protobufTranscoder;
 
-   ProtobufRemoteQueryManager(AdvancedCache<?, ?> cache, ComponentRegistry cr, SerializationContext serCtx, QuerySerializers querySerializers) {
+   ProtobufRemoteQueryManager(AdvancedCache<?, ?> cache, ComponentRegistry cr, SerializationContext serCtx,
+                              QuerySerializers querySerializers, SearchMapping searchMapping) {
       super(cache, querySerializers, cr);
-      Matcher matcher = new ObjectProtobufMatcher(serCtx, (messageDescriptor) ->
-            new ProtobufFieldIndexingMetadata(messageDescriptor, serCtx.getGenericDescriptors()));
+      RemoteHibernateSearchPropertyHelper propertyHelper = RemoteHibernateSearchPropertyHelper.create(serCtx, searchMapping);
+      Matcher matcher = new ObjectProtobufMatcher(serCtx, propertyHelper);
       cr.registerComponent(matcher, ProtobufMatcher.class);
 
       Configuration configuration = cache.getCacheConfiguration();
