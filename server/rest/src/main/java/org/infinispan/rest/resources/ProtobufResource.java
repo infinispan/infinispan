@@ -22,6 +22,7 @@ import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
@@ -137,7 +138,14 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
 
       return putSchema.thenCompose(r -> {
          if (isOkOrCreated(builder)) {
-            return cache.getAsync(schemaName + ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX);
+            return cache
+                    .getAsync(schemaName + ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX)
+                    .thenApply(err -> err)
+                    .exceptionally( ex -> {
+                       builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR)
+                               .entity(RestRequestHandler.filterCause(ex));
+                       return CompletableFutures.completedNull();
+                    });
          } else {
             return CompletableFutures.completedNull();
          }
