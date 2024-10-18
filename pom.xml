@@ -2174,6 +2174,7 @@
                <version>${version.maven-compiler-plugin}</version>
                <configuration>
                   <release>${maven.compiler.release}</release>
+                  <compilerArgs>${maven.compiler.arguments}</compilerArgs>
                   <encoding>UTF-8</encoding>
                   <excludes>
                      <exclude>**/package-info.java</exclude>

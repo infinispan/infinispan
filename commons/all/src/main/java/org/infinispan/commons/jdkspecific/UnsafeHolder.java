@@ -1,4 +1,4 @@
-package org.infinispan.container.offheap;
+package org.infinispan.commons.jdkspecific;
 
 import java.lang.reflect.Field;
 

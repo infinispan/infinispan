@@ -2,17 +2,15 @@ package org.infinispan.container.offheap;
 
 import java.util.stream.LongStream;
 
+import org.infinispan.commons.spi.OffHeapMemory;
 import org.infinispan.commons.util.Util;
-
-import sun.misc.Unsafe;
 
 /**
  * @author wburns
  * @since 9.0
  */
 public class MemoryAddressHash {
-   private static final Unsafe UNSAFE = UnsafeHolder.UNSAFE;
-   private static final OffHeapMemory MEMORY = OffHeapMemory.INSTANCE;
+   private static final OffHeapMemory MEMORY = org.infinispan.commons.jdkspecific.OffHeapMemory.getInstance();
 
    private final long memory;
    private final int pointerCount;
@@ -24,11 +22,11 @@ public class MemoryAddressHash {
       this.allocator = allocator;
       memory = allocator.allocate(bytes);
       // Have to clear out bytes to make sure no bad stuff was read in
-      UNSAFE.setMemory(memory, bytes, (byte) 0);
+      MEMORY.setMemory(memory, bytes, (byte) 0);
    }
 
    public void putMemoryAddressOffset(int offset, long address) {
-      MEMORY.putLong(memory, offset << 3, address);
+      MEMORY.putLong(memory, (long) offset << 3, address);
    }
 
    public long getMemoryAddressOffset(int offset) {
@@ -40,7 +38,7 @@ public class MemoryAddressHash {
    }
 
    public void deallocate() {
-      allocator.deallocate(memory, pointerCount << 3);
+      allocator.deallocate(memory, (long) pointerCount << 3);
    }
 
    /**
