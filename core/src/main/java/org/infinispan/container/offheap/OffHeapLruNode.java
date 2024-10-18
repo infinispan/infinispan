@@ -1,12 +1,14 @@
 package org.infinispan.container.offheap;
 
+import org.infinispan.commons.spi.OffHeapMemory;
+
 /**
  * Accessors for the fields of a native LRU list node.
  *
  * @since 9.1
  */
 class OffHeapLruNode {
-   private static final OffHeapMemory MEMORY = OffHeapMemory.INSTANCE;
+   private static final OffHeapMemory MEMORY = org.infinispan.commons.jdkspecific.OffHeapMemory.getInstance();
 
    private static final int ADDRESS_SIZE = 8;
 

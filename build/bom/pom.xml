@@ -155,6 +155,11 @@
                 <artifactId>infinispan-commons</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-commons-spi</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
             <!-- TODO should be here? -->
             <dependency>
                 <groupId>org.infinispan</groupId>

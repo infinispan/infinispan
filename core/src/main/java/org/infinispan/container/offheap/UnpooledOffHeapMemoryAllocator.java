@@ -2,6 +2,7 @@ package org.infinispan.container.offheap;
 
 import java.util.concurrent.atomic.LongAdder;
 
+import org.infinispan.commons.spi.OffHeapMemory;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -15,7 +16,7 @@ import sun.misc.Unsafe;
  */
 public class UnpooledOffHeapMemoryAllocator implements OffHeapMemoryAllocator {
    private static final Log log = LogFactory.getLog(UnpooledOffHeapMemoryAllocator.class, Log.class);
-   private static final OffHeapMemory MEMORY = OffHeapMemory.INSTANCE;
+   private static final OffHeapMemory MEMORY = org.infinispan.commons.jdkspecific.OffHeapMemory.getInstance();
    private final LongAdder amountAllocated = new LongAdder();
 
    @Override
