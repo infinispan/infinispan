@@ -124,7 +124,7 @@
       <dir.jacoco.merged>../jacoco/merged/</dir.jacoco.merged>
       <dir.jacoco.report>../jacoco/report/</dir.jacoco.report>
       <rerunFailingTestsCount>0</rerunFailingTestsCount>
-      <testjvm.commonArgs>-XX:+UseG1GC -XX:-TieredCompilation -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir} -Djboss.modules.settings.xml.url=${jboss.modules.settings.xml.url} -Dio.netty.leakDetection.level=paranoid</testjvm.commonArgs>
+      <testjvm.commonArgs>-XX:+UseG1GC -XX:-TieredCompilation -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir} -Dio.netty.leakDetection.level=paranoid</testjvm.commonArgs>
       <!--
         java.lang, java.util, java.io, java.lang.invoke, java.lang, reflect, java.util.concurrent, java.time:
           core externalizers for JDK types
@@ -184,7 +184,6 @@
       <testNGListeners>org.infinispan.commons.test.TestNGTestListener,org.infinispan.commons.test.PolarionJUnitXMLReporter</testNGListeners>
       <log4j.configurationFile>${infinispan.root}/etc/log4j2.xml</log4j.configurationFile>
       <uberjar.deps.optional>true</uberjar.deps.optional>
-      <jboss.modules.settings.xml.url>file://${infinispan.root}/maven-settings.xml</jboss.modules.settings.xml.url>
 
       <!-- dependencies version -->
       <versionx.org.infinispan.memcached-client>1.2.3</versionx.org.infinispan.memcached-client>
