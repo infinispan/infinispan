@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -49,6 +50,11 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    /** Holds all the keys that were actually locked on the local node. */
    private final AtomicReference<Set<Object>> lockedKeys = new AtomicReference<>();
+
+   /**
+    * Holds all the keys the local node tries to acquire. They might not be locked yet.
+    */
+   private Set<Object> inspectedKeys = null;
 
    /**
     * Holds all the locks for which the local node is a secondary data owner.
@@ -212,6 +218,24 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    private void initAffectedKeys() {
       if (affectedKeys == null) affectedKeys = new HashSet<>(INITIAL_LOCK_CAPACITY);
+   }
+
+   public void addInspectedKey(Object key) {
+      initInspectedKeys();
+      inspectedKeys.add(key);
+   }
+
+   public void addAllInspectedKeys(Collection<?> keys) {
+      initInspectedKeys();
+      inspectedKeys.addAll(keys);
+   }
+
+   public Set<Object> getInspectedKeys() {
+      return inspectedKeys == null ? Collections.emptySet() : inspectedKeys;
+   }
+
+   private void initInspectedKeys() {
+      if (inspectedKeys == null) inspectedKeys = ConcurrentHashMap.newKeySet(INITIAL_LOCK_CAPACITY);
    }
 
    @Override
