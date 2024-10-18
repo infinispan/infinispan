@@ -83,7 +83,7 @@ public class SortedSetBucket<V> implements SortableBucket<V> {
             if (existingScore == null) {
                unionScore = element.score();
             } else {
-               unionScore = function.apply(element.score(), existingScore * weight);
+               unionScore = function.apply(element.score(), weight == 0d ? 0d : existingScore * weight);
             }
             sortedMergeScoredValues.add(new ScoredValue<>(unionScore, element.wrappedValue()));
             mergedEntries.put(element.wrappedValue(), unionScore);
@@ -95,7 +95,7 @@ public class SortedSetBucket<V> implements SortableBucket<V> {
          ScoredValue<V> element = ite.next();
          Double existingScore = mergedEntries.get(element.wrappedValue());
          if (existingScore == null) {
-            sortedMergeScoredValues.add(new ScoredValue<>(element.score() * weight, element.wrappedValue()));
+            sortedMergeScoredValues.add(new ScoredValue<>(weight == 0d ? 0d : element.score() * weight, element.wrappedValue()));
          }
       }
       return sortedMergeScoredValues;
@@ -106,7 +106,7 @@ public class SortedSetBucket<V> implements SortableBucket<V> {
                                           AggregateFunction function) {
       if (inputValues == null) {
          return scoredEntries.stream()
-               .map(s -> new ScoredValue<>(s.score() * weight, s.wrappedValue()))
+               .map(s -> new ScoredValue<>(weight == 0d ? 0d : s.score() * weight, s.wrappedValue()))
                .collect(Collectors.toList());
       }
 
@@ -116,7 +116,7 @@ public class SortedSetBucket<V> implements SortableBucket<V> {
          ScoredValue<V> element = ite.next();
          Double existingScore = entries.get(element.wrappedValue());
          if (existingScore != null) {
-            double score = function.apply(element.score(), existingScore * weight);
+            double score = function.apply(element.score(), weight == 0d ? 0d : existingScore * weight);
             sortedMergeScoredValues.add(new ScoredValue<>(score, element.wrappedValue()));
          }
       }

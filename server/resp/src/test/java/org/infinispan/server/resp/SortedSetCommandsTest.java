@@ -1278,6 +1278,27 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
                            );
    }
 
+   @Test
+   public void ZUNIONSTORE_Infinity_Weight_0() {
+      // zadd zt -inf neginf
+      assertThat(redis.zadd("zt", just(Double.NEGATIVE_INFINITY, "neginf"))).isEqualTo(1);
+      //ZUNIONSTORE outt 1 zt weights 0
+      assertThat(redis.zunionstore("outt", ZStoreArgs.Builder.weights(0), "zt")).isEqualTo(1);
+      // ZRANGE outt 0 -1 withscores
+      assertThat(redis.zrangeWithScores("outt", 0, -1))
+              .containsExactly(just(0, "neginf"));
+   }
+
+   @Test
+   public void ZINTER_Infinity_Weight_0() {
+      // zadd zt -inf neginf
+      assertThat(redis.zadd("zt", just(Double.NEGATIVE_INFINITY, "neginf"))).isEqualTo(1);
+      //ZINTERSTORE outt 1 zt weights 0
+      assertThat(redis.zinterstore("outt", ZStoreArgs.Builder.weights(0), "zt")).isEqualTo(1);
+      // ZRANGE outt 0 -1 withscores
+      assertThat(redis.zrangeWithScores("outt", 0, -1))
+              .containsExactly(just(0, "neginf"));
+   }
 
    public void testZINTER() {
       // ZINTER 1 s1
