@@ -149,9 +149,6 @@ public final class LifecycleManager implements ModuleLifecycle {
          // a remote query manager must be added for each non-internal cache
          SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
 
-         RemoteQueryManager remoteQueryManager = buildQueryManager(cfg, serCtx, cr);
-         cr.registerComponent(remoteQueryManager, RemoteQueryManager.class);
-
          SearchMappingCommonBuilding commonBuilding = cr.getComponent(SearchMappingCommonBuilding.class);
          SearchMapping searchMapping = cr.getComponent(SearchMapping.class);
          if (commonBuilding != null && searchMapping == null) {
@@ -168,14 +165,16 @@ public final class LifecycleManager implements ModuleLifecycle {
             BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
             bcr.replaceComponent(IndexStatistics.class.getName(), new LocalIndexStatistics(), true);
             bcr.rewire();
-
-            cr.registerComponent(new RemoteQueryAccessEngine(), RemoteQueryAccess.class);
          }
 
+         RemoteQueryManager remoteQueryManager = buildQueryManager(cfg, serCtx, cr, searchMapping);
+         cr.registerComponent(remoteQueryManager, RemoteQueryManager.class);
+         cr.registerComponent(new RemoteQueryAccessEngine(), RemoteQueryAccess.class);
       }
    }
 
-   private RemoteQueryManager buildQueryManager(Configuration cfg, SerializationContext ctx, ComponentRegistry cr) {
+   private RemoteQueryManager buildQueryManager(Configuration cfg, SerializationContext ctx, ComponentRegistry cr,
+                                                SearchMapping searchMapping) {
       ContentTypeConfiguration valueEncoding = cfg.encoding().valueDataType();
       MediaType valueStorageMediaType = valueEncoding.mediaType();
       AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
@@ -184,7 +183,7 @@ public final class LifecycleManager implements ModuleLifecycle {
 
       boolean isObjectStorage = valueStorageMediaType != null && valueStorageMediaType.match(APPLICATION_OBJECT);
       if (isObjectStorage) return new ObjectRemoteQueryManager(cache, cr, querySerializers);
-      return new ProtobufRemoteQueryManager(cache, cr, ctx, querySerializers);
+      return new ProtobufRemoteQueryManager(cache, cr, ctx, querySerializers, searchMapping);
    }
 
    private QuerySerializers buildQuerySerializers(ComponentRegistry cr, MediaType storageMediaType) {
