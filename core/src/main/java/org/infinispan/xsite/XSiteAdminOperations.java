@@ -53,7 +53,7 @@ import org.infinispan.xsite.status.TakeOfflineManager;
 import org.infinispan.xsite.status.TakeSiteOfflineResponse;
 
 /**
- * Managed bean exposing sys admin operations for Cross-Site replication functionality.
+ * A Managed bean exposing system administration operations for Cross-Site replication functionality (cache scope only)
  *
  * @author Mircea Markus
  * @since 5.2
@@ -96,10 +96,14 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
       authorizer.checkPermission(AuthorizationPermission.ADMIN);
       Map<String, Boolean> localNodeStatus = takeOfflineManager.status();
       CacheRpcCommand command = commandsFactory.buildXSiteStatusCommand();
+
+      // TODO [pruivo] TakeOfflineManager is cluster-wide and this command is not longer required.
+      // It is kept for backwards compatible reasons and can be removed after the product release.
+      // https://issues.redhat.com/browse/ISPN-16779
       XSiteResponse<Map<String, Boolean>> response = invokeOnAll(command,
             new PerSiteBooleanResponseCollector(clusterSize()));
       if (response.hasErrors()) {
-         throw new CacheException("Unable to check cluster state for members: " + response.getErrors());
+         throw new CacheException("Unable to check cluster state for members: " + response.errors());
       }
       //site name => online/offline/mixed
       Map<String, CacheSiteStatusBuilder> perSiteBuilder = new HashMap<>();
@@ -149,10 +153,10 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
    }
 
    /**
-    * Obtain the status of the nodes from a site
+    * Gets the status of the nodes from a site
     *
     * @param site The name of the backup site
-    * @return a Map&lt;String, String&gt; with the Address and the status of each node in the site
+    * @return a Map&lt;String, String&gt; with the Address and the status of each node in the site.
     */
    public Map<Address, String> nodeStatus(String site) {
       authorizer.checkPermission(AuthorizationPermission.ADMIN);
@@ -161,6 +165,9 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
          throw new IllegalArgumentException(incorrectSiteName(site));
       }
 
+      // TODO [pruivo] TakeOfflineManager is cluster-wide and this command is not longer required.
+      // It is kept for backwards compatible reasons and can be removed after the product release.
+      // https://issues.redhat.com/browse/ISPN-16779
       CacheRpcCommand command = commandsFactory.buildXSiteOfflineStatusCommand(site);
       XSiteResponse<Boolean> response = invokeOnAll(command, new XSiteStatusResponseCollector(clusterSize()));
       Map<Address, String> statusMap = new HashMap<>();
@@ -187,11 +194,14 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
          return incorrectSiteName(site);
       }
 
+      // TODO [pruivo] TakeOfflineManager is cluster-wide and this command is not longer required.
+      // It is kept for backwards compatible reasons and can be removed after the product release.
+      // https://issues.redhat.com/browse/ISPN-16779
       CacheRpcCommand command = commandsFactory.buildXSiteTakeOfflineCommand(site);
       XSiteResponse<Void> response = invokeOnAll(command, new VoidResponseCollector(clusterSize()));
 
       String prefix = "Could not take the site offline on nodes:";
-      return returnFailureOrSuccess(response.getErrors(), prefix);
+      return returnFailureOrSuccess(response.errors(), prefix);
    }
 
    @ManagedOperation(description = "Amends the values for 'afterFailures' for the 'TakeOffline' functionality on all the nodes in the cluster.", displayName = "Amends the values for 'TakeOffline.afterFailures' on all the nodes in the cluster.")
@@ -247,10 +257,13 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
          return incorrectSiteName(site);
       }
 
+      // TODO [pruivo] TakeOfflineManager is cluster-wide and this command is not longer required.
+      // It is kept for backwards compatible reasons and can be removed after the product release.
+      // https://issues.redhat.com/browse/ISPN-16779
       CacheRpcCommand command = commandsFactory.buildXSiteBringOnlineCommand(site);
       XSiteResponse<Void> response = invokeOnAll(command, new VoidResponseCollector(clusterSize()));
 
-      return returnFailureOrSuccess(response.getErrors(), "Could not take the site online on nodes:");
+      return returnFailureOrSuccess(response.errors(), "Could not take the site online on nodes:");
    }
 
    @ManagedOperation(displayName = "Push state to site",
@@ -273,7 +286,7 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
    }
 
    /**
-    * for debug only!
+    * For debugging only!
     */
    public final List<String> getRunningStateTransfer() {
       return stateTransferManager.getRunningStateTransfers();
@@ -387,13 +400,15 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
          return incorrectSiteName(site);
       }
 
+      // TODO [pruivo] use mutable attributes to update the take offline settings?
+      // https://issues.redhat.com/browse/ISPN-16780
       CacheRpcCommand command = commandsFactory.buildXSiteAmendOfflineStatusCommand(site, afterFailures, minTimeToWait);
       XSiteResponse<Void> response = invokeOnAll(command, new VoidResponseCollector(clusterSize()));
 
       //also amend locally
       takeOfflineManager.amendConfiguration(site, afterFailures, minTimeToWait);
 
-      return returnFailureOrSuccess(response.getErrors(), "Could not amend for nodes:");
+      return returnFailureOrSuccess(response.errors(), "Could not amend for nodes:");
    }
 
    private String returnFailureOrSuccess(List<Address> failed, String prefix) {
@@ -466,21 +481,10 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
       }
    }
 
-   private static class XSiteResponse<T> {
-      final Map<Address, T> responses;
-      final List<Address> errors;
-
-      private XSiteResponse(Map<Address, T> responses, List<Address> errors) {
-         this.responses = responses;
-         this.errors = errors;
-      }
+   private record XSiteResponse<T>(Map<Address, T> responses, List<Address> errors) {
 
       boolean hasErrors() {
          return !errors.isEmpty();
-      }
-
-      List<Address> getErrors() {
-         return errors;
       }
 
       void forEachError(Consumer<Address> consumer) {
