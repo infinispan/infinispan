@@ -86,6 +86,18 @@ jobs:
             ./mvnw verify -V -B -e -DrerunFailingTestsCount=2
             -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative
 
+      - name: Fail check status
+      # In case of failure Publish Test Report workflow is skipped
+      # so we need to fail the check here
+        if: failure()
+        uses: LouisBrunner/checks-action@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: Test Report Result
+          status: completed
+          conclusion: failure
+          sha: ${{ needs.get-info.outputs.source-head-sha }}
+
       - name: Archive commit sha PR
         if: >
           (success() || failure()) &&

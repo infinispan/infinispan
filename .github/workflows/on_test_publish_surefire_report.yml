@@ -5,7 +5,7 @@ on:
      types: [completed]
 jobs:
    publish:
-      if: ${{ github.event.workflow_run.conclusion == 'success' }}
+      if: github.event.workflow_run.conclusion == 'success'
       name: Publish Surefire Report
       runs-on: ubuntu-latest
       steps:
@@ -18,36 +18,14 @@ jobs:
 # Downloading surefire report artifact containing
 # zip file with reports and file
 # containing commit sha
-        - name: Download artifact
-          id: download-artifact
-          uses: actions/github-script@v7
+        - name: Download a Build Artifact
+          uses: actions/download-artifact@v4.1.8
           with:
-            result-encoding: string
-            script: |
-              let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
-                 owner: context.repo.owner,
-                 repo: context.repo.repo,
-                 run_id: context.payload.workflow_run.id,
-              });
-              let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
-                return artifact.name == "surefire-test-report"
-              })[0];
-              if (typeof matchArtifact == 'undefined') {
-               // No surefire report artifact found
-               return "No Report";
-              }
-              let download = await github.rest.actions.downloadArtifact({
-                 owner: context.repo.owner,
-                 repo: context.repo.repo,
-                 artifact_id: matchArtifact.id,
-                 archive_format: 'zip',
-              });
-              let fs = require('fs');
-              fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/surefire-test-report.zip`, Buffer.from(download.data));
-              return "Report Found";
+            name: surefire-test-report
+            github-token: ${{ github.token }}
+            run-id: ${{ github.event.workflow_run.id }}
 
-        - if: steps.download-artifact.outputs.result == 'Report Found'
-          name: Unzip artifact
+        - name: Unzip artifact
           run: unzip surefire-test-report.zip
 
         - name: Get github sha
@@ -63,6 +41,7 @@ jobs:
                    do
                       xmlstarlet ed --inplace -d "//testcase[flakyFailure]" "$f"
                    done
+
         - name: Publish Test Report
           if: success() || failure()
           uses: ScaCap/action-surefire-report@v1
