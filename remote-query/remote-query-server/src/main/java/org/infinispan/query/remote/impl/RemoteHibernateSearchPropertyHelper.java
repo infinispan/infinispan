@@ -1,7 +1,10 @@
-package org.infinispan.query.dsl.embedded.impl;
+package org.infinispan.query.remote.impl;
+
+import static org.infinispan.query.remote.impl.indexing.IndexingMetadata.findProcessedAnnotation;
 
 import java.text.ParseException;
 import java.util.Date;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.lucene.document.DateTools;
@@ -13,31 +16,37 @@ import org.hibernate.search.engine.backend.types.IndexFieldTraits;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
-import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
-import org.infinispan.objectfilter.impl.syntax.parser.ReflectionPropertyHelper;
-import org.infinispan.objectfilter.impl.syntax.parser.projection.CacheValuePropertyPath;
-import org.infinispan.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
-import org.infinispan.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
+import org.infinispan.objectfilter.impl.syntax.parser.ProtobufPropertyHelper;
 import org.infinispan.objectfilter.impl.util.StringHelper;
+import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.GenericDescriptor;
+import org.infinispan.protostream.descriptors.JavaType;
+import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 
-public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
+public class RemoteHibernateSearchPropertyHelper extends ProtobufPropertyHelper {
 
-   public static final String KEY = "__ISPN_Key";
-   public static final String VALUE = CacheValuePropertyPath.VALUE_PROPERTY_NAME;
-   public static final String VERSION = VersionPropertyPath.VERSION_PROPERTY_NAME;
-   public static final String SCORE = ScorePropertyPath.SCORE_PROPERTY_NAME;
+   public static RemoteHibernateSearchPropertyHelper create(SerializationContext serializationContext,
+                                                            SearchMapping searchMapping) {
+      RemoteIndexFieldProvider indexedFieldProvider = new RemoteIndexFieldProvider(serializationContext, searchMapping);
+      return new RemoteHibernateSearchPropertyHelper(serializationContext, searchMapping, indexedFieldProvider);
+   }
+
+   private static final String KEY = "__ISPN_Key";
 
    private final SearchMapping searchMapping;
 
-   public HibernateSearchPropertyHelper(SearchMapping searchMapping, EntityNameResolver<Class<?>> entityNameResolver) {
-      super(entityNameResolver);
+   public RemoteHibernateSearchPropertyHelper(SerializationContext serializationContext, SearchMapping searchMapping,
+                                              IndexedFieldProvider<Descriptor> indexedFieldProvider) {
+      super(serializationContext, indexedFieldProvider);
       this.searchMapping = searchMapping;
    }
 
    @Override
-   public Object convertToPropertyType(Class<?> entityType, String[] propertyPath, String value) {
+   public Object convertToPropertyType(Descriptor entityType, String[] propertyPath, String value) {
       IndexValueFieldDescriptor fieldDescriptor = getValueFieldDescriptor(entityType, propertyPath);
       if (fieldDescriptor == null) {
          return super.convertToPropertyType(entityType, propertyPath, value);
@@ -56,7 +65,7 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
    }
 
    @Override
-   public Class<?> getPrimitivePropertyType(Class<?> entityType, String[] propertyPath) {
+   public Class<?> getPrimitivePropertyType(Descriptor entityType, String[] propertyPath) {
       if (propertyPath.length == 1) {
          if (propertyPath[0].equals(VERSION)) {
             return EntryVersion.class;
@@ -79,7 +88,7 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
    }
 
    @Override
-   public Class<?> getIndexedPropertyType(Class<?> entityType, String[] propertyPath) {
+   public Class<?> getIndexedPropertyType(Descriptor entityType, String[] propertyPath) {
       IndexValueFieldDescriptor fieldDescriptor = getValueFieldDescriptor(entityType, propertyPath);
       if (fieldDescriptor == null) {
          return null;
@@ -89,13 +98,13 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
    }
 
    @Override
-   public boolean isNestedIndexStructure(Class<?> entityType, String[] propertyPath) {
+   public boolean isNestedIndexStructure(Descriptor entityType, String[] propertyPath) {
       IndexFieldDescriptor fieldDescriptor = getFieldDescriptor(entityType, propertyPath);
       return fieldDescriptor != null && fieldDescriptor.type().traits().contains(IndexFieldTraits.Predicates.NESTED);
    }
 
    @Override
-   public boolean isRepeatedProperty(Class<?> entityType, String[] propertyPath) {
+   public boolean isRepeatedProperty(Descriptor entityType, String[] propertyPath) {
       IndexFieldDescriptor fieldDescriptor = getFieldDescriptor(entityType, propertyPath);
       if (fieldDescriptor == null) {
          return super.isRepeatedProperty(entityType, propertyPath);
@@ -104,7 +113,7 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
    }
 
    @Override
-   public boolean hasEmbeddedProperty(Class<?> entityType, String[] propertyPath) {
+   public boolean hasEmbeddedProperty(Descriptor entityType, String[] propertyPath) {
       IndexFieldDescriptor fieldDescriptor = getFieldDescriptor(entityType, propertyPath);
       if (fieldDescriptor == null) {
          return super.hasEmbeddedProperty(entityType, propertyPath);
@@ -114,7 +123,7 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
    }
 
    @Override
-   public boolean hasProperty(Class<?> entityType, String[] propertyPath) {
+   public boolean hasProperty(Descriptor entityType, String[] propertyPath) {
       IndexFieldDescriptor fieldDescriptor = getFieldDescriptor(entityType, propertyPath);
       if (fieldDescriptor != null) {
          return true;
@@ -128,19 +137,7 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       return super.hasProperty(entityType, propertyPath);
    }
 
-   @Override
-   public IndexedFieldProvider<Class<?>> getIndexedFieldProvider() {
-      return entityType -> {
-         IndexDescriptor indexDescriptor = getIndexDescriptor(entityType);
-         if (indexDescriptor == null) {
-            return CLASS_NO_INDEXING;
-         }
-
-         return new SearchFieldIndexingMetadata(indexDescriptor);
-      };
-   }
-
-   private IndexValueFieldDescriptor getValueFieldDescriptor(Class<?> entityType, String[] propertyPath) {
+   private IndexValueFieldDescriptor getValueFieldDescriptor(Descriptor entityType, String[] propertyPath) {
       IndexFieldDescriptor fieldDescriptor = getFieldDescriptor(entityType, propertyPath);
       if (fieldDescriptor == null) {
          return null;
@@ -149,7 +146,7 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       return (fieldDescriptor.isObjectField()) ? null : fieldDescriptor.toValueField();
    }
 
-   private IndexFieldDescriptor getFieldDescriptor(Class<?> entityType, String[] propertyPath) {
+   private IndexFieldDescriptor getFieldDescriptor(Descriptor entityType, String[] propertyPath) {
       IndexDescriptor indexDescriptor = getIndexDescriptor(entityType);
       if (indexDescriptor == null) {
          return null;
@@ -159,8 +156,12 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       return field.orElse(null);
    }
 
-   private IndexDescriptor getIndexDescriptor(Class<?> type) {
-      SearchIndexedEntity indexedEntity = searchMapping.indexedEntity(type);
+   private IndexDescriptor getIndexDescriptor(Descriptor type) {
+      if (searchMapping == null) {
+         return null;
+      }
+
+      SearchIndexedEntity indexedEntity = searchMapping.indexedEntity(type.getFullName());
       if (indexedEntity == null) {
          return null;
       }
@@ -168,12 +169,54 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       return indexedEntity.indexManager().descriptor();
    }
 
-   private static class SearchFieldIndexingMetadata implements IndexedFieldProvider.FieldIndexingMetadata<Class<?>> {
+   public static class RemoteIndexFieldProvider implements IndexedFieldProvider<Descriptor> {
 
+      private final SerializationContext serializationContext;
+      private final SearchMapping searchMapping;
+
+      public RemoteIndexFieldProvider(SerializationContext serializationContext, SearchMapping searchMapping) {
+         this.serializationContext = serializationContext;
+         this.searchMapping = searchMapping;
+      }
+
+      @Override
+      public FieldIndexingMetadata<Descriptor> get(Descriptor messageDescriptor) {
+         if (searchMapping == null) {
+            return new ProtobufFieldIndexingMetadata(messageDescriptor, serializationContext.getGenericDescriptors());
+         }
+
+         SearchIndexedEntity indexedEntity = searchMapping.indexedEntity(messageDescriptor.getFullName());
+         if (indexedEntity == null) {
+            return new ProtobufFieldIndexingMetadata(messageDescriptor, serializationContext.getGenericDescriptors());
+         }
+
+         IndexDescriptor descriptor = indexedEntity.indexManager().descriptor();
+         return new RemoteHibernateSearchPropertyHelper.SearchFieldIndexingMetadata(
+               descriptor, messageDescriptor, serializationContext.getGenericDescriptors());
+      }
+   }
+
+   public static class SearchFieldIndexingMetadata implements IndexedFieldProvider.FieldIndexingMetadata<Descriptor> {
+
+      private final Descriptor messageDescriptor;
       private final IndexDescriptor indexDescriptor;
+      private final String keyProperty;
+      private final Descriptor keyMessageDescriptor;
 
-      public SearchFieldIndexingMetadata(IndexDescriptor indexDescriptor) {
+      public SearchFieldIndexingMetadata(IndexDescriptor indexDescriptor, Descriptor messageDescriptor, Map<String, GenericDescriptor> genericDescriptors) {
+         if (messageDescriptor == null) {
+            throw new IllegalArgumentException("argument cannot be null");
+         }
          this.indexDescriptor = indexDescriptor;
+         this.messageDescriptor = messageDescriptor;
+         IndexingMetadata indexingMetadata = findProcessedAnnotation(messageDescriptor, IndexingMetadata.INDEXED_ANNOTATION);
+         if (indexingMetadata != null && indexingMetadata.indexingKey() != null) {
+            keyProperty = indexingMetadata.indexingKey().fieldName();
+            keyMessageDescriptor = (Descriptor) genericDescriptors.get(indexingMetadata.indexingKey().typeFullName());
+         } else {
+            keyProperty = null;
+            keyMessageDescriptor = null;
+         }
       }
 
       @Override
@@ -220,12 +263,29 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
 
       @Override
       public Object getNullMarker(String[] propertyPath) {
+         Descriptor md = messageDescriptor;
+         int i = 0;
+         for (String p : propertyPath) {
+            i++;
+            FieldDescriptor field = md.findFieldByName(p);
+            if (field == null) {
+               break;
+            }
+            if (i == propertyPath.length) {
+               IndexingMetadata indexingMetadata = findProcessedAnnotation(md, IndexingMetadata.INDEXED_ANNOTATION);
+               return indexingMetadata == null ? null : indexingMetadata.getNullMarker(field.getName());
+            }
+            if (field.getJavaType() != JavaType.MESSAGE) {
+               break;
+            }
+            md = field.getMessageType();
+         }
          return null;
       }
 
       @Override
-      public Class<?> keyType(String property) {
-         return null;
+      public Descriptor keyType(String property) {
+         return (property.equals(keyProperty)) ? keyMessageDescriptor : null;
       }
 
       private IndexValueFieldTypeDescriptor getField(String[] propertyPath) {
@@ -241,5 +301,6 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
 
          return indexFieldDescriptor.toValueField().type();
       }
+
    }
 }
