@@ -23,6 +23,8 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.counter.exception.CounterException;
+import org.infinispan.counter.exception.CounterOutOfBoundsException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
@@ -425,4 +427,14 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Cache '%s' with marshaller %s does not handle server storage type '%s'. Configure the cache or default marshaller.", id = 4117)
    void invalidateNearDefaultMarshallerMismatch(String cacheName, Class<?> clazz, MediaType serverKeyType);
+
+   @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 4118)
+   CounterOutOfBoundsException counterOurOfBounds(String bound);
+
+   @Message(value = "Invalid counter type. Expected=%s but got %s", id = 4119)
+   CounterException invalidCounterType(String expected, String actual);
+
+   @Message(value = "Counter '%s' is not defined.", id = 4120)
+   CounterException undefinedCounter(String name);
+
 }

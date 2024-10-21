@@ -2,17 +2,17 @@ package org.infinispan.client.hotrod.counter.operation;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.exception.CounterOutOfBoundsException;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 
 /**
  * A compare-and-set operation for {@link StrongCounter#compareAndSwap(long, long)} and {@link
@@ -22,8 +22,6 @@ import org.infinispan.counter.exception.CounterOutOfBoundsException;
  * @since 9.2
  */
 public class CompareAndSwapOperation extends BaseCounterOperation<Long> {
-
-   private static final Log commonsLog = LogFactory.getLog(CompareAndSwapOperation.class, Log.class);
 
    private final long expect;
    private final long update;
@@ -56,9 +54,9 @@ public class CompareAndSwapOperation extends BaseCounterOperation<Long> {
    private void assertBoundaries(short status) {
       if (status == NOT_EXECUTED_WITH_PREVIOUS) {
          if (update >= counterConfiguration.upperBound()) {
-            throw commonsLog.counterOurOfBounds(CounterOutOfBoundsException.UPPER_BOUND);
+            throw Log.HOTROD.counterOurOfBounds(CounterOutOfBoundsException.UPPER_BOUND);
          } else {
-            throw commonsLog.counterOurOfBounds(CounterOutOfBoundsException.LOWER_BOUND);
+            throw Log.HOTROD.counterOurOfBounds(CounterOutOfBoundsException.LOWER_BOUND);
          }
       }
    }

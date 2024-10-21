@@ -11,7 +11,7 @@ import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.security.AuthorizationPermission;
@@ -29,8 +29,11 @@ import org.infinispan.util.logging.events.EventLogLevel;
  * @author Ryan Emerson
  * @since 10.0
  */
-@AutoProtoSchemaBuilder(
-      dependsOn = org.infinispan.commons.marshall.PersistenceContextInitializer.class,
+@ProtoSchema(
+      dependsOn = {
+            org.infinispan.commons.marshall.PersistenceContextInitializer.class,
+            org.infinispan.counter.api._private.PersistenceContextInitializer.class
+      },
       includeClasses = {
             ByteString.class,
             EmbeddedMetadata.class,
