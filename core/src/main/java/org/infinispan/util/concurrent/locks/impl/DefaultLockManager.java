@@ -5,6 +5,7 @@ import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -28,6 +29,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.ExceptionSyncInvocationStage;
@@ -37,6 +39,7 @@ import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
+import org.infinispan.util.concurrent.locks.DeadlockDetection;
 import org.infinispan.util.concurrent.locks.ExtendedLockPromise;
 import org.infinispan.util.concurrent.locks.KeyAwareLockListener;
 import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
@@ -44,6 +47,7 @@ import org.infinispan.util.concurrent.locks.LockListener;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockPromise;
 import org.infinispan.util.concurrent.locks.LockState;
+import org.infinispan.util.concurrent.locks.deadlock.DeadlockDetectionLockListener;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -63,10 +67,18 @@ public class DefaultLockManager implements LockManager {
 
    @Inject LockContainer lockContainer;
    @Inject Configuration configuration;
+   @Inject DeadlockDetection deadlockDetection;
    @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService scheduler;
    @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
    Executor nonBlockingExecutor;
+
+   private DeadlockDetectionLockListener listener;
+
+   @Start
+   void start() {
+      this.listener = new DeadlockDetectionLockListener(this, deadlockDetection);
+   }
 
    @Override
    public KeyAwareLockPromise lock(Object key, Object lockOwner, long time, TimeUnit unit) {
@@ -89,6 +101,11 @@ public class DefaultLockManager implements LockManager {
       }
 
       ExtendedLockPromise promise = lockContainer.acquire(key, lockOwner, time, unit);
+      // Initialize deadlock detection if the lock isn't acquire immediately.
+      if (deadlockDetection.isEnabled() && !promise.isAvailable()) {
+         deadlockDetection.initializeDeadlockDetection(lockOwner, promise.getOwner());
+         promise.addListener(ev -> listener.onEvent(key, ev));
+      }
       return new KeyAwareExtendedLockPromise(promise, key, unit.toMillis(time)).scheduleLockTimeoutTask(scheduler);
    }
 
@@ -130,6 +147,18 @@ public class DefaultLockManager implements LockManager {
       }
       compositeLockPromise.scheduleLockTimeoutTask(scheduler, time, unit);
       compositeLockPromise.markListAsFinal();
+
+      // Check whether the locks are all acquired.
+      // In case there are pending locks, we need to starting probing for a deadlock.
+      if (deadlockDetection.isEnabled() && !compositeLockPromise.isAvailable()) {
+         Set<Object> pending = new HashSet<>(compositeLockPromise.lockPromiseList.size());
+         for (KeyAwareExtendedLockPromise promise : compositeLockPromise.lockPromiseList) {
+            if (!promise.isAvailable() && pending.add(promise.getOwner()))
+               deadlockDetection.initializeDeadlockDetection(lockOwner, promise.getOwner());
+         }
+
+         compositeLockPromise.addListener(listener);
+      }
       return compositeLockPromise;
    }
 
@@ -198,6 +227,14 @@ public class DefaultLockManager implements LockManager {
    public Object getOwner(Object key) {
       InfinispanLock lock = lockContainer.getLock(key);
       return lock == null ? null : lock.getLockOwner();
+   }
+
+   @Override
+   public Collection<Object> getPendingOwners(Object key) {
+      InfinispanLock lock = lockContainer.getLock(key);
+      return lock == null
+            ? Collections.emptyList()
+            : lock.pending();
    }
 
    @Override
@@ -295,6 +332,11 @@ public class DefaultLockManager implements LockManager {
       }
 
       @Override
+      public void completeExceptionally(LockState state) {
+         lockPromise.cancel(state);
+      }
+
+      @Override
       public TimeoutException get() {
          return log.unableToAcquireLock(Util.prettyPrintTime(timeoutMillis), toStr(key), lockPromise.getRequestor(),
                lockPromise.getOwner());
@@ -322,7 +364,7 @@ public class DefaultLockManager implements LockManager {
       private final CompletableFuture<LockState> notifier;
       private final Executor executor;
       @SuppressWarnings("CanBeFinal")
-      volatile LockState lockState = LockState.ACQUIRED;
+      volatile LockState lockState = LockState.WAITING;
       private final AtomicInteger countersLeft = new AtomicInteger();
       private volatile ScheduledFuture<Void> timeoutTask;
 
@@ -410,14 +452,18 @@ public class DefaultLockManager implements LockManager {
             cancelAll(state);
             return;
          }
-         if (countersLeft.decrementAndGet() == 0) {
+         if (countersLeft.decrementAndGet() == 0 && cas(state)) {
             cancelTimeoutTask();
             notifier.complete(lockState);
          }
       }
 
+      private boolean cas(LockState state) {
+         return UPDATER.compareAndSet(this, LockState.WAITING, state);
+      }
+
       private void cancelAll(LockState state) {
-         if (UPDATER.compareAndSet(this, LockState.ACQUIRED, state)) {
+         if (cas(state)) {
             cancelTimeoutTask();
             //complete the future before cancel other locks. the remaining locks will be invoke onEvent()
             notifier.complete(state);
@@ -442,6 +488,11 @@ public class DefaultLockManager implements LockManager {
          return null;
       }
 
+      @Override
+      public void completeExceptionally(LockState state) {
+         cancelAll(state);
+      }
+
       /**
        * Schedule a timeout task. Must be called before {@link #markListAsFinal()}
        */
@@ -456,7 +507,7 @@ public class DefaultLockManager implements LockManager {
             return acquired.get();
          }
          T rv = null;
-         for (LockPromise lockPromise : lockPromiseList) {
+         for (KeyAwareExtendedLockPromise lockPromise : lockPromiseList) {
             try {
                lockPromise.lock();
             } catch (Throwable throwable) {
@@ -465,6 +516,10 @@ public class DefaultLockManager implements LockManager {
                }
             }
          }
+
+         if (rv == null)
+            return acquired.get();
+
          return rv;
       }
 

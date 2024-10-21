@@ -125,6 +125,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.locks.deadlock.DeadlockProbeCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
@@ -346,6 +347,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public LockControlCommand buildLockControlCommand(Collection<?> keys, long flagsBitSet) {
       return new LockControlCommand(keys, cacheName, flagsBitSet, null);
+   }
+
+   @Override
+   public DeadlockProbeCommand buildDeadlockProbeCommand(GlobalTransaction initiator, GlobalTransaction holder) {
+      return new DeadlockProbeCommand(cacheName, initiator, holder);
    }
 
    @Override

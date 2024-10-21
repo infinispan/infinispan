@@ -111,6 +111,7 @@ import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.ReclosableLatch;
+import org.infinispan.util.concurrent.locks.deadlock.DeadlockProbeCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
@@ -348,6 +349,11 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public LockControlCommand buildLockControlCommand(Collection<?> keys, long flagsBitSet) {
       return actual.buildLockControlCommand(keys, flagsBitSet);
+   }
+
+   @Override
+   public DeadlockProbeCommand buildDeadlockProbeCommand(GlobalTransaction initiator, GlobalTransaction holder) {
+      return actual.buildDeadlockProbeCommand(initiator, holder);
    }
 
    @Override
