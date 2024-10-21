@@ -120,7 +120,7 @@ public class ConsistentHashTest extends MultiHotRodServersTest {
       private BiConsumer<SocketAddress, ChannelOperation> onFetch;
 
       public ControlledChannelFactory(Configuration cfg) {
-         super(new CodecHolder(cfg.version().getCodec()));
+         super(cfg, new CodecHolder(cfg.version().getCodec()));
       }
 
       public void useOnFetch(BiConsumer<SocketAddress, ChannelOperation> onFetch) {
