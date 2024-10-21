@@ -11,24 +11,44 @@ final class PredicateOptimisations {
    private PredicateOptimisations() {
    }
 
+   enum PredicateComparisonResult {
+      /**
+       * Identical predicates.
+       */
+      IDENTICAL,
+
+      /**
+       * Opposite (one is the negated form of the other) but otherwise identical.
+       */
+      OPPOSITE,
+
+      /**
+       * Unrelated, incomparable.
+       */
+      UNRELATED
+   }
+
    /**
-    * Checks if two predicates are identical or opposite.
+    * Checks if two predicates are identical or opposite or completely unrelated.
     *
     * @param isFirstNegated  is first predicate negated?
     * @param first           the first predicate expression
     * @param isSecondNegated is second predicate negated?
     * @param second          the second predicate expression
-    * @return -1 if unrelated predicates, 0 if identical predicates, 1 if opposite predicates
+    * @return one of the PredicateComparisonResult enums
     */
-   public static int comparePrimaryPredicates(boolean isFirstNegated, PrimaryPredicateExpr first, boolean isSecondNegated, PrimaryPredicateExpr second) {
+   public static PredicateComparisonResult comparePrimaryPredicates(boolean isFirstNegated, PrimaryPredicateExpr first, boolean isSecondNegated, PrimaryPredicateExpr second) {
       if (first.getClass() == second.getClass()) {
          if (first instanceof ComparisonExpr) {
             ComparisonExpr comparison1 = (ComparisonExpr) first;
             ComparisonExpr comparison2 = (ComparisonExpr) second;
+
+            // We work under these assumptions, which are normally true unless there's's a bug somewhere
             assert comparison1.getLeftChild() instanceof PropertyValueExpr;
             assert comparison1.getRightChild() instanceof ConstantValueExpr;
             assert comparison2.getLeftChild() instanceof PropertyValueExpr;
             assert comparison2.getRightChild() instanceof ConstantValueExpr;
+
             if (comparison1.getLeftChild().equals(comparison2.getLeftChild()) && comparison1.getRightChild().equals(comparison2.getRightChild())) {
                ComparisonExpr.Type cmpType1 = comparison1.getComparisonType();
                if (isFirstNegated) {
@@ -38,13 +58,14 @@ final class PredicateOptimisations {
                if (isSecondNegated) {
                   cmpType2 = cmpType2.negate();
                }
-               return cmpType1 == cmpType2 ? 0 : (cmpType1 == cmpType2.negate() ? 1 : -1);
+               return cmpType1 == cmpType2 ? PredicateComparisonResult.IDENTICAL : (cmpType1 == cmpType2.negate() ?
+                     PredicateComparisonResult.OPPOSITE : PredicateComparisonResult.UNRELATED);
             }
          } else if (first.equals(second)) {
-            return isFirstNegated == isSecondNegated ? 0 : 1;
+            return isFirstNegated == isSecondNegated ? PredicateComparisonResult.IDENTICAL : PredicateComparisonResult.OPPOSITE;
          }
       }
-      return -1;
+      return PredicateComparisonResult.UNRELATED;
    }
 
    public static void optimizePredicates(List<BooleanExpr> children, boolean isConjunction) {
@@ -71,7 +92,7 @@ final class PredicateOptimisations {
       for (int i = 0; i < children.size(); i++) {
          BooleanExpr ci = children.get(i);
          if (ci instanceof BooleanOperatorExpr || ci instanceof FullTextBoostExpr || ci instanceof FullTextOccurExpr) {
-            // we may encounter non-predicate expressions, just ignore them
+            // we may encounter non-predicate expressions, just ignore them and move on
             continue;
          }
          boolean isCiNegated = ci instanceof NotExpr;
@@ -83,29 +104,30 @@ final class PredicateOptimisations {
          assert ci1.getChild() instanceof PropertyValueExpr;
          PropertyValueExpr pve = (PropertyValueExpr) ci1.getChild();
          if (pve.isRepeated()) {
-            // do not optimize repeated predicates
+            // do not optimize predicates on repeated properties
             continue;
          }
          int j = i + 1;
          while (j < children.size()) {
             BooleanExpr cj = children.get(j);
-            // we may encounter non-predicate expressions, just ignore them
+            // we may encounter non-predicate expressions, just ignore them and move on
             if (!(cj instanceof BooleanOperatorExpr || cj instanceof FullTextBoostExpr || cj instanceof FullTextOccurExpr)) {
                boolean isCjNegated = cj instanceof NotExpr;
                if (isCjNegated) {
                   cj = ((NotExpr) cj).getChild();
                }
+               assert cj instanceof PrimaryPredicateExpr;
                PrimaryPredicateExpr cj1 = (PrimaryPredicateExpr) cj;
                assert cj1.getChild() instanceof PropertyValueExpr;
                PropertyValueExpr pve2 = (PropertyValueExpr) cj1.getChild();
-               // do not optimize repeated predicates
+               // do not optimize predicates on repeated properties
                if (!pve2.isRepeated()) {
-                  int res = comparePrimaryPredicates(isCiNegated, ci1, isCjNegated, cj1);
-                  if (res == 0) {
+                  PredicateComparisonResult res = comparePrimaryPredicates(isCiNegated, ci1, isCjNegated, cj1);
+                  if (res == PredicateComparisonResult.IDENTICAL) {
                      // found duplication
                      children.remove(j);
                      continue;
-                  } else if (res == 1) {
+                  } else if (res == PredicateComparisonResult.OPPOSITE) {
                      // found tautology or contradiction
                      children.clear();
                      children.add(ConstantBooleanExpr.forBoolean(!isConjunction));

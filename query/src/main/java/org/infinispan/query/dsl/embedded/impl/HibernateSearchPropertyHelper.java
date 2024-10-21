@@ -1,6 +1,5 @@
 package org.infinispan.query.dsl.embedded.impl;
 
-import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Optional;
@@ -12,7 +11,6 @@ import org.hibernate.search.engine.backend.metamodel.IndexFieldDescriptor;
 import org.hibernate.search.engine.backend.metamodel.IndexValueFieldDescriptor;
 import org.hibernate.search.engine.backend.metamodel.IndexValueFieldTypeDescriptor;
 import org.hibernate.search.engine.backend.types.IndexFieldTraits;
-import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
@@ -25,7 +23,7 @@ import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 
-public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
+public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
 
    public static final String KEY = "__ISPN_Key";
    public static final String VALUE = CacheValuePropertyPath.VALUE_PROPERTY_NAME;
@@ -47,15 +45,15 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       }
 
       Class<?> type = fieldDescriptor.type().dslArgumentClass();
-      if (Date.class != type) {
-         return super.convertToPropertyType(entityType, propertyPath, value);
+      if (Date.class == type) {
+         try {
+            return DateTools.stringToDate(value);
+         } catch (ParseException e) {
+            throw new ParsingException(e);
+         }
       }
 
-      try {
-         return DateTools.stringToDate(value);
-      } catch (ParseException e) {
-         throw new ParsingException(e);
-      }
+      return super.convertToPropertyType(entityType, propertyPath, value);
    }
 
    @Override
@@ -94,19 +92,7 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
    @Override
    public boolean isNestedIndexStructure(Class<?> entityType, String[] propertyPath) {
       IndexFieldDescriptor fieldDescriptor = getFieldDescriptor(entityType, propertyPath);
-
-      if (fieldDescriptor != null) {
-         // TODO replace reflection with direct call to type().traits()
-         // currently direct call to type() will fail the quarkus build
-         // https://hibernate.atlassian.net/browse/HSEARCH-3909 check it
-         Method typeMethod = ReflectionUtil.findMethod(fieldDescriptor.getClass(), "type");
-         Object type = ReflectionUtil.invokeMethod(fieldDescriptor, typeMethod, new Object[]{});
-         Method traitsMethod = ReflectionUtil.findMethod(type.getClass(), "traits");
-         Set<String> traits = (Set<String>) ReflectionUtil.invokeMethod(type, traitsMethod, new Object[]{});
-
-         return traits.contains(IndexFieldTraits.Predicates.NESTED);
-      }
-      return false;
+      return fieldDescriptor != null && fieldDescriptor.type().traits().contains(IndexFieldTraits.Predicates.NESTED);
    }
 
    @Override
@@ -183,12 +169,17 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       return indexedEntity.indexManager().descriptor();
    }
 
-   private static class SearchFieldIndexingMetadata implements IndexedFieldProvider.FieldIndexingMetadata<Class<?>> {
+   private static final class SearchFieldIndexingMetadata implements IndexedFieldProvider.FieldIndexingMetadata<Class<?>> {
 
       private final IndexDescriptor indexDescriptor;
 
       public SearchFieldIndexingMetadata(IndexDescriptor indexDescriptor) {
          this.indexDescriptor = indexDescriptor;
+      }
+
+      @Override
+      public boolean hasProperty(String[] propertyPath) {
+         return getField(propertyPath) != null;
       }
 
       @Override
@@ -230,9 +221,7 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       @Override
       public boolean isVector(String[] propertyPath) {
          IndexValueFieldTypeDescriptor field = getField(propertyPath);
-
-         // TODO https://hibernate.atlassian.net/browse/HSEARCH-3909 check it
-         return true;
+         return field != null && field.traits().contains(IndexFieldTraits.Predicates.KNN);
       }
 
       @Override
@@ -243,6 +232,19 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       @Override
       public Class<?> keyType(String property) {
          return null;
+      }
+
+      @Override
+      public boolean isSpatial(String[] propertyPath) {
+         IndexValueFieldTypeDescriptor field = getField(propertyPath);
+         if (field == null) {
+            return false;
+         }
+
+         Set<String> traits = field.traits();
+         return  (traits.contains(IndexFieldTraits.Predicates.SPATIAL_WITHIN_BOUNDING_BOX) ||
+               traits.contains(IndexFieldTraits.Predicates.SPATIAL_WITHIN_CIRCLE) ||
+               traits.contains(IndexFieldTraits.Predicates.SPATIAL_WITHIN_POLYGON));
       }
 
       private IndexValueFieldTypeDescriptor getField(String[] propertyPath) {

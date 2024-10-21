@@ -26,7 +26,7 @@ import org.infinispan.query.remote.impl.indexing.infinispan.IndexingMetadataHold
  *
  * @since 12.0
  */
-public class MessageReferenceProvider {
+public final class MessageReferenceProvider {
 
    public static final Set<String> COMMON_MESSAGE_TYPES =
          new HashSet<>(Arrays.asList(FieldReferenceProvider.COMMON_MESSAGE_TYPES));
@@ -118,7 +118,7 @@ public class MessageReferenceProvider {
       return indexingMetadata;
    }
 
-   public static class Embedded {
+   public static final class Embedded {
       private final String fieldName;
       private final String typeFullName;
       private final boolean repeated;
@@ -126,7 +126,7 @@ public class MessageReferenceProvider {
       private final ObjectStructure structure;
       private final IndexingMetadataHolder holder;
 
-      public Embedded(String fieldName, String typeFullName, boolean repeated, FieldMapping fieldMapping,
+      private Embedded(String fieldName, String typeFullName, boolean repeated, FieldMapping fieldMapping,
                       IndexingMetadataHolder holder) {
          this.fieldName = fieldName;
          this.typeFullName = typeFullName;
@@ -138,7 +138,7 @@ public class MessageReferenceProvider {
       }
 
       // typically invoked to create an index-embedded for the cache key
-      public Embedded(String fieldName, String typeFullName, Integer includeDepth) {
+      private Embedded(String fieldName, String typeFullName, Integer includeDepth) {
          this.fieldName = fieldName;
          this.typeFullName = typeFullName;
          this.repeated = false;
