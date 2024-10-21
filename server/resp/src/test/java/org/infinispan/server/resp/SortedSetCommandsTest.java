@@ -641,6 +641,23 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
             .containsExactly(
                   just(1, "gustavo"),
                   just(1, "ryan"));
+
+      // ZADD zset 1 b 2 c 3 d 4 e 5 f
+      assertThat(redis.zadd("zset",
+              just(1, "b"),
+              just(2, "c"),
+              just(3, "d"),
+              just(4, "e"),
+              just(5, "f"))).isEqualTo(5);
+
+      // ZRANGEBYSCORE zset (5 (+inf
+      assertThat(redis.zrangebyscore("zset",
+              Range.from(Range.Boundary.excluding(5),
+                      Range.Boundary.excluding(Double.POSITIVE_INFINITY)))).isEmpty();
+      // ZRANGEBYSCORE zset [6 (+inf
+      assertThat(redis.zrangebyscore("zset",
+              Range.from(Range.Boundary.including(6),
+                      Range.Boundary.excluding(Double.POSITIVE_INFINITY)))).isEmpty();
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zrangebyscore("another", Range.<Double>unbounded()));
    }
 
