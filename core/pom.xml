@@ -13,10 +13,18 @@
    <name>Infinispan Core</name>
    <description>Infinispan core module</description>
 
+   <properties>
+     <testjvm.jdkSpecificArgs>--enable-preview</testjvm.jdkSpecificArgs>
+   </properties>
+
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-commons</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-commons-spi</artifactId>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
