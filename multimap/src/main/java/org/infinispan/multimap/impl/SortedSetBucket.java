@@ -440,12 +440,14 @@ public class SortedSetBucket<V> implements SortableBucket<V> {
       } else {
          if (includeMin) {
             startSv = scoredEntries.lower(ScoredValue.of(min));
+            if (startSv == null) {
+               startSv = scoredEntries.first();
+            }
          } else {
             startSv = scoredEntries.higher(ScoredValue.of(min));
-         }
-
-         if (startSv == null) {
-            startSv = scoredEntries.first();
+            if (startSv == null) {
+               startSv = scoredEntries.last();
+            }
          }
       }
 
