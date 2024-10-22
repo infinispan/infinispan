@@ -41,7 +41,7 @@ public class SubscriberHandler extends CacheRespRequestHandler {
    private final Resp3Handler resp3Handler;
 
    public SubscriberHandler(RespServer respServer, Resp3Handler prevHandler) {
-      super(respServer);
+      super(respServer, prevHandler.cache());
       this.resp3Handler = prevHandler;
    }
 

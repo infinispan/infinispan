@@ -36,8 +36,8 @@ public class Resp3Handler extends Resp3AuthHandler {
 
    private final MediaType valueMediaType;
 
-   Resp3Handler(RespServer respServer, MediaType valueMediaType) {
-      super(respServer);
+   Resp3Handler(RespServer respServer, MediaType valueMediaType, AdvancedCache<byte[], byte[]> cache) {
+      super(respServer, cache);
       this.valueMediaType = valueMediaType;
 
       GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cache.getCacheManager());
