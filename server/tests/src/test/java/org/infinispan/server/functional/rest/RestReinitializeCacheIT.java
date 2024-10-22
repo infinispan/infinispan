@@ -10,6 +10,7 @@ import static org.infinispan.server.test.core.Common.sync;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED;
 
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 import org.assertj.core.api.ThrowableAssert;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -26,7 +27,7 @@ import org.infinispan.server.test.core.InfinispanServerDriver;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -40,12 +41,11 @@ public class RestReinitializeCacheIT {
                .property(INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED, "true")
                .build();
 
-   @AfterEach
-   protected void afterEach() {
+   @BeforeEach
+   protected void beforeEach() {
       InfinispanServerDriver driver = SERVER.getServerDriver();
-      for (int i = 0; i < 3; i++) {
-         if (driver.isRunning(i)) driver.stop(i);
-         driver.restart(i);
+      for (int i = 0; i < driver.getConfiguration().numServers(); i++) {
+         if (!driver.isRunning(i)) driver.restart(i);
       }
    }
 
@@ -83,6 +83,9 @@ public class RestReinitializeCacheIT {
       // The operation does not succeed because cluster have missing members.
       assertCacheMissingMembers(() -> hotRod.get("k"));
 
+      // Successfully reinitialize replicated caches
+      reinitialize(rest, "memcachedCache");
+
       // Add another member, but still missing nodes.
       serverDriver.restart(1);
       assertCacheMissingMembers(() -> hotRod.get("k"));
@@ -92,6 +95,9 @@ public class RestReinitializeCacheIT {
 
       // Cache working as expected.
       assertThat(hotRod.get("k")).isEqualTo("v");
+
+      // Initialize the missing member to complete the cluster.
+      serverDriver.restart(2);
    }
 
    @Test
@@ -122,7 +128,8 @@ public class RestReinitializeCacheIT {
       InfinispanServerDriver serverDriver = SERVER.getServerDriver();
       Eventually.eventually(
             "Cluster did not shutdown within timeout",
-            () -> (!serverDriver.isRunning(0) && !serverDriver.isRunning(1)),
+            () -> IntStream.range(0, serverDriver.getConfiguration().numServers())
+                  .noneMatch(serverDriver::isRunning),
             serverDriver.getTimeout(), 1, TimeUnit.SECONDS);
    }
 

@@ -822,12 +822,12 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                .fromPersistentState(persistentState.get());
          int missing = pastConsistentHash.getMembers().size() - members.size();
          int owners = joinInfo.getNumOwners();
-         if (!force && missing >= owners) {
+         boolean isReplicated = gcr.getCacheManager().getCacheConfiguration(cacheName).clustering().cacheMode().isReplicated();
+         if (!isReplicated && !force && missing >= owners) {
             throw log.missingTooManyMembers(cacheName, owners, missing, pastConsistentHash.getMembers().size());
          }
 
          boolean safelyRecovered = missing < owners;
-         boolean isReplicated = gcr.getCacheManager().getCacheConfiguration(cacheName).clustering().cacheMode().isReplicated();
          ConsistentHash ch;
          if (safelyRecovered && !isReplicated) {
             // We reuse the previous topology, only changing it to reflect the current members.
