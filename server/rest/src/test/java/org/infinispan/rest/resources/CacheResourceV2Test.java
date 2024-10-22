@@ -1990,6 +1990,14 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(response).containsReturnedText("The alias 'butch-cassidy' is already being used by cache 'robert-parker'");
    }
 
+   @Test
+   public void reinitializeNotExistentCache() {
+      RestCacheClient restClient = adminClient.cache("it-does-not-exist");
+      assertThat(restClient.markTopologyStable(false))
+            .isNotFound()
+            .hasReturnedText("\"Cache 'it-does-not-exist' does not exist\"");
+   }
+
    private void assertBadResponse(RestCacheClient client, String config) {
       RestResponse response = join(client.connectSource(RestEntity.create(APPLICATION_JSON, config)));
       ResponseAssertion.assertThat(response).isBadRequest();
