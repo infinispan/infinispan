@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.server.resp.CacheRespRequestHandler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
@@ -43,8 +44,8 @@ public class RespTransactionHandler extends CacheRespRequestHandler {
    private final List<TransactionCommand> queued;
    private boolean failed;
 
-   public RespTransactionHandler(RespServer respServer) {
-      super(respServer);
+   public RespTransactionHandler(RespServer respServer, AdvancedCache<byte[], byte[]> cache) {
+      super(respServer, cache);
       this.queued = new ArrayList<>();
    }
 
@@ -55,7 +56,7 @@ public class RespTransactionHandler extends CacheRespRequestHandler {
       // Doing specific checks here instead of implementing on the commands, so we can update this later, if necessary.
       if (command instanceof SUBSCRIBE || command instanceof PSUBSCRIBE) {
          CompletionStage<?> drop = dropTransaction(ctx);
-         SubscriberHandler subscriberHandler = new SubscriberHandler(respServer(), respServer().newHandler());
+         SubscriberHandler subscriberHandler = new SubscriberHandler(respServer(), respServer().newHandler(cache));
          return subscriberHandler.handleRequest(ctx, command, arguments).thenCombine(drop, (handler, ignore) -> handler);
       }
 

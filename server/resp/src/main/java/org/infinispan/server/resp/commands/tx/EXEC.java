@@ -51,7 +51,7 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
 
    @Override
    public CompletionStage<RespRequestHandler> perform(RespTransactionHandler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
-      Resp3Handler next = handler.respServer().newHandler();
+      Resp3Handler next = handler.respServer().newHandler(handler.cache());
       CompletionStage<?> cs = handler.performingOperations(ctx)
             .thenCompose(commands -> perform(commands, handler, next, ctx));
       return next.stageToReturn(cs, ctx, ignore -> next);
