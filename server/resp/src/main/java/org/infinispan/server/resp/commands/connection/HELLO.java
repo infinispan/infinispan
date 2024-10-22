@@ -68,10 +68,13 @@ public class HELLO extends RespCommand implements AuthResp3Command {
 
       if (successStage != null) {
          return handler.stageToReturn(successStage, ctx, success -> {
+            RespRequestHandler next = AUTH.silentCreateAfterAuthentication(success, handler);
+            if (next == null)
+               return handler;
+
             if (success) helloResponse(handler, ctx);
             else RespErrorUtil.unauthorized(handler.allocator());
-
-            return AUTH.silentCreateAfterAuthentication(success, handler);
+            return next;
          });
       }
 

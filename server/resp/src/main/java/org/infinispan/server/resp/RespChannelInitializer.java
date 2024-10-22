@@ -33,7 +33,7 @@ public class RespChannelInitializer implements NettyInitializer {
       if (respServer.getConfiguration().authentication().enabled()) {
          initialHandler = new Resp3AuthHandler(respServer);
       } else {
-         initialHandler = respServer.newHandler();
+         initialHandler = respServer.newHandler(respServer.getCache());
       }
 
       RespDecoder decoder = new RespDecoder();
