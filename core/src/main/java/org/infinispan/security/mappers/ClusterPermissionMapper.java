@@ -51,7 +51,7 @@ public class ClusterPermissionMapper implements MutableRolePermissionMapper {
       CacheMode cacheMode = globalConfiguration.isClustered() ? CacheMode.REPL_SYNC : CacheMode.LOCAL;
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg.clustering().cacheMode(cacheMode)
-            .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false)
+            .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(globalConfiguration.isClustered())
             .security().authorization().disable();
       internalCacheRegistry.registerInternalCache(CLUSTER_PERMISSION_MAPPER_CACHE, cfg.build(), EnumSet.of(InternalCacheRegistry.Flag.PERSISTENT));
    }
