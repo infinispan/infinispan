@@ -106,11 +106,16 @@ abstract class RESPAuthorizationTest {
    }
 
    @Test
-   public void testAllUsersConnectingAndOperating(Vertx vertx, VertxTestContext ctx) {
+   public void testOnlyAdminConnectAndOperate(Vertx vertx, VertxTestContext ctx) {
       List<Future<?>> futures = new ArrayList<>();
       for (TestUser user: TestUser.values()) {
          if (user == TestUser.ANONYMOUS) {
             assertAnonymous(createClient(user, vertx), r -> r.ping(Collections.emptyList()), ctx);
+            continue;
+         }
+
+         if (user != TestUser.ADMIN) {
+            assertUnauthorized(user, vertx, r -> r.ping(Collections.emptyList()), ctx);
             continue;
          }
 
@@ -158,6 +163,11 @@ abstract class RESPAuthorizationTest {
             continue;
          }
 
+         if (user != TestUser.ADMIN) {
+            assertUnauthorized(user, vertx, r -> r.info(Collections.emptyList()), ctx);
+            continue;
+         }
+
          RedisAPI redis = createConnection(user, vertx);
          Future<?> f = redis.info(Collections.emptyList())
                .onFailure(ctx::failNow)
@@ -177,6 +187,11 @@ abstract class RESPAuthorizationTest {
       for (TestUser user: TestUser.values()) {
          if (user == TestUser.ANONYMOUS) {
             assertAnonymous(createClient(user, vertx), r -> r.cluster(List.of("SHARDS")), ctx);
+            continue;
+         }
+
+         if (user != TestUser.ADMIN) {
+            assertUnauthorized(user, vertx, r -> r.cluster(List.of("SHARDS")), ctx);
             continue;
          }
 
@@ -232,6 +247,11 @@ abstract class RESPAuthorizationTest {
             continue;
          }
 
+         if (user != TestUser.ADMIN) {
+            assertUnauthorized(user, vertx, r -> r.cluster(List.of("NODES")), ctx);
+            continue;
+         }
+
          RedisAPI redis = createConnection(user, vertx);
          Future<?> f = redis.cluster(List.of("NODES"))
                .onFailure(ctx::failNow)
@@ -258,6 +278,21 @@ abstract class RESPAuthorizationTest {
                ctx.verify(() -> assertThat(r.cause())
                      .isInstanceOf(ConnectException.class)
                      .hasMessageStartingWith("Cannot connect to any of the provided endpoints"));
+            });
+   }
+
+   private void assertUnauthorized(TestUser user, Vertx vertx, Function<RedisAPI, Future<?>> consumer, VertxTestContext ctx) {
+      RedisAPI client = createConnection(user, vertx);
+      ctx.assertFailure(consumer.apply(client))
+            .onComplete(r -> {
+               if (r.succeeded()) {
+                  ctx.failNow(String.format("User '%s' should fail submitting operation", user));
+                  return;
+               }
+
+               ctx.verify(() -> assertThat(r.cause())
+                     .isInstanceOf(ConnectException.class)
+                     .hasMessageContaining("WRONGPASS"));
             });
    }
 

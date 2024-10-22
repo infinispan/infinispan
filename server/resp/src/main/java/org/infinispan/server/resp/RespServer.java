@@ -144,8 +144,8 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
       return cacheManager.<byte[], byte[]>getCache(configuration.defaultCacheName()).getAdvancedCache();
    }
 
-   public Resp3Handler newHandler() {
-      return new Resp3Handler(this, configuredValueType);
+   public Resp3Handler newHandler(AdvancedCache<byte[], byte[]> cache) {
+      return new Resp3Handler(this, configuredValueType, cache);
    }
 
    @Override
