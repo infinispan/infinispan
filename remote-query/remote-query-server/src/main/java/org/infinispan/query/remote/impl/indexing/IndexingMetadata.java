@@ -158,6 +158,10 @@ public final class IndexingMetadata {
       return fields.get(name);
    }
 
+   public Map<String, SpatialFieldMapping> getSpatialFields() {
+      return spatialFields;
+   }
+
    @Override
    public String toString() {
       return "IndexingMetadata{" +

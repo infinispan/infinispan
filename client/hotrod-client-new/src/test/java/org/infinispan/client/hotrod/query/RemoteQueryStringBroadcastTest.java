@@ -21,7 +21,8 @@ public class RemoteQueryStringBroadcastTest extends RemoteQueryStringTest {
             .storage(LOCAL_HEAP)
             .addIndexedEntity("sample_bank_account.User")
             .addIndexedEntity("sample_bank_account.Transaction")
-            .addIndexedEntity("sample_bank_account.AnalyzerTestEntity");
+            .addIndexedEntity("sample_bank_account.AnalyzerTestEntity")
+            .addIndexedEntity("sample_bank_account.FlightRoute");
       return cfgBuilder;
    }
 
