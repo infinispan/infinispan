@@ -2,12 +2,6 @@ package org.infinispan.multimap.impl;
 
 import static org.infinispan.commons.marshall.ProtoStreamTypeIds.MULTIMAP_INDEX_VALUE;
 
-import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
-import org.infinispan.protostream.annotations.ProtoFactory;
-import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoTypeId;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -23,6 +17,12 @@ import java.util.TreeSet;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Bucket used to store Sorted Set data type.
@@ -268,12 +268,14 @@ public class SortedSetBucket<V> implements SortableBucket<V> {
       }
 
       Double newScore = existingScore == null ? incr : existingScore + incr;
-      if (existingScore != null && (Double.isNaN(newScore) || Double.isInfinite(newScore)))
-         throw new IllegalStateException("increment would produce NaN or Infinity");
+      if (existingScore != null) {
+         if ((updateGreaterScoresOnly && newScore <= existingScore) || (updateLessScoresOnly && newScore >= existingScore)) {
+            // do nothing;
+            return null;
+         }
 
-      if (existingScore != null && ((updateGreaterScoresOnly && newScore <= existingScore) || (updateLessScoresOnly && newScore >= existingScore))) {
-         // do nothing
-         return null;
+         if (Double.isNaN(newScore))
+            throw new IllegalStateException("resulting score is not a number (NaN)");
       }
       addOrUpdate(new AddOrUpdatesCounters(), new ScoredValue<>(newScore, wrappedValue));
       return newScore;
