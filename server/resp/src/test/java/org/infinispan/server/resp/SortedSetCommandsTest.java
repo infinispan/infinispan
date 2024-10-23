@@ -13,6 +13,8 @@ import static io.lettuce.core.ZAggregateArgs.Builder.weights;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
 
 import java.util.List;
 
@@ -1198,6 +1200,96 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
             just(9, "c"),
             just(10, "d"));
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zunion("another", "people"));
+   }
+
+   public void testMixSetUnion() {
+      // sadd seta a b c
+      redis.sadd(k(0), v(0), v(1), v(2));
+
+      // zadd setb 1 b 2 c 3 d
+      redis.zadd(k(1), just(1, v(1)), just(2, v(2)), just(3, v(3)));
+
+      // zunion seta setb
+      assertThat(redis.zunion(k(0), k(1))).containsExactly(v(0), v(1), v(2), v(3));
+
+      // zunion seta setb withscores
+      assertThat(redis.zunionWithScores(k(0), k(1)))
+            .containsExactly(
+                  just(1, v(0)),
+                  just(2, v(1)),
+                  just(3, v(2)),
+                  just(3, v(3))
+            );
+
+      // zunion seta setb weights 2 3 withscores
+      assertThat(redis.zunionWithScores(weights(2, 3), k(0), k(1)))
+            .containsExactly(
+                  just(2, v(0)),
+                  just(5, v(1)),
+                  just(8, v(2)),
+                  just(9, v(3))
+            );
+
+      // zunion seta setb weights 2 3 aggregate max withscores
+      assertThat(redis.zunionWithScores(weights(2, 3).max(), k(0), k(1)))
+            .containsExactly(
+                  just(2, v(0)),
+                  just(3, v(1)),
+                  just(6, v(2)),
+                  just(9, v(3))
+            );
+   }
+
+   public void testMixSetInter() {
+      // sadd seta a b c
+      redis.sadd(k(0), v(0), v(1), v(2));
+
+      // zadd setb 1 b 2 c 3 d
+      redis.zadd(k(1), just(1, v(1)), just(2, v(2)), just(3, v(3)));
+
+      // zinter seta setb
+      assertThat(redis.zinter(k(0), k(1))).containsExactly(v(1), v(2));
+
+      // zinter seta setb
+      assertThat(redis.zinterWithScores(k(0), k(1)))
+            .containsExactly(
+                  just(2, v(1)),
+                  just(3, v(2))
+            );
+
+      // zinter seta setb weights 2 3 withscores
+      assertThat(redis.zinterWithScores(weights(2, 3), k(0), k(1)))
+            .containsExactly(
+                  just(5, v(1)),
+                  just(8, v(2))
+            );
+
+      // zinter seta setb weights 2 3 aggregate max withscores
+      assertThat(redis.zinterWithScores(weights(2, 3).max(), k(0), k(1)))
+            .containsExactly(
+                  just(3, v(1)),
+                  just(6, v(2))
+            );
+   }
+
+   public void testMixSetDiff() {
+      // sadd seta a b c
+      redis.sadd(k(0), v(0), v(1), v(2));
+
+      // zadd setb 1 b 2 c 3 d
+      redis.zadd(k(1), just(1, v(1)), just(2, v(2)), just(3, v(3)));
+
+      redis.sadd(k(2), v(3), v(4), v(5));
+
+      // zdiff 2 seta setb
+      assertThat(redis.zdiff(k(0), k(1))).containsExactly(v(0));
+
+      // Any order because k(2) is a regular set without order guarantees.
+      assertThat(redis.zdiff(k(2), k(1), k(0))).containsExactlyInAnyOrder(v(4), v(5));
+
+      // zdiff 2 seta setb withscores
+      assertThat(redis.zdiffWithScores(k(0), k(1)))
+            .containsExactly(just(1, v(0)));
    }
 
    public void testZUNIONSTORE() {
