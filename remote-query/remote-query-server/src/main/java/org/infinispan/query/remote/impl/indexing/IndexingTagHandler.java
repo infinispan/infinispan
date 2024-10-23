@@ -62,9 +62,16 @@ public final class IndexingTagHandler implements TagHandler {
          messageContext.addArrayItem(fieldPath, (Float)value);
          return;
       }
+
       IndexFieldReference<?> fieldReference = indexReferenceHolder.getFieldReference(fieldPath);
       if (fieldReference != null) {
          messageContext.addValue(fieldReference, value);
+         return;
+      }
+
+      IndexReferenceHolder.GeoIndexFieldReference geoReference = indexReferenceHolder.getGeoReference(fieldPath);
+      if (geoReference != null) {
+         messageContext.addGeoValue(geoReference, value);
       }
    }
 
@@ -178,5 +185,6 @@ public final class IndexingTagHandler implements TagHandler {
             addDefaultFieldToDocument(fieldDescriptor, defaultValue);
          }
       }
+      messageContext.writeGeoPoints();
    }
 }

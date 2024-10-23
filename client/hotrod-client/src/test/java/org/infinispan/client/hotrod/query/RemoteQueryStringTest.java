@@ -27,6 +27,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.query.dsl.embedded.QueryStringTest;
+import org.infinispan.query.dsl.embedded.testdomain.FlightRoute;
 import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
@@ -239,19 +240,18 @@ public class RemoteQueryStringTest extends QueryStringTest {
 
    @Override
    public void testSpatialPredicate() {
-      // TODO ISPN-8238 Support remote spatial queries
-//      Query<FlightRoute> q = createQueryFromString("SELECT r.name" +
-//            " FROM sample_bank_account.FlightRoute r" +
-//            " WHERE r.start WITHIN CIRCLE(46.7716, 23.5895, 100)");
-//
-//      List<FlightRoute> list = q.execute().list();
-//      assertEquals(1, list.size());
-//
-//      q = createQueryFromString("SELECT r.name" +
-//            " FROM sample_bank_account.FlightRoute r" +
-//            " WHERE r.start WITHIN CIRCLE(46.7716, 23.5895, 100) AND r.start NOT WITHIN CIRCLE(46.7716, 23.5895, 10)");
-//
-//      list = q.execute().list();
-//      assertEquals(0, list.size());
+      Query<FlightRoute> q = createQueryFromString("SELECT r.name" +
+            " FROM sample_bank_account.FlightRoute r" +
+            " WHERE r.start WITHIN CIRCLE(46.7716, 23.5895, 100)");
+
+      List<FlightRoute> list = q.execute().list();
+      assertEquals(1, list.size());
+
+      q = createQueryFromString("SELECT r.name" +
+            " FROM sample_bank_account.FlightRoute r" +
+            " WHERE r.start WITHIN CIRCLE(46.7716, 23.5895, 100) AND r.start NOT WITHIN CIRCLE(46.7716, 23.5895, 10)");
+
+      list = q.execute().list();
+      assertEquals(0, list.size());
    }
 }

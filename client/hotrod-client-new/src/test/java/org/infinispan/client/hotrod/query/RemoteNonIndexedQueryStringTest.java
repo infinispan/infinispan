@@ -138,6 +138,12 @@ public class RemoteNonIndexedQueryStringTest extends RemoteQueryStringTest {
       super.testFullTextRegexp2();
    }
 
+   @Test(expectedExceptions = HotRodClientException.class)
+   @Override
+   public void testSpatialPredicate() {
+      super.testSpatialPredicate();
+   }
+
    @Override
    public void testCustomFieldAnalyzer() {
       // Not applicable to non-indexed caches

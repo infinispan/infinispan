@@ -53,6 +53,7 @@ public class ProtobufMessageBinder implements TypeBinder {
    private IndexReferenceHolder createIndexReferenceProvider(TypeBindingContext context) {
       final Map<String, IndexFieldReference<?>> fieldReferenceMap = new HashMap<>();
       final Map<String, IndexObjectFieldReference> objectReferenceMap = new HashMap<>();
+      final Map<String, IndexReferenceHolder.GeoIndexFieldReference> geoReferenceMap = new HashMap<>();
 
       Stack<State> stack = new Stack<>();
       stack.push(new State(globalReferenceHolder.getMessageReferenceProviders().get(rootMessageName),
@@ -62,6 +63,7 @@ public class ProtobufMessageBinder implements TypeBinder {
       while (!stack.isEmpty()) {
          State currentState = stack.pop();
          fieldReferenceMap.putAll(currentState.bind());
+         geoReferenceMap.putAll(currentState.bindGeo());
 
          if (maxDepth != null && currentState.depth == maxDepth) {
             continue;
@@ -92,7 +94,7 @@ public class ProtobufMessageBinder implements TypeBinder {
          }
       }
 
-      return new IndexReferenceHolder(fieldReferenceMap, objectReferenceMap);
+      return new IndexReferenceHolder(fieldReferenceMap, objectReferenceMap, geoReferenceMap);
    }
 
    private static class State {
@@ -111,6 +113,10 @@ public class ProtobufMessageBinder implements TypeBinder {
 
       public Map<String, IndexFieldReference<?>> bind() {
          return messageReferenceProvider.bind(indexSchemaElement, path);
+      }
+
+      public Map<String, IndexReferenceHolder.GeoIndexFieldReference> bindGeo() {
+         return messageReferenceProvider.bindGeo(indexSchemaElement, path);
       }
    }
 }
