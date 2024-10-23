@@ -42,6 +42,7 @@ public class QUIT extends RespCommand implements AuthResp3Command, PubSubResp3Co
    @Override
    public CompletionStage<RespRequestHandler> perform(RespTransactionHandler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
       return handler.dropTransaction(ctx)
-            .thenCompose(ignore -> handler.respServer().newHandler().handleRequest(ctx, this, arguments));
+            .thenCompose(ignore -> handler.respServer().newHandler(handler.cache())
+                  .handleRequest(ctx, this, arguments));
    }
 }

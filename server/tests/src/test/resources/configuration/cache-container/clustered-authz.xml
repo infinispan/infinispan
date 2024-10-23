@@ -24,4 +24,11 @@
          <backup site="NYC"/>
       </backups>
    </distributed-cache>
+
+   <replicated-cache name="respCache" key-partitioner="org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner">
+      <encoding media-type="application/octet-stream"/>
+      <security>
+         <authorization/>
+      </security>
+   </replicated-cache>
 </cache-container>

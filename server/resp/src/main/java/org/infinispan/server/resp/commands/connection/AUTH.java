@@ -31,13 +31,23 @@ public class AUTH extends RespCommand implements AuthResp3Command {
    }
 
    static RespRequestHandler createAfterAuthentication(boolean success, Resp3AuthHandler prev) {
+      RespRequestHandler next = silentCreateAfterAuthentication(success, prev);
+      if (next == null)
+         return prev;
+
       if (!success) RespErrorUtil.unauthorized(prev.allocator());
       else Resp3Response.ok(prev.allocator());
-
-      return silentCreateAfterAuthentication(success, prev);
+      return next;
    }
 
    static RespRequestHandler silentCreateAfterAuthentication(boolean success, Resp3AuthHandler prev) {
-      return success ? prev.respServer().newHandler() : prev;
+      if (!success) return prev;
+
+      try {
+         return prev.respServer().newHandler(prev.cache());
+      } catch (SecurityException ignore) {
+         RespErrorUtil.unauthorized(prev.allocator());
+         return null;
+      }
    }
 }

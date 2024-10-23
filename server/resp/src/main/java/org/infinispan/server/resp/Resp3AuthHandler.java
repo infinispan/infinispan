@@ -7,6 +7,7 @@ import java.util.concurrent.CompletionStage;
 import javax.security.auth.Subject;
 import javax.security.sasl.SaslException;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.resp.authentication.RespAuthenticator;
@@ -17,7 +18,11 @@ import io.netty.channel.ChannelHandlerContext;
 public class Resp3AuthHandler extends CacheRespRequestHandler {
 
    public Resp3AuthHandler(RespServer server) {
-      super(server);
+      this(server, server.getCache());
+   }
+
+   protected Resp3AuthHandler(RespServer server, AdvancedCache<byte[], byte[]> cache) {
+      super(server, cache);
    }
 
    @Override

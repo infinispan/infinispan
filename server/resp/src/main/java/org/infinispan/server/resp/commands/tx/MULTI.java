@@ -47,7 +47,7 @@ public class MULTI extends RespCommand implements Resp3Command, TransactionResp3
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
       Resp3Response.ok(handler.allocator());
-      return CompletableFuture.completedFuture(new RespTransactionHandler(handler.respServer()));
+      return CompletableFuture.completedFuture(new RespTransactionHandler(handler.respServer(), handler.cache()));
    }
 
    @Override

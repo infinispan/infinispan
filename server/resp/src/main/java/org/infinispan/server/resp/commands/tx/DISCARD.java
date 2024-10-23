@@ -38,7 +38,7 @@ public class DISCARD extends RespCommand implements Resp3Command, TransactionRes
 
    @Override
    public CompletionStage<RespRequestHandler> perform(RespTransactionHandler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
-      Resp3Handler next = handler.respServer().newHandler();
+      Resp3Handler next = handler.respServer().newHandler(handler.cache());
       return handler.stageToReturn(handler.dropTransaction(ctx), ctx, ignore -> {
          Resp3Response.ok(handler.allocator());
          return next;
