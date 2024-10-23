@@ -19,6 +19,11 @@ public class InfinispanAnnotations {
    public static final String KEY_PROPERTY_NAME_ATTRIBUTE = "keyPropertyName";
    public static final String KEY_INCLUDE_DEPTH_ATTRIBUTE = "keyIncludeDepth";
 
+   public static final String SPATIALS_ANNOTATION = "GeoPoints";
+   public static final String SPATIAL_ANNOTATION = "GeoPoint";
+   public static final String SPATIAL_FIELD_NAME_ATTRIBUTE = "fieldName";
+   public static final String SPATIAL_MARKER_ATTRIBUTE = "marker";
+
    public static final String BASIC_ANNOTATION = "Basic";
    public static final String NAME_ATTRIBUTE = "name";
    public static final String SEARCHABLE_ATTRIBUTE = "searchable";
@@ -48,8 +53,28 @@ public class InfinispanAnnotations {
    public static final String BEAM_WIDTH_ATTRIBUTE = "beamWidth";
    public static final String MAX_CONNECTIONS_ATTRIBUTE = "maxConnections";
 
+   public static final String GEO_FIELD_ANNOTATION = "GeoField";
+   public static final String LATITUDE_ANNOTATION = "Latitude";
+   public static final String LATITUDE_MARKER_ATTRIBUTE = "marker";
+   public static final String LONGITUDE_ANNOTATION = "Longitude";
+   public static final String LONGITUDE_MARKER_ATTRIBUTE = "marker";
+
    public static void configure(Configuration.Builder builder) {
       builder.annotationsConfig()
+            .annotation(SPATIAL_ANNOTATION, AnnotationElement.AnnotationTarget.MESSAGE)
+            .repeatable(SPATIALS_ANNOTATION)
+               .attribute(SPATIAL_FIELD_NAME_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.STRING)
+                  .defaultValue("")
+               .attribute(SPATIAL_MARKER_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.STRING)
+                  .defaultValue("")
+               .attribute(PROJECTABLE_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.BOOLEAN)
+                  .defaultValue(false)
+               .attribute(SORTABLE_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.BOOLEAN)
+                  .defaultValue(false)
             .annotation(BASIC_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
                .attribute(NAME_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.STRING)
@@ -179,6 +204,27 @@ public class InfinispanAnnotations {
                .attribute(MAX_CONNECTIONS_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.INT)
                   .defaultValue(Values.DEFAULT_MAX_CONNECTIONS)
+            .annotation(GEO_FIELD_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
+               .attribute(SPATIAL_FIELD_NAME_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.STRING)
+                  .defaultValue("")
+               .attribute(SPATIAL_MARKER_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.STRING)
+                  .defaultValue("")
+               .attribute(PROJECTABLE_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.BOOLEAN)
+                  .defaultValue(false)
+               .attribute(SORTABLE_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.BOOLEAN)
+                  .defaultValue(false)
+            .annotation(LATITUDE_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
+               .attribute(LATITUDE_MARKER_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.STRING)
+                  .defaultValue("")
+            .annotation(LONGITUDE_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
+               .attribute(LONGITUDE_MARKER_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.STRING)
+                  .defaultValue("")
                ;
    }
 

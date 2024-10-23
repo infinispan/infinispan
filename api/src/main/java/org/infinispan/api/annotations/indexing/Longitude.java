@@ -17,7 +17,7 @@ import org.infinispan.api.common.annotations.indexing._private.LongitudeProcesso
  * <p>
  * Infinispan version of {@link org.hibernate.search.mapper.pojo.bridge.builtin.annotation.Longitude}
  *
- * @since 14.0
+ * @since 15.1
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD})
@@ -27,7 +27,7 @@ public @interface Longitude {
 
    /**
     * @return The name of the marker this marker belongs to.
-    * Set it to the value of {@link GeoCoordinates#marker()}
+    * Set it to the value of {@link GeoPoint#marker()}
     * so that the bridge detects this marker.
     */
    String marker() default "";

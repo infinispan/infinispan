@@ -20,6 +20,7 @@ public final class IndexingMessageContext extends MessageContext<IndexingMessage
    // null if the embedded is not indexed
    private final DocumentElement document;
    private final TypeAggregator typeAggregator;
+   private final IndexingMessageContext parentContext;
 
    private Map<String, List<Float>> vectorAggregators;
    private Map<String, GeoPointInfo> geoPoints;
@@ -30,6 +31,7 @@ public final class IndexingMessageContext extends MessageContext<IndexingMessage
       super(parentContext, fieldDescriptor, messageDescriptor);
       this.document = document;
       this.typeAggregator = typeAggregator;
+      this.parentContext = parentContext;
    }
 
    public DocumentElement getDocument() {
@@ -57,6 +59,11 @@ public final class IndexingMessageContext extends MessageContext<IndexingMessage
    }
 
    public void addGeoValue(IndexReferenceHolder.GeoIndexFieldReference geoReference, Object value) {
+      if (document == null) {
+         parentContext.addGeoValue(geoReference, value);
+         return;
+      }
+
       if (geoPoints == null) {
          geoPoints = new HashMap<>();
       }

@@ -89,17 +89,15 @@ public final class Search5MetadataCreator implements AnnotationMetadataCreator<I
       for (FieldDescriptor fd : descriptor.getFields()) {
          Map<String, AnnotationElement.Annotation> annotations = fd.getAnnotations();
 
-         AnnotationElement.Annotation longitudeAnnotation = fd.getAnnotations().get(Search5Annotations.LONGITUDE_ANNOTATION);
+         AnnotationElement.Annotation longitudeAnnotation = fd.getAnnotations().get(InfinispanAnnotations.LONGITUDE_ANNOTATION);
          if (longitudeAnnotation != null) {
             processLongitude(fd, longitudeAnnotation, spatialFields);
-            //todo [anistor] do we accept other annotations?
             continue;
          }
 
-         AnnotationElement.Annotation latitudeAnnotation = fd.getAnnotations().get(Search5Annotations.LATITUDE_ANNOTATION);
+         AnnotationElement.Annotation latitudeAnnotation = fd.getAnnotations().get(InfinispanAnnotations.LATITUDE_ANNOTATION);
          if (latitudeAnnotation != null) {
             processLatitude(fd, latitudeAnnotation, spatialFields);
-            //todo [anistor] do we accept other annotations?
             continue;
          }
 
@@ -117,6 +115,12 @@ public final class Search5MetadataCreator implements AnnotationMetadataCreator<I
             continue;
          }
 
+         SpatialFieldMapping spatialFieldMapping = InfinispanMetadataCreator.spatialFieldMapping(fd, annotations);
+         if (spatialFieldMapping != null) {
+            spatialFields.put(spatialFieldMapping.fieldName(), spatialFieldMapping);
+            continue;
+         }
+
          fieldMapping = search5FieldMapping(fd, annotations);
          if (fieldMapping != null) {
             FieldMapping existingFieldMapping = fields.put(fieldName, fieldMapping);
@@ -130,18 +134,18 @@ public final class Search5MetadataCreator implements AnnotationMetadataCreator<I
 
    private static Map<String, SpatialFieldMapping> spatialFields(Descriptor descriptor) {
       Map<String, SpatialFieldMapping> spatialFields = new HashMap<>();
-      AnnotationElement.Annotation spatialAnnotation = descriptor.getAnnotations().get(Search5Annotations.SPATIAL_ANNOTATION);
+      AnnotationElement.Annotation spatialAnnotation = descriptor.getAnnotations().get(InfinispanAnnotations.SPATIAL_ANNOTATION);
       if (spatialAnnotation != null) {
-         processGeoPointBinding(descriptor, spatialAnnotation, spatialFields);
+         SpatialFieldMapping spatial = InfinispanMetadataCreator.spatial(null, spatialAnnotation);
+         spatialFields.put(spatial.fieldName(), spatial);
       }
-      AnnotationElement.Annotation spatialsAnnotation = descriptor.getAnnotations().get(Search5Annotations.SPATIALS_ANNOTATION);
+      AnnotationElement.Annotation spatialsAnnotation = descriptor.getAnnotations().get(InfinispanAnnotations.SPATIALS_ANNOTATION);
       if (spatialsAnnotation != null) {
          for (AnnotationElement.Value v : ((AnnotationElement.Array) spatialsAnnotation.getDefaultAttributeValue()).getValues()) {
-            processGeoPointBinding(descriptor, (AnnotationElement.Annotation) v, spatialFields);
+            SpatialFieldMapping spatial = InfinispanMetadataCreator.spatial(null, (AnnotationElement.Annotation) v);
+            spatialFields.put(spatial.fieldName(), spatial);
          }
       }
-      //todo [anistor] more validation, if indexed==false do we accept Spatial annotation?
-      //todo [anistor] more validation, if indexed==false do we accept Analyzer annotation?
       return spatialFields;
    }
 
@@ -226,62 +230,42 @@ public final class Search5MetadataCreator implements AnnotationMetadataCreator<I
             DefaultAnalysisConfigurer.STANDARD_ANALYZER_NAME;
    }
 
-   private static void processGeoPointBinding(Descriptor descriptor, AnnotationElement.Annotation spatialAnnotation, Map<String, SpatialFieldMapping> spatialFields) {
-      String fieldName = (String) spatialAnnotation.getAttributeValue(Search5Annotations.SPATIAL_FIELD_NAME_ATTRIBUTE).getValue();
-      if (fieldName.isEmpty()) {
-         fieldName = null;
-      }
-      String markerSet = (String) spatialAnnotation.getAttributeValue(Search5Annotations.SPATIAL_MARKER_SET_ATTRIBUTE).getValue();
-      if (markerSet.isEmpty()) {
-         markerSet = null;
-      }
-      //todo [anistor] consider also the DEFAULT values
-      String projectableStr = (String) spatialAnnotation.getAttributeValue(Search5Annotations.SPATIAL_PROJECTABLE_ATTRIBUTE).getValue();
-      boolean projectable = projectableStr.equals(Search5Annotations.PROJECTABLE_YES);
-      String sortableStr = (String) spatialAnnotation.getAttributeValue(Search5Annotations.SPATIAL_PROJECTABLE_ATTRIBUTE).getValue();
-      boolean sortable = sortableStr.equals(Search5Annotations.SORTABLE_YES);
-      SpatialFieldMapping existing = spatialFields.put(fieldName, new SpatialFieldMapping(fieldName, markerSet, projectable, sortable));
-      if (existing != null) {
-         throw new AnnotationParserException("The spatial index field '" + fieldName + "' was declared multiple times by " + descriptor.getFullName());
-      }
-   }
-
    private static void processLatitude(FieldDescriptor fd, AnnotationElement.Annotation latitudeAnnotation, Map<String, SpatialFieldMapping> spatialFields) {
-      String markerSet = (String) latitudeAnnotation.getAttributeValue(Search5Annotations.LATITUDE_MARKERSET_ATTRIBUTE).getValue();
-      if (markerSet.isEmpty()) {
-         markerSet = null;
+      String marker = (String) latitudeAnnotation.getAttributeValue(InfinispanAnnotations.LATITUDE_MARKER_ATTRIBUTE).getValue();
+      if (marker.isEmpty()) {
+         marker = null;
       }
       SpatialFieldMapping found = null;
       for (SpatialFieldMapping sf : spatialFields.values()) {
-         if (Objects.equals(sf.markerSet(), markerSet)) {
+         if (Objects.equals(sf.marker(), marker)) {
             if (found != null) {
-               throw new AnnotationParserException("Found multiple latitude fields with the same marketSet value " + markerSet + " for field " + fd.getFullName());
+               throw new AnnotationParserException("Found multiple latitude fields with the same marketSet value " + marker + " for field " + fd.getFullName());
             }
             found = sf;
          }
       }
       if (found == null) {
-         throw new AnnotationParserException("No latitude field found with the marketSet value " + markerSet + " for field " + fd.getFullName());
+         throw new AnnotationParserException("No latitude field found with the marketSet value " + marker + " for field " + fd.getFullName());
       }
       found.setLatitude(fd);
    }
 
    private static void processLongitude(FieldDescriptor fd, AnnotationElement.Annotation longitudeAnnotation, Map<String, SpatialFieldMapping> spatialFields) {
-      String markerSet = (String) longitudeAnnotation.getAttributeValue(Search5Annotations.LONGITUDE_MARKERSET_ATTRIBUTE).getValue();
-      if (markerSet.isEmpty()) {
-         markerSet = null;
+      String marker = (String) longitudeAnnotation.getAttributeValue(InfinispanAnnotations.LONGITUDE_MARKER_ATTRIBUTE).getValue();
+      if (marker.isEmpty()) {
+         marker = null;
       }
       SpatialFieldMapping found = null;
       for (SpatialFieldMapping sf : spatialFields.values()) {
-         if (Objects.equals(sf.markerSet(), markerSet)) {
+         if (Objects.equals(sf.marker(), marker)) {
             if (found != null) {
-               throw new AnnotationParserException("Found multiple longitude fields with the same marketSet value " + markerSet + " for field " + fd.getFullName());
+               throw new AnnotationParserException("Found multiple longitude fields with the same marketSet value " + marker + " for field " + fd.getFullName());
             }
             found = sf;
          }
       }
       if (found == null) {
-         throw new AnnotationParserException("No longitude field found with the marketSet value " + markerSet + " for field " + fd.getFullName());
+         throw new AnnotationParserException("No longitude field found with the marketSet value " + marker + " for field " + fd.getFullName());
       }
       found.setLongitude(fd);
    }

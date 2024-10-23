@@ -1,7 +1,7 @@
 package org.infinispan.api.annotations.indexing.demo;
 
 import org.infinispan.api.annotations.indexing.Basic;
-import org.infinispan.api.annotations.indexing.GeoCoordinates;
+import org.infinispan.api.annotations.indexing.GeoPoint;
 import org.infinispan.api.annotations.indexing.Keyword;
 import org.infinispan.api.annotations.indexing.Latitude;
 import org.infinispan.api.annotations.indexing.Longitude;
@@ -12,10 +12,10 @@ import org.infinispan.api.annotations.indexing.Longitude;
  * Instance of indexed embedded entity.
  * The root indexed entity containing this entity is {@link Book}.
  *
- * @since 14.0
+ * @since 15.1
  */
-@GeoCoordinates(fieldName = "placeOfBirth", marker = "birth")
-@GeoCoordinates(fieldName = "placeOfDeath", marker = "death")
+@GeoPoint(fieldName = "placeOfBirth", marker = "birth")
+@GeoPoint(fieldName = "placeOfDeath", marker = "death")
 public class Author {
 
    @Keyword(sortable = true)

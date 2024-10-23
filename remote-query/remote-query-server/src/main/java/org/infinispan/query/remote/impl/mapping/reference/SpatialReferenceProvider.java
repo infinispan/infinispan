@@ -28,8 +28,8 @@ public class SpatialReferenceProvider {
    public SpatialReferenceProvider(SpatialFieldMapping spatialFieldMapping) {
       FieldDescriptor longitude = spatialFieldMapping.getLongitude();
       FieldDescriptor latitude = spatialFieldMapping.getLatitude();
-      longitudeName = longitude.getName();
-      latitudeName = latitude.getName();
+      longitudeName = (longitude == null) ? spatialFieldMapping.fieldName() + ".longitude" : longitude.getName();
+      latitudeName = (latitude == null) ? spatialFieldMapping.fieldName() + ".latitude" : latitude.getName();
 
       indexName = spatialFieldMapping.fieldName();
       projectable = (spatialFieldMapping.projectable()) ? Projectable.YES : Projectable.NO;

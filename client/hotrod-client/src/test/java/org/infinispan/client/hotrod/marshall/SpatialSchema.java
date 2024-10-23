@@ -13,5 +13,5 @@ import org.infinispan.query.dsl.embedded.testdomain.FlightRoute;
 )
 public interface SpatialSchema extends SerializationContextInitializer {
 
-   SerializationContextInitializer INSTANCE = new CustomSpacialSchemaImpl();
+   SerializationContextInitializer INSTANCE = new CustomSpatialSchemaImpl();
 }

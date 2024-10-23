@@ -10,7 +10,7 @@ public final class SpatialFieldMapping {
 
    private final String fieldName;
 
-   private final String markerSet;
+   private final String marker;
 
    private final boolean projectable;
 
@@ -20,9 +20,9 @@ public final class SpatialFieldMapping {
 
    private FieldDescriptor longitude;
 
-   public SpatialFieldMapping(String fieldName, String markerSet, boolean projectable, boolean sortable) {
+   public SpatialFieldMapping(String fieldName, String marker, boolean projectable, boolean sortable) {
       this.fieldName = fieldName;
-      this.markerSet = markerSet;
+      this.marker = marker;
       this.projectable = projectable;
       this.sortable = sortable;
    }
@@ -31,8 +31,8 @@ public final class SpatialFieldMapping {
       return fieldName;
    }
 
-   public String markerSet() {
-      return markerSet;
+   public String marker() {
+      return marker;
    }
 
    public boolean projectable() {
@@ -63,7 +63,7 @@ public final class SpatialFieldMapping {
    public String toString() {
       return "SpatialFieldMapping{" +
             "fieldName='" + fieldName + '\'' +
-            "markerSet='" + markerSet + '\'' +
+            "marker='" + marker + '\'' +
             "projectable=" + projectable +
             "sortable=" + sortable +
             "latitude=" + latitude +

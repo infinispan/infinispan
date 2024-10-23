@@ -10,6 +10,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.query.remote.impl.indexing.FieldMapping;
+import org.infinispan.query.remote.impl.indexing.SpatialFieldMapping;
 import org.infinispan.query.remote.impl.logging.Log;
 
 public final class InfinispanMetadataCreator {
@@ -48,6 +49,27 @@ public final class InfinispanMetadataCreator {
       }
 
       return null;
+   }
+
+   public static SpatialFieldMapping spatialFieldMapping(FieldDescriptor fieldDescriptor, Map<String, AnnotationElement.Annotation> annotations) {
+      AnnotationElement.Annotation fieldAnnotation = annotations.get(InfinispanAnnotations.GEO_FIELD_ANNOTATION);
+      if (fieldAnnotation != null) {
+         return spatial(fieldDescriptor, fieldAnnotation);
+      }
+
+      return null;
+   }
+
+   public static SpatialFieldMapping spatial(FieldDescriptor fieldDescriptor, AnnotationElement.Annotation fieldAnnotation) {
+      String fieldName = fieldName(fieldDescriptor, fieldAnnotation);
+      String marker = (String) fieldAnnotation.getAttributeValue(InfinispanAnnotations.SPATIAL_MARKER_ATTRIBUTE).getValue();
+      if (marker.isEmpty()) {
+         marker = null;
+      }
+      Boolean projectable = (Boolean) fieldAnnotation.getAttributeValue(InfinispanAnnotations.PROJECTABLE_ATTRIBUTE).getValue();
+      Boolean sortable = (Boolean) fieldAnnotation.getAttributeValue(InfinispanAnnotations.SORTABLE_ATTRIBUTE).getValue();
+
+      return new SpatialFieldMapping(fieldName, marker, projectable, sortable);
    }
 
    private static FieldMapping basic(FieldDescriptor fieldDescriptor, AnnotationElement.Annotation fieldAnnotation) {
@@ -163,6 +185,14 @@ public final class InfinispanMetadataCreator {
          name = fieldDescriptor.getName();
       }
       return name;
+   }
+
+   private static String fieldName(FieldDescriptor fieldDescriptor, AnnotationElement.Annotation fieldAnnotation) {
+      String name = (String) fieldAnnotation.getAttributeValue(InfinispanAnnotations.SPATIAL_FIELD_NAME_ATTRIBUTE).getValue();
+      if (name != null && !name.isEmpty()) {
+         return name;
+      }
+      return (fieldDescriptor == null) ? null : fieldDescriptor.getName();
    }
 
    private static String indexNullAs(AnnotationElement.Annotation fieldAnnotation) {

@@ -5,11 +5,11 @@ import java.util.List;
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Decimal;
 import org.infinispan.api.annotations.indexing.Embedded;
-import org.infinispan.api.annotations.indexing.GeoCoordinates;
+import org.infinispan.api.annotations.indexing.GeoField;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Keyword;
 import org.infinispan.api.annotations.indexing.Text;
-import org.infinispan.api.annotations.indexing.model.Point;
+import org.infinispan.api.annotations.indexing.model.LatLng;
 import org.infinispan.api.annotations.indexing.option.Structure;
 import org.infinispan.api.annotations.indexing.option.TermVector;
 
@@ -19,7 +19,7 @@ import org.infinispan.api.annotations.indexing.option.TermVector;
  * Instance of indexed (as root) entity,
  * containing two embedded indexed entities: {@link Author} and {@link Review}.
  *
- * @since 14.0
+ * @since 15.1
  */
 @Indexed(index = "books")
 public class Book {
@@ -43,7 +43,7 @@ public class Book {
    @Embedded(structure = Structure.NESTED)
    private List<Review> reviews;
 
-   @GeoCoordinates
-   private Point placeOfPublication;
+   @GeoField
+   private LatLng placeOfPublication;
 
 }
