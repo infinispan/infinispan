@@ -11,11 +11,10 @@ import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.LdapServerListener;
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.core.category.Security;
+import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.infinispan.server.test.junit5.InfinispanSuite;
-import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
@@ -24,9 +23,9 @@ import org.junit.platform.suite.api.Suite;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.1
  **/
-@Suite
+@Suite(failIfNoTests = false)
 @SelectClasses({AuthorizationKerberosIT.HotRod.class, AuthorizationKerberosIT.Rest.class})
-@Category(Security.class)
+@Security
 public class AuthorizationKerberosIT extends InfinispanSuite {
 
    @RegisterExtension

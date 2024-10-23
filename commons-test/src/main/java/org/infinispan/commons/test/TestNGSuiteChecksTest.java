@@ -27,7 +27,7 @@ public class TestNGSuiteChecksTest {
       Arrays.asList("unit", "functional", "xsite", "arquillian", "stress", "profiling", "manual", "unstable"));
    private static final Set<String> ALLOWED_GROUPS = new HashSet<>(
       Arrays.asList("unit", "functional", "xsite", "arquillian", "stress", "profiling", "manual", "unstable",
-                    "smoke", "java11", "transaction"));
+                    "smoke", "transaction"));
 
    @BeforeSuite(alwaysRun = true)
    public void beforeSuite(ITestContext context) {

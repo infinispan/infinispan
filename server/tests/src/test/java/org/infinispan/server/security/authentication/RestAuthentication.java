@@ -26,9 +26,8 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.InfinispanServerDriver;
-import org.infinispan.server.test.core.category.Security;
+import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
-import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -42,7 +41,7 @@ import org.wildfly.security.mechanism.digest.DigestUtil;
  * @since 10.0
  **/
 
-@Category(Security.class)
+@Security
 public class RestAuthentication {
 
    @RegisterExtension

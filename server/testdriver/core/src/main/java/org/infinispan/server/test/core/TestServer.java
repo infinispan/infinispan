@@ -44,6 +44,8 @@ public class TestServer {
    }
 
    public void stopServerDriver(String testName) {
+      if (serverDriver == null)
+         return;
       getDriver().stop(testName);
       serverDriver = null;
    }

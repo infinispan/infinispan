@@ -5,18 +5,14 @@ This module contains the Infinispan Server Integration test suite. It uses `infi
 
 ## Testsuite Categories
 
-Tests are annotated with JUnit's `@Category` annotation. The following categories are available:
+Tests are annotated with JUnit tags. The following tags are available:
 
-* `Java11`
+* `Database`
 * `Persistence`
-* `Profiling`
 * `Resilience`
 * `Security`
-* `Smoke`
-* `Stress`
-* `Unstable`
 
-The default is to run all categories, except `[Unstable, Profiling, Stress]`, but this can be overridden by setting the `defaultJUnitGroups` system property, e.g.
+The default is to run all tags, but this can be overridden by setting the `defaultJUnitGroups` system property, e.g.
 
 `mvn -DdefaultExcludedJUnitGroups=Persistence ...`
 

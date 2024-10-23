@@ -72,6 +72,5 @@ public abstract class AbstractServerExtension {
    protected void stopTestServer(ExtensionContext extensionContext, TestServer testServer) {
       String testName = testName(extensionContext);
       testServer.stopServerDriver(testName);
-      testServer.afterListeners();
    }
 }

@@ -8,16 +8,15 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.core.category.Persistence;
+import org.infinispan.server.test.core.tags.Persistence;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.jupiter.api.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-@Category(Persistence.class)
+@Persistence
 public class CustomStoreOperationsIT {
 
    @RegisterExtension

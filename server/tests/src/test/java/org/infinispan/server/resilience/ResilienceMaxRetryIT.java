@@ -17,11 +17,10 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.core.category.Resilience;
+import org.infinispan.server.test.core.tags.Resilience;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.junit.jupiter.api.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
@@ -29,7 +28,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  * even when it is configured with max_retries=0 and the current server topology
  * contains more than one server.
  */
-@Category(Resilience.class)
+@Resilience
 public class ResilienceMaxRetryIT {
 
    @RegisterExtension

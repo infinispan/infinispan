@@ -13,15 +13,13 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.server.test.core.AeshTestConnection;
 import org.infinispan.server.test.core.Common;
-import org.infinispan.server.test.core.category.Persistence;
 import org.infinispan.server.test.core.persistence.Database;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
-import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-@Category(Persistence.class)
+@org.infinispan.server.test.core.tags.Database
 public class ManagedConnectionOperations {
 
    @RegisterExtension

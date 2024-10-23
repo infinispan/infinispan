@@ -15,9 +15,8 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.core.Common;
-import org.infinispan.server.test.core.category.Security;
+import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
-import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -31,7 +30,7 @@ import net.spy.memcached.internal.OperationFuture;
  * @since 15.0
  **/
 
-@Category(Security.class)
+@Security
 public class MemcachedAuthentication {
 
    @RegisterExtension

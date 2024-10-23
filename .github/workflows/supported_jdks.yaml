@@ -28,7 +28,6 @@ jobs:
         with:
           java-version: ${{ matrix.jdk }}
           distribution: 'temurin'
-          cache: maven
 
       - name: Build Infinispan
         run: ./mvnw -B -s maven-settings.xml install -DskipTests

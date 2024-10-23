@@ -16,7 +16,7 @@ import org.junit.platform.suite.api.Suite;
 /**
  * Cross-Site suite with 2 servers per site and a single site master per site.
  */
-@Suite
+@Suite(failIfNoTests = false)
 @SelectClasses({
       XSiteRestMetricsOperations2.class
 })

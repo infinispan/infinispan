@@ -77,7 +77,11 @@ public class InfinispanXSiteServerExtension extends AbstractServerExtension impl
       if (suiteTestClasses.isEmpty()) {
          testServers.stream()
                .filter(TestServer::isDriverInitialized)
-               .forEach(server -> stopTestServer(extensionContext, server));
+               .forEach(server -> {
+                  if (server.isDriverInitialized())
+                     stopTestServer(extensionContext, server);
+                  server.afterListeners();
+               });
       }
    }
 

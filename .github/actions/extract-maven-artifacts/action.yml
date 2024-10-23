@@ -1,0 +1,14 @@
+name: Extract Maven Artifacts
+description: Extract Maven Artifacts uploaded by the build-infinispan action
+
+runs:
+  using: composite
+  steps:
+    - name: Download Infinispan Maven artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: m2-infinispan.tzts
+
+    - name: Extract Infinispan Maven artifacts
+      shell: bash
+      run: tar -C ~/ --use-compress-program="zstd -d" -xf m2-infinispan.tzts
