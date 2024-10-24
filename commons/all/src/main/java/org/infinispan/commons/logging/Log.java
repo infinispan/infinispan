@@ -299,6 +299,10 @@ public interface Log extends BasicLogger {
    @Message(value = "Error while reloading certificate", id = 970)
    RuntimeException certificateReloadError(@Cause Exception ex);
 
+   @LogMessage(level = WARN)
+   @Message(value = "Transactional cache should utilize PESSIMISTIC locking instead of '%s'", id = 971)
+   void utilizePessimisticLocking(String mode);
+
    //----- counters exceptions // don't use the same id range ------
 
    @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 29501)

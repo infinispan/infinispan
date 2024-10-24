@@ -7,6 +7,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.resp.TransactionOperationsTest;
+import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "server.resp.types.TransactionMediaTypeTest")
@@ -23,6 +24,7 @@ public class TransactionMediaTypeTest extends TransactionOperationsTest {
          configurationBuilder.clustering().cacheMode(cacheMode);
          configurationBuilder.invocationBatching().enable(true);
       }
+      configurationBuilder.transaction().lockingMode(LockingMode.PESSIMISTIC);
       configurationBuilder.encoding().value().mediaType(valueType.toString());
    }
 

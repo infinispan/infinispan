@@ -77,15 +77,17 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
          }, ctx.executor());
       }
 
-      AdvancedCache<byte[], byte[]> cache = curr.cache();
+      AdvancedCache<byte[], byte[]> cache = next.cache();
 
       // Redis has a serializable isolation. Without batching we have read-uncomitted.
       // Using the batching API we have a few more useful features.
       boolean batchEnabled = cache.getCacheConfiguration().invocationBatching().enabled();
+      final TransactionDecorator.TransactionResume resume;
       if (!batchEnabled) {
          log.multiKeyOperationUseBatching();
+         resume = null;
       } else {
-         cache.startBatch();
+         resume = TransactionDecorator.beginTransaction(next, cache);
       }
       return CompletableFuture.supplyAsync(() -> {
          // Mark the commands are executing from within a transaction context.
@@ -93,13 +95,12 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
 
          // Unfortunately, we need to manually write the prefix before proceeding with each operation.
          ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, commands.size(), curr.allocator());
-         return orderlyExecution(next, ctx, commands, 0, CompletableFutures.completedNull())
-               .whenComplete((ignore, t) -> {
-                  if (batchEnabled)
-                     cache.endBatch(true);
-
-                  TransactionContext.endTransactionContext(ctx);
-               });
+         return CompletionStages.handleAndCompose(orderlyExecution(next, ctx, commands, 0, CompletableFutures.completedNull()), (ignore, t) -> {
+            TransactionContext.endTransactionContext(ctx);
+            return batchEnabled
+                  ? TransactionDecorator.completeTransaction(resume, t == null)
+                  : CompletableFutures.completedNull();
+         });
       }, ctx.executor()).thenCompose(Function.identity());
    }
 

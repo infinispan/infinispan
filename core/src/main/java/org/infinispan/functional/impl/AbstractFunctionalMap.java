@@ -81,6 +81,10 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
    }
 
    protected InvocationContext getInvocationContext(boolean isWrite, int keyCount) {
+      // Avoid creating a new context for the command. Useful during transactions that can change threads.
+      if (fmap.delegateContextCreation())
+         return fmap.createInvocationContext(isWrite, keyCount);
+
       InvocationContext invocationContext;
       boolean txInjected = false;
       if (transactional) {

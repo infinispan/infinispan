@@ -141,7 +141,19 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
             });
    }
 
-   @Listener(clustered = true)
+   /**
+    * Asynchronous listener to capture events.
+    * <p>
+    * The listener captures events for entries creation and updates. The polling mechanism is triggered in case the entry
+    * is a {@link ListBucket}, that is, an object representing the RESP list to poll from.
+    * </p>
+    *
+    * <p>
+    * <b>Warning:</b> Utilize an asynchronous listener to avoid deadlock in transactional caches. Otherwise, the listener
+    * tries to synchronously execute an operation over a key holding a lock, leading to a deadlock.
+    * </p>
+    */
+   @Listener(clustered = true, sync = false)
    public static class PubSubListener {
       private final AdvancedCache<byte[], Object> cache;
       private volatile ScheduledFuture<?> scheduledTimer;
