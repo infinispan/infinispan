@@ -3,7 +3,6 @@ package org.infinispan.objectfilter.impl;
 import java.util.List;
 
 import org.infinispan.objectfilter.impl.predicateindex.ProtobufMatcherEvalContext;
-import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
 import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.objectfilter.impl.syntax.parser.ProtobufPropertyHelper;
 import org.infinispan.protostream.SerializationContext;
@@ -21,8 +20,8 @@ public class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescriptor, In
 
    private final Descriptor wrappedMessageDescriptor;
 
-   public ProtobufMatcher(SerializationContext serializationContext, IndexedFieldProvider<Descriptor> indexedFieldProvider) {
-      super(new ProtobufPropertyHelper(serializationContext, indexedFieldProvider));
+   public ProtobufMatcher(SerializationContext serializationContext, ProtobufPropertyHelper propertyHelper) {
+      super(propertyHelper != null ? propertyHelper : new ProtobufPropertyHelper(serializationContext, null));
       this.serializationContext = serializationContext;
       this.wrappedMessageDescriptor = serializationContext.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
    }
