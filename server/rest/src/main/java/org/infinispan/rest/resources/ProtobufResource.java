@@ -137,7 +137,14 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
 
       return putSchema.thenCompose(r -> {
          if (isOkOrCreated(builder)) {
-            return cache.getAsync(schemaName + ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX);
+            return cache
+                    .getAsync(schemaName + ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX)
+                    .thenApply(err -> err)
+                    .exceptionally( ex -> {
+                       builder.status(HttpResponseStatus.INTERNAL_SERVER_ERROR)
+                               .entity(RestRequestHandler.filterCause(ex));
+                       return CompletableFutures.completedNull();
+                    });
          } else {
             return CompletableFutures.completedNull();
          }
