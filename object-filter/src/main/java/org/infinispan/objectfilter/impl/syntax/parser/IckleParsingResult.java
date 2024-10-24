@@ -59,10 +59,10 @@ public final class IckleParsingResult<TypeMetadata> {
    private final BooleanExpr filteringClause;
    private final String targetEntityName;
    private final TypeMetadata targetEntityMetadata;
-   private final PropertyPath[] projectedPaths;
+   private final PropertyPath<?>[] projectedPaths;
    private final Class<?>[] projectedTypes;
    private final Object[] projectedNullMarkers;
-   private final PropertyPath[] groupBy;
+   private final PropertyPath<?>[] groupBy;
    private final SortField[] sortFields;
 
    //todo [anistor] make package local
@@ -71,8 +71,8 @@ public final class IckleParsingResult<TypeMetadata> {
                              Set<String> parameterNames,
                              BooleanExpr whereClause, BooleanExpr havingClause, BooleanExpr filteringClause,
                              String targetEntityName, TypeMetadata targetEntityMetadata,
-                             PropertyPath[] projectedPaths, Class<?>[] projectedTypes, Object[] projectedNullMarkers,
-                             PropertyPath[] groupBy,
+                             PropertyPath<?>[] projectedPaths, Class<?>[] projectedTypes, Object[] projectedNullMarkers,
+                             PropertyPath<?>[] groupBy,
                              SortField[] sortFields) {
       this.queryString = queryString;
       this.statementType = statementType;
@@ -164,7 +164,7 @@ public final class IckleParsingResult<TypeMetadata> {
       return projections;
    }
 
-   public PropertyPath[] getProjectedPaths() {
+   public PropertyPath<?>[] getProjectedPaths() {
       return projectedPaths;
    }
 
@@ -197,7 +197,7 @@ public final class IckleParsingResult<TypeMetadata> {
       return false;
    }
 
-   public PropertyPath[] getGroupBy() {
+   public PropertyPath<?>[] getGroupBy() {
       return groupBy;
    }
 
@@ -207,7 +207,7 @@ public final class IckleParsingResult<TypeMetadata> {
 
    @Override
    public String toString() {
-      return "FilterParsingResult [" +
+      return "IckleParsingResult [" +
             " queryString=" + queryString
             + ", statementType=" + statementType
             + ", targetEntityName=" + targetEntityName

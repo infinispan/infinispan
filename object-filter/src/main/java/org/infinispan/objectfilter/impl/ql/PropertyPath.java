@@ -31,12 +31,19 @@ import java.util.List;
  */
 public class PropertyPath<TypeDescriptor> {
 
+   /**
+    * A reference to a property along the path.
+    */
    public static final class PropertyReference<TypeDescriptor> {
 
       private final String propertyName;
 
+      //Non-null for alias and embedded; null for terminal property node
       private final TypeDescriptor typeDescriptor;
 
+      /**
+       * Indicates if this is an alias or an actual property name. Only the first node in a path can be an alias.
+       */
       private final boolean isAlias;
 
       public PropertyReference(String propertyName, TypeDescriptor typeDescriptor, boolean isAlias) {
@@ -96,22 +103,26 @@ public class PropertyPath<TypeDescriptor> {
    }
 
    /**
-    * Creates an path with a given list of nodes.
+    * Creates a path with a given list of nodes.
     */
    public PropertyPath(List<PropertyReference<TypeDescriptor>> nodes) {
       this.nodes = new LinkedList<>(nodes);
    }
 
    public boolean isAlias() {
-      return getFirst().isAlias();
+      return nodes.getFirst().isAlias();
    }
 
-   public PropertyReference<TypeDescriptor> getFirst() {
-      return nodes.getFirst();
+   public String getAlias() {
+      return nodes.getFirst().getPropertyName();
    }
 
-   public PropertyReference<TypeDescriptor> getLast() {
-      return nodes.getLast();
+   public TypeDescriptor getFirstTypeDescriptor() {
+      return nodes.getFirst().getTypeDescriptor();
+   }
+
+   public TypeDescriptor getLastTypeDescriptor() {
+      return nodes.getLast().getTypeDescriptor();
    }
 
    public List<PropertyReference<TypeDescriptor>> getNodes() {
@@ -140,14 +151,14 @@ public class PropertyPath<TypeDescriptor> {
       if (asStringPath == null) {
          StringBuilder sb = new StringBuilder();
          boolean isFirst = true;
-         for (PropertyReference node : nodes) {
+         for (PropertyReference<?> node : nodes) {
             if (isFirst) {
                isFirst = false;
             } else {
                sb.append('.');
             }
 
-            sb.append(node.getPropertyName());
+            sb.append(node.propertyName);
          }
          asStringPath = sb.toString();
       }
@@ -158,7 +169,7 @@ public class PropertyPath<TypeDescriptor> {
       if (asStringPathWithoutAlias == null) {
          StringBuilder sb = new StringBuilder();
          boolean isFirst = true;
-         for (PropertyReference node : nodes) {
+         for (PropertyReference<?> node : nodes) {
             if (!node.isAlias()) {
                if (isFirst) {
                   isFirst = false;
@@ -166,7 +177,7 @@ public class PropertyPath<TypeDescriptor> {
                   sb.append('.');
                }
 
-               sb.append(node.getPropertyName());
+               sb.append(node.propertyName);
             }
          }
          asStringPathWithoutAlias = sb.toString();
@@ -179,7 +190,7 @@ public class PropertyPath<TypeDescriptor> {
          String[] arrayPath = new String[nodes.size()];
          int i = 0;
          for (PropertyReference<?> pr : nodes) {
-            arrayPath[i++] = pr.getPropertyName();
+            arrayPath[i++] = pr.propertyName;
          }
          asArrayPath = arrayPath;
       }
@@ -190,7 +201,7 @@ public class PropertyPath<TypeDescriptor> {
       List<String> list = new ArrayList<>(nodes.size());
       for (PropertyReference<TypeDescriptor> node : nodes) {
          if (!node.isAlias()) {
-            list.add(node.getPropertyName());
+            list.add(node.propertyName);
          }
       }
       return list;

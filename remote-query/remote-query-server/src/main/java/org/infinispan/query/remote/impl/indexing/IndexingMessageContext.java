@@ -7,6 +7,8 @@ import java.util.Map;
 
 import org.hibernate.search.engine.backend.document.DocumentElement;
 import org.hibernate.search.engine.backend.document.IndexFieldReference;
+import org.hibernate.search.engine.cfg.spi.ConvertUtils;
+import org.hibernate.search.engine.spatial.GeoPoint;
 import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
@@ -20,6 +22,7 @@ public final class IndexingMessageContext extends MessageContext<IndexingMessage
    private final TypeAggregator typeAggregator;
 
    private Map<String, List<Float>> vectorAggregators;
+   private Map<String, GeoPointInfo> geoPoints;
 
    public IndexingMessageContext(IndexingMessageContext parentContext, FieldDescriptor fieldDescriptor,
                                  Descriptor messageDescriptor, DocumentElement document,
@@ -53,6 +56,20 @@ public final class IndexingMessageContext extends MessageContext<IndexingMessage
       vectorAggregators.get(fieldPath).add(value);
    }
 
+   public void addGeoValue(IndexReferenceHolder.GeoIndexFieldReference geoReference, Object value) {
+      if (geoPoints == null) {
+         geoPoints = new HashMap<>();
+      }
+      Double converted = ConvertUtils.convertDouble(value);
+      String indexFieldName = geoReference.indexFieldName();
+      geoPoints.putIfAbsent(indexFieldName, new GeoPointInfo(geoReference.fieldReference()));
+      if (geoReference.role().equals(IndexReferenceHolder.GeoIndexFieldReference.Role.LAT)) {
+         geoPoints.get(indexFieldName).latitude = converted;
+      } else {
+         geoPoints.get(indexFieldName).longitude = converted;
+      }
+   }
+
    public void writeVectorAggregators(IndexReferenceHolder indexReferenceHolder) {
       if (vectorAggregators == null) {
          return;
@@ -65,6 +82,34 @@ public final class IndexingMessageContext extends MessageContext<IndexingMessage
             value[i] = values.get(i);
          }
          addValue(fieldReference, value);
+      }
+   }
+
+   public void writeGeoPoints() {
+      if (geoPoints == null) {
+         return;
+      }
+
+      for (GeoPointInfo geoPointInfo : geoPoints.values()) {
+         geoPointInfo.addValue(document);
+      }
+   }
+
+   private static class GeoPointInfo {
+      private final IndexFieldReference<GeoPoint> fieldReference;
+      private Double latitude;
+      private Double longitude;
+
+      private GeoPointInfo(IndexFieldReference<GeoPoint> fieldReference) {
+         this.fieldReference = fieldReference;
+      }
+
+      GeoPoint geoPoint() {
+         return GeoPoint.of(latitude, longitude);
+      }
+
+      void addValue(DocumentElement document) {
+         document.addValue(fieldReference, geoPoint());
       }
    }
 }

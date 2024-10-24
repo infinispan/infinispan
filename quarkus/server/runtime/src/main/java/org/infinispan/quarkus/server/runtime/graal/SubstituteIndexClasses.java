@@ -14,12 +14,14 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.impl.ModuleMetadataBuilder;
+import org.infinispan.graalvm.substitutions.graal.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.ql.PropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
-import org.infinispan.graalvm.substitutions.graal.Util;
+import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.concurrent.QueryPackageImpl;
+import org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper;
 import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryMaker;
@@ -27,6 +29,7 @@ import org.infinispan.query.dsl.embedded.impl.SearchQueryParsingResult;
 import org.infinispan.query.impl.LifecycleManager;
 import org.infinispan.query.impl.massindex.IndexWorker;
 import org.infinispan.query.remote.impl.LazySearchMapping;
+import org.infinispan.query.remote.impl.RemoteHibernateSearchPropertyHelper;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
 import org.infinispan.search.mapper.model.impl.InfinispanBootstrapIntrospector;
@@ -138,4 +141,46 @@ final class Target_QueryPackageImpl {
 @TargetClass(LazySearchMapping.class)
 @Delete
 final class Target_LazySearchMapping {
+}
+
+@TargetClass(HibernateSearchPropertyHelper.class)
+final class Target_HibernateSearchPropertyHelper {
+   @Substitute
+   public boolean isNestedIndexStructure(Class<?> entityType, String[] propertyPath) {
+      return false;
+   }
+}
+
+@TargetClass(HibernateSearchPropertyHelper.SearchFieldIndexingMetadata.class)
+final class Target_HibernateSearchPropertyHelper_SearchFieldIndexingMetadata {
+   @Substitute
+   public boolean isVector(String[] propertyPath) {
+      return false;
+   }
+
+   @Substitute
+   public boolean isSpatial(String[] propertyPath) {
+      return false;
+   }
+}
+
+@TargetClass(RemoteHibernateSearchPropertyHelper.class)
+final class Target_RemoteHibernateSearchPropertyHelper {
+   @Substitute
+   public boolean isNestedIndexStructure(Descriptor entityType, String[] propertyPath) {
+      return false;
+   }
+}
+
+@TargetClass(RemoteHibernateSearchPropertyHelper.SearchFieldIndexingMetadata.class)
+final class Target_RemoteHibernateSearchPropertyHelper_SearchFieldIndexingMetadata {
+   @Substitute
+   public boolean isVector(String[] propertyPath) {
+      return false;
+   }
+
+   @Substitute
+   public boolean isSpatial(String[] propertyPath) {
+      return false;
+   }
 }

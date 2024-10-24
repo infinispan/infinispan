@@ -14,7 +14,7 @@ import org.infinispan.query.remote.impl.mapping.reference.GlobalReferenceHolder;
 import org.infinispan.query.remote.impl.mapping.type.ProtobufKeyValuePair;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 
-public class ProtobufEntityConverter implements EntityConverter {
+public final class ProtobufEntityConverter implements EntityConverter {
 
    private final static PojoRawTypeIdentifier<byte[]> BYTE_ARRAY_TYPE_IDENTIFIER = PojoRawTypeIdentifier.of(byte[].class);
    private final static PojoRawTypeIdentifier<ProtobufKeyValuePair> KEY_VALUE_TYPE_IDENTIFIER = PojoRawTypeIdentifier.of(ProtobufKeyValuePair.class);
@@ -80,12 +80,12 @@ public class ProtobufEntityConverter implements EntityConverter {
       return new ProtobufKeyValueConvertedEntity(skip, entityName, tagHandler.getMessageBytes(), messageBytes);
    }
 
-   private static class ProtobufConvertedEntity implements ConvertedEntity {
+   private static final class ProtobufConvertedEntity implements ConvertedEntity {
       private final boolean skip;
       private final String entityName;
       private final byte[] value;
 
-      public ProtobufConvertedEntity(boolean skip, String entityName, byte[] value) {
+      ProtobufConvertedEntity(boolean skip, String entityName, byte[] value) {
          this.skip = skip;
          this.entityName = entityName;
          this.value = value;
