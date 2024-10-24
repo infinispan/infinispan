@@ -1,6 +1,4 @@
-package org.infinispan.commons.util;
-
-import static org.infinispan.commons.logging.Log.CONTAINER;
+package org.infinispan.counter.api._private;
 
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
@@ -59,7 +57,7 @@ public final class CounterEncodeUtil {
          case UNBOUNDED_COUNTER:
             return CounterType.UNBOUNDED_STRONG;
          default:
-            throw CONTAINER.invalidCounterTypeEncoded();
+            throw new IllegalArgumentException("WEAK and BOUNDED encoded flag isn't supported!");
       }
    }
 

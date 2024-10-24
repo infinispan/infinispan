@@ -19,6 +19,11 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-counter-api</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.wildfly.security</groupId>
          <artifactId>wildfly-elytron-sasl-digest</artifactId>
       </dependency>
