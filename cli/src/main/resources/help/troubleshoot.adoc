@@ -1,0 +1,59 @@
+TROUBLESHOOT(1)
+===============
+:doctype: manpage
+
+
+NAME
+----
+troubleshoot - troubleshooting commands to identify issues in single servers or cluster-wide.
+
+
+SYNOPSIS
+--------
+*troubleshoot log* ['OPTIONS'] `ACCESS_LOG_LIST`
+
+
+TROUBLESHOOT LOG OPTIONS
+------------------------
+*-o, --operation*='OP'::
+Filter the access log using a single operation.
+
+*-x, --excludeOperations*='OP1,OP2,...'::
+Defines a name for the backup archive.
+
+*-t, --highest*='NUMBER'::
+List the top `NUMBER` operations that took longer to complete.
+
+*-d, --duration*='NUMBER'::
+List the operations with a duration in milliseconds greater than or equal to the provided value.
+
+*--by-client*::
+Segment the output and group the statistics by clients.
+
+*--start*='DATE'::
+Filter operation submitted at and after the given time. Must follow the format `dd/MMM/yyyy:HH:mm:ss`.
+
+*--end*='DATE'::
+Filter operation submitted before the given time. Must follow the format `dd/MMM/yyyy:HH:mm:ss`.
+
+
+EXAMPLES
+--------
+`troubleshoot log access.log access.log.1` +
+Generates statistics grouped by operations from the local files `access.log` and `access.log.1`.
+
+`troubleshoot log --by-client access.log access.log.1` +
+Generates statistics grouped by clients from the local files `access.log` and `access.log.1`.
+
+`troubleshoot log -t 10 access.log access.log.1` +
+Displays the 10 operations that took longer to complete from the files `access.log` and `access.log.1`.
+
+`troubleshoot log -o PUT --start '04/Sep/2024:13:18:14' --end '04/Sep/2024:13:18:15' access.log access.log.1` +
+Generates statistics grouped by operations from the local files `access.log` and `access.log.1`. Filters for only `PUT`
+operations that happen during the second between the given start and end dates. Note the dates *must* be quoted.
+
+`troubleshoot log -x GET,ERROR --start '04/Sep/2024:13:18:14' --by-client access.log access.log.1` +
+Generates statistics grouped by clients from the local files `access.log` and `access.log.1`. Exclude `GET` and `ERROR`
+operations, and only accept operations at or after the given. Note the date *must* be quoted.
+
+
