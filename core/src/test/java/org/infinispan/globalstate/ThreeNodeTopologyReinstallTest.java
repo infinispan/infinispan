@@ -13,7 +13,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -22,8 +24,6 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.MissingMembersException;
 import org.infinispan.topology.PersistentUUID;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 @Test(testName = "globalstate.ThreeNodeTopologyReinstallTest", groups = "functional")
@@ -84,9 +84,11 @@ public class ThreeNodeTopologyReinstallTest extends AbstractGlobalStateRestartTe
          createStatefulCacheManager(Character.toString((char) ('A' + i)), false);
          TestingUtil.blockUntilViewsReceived(15000, getCaches(CACHE_NAME));
          GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(manager(i));
-         Exceptions.expectException(MissingMembersException.class,
-               "ISPN000694: Cache 'testCache' has number of owners \\d but is missing too many members \\(\\d\\/3\\) to reinstall topology$",
-               () -> gcr.getClusterTopologyManager().useCurrentTopologyAsStable(CACHE_NAME, false));
+         if (!cacheMode.isReplicated()) {
+            Exceptions.expectException(MissingMembersException.class,
+                  "ISPN000694: Cache 'testCache' has number of owners \\d but is missing too many members \\(\\d\\/3\\) to reinstall topology$",
+                  () -> gcr.getClusterTopologyManager().useCurrentTopologyAsStable(CACHE_NAME, false));
+         }
       }
 
       // Assert no rebalance for CACHE_NAME.
