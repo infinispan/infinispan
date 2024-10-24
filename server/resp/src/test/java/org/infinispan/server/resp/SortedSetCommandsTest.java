@@ -1107,9 +1107,9 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.zrangeWithScores("people", 0, -1)).containsExactly(just(28, "tristan"));
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zincrby("another",  30, "tristan"));
 
-      assertThatThrownBy(() -> redis.zincrby("people", Double.POSITIVE_INFINITY, "tristan"))
+      assertThatThrownBy(() -> redis.zincrby("huge-score", Double.NEGATIVE_INFINITY, "positive"))
             .isInstanceOf(RedisCommandExecutionException.class)
-            .hasMessage("ERR increment would produce NaN or Infinity");
+            .hasMessage("ERR resulting score is not a number (NaN)");
    }
 
    public void testZUNION() {

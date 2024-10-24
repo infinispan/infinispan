@@ -2,7 +2,10 @@ package org.infinispan.server.resp.types;
 
 import static io.lettuce.core.ScoredValue.just;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -151,6 +154,36 @@ public class DataStructuresMediaTypesTest extends SingleNodeRespBaseTest {
                   just(10.4, "william"), just(13, "fabio"), just(13.4, "jose"),
                   just(13.4, "tristan"), just(21.9, "marc"));
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zadd("another", 2.3, "tristan"));
+   }
+
+   @SuppressWarnings("unchecked")
+   public void testZaddInfinityScores() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      String key = k();
+      String m0 = v(0);
+      String m1 = v(1);
+      String m2 = v(2);
+
+      assertThat(redis.zadd(key,
+            just(Double.POSITIVE_INFINITY, m0),
+            just(Double.NEGATIVE_INFINITY, m1),
+            just(1, m2))
+      ).isEqualTo(3);
+
+      // Allows increment with +inf
+      assertThat(redis.zaddincr(key, Double.POSITIVE_INFINITY, m2)).isEqualTo(Double.POSITIVE_INFINITY);
+
+      // LT/GT validation on other members should return null.
+      assertThat(redis.zaddincr(key, ZAddArgs.Builder.lt(), 1, m0)).isNull();
+      assertThat(redis.zaddincr(key, ZAddArgs.Builder.lt(), 1, m1)).isNull();
+
+      // Adding +inf with -inf is NaN.
+      assertThatThrownBy(() -> redis.zaddincr(key, Double.NEGATIVE_INFINITY, m2))
+            .hasMessageContaining("resulting score is not a number (NaN)");
+
+      // Adding +inf with 42 is +inf.
+      assertThat(redis.zaddincr(key, 42, m0)).isInfinite();
    }
 
    @Override
