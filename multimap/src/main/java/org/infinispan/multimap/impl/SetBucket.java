@@ -1,12 +1,5 @@
 package org.infinispan.multimap.impl;
 
-import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.util.Util;
-import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
-import org.infinispan.protostream.annotations.ProtoFactory;
-import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoTypeId;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -16,6 +9,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.util.Util;
+import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+
 /**
  * Bucket used to store Set data type.
  *
@@ -23,7 +23,7 @@ import java.util.stream.Stream;
  * @since 15.0
  */
 @ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_SET_BUCKET)
-public class SetBucket<V> implements SortableBucket<V> {
+public class SetBucket<V> implements SortableBucket<V>, BaseSetBucket<V> {
    final Set<MultimapObjectWrapper<V>> values;
 
    public SetBucket() {
@@ -61,6 +61,25 @@ public class SetBucket<V> implements SortableBucket<V> {
          }
       }
       return Boolean.FALSE;
+   }
+
+   @Override
+   public Set<ScoredValue<V>> getAsSet() {
+      return values.stream()
+            .map(v -> new ScoredValue<>(1d, v))
+            .collect(Collectors.toSet());
+   }
+
+   @Override
+   public List<ScoredValue<V>> getAsList() {
+      return values.stream()
+            .map(v -> new ScoredValue<>(1d, v))
+            .toList();
+   }
+
+   @Override
+   public Double getScore(MultimapObjectWrapper<V> key) {
+      return 1d;
    }
 
    public boolean isEmpty() {

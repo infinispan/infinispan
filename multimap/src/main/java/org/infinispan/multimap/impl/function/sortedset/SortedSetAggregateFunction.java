@@ -1,11 +1,6 @@
 package org.infinispan.multimap.impl.function.sortedset;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
-import org.infinispan.multimap.impl.ScoredValue;
-import org.infinispan.multimap.impl.SortedSetBucket;
+import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -16,7 +11,14 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.functional.EntryView;
+import org.infinispan.multimap.impl.BaseSetBucket;
+import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.multimap.impl.ScoredValue;
+import org.infinispan.multimap.impl.SortedSetBucket;
+import org.infinispan.util.function.SerializableFunction;
 
 /**
  * Serializable function used by
@@ -26,7 +28,7 @@ import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
-public final class SortedSetAggregateFunction<K, V> implements SortedSetBucketBaseFunction<K, V, Collection<ScoredValue<V>>> {
+public final class SortedSetAggregateFunction<K, V> implements SerializableFunction<EntryView.ReadWriteEntryView<K, ? extends BaseSetBucket<V>>, Collection<ScoredValue<V>>> {
    public static final AdvancedExternalizer<SortedSetAggregateFunction> EXTERNALIZER = new Externalizer();
    private final Collection<ScoredValue<V>> scoredValues;
    private final double weight;
@@ -53,13 +55,15 @@ public final class SortedSetAggregateFunction<K, V> implements SortedSetBucketBa
    }
 
    @Override
-   public Collection<ScoredValue<V>> apply(EntryView.ReadWriteEntryView<K, SortedSetBucket<V>> entryView) {
-      Optional<SortedSetBucket<V>> existing = entryView.peek();
+   public Collection<ScoredValue<V>> apply(EntryView.ReadWriteEntryView<K, ? extends BaseSetBucket<V>> view) {
+      Optional<? extends BaseSetBucket<V>> existing = view.peek();
       if (scoredValues != null && scoredValues.isEmpty() && existing.isEmpty()) {
          return Collections.emptyList();
       }
-      SortedSetBucket<V> bucket = existing.isPresent() ? existing.get() : new SortedSetBucket();
-      return type == AggregateType.UNION ? bucket.union(scoredValues, weight, function) : bucket.inter(scoredValues, weight, function);
+      BaseSetBucket<V> bucket = existing.map(v -> (BaseSetBucket<V>) v).orElseGet(SortedSetBucket::new);
+      return type == AggregateType.UNION
+            ? bucket.union(scoredValues, weight, function)
+            : bucket.inter(scoredValues, weight, function);
    }
 
    private static class Externalizer implements AdvancedExternalizer<SortedSetAggregateFunction> {

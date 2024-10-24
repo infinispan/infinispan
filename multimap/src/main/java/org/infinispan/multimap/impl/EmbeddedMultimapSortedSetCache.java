@@ -156,11 +156,11 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     */
    public CompletionStage<List<ScoredValue<V>>> getValueAsList(K key) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
-      return cache.getAsync(key).thenApply(b -> {
-         if (b != null) {
-            return b.getScoredEntriesAsList();
-         }
-         return null;
+      return cache.getCacheEntryAsync(key).thenApply(b -> {
+         if (b == null) return null;
+
+         BaseSetBucket<V> value = b.getValue();
+         return value.getAsList();
       });
    }
 
@@ -172,11 +172,13 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     */
    public CompletionStage<Set<MultimapObjectWrapper<V>>> getValuesSet(K key) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
-      return cache.getAsync(key).thenApply(b -> {
-         if (b != null) {
-            return b.getScoredEntriesAsValuesSet();
-         }
-         return null;
+      return cache.getCacheEntryAsync(key).thenApply(b -> {
+         if (b == null) return null;
+
+         BaseSetBucket<V> value = b.getValue();
+         return value.getAsSet().stream()
+               .map(ScoredValue::wrappedValue)
+               .collect(Collectors.toSet());
       });
    }
 
