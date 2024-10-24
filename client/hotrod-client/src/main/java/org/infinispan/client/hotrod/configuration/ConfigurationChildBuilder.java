@@ -196,6 +196,16 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder maxRetries(int maxRetries);
 
    /**
+    * The time for a failed server to be cleared allowing for it to attempt to reconnect at a later point.
+    * <p>
+    * If the value is less than or equal to 0 it will be disabled, meaning a failed SERVER will not be reconnected to
+    * until all configured servers have failed or a topology update (TOPOLOGY_AWARE and CONSISTENT_HASH_AWARE only)
+    * @param timeoutInMilliseconds the timeout to attempt to clear a failed server in milliseconds
+    * @return this bulider
+    */
+   ConfigurationBuilder serverFailureTimeout(int timeoutInMilliseconds);
+
+   /**
     * List of regular expressions for classes that can be deserialized using standard Java deserialization
     * when reading data that might have been stored with a different endpoint, e.g. REST.
     */

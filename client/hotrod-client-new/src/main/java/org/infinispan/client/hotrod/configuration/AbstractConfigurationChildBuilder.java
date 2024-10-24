@@ -102,6 +102,11 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    }
 
    @Override
+   public ConfigurationBuilder serverFailureTimeout(int timeoutInMilliseconds) {
+      return builder.serverFailureTimeout(timeoutInMilliseconds);
+   }
+
+   @Override
    public ConfigurationBuilder forceReturnValues(boolean forceReturnValues) {
       return builder.forceReturnValues(forceReturnValues);
    }
