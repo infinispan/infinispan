@@ -14,4 +14,20 @@ public class DeadlockDetectedException extends CacheException {
    public DeadlockDetectedException(String msg) {
       super(msg);
    }
+
+   public static boolean isDeadlockDetectedException(Throwable t) {
+      Throwable r = t;
+      while (r.getCause() != null) {
+         if (isException(r))
+            return true;
+
+         r = r.getCause();
+      }
+
+      return isException(r);
+   }
+
+   private static boolean isException(Throwable t) {
+      return t instanceof DeadlockDetectedException;
+   }
 }

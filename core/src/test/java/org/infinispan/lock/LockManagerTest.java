@@ -31,6 +31,7 @@ import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.infinispan.util.concurrent.locks.DeadlockDetection;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockPromise;
 import org.infinispan.util.concurrent.locks.impl.DefaultLockManager;
@@ -50,10 +51,12 @@ public class LockManagerTest extends AbstractInfinispanTest {
 
    private final ExecutorService asyncExecutor;
    private final ScheduledExecutorService mockScheduledExecutor;
+   private final DeadlockDetection deadlockDetection;
 
    public LockManagerTest() {
       asyncExecutor = new WithinThreadExecutor();
       mockScheduledExecutor = mock(ScheduledExecutorService.class);
+      deadlockDetection = DeadlockDetection.disabled();
       ScheduledFuture future = mock(ScheduledFuture.class);
       when(future.cancel(anyBoolean())).thenReturn(true);
       //noinspection unchecked
@@ -67,7 +70,7 @@ public class LockManagerTest extends AbstractInfinispanTest {
       PerKeyLockContainer lockContainer = new PerKeyLockContainer();
       TestingUtil.inject(lockContainer, AbstractCacheTest.TIME_SERVICE);
       TestingUtil.inject(lockManager, lockContainer, named(NON_BLOCKING_EXECUTOR, asyncExecutor),
-                         named(TIMEOUT_SCHEDULE_EXECUTOR, mockScheduledExecutor));
+                         named(TIMEOUT_SCHEDULE_EXECUTOR, mockScheduledExecutor), deadlockDetection);
       doSingleCounterTest(lockManager);
    }
 
@@ -75,7 +78,7 @@ public class LockManagerTest extends AbstractInfinispanTest {
       DefaultLockManager lockManager = new DefaultLockManager();
       StripedLockContainer lockContainer = new StripedLockContainer(16);
       TestingUtil.inject(lockContainer, AbstractCacheTest.TIME_SERVICE);
-      TestingUtil.inject(lockManager, lockContainer, asyncExecutor, mockScheduledExecutor);
+      TestingUtil.inject(lockManager, lockContainer, asyncExecutor, mockScheduledExecutor, deadlockDetection);
       doSingleCounterTest(lockManager);
    }
 
@@ -83,7 +86,7 @@ public class LockManagerTest extends AbstractInfinispanTest {
       DefaultLockManager lockManager = new DefaultLockManager();
       PerKeyLockContainer lockContainer = new PerKeyLockContainer();
       TestingUtil.inject(lockContainer, AbstractCacheTest.TIME_SERVICE);
-      TestingUtil.inject(lockManager, lockContainer, asyncExecutor, mockScheduledExecutor);
+      TestingUtil.inject(lockManager, lockContainer, asyncExecutor, mockScheduledExecutor, deadlockDetection);
       doMultipleCounterTest(lockManager);
    }
 
@@ -91,7 +94,7 @@ public class LockManagerTest extends AbstractInfinispanTest {
       DefaultLockManager lockManager = new DefaultLockManager();
       StripedLockContainer lockContainer = new StripedLockContainer(16);
       TestingUtil.inject(lockContainer, AbstractCacheTest.TIME_SERVICE);
-      TestingUtil.inject(lockManager, lockContainer, asyncExecutor, mockScheduledExecutor);
+      TestingUtil.inject(lockManager, lockContainer, asyncExecutor, mockScheduledExecutor, deadlockDetection);
       doMultipleCounterTest(lockManager);
    }
 
@@ -99,7 +102,7 @@ public class LockManagerTest extends AbstractInfinispanTest {
       DefaultLockManager lockManager = new DefaultLockManager();
       PerKeyLockContainer lockContainer = new PerKeyLockContainer();
       TestingUtil.inject(lockContainer, AbstractCacheTest.TIME_SERVICE);
-      TestingUtil.inject(lockManager, lockContainer, asyncExecutor, mockScheduledExecutor);
+      TestingUtil.inject(lockManager, lockContainer, asyncExecutor, mockScheduledExecutor, deadlockDetection);
       doTestWithFailAcquisition(lockManager);
    }
 
@@ -107,7 +110,7 @@ public class LockManagerTest extends AbstractInfinispanTest {
       DefaultLockManager lockManager = new DefaultLockManager();
       StripedLockContainer lockContainer = new StripedLockContainer(16);
       TestingUtil.inject(lockContainer, AbstractCacheTest.TIME_SERVICE);
-      TestingUtil.inject(lockManager, lockContainer, asyncExecutor, mockScheduledExecutor);
+      TestingUtil.inject(lockManager, lockContainer, asyncExecutor, mockScheduledExecutor, deadlockDetection);
       doTestWithFailAcquisition(lockManager);
    }
 
