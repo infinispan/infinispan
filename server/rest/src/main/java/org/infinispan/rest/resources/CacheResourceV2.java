@@ -1278,6 +1278,12 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
                .build());
       }
       if (ecm.isRunning(cache)) return CompletableFuture.completedFuture(builder.build());
+      if (!ecm.cacheExists(cache)) {
+         return CompletableFuture.completedFuture(builder
+               .status(NOT_FOUND)
+               .entity(Json.make(String.format("Cache '%s' does not exist", cache)))
+               .build());
+      }
 
       return CompletableFuture.supplyAsync(() -> {
          if (!ctm.useCurrentTopologyAsStable(cache, force))
