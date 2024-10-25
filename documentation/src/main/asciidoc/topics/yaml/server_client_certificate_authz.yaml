@@ -3,6 +3,7 @@ infinispan:
     name: "certificate-authentication"
     security:
       authorization:
+        groupOnlyMapping: false
         commonNameRoleMapper: ~
         roles:
           Client1:
