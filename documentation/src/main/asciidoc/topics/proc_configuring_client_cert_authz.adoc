@@ -14,6 +14,10 @@ Enabling client certificate authentication means you do not need to specify {bra
 . Assign the Common Name (`CN`) from the client certificate a role with the appropriate permissions.
 . Save the changes to your configuration.
 
+NOTE: {brandname} creates the identity of the client by extracting the certificate principal. Any other Subject
+Alternative Names (SANs) which may be present in the certificate are currently ignored. For this reason, the
+`authorization.group-only-mapping` attribute below must be set to `false`.
+
 [discrete]
 == Client certificate authorization configuration
 

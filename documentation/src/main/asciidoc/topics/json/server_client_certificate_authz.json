@@ -4,6 +4,7 @@
       "name": "certificate-authentication",
       "security": {
         "authorization": {
+          "group-only-mapping": false,
           "common-name-role-mapper": null,
           "roles": {
             "Client1": {
