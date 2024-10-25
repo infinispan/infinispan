@@ -19,7 +19,8 @@ Identity role mapper:: Uses the principal name as the role name. The type or for
 Common name role mapper:: Uses the Common Name (CN) as the role name. You can use this role mapper with an LDAP directory or with client certificates that contain Distinguished Names (DN); for example `cn=managers,ou=people,dc=example,dc=com` maps to the `managers` role.
 
 NOTE: By default, principal-to-role mapping is only applied to principals which represent groups.
-It is possible to configure {brandname} to also perform the mapping for user principals.
+It is possible to configure {brandname} to also perform the mapping for user principals by setting the
+`authorization.group-only-mapping` configuration attribute to `false`.
 
 == Mapping users to roles and permissions in {brandname}
 
