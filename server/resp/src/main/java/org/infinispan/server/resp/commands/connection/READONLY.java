@@ -12,7 +12,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/readonly/
+ * READONLY
+ *
+ * @see <a href="https://redis.io/commands/readonly/">READONLY</a>
  * @since 14.0
  */
 public class READONLY extends RespCommand implements Resp3Command {

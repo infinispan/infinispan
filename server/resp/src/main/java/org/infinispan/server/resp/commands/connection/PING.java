@@ -14,7 +14,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/ping/
+ * PING
+ *
+ * @see <a href="https://redis.io/commands/ping/">PING</a>
  * @since 14.0
  */
 public class PING extends RespCommand implements Resp3Command, PubSubResp3Command {

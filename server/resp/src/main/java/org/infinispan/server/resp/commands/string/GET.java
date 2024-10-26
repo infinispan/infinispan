@@ -13,12 +13,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * GET Resp Command
+ * GET
  *
- * Get the value of key. If the key does not exist the special value nil is returned.
- * An error is returned if the value stored at key is not a string, because GET only handles string values.
- *
- * @see <a href="https://redis.io/commands/get/">Redis documentation</a>
+ * @see <a href="https://redis.io/commands/get/">GET</a>
  * @since 14.0
  */
 public class GET extends RespCommand implements Resp3Command {

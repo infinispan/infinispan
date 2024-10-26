@@ -13,14 +13,11 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>HSTRLEN key field</code>` command.
- * </p>
- * the string length of the value associated with the field, or 0 if key or
- * field do not exist
+ * HSTRLEN
  *
- * @since 15.0
- * @see <a href="https://redis.io/commands/hstrlen/">Redis Documentation</a>
  * @author Vittorio Rigamonti
+ * @see <a href="https://redis.io/commands/hstrlen/">HSTRLEN</a>
+ * @since 15.0
  */
 public class HSTRLEN extends RespCommand implements Resp3Command {
 

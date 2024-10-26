@@ -12,7 +12,7 @@ import org.infinispan.xsite.XSiteBackup;
 import net.jcip.annotations.GuardedBy;
 
 /**
- * Cross-Site state transfer status & collector
+ * Cross-Site state transfer status and collector
  *
  * @author Pedro Ruivo
  * @since 12

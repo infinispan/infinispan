@@ -13,12 +13,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/llen/
+ * LLEN
  *
- * Returns the length of the list stored at key. If key does not exist,
- * it is interpreted as an empty list and 0 is returned.
- * When the value at key is not a list, an error is returned.
- *
+ * @see <a href="https://redis.io/commands/llen/">LLEN</a>
  * @since 15.0
  */
 public class LLEN extends RespCommand implements Resp3Command {

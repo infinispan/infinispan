@@ -262,7 +262,7 @@ import org.infinispan.commons.util.TimeQuantity;
  * <li>Added support for {@link RawJson} as a specialized {@link StringJson}</li>
  * <li>Usage of {@link LinkedHashMap} internally for {@link ObjectJson} for predictable iteration</li>
  * <li>Support for {@link Class}, {@link Properties}, {@link Enum} for {@link DefaultFactory#make(Object)}</li>
- * <li>Support from internal Infinispan classes for {@link DefaultFactory#make(Object)}: {@link MediaType}, {@link JsonSerialization}, {@link ConfigurationInfo}</li>
+ * <li>Support from internal Infinispan classes for {@link DefaultFactory#make(Object)}: {@link MediaType}, {@link JsonSerialization}</li>
  * <li>Support for replacing objects</li>
  *  </ul></p>
  *
@@ -1402,7 +1402,7 @@ public class Json implements java.io.Serializable {
    public static class help {
       /**
        * <p>
-       * Perform JSON escaping so that ", <, >, etc. characters are properly encoded in the JSON string representation
+       * Perform JSON escaping so that ", &lt; &gt; etc. characters are properly encoded in the JSON string representation
        * before returning to the client code. This is useful when serializing property names or string values.
        * </p>
        */

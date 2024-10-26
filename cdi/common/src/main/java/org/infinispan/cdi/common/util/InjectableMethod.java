@@ -36,7 +36,7 @@ public class InjectableMethod<X> {
      *
      * @param method      the method which will be injected upon a call to
      *                    {@link #invoke(Object, CreationalContext)}
-     * @param bean        the bean which defines the injectable method
+     * @param declaringBean        the bean which defines the injectable method
      * @param beanManager the {@link BeanManager} to use to obtain the parameter
      *                    values
      */

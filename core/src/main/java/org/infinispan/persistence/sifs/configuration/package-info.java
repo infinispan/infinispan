@@ -1,5 +1,5 @@
 /**
- * Configuration for {@link org.infinispan.persistence.sifs.SoftIndexFileStore}.
+ * Configuration for {@link org.infinispan.persistence.sifs.NonBlockingSoftIndexFileStore}.
  *
  * @api.public
  */

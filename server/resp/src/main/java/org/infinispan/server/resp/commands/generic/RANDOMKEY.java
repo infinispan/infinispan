@@ -15,13 +15,10 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>RANDOMKEY</code>` command.
- * <p>
- * Returns a random key from the current selected cache.
- * </p>
+ * RANDOMKEY
  *
+ * @see <a href="https://redis.io/commands/randomkey/">RANDOMKEY</a>
  * @since 15.0
- * @see <a href="https://redis.io/commands/randomkey/">Redis Documentation</a>
  */
 public class RANDOMKEY extends RespCommand implements Resp3Command {
 

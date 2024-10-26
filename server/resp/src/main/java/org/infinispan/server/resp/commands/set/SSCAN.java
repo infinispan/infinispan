@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.multimap.impl.EmbeddedSetCache;
 import org.infinispan.multimap.impl.SetBucket;
@@ -15,16 +16,13 @@ import org.infinispan.server.iteration.IterationManager;
 import org.infinispan.server.iteration.map.MapIterationInitializationContext;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.commands.iteration.BaseIterationCommand;
-import org.infinispan.commons.util.Util;
 
 /**
- * `<code>SSCAN key cursor [MATCH pattern] [COUNT count]</code>` command.
- * <p>
- * Scan the key-value properties of the set stored under <code>key</code>.
+ * SSCAN
  *
- * @since 15.0
- * @see <a href="https://redis.io/commands/sscan/">Redis Documentation</a>
  * @author Vittorio Rigamonti
+ * @see <a href="https://redis.io/commands/sscan/">SSCAN</a>
+ * @since 15.0
  */
 public class SSCAN extends BaseIterationCommand {
    public SSCAN() {
@@ -38,7 +36,7 @@ public class SSCAN extends BaseIterationCommand {
 
    @Override
    protected CompletionStage<IterationInitializationContext> initializeIteration(Resp3Handler handler,
-         List<byte[]> arguments) {
+                                                                                 List<byte[]> arguments) {
       EmbeddedSetCache<byte[], byte[]> multimap = handler.getEmbeddedSetCache();
       return multimap.get(arguments.get(0)).thenApply(entry -> {
          if (entry == null) {

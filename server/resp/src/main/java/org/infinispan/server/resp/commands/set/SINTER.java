@@ -21,11 +21,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * {@link} https://redis.io/commands/sinter/
+ * SINTER
  *
- * Returns the members of the set resulting from the intersection of all the
- * given sets.
- *
+ * @see <a href="https://redis.io/commands/sinter/">SINTER</a>
  * @since 15.0
  */
 public class SINTER extends RespCommand implements Resp3Command {
@@ -69,7 +67,7 @@ public class SINTER extends RespCommand implements Resp3Command {
       var iter = buckets.iterator();
       // access all items to check for error
       while (iter.hasNext()) {
-      var aSet = iter.next();
+         var aSet = iter.next();
       }
       return Collections.emptySet();
    }

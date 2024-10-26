@@ -18,23 +18,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/lmove/
- * <p>
- * Atomically returns and removes the first/last element (head/tail depending on the wherefrom argument)
- * of the list stored at source, and pushes the element at the first/last element (head/tail depending on the whereto argument)
- * of the list stored at destination.
- * <p>
- * For example: consider source holding the list a,b,c, and destination holding the list x,y,z.
- * Executing LMOVE source destination RIGHT LEFT results in source holding a,b and destination holding c,x,y,z.
- * <p>
- * If source does not exist, the value nil is returned and no operation is performed.
- * If source and destination are the same, the operation is equivalent to removing the first/last element
- * from the list and pushing it as first/last element of the list,
- * so it can be considered as a list rotation command (or a no-op if wherefrom is the same
- * as whereto).
- * <p>
- * This command comes in place of the now deprecated RPOPLPUSH.
- * Doing LMOVE RIGHT LEFT is equivalent.
+ * LMOVE
+ *
+ * @see <a href="https://redis.io/commands/lmove/">LMOVE</a>
  * @since 15.0
  */
 public class LMOVE extends RespCommand implements Resp3Command {

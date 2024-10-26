@@ -17,7 +17,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/del/
+ * DEL
+ *
+ * @see <a href="https://redis.io/commands/del/">DEL</a>
  * @since 14.0
  */
 public class DEL extends RespCommand implements Resp3Command {

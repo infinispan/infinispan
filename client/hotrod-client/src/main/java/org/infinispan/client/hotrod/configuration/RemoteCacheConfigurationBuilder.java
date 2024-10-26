@@ -62,7 +62,7 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
    }
 
    /**
-    * Whether or not to implicitly FORCE_RETURN_VALUE for all calls to this cache.
+    * Whether to implicitly FORCE_RETURN_VALUE for all calls to this cache.
     */
    public RemoteCacheConfigurationBuilder forceReturnValues(boolean forceReturnValues) {
       attributes.attribute(FORCE_RETURN_VALUES).set(forceReturnValues);
@@ -219,7 +219,7 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
    }
 
    /**
-    * The {@link javax.transaction.TransactionManager} to use for the cache
+    * The {@link jakarta.transaction.TransactionManager} to use for the cache
     *
     * @param manager an instance of a TransactionManager
     * @return an instance of the builder

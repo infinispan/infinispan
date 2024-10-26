@@ -18,7 +18,9 @@ import org.infinispan.server.resp.serialization.RespConstants;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @see <a href="https://redis.io/commands/command/">Redis documentation</a>
+ * COMMAND
+ *
+ * @see <a href="https://redis.io/commands/command/">COMMAND</a>
  * @since 14.0
  */
 public class COMMAND extends RespCommand implements Resp3Command {

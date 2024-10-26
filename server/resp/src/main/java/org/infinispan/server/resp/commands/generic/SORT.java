@@ -36,7 +36,7 @@ import io.netty.channel.ChannelHandlerContext;
  * There is also the {@link SORT_RO} read-only variant of this command.
  *
  * @since 15.0
- * @see <a href="https://redis.io/commands/sort/">Redis Documentation</a>
+ * @see <a href="https://redis.io/commands/sort/">SORT</a>
  */
 public class SORT extends RespCommand implements Resp3Command {
    private static final char REPLACEMENT = '*';

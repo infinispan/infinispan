@@ -4,12 +4,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+
+import jakarta.transaction.Transaction;
 
 /**
  * Interface defining additional functionality for invocation contexts that propagate within a transaction's scope.
@@ -43,7 +43,7 @@ public interface TxInvocationContext<T extends AbstractCacheTransaction> extends
 
    /**
     * Returns the tx associated with the current thread. This method MUST be guarded with a call to {@link
-    * #isOriginLocal()}, as {@link javax.transaction.Transaction} are not propagated from the node where tx was
+    * #isOriginLocal()}, as {@link jakarta.transaction.Transaction} are not propagated from the node where tx was
     * started.
     * @throws IllegalStateException if the call is performed from a {@link #isOriginLocal()}==false context.
     */

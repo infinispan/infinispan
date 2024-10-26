@@ -115,7 +115,7 @@ public interface AvailabilityStrategyContext {
 
    /**
     * Initiates conflict resolution using the conflictTopology, which should have already been broadcast via
-    * {@link this#updateTopologiesAfterMerge(CacheTopology, CacheTopology, AvailabilityMode)}
+    * {@link AvailabilityStrategyContext#updateTopologiesAfterMerge(CacheTopology, CacheTopology, AvailabilityMode)}
     *
     * @param conflictTopology the topology to use during conflict resolution
     * @param preferredNodes the addresses that belong to the preferred partition as determined by the {@link AvailabilityStrategy}

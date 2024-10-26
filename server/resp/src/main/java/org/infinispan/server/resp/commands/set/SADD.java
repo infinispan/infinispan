@@ -13,9 +13,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * SADD implementation, see:
- * @link https://redis.io/commands/sadd
+ * SADD
  *
+ * @see <a href="https://redis.io/commands/sadd/">SADD</a>
  * @since 15.0
  */
 public class SADD extends RespCommand implements Resp3Command {

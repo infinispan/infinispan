@@ -110,7 +110,6 @@ public interface SyncCache<K, V> {
     * @param key
     * @param value
     * @param options
-    * @return
     */
    default void set(K key, V value, CacheWriteOptions options) {
       put(key, value, options);
@@ -300,7 +299,6 @@ public interface SyncCache<K, V> {
     * Puts all entries
     *
     * @param entries
-    * @return Void
     */
    default void putAll(Map<K, V> entries) {
       putAll(entries, CacheWriteOptions.DEFAULT);

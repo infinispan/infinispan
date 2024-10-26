@@ -16,6 +16,7 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
+ * @see <a href="https://redis.io/commands/zrandmember/">ZRANDMEMBER</a>
  * When called with just the key argument, return a random element from the sorted set value stored at key.
  * If the provided count argument is positive, return an array of distinct elements.
  * The array's length is either count or the sorted set's cardinality ({@link ZCARD}), whichever is lower.
@@ -40,7 +41,6 @@ import io.netty.channel.ChannelHandlerContext;
  * If the WITHSCORES modifier is used, the reply is a list elements and their scores from the sorted set.
  *
  * @since 15.0
- * @see <a href="https://redis.io/commands/zrandmember/">Redis Documentation</a>
  */
 public class ZRANDMEMBER extends RespCommand implements Resp3Command {
    public ZRANDMEMBER() {

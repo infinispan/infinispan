@@ -1,14 +1,14 @@
 package org.infinispan.cdi.embedded.event.cache;
 
-import jakarta.enterprise.event.Event;
-import jakarta.enterprise.util.TypeLiteral;
-
 import org.infinispan.Cache;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.transaction.xa.GlobalTransaction;
+
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.TypeLiteral;
 
 /**
  * Event bridge for {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated}.
@@ -21,7 +21,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 @Listener
 public class CacheEntryCreatedAdapter<K, V> extends AbstractAdapter<CacheEntryCreatedEvent<K, V>> {
 
-   /**
+   /*
     * CDI does not allow parametrized type for events (like <code><K,V></code>). This is why this wrapped needs to be
     * introduced. To ensure type safety, this needs to be linked to parent class (in other words this class can not
     * be static).
@@ -128,14 +128,14 @@ public class CacheEntryCreatedAdapter<K, V> extends AbstractAdapter<CacheEntryCr
 
    };
 
-   /**
+   /*
     * Events which will be selected (including generic type information (<code><?, ?></code>).
     */
    @SuppressWarnings("serial")
    public static final TypeLiteral<CacheEntryCreatedEvent<?, ?>> WILDCARD_TYPE = new TypeLiteral<CacheEntryCreatedEvent<?, ?>>() {
    };
 
-   /**
+   /*
     * Needed for creating event bridge.
     */
    public CacheEntryCreatedAdapter(Event<CacheEntryCreatedEvent<K, V>> event) {

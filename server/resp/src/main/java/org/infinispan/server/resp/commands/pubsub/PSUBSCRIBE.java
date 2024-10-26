@@ -12,7 +12,9 @@ import org.infinispan.server.resp.commands.PubSubResp3Command;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/psubscribe/
+ * PSUBSCRIBE
+ *
+ * @see <a href="https://redis.io/commands/psubscribe/">PSUBSCRIBE</a>
  * @since 14.0
  */
 public class PSUBSCRIBE extends RespCommand implements PubSubResp3Command {

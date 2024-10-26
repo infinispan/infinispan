@@ -15,14 +15,11 @@ import org.infinispan.server.resp.tx.RespTransactionHandler;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>DISCARD</code>` command.
- * <p>
- * This command clears the queued commands and returns to the normal mode. All the registered listeners are
- * removed.
+ * DISCARD
  *
- * @since 15.0
- * @see <a href="https://redis.io/commands/discard">Redis Documentation</a>
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/discard/">DISCARD</a>
+ * @since 15.0
  */
 public class DISCARD extends RespCommand implements Resp3Command, TransactionResp3Command {
 

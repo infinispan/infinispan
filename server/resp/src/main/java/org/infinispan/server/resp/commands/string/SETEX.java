@@ -11,14 +11,14 @@ import org.infinispan.server.resp.RespRequestHandler;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>SETEX key seconds value</code>` command.
+ * SETEX
  * <p>
  * As of Redis 2.6.2, this command is deprecated. Applications should utilize `<code>SET key value EX seconds</code>`.
  * </p>
  *
+ * @author Jos&eacute; Bolina
+ * @see <a href="https://redis.io/commands/setex/">SETEX</a>.
  * @since 15.0
- * @author José Bolina
- * @see <a href="https://redis.io/commands/setex/">Redis documentation</a>.
  */
 public class SETEX extends SET {
 

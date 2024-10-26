@@ -1,17 +1,18 @@
 package org.infinispan.server.resp.commands.list;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
- * https://redis.io/commands/rpoplpush/
- * Is like {@link LMOVE} with RIGHT and LEFT
+ * RPOPLPUSH
  *
+ * @see <a href="https://redis.io/commands/rpoplpush/">RPOPLPUSH</a>
  * @since 15.0
  */
 public class RPOPLPUSH extends LMOVE implements Resp3Command {

@@ -10,8 +10,9 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.commands.iteration.BaseIterationCommand;
 
 /**
- * <a href="https://redis.io/commands/scan/">SCAN</a>
+ * SCAN
  *
+ * @see <a href="https://redis.io/commands/scan/">SCAN</a>
  * @since 15.0
  */
 public class SCAN extends BaseIterationCommand {

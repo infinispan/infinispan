@@ -14,18 +14,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/ltrim/
+ * LTRIM
  *
- * Trim an existing list so that it will contain only the specified range of elements specified.
- * Both start and stop are zero-based indexes, where 0 is the first element of the list (the head),
- * 1 the next element and so on.
- * start and end can also be negative numbers indicating offsets from the end of the list,
- * where -1 is the last element of the list, -2 the penultimate element and so on.
- * Out of range indexes will not produce an error:
- * if start is larger than the end of the list, or start > end,
- * the result will be an empty list (which causes key to be removed).
- * If end is larger than the end of the list, the command will treat it like the last element of the list.
- * Returns "OK"
+ * @see <a href="https://redis.io/commands/ltrim/">LTRIM</a>
  * @since 15.0
  */
 public class LTRIM extends RespCommand implements Resp3Command {

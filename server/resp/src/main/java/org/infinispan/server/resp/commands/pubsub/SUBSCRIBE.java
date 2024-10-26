@@ -25,7 +25,9 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.CharsetUtil;
 
 /**
- * @link https://redis.io/commands/subscribe/
+ * SUBSCRIBE
+ *
+ * @see <a href="https://redis.io/commands/subscribe/">SUBSCRIBE</a>
  * @since 14.0
  */
 public class SUBSCRIBE extends RespCommand implements Resp3Command, PubSubResp3Command {

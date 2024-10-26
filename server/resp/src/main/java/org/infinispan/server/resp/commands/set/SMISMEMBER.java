@@ -13,8 +13,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * {@link} https://redis.io/commands/smismember/
+ * SMISMEMBER
  *
+ * @see <a href="https://redis.io/commands/smismember/">SMISMEMBER</a>
  * @since 15.0
  */
 public class SMISMEMBER extends RespCommand implements Resp3Command {
@@ -24,8 +25,8 @@ public class SMISMEMBER extends RespCommand implements Resp3Command {
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
-         ChannelHandlerContext ctx,
-         List<byte[]> arguments) {
+                                                      ChannelHandlerContext ctx,
+                                                      List<byte[]> arguments) {
       EmbeddedSetCache<byte[], byte[]> esc = handler.getEmbeddedSetCache();
       byte[][] ba = arguments.subList(1, arguments.size()).toArray(byte[][]::new);
       CompletionStage<List<Long>> resultStage = esc.mIsMember(arguments.get(0), ba);

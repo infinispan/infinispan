@@ -24,6 +24,7 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
+ * @see <a href="https://redis.io/commands/zrange/">ZRANGE</a>
  * Returns the specified range of elements in the sorted set stored at <key>.
  * <p>
  * ZRANGE can perform different types of range queries: by index (rank), by the score,or by lexicographical order.
@@ -37,7 +38,6 @@ import io.netty.channel.ChannelHandlerContext;
  *    <li>{@link ZREVRANGEBYLEX}</li>
  * </ul>
  *
- * @see <a href="https://redis.io/commands/zrange">Redis Documentation</a>
  * @since 15.0
  */
 public class ZRANGE extends RespCommand implements Resp3Command {

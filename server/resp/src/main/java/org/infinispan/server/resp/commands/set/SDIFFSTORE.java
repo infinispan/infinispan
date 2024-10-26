@@ -14,7 +14,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * {@link} https://redis.io/commands/sdiffstore/
+ * SDIFFSTORE
+ *
+ * @see <a href="https://redis.io/commands/sdiffstore/">SDIFFSTORE</a>
  * @since 15.0
  */
 public class SDIFFSTORE extends RespCommand implements Resp3Command {

@@ -31,7 +31,7 @@ import io.netty.buffer.ByteBufUtil;
  * </p>
  *
  * @see <a href="https://redis.io/docs/latest/develop/reference/protocol-spec/">RESP Specification</a>
- * @see <a href="https://github.com/antirez/RESP3/blob/74adea588783e463c7e84793b325b088fe6edd1c/spec.md">RESP3 Specification</a>
+ * @see <a href="https://github.com/antirez/RESP3/blob/74adea588783e463c7e84793b325b088fe6edd1c/spec.md/">RESP3 Specification</a>
  * @since 15.0
  * @author José Bolina
  */

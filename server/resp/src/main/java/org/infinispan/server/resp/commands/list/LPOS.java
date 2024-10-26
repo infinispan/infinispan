@@ -18,16 +18,10 @@ import org.infinispan.server.resp.serialization.Resp3Type;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/lpos/
+ * LPOS
  *
- * Returns the element at the given index in the list.
- * The index is zero-based, so 0 means the first element, 1 the second element and so on.
- * Negative indices can be used to designate elements starting at the tail of the list.
- * -1 means the last element.
- * When the value at key is not a list, an error is returned.
- *
+ * @see <a href="https://redis.io/commands/lpos/">LPOS</a>
  * @since 15.0
- * @see <a href="https://redis.io/commands/lpos">Redis Documentation</a>
  */
 public class LPOS extends RespCommand implements Resp3Command {
 
@@ -44,7 +38,7 @@ public class LPOS extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
 
-      if (arguments.size() % 2 != 0  || arguments.size() > 8) {
+      if (arguments.size() % 2 != 0 || arguments.size() > 8) {
          //(error) (arguments must come in pairs)
          RespErrorUtil.syntaxError(handler.allocator());
          return handler.myStage();
@@ -89,7 +83,7 @@ public class LPOS extends RespCommand implements Resp3Command {
                }
                if (rank == Long.MIN_VALUE) {
                   RespErrorUtil.customError("value is out of range, "
-                        +"value must between -9223372036854775807 and 9223372036854775807", handler.allocator());
+                        + "value must between -9223372036854775807 and 9223372036854775807", handler.allocator());
                   return handler.myStage();
                }
                break;

@@ -16,11 +16,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * RENAMENX Resp Command
+ * RENAMENX
  *
- * @link <a href="https://redis.io/commands/renamenx/">RENAMENX</a>
- *       Operation is performed in two step: old key removed, new key set.
- *       data could get lost in case of failure of the latter.
+ * @see <a href="https://redis.io/commands/renamenx/">RENAMENX</a>
  * @since 15.0
  */
 public class RENAMENX extends RespCommand implements Resp3Command {

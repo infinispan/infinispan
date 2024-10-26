@@ -115,7 +115,7 @@ public class ReadOnlySegmentAwareMap<K, V> extends AbstractDelegatingMap<K, V> {
     * keys counting all that are in the segments.
     * <p>
     * If you are using this method to verify if the map is empty, you should instead use
-    * the {@link ReadOnlySegmentAwareEntryMap#isEmpty()} as it will perform better if the
+    * the {@link ReadOnlySegmentAwareMap#isEmpty()} as it will perform better if the
     * size is only used for this purpose.
     * <p>
     * This time complexity for this method is always O(N).

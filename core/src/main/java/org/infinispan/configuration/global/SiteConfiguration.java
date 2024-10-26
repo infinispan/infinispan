@@ -1,5 +1,7 @@
 package org.infinispan.configuration.global;
 
+import java.util.Objects;
+
 import org.infinispan.remoting.transport.Transport;
 
 /**
@@ -16,7 +18,7 @@ public class SiteConfiguration {
    }
 
    /**
-    * Returns the name of the local site. Must be a valid name defined in {@link #siteConfigurations()}
+    * Returns the name of the local site.
     */
    @Deprecated(forRemoval=true, since = "11.0")
    public final String localSite() {
@@ -26,13 +28,8 @@ public class SiteConfiguration {
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof SiteConfiguration)) return false;
-
-      SiteConfiguration that = (SiteConfiguration) o;
-
-      if (localSite != null ? !localSite.equals(that.localSite) : that.localSite != null) return false;
-
-      return true;
+      if (!(o instanceof SiteConfiguration that)) return false;
+      return Objects.equals(localSite, that.localSite);
    }
 
    @Override

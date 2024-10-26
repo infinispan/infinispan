@@ -13,15 +13,10 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * Removes the specified members from the sorted set stored at key.
- * Non-existing members are ignored.
+ * ZREM
  *
- * An error is returned when key exists and does not hold a sorted set.
- * Integer reply:
- * The number of members removed from the sorted set, not including non-existing members.
- *
+ * @see <a href="https://redis.io/commands/zrem/">ZREM</a>
  * @since 15.0
- * @see <a href="https://redis.io/commands/zrem/">Redis Documentation</a>
  */
 public class ZREM extends RespCommand implements Resp3Command {
    public ZREM() {

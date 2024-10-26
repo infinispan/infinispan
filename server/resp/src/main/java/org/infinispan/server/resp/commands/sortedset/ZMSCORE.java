@@ -13,15 +13,10 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * Returns the scores associated with the specified members in the sorted set stored at key.
+ * ZMSCORE
  *
- * For every member that does not exist in the sorted set, a nil value is returned.
- *
- * Array reply: list of scores or nil associated with the specified member values
- * (a double precision floating point number), represented as strings.
- *
+ * @see <a href="https://redis.io/commands/zmscore/">ZMSCORE</a>
  * @since 15.0
- * @see <a href="https://redis.io/commands/zmscore/">Redis Documentation</a>
  */
 public class ZMSCORE extends RespCommand implements Resp3Command {
    public ZMSCORE() {

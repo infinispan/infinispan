@@ -13,10 +13,10 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * Returns the sorted set number of elements.
+ * ZCOUNT
  *
+ * @see <a href="https://redis.io/commands/zcard/">ZCARD</a>
  * @since 15.0
- * @see <a href="https://redis.io/commands/zcard">Redis Documentation</a>
  */
 public class ZCARD extends RespCommand implements Resp3Command {
 

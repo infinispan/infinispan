@@ -25,8 +25,9 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.ChannelMatcher;
 
 /**
- * <a href="https://redis.io/commands/client/">CLIENT</a> *
+ * CLIENT
  *
+ * @see <a href="https://redis.io/commands/client/">CLIENT</a> *
  * @since 15.0
  */
 public class CLIENT extends RespCommand implements Resp3Command {

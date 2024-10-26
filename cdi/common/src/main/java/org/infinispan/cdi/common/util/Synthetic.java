@@ -78,7 +78,7 @@ public @interface Synthetic {
          * Get a synthetic qualifier. The provided annotation is used to map the
          * generated qualifier, allowing later retrieval.
          *
-         * @param annotation
+         * @param object
          * @return
          */
         public Synthetic get(Object object) {

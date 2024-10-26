@@ -12,8 +12,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * <a href="https://redis.io/commands/dbsize/">DBSIZE</a>
+ * DBSIZE
  *
+ * @see <a href="https://redis.io/commands/dbsize/">DBSIZE</a>
  * @since 15.0
  */
 public class DBSIZE extends RespCommand implements Resp3Command {

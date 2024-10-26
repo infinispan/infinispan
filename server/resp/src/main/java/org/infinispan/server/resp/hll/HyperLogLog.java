@@ -53,10 +53,10 @@ import net.jcip.annotations.ThreadSafe;
  * changes from explicit to compact.
  * </p>
  *
- * @see <a href="https://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf">[1] HyperLogLog: the analysis of a near-optimal cardinality estimation algorithm</a>
+ * @see <a href="https://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf/">[1] HyperLogLog: the analysis of a near-optimal cardinality estimation algorithm</a>
  * @see <a href="http://antirez.com/news/75">[2] Redis new data structure: the HyperLogLog</a>
- * @see <a href="http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/40671.pdf">[3] HyperLogLog in Practice: Algorithmic Engineering of a State of The Art Cardinality Estimation Algorithm</a>
- * @see <a href="https://arxiv.org/pdf/1702.01284.pdf">[4] New cardinality estimation algorithms for HyperLogLog sketches</a>
+ * @see <a href="http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/40671.pdf/">[3] HyperLogLog in Practice: Algorithmic Engineering of a State of The Art Cardinality Estimation Algorithm</a>
+ * @see <a href="https://arxiv.org/pdf/1702.01284.pdf/">[4] New cardinality estimation algorithms for HyperLogLog sketches</a>
  * @since 15.0
  * @author José Bolina
  */

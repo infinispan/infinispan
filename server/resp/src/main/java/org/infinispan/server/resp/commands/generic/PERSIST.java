@@ -13,9 +13,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * PERSIST Resp Command
- * <a href="https://redis.io/commands/persist/">persist</a>
+ * PERSIST
  *
+ * @see <a href="https://redis.io/commands/persist/">PERSIST</a>
  * @since 15.0
  */
 public class PERSIST extends RespCommand implements Resp3Command {

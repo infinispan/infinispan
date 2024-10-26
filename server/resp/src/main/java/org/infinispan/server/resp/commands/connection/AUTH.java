@@ -13,7 +13,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @see <a href="https://redis.io/commands/auth/">Redis documentation</a>
+ * AUTH
+ *
+ * @see <a href="https://redis.io/commands/auth/">AUTH</a>
  * @since 14.0
  */
 public class AUTH extends RespCommand implements AuthResp3Command {

@@ -11,9 +11,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.util.function.SerializablePredicate;
 
 /**
- * {@inheritDoc}
- *
- * Embedded version of MultimapCache.
+ * Embedded version of {@link BasicMultimapCache}.
  *
  * @author Katia Aresti, karesti@redhat.com
  * @see <a href="http://infinispan.org/documentation/">Infinispan documentation</a>

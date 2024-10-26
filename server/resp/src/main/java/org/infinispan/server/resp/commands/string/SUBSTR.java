@@ -1,14 +1,14 @@
 package org.infinispan.server.resp.commands.string;
 
 /**
- * `<code>SUBSTR key start end</code>` command.
+ * SUBSTR
  * <p>
  * This command is deprecated. The recommended alternative is `<code>GETRANGE key start end</code>`.
  * </p>
  *
- * @since 15.0
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/substr/">SUBSTR</a>
  * @see GETRANGE
- * @see <a href="https://redis.io/commands/substr/">Redis documentation</a>.
+ * @since 15.0
  */
 public class SUBSTR extends GETRANGE { }

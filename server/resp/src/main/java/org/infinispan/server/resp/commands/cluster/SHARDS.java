@@ -40,12 +40,13 @@ import io.netty.channel.ChannelHandlerContext;
 import net.jcip.annotations.GuardedBy;
 
 /**
- * `CLUSTER SHARDS` command.
+ * CLUSTER SHARDS
  * <p>
  * Use the {@link CacheTopology} and retrieves information based on the {@link ConsistentHash}. We broadcast the
  * command to the current topology members to retrieve specific data from the nodes.
+ * </p>
  *
- * @link <a href="https://redis.io/commands/cluster-shards/">CLUSTER SHARDS</a>
+ * @see <a href="https://redis.io/commands/cluster-shards/">CLUSTER SHARDS</a>
  * @since 15.0
  */
 public class SHARDS extends RespCommand implements Resp3Command {

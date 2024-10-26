@@ -19,12 +19,12 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>CLUSTER KEYSLOT key</code>` command.
+ * CLUSTER KEYSLOT
  * <p>
  * Returns the slot a key is mapped to. Useful for debugging.
- *
+ * </p>
  * @since 15.0
- * @see <a href="https://redis.io/commands/cluster-keyslot/">Redis Documentation</a>
+ * @see <a href="https://redis.io/commands/cluster-keyslot/">CLUSTER KEYSLOT</a>
  */
 public class KEYSLOT extends RespCommand implements Resp3Command {
 

@@ -20,15 +20,16 @@ import org.infinispan.server.resp.serialization.Resp3Type;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>PUBSUB CHANNELS [pattern]</code>` command.
+ * PUBSUB CHANNELS
+ *
  * <p>
  * List the existing subscribers matching the optional glob pattern. If no pattern is specified, all channels are listed.
  * The reply in a clustered environment is local to the node handling the command.
  * </p>
  *
- * @since 15.0
- * @see <a href="https://redis.io/docs/latest/commands/pubsub-channels/">Redis documentation.</a>
  * @author José Bolina
+ * @see <a href="https://redis.io/docs/latest/commands/pubsub-channels/">PUBSUB CHANNELS</a>
+ * @since 15.0
  */
 class CHANNELS extends RespCommand implements Resp3Command {
 

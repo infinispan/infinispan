@@ -1,17 +1,17 @@
 package org.infinispan.server.resp.commands.generic;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.server.iteration.IterationManager;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.commands.iteration.BaseIterationCommand;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Returns all keys matching pattern.
+ * KEYS
  *
- * @see <a href="https://redis.io/commands/keys">Redis Documentation</a>
+ * @see <a href="https://redis.io/commands/keys/">KEYS</a>
  * @since 15.0
  */
 public class KEYS extends BaseIterationCommand {

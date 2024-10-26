@@ -19,9 +19,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * GETEX Resp Command
+ * GETEX
  *
- * @link https://redis.io/commands/getex/
+ * @see <a href="https://redis.io/commands/getex/">GETEX</a>
  * @since 15.0
  */
 public class GETEX extends RespCommand implements Resp3Command {

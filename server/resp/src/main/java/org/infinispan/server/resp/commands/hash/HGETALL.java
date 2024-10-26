@@ -13,14 +13,11 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>HGETALL key</code>` command.
- * <p>
- *    Returns the key-value pairs in the hash map stored at the given key.
- * </p>
+ * HGETALL
  *
- * @since 15.0
- * @see <a href="https://redis.io/commands/hgetall/">Redis Documentation</a>
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/hgetall/">HGETALL</a>
+ * @since 15.0
  */
 public class HGETALL extends RespCommand implements Resp3Command {
 

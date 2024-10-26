@@ -13,14 +13,11 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>HVALS key</code>` command.
- * <p>
- *    Return all values in the hash map stored under <code>key</code>.
- * </p>
+ * HVALS
  *
- * @since 15.0
- * @see <a href="https://redis.io/commands/hvals/">Redis Documentation</a>
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/hvals/">HVALS</a>
+ * @since 15.0
  */
 public class HVALS extends RespCommand implements Resp3Command {
 

@@ -2,7 +2,7 @@ package org.infinispan.server.memcached.binary;
 
 /**
  * Memcache binary protocol constants.
- * {@link <a href="https://github.com/memcached/memcached/wiki/BinaryProtocolRevamped">Memcached Binary Protocol</a>}
+ * <a href="https://github.com/memcached/memcached/wiki/BinaryProtocolRevamped">Memcached Binary Protocol</a>
  *
  * @since 15.0
  */

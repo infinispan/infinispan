@@ -15,7 +15,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @see <a href="https://redis.io/commands/set/">Redis documentation</a>
+ * SET
+ *
+ * @see <a href="https://redis.io/commands/set/">SET</a>
  * @since 14.0
  */
 public class SET extends RespCommand implements Resp3Command {

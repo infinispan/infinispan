@@ -19,9 +19,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * {@link} https://redis.io/commands/sdiff/
- * Returns the members of the set resulting from the difference between
- * the first set and all the successive sets.
+ * SDIFF
+ *
+ * @see <a href="https://redis.io/commands/sdiff/">SDIFF</a>
  * @since 15.0
  */
 public class SDIFF extends RespCommand implements Resp3Command {

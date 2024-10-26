@@ -15,8 +15,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * <a href="https://redis.io/commands/module-list/">MODULE LIST</a>
+ * MODULE LIST
  *
+ * @see <a href="https://redis.io/commands/module-list/">MODULE LIST</a>
  * @since 15.0
  */
 public class MODULE extends RespCommand implements Resp3Command {

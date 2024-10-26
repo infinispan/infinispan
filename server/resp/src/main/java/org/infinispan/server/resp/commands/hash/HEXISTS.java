@@ -14,15 +14,11 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>HEXISTS key field</code>` command.
- * <p>
- *    Verify if the specified <code>field</code> exists in the hash stored at <code>key</code>. Returns 1 if true,
- *    or 0, otherwise.
- * </p>
+ * HEXISTS
  *
- * @since 15.0
- * @see <a href="https://redis.io/commands/hexists">Redis Documentation</a>
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/hexists/">HEXISTS</a>
+ * @since 15.0
  */
 public class HEXISTS extends RespCommand implements Resp3Command {
 

@@ -56,7 +56,7 @@ public class MemoryAddressHash {
 
    /**
     * Removes all the address lookups by setting them to 0. This method returns a LongStream that contains all of
-    * valid (non zero) addresses that were present during this operation.
+    * valid (non-zero) addresses that were present during this operation.
     * @return stream with the valid memory pointers to stored values
     */
    public LongStream removeAll() {
@@ -69,7 +69,7 @@ public class MemoryAddressHash {
    /**
     * Removes all the address lookups by setting them to 0 within the given offset, limiting the removal to only
     * a specific count of addresses. This method returns a LongStream that contains all of
-    * valid (non zero) addresses that were present during this operation.
+    * valid (non-zero) addresses that were present during this operation.
     * @param offset offset into the block
     * @param count how many pointers to look at
     * @return stream with the valid memory pointers to stored values

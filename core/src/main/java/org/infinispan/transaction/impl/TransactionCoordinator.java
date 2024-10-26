@@ -17,6 +17,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.InvocationContextFactory;
@@ -30,14 +31,13 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import jakarta.transaction.Transaction;
 
 /**
- * Coordinates transaction prepare/commits as received from the {@link javax.transaction.TransactionManager}.
+ * Coordinates transaction prepare/commits as received from the {@link jakarta.transaction.TransactionManager}.
  * Integrates with the TM through either {@link org.infinispan.transaction.xa.TransactionXaAdapter} or
  * through {@link org.infinispan.transaction.synchronization.SynchronizationAdapter}.
  *

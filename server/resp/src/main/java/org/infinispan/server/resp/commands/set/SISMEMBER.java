@@ -13,10 +13,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * {@link} https://redis.io/commands/sismember/
+ * SISMEMBER
  *
- * Returns 1 if element is member of the set stored at key, 0 otherwise
- *
+ * @see <a href="https://redis.io/commands/sismember/">SISMEMBER</a>
  * @since 15.0
  */
 public class SISMEMBER extends RespCommand implements Resp3Command {
@@ -26,8 +25,8 @@ public class SISMEMBER extends RespCommand implements Resp3Command {
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
-         ChannelHandlerContext ctx,
-         List<byte[]> arguments) {
+                                                      ChannelHandlerContext ctx,
+                                                      List<byte[]> arguments) {
       EmbeddedSetCache<byte[], byte[]> esc = handler.getEmbeddedSetCache();
       var resultStage = esc.mIsMember(arguments.get(0), arguments.get(1)).thenApply(v -> v.get(0));
       return handler.stageToReturn(resultStage, ctx, Resp3Response.INTEGER);

@@ -14,6 +14,12 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
+/**
+ * HSETNX
+ *
+ * @see <a href="https://redis.io/commands/hsetnx/">HSETNX</a>
+ * @since 15.0
+ */
 public class HSETNX extends RespCommand implements Resp3Command {
 
    public HSETNX() {

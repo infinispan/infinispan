@@ -48,6 +48,7 @@ import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -141,7 +142,6 @@ import org.infinispan.stream.impl.intops.object.FilterOperation;
 import org.infinispan.stream.impl.intops.object.MapOperation;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -1177,7 +1177,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
 
    /**
     * Adds the listener using the provided filter converter and class loader.  The provided builder is used to add
-    * additional configuration including (clustered, onlyPrimary & identifier) which can be used after this method is
+    * additional configuration including (clustered, onlyPrimary and identifier) which can be used after this method is
     * completed to see what values were used in the addition of this listener
     */
    @Override

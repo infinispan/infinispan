@@ -15,16 +15,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/lrem/
+ * LREM
  *
- * Removes the first count occurrences of elements equal to element from the list.
- *
- * count > 0: Remove elements equal to element moving from head to tail.
- * count < 0: Remove elements equal to element moving from tail to head.
- * count = 0: Remove all elements equal to element.
- *
- * When key does not exist, the command will always return 0.
- *
+ * @see <a href="https://redis.io/commands/lrem/">LREM</a>
  * @since 15.0
  */
 public class LREM extends RespCommand implements Resp3Command {

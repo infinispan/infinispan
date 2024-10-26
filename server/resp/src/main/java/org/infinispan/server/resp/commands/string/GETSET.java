@@ -11,14 +11,15 @@ import org.infinispan.server.resp.RespRequestHandler;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>GETSET key value</code>` command.
+ * GETSET
  * <p>
  * This command is deprecated. The alternative is `<code>SET key value GET</code>`.
  * </p>
- * @since 15.0
+ *
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/getset/">GETSET</a>.
  * @see SET
- * @see <a href="https://redis.io/commands/getset/">Redis documentation</a>.
+ * @since 15.0
  */
 public class GETSET extends SET {
 

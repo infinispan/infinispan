@@ -21,7 +21,7 @@ import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 /**
- * JUnit 5 {@link 'https://junit.org/junit5'} extension. <br/>
+ * <a href="https://junit.org/junit5">JUnit 5</a> extension. <br/>
  *
  * The extension can be used in the most simple way that will work in container mode with a standalone server running.
  *

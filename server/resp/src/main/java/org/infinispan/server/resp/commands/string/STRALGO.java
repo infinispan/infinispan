@@ -13,7 +13,9 @@ import org.infinispan.server.resp.response.LCSResponse;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/lcs/
+ * LCS
+ *
+ * @see <a href="https://redis.io/commands/lcs/">LCS</a>
  * @since 15.0
  */
 public class STRALGO extends RespCommand implements Resp3Command {

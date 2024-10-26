@@ -16,20 +16,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * https://redis.io/commands/lrange/
+ * LRANGE
  *
- * Returns the specified elements of the list stored at key.
- * The offsets start and stop are zero-based indexes,
- * with 0 being the first element of the list (the head of the list),
- * 1 being the next element and so on.
- *
- * These offsets can also be negative numbers indicating offsets starting at the end of the list.
- * For example, -1 is the last element of the list, -2 the penultimate, and so on.
- *
- * Out of range indexes will not produce an error.
- * If start is larger than the end of the list, an empty list is returned.
- * If stop is larger than the actual end of the list, will treat it like the
- * last element of the list.
+ * @see <a href="https://redis.io/commands/lrange/">LRANGE</a>
  * @since 15.0
  */
 public class LRANGE extends RespCommand implements Resp3Command {

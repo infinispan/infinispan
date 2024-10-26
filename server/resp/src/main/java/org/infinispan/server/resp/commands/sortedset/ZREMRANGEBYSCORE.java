@@ -3,11 +3,10 @@ package org.infinispan.server.resp.commands.sortedset;
 import org.infinispan.server.resp.commands.sortedset.internal.ZREMRANGE;
 
 /**
- * Removes all elements in the sorted set stored at key with a score between min and max (inclusive).
+ * ZREMRANGEBYSCORE
  *
- * Integer reply: the number of elements removed.
+ * @see <a href="https://redis.io/commands/zremrangebyscore/">ZREMRANGEBYSCORE</a>
  * @since 15.0
- * @see <a href="https://redis.io/commands/zremrangebyscore/">Redis Documentation</a>
  */
 public class ZREMRANGEBYSCORE extends ZREMRANGE {
    public ZREMRANGEBYSCORE() {

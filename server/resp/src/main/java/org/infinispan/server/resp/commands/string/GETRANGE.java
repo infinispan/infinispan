@@ -15,18 +15,18 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * GETRANGE Resp Command
- *
+ * GETRANGE
+ * <p>
  * Returns the substring of the string value stored at key, determined by the
  * offsets start and end (both are inclusive).
  * Negative offsets can be used in order to provide an offset starting from the
  * end of the string.
  * So -1 means the last character, -2 the penultimate and so forth.
- *
+ * <p>
  * The function handles out of range requests by limiting the resulting range to
  * the actual length of the string.
  *
- * @link https://redis.io/commands/getrange/
+ * @see <a href="https://redis.io/commands/getrange/">GETRANGE</a>
  * @since 15.0
  */
 public class GETRANGE extends RespCommand implements Resp3Command {

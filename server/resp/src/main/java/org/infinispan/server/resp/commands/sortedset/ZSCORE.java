@@ -13,14 +13,10 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * Returns the score of member in the sorted set at key.
+ * ZSCORE
  *
- * If member does not exist in the sorted set, or key does not exist, nil is returned.
- * Bulk string reply: the score of member (a double precision floating point number),
- * represented as string.
- *
+ * @see <a href="https://redis.io/commands/zscore/">ZSCORE</a>
  * @since 15.0
- * @see <a href="https://redis.io/commands/zscore/">Redis Documentation</a>
  */
 public class ZSCORE extends RespCommand implements Resp3Command {
    public ZSCORE() {

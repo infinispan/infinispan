@@ -21,33 +21,10 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * Adds all the specified members with the specified scores to the sorted set stored at key.
- * It is possible to specify multiple score / member pairs.
- * If a specified member is already a member of the sorted set,
- * the score is updated and the element reinserted at the right position to ensure the correct ordering.
- * <p>
- * If key does not exist, a new sorted set with the specified members as sole members is created,
- * like if the sorted set was empty.
- * If the key exists but does not hold a sorted set, an error is returned.
- * <p>
- * Options:
- * <ul>
- * <li>XX: Only update elements that already exist. Don't add new elements.</li>
- * <li>NX: Only add new elements. Don't update already existing elements.</li>
- * <li>LT: Only update existing elements if the new score is less than the current score. This flag doesn't prevent adding new elements.</li>
- * <li>GT: Only update existing elements if the new score is greater than the current score. This flag doesn't prevent adding new elements.</li>
- * <li>CH: Modify the return value from the number of new elements added, to the total number of elements changed.
- * Changed elements are new elements added and elements already existing for which the score was updated.
- * Normally the return value of ZADD only counts the number of new elements added.</li>
- * <li>INCR: When this option is specified ZADD acts like {@link ZINCRBY}.
- * Only one score-element pair can be specified in this mode.</li>
- * </ul>
- * Note: The GT, LT and NX options are mutually exclusive.
- * The score values should be the string representation of a double precision floating
- * point number. +inf and -inf values are valid values as well.
+ * ZADD
  *
+ * @see <a href="https://redis.io/commands/zadd/">ZADD</a>
  * @since 15.0
- * @see <a href="https://redis.io/commands/zadd">Redis Documentation</a>
  */
 public class ZADD extends RespCommand implements Resp3Command {
 

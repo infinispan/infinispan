@@ -16,15 +16,17 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * SMOVE implementation
+ * SMOVE
+ *
  * <p>
  * Atomicity warning:
  * Derogating to the above description, this implementation is not atomic:
  * is it possible that, moving an existing element in source, at a given
  * time a client
- * can observe that element doesn't exists both in source and destination.
+ * can observe that element doesn't exist both in source and destination.
+ *
+ * @see <a href="https://redis.io/commands/smove/">SMOVE</a>
  * @since 15.0
- * @see <a href="https://redis.io/commands/smove/">Redis documentation</a>
  */
 public class SMOVE extends RespCommand implements Resp3Command {
    public SMOVE() {
@@ -33,8 +35,8 @@ public class SMOVE extends RespCommand implements Resp3Command {
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
-         ChannelHandlerContext ctx,
-         List<byte[]> arguments) {
+                                                      ChannelHandlerContext ctx,
+                                                      List<byte[]> arguments) {
       final var source = arguments.get(0);
       final var destination = arguments.get(1);
       final var element = arguments.get(2);

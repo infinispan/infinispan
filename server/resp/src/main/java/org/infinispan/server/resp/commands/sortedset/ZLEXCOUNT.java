@@ -14,13 +14,10 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * When all the elements in a sorted set are inserted with the same score, in order to force lexicographical
- * ordering, this command returns the number of elements in the sorted set at key with a value between min and max.
+ * ZLEXCOUNT
  *
- * The min and max arguments have the same meaning as described for {@link ZRANGEBYLEX}.
- *
+ * @see <a href="https://redis.io/commands/zlexcount/">ZLEXCOUNT</a>
  * @since 15.0
- * @see <a href="https://redis.io/commands/zlexcount">Redis Documentation</a>
  */
 public class ZLEXCOUNT extends RespCommand implements Resp3Command {
 

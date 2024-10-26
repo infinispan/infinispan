@@ -25,20 +25,10 @@ import org.jgroups.util.CompletableFutures;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * Pops one or more elements from the first non-empty list key from the list of provided key names.
+ * LMPOP
  *
- * Elements are popped from either the left or right of the first non-empty list based on
- * the passed argument. The number of returned elements is limited to the lower between the
- * non-empty list's length, and the count argument (which defaults to 1).
- *
- * Returns array reply, specifically:
- * <ul>
- *    <li>null when no element could be popped.</li>
- *    <li>A two-element array with the first element being the name of the key from which elements were popped,
- *    and the second element is an array of elements.</li>
- * </ul>
+ * @see <a href="https://redis.io/commands/lmpop/">LMPOP</a>
  * @since 15.0
- * @see <a href="https://redis.io/commands/lmpop">Redis Documentation</a>
  */
 public class LMPOP extends RespCommand implements Resp3Command {
 
@@ -91,7 +81,7 @@ public class LMPOP extends RespCommand implements Resp3Command {
          return handler.myStage();
       }
       long count = 1;
-      if (arguments.size() > pos ) {
+      if (arguments.size() > pos) {
          byte[] countArgValue;
          try {
             if (!Util.isAsciiBytesEquals(COUNT, arguments.get(pos++))) {
@@ -126,14 +116,14 @@ public class LMPOP extends RespCommand implements Resp3Command {
    }
 
    private CompletionStage<PopResult> asyncCalls(CompletionStage<Collection<byte[]>> pollValues,
-                                                          byte[] prevName,
-                                                          Iterator<byte[]> iteNames,
-                                                          long count,
-                                                          boolean isleft,
-                                                          ChannelHandlerContext ctx,
-                                                          Resp3Handler handler) {
+                                                 byte[] prevName,
+                                                 Iterator<byte[]> iteNames,
+                                                 long count,
+                                                 boolean isleft,
+                                                 ChannelHandlerContext ctx,
+                                                 Resp3Handler handler) {
       return pollValues.thenCompose(c -> {
-         if (c != null){
+         if (c != null) {
             return CompletableFuture.completedFuture(new PopResult(prevName, c));
          }
 

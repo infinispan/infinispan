@@ -17,7 +17,7 @@ import org.infinispan.server.resp.serialization.Resp3Type;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @see <a href="https://redis.io/commands/config/">Redis documentation</a>
+ * @see <a href="https://redis.io/commands/config/">CONFIG</a>
  * @since 14.0
  */
 public class CONFIG extends RespCommand implements Resp3Command {
