@@ -20,8 +20,9 @@ import org.infinispan.server.resp.serialization.RespConstants;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * <a href="https://redis.io/commands/memory/">MEMORY</a>
+ * MEMORY
  *
+ * @see <a href="https://redis.io/commands/memory/">MEMORY</a>
  * @since 15.0
  */
 public class MEMORY extends RespCommand implements Resp3Command {

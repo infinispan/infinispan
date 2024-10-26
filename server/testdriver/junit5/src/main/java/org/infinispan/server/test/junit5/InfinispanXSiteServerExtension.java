@@ -19,7 +19,7 @@ import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 /**
- * JUnit 5 {@link 'https://junit.org/junit5'} extension. <br/>
+ * <a href="https://junit.org/junit5">JUnit 5</a> extension. <br/>
  *
  *  * Creates a cluster of sites to be used for running multiple tests for Cross-Site replication functionality
  *

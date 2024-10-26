@@ -18,29 +18,14 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * Returns the rank of member in the sorted set stored at key, with the scores ordered from high to low.
- * The rank (or index) is 0-based, which means that the member with the lowest score has rank 0.
- *The optional WITHSCORE argument supplements the command's reply with the score of the element returned.
+ * ZRANK
  *
- * Use {@link ZREVRANK} to get the rank of an element with the scores ordered from high to low.
- *
- * If member exists in the sorted set:
- * <ul>
- *    <li>using WITHSCORE, Array reply: an array containing the rank and score of member.</li>
- *    <li> without using WITHSCORE, Integer reply: the rank of member.</li>
- * </ul>
- *
- * If member does not exist in the sorted set or key does not exist:
- * <ul>
- *    <li>using WITHSCORE, Array reply: nil.</li>
- *    <li>without using WITHSCORE, Bulk string reply: nil.</li>
- * </ul>
- *
- * @see <a href="https://redis.io/commands/zrank">Redis Documentation</a>
+ * @see <a href="https://redis.io/commands/zrank/">ZRANK</a>
  * @since 15.0
  */
-public class ZRANK  extends RespCommand implements Resp3Command {
+public class ZRANK extends RespCommand implements Resp3Command {
    protected boolean isRev;
+
    public ZRANK() {
       super(-3, 1, 1, 1);
    }
@@ -64,7 +49,7 @@ public class ZRANK  extends RespCommand implements Resp3Command {
       if (withScore) {
          return handler.stageToReturn(sortedSet.indexOf(name, member, isRev).thenApply(ZRANK::mapResult), ctx, Resp3Response.ARRAY_INTEGER);
       }
-      return handler.stageToReturn(sortedSet.indexOf(name, member, isRev).thenApply(r -> r == null? null : r.getValue()), ctx, Resp3Response.INTEGER);
+      return handler.stageToReturn(sortedSet.indexOf(name, member, isRev).thenApply(r -> r == null ? null : r.getValue()), ctx, Resp3Response.INTEGER);
    }
 
    private static Collection<Number> mapResult(SortedSetBucket.IndexValue index) {

@@ -13,11 +13,11 @@ import org.infinispan.server.resp.response.LCSResponse;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>LCS key1 key2 [LEN] [IDX] [MINMATCHLEN min-match-len] [WITHMATCHLEN]</code>` command.
+ * LCS
  *
- * @since 15.1
- * @see <a href="https://redis.io/commands/lcs/">Redis Documentation</a>
+ * @see <a href="https://redis.io/commands/lcs/">LCS</a>
  * @see STRALGO
+ * @since 15.1
  */
 public class LCS extends RespCommand implements Resp3Command {
 

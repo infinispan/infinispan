@@ -76,8 +76,8 @@ public class BeanBuilder<T> {
      * </p>
      * <p/>
      * <p>
-     * By default the bean lifecycle will wrap the result of calling
-     * {@link BeanManager#createInjectionTarget(AnnotatedType)}.
+     * By default, the bean lifecycle will wrap the result of calling
+     * {@link BeanManager#getInjectionTargetFactory(AnnotatedType)}.
      * </p>
      * <p/>
      * <p>
@@ -178,7 +178,7 @@ public class BeanBuilder<T> {
     /**
      * Add to the qualifiers used for bean creation.
      *
-     * @param qualifiers the additional qualifier to use
+     * @param qualifier the additional qualifier to use
      */
     public BeanBuilder<T> addQualifier(Annotation qualifier) {
         this.qualifiers.add(qualifier);
@@ -426,7 +426,7 @@ public class BeanBuilder<T> {
     /**
      * Define that the created bean will (or will not) be passivation capable.
      *
-     * @param nullable <code>true</code> if the created bean should be
+     * @param passivationCapable <code>true</code> if the created bean should be
      *                 passivation capable, otherwise <code>false</code>
      */
     public BeanBuilder<T> passivationCapable(boolean passivationCapable) {

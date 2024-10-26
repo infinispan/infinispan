@@ -27,17 +27,10 @@ import org.jgroups.util.CompletableFutures;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * Pops one or more elements, that are member-score pairs, from the first non-empty sorted set in the
- * provided list of key names.
+ * ZMPOP
  *
- * {@link ZMPOP} and {BZMPOP} are similar to the following, more limited, commands:
- *
- * {@link ZPOPMIN} or {@link ZPOPMAX} which take only one key, and can return multiple elements.
- * {BZPOPMIN} or {BZPOPMAX} which take multiple keys, but return only one element from just one key.
- *
- * See {BZMPOP} for the blocking variant of this command.
+ * @see <a href="https://redis.io/commands/zmpop/">ZMPOP</a>
  * @since 15.0
- * @see <a href="https://redis.io/commands/zpopmax/">Redis Documentation</a>
  */
 public class ZMPOP extends RespCommand implements Resp3Command {
 
@@ -117,12 +110,12 @@ public class ZMPOP extends RespCommand implements Resp3Command {
    }
 
    private CompletionStage<PopResult> asyncCalls(CompletionStage<Collection<ScoredValue<byte[]>>> popValues,
-                                                          byte[] prevName,
-                                                          Iterator<byte[]> iteNames,
-                                                          long count,
-                                                          boolean isMin,
-                                                          ChannelHandlerContext ctx,
-                                                          Resp3Handler handler) {
+                                                 byte[] prevName,
+                                                 Iterator<byte[]> iteNames,
+                                                 long count,
+                                                 boolean isMin,
+                                                 ChannelHandlerContext ctx,
+                                                 Resp3Handler handler) {
 
       return popValues.thenApply(c -> {
          if (c != null && !c.isEmpty()) {
@@ -138,7 +131,8 @@ public class ZMPOP extends RespCommand implements Resp3Command {
       });
    }
 
-   private record PopResult(byte[] name, Collection<ScoredValue<byte[]>> values) implements JavaObjectSerializer<PopResult> {
+   private record PopResult(byte[] name,
+                            Collection<ScoredValue<byte[]>> values) implements JavaObjectSerializer<PopResult> {
 
       @Override
       public void accept(PopResult res, ByteBufPool alloc) {

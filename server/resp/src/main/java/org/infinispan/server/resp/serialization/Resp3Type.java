@@ -17,7 +17,7 @@ import org.infinispan.server.resp.ByteBufPool;
  * </p>
  *
  * @author José Bolina
- * @see <a href="https://github.com/antirez/RESP3/blob/master/spec.md#resp3-types">RESP3 Types</a>
+ * @see <a href="https://github.com/antirez/RESP3/blob/master/spec.md#resp3-types/">RESP3 Types</a>
  */
 public enum Resp3Type implements SerializationHint.SimpleHint {
    /**

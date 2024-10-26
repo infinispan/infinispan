@@ -17,7 +17,7 @@ import org.infinispan.server.resp.tx.RespTransactionHandler;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>MULTI</code>` command.
+ * MULTI
  * <p>
  * This command marks the start of a transaction block. Subsequent operations are queued for later execution and receive
  * a {@link RespConstants#QUEUED_REPLY} response. Each operation is verified for errors,
@@ -33,10 +33,10 @@ import io.netty.channel.ChannelHandlerContext;
  * and {@link org.infinispan.server.resp.commands.pubsub.PSUBSCRIBE}. The subscription commands drop the queued commands
  * and enter pub-sub mode.
  *
- * @since 15.0
- * @see <a href="https://redis.io/commands/multi/">Redis documentation</a>
- * @see <a href="https://redis.io/docs/interact/transactions/">Redis transactions documentation</a>
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/multi/">MULTI</a>
+ * @see <a href="https://redis.io/docs/interact/transactions/">Redis transactions documentation</a>
+ * @since 15.0
  */
 public class MULTI extends RespCommand implements Resp3Command, TransactionResp3Command {
 

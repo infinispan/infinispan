@@ -1,5 +1,5 @@
 /**
- * {@link Cache}-specific listener events
+ * {@link org.infinispan.Cache}-specific listener events
  *
  * @api.public
  */

@@ -13,9 +13,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * SUNIONSTORE implementation, see:
- * {@link} https://redis.io/commands/sunionstore/
+ * SUNIONSTORE
  *
+ * @see <a href="https://redis.io/commands/sunionstore/">SUNIONSTORE</a>
  * @since 15.0
  */
 public class SUNIONSTORE extends RespCommand implements Resp3Command {
@@ -25,8 +25,8 @@ public class SUNIONSTORE extends RespCommand implements Resp3Command {
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
-         ChannelHandlerContext ctx,
-         List<byte[]> arguments) {
+                                                      ChannelHandlerContext ctx,
+                                                      List<byte[]> arguments) {
       EmbeddedSetCache<byte[], byte[]> esc = handler.getEmbeddedSetCache();
 
       var destination = arguments.get(0);

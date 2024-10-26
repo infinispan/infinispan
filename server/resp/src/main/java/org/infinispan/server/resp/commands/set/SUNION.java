@@ -18,9 +18,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * SUNION implementation, see:
- * {@link} https://redis.io/commands/sunion/
+ * SUNION
  *
+ * @see <a href="https://redis.io/commands/sunion/">SUNION</a>
  * @since 15.0
  */
 public class SUNION extends RespCommand implements Resp3Command {
@@ -30,8 +30,8 @@ public class SUNION extends RespCommand implements Resp3Command {
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
-         ChannelHandlerContext ctx,
-         List<byte[]> arguments) {
+                                                      ChannelHandlerContext ctx,
+                                                      List<byte[]> arguments) {
       EmbeddedSetCache<byte[], byte[]> esc = handler.getEmbeddedSetCache();
 
       var uniqueKeys = SINTER.getUniqueKeys(handler, arguments);
@@ -50,7 +50,7 @@ public class SUNION extends RespCommand implements Resp3Command {
                if (el == null) {
                   continue;
                }
-               if (result.stream().noneMatch((v)-> Objects.deepEquals(v, el))) {
+               if (result.stream().noneMatch((v) -> Objects.deepEquals(v, el))) {
                   result.add(el);
                }
             }

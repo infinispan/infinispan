@@ -39,7 +39,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.AttributeKey;
 
 /**
- * `<code>WATCH key [key ...]</code>` command.
+ * WATCH
  * <p>
  * Installs a clustered listener to watch for the given <code>key</code>s. The listener receives events for creation,
  * updates, and expiration.
@@ -51,9 +51,9 @@ import io.netty.util.AttributeKey;
  * Since a listener is bound to a single connection, this ensures that another client does not affect each other's
  * transactions safeguards.
  *
- * @since 15.0
- * @see <a href="https://redis.io/commands/watch/>Redis Documentation</a>
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/watch/>WATCH</a>
+ * @since 15.0
  */
 public class WATCH extends RespCommand implements Resp3Command, TransactionResp3Command {
    public static final AdvancedExternalizer<TxEventConverterEmpty> EXTERNALIZER = new TxEventConverterEmpty.Externalizer();

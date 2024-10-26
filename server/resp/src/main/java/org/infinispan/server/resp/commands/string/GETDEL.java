@@ -12,12 +12,12 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * GETDEL Resp Command
- *
+ * GETDEL
  * Get the value of key and delete the key. This command is similar to GET,
  * except for the fact that it also deletes the key on success (if and only
  * if the key's value type is a string).
- * @link https://redis.io/commands/getdel/
+ *
+ * @see <a href="https://redis.io/commands/getdel/">GETDEL</a>
  * @since 15.0
  */
 public class GETDEL extends RespCommand implements Resp3Command {

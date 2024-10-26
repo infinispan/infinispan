@@ -18,7 +18,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.CharsetUtil;
 
 /**
- * `<code>HELLO [protover [AUTH username password] [SETNAME clientname]]</code>` command.
+ * HELLO
  * <p>
  * Issued by the client when establishing a new connection. This implementation only allows for RESP3 version. Any
  * other version receives an error reply.
@@ -31,8 +31,8 @@ import io.netty.util.CharsetUtil;
  * The `<code>SETNAME</code>` operation is ignored.
  * </p>
  *
+ * @see <a href="https://redis.io/commands/hello/">HELLO</a>
  * @since 14.0
- * @see <a href="https://redis.io/commands/hello/">Redis Documentation</a>
  */
 public class HELLO extends RespCommand implements AuthResp3Command {
    public HELLO() {

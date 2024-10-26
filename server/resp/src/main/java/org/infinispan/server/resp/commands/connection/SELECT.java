@@ -18,7 +18,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link <a href="https://redis.io/commands/select/">SELECT</a>
+ * SELECT
+ *
+ * @see <a href="https://redis.io/commands/select/">SELECT</a>
  * @since 14.0
  */
 public class SELECT extends RespCommand implements Resp3Command {

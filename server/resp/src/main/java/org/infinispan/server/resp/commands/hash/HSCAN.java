@@ -14,13 +14,11 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.commands.iteration.BaseIterationCommand;
 
 /**
- * `<code>HSCAN key cursor [MATCH pattern] [COUNT count]</code>` command.
- * <p>
- * Scan the key-value properties of the hash stored under <code>key</code>.
+ * HSCAN
  *
- * @since 15.0
- * @see <a href="https://redis.io/commands/hscan/">Redis Documentation</a>
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/hscan/">HSCAN</a>
+ * @since 15.0
  */
 public class HSCAN extends BaseIterationCommand {
 

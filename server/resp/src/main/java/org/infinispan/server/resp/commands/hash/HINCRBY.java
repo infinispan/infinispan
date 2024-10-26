@@ -16,14 +16,11 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>HINCRBY key field increment</code>` command.
- * <p>
- * Increments the long value at the <code>field</code> in the hash map stored at <code>key</code> by <code>increment</code>.
- * The command returns an error if the stored value is not a numeric long.
+ * HINCRBY
  *
- * @since 15.0
- * @see <a href="https://redis.io/commands/hincrby/">Redis Documentation</a>
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/hincrby/">HINCRBY</a>
+ * @since 15.0
  */
 public class HINCRBY extends RespCommand implements Resp3Command {
 

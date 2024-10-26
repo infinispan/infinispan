@@ -20,12 +20,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * RENAME Resp Command
+ * RENAME
  *
- * @link <a href="https://redis.io/commands/rename/">RENAME</a>
- *       This operation is NOT atomic, it is performed in two step: old key
- *       removed, new key set.
- *       Data could get lost in case of failure of the latter.
+ * @see <a href="https://redis.io/commands/rename/">RENAME</a>
  * @since 15.0
  */
 public class RENAME extends RespCommand implements Resp3Command {

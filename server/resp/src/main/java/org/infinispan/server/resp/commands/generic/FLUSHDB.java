@@ -15,8 +15,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * <a href="https://redis.io/commands/flushdb/">FLUSHDB</a>
+ * FLUSHDB
  *
+ * @see <a href="https://redis.io/commands/flushdb/">FLUSHDB</a>
  * @since 15.0
  */
 public class FLUSHDB extends RespCommand implements Resp3Command {

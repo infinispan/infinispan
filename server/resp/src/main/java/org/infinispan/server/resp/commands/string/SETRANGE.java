@@ -15,9 +15,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * SETRANGE Resp Command
+ * SETRANGE
  *
- * @link https://redis.io/commands/setrange/
+ * @see <a href="https://redis.io/commands/setrange/">SETRANGE</a>
  * @since 15.0
  */
 public class SETRANGE extends RespCommand implements Resp3Command {

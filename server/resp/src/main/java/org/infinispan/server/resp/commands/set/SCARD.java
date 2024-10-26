@@ -13,10 +13,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * {@link} https://redis.io/commands/scard/
+ * SCARD
  *
- * Returns the set cardinality (number of elements) of the set stored at key.
- *
+ * @see <a href="https://redis.io/commands/scard/">SCARD</a>
  * @since 15.0
  */
 public class SCARD extends RespCommand implements Resp3Command {

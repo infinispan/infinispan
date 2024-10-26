@@ -14,10 +14,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * Alters the last access time of a key(s). A key is ignored if it does not exist.
- * Integer reply: The number of keys that were touched.
+ * TOUCH
  *
- * @link https://redis.io/commands/touch/
+ * @see <a href="https://redis.io/commands/touch/">TOUCH</a>
  * @since 15.0
  */
 public class TOUCH extends RespCommand implements Resp3Command {

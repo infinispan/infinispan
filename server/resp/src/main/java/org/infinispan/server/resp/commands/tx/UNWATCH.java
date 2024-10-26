@@ -19,13 +19,13 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>UNWATCH</code>` command.
+ * UNWATCH
  * <p>
  * Removes all the registered watchers in the current {@link ChannelHandlerContext}.
  *
- * @since 15.0
- * @see <a href="https://redis.io/commands/unwatch/">Redis documentation.</a>
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/unwatch/">UNWATCH</a>
+ * @since 15.0
  */
 public class UNWATCH extends RespCommand implements Resp3Command {
 

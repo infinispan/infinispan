@@ -20,7 +20,7 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * <a href="https://redis.io/commands/info/">INFO</a>
+ * @see <a href="https://redis.io/commands/info/">INFO</a>
  *
  * This implementation attempts to return all attributes that a real Redis server returns. However, in most
  * cases, the values are set to 0, because they cannot be retrieved or don't make any sense in Infinispan.

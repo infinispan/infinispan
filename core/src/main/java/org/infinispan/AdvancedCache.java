@@ -31,7 +31,6 @@ import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
-import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
@@ -148,7 +147,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    /**
     * Whenever this cache acquires a lock it will do so using the given Object as the owner of said lock.
     * <p>
-    * This can be useful when a lock may have been manually acquired and you wish to reuse that lock across
+    * This can be useful when a lock may have been manually acquired, and you wish to reuse that lock across
     * invocations.
     * <p>
     * Great care should be taken with this command as misuse can very easily lead to deadlocks.
@@ -233,7 +232,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    XAResource getXAResource();
 
    /**
-    * Returns the cache loader associated associated with this cache.  As an alternative to setting this on every
+    * Returns the cache loader associated with this cache.  As an alternative to setting this on every
     * invocation, users could also consider using the {@link DecoratedCache} wrapper.
     *
     * @return this cache's cache loader
@@ -241,7 +240,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    ClassLoader getClassLoader();
 
    /**
-    * An overloaded form of {@link #put(K, V)}, which takes in an instance of {@link org.infinispan.metadata.Metadata}
+    * An overloaded form of {@link Cache#put(Object, Object)}, which takes in an instance of {@link org.infinispan.metadata.Metadata}
     * which can be used to provide metadata information for the entry being stored, such as lifespan, version of
     * value...etc.
     *
@@ -255,7 +254,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    V put(K key, V value, Metadata metadata);
 
    /**
-    * An overloaded form of {@link #putAll(Map)}, which takes in an instance of {@link org.infinispan.metadata.Metadata}
+    * An overloaded form of {@link Cache#putAll(Map)}, which takes in an instance of {@link org.infinispan.metadata.Metadata}
     * which can be used to provide metadata information for the entries being stored, such as lifespan, version of
     * value...etc.
     *
@@ -270,7 +269,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    }
 
    /**
-    * An overloaded form of {@link #replace(K, V)}, which takes in an instance of {@link Metadata} which can be used to
+    * An overloaded form of {@link Cache#replace(Object, Object)}, which takes in an instance of {@link Metadata} which can be used to
     * provide metadata information for the entry being stored, such as lifespan, version of value...etc. The {@link
     * Metadata} is only stored if the call is successful.
     *
@@ -284,7 +283,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    V replace(K key, V value, Metadata metadata);
 
    /**
-    * An overloaded form of {@link #replaceAsync(K, V)}, which takes in an instance of {@link Metadata} which can be used to
+    * An overloaded form of {@link Cache#replaceAsync(Object, Object)}, which takes in an instance of {@link Metadata} which can be used to
     * provide metadata information for the entry being stored, such as lifespan, version of value...etc. The {@link
     * Metadata} is only stored if the call is successful.
     *
@@ -300,7 +299,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    }
 
    /**
-    * An extension of {@link #replaceAsync(K, V, Metadata)}, which returns a {@link CacheEntry} instead of
+    * An extension of {@link AdvancedCache#replaceAsync(Object, Object, Metadata)}, which returns a {@link CacheEntry} instead of
     * only the value.
     *
     * @param key      key with which the specified value is associated
@@ -314,7 +313,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    CompletableFuture<CacheEntry<K, V>> replaceAsyncEntry(K key, V value, Metadata metadata);
 
    /**
-    * An overloaded form of {@link #replace(K, V, V)}, which takes in an instance of {@link Metadata} which can be used
+    * An overloaded form of {@link Cache#replace(Object, Object, Object)}, which takes in an instance of {@link Metadata} which can be used
     * to provide metadata information for the entry being stored, such as lifespan, version of value...etc. The {@link
     * Metadata} is only stored if the call is successful.
     *
@@ -332,7 +331,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    }
 
    /**
-    * An overloaded form of {@link #putIfAbsent(K, V)}, which takes in an instance of {@link Metadata} which can be used
+    * An overloaded form of {@link Cache#putIfAbsent(Object, Object)}, which takes in an instance of {@link Metadata} which can be used
     * to provide metadata information for the entry being stored, such as lifespan, version of value...etc. The {@link
     * Metadata} is only stored if the call is successful.
     *
@@ -346,7 +345,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    V putIfAbsent(K key, V value, Metadata metadata);
 
    /**
-    * An overloaded form of {@link #putIfAbsentAsync(K, V)}, which takes in an instance of {@link Metadata} which can be used
+    * An overloaded form of {@link Cache#putIfAbsentAsync(Object, Object)}, which takes in an instance of {@link Metadata} which can be used
     * to provide metadata information for the entry being stored, such as lifespan, version of value...etc. The {@link
     * Metadata} is only stored if the call is successful.
     *
@@ -362,7 +361,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    }
 
    /**
-    * An extension form of {@link #putIfAbsentAsync(K, V, Metadata)}, which returns a {@link CacheEntry} instead of
+    * An extension form of {@link AdvancedCache#putIfAbsentAsync(Object, Object, Metadata)}, which returns a {@link CacheEntry} instead of
     * only the value.
     *
     * @param key      key with which the specified value is to be associated
@@ -376,7 +375,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    CompletableFuture<CacheEntry<K, V>> putIfAbsentAsyncEntry(K key, V value, Metadata metadata);
 
    /**
-    * An overloaded form of {@link #putForExternalRead(K, V)}, which takes in an instance of {@link Metadata} which can
+    * An overloaded form of {@link Cache#putForExternalRead(Object, Object)}, which takes in an instance of {@link Metadata} which can
     * be used to provide metadata information for the entry being stored, such as lifespan, version of value...etc. The
     * {@link Metadata} is only stored if the call is successful.
     *
@@ -388,7 +387,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    void putForExternalRead(K key, V value, Metadata metadata);
 
    /**
-    * An overloaded form of {@link #compute(K, BiFunction)}, which takes in an instance of {@link Metadata} which can be
+    * An overloaded form of {@link Cache#compute(Object, BiFunction)}, which takes in an instance of {@link Metadata} which can be
     * used to provide metadata information for the entry being stored, such as lifespan, version of value...etc.
     *
     * @param key               key with which the specified value is associated
@@ -408,7 +407,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    }
 
    /**
-    * An overloaded form of {@link #computeIfPresent(K, BiFunction)}, which takes in an instance of {@link Metadata}
+    * An overloaded form of {@link Cache#computeIfPresent(Object, BiFunction)}, which takes in an instance of {@link Metadata}
     * which can be used to provide metadata information for the entry being stored, such as lifespan, version of
     * value...etc. The {@link Metadata} is only stored if the call is successful.
     *
@@ -429,7 +428,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    }
 
    /**
-    * An overloaded form of {@link #computeIfAbsent(K, Function)}, which takes in an instance of {@link Metadata} which
+    * An overloaded form of {@link Cache#computeIfAbsent(Object, Function)}, which takes in an instance of {@link Metadata} which
     * can be used to provide metadata information for the entry being stored, such as lifespan, version of value...etc.
     * The {@link Metadata} is only stored if the call is successful.
     *
@@ -450,7 +449,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    }
 
    /**
-    * An overloaded form of {@link #merge(Object, Object, BiFunction)}, which takes in an instance of {@link Metadata}
+    * An overloaded form of {@link Cache#merge(Object, Object, BiFunction)}, which takes in an instance of {@link Metadata}
     * which can be used to provide metadata information for the entry being stored, such as lifespan, version of
     * value...etc. The {@link Metadata} is only stored if the call is successful.
     *
@@ -473,7 +472,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    }
 
    /**
-    * Asynchronous version of {@link #put(Object, Object, Metadata)} which stores metadata alongside the value.  This
+    * Asynchronous version of {@link AdvancedCache#put(Object, Object, Metadata)} which stores metadata alongside the value.  This
     * method does not block on remote calls, even if your cache mode is synchronous.  Has no benefit over {@link
     * #put(Object, Object, Metadata)} if used in LOCAL mode.
     * <p/>
@@ -487,7 +486,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    CompletableFuture<V> putAsync(K key, V value, Metadata metadata);
 
    /**
-    * Extension of {@link #putAsync(K, V, Metadata)} which returns a {@link CacheEntry} instead of only the
+    * Extension of {@link AdvancedCache#putAsync(Object, Object, Metadata)} which returns a {@link CacheEntry} instead of only the
     * previous value.
     *
     * @param key      key to use
@@ -499,7 +498,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    CompletableFuture<CacheEntry<K, V>> putAsyncEntry(K key, V value, Metadata metadata);
 
    /**
-    * Overloaded {@link #computeAsync(K, BiFunction)}, which stores metadata alongside the value.  This
+    * Overloaded {@link Cache#computeAsync(Object, BiFunction)}, which stores metadata alongside the value.  This
     * method does not block on remote calls, even if your cache mode is synchronous.
     *
     * @param key               key with which the specified value is associated
@@ -520,7 +519,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    }
 
    /**
-    * Overloaded {@link #computeIfPresentAsync(K, BiFunction)}, which takes in an instance of {@link Metadata}
+    * Overloaded {@link Cache#computeIfPresentAsync(Object, BiFunction)}, which takes in an instance of {@link Metadata}
     * which can be used to provide metadata information for the entry being stored, such as lifespan, version of
     * value...etc. The {@link Metadata} is only stored if the call is successful.
     *
@@ -542,7 +541,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    }
 
    /**
-    * Overloaded {@link #computeIfAbsentAsync(K, Function)}, which takes in an instance of {@link Metadata} which
+    * Overloaded {@link Cache#computeIfAbsentAsync(Object, Function)}, which takes in an instance of {@link Metadata} which
     * can be used to provide metadata information for the entry being stored, such as lifespan, version of value...etc.
     * The {@link Metadata} is only stored if the call is successful.
     *
@@ -564,7 +563,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    }
 
    /**
-    * Overloaded {@link #mergeAsync(Object, Object, BiFunction)}, which takes in an instance of {@link Metadata}
+    * Overloaded {@link Cache#mergeAsync(Object, Object, BiFunction)}, which takes in an instance of {@link Metadata}
     * which can be used to provide metadata information for the entry being stored, such as lifespan, version of
     * value...etc. The {@link Metadata} is only stored if the call is successful.
     *
@@ -594,8 +593,8 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * requested.
     * <p>
     * If the cache is configured read-through, and a get for a key would return null because an entry is missing from
-    * the cache, the Cache's {@link CacheLoader} is called in an attempt to load the entry. If an entry cannot be loaded
-    * for a given key, the returned Map will contain null for value of the key.
+    * the cache, the Cache's {@link org.infinispan.persistence.spi.NonBlockingStore} is called in an attempt to load the
+    * entry. If an entry cannot be loaded for a given key, the returned Map will contain null for value of the key.
     * <p>
     * Unlike other bulk methods if this invoked in an existing transaction all entries will be stored in the current
     * transactional context
@@ -638,8 +637,8 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * associated with the set of keys requested.
     * <p>
     * If the cache is configured read-through, and a get for a key would return null because an entry is missing from
-    * the cache, the Cache's {@link CacheLoader} is called in an attempt to load the entry. If an entry cannot be loaded
-    * for a given key, the returned Map will contain null for value of the key.
+    * the cache, the Cache's {@link org.infinispan.persistence.spi.NonBlockingStore} is called in an attempt to load the
+    * entry. If an entry cannot be loaded for a given key, the returned Map will contain null for value of the key.
     * <p>
     * Unlike other bulk methods if this invoked in an existing transaction all entries will be stored in the current
     * transactional context
@@ -867,7 +866,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * Perform any cache operations using an alternate {@link org.infinispan.commons.dataconversion.MediaType}.
     *
     * @param keyMediaType   {@link org.infinispan.commons.dataconversion.MediaType} for the keys.
-    * @param valueMediaType {@link org.infinispan.commons.dataconversion} for the values.
+    * @param valueMediaType {@link org.infinispan.commons.dataconversion.MediaType} for the values.
     * @return an instance of {@link AdvancedCache} where all data will formatted according to the supplied {@link
     * org.infinispan.commons.dataconversion.MediaType}.
     *

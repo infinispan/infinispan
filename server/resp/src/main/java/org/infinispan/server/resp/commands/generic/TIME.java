@@ -16,9 +16,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * TIME Resp Command
- * <a href="https://redis.io/commands/time/">time</a>
+ * TIME
  *
+ * @see <a href="https://redis.io/commands/time/">time</a>
  * @since 15.0
  */
 public class TIME extends RespCommand implements Resp3Command {

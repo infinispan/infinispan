@@ -65,7 +65,7 @@ public class SchemaJdbcConfigurationBuilder<S extends AbstractJdbcStoreConfigura
 
    /**
     * Whether the key column(s) should be also written into the value object. When this is enabled, {@link
-    * #messageName(String) <b>must</b> also be configured.
+    * #messageName(String)} <b>must</b> also be configured.
     *
     * @param embeddedKey whether the key is embedded in the value
     * @return this

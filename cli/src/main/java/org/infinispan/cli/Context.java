@@ -47,7 +47,6 @@ public interface Context extends AeshContext {
     *
     * @param shell
     * @param connectionString
-    * @return
     */
    void connect(Shell shell, String connectionString);
 
@@ -58,7 +57,6 @@ public interface Context extends AeshContext {
     * @param connectionString
     * @param username
     * @param password
-    * @return
     */
    void connect(Shell shell, String connectionString, String username, String password);
 

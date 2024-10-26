@@ -13,13 +13,11 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>HGET key field</code>` command.
- * </p>
- * Find the value associated with field in the hash stored at key.
+ * HGET
  *
- * @since 15.0
- * @see <a href="https://redis.io/commands/hget/">Redis Documentation</a>
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/hget/">HGET</a>
+ * @since 15.0
  */
 public class HGET extends RespCommand implements Resp3Command {
 
@@ -29,7 +27,7 @@ public class HGET extends RespCommand implements Resp3Command {
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx,
-         List<byte[]> arguments) {
+                                                      List<byte[]> arguments) {
       EmbeddedMultimapPairCache<byte[], byte[], byte[]> hashMap = handler.getHashMapMultimap();
       return handler.stageToReturn(hashMap.get(arguments.get(0), arguments.get(1)), ctx, Resp3Response.BULK_STRING_BYTES);
    }

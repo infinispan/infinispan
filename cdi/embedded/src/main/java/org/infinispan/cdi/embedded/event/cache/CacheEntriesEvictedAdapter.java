@@ -2,13 +2,13 @@ package org.infinispan.cdi.embedded.event.cache;
 
 import java.util.Map;
 
-import jakarta.enterprise.event.Event;
-import jakarta.enterprise.util.TypeLiteral;
-
 import org.infinispan.Cache;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
+
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.TypeLiteral;
 
 /**
  * Event bridge for {@link org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted}.
@@ -21,7 +21,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent
 @Listener
 public class CacheEntriesEvictedAdapter<K, V> extends AbstractAdapter<CacheEntriesEvictedEvent<K, V>> {
 
-   /**
+   /*
     * CDI does not allow parametrized type for events (like <code><K,V></code>). This is why this wrapped needs to be
     * introduced. To ensure type safety, this needs to be linked to parent class (in other words this class can not
     * be static).
@@ -54,7 +54,7 @@ public class CacheEntriesEvictedAdapter<K, V> extends AbstractAdapter<CacheEntri
       }
    }
 
-   /**
+   /*
     * Needed for creating event bridge.
     */
    public static final CacheEntriesEvictedEvent<?, ?> EMPTY = new CacheEntriesEvictedEvent<Object, Object>() {
@@ -79,8 +79,8 @@ public class CacheEntriesEvictedAdapter<K, V> extends AbstractAdapter<CacheEntri
       }
    };
 
-   /**
-    * Events which will be selected (including generic type information (<code><?, ?></code>).
+   /*
+    * Events which will be selected, including generic type information (<code>&tl;?, ?&gt;</code>).
     */
    @SuppressWarnings("serial")
    public static final TypeLiteral<CacheEntriesEvictedEvent<?, ?>> WILDCARD_TYPE = new TypeLiteral<CacheEntriesEvictedEvent<?, ?>>() {

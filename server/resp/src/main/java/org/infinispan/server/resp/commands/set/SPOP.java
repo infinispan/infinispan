@@ -15,8 +15,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * SPOP implementation, see:
- * @link https://redis.io/commands/spop/
+ * SPOP
+ *
+ * @see <a href="https://redis.io/commands/spop/">SPOP</a>
  * @since 15.0
  */
 public class SPOP extends RespCommand implements Resp3Command {
@@ -26,9 +27,9 @@ public class SPOP extends RespCommand implements Resp3Command {
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
-         ChannelHandlerContext ctx,
-         List<byte[]> arguments) {
-      final Long count = (arguments.size() <= 1) ? 1 : ArgumentUtils.toLong(arguments.get(1));
+                                                      ChannelHandlerContext ctx,
+                                                      List<byte[]> arguments) {
+      final long count = (arguments.size() <= 1) ? 1 : ArgumentUtils.toLong(arguments.get(1));
       if (count < 0) {
          RespErrorUtil.mustBePositive(handler.allocator());
          return handler.myStage();

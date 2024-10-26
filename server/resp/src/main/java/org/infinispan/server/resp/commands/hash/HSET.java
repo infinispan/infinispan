@@ -11,13 +11,10 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * Executes the `<code>HSET key field value [field value ...]</code>` command.
- * <p>
- * Sets the specified `<code>field</code>`-`<code>value</code>` pairs in the hash stored at the given `<code>key</code>`.
- * </p>
+ * HSET
  *
+ * @see <a href="https://redis.io/commands/hset/">HSET</a>
  * @since 15.0
- * @see <a href="https://redis.io/commands/hset">Redis Documentation</a>
  */
 public class HSET extends HMSET {
 

@@ -18,15 +18,11 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * The `<code>PFADD key [element [element ...]]</code>` command.
- * <p>
- * Adds an element to the HyperLogLog (HLL) structure. The command always verify if is possible to use the HLL structure
- * with the given <code>key</code>. If the command is invoked without elements, the entry is created.
- * </p>
+ * PFADD
  *
- * @see <a href="https://redis.io/commands/pfadd/">Redis documentation.</a>
- * @since 15.0
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/pfadd/">PFADD</a>
+ * @since 15.0
  */
 public class PFADD extends RespCommand implements Resp3Command {
 

@@ -16,22 +16,10 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * Increments the score of member in the sorted set stored at key by increment.
- * If member does not exist in the sorted set, it is added with increment as its score
- * (as if its previous score was 0.0).
- * If key does not exist, a new sorted set with the specified member as its sole member is created.
+ * ZINCRBY
  *
- * An error is returned when key exists but does not hold a sorted set.
- *
- * The score value should be the string representation of a numeric value,
- * and accepts double precision floating point numbers.
- * It is possible to provide a negative value to decrement the score.
- *
- * Bulk string reply:
- * the new score of member (a double precision floating point number), represented as string.
- *
+ * @see <a href="https://redis.io/commands/zincrby/">ZINCRBY</a>
  * @since 15.0
- * @see <a href="https://redis.io/commands/zincrby/">Redis Documentation</a>
  */
 public class ZINCRBY extends RespCommand implements Resp3Command {
    public ZINCRBY() {
@@ -40,8 +28,8 @@ public class ZINCRBY extends RespCommand implements Resp3Command {
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
-                                                                ChannelHandlerContext ctx,
-                                                                List<byte[]> arguments) {
+                                                      ChannelHandlerContext ctx,
+                                                      List<byte[]> arguments) {
       byte[] name = arguments.get(0);
       double score;
       try {

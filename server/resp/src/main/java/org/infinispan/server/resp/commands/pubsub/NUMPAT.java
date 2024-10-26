@@ -15,15 +15,11 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>PUBSUB NUMPAT</code>` command.
- * <p>
- * Return the number of unique pattern the current node is subscribed to. Only patterns are counted, that is, only
- * subscriptions executed with {@link PSUBSCRIBE} command.
- * </p>
+ * NUMPAT
  *
- * @since 15.0
- * @see <a href="https://redis.io/docs/latest/commands/pubsub-numpat/">Redis documentation.</a>
  * @author José Bolina
+ * @see <a href="https://redis.io/docs/latest/commands/pubsub-numpat/">PUBSUB NUMPAT</a>
+ * @since 15.0
  */
 class NUMPAT extends RespCommand implements Resp3Command {
 

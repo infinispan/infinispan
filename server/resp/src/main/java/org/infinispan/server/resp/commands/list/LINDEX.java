@@ -14,14 +14,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/lindex/
+ * LINDEX
  *
- * Returns the element at the given index in the list.
- * The index is zero-based, so 0 means the first element, 1 the second element and so on.
- * Negative indices can be used to designate elements starting at the tail of the list.
- * -1 means the last element.
- * When the value at key is not a list, an error is returned.
- *
+ * @see <a href="https://redis.io/commands/lindex/">LINDEX</a>
  * @since 15.0
  */
 public class LINDEX extends RespCommand implements Resp3Command {

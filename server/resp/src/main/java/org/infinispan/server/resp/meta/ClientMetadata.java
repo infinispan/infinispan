@@ -1,10 +1,11 @@
 package org.infinispan.server.resp.meta;
 
 import static java.util.concurrent.atomic.AtomicLongFieldUpdater.newUpdater;
+
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 /**
- * Metadata for `<code>INFO</code>` command.
+ * Metadata for {@link org.infinispan.server.resp.commands.INFO} command.
  * <p>
  * Holds metadata about client connections. All the values are specific to a single node.
  * </p>

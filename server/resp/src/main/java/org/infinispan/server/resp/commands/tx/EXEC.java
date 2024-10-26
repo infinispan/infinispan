@@ -24,7 +24,7 @@ import org.infinispan.server.resp.tx.TransactionContext;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>EXEC</code>` command.
+ * EXEC
  * <p>
  * Retrieves the queued commands from the handler and executes them serially. If the handler returns a <code>null</code>
  * list, the transaction is aborted. The user installed a watch for a key, and the value was updated.
@@ -33,9 +33,9 @@ import io.netty.channel.ChannelHandlerContext;
  * see the state changing before the queue finishes. Even though Redis does not have the concept of commit/rollback,
  * which means that everything is applied, the current implementation provides a weaker isolation level.
  *
- * @since 15.0
- * @see <a href="https://redis.io/commands/exec">Redis Documentation</a>
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/exec/">EXEC</a>
+ * @since 15.0
  */
 public class EXEC extends RespCommand implements Resp3Command, TransactionResp3Command {
 

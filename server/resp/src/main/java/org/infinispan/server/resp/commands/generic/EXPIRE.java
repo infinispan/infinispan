@@ -22,9 +22,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * EXPIRE Resp Command
+ * EXPIRE
  *
- * @link <a href="https://redis.io/commands/expire/">EXPIRE</a>
+ * @see <a href="https://redis.io/commands/expire/">EXPIRE</a>
  * @since 15.0
  */
 public class EXPIRE extends RespCommand implements Resp3Command {

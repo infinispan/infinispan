@@ -1231,9 +1231,6 @@ public class DefaultCacheManager extends InternalCacheManager {
       }
    }
 
-   /**
-    * {@inheritDoc}
-    */
    @ManagedAttribute(description = "Global configuration properties", displayName = "Global configuration properties", dataType = DataType.TRAIT)
    public Properties getGlobalConfigurationAsProperties() {
       return new PropertyFormatter().format(configurationManager.getGlobalConfiguration());

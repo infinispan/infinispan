@@ -13,7 +13,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @see <a href="https://redis.io/commands/incrbyfloat/">Redis documentation</a>
+ * INCRBYFLOAT
+ *
+ * @see <a href="https://redis.io/commands/incrbyfloat/">INCRBYFLOAT</a>
  * @since 15.0
  */
 public class INCRBYFLOAT extends RespCommand implements Resp3Command {

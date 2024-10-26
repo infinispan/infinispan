@@ -18,9 +18,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * TTL Resp Command
- * <a href="https://redis.io/commands/ttl/">ttl</a>
+ * TTL
  *
+ * @see <a href="https://redis.io/commands/ttl/">ttl</a>
  * @since 15.0
  */
 public class TTL extends RespCommand implements Resp3Command {

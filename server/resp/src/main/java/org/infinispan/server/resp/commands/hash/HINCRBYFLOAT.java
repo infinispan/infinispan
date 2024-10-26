@@ -16,14 +16,11 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>HINCRBYFLOAT key field increment</code>` command.
- * <p>
- * Increments the value at the <code>field</code> in the hash map stored at <code>key</code> by <code>increment</code>.
- * The command fails if the stored value is not a number.
+ * HINCRBYFLOAT
  *
- * @since 15.0
- * @see <a href="https://redis.io/commands/hincrbyfloat/">Redis Documentation</a>
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/hincrbyfloat/">HINCRBYFLOAT</a>
+ * @since 15.0
  */
 public class HINCRBYFLOAT extends RespCommand implements Resp3Command {
 

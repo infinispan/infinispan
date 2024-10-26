@@ -13,14 +13,11 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>HLEN key</code>` command.
- * <p>
- *    Retrieve the size of the hash map stored under the given key.
- * </p>
+ * HLEN
  *
- * @since 15.0
- * @see <a href="https://redis.io/commands/hlen/">Redis Documentation</a>
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/hlen/">HLEN</a>
+ * @since 15.0
  */
 public class HLEN extends RespCommand implements Resp3Command {
 

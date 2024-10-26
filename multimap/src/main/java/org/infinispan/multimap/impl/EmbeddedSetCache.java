@@ -93,7 +93,7 @@ public class EmbeddedSetCache<K, V> {
     * Add the specified elements to the set, creates the set in case
     *
     * @param key,   the name of the set
-    * @param value, the element to be inserted
+    * @param values, the element to be inserted
     * @return {@link CompletionStage} containing a {@link Void}
     */
    public CompletionStage<Long> add(K key, Collection<V> values) {
@@ -119,7 +119,7 @@ public class EmbeddedSetCache<K, V> {
     * Remove the specified elements from the set, remove the set if empty
     *
     * @param key,   the name of the set
-    * @param value, the element to be inserted
+    * @param values, the element to be inserted
     * @return {@link CompletionStage} containing a {@link Void}
     */
    public CompletionStage<Long> remove(K key, Collection<V> values) {
@@ -132,7 +132,7 @@ public class EmbeddedSetCache<K, V> {
     * Get all the entries specified in the keys collection
     *
     * @param keys, collection of keys to be get
-    * @return {@link CompletionStage} containing a {@link }
+    * @return {@link CompletionStage} containing a {@link Map} with the values for the requested keys
     */
    public CompletableFuture<Map<K, SetBucket<V>>> getAll(Set<K> keys) {
       requireNonNull(keys, ERR_KEY_CAN_T_BE_NULL);

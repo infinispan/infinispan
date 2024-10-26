@@ -13,10 +13,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * {@link} https://redis.io/commands/smembers/
+ * SMEMBERS
  *
- * Returns all the members of the set value stored at key.
- *
+ * @see <a href="https://redis.io/commands/smembers/">SMEMBERS</a>
  * @since 15.0
  */
 public class SMEMBERS extends RespCommand implements Resp3Command {
@@ -26,8 +25,8 @@ public class SMEMBERS extends RespCommand implements Resp3Command {
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
-         ChannelHandlerContext ctx,
-         List<byte[]> arguments) {
+                                                      ChannelHandlerContext ctx,
+                                                      List<byte[]> arguments) {
       EmbeddedSetCache<byte[], byte[]> esc = handler.getEmbeddedSetCache();
       return handler.stageToReturn(esc.getAsSet(arguments.get(0)), ctx, Resp3Response.SET_BULK_STRING);
    }

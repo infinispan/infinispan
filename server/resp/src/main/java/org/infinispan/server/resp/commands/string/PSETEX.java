@@ -11,15 +11,15 @@ import org.infinispan.server.resp.RespRequestHandler;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>PSETEX key milliseconds value</code>` command.
+ * PSETEX
  * <p>
  * This command is deprecated. The alternative is `<code>SET key value PX milliseconds</code>`.
  * </p>
  *
- * @since 15.0
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/psetex/">PSETEX</a>.
  * @see SET
- * @see <a href="https://redis.io/commands/psetex/">Redis documentation</a>.
+ * @since 15.0
  */
 public class PSETEX extends SET {
 

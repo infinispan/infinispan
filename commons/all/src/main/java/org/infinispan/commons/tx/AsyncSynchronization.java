@@ -5,7 +5,7 @@ import java.util.concurrent.CompletionStage;
 import jakarta.transaction.Synchronization;
 
 /**
- * Non-blocking {@link javax.transaction.Synchronization}.
+ * Non-blocking {@link jakarta.transaction.Synchronization}.
  *
  * @since 14.0
  */

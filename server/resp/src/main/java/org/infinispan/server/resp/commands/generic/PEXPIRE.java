@@ -1,15 +1,10 @@
 package org.infinispan.server.resp.commands.generic;
 
 /**
- * `<code>PEXPIRE key milliseconds [NX | XX | GT | LT]</code>` command.
+ * PEXPIRE
  *
- * <p>
- * This command works exactly like {@link EXPIRE} but the time to live of the key is specified in milliseconds
- * instead of seconds.
- * </p>
- *
+ * @see <a href="https://redis.io/commands/pexpire/">PEXPIRE</a>
  * @since 15.0
- * @see <a href="https://redis.io/commands/pexpire/">Redis Documentation</a>
  */
 public class PEXPIRE extends EXPIRE {
 

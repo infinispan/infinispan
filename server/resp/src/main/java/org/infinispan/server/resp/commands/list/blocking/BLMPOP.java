@@ -9,6 +9,12 @@ import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.Util;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 
+/**
+ * BLMPOP
+ *
+ * @see <a href="https://redis.io/commands/blmpop/">BLMPOP</a>
+ * @since 15.0
+ */
 public class BLMPOP extends AbstractBlockingPop {
    private static final byte[] LEFT = new byte[] { 'L', 'E', 'F', 'T' };
    private static final byte[] RIGHT = new byte[] { 'R', 'I', 'G', 'H', 'T'};

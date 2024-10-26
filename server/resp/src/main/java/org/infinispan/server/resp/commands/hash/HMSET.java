@@ -15,15 +15,10 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * Executes the `<code>HMSET key field value [field value ...]</code>` command.
- * <p>
- * Sets the specified `<code>field</code>`-`<code>value</code>` pairs in the hash stored at the given `<code>key</code>`.
- * </p>
+ * HMSET
  *
- * Note this command is deprecated since Redis 4.0 in favor of {@link HSET}.
- *
+ * @see <a href="https://redis.io/commands/hmset/">HMSET</a>
  * @since 15.0
- * @see <a href="https://redis.io/commands/hmset">Redis Documentation</a>
  */
 public class HMSET extends RespCommand implements Resp3Command {
 

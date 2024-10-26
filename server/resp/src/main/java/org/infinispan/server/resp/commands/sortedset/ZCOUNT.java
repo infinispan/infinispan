@@ -14,6 +14,7 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
+ * @see <a href="https://redis.io/commands/zcount/">ZCOUNT</a>
  * Returns the number of elements in the sorted set at key with a score between min and max.
  * Min and max can be -inf and +inf, so that you are not required to know the highest or lowest score
  * in the sorted set to get all elements from or up to a certain score.
@@ -23,13 +24,12 @@ import io.netty.channel.ChannelHandlerContext;
  * min and max can be -inf and +inf, so that you are not required to know the highest or
  * lowest score in the sorted set to get all elements from or up to a certain score.
  * For example:
- * - ZCOUNT people (1 5 Will return all elements with 1 < score <= 5
+ * - ZCOUNT people (1 5 Will return all elements with 1 &lt; score &lt;= 5
  * while:
  * - ZCOUNT people (5 (10
- * Will return all the elements with 5 < score < 10 (5 and 10 excluded).
+ * Will return all the elements with 5 &lt; score &lt; 10 (5 and 10 excluded).
  *
  * @since 15.0
- * @see <a href="https://redis.io/commands/zcount">Redis Documentation</a>
  */
 public class ZCOUNT extends RespCommand implements Resp3Command {
 

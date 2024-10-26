@@ -51,9 +51,9 @@ import net.jcip.annotations.ThreadSafe;
  * Google implementation or the [3]. That is, it does not need empirical data to correct estimations.
  * </p>
  *
- * @see <a href="https://github.com/redis/redis/blob/unstable/src/hyperloglog.c">[1] Redis HyperLogLog implementation.</a>
- * @see <a href="https://arxiv.org/pdf/1702.01284.pdf">[2] New cardinality estimation algorithms for HyperLogLog sketches</a>
- * @see <a href="https://github.com/aggregateknowledge/java-hll">[3] Aggregate Knowledge HyperLogLog implementation.</a>
+ * @see <a href="https://github.com/redis/redis/blob/unstable/src/hyperloglog.c/">[1] Redis HyperLogLog implementation.</a>
+ * @see <a href="https://arxiv.org/pdf/1702.01284.pdf/">[2] New cardinality estimation algorithms for HyperLogLog sketches</a>
+ * @see <a href="https://github.com/aggregateknowledge/java-hll/">[3] Aggregate Knowledge HyperLogLog implementation.</a>
  * @since 15.0
  * @author José Bolina
  */

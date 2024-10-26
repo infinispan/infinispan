@@ -9,10 +9,10 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.commands.FamilyCommand;
 
 /**
- * Family of `<code>PUBSUB</code>` commands.
+ * PUBSUB
  *
+ * @see <a href="https://redis.io/docs/latest/commands/pubsub/">PUBSUB</a>
  * @since 15.0
- * @link <a href="https://redis.io/docs/latest/commands/pubsub/">Redis documentation</a>
  */
 public class PUBSUB extends FamilyCommand {
 

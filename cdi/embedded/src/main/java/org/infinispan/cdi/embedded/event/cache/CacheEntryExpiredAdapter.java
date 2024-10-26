@@ -1,14 +1,14 @@
 package org.infinispan.cdi.embedded.event.cache;
 
-import jakarta.enterprise.event.Event;
-import jakarta.enterprise.util.TypeLiteral;
-
 import org.infinispan.Cache;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
 import org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent;
 import org.infinispan.transaction.xa.GlobalTransaction;
+
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.TypeLiteral;
 
 /**
  * Event bridge for {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired}.
@@ -20,7 +20,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 @Listener
 public class CacheEntryExpiredAdapter<K, V> extends AbstractAdapter<CacheEntryExpiredEvent<K, V>> {
 
-   /**
+   /*
     * CDI does not allow parametrized type for events (like <code><K,V></code>). This is why this wrapped needs to be
     * introduced. To ensure type safety, this needs to be linked to parent class (in other words this class can not
     * be static).
@@ -73,7 +73,7 @@ public class CacheEntryExpiredAdapter<K, V> extends AbstractAdapter<CacheEntryEx
       }
    }
 
-   /**
+   /*
     * Needed for creating event bridge.
     */
    public static final CacheEntryExpiredEvent<?, ?> EMPTY = new CacheEntryExpiredEvent<Object, Object>() {
@@ -119,7 +119,7 @@ public class CacheEntryExpiredAdapter<K, V> extends AbstractAdapter<CacheEntryEx
       }
    };
 
-   /**
+   /*
     * Events which will be selected (including generic type information (<code><?, ?></code>).
     */
    @SuppressWarnings("serial")

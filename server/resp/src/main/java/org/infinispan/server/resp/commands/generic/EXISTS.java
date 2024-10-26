@@ -15,9 +15,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * EXISTS Resp Command
+ * EXISTS
  *
- * @link https://redis.io/commands/exists/
+ * @see <a href="https://redis.io/commands/exists/">EXISTS</a>
  * @since 15.0
  */
 public class EXISTS extends RespCommand implements Resp3Command {

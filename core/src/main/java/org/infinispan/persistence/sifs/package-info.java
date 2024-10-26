@@ -1,5 +1,5 @@
 /**
- * Soft Index {@link org.infinispan.persistence.spi.AdvancedLoadWriteStore}.
+ * Soft Index {@link org.infinispan.persistence.spi.NonBlockingStore}.
  *
  * @api.public
  */

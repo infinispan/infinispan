@@ -13,15 +13,11 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>HDEL key field [field ...]</code>` command.
- * <p>
- *    Remove the given fields from the hash stored at key. Unknown fields are just ignored, and a non-existing key
- *    returns 0.
- * </p>
+ * HDEL
  *
- * @since 15.0
- * @see <a href="https://redis.io/commands/hdel/">Redis Documentation</a>
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/hdel/">HDEL</a>
+ * @since 15.0
  */
 public class HDEL extends RespCommand implements Resp3Command {
 

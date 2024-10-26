@@ -14,14 +14,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/linsert/
+ * LINSERT
  *
- * Inserts element in the list stored at key either before or after the reference value pivot.
- * When key does not exist, it is considered an empty list and no operation is performed.
- * An error is returned when key exists but does not hold a list value.
- * Returns the list length after a successful insert operation,
- * 0 if the key doesn't exist, and -1 when the pivot wasn't found.
- *
+ * @see <a href="https://redis.io/commands/linsert/">LINSERT</a>
  * @since 15.0
  */
 public class LINSERT extends RespCommand implements Resp3Command {

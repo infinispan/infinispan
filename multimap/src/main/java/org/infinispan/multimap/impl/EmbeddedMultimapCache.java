@@ -46,7 +46,7 @@ import jakarta.transaction.TransactionManager;
  * <a href="http://infinispan.org/docs/dev/user_guide/user_guide.html#transactions">the Infinispan Documentation</a>.
  *
  * <h2>Duplicates</h2>
- * MultimapCache can optionally support duplicate values on keys. {@link
+ * MultimapCache can optionally support duplicate values on keys.
  *
  * <pre>
  *    multimapCache.put("k", "v1").join();

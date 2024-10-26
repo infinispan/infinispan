@@ -15,7 +15,9 @@ import org.infinispan.server.resp.tx.RespTransactionHandler;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/quit/
+ * QUIT
+ *
+ * @see <a href="https://redis.io/commands/quit/">QUIT</a>
  * @since 14.0
  */
 public class QUIT extends RespCommand implements AuthResp3Command, PubSubResp3Command, TransactionResp3Command {

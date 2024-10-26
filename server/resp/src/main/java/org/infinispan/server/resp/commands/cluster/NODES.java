@@ -34,17 +34,16 @@ import io.netty.channel.ChannelHandlerContext;
 import net.jcip.annotations.GuardedBy;
 
 /**
- * `<code>CLUSTER NODES</code>` command.
+ * CLUSTER NODES
  * <p>
- *  A command that uses the current {@link CacheTopology} and {@link ConsistentHash} to retrieve information about
- *  the nodes. The response slightly changes with the node executing the command, as it is necessary to identify itself.
- *  The execution is broadcast for nodes in the topology to identify themselves. So the response are cached according
- *  to the node that executed the command and the topology.
+ * A command that uses the current {@link CacheTopology} and {@link ConsistentHash} to retrieve information about
+ * the nodes. The response slightly changes with the node executing the command, as it is necessary to identify itself.
+ * The execution is broadcast for nodes in the topology to identify themselves. So the response are cached according
+ * to the node that executed the command and the topology.
  * </p>
  *
- * @link <a href="https://redis.io/commands/cluster-nodes/">CLUSTER NODES</a>
+ * @see <a href="https://redis.io/commands/cluster-nodes/">CLUSTER NODES</a>
  * @since 15.0
- * @author José Bolina
  */
 public class NODES extends RespCommand implements Resp3Command {
 

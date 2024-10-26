@@ -13,9 +13,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * STRLEN Resp Command
+ * STRLEN
  *
- * @link https://redis.io/commands/strlen/
+ * @see <a href="https://redis.io/commands/strlen/">STRLEN</a>
  * @since 15.0
  */
 public class STRLEN extends RespCommand implements Resp3Command {

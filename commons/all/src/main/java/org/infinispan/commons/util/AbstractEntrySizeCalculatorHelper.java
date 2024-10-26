@@ -4,7 +4,6 @@ package org.infinispan.commons.util;
  * Abstract class that provides a method to round up to the nearest value of 8 which is important for most jvm when
  * doing size calculations.  This is due to the fact that most JVMs align to the nearest 8 bytes for addressing
  * purposes.
- * {@inheritDoc}
  */
 public abstract class AbstractEntrySizeCalculatorHelper<K, V> implements EntrySizeCalculator<K, V> {
    // This is how large the object header info is

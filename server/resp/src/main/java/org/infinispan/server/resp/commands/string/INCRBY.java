@@ -13,7 +13,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/incrby/
+ * INCRBY
+ *
+ * @see <a href="https://redis.io/commands/incrby/">INCRBY</a>
  * @since 15.0
  */
 public class INCRBY extends RespCommand implements Resp3Command {

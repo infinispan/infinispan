@@ -12,7 +12,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/append/
+ * APPEND
+ *
+ * @see <a href="https://redis.io/commands/append/">APPEND</a>
  * @since 15.0
  */
 public class APPEND extends RespCommand implements Resp3Command {

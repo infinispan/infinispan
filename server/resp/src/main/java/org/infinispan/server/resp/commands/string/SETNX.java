@@ -15,15 +15,15 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>SETNX key value</code>` command.
+ * SETNX
  * <p>
  * This command is deprecated. The alternative is `<code>SET key value NX</code>`.
  * </p>
  *
- * @since 15.0
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/setnx/">SETNX</a>.
  * @see SET
- * @see <a href="https://redis.io/commands/setnx/">Redis documentation</a>.
+ * @since 15.0
  */
 public class SETNX extends RespCommand implements Resp3Command {
 

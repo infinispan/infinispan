@@ -6,14 +6,13 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.infinispan.cdi.common.util.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
+
 import jakarta.enterprise.context.Dependent;
-import jakarta.enterprise.context.spi.CreationalContext;
 import jakarta.enterprise.inject.Default;
 import jakarta.enterprise.inject.spi.Bean;
 import jakarta.enterprise.inject.spi.InjectionPoint;
-
-import org.infinispan.cdi.common.util.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
 
 /**
  * <p>
@@ -28,7 +27,6 @@ import org.infinispan.commons.logging.LogFactory;
  *
  * @author Pete Muir
  * @see ImmutableBean
- * @see ImmutableNarrowingBean
  */
 public abstract class AbstractImmutableBean<T> implements Bean<T> {
 
@@ -62,8 +60,6 @@ public abstract class AbstractImmutableBean<T> implements Bean<T> {
      * @param nullable        True if the bean is nullable
      * @param injectionPoints the bean's injection points, if null an empty set
      *                        is used
-     * @param beanLifecycle   Handler for {@link #create(CreationalContext)} and
-     *                        {@link #destroy(Object, CreationalContext)}
      * @throws IllegalArgumentException if the beanClass is null
      */
     public AbstractImmutableBean(Class<?> beanClass, String name, Set<Annotation> qualifiers, Class<? extends Annotation> scope, Set<Class<? extends Annotation>> stereotypes, Set<Type> types, boolean alternative, boolean nullable, Set<InjectionPoint> injectionPoints, String toString) {

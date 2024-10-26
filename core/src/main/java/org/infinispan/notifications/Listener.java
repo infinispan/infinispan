@@ -150,17 +150,17 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  *    </tr>
  *    <tr>
  *       <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.TransactionRegistered}</td>
- *       <td valign@="top">{@link org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent}</td>
+ *       <td valign="top">{@link org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent}</td>
  *       <td valign="top">The cache has started to participate in a transaction</td>
  *    </tr>
  *    <tr>
  *       <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.TransactionCompleted}</td>
- *       <td valign=@"top">{@link org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent}</td>
+ *       <td valign="top">{@link org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent}</td>
  *       <td valign="top">The cache has completed its participation in a transaction</td>
  *    </tr>
  *    <tr>
  *       <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryInvalidated}</td>
- *       <td valign=@"top">{@link org.infinispan.notifications.cachelistener.event.CacheEntryInvalidatedEvent}</td>
+ *       <td valign="top">{@link org.infinispan.notifications.cachelistener.event.CacheEntryInvalidatedEvent}</td>
  *       <td valign="top">A cache entry was invalidated by a remote cache.  Only if cache mode is INVALIDATION_SYNC or INVALIDATION_ASYNC.</td>
  *    </tr>
  * <p/>

@@ -51,29 +51,6 @@ public interface MetaParam<T> {
     * Provides metadata parameter lookup capabilities using {@link Class} as
     * lookup key.
     *
-    * <p>When the {@link MetaParam} type is generic, e.g. {@link MetaEntryVersion},
-    * passing the correct {@link Class} information so that the return of
-    * {@link #findMetaParam} is of the expected type can be a bit tricky.
-    * {@link MetaEntryVersion#type()} offers an easy way to retrieve the
-    * expected {@link MetaParam} type from {@link #findMetaParam} at the
-    * expense of some type safety:
-    *
-    * <pre>{@code
-    *     Class<MetaEntryVersion<Long>> type = MetaEntryVersion.type();
-    *     Optional<MetaEntryVersion<Long>> metaVersion =
-    *          metaParamLookup.findMetaParam(type);
-    * }</pre>
-    *
-    * In the future, the API might be adjusted to provide additional lookup
-    * methods where this situation is improved. Also, if the {@link MetaParam}
-    * type is not generic, e.g. {@link MetaLifespan}, the problem is avoided
-    * altogether:
-    *
-    * <pre>{@code
-    *     Optional<MetaLifespan<Long>> metaLifespan =
-    *          metaParamLookup.findMetaParam(MetaLifespan.class);
-    * }</pre>
-    *
     * <p>A user that queries meta parameters can never assume that the
     * meta parameter will always exist because some of them depends on the
     * cache usage.
@@ -291,7 +268,7 @@ public interface MetaParam<T> {
 
    /**
     * Non-writable parameter telling if the entry was loaded from a persistence tier
-    * ({@link org.infinispan.persistence.spi.CacheLoader}) or not.
+    * ({@link org.infinispan.persistence.spi.NonBlockingStore}) or not.
     * This information may be available only to write commands due to implementation reasons.
     */
    @Experimental

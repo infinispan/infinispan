@@ -13,7 +13,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/decrby/
+ * DECRBY
+ *
+ * @see <a href="https://redis.io/commands/decrby/">DECRBY</a>
  * @since 15.0
  */
 public class DECRBY extends RespCommand implements Resp3Command {

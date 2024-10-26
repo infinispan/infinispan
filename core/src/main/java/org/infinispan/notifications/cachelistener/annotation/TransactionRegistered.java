@@ -7,8 +7,8 @@ import java.lang.annotation.Target;
 
 /**
  * This annotation should be used on methods that need to be notified when the cache is called to participate in a
- * transaction and registers a {@link javax.transaction.Synchronization} with a registered {@link
- * javax.transaction.TransactionManager}.
+ * transaction and registers a {@link jakarta.transaction.Synchronization} with a registered {@link
+ * jakarta.transaction.TransactionManager}.
  * <p/>
  * Methods annotated with this annotation should accept a single parameter, a {@link
  * org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent} otherwise a {@link

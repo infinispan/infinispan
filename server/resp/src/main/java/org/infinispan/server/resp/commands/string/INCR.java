@@ -12,7 +12,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/incr/
+ * INCR
+ *
+ * @see <a href="https://redis.io/commands/incr/">INCR</a>
  * @since 14.0
  */
 public class INCR extends RespCommand implements Resp3Command {

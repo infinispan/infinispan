@@ -14,7 +14,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/publish/
+ * PUBLISH
+ *
+ * @see <a href="https://redis.io/commands/publish/">PUBLISH</a>
  * @since 14.0
  */
 public class PUBLISH extends RespCommand implements Resp3Command {

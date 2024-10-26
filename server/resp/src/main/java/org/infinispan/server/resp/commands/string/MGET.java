@@ -18,7 +18,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/mget/
+ * MGET
+ *
+ * @see <a href="https://redis.io/commands/mget/">MGET</a>
  * @since 14.0
  */
 public class MGET extends RespCommand implements Resp3Command {

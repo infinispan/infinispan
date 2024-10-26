@@ -113,6 +113,11 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-resp</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-rest</artifactId>
       </dependency>
 
@@ -283,7 +288,7 @@
                         </group>
                         <group>
                            <title>Server Connectors API</title>
-                           <packages>org.infinispan.rest*</packages>
+                           <packages>org.infinispan.rest*:org.infinispan.server.hotrod*:org.infinispan.server.resp*:org.infinispan.server.memcached*</packages>
                         </group>
                         <group>
                            <title>Tasks API</title>

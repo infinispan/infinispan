@@ -17,7 +17,9 @@ import org.infinispan.server.resp.meta.ClientMetadata;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @see <a href="https://redis.io/commands/ubsubscribe/">Redis documentation</a>
+ * UNSUBSCRIBE
+ *
+ * @see <a href="https://redis.io/commands/unsubscribe/">UNSUBSCRIBE</a>
  * @since 14.0
  */
 public class UNSUBSCRIBE extends RespCommand implements Resp3Command, PubSubResp3Command {

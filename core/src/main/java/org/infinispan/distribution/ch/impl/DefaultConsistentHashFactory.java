@@ -23,7 +23,7 @@ import org.infinispan.remoting.transport.Address;
  * Default implementation of {@link ConsistentHashFactory}.
  *
  * All methods except {@link #union(DefaultConsistentHash, DefaultConsistentHash)} return a consistent hash
- * with floor(numOwners*numSegments/numNodes) <= segments per owner <= ceil(numOwners*numSegments/numNodes).
+ * with floor(numOwners*numSegments/numNodes) &lt;= segments per owner &lt;= ceil(numOwners*numSegments/numNodes).
  *
  * @author Dan Berindei
  * @author anistor@redhat.com

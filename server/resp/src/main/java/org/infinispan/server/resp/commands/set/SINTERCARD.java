@@ -15,15 +15,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * {@link} https://redis.io/commands/sintercard/
+ * SINTERCARD
  *
- * Returns the cardinality of the resulting intersection set.
- *
- * When provided with the optional LIMIT argument (default 0 means unlimited),
- * if the intersection cardinality reaches limit partway through the
- * computation,
- * the algorithm exits returning LIMIT
- *
+ * @see <a href="https://redis.io/commands/sintercard/">SINTERCARD</a>
  * @since 15.0
  */
 public class SINTERCARD extends RespCommand implements Resp3Command {

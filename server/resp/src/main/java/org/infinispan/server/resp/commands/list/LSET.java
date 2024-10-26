@@ -17,11 +17,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/lset/
+ * LSET
  *
- * Sets the list element at index to element.
- * An error is returned for out of range indexes.
- *
+ * @see <a href="https://redis.io/commands/lset/">LSET</a>
  * @since 15.0
  */
 public class LSET extends RespCommand implements Resp3Command {

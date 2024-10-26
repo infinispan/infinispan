@@ -13,8 +13,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * SREM implementation, see:
- * @link https://redis.io/commands/srem/
+ * SREM
+ *
+ * @see <a href="https://redis.io/commands/srem/">SREM</a>
  * @since 15.0
  */
 public class SREM extends RespCommand implements Resp3Command {
@@ -28,7 +29,7 @@ public class SREM extends RespCommand implements Resp3Command {
                                                       List<byte[]> arguments) {
 
       byte[] key = arguments.get(0);
-      EmbeddedSetCache<byte[],byte[]> esc = handler.getEmbeddedSetCache();
+      EmbeddedSetCache<byte[], byte[]> esc = handler.getEmbeddedSetCache();
       CompletionStage<Long> result = esc.remove(key, arguments.subList(1, arguments.size()));
       return handler.stageToReturn(result, ctx, Resp3Response.INTEGER);
    }

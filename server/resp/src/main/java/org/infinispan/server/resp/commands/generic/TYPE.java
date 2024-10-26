@@ -14,8 +14,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * TYPE Resp Command
- * <a href="https://redis.io/commands/type/">type</a>
+ * TYPE
+ *
+ * @see <a href="https://redis.io/commands/type/">type</a>
  * @since 15.0
  */
 public class TYPE extends RespCommand implements Resp3Command {

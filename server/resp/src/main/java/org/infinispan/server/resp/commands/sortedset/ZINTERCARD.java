@@ -21,20 +21,10 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * This command is similar to {@link ZINTER}, but instead of returning the resulting sorted set,
- * it returns just the cardinality of the result.
+ * ZINTERCARD
  *
- * Keys that do not exist are considered to be empty sets. With one of the keys being an empty set,
- * the resulting set is also empty (since set intersection with an empty set always results in an empty set).
- *
- * By default, the command calculates the cardinality of the intersection of all given sets.
- * When provided with the optional LIMIT argument (which defaults to 0 and means unlimited),
- * if the intersection cardinality reaches limit partway through the computation,
- * the algorithm will exit and yield limit as the cardinality. Such implementation ensures a
- * significant speedup for queries where the limit is lower than the actual intersection cardinality.
- *
+ * @see <a href="https://redis.io/commands/zintercard/">ZINTERCARD</a>
  * @since 15.0
- * @see <a href="https://redis.io/commands/zintercard/">Redis Documentation</a>
  */
 public class ZINTERCARD extends RespCommand implements Resp3Command {
 
@@ -89,7 +79,7 @@ public class ZINTERCARD extends RespCommand implements Resp3Command {
          } catch (NumberFormatException ex) {
             invalidLimit = true;
          }
-         if (invalidLimit){
+         if (invalidLimit) {
             RespErrorUtil.customError("LIMIT can't be negative", handler.allocator());
             return handler.myStage();
          }
@@ -103,7 +93,7 @@ public class ZINTERCARD extends RespCommand implements Resp3Command {
 
       EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetCache = handler.getSortedSeMultimap();
       CompletionStage<Collection<ScoredValue<byte[]>>> aggValues = sortedSetCache
-            .inter(keys.get(0), null, 1,  SUM);
+            .inter(keys.get(0), null, 1, SUM);
       final int finalLimit = limit;
       for (int i = 1; i < keys.size(); i++) {
          final byte[] setName = keys.get(i);

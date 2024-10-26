@@ -19,15 +19,11 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>HMGET key field [field ...]</code>` command.
- * <p>
- * Returns the values associated with all <code>field</code>s in the hash stored at <code>key</code>, returning a list
- * with the values in the same order of the <code>field</code>s. No error returns from <code>field</code>s or
- * <code>key</code> that do not exist in the hash, and <code>null</code> is returned in the position.
+ * HMGET
  *
- * @since 15.0
- * @see <a href="https://redis.io/commands/hmget/">Redis Documentation</a>
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/hmget/">HMGET</a>
+ * @since 15.0
  */
 public class HMGET extends RespCommand implements Resp3Command {
 

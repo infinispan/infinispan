@@ -19,12 +19,15 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/msetnx/
- *       Derogating to the above description, this implementation is not atomic:
- *       msetnx first checks the nonexistence of all the keys
- *       and then performs the set. A concurrent set of any of the keys by
- *       another client
- *       will be overwritten.
+ * MSETNX
+ * <p>
+ * This implementation is not atomic:
+ * msetnx first checks the nonexistence of all the keys
+ * and then performs the set. A concurrent set of the keys by
+ * another client will be overwritten.
+ * </p>
+ *
+ * @see <a href="https://redis.io/commands/msetnx/">MSETNX</a>
  * @since 15.0
  */
 public class MSETNX extends RespCommand implements Resp3Command {

@@ -39,7 +39,7 @@ import io.netty.channel.ChannelHandlerContext;
  *  on a BLPOP, the order in which they will be served is unspecified.
  *
  * @since 15.0
- * @see <a href="https://redis.io/commands/blpop/">Redis documentation</a>
+ * @see <a href="https://redis.io/commands/blpop/">BLPOP</a>
  */
 public abstract class AbstractBlockingPop extends RespCommand implements Resp3Command {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);

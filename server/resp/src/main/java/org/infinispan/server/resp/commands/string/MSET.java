@@ -18,7 +18,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/mset/
+ * MSET
+ *
+ * @see <a href="https://redis.io/commands/mset/">MSET</a>
  * @since 14.0
  */
 public class MSET extends RespCommand implements Resp3Command {

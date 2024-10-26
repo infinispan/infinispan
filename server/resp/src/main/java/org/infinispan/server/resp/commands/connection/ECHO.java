@@ -12,7 +12,9 @@ import org.infinispan.server.resp.serialization.Resp3Response;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * @link https://redis.io/commands/echo/
+ * ECHO
+ *
+ * @see <a href="https://redis.io/commands/echo/">ECHO</a>
  * @since 14.0
  */
 public class ECHO extends RespCommand implements Resp3Command {

@@ -16,14 +16,14 @@ import org.infinispan.server.iteration.IterationManager;
 import org.infinispan.server.iteration.list.ListIterationInitializationContext;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
-import org.infinispan.server.resp.commands.generic.SCAN;
 import org.infinispan.server.resp.commands.iteration.BaseIterationCommand;
 
 /**
- * See {@link SCAN} for {@link ZSCAN} documentation.
+ * ZSCAN
  *
+ * @see <a href="https://redis.io/commands/zscan/">ZSCAN</a>
+ * @see <a href="https://redis.io/commands/scan/">SCAN</a>
  * @since 15.0
- * @see <a href="https://redis.io/commands/zscan/">Redis Documentation</a>
  */
 public class ZSCAN extends BaseIterationCommand {
 
@@ -50,7 +50,7 @@ public class ZSCAN extends BaseIterationCommand {
       List<Map.Entry<Object, Object>> elements = new ArrayList<>();
       Iterator<ScoredValue<byte[]>> ite = scoredValues.iterator();
       while (ite.hasNext()) {
-        ScoredValue<byte[]> item = ite.next();
+         ScoredValue<byte[]> item = ite.next();
          Map.Entry<Object, Object> entry = Map.entry(item.getValue(), ArgumentUtils.toByteArray(item.score()));
          elements.add(entry);
       }

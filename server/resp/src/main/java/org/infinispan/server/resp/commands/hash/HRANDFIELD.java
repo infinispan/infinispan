@@ -25,14 +25,11 @@ import org.infinispan.server.resp.serialization.Resp3Type;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>HRANDFIELD key [count [WITHVALUES]]</code>` command.
- * <p>
- * Returns <code>count</code> keys from the hash stored at <code>key</code>. Negative <code>count</code> can return
- * duplicated keys.
+ * HRANDFIELD
  *
- * @since 15.0
- * @see <a href="https://redis.io/commands/hrandfield/">Redis documentation</a>
  * @author José Bolina
+ * @see <a href="https://redis.io/commands/hrandfield/">HRANDFIELD</a>
+ * @since 15.0
  */
 public class HRANDFIELD extends RespCommand implements Resp3Command {
 

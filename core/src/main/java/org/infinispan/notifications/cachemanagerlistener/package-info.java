@@ -1,4 +1,4 @@
 /**
- * {@link CacheManager}-specific notifications and eventing.
+ * {@link org.infinispan.manager.EmbeddedCacheManager}-specific notifications and eventing.
  */
 package org.infinispan.notifications.cachemanagerlistener;
