@@ -25,9 +25,6 @@ jobs:
             github-token: ${{ github.token }}
             run-id: ${{ github.event.workflow_run.id }}
 
-        - name: Unzip artifact
-          run: unzip surefire-test-report.zip
-
         - name: Get github sha
           id: github_sha
           uses: juliangruber/read-file-action@v1
@@ -53,19 +50,21 @@ jobs:
 
         - name: Check test number
           if: success() || failure()
+          id: test-number
           env:
             MIN_TEST_NUM: 30000
             GH_TOKEN: ${{ github.token }}
           run: |
             COUNT=$(find . -name "TEST-*.xml" | while read f; do xmlstarlet sel -t -c  "count(//testcase)" -n "$f"; done | awk '{s+=$1} END {print s}')
-            if [ "$COUNT" -lt "$MIN_TEST_NUM" ]; then
-               gh api -X POST -H "Accept: application/vnd.github+json" \
-                  -H "X-GitHub-Api-Version: 2022-11-28" \
-                  -f 'name=Check number tests ran' \
-                  -f 'head_sha=${{ steps.github_sha.outputs.content }}' \
-                  -f 'status=completed' \
-                  -f 'conclusion=failure' \
-                  -f 'output[title]=Number Tests Executed' \
-                  -f "output[summary]=Fail. $COUNT test ran, minimum required is $MIN_TEST_NUM" \
-                     /repos/${{ github.repository }}/check-runs
-            fi
+            echo "test_count=$COUNT" >> $GITHUB_OUTPUT
+            echo "test_min=$MIN_TEST_NUM" >> $GITHUB_OUTPUT
+
+        - name: set-commit-status-pending
+          uses: myrotvorets/set-commit-status-action@v2.0.1
+          with:
+                status: failure
+                sha: ${{ steps.github_sha.outputs.content }}
+                context: Tests number check
+                description: Fail. ${{ steps.test-number.outputs.test_count }} test ran, minimum required is ${{ steps.test-number.outputs.test_min }}
+                targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
