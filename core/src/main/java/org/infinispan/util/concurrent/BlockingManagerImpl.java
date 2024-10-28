@@ -168,7 +168,7 @@ public class BlockingManagerImpl implements BlockingManager {
    @Override
    public <I, O> CompletionStage<O> handleBlocking(CompletionStage<? extends I> stage,
          BiFunction<? super I, Throwable, ? extends O> function, Object traceId) {
-      if (isCurrentThreadBlocking()) {
+      if (CompletionStages.isCompletedSuccessfully(stage) && isCurrentThreadBlocking()) {
          I value = null;
          Throwable throwable = null;
          try {
