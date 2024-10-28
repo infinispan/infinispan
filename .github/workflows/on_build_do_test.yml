@@ -7,8 +7,8 @@ on:
 permissions:
   contents: read
   packages: read
-  # Needed to write check run
-  checks: write
+  # Needed to write commit status
+  statuses: write
 
 concurrency:
   # Only cancel jobs for PR updates
@@ -43,12 +43,12 @@ jobs:
       MAVEN_OPTS: "-Xmx1500m -XX:+HeapDumpOnOutOfMemoryError"
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: LouisBrunner/checks-action@v2.0.0
+      - name: set-commit-status-pending
+        uses: myrotvorets/set-commit-status-action@v2.0.1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          name: Test Report Result
-          status: in_progress
-          sha: ${{ needs.get-info.outputs.source-head-sha }}
+            status: pending
+            sha: ${{ needs.get-info.outputs.source-head-sha }}
+            targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       - uses: actions/checkout@v4
 
@@ -80,23 +80,28 @@ jobs:
           mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
 
       - name: Maven Test
+        id: maven-test
         shell: bash
         run: >
             cd test_dir/infinispan &&
             ./mvnw verify -V -B -e -DrerunFailingTestsCount=2
             -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative
 
-      - name: Fail check status
-      # In case of failure Publish Test Report workflow is skipped
-      # so we need to fail the check here
-        if: failure()
-        uses: LouisBrunner/checks-action@v2.0.0
+      - name: set-commit-status-conclusion
+        if: success()
+        uses: myrotvorets/set-commit-status-action@v2.0.1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          name: Test Report Result
-          status: completed
-          conclusion: failure
-          sha: ${{ needs.get-info.outputs.source-head-sha }}
+            status: success
+            sha: ${{ needs.get-info.outputs.source-head-sha }}
+            targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: set-commit-status-conclusion
+        if: always() && failure()
+        uses: myrotvorets/set-commit-status-action@v2.0.1
+        with:
+            status: failure
+            sha: ${{ needs.get-info.outputs.source-head-sha }}
+            targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       - name: Archive commit sha PR
         if: >
@@ -169,6 +174,14 @@ jobs:
           - mssql
           - oracle
     steps:
+      - name: set-commit-status-pending
+        uses: myrotvorets/set-commit-status-action@v2.0.1
+        with:
+          context: Test DB ${{ matrix.dbs }}
+          status: pending
+          sha: ${{ needs.get-info.outputs.source-head-sha }}
+          targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
       - uses: actions/checkout@v4
 
       - name: Setup Java
@@ -218,3 +231,21 @@ jobs:
             test_dir/infinispan/**/failsafe-summary.xml
             github-sha.txt
             !test_dir/infinispan/**/target/*-reports*/**/TEST-*FLAKY.xml
+      - name: set-commit-status-conclusion
+        if: success()
+        uses: myrotvorets/set-commit-status-action@v2.0.1
+        with:
+            context: Test DB ${{ matrix.dbs }}
+            status: success
+            sha: ${{ needs.get-info.outputs.source-head-sha }}
+            targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: set-commit-status-conclusion
+        if: always() && failure()
+        uses: myrotvorets/set-commit-status-action@v2.0.1
+        with:
+            context: Test DB ${{ matrix.dbs }}
+            status: failure
+            sha: ${{ needs.get-info.outputs.source-head-sha }}
+            targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+

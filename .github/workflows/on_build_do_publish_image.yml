@@ -38,7 +38,10 @@ jobs:
           with:
             number: ${{ steps.workflow-run-info.outputs.pull-request-number }}
 
-        - if: ${{ github.event.workflow_run.event == 'pull_request' && contains(fromJSON(env.LABELS), 'Image Required') }}
+        - if: >
+             github.event.workflow_run.event == 'push'
+             || github.event.workflow_run.event == 'pull_request'
+             && contains(fromJSON(env.LABELS), 'Image Required')
           id: publish-image-info
           run: echo "publish-image=true" >> $GITHUB_OUTPUT
 
@@ -46,12 +49,18 @@ jobs:
           id: image-name
           run: echo "image-name=$IMAGE_NAME" >> $GITHUB_OUTPUT
 
+        - name: set-commit-status
+          if: steps.publish-image-info.outputs.publish-image == 'true'
+          uses: myrotvorets/set-commit-status-action@v2.0.1
+          with:
+              status: pending
+              sha: ${{ github.event.workflow_run.head_sha }}
+              targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
   publish-image:
       needs:
          - get-info
-      if: >
-         needs.get-info.outputs.sourceEvent != 'pull_request' ||
-         needs.get-info.outputs.publish-image == 'true'
+      if: needs.get-info.outputs.publish-image == 'true'
       uses: infinispan/infinispan-images/.github/workflows/publish_image.yml@main
       secrets:
          token: ${{ secrets.GITHUB_TOKEN }}
@@ -68,11 +77,20 @@ jobs:
       needs:
          - get-info
          - publish-image
-      if: always()
+      if:  always() && needs.get-info.outputs.publish-image == 'true'
       steps:
-      - uses: LouisBrunner/checks-action@v2.0.0
+      - name: set-commit-status
+        if: ${{ needs.publish-image.result == 'success'}}
+        uses: myrotvorets/set-commit-status-action@v2.0.1
         with:
-           token: ${{ secrets.GITHUB_TOKEN }}
-           name: Publish Image
-           conclusion: ${{ needs.publish-image.result }}
-           sha: ${{ needs.get-info.outputs.source-head-sha }}
+            status: success
+            sha: ${{ needs.get-info.outputs.source-head-sha }}
+            targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: set-commit-status
+        if: ${{ needs.publish-image.result != 'success'}}
+        uses: myrotvorets/set-commit-status-action@v2.0.1
+        with:
+            status: failure
+            sha: ${{ needs.get-info.outputs.source-head-sha }}
+            targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
