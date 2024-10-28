@@ -1,7 +1,7 @@
 [![Infinispan](https://design.jboss.org/infinispan/logo/final/PNG/infinispan_logo_rgb_lightbluewhite_darkblue_600px.png)](https://infinispan.org/) 
 
-[![Version Final](https://img.shields.io/maven-central/v/org.infinispan/infinispan-core?logo=apache-maven&style=for-the-badge&versionPrefix=15.0)](https://search.maven.org/artifact/org.infinispan/infinispan-core)
-[![Version Dev](https://img.shields.io/maven-central/v/org.infinispan/infinispan-core?logo=apache-maven&style=for-the-badge&versionPrefix=15.1)](https://search.maven.org/artifact/org.infinispan/infinispan-core)
+[![Version Final](https://img.shields.io/maven-central/v/org.infinispan/infinispan-core?logo=apache-maven&style=for-the-badge&versionPrefix=15.0)](https://central.sonatype.com/artifact/org.infinispan/infinispan-core/versions)
+[![Version Dev](https://img.shields.io/maven-central/v/org.infinispan/infinispan-core?logo=apache-maven&style=for-the-badge&versionPrefix=15.1)](https://central.sonatype.com/artifact/org.infinispan/infinispan-core/versions)
 ![Supported JVM Versions](https://img.shields.io/badge/JVM-17--23-brightgreen.svg?style=for-the-badge&logo=openjdk)
 [![Commits](https://img.shields.io/github/commit-activity/m/infinispan/infinispan.svg?label=commits&style=for-the-badge&logo=git&logoColor=white)](https://github.com/infinispan/infinispan/pulse)
 [![License](https://img.shields.io/github/license/infinispan/infinispan?style=for-the-badge&logo=apache)](https://www.apache.org/licenses/LICENSE-2.0)
