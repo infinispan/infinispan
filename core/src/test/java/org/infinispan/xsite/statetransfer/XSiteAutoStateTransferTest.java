@@ -35,7 +35,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
-import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStartSendCommand;
 import org.infinispan.xsite.status.BringSiteOnlineResponse;
 import org.infinispan.xsite.status.SiteState;
@@ -162,8 +161,7 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
             IracCleanupKeysCommand.class, IracTombstoneStateResponseCommand.class, StateTransferCancelCommand.class);
       CompletableFuture<ControlledRpcManager.BlockedRequest<XSiteAutoTransferStatusCommand>> req1 =
             controller.getRpcManager().expectCommandAsync(XSiteAutoTransferStatusCommand.class);
-      CompletableFuture<ControlledRpcManager.BlockedRequest<XSiteBringOnlineCommand>> req2 =
-            controller.getRpcManager().expectCommandAsync(XSiteBringOnlineCommand.class);
+      // req2 removed, the site status is global and store in an internal cache
       CompletableFuture<ControlledRpcManager.BlockedRequest<XSiteStateTransferStartSendCommand>> req3 =
             controller.getRpcManager().expectCommandAsync(XSiteStateTransferStartSendCommand.class);
 
@@ -175,7 +173,6 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
 
       //make sure the commands are blocked
       req1.get(10, TimeUnit.SECONDS).send().receiveAll();
-      req2.get(10, TimeUnit.SECONDS).send().receiveAll();
       req3.get(10, TimeUnit.SECONDS).send().receiveAll();
       controller.getRpcManager().stopBlocking();
 
@@ -227,8 +224,7 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
       CompletableFuture<ControlledRpcManager.BlockedRequest<XSiteAutoTransferStatusCommand>> req1 = newSiteMaster
             .getRpcManager().expectCommandAsync(XSiteAutoTransferStatusCommand.class);
       // req2 no longer triggered since only site-master trigger the SiteViewChanged event
-      CompletableFuture<ControlledRpcManager.BlockedRequest<XSiteBringOnlineCommand>> req3 = newSiteMaster
-            .getRpcManager().expectCommandAsync(XSiteBringOnlineCommand.class);
+      // req3 removed, the site status is global and store in an internal cache
       CompletableFuture<ControlledRpcManager.BlockedRequest<XSiteStateTransferStartSendCommand>> req4 = newSiteMaster
             .getRpcManager().expectCommandAsync(XSiteStateTransferStartSendCommand.class);
 
@@ -245,7 +241,6 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
 
       //make sure the commands are blocked
       req1.get(10, TimeUnit.SECONDS).send().receiveAll();
-      req3.get(10, TimeUnit.SECONDS).send().receiveAll();
       req4.get(10, TimeUnit.SECONDS).send().receiveAll();
       newSiteMaster.getRpcManager().stopBlocking();
 

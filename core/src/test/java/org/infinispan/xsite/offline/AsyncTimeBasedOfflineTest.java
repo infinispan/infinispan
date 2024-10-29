@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
@@ -116,7 +117,7 @@ public class AsyncTimeBasedOfflineTest extends AbstractXSiteTest {
 
    private void assertBringSiteOnline(String cacheName, int index) {
       OfflineStatus status = takeOfflineManager(LON, cacheName, index).getOfflineStatus(SFO);
-      assertTrue("Unable to bring " + SFO + " online. status=" + status, status.bringOnline());
+      assertTrue("Unable to bring " + SFO + " online. status=" + status, CompletionStages.join(status.bringOnline()));
    }
 
    private int primaryOwnerIndex(String cacheName, String key) {

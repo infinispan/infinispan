@@ -3,24 +3,23 @@ package org.infinispan.xsite;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.stat.MetricInfo;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.configuration.global.GlobalMetricsConfiguration;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
@@ -33,11 +32,10 @@ import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.ValidResponseCollector;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.Authorizer;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.response.AutoStateTransferResponse;
@@ -46,7 +44,6 @@ import org.infinispan.xsite.statetransfer.StateTransferStatus;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 import org.infinispan.xsite.status.BringSiteOnlineResponse;
 import org.infinispan.xsite.status.CacheMixedSiteStatus;
-import org.infinispan.xsite.status.CacheSiteStatusBuilder;
 import org.infinispan.xsite.status.SiteState;
 import org.infinispan.xsite.status.SiteStatus;
 import org.infinispan.xsite.status.TakeOfflineManager;
@@ -64,7 +61,6 @@ import org.infinispan.xsite.status.TakeSiteOfflineResponse;
 public class XSiteAdminOperations implements CustomMetricsSupplier {
 
    public static final String ONLINE = "online";
-   public static final String FAILED = "failed";
    public static final String OFFLINE = "offline";
    public static final String SUCCESS = "ok";
    private static final Function<CacheMixedSiteStatus, String> DEFAULT_MIXED_MESSAGES = s -> "mixed, offline on nodes: " + s.getOffline();
@@ -74,8 +70,8 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
    @Inject XSiteStateTransferManager stateTransferManager;
    @Inject CommandsFactory commandsFactory;
    @Inject TakeOfflineManager takeOfflineManager;
-   @Inject
-   Authorizer authorizer;
+   @Inject Authorizer authorizer;
+   @Inject DistributionManager distributionManager;
 
    public static String siteStatusToString(SiteStatus status, Function<CacheMixedSiteStatus, String> mixedFunction) {
       if (status.isOffline()) {
@@ -95,61 +91,20 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
    public Map<String, SiteStatus> clusterStatus() {
       authorizer.checkPermission(AuthorizationPermission.ADMIN);
       Map<String, Boolean> localNodeStatus = takeOfflineManager.status();
-      CacheRpcCommand command = commandsFactory.buildXSiteStatusCommand();
 
-      // TODO [pruivo] TakeOfflineManager is cluster-wide and this command is not longer required.
-      // It is kept for backwards compatible reasons and can be removed after the product release.
-      // https://issues.redhat.com/browse/ISPN-16779
-      XSiteResponse<Map<String, Boolean>> response = invokeOnAll(command,
-            new PerSiteBooleanResponseCollector(clusterSize()));
-      if (response.hasErrors()) {
-         throw new CacheException("Unable to check cluster state for members: " + response.errors());
-      }
-      //site name => online/offline/mixed
-      Map<String, CacheSiteStatusBuilder> perSiteBuilder = new HashMap<>();
-      for (Map.Entry<String, Boolean> entry : localNodeStatus.entrySet()) {
-         CacheSiteStatusBuilder builder = new CacheSiteStatusBuilder();
-         builder.addMember(rpcManager.getAddress(), entry.getValue());
-         perSiteBuilder.put(entry.getKey(), builder);
-      }
-
-      response.forEach((address, sites) -> {
-         for (Map.Entry<String, Boolean> site : sites.entrySet()) {
-            CacheSiteStatusBuilder builder = perSiteBuilder.get(site.getKey());
-            if (builder == null) {
-               throw new IllegalStateException("Site " + site.getKey() + " not defined in all the cluster members");
-            }
-            builder.addMember(address, site.getValue());
-         }
-      });
-
-      Map<String, SiteStatus> result = new HashMap<>();
-      perSiteBuilder.forEach((site, builder) -> result.put(site, builder.build()));
-      return result;
+      return localNodeStatus.entrySet().stream()
+            .map(entry -> Map.entry(entry.getKey(), SiteStatus.status(entry.getValue())))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
    }
 
    @ManagedOperation(description = "Check whether the given backup site is offline or not.", displayName = "Check whether the given backup site is offline or not.")
    public String siteStatus(@Parameter(name = "site", description = "The name of the backup site") String site) {
       //also consider local node
+      var siteState = takeOfflineManager.getSiteState(site);
       if (takeOfflineManager.getSiteState(site) == SiteState.NOT_FOUND) {
          return incorrectSiteName(site);
       }
-
-      Map<Address, String> statuses = nodeStatus(site);
-      List<Address> online = new ArrayList<>(statuses.size());
-      List<Address> offline = new ArrayList<>(statuses.size());
-      List<Address> failed = new ArrayList<>(statuses.size());
-      statuses.forEach((a, s) -> {
-         if (s.equals(FAILED)) failed.add(a);
-         if (s.equals(OFFLINE)) offline.add(a);
-         if (s.equals(ONLINE)) online.add(a);
-      });
-
-      if (!failed.isEmpty()) return rpcError(failed, "Could not query nodes ");
-      if (offline.isEmpty()) return ONLINE;
-      if (online.isEmpty()) return OFFLINE;
-
-      return "Site appears online on nodes:" + online + " and offline on nodes: " + offline;
+      return siteState == SiteState.ONLINE ? ONLINE : OFFLINE;
    }
 
    /**
@@ -160,22 +115,15 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
     */
    public Map<Address, String> nodeStatus(String site) {
       authorizer.checkPermission(AuthorizationPermission.ADMIN);
-      SiteState state = takeOfflineManager.getSiteState(site);
+      var state = takeOfflineManager.getSiteState(site);
       if (state == SiteState.NOT_FOUND) {
          throw new IllegalArgumentException(incorrectSiteName(site));
       }
+      var result = state == SiteState.ONLINE ? ONLINE : OFFLINE;
 
-      // TODO [pruivo] TakeOfflineManager is cluster-wide and this command is not longer required.
-      // It is kept for backwards compatible reasons and can be removed after the product release.
-      // https://issues.redhat.com/browse/ISPN-16779
-      CacheRpcCommand command = commandsFactory.buildXSiteOfflineStatusCommand(site);
-      XSiteResponse<Boolean> response = invokeOnAll(command, new XSiteStatusResponseCollector(clusterSize()));
-      Map<Address, String> statusMap = new HashMap<>();
-
-      response.forEachError(address -> statusMap.put(address, FAILED));
-      response.forEach((address, offline) -> statusMap.put(address, offline ? OFFLINE : ONLINE));
-      statusMap.put(rpcManager.getAddress(), state == SiteState.OFFLINE ? OFFLINE : ONLINE);
-      return statusMap;
+      return distributionManager.getCacheTopology().getMembers()
+            .stream()
+            .collect(Collectors.toMap(CompletableFutures.identity(), address -> result));
    }
 
    @ManagedOperation(description = "Returns the the status(offline/online) of all the configured backup sites.", displayName = "Returns the the status(offline/online) of all the configured backup sites.")
@@ -193,15 +141,7 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
       if (rsp == TakeSiteOfflineResponse.NO_SUCH_SITE) {
          return incorrectSiteName(site);
       }
-
-      // TODO [pruivo] TakeOfflineManager is cluster-wide and this command is not longer required.
-      // It is kept for backwards compatible reasons and can be removed after the product release.
-      // https://issues.redhat.com/browse/ISPN-16779
-      CacheRpcCommand command = commandsFactory.buildXSiteTakeOfflineCommand(site);
-      XSiteResponse<Void> response = invokeOnAll(command, new VoidResponseCollector(clusterSize()));
-
-      String prefix = "Could not take the site offline on nodes:";
-      return returnFailureOrSuccess(response.errors(), prefix);
+      return SUCCESS;
    }
 
    @ManagedOperation(description = "Amends the values for 'afterFailures' for the 'TakeOffline' functionality on all the nodes in the cluster.", displayName = "Amends the values for 'TakeOffline.afterFailures' on all the nodes in the cluster.")
@@ -256,14 +196,7 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
       if (rsp == BringSiteOnlineResponse.NO_SUCH_SITE) {
          return incorrectSiteName(site);
       }
-
-      // TODO [pruivo] TakeOfflineManager is cluster-wide and this command is not longer required.
-      // It is kept for backwards compatible reasons and can be removed after the product release.
-      // https://issues.redhat.com/browse/ISPN-16779
-      CacheRpcCommand command = commandsFactory.buildXSiteBringOnlineCommand(site);
-      XSiteResponse<Void> response = invokeOnAll(command, new VoidResponseCollector(clusterSize()));
-
-      return returnFailureOrSuccess(response.errors(), "Could not take the site online on nodes:");
+      return SUCCESS;
    }
 
    @ManagedOperation(displayName = "Push state to site",
@@ -403,32 +336,24 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
       // TODO [pruivo] use mutable attributes to update the take offline settings?
       // https://issues.redhat.com/browse/ISPN-16780
       CacheRpcCommand command = commandsFactory.buildXSiteAmendOfflineStatusCommand(site, afterFailures, minTimeToWait);
-      XSiteResponse<Void> response = invokeOnAll(command, new VoidResponseCollector(clusterSize()));
+      XSiteResponse response = invokeOnAll(command, new VoidResponseCollector(clusterSize()));
 
       //also amend locally
       takeOfflineManager.amendConfiguration(site, afterFailures, minTimeToWait);
 
-      return returnFailureOrSuccess(response.errors(), "Could not amend for nodes:");
-   }
-
-   private String returnFailureOrSuccess(List<Address> failed, String prefix) {
-      if (!failed.isEmpty()) {
-         return rpcError(failed, prefix);
+      if (response.errors.isEmpty()) {
+         return SUCCESS;
       }
-      return SUCCESS;
-   }
-
-   private String rpcError(List<Address> failed, String prefix) {
-      return prefix + failed.toString();
+      return String.format("Could not amend for nodes: %s", response.errors);
    }
 
    private String incorrectSiteName(String site) {
       return "Incorrect site name: " + site;
    }
 
-   private <T> XSiteResponse<T> invokeOnAll(CacheRpcCommand command, BaseResponseCollector<T> responseCollector) {
+   private XSiteResponse invokeOnAll(CacheRpcCommand command, ResponseCollector<XSiteResponse> responseCollector) {
       RpcOptions rpcOptions = rpcManager.getSyncRpcOptions();
-      CompletionStage<XSiteResponse<T>> rsp = rpcManager.invokeCommandOnAll(command, responseCollector, rpcOptions);
+      CompletionStage<XSiteResponse> rsp = rpcManager.invokeCommandOnAll(command, responseCollector, rpcOptions);
       return rpcManager.blocking(rsp);
    }
 
@@ -445,93 +370,39 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
       void execute() throws Throwable;
    }
 
-   private static abstract class BaseResponseCollector<T> extends ValidResponseCollector<XSiteResponse<T>> {
+   private record XSiteResponse(List<Address> errors) {
+   }
 
-      final Map<Address, T> okResponses;
-      final List<Address> errors;
+   private static class VoidResponseCollector extends ValidResponseCollector<XSiteResponse> {
 
-      private BaseResponseCollector(int expectedSize) {
-         okResponses = new HashMap<>(expectedSize);
+      private final List<Address> errors;
+
+      private VoidResponseCollector(int expectedSize) {
          errors = new ArrayList<>(expectedSize);
       }
 
       @Override
-      public final XSiteResponse<T> finish() {
-         return new XSiteResponse<>(okResponses, errors);
+      public XSiteResponse finish() {
+         return new XSiteResponse(errors);
       }
 
-      abstract void storeResponse(Address sender, ValidResponse response);
-
       @Override
-      protected final XSiteResponse<T> addValidResponse(Address sender, ValidResponse response) {
-         storeResponse(sender, response);
+      protected XSiteResponse addValidResponse(Address sender, ValidResponse response) {
+         //no-op
          return null;
       }
 
       @Override
-      protected final XSiteResponse<T> addTargetNotFound(Address sender) {
+      protected final XSiteResponse addTargetNotFound(Address sender) {
          //ignore leavers
          return null;
       }
 
       @Override
-      protected final XSiteResponse<T> addException(Address sender, Exception exception) {
+      protected final XSiteResponse addException(Address sender, Exception exception) {
          errors.add(sender);
          return null;
       }
    }
 
-   private record XSiteResponse<T>(Map<Address, T> responses, List<Address> errors) {
-
-      boolean hasErrors() {
-         return !errors.isEmpty();
-      }
-
-      void forEachError(Consumer<Address> consumer) {
-         errors.forEach(consumer);
-      }
-
-      void forEach(BiConsumer<Address, T> consumer) {
-         responses.forEach(consumer);
-      }
-   }
-
-   private static class VoidResponseCollector extends BaseResponseCollector<Void> {
-
-      private VoidResponseCollector(int expectedSize) {
-         super(expectedSize);
-      }
-
-      @Override
-      void storeResponse(Address sender, ValidResponse response) {
-         //no-op
-      }
-   }
-
-   private static class XSiteStatusResponseCollector extends BaseResponseCollector<Boolean> {
-
-      private XSiteStatusResponseCollector(int expectedSize) {
-         super(expectedSize);
-      }
-
-      @Override
-      void storeResponse(Address sender, ValidResponse response) {
-         Object value = response.getResponseValue();
-         assert value instanceof Boolean;
-         okResponses.put(sender, (Boolean) value);
-      }
-   }
-
-   private static class PerSiteBooleanResponseCollector extends BaseResponseCollector<Map<String, Boolean>> {
-
-      private PerSiteBooleanResponseCollector(int expectedSize) {
-         super(expectedSize);
-      }
-
-      @Override
-      void storeResponse(Address sender, ValidResponse response) {
-         //noinspection unchecked
-         okResponses.put(sender, (Map<String, Boolean>) response.getResponseValue());
-      }
-   }
 }
