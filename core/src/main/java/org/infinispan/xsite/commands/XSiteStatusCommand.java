@@ -15,6 +15,7 @@ import org.infinispan.xsite.status.TakeOfflineManager;
  * @author Ryan Emerson
  * @since 11.0
  */
+@Deprecated(since = "15.1", forRemoval = true)
 public class XSiteStatusCommand extends BaseRpcCommand {
 
    public static final int COMMAND_ID = 100;
@@ -29,7 +30,7 @@ public class XSiteStatusCommand extends BaseRpcCommand {
    }
 
    @Override
-   public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
+   public CompletionStage<?> invokeAsync(ComponentRegistry registry) {
       TakeOfflineManager takeOfflineManager = registry.getTakeOfflineManager().running();
       return CompletableFuture.completedFuture(takeOfflineManager.status());
    }

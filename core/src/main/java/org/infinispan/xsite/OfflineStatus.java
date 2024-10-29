@@ -4,11 +4,14 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.TakeOfflineConfigurationBuilder;
 import org.infinispan.globalstate.ScopedState;
@@ -40,7 +43,7 @@ import net.jcip.annotations.ThreadSafe;
  * @since 5.2
  */
 @ThreadSafe
-@Listener(observation = Listener.Observation.POST, sync = false)
+@Listener(observation = Listener.Observation.POST)
 public class OfflineStatus implements CacheEventFilter<Object, Object> {
 
    private static final Log log = LogFactory.getLog(OfflineStatus.class);
@@ -113,8 +116,8 @@ public class OfflineStatus implements CacheEventFilter<Object, Object> {
       return internalMillisSinceFirstFailure();
    }
 
-   public synchronized boolean bringOnline() {
-      return isOffline(localStatus) && internalReset();
+   public synchronized CompletionStage<Boolean> bringOnline() {
+      return isOffline(localStatus) ? internalReset() : CompletableFutures.completedFalse();
    }
 
    public synchronized int getFailureCount() {
@@ -133,13 +136,11 @@ public class OfflineStatus implements CacheEventFilter<Object, Object> {
       return takeOffline;
    }
 
-   public synchronized boolean forceOffline() {
+   public synchronized CompletionStage<Boolean> forceOffline() {
       var status = localStatus;
-      if (isOffline(status)) {
-         return false;
-      }
-      switchGlobally(status);
-      return true;
+      return isOffline(status) ?
+            CompletableFutures.completedFalse() :
+            switchGlobally(status);
    }
 
    @Override
@@ -219,18 +220,15 @@ public class OfflineStatus implements CacheEventFilter<Object, Object> {
       return false;
    }
 
-   /**
-    * @return true if status changed
-    */
    @GuardedBy("this")
-   private boolean internalReset() {
+   private CompletionStage<Boolean> internalReset() {
       boolean wasOffline = isOffline(localStatus);
       firstFailureTime = NO_FAILURE;
       failureCount = 0;
       if (wasOffline) {
-         switchGlobally(localStatus);
+         return switchGlobally(localStatus);
       }
-      return wasOffline;
+      return CompletableFutures.completedFalse();
    }
 
    @GuardedBy("this")
@@ -238,19 +236,27 @@ public class OfflineStatus implements CacheEventFilter<Object, Object> {
       return timeService.get().timeDuration(MILLISECONDS.toNanos(firstFailureTime), MILLISECONDS);
    }
 
-   private void switchGlobally(long currentStatus) {
-      replaceInCache(currentStatus, currentStatus + 1, 0);
+   private CompletionStage<Boolean> switchGlobally(long currentStatus) {
+      var rsp = replaceInCache(currentStatus, currentStatus + 1, 0);
       // optimistically switch assuming the “replace” eventually completes
       updateLocalStatus(currentStatus + 1);
+      return rsp;
    }
 
-   private void replaceInCache(long oldStatus, long newStatus, int retry) {
-      globalState.replaceAsync(key, oldStatus, newStatus).exceptionally(ignored -> {
+   private CompletionStage<Boolean> replaceInCache(long oldStatus, long newStatus, int retry) {
+      return CompletionStages.handleAndCompose(
+            globalState.replaceAsync(key, oldStatus, newStatus),
+            (replaced, throwable) -> handleReplaceResponse(replaced, throwable, oldStatus, newStatus, retry));
+   }
+
+   private CompletionStage<Boolean> handleReplaceResponse(Boolean replaced, Throwable throwable, long oldStatus, long newStatus, int retry) {
+      if (throwable != null) {
          if (retry <= MAX_RETRIES) {
-            replaceInCache(oldStatus, newStatus, retry + 1);
+            return replaceInCache(oldStatus, newStatus, retry + 1);
          }
-         return Boolean.TRUE;
-      });
+         return CompletableFutures.completedFalse();
+      }
+      return replaced ? CompletableFutures.completedTrue() : CompletableFutures.completedFalse();
    }
 
    private void updateLocalStatus(long newStatus) {

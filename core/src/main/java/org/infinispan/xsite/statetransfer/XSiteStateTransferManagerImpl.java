@@ -17,7 +17,9 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
@@ -31,11 +33,9 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.commands.XSiteStateTransferCancelSendCommand;
@@ -70,6 +70,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    @Inject TakeOfflineManager takeOfflineManager;
    @ComponentName(KnownComponentNames.CACHE_NAME)
    @Inject String cacheName;
+   @Inject BlockingManager blockingManager;
 
    private final ConcurrentMap<String, RemoteSiteStatus> sites;
    private volatile int currentTopologyId = -1;
@@ -271,10 +272,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    }
 
    private CompletionStage<Void> bringSiteOnline(String site) {
-      CacheRpcCommand cmd = commandsFactory.buildXSiteBringOnlineCommand(site);
-      CompletionStage<Void> rsp = rpcManager.invokeCommandOnAll(cmd, VoidResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
-      takeOfflineManager.bringSiteOnline(site);
-      return rsp;
+      return blockingManager.runBlocking(() -> takeOfflineManager.bringSiteOnline(site), "bring-online-" + site);
    }
 
    @Override

@@ -135,7 +135,7 @@ import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.reactivestreams.Publisher;
 
 /**
- * A factory to build commands, initializing and injecting dependencies accordingly.  Commands built for a specific,
+ * A factory to build commands, initializing and injecting dependencies accordingly. Commands built for a specific,
  * named cache instance cannot be reused on a different cache instance since most commands contain the cache name it was
  * built for along with references to other named-cache scoped components.
  * <p>
@@ -539,13 +539,25 @@ public interface CommandsFactory {
 
    XSiteAmendOfflineStatusCommand buildXSiteAmendOfflineStatusCommand(String siteName, Integer afterFailures, Long minTimeToWait);
 
-   XSiteBringOnlineCommand buildXSiteBringOnlineCommand(String siteName);
+   @Deprecated(since = "15.1", forRemoval = true)
+   default XSiteBringOnlineCommand buildXSiteBringOnlineCommand(String siteName) {
+      return null;
+   }
 
-   XSiteOfflineStatusCommand buildXSiteOfflineStatusCommand(String siteName);
+   @Deprecated(since = "15.1", forRemoval = true)
+   default XSiteOfflineStatusCommand buildXSiteOfflineStatusCommand(String siteName)  {
+      return null;
+   }
 
-   XSiteStatusCommand buildXSiteStatusCommand();
+   @Deprecated(since = "15.1", forRemoval = true)
+   default XSiteStatusCommand buildXSiteStatusCommand() {
+      return null;
+   }
 
-   XSiteTakeOfflineCommand buildXSiteTakeOfflineCommand(String siteName);
+   @Deprecated(since = "15.1", forRemoval = true)
+   default XSiteTakeOfflineCommand buildXSiteTakeOfflineCommand(String siteName) {
+      return null;
+   }
 
    /**
     * Builds XSiteStatePushCommand used to transfer a single chunk of data between sites.

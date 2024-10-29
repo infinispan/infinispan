@@ -3,7 +3,7 @@ package org.infinispan.xsite.status;
 /**
  * A site status.
  * <p>
- * A site could be online, offline or none of the previous. In the later case, it is consider in a mixed status and both
+ * It could be online, offline, or none of the previous. In the later case, it is considered in a mixed status and both
  * {@link #isOnline()}  and {@link #isOffline()}  returns {@code false}.
  *
  * @author Pedro Ruivo
@@ -20,5 +20,9 @@ public interface SiteStatus {
     * @return {@code true} if the site is offline.
     */
    boolean isOffline();
+
+   static SiteStatus status(boolean online) {
+      return online ? OnlineSiteStatus.getInstance() : OfflineSiteStatus.getInstance();
+   }
 
 }

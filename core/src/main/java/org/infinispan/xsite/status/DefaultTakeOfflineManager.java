@@ -1,6 +1,11 @@
 package org.infinispan.xsite.status;
 
 import static org.infinispan.util.logging.events.Messages.MESSAGES;
+import static org.infinispan.xsite.status.BringSiteOnlineResponse.ALREADY_ONLINE;
+import static org.infinispan.xsite.status.BringSiteOnlineResponse.BROUGHT_ONLINE;
+import static org.infinispan.xsite.status.BringSiteOnlineResponse.NO_SUCH_SITE;
+import static org.infinispan.xsite.status.TakeSiteOfflineResponse.ALREADY_OFFLINE;
+import static org.infinispan.xsite.status.TakeSiteOfflineResponse.TAKEN_OFFLINE;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,6 +25,7 @@ import org.infinispan.commons.CrossSiteIllegalLifecycleStateException;
 import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.stat.MetricInfo;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.global.GlobalMetricsConfiguration;
@@ -169,23 +175,22 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
 
    @Override
    public BringSiteOnlineResponse bringSiteOnline(String siteName) {
-      OfflineStatus status = offlineStatus.get(siteName);
+      var status = offlineStatus.get(siteName);
       if (status == null) {
          log.tryingToBringOnlineNonexistentSite(siteName);
-         return BringSiteOnlineResponse.NO_SUCH_SITE;
+         return NO_SUCH_SITE;
       } else {
-         return status.bringOnline() ? BringSiteOnlineResponse.BROUGHT_ONLINE : BringSiteOnlineResponse.ALREADY_ONLINE;
+         return CompletionStages.join(status.bringOnline()) ? BROUGHT_ONLINE : ALREADY_ONLINE;
       }
    }
 
    @Override
    public TakeSiteOfflineResponse takeSiteOffline(String siteName) {
-      OfflineStatus status = offlineStatus.get(siteName);
+      var status = offlineStatus.get(siteName);
       if (status == null) {
          return TakeSiteOfflineResponse.NO_SUCH_SITE;
       } else {
-         return status.forceOffline() ? TakeSiteOfflineResponse.TAKEN_OFFLINE
-               : TakeSiteOfflineResponse.ALREADY_OFFLINE;
+         return CompletionStages.join(status.forceOffline()) ? TAKEN_OFFLINE : ALREADY_OFFLINE;
       }
    }
 

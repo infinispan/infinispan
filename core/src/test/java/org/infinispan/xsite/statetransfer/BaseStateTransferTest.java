@@ -45,7 +45,6 @@ import org.infinispan.util.ControlledTransport;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.BackupReceiverDelegator;
 import org.infinispan.xsite.XSiteAdminOperations;
-import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferCancelSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStartReceiveCommand;
@@ -107,7 +106,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       assertInSite(NYC, cache -> assertTrue(cache.isEmpty()));
 
       ControlledTransport controlledTransport = ControlledTransport.replace(cache(LON, 0));
-      controlledTransport.excludeCommands(XSiteBringOnlineCommand.class,
+      controlledTransport.excludeCommands(
             XSiteStateTransferStartReceiveCommand.class,
             XSiteStateTransferControlRequest.class,
             XSiteStateTransferStartSendCommand.class,
