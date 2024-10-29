@@ -9,12 +9,15 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.stat.CounterMetricInfo;
+import org.infinispan.commons.stat.CounterTracker;
 import org.infinispan.commons.stat.DistributionSummaryMetricInfo;
+import org.infinispan.commons.stat.DistributionSummaryTracker;
 import org.infinispan.commons.stat.FunctionTimerMetricInfo;
 import org.infinispan.commons.stat.GaugeMetricInfo;
 import org.infinispan.commons.stat.MetricInfo;
 import org.infinispan.commons.stat.TimeGaugeMetricInfo;
 import org.infinispan.commons.stat.TimerMetricInfo;
+import org.infinispan.commons.stat.TimerTracker;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -100,6 +103,8 @@ public class MetricsRegistryImpl implements MetricsRegistry {
                metricIds.add(id);
                continue;
             }
+         } else {
+            onGaugeDisabled(instance, info);
          }
 
          if (globalConfiguration.metrics().histograms()) {
@@ -108,6 +113,8 @@ public class MetricsRegistryImpl implements MetricsRegistry {
                metricIds.add(id);
                continue;
             }
+         } else {
+            onHistogramDisabled(instance, info);
          }
 
          if (log.isTraceEnabled()) {
@@ -194,6 +201,15 @@ public class MetricsRegistryImpl implements MetricsRegistry {
    }
 
    @SuppressWarnings("unchecked")
+   private void onGaugeDisabled(Object targetInstance, MetricInfo metricInfo) {
+      if (metricInfo instanceof CounterMetricInfo) {
+         ((CounterMetricInfo<Object>) metricInfo).accept(targetInstance, CounterTracker.NO_OP);
+      } else if (metricInfo instanceof FunctionTimerMetricInfo) {
+         ((FunctionTimerMetricInfo<Object>) metricInfo).accept(targetInstance, TimerTracker.NO_OP);
+      }
+   }
+
+   @SuppressWarnings("unchecked")
    private Meter.Id onHistogramEnabled(Object targetInstance, String prefix, MetricInfo metricInfo, Map<String, String> commonTags) {
       if (metricInfo instanceof TimerMetricInfo) {
          return createTimer(targetInstance, prefix, (TimerMetricInfo<Object>) metricInfo, commonTags);
@@ -202,6 +218,16 @@ public class MetricsRegistryImpl implements MetricsRegistry {
       }
       return null;
    }
+
+   @SuppressWarnings("unchecked")
+   private void onHistogramDisabled(Object targetInstance, MetricInfo metricInfo) {
+      if (metricInfo instanceof TimerMetricInfo) {
+         ((TimerMetricInfo<Object>) metricInfo).accept(targetInstance, TimerTracker.NO_OP);
+      } else if (metricInfo instanceof DistributionSummaryMetricInfo) {
+         ((DistributionSummaryMetricInfo<Object>) metricInfo).accept(targetInstance, DistributionSummaryTracker.NO_OP);
+      }
+   }
+
 
    private Collection<Tag> createTags(Map<String, String> attrTags, Map<String, String> tags) {
       Map<String, String> allTags = new TreeMap<>();
