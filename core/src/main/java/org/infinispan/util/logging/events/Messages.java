@@ -121,4 +121,10 @@ public interface Messages {
 
    @Message(value = "Can view statistics via JMX and the `metrics` endpoint.")
    String monitorRoleDescription();
+
+   @Message(value = "Sites connected: %s", id = 100017)
+   String sitesConnected(String sites);
+
+   @Message(value = "Sites disconnected: %s", id = 100018)
+   String sitesDisconnected(String sites);
 }

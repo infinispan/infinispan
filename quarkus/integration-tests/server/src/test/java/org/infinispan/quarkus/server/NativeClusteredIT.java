@@ -29,4 +29,8 @@ import org.junit.platform.suite.api.Suite;
       RestCacheManagerResource.class
 })
 public class NativeClusteredIT extends ClusteredIT {
+
+   static {
+      NATIVE_TESTING = true;
+   }
 }

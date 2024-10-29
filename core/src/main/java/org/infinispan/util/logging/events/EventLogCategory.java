@@ -23,5 +23,8 @@ public enum EventLogCategory {
    SECURITY,
 
    @ProtoEnumValue(number = 3)
-   TASKS
+   TASKS,
+
+   @ProtoEnumValue(number = 4)
+   CROSS_SITE
 }

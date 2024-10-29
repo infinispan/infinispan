@@ -505,6 +505,12 @@ Receive events about configuration changes using https://html.spec.whatwg.org/mu
 The `event` value will be one of `create-cache`, `remove-cache`, `update-cache`, `create-template`, `remove-template` or `update-template`.
 The `data` value will contain the declarative configuration of the entity that has been created. Remove events will only contain the name of the removed entity.
 
+[WARNING]
+====
+This endpoint is deprecated in favor of <<rest_v2_container_listen>>.
+Use `GET /rest/v2/container?action=listen&category=config` instead.
+====
+
 [source,options="nowrap",subs=attributes+]
 ----
 GET /rest/v2/container/config?action=listen
@@ -539,11 +545,41 @@ GET /rest/v2/container/config?action=listen
 = Listening to container events
 
 Receive events from the container using https://html.spec.whatwg.org/multipage/server-sent-events.html[Server-Sent Events].
-The emitted events come from logged information, so each event contains an identifier associated with the message.
-The `event` value will be `lifecycle-event`. The `data` has the logged information, which includes the `message`,
-`category`, `level`, `timestamp`, `owner`, `context`, and `scope`, some of which may be empty.
-Currently, we expose only `LIFECYCLE` events.
+The emitted events come from logged information, so each event contains an identifier associated with the message, or from configuration changes.
+The parameter `category` allows to filter for the interested events.
 
+The `event` value depends on the category selected (see Request Parameters).
+The table below summarizes the available categories, and the events it triggers:
+
+|===
+|Category |Event
+
+m|config
+|`create-cache`, `remove-cache`, `update-cache`, `create-template`, `remove-template` or `update-template`
+
+m|lifecycle
+|`lifecycle-event`
+
+m|cluster
+|`cluster-event`
+
+m|security
+|`security-event`
+
+m|tasks
+|`tasks-event`
+
+m|cross-site
+|`cross-site-event`
+
+m|all
+|All of the above.
+
+|===
+
+The `data` has the logged information, which includes the `message`,
+`category`, `level`, `timestamp`, `owner`, `context`, and `scope`, some of which may be empty.
+aa
 [source,options="nowrap",subs=attributes+]
 ----
 GET /rest/v2/container?action=listen
@@ -566,10 +602,18 @@ GET /rest/v2/container?action=listen
 
 |`includeCurrentState`
 |OPTIONAL
-|If `true`, the results include the state of the existing configuration in addition to the changes. If set to `false`, the request returns only the changes. The default value is `false`.
+|If `true`, the results include the state of the existing configuration in addition to the changes.
+If set to `false`, the request returns only the changes.
+The default value is `false`.
 
 |`pretty`
 |OPTIONAL
-|If `true` returns formatted content, including additional spacing and line separators which improve readability but increase payload size. The default is `false`.
+|If `true` returns formatted content, including additional spacing and line separators which improve readability but increase payload size.
+The default is `false`.
+
+m|category
+|OPTIONAL
+|The event log category to stream.
+If not specified, it will send events from the categories `config` and `lifecycle`.
 
 |===

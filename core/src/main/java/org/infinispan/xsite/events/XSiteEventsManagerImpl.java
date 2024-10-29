@@ -31,6 +31,9 @@ import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.logging.events.EventLogCategory;
+import org.infinispan.util.logging.events.EventLogManager;
+import org.infinispan.util.logging.events.Messages;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteCacheMapper;
 import org.infinispan.xsite.XSiteNamedCache;
@@ -56,6 +59,7 @@ public class XSiteEventsManagerImpl implements XSiteEventsManager {
    @Inject GlobalComponentRegistry globalRegistry;
    @Inject XSiteCacheMapper xSiteCacheMapper;
    @Inject MetricsRegistry metricsRegistry;
+   @Inject EventLogManager eventLogManager;
    private Executor backOffExecutor;
 
    private final XSiteViewMetrics xSiteViewMetrics;
@@ -129,6 +133,13 @@ public class XSiteEventsManagerImpl implements XSiteEventsManager {
       event.getJoiners().stream()
             .filter(this::isRemoteSite)
             .forEach(this::sendNewConnectionEvent);
+      var eventLog = eventLogManager.getEventLogger().scope(transport.getAddress());
+      if (!event.getJoiners().isEmpty()) {
+         eventLog.info(EventLogCategory.CROSS_SITE, Messages.MESSAGES.sitesConnected(String.join(",", event.getJoiners())));
+      }
+      if (!event.getLeavers().isEmpty()) {
+         eventLog.info(EventLogCategory.CROSS_SITE, Messages.MESSAGES.sitesDisconnected(String.join(",", event.getLeavers())));
+      }
    }
 
    @CacheStarted

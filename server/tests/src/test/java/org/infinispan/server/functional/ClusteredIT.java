@@ -78,6 +78,8 @@ import org.junit.platform.suite.api.Suite;
 })
 public class ClusteredIT extends InfinispanSuite {
 
+   public static boolean NATIVE_TESTING = false;
+
    @RegisterExtension
    public static final InfinispanServerExtension SERVERS =
          InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")

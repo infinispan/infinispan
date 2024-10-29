@@ -71,4 +71,23 @@ public class WeakSSEListener extends SSEListener {
          throw new TestException(e);
       }
    }
+
+   public void expectNoEvent(String type, Runnable eventFound) {
+      var value = backup.get(type);
+      if (value != null && !value.isEmpty()) {
+         eventFound.run();
+         return;
+      }
+      KeyValuePair<String, String> event = events.poll();
+      while (event != null) {
+         // add to backups just in case.
+         backup.computeIfAbsent(event.getKey(), s -> new ArrayList<>()).add(event.getValue());
+         value = backup.get(type);
+         if (value != null && !value.isEmpty()) {
+            eventFound.run();
+            return;
+         }
+         event = events.poll();
+      }
+   }
 }

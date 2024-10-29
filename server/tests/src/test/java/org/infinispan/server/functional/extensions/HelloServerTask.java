@@ -25,6 +25,7 @@ public class HelloServerTask implements ServerTask<Object> {
    @Override
    public Object call() {
       TaskContext ctx = taskContext.get();
+      ctx.logEvent(true);
       Object greetee = ctx.getParameters().get().get("greetee");
 
       if (greetee == null) {

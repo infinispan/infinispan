@@ -21,10 +21,11 @@ import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 
 import java.io.ByteArrayOutputStream;
-import java.io.StringWriter;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -37,7 +38,6 @@ import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.io.StringBuilderWriter;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -48,28 +48,22 @@ import org.infinispan.health.CacheHealth;
 import org.infinispan.health.ClusterHealth;
 import org.infinispan.health.Health;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachemanagerlistener.annotation.ConfigurationChanged;
-import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
 import org.infinispan.registry.InternalCacheRegistry;
-import org.infinispan.rest.EventStream;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
-import org.infinispan.rest.ServerSentEvent;
 import org.infinispan.rest.framework.ContentSource;
 import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
+import org.infinispan.rest.listener.ServerEventsListener;
+import org.infinispan.rest.operations.exceptions.MalformedRequest;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.BackupManager;
-import org.infinispan.util.logging.annotation.impl.Logged;
-import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
-import org.infinispan.util.logging.events.EventLogSerializer;
 
 /**
  * REST resource to manage the cache container.
@@ -127,6 +121,7 @@ public class ContainerResource implements ResourceHandler {
 
             // Container configuration listener
             .invocation().methods(GET).path("/v2/container/config").withAction("listen")
+               .deprecated()
                .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::listenConfig)
 
             // Container lifecycle listener
@@ -325,9 +320,7 @@ public class ContainerResource implements ResourceHandler {
             .filter(n -> !internalCacheRegistry.isInternalCache(n))
             .filter(n -> SecurityActions.getCacheConfiguration(subjectCacheManager, n).isTemplate())
             .distinct()
-            .map(n -> {
-               return getNamedCacheConfiguration(subjectCacheManager, n, pretty);
-            })
+            .map(n -> getNamedCacheConfiguration(subjectCacheManager, n, pretty))
             .sorted(Comparator.comparing(c -> c.name))
             .collect(Collectors.toList());
 
@@ -430,102 +423,64 @@ public class ContainerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> listenConfig(RestRequest request) {
-      return streamConfigurationAndEvents(request, false);
+      return streamEvents(request, true, Set.of(), Boolean.parseBoolean(request.getParameter("includeCurrentState")));
    }
 
    private CompletionStage<RestResponse> listenLifecycle(RestRequest request) {
-      return streamConfigurationAndEvents(request, true);
-   }
-
-   private CompletionStage<RestResponse> streamConfigurationAndEvents(RestRequest request, boolean includeLifecycle) {
-      MediaType mediaType = negotiateMediaType(request, APPLICATION_YAML, APPLICATION_JSON, APPLICATION_XML);
-      boolean includeCurrentState = Boolean.parseBoolean(request.getParameter("includeCurrentState"));
-      boolean pretty = isPretty(request);
-      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
-      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
-      ConfigurationListener listener = new ConfigurationListener(cacheManager, mediaType, includeCurrentState, pretty);
-      responseBuilder.contentType(TEXT_EVENT_STREAM).entity(listener.getEventStream());
-
-      CompletionStage<?> cs = SecurityActions.addListenerAsync(cacheManager, listener);
-      if (includeLifecycle) {
-         cs = cs.thenCompose(ignore -> SecurityActions.addLoggerListenerAsync(cacheManager, listener));
+      var requestedCategories = request.getParameter("category");
+      var includeState = Boolean.parseBoolean(request.getParameter("includeCurrentState"));
+      if (requestedCategories == null || requestedCategories.isEmpty()) {
+         // fallback to backwards compatible behavior: config and lifecycle
+         return streamEvents(request, true, EnumSet.of(EventLogCategory.LIFECYCLE), includeState);
       }
 
-      return cs.thenApply(v -> responseBuilder.build());
-   }
-
-   private String serializeConfig(Configuration cacheConfiguration, String name, MediaType mediaType, boolean pretty) {
-      StringWriter sw = new StringWriter();
-      try (ConfigurationWriter writer = ConfigurationWriter.to(sw).withType(mediaType).prettyPrint(pretty).build()) {
-         parserRegistry.serialize(writer, null, Collections.singletonMap(name, cacheConfiguration));
-      }
-      return sw.toString();
-   }
-
-   private String serializeEvent(EventLog event, MediaType mediaType, boolean pretty) {
-      StringWriter sw = new StringWriter();
-      try (ConfigurationWriter writer = ConfigurationWriter.to(sw).withType(mediaType).prettyPrint(pretty).build()) {
-         parserRegistry.serializeWith(writer, new EventLogSerializer(), event);
-      }
-      return sw.toString();
-   }
-
-   @Listener
-   public class ConfigurationListener {
-      final EmbeddedCacheManager cacheManager;
-      final EventStream eventStream;
-      final MediaType mediaType;
-      private final boolean pretty;
-
-      protected ConfigurationListener(EmbeddedCacheManager cacheManager, MediaType mediaType, boolean includeCurrentState, boolean pretty) {
-         this.cacheManager = cacheManager;
-         this.mediaType = mediaType;
-         this.pretty = pretty;
-         this.eventStream = new EventStream(
-               includeCurrentState ?
-                     (stream) -> {
-                        for (String configName : cacheManager.getCacheConfigurationNames()) {
-                           Configuration config = SecurityActions.getCacheConfiguration(cacheManager, configName);
-                           String eventType = config.isTemplate() ? "create-template" : "create-cache";
-                           stream.sendEvent(new ServerSentEvent(eventType, serializeConfig(config, configName, mediaType, pretty)));
-                        }
-                     } : null,
-               () -> Security.doPrivileged(() -> {
-                  cacheManager.removeListenerAsync(this);
-               }));
-      }
-
-      public EventStream getEventStream() {
-         return eventStream;
-      }
-
-      @Logged
-      public CompletionStage<Void> onDataLogged(EventLog event) {
-         if (event.getCategory() != EventLogCategory.LIFECYCLE) return CompletableFutures.completedNull();
-
-         final ServerSentEvent sse = new ServerSentEvent("lifecycle-event", serializeEvent(event, mediaType, pretty));
-         return eventStream.sendEvent(sse);
-      }
-
-      @ConfigurationChanged
-      public CompletionStage<Void> onConfigurationEvent(ConfigurationChangedEvent event) {
-         String eventType = event.getConfigurationEventType().toString().toLowerCase() + "-" + event.getConfigurationEntityType();
-         final ServerSentEvent sse;
-         if (event.getConfigurationEventType() == ConfigurationChangedEvent.EventType.REMOVE) {
-            sse = new ServerSentEvent(eventType, event.getConfigurationEntityName());
-         } else {
-            switch (event.getConfigurationEntityType()) {
-               case "cache":
-               case "template":
-                     Configuration config = SecurityActions.getCacheConfiguration(cacheManager, event.getConfigurationEntityName());
-                     sse = new ServerSentEvent(eventType, serializeConfig(config, event.getConfigurationEntityName(), mediaType, pretty));
-                  break;
-               default:
-                  // Unhandled entity type, ignore
-                  return CompletableFutures.completedNull();
-            }
+      var acceptedCategories = EnumSet.noneOf(EventLogCategory.class);
+      boolean configEvents = false;
+      for (var category : requestedCategories.split(",")) {
+         if ("all".equalsIgnoreCase(category)) {
+            configEvents = true;
+            acceptedCategories = EnumSet.allOf(EventLogCategory.class);
+            break;
          }
-         return eventStream.sendEvent(sse);
+         if ("config".equalsIgnoreCase(category)) {
+            configEvents = true;
+            continue;
+         }
+         try {
+            acceptedCategories.add(EventLogCategory.valueOf(category.toUpperCase(Locale.ROOT).replace("-", "_")));
+         } catch (IllegalArgumentException e) {
+            return CompletableFuture.failedFuture(new MalformedRequest("Invalid category '%s'".formatted(category)));
+         }
       }
+
+      return streamEvents(request, configEvents, acceptedCategories, includeState);
+   }
+
+   private CompletionStage<RestResponse> streamEvents(RestRequest request, boolean configEvents, Set<EventLogCategory> logEvents, boolean includeCurrentState) {
+      var listener = new ServerEventsListener(
+            negotiateMediaType(request, APPLICATION_YAML, APPLICATION_JSON, APPLICATION_XML),
+            isPretty(request),
+            parserRegistry,
+            invocationHelper.getRestCacheManager().getInstance(),
+            logEvents,
+            includeCurrentState);
+      var responseBuilder = invocationHelper.newResponse(request)
+            .contentType(TEXT_EVENT_STREAM)
+            .entity(listener.getEventStream());
+
+      CompletionStage<Void> stage;
+      if (configEvents && logEvents.isEmpty()) {
+         // configuration events only
+         stage = listener.registerConfigurationEvents();
+      } else if (!configEvents && !logEvents.isEmpty()) {
+         // log events only
+         stage = listener.registerLogEvents();
+      } else {
+         // both events
+         stage = listener.registerConfigurationEvents()
+               .thenCompose(unused -> listener.registerLogEvents());
+      }
+
+      return stage.thenApply(unused -> responseBuilder.build());
    }
 }

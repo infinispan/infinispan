@@ -1204,4 +1204,29 @@ public final class Util {
          return new RuntimeException(t);
       }
    }
+
+   /**
+    * Power set of set {@code S} is the set of all subsets of {@code S} including the empty set and {@code S} itself.
+    */
+   public static <T> List<List<T>> generatePowerSet(List<T> sequence) {
+      Objects.requireNonNull(sequence);
+      if (sequence.isEmpty()) {
+         return List.of(List.of());
+      }
+      int powerSetSize = (int) Math.pow(2, sequence.size());
+      List<List<T>> powerSet = new ArrayList<>(powerSetSize);
+      powerSetInternal(sequence, powerSet, new ArrayList<>(powerSetSize), 0);
+      return powerSet;
+   }
+
+   private static <T> void powerSetInternal(List<T> set, List<List<T>> powerSet, List<T> accumulator, int index) {
+      if (index == set.size()) {
+         powerSet.add(List.copyOf(accumulator));
+         return;
+      }
+      accumulator.add(set.get(index));
+      powerSetInternal(set, powerSet, accumulator, index + 1);
+      accumulator.remove(accumulator.size() - 1);
+      powerSetInternal(set, powerSet, accumulator, index + 1);
+   }
 }
