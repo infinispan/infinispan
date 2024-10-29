@@ -327,7 +327,7 @@ public class RestMetricsResourceIT {
             .toList();
    }
 
-   private static Metric findMetric(List<Metric> metrics, String metricName) {
+   public static Metric findMetric(List<Metric> metrics, String metricName) {
       var metricOpt = metrics.stream().filter(m -> m.matches(metricName)).findFirst();
       assertTrue(metricOpt.isPresent());
       return metricOpt.get();
