@@ -125,6 +125,8 @@ NOTE: This command is deprecated. Use the `SET` command with the appropriate fla
 +
 NOTE: This implementation attempts to return all attributes that a real Redis server returns. However, in most cases, the values are set to `0` because they cannot be retrieved, or don't apply to {brandname}.
 
+* link:https://redis.io/commands/json.set[JSON.SET]
+
 * link:https://redis.io/commands/keys[KEYS]
 
 * link:https://redis.io/commands/lindex[LINDEX]
