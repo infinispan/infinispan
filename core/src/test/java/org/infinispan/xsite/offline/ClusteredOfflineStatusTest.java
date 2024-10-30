@@ -38,7 +38,7 @@ public class ClusteredOfflineStatusTest extends AbstractMultipleSitesTest {
       site(0).waitForClusterToForm(null);
 
       // check if it fetches the status
-      var tom2 = takeOfflineManager(siteName(0), 0);
+      var tom2 = takeOfflineManager(siteName(0), 1);
       eventually(() -> tom2.getOfflineStatus(REMOTE_SITE_NAME).isOffline());
 
       // bring online and check it is replicated
