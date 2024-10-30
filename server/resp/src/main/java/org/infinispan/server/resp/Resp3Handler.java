@@ -18,6 +18,7 @@ import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.json.EmbeddedJsonCache;
 import org.infinispan.util.concurrent.BlockingManager;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -29,6 +30,7 @@ public class Resp3Handler extends Resp3AuthHandler {
    protected EmbeddedMultimapPairCache<byte[], byte[], byte[]> mapMultimap;
    protected EmbeddedSetCache<byte[], byte[]> embeddedSetCache;
    protected EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetMultimap;
+   protected EmbeddedJsonCache jsonCache;
    protected final ScheduledExecutorService scheduler;
    protected final BlockingManager blockingManager;
 
@@ -52,6 +54,11 @@ public class Resp3Handler extends Resp3AuthHandler {
       mapMultimap = new EmbeddedMultimapPairCache<>(toMultimap);
       embeddedSetCache = new EmbeddedSetCache<>(toMultimap);
       sortedSetMultimap = new EmbeddedMultimapSortedSetCache<>(toMultimap);
+      jsonCache = new EmbeddedJsonCache(toMultimap);
+   }
+
+   public EmbeddedJsonCache getJsonCache() {
+      return jsonCache;
    }
 
    public EmbeddedMultimapListCache<byte[], byte[]> getListMultimap() {

@@ -31,6 +31,11 @@
          <artifactId>infinispan-multimap</artifactId>
       </dependency>
       <dependency>
+         <groupId>com.jayway.jsonpath</groupId>
+         <artifactId>json-path</artifactId>
+         <version>${version.json-path}</version>
+     </dependency>
+      <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
          <scope>provided</scope>

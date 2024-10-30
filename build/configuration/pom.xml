@@ -147,7 +147,7 @@
       <version.infinispan.maven-plugins>1.0.8.Final</version.infinispan.maven-plugins>
       <version.insights>2.0.4</version.insights>
       <version.io.agroal>2.5</version.io.agroal>
-      <version.io.lettuce>6.5.2.RELEASE</version.io.lettuce>
+      <version.io.lettuce>6.5.3.RELEASE</version.io.lettuce>
       <version.vertx>4.5.12</version.vertx>
       <version.io.mashona>1.1.0</version.io.mashona>
       <version.jackson>2.18.2</version.jackson>
@@ -171,6 +171,7 @@
       <version.jcip-annotations>1.0</version.jcip-annotations>
       <version.jgroups>5.3.13.Final</version.jgroups>
       <version.jgroups.raft>1.0.14.Final</version.jgroups.raft>
+      <version.json-path>2.9.0</version.json-path>
       <version.jsr107>1.1.0</version.jsr107>
       <version.junit>4.13.2</version.junit>
       <version.junit5>5.11.4</version.junit5>
