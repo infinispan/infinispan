@@ -125,6 +125,12 @@ NOTE: This command is deprecated. Use the `SET` command with the appropriate fla
 +
 NOTE: This implementation attempts to return all attributes that a real Redis server returns. However, in most cases, the values are set to `0` because they cannot be retrieved, or don't apply to {brandname}.
 
+* link:https://redis.io/commands/json.get[JSON.GET]
+
+* link:https://redis.io/commands/json.set[JSON.SET]
++
+NOTE: The current implementation allows to add element at the end of an array, while Redis returns error.
+
 * link:https://redis.io/commands/keys[KEYS]
 
 * link:https://redis.io/commands/lindex[LINDEX]
@@ -160,7 +166,7 @@ NOTE: The current implementation is atomic for rotation when the source and dest
 * link:https://redis.io/commands/ltrim[LTRIM]
 
 * link:https://redis.io/commands/memory-info[MEMORY USAGE]
-+ 
++
 NOTE: This command will return the memory used by the key and the value. It doesn't include the memory used by additional metadata associated with the entry.
 
 

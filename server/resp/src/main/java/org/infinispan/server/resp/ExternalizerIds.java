@@ -7,4 +7,6 @@ public interface ExternalizerIds {
    Integer EVENT_LISTENER_CONVERTER = 2202;
 
    Integer COMPOSED_FILTER_CONVERTER = 2203;
+   Integer JSON_GET_FUNCTION = 2204;
+   Integer JSON_SET_FUNCTION = 2205;
 }

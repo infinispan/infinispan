@@ -156,12 +156,29 @@ class ByteBufPrimitiveSerializer {
       public void accept(CharSequence charSequence, ByteBufPool alloc) {
          // We only write errors in ASCII strings.
          int length = charSequence.length();
+         // Adding extra space to escape \n char
+         for (int i = 0; i < charSequence.length(); i++) {
+            char charAt = charSequence.charAt(i);
+            if ( charAt =='\n' || charAt=='\r') ++length;
+         }
          int total = length + CRLF.length;
-
          // RESP: -<error message>\r\n
          ByteBuf buffer = alloc.acquire(total);
          for (int i = 0; i < charSequence.length(); i++) {
-            buffer.writeByte(charSequence.charAt(i));
+            char charAt = charSequence.charAt(i);
+            // Escape char that break RESP
+            switch (charAt) {
+               case '\n':
+                     buffer.writeByte('\\');
+                     buffer.writeByte('n');
+                  break;
+               case '\r':
+                  buffer.writeByte('\\');
+                  buffer.writeByte('r');
+               break;
+               default:
+                  buffer.writeByte(charAt);
+            }
          }
          buffer.writeBytes(CRLF);
       }

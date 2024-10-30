@@ -15,6 +15,8 @@ import org.infinispan.server.resp.commands.tx.WATCH;
 import org.infinispan.server.resp.filter.ComposedFilterConverter;
 import org.infinispan.server.resp.filter.EventListenerConverter;
 import org.infinispan.server.resp.filter.EventListenerKeysFilter;
+import org.infinispan.server.resp.json.JsonGetFunction;
+import org.infinispan.server.resp.json.JsonSetFunction;
 
 @InfinispanModule(name = "resp", requiredModules = "core")
 public class RespModuleLifecycle implements ModuleLifecycle {
@@ -28,6 +30,8 @@ public class RespModuleLifecycle implements ModuleLifecycle {
       externalizerMap.put(WATCH.EXTERNALIZER.getId(), WATCH.EXTERNALIZER);
       externalizerMap.put(EventListenerConverter.EXTERNALIZER.getId(), EventListenerConverter.EXTERNALIZER);
       externalizerMap.put(ComposedFilterConverter.EXTERNALIZER.getId(), ComposedFilterConverter.EXTERNALIZER);
+      externalizerMap.put(JsonGetFunction.EXTERNALIZER.getId(), JsonGetFunction.EXTERNALIZER);
+      externalizerMap.put(JsonSetFunction.EXTERNALIZER.getId(), JsonSetFunction.EXTERNALIZER);
 
       // Externalizer that could be loaded by other modules.
       externalizerMap.put(ITERATION_FILTER, new IterationFilter.IterationFilterExternalizer());
