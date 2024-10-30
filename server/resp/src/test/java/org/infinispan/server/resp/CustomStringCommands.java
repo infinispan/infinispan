@@ -33,6 +33,13 @@ public interface CustomStringCommands extends Commands {
    @Command("LPOS :k1 :k2 RANK :k3")
    Long lposRank(@Param("k1") byte[] k1, @Param("k2") byte[] k2, @Param("k3") byte[] k3);
 
+
+   @Command("JSON.SET :key :path :value")
+   String jsonCmd(@Param("key") String key, @Param("path") String path, @Param("value") String value);
+
+   @Command("JSON.SET :key :path :value :arg")
+   String jsonCmdWithArg(@Param("cmd") String cmd, @Param("key") String key, @Param("path") String path, @Param("value") String value, @Param("arg") String arg);
+
    static CustomStringCommands instance(StatefulConnection<String, String> conn) {
       RedisCommandFactory factory = new RedisCommandFactory(conn);
       return factory.getCommands(CustomStringCommands.class);
