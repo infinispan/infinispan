@@ -2376,7 +2376,7 @@
                      <sortByGroupIdAndArtifactId>true</sortByGroupIdAndArtifactId>
                      <licensesOutputFile>${project.build.outputDirectory}/META-INF/licenses.xml</licensesOutputFile>
                      <excludedGroups>org.kohsuke</excludedGroups>
-                     <excludedArtifacts>jboss-logging-processor|jdeparser|jcip-annotations|jboss-logging-annotations</excludedArtifacts>
+                     <excludedArtifacts>jboss-logging-processor|jdeparser|jcip-annotations|jboss-logging-annotations|.*lettuce.*</excludedArtifacts>
                      <excludedScopes>system,test,runtime,provided</excludedScopes>
                   </configuration>
                </execution>
