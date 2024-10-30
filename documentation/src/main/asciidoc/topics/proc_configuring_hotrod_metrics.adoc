@@ -1,7 +1,7 @@
 [id='configuring-hotrod-metrics_{context}']
 = Configuring Hot Rod Client metrics
 
-Hot Rod Java clients collect and expose metrics related to the connection pool and cache requests.
+Hot Rod Java clients collect and expose metrics related to the cache requests.
 Implement the SPI `RemoteCacheManagerMetricsRegistry` to register metrics in the collector of your choice.
 {brandname} provides an implementation using Micrometer.
 

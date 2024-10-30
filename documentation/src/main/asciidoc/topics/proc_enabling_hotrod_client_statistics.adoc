@@ -1,6 +1,6 @@
 [id='enabling-hotrod-client-statistics_{context}']
 = Enabling Hot Rod client statistics
-Hot Rod Java clients can provide statistics that include remote cache and near-cache hits and misses as well as connection pool usage.
+Hot Rod Java clients can provide statistics that include remote cache and near-cache hits and misses.
 
 .Procedure
 

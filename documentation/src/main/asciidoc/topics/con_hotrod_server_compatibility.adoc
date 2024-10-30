@@ -27,6 +27,10 @@ endif::community[]
 ifdef::downstream[]
 .{brandname} 7.3 and earlier
 endif::downstream[]
+[TIP] 
+====
+The client no longer supports HotRod protocol versions older than 3.0. As such you must use an older client or the `hotrod-client-legacy` module.
+====
 Clients that use a Hot Rod protocol version that is higher than the {brandname} Server version must set the `infinispan.client.hotrod.protocol_version` property.
 
 [role="_additional-resources"]

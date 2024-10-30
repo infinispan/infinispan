@@ -6,9 +6,6 @@
 
 * Specify authentication mechanisms with the `saslMechanism()` method from the `AuthenticationConfigurationBuilder` class or with the `infinispan.client.hotrod.sasl_mechanism` property.
 
-WARNING: Authorization is an expensive operation performed on each new connection.
-We strongly recommend tuning the connection pool.
-
 .SCRAM
 [source,java,options="nowrap",subs=attributes+,role="primary"]
 ----

@@ -8,3 +8,10 @@ using different strategies.
 and automatically switch to available nodes.
 * Efficient data location. Hot Rod clients can find key owners and make
 requests directly to those nodes, which reduces latency.
+
+[NOTE]
+====
+The client only supports Hot Rod protocol version 3.0 and newer.
+The server supports Hot Rod protocol version 2.0 and newer.
+If a client is needed that supports older versions up to 2.0 the hotrod-client-legacy module can be used.
+====
