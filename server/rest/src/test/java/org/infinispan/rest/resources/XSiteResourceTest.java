@@ -340,14 +340,14 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       json = jsonResponseBody(restClient.container().backupStatuses());
       assertEquals(json.at(NYC).at("status").asString(), "mixed");
       assertEquals(json.at(NYC).at("online").asJsonList().iterator().next().asString(), CACHE_2);
-      assertTrue(json.at(NYC).at("offline").asJsonList().isEmpty());
-      assertEquals(json.at(NYC).at("mixed").asJsonList().iterator().next().asString(), CACHE_1);
+      assertEquals(json.at(NYC).at("offline").asJsonList().iterator().next().asString(), CACHE_1);
+      assertTrue(json.at(NYC).at("mixed").asJsonList().isEmpty()); // status is global, no more mixed state at a cache level.
 
       json = jsonResponseBody(restClient.container().backupStatus(NYC));
       assertEquals(json.at("status").asString(), "mixed");
       assertEquals(json.at("online").asJsonList().iterator().next().asString(), CACHE_2);
-      assertTrue(json.at("offline").asJsonList().isEmpty());
-      assertEquals(json.at("mixed").asJsonList().iterator().next().asString(), CACHE_1);
+      assertEquals(json.at("offline").asJsonList().iterator().next().asString(), CACHE_1);
+      assertTrue(json.at("mixed").asJsonList().isEmpty()); // status is global, no more mixed state at a cache level.
 
       takeOfflineManager.bringSiteOnline(NYC);
    }
