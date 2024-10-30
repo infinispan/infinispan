@@ -40,7 +40,7 @@ import net.jcip.annotations.ThreadSafe;
  * @since 5.2
  */
 @ThreadSafe
-@Listener(observation = Listener.Observation.POST, includeCurrentState = true, sync = false)
+@Listener(observation = Listener.Observation.POST, sync = false)
 public class OfflineStatus implements CacheEventFilter<Object, Object> {
 
    private static final Log log = LogFactory.getLog(OfflineStatus.class);
@@ -74,11 +74,16 @@ public class OfflineStatus implements CacheEventFilter<Object, Object> {
 
    public void start() {
       globalState.addFilteredListener(this, this, null, Set.of(CacheEntryModified.class, CacheEntryCreated.class));
-      if (globalState.containsKey(key)) {
-         // it will receive the event with the up-to-date value
+      var existingStatus = globalState.get(key);
+      if (existingStatus != null) {
+         updateLocalStatus(existingStatus);
          return;
       }
-      globalState.putIfAbsentAsync(key, 0L);
+      globalState.putIfAbsentAsync(key, 0L).thenAccept(status -> {
+         if (status != null){
+            updateLocalStatus(status);
+         }
+      });
    }
 
    public void stop() {
