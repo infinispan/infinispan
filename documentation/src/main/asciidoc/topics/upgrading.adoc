@@ -2,6 +2,18 @@
 
 === Java HotRod Client Changes
 
+==== New client connection handler
+
+A new client has been introduced that only keeps a single connection per server it is connected to and supports
+pipelining by batching concurrent requests into a single flush operation.
+The new approach requires less system resources (file descriptors/threads) and also uses less CPU to submit the same task.
+The existing client that used a connection pool to handle concurrent requests has been moved to a new module `hotrod-client-legacy`.
+
+The new client is effectively a drop in replacement. The only exceptions were if you were referencing some internal classes
+such as the ChannelFactory (non public API), which have been removed since they related to the underlying channel.
+
+The connection pool configuration is deprecated and no longer used.
+
 ==== RemoteCache withFlags no longer uses ThreadLocal
 
 Previously a RemoteCache would store its Flag settings in a ThreadLocal

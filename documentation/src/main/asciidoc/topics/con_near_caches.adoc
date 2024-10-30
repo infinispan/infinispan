@@ -35,7 +35,6 @@ Bloom filters optimize performance for write operations by reducing the total nu
 Bloom filters:
 
 * Reside on {brandname} Server and keep track of the entries that the client has requested.
-* Require a connection pool configuration that has a maximum of one active connection per server and uses the `WAIT` exhausted action.
 * Cannot be used with unbounded near caches.
 
 //-

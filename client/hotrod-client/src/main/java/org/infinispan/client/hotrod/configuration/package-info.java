@@ -128,43 +128,43 @@
  *          <td>Specifies the transport factory to use.</td>
  *       </tr>
  *       <tr>
- *          <th colspan="4">Connection pool properties</th>
+ *          <th colspan="4">Connection pool properties. This section is no longer used and is deprecated.</th>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.connection_pool.max_active</b></td>
  *          <td>Integer</td>
  *          <td>-1 (no limit)</td>
- *          <td>Maximum number of {@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#maxActive(int) connections} per server</td>
+ *          <td>Maximum number of {@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#maxActive(int) connections} per server. This configuration property is deprecated and does not take effect.</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.connection_pool.exhausted_action</b></td>
  *          <td>String</td>
  *          <td>{@link org.infinispan.client.hotrod.configuration.ExhaustedAction#WAIT WAIT}</td>
- *          <td>Specifies what happens when asking for a connection from a server's pool, and that pool is {@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#exhaustedAction(org.infinispan.client.hotrod.configuration.ExhaustedAction) exhausted}.</td>
+ *          <td>Specifies what happens when asking for a connection from a server's pool, and that pool is {@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#exhaustedAction(org.infinispan.client.hotrod.configuration.ExhaustedAction) exhausted}. This configuration property is deprecated and does not take effect.</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.connection_pool.max_wait</b></td>
  *          <td>Long</td>
  *          <td>-1 (no limit)</td>
- *          <td>{@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#maxWait(long) Time} to wait in milliseconds for a connection to become available when exhausted_action is WAIT</td>
+ *          <td>{@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#maxWait(long) Time} to wait in milliseconds for a connection to become available when exhausted_action is WAIT. This configuration property is deprecated and does not take effect.</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.connection_pool.min_idle</b></td>
  *          <td>Integer</td>
  *          <td>1</td>
- *          <td>Minimum number of idle {@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#minIdle(int) connections} that each server should have available.</td>
+ *          <td>Minimum number of idle {@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#minIdle(int) connections} that each server should have available. This configuration property is deprecated and does not take effect.</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.connection_pool.min_evictable_idle_time</b></td>
  *          <td>Integer</td>
  *          <td>180000</td>
- *          <td>Minimum amount of {@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#minEvictableIdleTime(long) time} in milliseconds that an connection may sit idle in the pool</td>
+ *          <td>Minimum amount of {@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#minEvictableIdleTime(long) time} in milliseconds that an connection may sit idle in the pool. This configuration property is deprecated and does not take effect.</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.connection_pool.max_pending_requests</b></td>
  *          <td>Integer</td>
  *          <td>5</td>
- *          <td>Specifies maximum number of {@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#maxPendingRequests(int) requests} sent over single connection at one instant.</td>
+ *          <td>Specifies maximum number of {@link org.infinispan.client.hotrod.configuration.ConnectionPoolConfigurationBuilder#maxPendingRequests(int) requests} sent over single connection at one instant. This configuration property is deprecated and does not take effect.</td>
  *       </tr>
  *       <tr>
  *          <th colspan="4">Thread pool properties</th>
