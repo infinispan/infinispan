@@ -50,6 +50,14 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
    public static final String ERR_GT_LT_AND_OR_NX_OPTIONS_AT_THE_SAME_TIME_ARE_NOT_COMPATIBLE = "ERR GT, LT, and/or NX options at the same time are not compatible";
    RedisCommands<String, String> redis;
 
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new SortedSetCommandsTest(),
+            new SortedSetCommandsTest().withAuthorization(),
+      };
+   }
+
    @BeforeMethod
    public void initConnection() {
       redis = redisConnection.sync();

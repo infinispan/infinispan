@@ -20,6 +20,7 @@ public class RespMultiNodeTest extends RespSingleNodeTest {
    public Object[] factory() {
       return new Object[] {
             new RespMultiNodeTest().withCacheMode(CacheMode.DIST_SYNC),
+            new RespMultiNodeTest().withCacheMode(CacheMode.DIST_SYNC).withAuthorization(),
             new RespMultiNodeTest().withCacheMode(CacheMode.REPL_SYNC),
       };
    }
@@ -31,7 +32,7 @@ public class RespMultiNodeTest extends RespSingleNodeTest {
 
    @Override
    protected String parameters() {
-      return "[mode=" + mode + "]";
+      return "[mode=" + mode + ", authz=" + isAuthorizationEnabled() + "]";
    }
 
    @Override
