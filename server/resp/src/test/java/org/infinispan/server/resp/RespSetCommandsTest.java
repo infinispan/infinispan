@@ -16,6 +16,15 @@ import io.lettuce.core.api.sync.RedisCommands;
 
 @Test(groups = "functional", testName = "server.resp.RespSetCommandsTest")
 public class RespSetCommandsTest extends SingleNodeRespBaseTest {
+
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new RespSetCommandsTest(),
+            new RespSetCommandsTest().withAuthorization(),
+      };
+   }
+
    @Test
    public void testSadd() {
       RedisCommands<String, String> redis = redisConnection.sync();

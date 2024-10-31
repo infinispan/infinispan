@@ -8,16 +8,21 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.resp.RespServer;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
+import org.infinispan.test.TestingUtil;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import javax.security.auth.Subject;
 
 /**
  * Utils for RESP tests.
@@ -28,9 +33,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class RespTestingUtil {
    private static final Log log = LogFactory.getLog(RespTestingUtil.class, Log.class);
 
+   public static final Subject ADMIN;
+   public static final String USERNAME = "default";
+   public static final String PASSWORD = "password";
    public static final String OK = "OK";
    public static final String PONG = "PONG";
    public static final String HOST = "127.0.0.1";
+
+   static {
+      Map<AuthorizationPermission, Subject> subjects = TestingUtil.makeAllSubjects();
+      ADMIN = subjects.get(AuthorizationPermission.ALL);
+   }
 
    public static RedisClient createClient(long timeout, int port) {
       RedisClient client = RedisClient.create(RedisURI.Builder.redis(HOST).withPort(port)

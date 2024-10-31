@@ -54,21 +54,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    private final ContextBuilder contextBuilder = this::writeContext;
 
    public DecoratedCache(CacheImpl<K, V> delegate, long flagsBitSet) {
-      this(delegate, (Object) null, flagsBitSet);
-   }
-
-   public DecoratedCache(AdvancedCache<K, V> delegate, CacheImpl<K, V> impl) {
-      super(delegate);
-      this.flags = 0;
-      this.lockOwner = null;
-      this.cacheImplementation = impl;
-   }
-
-   public DecoratedCache(AdvancedCache<K, V> delegate, CacheImpl<K, V> impl, long flags) {
-      super(delegate);
-      this.flags = flags;
-      this.lockOwner = null;
-      this.cacheImplementation = impl;
+      this(delegate, null, flagsBitSet);
    }
 
    public DecoratedCache(CacheImpl<K, V> delegate, Object lockOwner, long newFlags) {
@@ -98,7 +84,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
       return withFlags(EnumUtil.bitSetOf(flag));
    }
 
-   protected AdvancedCache<K, V> withFlags(long newFlags) {
+   private AdvancedCache<K, V> withFlags(long newFlags) {
       if (EnumUtil.containsAll(this.flags, newFlags)) {
          //we already have all specified flags
          return this;

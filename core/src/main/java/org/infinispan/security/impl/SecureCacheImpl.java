@@ -19,6 +19,7 @@ import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.LockedStream;
 import org.infinispan.batch.BatchContainer;
+import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
 import org.infinispan.cache.impl.InternalCache;
 import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
@@ -54,7 +55,7 @@ import jakarta.transaction.TransactionManager;
  * @author Tristan Tarrant
  * @since 7.0
  */
-public final class SecureCacheImpl<K, V> implements SecureCache<K, V>, InternalCache<K, V> {
+public final class SecureCacheImpl<K, V> extends AbstractDelegatingAdvancedCache<K, V> implements SecureCache<K, V>, InternalCache<K, V> {
 
    private final AuthorizationManager authzManager;
    private final AdvancedCache<K, V> delegate;
@@ -66,12 +67,14 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V>, InternalC
    }
 
    private SecureCacheImpl(AdvancedCache<K, V> delegate, AuthorizationManager authzManager, Subject subject) {
+      super(delegate);
       this.authzManager = authzManager;
       this.delegate = delegate;
       this.subject = subject;
       this.writePermission = authzManager.getWritePermission();
    }
 
+   @Override
    public AdvancedCache<K, V> getDelegate() {
       authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
       return delegate;
@@ -93,6 +96,18 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V>, InternalC
    }
 
    @Override
+   public void addListener(Object listener) {
+      authzManager.checkPermission(subject, AuthorizationPermission.LISTEN);
+      delegate.addListener(listener);
+   }
+
+   @Override
+   public <C> void addListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter) {
+      authzManager.checkPermission(subject, AuthorizationPermission.LISTEN);
+      delegate.addListener(listener, filter, converter);
+   }
+
+   @Override
    public <C> CompletionStage<Void> addListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter,
          CacheEventConverter<? super K, ? super V, C> converter) {
       authzManager.checkPermission(subject, AuthorizationPermission.LISTEN);
@@ -106,11 +121,23 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V>, InternalC
    }
 
    @Override
+   public <C> void addFilteredListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
+      authzManager.checkPermission(subject, AuthorizationPermission.LISTEN);
+      delegate.addFilteredListener(listener, filter, converter, filterAnnotations);
+   }
+
+   @Override
    public <C> CompletionStage<Void> addFilteredListenerAsync(Object listener,
          CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
          Set<Class<? extends Annotation>> filterAnnotations) {
       authzManager.checkPermission(subject, AuthorizationPermission.LISTEN);
       return delegate.addFilteredListenerAsync(listener, filter, converter, filterAnnotations);
+   }
+
+   @Override
+   public <C> void addStorageFormatFilteredListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter, Set<Class<? extends Annotation>> filterAnnotations) {
+      authzManager.checkPermission(subject, AuthorizationPermission.LISTEN);
+      delegate.addStorageFormatFilteredListener(listener, filter, converter, filterAnnotations);
    }
 
    @Override
@@ -147,6 +174,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V>, InternalC
    public void endBatch(boolean successful) {
       authzManager.checkPermission(subject, writePermission);
       delegate.endBatch(successful);
+   }
+
+   @Override
+   public void removeListener(Object listener) {
+      authzManager.checkPermission(subject, AuthorizationPermission.LISTEN);
+      delegate.removeListener(listener);
    }
 
    @Override
@@ -797,6 +830,11 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V>, InternalC
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapperClass,
                                            Class<? extends Wrapper> valueWrapperClass) {
       return new SecureCacheImpl<>(delegate.withWrapping(keyWrapperClass, valueWrapperClass), authzManager, subject);
+   }
+
+   @Override
+   public AdvancedCache rewrap(AdvancedCache newDelegate) {
+      return new SecureCacheImpl(newDelegate, authzManager, subject);
    }
 
    @Override
