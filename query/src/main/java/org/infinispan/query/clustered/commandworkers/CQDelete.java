@@ -35,7 +35,7 @@ final class CQDelete extends CQWorker {
    public LuceneSearchResult<Object> fetchIds(SearchQueryBuilder query) {
       long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
 
-      LuceneSearchResult<Object> result = query.ids().fetch(queryDefinition.getMaxResults());
+      LuceneSearchResult<Object> result = query.ids().fetchAll();
 
       if (queryStatistics.isEnabled()) {
          queryStatistics.localIndexedQueryExecuted(queryDefinition.getQueryString(), System.nanoTime() - start);
