@@ -18,6 +18,14 @@ import io.lettuce.core.api.sync.RedisCommands;
 @Test(groups = "functional", testName = "server.resp.HashOperationsTest")
 public class HashOperationsTest extends SingleNodeRespBaseTest {
 
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new HashOperationsTest(),
+            new HashOperationsTest().withAuthorization(),
+      };
+   }
+
    public void testHMSET() {
       RedisCommands<String, String> redis = redisConnection.sync();
 

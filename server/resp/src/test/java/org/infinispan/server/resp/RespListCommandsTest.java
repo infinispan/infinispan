@@ -31,6 +31,14 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
 
    RedisCommands<String, String> redis;
 
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new RespListCommandsTest(),
+            new RespListCommandsTest().withAuthorization(),
+      };
+   }
+
    @BeforeMethod
    public void initConnection() {
       redis = redisConnection.sync();
