@@ -16,8 +16,9 @@ public class GeoFieldProcessor implements PropertyMappingAnnotationProcessor<Geo
 
    private GeoPointBinder createBinder(GeoField annotation) {
       return GeoPointBinder.create()
-            .fieldName(annotation.fieldName())
-            .markerSet(annotation.marker())
+            .fieldName(annotation.name())
+            // this annotation is used only at property level, there is no reason to use any marker set
+            .markerSet("")
             .projectable(Options.projectable(annotation.projectable()))
             .sortable(Options.sortable(annotation.sortable()));
    }

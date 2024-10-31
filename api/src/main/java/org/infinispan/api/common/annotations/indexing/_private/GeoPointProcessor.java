@@ -17,7 +17,9 @@ public class GeoPointProcessor implements TypeMappingAnnotationProcessor<GeoPoin
    private GeoPointBinder createBinder(GeoPoint annotation) {
       return GeoPointBinder.create()
             .fieldName(annotation.fieldName())
-            .markerSet(annotation.marker())
+            // in Infinispan we use the field name as marker set,
+            // this is mandatory if we have more @GeoPoint defined on the same entity
+            .markerSet(annotation.fieldName())
             .projectable(Options.projectable(annotation.projectable()))
             .sortable(Options.sortable(annotation.sortable()));
    }

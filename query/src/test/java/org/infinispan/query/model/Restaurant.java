@@ -19,8 +19,8 @@ public record Restaurant(
       @Keyword(normalizer = "lowercase") String name,
       @Text String description,
       @Text String address,
-      @Latitude Double latitude,
-      @Longitude Double longitude,
+      @Latitude(fieldName = "location") Double latitude,
+      @Longitude(fieldName = "location") Double longitude,
       @Basic Float score
 ) {
 

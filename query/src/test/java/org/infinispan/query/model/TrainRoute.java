@@ -9,13 +9,13 @@ import org.infinispan.protostream.annotations.Proto;
 
 @Proto
 @Indexed
-@GeoPoint(fieldName = "departure", projectable = true, sortable = true, marker = "departure")
-@GeoPoint(fieldName = "arrival", projectable = true, sortable = true, marker = "arrival")
+@GeoPoint(fieldName = "departure", projectable = true, sortable = true)
+@GeoPoint(fieldName = "arrival", projectable = true, sortable = true)
 public record TrainRoute(
       @Keyword(normalizer = "lowercase") String name,
-      @Latitude(marker = "departure") Double departureLat,
-      @Longitude(marker = "departure") Double departureLon,
-      @Latitude(marker = "arrival") Double arrivalLat,
-      @Longitude(marker = "arrival") Double arrivalLon
+      @Latitude(fieldName = "departure") Double departureLat,
+      @Longitude(fieldName = "departure") Double departureLon,
+      @Latitude(fieldName = "arrival") Double arrivalLat,
+      @Longitude(fieldName = "arrival") Double arrivalLon
 ) {
 }

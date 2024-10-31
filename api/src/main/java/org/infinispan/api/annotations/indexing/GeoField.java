@@ -35,13 +35,9 @@ import org.infinispan.api.common.annotations.indexing._private.GeoFieldProcessor
 public @interface GeoField {
 
    /**
-    * The name of the index field holding spatial information.
-    * <p>
-    * defaults to the property name.
-    *
-    * @return the field name
+    * @return The name of the index field.
     */
-   String fieldName() default "";
+   String name() default "";
 
    /**
     * @return Whether projections are enabled for this field.
@@ -54,12 +50,6 @@ public @interface GeoField {
     * @see Basic#sortable()
     */
    boolean sortable() default false;
-
-   /**
-    * @return The name of the marker this spatial should look into
-    * when looking for the {@link Latitude} and {@link Longitude} markers.
-    */
-   String marker() default "";
 
    @Retention(RetentionPolicy.RUNTIME)
    @Target({ElementType.METHOD, ElementType.FIELD, ElementType.TYPE})

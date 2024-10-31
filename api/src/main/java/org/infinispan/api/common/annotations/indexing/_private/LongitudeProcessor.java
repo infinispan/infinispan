@@ -11,6 +11,6 @@ public class LongitudeProcessor implements PropertyMappingAnnotationProcessor<Lo
    @Override
    public void process(PropertyMappingStep mapping, Longitude annotation,
                        PropertyMappingAnnotationProcessorContext context) {
-      mapping.marker(GeoPointBinder.longitude().markerSet(annotation.marker()));
+      mapping.marker(GeoPointBinder.longitude().markerSet(annotation.fieldName()));
    }
 }

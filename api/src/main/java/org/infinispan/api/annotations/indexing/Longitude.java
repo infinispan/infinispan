@@ -26,10 +26,10 @@ import org.infinispan.api.common.annotations.indexing._private.LongitudeProcesso
 public @interface Longitude {
 
    /**
-    * @return The name of the marker this marker belongs to.
-    * Set it to the value of {@link GeoPoint#marker()}
-    * so that the bridge detects this marker.
+    * @return The field Name this marker belongs to.
+    *     * Set it to the value of {@link GeoPoint#fieldName()}
+    *     * so that the bridge detects this marker.
     */
-   String marker() default "";
+   String fieldName() default "";
 
 }

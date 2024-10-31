@@ -14,8 +14,8 @@ import org.infinispan.api.annotations.indexing.Longitude;
  *
  * @since 15.1
  */
-@GeoPoint(fieldName = "placeOfBirth", marker = "birth")
-@GeoPoint(fieldName = "placeOfDeath", marker = "death")
+@GeoPoint(fieldName = "placeOfBirth")
+@GeoPoint(fieldName = "placeOfDeath")
 public class Author {
 
    @Keyword(sortable = true)
@@ -28,16 +28,16 @@ public class Author {
    @Basic(name = "books", searchable = false, sortable = true, projectable = true, aggregable = true)
    private Integer numberOfPublishedBooks;
 
-   @Latitude(marker = "birth")
+   @Latitude(fieldName = "placeOfBirth")
    private Double placeOfBirthLatitude;
 
-   @Longitude(marker = "birth")
+   @Longitude(fieldName = "placeOfBirth")
    private Double placeOfBirthLongitude;
 
-   @Latitude(marker = "death")
+   @Latitude(fieldName = "placeOfDeath")
    private Double placeOfDeathLatitude;
 
-   @Longitude(marker = "death")
+   @Longitude(fieldName = "placeOfDeath")
    private Double placeOfDeathLongitude;
 
 }

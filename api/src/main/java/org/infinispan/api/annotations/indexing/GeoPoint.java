@@ -21,14 +21,17 @@ import org.infinispan.api.annotations.indexing.model.LatLng;
  * {@code @GeoPoint} must be used on the entity (class level).
  * The {@link Latitude} and {@link Longitude} annotations must mark the properties.
  * <pre><code>
- * &#064;GeoPoint(name="home")
+ * &#064;GeoPoint(fieldName="home")
  * public class User {
- *     &#064;Latitude
+ *     &#064;Latitude(fieldName="home")
  *     public Double getHomeLatitude() { ... }
- *     &#064;Longitude
+ *     &#064;Longitude(fieldName="home")
  *     public Double getHomeLongitude() { ... }
  * }
  * </code></pre>
+ *
+ * More geo fields can be defined, using multiple {@link GeoPoint} annotations
+ * having different field names.
  *
  * @since 15.1
  */
@@ -59,12 +62,6 @@ public @interface GeoPoint {
     * @see Basic#sortable()
     */
    boolean sortable() default false;
-
-   /**
-    * @return The name of the marker this spatial should look into
-    * when looking for the {@link Latitude} and {@link Longitude} markers.
-    */
-   String marker() default "";
 
    @Retention(RetentionPolicy.RUNTIME)
    @Target({ElementType.METHOD, ElementType.FIELD, ElementType.TYPE})

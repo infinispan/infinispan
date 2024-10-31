@@ -10,8 +10,8 @@ public class CustomSpatialSchemaImpl extends SpatialSchemaImpl implements Genera
       package sample_bank_account;
       /**
        * @Indexed
-       * @GeoPoint(fieldName = "start", marker = "start", projectable = true, sortable = true)
-       * @GeoPoint(fieldName = "end", marker = "end", projectable = true, sortable = true)
+       * @GeoPoint(fieldName = "start", projectable = true, sortable = true)
+       * @GeoPoint(fieldName = "end", projectable = true, sortable = true)
        */
       message FlightRoute {
          /**
@@ -19,19 +19,19 @@ public class CustomSpatialSchemaImpl extends SpatialSchemaImpl implements Genera
           */
          optional string name = 1;
          /**
-          * @Latitude(marker = "start")
+          * @Latitude(fieldName = "start")
           */
          optional double startLat = 2;
          /**
-          * @Longitude(marker = "start")
+          * @Longitude(fieldName = "start")
           */
          optional double startLon = 3;
          /**
-          * @Latitude(marker = "end")
+          * @Latitude(fieldName = "end")
           */
          optional double endLat = 4;
          /**
-          * @Longitude(marker = "end")
+          * @Longitude(fieldName = "end")
           */
          optional double endLon = 5;
       }

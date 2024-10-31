@@ -6,23 +6,21 @@ import java.util.List;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.DocumentId;
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Embedded;
+import org.infinispan.api.annotations.indexing.GeoPoint;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Keyword;
+import org.infinispan.api.annotations.indexing.Latitude;
+import org.infinispan.api.annotations.indexing.Longitude;
 import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.api.annotations.indexing.option.Structure;
-import org.hibernate.search.engine.backend.types.Projectable;
-import org.hibernate.search.engine.backend.types.Sortable;
-import org.hibernate.search.mapper.pojo.bridge.builtin.annotation.GeoPointBinding;
-import org.hibernate.search.mapper.pojo.bridge.builtin.annotation.Latitude;
-import org.hibernate.search.mapper.pojo.bridge.builtin.annotation.Longitude;
 
 /**
  * @author anistor@redhat.com
  * @since 9.0
  */
 @Indexed
-@GeoPointBinding(fieldName = "location", markerSet = "location", projectable = Projectable.YES, sortable = Sortable.YES)
-@GeoPointBinding(fieldName = "officeLocation", markerSet = "officeLocation", projectable = Projectable.YES, sortable = Sortable.YES)
+@GeoPoint(fieldName = "location", projectable = true, sortable = true)
+@GeoPoint(fieldName = "officeLocation", projectable = true, sortable = true)
 public class Employee {
 
    public String id;
@@ -49,16 +47,16 @@ public class Employee {
 
    public List<ContactDetails> alternativeContactDetails = new ArrayList<>();
 
-   @Latitude(markerSet = "location")
+   @Latitude(fieldName = "location")
    private Double locationLat;
 
-   @Longitude(markerSet = "location")
+   @Longitude(fieldName = "location")
    private Double locationLon;
 
-   @Latitude(markerSet = "officeLocation")
+   @Latitude(fieldName = "officeLocation")
    private Double officeLocationLat;
 
-   @Longitude(markerSet = "officeLocation")
+   @Longitude(fieldName = "officeLocation")
    private Double officeLocationLon;
 
    // When an entity is created with Infinispan,

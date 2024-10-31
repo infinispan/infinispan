@@ -115,7 +115,7 @@ public final class Search5MetadataCreator implements AnnotationMetadataCreator<I
             continue;
          }
 
-         SpatialFieldMapping spatialFieldMapping = InfinispanMetadataCreator.spatialFieldMapping(fd, annotations);
+         SpatialFieldMapping spatialFieldMapping = InfinispanMetadataCreator.geoField(fd, annotations);
          if (spatialFieldMapping != null) {
             spatialFields.put(spatialFieldMapping.fieldName(), spatialFieldMapping);
             continue;
@@ -134,15 +134,15 @@ public final class Search5MetadataCreator implements AnnotationMetadataCreator<I
 
    private static Map<String, SpatialFieldMapping> spatialFields(Descriptor descriptor) {
       Map<String, SpatialFieldMapping> spatialFields = new HashMap<>();
-      AnnotationElement.Annotation spatialAnnotation = descriptor.getAnnotations().get(InfinispanAnnotations.SPATIAL_ANNOTATION);
+      AnnotationElement.Annotation spatialAnnotation = descriptor.getAnnotations().get(InfinispanAnnotations.GEO_POINT_ANNOTATION);
       if (spatialAnnotation != null) {
-         SpatialFieldMapping spatial = InfinispanMetadataCreator.spatial(null, spatialAnnotation);
+         SpatialFieldMapping spatial = InfinispanMetadataCreator.geoPoint(spatialAnnotation);
          spatialFields.put(spatial.fieldName(), spatial);
       }
-      AnnotationElement.Annotation spatialsAnnotation = descriptor.getAnnotations().get(InfinispanAnnotations.SPATIALS_ANNOTATION);
+      AnnotationElement.Annotation spatialsAnnotation = descriptor.getAnnotations().get(InfinispanAnnotations.GEO_POINTS_ANNOTATION);
       if (spatialsAnnotation != null) {
          for (AnnotationElement.Value v : ((AnnotationElement.Array) spatialsAnnotation.getDefaultAttributeValue()).getValues()) {
-            SpatialFieldMapping spatial = InfinispanMetadataCreator.spatial(null, (AnnotationElement.Annotation) v);
+            SpatialFieldMapping spatial = InfinispanMetadataCreator.geoPoint((AnnotationElement.Annotation) v);
             spatialFields.put(spatial.fieldName(), spatial);
          }
       }
@@ -231,7 +231,7 @@ public final class Search5MetadataCreator implements AnnotationMetadataCreator<I
    }
 
    private static void processLatitude(FieldDescriptor fd, AnnotationElement.Annotation latitudeAnnotation, Map<String, SpatialFieldMapping> spatialFields) {
-      String marker = (String) latitudeAnnotation.getAttributeValue(InfinispanAnnotations.LATITUDE_MARKER_ATTRIBUTE).getValue();
+      String marker = (String) latitudeAnnotation.getAttributeValue(InfinispanAnnotations.GEO_FIELD_NAME_ATTRIBUTE).getValue();
       if (marker.isEmpty()) {
          marker = null;
       }
@@ -251,7 +251,7 @@ public final class Search5MetadataCreator implements AnnotationMetadataCreator<I
    }
 
    private static void processLongitude(FieldDescriptor fd, AnnotationElement.Annotation longitudeAnnotation, Map<String, SpatialFieldMapping> spatialFields) {
-      String marker = (String) longitudeAnnotation.getAttributeValue(InfinispanAnnotations.LONGITUDE_MARKER_ATTRIBUTE).getValue();
+      String marker = (String) longitudeAnnotation.getAttributeValue(InfinispanAnnotations.GEO_FIELD_NAME_ATTRIBUTE).getValue();
       if (marker.isEmpty()) {
          marker = null;
       }
