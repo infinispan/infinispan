@@ -11,8 +11,11 @@ permissions:
   statuses: write
 
 concurrency:
-  # Only cancel jobs for PR updates
-  group: ci-test-${{ github.event.workflow_run.head_sha }}
+  # Cancel jobs same head_branch same repo, works
+  # both for pull_request and push
+  group: >
+      ${{ github.workflow }}-${{ github.event.workflow_run.head_repository.full_name }}-
+      ${{ github.event.workflow_run.head_branch }}
   cancel-in-progress: true
 
 jobs:
