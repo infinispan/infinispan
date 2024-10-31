@@ -3,6 +3,8 @@ package org.infinispan.server.resp;
 import static io.lettuce.core.ScoredValue.just;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.infinispan.server.resp.test.RespTestingUtil.ADMIN;
+import static org.infinispan.server.resp.test.RespTestingUtil.HOST;
 import static org.infinispan.server.resp.test.RespTestingUtil.OK;
 import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
@@ -29,10 +31,12 @@ import java.util.stream.Stream;
 import org.assertj.core.api.SoftAssertions;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.security.Security;
 import org.infinispan.server.resp.commands.Commands;
 import org.infinispan.server.resp.test.CommonRespTests;
 import org.testng.annotations.DataProvider;
@@ -43,7 +47,10 @@ import io.lettuce.core.FlushMode;
 import io.lettuce.core.KeyScanArgs;
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.KeyValue;
+import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.ScanArgs;
 import io.lettuce.core.SetArgs;
 import io.lettuce.core.SortArgs;
@@ -75,11 +82,13 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    public Object[] factory() {
       return new Object[] {
             new RespSingleNodeTest(),
-            new RespSingleNodeTest().simpleCache()
+            new RespSingleNodeTest().withAuthorization(),
+            new RespSingleNodeTest().simpleCache(),
+            new RespSingleNodeTest().simpleCache().withAuthorization(),
       };
    }
 
-   RespSingleNodeTest simpleCache() {
+   protected RespSingleNodeTest simpleCache() {
       this.cacheMode = CacheMode.LOCAL;
       this.simpleCache = true;
       return this;
@@ -87,7 +96,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
 
    @Override
    protected String parameters() {
-      return "[simpleCache=" + simpleCache + ", cacheMode=" + cacheMode + "]";
+      return super.parameters() + " -- [simpleCache=" + simpleCache + ", cacheMode=" + cacheMode + "]";
    }
 
    @Override
@@ -1310,8 +1319,21 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    public void testDB() {
       ConfigurationBuilder builder = defaultRespConfiguration();
       amendConfiguration(builder);
-      manager(0).createCache("1", builder.build());
-      manager(0).createCache("2", builder.build());
+
+      if (isAuthorizationEnabled()) {
+         Security.doAs(ADMIN, () -> {
+            manager(0).createCache("1", builder.build());
+            manager(0).createCache("2", builder.build());
+         });
+      } else {
+         manager(0).createCache("1", builder.build());
+         manager(0).createCache("2", builder.build());
+      }
+
+      testDBInternal();
+   }
+
+   private void testDBInternal() {
       // Use a new connection to avoid conflicts with other tests
       RedisCommands<String, String> redis = redisConnection.sync();
       assertThat(redis.select(1)).isEqualTo("OK");
@@ -1324,5 +1346,19 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       assertThat(redis.select(1)).isEqualTo("OK");
       assertThat(redis.get(k())).isEqualTo(v());
       redis.select(0);
+   }
+
+   public void testNoAuthHello() {
+      SkipTestNG.skipIf(!isAuthorizationEnabled(), "Run only with authz enabled");
+
+      // Tries to only establish the connection without AUTH parameters.
+      RedisURI uri = RedisURI.Builder.redis(HOST, server.getPort()).build();
+      try (RedisClient noAuthClient = RedisClient.create(uri)) {
+         assertThatThrownBy(noAuthClient::connect)
+               .isInstanceOf(RedisConnectionException.class)
+               .cause()
+               .isInstanceOf(RedisCommandExecutionException.class)
+               .hasMessage("NOAUTH HELLO must be called with the client already authenticated, otherwise the HELLO <proto> AUTH <user> <pass> option can be used to authenticate the client and select the RESP protocol version at the same time");
+      }
    }
 }

@@ -5,7 +5,6 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
-import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.cache.impl.DecoratedCache;
 import org.infinispan.commons.tx.DefaultResourceConverter;
@@ -29,10 +28,9 @@ import org.infinispan.transaction.tm.EmbeddedTransactionManager;
  * </p>
  *
  * <p>
- * We extend the {@link DecoratedCache} to override the methods to utilize a transactional context. Additionally, we
- * also need to guarantee it works properly with instances of the {@link org.infinispan.cache.impl.EncoderCache}.That is,
- * it needs to transform the key and values, to later submit the command with the decorated instance. The extended
- * {@link RespExecDecoratedCache} also wraps the caches in case of new instances with flags or media-types.
+ * We extend the {@link DecoratedCache} to override the methods to utilize a transactional context. We inject the cache
+ * in the chain of delegates just before the final link to submit commands ({@link CacheImpl}). This guarantees that
+ * the proper chain of command exist and it only affects the {@link InvocationContext} creation.
  * </p>
  *
  * @since 15.0
@@ -62,11 +60,7 @@ final class TransactionDecorator {
       LocalTransaction localTx = table.getOrCreateLocalTransaction(tx, false);
       LocalTxInvocationContext ic = new LocalTxInvocationContext(localTx);
       table.enlistClientTransaction(tx, localTx);
-
-      CacheImpl<byte[], byte[]> ci = unwrap(cache);
-      AdvancedCache<byte[], byte[]> other = new RespExecDecoratedCache(ic, cache, ci);
-
-      handler.setCache(other);
+      handler.setCache(injectExecCache(cache, ic));
       return new TransactionResume(handler, cache, tx);
    }
 
@@ -91,12 +85,35 @@ final class TransactionDecorator {
       return ComponentRegistry.componentOf(cache, TransactionTable.class);
    }
 
-   private static  <K, V> CacheImpl<K, V> unwrap(Cache<K, V> cache) {
-      if (cache instanceof CacheImpl<K,V> ci)
-         return ci;
+   /**
+    * Intercepts the chain of caches.
+    *
+    * <p>
+    * Given a chain of caches ({@link AbstractDelegatingAdvancedCache}), inserts the {@link RespExecDecoratedCache} just
+    * above the {@link CacheImpl} and rebuilds the chain. This guarantees the delegation chain will maintain the same order,
+    * and even additional chances of encoding or authentication will keep the bottom order intact.
+    * </p>
+    *
+    * <p>
+    * The method will traverse recursively until finding the {@link CacheImpl} instance, and will rebuild again backwards
+    * with the {@link AbstractDelegatingAdvancedCache#rewrap(AdvancedCache)} method. For instance, the chain
+    * <code>Delegate1</code> -> <code>Delegate2</code> -> <code>CacheImpl</code> will transform into <code>Delegate1</code>
+    * -> <code>Delegate2</code> -> <code>RespExecDecoratedCache</code> -> <code>CacheImpl</code>.
+    * </p>
+    *
+    * @param cache Instance to verify or rebuild the chain.
+    * @param ctx Context to utilize in the {@link RespExecDecoratedCache}.
+    * @return A new delegation chain with {@link RespExecDecoratedCache} injected.
+    * @throws IllegalStateException if a {@link CacheImpl} does not exist in the chain.
+    */
+   private static AdvancedCache<byte[], byte[]> injectExecCache(Cache<byte[], byte[]> cache, InvocationContext ctx) {
+      if (cache instanceof CacheImpl<byte[], byte[]> ci)
+         return new RespExecDecoratedCache(ctx, ci, 0);
 
-      if (cache instanceof AbstractDelegatingCache<K,V> adc)
-         return unwrap(adc.getDelegate());
+      if (cache instanceof AbstractDelegatingAdvancedCache<byte[],byte[]> adac) {
+         AdvancedCache<byte[], byte[]> delegate = injectExecCache(adac.getDelegate(), ctx);
+         return adac.rewrap(delegate);
+      }
 
       throw new IllegalStateException("Simple cache not found for: " + cache.getClass());
    }
@@ -127,25 +144,9 @@ final class TransactionDecorator {
    private static class RespExecDecoratedCache extends DecoratedCache<byte[], byte[]> {
       private final InvocationContext ctx;
 
-      private RespExecDecoratedCache(InvocationContext ctx, AdvancedCache<byte[], byte[]> cache, CacheImpl<byte[], byte[]> ci) {
-         super(cache, ci);
+      private RespExecDecoratedCache(InvocationContext ctx, CacheImpl<byte[], byte[]> delegate, long flags) {
+         super(delegate, flags);
          this.ctx = ctx;
-      }
-
-      private RespExecDecoratedCache(InvocationContext ctx, AdvancedCache<byte[], byte[]> cache, CacheImpl<byte[], byte[]> ci, long flags) {
-         super(cache, ci, flags);
-         this.ctx = ctx;
-      }
-
-      @Override
-      public AdvancedCache rewrap(AdvancedCache newDelegate) {
-         // Change order between delegate and this instance.
-         // The delegate should apply any decoration and then hand the execution to the DecoratedCache.
-         // For example, the EncoderCache should transform the values before delegating to the DecoratedCache.
-         if (newDelegate instanceof AbstractDelegatingAdvancedCache<?,?> adac)
-            return adac.rewrap(this);
-
-         return super.rewrap(newDelegate);
       }
 
       @Override
@@ -161,23 +162,6 @@ final class TransactionDecorator {
       @Override
       public boolean bypassInvocationContextFactory() {
          return true;
-      }
-
-      @Override
-      protected AdvancedCache<byte[], byte[]> withFlags(long newFlags) {
-         AdvancedCache<byte[], byte[]> flagged = new RespExecDecoratedCache(ctx, cache, unwrap(getDelegate()), newFlags);
-         if (cache instanceof AbstractDelegatingAdvancedCache<byte[],byte[]> adac)
-            return adac.rewrap(flagged);
-
-         return flagged;
-      }
-
-      @Override
-      public AdvancedCache<byte[], byte[]> noFlags() {
-         if (getFlagsBitSet() == 0L)
-            return this;
-
-         return withFlags(0);
       }
    }
 }

@@ -27,6 +27,14 @@ import io.lettuce.core.api.sync.RedisCommands;
 public class TransactionOperationsTest extends SingleNodeRespBaseTest {
 
    @Override
+   public Object[] factory() {
+      return new Object[] {
+            new TransactionOperationsTest(),
+            new TransactionOperationsTest().withAuthorization(),
+      };
+   }
+
+   @Override
    protected void amendConfiguration(ConfigurationBuilder configurationBuilder) {
       configurationBuilder.invocationBatching().enable(true);
       configurationBuilder.transaction().lockingMode(LockingMode.PESSIMISTIC);
