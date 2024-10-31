@@ -5,7 +5,9 @@ package org.infinispan.client.hotrod.configuration;
  *
  * @author Tristan Tarrant
  * @since 5.3
+ * @deprecated since 15.1, the connection pool is no longer used
  */
+@Deprecated
 public class ConnectionPoolConfiguration {
    private final ExhaustedAction exhaustedAction;
    private final int maxActive;
