@@ -12,16 +12,19 @@ import java.net.SocketTimeoutException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.Cache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.distribution.BlockingInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -57,6 +60,16 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
+   protected static void removeAllBlockingInterceptorsFromCache(Cache<?, ?> cache) {
+      AsyncInterceptorChain chain = TestingUtil.extractInterceptorChain(cache);
+      BlockingInterceptor<?> blockingInterceptor = chain.findInterceptorExtending(BlockingInterceptor.class);
+      while (blockingInterceptor != null) {
+         blockingInterceptor.suspend(true);
+         chain.removeInterceptor(blockingInterceptor.getClass());
+         blockingInterceptor = chain.findInterceptorExtending(BlockingInterceptor.class);
+      }
+   }
+
    protected RemoteCacheManager getRemoteCacheManager() {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder(hotrodServer)
          .socketTimeout(1000).connectionTimeout(5000)
@@ -78,5 +91,9 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
                                  () -> remoteCacheManager.getCache().put(k(m), v(m)));
       barrier.await(10, TimeUnit.SECONDS);
       barrier.await(10, TimeUnit.SECONDS);
+
+      removeAllBlockingInterceptorsFromCache(cacheManager.getCache());
+
+      remoteCacheManager.getCache().put(k(m), v(m));
    }
 }

@@ -109,6 +109,9 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
             long messageId = operations.getHeadSequence();
             // Remove the polled one now
             operations.poll();
+            // Insert the operation back into the HashMap so we can continue using the RingBuffer for timeouts
+            // This way when a response is processed for the timed out operation we can process the bytes properly
+            incomplete.put(messageId, opTimeout.op);
             dispatcher.handleResponse(opTimeout.op, messageId, channel, null,
                   new SocketTimeoutException(this + " timed out after " + configuration.socketTimeout() + " ms"));
          } else {
@@ -193,7 +196,9 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
    public void channelActive(ChannelHandlerContext ctx) throws Exception {
       channel = ctx.channel();
       log.tracef("Decoder %s has Channel %s active", this, channel);
-      codec = configuration.version().getCodec();
+      if (codec == null) {
+         codec = configuration.version().getCodec();
+      }
       super.channelActive(ctx);
    }
 
@@ -382,7 +387,10 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
    public void setCodec(Codec codec) {
       assert channel.eventLoop().inEventLoop();
       if (configuration.version() == ProtocolVersion.PROTOCOL_VERSION_AUTO) {
-         this.codec = codec;
+         // Here for the purpose of tests to override explicitly as needed
+         if (codec == null) {
+            this.codec = codec;
+         }
          channel.attr(OperationChannel.OPERATION_CHANNEL_ATTRIBUTE_KEY).get().setCodec(codec);
       }
    }
@@ -429,7 +437,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
       if (closing) {
          return;
       }
-      assert channel.eventLoop().inEventLoop();
+      assert channel == null || channel.eventLoop().inEventLoop();
       closing = true;
       dispatcher.handleChannelFailure(ctx.channel(), t);
       operations.forEach((opTimeout, id) -> {

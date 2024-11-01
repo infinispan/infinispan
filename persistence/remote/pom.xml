@@ -33,6 +33,12 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-client-hotrod</artifactId>
+         <exclusions>
+           <exclusion>
+             <groupId>io.smallrye.reactive</groupId>
+             <artifactId>mutiny</artifactId>
+           </exclusion>
+         </exclusions>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>

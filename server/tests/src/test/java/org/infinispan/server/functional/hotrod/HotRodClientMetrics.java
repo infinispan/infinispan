@@ -39,10 +39,6 @@ public class HotRodClientMetrics {
    private static final String DEFAULT_PREFIX = "client_hotrod";
    private static final String[] CONNECTION_POOL_METRICS = {
          "connection_pool_retries_total",
-         "connection_pool_idle",
-         "connection_pool_active",
-         "connection_pool_connected",
-         "connection_pool_size"
    };
    private static final String[] NEAR_CACHE_METRICS = {
          "cache_near_cache_invalidations_total",
