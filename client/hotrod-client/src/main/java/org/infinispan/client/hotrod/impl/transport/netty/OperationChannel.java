@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
@@ -140,8 +141,13 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
       long messageId = headerDecoder.registerOperation(operation);
       Channel channel = this.channel;
       ByteBuf buffer = channel.alloc().buffer();
-      codec.writeHeader(buffer, messageId, currentCacheTopologyFunction.apply(operation.getCacheName()), operation);
-      operation.writeOperationRequest(channel, buffer, codec);
+
+      // The commands that are performed while unauthenticated are done without a server verified codec,
+      // so we must use a codec version that is safe for handshake to determine which codec to use
+      Codec codecToUse = codec.isUnsafeForTheHandshake() ? ProtocolVersion.SAFE_HANDSHAKE_PROTOCOL_VERSION.getCodec() : codec;
+
+      codecToUse.writeHeader(buffer, messageId, currentCacheTopologyFunction.apply(operation.getCacheName()), operation);
+      operation.writeOperationRequest(channel, buffer, codecToUse);
       channel.writeAndFlush(buffer, channel.voidPromise());
    }
 
@@ -172,6 +178,8 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
          acceptingRequests = false;
          // Let us try to reconnect
          attemptConnect();
+      } else {
+         log.tracef("Channel %s was never fully accepted, not reconnecting after exception %s", channel, t);
       }
       List<HotRodOperation<?>> channelOps = new ArrayList<>();
       queue.drain(channelOps::add, Integer.MAX_VALUE);
@@ -229,10 +237,14 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
       return queue;
    }
 
-   public void close() {
+   public List<HotRodOperation<?>> close() {
+      acceptingRequests = false;
       if (channel != null) {
          channel.close();
       }
+      List<HotRodOperation<?>> channelOps = new ArrayList<>();
+      queue.drain(channelOps::add, Integer.MAX_VALUE);
+      return channelOps;
    }
 
    public Channel getChannel() {

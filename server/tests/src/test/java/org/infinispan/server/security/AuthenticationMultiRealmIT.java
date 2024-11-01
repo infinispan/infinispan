@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
@@ -87,7 +88,7 @@ public class AuthenticationMultiRealmIT {
             .realm("default")
             .username("unknown")
             .password("unknown");
-      Exceptions.expectException(".*ELY05161.*",  () -> performOperations(builder), TransportException.class);
+      Exceptions.expectException(".*ELY05161.*",  () -> performOperations(builder), TransportException.class, HotRodClientException.class);
    }
 
    private void performOperations(ConfigurationBuilder builder) {

@@ -36,6 +36,7 @@ import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
+import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.TopologyInfo;
 import org.infinispan.client.hotrod.impl.Util;
@@ -102,6 +103,7 @@ public class OperationDispatcher {
    @GuardedBy("lock")
    private final Set<SocketAddress> connectionFailedServers;
    private final ChannelHandler channelHandler;
+   private final ExecutorService executorService;
    private final TimeService timeService;
 
    private final ClientListenerNotifier clientListenerNotifier;
@@ -109,6 +111,7 @@ public class OperationDispatcher {
 
    public OperationDispatcher(Configuration configuration, ExecutorService executorService, TimeService timeService,
                               ClientListenerNotifier clientListenerNotifier, Consumer<ChannelPipeline> pipelineDecorator) {
+      this.executorService = executorService;
       this.timeService = timeService;
       this.clientListenerNotifier = clientListenerNotifier;
       this.maxRetries = configuration.maxRetries();
@@ -273,18 +276,27 @@ public class OperationDispatcher {
       Object routingObj = operation.getRoutingObject();
       SocketAddress targetAddress = null;
       if (routingObj != null) {
-         CacheInfo cacheInfo = getCacheInfo(operation.getCacheName());
-         if (cacheInfo != null && cacheInfo.getConsistentHash() != null) {
-            SocketAddress server = cacheInfo.getConsistentHash().getServer(routingObj);
-            if (server != null && !opFailedServers.contains(server)) {
-               targetAddress = server;
-            }
-         }
+         targetAddress = addressForObject(routingObj, operation.getCacheName(), opFailedServers);
       }
       if (targetAddress == null) {
          targetAddress = getBalancer(operation.getCacheName()).nextServer(opFailedServers);
       }
       return executeOnSingleAddress(operation, targetAddress);
+   }
+
+   public SocketAddress addressForObject(Object routingObject, String cacheName) {
+      return addressForObject(routingObject, cacheName, Set.of());
+   }
+
+   protected SocketAddress addressForObject(Object routingObject, String cacheName, Set<SocketAddress> opFailedServers) {
+      CacheInfo cacheInfo = getCacheInfo(cacheName);
+      if (cacheInfo != null && cacheInfo.getConsistentHash() != null) {
+         SocketAddress server = cacheInfo.getConsistentHash().getServer(routingObject);
+         if (server != null && !opFailedServers.contains(server)) {
+            return server;
+         }
+      }
+      return null;
    }
 
    public <E> CompletionStage<E> executeOnSingleAddress(HotRodOperation<E> operation, SocketAddress socketAddress) {
@@ -410,7 +422,7 @@ public class OperationDispatcher {
       for (SocketAddress server : removedServers) {
          HOTROD.removingServer(server);
          connectionFailedServers.remove(server);
-         channelHandler.closeChannel(server);
+         closeChannel(server);
       }
    }
 
@@ -524,7 +536,7 @@ public class OperationDispatcher {
          markPendingOperationsAsPriorAge();
          // Close all the failed socket channels
          for (SocketAddress socketAddress : topologyInfo.getAllServers()) {
-            channelHandler.closeChannel(socketAddress);
+            closeChannel(socketAddress);
             connectionFailedServers.remove(socketAddress);
          }
          topologyInfo.switchCluster(newCluster);
@@ -536,6 +548,19 @@ public class OperationDispatcher {
          HOTROD.switchedToCluster(newCluster.getName());
       else
          HOTROD.switchedBackToMainCluster();
+   }
+
+   private void closeChannel(SocketAddress server) {
+      List<HotRodOperation<?>> ops = channelHandler.closeChannel(server);
+      if (!ops.isEmpty()) {
+         // Need to submit on executor as we are currently holding the write lock
+         executorService.submit(() -> {
+            TransportException transportException = log.connectionClosed(server, server);
+            for (HotRodOperation<?> op : ops) {
+               handleResponse(op, -1, server, null, transportException);
+            }
+         });
+      }
    }
 
    public boolean manualSwitchToCluster(String clusterName) {

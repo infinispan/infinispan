@@ -12,12 +12,14 @@ import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.hash.ConsistentHashTest")
@@ -39,12 +41,22 @@ public class ConsistentHashTest extends MultiHotRodServersTest {
       Map<Object, SocketAddress> requests = new HashMap<>();
       RemoteCache<Object, Object> cache = rcm.getCache();
 
+      OperationDispatcher dispatcher = TestingUtil.extractField(rcm, "dispatcher");
+
       for (int i = 0; i < 100; i++) {
          Object keyValue = kv(i);
-         // TODO: change this to something new
-//         ((ControlledChannelFactory) rcm.getChannelFactory()).useOnFetch((server, op) -> {
-//            requests.put(keyValue, server);
-//         });
+
+         Object convertedKey;
+         if (keyType == null || keyType.isBinary()) {
+            convertedKey = cache.getDataFormat().keyToBytes(keyValue);
+         } else {
+            convertedKey = keyValue;
+         }
+
+         SocketAddress socketAddress = dispatcher.addressForObject(convertedKey, cache.getName());
+         assertThat(socketAddress).isNotNull();
+
+         requests.put(keyValue, socketAddress);
          cache.put(keyValue, keyValue);
       }
 

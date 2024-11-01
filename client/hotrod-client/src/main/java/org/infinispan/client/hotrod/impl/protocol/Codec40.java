@@ -60,4 +60,9 @@ public class Codec40 extends Codec31 {
    public void writeMultimapSupportDuplicates(ByteBuf buf, boolean supportsDuplicates) {
       buf.writeByte(supportsDuplicates ? 1 : 0);
    }
+
+   @Override
+   public boolean isUnsafeForTheHandshake() {
+      return true;
+   }
 }

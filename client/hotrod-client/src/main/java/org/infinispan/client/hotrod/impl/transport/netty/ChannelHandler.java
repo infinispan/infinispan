@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl.transport.netty;
 import java.io.File;
 import java.net.SocketAddress;
 import java.security.Provider;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -110,13 +111,14 @@ public class ChannelHandler {
       return operationChannel.attemptConnect();
    }
 
-   public void closeChannel(SocketAddress address) {
+   public List<HotRodOperation<?>> closeChannel(SocketAddress address) {
       log.tracef("Removing OperationChannel for %s", address);
       OperationChannel channel = channels.remove(address);
       if (channel != null) {
          log.tracef("Closing channel for %s", address);
-         channel.close();
+         return channel.close();
       }
+      return List.of();
    }
 
    public void close() {

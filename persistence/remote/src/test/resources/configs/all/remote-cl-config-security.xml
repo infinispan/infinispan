@@ -12,7 +12,7 @@
          <persistence passivation="false">
             <remote-store xmlns="urn:infinispan:config:store:remote:${infinispan.core.schema.version}"
                           cache="___defaultcache" preload="false" purge="false" shared="true" read-only="false"
-                          hotrod-wrapping="false" raw-values="true" socket-timeout="60000" protocol-version="2.8"
+                          hotrod-wrapping="false" raw-values="true" socket-timeout="60000" protocol-version="3.1"
                           tcp-no-delay="true"
                           balancing-strategy="org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy"
                           key-size-estimate="62" value-size-estimate="512" force-return-values="false">

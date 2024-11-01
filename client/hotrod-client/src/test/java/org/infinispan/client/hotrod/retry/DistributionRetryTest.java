@@ -183,7 +183,7 @@ public class DistributionRetryTest extends AbstractRetryTest {
    public Object[] factory() {
       return new Object[] {
             new DistributionRetryTest().withRetries(0),
-//            new DistributionRetryTest().withRetries(10),
+            new DistributionRetryTest().withRetries(10),
       };
    }
 }
