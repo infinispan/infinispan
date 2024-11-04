@@ -94,6 +94,7 @@
       <infinispan.brand.prefix>infinispan</infinispan.brand.prefix>
       <infinispan.brand.short-name>infinispan</infinispan.brand.short-name>
       <infinispan.brand.version>${project.version}</infinispan.brand.version>
+      <infinispan.unbranded.version>${project.version}</infinispan.unbranded.version>
       <infinispan.codename>I'm Still Standing</infinispan.codename>
       <infinispan.module.slot.prefix>ispn</infinispan.module.slot.prefix>
       <infinispan.base.version>15.0</infinispan.base.version>
