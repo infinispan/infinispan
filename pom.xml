@@ -196,7 +196,7 @@
          --add-opens=java.base/com.sun.crypto.provider=ALL-UNNAMED
          --add-modules=java.se
       </testjvm.jigsawArgs>
-      <testjvm.blockHoundRedefinitionArgs/>
+      <testjvm.blockHoundRedefinitionArgs>-XX:+AllowRedefinitionToAddDeleteMethods</testjvm.blockHoundRedefinitionArgs>
       <testjvm.dynamicAgentLoading/>
       <testjvm.jdkSpecificArgs>${testjvm.jigsawArgs} -Dnet.bytebuddy.experimental=true ${testjvm.blockHoundRedefinitionArgs} ${testjvm.dynamicAgentLoading}</testjvm.jdkSpecificArgs>
       <testjvm.extraArgs/>
@@ -2756,12 +2756,6 @@
          </activation>
          <properties>
             <server.jvm>${env.JAVA_ALT_HOME}</server.jvm>
-            <server.jvm.args>${testjvm.commonArgs} ${testjvm.extraArgs}</server.jvm.args>
-            <!-- Unset all JDK-specific properties -->
-            <testjvm.jigsawArgs/>
-            <testjvm.blockHoundRedefinitionArgs/>
-            <!-- Also unset the aggregate property, just in case -->
-            <testjvm.jdkSpecificArgs/>
          </properties>
          <build>
             <plugins>
@@ -2769,9 +2763,8 @@
                   <artifactId>maven-surefire-plugin</artifactId>
                   <version>${version.maven.surefire}</version>
                   <configuration>
-                     <!-- Run the tests with JDK8 -->
+                     <!-- Run the tests with the alternate JDK -->
                      <jvm>${env.JAVA_ALT_HOME}/bin/java</jvm>
-                     <argLine>${forkJvmArgs}</argLine>
                   </configuration>
                </plugin>
                <plugin>
@@ -2779,7 +2772,6 @@
                   <version>${version.maven.surefire}</version>
                   <configuration>
                      <jvm>${env.JAVA_ALT_HOME}/bin/java</jvm>
-                     <argLine>${forkJvmArgs}</argLine>
                   </configuration>
                </plugin>
             </plugins>
