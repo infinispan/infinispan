@@ -31,6 +31,28 @@
          <artifactId>infinispan-multimap</artifactId>
       </dependency>
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-scripting</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>party.iroiro.luajava</groupId>
+         <artifactId>lua51</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>com.badlogicgames.gdx</groupId>
+         <artifactId>gdx-jnigen-loader</artifactId>
+         <version>2.5.2</version>
+      </dependency>
+      <dependency>
+         <groupId>party.iroiro.luajava</groupId>
+         <artifactId>lua51-platform</artifactId>
+         <classifier>natives-desktop</classifier>
+      </dependency>
+      <dependency>
+         <groupId>party.iroiro.luajava</groupId>
+         <artifactId>jsr223</artifactId>
+      </dependency>
+      <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
          <scope>provided</scope>

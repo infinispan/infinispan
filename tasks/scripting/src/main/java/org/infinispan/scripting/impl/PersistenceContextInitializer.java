@@ -2,7 +2,8 @@ package org.infinispan.scripting.impl;
 
 import org.infinispan.marshall.persistence.impl.PersistenceMarshallerImpl;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
+import org.infinispan.protostream.annotations.ProtoSyntax;
 
 /**
  * Interface used to initialise the {@link PersistenceMarshallerImpl}'s {@link org.infinispan.protostream.SerializationContext}
@@ -11,7 +12,7 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
  * @author Ryan Emerson
  * @since 10.0
  */
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       dependsOn = org.infinispan.commons.marshall.PersistenceContextInitializer.class,
       includeClasses = {
             ExecutionMode.class,
@@ -20,6 +21,7 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
       schemaFileName = "persistence.scripting.proto",
       schemaFilePath = "proto/generated",
       schemaPackageName = "org.infinispan.persistence.scripting",
+      syntax = ProtoSyntax.PROTO3,
       service = false
 )
 interface PersistenceContextInitializer extends SerializationContextInitializer {

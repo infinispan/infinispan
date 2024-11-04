@@ -66,11 +66,15 @@ public interface ResponseWriter {
 
    void set(Set<?> set, Resp3Type contentType);
 
+   <T> void set(Set<?> set, JavaObjectSerializer<T> serializer);
+
    void map(Map<?, ?> value);
 
    void map(Map<?, ?> value, Resp3Type contentType);
 
    void map(Map<?, ?> value, Resp3Type keyType, Resp3Type valueType);
+
+   <T> void map(Map<?, ?> map, JavaObjectSerializer<T> serializer);
 
    void error(CharSequence value);
 

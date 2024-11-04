@@ -8,7 +8,7 @@ import org.infinispan.server.resp.tx.RespTransactionHandler;
 
 import io.netty.channel.ChannelHandlerContext;
 
-public interface TransactionResp3Command {
+public interface TransactionResp3Command extends BaseResp3Command {
 
    CompletionStage<RespRequestHandler> perform(RespTransactionHandler handler, ChannelHandlerContext ctx, List<byte[]> arguments);
 }

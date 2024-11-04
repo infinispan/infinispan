@@ -5,6 +5,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TY
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -44,9 +45,11 @@ public class ScriptMetadata implements Metadata {
 
    private final String role;
 
+   private final Map<String, String> properties;
+
    @ProtoFactory
    ScriptMetadata(String name, String language, String extension, ExecutionMode mode, Set<String> parameters,
-                  String role, MediaType dataType) {
+                  String role, MediaType dataType, Map<String, String> properties) {
       this.name = name;
       this.language = language;
       this.extension = extension;
@@ -54,6 +57,7 @@ public class ScriptMetadata implements Metadata {
       this.parameters = Collections.unmodifiableSet(parameters);
       this.role = role;
       this.dataType = dataType;
+      this.properties = properties == null ? Collections.emptyMap() : Map.copyOf(properties);
    }
 
    @ProtoField(number = 1)
@@ -94,6 +98,11 @@ public class ScriptMetadata implements Metadata {
       return Optional.ofNullable(role);
    }
 
+   @ProtoField(number = 8)
+   public Map<String, String> properties() {
+      return properties;
+   }
+
    @Override
    public long lifespan() {
       return -1;
@@ -111,7 +120,12 @@ public class ScriptMetadata implements Metadata {
 
    @Override
    public Builder builder() {
-      return new Builder().name(name).extension(extension).mode(mode).parameters(parameters);
+      return new Builder()
+            .name(name)
+            .extension(extension)
+            .mode(mode)
+            .parameters(parameters)
+            .properties(properties);
    }
 
    @Override
@@ -124,6 +138,7 @@ public class ScriptMetadata implements Metadata {
             ", dataType=" + dataType +
             ", language=" + language +
             ", role=" + role +
+            ", properties=" + properties +
             '}';
    }
 
@@ -135,6 +150,7 @@ public class ScriptMetadata implements Metadata {
       private ExecutionMode mode;
       private Set<String> parameters = Collections.emptySet();
       private MediaType dataType = MediaType.APPLICATION_OBJECT;
+      private Map<String, String> properties;
 
       public ScriptMetadata.Builder name(String name) {
          this.name = name;
@@ -196,9 +212,14 @@ public class ScriptMetadata implements Metadata {
          return this;
       }
 
+      public ScriptMetadata.Builder properties(Map<String, String> properties) {
+         this.properties = properties;
+         return this;
+      }
+
       @Override
       public ScriptMetadata build() {
-         return new ScriptMetadata(name, language, extension, mode, parameters, role, dataType);
+         return new ScriptMetadata(name, language, extension, mode, parameters, role, dataType, properties);
       }
 
       @Override

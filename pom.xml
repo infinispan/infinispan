@@ -1260,6 +1260,22 @@
             <scope>provided</scope>
          </dependency>
          <dependency>
+            <groupId>party.iroiro.luajava</groupId>
+            <artifactId>lua51</artifactId>
+            <version>${version.party.iroiro.luajava}</version>
+         </dependency>
+         <dependency>
+            <groupId>party.iroiro.luajava</groupId>
+            <artifactId>lua51-platform</artifactId>
+            <classifier>natives-desktop</classifier>
+            <version>${version.party.iroiro.luajava}</version>
+         </dependency>
+         <dependency>
+            <groupId>party.iroiro.luajava</groupId>
+            <artifactId>jsr223</artifactId>
+            <version>${version.party.iroiro.luajava}</version>
+         </dependency>
+         <dependency>
             <groupId>org.jacoco</groupId>
             <artifactId>org.jacoco.agent</artifactId>
             <version>${version.jacoco}</version>

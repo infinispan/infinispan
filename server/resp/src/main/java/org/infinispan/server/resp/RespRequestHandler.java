@@ -66,6 +66,10 @@ public abstract class RespRequestHandler {
       return writer;
    }
 
+   public void writer(ResponseWriter newWriter) {
+      this.writer = newWriter;
+   }
+
    public final CompletionStage<RespRequestHandler> handleRequest(ChannelHandlerContext ctx, RespCommand command, List<byte[]> arguments) {
       initializeIfNecessary(ctx);
       if (command == null) {
@@ -214,5 +218,4 @@ public abstract class RespRequestHandler {
          return handlerWhenComplete.apply(value);
       }, ctx.channel().eventLoop());
    }
-
 }
