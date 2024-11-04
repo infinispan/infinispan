@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
+@org.infinispan.server.test.core.tags.Database
 public class AsyncJdbcStringBasedCacheStore {
 
     @RegisterExtension
