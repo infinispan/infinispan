@@ -439,6 +439,31 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       predicateSpatialWithinCircle(lat, lon, radius);
    }
 
+   @Override
+   public void predicateSpatialWithinBox(String tlLat, String tlLon, String brLat, String brLon) {
+      ensureLeftSideIsAPropertyPath();
+      PropertyPath<TypeDescriptor<TypeMetadata>> property = resolveAlias(propertyPath);
+      if (property.isEmpty()) {
+         throw log.getPredicatesOnEntityAliasNotAllowedException(propertyPath.asStringPath());
+      }
+      checkSpatial(property);
+      Object tlLatValue = parameterValue(Double.class, tlLat);
+      Object tlLonValue = parameterValue(Double.class, tlLon);
+      Object brLatValue = parameterValue(Double.class, brLat);
+      Object brLonValue = parameterValue(Double.class, brLon);
+      if (phase == Phase.WHERE) {
+         expressionBuilder.whereBuilder().addSpatialWithinBox(property, tlLatValue, tlLonValue, brLatValue, brLonValue);
+      } else {
+         throw new IllegalStateException();
+      }
+   }
+
+   @Override
+   public void predicateSpatialNotWithinBox(String tlLat, String tlLon, String brLat, String brLon) {
+      expressionBuilder.whereBuilder().pushNot();
+      predicateSpatialWithinBox(tlLat, tlLon, brLat, brLon);
+   }
+
    private void checkAnalyzed(PropertyPath<?> propertyPath, boolean expectAnalyzed) {
       if (!expectAnalyzed) {
          if (fieldIndexingMetadata.isAnalyzed(propertyPath.asArrayPath())) {

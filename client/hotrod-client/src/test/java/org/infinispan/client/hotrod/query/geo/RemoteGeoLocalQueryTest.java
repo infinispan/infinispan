@@ -116,6 +116,14 @@ public class RemoteGeoLocalQueryTest extends SingleHotRodServerTest {
       assertThat(list).extracting(Restaurant::name)
             .containsExactlyInAnyOrder("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni",
                   "Dal Toscano Restaurant");
+
+      ickle = String.format("from %s r " +
+            "where r.location within box(41.91, 12.45, 41.90, 12.46)", RESTAURANT_ENTITY_NAME);
+      query = remoteCache.query(ickle);
+      list = query.list();
+      assertThat(list).extracting(Restaurant::name)
+            .containsExactlyInAnyOrder("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni",
+                  "Dal Toscano Restaurant", "Scialla The Original Street Food", "Alla Bracioleria Gracchi Restaurant");
    }
 
    @Test
@@ -146,5 +154,14 @@ public class RemoteGeoLocalQueryTest extends SingleHotRodServerTest {
       trainRoutes = trainQuery.list();
       assertThat(trainRoutes).extracting(TrainRoute::name)
             .containsExactlyInAnyOrder("Bologna-Venice", "Bologna-Selva");
+
+      trainQuery = remoteCache.query("from geo.TrainRoute r where r.arrival within box(:a, :b, :c, :d)");
+      trainQuery.setParameter("a", 47.00);
+      trainQuery.setParameter("b", 8.00);
+      trainQuery.setParameter("c", 45.70);
+      trainQuery.setParameter("d", 12.00);
+      trainRoutes = trainQuery.list();
+      assertThat(trainRoutes).extracting(TrainRoute::name)
+            .containsExactlyInAnyOrder("Milan-Como", "Bologna-Selva");
    }
 }

@@ -106,6 +106,10 @@ public interface QueryRendererDelegate<TypeDescriptor> {
 
    void predicateSpatialNotWithinCircle(String lat, String lon, String radius);
 
+   void predicateSpatialWithinBox(String tlLat, String tlLon, String brLat, String brLon);
+
+   void predicateSpatialNotWithinBox(String tlLat, String tlLon, String brLat, String brLon);
+
    enum Occur {
       MUST("+"),
       FILTER("#"),

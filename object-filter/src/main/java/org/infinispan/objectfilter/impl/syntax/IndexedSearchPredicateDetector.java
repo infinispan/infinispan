@@ -48,6 +48,11 @@ public final class IndexedSearchPredicateDetector implements Visitor<Boolean, Bo
    }
 
    @Override
+   public Boolean visit(SpatialWithinBoxExpr spatialWithinBoxExpr) {
+      return Boolean.TRUE;
+   }
+
+   @Override
    public Boolean visit(KnnPredicate knnPredicate) {
       return Boolean.TRUE;
    }

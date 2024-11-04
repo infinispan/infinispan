@@ -29,6 +29,7 @@ import org.infinispan.objectfilter.impl.syntax.NestedExpr;
 import org.infinispan.objectfilter.impl.syntax.NotExpr;
 import org.infinispan.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
+import org.infinispan.objectfilter.impl.syntax.SpatialWithinBoxExpr;
 import org.infinispan.objectfilter.impl.syntax.SpatialWithinCircleExpr;
 import org.jboss.logging.Logger;
 
@@ -124,6 +125,15 @@ final class ExpressionBuilder<TypeMetadata> {
             new ConstantValueExpr((Comparable) lat),
             new ConstantValueExpr((Comparable) lon),
             new ConstantValueExpr((Comparable) radius)));
+   }
+
+   public void addSpatialWithinBox(PropertyPath<?> propertyPath, Object tlLat, Object tlLon, Object brLat, Object brLon) {
+      push(new SpatialWithinBoxExpr(makePropertyValueExpr(propertyPath),
+            new ConstantValueExpr((Comparable) tlLat),
+            new ConstantValueExpr((Comparable) tlLon),
+            new ConstantValueExpr((Comparable) brLat),
+            new ConstantValueExpr((Comparable) brLon)
+      ));
    }
 
    public void addIn(PropertyPath<?> propertyPath, List<Object> values) {

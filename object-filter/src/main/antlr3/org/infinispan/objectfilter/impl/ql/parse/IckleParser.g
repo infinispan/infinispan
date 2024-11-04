@@ -307,9 +307,8 @@ geoCircle
     : circle_key^ LPAREN! lat=atom COMMA! lon=atom COMMA! radius=atom RPAREN!
     ;
 
-/* TODO */
 geoBoundingBox
-    : boundingBox_key
+    : boundingBox_key^ LPAREN! tlLat=atom COMMA! tlLon=atom COMMA! brLat=atom COMMA! brLon=atom RPAREN!
     ;
 
 /* TODO */
@@ -616,7 +615,7 @@ circle_key
    ;
 
 boundingBox_key
-   :   {validateSoftKeyword("boundingBox")}?=> IDENTIFIER -> BOUNDINGBOX[$IDENTIFIER]
+   :   {validateSoftKeyword("box")}?=> IDENTIFIER -> BOUNDINGBOX[$IDENTIFIER]
    ;
 
 polygon_key

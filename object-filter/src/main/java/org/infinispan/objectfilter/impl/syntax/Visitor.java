@@ -25,6 +25,8 @@ public interface Visitor<BE, VE> {
 
    BE visit(SpatialWithinCircleExpr spatialWithinCircleExpr);
 
+   BE visit(SpatialWithinBoxExpr spatialWithinBoxExpr);
+
    BE visit(NotExpr notExpr);
 
    BE visit(OrExpr orExpr);

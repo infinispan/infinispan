@@ -68,6 +68,7 @@ import org.infinispan.objectfilter.impl.syntax.NestedExpr;
 import org.infinispan.objectfilter.impl.syntax.NotExpr;
 import org.infinispan.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
+import org.infinispan.objectfilter.impl.syntax.SpatialWithinBoxExpr;
 import org.infinispan.objectfilter.impl.syntax.SpatialWithinCircleExpr;
 import org.infinispan.objectfilter.impl.syntax.Visitor;
 import org.infinispan.objectfilter.impl.syntax.parser.AggregationPropertyPath;
@@ -498,6 +499,24 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
       Double radiusValue = (Double) radiusValueExpr.getConstantValueAs(Double.class, namedParameters);
 
       return predicateFactory.spatial().within().field(path).circle(latValue, lonValue, radiusValue);
+   }
+
+   @Override
+   public PredicateFinalStep visit(SpatialWithinBoxExpr spatialWithinBoxExpr) {
+      PropertyValueExpr propertyValueExpr = (PropertyValueExpr) spatialWithinBoxExpr.getLeftChild();
+      String path = propertyValueExpr.getPropertyPath().asStringPath();
+
+      ConstantValueExpr tlLatChild = (ConstantValueExpr) spatialWithinBoxExpr.getTlLatChild();
+      ConstantValueExpr tlLonChild = (ConstantValueExpr) spatialWithinBoxExpr.getTlLonChild();
+      ConstantValueExpr brLatChild = (ConstantValueExpr) spatialWithinBoxExpr.getBrLatChild();
+      ConstantValueExpr brLonChild = (ConstantValueExpr) spatialWithinBoxExpr.getBrLonChild();
+
+      Double tlLat = (Double) tlLatChild.getConstantValueAs(Double.class, namedParameters);
+      Double tlLon = (Double) tlLonChild.getConstantValueAs(Double.class, namedParameters);
+      Double brLat = (Double) brLatChild.getConstantValueAs(Double.class, namedParameters);
+      Double brLon = (Double) brLonChild.getConstantValueAs(Double.class, namedParameters);
+
+      return predicateFactory.spatial().within().field(path).boundingBox(tlLat, tlLon, brLat, brLon);
    }
 
    @Override

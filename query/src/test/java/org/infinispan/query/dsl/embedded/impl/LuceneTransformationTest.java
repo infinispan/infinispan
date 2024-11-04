@@ -821,6 +821,20 @@ public class LuceneTransformationTest extends SingleCacheManagerTest {
    }
 
    @Test
+   public void testSpatialPredicate_box() {
+      IckleParsingResult<Class<?>> parsed = parse(
+            "SELECT e.contactDetails.email" +
+                  " FROM org.infinispan.query.dsl.embedded.impl.model.Employee e " +
+                  " WHERE e.location WITHIN box(46.7716, 23.5895, 47.7716, 24.5895) AND e.location NOT WITHIN box(46.7716, 23.5895, 47.7716, 24.5895)");
+      SearchQuery<?> query = transform(parsed);
+
+      assertThat(query.queryString())
+            .isEqualTo("+(+location:[47.771600000560284 TO 46.7715999763459],[23.589500058442354 TO 24.58949999883771] -location:[47.771600000560284 TO 46.7715999763459],[23.589500058442354 TO 24.58949999883771]) #__HSEARCH_type:main");
+
+      assertThat(parsed.getProjections()).containsExactly("contactDetails.email");
+   }
+
+   @Test
    public void testSpatialProjection() {
       IckleParsingResult<Class<?>> parsed = parse(
             "SELECT e.contactDetails.email, distance(e.location, 37.7608, 140.4748) " +
@@ -830,6 +844,26 @@ public class LuceneTransformationTest extends SingleCacheManagerTest {
 
       assertThat(query.queryString())
             .isEqualTo("+(+location:46.7716,23.5895 +/- 100.0 meters -location:46.7716,23.5895 +/- 10.0 meters) #__HSEARCH_type:main");
+
+      assertThat(parsed.getProjectedPaths()).hasSize(2);
+      assertThat(parsed.getProjectedPaths()[0]).isInstanceOf(PropertyPath.class);
+      assertThat(parsed.getProjectedPaths()[0].asStringPathWithoutAlias()).isEqualTo("contactDetails.email");
+      assertThat(parsed.getProjectedPaths()[1]).isInstanceOf(FunctionPropertyPath.class);
+      assertThat(parsed.getProjectedPaths()[1].asStringPathWithoutAlias()).isEqualTo("location");
+      assertThat(((FunctionPropertyPath<?>) parsed.getProjectedPaths()[1]).getFunction()).isEqualTo(Function.DISTANCE);
+      assertThat(((FunctionPropertyPath<?>) parsed.getProjectedPaths()[1]).getArgs()).containsExactly(37.7608d, 140.4748d);
+   }
+
+   @Test
+   public void testSpatialProjection_box() {
+      IckleParsingResult<Class<?>> parsed = parse(
+            "SELECT e.contactDetails.email, distance(e.location, 37.7608, 140.4748) " +
+                  " FROM org.infinispan.query.dsl.embedded.impl.model.Employee e " +
+                  " WHERE e.location WITHIN box(46.7716, 23.5895, 47.7716, 24.5895) AND e.location NOT WITHIN box(46.7716, 23.5895, 47.7716, 24.5895)");
+      SearchQuery<?> query = transform(parsed);
+
+      assertThat(query.queryString())
+            .isEqualTo("+(+location:[47.771600000560284 TO 46.7715999763459],[23.589500058442354 TO 24.58949999883771] -location:[47.771600000560284 TO 46.7715999763459],[23.589500058442354 TO 24.58949999883771]) #__HSEARCH_type:main");
 
       assertThat(parsed.getProjectedPaths()).hasSize(2);
       assertThat(parsed.getProjectedPaths()[0]).isInstanceOf(PropertyPath.class);

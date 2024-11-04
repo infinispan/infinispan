@@ -165,8 +165,8 @@ predicate
 	|	^( NOT_MEMBER_OF rowValueConstructor rowValueConstructor  )
 	|	^( IS_EMPTY rowValueConstructor )
 	|	^( IS_NOT_EMPTY rowValueConstructor )
-	|	^( WITHIN rowValueConstructor ^( CIRCLE lat=rowValueConstructor lon=rowValueConstructor radius=rowValueConstructor { delegate.predicateSpatialWithinCircle( $lat.text, $lon.text, $radius.text ); } ) )
-	|	^( NOT_WITHIN rowValueConstructor ^( CIRCLE lat=rowValueConstructor lon=rowValueConstructor radius=rowValueConstructor { delegate.predicateSpatialNotWithinCircle( $lat.text, $lon.text, $radius.text ); } ) )
+	|	^( WITHIN rowValueConstructor spatialExpression )
+	|	^( NOT_WITHIN rowValueConstructor negatedSpatialExpression )
 	|	rowValueConstructor
 	;
 
@@ -385,6 +385,16 @@ fullTextExpression
 
 knnExpression
    :  ^(ARROW propertyReferenceExpression ftClause)
+   ;
+
+spatialExpression
+   : ^(CIRCLE lat=rowValueConstructor lon=rowValueConstructor radius=rowValueConstructor { delegate.predicateSpatialWithinCircle( $lat.text, $lon.text, $radius.text ); })
+   | ^(BOUNDINGBOX tlLat=rowValueConstructor tlLon=rowValueConstructor brLat=rowValueConstructor brLon=rowValueConstructor { delegate.predicateSpatialWithinBox( $tlLat.text, $tlLon.text, $brLat.text, $brLon.text ); })
+   ;
+
+negatedSpatialExpression
+   : ^(CIRCLE lat=rowValueConstructor lon=rowValueConstructor radius=rowValueConstructor { delegate.predicateSpatialNotWithinCircle( $lat.text, $lon.text, $radius.text ); })
+   | ^(BOUNDINGBOX tlLat=rowValueConstructor tlLon=rowValueConstructor brLat=rowValueConstructor brLon=rowValueConstructor { delegate.predicateSpatialNotWithinBox( $tlLat.text, $tlLon.text, $brLat.text, $brLon.text ); })
    ;
 
 ftClause

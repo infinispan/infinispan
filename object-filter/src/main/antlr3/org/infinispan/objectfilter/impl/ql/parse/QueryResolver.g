@@ -167,8 +167,8 @@ predicate
 	|	^( NOT_MEMBER_OF rowValueConstructor rowValueConstructor  )
 	|	^( IS_EMPTY rowValueConstructor )
 	|	^( IS_NOT_EMPTY rowValueConstructor )
-	|	^( WITHIN rowValueConstructor ^( CIRCLE rowValueConstructor rowValueConstructor rowValueConstructor ) )
-	|	^( NOT_WITHIN rowValueConstructor ^( CIRCLE rowValueConstructor rowValueConstructor rowValueConstructor ) )
+	|	^( WITHIN rowValueConstructor spatialExpression )
+	|	^( NOT_WITHIN rowValueConstructor negatedSpatialExpression )
 	|	rowValueConstructor
 	;
 
@@ -404,6 +404,16 @@ fullTextExpression
 
 knnExpression
    :  ^(ARROW propertyReferenceExpression ftClause)
+   ;
+
+spatialExpression
+   :  ^(CIRCLE rowValueConstructor rowValueConstructor rowValueConstructor)
+   |  ^(BOUNDINGBOX rowValueConstructor rowValueConstructor rowValueConstructor rowValueConstructor)
+   ;
+
+negatedSpatialExpression
+   :  ^(CIRCLE rowValueConstructor rowValueConstructor rowValueConstructor)
+   |  ^(BOUNDINGBOX rowValueConstructor rowValueConstructor rowValueConstructor rowValueConstructor)
    ;
 
 ftClause
