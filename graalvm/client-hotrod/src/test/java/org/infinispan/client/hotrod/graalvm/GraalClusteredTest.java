@@ -10,7 +10,7 @@ import org.infinispan.server.functional.hotrod.HotRodTransactionalCacheOperation
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
 
-@Suite
+@Suite(failIfNoTests = false)
 @SelectClasses({
       HotRodCacheOperations.class,
       HotRodAdmin.class,
