@@ -835,6 +835,20 @@ public class LuceneTransformationTest extends SingleCacheManagerTest {
    }
 
    @Test
+   public void testSpatialPredicate_polygon() {
+      IckleParsingResult<Class<?>> parsed = parse(
+            "SELECT e.contactDetails.email" +
+                  " FROM org.infinispan.query.dsl.embedded.impl.model.Employee e " +
+                  " WHERE e.location WITHIN polygon((46.7716, 23.5895), (47.7716, 24.5895), (47.7716, 24.5895)) AND e.location NOT WITHIN polygon((46.7716, 23.5895), (47.7716, 24.5895), (47.7716, 24.5895))");
+      SearchQuery<?> query = transform(parsed);
+
+      assertThat(query.queryString())
+            .isEqualTo("+(+LatLonPointQuery: field=location:[[46.7716, 23.5895] [47.7716, 24.5895] [47.7716, 24.5895] [46.7716, 23.5895] ,] -LatLonPointQuery: field=location:[[46.7716, 23.5895] [47.7716, 24.5895] [47.7716, 24.5895] [46.7716, 23.5895] ,]) #__HSEARCH_type:main");
+
+      assertThat(parsed.getProjections()).containsExactly("contactDetails.email");
+   }
+
+   @Test
    public void testSpatialProjection() {
       IckleParsingResult<Class<?>> parsed = parse(
             "SELECT e.contactDetails.email, distance(e.location, 37.7608, 140.4748) " +

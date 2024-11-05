@@ -31,6 +31,7 @@ import org.infinispan.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
 import org.infinispan.objectfilter.impl.syntax.SpatialWithinBoxExpr;
 import org.infinispan.objectfilter.impl.syntax.SpatialWithinCircleExpr;
+import org.infinispan.objectfilter.impl.syntax.SpatialWithinPolygonExpr;
 import org.jboss.logging.Logger;
 
 /**
@@ -134,6 +135,11 @@ final class ExpressionBuilder<TypeMetadata> {
             new ConstantValueExpr((Comparable) brLat),
             new ConstantValueExpr((Comparable) brLon)
       ));
+   }
+
+   public void addSpatialWithinPolygon(PropertyPath<?> propertyPath, List<Object> vector) {
+      push(new SpatialWithinPolygonExpr(makePropertyValueExpr(propertyPath),
+            vector.stream().map(item -> new ConstantValueExpr((Comparable) item)).toList()));
    }
 
    public void addIn(PropertyPath<?> propertyPath, List<Object> values) {

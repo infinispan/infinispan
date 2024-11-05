@@ -110,6 +110,10 @@ public interface QueryRendererDelegate<TypeDescriptor> {
 
    void predicateSpatialNotWithinBox(String tlLat, String tlLon, String brLat, String brLon);
 
+   void predicateSpatialWithinPolygon(List<String> vector);
+
+   void predicateSpatialNotWithinPolygon(List<String> vector);
+
    enum Occur {
       MUST("+"),
       FILTER("#"),

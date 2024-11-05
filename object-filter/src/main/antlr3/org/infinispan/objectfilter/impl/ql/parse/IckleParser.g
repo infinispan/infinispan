@@ -311,9 +311,8 @@ geoBoundingBox
     : boundingBox_key^ LPAREN! tlLat=atom COMMA! tlLon=atom COMMA! brLat=atom COMMA! brLon=atom RPAREN!
     ;
 
-/* TODO */
 geoPolygon
-    : polygon_key
+    : polygon_key^ LPAREN! expressionOrVector RPAREN!
     ;
 
 likeEscape

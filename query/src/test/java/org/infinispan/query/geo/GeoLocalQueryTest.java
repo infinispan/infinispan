@@ -123,6 +123,14 @@ public class GeoLocalQueryTest extends SingleCacheManagerTest {
       assertThat(list).extracting(Restaurant::name)
             .containsExactlyInAnyOrder("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni",
                   "Dal Toscano Restaurant", "Scialla The Original Street Food", "Alla Bracioleria Gracchi Restaurant");
+
+      ickle = String.format("from %s r where r.location within" +
+            " polygon((41.91, 12.45), (41.91, 12.46), (41.90, 12.46), (41.90, 12.46))", RESTAURANT_ENTITY_NAME);
+      query = cache.query(ickle);
+      list = query.list();
+      assertThat(list).extracting(Restaurant::name)
+            .containsExactlyInAnyOrder("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni",
+                  "Dal Toscano Restaurant", "Scialla The Original Street Food", "Alla Bracioleria Gracchi Restaurant");
    }
 
    @Test
@@ -157,6 +165,17 @@ public class GeoLocalQueryTest extends SingleCacheManagerTest {
       query.setParameter("b", 12.00);
       query.setParameter("c", 41.00);
       query.setParameter("d", 12.459);
+      list = query.list();
+      assertThat(list).extracting(Hiking::name)
+            .containsExactlyInAnyOrder("track 2", "track 3");
+
+      ickle = String.format("from %s r " +
+            "where r.end within polygon(:a, :b, :c, :d) ", HIKING_ENTITY_NAME);
+      query = cache.query(ickle);
+      query.setParameter("a", "(42.00, 12.00)");
+      query.setParameter("b", "(42.00, 12.459)");
+      query.setParameter("c", "(41.00, 12.459)");
+      query.setParameter("d", "(41.00, 12.00)");
       list = query.list();
       assertThat(list).extracting(Hiking::name)
             .containsExactlyInAnyOrder("track 2", "track 3");
@@ -200,6 +219,17 @@ public class GeoLocalQueryTest extends SingleCacheManagerTest {
       trainQuery.setParameter("b", 8.00);
       trainQuery.setParameter("c", 45.70);
       trainQuery.setParameter("d", 12.00);
+      trainRoutes = trainQuery.list();
+      assertThat(trainRoutes).extracting(TrainRoute::name)
+            .containsExactlyInAnyOrder("Milan-Como", "Bologna-Selva");
+
+      ickle = String.format("from %s r where r.arrival within polygon(:a, :b, :c, :d)",
+            TRAIN_ROUTE_ENTITY_NAME);
+      trainQuery = cache.query(ickle);
+      trainQuery.setParameter("a", "(47.00, 8.00)");
+      trainQuery.setParameter("b", "(47.00, 12.00)");
+      trainQuery.setParameter("c", "(45.70, 12.00)");
+      trainQuery.setParameter("d", "(45.70, 8.00)");
       trainRoutes = trainQuery.list();
       assertThat(trainRoutes).extracting(TrainRoute::name)
             .containsExactlyInAnyOrder("Milan-Como", "Bologna-Selva");

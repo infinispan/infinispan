@@ -464,6 +464,32 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       predicateSpatialWithinBox(tlLat, tlLon, brLat, brLon);
    }
 
+   @Override
+   public void predicateSpatialWithinPolygon(List<String> vectorList) {
+      ensureLeftSideIsAPropertyPath();
+      PropertyPath<TypeDescriptor<TypeMetadata>> property = resolveAlias(propertyPath);
+      if (property.isEmpty()) {
+         throw log.getPredicatesOnEntityAliasNotAllowedException(propertyPath.asStringPath());
+      }
+      checkSpatial(property);
+
+      List<Object> vector = new ArrayList<>(vectorList.size());
+      for (String string : vectorList) {
+         vector.add(parameterStringValue(string));
+      }
+      if (phase == Phase.WHERE) {
+         expressionBuilder.whereBuilder().addSpatialWithinPolygon(property, vector);
+      } else {
+         throw new IllegalStateException();
+      }
+   }
+
+   @Override
+   public void predicateSpatialNotWithinPolygon(List<String> vector) {
+      expressionBuilder.whereBuilder().pushNot();
+      predicateSpatialWithinPolygon(vector);
+   }
+
    private void checkAnalyzed(PropertyPath<?> propertyPath, boolean expectAnalyzed) {
       if (!expectAnalyzed) {
          if (fieldIndexingMetadata.isAnalyzed(propertyPath.asArrayPath())) {

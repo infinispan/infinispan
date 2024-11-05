@@ -97,6 +97,12 @@ public final class BooleShannonExpansion {
       }
 
       @Override
+      public BooleanExpr visit(SpatialWithinPolygonExpr spatialWithinPolygonExpr) {
+         collect(spatialWithinPolygonExpr);
+         return super.visit(spatialWithinPolygonExpr);
+      }
+
+      @Override
       public BooleanExpr visit(NotExpr notExpr) {
          notExpr.getChild().acceptVisitor(this);
          return notExpr;

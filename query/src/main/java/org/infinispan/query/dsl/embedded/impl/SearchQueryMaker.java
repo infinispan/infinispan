@@ -7,7 +7,9 @@ import static org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelp
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -46,6 +48,7 @@ import org.hibernate.search.engine.search.sort.dsl.DistanceSortOptionsStep;
 import org.hibernate.search.engine.search.sort.dsl.FieldSortOptionsStep;
 import org.hibernate.search.engine.search.sort.dsl.SearchSortFactory;
 import org.hibernate.search.engine.spatial.GeoPoint;
+import org.hibernate.search.engine.spatial.GeoPolygon;
 import org.hibernate.search.util.common.data.RangeBoundInclusion;
 import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.ql.PropertyPath;
@@ -70,6 +73,7 @@ import org.infinispan.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
 import org.infinispan.objectfilter.impl.syntax.SpatialWithinBoxExpr;
 import org.infinispan.objectfilter.impl.syntax.SpatialWithinCircleExpr;
+import org.infinispan.objectfilter.impl.syntax.SpatialWithinPolygonExpr;
 import org.infinispan.objectfilter.impl.syntax.Visitor;
 import org.infinispan.objectfilter.impl.syntax.parser.AggregationPropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.CacheValueAggregationPropertyPath;
@@ -517,6 +521,28 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
       Double brLon = (Double) brLonChild.getConstantValueAs(Double.class, namedParameters);
 
       return predicateFactory.spatial().within().field(path).boundingBox(tlLat, tlLon, brLat, brLon);
+   }
+
+   @Override
+   public PredicateFinalStep visit(SpatialWithinPolygonExpr spatialWithinPolygonExpr) {
+      PropertyValueExpr propertyValueExpr = (PropertyValueExpr) spatialWithinPolygonExpr.getLeftChild();
+      String path = propertyValueExpr.getPropertyPath().asStringPath();
+      List<GeoPoint> geoPoints = new ArrayList<>(spatialWithinPolygonExpr.getVector().stream()
+            .map(c -> (String) c.getConstantValueAs(String.class, namedParameters))
+            .map(s -> {
+               String substring = s.substring(1, s.length() - 1);
+               String[] split = substring.split(",");
+               double lat = Double.parseDouble(split[0]);
+               double lon = Double.parseDouble(split[1]);
+               return GeoPoint.of(lat, lon);
+            })
+            .toList());
+      if (!geoPoints.isEmpty()) {
+         // Hibernate Search API requires
+         geoPoints.add(geoPoints.get(0));
+      }
+
+      return predicateFactory.spatial().within().field(path).polygon(GeoPolygon.of(geoPoints));
    }
 
    @Override
