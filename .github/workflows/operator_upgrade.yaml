@@ -10,6 +10,14 @@ on:
       - main
       - '*.0.x'
 
+concurrency:
+  # Cancel jobs same head_branch same repo, works
+  # both for pull_request and push
+  group: >
+      ${{ github.workflow }}-${{ github.event.repository.full_name }}-
+      ${{ github.event.pull_request.head.ref || github.event.push.ref }}
+  cancel-in-progress: true
+
 jobs:
   image:
     runs-on: ubuntu-latest
