@@ -1,0 +1,180 @@
+[id='tuning-network_{context}']
+= Network configuration
+
+As {brandname} is distributed over the network, adjusting the underlying network settings may improve performance.
+This chapter seeks to address the most common tunables used, and provide recommendations on their configuration.
+
+[NOTE]
+====
+These recommendations only apply to Linux environments.
+====
+
+== Adjusting Send/Receive Window Settings
+
+In many environments packet loss may be caused by the buffer space not being large enough to receive all of the transmissions, resulting in packet loss and costly retransmissions.
+As with all tunables, it is important to test these settings with a workload that mirrors what is expected to determine an appropriate value for your environment.
+
+The kernel buffers may be increased by following the below steps:
+
+. Adjust Send and Receive Window Sizes.
++
+--
+The window sizes are set per socket, which affects both TCP and UDP.
+These may be adjusted by setting the size of the send and receive windows in /etc/sysctl.conf file as root:
+
+[lowerroman]
+.. Add the following line to set the send window size to a value of `640` KB:
++
+----
+net.core.wmem_max=655360
+----
+
+.. Add the following line to set the receive window size to a value of `25` MB:
++
+----
+net.core.rmem_max=26214400
+----
++
+--
+
+. Increase TCP Socket Sizes The TCP send and receive socket sizes are also controlled by a second set of tunables, which may be defined no larger than the system settings set previously.
++
+--
+
+[lowerroman]
+.. Increase the TCP send socket size by adjusting the `net.ipv4.tcp_wmem` tuple.
+This tuple consists of three values, representing the `minimum`, `default`, and `maximum` values for the send buffer.
+To set it to the same size as the send socket above we would add the following line to _/etc/sysctl.conf_:
++
+----
+net.ipv4.tcp_wmem = 4096  16384  655360
+----
+
+.. Increase the TCP receive socket by adjusting the `net.ipv4.tcp_rmem` tuple.
+This tuple consists of three values, representing the `minimum`, `default`, and `maximum` values for the receive buffer.
+To set it to the same size as the receive socket above we would add the following line to _/etc/sysctl.conf_:
++
+----
+net.ipv4.tcp_rmem = 4096  87380  26214400
+----
++
+--
+
+. Apply change immeditaly.
++
+--
+Optionally, to load the new values into a running kernel (without a reboot), enter the following command as root:
+
+----
+sysctl -p
+----
+
+If the user reboots after the second step, the final step is unnecessary.
+--
+
+== Flow Control
+
+JGroups utilizes flow control for TCP connections to prevent fast senders from overflowing slower receivers.
+This process prevents packet loss by controlling the network transmissions, ensuring that the targets do not receive more information than they can handle.
+
+Some network cards and switches also perform flow control automatically, resulting in a performance decrease due to duplicating flow control for TCP connections.
+
+[NOTE]
+====
+The following content will vary based on the network topology in the site.
+As with all performance adjustments, each time a change is made benchmark tests should be executed to determine any performance improvements or degradations.
+====
+
+=== TCP Connections
+
+If the network card or switch performs flow control it is recommended to disable flow control at the ethernet level, allowing JGroups to prevent packet overflows.
+Any of the following will disable flow control:
+
+* *Option 1:* For managed switches, flow control may be disabled at the switch level, typically through a web or ssh interface.
+Full instructions on performing this task will vary depending on the switch, and will be found in the switch manufacturer’s documentation.
+
+* *Option 2:* In RHEL it is possible to disable this at the NIC level. This may be disabled by using the following command:
++
+----
+/sbin/ethtool -A $NIC tx off rx off
+----
+
+=== UDP Connections
+
+JGroups does not perform flow control for UDP connections, and due to this it is recommended to have flow control enabled.
+
+Flow control may be enabled using one of the following methods:
+
+* *Option 1:* For managed switches, flow control may be enabled at the switch level, typically through a web or ssh interface.
+Full instructions on performing this task will vary depending on the switch, and will be found in the switch manufacturer’s documentation.
+
+* *Option 2:* In RHEL it is possible to enable this at the NIC level. This may be enabled by using the following command:
++
+----
+/sbin/ethtool -A $NIC tx on rx on
+----
+
+== Failure Detector
+
+JGroups has several protocols to identify whether the nodes in the cluster are alive.
+These components are known as _failure detectors_.
+The algorithms `FD_SOCK` and `FD_SOCK2` bind to an additional port on the host to probe other nodes in the cluster.
+
+In an environment where a firewall is configured, the ports for failure detection must be enabled.
+Otherwise, this may disrupt the system, as nodes might suspect each other.
+
+== Member Discovery
+
+During initialization, JGroups will try to discover other members in the cluster. The algorithm for membership discovery varies with the environment the application is deployed. You must guarantee that protocols that require a static list of members (for example, `TCPPING`), do not include unavailable members. Otherwise, JGroups would waste resources trying to establish a connection with these members.
+
+== Jumbo Frames
+
+By default the maximum transmission unit (MTU) is 1500 bytes.
+Jumbo frames should be enabled when the MTU is larger than the default, or when smaller messages are aggregated to be larger than 1500 bytes.
+By enabling jumbo frames, more data is sent per ethernet frame.
+The MTU may be increased to a value up to 9000 bytes.
+
+[IMPORTANT]
+====
+For jumbo frames to be effective every intermediate network device between the sender and receiver must support the defined MTU size.
+====
+
+To enable jumbo frames add the following line to the configuration script of the network interface, such as _/etc/sysconfig/network-scripts/ifcfg-eth0_:
+
+----
+MTU=9000
+----
+
+== Transmit Queue Length
+
+The transmit queue determines how many frames are allowed to reside in the kernel transmission queue, with each device having its own queue.
+This value should be increased when a large number of writes will be expected over a short period of time, resulting in a potential overflow of the transmission queue.
+
+To determine if overruns have occurred the following command may be executed against the device.
+If the value for `overruns` is greater than 0 then the transmission queue length should be increased:
+
+----
+ip -s link show $NIC
+----
+
+This value may be set per device by using the following command:
+
+----
+ip link set $NIC txqueuelen 5000
+----
+
+[NOTE]
+====
+This value does not persist across system restarts, and as such it is recommended to include the command in a startup script, such as by adding it to _/etc/rc.local_.
+====
+
+== Network Bonding
+
+Multiple interfaces may be bound together to create a single, bonded, channel.
+Bonding interfaces in this manner allows two or more network interfaces to function as one, simultaneously increasing the bandwidth and providing redundancy in the event that one interface should fail.
+It is strongly recommended to bond network interfaces should more than one exist on a given node.
+
+ifdef::downstream[]
+Full instructions on bonding are available in the Networking Guide, available in Red Hat Enterprise Linux’s Product Documentation.
+endif::downstream[]
+

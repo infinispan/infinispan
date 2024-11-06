@@ -1,6 +1,11 @@
 [id='tuning']
 :context: tuning
+= Performance tuning guidelines
 
+This topic gives you information and tweaks for tuning {brandname} performance.
+
+include::{topics}/ref_performance_jvm.adoc[leveloffset=+1]
+include::{topics}/ref_performance_network.adoc[leveloffset=+1]
 include::{topics}/ref_performance_tuning.adoc[leveloffset=+0]
 
 // Restore the parent context.

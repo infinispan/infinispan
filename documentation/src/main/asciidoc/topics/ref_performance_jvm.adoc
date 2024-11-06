@@ -1,0 +1,77 @@
+[id='tuning-jvm_{context}']
+= Java Virtual Machine settings
+
+Java Virtual Machine tuning can be divided into sections like memory or GC.
+Below is a list of helpful configuration parameters and a guide how to adjust them.
+
+[discrete]
+== Memory settings
+
+Adjusting memory size is one of the most crucial steps in {brandname} tuning.
+Utilizing the largest heap is not always the answer, there is a trade-off between size and time for garbage collection.
+Additionally, be mindful of the host's physical memory when configuring the JVM heap.
+The most commonly used JVM flags are:
+
+* `-Xms` - Defines the minimum heap size allowed.
+* `-Xmx` - Defines the maximum heap size allowed.
+* `-Xmn` - Defines the minimum and maximum value for the young generation.
+* `-XX:NewRatio` - Define the ratio between young and old generations. Should not be used if -Xmn is enabled.
+
+Using `Xms` equal to `Xmx` will prevent JVM from dynamically sizing memory and might yield slightly better performance.
+It is a good practice to specify `Xmn` parameter when `Xms` and `Xmx` have the same value.
+This configuration might help during load peak (in such case {brandname} generates lots of small, short-living objects).
+A larger young generation increases the time for collecting the young generation but will collect less time with fewer objects going to the old generation.
+Additionally, since the old generation is smaller, it might fill more quickly and generate more full pauses.
+This property requires a fine balance.
+
+[discrete]
+== Garbage collection
+
+The main goal is to minimize the amount of time when JVM is paused.
+The JVM ergonomics usually makes good choices for configuring the garbage collection algorithm and moving the knobs.
+These configurations are highly dependent on the hardware available (number of cores, heap configuration) and the workload applied.
+Therefore, GC logs should be enabled, and garbage collection should be verified to see if it is causing any performance problems before making changes.
+
+The most frequently used JVM flags are:
+
+* `-XX:MaxGCPauseMillis` - Sets a target for the maximum GC pause time. Should be tuned to meet the SLA.
+* `-XX:+DisableExplicitGC` - Prevent explicit garbage collections.
+* `-XX:+UseG1GC` - Turn on G1 Garbage Collector.
+* `-XX:+UseSerialGC` - Turn on Serial Garbage Collector.
+* `-XX:+UseZGC` - Turn on Z Garbage Collector.
+* `-XX:+UseShenandoahGC` - Turn on Shenandoah Garbage Collector.
+
+[discrete]
+== Other settings
+
+There are two additional parameters which are suggested to be used:
+
+* `-server` - Enables server mode for the JVM.
+* `-XX:+ UseLargePages` - Instructs the JVM to allocate memory in Large Pages. These pages must be configured at the OS level for this parameter to function successfully.
+
+[discrete]
+== Example configuration
+
+Changing your garbage collection configuration should be followed by validation and benchmarking with production-like environments and loads to guarantee the changes do not harm.
+The link:{server_docs}#tshoot_server[troubleshooting guide] has more information about performance measurement.
+
+.32GB JVM using the generational ZGC
+----
+-server
+-Xmx32G
+-Xms32G
+-Xmn8G
+-XX:+UseLargePages
+-XX:+UseZGC
+-XX:+ZGenerational
+-XX:+DisableExplicitGC
+----
+
+.32GB JVM with G1 Garbage Collector
+----
+-server
+-Xmx32G
+-Xms32G
+-Xmn8G
+-XX:+UseG1GC
+----
