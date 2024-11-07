@@ -1,10 +1,5 @@
 package org.infinispan.multimap.impl.function.list;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
-import org.infinispan.multimap.impl.ListBucket;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -13,6 +8,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.functional.EntryView;
+import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.multimap.impl.ListBucket;
 
 /**
  * Serializable function used by
@@ -43,13 +43,13 @@ public final class PollFunction<K, V> implements ListBucketBaseFunction<K, V, Co
             return List.of();
          }
 
-         ListBucket<V>.ListBucketResult result = existing.get().poll(first, count);
-         if (result.bucketValue().isEmpty()) {
+         ListBucket.ListBucketResult<Collection<V>, V> result = existing.get().poll(first, count);
+         if (result.bucket().isEmpty()) {
             entryView.remove();
          } else {
-            entryView.set(result.bucketValue());
+            entryView.set(result.bucket());
          }
-         return result.opResult();
+         return result.result();
       }
       // key does not exist
       return null;

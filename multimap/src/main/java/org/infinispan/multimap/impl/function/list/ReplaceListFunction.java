@@ -5,8 +5,9 @@ import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -27,34 +28,46 @@ import org.infinispan.multimap.impl.ListBucket;
  */
 public final class ReplaceListFunction<K, V> implements ListBucketBaseFunction<K, V, Long> {
    public static final AdvancedExternalizer<ReplaceListFunction> EXTERNALIZER = new Externalizer();
-   private final List<V> values;
+   private final Deque<V> values;
 
    public ReplaceListFunction(List<V> values) {
+      this(ReplaceListFunction.get(values));
+   }
+
+   public ReplaceListFunction(Deque<V> values) {
       this.values = values;
    }
 
    @Override
    public Long apply(EntryView.ReadWriteEntryView<K, ListBucket<V>> entryView) {
       Optional<ListBucket<V>> existing = entryView.peek();
-      ListBucket bucket = null;
+      ListBucket<V> bucket = null;
       if (existing.isPresent()) {
         bucket = existing.get();
       } else if (values != null && !values.isEmpty()){
-         bucket = new ListBucket();
+         bucket = new ListBucket<>();
       }
 
       if (bucket != null) {
-         bucket.replace(values);
-         if (bucket.isEmpty()) {
+         ListBucket<V> updated = bucket.replace(values);
+         if (updated.isEmpty()) {
             entryView.remove();
          } else {
-            entryView.set(bucket);
+            entryView.set(updated);
          }
-         return bucket.size();
+         return updated.size();
       }
 
       // nothing has been done
       return 0L;
+   }
+
+   @SuppressWarnings("unchecked")
+   private static <E> Deque<E> get(List<E> values) {
+      if (values == null || values instanceof Deque<?> dq)
+         return (Deque<E>) values;
+
+      return new ArrayDeque<>(values);
    }
 
    private static class Externalizer implements AdvancedExternalizer<ReplaceListFunction> {
@@ -76,7 +89,7 @@ public final class ReplaceListFunction<K, V> implements ListBucketBaseFunction<K
 
       @Override
       public ReplaceListFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         List values = unmarshallCollection(input, ArrayList::new);
+         Deque values = unmarshallCollection(input, ArrayDeque::new);
          return new ReplaceListFunction(values);
       }
    }
