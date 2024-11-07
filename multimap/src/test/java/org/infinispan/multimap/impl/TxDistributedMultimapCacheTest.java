@@ -97,18 +97,22 @@ public class TxDistributedMultimapCacheTest extends DistributedMultimapCacheTest
       return asList(
             new TxDistributedMultimapCacheTest()
                   .fromOwner(false)
+                  .numOwners(1)
                   .lockingMode(lockingMode)
                   .isolationLevel(IsolationLevel.READ_COMMITTED),
             new TxDistributedMultimapCacheTest()
                   .fromOwner(true)
+                  .numOwners(1)
                   .lockingMode(lockingMode)
                   .isolationLevel(IsolationLevel.READ_COMMITTED),
             new TxDistributedMultimapCacheTest()
                   .fromOwner(false)
-                  .lockingMode(lockingMode).
-                  isolationLevel(IsolationLevel.REPEATABLE_READ),
+                  .numOwners(1)
+                  .lockingMode(lockingMode)
+                  .isolationLevel(IsolationLevel.REPEATABLE_READ),
             new TxDistributedMultimapCacheTest()
                   .fromOwner(true)
+                  .numOwners(1)
                   .lockingMode(lockingMode).
                   isolationLevel(IsolationLevel.REPEATABLE_READ)
       );
