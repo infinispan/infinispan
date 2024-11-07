@@ -146,6 +146,26 @@ public class GeoLocalQueryTest extends SingleCacheManagerTest {
             .filteredOn(item -> item[1].equals(65.78997502576355)).extracting(item -> item[0]).first().isEqualTo("La Locanda di Pietro");
       assertThat(projectList)
             .filteredOn(item -> item[1].equals(622.8579549605669)).extracting(item -> item[0]).first().isEqualTo("Scialla The Original Street Food");
+
+      ickle = String.format("from %s r order by distance(r.location, 41.90847031512531, 12.455633288333539)", RESTAURANT_ENTITY_NAME);
+      query = cache.query(ickle);
+      list = query.list();
+      assertThat(list).extracting(Restaurant::name)
+            .containsExactly("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni",
+                  "Dal Toscano Restaurant", "Alla Bracioleria Gracchi Restaurant", "Il Ciociaro",
+                  "Scialla The Original Street Food");
+
+      ickle = String.format("select r.name, distance(r.location, 41.90847031512531, 12.455633288333539) from %s r " +
+            "order by distance(r.location, 41.90847031512531, 12.455633288333539)", RESTAURANT_ENTITY_NAME);
+      projectQuery = cache.query(ickle);
+      projectList = projectQuery.list();
+      assertThat(projectList).extracting(item -> item[0])
+            .containsExactly("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni",
+                  "Dal Toscano Restaurant", "Alla Bracioleria Gracchi Restaurant", "Il Ciociaro",
+                  "Scialla The Original Street Food");
+      assertThat(projectList).extracting(item -> item[1])
+            .containsExactly(65.78997502576355, 69.72458363789359, 127.11531555461053, 224.8438726836208,
+                  310.6984480274634, 341.0897945700656, 622.8579549605669);
    }
 
    @Test

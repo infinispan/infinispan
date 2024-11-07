@@ -10,6 +10,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.ProtoHiking;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.commons.api.query.geo.LatLng;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -98,5 +99,35 @@ public class RemoteGeoPointQueryTest extends SingleHotRodServerTest {
       list = query.list();
       assertThat(list).extracting(ProtoHiking::name)
             .containsExactlyInAnyOrder("track 2", "track 3");
+
+      Query<Object[]> proQuery = remoteCache.query(
+            "select r.name, distance(r.end, 41.91, 12.46) " +
+            "from geo.ProtoHiking r " +
+            "where r.start within polygon(:a, :b, :c, :d) " +
+            "order by distance(r.end, 41.91, 12.46) desc");
+      proQuery.setParameter("a", "(42.00, 12.00)");
+      proQuery.setParameter("b", "(42.00, 12.459)");
+      proQuery.setParameter("c", "(41.00, 12.459)");
+      proQuery.setParameter("d", "(41.00, 12.00)");
+      QueryResult<Object[]> result = proQuery.execute();
+      assertThat(result.count().value()).isEqualTo(2);
+      List<Object[]> proList = result.list();
+      assertThat(proList).extracting(item -> item[0]).containsExactly("track 1", "track 3");
+      assertThat(proList).extracting(item -> item[1]).containsExactly(702.0532157425224, 445.9892727223779);
+
+      proQuery = remoteCache.query(
+            "select r.name, distance(r.start, 41.91, 12.46) " +
+                  "from geo.ProtoHiking r " +
+                  "where r.end within polygon(:a, :b, :c, :d) " +
+                  "order by distance(r.start, 41.91, 12.46) desc");
+      proQuery.setParameter("a", "(42.00, 12.00)");
+      proQuery.setParameter("b", "(42.00, 12.459)");
+      proQuery.setParameter("c", "(41.00, 12.459)");
+      proQuery.setParameter("d", "(41.00, 12.00)");
+      result = proQuery.execute();
+      assertThat(result.count().value()).isEqualTo(2);
+      proList = result.list();
+      assertThat(proList).extracting(item -> item[0]).containsExactly("track 2", "track 3");
+      assertThat(proList).extracting(item -> item[1]).containsExactly(702.0532157425224, 458.7166803703988);
    }
 }

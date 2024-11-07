@@ -11,7 +11,9 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
 
 @Proto
 @Indexed
-public record ProtoHiking(@Keyword String name, @GeoField LatLng start, @GeoField LatLng end) {
+public record ProtoHiking(@Keyword(projectable = true) String name,
+                          @GeoField(projectable = true, sortable = true) LatLng start,
+                          @GeoField(projectable = true, sortable = true) LatLng end) {
 
    @ProtoSchema(
          dependsOn = LatLng.LatLngSchema.class,

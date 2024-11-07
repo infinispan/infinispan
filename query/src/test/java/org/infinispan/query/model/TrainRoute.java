@@ -12,7 +12,7 @@ import org.infinispan.protostream.annotations.Proto;
 @GeoPoint(fieldName = "departure", projectable = true, sortable = true)
 @GeoPoint(fieldName = "arrival", projectable = true, sortable = true)
 public record TrainRoute(
-      @Keyword(normalizer = "lowercase") String name,
+      @Keyword(normalizer = "lowercase", projectable = true) String name,
       @Latitude(fieldName = "departure") Double departureLat,
       @Longitude(fieldName = "departure") Double departureLon,
       @Latitude(fieldName = "arrival") Double arrivalLat,

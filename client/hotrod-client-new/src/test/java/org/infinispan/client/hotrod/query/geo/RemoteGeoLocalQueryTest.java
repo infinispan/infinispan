@@ -9,6 +9,7 @@ import java.util.Map;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.commons.api.query.geo.LatLng;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -147,6 +148,27 @@ public class RemoteGeoLocalQueryTest extends SingleHotRodServerTest {
             .filteredOn(item -> item[1].equals(65.78997502576355)).extracting(item -> item[0]).first().isEqualTo("La Locanda di Pietro");
       assertThat(projectList)
             .filteredOn(item -> item[1].equals(622.8579549605669)).extracting(item -> item[0]).first().isEqualTo("Scialla The Original Street Food");
+
+      ickle = String.format("from %s r order by distance(r.location, 41.90847031512531, 12.455633288333539)", RESTAURANT_ENTITY_NAME);
+      query = remoteCache.query(ickle);
+      list = query.list();
+      assertThat(list).extracting(Restaurant::name)
+            .containsExactly("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni",
+                  "Dal Toscano Restaurant", "Alla Bracioleria Gracchi Restaurant", "Il Ciociaro",
+                  "Scialla The Original Street Food");
+
+      ickle = String.format("select r.name, distance(r.location, 41.90847031512531, 12.455633288333539) from %s r " +
+            "order by distance(r.location, 41.90847031512531, 12.455633288333539)", RESTAURANT_ENTITY_NAME);
+      projectQuery = remoteCache.query(ickle);
+      projectList = projectQuery.list();
+      assertThat(projectList).extracting(item -> item[0])
+            .containsExactly("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni",
+                  "Dal Toscano Restaurant", "Alla Bracioleria Gracchi Restaurant", "Il Ciociaro",
+                  "Scialla The Original Street Food");
+      assertThat(projectList).extracting(item -> item[1])
+            .containsExactly(65.78997502576355, 69.72458363789359, 127.11531555461053, 224.8438726836208,
+                  310.6984480274634, 341.0897945700656, 622.8579549605669);
+
    }
 
    @Test
@@ -195,5 +217,23 @@ public class RemoteGeoLocalQueryTest extends SingleHotRodServerTest {
       trainRoutes = trainQuery.list();
       assertThat(trainRoutes).extracting(TrainRoute::name)
             .containsExactlyInAnyOrder("Milan-Como", "Bologna-Selva");
+
+      Query<Object[]> query = remoteCache.query("select r.name, distance(r.arrival, 41.90847031512531, 12.455633288333539) " +
+            "from geo.TrainRoute r where r.departure within box(45.743465, 8.305000, 44.218980, 12.585290) " +
+            "order by distance(r.arrival, 41.90847031512531, 12.455633288333539)");
+      QueryResult<Object[]> result = query.execute();
+      assertThat(result.count().value()).isEqualTo(3);
+      List<Object[]> list = result.list();
+      assertThat(list).extracting(item -> item[0]).containsExactly("Bologna-Venice", "Milan-Como", "Bologna-Selva");
+      assertThat(list).extracting(item -> item[1]).containsExactly(392893.53564872313, 510660.6643083735, 519774.5486163137);
+
+      query = remoteCache.query("select r.name, distance(r.departure, 41.90847031512531, 12.455633288333539) " +
+            "from geo.TrainRoute r where r.arrival within box(45.743465, 8.305000, 44.218980, 12.585290) " +
+            "order by distance(r.departure, 41.90847031512531, 12.455633288333539)");
+      result = query.execute();
+      assertThat(result.count().value()).isEqualTo(2);
+      list = result.list();
+      assertThat(list).extracting(item -> item[0]).containsExactly("Rome-Milan", "Bologna-Venice");
+      assertThat(list).extracting(item -> item[1]).containsExactly(2558.7323262164573, 301408.00282977184);
    }
 }
