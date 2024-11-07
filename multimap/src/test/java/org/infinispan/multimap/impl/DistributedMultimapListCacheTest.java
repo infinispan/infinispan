@@ -1,282 +1,247 @@
 package org.infinispan.multimap.impl;
 
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.multimap.api.embedded.EmbeddedMultimapCacheManagerFactory;
-import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.data.Person;
-import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
-import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.multimap.impl.MultimapTestUtils.ELAIA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.FELIX;
-import static org.infinispan.multimap.impl.MultimapTestUtils.NAMES_KEY;
 import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.Arrays;
+import java.util.Map;
+
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.data.Person;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.DistributedMultimapListCacheTest")
-public class DistributedMultimapListCacheTest extends BaseDistFunctionalTest<String, Collection<Person>> {
-
-   protected Map<Address, EmbeddedMultimapListCache<String, Person>> listCluster = new HashMap<>();
-   protected boolean fromOwner;
-
-   public DistributedMultimapListCacheTest fromOwner(boolean fromOwner) {
-      this.fromOwner = fromOwner;
-      return this;
-   }
+public class DistributedMultimapListCacheTest
+      extends BaseDistributedMultimapTest<EmbeddedMultimapListCache<String, Person>, Person> {
 
    @Override
-   protected void createCacheManagers() throws Throwable {
-      super.createCacheManagers();
-
-      for (EmbeddedCacheManager cacheManager : cacheManagers) {
-         EmbeddedMultimapCacheManager multimapCacheManager = (EmbeddedMultimapCacheManager) EmbeddedMultimapCacheManagerFactory.from(cacheManager);
-         listCluster.put(cacheManager.getAddress(), multimapCacheManager.getMultimapList(cacheName));
-      }
-   }
-
-   @Override
-   protected SerializationContextInitializer getSerializationContext() {
-      return MultimapSCI.INSTANCE;
-   }
-
-   @Override
-   protected String[] parameterNames() {
-      return concat(super.parameterNames(), "fromOwner");
-   }
-
-   @Override
-   protected Object[] parameterValues() {
-      return concat(super.parameterValues(), fromOwner ? Boolean.TRUE : Boolean.FALSE);
+   protected EmbeddedMultimapListCache<String, Person> create(EmbeddedMultimapCacheManager<String, Person> manager) {
+      return manager.getMultimapList(cacheName);
    }
 
    @Override
    public Object[] factory() {
-      return new Object[]{
-            new DistributedMultimapListCacheTest().fromOwner(false).cacheMode(CacheMode.DIST_SYNC).transactional(false),
-            new DistributedMultimapListCacheTest().fromOwner(true).cacheMode(CacheMode.DIST_SYNC).transactional(false),
-      };
-   }
-
-   @Override
-   protected void initAndTest() {
-      for (EmbeddedMultimapListCache list : listCluster.values()) {
-         assertThat(await(list.size(NAMES_KEY))).isEqualTo(0L);
-      }
-   }
-
-   protected EmbeddedMultimapListCache<String, Person> getMultimapCacheMember() {
-      return listCluster.
-            values().stream().findFirst().orElseThrow(() -> new IllegalStateException("Cluster is empty"));
+      return super.factory(DistributedMultimapListCacheTest::new);
    }
 
    public void testOfferFirstAndLast() {
-      initAndTest();
-      EmbeddedMultimapListCache<String, Person> list = getMultimapCacheMember();
-      await(list.offerFirst(NAMES_KEY, OIHANA));
-      assertValuesAndOwnership(NAMES_KEY, OIHANA);
+      String key = getEntryKey();
+      EmbeddedMultimapListCache<String, Person> list = getMultimapMember();
+      await(list.offerFirst(key, OIHANA));
+      assertValuesAndOwnership(key, OIHANA);
 
-      await(list.offerLast(NAMES_KEY, ELAIA));
-      assertValuesAndOwnership(NAMES_KEY, ELAIA);
+      await(list.offerLast(key, ELAIA));
+      assertValuesAndOwnership(key, ELAIA);
    }
 
    public void testPollFirstAndLast() {
-      initAndTest();
-      EmbeddedMultimapListCache<String, Person> list = getMultimapCacheMember();
+      String key = getEntryKey();
+      EmbeddedMultimapListCache<String, Person> list = getMultimapMember();
       await(
-            list.offerLast(NAMES_KEY, OIHANA)
-                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, ELAIA))
-                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, OIHANA))
-                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, ELAIA))
-                  .thenCompose(r1 -> list.size(NAMES_KEY))
+            list.offerLast(key, OIHANA)
+                  .thenCompose(r1 -> list.offerLast(key, ELAIA))
+                  .thenCompose(r1 -> list.offerLast(key, OIHANA))
+                  .thenCompose(r1 -> list.offerLast(key, ELAIA))
+                  .thenCompose(r1 -> list.size(key))
                   .thenAccept(size -> assertThat(size).isEqualTo(4))
 
       );
 
       await(
-            list.pollLast(NAMES_KEY, 2)
+            list.pollLast(key, 2)
                   .thenAccept(r1 -> assertThat(r1).containsExactly(ELAIA, OIHANA))
 
       );
       await(
-            list.pollFirst(NAMES_KEY, 1)
+            list.pollFirst(key, 1)
                   .thenAccept(r1 -> assertThat(r1).containsExactly(OIHANA))
 
       );
 
       await(
-            list.size(NAMES_KEY)
+            list.size(key)
                   .thenAccept(r1 -> assertThat(r1).isEqualTo(1))
 
       );
    }
 
    public void testSize() {
-      initAndTest();
-      EmbeddedMultimapListCache<String, Person> list = getMultimapCacheMember();
+      String key = getEntryKey();
+      EmbeddedMultimapListCache<String, Person> list = getMultimapMember();
       await(
-            list.offerFirst(NAMES_KEY, OIHANA)
-                  .thenCompose(r1 -> list.offerFirst(NAMES_KEY, OIHANA))
-                  .thenCompose(r1 -> list.offerFirst(NAMES_KEY, OIHANA))
-                  .thenCompose(r1 -> list.offerFirst(NAMES_KEY, OIHANA))
-                  .thenCompose(r1 -> list.size(NAMES_KEY))
+            list.offerFirst(key, OIHANA)
+                  .thenCompose(r1 -> list.offerFirst(key, OIHANA))
+                  .thenCompose(r1 -> list.offerFirst(key, OIHANA))
+                  .thenCompose(r1 -> list.offerFirst(key, OIHANA))
+                  .thenCompose(r1 -> list.size(key))
                   .thenAccept(size -> assertThat(size).isEqualTo(4))
 
       );
    }
 
    public void testIndex() {
-      initAndTest();
-      EmbeddedMultimapListCache<String, Person> list = getMultimapCacheMember();
+      String key = getEntryKey();
+      EmbeddedMultimapListCache<String, Person> list = getMultimapMember();
       await(
-            list.offerLast(NAMES_KEY, OIHANA)
-                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, OIHANA))
-                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, ELAIA))
-                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, OIHANA))
-                  .thenCompose(r1 -> list.index(NAMES_KEY, 2))
+            list.offerLast(key, OIHANA)
+                  .thenCompose(r1 -> list.offerLast(key, OIHANA))
+                  .thenCompose(r1 -> list.offerLast(key, ELAIA))
+                  .thenCompose(r1 -> list.offerLast(key, OIHANA))
+                  .thenCompose(r1 -> list.index(key, 2))
                   .thenAccept(v -> assertThat(v).isEqualTo(ELAIA))
 
       );
    }
 
    public void testSubList() {
-      initAndTest();
-      EmbeddedMultimapListCache<String, Person> list = getMultimapCacheMember();
+      String key = getEntryKey();
+      EmbeddedMultimapListCache<String, Person> list = getMultimapMember();
       await(
-            list.offerLast(NAMES_KEY, OIHANA)
-                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, OIHANA))
-                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, ELAIA))
-                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, OIHANA))
-                  .thenCompose(r1 -> list.subList(NAMES_KEY, 1, 3))
+            list.offerLast(key, OIHANA)
+                  .thenCompose(r1 -> list.offerLast(key, OIHANA))
+                  .thenCompose(r1 -> list.offerLast(key, ELAIA))
+                  .thenCompose(r1 -> list.offerLast(key, OIHANA))
+                  .thenCompose(r1 -> list.subList(key, 1, 3))
                   .thenAccept(c -> assertThat(c).containsExactly(OIHANA, ELAIA, OIHANA))
 
       );
    }
 
    public void testSet() {
-      initAndTest();
-      EmbeddedMultimapListCache<String, Person> list = getMultimapCacheMember();
+      String key = getEntryKey();
+      EmbeddedMultimapListCache<String, Person> list = getMultimapMember();
       await(
-            list.offerLast(NAMES_KEY, OIHANA)
-                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, OIHANA))
-                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, ELAIA))
-                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, OIHANA))
-                  .thenCompose(r1 -> list.index(NAMES_KEY, 2))
+            list.offerLast(key, OIHANA)
+                  .thenCompose(r1 -> list.offerLast(key, OIHANA))
+                  .thenCompose(r1 -> list.offerLast(key, ELAIA))
+                  .thenCompose(r1 -> list.offerLast(key, OIHANA))
+                  .thenCompose(r1 -> list.index(key, 2))
                   .thenAccept(v -> assertThat(v).isEqualTo(ELAIA))
 
       );
 
       await(
-            list.set(NAMES_KEY, 2, OIHANA)
-                  .thenCompose(r1 -> list.index(NAMES_KEY, 2))
+            list.set(key, 2, OIHANA)
+                  .thenCompose(r1 -> list.index(key, 2))
                   .thenAccept(v -> assertThat(v).isEqualTo(OIHANA))
+
+      );
+
+      // Set at the head.
+      await(
+            list.set(key, 0, ELAIA)
+                  .thenCompose(r1 -> list.index(key, 0))
+                  .thenAccept(v -> assertThat(v).isEqualTo(ELAIA))
+
+      );
+
+      // Set at the tail.
+      await(
+            list.set(key, -1, ELAIA)
+                  .thenCompose(r1 -> list.index(key, -1))
+                  .thenAccept(v -> assertThat(v).isEqualTo(ELAIA))
 
       );
    }
 
    public void testIndexOf() {
-      initAndTest();
-      EmbeddedMultimapListCache<String, Person> list = getMultimapCacheMember();
+      String key = getEntryKey();
+      EmbeddedMultimapListCache<String, Person> list = getMultimapMember();
       await(
-            list.offerLast(NAMES_KEY, OIHANA)
-                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, OIHANA))
-                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, ELAIA))
-                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, OIHANA))
-                  .thenCompose(r1 -> list.indexOf(NAMES_KEY, OIHANA, 0L, null, null))
+            list.offerLast(key, OIHANA)
+                  .thenCompose(r1 -> list.offerLast(key, OIHANA))
+                  .thenCompose(r1 -> list.offerLast(key, ELAIA))
+                  .thenCompose(r1 -> list.offerLast(key, OIHANA))
+                  .thenCompose(r1 -> list.indexOf(key, OIHANA, 0L, null, null))
                   .thenAccept(v -> assertThat(v).containsExactly(0L, 1L, 3L))
 
       );
    }
 
    public void testInsert() {
-      initAndTest();
-      EmbeddedMultimapListCache<String, Person> list = getMultimapCacheMember();
+      String key = getEntryKey();
+      EmbeddedMultimapListCache<String, Person> list = getMultimapMember();
       await(
-            list.offerLast(NAMES_KEY, OIHANA)
-                  .thenCompose(r1 -> list.insert(NAMES_KEY, true, OIHANA, ELAIA))
+            list.offerLast(key, OIHANA)
+                  .thenCompose(r1 -> list.insert(key, true, OIHANA, ELAIA))
                   .thenAccept(v -> assertThat(v).isEqualTo(2))
 
       );
    }
 
    public void testRemove() {
-      initAndTest();
-      EmbeddedMultimapListCache<String, Person> list = getMultimapCacheMember();
+      String key = getEntryKey();
+      EmbeddedMultimapListCache<String, Person> list = getMultimapMember();
       await(
-            list.offerLast(NAMES_KEY, OIHANA)
-                  .thenCompose(r1 -> list.remove(NAMES_KEY, 1, OIHANA))
+            list.offerLast(key, OIHANA)
+                  .thenCompose(ignore -> list.offerLast(key, OIHANA))
+                  .thenCompose(r1 -> list.remove(key, 1, OIHANA))
                   .thenAccept(v -> assertThat(v).isEqualTo(1))
-
       );
+
+      assertThat(await(list.size(key))).isOne();
    }
 
    public void testTrim() {
-      initAndTest();
-      EmbeddedMultimapListCache<String, Person> list = getMultimapCacheMember();
+      String key = getEntryKey();
+      EmbeddedMultimapListCache<String, Person> list = getMultimapMember();
       await(
-            list.offerLast(NAMES_KEY, OIHANA)
-                  .thenCompose(r -> list.offerLast(NAMES_KEY, ELAIA))
-                  .thenCompose(r -> list.offerLast(NAMES_KEY, RAMON))
-                  .thenCompose(r -> list.trim(NAMES_KEY, 1, 2))
-                  .thenCompose(r -> list.subList(NAMES_KEY, 0, -1))
+            list.offerLast(key, OIHANA)
+                  .thenCompose(r -> list.offerLast(key, ELAIA))
+                  .thenCompose(r -> list.offerLast(key, RAMON))
+                  .thenCompose(r -> list.trim(key, 1, 2))
+                  .thenCompose(r -> list.subList(key, 0, -1))
                   .thenAccept(v -> assertThat(v).containsExactly(ELAIA, RAMON))
       );
    }
 
    public void testRotate() {
-      initAndTest();
-      EmbeddedMultimapListCache<String, Person> list = getMultimapCacheMember();
+      String key = getEntryKey();
+      EmbeddedMultimapListCache<String, Person> list = getMultimapMember();
       await(
-            list.offerLast(NAMES_KEY, OIHANA)
-                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, ELAIA))
-                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, RAMON))
+            list.offerLast(key, OIHANA)
+                  .thenCompose(r1 -> list.offerLast(key, ELAIA))
+                  .thenCompose(r1 -> list.offerLast(key, RAMON))
       );
 
       await(
-            list.rotate(NAMES_KEY, false)
+            list.rotate(key, false)
                   .thenAccept(v -> assertThat(v).isEqualTo(RAMON))
 
       );
       await(
-            list.subList(NAMES_KEY, 0, -1)
+            list.subList(key, 0, -1)
                   .thenAccept(v -> assertThat(v).containsExactly(RAMON, OIHANA, ELAIA))
 
       );
    }
 
    public void testReplace() {
-      initAndTest();
-      EmbeddedMultimapListCache<String, Person> list = getMultimapCacheMember();
+      String key = getEntryKey();
+      EmbeddedMultimapListCache<String, Person> list = getMultimapMember();
       await(
-            list.offerLast(NAMES_KEY, OIHANA)
-                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, ELAIA))
-                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, RAMON))
+            list.offerLast(key, OIHANA)
+                  .thenCompose(r1 -> list.offerLast(key, ELAIA))
+                  .thenCompose(r1 -> list.offerLast(key, RAMON))
       );
 
       await(
-            list.subList(NAMES_KEY, 0, -1)
+            list.subList(key, 0, -1)
                   .thenAccept(v -> assertThat(v).containsExactly(OIHANA, ELAIA, RAMON))
 
       );
 
       await(
-            list.replace(NAMES_KEY, Arrays.asList(FELIX))
+            list.replace(key, Arrays.asList(FELIX))
                   .thenAccept(s -> assertThat(s).isEqualTo(1))
       );
 
       await(
-            list.subList(NAMES_KEY, 0, -1)
+            list.subList(key, 0, -1)
                   .thenAccept(v -> assertThat(v).containsExactly(FELIX))
 
       );
@@ -288,13 +253,12 @@ public class DistributedMultimapListCacheTest extends BaseDistFunctionalTest<Str
    }
 
    protected void assertOnAllCaches(Object key, Person value) {
-      for (Map.Entry<Address, EmbeddedMultimapListCache<String, Person>> entry : listCluster.entrySet()) {
+      for (Map.Entry<Address, EmbeddedMultimapListCache<String, Person>> entry : cluster.entrySet()) {
          await(entry.getValue().get((String) key).thenAccept(v -> {
-                  assertNotNull(format("values on the key %s must be not null", key), v);
-                  assertTrue(format("values on the key '%s' must contain '%s' on node '%s'", key, value, entry.getKey()),
-                        v.contains(value));
+            assertThat(v)
+                  .isNotNull()
+                  .containsOnlyOnce(value);
                })
-
          );
       }
    }

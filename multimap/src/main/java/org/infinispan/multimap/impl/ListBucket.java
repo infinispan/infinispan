@@ -1,13 +1,5 @@
 package org.infinispan.multimap.impl;
 
-import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
-import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
-import org.infinispan.protostream.annotations.ProtoFactory;
-import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoTypeId;
-
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,6 +10,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
+import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Bucket used to store ListMultimap values.
@@ -89,16 +89,17 @@ public class ListBucket<V> implements SortableBucket<V> {
    }
 
    public ListBucket<V> offer(Collection<V> value, boolean first) {
+      Deque<V> newItems = new ArrayDeque<>(values);
       if (first) {
          for (V v : value) {
-            values.offerFirst(v);
+            newItems.offerFirst(v);
          }
       } else {
          for (V v : value) {
-            values.offerLast(v);
+            newItems.offerLast(v);
          }
       }
-      return new ListBucket<>(values);
+      return new ListBucket<>(newItems);
    }
 
    public ListBucket<V> set(long index, V value) {
@@ -106,22 +107,8 @@ public class ListBucket<V> implements SortableBucket<V> {
          return null;
       }
 
-      // set head
-      if (index == 0) {
-         values.pollFirst();
-         values.offerFirst(value);
-         return new ListBucket<>(values);
-      }
-
-      // set tail
-      if (index == -1 || index == values.size() - 1) {
-         values.pollLast();
-         values.offerLast(value);
-         return new ListBucket<>(values);
-      }
-
       ArrayDeque<V> newBucket = new ArrayDeque<>(values.size());
-      if (index > 0) {
+      if (index >= 0) {
          Iterator<V> ite = values.iterator();
          int currentIndex = 0;
          while (ite.hasNext()) {
@@ -133,9 +120,7 @@ public class ListBucket<V> implements SortableBucket<V> {
             }
             currentIndex++;
          }
-      }
-
-      if (index < -1) {
+      } else {
          Iterator<V> ite = values.descendingIterator();
          int currentIndex = -1;
          while (ite.hasNext()) {
@@ -191,30 +176,28 @@ public class ListBucket<V> implements SortableBucket<V> {
       return result;
    }
 
-   public void trim(long from, long to) {
+   public ListBucket<V> trim(long from, long to) {
       // from and to are + but from is bigger
       // example: from 2 > to 1 -> empty
       // from and to are - and to is smaller
       // example: from -1 > to -2 -> empty
       if ((from > 0 && to > 0 && from > to) || (from < 0 && to < 0 && from > to)) {
-         values.clear();
-         return;
+         return new ListBucket<>();
       }
 
       // index request
       if (from == to) {
          V element = index(from);
-         if (element != null) {
-            values.clear();
-            values.add(element);
-         }
-         return;
+         return element != null
+               ? new ListBucket<>(element)
+               : this;
       }
 
       long startRemoveCount = from < 0 ? values.size() + from : from;
       long keepCount = (to < 0 ? values.size() + to : to) - startRemoveCount;
 
-      Iterator<V> ite = values.iterator();
+      Deque<V> newValues = new ArrayDeque<>(values);
+      Iterator<V> ite = newValues.iterator();
       while (ite.hasNext() && startRemoveCount > 0) {
          ite.next();
          ite.remove();
@@ -232,6 +215,8 @@ public class ListBucket<V> implements SortableBucket<V> {
          ite.next();
          ite.remove();
       }
+
+      return new ListBucket<>(newValues);
    }
 
    public Collection<Long> indexOf(V element, long count, long rank, long maxLen) {
@@ -298,9 +283,8 @@ public class ListBucket<V> implements SortableBucket<V> {
       return new ListBucket<>(newValues);
    }
 
-   public long remove(long count, V element) {
+   public ListBucketResult<Long, V> remove(long count, V element) {
       Iterator<V> ite;
-
       if (count < 0) {
          ite = values.descendingIterator();
       } else {
@@ -308,33 +292,38 @@ public class ListBucket<V> implements SortableBucket<V> {
       }
 
       long maxRemovalsCount = count == 0 ? values.size() : Math.abs(count);
-      long removedElements = 0;
+      long removedElements = 0L;
+      Deque<V> newItems = new ArrayDeque<>();
       while (ite.hasNext()) {
          V next = ite.next();
-         if (Objects.deepEquals(next, element)) {
-            ite.remove();
+         if (Objects.deepEquals(next, element) && removedElements < maxRemovalsCount) {
             removedElements++;
-            if (removedElements == maxRemovalsCount) {
-               break;
-            }
+            continue;
+         }
+
+         if (count < 0) {
+            newItems.addFirst(next);
+         } else {
+            newItems.addLast(next);
          }
       }
 
-      return removedElements;
+      return new ListBucketResult<>(removedElements, new ListBucket<>(newItems));
    }
 
-   public V rotate(boolean rotateRight) {
+   public ListBucketResult<V, V> rotate(boolean rotateRight) {
+      Deque<V> newItems = new ArrayDeque<>(values);
       V element;
       if (rotateRight) {
          // from head to tail
-         element = values.pollFirst();
-         values.offerLast(element);
+         element = newItems.pollFirst();
+         newItems.offerLast(element);
       } else {
          // from tail to head
-         element = values.pollLast();
-         values.offerFirst(element);
+         element = newItems.pollLast();
+         newItems.offerFirst(element);
       }
-      return element;
+      return new ListBucketResult<>(element, new ListBucket<>(newItems));
    }
 
    @Override
@@ -360,32 +349,17 @@ public class ListBucket<V> implements SortableBucket<V> {
       return sort(scoredValueStream, sortOptions);
    }
 
-   public void replace(List<V> list) {
-      this.values.clear();
+   public ListBucket<V> replace(Deque<V> list) {
       if (list != null && !list.isEmpty()) {
-         this.values.addAll(list);
+         return new ListBucket<>(list);
       }
+
+      return new ListBucket<>();
    }
 
-   public class ListBucketResult {
-      private final Collection<V> result;
-      private final ListBucket<V> bucketValue;
+   public record ListBucketResult<R, E>(R result, ListBucket<E> bucket) { }
 
-      public ListBucketResult(Collection<V> result, ListBucket<V> bucketValue) {
-         this.result = result;
-         this.bucketValue = bucketValue;
-      }
-
-      public ListBucket<V> bucketValue() {
-         return bucketValue;
-      }
-
-      public Collection<V> opResult() {
-         return result;
-      }
-   }
-
-   public ListBucketResult poll(boolean first, long count) {
+   public ListBucketResult<Collection<V>, V> poll(boolean first, long count) {
       List<V> polledValues = new ArrayList<>();
       if (count >= values.size()) {
          if (first) {
@@ -396,17 +370,18 @@ public class ListBucket<V> implements SortableBucket<V> {
                polledValues.add(ite.next());
             }
          }
-         return new ListBucketResult(polledValues, new ListBucket<>());
+         return new ListBucketResult<>(polledValues, new ListBucket<>());
       }
 
+      Deque<V> newItems = new ArrayDeque<>(values);
       for (int i = 0; i < count; i++) {
          if (first) {
-            polledValues.add(values.pollFirst());
+            polledValues.add(newItems.pollFirst());
          } else {
-            polledValues.add(values.pollLast());
+            polledValues.add(newItems.pollLast());
          }
       }
-      return new ListBucketResult(polledValues, new ListBucket<>(values));
+      return new ListBucketResult<>(polledValues, new ListBucket<>(newItems));
    }
 
    public V index(long index) {
