@@ -68,10 +68,16 @@ public final class FunctionPropertyPath<TypeMetadata> extends PropertyPath<TypeD
 
    @Override
    public String toString() {
-      return "FunctionPropertyPath{" +
-            "function=" + function +
-            ", propertyPath=" + asStringPath() +
-            ", args=" + args +
-            '}';
+      StringBuilder builder = new StringBuilder(function.toString());
+      builder.append("(");
+      builder.append(asStringPath());
+
+      for (Object arg : args) {
+         builder.append(", ");
+         builder.append(arg);
+      }
+      builder.append(")");
+
+      return builder.toString();
    }
 }

@@ -132,6 +132,21 @@ public class RemoteGeoLocalQueryTest extends SingleHotRodServerTest {
       assertThat(list).extracting(Restaurant::name)
             .containsExactlyInAnyOrder("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni",
                   "Dal Toscano Restaurant", "Scialla The Original Street Food", "Alla Bracioleria Gracchi Restaurant");
+
+      ickle = String.format("select distance(r.location, 41.90847031512531, 12.455633288333539) from %s r", RESTAURANT_ENTITY_NAME);
+      Query<Object[]> projectQuery = remoteCache.query(ickle);
+      List<Object[]> projectList = projectQuery.list();
+      assertThat(projectList).extracting(item -> item[0])
+            .containsExactlyInAnyOrder(65.78997502576355, 622.8579549605669, 69.72458363789359, 310.6984480274634,
+                  127.11531555461053, 224.8438726836208, 341.0897945700656);
+
+      ickle = String.format("select r.name, distance(r.location, 41.90847031512531, 12.455633288333539) from %s r", RESTAURANT_ENTITY_NAME);
+      projectQuery = remoteCache.query(ickle);
+      projectList = projectQuery.list();
+      assertThat(projectList)
+            .filteredOn(item -> item[1].equals(65.78997502576355)).extracting(item -> item[0]).first().isEqualTo("La Locanda di Pietro");
+      assertThat(projectList)
+            .filteredOn(item -> item[1].equals(622.8579549605669)).extracting(item -> item[0]).first().isEqualTo("Scialla The Original Street Food");
    }
 
    @Test

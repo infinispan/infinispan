@@ -16,7 +16,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
 @Indexed
 @GeoPoint(fieldName = "location", projectable = true, sortable = true)
 public record Restaurant(
-      @Keyword(normalizer = "lowercase") String name,
+      @Keyword(normalizer = "lowercase", projectable = true, sortable = true) String name,
       @Text String description,
       @Text String address,
       @Latitude(fieldName = "location") Double latitude,

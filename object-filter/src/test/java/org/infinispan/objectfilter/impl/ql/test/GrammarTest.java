@@ -150,6 +150,9 @@ public class GrammarTest extends TestBase {
 
       expectParserSuccess("select distance(cat.location, 40.3, 30.99) from Cat cat where cat.location within circle(45.6, 39.4, 100)",
             expectedFrom + "(select (SELECT_LIST (SELECT_ITEM (distance (PROPERTY_REFERENCE (. cat location)) 40.3 30.99))))) (where (within (PATH (. cat location)) (circle 45.6 39.4 100)))))");
+
+      expectParserSuccess("select cat.name, distance(cat.location, 40.3, 30.99) from Cat cat where cat.location within circle(45.6, 39.4, 100)",
+            expectedFrom + "(select (SELECT_LIST (SELECT_ITEM (PATH (. cat name))) (SELECT_ITEM (distance (PROPERTY_REFERENCE (. cat location)) 40.3 30.99))))) (where (within (PATH (. cat location)) (circle 45.6 39.4 100)))))");
    }
 
    @Test
