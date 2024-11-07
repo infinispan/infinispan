@@ -4,13 +4,11 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.infinispan.multimap.impl.ScoredValue;
-import org.infinispan.server.resp.ByteBufPool;
-import org.infinispan.server.resp.Util;
+import org.infinispan.server.resp.RespUtil;
 import org.infinispan.server.resp.commands.ArgumentUtils;
-import org.infinispan.server.resp.serialization.ByteBufferUtils;
 import org.infinispan.server.resp.serialization.JavaObjectSerializer;
-import org.infinispan.server.resp.serialization.Resp3Response;
 import org.infinispan.server.resp.serialization.RespConstants;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 public final class ZSetCommonUtils {
    public static final byte[] WITHSCORES = "WITHSCORES".getBytes();
@@ -20,7 +18,7 @@ public final class ZSetCommonUtils {
    }
 
    public static boolean isWithScoresArg(byte[] arg) {
-      return Util.isAsciiBytesEquals(WITHSCORES, arg);
+      return RespUtil.isAsciiBytesEquals(WITHSCORES, arg);
    }
 
    private static boolean isInf(byte[] arg, char sign) {
@@ -110,21 +108,21 @@ public final class ZSetCommonUtils {
    public record ZOperationResponse(Collection<ScoredValue<byte[]>> values, boolean withScores) implements JavaObjectSerializer<ZOperationResponse> {
 
       @Override
-      public void accept(ZOperationResponse ignore, ByteBufPool alloc) {
+      public void accept(ZOperationResponse ignore, ResponseWriter writer) {
          if (values == null) {
-            ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, 0, alloc);
+            writer.writeNumericPrefix(RespConstants.ARRAY, 0);
             return;
          }
 
-         ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, values.size(), alloc);
+         writer.writeNumericPrefix(RespConstants.ARRAY, values.size());
 
          for (ScoredValue<byte[]> sv : values) {
             if (withScores) {
-               ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, 2, alloc);
-               Resp3Response.string(sv.getValue(), alloc);
-               Resp3Response.doubles(sv.score(), alloc);
+               writer.writeNumericPrefix(RespConstants.ARRAY, 2);
+               writer.string(sv.getValue());
+               writer.doubles(sv.score());
             } else {
-               Resp3Response.string(sv.getValue(), alloc);
+               writer.string(sv.getValue());
             }
          }
       }

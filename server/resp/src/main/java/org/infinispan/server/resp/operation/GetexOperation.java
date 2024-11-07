@@ -4,7 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.server.resp.Util;
+import org.infinispan.server.resp.RespUtil;
 
 public class GetexOperation {
    private static final byte[] PERSIST_BYTES = "PERSIST".getBytes(StandardCharsets.US_ASCII);
@@ -45,7 +45,7 @@ public class GetexOperation {
             }
          }
          // `PERSIST` argument.
-         if (arg.length == 7 && Util.isAsciiBytesEquals(PERSIST_BYTES, arg)) {
+         if (arg.length == 7 && RespUtil.isAsciiBytesEquals(PERSIST_BYTES, arg)) {
             if (expirationMs != 0)
                throw new IllegalArgumentException("PERSIST and EX/PX/EXAT/PXAT are mutually exclusive");
             expirationMs = -1;

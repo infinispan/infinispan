@@ -1,9 +1,12 @@
-package org.infinispan.server.resp.serialization;
+package org.infinispan.server.resp.serialization.bytebuf;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.server.resp.ByteBufPool;
+import org.infinispan.server.resp.serialization.NestedResponseSerializer;
+import org.infinispan.server.resp.serialization.ResponseSerializer;
+import org.infinispan.server.resp.serialization.SerializationHint;
 
 /**
  * Registry holding all RESP3 serializers.
@@ -16,22 +19,22 @@ import org.infinispan.server.resp.ByteBufPool;
  *
  * @author José Bolina
  */
-public final class Resp3SerializerRegistry {
+final class ByteBufSerializerRegistry {
 
-   private Resp3SerializerRegistry() { }
+   private ByteBufSerializerRegistry() { }
 
-   private static final ResponseSerializer<?>[] serializers;
+   private static final ResponseSerializer<?, ByteBufPool>[] serializers;
 
    static {
       // The serializers follow the registration order.
       // Therefore, we try to keep the most common first and add any new one later.
-      List<ResponseSerializer<?>> s = new ArrayList<>(PrimitiveSerializer.SERIALIZERS);
-      s.add(CollectionSerializer.ArraySerializer.INSTANCE);
-      s.add(CollectionSerializer.SetSerializer.INSTANCE);
-      s.add(DoubleSerializer.INSTANCE);
-      s.add(ThrowableSerializer.INSTANCE);
-      s.add(MapSerializer.INSTANCE);
-      s.add(BigNumberSerializer.INSTANCE);
+      List<ResponseSerializer<?, ByteBufPool>> s = new ArrayList<>(ByteBufPrimitiveSerializer.SERIALIZERS);
+      s.add(ByteBufCollectionSerializer.ArraySerializer.INSTANCE);
+      s.add(ByteBufCollectionSerializer.SetSerializer.INSTANCE);
+      s.add(ByteBufDoubleSerializer.INSTANCE);
+      s.add(ByteBufThrowableSerializer.INSTANCE);
+      s.add(ByteBufMapSerializer.INSTANCE);
+      s.add(ByteBufBigNumberSerializer.INSTANCE);
       serializers = s.toArray(ResponseSerializer[]::new);
    }
 
@@ -46,15 +49,15 @@ public final class Resp3SerializerRegistry {
       serialize(value, alloc, serializers);
    }
 
-   static void serialize(Object value, ByteBufPool alloc, ResponseSerializer<?>[] candidates) {
+   static void serialize(Object value, ByteBufPool alloc, ResponseSerializer<?, ByteBufPool>[] candidates) {
       // The first check must always be for the null serializer.
       // This removes all null checks on every other serializer.
-      if (PrimitiveSerializer.NullSerializer.INSTANCE.test(value)) {
-         PrimitiveSerializer.NullSerializer.INSTANCE.accept(null, alloc);
+      if (ByteBufPrimitiveSerializer.NullSerializer.INSTANCE.test(value)) {
+         ByteBufPrimitiveSerializer.NullSerializer.INSTANCE.accept(null, alloc);
          return;
       }
 
-      for (ResponseSerializer<?> serializer : candidates) {
+      for (ResponseSerializer<?, ByteBufPool> serializer : candidates) {
          if (serializer.test(value)) {
             serialize(serializer, value, alloc);
             return;
@@ -72,11 +75,11 @@ public final class Resp3SerializerRegistry {
     * @param candidate The candidate serializer to handle the object.
     * @throws IllegalStateException: when the candidate does not accept the provided value.
     */
-   static void serialize(Object value, ByteBufPool alloc, ResponseSerializer<?> candidate) {
+   static void serialize(Object value, ByteBufPool alloc, ResponseSerializer<?, ByteBufPool> candidate) {
       // The first check must always be for the null serializer.
       // This removes all null checks on every other serializer.
-      if (PrimitiveSerializer.NullSerializer.INSTANCE.test(value)) {
-         PrimitiveSerializer.NullSerializer.INSTANCE.accept(null, alloc);
+      if (ByteBufPrimitiveSerializer.NullSerializer.INSTANCE.test(value)) {
+         ByteBufPrimitiveSerializer.NullSerializer.INSTANCE.accept(null, alloc);
          return;
       }
 
@@ -87,12 +90,12 @@ public final class Resp3SerializerRegistry {
    }
 
    static <H extends SerializationHint> void serialize(Object value, ByteBufPool alloc,
-                                                       NestedResponseSerializer<?, H> candidate, H hint) {
+                                                       NestedResponseSerializer<?, ByteBufPool, H> candidate, H hint) {
 
       // The first check must always be for the null serializer.
       // This removes all null checks on every other serializer.
-      if (PrimitiveSerializer.NullSerializer.INSTANCE.test(value)) {
-         PrimitiveSerializer.NullSerializer.INSTANCE.accept(null, alloc);
+      if (ByteBufPrimitiveSerializer.NullSerializer.INSTANCE.test(value)) {
+         ByteBufPrimitiveSerializer.NullSerializer.INSTANCE.accept(null, alloc);
          return;
       }
 
@@ -100,13 +103,13 @@ public final class Resp3SerializerRegistry {
          throw new IllegalStateException("Serializer not handling: " + value.getClass());
 
       @SuppressWarnings("unchecked")
-      NestedResponseSerializer<Object, H> nrs = (NestedResponseSerializer<Object, H>) candidate;
+      NestedResponseSerializer<Object, ByteBufPool, H> nrs = (NestedResponseSerializer<Object, ByteBufPool, H>) candidate;
       nrs.accept(value, alloc, hint);
    }
 
-   private static void serialize(ResponseSerializer<?> serializer, Object value, ByteBufPool alloc) {
+   private static void serialize(ResponseSerializer<?, ByteBufPool> serializer, Object value, ByteBufPool alloc) {
       @SuppressWarnings("unchecked")
-      ResponseSerializer<Object> s = (ResponseSerializer<Object>) serializer;
+      ResponseSerializer<Object, ByteBufPool> s = (ResponseSerializer<Object, ByteBufPool>) serializer;
       s.accept(value, alloc);
    }
 }

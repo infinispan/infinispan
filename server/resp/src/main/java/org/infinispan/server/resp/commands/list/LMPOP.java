@@ -7,19 +7,16 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
-import org.infinispan.server.resp.Util;
+import org.infinispan.server.resp.RespUtil;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.ByteBufferUtils;
 import org.infinispan.server.resp.serialization.JavaObjectSerializer;
-import org.infinispan.server.resp.serialization.Resp3Response;
 import org.infinispan.server.resp.serialization.Resp3Type;
 import org.infinispan.server.resp.serialization.RespConstants;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.jgroups.util.CompletableFutures;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -56,7 +53,7 @@ public class LMPOP extends RespCommand implements Resp3Command {
       }
 
       if (invalidNumKeys) {
-         RespErrorUtil.customError("numkeys should be greater than 0", handler.allocator());
+         handler.writer().customError("numkeys should be greater than 0");
          return handler.myStage();
       }
 
@@ -67,52 +64,52 @@ public class LMPOP extends RespCommand implements Resp3Command {
       }
 
       if (pos < numKeys || pos > arguments.size()) {
-         RespErrorUtil.syntaxError(handler.allocator());
+         handler.writer().syntaxError();
          return handler.myStage();
       }
 
       byte[] leftOrRight = arguments.get(pos++);
       boolean isLeft = false;
-      if (Util.isAsciiBytesEquals(LEFT, leftOrRight)) {
+      if (RespUtil.isAsciiBytesEquals(LEFT, leftOrRight)) {
          isLeft = true;
-      } else if (!Util.isAsciiBytesEquals(RIGHT, leftOrRight)) {
+      } else if (!RespUtil.isAsciiBytesEquals(RIGHT, leftOrRight)) {
          // we need to chose between LEFT OR RIGHT
-         RespErrorUtil.syntaxError(handler.allocator());
+         handler.writer().syntaxError();
          return handler.myStage();
       }
       long count = 1;
       if (arguments.size() > pos) {
          byte[] countArgValue;
          try {
-            if (!Util.isAsciiBytesEquals(COUNT, arguments.get(pos++))) {
+            if (!RespUtil.isAsciiBytesEquals(COUNT, arguments.get(pos++))) {
                throw new IllegalArgumentException("the value should be COUNT here");
             }
             countArgValue = arguments.get(pos++);
          } catch (Exception ex) {
-            RespErrorUtil.syntaxError(handler.allocator());
+            handler.writer().syntaxError();
             return handler.myStage();
          }
 
          try {
             count = ArgumentUtils.toLong(countArgValue);
             if (count <= 0) {
-               RespErrorUtil.customError("count should be greater than 0", handler.allocator());
+               handler.writer().customError("count should be greater than 0");
                return handler.myStage();
             }
          } catch (Exception ex) {
-            RespErrorUtil.syntaxError(handler.allocator());
+            handler.writer().syntaxError();
             return handler.myStage();
          }
       }
 
       // if the user sends more arguments at this point, syntax error
       if (arguments.size() > pos) {
-         RespErrorUtil.syntaxError(handler.allocator());
+         handler.writer().syntaxError();
          return handler.myStage();
       }
 
       CompletionStage<PopResult> cs = asyncCalls(CompletableFutures.completedNull(), null, listNames.iterator(), count, isLeft, ctx, handler);
-      return handler.stageToReturn(cs, ctx, Resp3Response.CUSTOM);
+      return handler.stageToReturn(cs, ctx, ResponseWriter.CUSTOM);
    }
 
    private CompletionStage<PopResult> asyncCalls(CompletionStage<Collection<byte[]>> pollValues,
@@ -139,10 +136,10 @@ public class LMPOP extends RespCommand implements Resp3Command {
    private record PopResult(byte[] key, Collection<byte[]> values) implements JavaObjectSerializer<PopResult> {
 
       @Override
-      public void accept(PopResult ignore, ByteBufPool alloc) {
-         ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, 2, alloc);
-         Resp3Response.string(key, alloc);
-         Resp3Response.array(values, alloc, Resp3Type.BULK_STRING);
+      public void accept(PopResult ignore, ResponseWriter writer) {
+         writer.writeNumericPrefix(RespConstants.ARRAY, 2);
+         writer.string(key);
+         writer.array(values, Resp3Type.BULK_STRING);
       }
    }
 }

@@ -7,7 +7,6 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -28,7 +27,7 @@ public class READWRITE extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
       // We are always in read write allowing read from backups
-      Resp3Response.ok(handler.allocator());
+      handler.writer().ok();
       return handler.myStage();
    }
 }

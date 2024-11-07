@@ -1,6 +1,6 @@
 package org.infinispan.server.resp.commands.generic;
 
-import static org.infinispan.server.resp.Util.toUnixTime;
+import static org.infinispan.server.resp.RespUtil.toUnixTime;
 
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -13,7 +13,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -60,7 +60,7 @@ public class TTL extends RespCommand implements Resp3Command {
 
             return ttl;
          }
-      }), ctx, Resp3Response.INTEGER);
+      }), ctx, ResponseWriter.INTEGER);
    }
 
    protected enum ExpirationOption {

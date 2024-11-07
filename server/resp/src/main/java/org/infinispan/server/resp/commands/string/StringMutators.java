@@ -1,9 +1,9 @@
 package org.infinispan.server.resp.commands.string;
 
-import org.infinispan.Cache;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+
+import org.infinispan.Cache;
 
 /**
  * StringMutators

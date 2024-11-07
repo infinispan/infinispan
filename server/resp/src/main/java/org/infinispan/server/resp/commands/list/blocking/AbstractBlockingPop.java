@@ -29,7 +29,7 @@ import org.infinispan.server.resp.filter.EventListenerConverter;
 import org.infinispan.server.resp.filter.EventListenerKeysFilter;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.server.resp.meta.ClientMetadata;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.infinispan.server.resp.tx.TransactionContext;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -67,7 +67,7 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
       // Running blocking pop from EXEC should not block.
       // In this case, we just return whatever the polling has returned and do not install the listener.
       if (TransactionContext.isInTransactionContext(ctx)) {
-         return handler.stageToReturn(pollStage, ctx, Resp3Response.ARRAY_BULK_STRING);
+         return handler.stageToReturn(pollStage, ctx, ResponseWriter.ARRAY_BULK_STRING);
       }
 
       // If no value returned, we need subscribers
@@ -77,7 +77,7 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
          return (v != null && !v.isEmpty())
                ? CompletableFuture.completedFuture(v)
                : addSubscriber(configuration, handler);
-      }), ctx, Resp3Response.ARRAY_BULK_STRING);
+      }), ctx, ResponseWriter.ARRAY_BULK_STRING);
    }
 
    private CompletableFuture<Collection<byte[]>> addSubscriber(PopConfiguration configuration, Resp3Handler handler) {

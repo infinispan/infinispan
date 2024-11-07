@@ -14,7 +14,7 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.meta.ClientMetadata;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -36,7 +36,7 @@ public class UNWATCH extends RespCommand implements Resp3Command {
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
       CompletionStage<?> cs = deregister(ctx, handler.cache(), handler.respServer().metadataRepository().client());
-      return handler.stageToReturn(cs, ctx, Resp3Response.OK);
+      return handler.stageToReturn(cs, ctx, ResponseWriter.OK);
    }
 
    public static CompletionStage<List<WATCH.TxKeysListener>> deregister(ChannelHandlerContext ctx, AdvancedCache<byte[], byte[]> cache, ClientMetadata metadata) {

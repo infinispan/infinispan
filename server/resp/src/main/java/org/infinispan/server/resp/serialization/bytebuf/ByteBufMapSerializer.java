@@ -1,8 +1,11 @@
-package org.infinispan.server.resp.serialization;
+package org.infinispan.server.resp.serialization.bytebuf;
 
 import java.util.Map;
 
 import org.infinispan.server.resp.ByteBufPool;
+import org.infinispan.server.resp.serialization.NestedResponseSerializer;
+import org.infinispan.server.resp.serialization.RespConstants;
+import org.infinispan.server.resp.serialization.SerializationHint;
 
 /**
  * Represent an unordered sequence of key-value tuples.
@@ -15,17 +18,17 @@ import org.infinispan.server.resp.ByteBufPool;
  * @since 15.0
  * @author José Bolina
  */
-final class MapSerializer implements NestedResponseSerializer<Map<Object, Object>, SerializationHint.KeyValueHint> {
-   static final MapSerializer INSTANCE = new MapSerializer();
+final class ByteBufMapSerializer implements NestedResponseSerializer<Map<Object, Object>, ByteBufPool, SerializationHint.KeyValueHint> {
+   static final ByteBufMapSerializer INSTANCE = new ByteBufMapSerializer();
 
    @Override
    public void accept(Map<Object, Object> map, ByteBufPool alloc, SerializationHint.KeyValueHint hint) {
       // RESP: %<number-of-entries>\r\n<key-1><value-1>...<key-n><value-n>
       ByteBufferUtils.writeNumericPrefix(RespConstants.MAP, map.size(), alloc);
-
+      ByteBufResponseWriter writer = new ByteBufResponseWriter(alloc);
       for (Map.Entry<Object, Object> entry : map.entrySet()) {
-         hint.key().serialize(entry.getKey(), alloc);
-         hint.value().serialize(entry.getValue(), alloc);
+         hint.key().serialize(entry.getKey(), writer);
+         hint.value().serialize(entry.getValue(), writer);
       }
    }
 

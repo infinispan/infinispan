@@ -3,17 +3,14 @@ package org.infinispan.server.resp.commands.connection;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Commands;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.ByteBufferUtils;
 import org.infinispan.server.resp.serialization.JavaObjectSerializer;
-import org.infinispan.server.resp.serialization.Resp3Response;
 import org.infinispan.server.resp.serialization.RespConstants;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -25,11 +22,11 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class COMMAND extends RespCommand implements Resp3Command {
    public static final String NAME = "COMMAND";
-   private static final JavaObjectSerializer<Object> SERIALIZER = (ignore, alloc) -> {
+   private static final JavaObjectSerializer<Object> SERIALIZER = (ignore, writer) -> {
       List<RespCommand> commands = Commands.all();
-      ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, commands.size(), alloc);
+      writer.writeNumericPrefix(RespConstants.ARRAY, commands.size());
       for (RespCommand command : commands) {
-         describeCommand(command, alloc);
+         describeCommand(command, writer);
       }
    };
 
@@ -42,38 +39,38 @@ public class COMMAND extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
       if (!arguments.isEmpty()) {
-         RespErrorUtil.customError("COMMAND does not currently support arguments", handler.allocator());
+         handler.writer().customError("COMMAND does not currently support arguments");
       } else {
          // If we ever support a command that isn't ASCII this will need to change
-         Resp3Response.write(handler.allocator(), SERIALIZER);
+         handler.writer().write(SERIALIZER);
       }
       return handler.myStage();
    }
 
-   private static void describeCommand(RespCommand command, ByteBufPool alloc) {
+   private static void describeCommand(RespCommand command, ResponseWriter writer) {
       // Each command has 10 subsections.
-      ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, 10, alloc);
+      writer.writeNumericPrefix(RespConstants.ARRAY, 10);
       // Name
-      Resp3Response.simpleString(command.getName(), alloc);
+      writer.simpleString(command.getName());
       // Arity
-      Resp3Response.integers(command.getArity(), alloc);
+      writer.integers(command.getArity());
       // Flags, a set
-      Resp3Response.emptySet(alloc);
+      writer.emptySet();
       // First key
-      Resp3Response.integers(command.getFirstKeyPos(), alloc);
+      writer.integers(command.getFirstKeyPos());
       // Last key
-      Resp3Response.integers(command.getLastKeyPos(), alloc);
+      writer.integers(command.getLastKeyPos());
       // Step
-      Resp3Response.integers(command.getSteps(), alloc);
+      writer.integers(command.getSteps());
 
       // Additional command metadata
       // ACL categories
-      Resp3Response.emptySet(alloc);
+      writer.emptySet();
       // Tips
-      Resp3Response.emptySet(alloc);
+      writer.emptySet();
       // Key specifications
-      Resp3Response.emptySet(alloc);
+      writer.emptySet();
       // Subcommands
-      Resp3Response.emptySet(alloc);
+      writer.emptySet();
    }
 }

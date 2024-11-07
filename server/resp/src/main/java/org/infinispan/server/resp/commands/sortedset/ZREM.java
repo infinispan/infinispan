@@ -8,7 +8,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -30,7 +30,7 @@ public class ZREM extends RespCommand implements Resp3Command {
 
       EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetCache = handler.getSortedSeMultimap();
       return handler.stageToReturn(sortedSetCache.removeAll(arguments.get(0), arguments.subList(1, arguments.size())),
-            ctx, Resp3Response.INTEGER);
+            ctx, ResponseWriter.INTEGER);
    }
 
 }

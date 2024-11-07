@@ -8,7 +8,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -29,6 +29,6 @@ public class HGET extends RespCommand implements Resp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
       EmbeddedMultimapPairCache<byte[], byte[], byte[]> hashMap = handler.getHashMapMultimap();
-      return handler.stageToReturn(hashMap.get(arguments.get(0), arguments.get(1)), ctx, Resp3Response.BULK_STRING_BYTES);
+      return handler.stageToReturn(hashMap.get(arguments.get(0), arguments.get(1)), ctx, ResponseWriter.BULK_STRING_BYTES);
    }
 }

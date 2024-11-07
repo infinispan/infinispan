@@ -10,10 +10,8 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -38,9 +36,9 @@ public class SELECT extends RespCommand implements Resp3Command {
          ConnectionMetadata metadata = ConnectionMetadata.getInstance(ctx.channel());
          handler.setCache(cache.getAdvancedCache().withSubject(metadata.subject()).withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM));
          metadata.cache(cache.getName());
-         Resp3Response.ok(handler.allocator());
+         handler.writer().ok();
       } catch (CacheException e) {
-         RespErrorUtil.customError("DB index is out of range", handler.allocator());
+         handler.writer().customError("DB index is out of range");
       }
       return handler.myStage();
    }

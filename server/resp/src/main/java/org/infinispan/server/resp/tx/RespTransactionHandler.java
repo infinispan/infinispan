@@ -7,7 +7,6 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.AdvancedCache;
 import org.infinispan.server.resp.CacheRespRequestHandler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.RespServer;
 import org.infinispan.server.resp.SubscriberHandler;
@@ -16,7 +15,6 @@ import org.infinispan.server.resp.commands.pubsub.PSUBSCRIBE;
 import org.infinispan.server.resp.commands.pubsub.SUBSCRIBE;
 import org.infinispan.server.resp.commands.tx.UNWATCH;
 import org.infinispan.server.resp.commands.tx.WATCH;
-import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -62,8 +60,7 @@ public class RespTransactionHandler extends CacheRespRequestHandler {
 
       // Transaction commands take precedence and are not queued.
       // We need to verify how commands like WATCH are handled from within a transaction.
-      if (command instanceof TransactionResp3Command) {
-         TransactionResp3Command tx = (TransactionResp3Command) command;
+      if (command instanceof TransactionResp3Command tx) {
          return tx.perform(this, ctx, arguments);
       }
 
@@ -78,7 +75,7 @@ public class RespTransactionHandler extends CacheRespRequestHandler {
          return command.handleException(this, t);
       }
 
-      return stageToReturn(myStage(), ctx, Resp3Response::queued);
+      return stageToReturn(myStage(), ctx, (h, writer) -> writer.queued(h));
    }
 
    @Override
@@ -94,7 +91,7 @@ public class RespTransactionHandler extends CacheRespRequestHandler {
 
    private boolean isCommandValid(RespCommand command, List<byte[]> arguments) {
       if (!command.hasValidNumberOfArguments(arguments)) {
-         RespErrorUtil.wrongArgumentNumber(command, allocator());
+         writer().wrongArgumentNumber(command);
          return false;
       }
 

@@ -8,7 +8,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -31,6 +31,6 @@ public class STRLEN extends RespCommand implements Resp3Command {
 
       CompletableFuture<Long> strLenAsync = handler.cache().getAsync(keyBytes)
       .thenApply(buff -> buff!=null ? buff.length : 0L);
-      return handler.stageToReturn(strLenAsync, ctx, Resp3Response.INTEGER);
+      return handler.stageToReturn(strLenAsync, ctx, ResponseWriter.INTEGER);
    }
 }

@@ -10,10 +10,9 @@ import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
 import org.infinispan.multimap.impl.SortedSetBucket;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -40,16 +39,16 @@ public class ZRANK extends RespCommand implements Resp3Command {
       if (arguments.size() > 2) {
          withScore = isWithScoresArg(arguments.get(2));
          if (!withScore) {
-            RespErrorUtil.syntaxError(handler.allocator());
+            handler.writer().syntaxError();
             return handler.myStage();
          }
       }
 
       EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSet = handler.getSortedSeMultimap();
       if (withScore) {
-         return handler.stageToReturn(sortedSet.indexOf(name, member, isRev).thenApply(ZRANK::mapResult), ctx, Resp3Response.ARRAY_INTEGER);
+         return handler.stageToReturn(sortedSet.indexOf(name, member, isRev).thenApply(ZRANK::mapResult), ctx, ResponseWriter.ARRAY_INTEGER);
       }
-      return handler.stageToReturn(sortedSet.indexOf(name, member, isRev).thenApply(r -> r == null ? null : r.getValue()), ctx, Resp3Response.INTEGER);
+      return handler.stageToReturn(sortedSet.indexOf(name, member, isRev).thenApply(r -> r == null ? null : r.getValue()), ctx, ResponseWriter.INTEGER);
    }
 
    private static Collection<Number> mapResult(SortedSetBucket.IndexValue index) {

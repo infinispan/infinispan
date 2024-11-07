@@ -14,12 +14,11 @@ import org.infinispan.multimap.impl.SortedSetAddArgs;
 import org.infinispan.multimap.impl.SortedSetSubsetArgs;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.LimitArgument;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -117,7 +116,7 @@ public class ZRANGE extends RespCommand implements Resp3Command {
                resultOpt.withScores = true;
                break;
             default:
-               RespErrorUtil.syntaxError(handler.allocator());
+               handler.writer().syntaxError();
                return handler.myStage();
          }
       }
@@ -126,21 +125,19 @@ public class ZRANGE extends RespCommand implements Resp3Command {
 
       // Syntax error when byLex and byScore
       if (byLex && byScore) {
-         RespErrorUtil.syntaxError(handler.allocator());
+         handler.writer().syntaxError();
          return handler.myStage();
       }
 
       // LIMIT use is for byLex and byScore
       if (!byLex && !byScore && resultOpt.offset != null) {
-         RespErrorUtil.customError("syntax error, LIMIT is only supported in combination with either BYSCORE or BYLEX",
-               handler.allocator());
+         handler.writer().customError("syntax error, LIMIT is only supported in combination with either BYSCORE or BYLEX");
          return handler.myStage();
       }
 
       // WITHSCORES use is for index range and byScore
       if (byLex && resultOpt.withScores) {
-         RespErrorUtil.customError("syntax error, WITHSCORES not supported in combination with BYLEX",
-               handler.allocator());
+         handler.writer().customError("syntax error, WITHSCORES not supported in combination with BYLEX");
          return handler.myStage();
       }
 
@@ -150,7 +147,7 @@ public class ZRANGE extends RespCommand implements Resp3Command {
          ZSetCommonUtils.Score startScore = ZSetCommonUtils.parseScore(start);
          ZSetCommonUtils.Score stopScore = ZSetCommonUtils.parseScore(stop);
          if (startScore == null || stopScore == null) {
-            RespErrorUtil.minOrMaxNotAValidFloat(handler.allocator());
+            handler.writer().minOrMaxNotAValidFloat();
             return handler.myStage();
          }
 
@@ -169,7 +166,7 @@ public class ZRANGE extends RespCommand implements Resp3Command {
          ZSetCommonUtils.Lex startLex = ZSetCommonUtils.parseLex(start);
          ZSetCommonUtils.Lex stopLex = ZSetCommonUtils.parseLex(stop);
          if (startLex == null || stopLex == null) {
-            RespErrorUtil.minOrMaxNotAValidStringRange(handler.allocator());
+            handler.writer().minOrMaxNotAValidStringRange();
             return handler.myStage();
          }
          SortedSetSubsetArgs.Builder<byte[]> builder = SortedSetSubsetArgs.create();
@@ -189,7 +186,7 @@ public class ZRANGE extends RespCommand implements Resp3Command {
             from = ArgumentUtils.toLong(start);
             to = ArgumentUtils.toLong(stop);
          } catch (NumberFormatException ex) {
-            RespErrorUtil.valueNotInteger(handler.allocator());
+            handler.writer().valueNotInteger();
             return handler.myStage();
          }
          SortedSetSubsetArgs.Builder<Long> builder = SortedSetSubsetArgs.create();
@@ -204,7 +201,7 @@ public class ZRANGE extends RespCommand implements Resp3Command {
       }
 
       CompletionStage<ZSetCommonUtils.ZOperationResponse> cs = getSortedSetCall.thenApply(subsetResult -> response(subsetResult, resultOpt.withScores));
-      return handler.stageToReturn(cs, ctx, Resp3Response.CUSTOM);
+      return handler.stageToReturn(cs, ctx, ResponseWriter.CUSTOM);
    }
 
    private CompletionStage<RespRequestHandler> rangeAndStore(Resp3Handler handler,
@@ -214,6 +211,6 @@ public class ZRANGE extends RespCommand implements Resp3Command {
                                                             CompletionStage<Collection<ScoredValue<byte[]>>> getSortedSetCall) {
       CompletionStage<Long> cs = getSortedSetCall
             .thenCompose(scoredValues -> sortedSetCache.addMany(destination, scoredValues, SortedSetAddArgs.create().replace().build()));
-      return handler.stageToReturn(cs, ctx, Resp3Response.INTEGER);
+      return handler.stageToReturn(cs, ctx, ResponseWriter.INTEGER);
    }
 }

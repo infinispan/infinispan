@@ -13,15 +13,13 @@ import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
 import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.multimap.impl.SortedSetAddArgs;
 import org.infinispan.multimap.impl.SortedSetBucket;
-import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -29,14 +27,14 @@ import io.netty.channel.ChannelHandlerContext;
  * Common implementation for UNION and INTER commands
  */
 public abstract class AGGCommand extends RespCommand implements Resp3Command {
-   private static final BiConsumer<Object, ByteBufPool> SERIALIZER = (res, alloc) -> {
+   private static final BiConsumer<Object, ResponseWriter> SERIALIZER = (res, writer) -> {
       if (res instanceof Long l) {
-         Resp3Response.integers(l, alloc);
+         writer.integers(l);
          return;
       }
 
       ZSetCommonUtils.ZOperationResponse zres = (ZSetCommonUtils.ZOperationResponse) res;
-      Resp3Response.write(zres, alloc, zres);
+      writer.write(zres, zres);
    };
 
    public static final String WEIGHTS = "WEIGHTS";
@@ -67,12 +65,12 @@ public abstract class AGGCommand extends RespCommand implements Resp3Command {
       try {
          numberOfKeysArg = ArgumentUtils.toInt(arguments.get(pos++));
       } catch (NumberFormatException ex) {
-         RespErrorUtil.valueNotInteger(handler.allocator());
+         handler.writer().valueNotInteger();
          return handler.myStage();
       }
 
       if (numberOfKeysArg <= 0) {
-         RespErrorUtil.customError("at least 1 input key is needed for '" + this.getName().toLowerCase() + "' command", handler.allocator());
+         handler.writer().customError("at least 1 input key is needed for '" + this.getName().toLowerCase() + "' command");
          return handler.myStage();
       }
 
@@ -82,7 +80,7 @@ public abstract class AGGCommand extends RespCommand implements Resp3Command {
       }
 
       if (keys.size() < numberOfKeysArg) {
-         RespErrorUtil.syntaxError(handler.allocator());
+         handler.writer().syntaxError();
          return handler.myStage();
       }
 
@@ -96,7 +94,7 @@ public abstract class AGGCommand extends RespCommand implements Resp3Command {
                if (getArity() == -3) {
                   withScores = true;
                } else {
-                  RespErrorUtil.syntaxError(handler.allocator());
+                  handler.writer().syntaxError();
                   return handler.myStage();
                }
                break;
@@ -105,11 +103,11 @@ public abstract class AGGCommand extends RespCommand implements Resp3Command {
                   try {
                      aggOption = SortedSetBucket.AggregateFunction.valueOf(new String(arguments.get(pos++)).toUpperCase());
                   } catch (Exception ex) {
-                     RespErrorUtil.syntaxError(handler.allocator());
+                     handler.writer().syntaxError();
                      return handler.myStage();
                   }
                } else {
-                  RespErrorUtil.syntaxError(handler.allocator());
+                  handler.writer().syntaxError();
                   return handler.myStage();
                }
                break;
@@ -119,16 +117,16 @@ public abstract class AGGCommand extends RespCommand implements Resp3Command {
                      weights.add(ArgumentUtils.toDouble(arguments.get(pos++)));
                   }
                } catch (NumberFormatException ex) {
-                  RespErrorUtil.customError("weight value is not a float", handler.allocator());
+                  handler.writer().customError("weight value is not a float");
                   return handler.myStage();
                }
                if (weights.size() != numberOfKeysArg) {
-                  RespErrorUtil.syntaxError(handler.allocator());
+                  handler.writer().syntaxError();
                   return handler.myStage();
                }
                break;
             default:
-               RespErrorUtil.syntaxError(handler.allocator());
+               handler.writer().syntaxError();
                return handler.myStage();
 
          }

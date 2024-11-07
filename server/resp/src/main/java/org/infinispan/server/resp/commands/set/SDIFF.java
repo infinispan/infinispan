@@ -14,7 +14,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -43,7 +43,7 @@ public class SDIFF extends RespCommand implements Resp3Command {
       var uniqueKeys = SINTER.getUniqueKeys(handler, arguments);
       var allEntries = esc.getAll(uniqueKeys);
       return handler.stageToReturn(allEntries.thenApply(entriesMap -> diff(arguments.get(0), entriesMap, diffItself)),
-            ctx, Resp3Response.SET_BULK_STRING);
+            ctx, ResponseWriter.SET_BULK_STRING);
    }
 
    public static Set<byte[]> diff(byte[] key, Map<byte[], SetBucket<byte[]>> buckets, boolean diffItself) {

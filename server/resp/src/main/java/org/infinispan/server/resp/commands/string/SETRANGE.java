@@ -10,7 +10,7 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -33,7 +33,7 @@ public class SETRANGE extends RespCommand implements Resp3Command {
       int offset = ArgumentUtils.toInt(arguments.get(1));
       byte[] patch = arguments.get(2);
       CompletionStage<Long> objectCompletableFuture = handler.cache().computeAsync(keyBytes, (ignoredKey, value) -> setrange(value, patch, offset)).thenApply(newValue -> newValue == null ? 0L : (long)newValue.length);
-      return handler.stageToReturn(objectCompletableFuture, ctx, Resp3Response.INTEGER);
+      return handler.stageToReturn(objectCompletableFuture, ctx, ResponseWriter.INTEGER);
    }
 
    private static byte[] setrange(byte[] value, byte[] patch, int offset) {

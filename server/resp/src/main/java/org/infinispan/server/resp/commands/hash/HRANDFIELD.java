@@ -11,16 +11,14 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
-import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
-import org.infinispan.server.resp.Util;
+import org.infinispan.server.resp.RespUtil;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
 import org.infinispan.server.resp.serialization.Resp3Type;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -50,33 +48,33 @@ public class HRANDFIELD extends RespCommand implements Resp3Command {
       }
 
       if (count == 0) {
-         Resp3Response.arrayEmpty(handler.allocator());
+         handler.writer().arrayEmpty();
          return handler.myStage();
       }
 
       boolean withValues = false;
       if (arguments.size() > 2) {
          // Syntax error, only a single option acceptable.
-         if (!Util.isAsciiBytesEquals(WITH_VALUES, arguments.get(2))) {
-            RespErrorUtil.syntaxError(handler.allocator());
+         if (!RespUtil.isAsciiBytesEquals(WITH_VALUES, arguments.get(2))) {
+            handler.writer().syntaxError();
             return handler.myStage();
          }
          withValues = true;
       }
 
       EmbeddedMultimapPairCache<byte[], byte[], byte[]> multimap = handler.getHashMapMultimap();
-      BiConsumer<Map<byte[], byte[]>, ByteBufPool> consumer = consumeResponse(count, withValues, countDefined);
+      BiConsumer<Map<byte[], byte[]>, ResponseWriter> consumer = consumeResponse(count, withValues, countDefined);
       CompletionStage<Map<byte[], byte[]>> cs = multimap.subSelect(key, Math.abs(count));
       return handler.stageToReturn(cs, ctx, consumer);
    }
 
-   private BiConsumer<Map<byte[], byte[]>, ByteBufPool> consumeResponse(int count, boolean withValues, boolean countDefined) {
-      return (res, alloc) -> {
+   private BiConsumer<Map<byte[], byte[]>, ResponseWriter> consumeResponse(int count, boolean withValues, boolean countDefined) {
+      return (res, writer) -> {
          if (res == null) {
             // The key doesn't exist but the command has the COUNT argument, return an empty list.
-            if (countDefined) Resp3Response.arrayEmpty(alloc);
+            if (countDefined) writer.arrayEmpty();
                // Otherwise, simply return null.
-            else Resp3Response.nulls(alloc);
+            else writer.nulls();
             return;
          }
 
@@ -86,16 +84,16 @@ public class HRANDFIELD extends RespCommand implements Resp3Command {
             // In case the return contains the values, we return a list of lists.
             // Each sub-list has two elements, the key and the value.
             if (withValues) {
-               Resp3Response.array(parsed, alloc, (c, a) -> Resp3Response.array(c, a, Resp3Type.BULK_STRING));
+               writer.array(parsed, (c, a) -> a.array(c, Resp3Type.BULK_STRING));
                return;
             }
-            Resp3Response.array(parsed.stream().flatMap(Collection::stream).toList(), alloc, Resp3Type.BULK_STRING);
+            writer.array(parsed.stream().flatMap(Collection::stream).toList(), Resp3Type.BULK_STRING);
             return;
          }
 
          // Otherwise, we return a bulk string with a single key.
          Collection<byte[]> bytes = parsed.iterator().next();
-         Resp3Response.string(bytes.iterator().next(), alloc);
+         writer.string(bytes.iterator().next());
       };
    }
 

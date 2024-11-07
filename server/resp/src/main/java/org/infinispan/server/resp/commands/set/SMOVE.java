@@ -11,7 +11,7 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.logging.Log;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -46,10 +46,10 @@ public class SMOVE extends RespCommand implements Resp3Command {
       if (!sameList) {
          // warn when different sets
          Log.SERVER.smoveConsistencyMessage();
-         return handler.stageToReturn(moveElement(esc, element, source, destination), ctx, Resp3Response.INTEGER);
+         return handler.stageToReturn(moveElement(esc, element, source, destination), ctx, ResponseWriter.INTEGER);
       }
       return handler.stageToReturn(esc.get(source)
-            .thenApply((bucket) -> bucket.contains(element) ? 1L : 0L), ctx, Resp3Response.INTEGER);
+            .thenApply((bucket) -> bucket.contains(element) ? 1L : 0L), ctx, ResponseWriter.INTEGER);
    }
 
    private CompletionStage<Long> moveElement(EmbeddedSetCache<byte[], byte[]> cache, byte[] element, byte[] srcKey, byte[] destKey) {

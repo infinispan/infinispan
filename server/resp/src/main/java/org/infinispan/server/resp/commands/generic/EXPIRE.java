@@ -1,7 +1,7 @@
 package org.infinispan.server.resp.commands.generic;
 
-import static org.infinispan.server.resp.Util.fromUnixTime;
-import static org.infinispan.server.resp.Util.toUnixTime;
+import static org.infinispan.server.resp.RespUtil.fromUnixTime;
+import static org.infinispan.server.resp.RespUtil.toUnixTime;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -17,7 +17,7 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -63,7 +63,7 @@ public class EXPIRE extends RespCommand implements Resp3Command {
          // Handle mode
          mode = Mode.valueOf(new String(arguments.get(2), StandardCharsets.US_ASCII).toUpperCase());
       }
-      return handler.stageToReturn(expire(handler, key, expiration, mode, unixTime), ctx, Resp3Response.INTEGER);
+      return handler.stageToReturn(expire(handler, key, expiration, mode, unixTime), ctx, ResponseWriter.INTEGER);
 
    }
 

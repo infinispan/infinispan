@@ -10,7 +10,7 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -44,7 +44,7 @@ public class GETRANGE extends RespCommand implements Resp3Command {
       long lastIndex =  ArgumentUtils.toLong(arguments.get(2));
       CompletionStage<byte[]> objectCompletableFuture = handler.cache().getAsync(keyBytes)
             .thenApply(value -> subrange(value, beginIndex, lastIndex));
-      return handler.stageToReturn(objectCompletableFuture, ctx, Resp3Response.BULK_STRING_BYTES);
+      return handler.stageToReturn(objectCompletableFuture, ctx, ResponseWriter.BULK_STRING_BYTES);
    }
 
    private byte[] subrange(byte[] arr, long begin, long end) {

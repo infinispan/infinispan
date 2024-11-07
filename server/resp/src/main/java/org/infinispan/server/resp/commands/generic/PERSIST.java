@@ -8,7 +8,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -29,7 +29,7 @@ public class PERSIST extends RespCommand implements Resp3Command {
                                                       List<byte[]> arguments) {
       byte[] keyBytes = arguments.get(0);
 
-      return handler.stageToReturn(persist(handler, keyBytes), ctx, Resp3Response.INTEGER);
+      return handler.stageToReturn(persist(handler, keyBytes), ctx, ResponseWriter.INTEGER);
    }
 
    private static CompletableFuture<Long> persist(Resp3Handler handler, byte[] keyBytes) {

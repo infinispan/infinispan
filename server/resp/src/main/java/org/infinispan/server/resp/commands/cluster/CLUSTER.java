@@ -52,16 +52,14 @@ public class CLUSTER extends FamilyCommand {
 
    public static int findPort(Address address) {
       int port = 0;
-      if (address instanceof JGroupsAddress && ((JGroupsAddress) address).getJGroupsAddress() instanceof IpAddress) {
-         JGroupsAddress jAddress = (JGroupsAddress) address;
+      if (address instanceof JGroupsAddress jAddress && jAddress.getJGroupsAddress() instanceof IpAddress) {
          port = ((IpAddress) jAddress.getJGroupsAddress()).getPort();
       }
       return port;
    }
 
    public static String getOnlyIp(Address address) {
-      if (address instanceof JGroupsAddress && ((JGroupsAddress) address).getJGroupsAddress() instanceof IpAddress) {
-         JGroupsAddress jAddress = (JGroupsAddress) address;
+      if (address instanceof JGroupsAddress jAddress && jAddress.getJGroupsAddress() instanceof IpAddress) {
          return ((IpAddress) jAddress.getJGroupsAddress()).getIpAddress().getHostAddress();
       }
       return address.toString();

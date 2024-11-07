@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.util.List;
 
 import org.infinispan.server.resp.Resp3Handler;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 
 class SingleBlockingPop extends AbstractBlockingPop {
@@ -23,7 +22,7 @@ class SingleBlockingPop extends AbstractBlockingPop {
       double argTimeout = ArgumentUtils.toDouble(arguments.get(lastKeyIdx));
       // Using last arg as timeout if it can be a double
       if (argTimeout < 0) {
-         RespErrorUtil.mustBePositive(handler.allocator());
+         handler.writer().mustBePositive();
          return null;
       }
       long timeout = (long) (argTimeout * Duration.ofSeconds(1).toMillis());

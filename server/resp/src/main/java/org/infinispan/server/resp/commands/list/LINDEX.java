@@ -9,7 +9,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -33,6 +33,6 @@ public class LINDEX extends RespCommand implements Resp3Command {
 
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
       CompletionStage<byte[]> value = listMultimap.index(key, index);
-      return handler.stageToReturn(value, ctx, Resp3Response.BULK_STRING_BYTES);
+      return handler.stageToReturn(value, ctx, ResponseWriter.BULK_STRING_BYTES);
    }
 }

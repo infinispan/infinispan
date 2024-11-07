@@ -1,11 +1,14 @@
 package org.infinispan.server.resp;
 
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.time.TimeService;
 
-public class Util {
-   private Util() { }
+public class RespUtil {
+   private RespUtil() { }
 
    /**
     * Checks if target is equal to expected. This method is case-insensitive and only works with ASCII characters.
@@ -74,5 +77,14 @@ public class Util {
       if (unixTime < 0) return unixTime;
       long time = unixTime - timeService.wallClockTime();
       return time < 0 ? 0 : time;
+   }
+
+   public static boolean isWrongTypeError(Throwable t) {
+      while (t instanceof CompletionException || t instanceof CacheException || t instanceof ExecutionException) {
+         t = t.getCause();
+      }
+      return t instanceof ClassCastException ||
+            (t instanceof IllegalArgumentException &&
+                  t.getMessage().contains("No marshaller registered for object of Java type"));
    }
 }

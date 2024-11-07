@@ -6,12 +6,11 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -46,7 +45,7 @@ public abstract class ZREMRANGE extends RespCommand implements Resp3Command {
          ZSetCommonUtils.Score startScore = ZSetCommonUtils.parseScore(start);
          ZSetCommonUtils.Score stopScore = ZSetCommonUtils.parseScore(stop);
          if (startScore == null || stopScore == null) {
-            RespErrorUtil.minOrMaxNotAValidFloat(handler.allocator());
+            handler.writer().minOrMaxNotAValidFloat();
             return handler.myStage();
          }
          removeAllCall = sortedSetCache.removeAll(name, startScore.value, startScore.include, stopScore.value, stopScore.include);
@@ -55,7 +54,7 @@ public abstract class ZREMRANGE extends RespCommand implements Resp3Command {
          ZSetCommonUtils.Lex startLex = ZSetCommonUtils.parseLex(start);
          ZSetCommonUtils.Lex stopLex = ZSetCommonUtils.parseLex(stop);
          if (startLex == null || stopLex == null) {
-            RespErrorUtil.customError("min or max not valid string range item", handler.allocator());
+            handler.writer().customError("min or max not valid string range item");
             return handler.myStage();
          }
          removeAllCall = sortedSetCache.removeAll(name, startLex.value, startLex.include, stopLex.value, stopLex.include);
@@ -67,12 +66,12 @@ public abstract class ZREMRANGE extends RespCommand implements Resp3Command {
             from = ArgumentUtils.toLong(start);
             to = ArgumentUtils.toLong(stop);
          } catch (NumberFormatException ex) {
-            RespErrorUtil.valueNotInteger(handler.allocator());
+            handler.writer().valueNotInteger();
             return handler.myStage();
          }
          removeAllCall = sortedSetCache.removeAll(name, from, to);
       }
 
-      return handler.stageToReturn(removeAllCall, ctx, Resp3Response.INTEGER);
+      return handler.stageToReturn(removeAllCall, ctx, ResponseWriter.INTEGER);
    }
 }

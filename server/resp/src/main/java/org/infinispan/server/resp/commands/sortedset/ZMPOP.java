@@ -9,19 +9,16 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.multimap.impl.ScoredValue;
-import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
-import org.infinispan.server.resp.Util;
+import org.infinispan.server.resp.RespUtil;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.response.ScoredValueSerializer;
-import org.infinispan.server.resp.serialization.ByteBufferUtils;
 import org.infinispan.server.resp.serialization.JavaObjectSerializer;
-import org.infinispan.server.resp.serialization.Resp3Response;
 import org.infinispan.server.resp.serialization.RespConstants;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.jgroups.util.CompletableFutures;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -56,7 +53,7 @@ public class ZMPOP extends RespCommand implements Resp3Command {
       }
 
       if (numberKeys <= 0) {
-         RespErrorUtil.customError("numkeys should be greater than 0", handler.allocator());
+         handler.writer().customError("numkeys should be greater than 0");
          return handler.myStage();
       }
 
@@ -66,24 +63,24 @@ public class ZMPOP extends RespCommand implements Resp3Command {
       }
 
       if (sortedSetNames.size() != numberKeys || pos >= arguments.size()) {
-         RespErrorUtil.syntaxError(handler.allocator());
+         handler.writer().syntaxError();
          return handler.myStage();
       }
       byte[] minOrMax = arguments.get(pos++);
       final boolean isMin;
-      if (Util.isAsciiBytesEquals(MIN, minOrMax)) {
+      if (RespUtil.isAsciiBytesEquals(MIN, minOrMax)) {
          isMin = true;
-      } else if (Util.isAsciiBytesEquals(MAX, minOrMax)) {
+      } else if (RespUtil.isAsciiBytesEquals(MAX, minOrMax)) {
          isMin = false;
       } else {
-         RespErrorUtil.syntaxError(handler.allocator());
+         handler.writer().syntaxError();
          return handler.myStage();
       }
 
       int count = 1;
       if (pos < arguments.size()) {
          byte[] countArg = arguments.get(pos++);
-         if (Util.isAsciiBytesEquals(COUNT, countArg) && pos < arguments.size()) {
+         if (RespUtil.isAsciiBytesEquals(COUNT, countArg) && pos < arguments.size()) {
             try {
                byte[] bytes = arguments.get(pos++);
                count = ArgumentUtils.toInt(bytes);
@@ -91,22 +88,22 @@ public class ZMPOP extends RespCommand implements Resp3Command {
                count = -1;
             }
             if (count <= 0) {
-               RespErrorUtil.customError("count should be greater than 0", handler.allocator());
+               handler.writer().customError("count should be greater than 0");
                return handler.myStage();
             }
          } else {
-            RespErrorUtil.syntaxError(handler.allocator());
+            handler.writer().syntaxError();
             return handler.myStage();
          }
       }
 
       if (arguments.size() > pos) {
-         RespErrorUtil.syntaxError(handler.allocator());
+         handler.writer().syntaxError();
          return handler.myStage();
       }
 
       CompletionStage<PopResult> cs = asyncCalls(CompletableFutures.completedNull(), null, sortedSetNames.iterator(), count, isMin, ctx, handler);
-      return handler.stageToReturn(cs, ctx, (res, alloc) -> Resp3Response.write(res, alloc, res));
+      return handler.stageToReturn(cs, ctx, (res, writer) -> writer.write(res, res));
    }
 
    private CompletionStage<PopResult> asyncCalls(CompletionStage<Collection<ScoredValue<byte[]>>> popValues,
@@ -135,11 +132,11 @@ public class ZMPOP extends RespCommand implements Resp3Command {
                             Collection<ScoredValue<byte[]>> values) implements JavaObjectSerializer<PopResult> {
 
       @Override
-      public void accept(PopResult res, ByteBufPool alloc) {
+      public void accept(PopResult res, ResponseWriter writer) {
          // Response written as an array of two elements.
-         ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, 2, alloc);
-         Resp3Response.string(name, alloc);
-         Resp3Response.array(values, alloc, ScoredValueSerializer.INSTANCE);
+         writer.writeNumericPrefix(RespConstants.ARRAY, 2);
+         writer.string(name);
+         writer.array(values, ScoredValueSerializer.INSTANCE);
       }
    }
 }

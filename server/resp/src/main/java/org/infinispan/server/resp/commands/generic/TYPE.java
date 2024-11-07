@@ -9,7 +9,7 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.RespTypes;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -36,6 +36,6 @@ public class TYPE extends RespCommand implements Resp3Command {
          }
          Class<?> c = e.getValue().getClass();
          return RespTypes.fromValueClass(c).name();
-      }), ctx, Resp3Response.SIMPLE_STRING);
+      }), ctx, ResponseWriter.SIMPLE_STRING);
    }
 }

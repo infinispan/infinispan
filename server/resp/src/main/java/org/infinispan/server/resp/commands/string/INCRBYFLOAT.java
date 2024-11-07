@@ -8,7 +8,7 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -31,6 +31,6 @@ public class INCRBYFLOAT extends RespCommand implements Resp3Command {
             .stageToReturn(
                   CounterIncOrDec.counterIncByDouble(handler.cache(), arguments.get(0),
                         ArgumentUtils.toDouble(arguments.get(1))),
-                  ctx, Resp3Response.DOUBLE);
+                  ctx, ResponseWriter.DOUBLE);
    }
 }

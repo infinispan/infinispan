@@ -6,15 +6,13 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
-import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
 import org.infinispan.server.resp.serialization.Resp3Type;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -24,14 +22,14 @@ import io.netty.channel.ChannelHandlerContext;
  * @since 15.0
  */
 public abstract class POP extends RespCommand implements Resp3Command {
-   private static final BiConsumer<Object, ByteBufPool> SERIALIZER = (res, alloc) -> {
+   private static final BiConsumer<Object, ResponseWriter> SERIALIZER = (res, writer) -> {
       if (res instanceof Collection<?>) {
          Collection<byte[]> strings = (Collection<byte[]>) res;
-         Resp3Response.array(strings, alloc, Resp3Type.BULK_STRING);
+         writer.array(strings, Resp3Type.BULK_STRING);
          return;
       }
 
-      Resp3Response.string((byte[]) res, alloc);
+      writer.string((byte[]) res);
    };
 
    protected boolean first;
@@ -61,12 +59,12 @@ public abstract class POP extends RespCommand implements Resp3Command {
          case 2:
             count = ArgumentUtils.toLong(arguments.get(1));
             if (count < 0) {
-               RespErrorUtil.mustBePositive(handler.allocator());
+               handler.writer().mustBePositive();
                return handler.myStage();
             }
             break;
          default:
-            RespErrorUtil.wrongArgumentNumber(this, handler.allocator());
+            handler.writer().wrongArgumentNumber(this);
             return handler.myStage();
       }
 

@@ -1,9 +1,8 @@
 package org.infinispan.server.resp.commands;
 
-import org.infinispan.server.resp.Resp3Handler;
-import org.infinispan.server.resp.RespErrorUtil;
-
 import java.util.List;
+
+import org.infinispan.server.resp.Resp3Handler;
 
 public final class LimitArgument {
    public long offset;
@@ -17,10 +16,10 @@ public final class LimitArgument {
          limitArgument.offset = ArgumentUtils.toLong(arguments.get(pos));
          limitArgument.count = ArgumentUtils.toLong(arguments.get(pos + 1));
       } catch (NumberFormatException ex) {
-         RespErrorUtil.valueNotInteger(handler.allocator());
+         handler.writer().valueNotInteger();
          limitArgument.error = true;
       } catch (IndexOutOfBoundsException ex) {
-         RespErrorUtil.syntaxError(handler.allocator());
+         handler.writer().syntaxError();
          limitArgument.error = true;
       }
       limitArgument.nextArgPos = pos + 2;

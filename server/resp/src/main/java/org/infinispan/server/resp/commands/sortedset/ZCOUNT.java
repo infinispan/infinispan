@@ -6,10 +6,9 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -47,12 +46,12 @@ public class ZCOUNT extends RespCommand implements Resp3Command {
       ZSetCommonUtils.Score minScore = ZSetCommonUtils.parseScore(min);
       ZSetCommonUtils.Score maxScore = ZSetCommonUtils.parseScore(max);
       if (minScore == null || maxScore == null) {
-         RespErrorUtil.minOrMaxNotAValidFloat(handler.allocator());
+         handler.writer().minOrMaxNotAValidFloat();
          return handler.myStage();
       }
       if (maxScore.unboundedMin || minScore.unboundedMax) {
          // minScore +inf or maxScore is -inf, return 0 without performing any call
-         return handler.stageToReturn(CompletableFuture.completedFuture(0L), ctx, Resp3Response.INTEGER);
+         return handler.stageToReturn(CompletableFuture.completedFuture(0L), ctx, ResponseWriter.INTEGER);
       }
 
       if (minScore.value == null) {
@@ -64,6 +63,6 @@ public class ZCOUNT extends RespCommand implements Resp3Command {
       }
 
       return handler.stageToReturn(handler.getSortedSeMultimap()
-            .count(name, minScore.value, minScore.include, maxScore.value, maxScore.include), ctx, Resp3Response.INTEGER);
+            .count(name, minScore.value, minScore.include, maxScore.value, maxScore.include), ctx, ResponseWriter.INTEGER);
    }
 }

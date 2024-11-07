@@ -11,7 +11,6 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.SubscriberHandler;
 import org.infinispan.server.resp.commands.PubSubResp3Command;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -30,7 +29,7 @@ public class RESET extends RespCommand implements Resp3Command, PubSubResp3Comma
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
-      Resp3Response.string("RESET", handler.allocator());
+      handler.writer().string("RESET");
       if (handler.respServer().getConfiguration().authentication().enabled()) {
          return CompletableFuture.completedFuture(new Resp3AuthHandler(handler.respServer()));
       }

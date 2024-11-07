@@ -10,10 +10,10 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.RespUtil;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -41,12 +41,12 @@ public class MGET extends RespCommand implements Resp3Command {
          List<byte[]> arguments) {
       int keysToRetrieve = arguments.size();
       if (keysToRetrieve == 0) {
-         Resp3Response.arrayEmpty(handler.allocator());
+         handler.writer().arrayEmpty();
          return handler.myStage();
       }
       CompletionStage<List<byte[]>> results = CompletionStages.performSequentially(arguments.iterator(), k -> getAsync(handler, k)
             .exceptionally(MGET::handleWrongTypeError), Collectors.toList());
-      return handler.stageToReturn(results, ctx, Resp3Response.ARRAY_BULK_STRING);
+      return handler.stageToReturn(results, ctx, ResponseWriter.ARRAY_BULK_STRING);
    }
 
    private static CompletionStage<byte[]> getAsync(Resp3Handler handler, byte[] key) {
@@ -60,7 +60,7 @@ public class MGET extends RespCommand implements Resp3Command {
    }
 
    private static byte[] handleWrongTypeError(Throwable ex) {
-      if (RespErrorUtil.isWrongTypeError(ex)) {
+      if (RespUtil.isWrongTypeError(ex)) {
          return null;
       }
       throw CompletableFutures.asCompletionException(ex);

@@ -7,11 +7,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -37,7 +35,7 @@ public class HINCRBYFLOAT extends RespCommand implements Resp3Command {
       EmbeddedMultimapPairCache<byte[], byte[], byte[]> multimap = handler.getHashMapMultimap();
       double delta = ArgumentUtils.toDouble(arguments.get(2));
       if (!ArgumentUtils.isFloatValid(delta)) {
-         RespErrorUtil.nanOrInfinity(handler.allocator());
+         handler.writer().nanOrInfinity();
          return handler.myStage();
       }
 
@@ -57,12 +55,12 @@ public class HINCRBYFLOAT extends RespCommand implements Resp3Command {
             return prev;
          }
       });
-      return handler.stageToReturn(cs, ctx, (res, alloc) -> {
+      return handler.stageToReturn(cs, ctx, (res, writer) -> {
          switch (status.get()) {
-            case NOT_A_FLOAT -> RespErrorUtil.customError("hash value is not a float", alloc);
-            case NAN_OR_INF -> RespErrorUtil.nanOrInfinity(alloc);
+            case NOT_A_FLOAT -> writer.customError("hash value is not a float");
+            case NAN_OR_INF -> writer.nanOrInfinity();
             // Yes, the double value return as a bulk string...
-            default -> Resp3Response.string(res, alloc);
+            default -> writer.string(res);
          }
       });
    }

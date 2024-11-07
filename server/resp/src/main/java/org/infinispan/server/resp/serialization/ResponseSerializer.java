@@ -3,8 +3,6 @@ package org.infinispan.server.resp.serialization;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
-import org.infinispan.server.resp.ByteBufPool;
-
 /**
  * Base interface for RESP3 serializers.
  *
@@ -15,7 +13,8 @@ import org.infinispan.server.resp.ByteBufPool;
  * </p>
  *
  * @param <T> The type of object to serialize.
+ * @param <O> The output object
  * @author José Bolina
  * @since 15.0
  */
-interface ResponseSerializer<T> extends BiConsumer<T, ByteBufPool>, Predicate<Object> { }
+public interface ResponseSerializer<T, O> extends BiConsumer<T, O>, Predicate<Object> { }

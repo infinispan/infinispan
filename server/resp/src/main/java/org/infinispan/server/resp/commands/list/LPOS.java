@@ -8,11 +8,9 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
 import org.infinispan.server.resp.serialization.Resp3Type;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -40,16 +38,16 @@ public class LPOS extends RespCommand implements Resp3Command {
 
       if (arguments.size() % 2 != 0 || arguments.size() > 8) {
          //(error) (arguments must come in pairs)
-         RespErrorUtil.syntaxError(handler.allocator());
+         handler.writer().syntaxError();
          return handler.myStage();
       }
 
       CompletionStage<?> cs = lposAndReturn(handler, ctx, arguments);
-      return handler.stageToReturn(cs, ctx, (res, buff) -> {
+      return handler.stageToReturn(cs, ctx, (res, writer) -> {
          if (res == handler) return;
 
-         if (res == null || res instanceof Long) Resp3Response.integers((Number) res, buff);
-         else Resp3Response.array((Collection<?>) res, buff, Resp3Type.INTEGER);
+         if (res == null || res instanceof Long) writer.integers((Number) res);
+         else writer.array((Collection<?>) res, Resp3Type.INTEGER);
       });
    }
 
@@ -70,32 +68,32 @@ public class LPOS extends RespCommand implements Resp3Command {
             case COUNT:
                count = argumentValue;
                if (count < 0) {
-                  RespErrorUtil.customError("COUNT can't be negative", handler.allocator());
+                  handler.writer().customError("COUNT can't be negative");
                   return handler.myStage();
                }
                break;
             case RANK:
                rank = argumentValue;
                if (rank == 0) {
-                  RespErrorUtil.customError("RANK can't be zero: use 1 to start from the first match, "
-                        + "2 from the second ... or use negative to start from the end of the list", handler.allocator());
+                  handler.writer().customError("RANK can't be zero: use 1 to start from the first match, "
+                        + "2 from the second ... or use negative to start from the end of the list");
                   return handler.myStage();
                }
                if (rank == Long.MIN_VALUE) {
-                  RespErrorUtil.customError("value is out of range, "
-                        + "value must between -9223372036854775807 and 9223372036854775807", handler.allocator());
+                  handler.writer().customError("value is out of range, "
+                        + "value must between -9223372036854775807 and 9223372036854775807");
                   return handler.myStage();
                }
                break;
             case MAXLEN:
                maxLen = argumentValue;
                if (maxLen < 0) {
-                  RespErrorUtil.customError("MAXLEN can't be negative", handler.allocator());
+                  handler.writer().customError("MAXLEN can't be negative");
                   return handler.myStage();
                }
                break;
             default:
-               RespErrorUtil.syntaxError(handler.allocator());
+               handler.writer().syntaxError();
                return handler.myStage();
          }
       }

@@ -24,7 +24,7 @@ public class SortedSetSubsetArgs<T> {
       this.count = builder.count;
    }
 
-   public static Builder create() {
+   public static <T> Builder<T> create() {
       return new Builder<>();
    }
 

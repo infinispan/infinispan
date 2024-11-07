@@ -12,7 +12,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -45,6 +45,6 @@ public class DEL extends RespCommand implements Resp3Command {
                   }
                }));
       }
-      return handler.stageToReturn(deleteStages.freeze(), ctx, Resp3Response.INTEGER);
+      return handler.stageToReturn(deleteStages.freeze(), ctx, ResponseWriter.INTEGER);
    }
 }

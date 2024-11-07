@@ -5,14 +5,12 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
-import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -24,9 +22,9 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class LSET extends RespCommand implements Resp3Command {
 
-   private static final BiConsumer<Boolean, ByteBufPool> RESPONSE_HANDLER = (result, buf) -> {
-      if (!result) RespErrorUtil.noSuchKey(buf);
-      else Resp3Response.ok(buf);
+   private static final BiConsumer<Boolean, ResponseWriter> RESPONSE_HANDLER = (result, writer) -> {
+      if (!result) writer.noSuchKey();
+      else writer.ok();
    };
 
    public LSET() {

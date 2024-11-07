@@ -11,7 +11,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -40,15 +40,15 @@ public class RENAMENX extends RespCommand implements Resp3Command {
          ChannelHandlerContext ctx) {
       if (Arrays.equals(srcKey, dstKey)) {
          // If src = dest return 0
-         return handler.stageToReturn(CompletableFuture.completedFuture(0L), ctx, Resp3Response.INTEGER);
+         return handler.stageToReturn(CompletableFuture.completedFuture(0L), ctx, ResponseWriter.INTEGER);
       }
 
       return CompletionStages.handleAndComposeAsync(handler.cache().containsKeyAsync(dstKey), (contains, t) -> {
          if (t != null) throw CompletableFutures.asCompletionException(t);
 
          return contains
-               ? handler.stageToReturn(CompletableFuture.completedFuture(0L), ctx, Resp3Response.INTEGER)
-               : RENAME.rename(handler, srcKey, dstKey, ctx, Resp3Response.INTEGER);
+               ? handler.stageToReturn(CompletableFuture.completedFuture(0L), ctx, ResponseWriter.INTEGER)
+               : RENAME.rename(handler, srcKey, dstKey, ctx, ResponseWriter.INTEGER);
       }, ctx.executor());
    }
 }

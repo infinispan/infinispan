@@ -5,7 +5,6 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.cluster.CLUSTER;
 
@@ -41,7 +40,7 @@ public abstract class FamilyCommand extends RespCommand implements Resp3Command 
             break;
          }
       }
-      RespErrorUtil.unknownCommand(handler.allocator());
+      handler.writer().unknownCommand();
       return handler.myStage();
    }
 

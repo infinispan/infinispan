@@ -1,7 +1,5 @@
 package org.infinispan.server.resp.serialization;
 
-import org.infinispan.server.resp.ByteBufPool;
-
 /**
  * Identifies the RESP3 type correspondent of a Java object.
  *
@@ -13,7 +11,7 @@ import org.infinispan.server.resp.ByteBufPool;
  *
  * <p>
  * The type only covers the primitive types in RESP. We do not include nested objects here. If a nested object is needed,
- * utilize the appropriate method in {@link Resp3Response} and provide a {@link JavaObjectSerializer} to serialize.
+ * utilize the appropriate method in {@link ResponseWriter} and provide a {@link JavaObjectSerializer} to serialize.
  * </p>
  *
  * @author José Bolina
@@ -23,49 +21,53 @@ public enum Resp3Type implements SerializationHint.SimpleHint {
    /**
     * Strings which do not contain any of the escape characters ('\n' or '\r').
     *
-    * @see Resp3Response#simpleString(CharSequence, ByteBufPool)
+    * @see ResponseWriter#simpleString(CharSequence)
     */
    SIMPLE_STRING {
       @Override
-      public void serialize(Object object, ByteBufPool alloc) {
-         Resp3Response.simpleString((CharSequence) object, alloc);
+      public void serialize(Object object, ResponseWriter writer) {
+         writer.simpleString((CharSequence) object);
       }
    },
 
    /**
     * Any type of string.
     *
-    * @see Resp3Response#string(byte[], ByteBufPool)
-    * @see Resp3Response#string(CharSequence, ByteBufPool)
+    * @see ResponseWriter#string(byte[])
+    * @see ResponseWriter#string(CharSequence)
     */
    BULK_STRING {
       @Override
-      public void serialize(Object object, ByteBufPool alloc) {
-         Resp3SerializerRegistry.serialize(object, alloc, PrimitiveSerializer.BULK_STRING_SERIALIZERS);
+      public void serialize(Object object, ResponseWriter writer) {
+         if (object instanceof byte[]) {
+            writer.string((byte[]) object);
+         } else {
+            writer.string((CharSequence) object);
+         }
       }
    },
 
    /**
     * Integer numbers represented by 64-bits.
     *
-    * @see Resp3Response#integers(Number, ByteBufPool)
+    * @see ResponseWriter#integers(Number)
     */
    INTEGER {
       @Override
-      public void serialize(Object object, ByteBufPool alloc) {
-         Resp3Response.integers((Number) object, alloc);
+      public void serialize(Object object, ResponseWriter writer) {
+         writer.integers((Number) object);
       }
    },
 
    /**
     * Rational numbers represented by float or double.
     *
-    * @see Resp3Response#doubles(Number, ByteBufPool)
+    * @see ResponseWriter#doubles(Number)
     */
    DOUBLE {
       @Override
-      public void serialize(Object object, ByteBufPool alloc) {
-         Resp3Response.doubles((Number) object, alloc);
+      public void serialize(Object object, ResponseWriter writer) {
+         writer.doubles((Number) object);
       }
    };
 
@@ -78,8 +80,8 @@ public enum Resp3Type implements SerializationHint.SimpleHint {
     * </p>
     *
     * @param object The element to serialize.
-    * @param alloc The allocator to utilize.
+    * @param writer The allocator to utilize.
     */
    @Override
-   public abstract void serialize(Object object, ByteBufPool alloc);
+   public abstract void serialize(Object object, ResponseWriter writer);
 }

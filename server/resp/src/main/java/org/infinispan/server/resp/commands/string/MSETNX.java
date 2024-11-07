@@ -10,11 +10,10 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.logging.Log;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -40,7 +39,7 @@ public class MSETNX extends RespCommand implements Resp3Command {
          ChannelHandlerContext ctx,
          List<byte[]> arguments) {
       if (arguments.size() < 2 || arguments.size() % 2 != 0) {
-         RespErrorUtil.wrongArgumentNumber(this, handler.allocator());
+         handler.writer().wrongArgumentNumber(this);
          return handler.myStage();
       }
       Log.SERVER.msetnxConsistencyMessage();
@@ -54,9 +53,9 @@ public class MSETNX extends RespCommand implements Resp3Command {
       var existingEntries = handler.cache().getAll(entriesWBA.keySet());
       if (existingEntries.isEmpty()) {
          return handler.stageToReturn(handler.cache().putAllAsync(entries).thenApply(v -> 1L), ctx,
-               Resp3Response.INTEGER);
+               ResponseWriter.INTEGER);
       }
       return handler
-            .stageToReturn(CompletableFuture.completedFuture(0L), ctx, Resp3Response.INTEGER);
+            .stageToReturn(CompletableFuture.completedFuture(0L), ctx, ResponseWriter.INTEGER);
    }
 }
