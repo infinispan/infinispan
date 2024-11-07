@@ -10,10 +10,9 @@ import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -37,7 +36,7 @@ public class MSET extends RespCommand implements Resp3Command {
       int keyValuePairCount = arguments.size();
       if ((keyValuePairCount & 1) == 1) {
          log.tracef("Received: %s count for keys and values combined, should be even for MSET", keyValuePairCount);
-         RespErrorUtil.customError("Missing a value for a key", handler.allocator());
+         handler.writer().customError("Missing a value for a key");
          return handler.myStage();
       }
       AggregateCompletionStage<Void> setStage = CompletionStages.aggregateCompletionStage();
@@ -46,6 +45,6 @@ public class MSET extends RespCommand implements Resp3Command {
          byte[] valueBytes = arguments.get(i + 1);
          setStage.dependsOn(handler.cache().putAsync(keyBytes, valueBytes));
       }
-      return handler.stageToReturn(setStage.freeze(), ctx, Resp3Response.OK);
+      return handler.stageToReturn(setStage.freeze(), ctx, ResponseWriter.OK);
    }
 }

@@ -10,7 +10,7 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.operation.SetOperation;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -39,6 +39,6 @@ public class SETNX extends RespCommand implements Resp3Command {
       // Despite the recommended command to replace, the return of SETNX is a boolean instead of an OK.
       CompletionStage<Integer> cs = SetOperation.performOperation(handler.cache(), List.of(key, value, NX_BYTES), handler.respServer().getTimeService(), getName())
             .thenApply(r -> r.isSuccess() ? 1 : 0);
-      return handler.stageToReturn(cs, ctx, Resp3Response.INTEGER);
+      return handler.stageToReturn(cs, ctx, ResponseWriter.INTEGER);
    }
 }

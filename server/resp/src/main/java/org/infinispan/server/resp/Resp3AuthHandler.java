@@ -27,8 +27,7 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
 
    @Override
    protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, RespCommand command, List<byte[]> arguments) {
-      if (command instanceof AuthResp3Command) {
-         AuthResp3Command authCommand = (AuthResp3Command) command;
+      if (command instanceof AuthResp3Command authCommand) {
          return authCommand.perform(this, ctx, arguments);
       }
 
@@ -87,7 +86,7 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
 
    private void handleUnauthorized(ChannelHandlerContext ctx) {
       assert ctx.channel().eventLoop().inEventLoop();
-      RespErrorUtil.unauthorized(allocatorToUse);
+      writer().unauthorized();
    }
 
    public boolean isAuthorized() {

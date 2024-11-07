@@ -24,10 +24,10 @@ import org.infinispan.server.resp.commands.pubsub.KeyChannelUtils;
 import org.infinispan.server.resp.commands.pubsub.RespCacheListener;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.server.resp.meta.ClientMetadata;
-import org.infinispan.server.resp.serialization.ByteBufferUtils;
-import org.infinispan.server.resp.serialization.Resp3Response;
 import org.infinispan.server.resp.serialization.Resp3Type;
 import org.infinispan.server.resp.serialization.RespConstants;
+import org.infinispan.server.resp.serialization.bytebuf.ByteBufResponseWriter;
+import org.infinispan.server.resp.serialization.bytebuf.ByteBufferUtils;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -82,7 +82,8 @@ public class SubscriberHandler extends CacheRespRequestHandler {
             // TODO: this is technically an issue with concurrent events before/after register/unregister message
             ByteBuf byteBuf = channel.alloc().buffer(byteSize, byteSize);
             ByteBufPool allocator = ignore -> byteBuf;
-            Resp3Response.array(List.of(PubSubEvents.MESSAGE, key, value), allocator, Resp3Type.BULK_STRING);
+            ByteBufResponseWriter w = new ByteBufResponseWriter(allocator);
+            w.array(List.of(PubSubEvents.MESSAGE, key, value), Resp3Type.BULK_STRING);
             assert byteBuf.writerIndex() == byteSize;
             // TODO: add some back pressure? - something like ClientListenerRegistry?
             channel.writeAndFlush(byteBuf, channel.voidPromise());
@@ -125,8 +126,7 @@ public class SubscriberHandler extends CacheRespRequestHandler {
    @Override
    protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, RespCommand command, List<byte[]> arguments) {
       initializeIfNecessary(ctx);
-      if (command instanceof PubSubResp3Command) {
-         PubSubResp3Command pubSubsCommand = (PubSubResp3Command) command;
+      if (command instanceof PubSubResp3Command pubSubsCommand) {
          return pubSubsCommand.perform(this, ctx, arguments);
       }
       return super.actualHandleRequest(ctx, command, arguments);
@@ -183,12 +183,10 @@ public class SubscriberHandler extends CacheRespRequestHandler {
          for (byte[] keyChannel : keyChannels) {
             counter = Math.max(0, counter + (isSubscribe ? 1 : -1));
             long c = counter;
-            Resp3Response.write(alloc, (ignore, a) -> {
-               ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, 3, a);
-               Resp3Response.string(type, a);
-               Resp3Response.string(keyChannel, a);
-               Resp3Response.integers(c, a);
-            });
+            writer.writeNumericPrefix(RespConstants.ARRAY, 3);
+            writer.string(type);
+            writer.string(keyChannel);
+            writer.integers(c);
          }
 
          if (counter == 0) {

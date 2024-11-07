@@ -10,7 +10,6 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -37,7 +36,7 @@ class NUMPAT extends RespCommand implements Resp3Command {
             .filter(Objects::nonNull)
             .filter(PUBSUB.deduplicate())
             .count();
-      Resp3Response.integers(patterns, handler.allocator());
+      handler.writer().integers(patterns);
       return handler.myStage();
    }
 }

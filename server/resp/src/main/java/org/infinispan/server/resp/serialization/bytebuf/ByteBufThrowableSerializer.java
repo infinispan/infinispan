@@ -1,26 +1,28 @@
-package org.infinispan.server.resp.serialization;
+package org.infinispan.server.resp.serialization.bytebuf;
 
 import java.util.function.Consumer;
 
 import org.infinispan.server.resp.ByteBufPool;
-import org.infinispan.server.resp.RespErrorUtil;
+import org.infinispan.server.resp.serialization.ResponseSerializer;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 /**
  * Transform a Java throwable into a RESP3 error message.
  *
  * @author José Bolina
  */
-final class ThrowableSerializer implements ResponseSerializer<Throwable> {
-   static final ThrowableSerializer INSTANCE = new ThrowableSerializer();
+final class ByteBufThrowableSerializer implements ResponseSerializer<Throwable, ByteBufPool> {
+   static final ByteBufThrowableSerializer INSTANCE = new ByteBufThrowableSerializer();
    private static final String DEFAULT_ERROR_MESSAGE = "failed handling command";
 
    @Override
    public void accept(Throwable throwable, ByteBufPool alloc) {
-      Consumer<ByteBufPool> writer = RespErrorUtil.handleException(throwable);
+      ByteBufResponseWriter w = new ByteBufResponseWriter(alloc);
+      Consumer<ResponseWriter> writer = ResponseWriter.handleException(throwable);
       if (writer != null) {
-         writer.accept(alloc);
+         writer.accept(w);
       } else {
-         Resp3Response.error("-ERR " + extractRootCauseMessage(throwable), alloc);
+         w.error("-ERR " + extractRootCauseMessage(throwable));
       }
    }
 

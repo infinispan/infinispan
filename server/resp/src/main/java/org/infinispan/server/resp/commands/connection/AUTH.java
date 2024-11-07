@@ -5,10 +5,8 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.server.resp.Resp3AuthHandler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.AuthResp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -37,8 +35,8 @@ public class AUTH extends RespCommand implements AuthResp3Command {
       if (next == null)
          return prev;
 
-      if (!success) RespErrorUtil.unauthorized(prev.allocator());
-      else Resp3Response.ok(prev.allocator());
+      if (!success) prev.writer().unauthorized();
+      else prev.writer().ok();
       return next;
    }
 
@@ -48,7 +46,7 @@ public class AUTH extends RespCommand implements AuthResp3Command {
       try {
          return prev.respServer().newHandler(prev.cache());
       } catch (SecurityException ignore) {
-         RespErrorUtil.unauthorized(prev.allocator());
+         prev.writer().unauthorized();
          return null;
       }
    }

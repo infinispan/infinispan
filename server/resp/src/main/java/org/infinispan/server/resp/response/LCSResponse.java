@@ -3,15 +3,13 @@ package org.infinispan.server.resp.response;
 import java.util.ArrayList;
 import java.util.function.BiConsumer;
 
-import org.infinispan.server.resp.ByteBufPool;
-import org.infinispan.server.resp.serialization.ByteBufferUtils;
 import org.infinispan.server.resp.serialization.JavaObjectSerializer;
-import org.infinispan.server.resp.serialization.Resp3Response;
 import org.infinispan.server.resp.serialization.RespConstants;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 public class LCSResponse {
-   public static final BiConsumer<LCSResponse, ByteBufPool> SERIALIZER = (res, alloc) ->
-         Resp3Response.write(res, alloc, LcsResponseSerializer.INSTANCE);
+   public static final BiConsumer<LCSResponse, ResponseWriter> SERIALIZER = (res, writer) ->
+         writer.write(res, LcsResponseSerializer.INSTANCE);
 
    public ArrayList<long[]> idx;
    public byte[] lcs;
@@ -24,44 +22,44 @@ public class LCSResponse {
       private static final byte[] LEN = { 'l', 'e', 'n' };
 
       @Override
-      public void accept(LCSResponse res, ByteBufPool alloc) {
+      public void accept(LCSResponse res, ResponseWriter writer) {
          // If lcs present, return a bulk_string
          if (res.lcs != null) {
-            Resp3Response.string(res.lcs, alloc);
+            writer.string(res.lcs);
             return;
          }
 
          // If idx is null then it's a justLen command, return a long
          if (res.idx == null) {
-            Resp3Response.integers(res.len, alloc);
+            writer.integers(res.len);
             return;
          }
 
          // LCS client library for tests assume the keys in this order.
-         ByteBufferUtils.writeNumericPrefix(RespConstants.MAP, 2, alloc);
+         writer.writeNumericPrefix(RespConstants.MAP, 2);
 
-         Resp3Response.string(MATCHES, alloc);
-         ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, res.idx.size(), alloc);
+         writer.string(MATCHES);
+         writer.writeNumericPrefix(RespConstants.ARRAY, res.idx.size());
          for (long[] match : res.idx) {
             int size = match.length > 4 ? 3 : 2;
 
-            ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, size, alloc);
+            writer.writeNumericPrefix(RespConstants.ARRAY, size);
 
-            ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, 2, alloc);
-            Resp3Response.integers(match[0], alloc);
-            Resp3Response.integers(match[1], alloc);
+            writer.writeNumericPrefix(RespConstants.ARRAY, 2);
+            writer.integers(match[0]);
+            writer.integers(match[1]);
 
-            ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, 2, alloc);
-            Resp3Response.integers(match[2], alloc);
-            Resp3Response.integers(match[3], alloc);
+            writer.writeNumericPrefix(RespConstants.ARRAY, 2);
+            writer.integers(match[2]);
+            writer.integers(match[3]);
 
             if (match.length > 4) {
-               Resp3Response.integers(match[4], alloc);
+               writer.integers(match[4]);
             }
          }
 
-         Resp3Response.string(LEN, alloc);
-         Resp3Response.integers(res.len, alloc);
+         writer.string(LEN);
+         writer.integers(res.len);
       }
    }
 }

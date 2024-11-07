@@ -7,7 +7,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -31,6 +31,6 @@ public class GETDEL extends RespCommand implements Resp3Command {
                                                       List<byte[]> arguments) {
       byte[] keyBytes = arguments.get(0);
 
-      return handler.stageToReturn(handler.cache().removeAsync(keyBytes), ctx, Resp3Response.BULK_STRING_BYTES);
+      return handler.stageToReturn(handler.cache().removeAsync(keyBytes), ctx, ResponseWriter.BULK_STRING_BYTES);
    }
 }

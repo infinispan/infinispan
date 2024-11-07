@@ -13,7 +13,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -39,7 +39,7 @@ public class SUNION extends RespCommand implements Resp3Command {
       return handler.stageToReturn(
             allEntries.thenApply(sets -> union(sets.values())),
             ctx,
-            Resp3Response.SET_BULK_STRING);
+            ResponseWriter.SET_BULK_STRING);
    }
 
    public static Set<byte[]> union(Collection<SetBucket<byte[]>> sets) {

@@ -9,7 +9,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -32,6 +32,6 @@ public class TOUCH extends RespCommand implements Resp3Command {
             k -> handler.cache().touch(k, false),
             Collectors.summingLong(touched -> touched ? 1 : 0));
 
-      return handler.stageToReturn(totalTouchCount, ctx, Resp3Response.INTEGER);
+      return handler.stageToReturn(totalTouchCount, ctx, ResponseWriter.INTEGER);
    }
 }

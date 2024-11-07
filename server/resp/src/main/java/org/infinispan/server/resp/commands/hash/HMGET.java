@@ -14,7 +14,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -43,7 +43,7 @@ public class HMGET extends RespCommand implements Resp3Command {
                }
                return result;
             });
-      return handler.stageToReturn(cs, ctx, Resp3Response.ARRAY_BULK_STRING);
+      return handler.stageToReturn(cs, ctx, ResponseWriter.ARRAY_BULK_STRING);
    }
 
    private Map<WrappedByteArray, byte[]> wrapKeys(Map<byte[], byte[]> original) {

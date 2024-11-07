@@ -7,12 +7,10 @@ import org.infinispan.commons.util.Version;
 import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.resp.Resp3AuthHandler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.AuthResp3Command;
-import org.infinispan.server.resp.serialization.ByteBufferUtils;
-import org.infinispan.server.resp.serialization.Resp3Response;
 import org.infinispan.server.resp.serialization.RespConstants;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.CharsetUtil;
@@ -36,7 +34,7 @@ import io.netty.util.CharsetUtil;
  */
 public class HELLO extends RespCommand implements AuthResp3Command {
    public HELLO() {
-      super(-1, 0, 0,0);
+      super(-1, 0, 0, 0);
    }
 
    @Override
@@ -48,7 +46,7 @@ public class HELLO extends RespCommand implements AuthResp3Command {
       byte[] respProtocolBytes = arguments.get(0);
       String version = new String(respProtocolBytes, CharsetUtil.UTF_8);
       if (!version.equals("3")) {
-         RespErrorUtil.customRawError("-NOPROTO sorry this protocol version is not supported", handler.allocator());
+         handler.writer().error("-NOPROTO sorry this protocol version is not supported");
          return handler.myStage();
       }
 
@@ -60,7 +58,7 @@ public class HELLO extends RespCommand implements AuthResp3Command {
          // In case authentication is enabled, HELLO must provide the additional arguments to perform the authentication.
          // A similar behavior of running with `--requirepass <password>`.
          if (!handler.isAuthorized()) {
-            RespErrorUtil.customRawError("-NOAUTH HELLO must be called with the client already authenticated, otherwise the HELLO <proto> AUTH <user> <pass> option can be used to authenticate the client and select the RESP protocol version at the same time", handler.allocator());
+            handler.writer().error("-NOAUTH HELLO must be called with the client already authenticated, otherwise the HELLO <proto> AUTH <user> <pass> option can be used to authenticate the client and select the RESP protocol version at the same time");
          } else {
             helloResponse(handler, ctx);
          }
@@ -73,7 +71,7 @@ public class HELLO extends RespCommand implements AuthResp3Command {
                return handler;
 
             if (success) helloResponse(handler, ctx);
-            else RespErrorUtil.unauthorized(handler.allocator());
+            else handler.writer().unauthorized();
             return next;
          });
       }
@@ -88,29 +86,29 @@ public class HELLO extends RespCommand implements AuthResp3Command {
       ConnectionMetadata metadata = ConnectionMetadata.getInstance(ctx.channel());
 
       // Map mixes different types.
-      Resp3Response.write(handler.allocator(), (ignore, alloc) -> {
-         ByteBufferUtils.writeNumericPrefix(RespConstants.MAP, 7, alloc);
+      ResponseWriter writer = handler.writer();
 
-         Resp3Response.simpleString("server", alloc);
-         Resp3Response.simpleString("Infinispan RESP", alloc);
+      writer.writeNumericPrefix(RespConstants.MAP, 7);
 
-         Resp3Response.simpleString("version", alloc);
-         Resp3Response.simpleString(versionString, alloc);
+      writer.simpleString("server");
+      writer.simpleString("Infinispan RESP");
 
-         Resp3Response.simpleString("proto", alloc);
-         Resp3Response.integers(3, alloc);
+      writer.simpleString("version");
+      writer.simpleString(versionString);
 
-         Resp3Response.simpleString("id", alloc);
-         Resp3Response.integers(metadata.id(), alloc);
+      writer.simpleString("proto");
+      writer.integers(3);
 
-         Resp3Response.simpleString("mode", alloc);
-         Resp3Response.simpleString("cluster", alloc);
+      writer.simpleString("id");
+      writer.integers(metadata.id());
 
-         Resp3Response.simpleString("role", alloc);
-         Resp3Response.simpleString("master", alloc);
+      writer.simpleString("mode");
+      writer.simpleString("cluster");
 
-         Resp3Response.simpleString("modules", alloc);
-         Resp3Response.arrayEmpty(alloc);
-      });
+      writer.simpleString("role");
+      writer.simpleString("master");
+
+      writer.simpleString("modules");
+      writer.arrayEmpty();
    }
 }

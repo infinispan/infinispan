@@ -8,7 +8,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -31,6 +31,6 @@ public class HSTRLEN extends RespCommand implements Resp3Command {
       EmbeddedMultimapPairCache<byte[], byte[], byte[]> hashMap = handler.getHashMapMultimap();
 
       return handler.stageToReturn(
-            hashMap.get(arguments.get(0), arguments.get(1)).thenApply(v -> v == null ? 0 : v.length), ctx, Resp3Response.INTEGER);
+            hashMap.get(arguments.get(0), arguments.get(1)).thenApply(v -> v == null ? 0 : v.length), ctx, ResponseWriter.INTEGER);
    }
 }

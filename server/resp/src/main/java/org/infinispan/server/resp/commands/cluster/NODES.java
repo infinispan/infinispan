@@ -23,11 +23,10 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.RespServer;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.infinispan.topology.CacheTopology;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -63,7 +62,7 @@ public class NODES extends RespCommand implements Resp3Command {
       AdvancedCache<?, ?> respCache = handler.cache();
       DistributionManager dm = respCache.getDistributionManager();
       if (dm == null) {
-         RespErrorUtil.customError("This instance has cluster support disabled", handler.allocator());
+         handler.writer().customError("This instance has cluster support disabled");
          return handler.myStage();
       }
 
@@ -71,7 +70,7 @@ public class NODES extends RespCommand implements Resp3Command {
       ConsistentHash currentCH = topology.getCurrentCH();
 
       if (currentCH == null) {
-         RespErrorUtil.customError("No consistent hash available", handler.allocator());
+         handler.writer().customError("No consistent hash available");
          return handler.myStage();
       }
 
@@ -83,7 +82,7 @@ public class NODES extends RespCommand implements Resp3Command {
          }
       }
 
-      return handler.stageToReturn(response, ctx, Resp3Response.BULK_STRING);
+      return handler.stageToReturn(response, ctx, ResponseWriter.BULK_STRING);
    }
 
    protected static CompletionStage<CharSequence> requestClusterInformation(Resp3Handler handler, ChannelHandlerContext ctx,

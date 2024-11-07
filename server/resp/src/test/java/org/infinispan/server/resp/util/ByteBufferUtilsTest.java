@@ -2,7 +2,7 @@ package org.infinispan.server.resp.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.infinispan.server.resp.serialization.ByteBufferUtils;
+import org.infinispan.server.resp.serialization.bytebuf.ByteBufferUtils;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "resp.util.ByteBufferUtilsTest")

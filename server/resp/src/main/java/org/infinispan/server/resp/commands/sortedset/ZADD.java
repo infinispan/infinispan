@@ -12,11 +12,10 @@ import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.multimap.impl.SortedSetAddArgs;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -68,9 +67,9 @@ public class ZADD extends RespCommand implements Resp3Command {
          sortedSetAddArgs = addManyArgs.build();
       } catch (IllegalArgumentException ex) {
          if (ex.getMessage().equals(ADD_AND_UPDATE_ONLY_INCOMPATIBLE_ERROR)) {
-            RespErrorUtil.customError("XX and NX options at the same time are not compatible", handler.allocator());
+            handler.writer().customError("XX and NX options at the same time are not compatible");
          } else {
-            RespErrorUtil.customError("GT, LT, and/or NX options at the same time are not compatible", handler.allocator());
+            handler.writer().customError("GT, LT, and/or NX options at the same time are not compatible");
          }
          return handler.myStage();
       }
@@ -78,13 +77,13 @@ public class ZADD extends RespCommand implements Resp3Command {
       // Validate scores and values in pairs. We need at least 1 pair
       if (((arguments.size() - pos) == 0) || (arguments.size() - pos) % 2 != 0) {
          // Scores and Values come in pairs
-         RespErrorUtil.syntaxError(handler.allocator());
+         handler.writer().syntaxError();
          return handler.myStage();
       }
 
       int count = (arguments.size() - pos) / 2;
       if (sortedSetAddArgs.incr && count > 1) {
-         RespErrorUtil.customError("INCR option supports a single increment-element pair", handler.allocator());
+         handler.writer().customError("INCR option supports a single increment-element pair");
          return handler.myStage();
       }
 
@@ -95,7 +94,7 @@ public class ZADD extends RespCommand implements Resp3Command {
             score = ArgumentUtils.toDouble(arguments.get(pos++));
          } catch (NumberFormatException e) {
             // validate number format
-            RespErrorUtil.valueNotAValidFloat(handler.allocator());
+            handler.writer().valueNotAValidFloat();
             return handler.myStage();
          }
          byte[] value = arguments.get(pos++);
@@ -104,10 +103,10 @@ public class ZADD extends RespCommand implements Resp3Command {
 
       if (sortedSetAddArgs.incr) {
          return handler.stageToReturn(sortedSetCache.incrementScore(name, scoredValues.get(0).score(), scoredValues.get(0).getValue(), sortedSetAddArgs),
-               ctx, Resp3Response.DOUBLE);
+               ctx, ResponseWriter.DOUBLE);
       }
 
-      return handler.stageToReturn(sortedSetCache.addMany(name, scoredValues, sortedSetAddArgs), ctx, Resp3Response.INTEGER);
+      return handler.stageToReturn(sortedSetCache.addMany(name, scoredValues, sortedSetAddArgs), ctx, ResponseWriter.INTEGER);
    }
 
    private void parseArgument(SortedSetAddArgs.Builder addManyArgs, String argument) {

@@ -20,18 +20,15 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.transport.NettyTransport;
-import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.RespServer;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.ByteBufferUtils;
 import org.infinispan.server.resp.serialization.JavaObjectSerializer;
-import org.infinispan.server.resp.serialization.Resp3Response;
 import org.infinispan.server.resp.serialization.Resp3Type;
 import org.infinispan.server.resp.serialization.RespConstants;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.infinispan.topology.CacheTopology;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -52,10 +49,10 @@ import net.jcip.annotations.GuardedBy;
  */
 public class SLOTS extends RespCommand implements Resp3Command {
 
-   private static final BiConsumer<List<SlotInformation>, ByteBufPool> SERIALIZER = (res, alloc) -> {
-      ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, res.size(), alloc);
+   private static final BiConsumer<List<SlotInformation>, ResponseWriter> SERIALIZER = (res, writer) -> {
+      writer.writeNumericPrefix(RespConstants.ARRAY, res.size());
       for (SlotInformation si : res) {
-         Resp3Response.write(si, alloc, si);
+         writer.write(si, si);
       }
    };
 
@@ -74,7 +71,7 @@ public class SLOTS extends RespCommand implements Resp3Command {
       AdvancedCache<?, ?> respCache = handler.cache();
       DistributionManager dm = respCache.getDistributionManager();
       if (dm == null) {
-         RespErrorUtil.customError("This instance has cluster support disabled", handler.allocator());
+         handler.writer().customError("This instance has cluster support disabled");
          return handler.myStage();
       }
 
@@ -82,7 +79,7 @@ public class SLOTS extends RespCommand implements Resp3Command {
       ConsistentHash hash = topology.getCurrentCH();
 
       if (hash == null) {
-         RespErrorUtil.customError("No consistent hash available", handler.allocator());
+         handler.writer().customError("No consistent hash available");
          return handler.myStage();
       }
 
@@ -176,26 +173,26 @@ public class SLOTS extends RespCommand implements Resp3Command {
    private record SlotInformation(int start, int end, List<NodeInformation> info) implements JavaObjectSerializer<SlotInformation> {
 
       @Override
-      public void accept(SlotInformation si, ByteBufPool alloc) {
+      public void accept(SlotInformation si, ResponseWriter writer) {
          int size = 2 + si.info.size();
-         ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, size, alloc);
+         writer.writeNumericPrefix(RespConstants.ARRAY, size);
 
-         Resp3Response.integers(si.start(), alloc);
-         Resp3Response.integers(si.end(), alloc);
+         writer.integers(si.start());
+         writer.integers(si.end());
          for (NodeInformation ni : si.info) {
-            Resp3Response.write(ni, alloc, ni);
+            writer.write(ni, ni);
          }
       }
    }
 
    private record NodeInformation(String host, Integer port, String name, List<String> metadata) implements JavaObjectSerializer<NodeInformation> {
       @Override
-      public void accept(NodeInformation ignore, ByteBufPool alloc) {
-         ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, 4, alloc);
-         Resp3Response.string(host, alloc);
-         Resp3Response.integers(port, alloc);
-         Resp3Response.string(name, alloc);
-         Resp3Response.array(metadata, alloc, Resp3Type.BULK_STRING);
+      public void accept(NodeInformation ignore, ResponseWriter writer) {
+         writer.writeNumericPrefix(RespConstants.ARRAY, 4);
+         writer.string(host);
+         writer.integers(port);
+         writer.string(name);
+         writer.array(metadata, Resp3Type.BULK_STRING);
       }
 
       private static NodeInformation create(List<Object> values) {

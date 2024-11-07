@@ -16,10 +16,9 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.ByteBufferUtils;
-import org.infinispan.server.resp.serialization.Resp3Response;
 import org.infinispan.server.resp.serialization.Resp3Type;
 import org.infinispan.server.resp.serialization.RespConstants;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.infinispan.util.concurrent.BlockingManager;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -80,7 +79,7 @@ public abstract class BaseIterationCommand extends RespCommand implements Resp3C
          emptyIterationResponse(handler);
       } else {
          if (!writeCursor()) {
-            Resp3Response.array(writeResponse(result.getEntries()), handler.allocator(), Resp3Type.BULK_STRING);
+            handler.writer().array(writeResponse(result.getEntries()), Resp3Type.BULK_STRING);
             return;
          }
 
@@ -93,11 +92,10 @@ public abstract class BaseIterationCommand extends RespCommand implements Resp3C
             replyCursor = cursor;
          }
          // Array mixes bulk string and arrays.
-         Resp3Response.write(handler.allocator(), (res, alloc) -> {
-            ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, 2, alloc);
-            Resp3Response.string(replyCursor, alloc);
-            Resp3Response.array(writeResponse(result.getEntries()), alloc, Resp3Type.BULK_STRING);
-         });
+         ResponseWriter writer = handler.writer();
+         writer.writeNumericPrefix(RespConstants.ARRAY, 2);
+         writer.string(replyCursor);
+         writer.array(writeResponse(result.getEntries()), Resp3Type.BULK_STRING);
       }
    }
 
@@ -107,11 +105,10 @@ public abstract class BaseIterationCommand extends RespCommand implements Resp3C
 
    private void emptyIterationResponse(Resp3Handler handler) {
       // Array mixes a bulk string at first position and an array.
-      Resp3Response.write(handler.allocator(), (res, alloc) -> {
-         ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, 2, alloc);
-         Resp3Response.string(INITIAL_CURSOR, alloc);
-         Resp3Response.arrayEmpty(alloc);
-      });
+      ResponseWriter writer = handler.writer();
+      writer.writeNumericPrefix(RespConstants.ARRAY, 2);
+      writer.string(INITIAL_CURSOR);
+      writer.arrayEmpty();
    }
 
    protected boolean writeCursor() {

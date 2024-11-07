@@ -5,8 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.infinispan.server.resp.Resp3Handler;
-import org.infinispan.server.resp.RespErrorUtil;
-import org.infinispan.server.resp.Util;
+import org.infinispan.server.resp.RespUtil;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 
 /**
@@ -27,7 +26,7 @@ public class BLMPOP extends AbstractBlockingPop {
    PopConfiguration parseArguments(Resp3Handler handler, List<byte[]> arguments) {
       double timeout = ArgumentUtils.toDouble(arguments.get(0));
       if (timeout < 0) {
-         RespErrorUtil.mustBePositive(handler.allocator(), "timeout");
+         handler.writer().mustBePositive("timeout");
          return null;
       }
 
@@ -43,7 +42,7 @@ public class BLMPOP extends AbstractBlockingPop {
          count = ArgumentUtils.toInt(arguments.get(++additionalArgs));
 
          if (count <= 0) {
-            RespErrorUtil.mustBePositive(handler.allocator(), "count");
+            handler.writer().mustBePositive("count");
             return null;
          }
       }
@@ -52,10 +51,10 @@ public class BLMPOP extends AbstractBlockingPop {
    }
 
    private boolean isHead(byte[] bytes) {
-      if (Util.isAsciiBytesEquals(LEFT, bytes))
+      if (RespUtil.isAsciiBytesEquals(LEFT, bytes))
          return true;
 
-      if (!Util.isAsciiBytesEquals(RIGHT, bytes))
+      if (!RespUtil.isAsciiBytesEquals(RIGHT, bytes))
          throw new IllegalArgumentException("Unknown argument: " + Arrays.toString(bytes));
 
       return false;

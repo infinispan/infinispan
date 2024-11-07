@@ -41,7 +41,7 @@ package org.infinispan.server.resp.serialization;
  *           of T and subclasses.
  */
 @FunctionalInterface
-public interface JavaObjectSerializer<T> extends ResponseSerializer<T> {
+public interface JavaObjectSerializer<T> extends ResponseSerializer<T, ResponseWriter> {
 
    @Override
    default boolean test(Object object) {

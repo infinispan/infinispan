@@ -14,7 +14,7 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.operation.GetexOperation;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -36,10 +36,10 @@ public class GETEX extends RespCommand implements Resp3Command {
       if (arguments.size() > 1) {
          return handler
                .stageToReturn(performOperation(handler.cache(), arguments, handler.respServer().getTimeService()), ctx,
-                     Resp3Response.BULK_STRING_BYTES);
+                     ResponseWriter.BULK_STRING_BYTES);
       }
       byte[] keyBytes = arguments.get(0);
-      return handler.stageToReturn(handler.cache().getAsync(keyBytes), ctx, Resp3Response.BULK_STRING_BYTES);
+      return handler.stageToReturn(handler.cache().getAsync(keyBytes), ctx, ResponseWriter.BULK_STRING_BYTES);
    }
 
    private static CompletionStage<byte[]> performOperation(AdvancedCache<byte[], byte[]> cache,

@@ -4,7 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.server.resp.Util;
+import org.infinispan.server.resp.RespUtil;
 
 public enum RespExpiration {
    EX {
@@ -41,7 +41,7 @@ public enum RespExpiration {
 
    public static RespExpiration valueOf(byte[] type) {
       if (type.length == 2) {
-         if (!Util.caseInsensitiveAsciiCheck('X', type[1]))
+         if (!RespUtil.caseInsensitiveAsciiCheck('X', type[1]))
             throw new IllegalArgumentException("Invalid expiration type");
 
          switch (type[0]) {
@@ -55,8 +55,8 @@ public enum RespExpiration {
       }
 
       if (type.length == 4) {
-         if (Util.isAsciiBytesEquals(EXAT_BYTES, type)) return EXAT;
-         if (Util.isAsciiBytesEquals(PXAT_BYTES, type)) return PXAT;
+         if (RespUtil.isAsciiBytesEquals(EXAT_BYTES, type)) return EXAT;
+         if (RespUtil.isAsciiBytesEquals(PXAT_BYTES, type)) return PXAT;
       }
 
       throw new IllegalArgumentException("Invalid expiration type");

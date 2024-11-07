@@ -1,22 +1,24 @@
-package org.infinispan.server.resp.serialization;
+package org.infinispan.server.resp.serialization.bytebuf;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 
 import org.infinispan.server.resp.ByteBufPool;
+import org.infinispan.server.resp.serialization.RespConstants;
+import org.infinispan.server.resp.serialization.ResponseSerializer;
 
 /**
  * Represent signed integer values outside the 64-bit interval.
  *
  * <p>
- * Similar to {@link PrimitiveSerializer.IntegerSerializer}, but the prefix is the left parenthesis.
+ * Similar to {@link ByteBufPrimitiveSerializer.IntegerSerializer}, but the prefix is the left parenthesis.
  * </p>
  *
  * @since 15.0
  * @author José Bolina
  */
-final class BigNumberSerializer implements ResponseSerializer<BigInteger> {
-   static final BigNumberSerializer INSTANCE = new BigNumberSerializer();
+final class ByteBufBigNumberSerializer implements ResponseSerializer<BigInteger, ByteBufPool> {
+   static final ByteBufBigNumberSerializer INSTANCE = new ByteBufBigNumberSerializer();
 
    @Override
    public void accept(BigInteger bigInteger, ByteBufPool alloc) {

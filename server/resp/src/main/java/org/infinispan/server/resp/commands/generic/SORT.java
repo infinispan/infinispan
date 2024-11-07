@@ -21,12 +21,11 @@ import org.infinispan.multimap.impl.SortableBucket;
 import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
-import org.infinispan.server.resp.Util;
+import org.infinispan.server.resp.RespUtil;
 import org.infinispan.server.resp.commands.LimitArgument;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -80,18 +79,18 @@ public class SORT extends RespCommand implements Resp3Command {
                break;
             case STORE:
                if (readonly) {
-                  RespErrorUtil.syntaxError(handler.allocator());
+                  handler.writer().syntaxError();
                   return handler.myStage();
                }
                if (pos >= arguments.size()) {
-                  RespErrorUtil.syntaxError(handler.allocator());
+                  handler.writer().syntaxError();
                   return handler.myStage();
                }
                destination = arguments.get(pos++);
                break;
             case BY:
                if (pos >= arguments.size()) {
-                  RespErrorUtil.syntaxError(handler.allocator());
+                  handler.writer().syntaxError();
                   return handler.myStage();
                }
                pattern = new String(arguments.get(pos++));
@@ -108,14 +107,14 @@ public class SORT extends RespCommand implements Resp3Command {
             }
             case GET: {
                if (pos >= arguments.size()) {
-                  RespErrorUtil.syntaxError(handler.allocator());
+                  handler.writer().syntaxError();
                   return handler.myStage();
                }
                getObjectsPatterns.add(new String(arguments.get(pos++)));
                break;
             }
             default:
-               RespErrorUtil.syntaxError(handler.allocator());
+               handler.writer().syntaxError();
                return handler.myStage();
          }
       }
@@ -160,7 +159,7 @@ public class SORT extends RespCommand implements Resp3Command {
             return storeV(handler, ctx, destination, resultingList);
          }
 
-         return handler.stageToReturn(resultingList, ctx, Resp3Response.ARRAY_BULK_STRING);
+         return handler.stageToReturn(resultingList, ctx, ResponseWriter.ARRAY_BULK_STRING);
       }
 
       // STORE
@@ -170,12 +169,12 @@ public class SORT extends RespCommand implements Resp3Command {
 
       CompletionStage<Collection<byte[]>> cs = sortedCollection
             .thenApply(res -> res.stream().map(ScoredValue::getValue).toList());
-      return handler.stageToReturn(cs, ctx, Resp3Response.ARRAY_BULK_STRING);
+      return handler.stageToReturn(cs, ctx, ResponseWriter.ARRAY_BULK_STRING);
    }
 
    private static byte[] computePatternKey(String pattern, int index, byte[] value) {
       String computedKey =
-            pattern.substring(0, index) + Util.ascii(value) + pattern.substring(index + 1);
+            pattern.substring(0, index) + RespUtil.ascii(value) + pattern.substring(index + 1);
       return computedKey.getBytes(StandardCharsets.US_ASCII);
    }
 
@@ -185,7 +184,7 @@ public class SORT extends RespCommand implements Resp3Command {
                                                      CompletionStage<List<byte[]>> resultingList) {
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
       CompletionStage<Long> cs = resultingList.thenCompose(values -> listMultimap.replace(destination, values));
-      return handler.stageToReturn(cs, ctx, Resp3Response.INTEGER);
+      return handler.stageToReturn(cs, ctx, ResponseWriter.INTEGER);
    }
 
    private CompletionStage<RespRequestHandler> store(Resp3Handler handler,
@@ -195,7 +194,7 @@ public class SORT extends RespCommand implements Resp3Command {
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
       CompletionStage<Long> cs = sortedList.thenCompose(values ->
             listMultimap.replace(destination, values.stream().map(ScoredValue::getValue).collect(Collectors.toList())));
-      return handler.stageToReturn(cs, ctx, Resp3Response.INTEGER);
+      return handler.stageToReturn(cs, ctx, ResponseWriter.INTEGER);
    }
 
    private CompletionStage<List<ScoredValue<byte[]>>> retrieveExternal(Resp3Handler handler, SortableBucket<byte[]> bucket, String pattern, SortableBucket.SortOptions sortOptions) {

@@ -26,13 +26,12 @@ import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.server.resp.ExternalizerIds;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.commands.TransactionResp3Command;
 import org.infinispan.server.resp.filter.EventListenerKeysFilter;
 import org.infinispan.server.resp.meta.ClientMetadata;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.infinispan.server.resp.tx.RespTransactionHandler;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -78,12 +77,12 @@ public class WATCH extends RespCommand implements Resp3Command, TransactionResp3
                metadata.incrementWatchingClients();
                metadata.recordWatchedKeys(keys.length);
             });
-      return handler.stageToReturn(cs, ctx, Resp3Response.OK);
+      return handler.stageToReturn(cs, ctx, ResponseWriter.OK);
    }
 
    @Override
    public CompletionStage<RespRequestHandler> perform(RespTransactionHandler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
-      RespErrorUtil.customError("WATCH inside MULTI is not allowed", handler.allocator());
+      handler.writer().customError("WATCH inside MULTI is not allowed");
       return handler.myStage();
    }
 

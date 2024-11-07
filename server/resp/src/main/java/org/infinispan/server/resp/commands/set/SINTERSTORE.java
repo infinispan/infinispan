@@ -11,7 +11,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -42,6 +42,6 @@ public class SINTERSTORE extends RespCommand implements Resp3Command {
       return handler.stageToReturn(
             allEntries.thenCompose(sets -> handler.getEmbeddedSetCache().set(destination, SINTER.intersect(sets.values(), 0))),
             ctx,
-            Resp3Response.INTEGER);
+            ResponseWriter.INTEGER);
    }
 }

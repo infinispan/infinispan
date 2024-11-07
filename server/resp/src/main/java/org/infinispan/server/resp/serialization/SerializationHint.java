@@ -1,7 +1,5 @@
 package org.infinispan.server.resp.serialization;
 
-import org.infinispan.server.resp.ByteBufPool;
-
 /**
  * Hints the serializer for nested object's type.
  *
@@ -17,7 +15,7 @@ import org.infinispan.server.resp.ByteBufPool;
  *
  * @author José Bolina
  */
-interface SerializationHint {
+public interface SerializationHint {
 
    /**
     * Provide hints of simple primitive elements.
@@ -27,7 +25,7 @@ interface SerializationHint {
       /**
        * Identify the underlying RESP3 type.
        */
-      void serialize(Object object, ByteBufPool alloc);
+      void serialize(Object object, ResponseWriter writer);
    }
 
    /**

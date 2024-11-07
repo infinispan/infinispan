@@ -1,8 +1,10 @@
-package org.infinispan.server.resp.serialization;
+package org.infinispan.server.resp.serialization.bytebuf;
 
 import java.nio.charset.StandardCharsets;
 
 import org.infinispan.server.resp.ByteBufPool;
+import org.infinispan.server.resp.serialization.RespConstants;
+import org.infinispan.server.resp.serialization.ResponseSerializer;
 
 import io.netty.buffer.ByteBuf;
 
@@ -18,8 +20,8 @@ import io.netty.buffer.ByteBuf;
  * @since 15.0
  * @author José Bolina
  */
-final class DoubleSerializer implements ResponseSerializer<Double> {
-   static final DoubleSerializer INSTANCE = new DoubleSerializer();
+final class ByteBufDoubleSerializer implements ResponseSerializer<Double, ByteBufPool> {
+   static final ByteBufDoubleSerializer INSTANCE = new ByteBufDoubleSerializer();
    private static final byte[] NAN = {'n', 'a', 'n'};
    private static final byte[] INF = {'i', 'n', 'f'};
 

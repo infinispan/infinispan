@@ -7,10 +7,9 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -30,11 +29,11 @@ public class HMSET extends RespCommand implements Resp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
       // Arguments are the hash map key and N key-value pairs.
       if ((arguments.size() & 1) == 0) {
-         RespErrorUtil.wrongArgumentNumber(this, handler.allocator());
+         handler.writer().wrongArgumentNumber(this);
          return handler.myStage();
       }
 
-      return handler.stageToReturn(setEntries(handler, arguments), ctx, Resp3Response.OK);
+      return handler.stageToReturn(setEntries(handler, arguments), ctx, ResponseWriter.OK);
    }
 
    protected CompletionStage<Integer> setEntries(Resp3Handler handler, List<byte[]> arguments) {

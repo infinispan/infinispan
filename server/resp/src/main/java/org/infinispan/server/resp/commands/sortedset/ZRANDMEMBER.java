@@ -7,11 +7,10 @@ import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
 import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -60,14 +59,14 @@ public class ZRANDMEMBER extends RespCommand implements Resp3Command {
          try {
             count = ArgumentUtils.toInt(arguments.get(1));
          } catch (NumberFormatException ex) {
-            RespErrorUtil.valueNotInteger(handler.allocator());
+            handler.writer().valueNotInteger();
             return handler.myStage();
          }
       }
       if (arguments.size() > 2) {
          withScores = ZSetCommonUtils.isWithScoresArg(arguments.get(2));
          if (!withScores) {
-            RespErrorUtil.syntaxError(handler.allocator());
+            handler.writer().syntaxError();
             return handler.myStage();
          }
       } else {
@@ -78,9 +77,9 @@ public class ZRANDMEMBER extends RespCommand implements Resp3Command {
 
       CompletionStage<List<ScoredValue<byte[]>>> randomMembers = sortedSetCache.randomMembers(name, count);
       if (arguments.size() == 1) {
-         return handler.stageToReturn(randomMembers.thenApply(r -> r.isEmpty() ? null : r.get(0).getValue()), ctx, Resp3Response.BULK_STRING_BYTES);
+         return handler.stageToReturn(randomMembers.thenApply(r -> r.isEmpty() ? null : r.get(0).getValue()), ctx, ResponseWriter.BULK_STRING_BYTES);
       }
 
-      return handler.stageToReturn(randomMembers.thenApply(r -> ZSetCommonUtils.response(r, withScores)), ctx, Resp3Response.CUSTOM);
+      return handler.stageToReturn(randomMembers.thenApply(r -> ZSetCommonUtils.response(r, withScores)), ctx, ResponseWriter.CUSTOM);
    }
 }

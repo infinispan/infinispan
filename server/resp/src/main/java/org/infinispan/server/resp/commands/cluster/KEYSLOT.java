@@ -11,10 +11,9 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -41,7 +40,7 @@ public class KEYSLOT extends RespCommand implements Resp3Command {
             .getComponent(KeyPartitioner.class);
 
       if (!(partitioner instanceof HashFunctionPartitioner)) {
-         RespErrorUtil.customError("Key partitioner not configured properly", handler.allocator());
+         handler.writer().customError("Key partitioner not configured properly");
          return handler.myStage();
       }
 
@@ -50,6 +49,6 @@ public class KEYSLOT extends RespCommand implements Resp3Command {
       int h = hashPartitioner.getHashForKey(key);
       CompletionStage<Integer> cs = CompletableFuture.completedFuture(handler.respServer().segmentSlotRelation().hashToSlot(h));
 
-      return handler.stageToReturn(cs, ctx, Resp3Response.INTEGER);
+      return handler.stageToReturn(cs, ctx, ResponseWriter.INTEGER);
    }
 }

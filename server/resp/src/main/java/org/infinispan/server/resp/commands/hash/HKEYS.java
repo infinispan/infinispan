@@ -10,7 +10,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -32,6 +32,6 @@ public class HKEYS extends RespCommand implements Resp3Command {
       EmbeddedMultimapPairCache<byte[], byte[], byte[]> multimap = handler.getHashMapMultimap();
       CompletionStage<Collection<byte[]>> cs = multimap.keySet(arguments.get(0))
             .thenApply(Collections::unmodifiableCollection);
-      return handler.stageToReturn(cs, ctx, Resp3Response.ARRAY_BULK_STRING);
+      return handler.stageToReturn(cs, ctx, ResponseWriter.ARRAY_BULK_STRING);
    }
 }

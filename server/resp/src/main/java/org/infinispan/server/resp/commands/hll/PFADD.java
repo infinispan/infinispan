@@ -9,11 +9,9 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.hll.HyperLogLog;
-import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -56,16 +54,16 @@ public class PFADD extends RespCommand implements Resp3Command {
          return UpdateStatus.ADDED.ordinal();
       }).thenApply(UpdateStatus::fromOrdinal);
 
-      return handler.stageToReturn(cs, ctx, (res, buf) -> {
+      return handler.stageToReturn(cs, ctx, (res, writer) -> {
          switch (res) {
             case NO_CHANGE:
-               Resp3Response.integers(0L, buf);
+               writer.integers(0L);
                break;
             case ADDED:
-               Resp3Response.integers(1L, buf);
+               writer.integers(1L);
                break;
             case NO_OP:
-               RespErrorUtil.wrongType(handler.allocator());
+               writer.wrongType();
                break;
          }
       });

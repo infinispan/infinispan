@@ -7,7 +7,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -28,6 +28,6 @@ public class INCR extends RespCommand implements Resp3Command {
                                                       List<byte[]> arguments) {
       return handler
             .stageToReturn(CounterIncOrDec.counterIncOrDec(handler.cache(), arguments.get(0), true),
-                  ctx, Resp3Response.INTEGER);
+                  ctx, ResponseWriter.INTEGER);
    }
 }

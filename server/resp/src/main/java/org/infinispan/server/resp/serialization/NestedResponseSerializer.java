@@ -1,6 +1,5 @@
 package org.infinispan.server.resp.serialization;
 
-import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.util.function.TriConsumer;
 
 /**
@@ -16,11 +15,11 @@ import org.infinispan.util.function.TriConsumer;
  * @param <H> The generic type of hints the serializer accepts.
  * @author José Bolina
  */
-interface NestedResponseSerializer<T, H extends SerializationHint>
-      extends ResponseSerializer<T>, TriConsumer<T, ByteBufPool, H> {
+public interface NestedResponseSerializer<T, O, H extends SerializationHint>
+      extends ResponseSerializer<T, O>, TriConsumer<T, O, H> {
 
    @Override
-   default void accept(T t, ByteBufPool byteBufPool) {
+   default void accept(T t, O out) {
       throw new IllegalStateException("Nested response without serialization hints");
    }
 }

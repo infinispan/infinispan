@@ -16,7 +16,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -42,7 +42,7 @@ public class SINTER extends RespCommand implements Resp3Command {
       var allEntries= esc.getAll(uniqueKeys).thenApply( sets -> SINTER.checkTypeOrEmpty(sets,uniqueKeys.size()));
       return handler.stageToReturn(
             allEntries.thenApply((sets) -> intersect(sets.values(), 0)),
-            ctx, Resp3Response.SET_BULK_STRING);
+            ctx, ResponseWriter.SET_BULK_STRING);
    }
 
    public static Set<byte[]> getUniqueKeys(Resp3Handler handler, List<byte[]> arguments) {

@@ -11,7 +11,7 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -39,6 +39,6 @@ public class LRANGE extends RespCommand implements Resp3Command {
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
       CompletionStage<Collection<byte[]>> cs = listMultimap.subList(key, start, stop)
             .thenApply(c -> c == null ? Collections.emptyList() : c);
-      return handler.stageToReturn(cs, ctx, Resp3Response.ARRAY_BULK_STRING);
+      return handler.stageToReturn(cs, ctx, ResponseWriter.ARRAY_BULK_STRING);
    }
 }

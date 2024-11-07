@@ -6,11 +6,9 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.commands.TransactionResp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
 import org.infinispan.server.resp.serialization.RespConstants;
 import org.infinispan.server.resp.tx.RespTransactionHandler;
 
@@ -46,13 +44,13 @@ public class MULTI extends RespCommand implements Resp3Command, TransactionResp3
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
-      Resp3Response.ok(handler.allocator());
+      handler.writer().ok();
       return CompletableFuture.completedFuture(new RespTransactionHandler(handler.respServer(), handler.cache()));
    }
 
    @Override
    public CompletionStage<RespRequestHandler> perform(RespTransactionHandler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
-      RespErrorUtil.customError("MULTI calls can not be nested", handler.allocator());
+      handler.writer().customError("MULTI calls can not be nested");
       return handler.myStage();
    }
 }

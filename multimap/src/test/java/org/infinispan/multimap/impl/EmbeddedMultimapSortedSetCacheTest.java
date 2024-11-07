@@ -1,13 +1,5 @@
 package org.infinispan.multimap.impl;
 
-import org.assertj.core.util.Lists;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.data.Person;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.util.Lists.list;
@@ -32,6 +24,14 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.PEPE;
 import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
 import static org.infinispan.multimap.impl.ScoredValue.of;
 import static org.infinispan.multimap.impl.SortedSetSubsetArgs.create;
+
+import org.assertj.core.util.Lists;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.data.Person;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Test;
 
 /**
  * Single Multimap Cache Test with Linked List
@@ -284,10 +284,11 @@ public class EmbeddedMultimapSortedSetCacheTest extends SingleCacheManagerTest {
       assertThatThrownBy(() -> await(sortedSetCache.subsetByIndex(NAMES_KEY, null)))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_ARGS_CAN_T_BE_NULL);
-      assertThatThrownBy(() -> await(sortedSetCache.subsetByIndex(NAMES_KEY,  create().build())))
+      SortedSetSubsetArgs.Builder<Long> builder = create();
+      assertThatThrownBy(() -> await(sortedSetCache.subsetByIndex(NAMES_KEY, builder.build())))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_ARGS_INDEXES_CAN_T_BE_NULL);
-      assertThatThrownBy(() -> await(sortedSetCache.subsetByIndex(NAMES_KEY,  create().start(12L).build())))
+      assertThatThrownBy(() -> await(sortedSetCache.subsetByIndex(NAMES_KEY, builder.start(12L).build())))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_ARGS_INDEXES_CAN_T_BE_NULL);
    }

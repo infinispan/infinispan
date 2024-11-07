@@ -7,11 +7,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -48,11 +46,11 @@ public class HINCRBY extends RespCommand implements Resp3Command {
          }
          return ArgumentUtils.toByteArray(result);
       });
-      return handler.stageToReturn(cs, ctx, (res, alloc) -> {
+      return handler.stageToReturn(cs, ctx, (res, writer) -> {
          if (failed.get()) {
-            RespErrorUtil.customError("increment or decrement would overflow", alloc);
+            handler.writer().customError("increment or decrement would overflow");
          } else {
-            Resp3Response.integers(ArgumentUtils.toLong(res), alloc);
+            writer.integers(ArgumentUtils.toLong(res));
          }
       });
    }

@@ -9,7 +9,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -37,6 +37,6 @@ public class PUBLISH extends RespCommand implements Resp3Command {
       CompletionStage<Long> cs = handler.ignorePreviousValuesCache()
             .putAsync(KeyChannelUtils.keyToChannel(arguments.get(0)), arguments.get(1), 3, TimeUnit.SECONDS)
             .thenApply(CONVERT);
-      return handler.stageToReturn(cs, ctx, Resp3Response.INTEGER);
+      return handler.stageToReturn(cs, ctx, ResponseWriter.INTEGER);
    }
 }

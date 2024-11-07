@@ -1,4 +1,4 @@
-package org.infinispan.server.resp.serialization;
+package org.infinispan.server.resp.serialization.bytebuf;
 
 import static org.infinispan.server.resp.serialization.RespConstants.CRLF;
 
@@ -7,6 +7,8 @@ import java.util.Collection;
 import java.util.List;
 
 import org.infinispan.server.resp.ByteBufPool;
+import org.infinispan.server.resp.serialization.RespConstants;
+import org.infinispan.server.resp.serialization.ResponseSerializer;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
@@ -35,19 +37,18 @@ import io.netty.buffer.ByteBufUtil;
  * @since 15.0
  * @author José Bolina
  */
-class PrimitiveSerializer {
-
+class ByteBufPrimitiveSerializer {
    /**
     * Group the serializers for bulk string.
     */
-   static ResponseSerializer<?>[] BULK_STRING_SERIALIZERS = {
+   static ResponseSerializer<?, ?>[] BULK_STRING_SERIALIZERS = {
      BulkStringSerializer.INSTANCE,
      BulkStringSerializer2.INSTANCE,
    };
    /**
     * Group all serializers, except the null.
     */
-   static Collection<ResponseSerializer<?>> SERIALIZERS = List.of(
+   static Collection<ResponseSerializer<?, ByteBufPool>> SERIALIZERS = List.of(
          SimpleStringSerializer.INSTANCE,
          BulkStringSerializer.INSTANCE,
          BulkStringSerializer2.INSTANCE,
@@ -66,7 +67,7 @@ class PrimitiveSerializer {
     * <b>Warning:</b> Always check with the null serializer first before trying any other. This approach guarantees the
     * value is non-null during the serialization.
     */
-   final static class NullSerializer implements ResponseSerializer<Object> {
+   final static class NullSerializer implements ResponseSerializer<Object, ByteBufPool> {
       public static final NullSerializer INSTANCE = new NullSerializer();
 
       @Override
@@ -98,7 +99,7 @@ class PrimitiveSerializer {
     * bulk strings must be byte arrays.
     * </p>
     */
-   final static class SimpleStringSerializer implements ResponseSerializer<CharSequence> {
+   final static class SimpleStringSerializer implements ResponseSerializer<CharSequence, ByteBufPool> {
       public static final SimpleStringSerializer INSTANCE = new SimpleStringSerializer();
 
       @Override
@@ -148,7 +149,7 @@ class PrimitiveSerializer {
     * </p>
     *
     */
-   final static class SimpleErrorSerializer implements ResponseSerializer<CharSequence> {
+   final static class SimpleErrorSerializer implements ResponseSerializer<CharSequence, ByteBufPool> {
       public static final SimpleErrorSerializer INSTANCE = new SimpleErrorSerializer();
 
       @Override
@@ -180,7 +181,7 @@ class PrimitiveSerializer {
     * representation might also contain a plus/minus symbol as the sign.
     * </p>
     */
-   final static class IntegerSerializer implements ResponseSerializer<Number> {
+   final static class IntegerSerializer implements ResponseSerializer<Number, ByteBufPool> {
       public static final IntegerSerializer INSTANCE = new IntegerSerializer();
 
       @Override
@@ -212,7 +213,7 @@ class PrimitiveSerializer {
     * symbol as the suffix.
     * </p>
     */
-   final static class BulkStringSerializer implements ResponseSerializer<byte[]> {
+   final static class BulkStringSerializer implements ResponseSerializer<byte[], ByteBufPool> {
       public static final BulkStringSerializer INSTANCE = new BulkStringSerializer();
 
       @Override
@@ -236,7 +237,7 @@ class PrimitiveSerializer {
     *
     * @see BulkStringSerializer
     */
-   final static class BulkStringSerializer2 implements ResponseSerializer<CharSequence> {
+   final static class BulkStringSerializer2 implements ResponseSerializer<CharSequence, ByteBufPool> {
       public static final BulkStringSerializer2 INSTANCE = new BulkStringSerializer2();
 
       @Override
@@ -265,7 +266,7 @@ class PrimitiveSerializer {
     * true or <code>'f'</code> for false, and the suffix is the terminator symbol.
     * </p>
     */
-   final static class BooleanSerializer implements ResponseSerializer<Boolean> {
+   final static class BooleanSerializer implements ResponseSerializer<Boolean, ByteBufPool> {
       public static final BooleanSerializer INSTANCE = new BooleanSerializer();
       private static final byte TRUE = 't';
       private static final byte FALSE = 'f';

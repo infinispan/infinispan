@@ -7,11 +7,10 @@ import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
 import org.infinispan.multimap.impl.SortedSetAddArgs;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -35,13 +34,13 @@ public class ZINCRBY extends RespCommand implements Resp3Command {
       try {
          score = ArgumentUtils.toDouble(arguments.get(1));
       } catch (Exception ex) {
-         RespErrorUtil.valueNotAValidFloat(handler.allocator());
+         handler.writer().valueNotAValidFloat();
          return handler.myStage();
       }
       byte[] value = arguments.get(2);
 
       EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetCache = handler.getSortedSeMultimap();
       return handler.stageToReturn(sortedSetCache.incrementScore(name, score, value, SortedSetAddArgs.create().incr().build()),
-            ctx, Resp3Response.DOUBLE);
+            ctx, ResponseWriter.DOUBLE);
    }
 }

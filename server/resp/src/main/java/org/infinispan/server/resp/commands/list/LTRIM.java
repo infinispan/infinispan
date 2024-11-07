@@ -9,7 +9,7 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -35,6 +35,6 @@ public class LTRIM extends RespCommand implements Resp3Command {
       int stop = ArgumentUtils.toInt(arguments.get(2));
 
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
-      return handler.stageToReturn(listMultimap.trim(key, start, stop), ctx, Resp3Response.OK);
+      return handler.stageToReturn(listMultimap.trim(key, start, stop), ctx, ResponseWriter.OK);
    }
 }

@@ -12,11 +12,10 @@ import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
 import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -43,12 +42,12 @@ public class ZINTERCARD extends RespCommand implements Resp3Command {
       try {
          numberOfKeysArg = ArgumentUtils.toInt(arguments.get(pos++));
       } catch (NumberFormatException ex) {
-         RespErrorUtil.valueNotInteger(handler.allocator());
+         handler.writer().valueNotInteger();
          return handler.myStage();
       }
 
       if (numberOfKeysArg <= 0) {
-         RespErrorUtil.customError("at least 1 input key is needed for '" + this.getName().toLowerCase() + "' command", handler.allocator());
+         handler.writer().customError("at least 1 input key is needed for '" + this.getName().toLowerCase() + "' command");
          return handler.myStage();
       }
 
@@ -58,7 +57,7 @@ public class ZINTERCARD extends RespCommand implements Resp3Command {
       }
 
       if (keys.size() < numberOfKeysArg) {
-         RespErrorUtil.syntaxError(handler.allocator());
+         handler.writer().syntaxError();
          return handler.myStage();
       }
 
@@ -67,7 +66,7 @@ public class ZINTERCARD extends RespCommand implements Resp3Command {
       if (pos < arguments.size()) {
          String arg = new String(arguments.get(pos++));
          if (!LIMIT.equals(arg.toUpperCase())) {
-            RespErrorUtil.syntaxError(handler.allocator());
+            handler.writer().syntaxError();
             return handler.myStage();
          }
          boolean invalidLimit = false;
@@ -80,14 +79,14 @@ public class ZINTERCARD extends RespCommand implements Resp3Command {
             invalidLimit = true;
          }
          if (invalidLimit) {
-            RespErrorUtil.customError("LIMIT can't be negative", handler.allocator());
+            handler.writer().customError("LIMIT can't be negative");
             return handler.myStage();
          }
       }
 
       if (pos < arguments.size()) {
          // No more arguments are expected at this point
-         RespErrorUtil.syntaxError(handler.allocator());
+         handler.writer().syntaxError();
          return handler.myStage();
       }
 
@@ -103,7 +102,7 @@ public class ZINTERCARD extends RespCommand implements Resp3Command {
       }
 
       CompletionStage<Long> cs = aggValues.thenApply(res -> cardinalityResult(res.size(), finalLimit));
-      return handler.stageToReturn(cs, ctx, Resp3Response.INTEGER);
+      return handler.stageToReturn(cs, ctx, ResponseWriter.INTEGER);
    }
 
    private static boolean isLimitReached(int interResultSize, int finalLimit) {

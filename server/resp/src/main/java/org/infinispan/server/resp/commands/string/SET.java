@@ -10,7 +10,7 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.operation.SetOperation;
 import org.infinispan.server.resp.response.SetResponse;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -40,6 +40,6 @@ public class SET extends RespCommand implements Resp3Command {
       }
       return handler.stageToReturn(
             handler.ignorePreviousValuesCache().putAsync(arguments.get(0), arguments.get(1)),
-            ctx, Resp3Response.OK);
+            ctx, ResponseWriter.OK);
    }
 }

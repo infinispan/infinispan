@@ -8,7 +8,6 @@ import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.server.resp.logging.AccessLoggerManager;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.server.resp.logging.RespAccessLogger;
-import org.infinispan.server.resp.serialization.Resp3Response;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
@@ -183,7 +182,7 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
    @Override
    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
       log.unexpectedException(cause);
-      Resp3Response.error(cause, requestHandler.allocator());
+      requestHandler.writer.error(cause);
       flushBufferIfNeeded(ctx, false, null);
       ctx.close();
    }

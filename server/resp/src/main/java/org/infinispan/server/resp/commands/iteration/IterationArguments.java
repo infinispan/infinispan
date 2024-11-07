@@ -7,9 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.server.resp.Resp3Handler;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespTypes;
-import org.infinispan.server.resp.Util;
+import org.infinispan.server.resp.RespUtil;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.filter.ComposedFilterConverterFactory;
 import org.infinispan.server.resp.filter.GlobMatchFilterConverterFactory;
@@ -64,29 +63,29 @@ public class IterationArguments {
       if (argc > 1) {
          for (int i = 1; i < argc; i++) {
             byte[] arg = arguments.get(i);
-            if (Util.isAsciiBytesEquals(MATCH, arg)) {
+            if (RespUtil.isAsciiBytesEquals(MATCH, arg)) {
                if (++i >= argc) {
-                  RespErrorUtil.syntaxError(handler.allocator());
+                  handler.writer().syntaxError();
                   return null;
                } else {
                   if (filters == null) filters = new HashMap<>(2);
                   filters.put(GlobMatchFilterConverterFactory.class, Collections.singletonList(arguments.get(i)));
                }
-            } else if (Util.isAsciiBytesEquals(COUNT, arg)) {
+            } else if (RespUtil.isAsciiBytesEquals(COUNT, arg)) {
                if (++i >= argc) {
-                  RespErrorUtil.syntaxError(handler.allocator());
+                  handler.writer().syntaxError();
                   return null;
                } else {
                   try {
                      count = ArgumentUtils.toInt(arguments.get(i));
                   } catch (NumberFormatException e) {
-                     RespErrorUtil.valueNotInteger(handler.allocator());
+                     handler.writer().valueNotInteger();
                      return null;
                   }
                }
-            } else if (Util.isAsciiBytesEquals(TYPE, arg)) {
+            } else if (RespUtil.isAsciiBytesEquals(TYPE, arg)) {
                if (++i >= argc) {
-                  RespErrorUtil.syntaxError(handler.allocator());
+                  handler.writer().syntaxError();
                   return null;
                } else {
                   try {

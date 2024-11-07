@@ -23,17 +23,14 @@ import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.actions.SecurityActions;
-import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.ByteBufferUtils;
 import org.infinispan.server.resp.serialization.JavaObjectSerializer;
-import org.infinispan.server.resp.serialization.Resp3Response;
 import org.infinispan.server.resp.serialization.Resp3Type;
 import org.infinispan.server.resp.serialization.RespConstants;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.infinispan.topology.CacheTopology;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -51,13 +48,13 @@ import net.jcip.annotations.GuardedBy;
  */
 public class SHARDS extends RespCommand implements Resp3Command {
 
-   private static final BiConsumer<List<ShardInformation>, ByteBufPool> SERIALIZER = (res, alloc) -> {
+   private static final BiConsumer<List<ShardInformation>, ResponseWriter> SERIALIZER = (res, writer) -> {
       // Write the size of the response array first.
-      ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, res.size(), alloc);
+      writer.writeNumericPrefix(RespConstants.ARRAY, res.size());
 
       // Proceed to serialize each element.
       for (ShardInformation si : res) {
-         Resp3Response.write(si, alloc, si);
+         writer.write(si, si);
       }
    };
 
@@ -76,7 +73,7 @@ public class SHARDS extends RespCommand implements Resp3Command {
       AdvancedCache<?, ?> respCache = handler.cache();
       DistributionManager dm = respCache.getDistributionManager();
       if (dm == null) {
-         RespErrorUtil.customError("This instance has cluster support disabled", handler.allocator());
+         handler.writer().customError("This instance has cluster support disabled");
          return handler.myStage();
       }
 
@@ -84,7 +81,7 @@ public class SHARDS extends RespCommand implements Resp3Command {
       ConsistentHash hash = topology.getCurrentCH();
 
       if (hash == null) {
-         RespErrorUtil.customError("No consistent hash available", handler.allocator());
+         handler.writer().customError("No consistent hash available");
          return handler.myStage();
       }
 
@@ -211,18 +208,18 @@ public class SHARDS extends RespCommand implements Resp3Command {
    private record ShardInformation(List<Integer> slots, List<NodeInformation> nodes) implements JavaObjectSerializer<ShardInformation> {
 
       @Override
-      public void accept(ShardInformation ignore, ByteBufPool alloc) {
-         ByteBufferUtils.writeNumericPrefix(RespConstants.MAP, 2, alloc);
+      public void accept(ShardInformation ignore, ResponseWriter writer) {
+         writer.writeNumericPrefix(RespConstants.MAP, 2);
 
          // First key and value for slots.
-         Resp3Response.simpleString("slots", alloc);
-         Resp3Response.array(slots, alloc, Resp3Type.INTEGER);
+         writer.simpleString("slots");
+         writer.array(slots, Resp3Type.INTEGER);
 
          // Key and value for nodes.
-         Resp3Response.simpleString("nodes", alloc);
-         ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, nodes.size(), alloc);
+         writer.simpleString("nodes");
+         writer.writeNumericPrefix(RespConstants.ARRAY, nodes.size());
          for (NodeInformation node : nodes) {
-            Resp3Response.write(node, alloc, node);
+            writer.write(node, node);
          }
       }
    }
@@ -244,30 +241,30 @@ public class SHARDS extends RespCommand implements Resp3Command {
       }
 
       @Override
-      public void accept(NodeInformation ignore, ByteBufPool alloc) {
+      public void accept(NodeInformation ignore, ResponseWriter writer) {
          // Write this object as a map.
-         ByteBufferUtils.writeNumericPrefix(RespConstants.MAP, 7, alloc);
+         writer.writeNumericPrefix(RespConstants.MAP, 7);
 
-         Resp3Response.simpleString("id", alloc);
-         Resp3Response.string(id, alloc);
+         writer.simpleString("id");
+         writer.string(id);
 
-         Resp3Response.simpleString("port", alloc);
-         Resp3Response.integers(port, alloc);
+         writer.simpleString("port");
+         writer.integers(port);
 
-         Resp3Response.simpleString("ip", alloc);
-         Resp3Response.string(ip, alloc);
+         writer.simpleString("ip");
+         writer.string(ip);
 
-         Resp3Response.simpleString("endpoint", alloc);
-         Resp3Response.string(endpoint, alloc);
+         writer.simpleString("endpoint");
+         writer.string(endpoint);
 
-         Resp3Response.simpleString("replication-offset", alloc);
-         Resp3Response.integers(offset, alloc);
+         writer.simpleString("replication-offset");
+         writer.integers(offset);
 
-         Resp3Response.simpleString("health", alloc);
-         Resp3Response.simpleString(health, alloc);
+         writer.simpleString("health");
+         writer.simpleString(health);
 
-         Resp3Response.simpleString("role", alloc);
-         Resp3Response.simpleString(role, alloc);
+         writer.simpleString("role");
+         writer.simpleString(role);
       }
    }
 }

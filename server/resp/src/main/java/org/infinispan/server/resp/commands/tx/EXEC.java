@@ -10,12 +10,9 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.commands.TransactionResp3Command;
-import org.infinispan.server.resp.serialization.ByteBufferUtils;
-import org.infinispan.server.resp.serialization.Resp3Response;
 import org.infinispan.server.resp.serialization.RespConstants;
 import org.infinispan.server.resp.tx.RespTransactionHandler;
 import org.infinispan.server.resp.tx.TransactionCommand;
@@ -45,7 +42,7 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
-      RespErrorUtil.customError("EXEC without MULTI", handler.allocator());
+      handler.writer().customError("EXEC without MULTI");
       return handler.myStage();
    }
 
@@ -63,7 +60,7 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
       // See: https://redis.io/docs/interact/transactions/#errors-inside-a-transaction
       if (curr.hasFailed()) {
          return CompletableFuture.supplyAsync(() -> {
-            RespErrorUtil.transactionAborted(curr.allocator());
+            curr.writer().transactionAborted();
             return null;
          }, ctx.executor());
       }
@@ -72,7 +69,7 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
       if (commands == null) {
          // Should write `(nil)` since the transaction is aborted.
          return CompletableFuture.supplyAsync(() -> {
-            Resp3Response.nulls(curr.allocator());
+            curr.writer().nulls();
             return null;
          }, ctx.executor());
       }
@@ -93,7 +90,7 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
          TransactionContext.startTransactionContext(ctx);
 
          // Unfortunately, we need to manually write the prefix before proceeding with each operation.
-         ByteBufferUtils.writeNumericPrefix(RespConstants.ARRAY, commands.size(), curr.allocator());
+         curr.writer().writeNumericPrefix(RespConstants.ARRAY, commands.size());
          return CompletionStages.handleAndCompose(orderlyExecution(next, ctx, commands), (ignore, t) -> {
             TransactionContext.endTransactionContext(ctx);
             return transactional

@@ -8,11 +8,11 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.server.resp.Util;
+import org.infinispan.server.resp.RespUtil;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.response.SetResponse;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 public class SetOperation {
 
@@ -177,13 +177,13 @@ public class SetOperation {
                switch (arg[0]) {
                   case 'N':
                   case 'n':
-                     if (!Util.caseInsensitiveAsciiCheck('X', arg[1])) break;
+                     if (!RespUtil.caseInsensitiveAsciiCheck('X', arg[1])) break;
                      if (operationType != null) throw new IllegalArgumentException("NX and XX options are mutually exclusive");
                      withOperationType(NX_BYTES);
                      continue;
                   case 'X':
                   case 'x':
-                     if (!Util.caseInsensitiveAsciiCheck('X', arg[1])) break;
+                     if (!RespUtil.caseInsensitiveAsciiCheck('X', arg[1])) break;
                      if (operationType != null) throw new IllegalArgumentException("NX and XX options are mutually exclusive");
                      withOperationType(XX_BYTES);
                      continue;
@@ -209,13 +209,13 @@ public class SetOperation {
             }
 
             // `GET` argument.
-            if (arg.length == 3 && Util.isAsciiBytesEquals(GET_BYTES, arg)) {
+            if (arg.length == 3 && RespUtil.isAsciiBytesEquals(GET_BYTES, arg)) {
                withReturnPrevious();
                continue;
             }
 
             // `KEEPTTL` argument.
-            if (arg.length == 7 && Util.isAsciiBytesEquals(KEEP_TTL_BYTES, arg)) {
+            if (arg.length == 7 && RespUtil.isAsciiBytesEquals(KEEP_TTL_BYTES, arg)) {
                if (isUsingExpiration()) throw new IllegalArgumentException("KEEPTTL and EX/PX/EXAT/PXAT are mutually exclusive");
                withKeepTtl();
                continue;

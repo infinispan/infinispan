@@ -8,7 +8,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -31,6 +31,6 @@ public class ZSCORE extends RespCommand implements Resp3Command {
       byte[] name = arguments.get(0);
       byte[] member = arguments.get(1);
       EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetCache = handler.getSortedSeMultimap();
-      return handler.stageToReturn(sortedSetCache.score(name, member), ctx, Resp3Response.DOUBLE);
+      return handler.stageToReturn(sortedSetCache.score(name, member), ctx, ResponseWriter.DOUBLE);
    }
 }

@@ -6,10 +6,9 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -34,15 +33,15 @@ public class ZLEXCOUNT extends RespCommand implements Resp3Command {
       ZSetCommonUtils.Lex lexTo = ZSetCommonUtils.parseLex(arguments.get(2));
 
       if (lexFrom == null || lexTo == null) {
-         RespErrorUtil.minOrMaxNotAValidStringRange(handler.allocator());
+         handler.writer().minOrMaxNotAValidStringRange();
          return handler.myStage();
       }
       if (lexFrom.unboundedMax || lexTo.unboundedMin) {
          // minLex + or maxLex -,return 0 without performing any call
-         return handler.stageToReturn(CompletableFuture.completedFuture(0L), ctx, Resp3Response.INTEGER);
+         return handler.stageToReturn(CompletableFuture.completedFuture(0L), ctx, ResponseWriter.INTEGER);
       }
 
       return handler.stageToReturn(handler.getSortedSeMultimap()
-            .count(name, lexFrom.value, lexFrom.include, lexTo.value, lexTo.include), ctx, Resp3Response.INTEGER);
+            .count(name, lexFrom.value, lexFrom.include, lexTo.value, lexTo.include), ctx, ResponseWriter.INTEGER);
    }
 }

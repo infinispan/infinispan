@@ -1,9 +1,12 @@
-package org.infinispan.server.resp.serialization;
+package org.infinispan.server.resp.serialization.bytebuf;
 
 import java.util.Collection;
 import java.util.Set;
 
 import org.infinispan.server.resp.ByteBufPool;
+import org.infinispan.server.resp.serialization.NestedResponseSerializer;
+import org.infinispan.server.resp.serialization.RespConstants;
+import org.infinispan.server.resp.serialization.SerializationHint;
 
 /**
  * Serialize collection types into the RESP3 equivalent.
@@ -11,7 +14,7 @@ import org.infinispan.server.resp.ByteBufPool;
  * @since 15.0
  * @author José Bolina
  */
-final class CollectionSerializer {
+final class ByteBufCollectionSerializer {
 
    /**
     * Abstract the serialization of collections.
@@ -21,14 +24,15 @@ final class CollectionSerializer {
     * @param symbol: The prefix symbol that represents the collection type.
     */
    private static void serialize(Collection<?> objects, ByteBufPool alloc, byte symbol, SerializationHint.SimpleHint hint) {
+      ByteBufResponseWriter writer  = new ByteBufResponseWriter(alloc);
       // First, writes the prefix.
       // RESP: <symbol><number-of-elements>\r\n
-      ByteBufferUtils.writeNumericPrefix(symbol, objects.size(), alloc);
+      writer.writeNumericPrefix(symbol, objects.size());
 
       // Write each element individually.
       // The values are heterogeneous, they can be primitives or another aggregate type.
       for (Object object : objects) {
-         hint.serialize(object, alloc);
+         hint.serialize(object, writer);
       }
    }
 
@@ -41,7 +45,7 @@ final class CollectionSerializer {
     * collection element is serialized individually, following the correct representation.
     * </p>
     */
-   static final class ArraySerializer implements NestedResponseSerializer<Collection<?>, SerializationHint.SimpleHint> {
+   static final class ArraySerializer implements NestedResponseSerializer<Collection<?>, ByteBufPool, SerializationHint.SimpleHint> {
       static final ArraySerializer INSTANCE = new ArraySerializer();
 
       @Override
@@ -65,7 +69,7 @@ final class CollectionSerializer {
     * unique elements. The prefix for a set is the tilde symbol ({@link RespConstants#SET}).
     * </p>
     */
-   static final class SetSerializer implements NestedResponseSerializer<Set<?>, SerializationHint.SimpleHint> {
+   static final class SetSerializer implements NestedResponseSerializer<Set<?>, ByteBufPool, SerializationHint.SimpleHint> {
       static final SetSerializer INSTANCE = new SetSerializer();
 
       @Override

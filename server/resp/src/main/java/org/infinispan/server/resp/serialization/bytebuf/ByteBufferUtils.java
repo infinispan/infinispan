@@ -1,4 +1,4 @@
-package org.infinispan.server.resp.serialization;
+package org.infinispan.server.resp.serialization.bytebuf;
 
 import static org.infinispan.server.resp.serialization.RespConstants.CRLF;
 

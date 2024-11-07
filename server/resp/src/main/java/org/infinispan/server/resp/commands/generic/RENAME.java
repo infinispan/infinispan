@@ -9,13 +9,11 @@ import java.util.function.BiConsumer;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -37,12 +35,12 @@ public class RENAME extends RespCommand implements Resp3Command {
          List<byte[]> arguments) {
       byte[] srcKey = arguments.get(0);
       byte[] dstKey = arguments.get(1);
-      return rename(handler, srcKey, dstKey, ctx, Resp3Response.OK);
+      return rename(handler, srcKey, dstKey, ctx, ResponseWriter.OK);
    }
 
    public static CompletionStage<RespRequestHandler> rename(Resp3Handler handler, byte[] srcKey, byte[] dstKey,
-         ChannelHandlerContext ctx, BiConsumer<?, ByteBufPool> consumer) {
-      BiConsumer<Object, ByteBufPool> bc = (BiConsumer<Object, ByteBufPool>) consumer;
+         ChannelHandlerContext ctx, BiConsumer<?, ResponseWriter> consumer) {
+      BiConsumer<Object, ResponseWriter> bc = (BiConsumer<Object, ResponseWriter>) consumer;
       MediaType vmt = handler.cache().getValueDataConversion().getStorageMediaType();
       final AdvancedCache<byte[], Object> acm = handler.typedCache(vmt);
       CompletionStage<?> cs = acm.removeAsyncEntry(srcKey)
@@ -72,9 +70,9 @@ public class RENAME extends RespCommand implements Resp3Command {
                }
             });
 
-      return handler.stageToReturn(cs, ctx, (l, bbp) -> {
-         if (l != null) bc.accept(l, bbp);
-         else RespErrorUtil.noSuchKey(handler.allocator());
+      return handler.stageToReturn(cs, ctx, (l, writer) -> {
+         if (l != null) bc.accept(l, writer);
+         else writer.noSuchKey();
       });
    }
 }

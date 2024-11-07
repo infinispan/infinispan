@@ -9,7 +9,6 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.SubscriberHandler;
 import org.infinispan.server.resp.commands.PubSubResp3Command;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.Resp3Response;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -31,10 +30,10 @@ public class PING extends RespCommand implements Resp3Command, PubSubResp3Comman
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx,
                                                                 List<byte[]> arguments) {
       if (arguments.isEmpty()) {
-         Resp3Response.string(PONG, handler.allocator());
+         handler.writer().string(PONG);
          return handler.myStage();
       } else if (arguments.size()==1) {
-         Resp3Response.string(arguments.get(0), handler.allocator());
+         handler.writer().string(arguments.get(0));
          return handler.myStage();
       }
       return handler.delegate(ctx, this, arguments);
