@@ -3,9 +3,11 @@ package org.infinispan.query.clustered.commandworkers;
 import static org.infinispan.query.core.impl.Log.CONTAINER;
 
 import java.util.BitSet;
+import java.util.List;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 
-import org.hibernate.search.backend.lucene.search.query.LuceneSearchResult;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.query.clustered.QueryResponse;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
 
@@ -28,15 +30,14 @@ final class CQDelete extends CQWorker {
 
       SearchQueryBuilder query = queryDefinition.getSearchQueryBuilder();
       return blockingManager.supplyBlocking(() -> fetchIds(query), this)
-            .thenApply(queryResult -> queryResult.hits().stream().map(id -> cache.remove(id) != null ? 1 : 0).reduce(0, Integer::sum))
+            .thenCompose(queryResult -> CompletionStages.performSequentially(queryResult.iterator(), cache::removeAsync,
+                  Collectors.summingInt(prev -> prev != null ? 1 : 0)))
             .thenApply(QueryResponse::new);
    }
 
-   public LuceneSearchResult<Object> fetchIds(SearchQueryBuilder query) {
+   public List<Object> fetchIds(SearchQueryBuilder query) {
       long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
-
-      LuceneSearchResult<Object> result = query.ids().fetchAll();
-
+      List<Object> result = query.ids().fetchAllHits();
       if (queryStatistics.isEnabled()) {
          queryStatistics.localIndexedQueryExecuted(queryDefinition.getQueryString(), System.nanoTime() - start);
       }
