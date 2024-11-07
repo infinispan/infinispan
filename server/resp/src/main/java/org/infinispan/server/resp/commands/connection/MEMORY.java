@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
@@ -51,7 +53,7 @@ public class MEMORY extends RespCommand implements Resp3Command {
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx,
-                                                      List<byte[]> arguments) {
+         List<byte[]> arguments) {
       handler.checkPermission(AuthorizationPermission.ADMIN);
       String subcommand = new String(arguments.get(0), StandardCharsets.US_ASCII).toUpperCase();
       switch (subcommand) {
@@ -65,9 +67,10 @@ public class MEMORY extends RespCommand implements Resp3Command {
                return handler.myStage();
             } else {
                byte[] key = arguments.get(1);
-               return handler.stageToReturn(handler.cache().getAsync(key).thenApply(v ->
-                           v == null ? null : (long) (key.length + v.length + 14) / 8 * 8),
-                     ctx, ResponseWriter.INTEGER);
+               CompletionStage<CacheEntry<byte[], Object>> cs = handler.typedCache(null).getCacheEntryAsync(key);
+               CompletionStage<Long> cs1 = cs
+                     .thenApply(e -> MemoryEntrySizeUtils.calculateSize(key, (InternalCacheEntry<byte[], Object>) e));
+               return handler.stageToReturn(cs1, ctx, ResponseWriter.INTEGER);
             }
          case "DOCTOR":
          case "MALLOC-STATS":

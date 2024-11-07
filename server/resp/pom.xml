@@ -15,6 +15,10 @@
 
    <dependencies>
       <dependency>
+         <groupId>org.ehcache</groupId>
+         <artifactId>sizeof</artifactId>
+      </dependency>
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-component-processor</artifactId>
       </dependency>
@@ -34,7 +38,7 @@
          <groupId>com.jayway.jsonpath</groupId>
          <artifactId>json-path</artifactId>
          <version>${version.json-path}</version>
-     </dependency>
+      </dependency>
       <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
