@@ -9,94 +9,81 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.multimap.api.embedded.EmbeddedMultimapCacheManagerFactory;
-import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.data.Person;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.DistributedMultimapPairCacheTest")
-public class DistributedMultimapPairCacheTest extends BaseDistFunctionalTest<String, Map<byte[], Person>> {
-
-   protected Map<Address, EmbeddedMultimapPairCache<String, byte[], Person>> pairCacheCluster = new HashMap<>();
+public class DistributedMultimapPairCacheTest extends BaseDistributedMultimapTest<EmbeddedMultimapPairCache<String, byte[], Person>, Map<byte[], Person>> {
 
    @Override
-   protected void createCacheManagers() throws Throwable {
-      super.createCacheManagers();
-
-      for (EmbeddedCacheManager cacheManager : cacheManagers) {
-         EmbeddedMultimapCacheManager multimapCacheManager = (EmbeddedMultimapCacheManager) EmbeddedMultimapCacheManagerFactory.from(cacheManager);
-         pairCacheCluster.put(cacheManager.getAddress(), multimapCacheManager.getMultimapPair(cacheName));
-      }
+   protected EmbeddedMultimapPairCache<String, byte[], Person> create(EmbeddedMultimapCacheManager<String, Map<byte[], Person>> manager) {
+      return manager.getMultimapPair(cacheName);
    }
 
    @Override
-   protected SerializationContextInitializer getSerializationContext() {
-      return MultimapSCI.INSTANCE;
-   }
-
-   private EmbeddedMultimapPairCache<String, byte[], Person> getMultimapMember() {
-      return pairCacheCluster.values()
-            .stream().findFirst().orElseThrow(() -> new IllegalStateException("No multimap cluster found!"));
+   public Object[] factory() {
+      return super.factory(DistributedMultimapPairCacheTest::new);
    }
 
    public void testSetGetOperations() {
+      String key = getEntryKey();
       EmbeddedMultimapPairCache<String, byte[], Person> multimap = getMultimapMember();
-      assertThat(await(multimap.set("person1", Map.entry(toBytes("oihana"), OIHANA))))
+      assertThat(await(multimap.set(key, Map.entry(toBytes("oihana"), OIHANA))))
             .isEqualTo(1);
-      assertThat(await(multimap.set("person1", Map.entry(toBytes("koldo"), KOLDO), Map.entry(toBytes("felix"), RAMON))))
+      assertThat(await(multimap.set(key, Map.entry(toBytes("koldo"), KOLDO), Map.entry(toBytes("felix"), RAMON))))
             .isEqualTo(2);
 
-      assertThat(await(multimap.set("person1", Map.entry(toBytes("felix"), FELIX)))).isZero();
+      assertThat(await(multimap.set(key, Map.entry(toBytes("felix"), FELIX)))).isZero();
 
-      assertFromAllCaches("person1", Map.of("oihana", OIHANA, "koldo", KOLDO, "felix", FELIX));
+      assertFromAllCaches(key, Map.of("oihana", OIHANA, "koldo", KOLDO, "felix", FELIX));
+      assertThat(await(multimap.size(key))).isEqualTo(3);
 
-      assertThat(await(multimap.get("person1", toBytes("oihana")))).isEqualTo(OIHANA);
-      assertThat(await(multimap.get("person1", toBytes("unknown")))).isNull();
+      assertThat(await(multimap.get(key, toBytes("oihana")))).isEqualTo(OIHANA);
+      assertThat(await(multimap.get(key, toBytes("unknown")))).isNull();
       assertThat(await(multimap.get("unknown", toBytes("unknown")))).isNull();
    }
 
    public void testSizeOperation() {
+      String key = getEntryKey();
       EmbeddedMultimapPairCache<String, byte[], Person> multimap = getMultimapMember();
-      CompletionStage<Integer> cs = multimap.set("size-test", Map.entry(toBytes("oihana"), OIHANA), Map.entry(toBytes("ramon"), RAMON))
-            .thenCompose(ignore -> multimap.size("size-test"));
+      CompletionStage<Integer> cs = multimap.set(key, Map.entry(toBytes("oihana"), OIHANA), Map.entry(toBytes("ramon"), RAMON))
+            .thenCompose(ignore -> multimap.size(key));
       assertThat(await(cs)).isEqualTo(2);
    }
 
    public void testKeySetOperation() {
+      String key = getEntryKey();
       EmbeddedMultimapPairCache<String, byte[], Person> multimap = getMultimapMember();
-      CompletionStage<Set<String>> cs = multimap.set("keyset-test", Map.entry(toBytes("oihana"), OIHANA), Map.entry(toBytes("koldo"), KOLDO))
-            .thenCompose(ignore -> multimap.keySet("keyset-test"))
-            .thenApply(s -> s.stream().map(String::new).collect(Collectors.toSet()));
-      assertThat(await(cs)).contains("oihana", "koldo");
+      CompletionStage<List<String>> cs = multimap.set(key, Map.entry(toBytes("oihana"), OIHANA), Map.entry(toBytes("koldo"), KOLDO))
+            .thenCompose(ignore -> multimap.keySet(key))
+            .thenApply(s -> s.stream().map(String::new).toList());
+      assertThat(await(cs)).containsOnly("oihana", "koldo");
    }
 
    public void testSetAndRemove() {
+      String key = getEntryKey();
       EmbeddedMultimapPairCache<String, byte[], Person> multimap = getMultimapMember();
-      await(multimap.set("set-and-remove", Map.entry(toBytes("oihana"), OIHANA), Map.entry(toBytes("koldo"), KOLDO))
-            .thenCompose(ignore -> multimap.remove("set-and-remove", toBytes("oihana")))
+      await(multimap.set(key, Map.entry(toBytes("oihana"), OIHANA), Map.entry(toBytes("koldo"), KOLDO))
+            .thenCompose(ignore -> multimap.remove(key, toBytes("oihana")))
             .thenCompose(v -> {
                assertThat(v).isEqualTo(1);
-               return multimap.remove("set-and-remove", toBytes("koldo"), toBytes("ramon"));
+               return multimap.remove(key, toBytes("koldo"), toBytes("ramon"));
             })
             .thenAccept(v -> assertThat(v).isEqualTo(1)));
-      assertThatThrownBy(() -> await(multimap.remove("set-and-remove", null)))
+      assertThatThrownBy(() -> await(multimap.remove(key, null)))
             .isInstanceOf(NullPointerException.class);
       assertThatThrownBy(() -> await(multimap.remove(null, new byte[] { 1 })))
             .isInstanceOf(NullPointerException.class);
    }
 
    protected void assertFromAllCaches(String key, Map<String, Person> expected) {
-      for (EmbeddedMultimapPairCache<String, byte[], Person> multimap : pairCacheCluster.values()) {
+      for (EmbeddedMultimapPairCache<String, byte[], Person> multimap : cluster.values()) {
          assertThat(await(multimap.get(key)
                .thenApply(DistributedMultimapPairCacheTest::convertKeys)))
                .containsAllEntriesOf(expected);
@@ -104,7 +91,7 @@ public class DistributedMultimapPairCacheTest extends BaseDistFunctionalTest<Str
    }
 
    protected void assertFromAllCaches(Function<EmbeddedMultimapPairCache<String, byte[], Person>, CompletionStage<?>> f) {
-      for (EmbeddedMultimapPairCache<String, byte[], Person> multimap : pairCacheCluster.values()) {
+      for (EmbeddedMultimapPairCache<String, byte[], Person> multimap : cluster.values()) {
          await(f.apply(multimap));
       }
    }
@@ -124,20 +111,22 @@ public class DistributedMultimapPairCacheTest extends BaseDistFunctionalTest<Str
    }
 
    public void testValuesOperation() {
+      String key = getEntryKey();
       EmbeddedMultimapPairCache<String, byte[], Person> multimap = getMultimapMember();
-      CompletionStage<Collection<Person>> cs = multimap.set("values-test", Map.entry(toBytes("oihana"), OIHANA), Map.entry(toBytes("koldo"), KOLDO))
-                  .thenCompose(ignore -> multimap.values("values-test"));
-      assertThat(await(cs)).contains(OIHANA, KOLDO);
+      CompletionStage<Collection<Person>> cs = multimap.set(key, Map.entry(toBytes("oihana"), OIHANA), Map.entry(toBytes("koldo"), KOLDO))
+                  .thenCompose(ignore -> multimap.values(key));
+      assertThat(await(cs)).containsOnly(OIHANA, KOLDO);
    }
 
    public void testContainsProperty() {
+      String key = getEntryKey();
       EmbeddedMultimapPairCache<String, byte[], Person> multimap = getMultimapMember();
-      await(multimap.set("contains-test", Map.entry(toBytes("oihana"), OIHANA))
-            .thenAccept(ignore -> assertFromAllCaches("contains-test", Map.of("oihana", OIHANA)))
-            .thenCompose(ignore -> multimap.contains("contains-test", toBytes("oihana"))
+      await(multimap.set(key, Map.entry(toBytes("oihana"), OIHANA))
+            .thenAccept(ignore -> assertFromAllCaches(key, Map.of("oihana", OIHANA)))
+            .thenCompose(ignore -> multimap.contains(key, toBytes("oihana"))
             .thenCompose(b -> {
                assertThat(b).isTrue();
-               return multimap.contains("contains-test", toBytes("unknown"));
+               return multimap.contains(key, toBytes("unknown"));
             })
             .thenCompose(b -> {
                assertThat(b).isFalse();
@@ -147,24 +136,26 @@ public class DistributedMultimapPairCacheTest extends BaseDistFunctionalTest<Str
    }
 
    public void testCompute() {
+      String key = getEntryKey();
       EmbeddedMultimapPairCache<String, byte[], Person> multimap = getMultimapMember();
       byte[] oihana = toBytes("oihana");
-      await(multimap.set("compute-test", Map.entry(oihana, OIHANA))
-            .thenAccept(ignore -> assertFromAllCaches("compute-test", Map.of("oihana", OIHANA)))
-            .thenCompose(ignore -> multimap.compute("compute-test", oihana, (k, v) -> {
+      await(multimap.set(key, Map.entry(oihana, OIHANA))
+            .thenAccept(ignore -> assertFromAllCaches(key, Map.of("oihana", OIHANA)))
+            .thenCompose(ignore -> multimap.compute(key, oihana, (k, v) -> {
                assertThat(k).isEqualTo(oihana);
                assertThat(v).isEqualTo(OIHANA);
                return FELIX;
             }))
-            .thenAccept(ignore -> assertFromAllCaches("compute-test", Map.of("oihana", FELIX))));
+            .thenAccept(ignore -> assertFromAllCaches(key, Map.of("oihana", FELIX))));
    }
 
    public void testSubSelect() {
+      String key = getEntryKey();
       // Not existent key.
       assertFromAllCaches(m -> m.subSelect("something-not-existent", 10)
             .thenAccept(v -> assertThat(v).isNull()));
-      assertFromAllCaches(multimap -> multimap.set("sub-select-test", Map.entry(toBytes("oihana"), OIHANA), Map.entry(toBytes("koldo"), KOLDO))
-            .thenCompose(ignore -> multimap.subSelect("sub-select-test", 1))
+      assertFromAllCaches(multimap -> multimap.set(key, Map.entry(toBytes("oihana"), OIHANA), Map.entry(toBytes("koldo"), KOLDO))
+            .thenCompose(ignore -> multimap.subSelect(key, 1))
             .thenAccept(m ->
                   assertThat(convertKeys(m))
                         .hasSize(1)
@@ -172,8 +163,9 @@ public class DistributedMultimapPairCacheTest extends BaseDistFunctionalTest<Str
    }
 
    public void testGetMultiple() {
-      assertFromAllCaches(multimap -> multimap.set("get-multiple-test", Map.entry(toBytes("oihana"), OIHANA), Map.entry(toBytes("koldo"), KOLDO))
-            .thenCompose(ignore -> multimap.get("get-multiple-test", toBytes("oihana"), toBytes("koldo")))
+      String key = getEntryKey();
+      assertFromAllCaches(multimap -> multimap.set(key, Map.entry(toBytes("oihana"), OIHANA), Map.entry(toBytes("koldo"), KOLDO))
+            .thenCompose(ignore -> multimap.get(key, toBytes("oihana"), toBytes("koldo")))
             .thenAccept(m -> assertThat(convertKeys(m))
                   .hasSize(2)
                   .containsEntry("oihana", OIHANA)

@@ -23,8 +23,8 @@ public class HashMapBucket<K, V> {
 
    final Map<MultimapObjectWrapper<K>, V> values;
 
-   private HashMapBucket(Map<K, V> values) {
-      this.values = toStore(values);
+   private HashMapBucket(Map<MultimapObjectWrapper<K>, V> values) {
+      this.values = values;
    }
 
    @ProtoFactory
@@ -34,7 +34,7 @@ public class HashMapBucket<K, V> {
    }
 
    public static <K, V> HashMapBucket<K, V> create(Map<K, V> values) {
-      return new HashMapBucket<>(values);
+      return new HashMapBucket<>(toStore(values));
    }
 
    @ProtoField(number = 1, collectionImplementation = ArrayList.class)
@@ -42,25 +42,27 @@ public class HashMapBucket<K, V> {
       return values.entrySet().stream().map(BucketEntry::new).collect(Collectors.toList());
    }
 
-   public int putAll(Map<K, V> map) {
+   public HashMapBucketResponse<Integer, K, V> putAll(Map<K, V> map) {
+      Map<MultimapObjectWrapper<K>, V> copied = new HashMap<>(values);
       int res = 0;
       for (Map.Entry<K, V> entry : map.entrySet()) {
-         V prev = values.put(new MultimapObjectWrapper<>(entry.getKey()), entry.getValue());
+         V prev = copied.put(new MultimapObjectWrapper<>(entry.getKey()), entry.getValue());
          if (prev == null) res++;
       }
-      return res;
+      return new HashMapBucketResponse<>(res, new HashMapBucket<>(copied));
    }
 
-   public int putIfAbsent(Map<K, V> map) {
+   public HashMapBucketResponse<Integer, K, V> putIfAbsent(Map<K, V> map) {
       ByRef.Integer created = new ByRef.Integer(0);
+      Map<MultimapObjectWrapper<K>, V> copied = new HashMap<>(values);
       for (Map.Entry<K, V> entry : map.entrySet()) {
          // The `values` map can have null values, we use compute instead of putIfAbsent.
-         values.computeIfAbsent(new MultimapObjectWrapper<>(entry.getKey()), ignore -> {
+         copied.computeIfAbsent(new MultimapObjectWrapper<>(entry.getKey()), ignore -> {
             created.inc();
             return entry.getValue();
          });
       }
-      return created.get();
+      return new HashMapBucketResponse<>(created.get(), new HashMapBucket<>(copied));
    }
 
    public Map<K, V> getAll(Set<K> keys) {
@@ -80,13 +82,18 @@ public class HashMapBucket<K, V> {
       return values.isEmpty();
    }
 
-   public int removeAll(Collection<K> keys) {
+   public HashMapBucketResponse<Integer, K, V> removeAll(Collection<K> keys) {
       int res = 0;
-      for (K key : keys) {
-         Object prev = values.remove(new MultimapObjectWrapper<>(key));
-         if (prev != null) res++;
+      Map<MultimapObjectWrapper<K>, V> copied = new HashMap<>(values.size());
+      for (Map.Entry<MultimapObjectWrapper<K>, V> entry : values.entrySet()) {
+         if (containsKey(keys, entry.getKey())) {
+            res++;
+            continue;
+         }
+
+         copied.put(entry.getKey(), entry.getValue());
       }
-      return res;
+      return new HashMapBucketResponse<>(res, new HashMapBucket<>(copied));
    }
 
    public V get(K k) {
@@ -116,22 +123,26 @@ public class HashMapBucket<K, V> {
    /**
     * We do not use the original replace method here. Our implementation allows to create and delete entries.
     */
-   public boolean replace(K key, V expected, V replacement) {
+   public HashMapBucket<K, V> replace(K key, V expected, V replacement) {
       MultimapObjectWrapper<K> storeKey = new MultimapObjectWrapper<>(key);
       V current = values.get(storeKey);
-      if (current == null && expected == null && replacement != null) {
-         values.put(storeKey, replacement);
-         return true;
+
+      if (!equalValues(current, expected)) return null;
+      if (equalValues(current, replacement)) return this;
+
+      if (values.isEmpty()) {
+         Map<MultimapObjectWrapper<K>, V> copied = new HashMap<>();
+         copied.put(storeKey, replacement);
+         return new HashMapBucket<>(copied);
       }
 
-      if (!equalValues(current, expected)) return false;
-
+      Map<MultimapObjectWrapper<K>, V> copied = new HashMap<>(values);
       if (replacement == null) {
-         values.remove(storeKey);
+         copied.remove(storeKey, expected);
       } else {
-         values.put(storeKey, replacement);
+         copied.put(storeKey, replacement);
       }
-      return true;
+      return new HashMapBucket<>(copied);
    }
 
    private boolean equalValues(V one, Object other) {
@@ -144,7 +155,7 @@ public class HashMapBucket<K, V> {
       return eq;
    }
 
-   private Map<MultimapObjectWrapper<K>, V> toStore(Map<K, V> raw) {
+   private static <K, V> Map<MultimapObjectWrapper<K>, V> toStore(Map<K, V> raw) {
       Map<MultimapObjectWrapper<K>, V> converted = new HashMap<>();
       for (Map.Entry<K, V> entry : raw.entrySet()) {
          converted.put(new MultimapObjectWrapper<>(entry.getKey()), entry.getValue());
@@ -158,6 +169,14 @@ public class HashMapBucket<K, V> {
          converted.put(entry.getKey().get(), entry.getValue());
       }
       return converted;
+   }
+
+   private boolean containsKey(Collection<K> keys, MultimapObjectWrapper<K> entry) {
+      for (K key : keys) {
+         if (MultimapObjectWrapper.wrappedEquals(entry.get(), key))
+            return true;
+      }
+      return false;
    }
 
    @Override
@@ -225,4 +244,6 @@ public class HashMapBucket<K, V> {
          return value;
       }
    }
+
+   public record HashMapBucketResponse<R, K, V>(R response, HashMapBucket<K, V> bucket) { }
 }
