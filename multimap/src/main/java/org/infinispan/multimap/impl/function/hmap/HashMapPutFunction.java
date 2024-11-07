@@ -45,20 +45,17 @@ public class HashMapPutFunction<K, HK, HV> extends HashMapBucketBaseFunction<K, 
       Map<HK, HV> values = entries.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
       Optional<HashMapBucket<HK, HV>> existing = view.peek();
 
-      int res;
-      HashMapBucket<HK, HV> bucket;
-      if (existing.isPresent()) {
-         bucket = existing.get();
-         res = putIfAbsent
-               ? bucket.putIfAbsent(values)
-               : bucket.putAll(values);
-      } else {
-         bucket = HashMapBucket.create(values);
-         res = values.size();
+      if (existing.isEmpty()) {
+         view.set(HashMapBucket.create(values));
+         return values.size();
       }
-      view.set(bucket);
+      HashMapBucket<HK, HV> bucket = existing.get();
+      HashMapBucket.HashMapBucketResponse<Integer, HK, HV> res = putIfAbsent
+            ? bucket.putIfAbsent(values)
+            : bucket.putAll(values);
+      view.set(res.bucket());
 
-      return res;
+      return res.response();
    }
 
    public static class Externalizer implements AdvancedExternalizer<HashMapPutFunction> {

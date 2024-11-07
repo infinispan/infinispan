@@ -33,10 +33,11 @@ public class HashMapReplaceFunction<K, HK, HV> extends HashMapBucketBaseFunction
       Optional<HashMapBucket<HK, HV>> existing = view.peek();
       HashMapBucket<HK, HV> bucket = existing.orElse(HashMapBucket.create(Map.of()));
 
-      boolean replaced = bucket.replace(property, expected, replacement);
-      if (replaced) view.set(bucket);
+      // Replace returns null when there are no changes.
+      HashMapBucket<HK, HV> next = bucket.replace(property, expected, replacement);
+      if (next != null && next != bucket) view.set(next);
 
-      return replaced;
+      return next != null;
    }
 
    @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
