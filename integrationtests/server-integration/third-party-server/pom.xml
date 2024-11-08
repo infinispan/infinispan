@@ -27,6 +27,13 @@
         <database>h2</database>
     </properties>
 
+    <repositories>
+      <repository>
+          <id>jboss-repo</id>
+          <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+      </repository>
+    </repositories>
+
     <dependencies>
         <dependency>
             <groupId>org.jboss.threads</groupId>
