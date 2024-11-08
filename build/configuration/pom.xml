@@ -221,7 +221,7 @@
 
       <version.kafka.client>3.6.1</version.kafka.client>
       <version.xom>1.3.9</version.xom>
-      <version.xstream>1.4.20</version.xstream>
+      <version.xstream>1.4.21</version.xstream>
 
       <!-- Plugin dependencies -->
       <version.checkstyle.maven-plugin>3.3.1</version.checkstyle.maven-plugin>
