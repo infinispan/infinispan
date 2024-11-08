@@ -60,6 +60,7 @@ jobs:
             echo "test_min=$MIN_TEST_NUM" >> $GITHUB_OUTPUT
 
         - name: set-commit-status-pending
+          if: steps.test-number.outputs.test_count < steps.test-number.outputs.test_min
           uses: myrotvorets/set-commit-status-action@v2.0.1
           with:
                 status: failure

@@ -49,6 +49,7 @@ jobs:
       - name: set-commit-status-pending
         uses: myrotvorets/set-commit-status-action@v2.0.1
         with:
+            context: Test mvn verify
             status: pending
             sha: ${{ needs.get-info.outputs.source-head-sha }}
             targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -94,6 +95,7 @@ jobs:
         if: success()
         uses: myrotvorets/set-commit-status-action@v2.0.1
         with:
+            context: Test mvn verify
             status: success
             sha: ${{ needs.get-info.outputs.source-head-sha }}
             targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -102,6 +104,7 @@ jobs:
         if: always() && failure()
         uses: myrotvorets/set-commit-status-action@v2.0.1
         with:
+            context: Test mvn verify
             status: failure
             sha: ${{ needs.get-info.outputs.source-head-sha }}
             targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
