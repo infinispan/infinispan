@@ -63,10 +63,11 @@ public final class IncrFunction<K, V> implements SortedSetBucketBaseFunction<K, 
       }
       Double result = null;
       if (bucket != null) {
-         result = bucket.incrScore(score, member, addOnly, updateOnly, updateLessScoresOnly, updateGreaterScoresOnly);
+         var res = bucket.incrScore(score, member, addOnly, updateOnly, updateLessScoresOnly, updateGreaterScoresOnly);
          //don't change if nothing was added or updated. it avoids replicating a no-op
-         if (result != null) {
-            entryView.set(bucket);
+         if (res != null) {
+            result = res.result();
+            entryView.set(res.bucket());
          }
       }
 
