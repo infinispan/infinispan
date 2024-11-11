@@ -1,9 +1,13 @@
 package org.infinispan.multimap.impl;
 
+import static org.infinispan.functional.FunctionalTestUtils.await;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -53,6 +57,12 @@ public abstract class BaseDistributedMultimapTest<T, V> extends BaseDistFunction
                   constructor.get().fromOwner(true).numOwners(1).cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(mode)
             ))
             .toArray();
+   }
+
+   protected void runAndRollback(Callable<CompletionStage<?>> method) throws Throwable {
+      tm(0, cacheName).begin();
+      await(method.call());
+      tm(0, cacheName).rollback();
    }
 
    protected final <O extends BaseDistributedMultimapTest<T, V>> O self() {
