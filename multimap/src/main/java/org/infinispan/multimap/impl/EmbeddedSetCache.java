@@ -2,7 +2,6 @@ package org.infinispan.multimap.impl;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -86,7 +85,7 @@ public class EmbeddedSetCache<K, V> {
    public CompletionStage<Long> add(K key, V value) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       requireNonNull(value, ERR_VALUE_CAN_T_BE_NULL);
-      return readWriteMap.eval(key, new SAddFunction<>(Arrays.asList(value)));
+      return readWriteMap.eval(key, new SAddFunction<>(List.of(value)));
    }
 
    /**
@@ -112,7 +111,7 @@ public class EmbeddedSetCache<K, V> {
    public CompletionStage<Long> remove(K key, V value) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       requireNonNull(value, ERR_VALUE_CAN_T_BE_NULL);
-      return readWriteMap.eval(key, new SRemoveFunction<>(Arrays.asList(value)));
+      return readWriteMap.eval(key, new SRemoveFunction<>(List.of(value)));
    }
 
    /**

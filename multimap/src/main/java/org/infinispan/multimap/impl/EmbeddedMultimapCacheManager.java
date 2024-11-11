@@ -69,4 +69,12 @@ public class EmbeddedMultimapCacheManager<K, V> implements MultimapCacheManager<
       }
       return new EmbeddedMultimapPairCache<>(cache);
    }
+
+   public EmbeddedSetCache<K, V> getMultimapSet(String cacheName) {
+      Cache<K, SetBucket<V>> cache = cacheManager.getCache(cacheName);
+      if (cache == null) {
+         throw new IllegalStateException("Cache must exist: " + cacheName);
+      }
+      return new EmbeddedSetCache<>(cache);
+   }
 }
