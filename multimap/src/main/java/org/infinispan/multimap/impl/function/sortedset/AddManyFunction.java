@@ -1,12 +1,6 @@
 package org.infinispan.multimap.impl.function.sortedset;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
-import org.infinispan.multimap.impl.ScoredValue;
-import org.infinispan.multimap.impl.SortedSetAddArgs;
-import org.infinispan.multimap.impl.SortedSetBucket;
+import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -17,7 +11,13 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.functional.EntryView;
+import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.multimap.impl.ScoredValue;
+import org.infinispan.multimap.impl.SortedSetAddArgs;
+import org.infinispan.multimap.impl.SortedSetBucket;
 
 /**
  * Serializable function used by
@@ -65,28 +65,29 @@ public final class AddManyFunction<K, V> implements SortedSetBucketBaseFunction<
    @Override
    public Long apply(EntryView.ReadWriteEntryView<K, SortedSetBucket<V>> entryView) {
       Optional<SortedSetBucket<V>> existing = entryView.peek();
-      SortedSetBucket bucket = null;
+      SortedSetBucket<V> bucket = null;
       if (existing.isPresent()) {
         bucket = existing.get();
       } else if (!updateOnly || !replace){
-         bucket = new SortedSetBucket();
+         bucket = new SortedSetBucket<>();
       }
 
       if (bucket != null) {
          if (replace) {
-            bucket.replace(scoredValues);
-            if (bucket.size() == 0) {
+            SortedSetBucket<V> next = bucket.replace(scoredValues);
+            if (next.size() == 0) {
                entryView.remove();
             } else {
-               entryView.set(bucket);
+               entryView.set(next);
             }
-            return bucket.size();
+            return next.size();
          }
 
-         SortedSetBucket.AddOrUpdatesCounters addResult = bucket.addMany(scoredValues, addOnly, updateOnly, updateLessScoresOnly, updateGreaterScoresOnly);
+         var res = bucket.addMany(scoredValues, addOnly, updateOnly, updateLessScoresOnly, updateGreaterScoresOnly);
+         SortedSetBucket.AddOrUpdatesCounters addResult = res.result();
          //don't change if nothing was added or updated. it avoids replicating a no-op
          if (addResult.updated > 0 || addResult.created > 0) {
-            entryView.set(bucket);
+            entryView.set(res.bucket());
          }
          // Return created only or created and updated count
          return returnChangedCount? addResult.created + addResult.updated : addResult.created;

@@ -149,14 +149,23 @@ public class SortedSetBucket<V> implements SortableBucket<V>, BaseSetBucket<V> {
       this.entries = new HashMap<>();
    }
 
-   public Collection<ScoredValue<V>> pop(boolean min, long count) {
-      List<ScoredValue<V>> popValuesList = new ArrayList<>();
-      for (long i = 0; i < count && !scoredEntries.isEmpty(); i++) {
-         ScoredValue<V> popedScoredValue = min ? scoredEntries.pollFirst() : scoredEntries.pollLast();
-         entries.remove(popedScoredValue.wrappedValue());
-         popValuesList.add(popedScoredValue);
+   public SortedSetResult<Collection<ScoredValue<V>>, V> pop(boolean min, long count) {
+      Iterator<ScoredValue<V>> it = min
+            ? scoredEntries.iterator()
+            : scoredEntries.descendingIterator();
+
+      int i = 0;
+      List<ScoredValue<V>> popped = new ArrayList<>();
+      List<ScoredValue<V>> remaining = new ArrayList<>();
+      while (it.hasNext()) {
+         ScoredValue<V> sv = it.next();
+         if (++i > count) {
+            remaining.add(sv);
+         } else {
+            popped.add(sv);
+         }
       }
-      return popValuesList;
+      return new SortedSetResult<>(popped, new SortedSetBucket<>(remaining));
    }
 
    public List<Double> scores(List<V> members) {
@@ -174,16 +183,8 @@ public class SortedSetBucket<V> implements SortableBucket<V>, BaseSetBucket<V> {
             : IndexValue.of(score, tailedHead.size());
    }
 
-   public void replace(Collection<ScoredValue<V>> scoredValues) {
-      entries.clear();
-      scoredEntries.clear();
-      for (ScoredValue<V> scoredValue : scoredValues) {
-         addScoredValue(scoredValue);
-      }
-   }
-
-   public Set<MultimapObjectWrapper<V>> getScoredEntriesAsValuesSet() {
-      return entries.keySet().stream().collect(Collectors.toSet());
+   public SortedSetBucket<V> replace(Collection<ScoredValue<V>> scoredValues) {
+      return new SortedSetBucket<>(scoredValues);
    }
 
    public static class AddOrUpdatesCounters {
@@ -192,33 +193,34 @@ public class SortedSetBucket<V> implements SortableBucket<V>, BaseSetBucket<V> {
 
       public long updated = 0;
    }
-   public AddOrUpdatesCounters addMany(Collection<ScoredValue<V>> scoredValues,
+   public SortedSetResult<AddOrUpdatesCounters, V> addMany(Collection<ScoredValue<V>> scoredValues,
                                        boolean addOnly,
                                        boolean updateOnly,
                                        boolean updateLessScoresOnly,
                                        boolean updateGreaterScoresOnly) {
 
       AddOrUpdatesCounters addResult = new AddOrUpdatesCounters();
-      int startSize = entries.size();
+      SortedSetBucket<V> next = new SortedSetBucket<>(scoredEntries);
+      long startSize = next.size();
 
       for (ScoredValue<V> scoredValue : scoredValues) {
          if (addOnly) {
-            addOnly(scoredValue);
+            next.addOnly(scoredValue);
          } else if (updateOnly && !updateGreaterScoresOnly && !updateLessScoresOnly) {
-            updateOnly(addResult, scoredValue);
+            next.updateOnly(addResult, scoredValue);
          } else if (updateGreaterScoresOnly) {
-            addOrUpdateGreaterScores(updateOnly, addResult, scoredValue);
+            next.addOrUpdateGreaterScores(updateOnly, addResult, scoredValue);
          } else if (updateLessScoresOnly) {
-            addOrUpdateLessScores(updateOnly, addResult, scoredValue);
+            next.addOrUpdateLessScores(updateOnly, addResult, scoredValue);
          } else {
-            addOrUpdate(addResult, scoredValue);
+            next.addOrUpdate(addResult, scoredValue);
          }
       }
-      addResult.created = entries.size() - startSize;
-      return addResult;
+      addResult.created = next.size() - startSize;
+      return new SortedSetResult<>(addResult, next);
    }
 
-   public Double incrScore(double incr, V member, boolean addOnly, boolean updateOnly, boolean updateLessScoresOnly, boolean updateGreaterScoresOnly) {
+   public SortedSetResult<Double, V> incrScore(double incr, V member, boolean addOnly, boolean updateOnly, boolean updateLessScoresOnly, boolean updateGreaterScoresOnly) {
       MultimapObjectWrapper<V> wrappedValue = new MultimapObjectWrapper<>(member);
       Double existingScore = entries.get(wrappedValue);
       if ((existingScore != null && addOnly) || (existingScore == null && updateOnly)) {
@@ -236,8 +238,10 @@ public class SortedSetBucket<V> implements SortableBucket<V>, BaseSetBucket<V> {
          if (Double.isNaN(newScore))
             throw new IllegalStateException("resulting score is not a number (NaN)");
       }
-      addOrUpdate(new AddOrUpdatesCounters(), new ScoredValue<>(newScore, wrappedValue));
-      return newScore;
+
+      SortedSetBucket<V> next = new SortedSetBucket<>(scoredEntries);
+      next.addOrUpdate(new AddOrUpdatesCounters(), new ScoredValue<>(newScore, wrappedValue));
+      return new SortedSetResult<>(newScore, next);
    }
 
    private void addOnly(ScoredValue<V> scoredValue) {
@@ -298,45 +302,42 @@ public class SortedSetBucket<V> implements SortableBucket<V>, BaseSetBucket<V> {
       entries.put(scoredValue.wrappedValue(), scoredValue.score());
    }
 
-   public <V> long removeAll(Collection<V> values) {
-      long removeCount = 0;
+   public SortedSetResult<Long, V> removeAll(Collection<V> values) {
+      Collection<ScoredValue<V>> subset = new ArrayList<>();
       for (V value: values) {
-         MultimapObjectWrapper<V> wrappedValue = new MultimapObjectWrapper(value);
+         MultimapObjectWrapper<V> wrappedValue = new MultimapObjectWrapper<>(value);
          Double score = entries.get(wrappedValue);
-         if (score != null) {
-            entries.remove(wrappedValue);
-            scoredEntries.remove(new ScoredValue<>(score, wrappedValue));
-            removeCount++;
-         }
+         if (score != null)
+            subset.add(new ScoredValue<>(score, wrappedValue));
       }
-      return removeCount;
+      return removeAllInternal(subset);
    }
 
-   public long removeAll(V min, boolean includeMin, V max, boolean includeMax) {
+   public SortedSetResult<Long, V> removeAll(V min, boolean includeMin, V max, boolean includeMax) {
       List<ScoredValue<V>> subset = subset(min, includeMin, max, includeMax, false, null, null);
-      for (ScoredValue<V> value : subset) {
-         entries.remove(value.wrappedValue());
-         scoredEntries.remove(value);
-      }
-      return subset.size();
+      return removeAllInternal(subset);
    }
 
-   public long removeAll(Double min, boolean includeMin, Double max, boolean includeMax) {
+   public SortedSetResult<Long, V> removeAll(Double min, boolean includeMin, Double max, boolean includeMax) {
       List<ScoredValue<V>> subset = subset(min, includeMin, max, includeMax, false, null, null);
-      for (ScoredValue<V> value : subset) {
-         entries.remove(value.wrappedValue());
-         scoredEntries.remove(value);
-      }
-      return subset.size();
+      return removeAllInternal(subset);
    }
 
-   public long removeAll(Long min, Long max) {
+   public SortedSetResult<Long, V> removeAll(Long min, Long max) {
       List<ScoredValue<V>> subset = subsetByIndex(min, max, false);
-      for (ScoredValue<V> value : subset) {
-         entries.remove(value.wrappedValue());
-         scoredEntries.remove(value);
+      return removeAllInternal(subset);
+   }
+
+   private SortedSetResult<Long, V> removeAllInternal(Collection<ScoredValue<V>> subset) {
+      if (subset.isEmpty())
+         return new SortedSetResult<>(0L, this);
+
+      List<ScoredValue<V>> remaining = new ArrayList<>(scoredEntries.size());
+      for (ScoredValue<V> sv : scoredEntries) {
+         if (!subset.contains(sv)) remaining.add(sv);
       }
-      return subset.size();
+      long size = subset.size();
+      return new SortedSetResult<>(size, new SortedSetBucket<>(remaining));
    }
 
    public List<ScoredValue<V>> subsetByIndex(long from, long to, boolean rev) {
@@ -554,7 +555,7 @@ public class SortedSetBucket<V> implements SortableBucket<V>, BaseSetBucket<V> {
 
    @Override
    public Stream<MultimapObjectWrapper<V>> stream() {
-      return scoredEntries.stream().map(v -> v.wrappedValue());
+      return scoredEntries.stream().map(ScoredValue::wrappedValue);
    }
 
    @Override
@@ -589,4 +590,6 @@ public class SortedSetBucket<V> implements SortableBucket<V>, BaseSetBucket<V> {
    public int hashCode() {
       return Objects.hash(scoredEntries, entries);
    }
+
+   public record SortedSetResult<R, E>(R result, SortedSetBucket<E> bucket) { }
 }

@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -50,31 +51,43 @@ public final class RemoveManyFunction<K, V, T> implements SortedSetBucketBaseFun
    public Long apply(EntryView.ReadWriteEntryView<K, SortedSetBucket<V>> entryView) {
       Optional<SortedSetBucket<V>> existing = entryView.peek();
       if (existing.isPresent()) {
-         SortedSetBucket bucket = existing.get();
-         long removeCount;
-         switch (type) {
-            case LEX:
-               removeCount = bucket.removeAll((V)values.get(0), includeMin, (V)values.get(1), includeMax);
-               break;
-            case SCORE:
-               removeCount = bucket.removeAll((Double)values.get(0), includeMin, (Double)values.get(1), includeMax);
-               break;
-            case INDEX:
-               removeCount =  bucket.removeAll((Long)values.get(0), (Long)values.get(1));
-               break;
-            default:
-               removeCount = bucket.removeAll(values);
-         }
+         SortedSetBucket<V> bucket = existing.get();
+         var result = switch (type) {
+            case LEX -> {
+               V first = element(values, 0);
+               yield bucket.removeAll(first, includeMin, element(values, 1), includeMax);
+            }
+            case SCORE -> {
+               Double d = element(values, 0);
+               yield bucket.removeAll(d, includeMin, element(values, 1), includeMax);
+            }
+            case INDEX -> {
+               Long l = element(values, 0);
+               yield bucket.removeAll(l, element(values, 1));
+            }
+            default -> bucket.removeAll(unchecked(values));
+         };
 
-         if (bucket.size() == 0) {
+         SortedSetBucket<V> next = result.bucket();
+         if (next.size() == 0) {
             entryView.remove();
          } else {
-            entryView.set(bucket);
+            entryView.set(next);
          }
-         return removeCount;
+         return result.result();
       }
       // nothing has been done
       return 0L;
+   }
+
+   @SuppressWarnings("unchecked")
+   private static <E> Collection<E> unchecked(List<?> list) {
+      return (Collection<E>) list;
+   }
+
+   @SuppressWarnings("unchecked")
+   private static <E> E element(List<?> list, int index) {
+      return (E) list.get(index);
    }
 
    private static class Externalizer implements AdvancedExternalizer<RemoveManyFunction> {
