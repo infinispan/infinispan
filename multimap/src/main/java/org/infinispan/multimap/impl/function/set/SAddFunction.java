@@ -35,11 +35,13 @@ public final class SAddFunction<K, V> implements SetBucketBaseFunction<K, V, Lon
    @Override
    public Long apply(EntryView.ReadWriteEntryView<K, SetBucket<V>> entryView) {
       Optional<SetBucket<V>> existing = entryView.peek();
-      Long added = 0L;
-      var s = existing.isPresent() ? existing.get() : new SetBucket<V>();
+      long added = 0L;
+      var s = existing.orElseGet(SetBucket::new);
       var initSize = s.size();
-      if (s.addAll(values)) {
-         added = Long.valueOf(s.size() - initSize);
+      var res = s.addAll(values);
+      s = res.bucket();
+      if (res.result()) {
+         added = s.size() - initSize;
       }
       // don't change the cache if the value already exists. it avoids replicating a
       // no-op

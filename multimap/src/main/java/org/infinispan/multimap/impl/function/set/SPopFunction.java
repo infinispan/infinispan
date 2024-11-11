@@ -39,22 +39,27 @@ public final class SPopFunction<K, V> implements SetBucketBaseFunction<K, V, Col
    @Override
    public Collection<V> apply(EntryView.ReadWriteEntryView<K, SetBucket<V>> entryView) {
       Optional<SetBucket<V>> existing = entryView.peek();
-      if (count == 0 || !existing.isPresent()) {
+      if (count == 0 || existing.isEmpty()) {
          return Collections.emptyList();
       }
       var s = existing.get();
       if (count > 0) {
          var popped = getRandomSubset(s.toList(), count);
          if (remove) {
-            s.removeAll(popped);
+            var result = s.removeAll(popped);
+            s = result.bucket();
+
+            if (s.isEmpty()) {
+               entryView.remove();
+            } else {
+               entryView.set(s);
+            }
          }
-         if (s.isEmpty()) {
-            entryView.remove();
-         }
+
          return popped;
       }
       var list = s.toList();
-      return ThreadLocalRandom.current().ints(-count, 0, s.size()).mapToObj(i -> list.get(i))
+      return ThreadLocalRandom.current().ints(-count, 0, s.size()).mapToObj(list::get)
             .collect(Collectors.toList());
    }
 
