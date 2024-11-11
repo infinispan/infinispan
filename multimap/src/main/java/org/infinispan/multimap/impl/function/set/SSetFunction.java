@@ -39,7 +39,7 @@ public final class SSetFunction<K, V> implements SetBucketBaseFunction<K, V, Lon
          }
          return 0L;
       }
-      var set = new SetBucket<V>(new HashSet<>(values));
+      var set = SetBucket.create(values);
       entryView.set(set);
       return (long) set.size();
    }

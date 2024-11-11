@@ -36,8 +36,12 @@ public class SetBucket<V> implements SortableBucket<V>, BaseSetBucket<V> {
       this.values = set;
    }
 
-   public SetBucket(Set<V> values) {
-      this.values = values.stream().map(MultimapObjectWrapper::new).collect(Collectors.toSet());
+   private SetBucket(Set<MultimapObjectWrapper<V>> values) {
+      this.values = values;
+   }
+
+   public static <V> SetBucket<V> create(Collection<V> values) {
+      return new SetBucket<>(values.stream().map(MultimapObjectWrapper::new).collect(Collectors.toSet()));
    }
 
    public static <V> SetBucket<V> create(V value) {
@@ -107,20 +111,35 @@ public class SetBucket<V> implements SortableBucket<V>, BaseSetBucket<V> {
       return "SetBucket{values=" + Util.toStr(values) + '}';
    }
 
-   public boolean add(V value) {
-      return values.add(new MultimapObjectWrapper<>(value));
+   public SetBucketResult<Boolean, V> addAll(Collection<V> values) {
+      Set<MultimapObjectWrapper<V>> existing = new HashSet<>(this.values);
+      boolean added = false;
+      for (V value : values) {
+         added |= existing.add(new MultimapObjectWrapper<>(value));
+      }
+      return new SetBucketResult<>(added, new SetBucket<>(existing));
    }
 
-   public boolean remove(V value) {
-      return values.remove(new MultimapObjectWrapper<>(value));
+   public SetBucketResult<Boolean, V> removeAll(Collection<V> values) {
+      Boolean changed = Boolean.FALSE;
+      Set<MultimapObjectWrapper<V>> existing = new HashSet<>(this.values.size());
+      for (MultimapObjectWrapper<V> value : this.values) {
+         if (contains(values, value)) {
+            changed = Boolean.TRUE;
+            continue;
+         }
+
+         existing.add(value);
+      }
+      return new SetBucketResult<>(changed, new SetBucket<>(existing));
    }
 
-   public boolean addAll(Collection<V> values) {
-      return this.values.addAll(values.stream().map(MultimapObjectWrapper::new).collect(Collectors.toSet()));
-   }
-
-   public boolean removeAll(Collection<V> values) {
-      return this.values.removeAll(values.stream().map(MultimapObjectWrapper::new).collect(Collectors.toSet()));
+   private boolean contains(Collection<V> collection, MultimapObjectWrapper<V> wrapped) {
+      for (V v : collection) {
+         if (wrapped.wrappedEquals(v))
+            return true;
+      }
+      return false;
    }
 
    @Override
@@ -154,4 +173,6 @@ public class SetBucket<V> implements SortableBucket<V>, BaseSetBucket<V> {
    public int hashCode() {
       return Objects.hash(values);
    }
+
+   public record SetBucketResult<R, E>(R result, SetBucket<E> bucket) { }
 }
