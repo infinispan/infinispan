@@ -17,6 +17,10 @@
 |UDP
 |JGroups multicast
 
+m|57800
+|TCP
+|Failure detection is provided by `FD_SOCK2`.
+
 |===
 
 [discrete]
@@ -25,5 +29,4 @@
 {brandname} uses the following ports for the JGroups RELAY2 protocol:
 
 `7900`:: For {brandname} clusters running on {k8s}.
-`7800`:: If using UDP for traffic between nodes and TCP for traffic between clusters.
-`7801`:: If using TCP for traffic between nodes and TCP for traffic between clusters.
+`7801`:: For other deployments.
