@@ -25,8 +25,8 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFact
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.server.hotrod.HotRodMultiNodeTest;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodClient;
@@ -34,7 +34,6 @@ import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.server.hotrod.test.TestClientListener;
 import org.infinispan.server.hotrod.test.TestResponse;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.KeyValuePair;
 import org.testng.annotations.Test;
 
@@ -63,8 +62,9 @@ public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTes
    }
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() {
-      return TestCacheManagerFactory.createClusteredCacheManager(HotRodClusterEventsSCI.INSTANCE, hotRodCacheConfiguration());
+   protected void createAndAddCacheManager() {
+      //noinspection resource
+      addClusterEnabledCacheManager(HotRodClusterEventsSCI.INSTANCE, hotRodCacheConfiguration());
    }
 
    @Override
@@ -183,9 +183,7 @@ public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTes
                listener2.expectOnlyRemovedEvent(anyCache(), newKey);
             });
          } finally {
-            if (client4 != null) {
-               client4.stop();
-            }
+            client4.stop();
             stopClusteredServer(newServer);
             TestingUtil.waitForNoRebalance(
                   cache(0, cacheName()), cache(1, cacheName()), cache(2, cacheName()));
@@ -426,7 +424,7 @@ public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTes
       }
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = {
                AcceptedKeyFilterFactory.class,
                AcceptedKeyValueConverterFactory.class
