@@ -16,6 +16,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collector;
+import java.util.stream.Stream;
 
 import org.infinispan.commons.reactive.RxJavaInterop;
 
@@ -309,6 +310,28 @@ public class CompletionStages {
             .concatMap(i -> RxJavaInterop.voidCompletionStageToFlowable(function.apply(i)))
             .sequential()
             .ignoreElements().toCompletionStage(null);
+   }
+
+   public static <I, T, A, R> CompletionStage<R> performConcurrently(Iterable<I> iterable, int parallelism, Scheduler scheduler,
+                                                                     Function<? super I, CompletionStage<T>> function,
+                                                                     Collector<T, A, R> collector) {
+      return performConcurrently(Flowable.fromIterable(iterable), parallelism, scheduler, function, collector);
+   }
+
+   public static <I, T, A, R> CompletionStage<R> performConcurrently(Stream<I> stream, int parallelism, Scheduler scheduler,
+                                                                     Function<? super I, CompletionStage<T>> function,
+                                                                     Collector<T, A, R> collector) {
+      return performConcurrently(Flowable.fromStream(stream), parallelism, scheduler, function, collector);
+   }
+
+   private static <I, T, A, R> CompletionStage<R> performConcurrently(Flowable<I> flowable, int parallelism, Scheduler scheduler,
+                                                                      Function<? super I, CompletionStage<T>> function, Collector<T, A, R> collector) {
+      return flowable
+            .parallel(parallelism)
+            .runOn(scheduler)
+            .concatMap(i -> Flowable.fromCompletionStage(function.apply(i)))
+            .collect(collector)
+            .singleOrErrorStage();
    }
 
    public static <I> CompletionStage<Void> performSequentially(Iterator<I> iterator, Function<? super I, CompletionStage<Void>> function) {
