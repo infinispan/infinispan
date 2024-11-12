@@ -10,6 +10,9 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.query.clustered.QueryResponse;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
+
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * Deletes the matching results on current node.
@@ -28,9 +31,12 @@ final class CQDelete extends CQWorker {
          throw CONTAINER.deleteStatementsCannotUsePaging();
       }
 
+      int concurrencyLevel = cache.getCacheConfiguration().locking().concurrencyLevel();
+
       SearchQueryBuilder query = queryDefinition.getSearchQueryBuilder();
       return blockingManager.supplyBlocking(() -> fetchIds(query), this)
-            .thenCompose(queryResult -> CompletionStages.performSequentially(queryResult.iterator(), cache::removeAsync,
+            .thenCompose(queryResult -> CompletionStages.performConcurrently(queryResult, concurrencyLevel,
+                  Schedulers.from(new WithinThreadExecutor()), cache::removeAsync,
                   Collectors.summingInt(prev -> prev != null ? 1 : 0)))
             .thenApply(QueryResponse::new);
    }
