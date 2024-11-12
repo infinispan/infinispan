@@ -3,7 +3,7 @@
         xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.3.xsd">
    <!-- jgroups.udp.address is deprecated and will be removed, see ISPN-11867 -->
    <UDP bind_addr="${jgroups.bind.address,jgroups.udp.address:SITE_LOCAL}"
-        bind_port="${jgroups.bind.port,jgroups.udp.port:0}"
+        bind_port="${jgroups.bind.port,jgroups.udp.port:7800}"
         mcast_addr="${jgroups.mcast_addr:239.6.7.8}"
         mcast_port="${jgroups.mcast_port:46655}"
         tos="0"
@@ -12,6 +12,7 @@
         ucast_recv_buf_size="20m"
         mcast_recv_buf_size="25m"
         ip_ttl="${jgroups.ip_ttl:2}"
+        ip_mcast="${jgroups.ip_mcast:true}"
         thread_naming_pattern="pl"
         diag.enabled="${jgroups.diag.enabled:false}"
         bundler_type="${jgroups.bundler.type:transfer-queue}"

@@ -124,9 +124,8 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
    }
 
    private GlobalConfigurationBuilder getServerModeGlobalConfigurationBuilder() {
-      GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
+      GlobalConfigurationBuilder globalConfigurationBuilder = defaultGlobalConfigurationBuilder();
       globalConfigurationBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
-      globalConfigurationBuilder.transport().defaultTransport();
       return globalConfigurationBuilder;
    }
 
