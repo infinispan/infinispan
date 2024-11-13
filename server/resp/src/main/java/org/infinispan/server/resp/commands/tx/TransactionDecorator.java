@@ -149,6 +149,16 @@ final class TransactionDecorator {
          this.ctx = ctx;
       }
 
+      private RespExecDecoratedCache(InvocationContext ctx, CacheImpl<byte[], byte[]> delegate, Object lockOwner, long flags) {
+         super(delegate, lockOwner, flags);
+         this.ctx = ctx;
+      }
+
+      @Override
+      protected DecoratedCache<byte[], byte[]> newInstance(CacheImpl<byte[], byte[]> impl, Object lockOwner, long newFlags) {
+         return new RespExecDecoratedCache(ctx, impl, lockOwner, newFlags);
+      }
+
       @Override
       protected InvocationContext readContext(int size) {
          return ctx;
