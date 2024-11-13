@@ -66,7 +66,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       // Verify
       var result = redis.jsonGet(k(), jpRoot);
       assertThat(result).hasSize(1);
-      assertThat(compareJSONSet(jvDoc, "$.root.k1", jvNew, result.get(0)));
+      assertThat(compareJSONSet(result.get(0), jvDoc, "$.root.k1", jvNew));
    }
 
    @Test
@@ -87,7 +87,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       // Verify
       var result = redis.jsonGet(k(), jpRoot);
       assertThat(result).hasSize(1);
-      assertThat(compareJSONSet(jvDoc, "$..k1", jvNew, result.get(0))).isEqualTo(true);
+      assertThat(compareJSONSet(result.get(0), jvDoc, "$..k1", jvNew)).isEqualTo(true);
    }
 
    @Test
@@ -129,7 +129,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.jsonSet(k(), jp, jvNew)).isEqualTo("OK");
       var result = redis.jsonGet(k(), jp);
       assertThat(result).hasSize(1);
-      assertThat(compareJSONSet(jv, "$.key1", jvNew, result.get(0))).isEqualTo(true);
+      assertThat(compareJSONSet(result.get(0), jv, "$.key1", jvNew)).isEqualTo(true);
 
       jv = result.get(0);
       jp = new JsonPath("$.key");
@@ -137,7 +137,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.jsonSet(k(), jp, jvNew)).isEqualTo("OK");
       result = redis.jsonGet(k(), jp);
       assertThat(result).hasSize(1);
-      assertThat(compareJSONSet(jv, "$.key", jvNew, result.get(0))).isEqualTo(true);
+      assertThat(compareJSONSet(result.get(0), jv, "$.key", jvNew)).isEqualTo(true);
 
       jp = new JsonPath("$.lev1");
       jv = new DefaultJsonParser().createJsonValue("{\"keyl1\":\"valuel1\"}");
@@ -146,6 +146,55 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       jp = new JsonPath("$.lev1.lev2.lev3");
       jv = new DefaultJsonParser().createJsonValue("{\"keyl2\":\"valuel2\"}");
       assertThat(redis.jsonSet(k(), jp, jv)).isNull();
+   }
+
+   @Test
+   public void testJSONGET() {
+      JsonPath jp = new JsonPath("$");
+      JsonValue jv = new DefaultJsonParser().createJsonValue("""
+               { "key1":"value1",
+                 "key2":"value2"
+               }
+            """);
+      assertThat(redis.jsonSet(k(), jp, jv)).isEqualTo("OK");
+      JsonPath jp1 = new JsonPath("$.key1");
+      JsonPath jp2 = new JsonPath("$.key2");
+      JsonPath jp3 = new JsonPath("$.key3");
+      var result = redis.jsonGet(k(), jp1);
+      assertThat(compareJSONGet(result.get(0), jv, jp1)).isEqualTo(true);
+
+      result = redis.jsonGet(k(), jp1, jp2);
+      assertThat(compareJSONGet(result.get(0), jv, jp1, jp2)).isEqualTo(true);
+
+      result = redis.jsonGet(k(), jp1, jp2, jp3);
+      assertThat(compareJSONGet(result.get(0), jv, jp1, jp2, jp3)).isEqualTo(true);
+
+      result = redis.jsonGet(k(), jp3);
+      assertThat(compareJSONGet(result.get(0), jv, jp3)).isEqualTo(true);
+   }
+
+   private boolean compareJSONGet(JsonValue result, JsonValue doc, JsonPath... paths) {
+      ObjectMapper mapper = new ObjectMapper();
+      ObjectNode rootObjectNode, resultNode;
+      try {
+         rootObjectNode = (ObjectNode) mapper.readTree(doc.toString());
+         resultNode = (ObjectNode) mapper.readTree(result.toString());
+         var jpCtx = com.jayway.jsonpath.JsonPath.using(config).parse(rootObjectNode);
+         if (paths.length == 1) {
+            JsonNode node = jpCtx.read(paths[0].toString());
+            return resultNode.equals(node);
+         }
+         int pos = 0;
+         ObjectNode root = mapper.createObjectNode();
+         while (pos < paths.length) {
+            JsonNode node = jpCtx.read(paths[pos].toString());
+            root.set(paths[pos++].toString(), node);
+         }
+         return resultNode.equals(root);
+      } catch (Exception ex) {
+         fail();
+         return false;
+      }
    }
 
    private boolean compareJSON(JsonValue j1, JsonValue j2) {
@@ -161,7 +210,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       return false;
    }
 
-   private boolean compareJSONSet(JsonValue doc, String path, JsonValue node, JsonValue result) {
+   private boolean compareJSONSet(JsonValue result, JsonValue doc, String path, JsonValue node) {
       ObjectMapper mapper = new ObjectMapper();
       ObjectNode rootObjectNode;
       try {
