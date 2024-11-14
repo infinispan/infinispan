@@ -5,6 +5,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -25,6 +26,11 @@ public class PUBLISH extends RespCommand implements Resp3Command {
 
    public PUBLISH() {
       super(3, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.PUBSUB | AclCategory.FAST;
    }
 
    @Override

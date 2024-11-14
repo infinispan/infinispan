@@ -11,6 +11,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commons.jdkspecific.ProcessInfo;
 import org.infinispan.commons.util.Version;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -30,6 +31,11 @@ public class INFO extends RespCommand implements Resp3Command {
 
    public INFO() {
       super(-1, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.SLOW | AclCategory.DANGEROUS;
    }
 
 

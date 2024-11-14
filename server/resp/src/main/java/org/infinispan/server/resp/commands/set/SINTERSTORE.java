@@ -1,12 +1,10 @@
 package org.infinispan.server.resp.commands.set;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.multimap.impl.EmbeddedSetCache;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -22,10 +20,14 @@ import io.netty.channel.ChannelHandlerContext;
  * @since 15.0
  */
 public class SINTERSTORE extends RespCommand implements Resp3Command {
-   static Set<WrappedByteArray> EMPTY_SET = new HashSet<>();
 
    public SINTERSTORE() {
       super(-3, 1, -1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.WRITE | AclCategory.SET | AclCategory.SLOW;
    }
 
    @Override

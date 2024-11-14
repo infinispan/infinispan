@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.commands.FamilyCommand;
 
@@ -27,6 +28,11 @@ public class PUBSUB extends FamilyCommand {
 
    public PUBSUB() {
       super(-2, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.PUBSUB | AclCategory.SLOW;
    }
 
    @Override

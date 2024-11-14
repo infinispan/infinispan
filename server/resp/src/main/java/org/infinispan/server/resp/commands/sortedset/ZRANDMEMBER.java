@@ -5,6 +5,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
 import org.infinispan.multimap.impl.ScoredValue;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -15,6 +16,8 @@ import org.infinispan.server.resp.serialization.ResponseWriter;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
+ * ZRANDMEMBER
+ *
  * @see <a href="https://redis.io/commands/zrandmember/">ZRANDMEMBER</a>
  * When called with just the key argument, return a random element from the sorted set value stored at key.
  * If the provided count argument is positive, return an array of distinct elements.
@@ -44,6 +47,11 @@ import io.netty.channel.ChannelHandlerContext;
 public class ZRANDMEMBER extends RespCommand implements Resp3Command {
    public ZRANDMEMBER() {
       super(-2, 1, 1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.READ | AclCategory.SORTEDSET | AclCategory.SLOW;
    }
 
    @Override

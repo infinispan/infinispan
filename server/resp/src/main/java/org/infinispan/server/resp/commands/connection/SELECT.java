@@ -8,6 +8,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.server.core.transport.ConnectionMetadata;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -24,6 +25,11 @@ import io.netty.channel.ChannelHandlerContext;
 public class SELECT extends RespCommand implements Resp3Command {
    public SELECT() {
       super(-1, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.FAST | AclCategory.CONNECTION;
    }
 
    @Override

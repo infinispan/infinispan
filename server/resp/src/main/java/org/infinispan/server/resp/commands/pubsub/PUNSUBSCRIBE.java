@@ -3,6 +3,7 @@ package org.infinispan.server.resp.commands.pubsub;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.SubscriberHandler;
@@ -19,6 +20,11 @@ import io.netty.channel.ChannelHandlerContext;
 public class PUNSUBSCRIBE extends RespCommand implements PubSubResp3Command {
    public PUNSUBSCRIBE() {
       super(-1, 0,0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.PUBSUB | AclCategory.SLOW;
    }
 
    @Override

@@ -5,8 +5,9 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.IntConsumer;
 
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.server.resp.RespCommand;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.server.resp.AclCategory;
+import org.infinispan.server.resp.RespCommand;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -133,6 +134,11 @@ public class AccessLoggerManager implements IntConsumer {
 
       private UnknownCommand() {
          super("UNKNOWN_COMMAND", 0, 0, 0, 0);
+      }
+
+      @Override
+      public long aclMask() {
+         return AclCategory.FAST;
       }
    }
 }

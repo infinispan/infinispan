@@ -8,6 +8,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.server.core.logging.Log;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -27,6 +28,11 @@ public class MSET extends RespCommand implements Resp3Command {
 
    public MSET() {
       super(-3, 1, -1, 2);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.WRITE | AclCategory.STRING | AclCategory.SLOW;
    }
 
    @Override

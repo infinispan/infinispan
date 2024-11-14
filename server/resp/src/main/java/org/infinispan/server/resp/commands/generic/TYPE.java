@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -22,6 +23,11 @@ import io.netty.channel.ChannelHandlerContext;
 public class TYPE extends RespCommand implements Resp3Command {
    public TYPE() {
       super(2, 1, 1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.KEYSPACE | AclCategory.READ | AclCategory.FAST;
    }
 
    @Override

@@ -9,6 +9,7 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.actions.SecurityActions;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -29,6 +30,11 @@ public class KEYSLOT extends RespCommand implements Resp3Command {
 
    public KEYSLOT() {
       super(3, 0, 0,0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.SLOW;
    }
 
    @Override

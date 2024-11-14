@@ -6,7 +6,7 @@ import java.util.List;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 
-class SingleBlockingPop extends AbstractBlockingPop {
+abstract class SingleBlockingPop extends AbstractBlockingPop {
 
    private final boolean head;
 

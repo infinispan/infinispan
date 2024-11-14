@@ -1,5 +1,7 @@
 package org.infinispan.server.resp.commands.list.blocking;
 
+import org.infinispan.server.resp.AclCategory;
+
 /**
  * BLPOP
  *
@@ -9,5 +11,10 @@ package org.infinispan.server.resp.commands.list.blocking;
 public class BLPOP extends SingleBlockingPop {
    public BLPOP() {
       super(true, -3, 1, -2, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.WRITE | AclCategory.LIST | AclCategory.SLOW | AclCategory.BLOCKING;
    }
 }

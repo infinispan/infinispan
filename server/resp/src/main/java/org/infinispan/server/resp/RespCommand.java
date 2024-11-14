@@ -193,6 +193,7 @@ public abstract class RespCommand {
       return keys.toArray(Util.EMPTY_BYTE_ARRAY_ARRAY);
    }
 
+   public abstract long aclMask();
 
    @Override
    public String toString() {

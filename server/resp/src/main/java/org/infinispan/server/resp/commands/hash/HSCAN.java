@@ -10,6 +10,7 @@ import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
 import org.infinispan.server.iteration.IterationInitializationContext;
 import org.infinispan.server.iteration.IterationManager;
 import org.infinispan.server.iteration.map.MapIterationInitializationContext;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.commands.iteration.BaseIterationCommand;
 
@@ -24,6 +25,11 @@ public class HSCAN extends BaseIterationCommand {
 
    public HSCAN() {
       super(-3, 1, 1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.READ | AclCategory.HASH | AclCategory.SLOW;
    }
 
    @Override

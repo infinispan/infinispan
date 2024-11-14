@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -47,6 +48,11 @@ public class EXPIRE extends RespCommand implements Resp3Command {
       super(-3, 1, 1, 1);
       this.unixTime = at;
       this.seconds = seconds;
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.KEYSPACE | AclCategory.WRITE | AclCategory.FAST;
    }
 
    @Override

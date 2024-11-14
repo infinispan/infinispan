@@ -5,6 +5,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -23,6 +24,12 @@ public class TOUCH extends RespCommand implements Resp3Command {
    public TOUCH() {
       super(-2, 1, -1, 1);
    }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.KEYSPACE | AclCategory.READ | AclCategory.FAST;
+   }
+
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
                                                       ChannelHandlerContext ctx,

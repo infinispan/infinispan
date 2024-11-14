@@ -8,6 +8,7 @@ import java.util.function.Function;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -38,6 +39,11 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
 
    public EXEC() {
       super(1, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.SLOW | AclCategory.TRANSACTION;
    }
 
    @Override

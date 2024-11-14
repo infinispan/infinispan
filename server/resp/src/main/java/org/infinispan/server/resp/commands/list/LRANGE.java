@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -25,6 +26,11 @@ public class LRANGE extends RespCommand implements Resp3Command {
 
    public LRANGE() {
       super(4, 1, 1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.READ | AclCategory.LIST | AclCategory.SLOW;
    }
 
    @Override

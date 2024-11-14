@@ -14,6 +14,7 @@ import org.infinispan.multimap.impl.SetBucket;
 import org.infinispan.server.iteration.IterationInitializationContext;
 import org.infinispan.server.iteration.IterationManager;
 import org.infinispan.server.iteration.map.MapIterationInitializationContext;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.commands.iteration.BaseIterationCommand;
 
@@ -27,6 +28,11 @@ import org.infinispan.server.resp.commands.iteration.BaseIterationCommand;
 public class SSCAN extends BaseIterationCommand {
    public SSCAN() {
       super(-3, 1, 1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.READ | AclCategory.SET | AclCategory.SLOW;
    }
 
    @Override

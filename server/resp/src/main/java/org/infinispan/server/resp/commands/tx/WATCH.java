@@ -23,6 +23,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.ExternalizerIds;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -61,6 +62,11 @@ public class WATCH extends RespCommand implements Resp3Command, TransactionResp3
 
    public WATCH() {
       super(-2, 1, -1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.FAST | AclCategory.TRANSACTION;
    }
 
    @Override

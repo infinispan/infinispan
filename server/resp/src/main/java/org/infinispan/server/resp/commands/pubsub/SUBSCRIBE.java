@@ -10,6 +10,7 @@ import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -35,6 +36,11 @@ public class SUBSCRIBE extends RespCommand implements Resp3Command, PubSubResp3C
 
    public SUBSCRIBE() {
       super(-2, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.PUBSUB | AclCategory.SLOW;
    }
 
    @Override

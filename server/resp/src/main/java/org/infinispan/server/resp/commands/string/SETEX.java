@@ -5,6 +5,7 @@ import static org.infinispan.server.resp.operation.RespExpiration.EX_BYTES;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespRequestHandler;
 
@@ -24,6 +25,11 @@ public class SETEX extends SET {
 
    public SETEX() {
       super(4, 1, 1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.WRITE | AclCategory.STRING | AclCategory.SLOW;
    }
 
    @Override

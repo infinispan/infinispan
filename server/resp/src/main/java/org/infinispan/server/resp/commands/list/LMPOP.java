@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -35,6 +36,11 @@ public class LMPOP extends RespCommand implements Resp3Command {
 
    public LMPOP() {
       super(-4, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.WRITE | AclCategory.LIST | AclCategory.SLOW;
    }
 
    @Override

@@ -1,5 +1,6 @@
 package org.infinispan.server.resp.commands.sortedset;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.commands.sortedset.internal.AGGCommand;
 
 /**
@@ -11,5 +12,10 @@ import org.infinispan.server.resp.commands.sortedset.internal.AGGCommand;
 public class ZUNIONSTORE extends AGGCommand {
    public ZUNIONSTORE() {
       super(-4, 1, 1, 1, AGGCommandType.UNION);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.WRITE | AclCategory.SORTEDSET | AclCategory.SLOW;
    }
 }
