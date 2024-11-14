@@ -10,6 +10,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.multimap.impl.EmbeddedSetCache;
 import org.infinispan.multimap.impl.SetBucket;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -28,6 +29,11 @@ public class SDIFF extends RespCommand implements Resp3Command {
 
    public SDIFF() {
       super(-2, 1, -1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.READ | AclCategory.SET | AclCategory.SLOW;
    }
 
    @Override

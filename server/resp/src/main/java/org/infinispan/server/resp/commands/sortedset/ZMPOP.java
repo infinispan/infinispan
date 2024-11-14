@@ -9,6 +9,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.multimap.impl.ScoredValue;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -37,6 +38,11 @@ public class ZMPOP extends RespCommand implements Resp3Command {
 
    public ZMPOP() {
       super(-4, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.WRITE | AclCategory.SORTEDSET | AclCategory.SLOW;
    }
 
    @Override

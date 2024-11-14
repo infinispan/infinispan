@@ -5,6 +5,7 @@ import static org.infinispan.server.resp.operation.SetOperation.NX_BYTES;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -29,6 +30,11 @@ public class SETNX extends RespCommand implements Resp3Command {
 
    public SETNX() {
       super(3, 1, 1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.WRITE | AclCategory.STRING | AclCategory.FAST;
    }
 
    @Override

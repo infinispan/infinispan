@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.multimap.impl.EmbeddedSetCache;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -24,6 +25,11 @@ public class SINTERCARD extends RespCommand implements Resp3Command {
 
    public SINTERCARD() {
       super(-3, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.READ | AclCategory.SET | AclCategory.SLOW;
    }
 
    @Override

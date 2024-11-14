@@ -7,6 +7,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -25,6 +26,11 @@ public class RENAMENX extends RespCommand implements Resp3Command {
 
    public RENAMENX() {
       super(3, 1, 2, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.KEYSPACE | AclCategory.WRITE | AclCategory.FAST;
    }
 
    @Override

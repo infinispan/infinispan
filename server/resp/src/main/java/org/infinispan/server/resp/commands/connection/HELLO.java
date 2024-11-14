@@ -5,6 +5,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.Version;
 import org.infinispan.server.core.transport.ConnectionMetadata;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3AuthHandler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -35,6 +36,11 @@ import io.netty.util.CharsetUtil;
 public class HELLO extends RespCommand implements AuthResp3Command {
    public HELLO() {
       super(-1, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.FAST | AclCategory.CONNECTION;
    }
 
    @Override

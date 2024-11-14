@@ -7,6 +7,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -26,6 +27,11 @@ public class PFADD extends RespCommand implements Resp3Command {
 
    public PFADD() {
       super(-2, 1, 1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.WRITE | AclCategory.HYPERLOGLOG | AclCategory.FAST;
    }
 
    @Override

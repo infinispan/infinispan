@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -27,6 +28,11 @@ public class SET extends RespCommand implements Resp3Command {
 
    protected SET(int arity, int firstKeyPos, int lastKeyPos, int steps) {
       super(arity, firstKeyPos, lastKeyPos, steps);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.WRITE | AclCategory.STRING | AclCategory.SLOW;
    }
 
    @Override

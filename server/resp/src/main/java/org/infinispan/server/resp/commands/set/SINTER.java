@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.multimap.impl.EmbeddedSetCache;
 import org.infinispan.multimap.impl.SetBucket;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -30,6 +31,11 @@ public class SINTER extends RespCommand implements Resp3Command {
 
    public SINTER() {
       super(-2, 1, -1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.READ | AclCategory.SET | AclCategory.SLOW;
    }
 
    @Override

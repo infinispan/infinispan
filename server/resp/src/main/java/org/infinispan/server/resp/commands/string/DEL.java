@@ -8,6 +8,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -26,6 +27,11 @@ public class DEL extends RespCommand implements Resp3Command {
 
    public DEL() {
       super(-2, 1, -1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.KEYSPACE | AclCategory.WRITE | AclCategory.SLOW;
    }
 
    @Override

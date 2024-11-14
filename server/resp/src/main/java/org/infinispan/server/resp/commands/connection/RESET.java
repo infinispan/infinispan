@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3AuthHandler;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -23,6 +24,11 @@ import io.netty.channel.ChannelHandlerContext;
 public class RESET extends RespCommand implements Resp3Command, PubSubResp3Command {
    public RESET() {
       super(1, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.FAST | AclCategory.CONNECTION;
    }
 
    @Override

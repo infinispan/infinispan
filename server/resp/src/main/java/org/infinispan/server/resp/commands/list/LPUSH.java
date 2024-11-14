@@ -1,5 +1,6 @@
 package org.infinispan.server.resp.commands.list;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.commands.list.internal.PUSH;
 
@@ -12,5 +13,10 @@ import org.infinispan.server.resp.commands.list.internal.PUSH;
 public class LPUSH extends PUSH implements Resp3Command {
    public LPUSH() {
       super(true);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.WRITE | AclCategory.LIST | AclCategory.FAST;
    }
 }

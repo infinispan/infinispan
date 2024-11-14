@@ -13,6 +13,7 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.core.transport.NettyTransport;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -35,6 +36,11 @@ public class CLIENT extends RespCommand implements Resp3Command {
 
    public CLIENT() {
       super(-2, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.SLOW;
    }
 
    @Override

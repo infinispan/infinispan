@@ -3,6 +3,7 @@ package org.infinispan.server.resp.commands.generic;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -22,6 +23,11 @@ public class SORT_RO extends RespCommand implements Resp3Command {
       super(-2, 1, 1, 1);
       sort = new SORT();
       sort.disableStore();
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.READ | AclCategory.SET | AclCategory.SORTEDSET | AclCategory.LIST | AclCategory.SLOW | AclCategory.DANGEROUS;
    }
 
    @Override

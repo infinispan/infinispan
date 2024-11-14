@@ -6,6 +6,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -27,6 +28,11 @@ public class UNSUBSCRIBE extends RespCommand implements Resp3Command, PubSubResp
 
    public UNSUBSCRIBE() {
       super(NAME, -1, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.PUBSUB | AclCategory.SLOW;
    }
 
    @Override

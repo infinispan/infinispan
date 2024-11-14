@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -26,6 +27,11 @@ public abstract class ZREMRANGE extends RespCommand implements Resp3Command {
    protected ZREMRANGE(int arity, ZREMRANGE.Type type) {
       super(arity, 1, 1, 1);
       this.type = type;
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.WRITE | AclCategory.SORTEDSET | AclCategory.SLOW;
    }
 
    @Override

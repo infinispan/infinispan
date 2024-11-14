@@ -12,6 +12,7 @@ import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
 import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.multimap.impl.SortedSetAddArgs;
 import org.infinispan.multimap.impl.SortedSetSubsetArgs;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -65,6 +66,11 @@ public class ZRANGE extends RespCommand implements Resp3Command {
 
    protected ZRANGE(int arity) {
       super(arity, 1, 1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.READ | AclCategory.SORTEDSET | AclCategory.SLOW;
    }
 
    static class ResultOptions {
