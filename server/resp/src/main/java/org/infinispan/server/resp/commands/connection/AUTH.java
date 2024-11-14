@@ -3,6 +3,7 @@ package org.infinispan.server.resp.commands.connection;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3AuthHandler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -19,6 +20,11 @@ import io.netty.channel.ChannelHandlerContext;
 public class AUTH extends RespCommand implements AuthResp3Command {
    public AUTH() {
       super(-2, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.FAST | AclCategory.CONNECTION;
    }
 
    @Override

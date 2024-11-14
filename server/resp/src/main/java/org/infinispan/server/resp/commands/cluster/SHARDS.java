@@ -23,6 +23,7 @@ import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.actions.SecurityActions;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -66,6 +67,11 @@ public class SHARDS extends RespCommand implements Resp3Command {
 
    public SHARDS() {
       super(2, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.SLOW;
    }
 
    @Override

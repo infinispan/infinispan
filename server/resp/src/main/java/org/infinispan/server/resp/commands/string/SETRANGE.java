@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.Util;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -23,6 +24,11 @@ import io.netty.channel.ChannelHandlerContext;
 public class SETRANGE extends RespCommand implements Resp3Command {
    public SETRANGE() {
       super(4, 1, 1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.WRITE | AclCategory.STRING | AclCategory.SLOW;
    }
 
    @Override

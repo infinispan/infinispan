@@ -9,6 +9,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -31,6 +32,11 @@ public class UNWATCH extends RespCommand implements Resp3Command {
 
    public UNWATCH() {
       super(1, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.FAST | AclCategory.TRANSACTION;
    }
 
    @Override

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -21,6 +22,11 @@ import io.netty.channel.ChannelHandlerContext;
 public class PERSIST extends RespCommand implements Resp3Command {
    public PERSIST() {
       super(2, 1, 1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.KEYSPACE | AclCategory.WRITE | AclCategory.FAST;
    }
 
    @Override

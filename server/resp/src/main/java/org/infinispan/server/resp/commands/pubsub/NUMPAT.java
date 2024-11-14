@@ -6,6 +6,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.security.actions.SecurityActions;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -24,6 +25,11 @@ class NUMPAT extends RespCommand implements Resp3Command {
 
    NUMPAT() {
       super(2, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.PUBSUB | AclCategory.SLOW;
    }
 
    @Override

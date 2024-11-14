@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -15,12 +16,17 @@ import io.netty.channel.ChannelHandlerContext;
 /**
  * MODULE LIST
  *
- * @see <a href="https://redis.io/commands/module-list/">MODULE LIST</a>
+ * @see <a href="https://redis.io/commands/module/">MODULE</a>
  * @since 15.0
  */
 public class MODULE extends RespCommand implements Resp3Command {
    public MODULE() {
       super(-1, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.SLOW;
    }
 
    @Override

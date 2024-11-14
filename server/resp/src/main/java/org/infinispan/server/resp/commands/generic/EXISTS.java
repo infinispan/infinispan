@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -23,6 +24,11 @@ import io.netty.channel.ChannelHandlerContext;
 public class EXISTS extends RespCommand implements Resp3Command {
    public EXISTS() {
       super(-2, 1, -1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.KEYSPACE | AclCategory.READ | AclCategory.FAST;
    }
 
    @Override

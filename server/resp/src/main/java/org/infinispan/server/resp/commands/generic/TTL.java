@@ -9,6 +9,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -33,6 +34,11 @@ public class TTL extends RespCommand implements Resp3Command {
    protected TTL(ExpirationOption ... options) {
       super(2, 1, 1, 1);
       this.options = EnumSet.copyOf(Arrays.asList(options));
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.KEYSPACE | AclCategory.READ | AclCategory.FAST;
    }
 
    @Override

@@ -7,6 +7,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -32,6 +33,11 @@ public class LMOVE extends RespCommand implements Resp3Command {
 
    public LMOVE() {
       super(5, 1, 2, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.WRITE | AclCategory.LIST | AclCategory.SLOW;
    }
 
    @Override

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -21,6 +22,11 @@ import io.netty.channel.ChannelHandlerContext;
 public class CONFIG extends RespCommand implements Resp3Command {
    public CONFIG() {
       super(-2, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.SLOW;
    }
 
    @Override

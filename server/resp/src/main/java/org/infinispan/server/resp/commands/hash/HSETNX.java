@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -24,6 +25,11 @@ public class HSETNX extends RespCommand implements Resp3Command {
 
    public HSETNX() {
       super(4, 1, 1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.WRITE | AclCategory.HASH | AclCategory.FAST;
    }
 
    @Override

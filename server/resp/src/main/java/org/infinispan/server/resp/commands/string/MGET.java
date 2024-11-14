@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -33,6 +34,11 @@ public class MGET extends RespCommand implements Resp3Command {
 
    public MGET() {
       super(-2, 1, -1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.READ | AclCategory.STRING | AclCategory.FAST;
    }
 
    @Override

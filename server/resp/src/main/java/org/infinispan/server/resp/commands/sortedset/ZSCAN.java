@@ -14,6 +14,7 @@ import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.server.iteration.IterationInitializationContext;
 import org.infinispan.server.iteration.IterationManager;
 import org.infinispan.server.iteration.list.ListIterationInitializationContext;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.iteration.BaseIterationCommand;
@@ -29,6 +30,11 @@ public class ZSCAN extends BaseIterationCommand {
 
    public ZSCAN() {
       super(-3, 1, 1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.READ | AclCategory.SORTEDSET | AclCategory.SLOW;
    }
 
    @Override

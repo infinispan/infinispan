@@ -10,6 +10,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.security.actions.SecurityActions;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.commands.FamilyCommand;
 import org.jgroups.stack.IpAddress;
@@ -29,6 +30,11 @@ public class CLUSTER extends FamilyCommand {
 
    public CLUSTER() {
       super(-2, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.SLOW;
    }
 
    @Override

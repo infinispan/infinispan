@@ -10,6 +10,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
 import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.multimap.impl.SortedSetAddArgs;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -38,6 +39,11 @@ public class ZADD extends RespCommand implements Resp3Command {
 
    public ZADD() {
       super(-4, 1, 1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.WRITE | AclCategory.SORTEDSET | AclCategory.FAST;
    }
 
    @Override

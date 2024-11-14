@@ -1,5 +1,6 @@
 package org.infinispan.server.resp.commands.sortedset;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.commands.sortedset.internal.POP;
 
 /**
@@ -12,5 +13,10 @@ public class ZPOPMAX extends POP {
 
    public ZPOPMAX() {
       super(false);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.WRITE | AclCategory.SORTEDSET | AclCategory.FAST;
    }
 }

@@ -6,6 +6,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -24,6 +25,11 @@ public class RANDOMKEY extends RespCommand implements Resp3Command {
 
    public RANDOMKEY() {
       super(1, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.KEYSPACE | AclCategory.READ | AclCategory.SLOW;
    }
 
    @Override

@@ -1,5 +1,6 @@
 package org.infinispan.server.resp.commands.list;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.commands.list.internal.POP;
 
 /**
@@ -11,5 +12,10 @@ import org.infinispan.server.resp.commands.list.internal.POP;
 public class LPOP extends POP {
    public LPOP() {
       super(true);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.WRITE | AclCategory.LIST | AclCategory.FAST;
    }
 }

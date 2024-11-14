@@ -3,6 +3,7 @@ package org.infinispan.server.resp.commands.string;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -21,6 +22,11 @@ import io.netty.channel.ChannelHandlerContext;
 public class STRALGO extends RespCommand implements Resp3Command {
    public STRALGO() {
       super(-5, 1, 2, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.READ | AclCategory.STRING | AclCategory.SLOW;
    }
 
    @Override

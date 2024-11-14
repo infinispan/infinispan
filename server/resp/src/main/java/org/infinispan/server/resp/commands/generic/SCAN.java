@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.server.iteration.IterationManager;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.commands.iteration.BaseIterationCommand;
 
@@ -19,6 +20,11 @@ public class SCAN extends BaseIterationCommand {
 
    public SCAN() {
       super(-2, 0, 0, 0);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.KEYSPACE | AclCategory.READ | AclCategory.SLOW;
    }
 
    @Override

@@ -5,6 +5,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -29,6 +30,11 @@ public class LSET extends RespCommand implements Resp3Command {
 
    public LSET() {
       super(4, 1, 1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.WRITE | AclCategory.LIST | AclCategory.SLOW;
    }
 
    @Override

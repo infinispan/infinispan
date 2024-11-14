@@ -19,6 +19,7 @@ import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
 import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.multimap.impl.SortableBucket;
 import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -49,6 +50,11 @@ public class SORT extends RespCommand implements Resp3Command {
 
    public SORT() {
       super(-2, 1, 1, 1);
+   }
+
+   @Override
+   public long aclMask() {
+      return AclCategory.WRITE | AclCategory.SET | AclCategory.SORTEDSET | AclCategory.LIST | AclCategory.SLOW | AclCategory.DANGEROUS;
    }
 
    public void disableStore() {
