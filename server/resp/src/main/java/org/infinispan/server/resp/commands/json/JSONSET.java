@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.CacheException;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
@@ -91,12 +92,11 @@ public class JSONSET extends RespCommand implements Resp3Command {
          nx = false;
          xx = false;
       }
-      ObjectMapper mapper = new ObjectMapper();
       JsonNode newNode;
       try {
          newNode = JSONUtil.objectMapper.readTree(value);
       } catch (IOException e) {
-         throw new RespJsonError(e);
+         throw new CacheException(e);
       }
       FunctionalMap.ReadWriteMap<byte[], Object> cache = ReadWriteMapImpl
             .create(FunctionalMapImpl.create(handler.typedCache(null)));
@@ -107,7 +107,7 @@ public class JSONSET extends RespCommand implements Resp3Command {
                return null;
             }
             if (!isRoot(path)) {
-               throw new RespJsonError("new objects must be created at root");
+               throw new CacheException("new objects must be created at root");
             }
             view.set(value);
             return RespConstants.OK;
@@ -115,8 +115,14 @@ public class JSONSET extends RespCommand implements Resp3Command {
          if (nx) {
             return null;
          }
+         if (isRoot(path)) {
+            // Updating the root node is not allowed by jsonpath
+            // replacing the whole doc here
+            view.set(value);
+            return RespConstants.OK;
+         }
          try {
-            var rootObjectNode = (ObjectNode) mapper.readTree(doc);
+            var rootObjectNode = (ObjectNode) JSONUtil.objectMapper.readTree(doc);
             var jpCtx = JsonPath.using(config).parse(rootObjectNode);
             var pathStr = new String(path);
             JsonNode node = jpCtx.read(pathStr);
@@ -124,13 +130,13 @@ public class JSONSET extends RespCommand implements Resp3Command {
                return null;
             }
             jpCtx.set(pathStr, newNode);
-            view.set(mapper.writeValueAsBytes(rootObjectNode));
+            view.set(JSONUtil.objectMapper.writeValueAsBytes(rootObjectNode));
             return RespConstants.OK;
          } catch (PathNotFoundException ex) {
             // mimicking redis. Not an error, do nothing and return null
             return null;
          } catch (Exception e) {
-            throw new RespJsonError(e, true);
+            throw new CacheException(e);
          }
       });
       return handler.stageToReturn(cs, ctx, JSONSET::jsonSetBiConsumer);

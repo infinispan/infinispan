@@ -49,6 +49,25 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       var result = redis.jsonGet(k(), jp);
       assertThat(result).hasSize(1);
       assertThat(compareJSON(result.get(0), jv)).isEqualTo(true);
+
+      jp = new JsonPath("$");
+      jv = new DefaultJsonParser().createJsonValue("""
+      {
+      "key": { "key1": "val1" }
+      }
+         """);
+      assertThat(redis.jsonSet(k(), jp, jv)).isEqualTo("OK");
+      result = redis.jsonGet(k(), jp);
+      assertThat(result).hasSize(1);
+      assertThat(compareJSON(result.get(0), jv)).isEqualTo(true);
+
+      jp = new JsonPath("$.key.key2");
+      jv = new DefaultJsonParser().createJsonValue("{\"key2\":\"value2\"}");
+      assertThat(redis.jsonSet(k(), jp, jv)).isEqualTo("OK");
+      result = redis.jsonGet(k(), jp);
+      assertThat(result).hasSize(1);
+      assertThat(compareJSON(result.get(0), jv)).isEqualTo(true);
+
    }
 
    @Test

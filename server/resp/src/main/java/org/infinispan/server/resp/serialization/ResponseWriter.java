@@ -191,7 +191,7 @@ public interface ResponseWriter {
             return new Consumer<ResponseWriter>() {
                @Override
                public void accept(ResponseWriter writer) {
-                  writer.error(rjErr.getMessage());
+                  writer.error("-ERR "+rjErr.getMessage());
                }
             };
          }
