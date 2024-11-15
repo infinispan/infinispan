@@ -34,7 +34,7 @@ public class InfinispanMappingInitiator extends AbstractPojoMappingInitiator<Inf
                                      Collection<ProgrammaticSearchMappingProvider> mappingProviders,
                                      BlockingManager blockingManager, FailureCounter failureCounter,
                                      IndexerConfig indexerConfig) {
-      super(introspector);
+      super(introspector, InfinispanSearchMapperHints.INSTANCE);
       typeConfigurationContributor = new InfinispanTypeConfigurationContributor(introspector);
       this.indexerConfig = indexerConfig;
       addConfigurationContributor(typeConfigurationContributor);

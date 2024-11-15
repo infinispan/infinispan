@@ -66,6 +66,11 @@ public class InfinispanSearchSession extends AbstractPojoSearchSession implement
    }
 
    @Override
+   public Object tenantIdentifierValue() {
+      return null;
+   }
+
+   @Override
    public InfinispanRuntimeIntrospector runtimeIntrospector() {
       return new InfinispanRuntimeIntrospector();
    }

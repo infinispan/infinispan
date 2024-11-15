@@ -1,7 +1,5 @@
 package org.infinispan.search.mapper.scope.impl;
 
-import org.hibernate.search.engine.backend.mapping.spi.BackendMappingContext;
-import org.hibernate.search.engine.backend.session.spi.DetachedBackendSessionContext;
 import org.hibernate.search.engine.common.EntityReference;
 import org.hibernate.search.engine.search.aggregation.dsl.SearchAggregationFactory;
 import org.hibernate.search.engine.search.predicate.dsl.SearchPredicateFactory;
@@ -17,14 +15,11 @@ import org.infinispan.search.mapper.scope.SearchWorkspace;
 
 public class SearchScopeImpl<E> implements SearchScope<E> {
 
-   private final BackendMappingContext mappingContext;
    private final PojoScopeDelegate<EntityReference, E, PojoRawTypeIdentifier<? extends E>> delegate;
    private final EntityLoaderFactory<E> entityLoader;
 
-   public SearchScopeImpl(BackendMappingContext mappingContext,
-                          PojoScopeDelegate<EntityReference, E, PojoRawTypeIdentifier<? extends E>> delegate,
+   public SearchScopeImpl(PojoScopeDelegate<EntityReference, E, PojoRawTypeIdentifier<? extends E>> delegate,
                           EntityLoaderFactory<E> entityLoader) {
-      this.mappingContext = mappingContext;
       this.delegate = delegate;
       this.entityLoader = entityLoader;
    }
@@ -51,7 +46,7 @@ public class SearchScopeImpl<E> implements SearchScope<E> {
 
    @Override
    public SearchWorkspace workspace() {
-      return new SearchWorkspaceImpl(delegate.workspace(DetachedBackendSessionContext.of(mappingContext, null)));
+      return new SearchWorkspaceImpl(delegate.workspace((String) null));
    }
 
    public SearchQuerySelectStep<?, EntityReference, E, ?, ?, ?> search(PojoScopeSessionContext sessionContext) {
