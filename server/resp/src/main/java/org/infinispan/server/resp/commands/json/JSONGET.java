@@ -32,9 +32,10 @@ public class JSONGET extends RespCommand implements Resp3Command {
       byte[] key = arguments.get(0);
       FunctionalMap.ReadOnlyMap<byte[], Object> cache = ReadOnlyMapImpl
             .create(FunctionalMapImpl.create(handler.typedCache(null)));
-            CompletionStage<byte[]> cs = cache.eval(key, view -> {
-               return (byte[])view.find().orElse(null);
-            });
+      CompletionStage<byte[]> cs = cache.eval(key, view -> {
+         JsonDoc value = (JsonDoc) view.find().orElse(null);
+         return value == null ? null : (byte[]) value.bytesDocument();
+      });
       return handler.stageToReturn(cs, ctx, ResponseWriter.BULK_STRING_BYTES);
    }
 

@@ -16,7 +16,6 @@ import org.infinispan.server.resp.serialization.RespConstants;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
@@ -98,10 +97,10 @@ public class JSONSET extends RespCommand implements Resp3Command {
       } catch (IOException e) {
          throw new CacheException(e);
       }
-      FunctionalMap.ReadWriteMap<byte[], Object> cache = ReadWriteMapImpl
+      FunctionalMap.ReadWriteMap<byte[], JsonDoc> cache = ReadWriteMapImpl
             .create(FunctionalMapImpl.create(handler.typedCache(null)));
       CompletionStage<CharSequence> cs = cache.eval(key, view -> {
-         var doc = (byte[]) view.find().orElse(null);
+         var doc = (JsonDoc) view.find().orElse(null);
          if (doc == null) {
             if (xx) {
                return null;
@@ -109,7 +108,7 @@ public class JSONSET extends RespCommand implements Resp3Command {
             if (!isRoot(path)) {
                throw new CacheException("new objects must be created at root");
             }
-            view.set(value);
+            view.set(new JsonDoc(value));
             return RespConstants.OK;
          }
          if (nx) {
@@ -118,11 +117,11 @@ public class JSONSET extends RespCommand implements Resp3Command {
          if (isRoot(path)) {
             // Updating the root node is not allowed by jsonpath
             // replacing the whole doc here
-            view.set(value);
+            view.set(new JsonDoc(value));
             return RespConstants.OK;
          }
          try {
-            var rootObjectNode = (ObjectNode) JSONUtil.objectMapper.readTree(doc);
+            var rootObjectNode = (ObjectNode) JSONUtil.objectMapper.readTree(doc.bytesDocument());
             var jpCtx = JsonPath.using(config).parse(rootObjectNode);
             var pathStr = new String(path);
             JsonNode node = jpCtx.read(pathStr);
@@ -130,7 +129,7 @@ public class JSONSET extends RespCommand implements Resp3Command {
                return null;
             }
             jpCtx.set(pathStr, newNode);
-            view.set(JSONUtil.objectMapper.writeValueAsBytes(rootObjectNode));
+            view.set(new JsonDoc(JSONUtil.objectMapper.writeValueAsBytes(rootObjectNode)));
             return RespConstants.OK;
          } catch (PathNotFoundException ex) {
             // mimicking redis. Not an error, do nothing and return null

@@ -3,6 +3,7 @@ package org.infinispan;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.server.resp.CustomStringCommands;
@@ -22,6 +23,7 @@ import io.lettuce.core.json.DefaultJsonParser;
 import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.json.arguments.JsonSetArgs;
+import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
 @Test(groups = "functional", testName = "server.resp.JsonCommandsTest")
 public class JsonCommandsTest extends SingleNodeRespBaseTest {
@@ -50,24 +52,39 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThat(result).hasSize(1);
       assertThat(compareJSON(result.get(0), jv)).isEqualTo(true);
 
+      // Test root can be updated
       jp = new JsonPath("$");
       jv = new DefaultJsonParser().createJsonValue("""
-      {
-      "key": { "key1": "val1" }
-      }
-         """);
+            {
+            "key": { "key1": "val1" }
+            }
+            """);
       assertThat(redis.jsonSet(k(), jp, jv)).isEqualTo("OK");
       result = redis.jsonGet(k(), jp);
       assertThat(result).hasSize(1);
       assertThat(compareJSON(result.get(0), jv)).isEqualTo(true);
 
+      // Test adding a field in a leaf
       jp = new JsonPath("$.key.key2");
-      jv = new DefaultJsonParser().createJsonValue("{\"key2\":\"value2\"}");
-      assertThat(redis.jsonSet(k(), jp, jv)).isEqualTo("OK");
+      jv = result.get(0);
+      JsonValue jv1 = new DefaultJsonParser().createJsonValue("{\"key2\":\"value2\"}");
+      assertThat(redis.jsonSet(k(), jp, jv1)).isEqualTo("OK");
       result = redis.jsonGet(k(), jp);
       assertThat(result).hasSize(1);
-      assertThat(compareJSON(result.get(0), jv)).isEqualTo(true);
+      assertThat(compareJSONSet(jv, "$.key.key2", jv1, result.get(0))).isEqualTo(true);
 
+   }
+
+   @Test
+   public void testJSONSETWrongType() {
+      assertWrongType(() -> redis.set(k(), v()), () -> redis.jsonGet(k(), new JsonPath("$")));
+      // Check with non root
+      String k1 = k(1);
+      assertWrongType(() -> redis.set(k1, v()), () -> redis.jsonGet(k1, new JsonPath("$.k1")));
+      // Check json is not a string
+      JsonValue jv = new DefaultJsonParser().createJsonValue("{\"key\":\"value\"}");
+      String k2 = k(2);
+      assertWrongType(() -> redis.jsonSet(k2, new JsonPath("$"), jv), () -> redis.get(k2));
    }
 
    @Test
@@ -187,13 +204,8 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
          rootObjectNode = (ObjectNode) mapper.readTree(doc.toString());
          var jpCtx = com.jayway.jsonpath.JsonPath.using(config).parse(rootObjectNode);
          var pathStr = new String(path);
-         var leaf = jpCtx.read(pathStr);
          JsonNode newNode = mapper.readTree(node.toString());
-         if (leaf == null) {
-            jpCtx.put(pathStr, "", newNode);
-         } else {
-            jpCtx.set(pathStr, newNode);
-         }
+         jpCtx.set(pathStr, newNode);
       } catch (Exception e) {
          fail();
          return false;
