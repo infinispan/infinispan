@@ -258,7 +258,7 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
             delegate().createPojoScope(this, typeIdentifiers,
                   // Store the type identifier as additional metadata
                   typeIdentifier -> typeIdentifier);
-      return new SearchScopeImpl(this, pojoScopeDelegate, entityLoader);
+      return new SearchScopeImpl(pojoScopeDelegate, entityLoader);
    }
 
    private <T> PojoRawTypeIdentifier<? extends T> entityTypeIdentifier(Class<T> expectedSuperType, String entityName) {
