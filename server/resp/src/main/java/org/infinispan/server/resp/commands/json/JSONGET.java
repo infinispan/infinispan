@@ -13,8 +13,16 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.util.DefaultIndenter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
+import com.fasterxml.jackson.core.util.Separators;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter.Indenter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
@@ -32,7 +40,7 @@ public class JSONGET extends RespCommand implements Resp3Command {
    private String indent;
    private String newline;
    private String space;
-
+   DefaultPrettyPrinter rpp = new RespPrettyPrinter("sepa");
    // Configure JsonPath to use Jackson. Path with missing final leaf will return
    // null
    // path with more the 1 level missing will rise exception
@@ -56,6 +64,13 @@ public class JSONGET extends RespCommand implements Resp3Command {
       } catch (Exception ex) {
          handler.writer().wrongArgumentNumber(this);
       }
+      DefaultPrettyPrinter dpp;
+      if (indent != null || newline != null || space != null) {
+         dpp = new DefaultPrettyPrinter();
+         Indenter ind = new DefaultIndenter(indent, newline);
+         dpp.indentArraysWith(ind);
+         dpp.indentObjectsWith(ind);
+      }
 
       FunctionalMap.ReadOnlyMap<byte[], Object> cache = ReadOnlyMapImpl
             .create(FunctionalMapImpl.create(handler.typedCache(null)));
@@ -67,8 +82,12 @@ public class JSONGET extends RespCommand implements Resp3Command {
          try {
             var rootNode = mapper.readTree(doc);
             var jpCtx = JsonPath.using(config).parse(rootNode);
-            if (pathPos == arguments.size()-1) {
-               return rootNode.toString();
+            if (pathPos == arguments.size() - 1) {
+               DefaultPrettyPrinter.Indenter i= new DefaultIndenter("ff", "nl");
+               // rpp.indentArraysWith(i);
+               // rpp.indentObjectsWith(i);
+               String resp = mapper.writer(rpp).writeValueAsString(rootNode);
+               return resp;
             }
             ObjectNode result = mapper.createObjectNode();
             while (pathPos < arguments.size()) {
@@ -76,7 +95,8 @@ public class JSONGET extends RespCommand implements Resp3Command {
                JsonNode node = jpCtx.read(pathStr);
                result.set(pathStr, node);
             }
-            return result.toString();
+            String resp = mapper.writer(rpp).writeValueAsString(result);
+            return resp;
          } catch (IOException e) {
             return e.getMessage();
          }
@@ -106,4 +126,46 @@ public class JSONGET extends RespCommand implements Resp3Command {
       return pos;
    }
 
+}
+
+class RespPrettyPrinter extends DefaultPrettyPrinter {
+   private String _ofvs;
+
+   public RespPrettyPrinter(String objectFieldValueSeparator) {
+      _ofvs = ":" + objectFieldValueSeparator;
+   }
+   // @Override
+   // public void writeRootValueSeparator(JsonGenerator g) throws IOException {
+   // g.writeRaw("s");
+   // }
+
+   // @Override
+   // public void beforeObjectEntries(JsonGenerator g) throws IOException {
+   // g.writeRaw("i");
+   // }
+
+   public RespPrettyPrinter(RespPrettyPrinter base) {
+      _rootSeparator = base._rootSeparator;
+
+      _arrayIndenter = base._arrayIndenter;
+      _objectIndenter = base._objectIndenter;
+      _spacesInObjectEntries = base._spacesInObjectEntries;
+      _nesting = base._nesting;
+
+      _separators = base._separators;
+      _objectFieldValueSeparatorWithSpaces = base._objectFieldValueSeparatorWithSpaces;
+      _objectEntrySeparator = base._objectEntrySeparator;
+      _arrayValueSeparator = base._arrayValueSeparator;
+
+   }
+
+   @Override
+   public void writeObjectFieldValueSeparator(JsonGenerator g) throws IOException {
+      g.writeRaw(_ofvs);
+   }
+
+   @Override
+   public DefaultPrettyPrinter createInstance() {
+      return new RespPrettyPrinter(this);
+   }
 }
