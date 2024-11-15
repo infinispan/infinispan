@@ -9,6 +9,7 @@ import java.util.function.Consumer;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.commands.json.RespJsonError;
 
 public interface ResponseWriter {
    BiConsumer<Object, ResponseWriter> OK = (ignore, writer) -> writer.ok();
@@ -18,15 +19,19 @@ public interface ResponseWriter {
    BiConsumer<Number, ResponseWriter> INTEGER = (i, writer) -> writer.integers(i);
    BiConsumer<Number, ResponseWriter> DOUBLE = (d, writer) -> writer.doubles(d);
    BiConsumer<Object, ResponseWriter> UNKNOWN = (o, writer) -> writer.serialize(o);
-   BiConsumer<JavaObjectSerializer<?>, ResponseWriter> CUSTOM = (res, writer) -> writer.write((JavaObjectSerializer<Object>) res);
+   BiConsumer<JavaObjectSerializer<?>, ResponseWriter> CUSTOM = (res, writer) -> writer
+         .write((JavaObjectSerializer<Object>) res);
 
    /**
     * List the consumers for array responses with the different types needed.
     * Add new types as necessary.
     */
-   BiConsumer<Collection<byte[]>, ResponseWriter> ARRAY_BULK_STRING = (c, writer) -> writer.array(c, Resp3Type.BULK_STRING);
-   BiConsumer<Collection<? extends Number>, ResponseWriter> ARRAY_INTEGER = (c, writer) -> writer.array(c, Resp3Type.INTEGER);
-   BiConsumer<Collection<? extends Number>, ResponseWriter> ARRAY_DOUBLE = (c, writer) -> writer.array(c, Resp3Type.DOUBLE);
+   BiConsumer<Collection<byte[]>, ResponseWriter> ARRAY_BULK_STRING = (c, writer) -> writer.array(c,
+         Resp3Type.BULK_STRING);
+   BiConsumer<Collection<? extends Number>, ResponseWriter> ARRAY_INTEGER = (c, writer) -> writer.array(c,
+         Resp3Type.INTEGER);
+   BiConsumer<Collection<? extends Number>, ResponseWriter> ARRAY_DOUBLE = (c, writer) -> writer.array(c,
+         Resp3Type.DOUBLE);
 
    /**
     * List the consumers for set responses with the different types needed.
@@ -36,7 +41,8 @@ public interface ResponseWriter {
    /**
     * List the consumers for map responses with the different types needed.
     */
-   BiConsumer<Map<byte[], byte[]>, ResponseWriter> MAP_BULK_STRING_KV = (m, writer) -> writer.map(m, Resp3Type.BULK_STRING);
+   BiConsumer<Map<byte[], byte[]>, ResponseWriter> MAP_BULK_STRING_KV = (m, writer) -> writer.map(m,
+         Resp3Type.BULK_STRING);
 
    void nulls();
 
@@ -180,6 +186,16 @@ public interface ResponseWriter {
          return ResponseWriter::valueNotInteger;
       }
 
+      if (ex instanceof RespJsonError rjErr) {
+         if (!rjErr.mustThrow()) {
+            return new Consumer<ResponseWriter>() {
+               @Override
+               public void accept(ResponseWriter writer) {
+                  writer.error(rjErr.getMessage());
+               }
+            };
+         }
+      }
       return null;
    }
 }

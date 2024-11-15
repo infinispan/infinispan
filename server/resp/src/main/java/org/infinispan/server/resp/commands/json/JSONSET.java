@@ -34,7 +34,8 @@ public class JSONSET extends RespCommand implements Resp3Command {
 
    public static final String XX = "XX";
    public static final String NX = "NX";
-   // Configure JsonPath to use Jackson. Path with missing final leaf will return null
+   // Configure JsonPath to use Jackson. Path with missing final leaf will return
+   // null
    // path with more the 1 level missing will rise exception
    static Configuration config = Configuration.builder().options(Option.DEFAULT_PATH_LEAF_TO_NULL)
          .jsonProvider(new com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider())
@@ -91,45 +92,48 @@ public class JSONSET extends RespCommand implements Resp3Command {
          xx = false;
       }
       ObjectMapper mapper = new ObjectMapper();
-         JsonNode newNode;
-         try {
-            newNode = mapper.readTree(value);
-         } catch (IOException e) {
-            handler.writer().error(e.getMessage());
-            return handler.myStage();
+      JsonNode newNode;
+      try {
+         newNode = JSONUtil.objectMapper.readTree(value);
+      } catch (IOException e) {
+         throw new RespJsonError(e);
+      }
+      FunctionalMap.ReadWriteMap<byte[], Object> cache = ReadWriteMapImpl
+            .create(FunctionalMapImpl.create(handler.typedCache(null)));
+      CompletionStage<CharSequence> cs = cache.eval(key, view -> {
+         var doc = (byte[]) view.find().orElse(null);
+         if (doc == null) {
+            if (xx) {
+               return null;
+            }
+            if (!isRoot(path)) {
+               throw new RespJsonError("new objects must be created at root");
+            }
+            view.set(value);
+            return RespConstants.OK;
          }
-         FunctionalMap.ReadWriteMap<byte[], Object> cache = ReadWriteMapImpl
-               .create(FunctionalMapImpl.create(handler.typedCache(null)));
-         CompletionStage<CharSequence> cs = cache.eval(key, view -> {
-            var doc = (byte[]) view.find().orElse(null);
-            if (doc == null) {
-               if (xx) {
-                  return null;
-               }
-               if (!isRoot(path)) {
-                  return "-ERR new objects must be created at root";
-               }
-               view.set(value);
-               return RespConstants.OK;
-            }
-            if (nx) {
+         if (nx) {
+            return null;
+         }
+         try {
+            var rootObjectNode = (ObjectNode) mapper.readTree(doc);
+            var jpCtx = JsonPath.using(config).parse(rootObjectNode);
+            var pathStr = new String(path);
+            JsonNode node = jpCtx.read(pathStr);
+            if (node.isNull() && xx || !node.isNull() && nx) {
                return null;
             }
-            try {
-               var rootObjectNode = (ObjectNode) mapper.readTree(doc);
-               var jpCtx = JsonPath.using(config).parse(rootObjectNode);
-               var pathStr = new String(path);
-               jpCtx.set(pathStr, newNode);
-               view.set(mapper.writeValueAsBytes(rootObjectNode));
-               return RespConstants.OK;
-            } catch (PathNotFoundException ex) {
-                // mimicking redis. Not an error, do nothing and return null
-               return null;
-            } catch (Exception e) {
-               return e.getMessage();
-            }
-         });
-         return handler.stageToReturn(cs, ctx, JSONSET::jsonSetBiConsumer);
+            jpCtx.set(pathStr, newNode);
+            view.set(mapper.writeValueAsBytes(rootObjectNode));
+            return RespConstants.OK;
+         } catch (PathNotFoundException ex) {
+            // mimicking redis. Not an error, do nothing and return null
+            return null;
+         } catch (Exception e) {
+            throw new RespJsonError(e, true);
+         }
+      });
+      return handler.stageToReturn(cs, ctx, JSONSET::jsonSetBiConsumer);
    }
 
    private static boolean isRoot(byte[] path) {
