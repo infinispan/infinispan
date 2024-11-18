@@ -50,8 +50,9 @@ import org.infinispan.client.hotrod.impl.operations.CacheOperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.DefaultCacheOperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
 import org.infinispan.client.hotrod.impl.operations.ManagerOperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.ObjectRoutingCacheOperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
-import org.infinispan.client.hotrod.impl.operations.RoutingCacheOperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.ServerRoutingCacheOperationsFactory;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transaction.SyncModeTransactionTable;
 import org.infinispan.client.hotrod.impl.transaction.TransactionTable;
@@ -579,6 +580,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       }
       if (pingResponse.getKeyMediaType() == MediaType.APPLICATION_OBJECT) {
          factoryFunction = wrapWithRouting(factoryFunction);
+      } else if (pingResponse.getKeyMediaType() != MediaType.APPLICATION_UNKNOWN) {
+         factoryFunction = wrapWithServerRouting(factoryFunction);
       }
 
       TransactionMode transactionMode = getTransactionMode(transactionModeOverride, cacheConfiguration);
@@ -611,9 +614,14 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       }
    }
 
+   static <K, V> Function<InternalRemoteCache<K, V>, CacheOperationsFactory> wrapWithServerRouting(
+         Function<InternalRemoteCache<K, V>, CacheOperationsFactory> factoryFunction) {
+      return irc -> new ServerRoutingCacheOperationsFactory(factoryFunction.apply(irc));
+   }
+
    static <K, V> Function<InternalRemoteCache<K, V>, CacheOperationsFactory> wrapWithRouting(
          Function<InternalRemoteCache<K, V>, CacheOperationsFactory> factoryFunction) {
-      return irc -> new RoutingCacheOperationsFactory(factoryFunction.apply(irc));
+      return irc -> new ObjectRoutingCacheOperationsFactory(factoryFunction.apply(irc));
    }
 
    private <K, V> InternalRemoteCache<K, V> createRemoteCache(String cacheName, Function<InternalRemoteCache<K, V>, CacheOperationsFactory> factoryFunction) {

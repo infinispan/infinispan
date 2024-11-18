@@ -7,11 +7,15 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
+import org.infinispan.client.hotrod.impl.operations.CacheOperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
 import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -20,6 +24,9 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
+import org.mockito.AdditionalAnswers;
+import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.hash.ConsistentHashTest")
@@ -41,24 +48,33 @@ public class ConsistentHashTest extends MultiHotRodServersTest {
       Map<Object, SocketAddress> requests = new HashMap<>();
       RemoteCache<Object, Object> cache = rcm.getCache();
 
+      CacheOperationsFactory cof = TestingUtil.extractField(cache, "operationsFactory");
       OperationDispatcher dispatcher = TestingUtil.extractField(rcm, "dispatcher");
+
+      Answer<?> answer = AdditionalAnswers.delegatesTo(cof);
+      CacheOperationsFactory mock = Mockito.mock(CacheOperationsFactory.class, answer);
+
+      // Collect the routing object used for each operation and then determine its address to confirm it
+      // was routed to the proper owner
+      Mockito.doAnswer(i -> {
+         HotRodOperation<?> op = (HotRodOperation<?>) answer.answer(i);
+         SocketAddress socketAddress = dispatcher.addressForObject(op.getRoutingObject(), cache.getName());
+         assertThat(socketAddress).isNotNull();
+
+         requests.put(i.getArguments()[0], socketAddress);
+         return op;
+      }).when(mock).newPutKeyValueOperation(Mockito.any(), Mockito.any(), Mockito.anyLong(),
+            Mockito.any(TimeUnit.class), Mockito.anyLong(), Mockito.any(TimeUnit.class));
+
+      TestingUtil.replaceField(mock, "operationsFactory", cache, RemoteCacheImpl.class);
 
       for (int i = 0; i < 100; i++) {
          Object keyValue = kv(i);
 
-         Object convertedKey;
-         if (keyType == null || keyType.isBinary()) {
-            convertedKey = cache.getDataFormat().keyToBytes(keyValue);
-         } else {
-            convertedKey = keyValue;
-         }
-
-         SocketAddress socketAddress = dispatcher.addressForObject(convertedKey, cache.getName());
-         assertThat(socketAddress).isNotNull();
-
-         requests.put(keyValue, socketAddress);
          cache.put(keyValue, keyValue);
       }
+
+      assertThat(requests).hasSize(100);
 
       for (Map.Entry<Object, SocketAddress> entry : requests.entrySet()) {
          int port = ((InetSocketAddress) entry.getValue()).getPort();

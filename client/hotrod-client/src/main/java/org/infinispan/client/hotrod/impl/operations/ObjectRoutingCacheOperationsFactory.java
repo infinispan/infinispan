@@ -9,8 +9,8 @@ import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 
 import io.netty.channel.Channel;
 
-public class RoutingCacheOperationsFactory extends DelegatingCacheOperationsFactory {
-   public RoutingCacheOperationsFactory(CacheOperationsFactory delegate) {
+public class ObjectRoutingCacheOperationsFactory extends DelegatingCacheOperationsFactory {
+   public ObjectRoutingCacheOperationsFactory(CacheOperationsFactory delegate) {
       super(delegate);
    }
 
@@ -84,6 +84,6 @@ public class RoutingCacheOperationsFactory extends DelegatingCacheOperationsFact
 
    @Override
    protected DelegatingCacheOperationsFactory newFactoryFor(CacheOperationsFactory factory) {
-      return new RoutingCacheOperationsFactory(factory);
+      return new ObjectRoutingCacheOperationsFactory(factory);
    }
 }
