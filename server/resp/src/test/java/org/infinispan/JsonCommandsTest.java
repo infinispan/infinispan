@@ -25,6 +25,7 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.json.DefaultJsonParser;
 import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.json.JsonValue;
+import io.lettuce.core.json.arguments.JsonGetArgs;
 import io.lettuce.core.json.arguments.JsonSetArgs;
 
 @Test(groups = "functional", testName = "server.resp.JsonCommandsTest")
@@ -146,7 +147,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
    public void testJSONSETNotRoot() {
       CustomStringCommands commands = CustomStringCommands.instance(redisConnection);
       assertThatThrownBy(() -> {
-         commands.jsonCmd(k(), "notroot", "{ \"k1\": \"v1\"}");
+         commands.jsonSet(k(), "notroot", "{ \"k1\": \"v1\"}");
       }).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessageContaining("ERR new objects must be created at root");
    }
@@ -154,9 +155,9 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
    @Test
    public void testJSONSETWrongPath() {
       CustomStringCommands commands = CustomStringCommands.instance(redisConnection);
-      commands.jsonCmd(k(), "$", "{ \"k1\": \"v1\"}");
+      commands.jsonSet(k(), "$", "{ \"k1\": \"v1\"}");
       assertThatThrownBy(() -> {
-         commands.jsonCmd(k(), "b a d", "{ \"k1\": \"v1\"}");
+         commands.jsonSet(k(), "b a d", "{ \"k1\": \"v1\"}");
       }).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessageStartingWith("ERR ");
    }
@@ -237,9 +238,14 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
             """);
       String key = k();
       assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
-      JsonPath jp1 = new JsonPath("$.key1");
-      var result = redis.jsonGet(key, jp1);
-      assertThat(compareJSONGet(result.get(0), jv, jp1)).isEqualTo(true);
+      JsonPath jp1 = new JsonPath("$");
+      JsonGetArgs args = new JsonGetArgs().indent("1").newline("2").space("3");
+      var result = redis.jsonGet(key, args, jp1);
+      assertThat(result).hasSize(1);
+      String strResult = result.get(0).toString();
+      String expected = """
+      {21"key1":3"value1",21"key2":3"value2"2}""";
+      assertThat(strResult).isEqualTo(expected);
    }
 
    private boolean compareJSONGet(JsonValue result, JsonValue doc, JsonPath... paths) {
@@ -298,9 +304,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
          var expectedNode = jpCtx.read(pathStr);
          return newNodeFromNewDoc.equals(expectedNode);
       } catch (Exception e) {
-
-         fail();
-         return false;
+         throw new RuntimeException(e);
       }
    }
 }

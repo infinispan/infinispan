@@ -33,10 +33,6 @@ import io.netty.channel.ChannelHandlerContext;
  * @since 15.1
  */
 public class JSONGET extends RespCommand implements Resp3Command {
-   private String indent = "";
-   private String newline = "";
-   private String space = "";
-   private DefaultPrettyPrinter rpp;
    // Configure JsonPath to use Jackson. Path with missing final leaf will return
    // null
    // path with more the 1 level missing will rise exception
@@ -53,23 +49,24 @@ public class JSONGET extends RespCommand implements Resp3Command {
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx,
          List<byte[]> arguments) {
-      int pos = 0;
-      byte[] key = arguments.get(pos++);
+      byte[] key = arguments.get(0);
+      Args args;
       try {
-         pos = parseArgs(arguments, pos);
+         args = parseArgs(arguments);
       } catch (Exception ex) {
          handler.writer().wrongArgumentNumber(this);
+         return handler.myStage();
       }
-      rpp = (space != null) ? new RespPrettyPrinter(space) : new RespPrettyPrinter();
-
-      Indenter ind = new DefaultIndenter(indent, newline);
-      rpp.indentArraysWith(ind);
-      rpp.indentObjectsWith(ind);
 
       FunctionalMap.ReadOnlyMap<byte[], Object> cache = ReadOnlyMapImpl
             .create(FunctionalMapImpl.create(handler.typedCache(null)));
-      int finalPos = pos;
+      int finalPos = args.pos();
       CompletionStage<String> cs = cache.eval(key, view -> {
+         DefaultPrettyPrinter rpp = (args.space() != null) ? new RespPrettyPrinter(args.space()) : new RespPrettyPrinter();
+
+         Indenter ind = new DefaultIndenter(args.indent(), args.newline());
+         rpp.indentArraysWith(ind);
+         rpp.indentObjectsWith(ind);
          int pathPos = finalPos;
          ObjectMapper mapper = new ObjectMapper();
          JsonDoc value = (JsonDoc) view.find().orElse(null);
@@ -83,7 +80,7 @@ public class JSONGET extends RespCommand implements Resp3Command {
                return resp;
             }
             // If only 1 path provided return all the matching nodes as array
-            if (pathPos == arguments.size()-1) {
+            if (pathPos == arguments.size() - 1) {
                var pathStr = new String(arguments.get(pathPos++));
                JsonNode node = jpCtx.read(pathStr);
                String resp = mapper.writer(rpp).writeValueAsString(node);
@@ -95,7 +92,7 @@ public class JSONGET extends RespCommand implements Resp3Command {
             while (pathPos < arguments.size()) {
                var pathStr = new String(arguments.get(pathPos++));
                JsonNode node = jpCtx.read(pathStr);
-               result.set(pathStr,node);
+               result.set(pathStr, node);
             }
             String resp = mapper.writer(rpp).writeValueAsString(result);
             return resp;
@@ -106,7 +103,11 @@ public class JSONGET extends RespCommand implements Resp3Command {
       return handler.stageToReturn(cs, ctx, ResponseWriter.SIMPLE_STRING);
    }
 
-   private int parseArgs(List<byte[]> arguments, int pos) {
+   private Args parseArgs(List<byte[]> arguments) {
+      String indent = "";
+      String newline = "";
+      String space = "";
+      int pos = 1;
       while (pos < arguments.size()) {
          switch ((new String(arguments.get(pos))).toUpperCase()) {
             case "INDENT":
@@ -122,14 +123,15 @@ public class JSONGET extends RespCommand implements Resp3Command {
                ++pos;
                break;
             default:
-               return pos;
+               return new Args(indent, newline, space, pos);
          }
       }
-      return pos;
+      return new Args(indent, newline, space, pos);
    }
 
 }
 
+record Args(String indent, String newline, String space, int pos) {}
 class RespPrettyPrinter extends DefaultPrettyPrinter {
    private String ofvs;
 
