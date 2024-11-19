@@ -194,19 +194,34 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
             """);
       assertThat(redis.jsonSet(k(), jp, jv)).isEqualTo("OK");
       JsonPath jp1 = new JsonPath("$.key1");
-      JsonPath jp2 = new JsonPath("$.key2");
-      JsonPath jp3 = new JsonPath("$.key3");
       var result = redis.jsonGet(k(), jp1);
       assertThat(compareJSONGet(result.get(0), jv, jp1)).isEqualTo(true);
 
+      JsonPath jp2 = new JsonPath("$.key2");
       result = redis.jsonGet(k(), jp1, jp2);
       assertThat(compareJSONGet(result.get(0), jv, jp1, jp2)).isEqualTo(true);
 
+      JsonPath jp3 = new JsonPath("$.key3");
       result = redis.jsonGet(k(), jp1, jp2, jp3);
       assertThat(compareJSONGet(result.get(0), jv, jp1, jp2, jp3)).isEqualTo(true);
 
       result = redis.jsonGet(k(), jp3);
       assertThat(compareJSONGet(result.get(0), jv, jp3)).isEqualTo(true);
+   }
+
+   @Test
+   public void testJSONGETPrettyPrinter() {
+      JsonPath jp = new JsonPath("$");
+      JsonValue jv = new DefaultJsonParser().createJsonValue("""
+               { "key1":"value1",
+                 "key2":"value2"
+               }
+            """);
+      String key=k();
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+      JsonPath jp1 = new JsonPath("$.key1");
+      var result = redis.jsonGet(key, jp1);
+      assertThat(compareJSONGet(result.get(0), jv, jp1)).isEqualTo(true);
    }
 
    private boolean compareJSONGet(JsonValue result, JsonValue doc, JsonPath... paths) {

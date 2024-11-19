@@ -37,10 +37,10 @@ import io.netty.channel.ChannelHandlerContext;
  * @since 15.1
  */
 public class JSONGET extends RespCommand implements Resp3Command {
-   private String indent;
-   private String newline;
-   private String space;
-   DefaultPrettyPrinter rpp = new RespPrettyPrinter("sepa");
+   private String indent = "";
+   private String newline = "";
+   private String space = "";
+   private DefaultPrettyPrinter rpp;
    // Configure JsonPath to use Jackson. Path with missing final leaf will return
    // null
    // path with more the 1 level missing will rise exception
@@ -64,13 +64,11 @@ public class JSONGET extends RespCommand implements Resp3Command {
       } catch (Exception ex) {
          handler.writer().wrongArgumentNumber(this);
       }
-      DefaultPrettyPrinter dpp;
-      if (indent != null || newline != null || space != null) {
-         dpp = new DefaultPrettyPrinter();
-         Indenter ind = new DefaultIndenter(indent, newline);
-         dpp.indentArraysWith(ind);
-         dpp.indentObjectsWith(ind);
-      }
+      rpp = (space != null) ? new RespPrettyPrinter(space) : new RespPrettyPrinter();
+
+      Indenter ind = new DefaultIndenter(indent, newline);
+      rpp.indentArraysWith(ind);
+      rpp.indentObjectsWith(ind);
 
       FunctionalMap.ReadOnlyMap<byte[], Object> cache = ReadOnlyMapImpl
             .create(FunctionalMapImpl.create(handler.typedCache(null)));
@@ -78,14 +76,12 @@ public class JSONGET extends RespCommand implements Resp3Command {
       CompletionStage<String> cs = cache.eval(key, view -> {
          int pathPos = finalPos;
          ObjectMapper mapper = new ObjectMapper();
-         var doc = (byte[]) view.find().orElse(null);
+         JsonDoc value = (JsonDoc) view.find().orElse(null);
+         var doc = value == null ? null : value.bytesDocument();
          try {
             var rootNode = mapper.readTree(doc);
             var jpCtx = JsonPath.using(config).parse(rootNode);
             if (pathPos == arguments.size() - 1) {
-               DefaultPrettyPrinter.Indenter i= new DefaultIndenter("ff", "nl");
-               // rpp.indentArraysWith(i);
-               // rpp.indentObjectsWith(i);
                String resp = mapper.writer(rpp).writeValueAsString(rootNode);
                return resp;
             }
@@ -129,10 +125,16 @@ public class JSONGET extends RespCommand implements Resp3Command {
 }
 
 class RespPrettyPrinter extends DefaultPrettyPrinter {
-   private String _ofvs;
+   private String ofvs;
+
+   public RespPrettyPrinter() {
+      super();
+      ofvs = ":";
+   }
 
    public RespPrettyPrinter(String objectFieldValueSeparator) {
-      _ofvs = ":" + objectFieldValueSeparator;
+      super();
+      ofvs = ":" + objectFieldValueSeparator;
    }
    // @Override
    // public void writeRootValueSeparator(JsonGenerator g) throws IOException {
@@ -145,23 +147,13 @@ class RespPrettyPrinter extends DefaultPrettyPrinter {
    // }
 
    public RespPrettyPrinter(RespPrettyPrinter base) {
-      _rootSeparator = base._rootSeparator;
-
-      _arrayIndenter = base._arrayIndenter;
-      _objectIndenter = base._objectIndenter;
-      _spacesInObjectEntries = base._spacesInObjectEntries;
-      _nesting = base._nesting;
-
-      _separators = base._separators;
-      _objectFieldValueSeparatorWithSpaces = base._objectFieldValueSeparatorWithSpaces;
-      _objectEntrySeparator = base._objectEntrySeparator;
-      _arrayValueSeparator = base._arrayValueSeparator;
-
+      super(base);
+      this.ofvs = base.ofvs;
    }
 
    @Override
    public void writeObjectFieldValueSeparator(JsonGenerator g) throws IOException {
-      g.writeRaw(_ofvs);
+      g.writeRaw(ofvs);
    }
 
    @Override
