@@ -2,9 +2,12 @@ package org.infinispan;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.junit.jupiter.api.Assertions.fail;
+
+import java.util.List;
 
 import org.infinispan.server.resp.CustomStringCommands;
 import org.infinispan.server.resp.SingleNodeRespBaseTest;
@@ -23,7 +26,6 @@ import io.lettuce.core.json.DefaultJsonParser;
 import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.json.arguments.JsonSetArgs;
-import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
 @Test(groups = "functional", testName = "server.resp.JsonCommandsTest")
 public class JsonCommandsTest extends SingleNodeRespBaseTest {
@@ -45,10 +47,11 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
 
    @Test
    public void testJSONSET() {
+      String key = k();
       JsonPath jp = new JsonPath("$");
       JsonValue jv = new DefaultJsonParser().createJsonValue("{\"key\":\"value\"}");
-      assertThat(redis.jsonSet(k(), jp, jv)).isEqualTo("OK");
-      var result = redis.jsonGet(k(), jp);
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+      var result = redis.jsonGet(key, jp);
       assertThat(result).hasSize(1);
       assertThat(compareJSON(result.get(0), jv)).isEqualTo(true);
 
@@ -59,8 +62,8 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
             "key": { "key1": "val1" }
             }
             """);
-      assertThat(redis.jsonSet(k(), jp, jv)).isEqualTo("OK");
-      result = redis.jsonGet(k(), jp);
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+      result = redis.jsonGet(key, jp);
       assertThat(result).hasSize(1);
       assertThat(compareJSON(result.get(0), jv)).isEqualTo(true);
 
@@ -68,16 +71,17 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       jp = new JsonPath("$.key.key2");
       jv = result.get(0);
       JsonValue jv1 = new DefaultJsonParser().createJsonValue("{\"key2\":\"value2\"}");
-      assertThat(redis.jsonSet(k(), jp, jv1)).isEqualTo("OK");
-      result = redis.jsonGet(k(), jp);
+      assertThat(redis.jsonSet(key, jp, jv1)).isEqualTo("OK");
+      result = redis.jsonGet(key);
       assertThat(result).hasSize(1);
-      assertThat(compareJSONSet(jv, "$.key.key2", jv1, result.get(0))).isEqualTo(true);
+      assertThat(compareJSONSet(result.get(0), jv, "$.key.key2", jv1)).isEqualTo(true);
 
    }
 
    @Test
    public void testJSONSETWrongType() {
-      assertWrongType(() -> redis.set(k(), v()), () -> redis.jsonGet(k(), new JsonPath("$")));
+      String key = k();
+      assertWrongType(() -> redis.set(key, v()), () -> redis.jsonGet(key, new JsonPath("$")));
       // Check with non root
       String k1 = k(1);
       assertWrongType(() -> redis.set(k1, v()), () -> redis.jsonGet(k1, new JsonPath("$.k1")));
@@ -89,50 +93,53 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
 
    @Test
    public void testJSONSETWithPath() {
+      String key = k();
       // Create json
       JsonPath jpRoot = new JsonPath("$");
       JsonValue jvDoc = new DefaultJsonParser().createJsonValue("{\"root\": { \"k1\" : \"v1\", \"k2\":\"v2\"}}");
-      assertThat(redis.jsonSet(k(), jpRoot, jvDoc)).isEqualTo("OK");
+      assertThat(redis.jsonSet(key, jpRoot, jvDoc)).isEqualTo("OK");
 
       // Modify json
       JsonPath jpLeaf = new JsonPath("$.root.k1");
       JsonValue jvNew = new DefaultJsonParser().createJsonValue("\"newv1\"");
-      assertThat(redis.jsonSet(k(), jpLeaf, jvNew)).isEqualTo("OK");
+      assertThat(redis.jsonSet(key, jpLeaf, jvNew)).isEqualTo("OK");
 
       // Verify
-      var result = redis.jsonGet(k(), jpRoot);
+      var result = redis.jsonGet(key, jpRoot);
       assertThat(result).hasSize(1);
       assertThat(compareJSONSet(result.get(0), jvDoc, "$.root.k1", jvNew));
    }
 
    @Test
    public void testJSONSETWithPathMulti() {
+      String key = k();
       // Create json
       JsonPath jpRoot = new JsonPath("$");
       JsonValue jvDoc = new DefaultJsonParser().createJsonValue(
             """
                   {"r1": { "k1" : "v1", "k2":"v2"}, "r2": { "k1" : "v1", "k2": "v2"}}"
                   """);
-      assertThat(redis.jsonSet(k(), jpRoot, jvDoc)).isEqualTo("OK");
+      assertThat(redis.jsonSet(key, jpRoot, jvDoc)).isEqualTo("OK");
 
       // Modify json
       JsonPath jpLeaf = new JsonPath("$..k1");
       JsonValue jvNew = new DefaultJsonParser().createJsonValue("\"newv1\"");
-      assertThat(redis.jsonSet(k(), jpLeaf, jvNew)).isEqualTo("OK");
+      assertThat(redis.jsonSet(key, jpLeaf, jvNew)).isEqualTo("OK");
 
       // Verify
-      var result = redis.jsonGet(k(), jpRoot);
+      var result = redis.jsonGet(key);
       assertThat(result).hasSize(1);
       assertThat(compareJSONSet(result.get(0), jvDoc, "$..k1", jvNew)).isEqualTo(true);
    }
 
    @Test
    public void testJSONSETWithXX() {
+      String key = k();
       JsonPath jp = new JsonPath("$");
       JsonValue jv = new DefaultJsonParser().createJsonValue("{\"key\":\"value\"}");
       JsonSetArgs args = JsonSetArgs.Builder.xx();
-      assertThat(redis.jsonSet(k(), jp, jv, args)).isNull();
-      assertThat(redis.jsonSet(k(), jp, jv)).isEqualTo("OK");
+      assertThat(redis.jsonSet(key, jp, jv, args)).isNull();
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
    }
 
    @Test
@@ -156,32 +163,33 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
 
    @Test
    public void testJSONSETPaths() {
+      String key = k();
       JsonPath jp = new JsonPath("$");
-      JsonValue jv = new DefaultJsonParser().createJsonValue("{\"key\":\"value\"}");
-      assertThat(redis.jsonSet(k(), jp, jv)).isEqualTo("OK");
+      JsonValue doc = new DefaultJsonParser().createJsonValue("{\"key\":\"value\"}");
+      assertThat(redis.jsonSet(key, jp, doc)).isEqualTo("OK");
 
       jp = new JsonPath("$.key1");
-      var jvNew = new DefaultJsonParser().createJsonValue("\"value1\"");
-      assertThat(redis.jsonSet(k(), jp, jvNew)).isEqualTo("OK");
-      var result = redis.jsonGet(k(), jp);
+      var newNode = new DefaultJsonParser().createJsonValue("\"value1\"");
+      assertThat(redis.jsonSet(key, jp, newNode)).isEqualTo("OK");
+      List<JsonValue> result = redis.jsonGet(key);
       assertThat(result).hasSize(1);
-      assertThat(compareJSONSet(result.get(0), jv, "$.key1", jvNew)).isEqualTo(true);
+      assertThat(compareJSONSet(result.get(0), doc, "$.key1", newNode)).isEqualTo(true);
 
-      jv = result.get(0);
+      doc = result.get(0);
       jp = new JsonPath("$.key");
-      jvNew = new DefaultJsonParser().createJsonValue("{\"key_l1\":\"value_l1\"}");
-      assertThat(redis.jsonSet(k(), jp, jvNew)).isEqualTo("OK");
-      result = redis.jsonGet(k(), jp);
+      newNode = new DefaultJsonParser().createJsonValue("{\"key_l1\":\"value_l1\"}");
+      assertThat(redis.jsonSet(key, jp, newNode)).isEqualTo("OK");
+      result = redis.jsonGet(key);
       assertThat(result).hasSize(1);
-      assertThat(compareJSONSet(result.get(0), jv, "$.key", jvNew)).isEqualTo(true);
+      assertThat(compareJSONSet(result.get(0), doc, "$.key", newNode)).isEqualTo(true);
 
       jp = new JsonPath("$.lev1");
-      jv = new DefaultJsonParser().createJsonValue("{\"keyl1\":\"valuel1\"}");
-      assertThat(redis.jsonSet(k(), jp, jv)).isEqualTo("OK");
+      doc = new DefaultJsonParser().createJsonValue("{\"keyl1\":\"valuel1\"}");
+      assertThat(redis.jsonSet(key, jp, doc)).isEqualTo("OK");
 
       jp = new JsonPath("$.lev1.lev2.lev3");
-      jv = new DefaultJsonParser().createJsonValue("{\"keyl2\":\"valuel2\"}");
-      assertThat(redis.jsonSet(k(), jp, jv)).isNull();
+      doc = new DefaultJsonParser().createJsonValue("{\"keyl2\":\"valuel2\"}");
+      assertThat(redis.jsonSet(key, jp, doc)).isNull();
    }
 
    @Test
@@ -207,6 +215,16 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
 
       result = redis.jsonGet(k(), jp3);
       assertThat(compareJSONGet(result.get(0), jv, jp3)).isEqualTo(true);
+
+      // One path multiple results
+      JsonPath jp4 = new JsonPath("$.*");
+      result = redis.jsonGet(k(), jp4);
+      assertThat(compareJSONGet(result.get(0), jv, jp4)).isEqualTo(true);
+
+      // Multiple path multiple results
+      JsonPath jp5 = new JsonPath("$.key1");
+      result = redis.jsonGet(k(), jp4, jp5);
+      assertThat(compareJSONGet(result.get(0), jv, jp4, jp5)).isEqualTo(true);
    }
 
    @Test
@@ -217,7 +235,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
                  "key2":"value2"
                }
             """);
-      String key=k();
+      String key = k();
       assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
       JsonPath jp1 = new JsonPath("$.key1");
       var result = redis.jsonGet(key, jp1);
@@ -226,10 +244,10 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
 
    private boolean compareJSONGet(JsonValue result, JsonValue doc, JsonPath... paths) {
       ObjectMapper mapper = new ObjectMapper();
-      ObjectNode rootObjectNode, resultNode;
+      JsonNode rootObjectNode, resultNode;
       try {
-         rootObjectNode = (ObjectNode) mapper.readTree(doc.toString());
-         resultNode = (ObjectNode) mapper.readTree(result.toString());
+         rootObjectNode = (JsonNode) mapper.readTree(doc.toString());
+         resultNode = (JsonNode) mapper.readTree(result.toString());
          var jpCtx = com.jayway.jsonpath.JsonPath.using(config).parse(rootObjectNode);
          if (paths.length == 1) {
             JsonNode node = jpCtx.read(paths[0].toString());
@@ -261,25 +279,28 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       return false;
    }
 
-   private boolean compareJSONSet(JsonValue result, JsonValue doc, String path, JsonValue node) {
+   private boolean compareJSONSet(JsonValue newDoc, JsonValue oldDoc, String path, JsonValue node) {
       ObjectMapper mapper = new ObjectMapper();
-      ObjectNode rootObjectNode;
       try {
-         rootObjectNode = (ObjectNode) mapper.readTree(doc.toString());
-         var jpCtx = com.jayway.jsonpath.JsonPath.using(config).parse(rootObjectNode);
+         var newRootNode = mapper.readTree(newDoc.toString());
+         var oldRootNode = (ObjectNode) mapper.readTree(oldDoc.toString());
+         var jpCtx = com.jayway.jsonpath.JsonPath.using(config).parse(oldRootNode);
          var pathStr = new String(path);
-         JsonNode newNode = mapper.readTree(node.toString());
+         var newNode = mapper.readTree(node.toString());
          jpCtx.set(pathStr, newNode);
+         // Check the whole doc is correct
+         if (!oldRootNode.equals(newRootNode)) {
+            return false;
+         }
+         // Check the node is set correctly
+         var newJpCtx = com.jayway.jsonpath.JsonPath.using(config).parse(newRootNode);
+         var newNodeFromNewDoc = newJpCtx.read(pathStr);
+         var expectedNode = jpCtx.read(pathStr);
+         return newNodeFromNewDoc.equals(expectedNode);
       } catch (Exception e) {
+
          fail();
          return false;
       }
-      try {
-         var jsonRes = mapper.readTree(result.toString());
-         return jsonRes.equals(rootObjectNode);
-      } catch (Exception e) {
-         fail();
-      }
-      return false;
    }
 }

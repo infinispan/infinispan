@@ -16,13 +16,9 @@ import org.infinispan.server.resp.serialization.ResponseWriter;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
-import com.fasterxml.jackson.core.util.Separators;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter.Indenter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
@@ -81,15 +77,25 @@ public class JSONGET extends RespCommand implements Resp3Command {
          try {
             var rootNode = mapper.readTree(doc);
             var jpCtx = JsonPath.using(config).parse(rootNode);
-            if (pathPos == arguments.size() - 1) {
+            // If no path provided return root
+            if (pathPos == arguments.size()) {
                String resp = mapper.writer(rpp).writeValueAsString(rootNode);
                return resp;
             }
+            // If only 1 path provided return all the matching nodes as array
+            if (pathPos == arguments.size()-1) {
+               var pathStr = new String(arguments.get(pathPos++));
+               JsonNode node = jpCtx.read(pathStr);
+               String resp = mapper.writer(rpp).writeValueAsString(node);
+               return resp;
+            }
+            // If more than 1 path provided return an object with
+            // properties "path": [array of matching nodes]
             ObjectNode result = mapper.createObjectNode();
             while (pathPos < arguments.size()) {
                var pathStr = new String(arguments.get(pathPos++));
                JsonNode node = jpCtx.read(pathStr);
-               result.set(pathStr, node);
+               result.set(pathStr,node);
             }
             String resp = mapper.writer(rpp).writeValueAsString(result);
             return resp;
