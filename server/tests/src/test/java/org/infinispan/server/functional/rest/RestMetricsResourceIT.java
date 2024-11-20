@@ -41,8 +41,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.prometheus.client.exporter.common.TextFormat;
-
 /**
  * Tests the Micrometer metrics exporter.
  *
@@ -53,6 +51,8 @@ public class RestMetricsResourceIT {
 
    // copied from regex101.com
    private static final Pattern PROMETHEUS_PATTERN = Pattern.compile("^(?<metric>[a-zA-Z_:][a-zA-Z0-9_:]*]*)(?<tags>\\{.*})?[\\t ]*(?<value>-?[0-9E.\\-]*)[\\t ]*(?<timestamp>[0-9]+)?$");
+   private static final String CONTENT_TYPE_004 = "text/plain; version=0.0.4; charset=utf-8";
+   private static final String CONTENT_TYPE_OPENMETRICS_100 = "application/openmetrics-text; version=1.0.0; charset=utf-8";
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private static final int NUM_SERVERS = 3;
    private static final String[] OWNERSHIP = new String[]{
@@ -296,14 +296,14 @@ public class RestMetricsResourceIT {
    }
 
    public static void checkIsPrometheus(MediaType contentType) {
-      String[] expectedContentType = TextFormat.CONTENT_TYPE_004.split(";");
+      String[] expectedContentType = CONTENT_TYPE_004.split(";");
       String[] actualContentType = contentType.toString().split(";");
 
       assertThat(actualContentType).containsExactlyInAnyOrder(expectedContentType);
    }
 
    public static void checkIsOpenmetrics(MediaType contentType) {
-      String[] expectedContentType = TextFormat.CONTENT_TYPE_OPENMETRICS_100.split(";");
+      String[] expectedContentType = CONTENT_TYPE_OPENMETRICS_100.split(";");
       String[] actualContentType = contentType.toString().split(";");
 
       assertThat(actualContentType).containsExactlyInAnyOrder(expectedContentType);

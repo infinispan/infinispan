@@ -21,7 +21,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.release>17</maven.compiler.release>
         <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
-        <version.micrometer>1.10.3</version.micrometer>
+        <version.micrometer>1.13.7</version.micrometer>
     </properties>
     <dependencyManagement>
         <dependencies>

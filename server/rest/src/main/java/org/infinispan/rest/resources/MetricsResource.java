@@ -18,8 +18,6 @@ import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.framework.impl.RestResponseBuilder;
 
-import io.prometheus.client.exporter.common.TextFormat;
-
 /**
  * Micrometer metrics resource.
  *
@@ -29,6 +27,8 @@ import io.prometheus.client.exporter.common.TextFormat;
 public final class MetricsResource implements ResourceHandler {
 
    private static final String METRICS_PATH = "/metrics";
+   private static final String CONTENT_TYPE_004 = "text/plain; version=0.0.4; charset=utf-8";
+   private static final String CONTENT_TYPE_OPENMETRICS_100 = "application/openmetrics-text; version=1.0.0; charset=utf-8";
 
    private final boolean auth;
    private final Executor blockingExecutor;
@@ -56,7 +56,7 @@ public final class MetricsResource implements ResourceHandler {
 
          try {
             if (metricsRegistry.supportScrape()) {
-               String contentType = TextFormat.chooseContentType(request.getAcceptHeader());
+               String contentType = chooseContentType(request.getAcceptHeader());
                builder.header("Content-Type", contentType);
                builder.entity(metricsRegistry.scrape(contentType));
             } else {
@@ -68,5 +68,16 @@ public final class MetricsResource implements ResourceHandler {
             throw Util.unchecked(e);
          }
       }, blockingExecutor);
+   }
+
+   private static String chooseContentType(String acceptHeader) {
+      if (acceptHeader != null) {
+         for (String accept : acceptHeader.split(",")) {
+            if ("application/openmetrics-text".equals(accept.split(";")[0].trim())) {
+               return CONTENT_TYPE_OPENMETRICS_100;
+            }
+         }
+      }
+      return CONTENT_TYPE_004;
    }
 }
