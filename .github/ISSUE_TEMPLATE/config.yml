@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question
+    url: https://stackoverflow.com/questions/ask?tags=infinispan
+    about: I have a question about how to use Infinispan.
+  - name: Discussions
+    url: https://github.com/infinispan/infinispan/discussions
+    about: Open Community discussions related to Quarkus. 
+  - name: Infinispan Zulip chat
+    url: https://infinispan.zulipchat.com/
+    about: If you prefer live chat with the developers, we have a Zulip chat where we all hang out.
