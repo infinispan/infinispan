@@ -1,11 +1,13 @@
 package org.infinispan.scripting;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Map;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.scripting.impl.ScriptMetadata;
@@ -16,12 +18,12 @@ import org.testng.annotations.Test;
 @Test(groups="functional", testName="scripting.ScriptMetadataTest")
 public class ScriptMetadataTest extends AbstractInfinispanTest {
 
-   public void testDoubleSlashComment() throws Exception {
+   public void testDoubleSlashComment() {
       ScriptMetadata metadata = ScriptMetadataParser.parse("test.js", "// name=test");
       assertEquals("test", metadata.name());
    }
 
-   public void testDefaultScriptExtension() throws Exception {
+   public void testDefaultScriptExtension() {
       ScriptMetadata metadata = ScriptMetadataParser.parse("test", "// name=test");
       assertEquals("test", metadata.name());
    }
@@ -31,29 +33,29 @@ public class ScriptMetadataTest extends AbstractInfinispanTest {
       assertEquals("test.", metadata.name());
    }
 
-   public void testHashComment() throws Exception {
+   public void testHashComment() {
       ScriptMetadata metadata = ScriptMetadataParser.parse("test.js", "# name=test");
       assertEquals("test", metadata.name());
    }
 
-   public void testDoublSemicolonComment() throws Exception {
+   public void testDoublSemicolonComment() {
       ScriptMetadata metadata = ScriptMetadataParser.parse("test.js", ";; name=test");
       assertEquals("test", metadata.name());
    }
 
-   public void testMultiplePairs() throws Exception {
+   public void testMultiplePairs() {
       ScriptMetadata metadata = ScriptMetadataParser.parse("test.scala", "// name=test,language=scala");
       assertEquals("test", metadata.name());
       assertEquals("scala", metadata.language().get());
    }
 
-   public void testDoubleQuotedValues() throws Exception {
+   public void testDoubleQuotedValues() {
       ScriptMetadata metadata = ScriptMetadataParser.parse("test.scala", "// name=\"te,st\",language=scala");
       assertEquals("te,st", metadata.name());
       assertEquals("scala", metadata.language().get());
    }
 
-   public void testSingleQuotedValues() throws Exception {
+   public void testSingleQuotedValues() {
       ScriptMetadata metadata = ScriptMetadataParser.parse("test.scala", "// name='te,st',language=scala");
       assertEquals("te,st", metadata.name());
       assertEquals("scala", metadata.language().get());
@@ -66,7 +68,7 @@ public class ScriptMetadataTest extends AbstractInfinispanTest {
       assertEquals("scala", metadata.extension());
    }
 
-   public void testDataTypeUtf8() throws Exception {
+   public void testDataTypeUtf8() {
       ScriptMetadata metadata = ScriptMetadataParser.parse("test", "// name='test',language=javascript,datatype='text/plain; charset=utf-8'");
       assertEquals("test", metadata.name());
       assertEquals("javascript", metadata.language().get());
@@ -75,7 +77,7 @@ public class ScriptMetadataTest extends AbstractInfinispanTest {
       assertEquals(StandardCharsets.UTF_8, metadata.dataType().getCharset());
    }
 
-   public void testDataTypeOther() throws Exception {
+   public void testDataTypeOther() {
       ScriptMetadata metadata = ScriptMetadataParser.parse("test", "// name='test',language=javascript,datatype='text/plain; charset=us-ascii'");
       assertEquals("test", metadata.name());
       assertEquals("javascript", metadata.language().get());
@@ -84,21 +86,28 @@ public class ScriptMetadataTest extends AbstractInfinispanTest {
       assertEquals(StandardCharsets.US_ASCII, metadata.dataType().getCharset());
    }
 
-   public void testArrayValues() throws Exception {
+   public void testArrayValues() {
       ScriptMetadata metadata = ScriptMetadataParser.parse("test.scala", "// name=test,language=javascript,parameters=[a,b,c]");
       assertEquals("test", metadata.name());
       assertEquals("javascript", metadata.language().get());
-      assertTrue(metadata.parameters().containsAll(Arrays.asList("a", "b", "c")));
+      assertThat(metadata.parameters()).containsExactly("a", "b", "c");
    }
 
-   public void testMultiLine() throws Exception {
+   public void testProperties() {
+      ScriptMetadata metadata = ScriptMetadataParser.parse("test.scala", "// name=test,language=javascript,properties={k1:v1,k2:v2}");
+      assertEquals("test", metadata.name());
+      assertEquals("javascript", metadata.language().get());
+      assertThat(metadata.properties()).containsExactlyEntriesOf(Map.of("k1", "v1", "k2", "v2"));
+   }
+
+   public void testMultiLine() {
       ScriptMetadata metadata = ScriptMetadataParser.parse("test.scala", "// name=test\n// language=scala");
       assertEquals("test", metadata.name());
       assertEquals("scala", metadata.language().get());
    }
 
    @Test(expectedExceptions=IllegalArgumentException.class, expectedExceptionsMessageRegExp=".*Script parameters must be declared using.*")
-   public void testBrokenParameters() throws Exception {
+   public void testBrokenParameters() {
       ScriptMetadata metadata = ScriptMetadataParser.parse("test.scala", "// name=test,language=javascript,parameters=\"a,b,c\"");
       assertEquals("test", metadata.name());
       assertEquals("javascript", metadata.language());
@@ -106,7 +115,7 @@ public class ScriptMetadataTest extends AbstractInfinispanTest {
    }
 
    @Test(expectedExceptions=CacheException.class, expectedExceptionsMessageRegExp=".*Unknown script mode:.*")
-   public void testUnknownScriptProperty() throws Exception {
+   public void testUnknownScriptProperty() {
       ScriptMetadata metadata = ScriptMetadataParser.parse("test.scala", "// name=test,language=javascript,parameters=[a,b,c],unknown=example");
       assertEquals("test", metadata.name());
       assertEquals("javascript", metadata.language());
