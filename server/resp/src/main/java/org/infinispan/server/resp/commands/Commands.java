@@ -85,6 +85,11 @@ import org.infinispan.server.resp.commands.pubsub.PUBSUB;
 import org.infinispan.server.resp.commands.pubsub.PUNSUBSCRIBE;
 import org.infinispan.server.resp.commands.pubsub.SUBSCRIBE;
 import org.infinispan.server.resp.commands.pubsub.UNSUBSCRIBE;
+import org.infinispan.server.resp.commands.scripting.EVAL;
+import org.infinispan.server.resp.commands.scripting.EVALSHA;
+import org.infinispan.server.resp.commands.scripting.EVALSHA_RO;
+import org.infinispan.server.resp.commands.scripting.EVAL_RO;
+import org.infinispan.server.resp.commands.scripting.SCRIPT;
 import org.infinispan.server.resp.commands.set.SADD;
 import org.infinispan.server.resp.commands.set.SCARD;
 import org.infinispan.server.resp.commands.set.SDIFF;
@@ -180,7 +185,7 @@ public final class Commands {
       ALL_COMMANDS[2] = new RespCommand[]{new CONFIG(), new COMMAND(), new CLUSTER(), new CLIENT() };
       // DEL should always be first here
       ALL_COMMANDS[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY(), new DBSIZE(), new DISCARD()};
-      ALL_COMMANDS[4] = new RespCommand[]{new ECHO(), new EXISTS(), new EXPIRE(), new EXPIREAT(), new EXPIRETIME(), new EXEC()};
+      ALL_COMMANDS[4] = new RespCommand[]{new ECHO(), new EXISTS(), new EXPIRE(), new EXPIREAT(), new EXPIRETIME(), new EXEC(), new EVAL(), new EVAL_RO(), new EVALSHA(), new EVALSHA_RO()};
       ALL_COMMANDS[5] = new RespCommand[]{new FLUSHDB(), new FLUSHALL()};
       // GET should always be first here
       ALL_COMMANDS[6] = new RespCommand[]{new GET(), new GETDEL(), new GETEX(), new GETRANGE(), new GETSET()};
@@ -193,7 +198,7 @@ public final class Commands {
       ALL_COMMANDS[16] = new RespCommand[]{new QUIT()};
       ALL_COMMANDS[17] = new RespCommand[]{new RPUSH(), new RPUSHX(), new RPOP(), new RESET(), new READWRITE(), new READONLY(), new RPOPLPUSH(), new RENAME(), new RENAMENX(), new RANDOMKEY() };
       // SET should always be first here
-      ALL_COMMANDS[18] = new RespCommand[]{new SET(), new SETEX(), new SETNX(), new SMEMBERS(), new SISMEMBER(), new SMISMEMBER(), new SADD(), new STRLEN(), new SMOVE(), new SCARD(), new SINTER(), new SINTERSTORE(), new SINTERCARD(), new SUNION(), new SUNIONSTORE(), new SPOP(), new SRANDMEMBER(), new SREM(), new SDIFF(), new SDIFFSTORE(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SSCAN(), new SETRANGE(), new SORT(), new SORT_RO(), new SUBSTR()};
+      ALL_COMMANDS[18] = new RespCommand[]{new SET(), new SETEX(), new SETNX(), new SMEMBERS(), new SISMEMBER(), new SMISMEMBER(), new SADD(), new STRLEN(), new SMOVE(), new SCARD(), new SINTER(), new SINTERSTORE(), new SINTERCARD(), new SUNION(), new SUNIONSTORE(), new SPOP(), new SRANDMEMBER(), new SREM(), new SDIFF(), new SDIFFSTORE(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SSCAN(), new SETRANGE(), new SORT(), new SORT_RO(), new SUBSTR(), new SCRIPT()};
       ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE(), new TOUCH(), new TIME() };
       ALL_COMMANDS[20] = new RespCommand[]{new UNSUBSCRIBE(), new UNWATCH()};
       ALL_COMMANDS[22] = new RespCommand[]{new WATCH()};

@@ -45,6 +45,11 @@ public final class ByteBufResponseWriter implements ResponseWriter {
       this.alloc = alloc;
    }
 
+   @Override
+   public boolean isInternal() {
+      return false;
+   }
+
    /**
     * Writes the null value.
     */
@@ -200,6 +205,11 @@ public final class ByteBufResponseWriter implements ResponseWriter {
       serialize(set, ByteBufCollectionSerializer.SetSerializer.INSTANCE, contentType);
    }
 
+   @Override
+   public <T> void set(Set<?> set, JavaObjectSerializer<T> serializer) {
+      serialize(set, ByteBufCollectionSerializer.SetSerializer.INSTANCE, (o, b) -> serializer.accept((T) o, b));
+   }
+
    /**
     * Serializes a map in the RESP3 map format.
     *
@@ -237,6 +247,11 @@ public final class ByteBufResponseWriter implements ResponseWriter {
    @Override
    public void map(Map<?, ?> value, Resp3Type keyType, Resp3Type valueType) {
       serialize(value, ByteBufMapSerializer.INSTANCE, new SerializationHint.KeyValueHint(keyType, valueType));
+   }
+
+   @Override
+   public void map(Map<?, ?> map, SerializationHint.KeyValueHint keyValueHint) {
+      serialize(map, ByteBufMapSerializer.INSTANCE, keyValueHint);
    }
 
    /**
@@ -341,7 +356,8 @@ public final class ByteBufResponseWriter implements ResponseWriter {
    }
 
    private <H extends SerializationHint> void serialize(Object object,
-                                                        NestedResponseSerializer<?, ByteBufPool, H> candidate, H hint) {
+                                                        NestedResponseSerializer<?, ByteBufPool, H> candidate,
+                                                        H hint) {
       ByteBufSerializerRegistry.serialize(object, alloc, candidate, hint);
    }
 }
