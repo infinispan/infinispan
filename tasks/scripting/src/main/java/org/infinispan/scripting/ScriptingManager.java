@@ -6,6 +6,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.scripting.impl.ScriptMetadata;
+import org.infinispan.scripting.impl.ScriptWithMetadata;
 import org.infinispan.tasks.TaskContext;
 
 /**
@@ -35,6 +37,18 @@ public interface ScriptingManager {
     *           the source of the script
     */
    void addScript(String name, String script);
+
+   /**
+    * Adds a new named script with user-specified metadata
+    *
+    * @param name
+    *           the name of the script. The name should contain an extension identifying its
+    *           language
+    * @param metadata the metadata for the script
+    * @param script
+    *           the source of the script
+    */
+   void addScript(String name, String script, ScriptMetadata metadata);
 
    /**
     * Removes a script.
@@ -68,6 +82,14 @@ public interface ScriptingManager {
     * @return the source code of the script
      */
    String getScript(String scriptName);
+
+   /**
+    * Retrieves the source code of an existing script together with its metadata
+    *
+    * @param scriptName The name of the script
+    * @return the source code of the script
+    */
+   ScriptWithMetadata getScriptWithMetadata(String scriptName);
 
    /**
     * Retrieves names of all available scripts.

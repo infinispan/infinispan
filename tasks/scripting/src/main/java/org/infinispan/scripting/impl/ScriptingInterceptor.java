@@ -7,6 +7,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.scripting.ScriptingManager;
 
 /**
@@ -29,26 +30,35 @@ public final class ScriptingInterceptor extends BaseCustomAsyncInterceptor {
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       String name = (String) command.getKey();
       String script = (String) command.getValue();
-      return asyncInvokeNext(ctx, command, scriptingManager.compileScript(name, script).thenAccept(command::setMetadata));
+      ScriptMetadata metadata = extractMetadata(name, script, command.getMetadata());
+      return asyncInvokeNext(ctx, command, scriptingManager.compileScript(name, script, metadata).thenAccept(command::setMetadata));
    }
 
    @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) {
       scriptingManager.compiledScripts.clear();
       return invokeNext(ctx, command);
    }
 
    @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) {
       scriptingManager.compiledScripts.remove(command.getKey());
       return invokeNext(ctx, command);
    }
 
    @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) {
       String name = (String) command.getKey();
       String script = (String) command.getNewValue();
-      return asyncInvokeNext(ctx, command, scriptingManager.compileScript(name, script).thenAccept(command::setMetadata));
+      ScriptMetadata metadata = extractMetadata(name, script, command.getMetadata());
+      return asyncInvokeNext(ctx, command, scriptingManager.compileScript(name, script, metadata).thenAccept(command::setMetadata));
    }
 
+   private ScriptMetadata extractMetadata(String name, String script, Metadata metadata) {
+      if (metadata instanceof ScriptMetadata) {
+         return (ScriptMetadata) metadata;
+      } else {
+         return ScriptMetadataParser.parse(name, script).merge(metadata).build();
+      }
+   }
 }

@@ -1,12 +1,12 @@
 package org.infinispan.scripting;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.scripting.utils.ScriptingUtils.getScriptingManager;
 import static org.infinispan.scripting.utils.ScriptingUtils.loadData;
 import static org.infinispan.scripting.utils.ScriptingUtils.loadScript;
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
 import static org.infinispan.test.TestingUtil.withCacheManagers;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -26,7 +27,6 @@ import org.infinispan.tasks.TaskContext;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -95,9 +95,7 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             CompletionStage<ArrayList<JGroupsAddress>> resultsFuture = scriptingManager.runScript("distExec1.js", new TaskContext().cache(cache1));
             ArrayList<JGroupsAddress> results = CompletionStages.join(resultsFuture);
             assertEquals(2, results.size());
-
-            assertTrue(results.contains(cms[0].getAddress()));
-            assertTrue(results.contains(cms[1].getAddress()));
+            assertThat(results).containsExactlyInAnyOrder((JGroupsAddress) cms[0].getAddress(), (JGroupsAddress) cms[1].getAddress());
          }
       });
    }
@@ -124,8 +122,7 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
 
             ArrayList<JGroupsAddress> results = CompletionStages.join(resultsFuture);
             assertEquals(2, results.size());
-            assertTrue(results.contains(cms[0].getAddress()));
-            assertTrue(results.contains(cms[1].getAddress()));
+            assertThat(results).containsExactlyInAnyOrder((JGroupsAddress) cms[0].getAddress(), (JGroupsAddress) cms[1].getAddress());
 
             assertEquals("value", cache1.get("a"));
             assertEquals("value", cache2.get("a"));
@@ -164,7 +161,7 @@ public class ClusteredScriptingTest extends AbstractInfinispanTest {
             assertEquals(EXPECTED_WORDS, resultsFuture.size());
             assertEquals(resultsFuture.get("macbeth"), Long.valueOf(287));
 
-            resultsFuture = (Map<String, Long>) CompletionStages.join(scriptingManager.runScript(
+            resultsFuture = CompletionStages.join(scriptingManager.runScript(
                     "wordCountStream.js", new TaskContext().cache(cache1.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL))));
             assertEquals(EXPECTED_WORDS, resultsFuture.size());
             assertEquals(resultsFuture.get("macbeth"), Long.valueOf(287));

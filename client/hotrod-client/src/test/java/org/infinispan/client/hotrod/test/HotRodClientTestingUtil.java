@@ -334,10 +334,12 @@ public class HotRodClientTestingUtil {
 
    public static void withScript(EmbeddedCacheManager cm, String scriptPath, Consumer<String> f) {
       ScriptingManager scriptingManager = GlobalComponentRegistry.componentOf(cm, ScriptingManager.class);
-      String scriptName = scriptPath.replaceAll("\\/", "");
+      String scriptName = scriptPath.replaceAll("/", "");
       try {
          loadScript(scriptName, scriptingManager, scriptPath);
          f.accept(scriptName);
+      } catch (Exception e) {
+         throw new RuntimeException(e);
       } finally {
          scriptingManager.removeScript(scriptName);
       }
@@ -354,7 +356,7 @@ public class HotRodClientTestingUtil {
    }
 
    public static void withScript(BasicCache<String, String> scriptCache, String scriptPath, Consumer<String> f) {
-      String scriptName = scriptPath.replaceAll("\\/", "");
+      String scriptName = scriptPath.replaceAll("/", "");
       try {
          loadScript(scriptName, scriptCache, scriptPath);
          f.accept(scriptName);

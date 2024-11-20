@@ -4,7 +4,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,9 +21,9 @@ public class ScriptMetadataParser {
    private static final String DEFAULT_SCRIPT_EXTENSION = "js";
    private static final Pattern METADATA_COMMENT = Pattern.compile("^(?:#|//|;;)\\s*(.+)");
    private static final Pattern METADATA_KV = Pattern
-         .compile("\\s*(\\w+)\\s*=\\s*(\"[^\"]*\"|\'[^\']*\'|\\[[\\w,\\s]*\\]|[^,=\\s\"]+)\\s*,?");
+         .compile("\\s*(\\w+)\\s*=\\s*(\"[^\"]*\"|'[^']*'|\\[[\\w,\\s]*]|\\{[\\w,\\s:]*}|[^,=\\s\"]+)\\s*,?");
 
-   public static ScriptMetadata parse(String name, String script) {
+   public static ScriptMetadata.Builder parse(String name, String script) {
       ScriptMetadata.Builder metadataBuilder = new ScriptMetadata.Builder();
 
       metadataBuilder.name(name);
@@ -64,26 +66,43 @@ public class ScriptMetadataParser {
                case "datatype":
                   metadataBuilder.dataType(MediaType.fromString(value));
                   break;
+               case "properties":
+                  metadataBuilder.properties(unobject(value));
+                  break;
                default:
                   throw log.unknownScriptProperty(key);
                }
             }
          }
       } catch (IOException e) {
-
+         // Ignore
       }
 
-      return metadataBuilder.build();
+      return metadataBuilder;
    }
 
    private static Set<String> unarray(String s) {
       if (s.charAt(0) == '[') {
          String[] ps = s.substring(1, s.length() - 1).split("\\s*,\\s*");
-         Set<String> parameters = new HashSet<>();
+         Set<String> parameters = new HashSet<>(ps.length);
          Collections.addAll(parameters, ps);
          return parameters;
       } else {
          throw log.parametersNotArray();
+      }
+   }
+
+   private static Map<String, String> unobject(String s) {
+      if (s.charAt(0) == '{') {
+         String[] ps = s.substring(1, s.length() - 1).split("\\s*,\\s*");
+         Map<String, String> properties = new HashMap<>(ps.length);
+         for(String p : ps) {
+            String[] kv = p.split(":");
+            properties.put(kv[0].trim(), kv[1].trim());
+         }
+         return properties;
+      } else {
+         throw log.propertiesNotObject();
       }
    }
 }
