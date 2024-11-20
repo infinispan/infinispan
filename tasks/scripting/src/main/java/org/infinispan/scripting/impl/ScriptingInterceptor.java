@@ -29,26 +29,28 @@ public final class ScriptingInterceptor extends BaseCustomAsyncInterceptor {
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       String name = (String) command.getKey();
       String script = (String) command.getValue();
-      return asyncInvokeNext(ctx, command, scriptingManager.compileScript(name, script).thenAccept(command::setMetadata));
+      ScriptMetadata metadata = (ScriptMetadata) command.getMetadata();
+      return asyncInvokeNext(ctx, command, scriptingManager.compileScript(name, script, metadata).thenAccept(command::setMetadata));
    }
 
    @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) {
       scriptingManager.compiledScripts.clear();
       return invokeNext(ctx, command);
    }
 
    @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) {
       scriptingManager.compiledScripts.remove(command.getKey());
       return invokeNext(ctx, command);
    }
 
    @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) {
       String name = (String) command.getKey();
       String script = (String) command.getNewValue();
-      return asyncInvokeNext(ctx, command, scriptingManager.compileScript(name, script).thenAccept(command::setMetadata));
+      ScriptMetadata metadata = (ScriptMetadata) command.getMetadata();
+      return asyncInvokeNext(ctx, command, scriptingManager.compileScript(name, script, metadata).thenAccept(command::setMetadata));
    }
 
 }
