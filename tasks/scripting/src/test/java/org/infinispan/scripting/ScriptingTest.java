@@ -1,7 +1,7 @@
 package org.infinispan.scripting;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
 import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
+import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
 import static org.infinispan.scripting.utils.ScriptingUtils.loadData;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -18,10 +18,10 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "scripting.ScriptingTest")
@@ -214,12 +214,13 @@ public class ScriptingTest extends AbstractScriptingTest {
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".*Cannot find an appropriate script engine for script.*")
    public void testNonSupportedScript() {
-      scriptingManager.addScript("Test.java", "//mode=local,language=nondescript\n" +
-            "public class Test {\n" +
-            "      public static void main(String[] args) {\n" +
-            "         System.out.println(cache.get(\"test.js\"));\n" +
-            "      }\n" +
-            "   }");
+      scriptingManager.addScript("Test.java", """
+            //mode=local,language=nondescript
+            public class Test {
+                  public static void main(String[] args) {
+                     System.out.println(cache.get("test.js"));
+                  }
+               }""");
 
       scriptingManager.runScript("Test.java");
    }

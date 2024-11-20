@@ -40,7 +40,7 @@ public class ScriptingUtils {
         }
         try (InputStream is = ScriptingUtils.class.getResourceAsStream(fileName)) {
             String script = loadFileAsString(is);
-            scriptingManager.addScript(fileName.replaceAll("\\/", ""), script);
+            scriptingManager.addScript(fileName.replaceAll("/", ""), script);
         }
     }
 

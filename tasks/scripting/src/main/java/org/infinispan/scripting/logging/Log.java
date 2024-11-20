@@ -36,7 +36,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Unknown script mode: '%s'", id = 27506)
    CacheException unknownScriptProperty(String value);
 
-   @Message(value = "Cannot find an appropriate script engine for '%s'", id = 27507)
+   @Message(value = "Cannot find an appropriate script engine for script '%s'", id = 27507)
    IllegalArgumentException noScriptEngineForScript(String name);
 
    @Message(value = "Script '%s' cannot be invoked directly since it specifies mode '%s'", id = 27508)
@@ -45,13 +45,13 @@ public interface Log extends BasicLogger {
    @Message(value = "Distributed script '%s' invoked without a cache binding", id = 27509)
    IllegalStateException distributedTaskNeedCacheInBinding(String scriptName);
 
-   @Message(value = "Cannot find an appropriate script engine for script '%s'", id = 27510)
-   IllegalArgumentException noEngineForScript(String name);
-
-   @Message(value = "Script parameters must be declared using the array notation, e.g. [a,b,c]", id = 27511)
+   @Message(value = "Script parameters must be declared using the unquoted array notation, e.g. [a,b,c]", id = 27511)
    IllegalArgumentException parametersNotArray();
 
    @Message(value = "Scripts can only access named caches", id = 27512)
    IllegalArgumentException scriptsCanOnlyAccessNamedCaches();
+
+   @Message(value = "Script properties must be declared using the unquoted object notation, e.g. {name: value}", id = 27513)
+   IllegalArgumentException propertiesNotObject();
 
 }
