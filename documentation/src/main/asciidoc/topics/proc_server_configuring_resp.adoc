@@ -105,3 +105,20 @@ include::json/resp_connector.json[]
 ----
 include::yaml/resp_connector.yaml[]
 ----
+
+[discrete]
+=== Clustered configuration
+
+{brandname} is a horizontally scalable Resp-compatible server with high availability capabilities.
+{brandname} provides clustering mechanisms with automatic failover detection and membership discovery by default.
+Topology changes are handled automatically, and adding or removing nodes to the cluster is a streamlined process that automatically redistributes entries between nodes without downtime.
+The cluster is homogeneous, where nodes are the primary and the backup owners of entries, guaranteeing that entries are available even in case of server failures.
+
+Backed by a consistent hash, compatible with the hash-slot algorithm in Resp clients, entries are distributed across cluster members.
+{brandname} automatically redirects requests to the proper entry owner.
+As a result, hash tags in keys and the `-MOVED` error response for requests are not required even for multi-key operations accessing keys with different owners.
+
+[TIP]
+====
+{brandname} allows multiple logical databases with the SELECT command in clustering mode.
+====

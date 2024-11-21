@@ -1,0 +1,33 @@
+[id='resp-differences_{context}']
+= Differences between {brandname} and Redis implementation
+
+{brandname} provides different guarantees compared to Redis for some functionalities.
+This chapter summarizes the differences and, when possible, alternative configurations for a similar behavior.
+
+== Isolation
+
+Redis utilizes a single thread to handle user requests, which provides serializable isolation and atomic behavior for multi-key requests.
+{brandname} provides a relaxed isolation level, which is configurable.
+Concurrent requests might perceive a partial result for commands that access multiple keys, such as `MSET`, where only a subset of the keys were inserted in the cache before the operation finishes.
+
+The only alternative in {brandname} for an atomic behavior is to submit multi-keys operations within a `MULTI…EXEC` block.
+However, this requires configuring the default cache with transactional capabilities.
+
+[WARNING]
+====
+{brandname} does not provide serializable transactions.
+See the link:{config_docs}#transaction_manager[cache configuration guide] for more information.
+====
+
+== Transactions
+
+Applications utilizing the `MULTI…EXEC` commands should update the default cache configuration to enable transactional capabilities.
+Transactions in Redis do not have the concept of rollback to revert in case of failures.
+{brandname} provides ACID transactions and rollback in case of failures.
+Additionally, the transactions are distributed in cluster mode and can operate across many slots.
+
+[TIP]
+====
+The recommended configuration utilizes `PESSIMISTIC` locking and transaction mode different from `NONE`.
+See the link:{config_docs}#transaction_manager[cache configuration guide] for more information.
+====
