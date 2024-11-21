@@ -1,10 +1,7 @@
 package org.infinispan.client.hotrod.counter.operation;
 
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientTopology;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.operations.CacheUnmarshaller;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.counter.api.CounterConfiguration;
@@ -27,28 +24,26 @@ public class CompareAndSwapOperation extends BaseCounterOperation<Long> {
    private final long update;
    private final CounterConfiguration counterConfiguration;
 
-   public CompareAndSwapOperation(ChannelFactory channelFactory, AtomicReference<ClientTopology> topologyId,
-                                  Configuration cfg, String counterName, long expect, long update, CounterConfiguration counterConfiguration) {
-      super(COUNTER_CAS_REQUEST, COUNTER_CAS_RESPONSE, channelFactory, topologyId, cfg, counterName, true);
+   public CompareAndSwapOperation(String counterName, long expect, long update, CounterConfiguration counterConfiguration) {
+      super(counterName, true);
       this.expect = expect;
       this.update = update;
       this.counterConfiguration = counterConfiguration;
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, 16);
+   public void writeOperationRequest(Channel channel, ByteBuf buf, Codec codec) {
+      super.writeOperationRequest(channel, buf, codec);
       buf.writeLong(expect);
       buf.writeLong(update);
-      channel.writeAndFlush(buf);
    }
 
    @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+   public Long createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
       checkStatus(status);
       assertBoundaries(status);
       assert status == NO_ERROR_STATUS;
-      complete(buf.readLong());
+      return buf.readLong();
    }
 
    private void assertBoundaries(short status) {
@@ -59,5 +54,15 @@ public class CompareAndSwapOperation extends BaseCounterOperation<Long> {
             throw Log.HOTROD.counterOurOfBounds(CounterOutOfBoundsException.LOWER_BOUND);
          }
       }
+   }
+
+   @Override
+   public short requestOpCode() {
+      return COUNTER_CAS_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return COUNTER_CAS_RESPONSE;
    }
 }

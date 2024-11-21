@@ -7,19 +7,24 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import jakarta.transaction.SystemException;
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
-
+import org.infinispan.client.hotrod.DataFormat;
+import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.Util;
+import org.infinispan.client.hotrod.impl.operations.CacheOperationsFactory;
 import org.infinispan.client.hotrod.impl.transaction.entry.TransactionEntry;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.EnumUtil;
+
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 /**
  * A {@link RemoteCache} implementation that handles {@link Transaction}.
@@ -49,14 +54,34 @@ public class TransactionalRemoteCacheImpl<K, V> extends RemoteCacheImpl<K, V> {
    private final Function<K, byte[]> keyMarshaller = this::keyToBytes;
    private final Function<V, byte[]> valueMarshaller = this::valueToBytes;
 
-   public TransactionalRemoteCacheImpl(RemoteCacheManager rcm, String name, boolean forceReturnValue,
-         boolean recoveryEnabled, TransactionManager transactionManager,
-         TransactionTable transactionTable, TimeService timeService) {
-      super(rcm, name, timeService);
-      this.forceReturnValue = forceReturnValue;
+   // TODO: need to make this class a wrapper instead of extending
+   public TransactionalRemoteCacheImpl(RemoteCacheManager rcm, String name, boolean recoveryEnabled, TransactionManager transactionManager,
+         TransactionTable transactionTable, TimeService timeService, Function<InternalRemoteCache<K, V>, CacheOperationsFactory> factoryFunction) {
+      super(rcm, name, timeService, factoryFunction);
+      this.forceReturnValue = EnumUtil.containsAny(Flag.FORCE_RETURN_VALUE.getFlagInt(), flagInt);
       this.recoveryEnabled = recoveryEnabled;
       this.transactionManager = transactionManager;
       this.transactionTable = transactionTable;
+   }
+
+   protected TransactionalRemoteCacheImpl(TransactionalRemoteCacheImpl<?, ?> other, int flagInt) {
+      super(other, flagInt);
+      this.forceReturnValue = EnumUtil.containsAny(Flag.FORCE_RETURN_VALUE.getFlagInt(), flagInt);
+      this.recoveryEnabled = other.recoveryEnabled;
+      this.transactionManager = other.transactionManager;
+      this.transactionTable = other.transactionTable;
+   }
+
+   @Override
+   protected <T, U> InternalRemoteCache<T, U> newInstance(int flags) {
+      return new TransactionalRemoteCacheImpl<>(this, flags);
+   }
+
+   @Override
+   protected <T, U> InternalRemoteCache<T, U> newInstance(DataFormat dataFormat) {
+      TransactionalRemoteCacheImpl<T,U> instance = new TransactionalRemoteCacheImpl<>(this, flagInt);
+      instance.dataFormat = dataFormat;
+      return instance;
    }
 
    @Override

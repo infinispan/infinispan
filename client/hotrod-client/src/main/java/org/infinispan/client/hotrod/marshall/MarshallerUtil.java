@@ -4,8 +4,10 @@ import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamConstants;
+import java.io.OutputStream;
 
 import org.infinispan.client.hotrod.RemoteCacheContainer;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -14,6 +16,7 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ClassAllowList;
+import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.commons.marshall.BufferSizePredictor;
 import org.infinispan.commons.marshall.CheckedInputStream;
 import org.infinispan.commons.marshall.Marshaller;
@@ -75,6 +78,31 @@ public final class MarshallerUtil {
       }
    }
 
+   public static <T> T bytes2obj(Marshaller marshaller, InputStream inputStream, boolean objectStorage, ClassAllowList allowList) {
+      try {
+         if (!(marshaller instanceof AbstractMarshaller)) {
+            return bytes2obj(marshaller, inputStream.readAllBytes(), objectStorage, allowList);
+         }
+         Object ret = ((AbstractMarshaller) marshaller).objectFromInputStream(inputStream);
+         if (objectStorage) {
+            // Server stores objects
+            // No extra configuration is required for client in this scenario,
+            // and no different marshaller should be required to deal with standard serialization.
+            // So, if the unmarshalled object is still a byte[], it could be a standard
+            // serialized object, so check for stream magic
+            if (ret instanceof byte[] && isJavaSerialized((byte[]) ret)) {
+               T ois = tryJavaDeserialize(null, (byte[]) ret, allowList);
+               if (ois != null)
+                  return ois;
+            }
+         }
+
+         return (T) ret;
+      } catch (Exception e) {
+         throw HOTROD.unableToUnmarshallBytes("stream", e);
+      }
+   }
+
    public static <T> T tryJavaDeserialize(byte[] bytes, byte[] ret, ClassAllowList allowList) {
       try (ObjectInputStream ois = new CheckedInputStream(new ByteArrayInputStream(ret), allowList)) {
          return (T) ois.readObject();
@@ -126,4 +154,19 @@ public final class MarshallerUtil {
       }
    }
 
+   public static void obj2stream(Marshaller marshaller, Object o, OutputStream stream, BufferSizePredictor sizePredictor) {
+      try {
+         if (marshaller instanceof AbstractMarshaller) {
+            ((AbstractMarshaller) marshaller).objectToOutputStream(o, stream);
+         } else {
+            byte[] bytes = marshaller.objectToByteBuffer(o, sizePredictor.nextSize(o));
+            stream.write(bytes);
+         }
+      } catch (IOException ioe) {
+         throw new HotRodClientException(
+               "Unable to marshall object of type [" + o.getClass().getName() + "]", ioe);
+      } catch (InterruptedException ie) {
+         Thread.currentThread().interrupt();
+      }
+   }
 }

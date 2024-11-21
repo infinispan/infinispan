@@ -10,9 +10,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.SystemException;
-import jakarta.transaction.Transaction;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
@@ -23,6 +20,10 @@ import org.infinispan.client.hotrod.impl.transaction.recovery.RecoveryManager;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.CacheException;
+
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
 
 /**
  * A {@link TransactionTable} that registers the {@link RemoteCache} as a {@link XAResource} in the transaction.
@@ -360,7 +361,8 @@ public class XaModeTransactionTable extends AbstractTransactionTable {
             log.tracef("Registering remote cache '%s' for transaction xid=%s", remoteCache.getName(), currentXid);
          }
          return new TransactionContext<>(remoteCache.keyMarshaller(), remoteCache.valueMarshaller(),
-               remoteCache.getOperationsFactory(), remoteCache.getName(), remoteCache.isRecoveryEnabled());
+               remoteCache.getOperationsFactory(), remoteCache.getDispatcher(), remoteCache.getName(),
+               remoteCache.isRecoveryEnabled());
       }
 
       private void cleanup() {

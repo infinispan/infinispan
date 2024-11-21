@@ -15,7 +15,7 @@ public class ClientStatisticsTest {
    public void testAverageRemoteStoreTime() {
 
       ControlledTimeService timeService = new ControlledTimeService();
-      ClientStatistics clientStatistics = new ClientStatistics(true, timeService);
+      ClientStatistics clientStatistics = new ClientStatistics(timeService);
       // given: a put operation
       long now = timeService.time();
       // when: network is slow
@@ -29,7 +29,7 @@ public class ClientStatisticsTest {
    public void testAverageRemoteReadTime() {
 
       ControlledTimeService timeService = new ControlledTimeService();
-      ClientStatistics clientStatistics = new ClientStatistics(true, timeService);
+      ClientStatistics clientStatistics = new ClientStatistics(timeService);
       // given: a get operation
       long now = timeService.time();
       // when: network is slow
@@ -43,7 +43,7 @@ public class ClientStatisticsTest {
    public void testAverageRemovesTime() {
 
       ControlledTimeService timeService = new ControlledTimeService();
-      ClientStatistics clientStatistics = new ClientStatistics(true, timeService);
+      ClientStatistics clientStatistics = new ClientStatistics(timeService);
       // given: a remove operation
       long now = timeService.time();
       // when: network is slow

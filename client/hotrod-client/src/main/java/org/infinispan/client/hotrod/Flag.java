@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod;
 
+import org.infinispan.api.common.Flags;
+
 /**
  * Defines all the flags available in the Hot Rod client that can influence the behavior of operations.
  * <p />
@@ -26,7 +28,7 @@ package org.infinispan.client.hotrod;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public enum Flag {
+public enum Flag implements org.infinispan.api.common.Flag {
 
    /**
     * By default, previously existing values for {@link java.util.Map} operations are not returned. E.g. {@link RemoteCache#put(Object, Object)}
@@ -71,5 +73,16 @@ public enum Flag {
 
    public int getFlagInt() {
       return flagInt;
+   }
+
+   @Override
+   public Flags<?, ?> add(Flags<?, ?> flags) {
+      HotRodFlags userFlags = (HotRodFlags) flags;
+      if (userFlags == null) {
+         userFlags = HotRodFlags.of(this);
+      } else {
+         userFlags.add(this);
+      }
+      return userFlags;
    }
 }

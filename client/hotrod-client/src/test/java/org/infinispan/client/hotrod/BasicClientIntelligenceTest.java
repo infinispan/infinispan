@@ -6,7 +6,7 @@ import static org.testng.AssertJUnit.assertFalse;
 
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.exceptions.TransportException;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
@@ -40,19 +40,19 @@ public class BasicClientIntelligenceTest extends MultiHotRodServersTest {
          @Override
          public void call() {
             RemoteCache<Object, Object> cache = rcm.getCache();
-            ChannelFactory cf = rcm.getChannelFactory();
+            OperationDispatcher dispatcher = rcm.getOperationDispatcher();
             assertFalse(cache.containsKey("k"));
             killServer(1);
             eventuallyEquals(1, () -> {
                assertFalse(cache.containsKey("k"));
-               return cf.getFailedServers().size();
+               return dispatcher.getConnectionFailedServers().size();
             });
 
             addHotRodServer(builder, initialPort);
 
             eventuallyEquals(0, () -> {
                assertFalse(cache.containsKey("k"));
-               return cf.getFailedServers().size();
+               return dispatcher.getConnectionFailedServers().size();
             });
          }
       });
@@ -72,19 +72,19 @@ public class BasicClientIntelligenceTest extends MultiHotRodServersTest {
          @Override
          public void call() {
             RemoteCache<Object, Object> cache = rcm.getCache();
-            ChannelFactory cf = rcm.getChannelFactory();
+            OperationDispatcher dispatcher = rcm.getOperationDispatcher();
             assertFalse(cache.containsKey("k"));
             killServer(1);
             for (int i = 0; i < 10; i++) {
                Exceptions.expectException(TransportException.class, () -> cache.containsKey("k"));
             }
-            eventuallyEquals(1, () -> cf.getFailedServers().size());
+            eventuallyEquals(1, () -> dispatcher.getConnectionFailedServers().size());
 
             addHotRodServer(builder, initialPort);
 
             eventuallyEquals(0, () -> {
                assertFalse(cache.containsKey("k"));
-               return cf.getFailedServers().size();
+               return dispatcher.getConnectionFailedServers().size();
             });
          }
       });

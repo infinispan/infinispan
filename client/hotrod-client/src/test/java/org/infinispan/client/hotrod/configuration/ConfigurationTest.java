@@ -197,7 +197,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
             .exhaustedAction(ExhaustedAction.WAIT)
             .maxPendingRequests(12)
             .connectionTimeout(100)
-            .version(ProtocolVersion.PROTOCOL_VERSION_29)
+            .version(ProtocolVersion.PROTOCOL_VERSION_30)
             .consistentHashImpl(2, SomeCustomConsistentHashV2.class)
             .socketTimeout(100)
             .tcpNoDelay(false)
@@ -263,7 +263,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       p.setProperty("testOnReturn", "true");
       p.setProperty("testWhileIdle", "false");
       p.setProperty(CONNECT_TIMEOUT, "100");
-      p.setProperty(PROTOCOL_VERSION, "2.9");
+      p.setProperty(PROTOCOL_VERSION, "3.0");
       p.setProperty(SO_TIMEOUT, "100");
       p.setProperty(TCP_NO_DELAY, "false");
       p.setProperty(TCP_KEEP_ALIVE, "true");
@@ -605,7 +605,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       assertEqualsConfig("1", SASL_PROPERTIES_PREFIX + ".A", configuration);
       assertEqualsConfig("2", SASL_PROPERTIES_PREFIX + ".B", configuration);
       assertEqualsConfig("3", SASL_PROPERTIES_PREFIX + ".C", configuration);
-      assertEqualsConfig(ProtocolVersion.PROTOCOL_VERSION_29, PROTOCOL_VERSION, configuration);
+      assertEqualsConfig(ProtocolVersion.PROTOCOL_VERSION_30, PROTOCOL_VERSION, configuration);
       assertEqualsConfig(Arrays.asList(".*Person.*", ".*Employee.*"), JAVA_SERIAL_ALLOWLIST, configuration);
       assertEqualsConfig(NearCacheMode.INVALIDATED, NEAR_CACHE_MODE, configuration);
       assertEqualsConfig(10_000, NEAR_CACHE_MAX_ENTRIES, configuration);

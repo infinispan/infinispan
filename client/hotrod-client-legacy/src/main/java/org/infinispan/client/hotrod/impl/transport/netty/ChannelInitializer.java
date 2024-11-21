@@ -1,0 +1,218 @@
+package org.infinispan.client.hotrod.impl.transport.netty;
+
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.security.Principal;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.security.Provider;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+
+import javax.net.ssl.SNIHostName;
+import javax.net.ssl.SSLParameters;
+import javax.security.auth.Subject;
+import javax.security.sasl.SaslClient;
+import javax.security.sasl.SaslClientFactory;
+import javax.security.sasl.SaslException;
+
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.AuthenticationConfiguration;
+import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.configuration.SslConfiguration;
+import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
+import org.infinispan.client.hotrod.impl.topology.ClusterInfo;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.util.SaslUtils;
+import org.infinispan.commons.util.Util;
+
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.timeout.IdleStateHandler;
+
+class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
+   private static final Log log = LogFactory.getLog(ChannelInitializer.class);
+
+   private final Bootstrap bootstrap;
+   private final SocketAddress unresolvedAddress;
+   private final OperationsFactory operationsFactory;
+   private final Configuration configuration;
+   private final ChannelFactory channelFactory;
+   private final ClusterInfo cluster;
+   private ChannelPool channelPool;
+   private volatile boolean isFirstPing = true;
+   private final SslContext sslContext;
+
+   private static final Provider[] SECURITY_PROVIDERS;
+
+   static {
+      // Register only the providers that matter to us
+      List<Provider> providers = new ArrayList<>();
+      for (String name : Arrays.asList(
+            "org.wildfly.security.sasl.plain.WildFlyElytronSaslPlainProvider",
+            "org.wildfly.security.sasl.digest.WildFlyElytronSaslDigestProvider",
+            "org.wildfly.security.sasl.external.WildFlyElytronSaslExternalProvider",
+            "org.wildfly.security.sasl.oauth2.WildFlyElytronSaslOAuth2Provider",
+            "org.wildfly.security.sasl.scram.WildFlyElytronSaslScramProvider",
+            "org.wildfly.security.sasl.gssapi.WildFlyElytronSaslGssapiProvider",
+            "org.wildfly.security.sasl.gs2.WildFlyElytronSaslGs2Provider"
+      )) {
+         Provider provider = Util.getInstance(name, RemoteCacheManager.class.getClassLoader());
+         providers.add(provider);
+      }
+      SECURITY_PROVIDERS = providers.toArray(new Provider[0]);
+   }
+
+   ChannelInitializer(Bootstrap bootstrap, SocketAddress unresolvedAddress, OperationsFactory operationsFactory, Configuration configuration, ChannelFactory channelFactory, ClusterInfo cluster, SslContext sslContext) {
+      this.bootstrap = bootstrap;
+      this.unresolvedAddress = unresolvedAddress;
+      this.operationsFactory = operationsFactory;
+      this.configuration = configuration;
+      this.channelFactory = channelFactory;
+      this.cluster = cluster;
+      this.sslContext = sslContext;
+   }
+
+   CompletableFuture<Channel> createChannel() {
+      ChannelFuture connect = bootstrap.clone().connect();
+      ActivationFuture activationFuture = new ActivationFuture();
+      connect.addListener(activationFuture);
+      return activationFuture;
+   }
+
+   @Override
+   protected void initChannel(Channel channel) throws Exception {
+      if (log.isTraceEnabled()) {
+         log.tracef("Created channel %s", channel);
+      }
+      if (configuration.security().ssl().enabled()) {
+         initSsl(channel);
+      }
+
+      AuthenticationConfiguration authentication = configuration.security().authentication();
+      if (authentication.enabled()) {
+         initAuthentication(channel, authentication);
+      }
+
+      if (configuration.connectionPool().minEvictableIdleTime() > 0) {
+         channel.pipeline().addLast("idle-state-handler",
+               new IdleStateHandler(0, 0, configuration.connectionPool().minEvictableIdleTime(), TimeUnit.MILLISECONDS));
+      }
+      ChannelRecord channelRecord = new ChannelRecord(unresolvedAddress, channelPool);
+      channel.attr(ChannelRecord.KEY).set(channelRecord);
+      if (isFirstPing) {
+         isFirstPing = false;
+         channel.pipeline().addLast(InitialPingHandler.NAME, new InitialPingHandler(operationsFactory.newPingOperation(false)));
+      } else {
+         channel.pipeline().addLast(ActivationHandler.NAME, ActivationHandler.INSTANCE);
+      }
+      channel.pipeline().addLast(HeaderDecoder.NAME, new HeaderDecoder(channelFactory, configuration, operationsFactory.getListenerNotifier()));
+      if (configuration.connectionPool().minEvictableIdleTime() > 0) {
+         // This handler needs to be the last so that HeaderDecoder has the chance to cancel the idle event
+         channel.pipeline().addLast(IdleStateHandlerProvider.NAME,
+               new IdleStateHandlerProvider(configuration.connectionPool().minIdle(), channelPool));
+      }
+   }
+
+   private void initSsl(Channel channel) {
+      SslConfiguration ssl = configuration.security().ssl();
+      SslHandler sslHandler = sslContext.newHandler(channel.alloc(), ssl.sniHostName(), -1);
+      String sniHostName;
+      if (cluster != null && cluster.getSniHostName() != null) {
+         sniHostName = cluster.getSniHostName();
+      } else if (ssl.sniHostName() != null) {
+         sniHostName = ssl.sniHostName();
+      } else {
+         sniHostName = ((InetSocketAddress) unresolvedAddress).getHostString();
+      }
+      SSLParameters sslParameters = sslHandler.engine().getSSLParameters();
+      sslParameters.setServerNames(Collections.singletonList(new SNIHostName(sniHostName)));
+      if (ssl.hostnameValidation()) {
+         sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+      }
+      sslHandler.engine().setSSLParameters(sslParameters);
+      channel.pipeline().addFirst(sslHandler, SslHandshakeExceptionHandler.INSTANCE);
+   }
+
+   private void initAuthentication(Channel channel, AuthenticationConfiguration authentication) throws PrivilegedActionException, SaslException {
+      SaslClient saslClient;
+      SaslClientFactory scf = getSaslClientFactory(authentication);
+      SslHandler sslHandler = channel.pipeline().get(SslHandler.class);
+      Principal principal = sslHandler != null ? sslHandler.engine().getSession().getLocalPrincipal() : null;
+      String authorizationId = principal != null ? principal.getName() : null;
+      if (authentication.clientSubject() != null) {
+         // We must use Subject.doAs() instead of Security.doAs()
+         saslClient = Subject.doAs(authentication.clientSubject(), (PrivilegedExceptionAction<SaslClient>) () ->
+               scf.createSaslClient(new String[]{authentication.saslMechanism()}, authorizationId, "hotrod",
+                     authentication.serverName(), authentication.saslProperties(), authentication.callbackHandler())
+         );
+      } else {
+         saslClient = scf.createSaslClient(new String[]{authentication.saslMechanism()}, authorizationId, "hotrod",
+               authentication.serverName(), authentication.saslProperties(), authentication.callbackHandler());
+      }
+
+      channel.pipeline().addLast(AuthHandler.NAME, new AuthHandler(authentication, saslClient, operationsFactory));
+   }
+
+   private SaslClientFactory getSaslClientFactory(AuthenticationConfiguration configuration) {
+      if (log.isTraceEnabled()) {
+         log.tracef("Attempting to load SaslClientFactory implementation with mech=%s, props=%s",
+               configuration.saslMechanism(), configuration.saslProperties());
+      }
+      Collection<SaslClientFactory> clientFactories = SaslUtils.getSaslClientFactories(this.getClass().getClassLoader(), SECURITY_PROVIDERS, true);
+      for (SaslClientFactory saslFactory : clientFactories) {
+         try {
+            String[] saslFactoryMechs = saslFactory.getMechanismNames(configuration.saslProperties());
+            for (String supportedMech : saslFactoryMechs) {
+               if (supportedMech.equals(configuration.saslMechanism())) {
+                  if (log.isTraceEnabled()) {
+                     log.tracef("Loaded SaslClientFactory: %s", saslFactory.getClass().getName());
+                  }
+                  return saslFactory;
+               }
+
+            }
+         } catch (Throwable t) {
+            // Catch any errors that can happen when calling to a Sasl mech
+            log.tracef("Error while trying to obtain mechanism names supported by SaslClientFactory: %s", saslFactory.getClass().getName());
+         }
+      }
+      throw new IllegalStateException("SaslClientFactory implementation not found");
+   }
+
+   void setChannelPool(ChannelPool channelPool) {
+      this.channelPool = channelPool;
+   }
+
+   private static class ActivationFuture extends CompletableFuture<Channel> implements ChannelFutureListener, BiConsumer<Channel, Throwable> {
+      @Override
+      public void operationComplete(ChannelFuture future) throws Exception {
+         if (future.isSuccess()) {
+            Channel channel = future.channel();
+            ChannelRecord.of(channel).whenComplete(this);
+         } else {
+            completeExceptionally(future.cause());
+         }
+      }
+
+      @Override
+      public void accept(Channel channel, Throwable throwable) {
+         if (throwable != null) {
+            completeExceptionally(throwable);
+         } else {
+            complete(channel);
+         }
+      }
+   }
+}

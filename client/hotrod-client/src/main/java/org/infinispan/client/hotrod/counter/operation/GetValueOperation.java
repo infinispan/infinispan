@@ -1,13 +1,10 @@
 package org.infinispan.client.hotrod.counter.operation;
 
-import java.util.concurrent.atomic.AtomicReference;
+import org.infinispan.client.hotrod.impl.operations.CacheUnmarshaller;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientTopology;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
-import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 /**
  * A counter operation that returns the counter's value.
@@ -17,20 +14,24 @@ import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
  */
 public class GetValueOperation extends BaseCounterOperation<Long> {
 
-   public GetValueOperation(ChannelFactory channelFactory, AtomicReference<ClientTopology> topologyId,
-         Configuration cfg, String counterName, boolean useConsistentHash) {
-      super(COUNTER_GET_REQUEST, COUNTER_GET_RESPONSE, channelFactory, topologyId, cfg, counterName, useConsistentHash);
+   public GetValueOperation(String counterName, boolean useConsistentHash) {
+      super(counterName, useConsistentHash);
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      sendHeaderAndCounterNameAndRead(channel);
-   }
-
-   @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+   public Long createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
       checkStatus(status);
       assert status == NO_ERROR_STATUS;
-      complete(buf.readLong());
+      return buf.readLong();
+   }
+
+   @Override
+   public short requestOpCode() {
+      return COUNTER_GET_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return COUNTER_GET_RESPONSE;
    }
 }

@@ -1,16 +1,13 @@
 package org.infinispan.client.hotrod.impl.transaction.operations;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientTopology;
-import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
+import org.infinispan.client.hotrod.impl.operations.AbstractNoCacheHotRodOperation;
+import org.infinispan.client.hotrod.impl.operations.CacheUnmarshaller;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
@@ -24,32 +21,36 @@ import io.netty.channel.Channel;
  * @author Pedro Ruivo
  * @since 9.4
  */
-public class ForgetTransactionOperation extends RetryOnFailureOperation<Void> {
+public class ForgetTransactionOperation extends AbstractNoCacheHotRodOperation<Void> {
    private final Xid xid;
 
-   public ForgetTransactionOperation(Codec codec, ChannelFactory channelFactory, AtomicReference<ClientTopology> clientTopology,
-         Configuration cfg, Xid xid) {
-      super(FORGET_TX_REQUEST, FORGET_TX_RESPONSE, codec, channelFactory, DEFAULT_CACHE_NAME_BYTES, clientTopology, 0, cfg,
-            null, null);
+   public ForgetTransactionOperation(Xid xid) {
       this.xid = xid;
    }
 
    @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      complete(null);
+   public void writeOperationRequest(Channel channel, ByteBuf buf, Codec codec) {
+      ByteBufUtil.writeXid(buf, xid);
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      scheduleRead(channel);
-      ByteBuf buf = channel.alloc().buffer(estimateSize());
-      codec.writeHeader(buf, header);
-      ByteBufUtil.writeXid(buf, xid);
-      channel.writeAndFlush(buf);
+   public Void createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
+      return null;
    }
 
-   private int estimateSize() {
-      return codec.estimateHeaderSize(header) + ByteBufUtil.estimateXidSize(xid);
+   @Override
+   public short requestOpCode() {
+      return HotRodConstants.FORGET_TX_REQUEST;
    }
 
+   @Override
+   public short responseOpCode() {
+      return HotRodConstants.FORGET_TX_RESPONSE;
+   }
+
+   @Override
+   public boolean supportRetry() {
+      // We want to retry to other servers as the tx should have been replicated
+      return true;
+   }
 }

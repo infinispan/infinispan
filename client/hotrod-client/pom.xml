@@ -15,12 +15,21 @@
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-api</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-commons</artifactId>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-counter-api</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>io.smallrye.reactive</groupId>
+         <artifactId>mutiny</artifactId>
       </dependency>
 
       <dependency>

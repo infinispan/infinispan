@@ -1,16 +1,27 @@
 package org.infinispan.client.hotrod.impl;
 
-import java.net.SocketAddress;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Flow;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import javax.management.ObjectName;
 
+import org.infinispan.api.async.AsyncCacheEntryProcessor;
+import org.infinispan.api.common.CacheEntry;
+import org.infinispan.api.common.CacheEntryVersion;
+import org.infinispan.api.common.CacheOptions;
+import org.infinispan.api.common.CacheWriteOptions;
+import org.infinispan.api.common.events.cache.CacheEntryEvent;
+import org.infinispan.api.common.events.cache.CacheEntryEventType;
+import org.infinispan.api.common.events.cache.CacheListenerOptions;
+import org.infinispan.api.common.process.CacheEntryProcessorResult;
+import org.infinispan.api.common.process.CacheProcessorOptions;
+import org.infinispan.api.configuration.CacheConfiguration;
 import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.Flag;
@@ -19,9 +30,11 @@ import org.infinispan.client.hotrod.RemoteCacheContainer;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.StreamingRemoteCache;
 import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
+import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
+import org.infinispan.client.hotrod.impl.operations.CacheOperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.GetWithMetadataOperation;
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
-import org.infinispan.client.hotrod.impl.operations.RetryAwareCompletionStage;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.util.CloseableIterator;
@@ -29,6 +42,8 @@ import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.commons.util.IntSet;
 import org.reactivestreams.Publisher;
+
+import io.netty.channel.Channel;
 
 /**
  * Delegates all invocations to the provided underlying {@link InternalRemoteCache} but provides extensibility to intercept
@@ -45,6 +60,16 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    }
 
    abstract <Key, Value> InternalRemoteCache<Key, Value> newDelegatingCache(InternalRemoteCache<Key, Value> innerCache);
+
+   @Override
+   public void init(Configuration configuration, OperationDispatcher dispatcher) {
+      delegate.init(configuration, dispatcher);
+   }
+
+   @Override
+   public void init(Configuration configuration, OperationDispatcher dispatcher, ObjectName jmxParent) {
+      delegate.init(configuration, dispatcher, jmxParent);
+   }
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
@@ -90,6 +115,16 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    }
 
    @Override
+   public Set<Flag> flags() {
+      return delegate.flags();
+   }
+
+   @Override
+   public int flagInt() {
+      return delegate.flagInt();
+   }
+
+   @Override
    public RemoteCacheContainer getRemoteCacheContainer() {
       return delegate.getRemoteCacheContainer();
    }
@@ -120,7 +155,7 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    }
 
    @Override
-   public SocketAddress addNearCacheListener(Object listener, int bloomBits) {
+   public Channel addNearCacheListener(Object listener, int bloomBits) {
       return delegate.addNearCacheListener(listener, bloomBits);
    }
 
@@ -185,8 +220,8 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    }
 
    @Override
-   public RetryAwareCompletionStage<MetadataValue<V>> getWithMetadataAsync(K key, SocketAddress preferredAddres) {
-      return delegate.getWithMetadataAsync(key, preferredAddres);
+   public CompletionStage<GetWithMetadataOperation.GetWithMetadataResult<V>> getWithMetadataAsync(K key, Channel channel) {
+      return delegate.getWithMetadataAsync(key, channel);
    }
 
    @Override
@@ -310,6 +345,11 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    }
 
    @Override
+   public byte[] getNameBytes() {
+      return delegate.getNameBytes();
+   }
+
+   @Override
    public String getVersion() {
       return delegate.getVersion();
    }
@@ -340,33 +380,13 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    }
 
    @Override
-   public void resolveStorage(boolean objectStorage) {
-      delegate.resolveStorage(objectStorage);
+   public void resolveStorage() {
+      delegate.resolveStorage();
    }
 
    @Override
    public byte[] keyToBytes(Object o) {
       return delegate.keyToBytes(o);
-   }
-
-   @Override
-   public void init(OperationsFactory operationsFactory, Configuration configuration, ObjectName jmxParent) {
-      delegate.init(operationsFactory, configuration, jmxParent);
-   }
-
-   @Override
-   public void init(OperationsFactory operationsFactory, Configuration configuration) {
-      delegate.init(operationsFactory, configuration);
-   }
-
-   @Override
-   public OperationsFactory getOperationsFactory() {
-      return delegate.getOperationsFactory();
-   }
-
-   @Override
-   public boolean isObjectStorage() {
-      return delegate.isObjectStorage();
    }
 
    @Override
@@ -387,5 +407,155 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    @Override
    public ContinuousQuery<K, V> continuousQuery() {
       return delegate.continuousQuery();
+   }
+
+   @Override
+   public CacheOperationsFactory getOperationsFactory() {
+      return delegate.getOperationsFactory();
+   }
+
+   @Override
+   public OperationDispatcher getDispatcher() {
+      return delegate.getDispatcher();
+   }
+
+   @Override
+   public ClientListenerNotifier getListenerNotifier() {
+      return delegate.getListenerNotifier();
+   }
+
+   @Override
+   public CompletionStage<CacheConfiguration> configuration() {
+      return delegate.configuration();
+   }
+
+   @Override
+   public CompletionStage<V> get(K key, CacheOptions options) {
+      return delegate.get(key, options);
+   }
+
+   @Override
+   public CompletionStage<CacheEntry<K, V>> getEntry(K key, CacheOptions options) {
+      return delegate.getEntry(key, options);
+   }
+
+   @Override
+   public CompletionStage<CacheEntry<K, V>> putIfAbsent(K key, V value, CacheWriteOptions options) {
+      return delegate.putIfAbsent(key, value, options);
+   }
+
+   @Override
+   public CompletionStage<Boolean> setIfAbsent(K key, V value, CacheWriteOptions options) {
+      return delegate.setIfAbsent(key, value, options);
+   }
+
+   @Override
+   public CompletionStage<CacheEntry<K, V>> put(K key, V value, CacheWriteOptions options) {
+      return delegate.put(key, value, options);
+   }
+
+   @Override
+   public CompletionStage<Void> set(K key, V value, CacheWriteOptions options) {
+      return delegate.set(key, value, options);
+   }
+
+   @Override
+   public CompletionStage<Boolean> replace(K key, V value, CacheEntryVersion version, CacheWriteOptions options) {
+      return delegate.replace(key, value, version, options);
+   }
+
+   @Override
+   public CompletionStage<CacheEntry<K, V>> getOrReplaceEntry(K key, V value, CacheEntryVersion version, CacheWriteOptions options) {
+      return delegate.getOrReplaceEntry(key, value, version, options);
+   }
+
+   @Override
+   public CompletionStage<Boolean> remove(K key, CacheOptions options) {
+      return delegate.remove(key, options);
+   }
+
+   @Override
+   public CompletionStage<Boolean> remove(K key, CacheEntryVersion version, CacheOptions options) {
+      return delegate.remove(key, version, options);
+   }
+
+   @Override
+   public CompletionStage<CacheEntry<K, V>> getAndRemove(K key, CacheOptions options) {
+      return delegate.getAndRemove(key, options);
+   }
+
+   @Override
+   public Flow.Publisher<K> keys(CacheOptions options) {
+      return delegate.keys(options);
+   }
+
+   @Override
+   public Flow.Publisher<CacheEntry<K, V>> entries(CacheOptions options) {
+      return delegate.entries(options);
+   }
+
+   @Override
+   public CompletionStage<Void> putAll(Map<K, V> entries, CacheWriteOptions options) {
+      return delegate.putAll(entries, options);
+   }
+
+   @Override
+   public CompletionStage<Void> putAll(Flow.Publisher<CacheEntry<K, V>> entries, CacheWriteOptions options) {
+      return delegate.putAll(entries, options);
+   }
+
+   @Override
+   public Flow.Publisher<CacheEntry<K, V>> getAll(Set<K> keys, CacheOptions options) {
+      return delegate.getAll(keys, options);
+   }
+
+   @Override
+   public Flow.Publisher<CacheEntry<K, V>> getAll(CacheOptions options, K[] keys) {
+      return delegate.getAll(options, keys);
+   }
+
+   @Override
+   public Flow.Publisher<K> removeAll(Set<K> keys, CacheWriteOptions options) {
+      return delegate.removeAll(keys, options);
+   }
+
+   @Override
+   public Flow.Publisher<K> removeAll(Flow.Publisher<K> keys, CacheWriteOptions options) {
+      return delegate.removeAll(keys, options);
+   }
+
+   @Override
+   public Flow.Publisher<CacheEntry<K, V>> getAndRemoveAll(Set<K> keys, CacheWriteOptions options) {
+      return delegate.getAndRemoveAll(keys, options);
+   }
+
+   @Override
+   public Flow.Publisher<CacheEntry<K, V>> getAndRemoveAll(Flow.Publisher<K> keys, CacheWriteOptions options) {
+      return delegate.getAndRemoveAll(keys, options);
+   }
+
+   @Override
+   public CompletionStage<Long> estimateSize(CacheOptions options) {
+      return delegate.estimateSize(options);
+   }
+
+   @Override
+   public CompletionStage<Void> clear(CacheOptions options) {
+      return delegate.clear(options);
+   }
+
+   @Override
+   public Flow.Publisher<CacheEntryEvent<K, V>> listen(CacheListenerOptions options, CacheEntryEventType[] types) {
+      return delegate.listen(options, types);
+   }
+
+   @Override
+   public <T> Flow.Publisher<CacheEntryProcessorResult<K, T>> process(Set<K> keys, AsyncCacheEntryProcessor<K, V, T> task, CacheOptions options) {
+      return delegate.process(keys, task, options);
+   }
+
+   @Override
+   public <T> Flow.Publisher<CacheEntryProcessorResult<K, T>> processAll(AsyncCacheEntryProcessor<K, V, T> processor, CacheProcessorOptions options) {
+      return delegate.processAll(processor, options);
    }
 }

@@ -1,9 +1,12 @@
 package org.infinispan.client.hotrod.telemetry.impl;
 
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
+import java.util.function.Function;
+
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
+import org.infinispan.client.hotrod.impl.operations.CacheOperationsFactory;
 
 public interface TelemetryService {
 
-   void injectSpanContext(HeaderParams header);
+   <K, V> Function<InternalRemoteCache<K, V>, CacheOperationsFactory> wrapWithTelemetry(Function<InternalRemoteCache<K, V>, CacheOperationsFactory> function);
 
 }

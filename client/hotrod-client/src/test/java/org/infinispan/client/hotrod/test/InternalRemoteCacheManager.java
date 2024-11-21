@@ -1,10 +1,12 @@
 package org.infinispan.client.hotrod.test;
 
+import java.util.function.Consumer;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.protocol.CodecHolder;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
-import org.infinispan.client.hotrod.impl.transport.netty.TestChannelFactory;
+
+import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.FixedLengthFrameDecoder;
 
 /**
  * RemoteCacheManager that exposes internal components such as transportFactory.
@@ -16,7 +18,6 @@ import org.infinispan.client.hotrod.impl.transport.netty.TestChannelFactory;
 public class InternalRemoteCacheManager extends RemoteCacheManager {
 
    private final boolean testReplay;
-   private ChannelFactory customChannelFactory;
 
    public InternalRemoteCacheManager(boolean testReplay, Configuration configuration) {
       super(configuration, true);
@@ -26,11 +27,6 @@ public class InternalRemoteCacheManager extends RemoteCacheManager {
    public InternalRemoteCacheManager(Configuration configuration) {
       super(configuration, true);
       this.testReplay = true;
-   }
-
-   public InternalRemoteCacheManager(Configuration configuration, ChannelFactory customChannelFactory) {
-      this(configuration, false);
-      this.customChannelFactory = customChannelFactory;
    }
 
    public InternalRemoteCacheManager(Configuration configuration, boolean start) {
@@ -47,14 +43,9 @@ public class InternalRemoteCacheManager extends RemoteCacheManager {
       this(true);
    }
 
-   public ChannelFactory getChannelFactory() {
-      return channelFactory;
-   }
-
    @Override
-   public ChannelFactory createChannelFactory() {
-      if (customChannelFactory != null) return customChannelFactory;
-      if (testReplay) return new TestChannelFactory(getConfiguration(), new CodecHolder(getConfiguration().version().getCodec()));
-      return super.createChannelFactory();
+   protected Consumer<ChannelPipeline> pipelineWrapper() {
+      return testReplay ? pipeline -> pipeline.addFirst("1frame", new FixedLengthFrameDecoder(1)) :
+            super.pipelineWrapper();
    }
 }

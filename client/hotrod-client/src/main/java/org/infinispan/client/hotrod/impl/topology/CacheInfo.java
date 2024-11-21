@@ -16,7 +16,6 @@ import org.infinispan.client.hotrod.impl.CacheTopologyInfoImpl;
 import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.commons.util.IntSets;
 
 /**
@@ -30,8 +29,6 @@ import org.infinispan.commons.util.IntSets;
  */
 public class CacheInfo {
    private final String cacheName;
-   // The topology age at the time this topology was received
-   private final int topologyAge;
    // The balancer is final, but using it still needs synchronization because it is not thread-safe
    private final FailoverRequestBalancingStrategy balancer;
    private final int numSegments;
@@ -41,11 +38,9 @@ public class CacheInfo {
    private final AtomicReference<ClientTopology> clientTopologyRef;
    private final ClientTopology clientTopology;
 
-   public CacheInfo(WrappedBytes cacheName, FailoverRequestBalancingStrategy balancer, int topologyAge, List<InetSocketAddress> servers, ClientIntelligence intelligence) {
+   public CacheInfo(String cacheName, FailoverRequestBalancingStrategy balancer, List<InetSocketAddress> servers, ClientIntelligence intelligence) {
       this.balancer = balancer;
-      this.topologyAge = topologyAge;
-      this.cacheName = cacheName == null || cacheName.getLength() == 0 ? "<default>" :
-                       new String(cacheName.getBytes(), HotRodConstants.HOTROD_STRING_CHARSET);
+      this.cacheName = cacheName;
       this.numSegments = -1;
       this.clientTopology = new ClientTopology(HotRodConstants.DEFAULT_CACHE_TOPOLOGY, intelligence);
       this.consistentHash = null;
@@ -63,24 +58,23 @@ public class CacheInfo {
       balancer.setServers((List) servers);
    }
 
-   public CacheInfo withNewServers(int topologyAge, int topologyId, List<InetSocketAddress> servers) {
-      return withNewServers(topologyAge, topologyId, servers, clientTopologyRef.get().getClientIntelligence());
+   public CacheInfo withNewServers(int topologyId, List<InetSocketAddress> servers) {
+      return withNewServers(topologyId, servers, clientTopologyRef.get().getClientIntelligence());
    }
 
-   public CacheInfo withNewServers(int topologyAge, int topologyId, List<InetSocketAddress> servers, ClientIntelligence intelligence) {
-      return new CacheInfo(cacheName, balancer, topologyAge,  servers, null, -1, clientTopologyRef, new ClientTopology(topologyId, intelligence));
+   public CacheInfo withNewServers(int topologyId, List<InetSocketAddress> servers, ClientIntelligence intelligence) {
+      return new CacheInfo(cacheName, balancer, servers, null, -1, clientTopologyRef, new ClientTopology(topologyId, intelligence));
    }
 
-   public CacheInfo withNewHash(int topologyAge, int topologyId, List<InetSocketAddress> servers,
+   public CacheInfo withNewHash(int topologyId, List<InetSocketAddress> servers,
                                 ConsistentHash consistentHash, int numSegments) {
-      return new CacheInfo(cacheName, balancer, topologyAge, servers, consistentHash, numSegments, clientTopologyRef, new ClientTopology(topologyId, getIntelligence()));
+      return new CacheInfo(cacheName, balancer, servers, consistentHash, numSegments, clientTopologyRef, new ClientTopology(topologyId, getIntelligence()));
    }
 
-   private CacheInfo(String cacheName, FailoverRequestBalancingStrategy balancer, int topologyAge,
+   private CacheInfo(String cacheName, FailoverRequestBalancingStrategy balancer,
                      List<InetSocketAddress> servers, ConsistentHash consistentHash, int numSegments,
                      AtomicReference<ClientTopology> clientTopologyRef, ClientTopology clientTopology) {
       this.balancer = balancer;
-      this.topologyAge = topologyAge;
       this.cacheName = cacheName;
       this.numSegments = numSegments;
       this.consistentHash = consistentHash;
@@ -100,10 +94,6 @@ public class CacheInfo {
 
    public String getCacheName() {
       return cacheName;
-   }
-
-   public int getTopologyAge() {
-      return topologyAge;
    }
 
    public FailoverRequestBalancingStrategy getBalancer() {

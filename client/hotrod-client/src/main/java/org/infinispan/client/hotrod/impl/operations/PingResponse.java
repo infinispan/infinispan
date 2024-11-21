@@ -7,6 +7,7 @@ import java.util.TreeSet;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.CodecUtils;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
@@ -81,28 +82,19 @@ public class PingResponse {
 
    public static class Decoder {
       int decoderState = 0;
-      final ProtocolVersion version;
       ProtocolVersion serverVersion;
       int serverOpsCount = -1;
       Set<Short> serverOps;
       MediaType keyMediaType;
       MediaType valueMediaType;
 
-      Decoder(ProtocolVersion version) {
-         this.version = version;
-      }
-
       void processResponse(Codec codec, ByteBuf buf, HeaderDecoder decoder) {
-         while (decoderState < 4) {
+         if (decoderState < 4) {
             switch (decoderState) {
                case 0:
-                  keyMediaType = codec.readKeyType(buf);
-                  valueMediaType = codec.readKeyType(buf);
+                  keyMediaType = CodecUtils.readMediaType(buf);
+                  valueMediaType = CodecUtils.readMediaType(buf);
                   decoder.checkpoint();
-                  if (version.compareTo(ProtocolVersion.PROTOCOL_VERSION_30) < 0) {
-                     decoderState = 4;
-                     break;
-                  }
                   ++decoderState;
                case 1:
                   serverVersion = ProtocolVersion.getBestVersion(buf.readUnsignedByte());
@@ -126,7 +118,7 @@ public class PingResponse {
 
       PingResponse build(short status) {
          assert decoderState == 4 : "Invalid decoder state";
-         return new PingResponse(status, version.choose(serverVersion), keyMediaType, valueMediaType, serverOps);
+         return new PingResponse(status, serverVersion, keyMediaType, valueMediaType, serverOps);
       }
 
       public void reset() {

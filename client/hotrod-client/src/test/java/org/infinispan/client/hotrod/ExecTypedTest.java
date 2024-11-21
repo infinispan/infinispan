@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 import org.infinispan.client.hotrod.event.EventLogListener;
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
@@ -55,14 +54,14 @@ public class ExecTypedTest extends MultiHotRodServersTest {
             super.createHotRodClientConfigurationBuilder(servers.get(0));
       clientBuilder.marshaller(new UTF8StringMarshaller());
       clientBuilder.version(getProtocolVersion());
-      return new InternalRemoteCacheManager(clientBuilder.build());
+      return new RemoteCacheManager(clientBuilder.build());
    }
 
    private RemoteCacheManager createAddScriptClient() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             super.createHotRodClientConfigurationBuilder(servers.get(0));
       clientBuilder.version(getProtocolVersion());
-      return new InternalRemoteCacheManager(clientBuilder.build());
+      return new RemoteCacheManager(clientBuilder.build());
    }
 
    public void testLocalTypedExecPutGet() {

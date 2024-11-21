@@ -1,20 +1,12 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import static org.infinispan.client.hotrod.logging.Log.HOTROD;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
-import net.jcip.annotations.Immutable;
 
 /**
  * Performs a step in the challenge/response authentication operation
@@ -22,46 +14,36 @@ import net.jcip.annotations.Immutable;
  * @author Tristan Tarrant
  * @since 7.0
  */
-@Immutable
-public class AuthOperation extends NeutralVersionHotRodOperation<byte[]> {
-
-   private final Channel channel;
+public class AuthOperation extends AbstractNoCacheHotRodOperation<byte[]> {
    private final String saslMechanism;
    private final byte[] response;
 
-   public AuthOperation(Codec codec, AtomicReference<ClientTopology> clientTopology, Configuration cfg, Channel channel,
-                        ChannelFactory channelFactory, String saslMechanism, byte[] response) {
-      super(AUTH_REQUEST, AUTH_RESPONSE, codec, 0,  cfg, DEFAULT_CACHE_NAME_BYTES, clientTopology, channelFactory);
-      this.channel = channel;
+   public AuthOperation(String saslMechanism, byte[] response) {
       this.saslMechanism = saslMechanism;
       this.response = response;
    }
 
    @Override
-   public CompletableFuture<byte[]> execute() {
-      if (!channel.isActive()) {
-         throw HOTROD.channelInactive(channel.remoteAddress(), channel.remoteAddress());
-      }
-
+   public void writeOperationRequest(Channel channel, ByteBuf buf, Codec codec) {
       byte[] saslMechBytes = saslMechanism.getBytes(HOTROD_STRING_CHARSET);
-
-      scheduleRead(channel);
-
-      ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) +
-            ByteBufUtil.estimateArraySize(saslMechBytes) + ByteBufUtil.estimateArraySize(response));
-
-      codec.writeHeader(buf, header);
       ByteBufUtil.writeArray(buf, saslMechBytes);
       ByteBufUtil.writeArray(buf, response);
-      channel.writeAndFlush(buf);
-
-      return this;
    }
 
    @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+   public byte[] createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
       boolean complete = buf.readUnsignedByte() > 0;
       byte[] challenge = ByteBufUtil.readArray(buf);
-      complete(complete ? null : challenge);
+      return complete ? null : challenge;
+   }
+
+   @Override
+   public short requestOpCode() {
+      return HotRodConstants.AUTH_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return HotRodConstants.AUTH_RESPONSE;
    }
 }

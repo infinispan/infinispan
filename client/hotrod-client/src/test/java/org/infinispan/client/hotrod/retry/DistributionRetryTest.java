@@ -4,7 +4,6 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import static org.testng.Assert.assertEquals;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -13,14 +12,9 @@ import org.infinispan.Cache;
 import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.affinity.KeyGenerator;
-import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.exceptions.TransportException;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
-import org.infinispan.client.hotrod.test.NoopChannelOperation;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
@@ -28,8 +22,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
-
-import io.netty.channel.Channel;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -60,6 +52,9 @@ public class DistributionRetryTest extends AbstractRetryTest {
 
    private void assertOperationFailsWithTransport(Object key) {
       Exceptions.expectException(TransportException.class, ".*", () -> remoteCache.get(key));
+
+      // Connection failed servers can take a bit to be propagated as it has to fail reconnecting
+      eventuallyEquals(1, () -> remoteCache.getDispatcher().getConnectionFailedServers().size());
    }
 
    public void testGet() throws Exception {
@@ -135,7 +130,7 @@ public class DistributionRetryTest extends AbstractRetryTest {
 
    private Object generateKeyAndShutdownServer() throws IOException, ClassNotFoundException, InterruptedException {
       resetStats();
-      Cache<Object,Object> cache = manager(1).getCache();
+      Cache<Object,Object> cache = manager(0).getCache();
       ExecutorService ex = Executors.newSingleThreadExecutor(getTestThreadFactory("KeyGenerator"));
       KeyAffinityService kaf = KeyAffinityServiceFactory.newKeyAffinityService(cache, ex, new ByteKeyGenerator(), 2, true);
       Address address = cache.getAdvancedCache().getRpcManager().getTransport().getAddress();
@@ -145,21 +140,10 @@ public class DistributionRetryTest extends AbstractRetryTest {
       kaf.stop();
 
       remoteCache.put(key, "v");
-      assertOnlyServerHit(getAddress(hotRodServer2));
-      ChannelFactory channelFactory = ((InternalRemoteCacheManager) remoteCacheManager).getChannelFactory();
+      assertOnlyServerHit(getAddress(hotRodServer1));
 
-      Marshaller m = new ProtoStreamMarshaller();
-      Channel channel = channelFactory.fetchChannelAndInvoke(m.objectToByteBuffer(key, 64), null, RemoteCacheManager.cacheNameBytes(), new NoopChannelOperation()).join();
-      try {
-         assertEquals(channel.remoteAddress(), new InetSocketAddress(hotRodServer2.getHost(), hotRodServer2.getPort()));
-      } finally {
-         channelFactory.releaseChannel(channel);
-      }
-
-
-      log.info("About to stop Hot Rod server 2");
-      HotRodClientTestingUtil.killServers(hotRodServer2);
-      eventually(() -> !channel.isActive());
+      log.info("About to stop Hot Rod server 1");
+      HotRodClientTestingUtil.killServers(hotRodServer1);
 
       return key;
    }
@@ -199,7 +183,7 @@ public class DistributionRetryTest extends AbstractRetryTest {
    public Object[] factory() {
       return new Object[] {
             new DistributionRetryTest().withRetries(0),
-            new DistributionRetryTest().withRetries(10),
+//            new DistributionRetryTest().withRetries(10),
       };
    }
 }

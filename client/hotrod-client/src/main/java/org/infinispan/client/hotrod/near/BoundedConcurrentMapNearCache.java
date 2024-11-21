@@ -10,6 +10,7 @@ import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 
 /**
  * Near cache based on {@link BoundedConcurrentMapNearCache}
@@ -30,7 +31,13 @@ final class BoundedConcurrentMapNearCache<K, V> implements NearCache<K, V> {
                                                BiConsumer<? super K, ? super MetadataValue<V>> removedConsumer) {
       Cache<K, MetadataValue<V>> cache = Caffeine.newBuilder()
             .maximumSize(config.maxEntries())
-            .<K, MetadataValue<V>>removalListener((key, value, cause) -> removedConsumer.accept(key, value))
+            // Always run in the same thread to make operations synchronous
+            .executor(Runnable::run)
+            .<K, MetadataValue<V>>removalListener((key, value, cause) -> {
+               if (cause != RemovalCause.REPLACED) {
+                  removedConsumer.accept(key, value);
+               }
+            })
             .build();
       return new BoundedConcurrentMapNearCache<>(cache);
    }

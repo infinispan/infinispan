@@ -1,28 +1,25 @@
 package org.infinispan.client.hotrod.impl.transaction.operations;
 
-import static org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil.estimateVIntSize;
-import static org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil.estimateXidSize;
 import static org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil.writeVInt;
 import static org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil.writeXid;
 
-import java.net.SocketAddress;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
-import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.Xid;
 
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientTopology;
-import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
+import org.infinispan.client.hotrod.DataFormat;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
+import org.infinispan.client.hotrod.impl.operations.AbstractCacheOperation;
+import org.infinispan.client.hotrod.impl.operations.CacheUnmarshaller;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transaction.entry.Modification;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import jakarta.transaction.TransactionManager;
 
 /**
  * A prepare request from the {@link TransactionManager}.
@@ -32,7 +29,7 @@ import io.netty.channel.Channel;
  * @author Pedro Ruivo
  * @since 9.3
  */
-public class PrepareTransactionOperation extends RetryOnFailureOperation<Integer> {
+public class PrepareTransactionOperation extends AbstractCacheOperation<Integer> {
 
    private final Xid xid;
    private final boolean onePhaseCommit;
@@ -41,10 +38,9 @@ public class PrepareTransactionOperation extends RetryOnFailureOperation<Integer
    private final long timeoutMs;
    private boolean retry;
 
-   public PrepareTransactionOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
-         AtomicReference<ClientTopology> clientTopology, Configuration cfg, Xid xid, boolean onePhaseCommit,
-         List<Modification> modifications, boolean recoverable, long timeoutMs) {
-      super(PREPARE_TX_2_REQUEST, PREPARE_TX_2_RESPONSE, codec, channelFactory, cacheName, clientTopology, 0, cfg, null, null);
+   public PrepareTransactionOperation(InternalRemoteCache<?, ?> cache, Xid xid, boolean onePhaseCommit,
+                                      List<Modification> modifications, boolean recoverable, long timeoutMs) {
+      super(cache);
       this.xid = xid;
       this.onePhaseCommit = onePhaseCommit;
       this.modifications = modifications;
@@ -57,21 +53,45 @@ public class PrepareTransactionOperation extends RetryOnFailureOperation<Integer
    }
 
    @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      if (status == NO_ERROR_STATUS) {
-         complete(buf.readInt());
+   public Integer createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
+      if (status == HotRodConstants.NO_ERROR_STATUS) {
+         return buf.readInt();
       } else {
-         retry = status == NOT_PUT_REMOVED_REPLACED_STATUS;
-         complete(0);
+         retry = status == HotRodConstants.NOT_PUT_REMOVED_REPLACED_STATUS;
+         return 0;
       }
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      retry = false;
-      scheduleRead(channel);
-      ByteBuf buf = channel.alloc().buffer(estimateSize());
-      codec.writeHeader(buf, header);
+   public short requestOpCode() {
+      return HotRodConstants.PREPARE_TX_2_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return HotRodConstants.PREPARE_TX_2_RESPONSE;
+   }
+
+   @Override
+   public Object getRoutingObject() {
+      // We could pass it to the server who owns the first key for a modification maybe?
+      return modifications.isEmpty() ? null : modifications.get(0).getKey();
+   }
+
+   @Override
+   public DataFormat getDataFormat() {
+      // Do we need this? It should technically be needed for the modifications, but we never
+      // passed one in the prior client impl
+      return null;
+   }
+
+   @Override
+   public void writeOperationRequest(Channel channel, ByteBuf buf, Codec codec) {
+      writeOperationRequest(buf, codec, xid, onePhaseCommit, recoverable, timeoutMs, modifications);
+   }
+
+   public static void writeOperationRequest(ByteBuf buf, Codec codec, Xid xid, boolean onePhaseCommit,
+                                            boolean recoverable, long timeoutMs, List<Modification> modifications) {
       writeXid(buf, xid);
       buf.writeBoolean(onePhaseCommit);
       buf.writeBoolean(recoverable);
@@ -80,23 +100,13 @@ public class PrepareTransactionOperation extends RetryOnFailureOperation<Integer
       for (Modification m : modifications) {
          m.writeTo(buf, codec);
       }
-      channel.writeAndFlush(buf);
    }
 
    @Override
-   protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
-      if (modifications.isEmpty()) {
-         super.fetchChannelAndInvoke(retryCount, failedServers);
-      } else {
-         channelFactory.fetchChannelAndInvoke(modifications.get(0).getKey(), failedServers, cacheName(), this);
-      }
-   }
-
-   private int estimateSize() {
-      int size = codec.estimateHeaderSize(header) + estimateXidSize(xid) + 1 + estimateVIntSize(modifications.size());
-      for (Modification modification : modifications) {
-         size += modification.estimateSize(codec);
-      }
-      return size;
+   protected void addParams(StringBuilder sb) {
+      sb.append(", modifications=[");
+      sb.append(modifications.stream().map(Object::toString)
+            .collect(Collectors.joining(",")).toString());
+      sb.append("]");
    }
 }

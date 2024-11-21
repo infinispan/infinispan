@@ -17,7 +17,7 @@
       <!-- Test dependencies -->
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-client-hotrod-new</artifactId>
+         <artifactId>infinispan-client-hotrod</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>

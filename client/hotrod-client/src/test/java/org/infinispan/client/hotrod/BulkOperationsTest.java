@@ -24,7 +24,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
@@ -34,7 +34,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.commons.time.ControlledTimeService;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.DataProvider;
@@ -51,22 +50,10 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
 
    enum CollectionOp {
       ENTRYSET(RemoteCache::entrySet) {
-         @Override
-         ProtocolVersion minimumVersionForIteration() {
-            return ProtocolVersion.PROTOCOL_VERSION_23;
-         }
       },
       KEYSET(RemoteCache::keySet) {
-         @Override
-         ProtocolVersion minimumVersionForIteration() {
-            return ProtocolVersion.PROTOCOL_VERSION_20;
-         }
       },
       VALUES(RemoteCache::values) {
-         @Override
-         ProtocolVersion minimumVersionForIteration() {
-            return ProtocolVersion.PROTOCOL_VERSION_23;
-         }
 
          @Override
          boolean isSet() {
@@ -76,7 +63,6 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
 
       private final Function<RemoteCache<?, ?>, CloseableIteratorCollection<?>> function;
 
-      abstract ProtocolVersion minimumVersionForIteration();
       boolean isSet() {
          return true;
       }
@@ -390,18 +376,10 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
          remoteCache.putAll(dataIn);
 
          CloseableIteratorCollection<?> collection = op.function.apply(cacheToUse);
-         // If we don't support it we should get an exception
-         if (version.compareTo(op.minimumVersionForIteration()) < 0) {
-            Exceptions.expectException(UnsupportedOperationException.class, () -> {
-               try (CloseableIterator<?> iter = collection.iterator()) {
-               }
-            });
-         } else {
-            try (CloseableIterator<?> iter = collection.iterator()) {
-               assertTrue(iter.hasNext());
-               assertNotNull(iter.next());
-               assertTrue(iter.hasNext());
-            }
+         try (CloseableIterator<?> iter = collection.iterator()) {
+            assertTrue(iter.hasNext());
+            assertNotNull(iter.next());
+            assertTrue(iter.hasNext());
          }
       } finally {
          if (temporaryManager != null) {

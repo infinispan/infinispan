@@ -38,7 +38,7 @@ public final class CodecUtils {
       return seconds;
    }
 
-   static MediaType readMediaType(ByteBuf byteBuf) {
+   public static MediaType readMediaType(ByteBuf byteBuf) {
       byte keyMediaTypeDefinition = byteBuf.readByte();
       if (keyMediaTypeDefinition == 0) return null;
       if (keyMediaTypeDefinition == 1) return readPredefinedMediaType(byteBuf);

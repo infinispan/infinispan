@@ -7,47 +7,40 @@ public class TelemetryServiceFactory {
 
    private static final Log log = LogFactory.getLog(TelemetryService.class, Log.class);
 
-   public static final TelemetryServiceFactory INSTANCE = new TelemetryServiceFactory();
+   public static final TelemetryService INSTANCE;
 
-   private final TelemetryService telemetryService;
-
-   private TelemetryServiceFactory() {
-      telemetryService = telemetryService();
+   static {
+      INSTANCE = telemetryService();
    }
 
-   public TelemetryService telemetryService(boolean propagationEnabled) {
-      if (telemetryService == null) {
+   public static TelemetryService telemetryService(boolean propagationEnabled) {
+      if (INSTANCE == null) {
          // in case of null, we've already logged either
          // noOpenTelemetryAPI or errorCreatingPropagationContext
-         return null;
+         return NoOpTelemetryService.INSTANCE;
       }
 
       if (propagationEnabled) {
          log.openTelemetryPropagationEnabled();
-         return telemetryService;
+         return INSTANCE;
       }
 
       // We log this only if the telemetry service is available,
       // but the user disable to propagate the tracing:
       log.openTelemetryPropagationDisabled();
-      return null;
+      return NoOpTelemetryService.INSTANCE;
    }
 
-   private TelemetryService telemetryService() {
+   private static TelemetryService telemetryService() {
       try {
          Class.forName("io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator", false,
                TelemetryService.class.getClassLoader());
+         return TelemetryServiceImpl.INSTANCE;
       } catch (ClassNotFoundException e) {
          log.noOpenTelemetryAPI();
-         return null;
-      }
-
-      try {
-         TelemetryServiceImpl service = new TelemetryServiceImpl();
-         return service;
       } catch (Throwable e) {
          log.errorCreatingPropagationContext(e);
-         return null;
       }
+      return null;
    }
 }

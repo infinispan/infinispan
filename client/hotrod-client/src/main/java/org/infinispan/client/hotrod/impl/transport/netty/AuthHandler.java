@@ -15,7 +15,9 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
 import org.infinispan.client.hotrod.configuration.AuthenticationConfiguration;
-import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.impl.operations.AuthMechListOperation;
+import org.infinispan.client.hotrod.impl.operations.AuthOperation;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
@@ -23,29 +25,29 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 
-class AuthHandler extends ActivationHandler {
+public class AuthHandler extends ActivationHandler {
    private static final Log log = LogFactory.getLog(AuthHandler.class);
 
    private static final String AUTH_INT = "auth-int";
    private static final String AUTH_CONF = "auth-conf";
 
-   static final String NAME = "auth-handler";
+   public static final String NAME = "auth-handler";
 
    private final AuthenticationConfiguration authentication;
    private final SaslClient saslClient;
-   private final OperationsFactory operationsFactory;
 
-   AuthHandler(AuthenticationConfiguration authentication, SaslClient saslClient,
-                      OperationsFactory operationsFactory) {
+   public AuthHandler(AuthenticationConfiguration authentication, SaslClient saslClient) {
       this.authentication = authentication;
       this.saslClient = saslClient;
-      this.operationsFactory = operationsFactory;
    }
 
    @Override
-   public void channelActive(ChannelHandlerContext ctx) {
+   protected void activate(ChannelHandlerContext ctx, OperationChannel operationChannel) {
       Channel channel = ctx.channel();
-      operationsFactory.newAuthMechListOperation(channel).execute().thenCompose(serverMechs -> {
+      AuthMechListOperation op = new AuthMechListOperation();
+
+      operationChannel.forceSendOperation(op);
+      op.thenCompose(serverMechs -> {
          if (!serverMechs.contains(authentication.saslMechanism())) {
             throw HOTROD.unsupportedMech(authentication.saslMechanism(), serverMechs);
          }
@@ -57,13 +59,16 @@ class AuthHandler extends ActivationHandler {
             try {
                response = evaluateChallenge(saslClient, EMPTY_BYTES, authentication.clientSubject());
             } catch (SaslException e) {
-               throw new CompletionException(e);
+               throw new HotRodClientException(e);
             }
          } else {
             response = EMPTY_BYTES;
          }
 
-         return operationsFactory.newAuthOperation(channel, authentication.saslMechanism(), response).execute();
+         AuthOperation authOperation = new AuthOperation(authentication.saslMechanism(), response);
+
+         operationChannel.forceSendOperation(authOperation);
+         return authOperation;
       }).thenCompose(new ChallengeEvaluator(channel, saslClient)).thenRun(() -> {
          String qop = (String) saslClient.getNegotiatedProperty(Sasl.QOP);
          if (qop != null && (qop.equalsIgnoreCase(AUTH_INT) || qop.equalsIgnoreCase(AUTH_CONF))) {
@@ -74,11 +79,11 @@ class AuthHandler extends ActivationHandler {
             try {
                saslClient.dispose();
             } catch (SaslException e) {
-               channel.pipeline().fireExceptionCaught(e);
+               log.debug("Exception encountered while closing saslClient", e);
             }
          }
          channel.pipeline().remove(this);
-         channel.pipeline().fireUserEventTriggered(ActivationHandler.ACTIVATION_EVENT);
+         operationChannel.markAcceptingRequests();
       }).exceptionally(throwable -> {
          while (throwable instanceof CompletionException && throwable.getCause() != null) {
             throwable = throwable.getCause();
@@ -122,11 +127,13 @@ class AuthHandler extends ActivationHandler {
             try {
                response = evaluateChallenge(saslClient, challenge, authentication.clientSubject());
             } catch (SaslException e) {
-               throw new CompletionException(e);
+               throw new HotRodClientException(e);
             }
             if (response != null) {
-               return operationsFactory.newAuthOperation(channel, authentication.saslMechanism(), response)
-                     .execute().thenCompose(this);
+               AuthOperation op = new AuthOperation(authentication.saslMechanism(), response);
+               OperationChannel operationChannel = channel.attr(OperationChannel.OPERATION_CHANNEL_ATTRIBUTE_KEY).get();
+               operationChannel.forceSendOperation(op);
+               return op.thenCompose(this);
             }
          }
          return CompletableFuture.completedFuture(null);

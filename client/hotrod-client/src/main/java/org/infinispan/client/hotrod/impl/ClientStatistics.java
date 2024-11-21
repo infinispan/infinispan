@@ -4,7 +4,10 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.function.Function;
 
+import org.infinispan.client.hotrod.impl.operations.CacheOperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.StatsOperationsFactory;
 import org.infinispan.client.hotrod.jmx.RemoteCacheClientStatisticsMXBean;
 import org.infinispan.client.hotrod.metrics.HotRodClientMetricsRegistry;
 import org.infinispan.client.hotrod.near.NearCacheService;
@@ -14,10 +17,9 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.concurrent.StripedCounters;
 
 public final class ClientStatistics implements RemoteCacheClientStatisticsMXBean {
-   private final boolean enabled;
    private final AtomicLong startNanoseconds = new AtomicLong(0);
    private final AtomicLong resetNanoseconds = new AtomicLong(0);
-   private final NearCacheService<?,?> nearCacheService;
+   private final NearCacheService<?, ?> nearCacheService;
    private final TimeService timeService;
    private final StripedCounters<StripeB> counters = new StripedCounters<>(StripeC::new);
    private final TimerTracker readHitTimes;
@@ -28,13 +30,16 @@ public final class ClientStatistics implements RemoteCacheClientStatisticsMXBean
    private final CounterTracker nearCacheMisses;
    private final CounterTracker nearCacheInvalidations;
 
-   ClientStatistics(boolean enabled, TimeService timeService, NearCacheService<?,?> nearCacheService, HotRodClientMetricsRegistry metricRegistry) {
-      this.enabled = enabled;
+   public static <K, V> Function<InternalRemoteCache<K, V>, CacheOperationsFactory> functionFor(
+         Function<InternalRemoteCache<K, V>, CacheOperationsFactory> delegate) {
+      return irc -> new StatsOperationsFactory(delegate.apply(irc), irc.clientStatistics());
+   }
+
+   ClientStatistics(TimeService timeService, NearCacheService<?, ?> nearCacheService, HotRodClientMetricsRegistry metricRegistry) {
       this.timeService = timeService;
       this.nearCacheService = nearCacheService;
-      if (nearCacheService != null) {
+      if (nearCacheService != null)
          nearCacheService.setInvalidationCallback(this::incrementNearCacheInvalidations);
-      }
       readHitTimes = metricRegistry.createTimer("reads.hit", "The read hits duration", Map.of(), null);
       readMissTimes = metricRegistry.createTimer("reads.miss", "The read misses duration", Map.of(), null);
       writeTimes = metricRegistry.createTimer("writes", "The writes duration", Map.of(), null);
@@ -45,12 +50,8 @@ public final class ClientStatistics implements RemoteCacheClientStatisticsMXBean
       metricRegistry.createGauge("nearCache.size", "The current number of entries stored in the near-cache", this::getNearCacheSize, Map.of(), null);
    }
 
-   ClientStatistics(boolean enabled, TimeService timeService) {
-      this(enabled, timeService, null, HotRodClientMetricsRegistry.DISABLED);
-   }
-
-   public boolean isEnabled() {
-      return enabled;
+   ClientStatistics(TimeService timeService) {
+      this(timeService, null, HotRodClientMetricsRegistry.DISABLED);
    }
 
    @Override
@@ -202,15 +203,6 @@ public final class ClientStatistics implements RemoteCacheClientStatisticsMXBean
    @Override
    public long getTimeSinceReset() {
       return timeService.timeDuration(resetNanoseconds.get(), TimeUnit.SECONDS);
-   }
-
-   /**
-    * It returns a {@link ClientStatistics} instance to be used when the statistics aren't needed.
-    *
-    * @return a disabled {@link ClientStatistics} instance.
-    */
-   public static ClientStatistics dummyClientStatistics(TimeService timeService) {
-      return new ClientStatistics(false, timeService);
    }
 
    private static class StripeA {

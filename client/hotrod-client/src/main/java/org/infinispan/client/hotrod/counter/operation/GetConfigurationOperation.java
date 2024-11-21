@@ -2,18 +2,14 @@ package org.infinispan.client.hotrod.counter.operation;
 
 import static org.infinispan.counter.api._private.CounterEncodeUtil.decodeConfiguration;
 
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.impl.operations.CacheUnmarshaller;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 
 /**
  * A counter configuration for {@link CounterManager#getConfiguration(String)}.
@@ -23,23 +19,26 @@ import io.netty.channel.Channel;
  */
 public class GetConfigurationOperation extends BaseCounterOperation<CounterConfiguration> {
 
-   public GetConfigurationOperation(ChannelFactory channelFactory, AtomicReference<ClientTopology> topologyId,
-                                    Configuration cfg, String counterName) {
-      super(COUNTER_GET_CONFIGURATION_REQUEST, COUNTER_GET_CONFIGURATION_RESPONSE, channelFactory, topologyId, cfg, counterName, false);
+   public GetConfigurationOperation(String counterName) {
+      super(counterName, false);
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      sendHeaderAndCounterNameAndRead(channel);
-   }
-
-   @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+   public CounterConfiguration createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
       if (status != NO_ERROR_STATUS) {
-         complete(null);
-         return;
+         return null;
       }
 
-      complete(decodeConfiguration(buf::readByte, buf::readLong, () -> ByteBufUtil.readVInt(buf)));
+      return decodeConfiguration(buf::readByte, buf::readLong, () -> ByteBufUtil.readVInt(buf));
+   }
+
+   @Override
+   public short requestOpCode() {
+      return COUNTER_GET_CONFIGURATION_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return COUNTER_GET_CONFIGURATION_RESPONSE;
    }
 }

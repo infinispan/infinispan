@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.impl;
 
-import static org.infinispan.client.hotrod.impl.Util.wrapBytes;
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import java.net.InetSocketAddress;
@@ -26,8 +25,6 @@ import org.infinispan.client.hotrod.impl.topology.CacheInfo;
 import org.infinispan.client.hotrod.impl.topology.ClusterInfo;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.commons.marshall.WrappedBytes;
 
 import net.jcip.annotations.NotThreadSafe;
 
@@ -41,11 +38,12 @@ import net.jcip.annotations.NotThreadSafe;
 public final class TopologyInfo {
 
    private static final Log log = LogFactory.getLog(TopologyInfo.class, Log.class);
+   private static final String DEFAULT_CACHE_NAME = "<default>";
 
    private final Supplier<FailoverRequestBalancingStrategy> balancerFactory;
    private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
 
-   private final ConcurrentMap<WrappedBytes, CacheInfo> caches = new ConcurrentHashMap<>();
+   private final ConcurrentMap<String, CacheInfo> caches = new ConcurrentHashMap<>();
    private volatile ClusterInfo cluster;
 
    public TopologyInfo(Configuration configuration, ClusterInfo clusterInfo) {
@@ -55,9 +53,12 @@ public final class TopologyInfo {
       this.cluster = clusterInfo.withTopologyAge(0);
    }
 
-   public Map<SocketAddress, Set<Integer>> getPrimarySegmentsByServer(byte[] cacheName) {
-      WrappedByteArray key = wrapBytes(cacheName);
-      CacheInfo cacheInfo = caches.get(key);
+   static String nameOrDefault(String cacheName) {
+      return cacheName != null ? cacheName : DEFAULT_CACHE_NAME;
+   }
+
+   public Map<SocketAddress, Set<Integer>> getPrimarySegmentsByServer(String cacheName) {
+      CacheInfo cacheInfo = caches.get(nameOrDefault(cacheName));
       if (cacheInfo != null) {
          return cacheInfo.getPrimarySegments();
       } else {
@@ -65,8 +66,8 @@ public final class TopologyInfo {
       }
    }
 
-   public List<InetSocketAddress> getServers(WrappedBytes cacheName) {
-      return getCacheInfo(cacheName).getServers();
+   public List<InetSocketAddress> getServers(String cacheName) {
+      return getCacheInfo(nameOrDefault(cacheName)).getServers();
    }
 
    public Collection<InetSocketAddress> getAllServers() {
@@ -91,23 +92,23 @@ public final class TopologyInfo {
       return hashFactory;
    }
 
-   public CacheTopologyInfo getCacheTopologyInfo(byte[] cacheName) {
-      WrappedByteArray key = wrapBytes(cacheName);
-      return caches.get(key).getCacheTopologyInfo();
+   public CacheTopologyInfo getCacheTopologyInfo(String cacheName) {
+      return caches.get(nameOrDefault(cacheName)).getCacheTopologyInfo();
    }
 
-   public CacheInfo getCacheInfo(WrappedBytes cacheName) {
-      return caches.get(cacheName);
+   public CacheInfo getCacheInfo(String cacheName) {
+      return caches.get(nameOrDefault(cacheName));
    }
 
-   public CacheInfo getOrCreateCacheInfo(WrappedBytes cacheName) {
-      return caches.computeIfAbsent(cacheName, cn -> {
+   public CacheInfo getOrCreateCacheInfo(String cacheName) {
+      log.debugf("Caches are: %s with argument cacheName %s", caches, cacheName);
+      return caches.computeIfAbsent(nameOrDefault(cacheName), cn -> {
          // TODO Do we still need locking, in case the cluster switch iteration misses this cache?
          ClusterInfo cluster = this.cluster;
-         CacheInfo cacheInfo = new CacheInfo(cn, balancerFactory.get(), cluster.getTopologyAge(), cluster.getInitialServers(), cluster.getIntelligence());
+         CacheInfo cacheInfo = new CacheInfo(cn, balancerFactory.get(), cluster.getInitialServers(), cluster.getIntelligence());
          cacheInfo.updateBalancerServers();
-         if (log.isTraceEnabled()) log.tracef("Creating cache info %s with topology age %d",
-                                              cacheInfo.getCacheName(), cluster.getTopologyAge());
+         if (log.isTraceEnabled()) log.tracef("Creating cache info %s",
+                                              cacheInfo.getCacheName());
          return cacheInfo;
       });
    }
@@ -117,6 +118,7 @@ public final class TopologyInfo {
     */
    public void switchCluster(ClusterInfo newCluster) {
       ClusterInfo oldCluster = this.cluster;
+
       int newTopologyAge = oldCluster.getTopologyAge() + 1;
 
       if (log.isTraceEnabled()) {
@@ -126,12 +128,11 @@ public final class TopologyInfo {
 
       // Stop accepting topology updates from old requests
       caches.forEach((name, oldCacheInfo) -> {
-         CacheInfo newCacheInfo = oldCacheInfo.withNewServers(newTopologyAge, HotRodConstants.SWITCH_CLUSTER_TOPOLOGY,
+         CacheInfo newCacheInfo = oldCacheInfo.withNewServers(HotRodConstants.SWITCH_CLUSTER_TOPOLOGY,
                                                               newCluster.getInitialServers(), newCluster.getIntelligence());
          updateCacheInfo(name, oldCacheInfo, newCacheInfo);
       });
 
-      // Update the topology age for new requests so that the topology updates from their responses are accepted
       this.cluster = newCluster.withTopologyAge(newTopologyAge);
    }
 
@@ -141,12 +142,11 @@ public final class TopologyInfo {
     * <p>Useful if there are still live servers in the cluster, but all the server in this cache's
     * current topology are unreachable.</p>
     */
-   public void reset(WrappedBytes cacheName) {
+   public void reset(String cacheName) {
       if (log.isTraceEnabled()) log.tracef("Switching to initial server list for cache %s, cluster %s",
                                            cacheName, cluster.getName());
       CacheInfo oldCacheInfo = caches.get(cacheName);
-      CacheInfo newCacheInfo = oldCacheInfo.withNewServers(cluster.getTopologyAge(),
-                                                           HotRodConstants.DEFAULT_CACHE_TOPOLOGY,
+      CacheInfo newCacheInfo = oldCacheInfo.withNewServers(HotRodConstants.DEFAULT_CACHE_TOPOLOGY,
                                                            cluster.getInitialServers(), cluster.getIntelligence());
       updateCacheInfo(cacheName, oldCacheInfo, newCacheInfo);
    }
@@ -159,7 +159,7 @@ public final class TopologyInfo {
       return cluster.getTopologyAge();
    }
 
-   public void updateCacheInfo(WrappedBytes cacheName, CacheInfo oldCacheInfo, CacheInfo newCacheInfo) {
+   public void updateCacheInfo(String cacheName, CacheInfo oldCacheInfo, CacheInfo newCacheInfo) {
       if (log.isTraceEnabled()) log.tracef("Updating topology for %s: %s -> %s", newCacheInfo.getCacheName(),
                                            oldCacheInfo.getTopologyId(), newCacheInfo.getTopologyId());
       CacheInfo existing = caches.put(cacheName, newCacheInfo);
@@ -171,7 +171,7 @@ public final class TopologyInfo {
       newCacheInfo.updateClientTopologyRef();
    }
 
-   public void forEachCache(BiConsumer<WrappedBytes, CacheInfo> action) {
+   public void forEachCache(BiConsumer<String, CacheInfo> action) {
       caches.forEach(action);
    }
 }

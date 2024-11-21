@@ -3,24 +3,37 @@ package org.infinispan.client.hotrod.impl;
 import static org.infinispan.client.hotrod.filter.Filters.makeFactoryParams;
 import static org.infinispan.client.hotrod.impl.Util.await;
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
-import static org.infinispan.commons.internal.InternalCacheNames.GLOBAL_STATE_INTERNAL_CACHES;
 
 import java.net.SocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Flow;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import org.infinispan.api.async.AsyncCacheEntryProcessor;
+import org.infinispan.api.common.CacheEntry;
+import org.infinispan.api.common.CacheEntryVersion;
+import org.infinispan.api.common.CacheOptions;
+import org.infinispan.api.common.CacheWriteOptions;
+import org.infinispan.api.common.events.cache.CacheEntryEvent;
+import org.infinispan.api.common.events.cache.CacheEntryEventType;
+import org.infinispan.api.common.events.cache.CacheListenerOptions;
+import org.infinispan.api.common.process.CacheEntryProcessorResult;
+import org.infinispan.api.common.process.CacheProcessorOptions;
+import org.infinispan.api.configuration.CacheConfiguration;
 import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.Flag;
@@ -32,33 +45,27 @@ import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.StreamingRemoteCache;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.StatisticsConfiguration;
+import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
 import org.infinispan.client.hotrod.filter.Filters;
+import org.infinispan.client.hotrod.impl.cache.CacheEntryImpl;
+import org.infinispan.client.hotrod.impl.cache.CacheEntryMetadataImpl;
+import org.infinispan.client.hotrod.impl.cache.CacheEntryVersionImpl;
 import org.infinispan.client.hotrod.impl.iteration.RemotePublisher;
 import org.infinispan.client.hotrod.impl.operations.AddClientListenerOperation;
-import org.infinispan.client.hotrod.impl.operations.ClearOperation;
-import org.infinispan.client.hotrod.impl.operations.ContainsKeyOperation;
-import org.infinispan.client.hotrod.impl.operations.ExecuteOperation;
-import org.infinispan.client.hotrod.impl.operations.GetAllParallelOperation;
-import org.infinispan.client.hotrod.impl.operations.GetOperation;
+import org.infinispan.client.hotrod.impl.operations.AdvancedHotRodOperation;
+import org.infinispan.client.hotrod.impl.operations.CacheOperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.GetAllBulkOperation;
 import org.infinispan.client.hotrod.impl.operations.GetWithMetadataOperation;
-import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
-import org.infinispan.client.hotrod.impl.operations.PutAllParallelOperation;
-import org.infinispan.client.hotrod.impl.operations.PutIfAbsentOperation;
-import org.infinispan.client.hotrod.impl.operations.PutOperation;
-import org.infinispan.client.hotrod.impl.operations.RemoveClientListenerOperation;
-import org.infinispan.client.hotrod.impl.operations.RemoveIfUnmodifiedOperation;
-import org.infinispan.client.hotrod.impl.operations.RemoveOperation;
-import org.infinispan.client.hotrod.impl.operations.ReplaceIfUnmodifiedOperation;
-import org.infinispan.client.hotrod.impl.operations.ReplaceOperation;
-import org.infinispan.client.hotrod.impl.operations.RetryAwareCompletionStage;
-import org.infinispan.client.hotrod.impl.operations.SizeOperation;
-import org.infinispan.client.hotrod.impl.operations.StatsOperation;
+import org.infinispan.client.hotrod.impl.operations.PutAllBulkOperation;
+import org.infinispan.client.hotrod.impl.protocol.Codec30;
 import org.infinispan.client.hotrod.impl.query.RemoteQueryFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.client.hotrod.metrics.HotRodClientMetricsRegistry;
 import org.infinispan.client.hotrod.near.NearCacheService;
 import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
@@ -70,10 +77,16 @@ import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.reactivestreams.FlowAdapters;
 import org.reactivestreams.Publisher;
 
+import io.netty.channel.Channel;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -83,60 +96,81 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    private static final Log log = LogFactory.getLog(RemoteCacheImpl.class, Log.class);
 
-   private final String name;
-   private final RemoteCacheManager remoteCacheManager;
-   protected OperationsFactory operationsFactory;
-   private int batchSize;
-   private volatile boolean isObjectStorage;
-   private DataFormat dataFormat;
+   protected final String name;
+   protected final byte[] nameBytes;
+   protected final RemoteCacheManager remoteCacheManager;
+   protected final CacheOperationsFactory operationsFactory;
+   protected final ClientListenerNotifier clientListenerNotifier;
+   protected final int flagInt;
+   protected int batchSize;
+   protected DataFormat dataFormat;
    protected ClientStatistics clientStatistics;
-   private ObjectName mbeanObjectName;
-   private RemoteQueryFactory queryFactory;
+   protected ObjectName mbeanObjectName;
+   protected OperationDispatcher dispatcher;
+   protected RemoteQueryFactory queryFactory;
 
-   public RemoteCacheImpl(RemoteCacheManager rcm, String name, TimeService timeService) {
-      this(rcm, name, timeService, null);
+   public RemoteCacheImpl(RemoteCacheManager rcm, String name, TimeService timeService,
+                          Function<InternalRemoteCache<K,V>, CacheOperationsFactory> factoryFunction) {
+      this(rcm, name, timeService, null, factoryFunction);
    }
 
-   public RemoteCacheImpl(RemoteCacheManager rcm, String name, TimeService timeService, NearCacheService<K, V> nearCacheService) {
+   public RemoteCacheImpl(RemoteCacheManager rcm, String name, TimeService timeService, NearCacheService<K, V> nearCacheService,
+                          Function<InternalRemoteCache<K,V>, CacheOperationsFactory> factoryFunction) {
       if (log.isTraceEnabled()) {
          log.tracef("Creating remote cache: %s", name);
       }
       this.name = name;
+      this.nameBytes = name.getBytes(StandardCharsets.UTF_8);
       this.remoteCacheManager = rcm;
       this.dataFormat = DataFormat.builder().build();
-      var statsEnabled = rcm.getConfiguration().statistics().enabled();
-      var metrics = statsEnabled ? rcm.getConfiguration().metricRegistry().withCache(name) : HotRodClientMetricsRegistry.DISABLED;
-      this.clientStatistics = new ClientStatistics(statsEnabled, timeService, nearCacheService, metrics);
+      this.clientStatistics = new ClientStatistics(timeService, nearCacheService, rcm.getConfiguration().metricRegistry().withCache(name));
+      this.operationsFactory = factoryFunction.apply(this);
+      this.clientListenerNotifier = rcm.getListenerNotifier();
+      this.flagInt = rcm.getConfiguration().forceReturnValues() ? Flag.FORCE_RETURN_VALUE.getFlagInt() : 0;
    }
 
-   protected RemoteCacheImpl(RemoteCacheManager rcm, String name, ClientStatistics clientStatistics) {
+   protected RemoteCacheImpl(RemoteCacheImpl<?, ?> other, int flagInt) {
       if (log.isTraceEnabled()) {
-         log.tracef("Creating remote cache: %s", name);
+         log.tracef("Creating remote cache: %s with flags %d", other.name, flagInt);
       }
-      this.name = name;
-      this.remoteCacheManager = rcm;
-      this.dataFormat = DataFormat.builder().build();
-      this.clientStatistics = clientStatistics;
+      this.name = other.name;
+      this.nameBytes = other.nameBytes;
+      this.remoteCacheManager = other.remoteCacheManager;
+      this.dataFormat = other.dataFormat;
+      this.clientStatistics = other.clientStatistics;
+      this.operationsFactory = other.operationsFactory.newFactoryFor(this);
+      this.flagInt = flagInt;
+      this.clientListenerNotifier = other.clientListenerNotifier;
+
+      // set the values for init
+      this.batchSize = other.batchSize;
+      this.dispatcher = other.dispatcher;
+      this.queryFactory = other.queryFactory;
    }
 
    @Override
-   public void init(OperationsFactory operationsFactory,
-                    Configuration configuration, ObjectName jmxParent) {
-      init(operationsFactory, configuration);
-      registerMBean(jmxParent);
+   public void init(Configuration configuration, OperationDispatcher dispatcher, ObjectName jmxParent) {
+      init(configuration, dispatcher);
+      if (jmxParent != null) {
+         registerMBean(jmxParent);
+      }
+   }
+
+   @Override
+   public OperationDispatcher getDispatcher() {
+      return dispatcher;
    }
 
    /**
     * Inititalize without mbeans
     */
-   @Override
-   public void init(OperationsFactory operationsFactory, Configuration configuration) {
-      init(operationsFactory, configuration.batchSize());
+   public void init(Configuration configuration, OperationDispatcher dispatcher) {
+      init(configuration.batchSize(), dispatcher);
    }
 
-   private void init(OperationsFactory operationsFactory, int batchSize) {
-      this.operationsFactory = operationsFactory;
+   private void init(int batchSize, OperationDispatcher dispatcher) {
       this.batchSize = batchSize;
+      this.dispatcher = dispatcher;
       // try cautiously
       try {
          this.queryFactory = new RemoteQueryFactory(this);
@@ -177,11 +211,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    }
 
    @Override
-   public OperationsFactory getOperationsFactory() {
-      return operationsFactory;
-   }
-
-   @Override
    public RemoteCacheContainer getRemoteCacheContainer() {
       return remoteCacheManager;
    }
@@ -189,9 +218,10 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    @Override
    public CompletableFuture<Boolean> removeWithVersionAsync(final K key, final long version) {
       assertRemoteCacheManagerIsStarted();
-      RemoveIfUnmodifiedOperation<V> op = operationsFactory.newRemoveIfUnmodifiedOperation(
-            key, keyToBytes(key), version, dataFormat);
-      return op.execute().thenApply(response -> response.getCode().isUpdated());
+      HotRodOperation<VersionedOperationResponse<V>> op = operationsFactory.newRemoveIfUnmodifiedOperation(key, version);
+      return dispatcher.execute(op)
+            .thenApply(response -> response.getCode().isUpdated())
+            .toCompletableFuture();
    }
 
    @Override
@@ -201,9 +231,11 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    public CompletableFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
-      ReplaceIfUnmodifiedOperation op = operationsFactory.newReplaceIfUnmodifiedOperation(
-            key, keyToBytes(key), valueToBytes(newValue), lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, version, dataFormat);
-      return op.execute().thenApply(response -> response.getCode().isUpdated());
+      HotRodOperation<VersionedOperationResponse<V>> op = operationsFactory.newReplaceIfUnmodifiedOperation(
+            key, newValue, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, version);
+      return dispatcher.execute(op)
+            .thenApply(response -> response.getCode().isUpdated())
+            .toCompletableFuture();
    }
 
    @Override
@@ -219,8 +251,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       if (segments != null && segments.isEmpty()) {
          return Flowable.empty();
       }
-      byte[][] params = marshallParams(filterConverterParams);
-      return new RemotePublisher<>(operationsFactory, filterConverterFactory, params, segments,
+      return new RemotePublisher<>(operationsFactory, dispatcher, filterConverterFactory, filterConverterParams, segments,
             batchSize, false, dataFormat);
    }
 
@@ -246,24 +277,26 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    @Override
    public Publisher<Entry<K, MetadataValue<V>>> publishEntriesWithMetadata(Set<Integer> segments, int batchSize) {
-      return new RemotePublisher<>(operationsFactory, null, null, segments,
+      return new RemotePublisher<>(operationsFactory, dispatcher, null, null, segments,
             batchSize, true, dataFormat);
    }
 
    @Override
    public CompletableFuture<MetadataValue<V>> getWithMetadataAsync(K key) {
       assertRemoteCacheManagerIsStarted();
-      GetWithMetadataOperation<V> op = operationsFactory.newGetWithMetadataOperation(
-            key, keyToBytes(key), dataFormat);
-      return op.execute();
+      var op = operationsFactory.<K, V>newGetWithMetadataOperation(key, null);
+      return dispatcher.execute(op)
+            .thenApply(GetWithMetadataOperation.GetWithMetadataResult::value)
+            .toCompletableFuture();
    }
 
    @Override
-   public RetryAwareCompletionStage<MetadataValue<V>> getWithMetadataAsync(K key, SocketAddress preferredAddres) {
+   public CompletionStage<GetWithMetadataOperation.GetWithMetadataResult<V>> getWithMetadataAsync(K key, Channel channel) {
       assertRemoteCacheManagerIsStarted();
-      GetWithMetadataOperation<V> op = operationsFactory.newGetWithMetadataOperation(
-            key, keyToBytes(key), dataFormat, preferredAddres);
-      return op.internalExecute();
+      var op = operationsFactory.<K, V>newGetWithMetadataOperation(key, channel);
+      return channel != null ?
+            dispatcher.executeOnSingleAddress(op, ChannelRecord.of(channel)) :
+            dispatcher.execute(op);
    }
 
    @Override
@@ -272,19 +305,18 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       if (log.isTraceEnabled()) {
          log.tracef("About to putAll entries (%s) lifespan:%d (%s), maxIdle:%d (%s)", map, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       }
-      Map<byte[], byte[]> byteMap = new HashMap<>();
-      for (Entry<? extends K, ? extends V> entry : map.entrySet()) {
-         byteMap.put(keyToBytes(entry.getKey()), valueToBytes(entry.getValue()));
-      }
-      PutAllParallelOperation op = operationsFactory.newPutAllOperation(byteMap, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, dataFormat);
-      return op.execute();
+      var op = new PutAllBulkOperation(map, dataFormat,
+            serialized -> operationsFactory.newPutAllBytesOperation(serialized, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
+      return dispatcher.executeBulk(name, op).toCompletableFuture();
    }
 
    @Override
    public CompletableFuture<Long> sizeAsync() {
       assertRemoteCacheManagerIsStarted();
-      SizeOperation op = operationsFactory.newSizeOperation();
-      return op.execute().thenApply(Integer::longValue);
+      HotRodOperation<Integer> op = operationsFactory.newSizeOperation();
+      return dispatcher.execute(op)
+            .toCompletableFuture()
+            .thenApply(Integer::longValue);
    }
 
    @Override
@@ -305,8 +337,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    @Override
    public CompletionStage<ServerStatistics> serverStatisticsAsync() {
       assertRemoteCacheManagerIsStarted();
-      StatsOperation op = operationsFactory.newStatsOperation();
-      return op.execute();
+      HotRodOperation<ServerStatistics> op = operationsFactory.newStatsOperation();
+      return dispatcher.execute(op).toCompletableFuture();
    }
 
    @Override
@@ -315,16 +347,17 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       if (log.isTraceEnabled()) {
          log.tracef("About to add (K,V): (%s, %s) lifespan:%d, maxIdle:%d", key, value, lifespan, maxIdleTime);
       }
-      PutOperation<V> op = operationsFactory.newPutKeyValueOperation(key,
-            keyToBytes(key), valueToBytes(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, dataFormat);
-      return op.execute();
+      HotRodOperation<MetadataValue<V>> op = operationsFactory.newPutKeyValueOperation(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      return dispatcher.execute(op)
+            .thenApply(CacheEntryConversion.extractValue())
+            .toCompletableFuture();
    }
 
    @Override
    public CompletableFuture<Void> clearAsync() {
       assertRemoteCacheManagerIsStarted();
-      ClearOperation op = operationsFactory.newClearOperation();
-      return op.execute();
+      HotRodOperation<Void> op = operationsFactory.newClearOperation();
+      return dispatcher.execute(op).toCompletableFuture();
    }
 
    @Override
@@ -416,15 +449,19 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return putIfAbsentAsync(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, (Flag[]) null);
+      assertRemoteCacheManagerIsStarted();
+      HotRodOperation<MetadataValue<V>> op = operationsFactory.newPutIfAbsentOperation(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      return dispatcher.execute(op)
+            .thenApply(CacheEntryConversion.extractValue())
+            .toCompletableFuture();
    }
 
    private CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag ... flags) {
       assertRemoteCacheManagerIsStarted();
-      PutIfAbsentOperation<V> op = operationsFactory.newPutIfAbsentOperation(key,
-            keyToBytes(key), valueToBytes(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, dataFormat);
-      op.header().addFlags(flags);
-      return op.execute();
+      HotRodOperation<MetadataValue<V>> op = operationsFactory.newPutIfAbsentOperation(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, flags);
+      return dispatcher.execute(op)
+            .thenApply(CacheEntryConversion.extractValue())
+            .toCompletableFuture();
    }
 
    @Override
@@ -453,10 +490,12 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    @Override
    public CompletableFuture<V> removeAsync(Object key) {
       assertRemoteCacheManagerIsStarted();
-      RemoveOperation<V> removeOperation = operationsFactory.newRemoveOperation(key, keyToBytes(key), dataFormat);
+      HotRodOperation<MetadataValue<V>> removeOperation = operationsFactory.newRemoveOperation(key);
       // TODO: It sucks that you need the prev value to see if it works...
       // We need to find a better API for RemoteCache...
-      return removeOperation.execute();
+      return dispatcher.execute(removeOperation)
+            .thenApply(CacheEntryConversion.extractValue())
+            .toCompletableFuture();
    }
 
    @Override
@@ -479,18 +518,19 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    }
 
    @Override
-   public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+   public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime,
+                                            TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
-      ReplaceOperation<V> op = operationsFactory.newReplaceOperation(key,
-            keyToBytes(key), valueToBytes(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, dataFormat);
-      return op.execute();
+      HotRodOperation<V> op = operationsFactory.newReplaceOperation(key, value, lifespan, lifespanUnit, maxIdleTime,
+            maxIdleTimeUnit);
+      return dispatcher.execute(op).toCompletableFuture();
    }
 
    @Override
    public CompletableFuture<Boolean> containsKeyAsync(K key) {
       assertRemoteCacheManagerIsStarted();
-      ContainsKeyOperation op = operationsFactory.newContainsKeyOperation(key, keyToBytes(key), dataFormat);
-      return op.execute();
+      HotRodOperation<Boolean> op = operationsFactory.newContainsKeyOperation(key);
+      return dispatcher.execute(op).toCompletableFuture();
    }
 
    @Override
@@ -505,12 +545,10 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       if (log.isTraceEnabled()) {
          log.tracef("About to getAll entries (%s)", keys);
       }
-      Set<byte[]> byteKeys = new HashSet<>(keys.size());
-      for (Object key : keys) {
-         byteKeys.add(keyToBytes(key));
-      }
-      GetAllParallelOperation<K, V> op = operationsFactory.newGetAllOperation(byteKeys, dataFormat);
-      return op.execute().thenApply(Collections::unmodifiableMap);
+      var op = new GetAllBulkOperation<K, V>(keys, dataFormat, operationsFactory::newGetAllBytesOperation);
+      return dispatcher.executeBulk(name, op)
+            .thenApply(Collections::unmodifiableMap)
+            .toCompletableFuture();
    }
 
    @Override
@@ -529,6 +567,11 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    @Override
    public String getName() {
       return name;
+   }
+
+   @Override
+   public byte[] getNameBytes() {
+      return nameBytes;
    }
 
    @Override
@@ -559,46 +602,45 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    @Override
    public void addClientListener(Object listener) {
-      assertRemoteCacheManagerIsStarted();
-      AddClientListenerOperation op = operationsFactory.newAddClientListenerOperation(listener, dataFormat);
-      // no timeout, see below
-      await(op.execute());
+      addClientListener(listener, null, null);
    }
 
    @Override
    public void addClientListener(Object listener, Object[] filterFactoryParams, Object[] converterFactoryParams) {
       assertRemoteCacheManagerIsStarted();
-      byte[][] marshalledFilterParams = marshallParams(filterFactoryParams);
-      byte[][] marshalledConverterParams = marshallParams(converterFactoryParams);
-      AddClientListenerOperation op = operationsFactory.newAddClientListenerOperation(
-            listener, marshalledFilterParams, marshalledConverterParams, dataFormat);
-      // No timeout: transferring initial state can take a while, socket timeout setting is not applicable here
-      await(op.execute());
+      AddClientListenerOperation op = operationsFactory.newAddClientListenerOperation(listener, filterFactoryParams, converterFactoryParams);
+      // Must be registered before executing to ensure this is always ran on the event loop, thus guaranteeing
+      // events cannot be received until after this has been processed
+      // We must wait on the stage to ensure the listeners are indeed registered fully before returning
+      await(dispatcher.executeAddListener(op));
    }
 
    @Override
-   public SocketAddress addNearCacheListener(Object listener, int bloomBits) {
+   public Channel addNearCacheListener(Object listener, int bloomBits) {
       throw new UnsupportedOperationException("Adding a near cache listener to a RemoteCache is not supported!");
-   }
-
-   private byte[][] marshallParams(Object[] params) {
-      if (params == null)
-         return org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY_ARRAY;
-
-      byte[][] marshalledParams = new byte[params.length][];
-      for (int i = 0; i < marshalledParams.length; i++) {
-         byte[] bytes = keyToBytes(params[i]);// should be small
-         marshalledParams[i] = bytes;
-      }
-
-      return marshalledParams;
    }
 
    @Override
    public void removeClientListener(Object listener) {
       assertRemoteCacheManagerIsStarted();
-      RemoveClientListenerOperation op = operationsFactory.newRemoveClientListenerOperation(listener);
-      await(op.execute());
+      byte[] listenerId = clientListenerNotifier.findListenerId(listener);
+      if (listenerId == null) {
+         return;
+      }
+      SocketAddress sa = clientListenerNotifier.findAddress(listenerId);
+      if (sa == null) {
+         return;
+      }
+      HotRodOperation<Void> op = operationsFactory.newRemoveClientListenerOperation(listener);
+      // By registering this here, we are guaranteed this will be ran on the event loop for this listener
+      CompletableFuture<Void> removalStage = op.asCompletableFuture().thenAccept(___ -> {
+         clientListenerNotifier.removeClientListener(listenerId);
+         dispatcher.removeListener(sa, listenerId);
+      });
+      dispatcher.executeOnSingleAddress(op, sa);
+      // This is convoluted but to ensure the caller doesn't return until the listener is completely removed
+      // we have to wait on the other stage
+      await(removalStage);
    }
 
    @Override
@@ -606,45 +648,55 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       if (flags.length == 0) {
          return this;
       }
-      int existingFlags = operationsFactory.flags();
       int newFlags = 0;
       for (Flag flag : flags) {
          newFlags |= flag.getFlagInt();
       }
-      int resultingFlags = (int) EnumUtil.mergeBitSets(existingFlags, newFlags);
-      if (resultingFlags == existingFlags) {
+      int resultingFlags = (int) EnumUtil.mergeBitSets(flagInt, newFlags);
+      if (resultingFlags == flagInt) {
          return this;
       }
-      RemoteCacheImpl<K, V> instance = newInstance(resultingFlags);
-      instance.dataFormat = dataFormat;
-      return instance;
+      return newInstance(resultingFlags);
    }
 
    @Override
    public InternalRemoteCache<K, V> noFlags() {
-      if (operationsFactory.flags() == 0) {
-         return this;
-      }
-      RemoteCacheImpl<K, V> instance = newInstance(0);
-      instance.dataFormat = dataFormat;
-      return instance;
+      return newInstance(0);
+   }
+
+   @Override
+   public Set<Flag> flags() {
+      return EnumUtil.enumSetOf(flagInt, Flag.class);
+   }
+
+   @Override
+   public int flagInt() {
+      return flagInt;
+   }
+
+   @Override
+   public CacheOperationsFactory getOperationsFactory() {
+      return operationsFactory;
+   }
+
+   @Override
+   public ClientListenerNotifier getListenerNotifier() {
+      return clientListenerNotifier;
    }
 
    @Override
    public CompletableFuture<V> getAsync(Object key) {
       assertRemoteCacheManagerIsStarted();
-      byte[] keyBytes = keyToBytes(key);
-      GetOperation<V> gco = operationsFactory.newGetKeyOperation(key, keyBytes, dataFormat);
-      CompletableFuture<V> result = gco.execute();
+      HotRodOperation<V> op = operationsFactory.newGetOperation(key);
       if (log.isTraceEnabled()) {
-         result.thenAccept(value -> log.tracef("For key(%s) returning %s", key, value));
+         op.asCompletableFuture().thenAccept(value -> log.tracef("For key(%s) returning %s", key, value));
       }
-
-      return result;
+      return dispatcher.execute(op).toCompletableFuture();
    }
 
    public CompletionStage<PingResponse> ping() {
-      return operationsFactory.newFaultTolerantPingOperation().execute();
+      return dispatcher.execute(operationsFactory.newPingOperation())
+            .toCompletableFuture();
    }
 
    @Override
@@ -671,7 +723,9 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    @Override
    public CloseableIterator<K> keyIterator(IntSet segments) {
-      return operationsFactory.getCodec().keyIterator(this, operationsFactory, segments, batchSize);
+      return new IteratorMapper<>(retrieveEntries(
+            // Use the ToEmptyBytesKeyValueFilterConverter to remove value payload
+            Codec30.EMPTY_VALUE_CONVERTER, segments, batchSize), e -> (K) e.getKey());
    }
 
    @Override
@@ -681,7 +735,11 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    @Override
    public CloseableIterator<Entry<K, V>> entryIterator(IntSet segments) {
-      return operationsFactory.getCodec().entryIterator(this, segments, batchSize);
+      return castEntryIterator(retrieveEntries(null, segments, batchSize));
+   }
+
+   protected <K, V> CloseableIterator<Map.Entry<K, V>> castEntryIterator(CloseableIterator iterator) {
+      return iterator;
    }
 
    @Override
@@ -703,17 +761,13 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
             marshalledParams.put(entry.getKey(), keyToBytes(entry.getValue()));
          }
       }
-      Object keyHint = null;
-      if (key != null) {
-         keyHint = isObjectStorage ? key : keyToBytes(key);
-      }
-      ExecuteOperation<T> op = operationsFactory.newExecuteOperation(taskName, marshalledParams, keyHint, dataFormat);
-      return await(op.execute());
+      HotRodOperation<T> op = operationsFactory.executeOperation(taskName, marshalledParams, key);
+      return await(dispatcher.execute(op));
    }
 
    @Override
    public CacheTopologyInfo getCacheTopologyInfo() {
-      return operationsFactory.getCacheTopologyInfo();
+      return dispatcher.getCacheTopologyInfo(name);
    }
 
    @Override
@@ -725,36 +779,30 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    @Override
    public <T, U> InternalRemoteCache<T, U> withDataFormat(DataFormat newDataFormat) {
       Objects.requireNonNull(newDataFormat, "Data Format must not be null")
-            .initialize(remoteCacheManager, name, isObjectStorage);
-      RemoteCacheImpl<T, U> instance = newInstance();
-      instance.dataFormat = newDataFormat;
+            .initialize(remoteCacheManager, name);
+      return newInstance(newDataFormat);
+   }
+
+   protected <T, U> InternalRemoteCache<T, U> newInstance(DataFormat dataFormat) {
+      RemoteCacheImpl<T,U> instance = new RemoteCacheImpl<>(this, flagInt);
+      instance.dataFormat = dataFormat;
+      instance.init(batchSize, dispatcher);
       return instance;
    }
 
-   private <T, U> RemoteCacheImpl<T, U> newInstance() {
-      RemoteCacheImpl<T, U> copy = new RemoteCacheImpl<>(this.remoteCacheManager, name, clientStatistics);
-      copy.init(this.operationsFactory, this.batchSize);
-      return copy;
+   protected <T, U> InternalRemoteCache<T, U> newInstance(int flags) {
+      return new RemoteCacheImpl<>(this, flags);
    }
 
-   private <T, U> RemoteCacheImpl<T, U> newInstance(int flags) {
-      RemoteCacheImpl<T, U> copy = new RemoteCacheImpl<>(this.remoteCacheManager, name, clientStatistics);
-      OperationsFactory newOperationsFactory = remoteCacheManager.createOperationFactory(name,
-            remoteCacheManager.getConfiguration().forceReturnValues(), clientStatistics, flags);
-      copy.init(newOperationsFactory, this.batchSize);
-      return copy;
-   }
-
-   public void resolveStorage(boolean objectStorage) {
-      this.isObjectStorage = objectStorage;
-      this.dataFormat.initialize(remoteCacheManager, name, isObjectStorage);
+   public void resolveStorage() {
+      this.dataFormat.initialize(remoteCacheManager, name);
    }
 
    @Override
-   public void resolveStorage(MediaType key, MediaType value, boolean objectStorage) {
+   public void resolveStorage(MediaType key, MediaType value) {
       // Set the storage first and initialize the current data format.
       // We need this to check if the key type match.
-      resolveStorage(objectStorage);
+      resolveStorage();
 
       if (key != null && key != MediaType.APPLICATION_UNKNOWN && !dataFormat.getKeyType().match(key)) {
          DataFormat.Builder server = DataFormat.builder()
@@ -765,13 +813,13 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
                .from(this.dataFormat)
                .serverDataFormat(server)
                .build();
-         resolveStorage(objectStorage);
+         resolveStorage();
 
          // Now proceed and check if the server has an available marshaller.
          // This means that the client DOES NOT have a marshaller capable of converting to the server key type.
          // Therefore, it will utilize the default fallback and NOT convert the object.
          // This could cause additional redirections on the server side and poor performance for the client.
-         if (!GLOBAL_STATE_INTERNAL_CACHES.contains(name) && remoteCacheManager.getMarshallerRegistry().getMarshaller(key) == null) {
+         if (remoteCacheManager.getMarshallerRegistry().getMarshaller(key) == null) {
             log.serverKeyTypeNotRecognized(key);
          }
       }
@@ -787,13 +835,9 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       return false;
    }
 
-   public boolean isObjectStorage() {
-      return isObjectStorage;
-   }
-
    @Override
    public boolean hasForceReturnFlag() {
-      return operationsFactory.hasFlag(Flag.FORCE_RETURN_VALUE);
+      return EnumUtil.containsAny(flagInt, Flag.FORCE_RETURN_VALUE.getFlagInt());
    }
 
    @Override
@@ -804,5 +848,235 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    @Override
    public String toString() {
       return "RemoteCache " + name;
+   }
+
+   @Override
+   public CompletionStage<CacheConfiguration> configuration() {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public CompletionStage<V> get(K key, CacheOptions options) {
+      assertRemoteCacheManagerIsStarted();
+      HotRodOperation<V> op = new AdvancedHotRodOperation<>(operationsFactory.newGetOperation(key), options);
+      return dispatcher.execute(op).toCompletableFuture();
+   }
+
+   @Override
+   public CompletionStage<CacheEntry<K, V>> getEntry(K key, CacheOptions options) {
+      assertRemoteCacheManagerIsStarted();
+      HotRodOperation<GetWithMetadataOperation.GetWithMetadataResult<V>> op = operationsFactory.newGetWithMetadataOperation(key, null);
+      return dispatcher.execute(new AdvancedHotRodOperation<>(op, options))
+            .thenApply(GetWithMetadataOperation.GetWithMetadataResult::value)
+            .thenApply(CacheEntryConversion.createCacheEntry(key));
+   }
+
+   @Override
+   public CompletionStage<CacheEntry<K, V>> putIfAbsent(K key, V value, CacheWriteOptions options) {
+      assertRemoteCacheManagerIsStarted();
+      long lifespan = CacheOptionsUtil.lifespan(options, defaultLifespan, TimeUnit.MILLISECONDS);
+      long maxIdle = CacheOptionsUtil.maxIdle(options, defaultMaxIdleTime, TimeUnit.MILLISECONDS);
+      HotRodOperation<MetadataValue<V>> op = operationsFactory.newPutIfAbsentOperation(key, value, lifespan, TimeUnit.MILLISECONDS, maxIdle, TimeUnit.MILLISECONDS);
+      return dispatcher.execute(new AdvancedHotRodOperation<>(op, options, PrivateHotRodFlag.FORCE_RETURN_VALUE.getFlagInt()))
+            .thenApply(CacheEntryConversion.createCacheEntry(key));
+   }
+
+   @Override
+   public CompletionStage<Boolean> setIfAbsent(K key, V value, CacheWriteOptions options) {
+      return putIfAbsent(key, value, options).thenApply(e -> e == null || e.value() == null);
+   }
+
+   @Override
+   public CompletionStage<CacheEntry<K, V>> put(K key, V value, CacheWriteOptions options) {
+      assertRemoteCacheManagerIsStarted();
+      long lifespan = CacheOptionsUtil.lifespan(options, defaultLifespan, TimeUnit.MILLISECONDS);
+      long maxIdle = CacheOptionsUtil.maxIdle(options, defaultMaxIdleTime, TimeUnit.MILLISECONDS);
+      HotRodOperation<MetadataValue<V>> op = operationsFactory.newPutKeyValueOperation(key, value, lifespan, TimeUnit.MILLISECONDS,
+            maxIdle, TimeUnit.MILLISECONDS);
+      return dispatcher.execute(new AdvancedHotRodOperation<>(op, options, PrivateHotRodFlag.FORCE_RETURN_VALUE.getFlagInt()))
+            .thenApply(CacheEntryConversion.createCacheEntry(key));
+   }
+
+   @Override
+   public CompletionStage<Void> set(K key, V value, CacheWriteOptions options) {
+      assertRemoteCacheManagerIsStarted();
+      long lifespan = CacheOptionsUtil.lifespan(options, defaultLifespan, TimeUnit.MILLISECONDS);
+      long maxIdle = CacheOptionsUtil.maxIdle(options, defaultMaxIdleTime, TimeUnit.MILLISECONDS);
+      HotRodOperation<MetadataValue<V>> op = operationsFactory.newPutKeyValueOperation(key, value, lifespan, TimeUnit.MILLISECONDS,
+            maxIdle, TimeUnit.MILLISECONDS);
+      // By default, does not return previous value.
+      return dispatcher.execute(new AdvancedHotRodOperation<>(op, options))
+            .thenApply(CompletableFutures.toNullFunction());
+   }
+
+   @Override
+   public CompletionStage<Boolean> replace(K key, V value, CacheEntryVersion version, CacheWriteOptions options) {
+      assertRemoteCacheManagerIsStarted();
+      if (!(Objects.requireNonNull(version) instanceof CacheEntryVersionImpl cevi))
+         throw new IllegalArgumentException("Only CacheEntryVersionImpl instances are supported!");
+
+      long lifespan = CacheOptionsUtil.lifespan(options, defaultLifespan, TimeUnit.MILLISECONDS);
+      long maxIdle = CacheOptionsUtil.maxIdle(options, defaultMaxIdleTime, TimeUnit.MILLISECONDS);
+      HotRodOperation<VersionedOperationResponse<V>> op = operationsFactory.newReplaceIfUnmodifiedOperation(
+            key, value, lifespan, TimeUnit.MILLISECONDS, maxIdle, TimeUnit.MILLISECONDS, cevi.version());
+      return dispatcher.execute(new AdvancedHotRodOperation<>(op, options)).thenApply(r -> r.getCode().isUpdated());
+   }
+
+   @Override
+   public CompletionStage<CacheEntry<K, V>> getOrReplaceEntry(K key, V value, CacheEntryVersion version, CacheWriteOptions options) {
+      assertRemoteCacheManagerIsStarted();
+      if (!(Objects.requireNonNull(version) instanceof CacheEntryVersionImpl cevi))
+         throw new IllegalArgumentException("Only CacheEntryVersionImpl instances are supported!");
+
+      long lifespan = CacheOptionsUtil.lifespan(options, defaultLifespan, TimeUnit.MILLISECONDS);
+      long maxIdle = CacheOptionsUtil.maxIdle(options, defaultMaxIdleTime, TimeUnit.MILLISECONDS);
+      var op = operationsFactory.newReplaceIfUnmodifiedOperation(key, value, lifespan, TimeUnit.MILLISECONDS,
+            maxIdle, TimeUnit.MILLISECONDS, cevi.version());
+      return dispatcher.execute(new AdvancedHotRodOperation<>(op, options))
+            .thenApply(r -> {
+               if (r.getCode().isUpdated()) return null;
+               return new CacheEntryImpl<>(key, r.getValue(), new CacheEntryMetadataImpl<V>(r.getMetadata()));
+            });
+   }
+
+   @Override
+   public CompletionStage<Boolean> remove(K key, CacheOptions options) {
+      return getAndRemove(key, options).thenApply(e -> e != null && e.value() != null);
+   }
+
+   @Override
+   public CompletionStage<Boolean> remove(K key, CacheEntryVersion version, CacheOptions options) {
+      assertRemoteCacheManagerIsStarted();
+      if (!(Objects.requireNonNull(version) instanceof CacheEntryVersionImpl cevi))
+         throw new IllegalArgumentException("Only CacheEntryVersionImpl instances are supported!");
+
+      var op = operationsFactory.newRemoveIfUnmodifiedOperation(key, cevi.version());
+      return dispatcher.execute(new AdvancedHotRodOperation<>(op, options))
+            .thenApply(res -> res != null && res.getValue() != null);
+   }
+
+   @Override
+   public CompletionStage<CacheEntry<K, V>> getAndRemove(K key, CacheOptions options) {
+      assertRemoteCacheManagerIsStarted();
+      HotRodOperation<MetadataValue<V>> op = operationsFactory.newRemoveOperation(key);
+      return dispatcher.execute(new AdvancedHotRodOperation<>(op, options, PrivateHotRodFlag.FORCE_RETURN_VALUE.getFlagInt()))
+            .thenApply(CacheEntryConversion.createCacheEntry(key));
+   }
+
+   @Override
+   public Flow.Publisher<K> keys(CacheOptions options) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public Flow.Publisher<CacheEntry<K, V>> entries(CacheOptions options) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public CompletionStage<Void> putAll(Map<K, V> entries, CacheWriteOptions options) {
+      assertRemoteCacheManagerIsStarted();
+      long lifespan = CacheOptionsUtil.lifespan(options, defaultLifespan, TimeUnit.MILLISECONDS);
+      long maxIdle = CacheOptionsUtil.maxIdle(options, defaultMaxIdleTime, TimeUnit.MILLISECONDS);
+      if (log.isTraceEnabled()) {
+         log.tracef("About to putAll entries (%s) lifespan:%d, maxIdle:%d", entries, lifespan, maxIdle);
+      }
+      var op = new PutAllBulkOperation(entries, dataFormat,
+            serialized -> operationsFactory.newPutAllBytesOperation(serialized, lifespan, TimeUnit.MILLISECONDS, maxIdle, TimeUnit.MILLISECONDS));
+      return dispatcher.executeBulk(name, op);
+   }
+
+   @Override
+   public CompletionStage<Void> putAll(Flow.Publisher<CacheEntry<K, V>> entries, CacheWriteOptions options) {
+      return Flowable.fromPublisher(FlowAdapters.toPublisher(entries))
+            .collect(Collectors.toMap(CacheEntry::key, CacheEntry::value))
+            .concatMapCompletable(map -> Completable.fromCompletionStage(putAll(map, options)))
+            .toCompletionStage(null);
+   }
+
+   @Override
+   public Flow.Publisher<CacheEntry<K, V>> getAll(Set<K> keys, CacheOptions options) {
+      assertRemoteCacheManagerIsStarted();
+      if (log.isTraceEnabled()) {
+         log.tracef("About to getAll entries (%s)", keys);
+      }
+      var op = new GetAllBulkOperation<K, V>(keys, dataFormat, serialized ->
+            new AdvancedHotRodOperation<>(operationsFactory.newGetAllBytesOperation(serialized), options));
+      CompletionStage<Map<K, V>> cs = dispatcher.executeBulk(name, op)
+            .thenApply(Collections::unmodifiableMap);
+      // FIXME: getAllOperation doesn't include entry metadata.
+      Flowable<CacheEntry<K, V>> flowable = Flowable.defer(() -> Flowable.fromCompletionStage(cs))
+            .concatMapIterable(Map::entrySet)
+            .map(e -> new CacheEntryImpl<>(e.getKey(), e.getValue(), null));
+      return FlowAdapters.toFlowPublisher(flowable);
+   }
+
+   @Override
+   public Flow.Publisher<CacheEntry<K, V>> getAll(CacheOptions options, K[] keys) {
+      return getAll(Set.of(keys), options);
+   }
+
+   @Override
+   public Flow.Publisher<K> removeAll(Set<K> keys, CacheWriteOptions options) {
+      return removeAll(Flowable.fromIterable(keys), options);
+   }
+
+   @Override
+   public Flow.Publisher<K> removeAll(Flow.Publisher<K> keys, CacheWriteOptions options) {
+      return removeAll(Flowable.fromPublisher(FlowAdapters.toPublisher(keys)), options);
+   }
+
+   private Flow.Publisher<K> removeAll(Flowable<K> keys, CacheWriteOptions options) {
+      assertRemoteCacheManagerIsStarted();
+      Flowable<K> flowable = keys.concatMapMaybe(k -> Single.fromCompletionStage(remove(k, options))
+            .mapOptional(removed -> removed ? Optional.of(k) : Optional.empty()));
+      return FlowAdapters.toFlowPublisher(flowable);
+   }
+
+   @Override
+   public Flow.Publisher<CacheEntry<K, V>> getAndRemoveAll(Set<K> keys, CacheWriteOptions options) {
+      return getAndRemoveAll(Flowable.fromIterable(keys), options);
+   }
+
+   @Override
+   public Flow.Publisher<CacheEntry<K, V>> getAndRemoveAll(Flow.Publisher<K> keys, CacheWriteOptions options) {
+      return getAndRemoveAll(Flowable.fromPublisher(FlowAdapters.toPublisher(keys)), options);
+   }
+
+   private Flow.Publisher<CacheEntry<K, V>> getAndRemoveAll(Flowable<K> keys, CacheWriteOptions options) {
+      assertRemoteCacheManagerIsStarted();
+      Flowable<CacheEntry<K, V>> flowable = keys
+            .concatMapMaybe(k -> Maybe.fromCompletionStage(getAndRemove(k, options)));
+      return FlowAdapters.toFlowPublisher(flowable);
+   }
+
+   @Override
+   public CompletionStage<Long> estimateSize(CacheOptions options) {
+      assertRemoteCacheManagerIsStarted();
+      HotRodOperation<Integer> op = operationsFactory.newSizeOperation();
+      return dispatcher.execute(new AdvancedHotRodOperation<>(op, options))
+            .thenApply(Integer::longValue);
+   }
+
+   @Override
+   public CompletionStage<Void> clear(CacheOptions options) {
+      assertRemoteCacheManagerIsStarted();
+      HotRodOperation<Void> op = operationsFactory.newClearOperation();
+      return dispatcher.execute(new AdvancedHotRodOperation<>(op, options));
+   }
+
+   @Override
+   public Flow.Publisher<CacheEntryEvent<K, V>> listen(CacheListenerOptions options, CacheEntryEventType[] types) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public <T> Flow.Publisher<CacheEntryProcessorResult<K, T>> process(Set<K> keys, AsyncCacheEntryProcessor<K, V, T> task, CacheOptions options) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public <T> Flow.Publisher<CacheEntryProcessorResult<K, T>> processAll(AsyncCacheEntryProcessor<K, V, T> processor, CacheProcessorOptions options) {
+      throw new UnsupportedOperationException();
    }
 }

@@ -1,22 +1,25 @@
 package org.infinispan.quarkus.server.runtime.graal;
 
-import com.oracle.svm.core.annotate.Alias;
-import com.oracle.svm.core.annotate.Delete;
-import com.oracle.svm.core.annotate.Substitute;
-import com.oracle.svm.core.annotate.TargetClass;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
+import java.util.concurrent.ExecutorService;
+
+import javax.management.ObjectName;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
-import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.commons.marshall.Marshaller;
 
-import javax.management.ObjectName;
-import java.util.concurrent.ExecutorService;
+import com.oracle.svm.core.annotate.Alias;
+import com.oracle.svm.core.annotate.Delete;
+import com.oracle.svm.core.annotate.Substitute;
+import com.oracle.svm.core.annotate.TargetClass;
+
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
 
 @Substitute
 @TargetClass(className = "org.infinispan.client.hotrod.impl.transport.netty.DefaultTransportFactory")
@@ -39,11 +42,12 @@ final class SubstituteRemoteCacheManager {
     private Marshaller marshaller;
     @Alias
     private Configuration configuration;
+    @Alias
+    protected OperationDispatcher dispatcher;
 
     @Substitute
-    private void initRemoteCache(InternalRemoteCache<?, ?> remoteCache, OperationsFactory operationsFactory) {
-        // Invoke the init method that doesn't have the JMX ObjectName argument
-        remoteCache.init(operationsFactory, configuration);
+    private void initRemoteCache(InternalRemoteCache<?, ?> remoteCache) {
+        remoteCache.init(configuration, dispatcher);
     }
 
     @Substitute
@@ -72,8 +76,7 @@ final class SubstituteRemoteCacheImpl {
     // Sadly this method is public, so technically a user could get a Runtime error if they were referencing
     // it before - but it is the only way to make graal happy
     @Delete
-    public void init(OperationsFactory operationsFactory,
-                     Configuration configuration, ObjectName jmxParent) {
+    public void init(Configuration configuration, OperationDispatcher dispatcher, ObjectName jmxParent) {
     }
 }
 

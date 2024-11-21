@@ -1,14 +1,11 @@
 package org.infinispan.client.hotrod.counter.operation;
 
-import java.util.concurrent.atomic.AtomicReference;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientTopology;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.operations.CacheUnmarshaller;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.counter.api.CounterManager;
+
+import io.netty.buffer.ByteBuf;
 
 /**
  * A counter operation for {@link CounterManager#isDefined(String)}.
@@ -18,18 +15,22 @@ import org.infinispan.counter.api.CounterManager;
  */
 public class IsDefinedOperation extends BaseCounterOperation<Boolean> {
 
-   public IsDefinedOperation(ChannelFactory channelFactory, AtomicReference<ClientTopology> clientTopology,
-                             Configuration cfg, String counterName) {
-      super(COUNTER_IS_DEFINED_REQUEST, COUNTER_IS_DEFINED_RESPONSE, channelFactory, clientTopology, cfg, counterName, false);
+   public IsDefinedOperation(String counterName) {
+      super(counterName, false);
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      sendHeaderAndCounterNameAndRead(channel);
+   public Boolean createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
+      return status == NO_ERROR_STATUS;
    }
 
    @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      complete(status == NO_ERROR_STATUS);
+   public short requestOpCode() {
+      return COUNTER_IS_DEFINED_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return COUNTER_IS_DEFINED_RESPONSE;
    }
 }

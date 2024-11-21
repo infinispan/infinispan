@@ -1,27 +1,18 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import java.net.SocketAddress;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.MetadataValue;
-import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
-import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.MetadataValueImpl;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.configuration.ClassAllowList;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
-import net.jcip.annotations.Immutable;
 
 /**
  * Corresponds to getWithMetadata operation as described by
@@ -30,55 +21,34 @@ import net.jcip.annotations.Immutable;
  * @author Tristan Tarrant
  * @since 5.2
  */
-@Immutable
-public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataValue<V>> implements RetryAwareCompletionStage<MetadataValue<V>> {
+public class GetWithMetadataOperation<V> extends AbstractKeyOperation<GetWithMetadataOperation.GetWithMetadataResult<V>> {
+
+   public record GetWithMetadataResult<V>(MetadataValue<V> value, boolean retried) {};
 
    private static final Log log = LogFactory.getLog(GetWithMetadataOperation.class);
 
-   private final SocketAddress preferredServer;
+   private final Channel preferredChannel;
 
-   private volatile boolean retried;
-
-   public GetWithMetadataOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes,
-                                   byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags,
-                                   Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics,
-                                   SocketAddress preferredServer) {
-      super(GET_WITH_METADATA, GET_WITH_METADATA_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, clientTopology,
-            flags, cfg, dataFormat, clientStatistics, null);
-      this.preferredServer = preferredServer;
-   }
-
-   public RetryAwareCompletionStage<MetadataValue<V>> internalExecute() {
-      // The super.execute returns this, so the cast is safe
-      //noinspection unchecked
-      return (RetryAwareCompletionStage<MetadataValue<V>>) super.execute();
+   public GetWithMetadataOperation(InternalRemoteCache<?, ?> remoteCache, byte[] keyBytes, Channel preferredChannel) {
+      super(remoteCache, keyBytes);
+      // We should always be passing resolved addresses here to confirm it matches
+      this.preferredChannel = preferredChannel;
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      scheduleRead(channel);
-      sendArrayOperation(channel, keyBytes);
+   public GetWithMetadataResult<V> createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
+      boolean retried = preferredChannel != null && !preferredChannel.equals(decoder.getChannel());
+      MetadataValue<V> metadataValue = readMetadataValue(buf, status, unmarshaller);
+      return new GetWithMetadataResult<>(metadataValue, retried);
    }
 
    @Override
-   protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
-      if (retryCount == 0 && preferredServer != null) {
-         channelFactory.fetchChannelAndInvoke(preferredServer, this);
-      } else {
-         retried = retryCount != 0;
-         super.fetchChannelAndInvoke(retryCount, failedServers);
-      }
+   public void handleStatsCompletion(ClientStatistics statistics, long startTime, short status,
+                              GetWithMetadataOperation.GetWithMetadataResult<V> responseValue) {
+      statistics.dataRead(responseValue.value != null, startTime, 1);
    }
 
-   @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      MetadataValue<V> metadataValue = readMetadataValue(buf, status, dataFormat(), cfg.getClassAllowList());
-      statsDataRead(metadataValue != null);
-      complete(metadataValue);
-   }
-
-   public static <V> MetadataValue<V> readMetadataValue(ByteBuf buf, short status, DataFormat dataFormat,
-         ClassAllowList classAllowList) {
+   public static <V> MetadataValue<V> readMetadataValue(ByteBuf buf, short status, CacheUnmarshaller unmarshaller) {
       if (HotRodConstants.isNotExist(status) || (!HotRodConstants.isSuccess(status) && !HotRodConstants.hasPrevious(status))) {
          return null;
       }
@@ -99,13 +69,18 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
       if (log.isTraceEnabled()) {
          log.tracef("Received version: %d", version);
       }
-      V value = dataFormat.valueToObj(ByteBufUtil.readArray(buf), classAllowList);
+      V value = unmarshaller.readValue(buf);
 
       return new MetadataValueImpl<>(creation, lifespan, lastUsed, maxIdle, version, value);
    }
 
    @Override
-   public Boolean wasRetried() {
-      return isDone() ? retried : null;
+   public short requestOpCode() {
+      return GET_WITH_METADATA;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return GET_WITH_METADATA_RESPONSE;
    }
 }

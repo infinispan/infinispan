@@ -2,12 +2,12 @@ package org.infinispan.client.hotrod.impl.protocol;
 
 import java.util.Map;
 
-import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.MetadataValue;
+import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.impl.operations.CacheUnmarshaller;
 import org.infinispan.client.hotrod.impl.operations.GetWithMetadataOperation;
+import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.commons.configuration.ClassAllowList;
-import org.infinispan.commons.marshall.Marshaller;
 
 import io.netty.buffer.ByteBuf;
 
@@ -16,14 +16,14 @@ import io.netty.buffer.ByteBuf;
  */
 public class Codec40 extends Codec31 {
    @Override
-   public HeaderParams writeHeader(ByteBuf buf, HeaderParams params) {
-      return writeHeader(buf, params, HotRodConstants.VERSION_40);
+   public void writeHeader(ByteBuf buf, long messageId, ClientTopology clientTopology, HotRodOperation<?> operation) {
+      writeHeader(buf, messageId, clientTopology, operation, HotRodConstants.VERSION_40);
    }
 
    @Override
-   public Object returnPossiblePrevValue(ByteBuf buf, short status, DataFormat dataFormat, int flags, ClassAllowList allowList, Marshaller marshaller) {
+   public Object returnPossiblePrevValue(ByteBuf buf, short status, CacheUnmarshaller unmarshaller) {
       if (HotRodConstants.hasPrevious(status)) {
-         MetadataValue<Object> metadataValue = GetWithMetadataOperation.readMetadataValue(buf, status, dataFormat, allowList);
+         MetadataValue<Object> metadataValue = GetWithMetadataOperation.readMetadataValue(buf, status, unmarshaller);
          return metadataValue != null ? metadataValue.getValue() : null;
       } else {
          return null;
@@ -31,10 +31,16 @@ public class Codec40 extends Codec31 {
    }
 
    @Override
-   protected HeaderParams writeHeader(ByteBuf buf, HeaderParams params, byte version) {
-      HeaderParams headerParams = super.writeHeader(buf, params, version);
-      writeOtherParams(buf, params.otherParams());
-      return headerParams;
+   public <V> MetadataValue<V> returnMetadataValue(ByteBuf buf, short status, CacheUnmarshaller unmarshaller) {
+      if (!HotRodConstants.hasPrevious(status)) return null;
+
+      return GetWithMetadataOperation.readMetadataValue(buf, status, unmarshaller);
+   }
+
+   @Override
+   protected void writeHeader(ByteBuf buf, long messageId, ClientTopology clientTopology, HotRodOperation<?> operation, byte version) {
+      super.writeHeader(buf, messageId, clientTopology, operation, version);
+      writeOtherParams(buf, operation.additionalParameters());
    }
 
    private void writeOtherParams(ByteBuf buf, Map<String, byte[]> parameters) {
@@ -51,17 +57,7 @@ public class Codec40 extends Codec31 {
    }
 
    @Override
-   public int estimateSizeMultimapSupportsDuplicated() {
-      return 1;
-   }
-
-   @Override
    public void writeMultimapSupportDuplicates(ByteBuf buf, boolean supportsDuplicates) {
       buf.writeByte(supportsDuplicates ? 1 : 0);
-   }
-
-   @Override
-   public boolean isUnsafeForTheHandshake() {
-      return true;
    }
 }

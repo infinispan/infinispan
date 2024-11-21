@@ -11,9 +11,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import javax.net.ssl.SNIHostName;
 import javax.net.ssl.SSLParameters;
@@ -26,8 +24,6 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.AuthenticationConfiguration;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.SslConfiguration;
-import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
-import org.infinispan.client.hotrod.impl.topology.ClusterInfo;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.util.SaslUtils;
@@ -36,23 +32,20 @@ import org.infinispan.commons.util.Util;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelPipeline;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.timeout.IdleStateHandler;
 
 class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
    private static final Log log = LogFactory.getLog(ChannelInitializer.class);
 
    private final Bootstrap bootstrap;
    private final SocketAddress unresolvedAddress;
-   private final OperationsFactory operationsFactory;
    private final Configuration configuration;
-   private final ChannelFactory channelFactory;
-   private final ClusterInfo cluster;
-   private ChannelPool channelPool;
-   private volatile boolean isFirstPing = true;
+   private final String hostNameToUse;
    private final SslContext sslContext;
+   private final OperationDispatcher dispatcher;
+   private final Consumer<ChannelPipeline> pipelineDecorator;
 
    private static final Provider[] SECURITY_PROVIDERS;
 
@@ -74,21 +67,20 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
       SECURITY_PROVIDERS = providers.toArray(new Provider[0]);
    }
 
-   ChannelInitializer(Bootstrap bootstrap, SocketAddress unresolvedAddress, OperationsFactory operationsFactory, Configuration configuration, ChannelFactory channelFactory, ClusterInfo cluster, SslContext sslContext) {
+   ChannelInitializer(Bootstrap bootstrap, SocketAddress unresolvedAddress, Configuration configuration,
+                      String hostNameToUse, SslContext sslContext, OperationDispatcher dispatcher,
+                      Consumer<ChannelPipeline> pipelineDecorator) {
       this.bootstrap = bootstrap;
       this.unresolvedAddress = unresolvedAddress;
-      this.operationsFactory = operationsFactory;
       this.configuration = configuration;
-      this.channelFactory = channelFactory;
-      this.cluster = cluster;
+      this.hostNameToUse = hostNameToUse;
       this.sslContext = sslContext;
+      this.dispatcher = dispatcher;
+      this.pipelineDecorator = pipelineDecorator;
    }
 
-   CompletableFuture<Channel> createChannel() {
-      ChannelFuture connect = bootstrap.clone().connect();
-      ActivationFuture activationFuture = new ActivationFuture();
-      connect.addListener(activationFuture);
-      return activationFuture;
+   ChannelFuture createChannel() {
+      return bootstrap.clone().connect();
    }
 
    @Override
@@ -103,34 +95,24 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
       AuthenticationConfiguration authentication = configuration.security().authentication();
       if (authentication.enabled()) {
          initAuthentication(channel, authentication);
-      }
-
-      if (configuration.connectionPool().minEvictableIdleTime() > 0) {
-         channel.pipeline().addLast("idle-state-handler",
-               new IdleStateHandler(0, 0, configuration.connectionPool().minEvictableIdleTime(), TimeUnit.MILLISECONDS));
-      }
-      ChannelRecord channelRecord = new ChannelRecord(unresolvedAddress, channelPool);
-      channel.attr(ChannelRecord.KEY).set(channelRecord);
-      if (isFirstPing) {
-         isFirstPing = false;
-         channel.pipeline().addLast(InitialPingHandler.NAME, new InitialPingHandler(operationsFactory.newPingOperation(false)));
       } else {
          channel.pipeline().addLast(ActivationHandler.NAME, ActivationHandler.INSTANCE);
       }
-      channel.pipeline().addLast(HeaderDecoder.NAME, new HeaderDecoder(channelFactory, configuration, operationsFactory.getListenerNotifier()));
-      if (configuration.connectionPool().minEvictableIdleTime() > 0) {
-         // This handler needs to be the last so that HeaderDecoder has the chance to cancel the idle event
-         channel.pipeline().addLast(IdleStateHandlerProvider.NAME,
-               new IdleStateHandlerProvider(configuration.connectionPool().minIdle(), channelPool));
-      }
+
+      // TODO: make the reader and writer idle time configurable
+      channel.pipeline().addLast("idleStateHandler", new IdleStateHandlerNoUnvoid(60, 30, 0));
+      channel.pipeline().addLast("pingHandler", new PingHandler());
+      channel.pipeline().addLast(HeaderDecoder.NAME, new HeaderDecoder(configuration, dispatcher));
+
+      pipelineDecorator.accept(channel.pipeline());
    }
 
    private void initSsl(Channel channel) {
       SslConfiguration ssl = configuration.security().ssl();
       SslHandler sslHandler = sslContext.newHandler(channel.alloc(), ssl.sniHostName(), -1);
       String sniHostName;
-      if (cluster != null && cluster.getSniHostName() != null) {
-         sniHostName = cluster.getSniHostName();
+      if (hostNameToUse != null) {
+         sniHostName = hostNameToUse;
       } else if (ssl.sniHostName() != null) {
          sniHostName = ssl.sniHostName();
       } else {
@@ -162,7 +144,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
                authentication.serverName(), authentication.saslProperties(), authentication.callbackHandler());
       }
 
-      channel.pipeline().addLast(AuthHandler.NAME, new AuthHandler(authentication, saslClient, operationsFactory));
+      channel.pipeline().addLast(AuthHandler.NAME, new AuthHandler(authentication, saslClient));
    }
 
    private SaslClientFactory getSaslClientFactory(AuthenticationConfiguration configuration) {
@@ -189,30 +171,5 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
          }
       }
       throw new IllegalStateException("SaslClientFactory implementation not found");
-   }
-
-   void setChannelPool(ChannelPool channelPool) {
-      this.channelPool = channelPool;
-   }
-
-   private static class ActivationFuture extends CompletableFuture<Channel> implements ChannelFutureListener, BiConsumer<Channel, Throwable> {
-      @Override
-      public void operationComplete(ChannelFuture future) throws Exception {
-         if (future.isSuccess()) {
-            Channel channel = future.channel();
-            ChannelRecord.of(channel).whenComplete(this);
-         } else {
-            completeExceptionally(future.cause());
-         }
-      }
-
-      @Override
-      public void accept(Channel channel, Throwable throwable) {
-         if (throwable != null) {
-            completeExceptionally(throwable);
-         } else {
-            complete(channel);
-         }
-      }
    }
 }

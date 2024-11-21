@@ -132,10 +132,12 @@ public class StreamingOpsTest extends SingleCacheManagerTest {
 
    private int readAndCheckDataFromStream(InputStream k1is) throws IOException {
       int count = 0;
-      try (k1is) {
+      try {
          for (int b = k1is.read(); b >= 0; b = k1is.read(), count++) {
             assertEquals(count % 256, b);
          }
+      } finally {
+         k1is.close();
       }
       return count;
    }

@@ -327,7 +327,7 @@ public interface Log extends BasicLogger {
    HotRodClientException transactionTableNotStarted();
 
    @Message(value = "[%s] Invalid response operation. Expected %#x and received %#x", id = 4090)
-   InvalidResponseException invalidResponse(String cacheName, short opRespCode, double receivedOpCode);
+   InvalidResponseException invalidResponse(String cacheName, short opRespCode, short receivedOpCode);
 
    @Message(value = "MBean registration failed", id = 4091)
    HotRodClientException jmxRegistrationFailure(@Cause Throwable cause);

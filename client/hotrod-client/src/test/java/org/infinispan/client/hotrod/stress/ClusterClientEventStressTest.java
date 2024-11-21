@@ -34,12 +34,11 @@ import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.Test;
 
 @Test(groups = "stress", testName = "client.hotrod.event.ClusterClientEventStressTest", timeOut = 15*60*1000)
@@ -88,7 +87,7 @@ public class ClusterClientEventStressTest extends MultiHotRodServersTest {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder =
             HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       builder.addServer().host("127.0.0.1").port(port);
-      RemoteCacheManager rcm = new InternalRemoteCacheManager(builder.build());
+      RemoteCacheManager rcm = new RemoteCacheManager(builder.build());
       rcm.getCache();
       return rcm;
    }

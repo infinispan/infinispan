@@ -1,25 +1,19 @@
 package org.infinispan.client.hotrod.telemetry.impl;
 
-import java.nio.charset.StandardCharsets;
+import java.util.function.Function;
 
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
-
-import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
-import io.opentelemetry.context.Context;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
+import org.infinispan.client.hotrod.impl.operations.CacheOperationsFactory;
 
 public class TelemetryServiceImpl implements TelemetryService {
+   public static final TelemetryServiceImpl INSTANCE = new TelemetryServiceImpl();
 
-   private final W3CTraceContextPropagator propagator;
-
-   public TelemetryServiceImpl() {
-      propagator = W3CTraceContextPropagator.getInstance();
+   private TelemetryServiceImpl() {
    }
 
-   public void injectSpanContext(HeaderParams header) {
-      // Inject the request with the *current* Context, which contains client current Span if exists.
-      propagator.inject(Context.current(), header,
-            (carrier, paramKey, paramValue) ->
-                  carrier.otherParam(paramKey, paramValue.getBytes(StandardCharsets.UTF_8))
-      );
+   @Override
+   public <K, V> Function<InternalRemoteCache<K, V>, CacheOperationsFactory> wrapWithTelemetry(
+         Function<InternalRemoteCache<K, V>, CacheOperationsFactory> function) {
+      return rc -> new TelemetryCacheOperationsFactory(function.apply(rc));
    }
 }

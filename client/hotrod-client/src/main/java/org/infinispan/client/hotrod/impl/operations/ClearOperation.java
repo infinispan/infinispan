@@ -1,16 +1,10 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
-import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -20,21 +14,24 @@ import net.jcip.annotations.Immutable;
  * @since 4.1
  */
 @Immutable
-public class ClearOperation extends RetryOnFailureOperation<Void> {
+public class ClearOperation extends AbstractCacheOperation<Void> {
 
-   public ClearOperation(Codec codec, ChannelFactory channelFactory,
-                         byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg,
-                         TelemetryService telemetryService) {
-      super(CLEAR_REQUEST, CLEAR_RESPONSE, codec, channelFactory, cacheName, clientTopology, flags, cfg, null, telemetryService);
+   public ClearOperation(InternalRemoteCache<?, ?> cache) {
+      super(cache);
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      sendHeaderAndRead(channel);
+   public Void createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
+      return null;
    }
 
    @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      complete(null);
+   public short requestOpCode() {
+      return CLEAR_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return CLEAR_RESPONSE;
    }
 }

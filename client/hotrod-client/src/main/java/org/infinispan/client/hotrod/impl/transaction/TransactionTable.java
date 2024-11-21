@@ -1,5 +1,8 @@
 package org.infinispan.client.hotrod.impl.transaction;
 
+import org.infinispan.client.hotrod.impl.operations.ManagerOperationsFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
+
 import jakarta.transaction.Transaction;
 
 /**
@@ -14,9 +17,9 @@ public interface TransactionTable {
    <K, V> TransactionContext<K, V> enlist(TransactionalRemoteCacheImpl<K, V> txRemoteCache, Transaction tx);
 
    /**
-    * It initializes the {@link TransactionTable} with the {@link TransactionOperationFactory} to use.
+    * It initializes the {@link TransactionTable} with the {@link ManagerOperationsFactory} to use.
     *
-    * @param operationFactory The {@link TransactionOperationFactory} to use.
+    * @param operationFactory The {@link ManagerOperationsFactory} to use.
     */
-   void start(TransactionOperationFactory operationFactory);
+   void start(ManagerOperationsFactory operationFactory, OperationDispatcher dispatcher);
 }

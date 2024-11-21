@@ -19,7 +19,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.ClassAllowList;
@@ -43,13 +42,10 @@ public class ClientListenerNotifier {
    private final ScheduledThreadPoolExecutor reconnectExecutor;
 
    private final Marshaller marshaller;
-   private final ChannelFactory channelFactory;
    private final ClassAllowList allowList;
 
-   public ClientListenerNotifier(Marshaller marshaller, ChannelFactory channelFactory,
-                                 Configuration configuration) {
+   public ClientListenerNotifier(Marshaller marshaller, Configuration configuration) {
       this.marshaller = marshaller;
-      this.channelFactory = channelFactory;
       this.allowList = configuration.getClassAllowList();
 
       TypedProperties defaultAsyncExecutorProperties = configuration.asyncExecutorFactory().properties();
@@ -165,6 +161,10 @@ public class ClientListenerNotifier {
       return null;
    }
 
+   public SocketAddress findAddressByListener(Object listener) {
+      return findAddress(findListenerId(listener));
+   }
+
    public Set<Object> getListeners(String cacheName) {
       Set<Object> ret = new HashSet<>(dispatchers.size());
       for (EventDispatcher<?> dispatcher : dispatchers.values()) {
@@ -211,9 +211,5 @@ public class ClientListenerNotifier {
    @Deprecated(forRemoval=true, since = "12.0")
    public ClassAllowList whitelist() {
       return allowList();
-   }
-
-   public ChannelFactory channelFactory() {
-      return channelFactory;
    }
 }

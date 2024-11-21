@@ -5,9 +5,9 @@ import static org.testng.Assert.assertEquals;
 import java.net.SocketAddress;
 import java.util.Iterator;
 
-import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -96,7 +96,7 @@ public class ReplicationRetryTest extends AbstractRetryTest {
    }
 
    private void validateSequenceAndStopServer() {
-      ConsistentHash consistentHash = channelFactory.getConsistentHash(RemoteCacheManager.cacheNameBytes());
+      ConsistentHash consistentHash = dispatcher.getConsistentHash(HotRodConstants.DEFAULT_CACHE_NAME);
       SocketAddress expectedServer;
 
       resetStats();

@@ -63,6 +63,19 @@ public class AuthenticationTest extends AbstractAuthenticationTest {
       assertEquals("a", defaultRemote.get("a"));
    }
 
+   @Test
+   public void testAuthenticationWithUnsupportedMech() {
+      ConfigurationBuilder clientBuilder = newClientBuilder();
+      clientBuilder.security().authentication().saslMechanism("SCRAM-SHA-256");
+      clientBuilder.security().authentication().username("user").password("password");
+      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
+      Exceptions.expectException(TransportException.class, SecurityException.class, ".*not among the supported server mechanisms.*",
+            () -> {
+               RemoteCache<String, String> defaultRemote = remoteCacheManager.getCache();
+               defaultRemote.put("a", "a");
+               assertEquals("a", defaultRemote.get("a"));
+            });
+   }
 
    @Test
    public void testAuthenticationFailWrongAuth() {
@@ -104,17 +117,4 @@ public class AuthenticationTest extends AbstractAuthenticationTest {
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
    }
 
-   @Test
-   public void testAuthenticationWithUnsupportedMech() {
-      ConfigurationBuilder clientBuilder = newClientBuilder();
-      clientBuilder.security().authentication().saslMechanism("SCRAM-SHA-256");
-      clientBuilder.security().authentication().username("user").password("password");
-      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-      Exceptions.expectException(TransportException.class, SecurityException.class, ".*not among the supported server mechanisms.*",
-            () -> {
-               RemoteCache<String, String> defaultRemote = remoteCacheManager.getCache();
-               defaultRemote.put("a", "a");
-               assertEquals("a", defaultRemote.get("a"));
-            });
-   }
 }

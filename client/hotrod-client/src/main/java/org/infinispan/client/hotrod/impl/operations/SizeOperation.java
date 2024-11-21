@@ -1,33 +1,30 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
-import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 
-public class SizeOperation extends RetryOnFailureOperation<Integer> {
+public class SizeOperation extends AbstractCacheOperation<Integer> {
 
-   protected SizeOperation(Codec codec, ChannelFactory channelFactory,
-                           byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg,
-                           TelemetryService telemetryService) {
-      super(SIZE_REQUEST, SIZE_RESPONSE, codec, channelFactory, cacheName, clientTopology, flags, cfg, null, telemetryService);
+   protected SizeOperation(InternalRemoteCache<?, ?> remoteCache) {
+      super(remoteCache);
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      sendHeaderAndRead(channel);
+   public Integer createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
+      return ByteBufUtil.readVInt(buf);
    }
 
    @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      complete(ByteBufUtil.readVInt(buf));
+   public short requestOpCode() {
+      return SIZE_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return SIZE_RESPONSE;
    }
 }

@@ -9,11 +9,6 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.Status;
-import jakarta.transaction.Synchronization;
-import jakarta.transaction.SystemException;
-import jakarta.transaction.Transaction;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.client.hotrod.RemoteCache;
@@ -22,6 +17,12 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.transaction.manager.RemoteXid;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Util;
+
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Status;
+import jakarta.transaction.Synchronization;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
 
 /**
  * A {@link TransactionTable} that registers the {@link RemoteCache} as a {@link Synchronization} in the transaction.
@@ -167,7 +168,7 @@ public class SyncModeTransactionTable extends AbstractTransactionTable {
             log.tracef("Registering remote cache '%s' for transaction xid=%s", remoteCache.getName(), xid);
          }
          return new TransactionContext<>(remoteCache.keyMarshaller(), remoteCache.valueMarshaller(),
-               remoteCache.getOperationsFactory(), remoteCache.getName(), false);
+               remoteCache.getOperationsFactory(), remoteCache.getDispatcher(), remoteCache.getName(), false);
       }
    }
 }

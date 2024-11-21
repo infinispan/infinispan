@@ -14,13 +14,14 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,24 +46,29 @@ import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
 import org.infinispan.client.hotrod.impl.MarshallerRegistry;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.RemoteCacheManagerAdminImpl;
-import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.CacheOperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.DefaultCacheOperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
+import org.infinispan.client.hotrod.impl.operations.ManagerOperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
-import org.infinispan.client.hotrod.impl.protocol.CodecHolder;
+import org.infinispan.client.hotrod.impl.operations.RoutingCacheOperationsFactory;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transaction.SyncModeTransactionTable;
-import org.infinispan.client.hotrod.impl.transaction.TransactionOperationFactory;
 import org.infinispan.client.hotrod.impl.transaction.TransactionTable;
 import org.infinispan.client.hotrod.impl.transaction.TransactionalRemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.transaction.XaModeTransactionTable;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.jmx.RemoteCacheManagerMXBean;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.marshall.BytesOnlyMarshaller;
 import org.infinispan.client.hotrod.near.NearCacheService;
+import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
+import org.infinispan.client.hotrod.telemetry.impl.TelemetryServiceFactory;
 import org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.StringConfiguration;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
@@ -79,6 +85,7 @@ import org.infinispan.counter.api.CounterManager;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
 
+import io.netty.channel.ChannelPipeline;
 import jakarta.transaction.TransactionManager;
 
 /**
@@ -104,12 +111,13 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    public static final String JSON_STRING_ARRAY_ELEMENT_REGEX = "(?:\")([^\"]*)(?:\",?)";
 
    private volatile boolean started = false;
-   private final Map<RemoteCacheKey, RemoteCacheHolder> cacheName2RemoteCache = new HashMap<>();
+   private final Map<RemoteCacheKey, InternalRemoteCache<?, ?>> cacheName2RemoteCache = new HashMap<>();
    private final MarshallerRegistry marshallerRegistry = new MarshallerRegistry();
    private final Configuration configuration;
+   private final TelemetryService telemetryService;
 
    private Marshaller marshaller;
-   protected ChannelFactory channelFactory;
+   protected OperationDispatcher dispatcher;
    protected ClientListenerNotifier listenerNotifier;
    private final Runnable start = this::start;
    private final Runnable stop = this::stop;
@@ -119,6 +127,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    private ObjectName mbeanObjectName;
    private final TimeService timeService = DefaultTimeService.INSTANCE;
    private ExecutorService asyncExecutorService;
+
+   private final ManagerOperationsFactory managerOpFactory = ManagerOperationsFactory.getInstance();
 
    /**
     * Create a new RemoteCacheManager using the supplied {@link Configuration}. The RemoteCacheManager will be started
@@ -167,6 +177,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
     */
    public RemoteCacheManager(Configuration configuration, boolean start) {
       this.configuration = configuration;
+      this.telemetryService = TelemetryServiceFactory.telemetryService(configuration.tracingPropagationEnabled());
       this.counterManager = new RemoteCounterManager();
       this.syncTransactionTable = new SyncModeTransactionTable(configuration.transactionTimeout());
       this.xaTransactionTable = new XaModeTransactionTable(configuration.transactionTimeout());
@@ -207,6 +218,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
          }
       }
       this.configuration = builder.build();
+      this.telemetryService = TelemetryServiceFactory.telemetryService(configuration.tracingPropagationEnabled());
       this.counterManager = new RemoteCounterManager();
       this.syncTransactionTable = new SyncModeTransactionTable(configuration.transactionTimeout());
       this.xaTransactionTable = new XaModeTransactionTable(configuration.transactionTimeout());
@@ -263,8 +275,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    @Override
    public Set<String> getCacheNames() {
-      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, listenerNotifier, configuration, 0);
-      String names = await(operationsFactory.newAdminOperation("@@cache@names", Collections.emptyMap()).execute());
+      HotRodOperation<String> executeOp = managerOpFactory.executeOperation("@@cache@names", Collections.emptyMap());
+      String names = await(dispatcher.execute(executeOp));
       Set<String> cacheNames = new TreeSet<>();
       // Simple pattern that matches the result which is represented as a JSON string array, e.g. ["cache1","cache2"]
       Pattern pattern = Pattern.compile(JSON_STRING_ARRAY_ELEMENT_REGEX);
@@ -297,6 +309,10 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       return createRemoteCache(cacheName, forceReturnValue, transactionMode, transactionManager);
    }
 
+   private <K, V> InternalRemoteCache<K, V> getInternalCache(String cacheName) {
+      return createRemoteCache(cacheName, configuration.forceReturnValues(), null, null);
+   }
+
    public CompletableFuture<Void> startAsync() {
       // The default async executor service is dedicated for Netty, therefore here we'll use common FJP.
       // TODO: This needs to be fixed at some point to not use an additional thread
@@ -318,7 +334,6 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    private void actualStart() {
       log.debugf("Starting remote cache manager %x", System.identityHashCode(this));
-      channelFactory = createChannelFactory();
 
       marshallerRegistry.registerMarshaller(BytesOnlyMarshaller.INSTANCE);
       marshallerRegistry.registerMarshaller(new UTF8StringMarshaller());
@@ -350,24 +365,39 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
          marshallerRegistry.registerMarshaller(marshaller);
       }
 
-      listenerNotifier = new ClientListenerNotifier(marshaller, channelFactory, configuration);
+      listenerNotifier = new ClientListenerNotifier(marshaller, configuration);
       ExecutorFactory executorFactory = configuration.asyncExecutorFactory().factory();
       if (executorFactory == null) {
          executorFactory = Util.getInstance(configuration.asyncExecutorFactory().factoryClass());
       }
       asyncExecutorService = executorFactory.getExecutor(configuration.asyncExecutorFactory().properties());
-      channelFactory.start(marshaller, asyncExecutorService,
-                           listenerNotifier, marshallerRegistry);
-      counterManager.start(channelFactory, configuration, listenerNotifier);
+      dispatcher = new OperationDispatcher(configuration, asyncExecutorService, timeService, listenerNotifier, pipelineWrapper());
+      counterManager.start(dispatcher, listenerNotifier);
 
-      TransactionOperationFactory txOperationFactory = new TransactionOperationFactory(configuration, channelFactory);
-      syncTransactionTable.start(txOperationFactory);
-      xaTransactionTable.start(txOperationFactory);
+      dispatcher.start();
+      syncTransactionTable.start(managerOpFactory, dispatcher);
+      xaTransactionTable.start(managerOpFactory, dispatcher);
+
+      // If any caches were created before we started, make sure to setup their topology now
+      synchronized (cacheName2RemoteCache) {
+         for (InternalRemoteCache<?, ?> cache : cacheName2RemoteCache.values()) {
+            dispatcher.addCacheTopologyInfoIfAbsent(cache.getName());
+         }
+      }
 
       // Print version to help figure client version run
       HOTROD.version(Version.printVersion());
 
       started = true;
+   }
+
+   /**
+    * Here solely for overriding purposes to modify any pipeline created by this manager. The pipeline will be fully
+    * initialized but not yet connected
+    * @return default is a consumer that does nothing
+    */
+   protected Consumer<ChannelPipeline> pipelineWrapper() {
+      return pipeline -> { };
    }
 
    private void registerProtoStreamMarshaller() {
@@ -417,15 +447,9 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       }
    }
 
-   public ChannelFactory createChannelFactory() {
-      return new ChannelFactory(configuration, new CodecHolder(configuration.version().getCodec()));
-   }
-
    @Override
    public boolean isTransactional(String cacheName) {
-      ClientStatistics stats = ClientStatistics.dummyClientStatistics(timeService);
-      OperationsFactory factory = createOperationFactory(cacheName, false, stats);
-      return checkTransactionSupport(cacheName, factory, log);
+      return checkTransactionSupport(cacheName, managerOpFactory, dispatcher, log);
    }
 
    public MarshallerRegistry getMarshallerRegistry() {
@@ -441,16 +465,18 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       if (isStarted()) {
          log.debugf("Stopping remote cache manager %x", System.identityHashCode(this));
          synchronized (cacheName2RemoteCache) {
-            for (Map.Entry<RemoteCacheKey, RemoteCacheHolder> cache : cacheName2RemoteCache.entrySet()) {
-               cache.getValue().remoteCache().stop();
+            for (Map.Entry<RemoteCacheKey, InternalRemoteCache<?, ?>> cache : cacheName2RemoteCache.entrySet()) {
+               cache.getValue().stop();
             }
             cacheName2RemoteCache.clear();
          }
          listenerNotifier.stop();
          counterManager.stop();
-         channelFactory.destroy();
+         dispatcher.stop();
+         asyncExecutorService.shutdown();
       }
       unregisterMBean();
+      configuration.metricRegistry().close();
       started = false;
    }
 
@@ -461,17 +487,17 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    @Override
    public boolean switchToCluster(String clusterName) {
-      return channelFactory.manualSwitchToCluster(clusterName);
+      return dispatcher.manualSwitchToCluster(clusterName);
    }
 
    @Override
    public boolean switchToDefaultCluster() {
-      return channelFactory.manualSwitchToCluster(ChannelFactory.DEFAULT_CLUSTER_NAME);
+      return dispatcher.manualSwitchToCluster(OperationDispatcher.DEFAULT_CLUSTER_NAME);
    }
 
    @Override
    public String getCurrentClusterName() {
-      return channelFactory.getCurrentClusterName();
+      return dispatcher.getCurrentClusterName();
    }
 
    private Properties loadFromStream(InputStream stream) {
@@ -498,20 +524,22 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       return null;
    }
 
-   private <K, V> RemoteCache<K, V> createRemoteCache(String cacheName, boolean forceReturnValueOverride,
+   private <K, V> InternalRemoteCache<K, V> createRemoteCache(String cacheName, boolean forceReturnValueOverride,
                                                       TransactionMode transactionModeOverride, TransactionManager transactionManagerOverride) {
       RemoteCacheConfiguration cacheConfiguration = findConfiguration(cacheName);
-      boolean forceReturnValue = forceReturnValueOverride || (cacheConfiguration != null ? cacheConfiguration.forceReturnValues() : configuration.forceReturnValues());
+      boolean configForceReturnValue = (cacheConfiguration != null ? cacheConfiguration.forceReturnValues() : configuration.forceReturnValues());
+      boolean forceReturnValue = forceReturnValueOverride || configForceReturnValue;
       RemoteCacheKey key = new RemoteCacheKey(cacheName, forceReturnValue);
       if (cacheName2RemoteCache.containsKey(key)) {
-         return cacheName2RemoteCache.get(key).remoteCache();
+         return (InternalRemoteCache<K, V>) cacheName2RemoteCache.get(key);
       }
 
-      OperationsFactory operationsFactory = createOperationFactory(cacheName, forceReturnValue, null);
       PingResponse pingResponse;
       if (started) {
+         dispatcher.addCacheTopologyInfoIfAbsent(cacheName);
+         HotRodOperation<PingResponse> op = managerOpFactory.newPingOperation(cacheName);
          // Verify if the cache exists on the server first
-         pingResponse = await(operationsFactory.newFaultTolerantPingOperation().execute());
+         pingResponse = await(dispatcher.execute(op));
 
          // If ping not successful assume that the cache does not exist
          if (pingResponse.isCacheNotFound()) {
@@ -519,45 +547,76 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
             Map<String, byte[]> params = new HashMap<>(2);
             params.put(RemoteCacheManagerAdminImpl.CACHE_NAME, cacheName.getBytes(HotRodConstants.HOTROD_STRING_CHARSET));
             if (cacheConfiguration != null && cacheConfiguration.templateName() != null) {
-               params.put(RemoteCacheManagerAdminImpl.CACHE_TEMPLATE, cacheConfiguration.templateName().getBytes(HotRodConstants.HOTROD_STRING_CHARSET));
+               String templateName = cacheConfiguration.templateName();
+               params.put(RemoteCacheManagerAdminImpl.CACHE_TEMPLATE, templateName.getBytes(HotRodConstants.HOTROD_STRING_CHARSET));
+               log.tracef("Cache %s not found on the server, will create from template %s", cacheName, templateName);
             } else if (cacheConfiguration != null && cacheConfiguration.configuration() != null) {
-               params.put(RemoteCacheManagerAdminImpl.CACHE_CONFIGURATION, new StringConfiguration(cacheConfiguration.configuration()).toStringConfiguration(cacheName).getBytes(HotRodConstants.HOTROD_STRING_CHARSET));
+               String configuration = new StringConfiguration(cacheConfiguration.configuration()).toStringConfiguration(cacheName);
+               params.put(RemoteCacheManagerAdminImpl.CACHE_CONFIGURATION, configuration.getBytes(HotRodConstants.HOTROD_STRING_CHARSET));
+               log.tracef("Cache %s not found on the server, will create it with configuration %s", cacheName, configuration);
             } else {
                // We cannot create the cache
                return null;
             }
             // Create and re-ping
-            OperationsFactory adminOperationsFactory = new OperationsFactory(channelFactory, listenerNotifier, configuration, 0);
-            pingResponse = await(adminOperationsFactory.newAdminOperation("@@cache@getorcreate", params).execute().thenCompose(s -> operationsFactory.newFaultTolerantPingOperation().execute()));
+            HotRodOperation<String> createCacheOp = managerOpFactory.executeOperation("@@cache@getorcreate", params);
+            await(dispatcher.execute(createCacheOp));
+            // Execute create and then execute ping after
+            HotRodOperation<PingResponse> pingcacheOp = managerOpFactory.newPingOperation(cacheName);
+            pingResponse = await(dispatcher.execute(pingcacheOp));
          }
       } else {
          pingResponse = PingResponse.EMPTY;
       }
 
+      Function<InternalRemoteCache<K, V>, CacheOperationsFactory> factoryFunction = DefaultCacheOperationsFactory::new;
+      if (telemetryService != null) {
+         factoryFunction = telemetryService.wrapWithTelemetry(factoryFunction);
+      }
+
+      if (configuration.statistics().enabled()) {
+         factoryFunction = ClientStatistics.functionFor(factoryFunction);
+      }
+      if (pingResponse.getKeyMediaType() == MediaType.APPLICATION_OBJECT) {
+         factoryFunction = wrapWithRouting(factoryFunction);
+      }
+
       TransactionMode transactionMode = getTransactionMode(transactionModeOverride, cacheConfiguration);
       InternalRemoteCache<K, V> remoteCache;
       if (transactionMode == TransactionMode.NONE) {
-         remoteCache = createRemoteCache(cacheName);
+         remoteCache = createRemoteCache(cacheName, factoryFunction);
       } else {
-         if (!await(checkTransactionSupport(cacheName, operationsFactory).toCompletableFuture())) {
+         if (!await(checkTransactionSupport(cacheName, managerOpFactory, dispatcher).toCompletableFuture())) {
             throw HOTROD.cacheDoesNotSupportTransactions(cacheName);
          } else {
             TransactionManager transactionManager = getTransactionManager(transactionManagerOverride, cacheConfiguration);
-            remoteCache = createRemoteTransactionalCache(cacheName, forceReturnValueOverride,
+            remoteCache = createRemoteTransactionalCache(cacheName, factoryFunction,
                   transactionMode == TransactionMode.FULL_XA, transactionMode, transactionManager);
          }
       }
 
       synchronized (cacheName2RemoteCache) {
-         startRemoteCache(remoteCache, forceReturnValue);
-         RemoteCacheHolder holder = new RemoteCacheHolder(remoteCache, forceReturnValueOverride);
-         remoteCache.resolveStorage(pingResponse.getKeyMediaType(), pingResponse.getValueMediaType(), pingResponse.isObjectStorage());
-         cacheName2RemoteCache.putIfAbsent(key, holder);
-         return remoteCache;
+         startRemoteCache(remoteCache);
+
+         remoteCache.resolveStorage(pingResponse.getKeyMediaType(), pingResponse.getValueMediaType());
+
+         // If configuration isn't forcing return value, then caller can still get a different instance
+         if (!configForceReturnValue) {
+            cacheName2RemoteCache.putIfAbsent(new RemoteCacheKey(cacheName, false), remoteCache);
+         }
+         InternalRemoteCache<K, V> forceReturn = remoteCache.withFlags(Flag.FORCE_RETURN_VALUE);
+
+         cacheName2RemoteCache.putIfAbsent(new RemoteCacheKey(cacheName, true), forceReturn);
+         return forceReturnValue ? forceReturn : remoteCache;
       }
    }
 
-   private <K, V> InternalRemoteCache<K, V> createRemoteCache(String cacheName) {
+   static <K, V> Function<InternalRemoteCache<K, V>, CacheOperationsFactory> wrapWithRouting(
+         Function<InternalRemoteCache<K, V>, CacheOperationsFactory> factoryFunction) {
+      return irc -> new RoutingCacheOperationsFactory(factoryFunction.apply(irc));
+   }
+
+   private <K, V> InternalRemoteCache<K, V> createRemoteCache(String cacheName, Function<InternalRemoteCache<K, V>, CacheOperationsFactory> factoryFunction) {
       RemoteCacheConfiguration remoteCacheConfiguration = configuration.remoteCaches().get(cacheName);
       NearCacheConfiguration nearCache;
       if (remoteCacheConfiguration != null) {
@@ -580,29 +639,27 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
             }
             NearCacheService<K, V> nearCacheService = createNearCacheService(cacheName, nearCache);
             return InvalidatedNearRemoteCache.delegatingNearCache(
-                  new RemoteCacheImpl<>(this, cacheName, timeService, nearCacheService) , nearCacheService);
+                  new RemoteCacheImpl<>(this, cacheName, timeService, nearCacheService, factoryFunction) , nearCacheService);
          }
       }
-      return new RemoteCacheImpl<>(this, cacheName, timeService);
+      return new RemoteCacheImpl<>(this, cacheName, timeService, factoryFunction);
    }
 
    protected <K, V> NearCacheService<K, V> createNearCacheService(String cacheName, NearCacheConfiguration cfg) {
       return NearCacheService.create(cfg, listenerNotifier);
    }
 
-   private void startRemoteCache(InternalRemoteCache<?, ?> remoteCache, boolean forceReturnValue) {
-      OperationsFactory operationsFactory = createOperationFactory(remoteCache.getName(),
-            forceReturnValue, remoteCache.clientStatistics());
-      initRemoteCache(remoteCache, operationsFactory);
+   private void startRemoteCache(InternalRemoteCache<?, ?> remoteCache) {
+      initRemoteCache(remoteCache);
       remoteCache.start();
    }
 
    // Method that handles cache initialization - needed as a placeholder
-   private void initRemoteCache(InternalRemoteCache<?, ?> remoteCache, OperationsFactory operationsFactory) {
+   private void initRemoteCache(InternalRemoteCache<?, ?> remoteCache) {
       if (configuration.statistics().jmxEnabled()) {
-         remoteCache.init(operationsFactory, configuration, mbeanObjectName);
+         remoteCache.init(configuration, dispatcher, mbeanObjectName);
       } else {
-         remoteCache.init(operationsFactory, configuration);
+         remoteCache.init(configuration, dispatcher);
       }
    }
 
@@ -625,19 +682,18 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
     * @return an instance of {@link RemoteCacheManagerAdmin} which can perform administrative operations on the server.
     */
    public RemoteCacheManagerAdmin administration() {
-      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, listenerNotifier, configuration, 0);
-      return new RemoteCacheManagerAdminImpl(this, operationsFactory, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
+      return new RemoteCacheManagerAdminImpl(this, managerOpFactory, dispatcher, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
             name -> {
                synchronized (cacheName2RemoteCache) {
                   // Remove any mappings
-                  RemoteCacheHolder removed = cacheName2RemoteCache.remove(new RemoteCacheKey(name, true));
+                  InternalRemoteCache<?, ?> removed = cacheName2RemoteCache.remove(new RemoteCacheKey(name, true));
                   if (removed != null) {
                      // stop the remote cache like we do it in the stop() method
-                     removed.remoteCache.stop();
+                     removed.stop();
                   }
                   removed = cacheName2RemoteCache.remove(new RemoteCacheKey(name, false));
                   if (removed != null) {
-                     removed.remoteCache.stop();
+                     removed.stop();
                   }
                }
             });
@@ -663,8 +719,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    /**
     * This method is not a part of the public API. It is exposed for internal purposes only.
     */
-   public ChannelFactory getChannelFactory() {
-      return channelFactory;
+   protected OperationDispatcher getOperationDispatcher() {
+      return dispatcher;
    }
 
    /**
@@ -706,97 +762,49 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       }
    }
 
-   private <K, V> TransactionalRemoteCacheImpl<K, V> createRemoteTransactionalCache(String cacheName,
-                                                                                    boolean forceReturnValues, boolean recoveryEnabled, TransactionMode transactionMode,
-                                                                                    TransactionManager transactionManager) {
-      return new TransactionalRemoteCacheImpl<>(this, cacheName, forceReturnValues, recoveryEnabled, transactionManager,
-            getTransactionTable(transactionMode), timeService);
-   }
-
    /*
     * The following methods are exposed through the MBean
     */
+
+   private <K, V> TransactionalRemoteCacheImpl<K, V> createRemoteTransactionalCache(String cacheName, Function<InternalRemoteCache<K, V>, CacheOperationsFactory> factoryFunction,
+                                                                                    boolean recoveryEnabled, TransactionMode transactionMode,
+                                                                                    TransactionManager transactionManager) {
+      return new TransactionalRemoteCacheImpl<>(this, cacheName, recoveryEnabled, transactionManager,
+            getTransactionTable(transactionMode), timeService, factoryFunction);
+   }
    @Override
    public String[] getServers() {
-      Collection<InetSocketAddress> addresses = channelFactory.getServers();
+      Collection<InetSocketAddress> addresses = dispatcher.getServers();
       return addresses.stream().map(socketAddress -> socketAddress.getHostString() + ":" + socketAddress.getPort()).toArray(String[]::new);
    }
 
    @Override
    public int getActiveConnectionCount() {
-      return channelFactory.getNumActive();
+      return -1;
    }
 
    @Override
    public int getConnectionCount() {
-      return channelFactory.getNumActive() + channelFactory.getNumIdle();
+      return dispatcher.getServers().size();
    }
 
    @Override
    public int getIdleConnectionCount() {
-      return channelFactory.getNumIdle();
+      return -1;
    }
 
    @Override
    public long getRetries() {
-      return channelFactory.getRetries();
-   }
-
-   OperationsFactory createOperationFactory(String cacheName, boolean forceReturnValue,
-                                                   ClientStatistics stats) {
-      return createOperationFactory(cacheName, forceReturnValue, stats, 0);
-   }
-
-   public OperationsFactory createOperationFactory(String cacheName, boolean forceReturnValue,
-                                                    ClientStatistics stats, int flags) {
-      return new OperationsFactory(channelFactory, cacheName, forceReturnValue, listenerNotifier, configuration,
-            stats, flags);
+      return dispatcher.getRetries();
    }
 
    public ExecutorService getAsyncExecutorService() {
       return asyncExecutorService;
    }
 
-   private static class RemoteCacheKey {
-
-      final String cacheName;
-      final boolean forceReturnValue;
-
-      RemoteCacheKey(String cacheName, boolean forceReturnValue) {
-         this.cacheName = cacheName;
-         this.forceReturnValue = forceReturnValue;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-         if (this == o) return true;
-         if (!(o instanceof RemoteCacheKey)) return false;
-
-         RemoteCacheKey that = (RemoteCacheKey) o;
-
-         if (forceReturnValue != that.forceReturnValue) return false;
-         return Objects.equals(cacheName, that.cacheName);
-      }
-
-      @Override
-      public int hashCode() {
-         int result = cacheName != null ? cacheName.hashCode() : 0;
-         result = 31 * result + (forceReturnValue ? 1 : 0);
-         return result;
-      }
+   public ClientListenerNotifier getListenerNotifier() {
+      return listenerNotifier;
    }
 
-   private static class RemoteCacheHolder {
-      final InternalRemoteCache<?, ?> remoteCache;
-      final boolean forceReturnValue;
-
-      RemoteCacheHolder(InternalRemoteCache<?, ?> remoteCache, boolean forceReturnValue) {
-         this.remoteCache = remoteCache;
-         this.forceReturnValue = forceReturnValue;
-      }
-
-      <K, V> InternalRemoteCache<K, V> remoteCache() {
-         return (InternalRemoteCache) remoteCache;
-      }
-   }
+   private record RemoteCacheKey(String cacheName, boolean forceReturnValue) { }
 }

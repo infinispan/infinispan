@@ -4,6 +4,7 @@ import static org.infinispan.client.hotrod.impl.Util.await;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.SyncWeakCounter;
 import org.infinispan.counter.api.WeakCounter;
@@ -18,19 +19,20 @@ class WeakCounterImpl extends BaseCounter implements WeakCounter {
    private final SyncWeakCounter syncCounter;
 
    WeakCounterImpl(String name, CounterConfiguration configuration, CounterOperationFactory operationFactory,
-                   NotificationManager notificationManager) {
-      super(configuration, name, operationFactory, notificationManager);
+                   OperationDispatcher dispatcher, NotificationManager notificationManager) {
+      super(configuration, name, operationFactory, dispatcher, notificationManager);
       syncCounter = new Sync();
    }
 
    @Override
    public long getValue() {
-      return await(factory.newGetValueOperation(name, useConsistentHash()).execute());
+      return await(dispatcher.execute(factory.newGetValueOperation(name, useConsistentHash())));
    }
 
    @Override
    public CompletableFuture<Void> add(long delta) {
-      return factory.newAddOperation(name, delta, useConsistentHash()).execute().thenRun(() -> {});
+      return dispatcher.execute(factory.newAddOperation(name, delta, useConsistentHash()))
+            .toCompletableFuture().thenRun(() -> {});
    }
 
    @Override

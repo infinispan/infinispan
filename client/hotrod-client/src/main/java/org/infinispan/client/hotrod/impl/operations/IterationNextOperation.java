@@ -7,19 +7,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
 
-import org.infinispan.client.hotrod.DataFormat;
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.MetadataValueImpl;
 import org.infinispan.client.hotrod.impl.iteration.KeyTracker;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 
@@ -30,10 +26,9 @@ import io.netty.channel.Channel;
  * @author gustavonalle
  * @since 8.0
  */
-public class IterationNextOperation<K, E> extends HotRodOperation<IterationNextResponse<K, E>> {
+public class IterationNextOperation<K, E> extends AbstractCacheOperation<IterationNextResponse<K, E>> {
 
    private final byte[] iterationId;
-   private final Channel channel;
    private final KeyTracker segmentKeyTracker;
 
    private byte[] finishedSegments;
@@ -42,36 +37,27 @@ public class IterationNextOperation<K, E> extends HotRodOperation<IterationNextR
    private int projectionsSize;
    private int untrackedEntries;
 
-   protected IterationNextOperation(Codec codec, int flags, Configuration cfg, byte[] cacheName,
-                                    AtomicReference<ClientTopology> clientTopology, byte[] iterationId, Channel channel,
-                                    ChannelFactory channelFactory, KeyTracker segmentKeyTracker,
-                                    DataFormat dataFormat) {
-      super(ITERATION_NEXT_REQUEST, ITERATION_NEXT_RESPONSE, codec, flags, cfg, cacheName, clientTopology, channelFactory, dataFormat);
+   protected IterationNextOperation(InternalRemoteCache<?, ?> cache, byte[] iterationId,
+                                    KeyTracker segmentKeyTracker) {
+      super(cache);
       this.iterationId = iterationId;
-      this.channel = channel;
       this.segmentKeyTracker = segmentKeyTracker;
    }
 
    @Override
-   public CompletableFuture<IterationNextResponse<K, E>> execute() {
-      if (!channel.isActive()) {
-         throw HOTROD.channelInactive(channel.remoteAddress(), channel.remoteAddress());
-      }
-      scheduleRead(channel);
-      sendArrayOperation(channel, iterationId);
-      return this;
+   public void writeOperationRequest(Channel channel, ByteBuf buf, Codec codec) {
+      ByteBufUtil.writeArray(buf, iterationId);
    }
 
    @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+   public IterationNextResponse<K, E> createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
       if (entriesSize < 0) {
          finishedSegments = ByteBufUtil.readArray(buf);
          entriesSize = ByteBufUtil.readVInt(buf);
          if (entriesSize == 0) {
             IntSet finishedSegmentSet = IntSets.from(finishedSegments);
             segmentKeyTracker.segmentsFinished(finishedSegmentSet);
-            complete(new IterationNextResponse<>(status, Collections.emptyList(), finishedSegmentSet, false));
-            return;
+            return new IterationNextResponse<>(status, Collections.emptyList(), finishedSegmentSet, false);
          }
          entries = new ArrayList<>(entriesSize);
          projectionsSize = -1;
@@ -79,12 +65,14 @@ public class IterationNextOperation<K, E> extends HotRodOperation<IterationNextR
       }
 
       if (projectionsSize < 0) {
-         projectionsSize = codec.readProjectionSize(buf);
+         projectionsSize = ByteBufUtil.readVInt(buf);
          decoder.checkpoint();
       }
 
+      ClassAllowList classAllowList = internalRemoteCache.getRemoteCacheContainer().getConfiguration().getClassAllowList();
+
       while (entries.size() + untrackedEntries < entriesSize) {
-         short meta = codec.readMeta(buf);
+         short meta = buf.readUnsignedByte();
          long creation = -1;
          int lifespan = -1;
          long lastUsed = -1;
@@ -107,18 +95,18 @@ public class IterationNextOperation<K, E> extends HotRodOperation<IterationNextR
          if (projectionsSize > 1) {
             Object[] projections = new Object[projectionsSize];
             for (int j = 0; j < projectionsSize; j++) {
-               projections[j] = unmarshallValue(ByteBufUtil.readArray(buf));
+               projections[j] = unmarshaller.readValue(buf);
             }
             value = (E) projections;
          } else {
-            value = unmarshallValue(ByteBufUtil.readArray(buf));
+            value = unmarshaller.readValue(buf);
          }
          if (meta == 1) {
             value = (E) new MetadataValueImpl<>(creation, lifespan, lastUsed, maxIdle, version, value);
          }
 
-         if (segmentKeyTracker.track(key, status, cfg.getClassAllowList())) {
-            K unmarshallKey = dataFormat().keyToObj(key, cfg.getClassAllowList());
+         if (segmentKeyTracker.track(key, status, classAllowList)) {
+            K unmarshallKey = internalRemoteCache.getDataFormat().keyToObj(key, classAllowList);
             entries.add(new SimpleEntry<>(unmarshallKey, value));
          } else {
             untrackedEntries++;
@@ -130,10 +118,21 @@ public class IterationNextOperation<K, E> extends HotRodOperation<IterationNextR
       if (HotRodConstants.isInvalidIteration(status)) {
          throw HOTROD.errorRetrievingNext(new String(iterationId, HOTROD_STRING_CHARSET));
       }
-      complete(new IterationNextResponse<>(status, entries, finishedSegmentSet, true));
+      return new IterationNextResponse<>(status, entries, finishedSegmentSet, true);
    }
 
-   private <M> M unmarshallValue(byte[] bytes) {
-      return dataFormat().valueToObj(bytes, cfg.getClassAllowList());
+   @Override
+   public short requestOpCode() {
+      return ITERATION_NEXT_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return ITERATION_NEXT_RESPONSE;
+   }
+
+   @Override
+   public boolean supportRetry() {
+      return false;
    }
 }

@@ -1,8 +1,8 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
+import java.net.SocketAddress;
 
-import io.netty.channel.Channel;
+import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 
 /**
  * @author gustavonalle
@@ -12,13 +12,13 @@ public class IterationStartResponse {
    private final byte[] iterationId;
    private final SegmentConsistentHash segmentConsistentHash;
    private final int topologyId;
-   private final Channel channel;
+   private final SocketAddress socketAddress;
 
-   IterationStartResponse(byte[] iterationId, SegmentConsistentHash segmentConsistentHash, int topologyId, Channel channel) {
+   IterationStartResponse(byte[] iterationId, SegmentConsistentHash segmentConsistentHash, int topologyId, SocketAddress socketAddress) {
       this.iterationId = iterationId;
       this.segmentConsistentHash = segmentConsistentHash;
       this.topologyId = topologyId;
-      this.channel = channel;
+      this.socketAddress = socketAddress;
    }
 
    public byte[] getIterationId() {
@@ -29,8 +29,8 @@ public class IterationStartResponse {
       return segmentConsistentHash;
    }
 
-   public Channel getChannel() {
-      return channel;
+   public SocketAddress getSocketAddress() {
+      return socketAddress;
    }
 
    public int getTopologyId() {

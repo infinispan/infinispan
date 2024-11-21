@@ -20,8 +20,6 @@ import org.infinispan.commons.reactive.AbstractAsyncPublisherHandler;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.logging.TraceException;
 
-import io.netty.channel.Channel;
-
 class RemoteInnerPublisherHandler<K, E> extends AbstractAsyncPublisherHandler<Map.Entry<SocketAddress, IntSet>,
       Map.Entry<K, E>, IterationStartResponse, IterationNextResponse<K, E>> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
@@ -29,7 +27,7 @@ class RemoteInnerPublisherHandler<K, E> extends AbstractAsyncPublisherHandler<Ma
    protected final RemotePublisher<K, E> publisher;
 
    // Need to be volatile since cancel can come on a different thread
-   protected volatile Channel channel;
+   protected volatile SocketAddress socketAddress;
    private volatile byte[] iterationId;
    private final AtomicBoolean cancelled = new AtomicBoolean();
 
@@ -51,9 +49,9 @@ class RemoteInnerPublisherHandler<K, E> extends AbstractAsyncPublisherHandler<Ma
    }
 
    private void actualCancel() {
-      if (iterationId != null && channel != null) {
+      if (iterationId != null && socketAddress != null) {
          // Just let cancel complete asynchronously
-         publisher.sendCancel(iterationId, channel);
+         publisher.sendCancel(iterationId, socketAddress);
       }
    }
 
@@ -68,15 +66,15 @@ class RemoteInnerPublisherHandler<K, E> extends AbstractAsyncPublisherHandler<Ma
 
    @Override
    protected CompletionStage<IterationNextResponse<K, E>> sendNextCommand(Map.Entry<SocketAddress, IntSet> target, int batchSize) {
-      return publisher.newIteratorNextOperation(iterationId, channel);
+      return publisher.newIteratorNextOperation(iterationId, socketAddress);
    }
 
    @Override
    protected long handleInitialResponse(IterationStartResponse startResponse, Map.Entry<SocketAddress, IntSet> target) {
-      this.channel = startResponse.getChannel();
+      this.socketAddress = startResponse.getSocketAddress();
       this.iterationId = startResponse.getIterationId();
       if (log.isDebugEnabled()) {
-         log.iterationTransportObtained(channel.remoteAddress(), iterationId());
+         log.iterationTransportObtained(socketAddress, iterationId());
          log.startedIteration(iterationId());
       }
 

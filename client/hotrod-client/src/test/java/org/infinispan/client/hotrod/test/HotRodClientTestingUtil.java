@@ -23,6 +23,7 @@ import javax.management.ObjectName;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
+import org.infinispan.client.hotrod.Internals;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheContainer;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -32,7 +33,6 @@ import org.infinispan.client.hotrod.event.RemoteCacheSupplier;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transaction.TransactionTable;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.api.BasicCache;
@@ -147,6 +147,8 @@ public class HotRodClientTestingUtil {
       l.get().addClientListener(l);
       try {
          cons.accept(l.get());
+      } catch (Throwable t) {
+         log.fatalf(t, "Encountered unexpected exception");
       } finally {
          l.get().removeClientListener(l);
       }
@@ -192,7 +194,7 @@ public class HotRodClientTestingUtil {
 
    public static RemoteCacheManager getRemoteCacheManager(HotRodServer server) {
       ConfigurationBuilder builder = newRemoteConfigurationBuilder(server);
-      return new InternalRemoteCacheManager(builder.build());
+      return new RemoteCacheManager(builder.build());
 
    }
 
@@ -313,13 +315,7 @@ public class HotRodClientTestingUtil {
    }
 
    public static <T extends FailoverRequestBalancingStrategy> T getLoadBalancer(RemoteCacheManager client) {
-      ChannelFactory channelFactory;
-      if (client instanceof InternalRemoteCacheManager) {
-         channelFactory = ((InternalRemoteCacheManager) client).getChannelFactory();
-      } else {
-         channelFactory = TestingUtil.extractField(client, "channelFactory");
-      }
-      return (T) channelFactory.getBalancer(HotRodConstants.DEFAULT_CACHE_NAME_BYTES);
+      return (T) Internals.dispatcher(client).getBalancer(HotRodConstants.DEFAULT_CACHE_NAME);
    }
 
 

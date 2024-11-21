@@ -1,19 +1,14 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
-import org.infinispan.client.hotrod.DataFormat;
-import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
-import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
-import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -25,41 +20,43 @@ import io.netty.channel.Channel;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation<VersionedOperationResponse> {
+public class ReplaceIfUnmodifiedOperation<V> extends AbstractKeyValueOperation<VersionedOperationResponse<V>> {
    private final long version;
 
-   public ReplaceIfUnmodifiedOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes, byte[] cacheName,
-                                       AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg, byte[] value,
+   public ReplaceIfUnmodifiedOperation(InternalRemoteCache<?, ?> remoteCache, byte[] keyBytes, byte[] value,
                                        long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit,
-                                       long version, DataFormat dataFormat, ClientStatistics clientStatistics,
-                                       TelemetryService telemetryService) {
-      super(REPLACE_IF_UNMODIFIED_REQUEST, REPLACE_IF_UNMODIFIED_RESPONSE, codec, channelFactory, key, keyBytes, cacheName,
-            clientTopology, flags, cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics,
-            telemetryService);
+                                       long version) {
+      super(remoteCache, keyBytes, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
       this.version = version;
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      scheduleRead(channel);
-
-      ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + ByteBufUtil.estimateArraySize(keyBytes) +
-            codec.estimateExpirationSize(lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit) + 8 +
-            ByteBufUtil.estimateArraySize(value));
-
-      codec.writeHeader(buf, header);
+   public void writeOperationRequest(Channel channel, ByteBuf buf, Codec codec) {
       ByteBufUtil.writeArray(buf, keyBytes);
       codec.writeExpirationParams(buf, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
       buf.writeLong(version);
-      ByteBufUtil.writeArray(buf, value);
-      channel.writeAndFlush(buf);
+      ByteBufUtil.writeArray(buf, valueBytes);
    }
 
    @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+   public VersionedOperationResponse<V> createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
+      return returnVersionedOperationResponse(buf, status, codec, unmarshaller);
+   }
+
+   @Override
+   public void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, VersionedOperationResponse<V> responseValue) {
       if (HotRodConstants.isSuccess(status)) {
-         statsDataStore();
+         statistics.dataStore(startTime, 1);
       }
-      complete(returnVersionedOperationResponse(buf, status));
+   }
+
+   @Override
+   public short requestOpCode() {
+      return REPLACE_IF_UNMODIFIED_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return REPLACE_IF_UNMODIFIED_RESPONSE;
    }
 }

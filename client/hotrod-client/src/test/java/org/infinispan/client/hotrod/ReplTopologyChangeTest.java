@@ -8,9 +8,8 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -37,7 +36,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
 
    RemoteCache remoteCache;
    private RemoteCacheManager remoteCacheManager;
-   private ChannelFactory channelFactory;
+   private OperationDispatcher dispatcher;
    private ConfigurationBuilder config;
 
    @AfterMethod
@@ -78,10 +77,10 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("127.0.0.1").port(hotRodServer2.getPort());
-      remoteCacheManager = new InternalRemoteCacheManager(clientBuilder.build());
+      remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
 
-      channelFactory = ((InternalRemoteCacheManager) remoteCacheManager).getChannelFactory();
+      dispatcher = remoteCacheManager.getOperationDispatcher();
    }
 
    protected CacheMode getCacheMode() {
@@ -91,7 +90,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
    public void testTwoMembers() {
       InetSocketAddress server1Address = InetSocketAddress.createUnresolved(hotRodServer1.getHost(), hotRodServer1.getPort());
       expectTopologyChange(server1Address, true);
-      assertEquals(2, channelFactory.getServers().size());
+      assertEquals(2, dispatcher.getServers().size());
    }
 
    @Test(dependsOnMethods = "testTwoMembers")
@@ -105,7 +104,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
 
       try {
          expectTopologyChange(InetSocketAddress.createUnresolved(hotRodServer3.getHost(), hotRodServer3.getPort()), true);
-         assertEquals(3, channelFactory.getServers().size());
+         assertEquals(3, dispatcher.getServers().size());
       } finally {
          log.info("Members are: " + manager(0).getCache().getAdvancedCache().getRpcManager().getTransport().getMembers());
          log.info("Members are: " + manager(1).getCache().getAdvancedCache().getRpcManager().getTransport().getMembers());
@@ -125,7 +124,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
 
       try {
          expectTopologyChange(server3Address, false);
-         assertEquals(2, channelFactory.getServers().size());
+         assertEquals(2, dispatcher.getServers().size());
       } finally {
          log.info("Members are: " + manager(0).getCache().getAdvancedCache().getRpcManager().getTransport().getMembers());
          log.info("Members are: " + manager(1).getCache().getAdvancedCache().getRpcManager().getTransport().getMembers());
@@ -139,9 +138,9 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
    private void expectTopologyChange(InetSocketAddress server1Address, boolean added) {
       for (int i = 0; i < 10; i++) {
          remoteCache.put("k" + i, "v" + i);
-         if (added == channelFactory.getServers().contains(server1Address)) break;
+         if (added == dispatcher.getServers().contains(server1Address)) break;
       }
-      Collection<InetSocketAddress> addresses = channelFactory.getServers();
+      Collection<InetSocketAddress> addresses = dispatcher.getServers();
       assertEquals(server1Address + " not found in " + addresses, added, addresses.contains(server1Address));
    }
 

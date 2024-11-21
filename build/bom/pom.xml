@@ -122,7 +122,7 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-client-hotrod-new</artifactId>
+                <artifactId>infinispan-client-hotrod</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
             <dependency>

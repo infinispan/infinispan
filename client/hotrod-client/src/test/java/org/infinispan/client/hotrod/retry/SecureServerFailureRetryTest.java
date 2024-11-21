@@ -3,7 +3,6 @@ package org.infinispan.client.hotrod.retry;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.security.simple.SimpleSaslAuthenticator;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -40,7 +39,7 @@ public class SecureServerFailureRetryTest extends ServerFailureRetryTest {
          .connectionTimeout(5)
          .connectionPool().maxActive(1)
          .addServer().host("127.0.0.1").port(port);
-      return new InternalRemoteCacheManager(clientBuilder.build());
+      return new RemoteCacheManager(clientBuilder.build());
    }
 
 }

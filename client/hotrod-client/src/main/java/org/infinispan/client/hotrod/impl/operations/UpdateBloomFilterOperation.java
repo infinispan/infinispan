@@ -1,55 +1,45 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import java.net.SocketAddress;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.DataFormat;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelOperation;
+import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
-public class UpdateBloomFilterOperation extends HotRodOperation<Void> implements ChannelOperation {
-   private final SocketAddress address;
+public class UpdateBloomFilterOperation extends AbstractCacheOperation<Void> {
    private final byte[] bloomBits;
 
-   protected UpdateBloomFilterOperation(Codec codec, ChannelFactory channelFactory,
-                                        byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags,
-                                        Configuration cfg, SocketAddress address, byte[] bloomBits) {
-      super(UPDATE_BLOOM_FILTER_REQUEST, UPDATE_BLOOM_FILTER_RESPONSE, codec, flags, cfg, cacheName, clientTopology, channelFactory);
-      this.address = address;
+   protected UpdateBloomFilterOperation(InternalRemoteCache<?, ?> remoteCache, byte[] bloomBits) {
+      super(remoteCache);
       this.bloomBits = bloomBits;
    }
 
    @Override
-   public CompletableFuture<Void> execute() {
-      try {
-         channelFactory.fetchChannelAndInvoke(address, this);
-      } catch (Exception e) {
-         completeExceptionally(e);
-      }
-      return this;
+   public void writeOperationRequest(Channel channel, ByteBuf buf, Codec codec) {
+      ByteBufUtil.writeArray(buf, bloomBits);
    }
 
    @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      complete(null);
+   public Void createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
+      return null;
    }
 
    @Override
-   public void invoke(Channel channel) {
-      scheduleRead(channel);
-      sendArrayOperation(channel, bloomBits);
-      releaseChannel(channel);
+   public short requestOpCode() {
+      return UPDATE_BLOOM_FILTER_REQUEST;
    }
 
    @Override
-   public void cancel(SocketAddress address, Throwable cause) {
-      completeExceptionally(cause);
+   public short responseOpCode() {
+      return UPDATE_BLOOM_FILTER_RESPONSE;
+   }
+
+   @Override
+   public DataFormat getDataFormat() {
+      // No data format sent for updating bloom filter as nothing to use format
+      return null;
    }
 }

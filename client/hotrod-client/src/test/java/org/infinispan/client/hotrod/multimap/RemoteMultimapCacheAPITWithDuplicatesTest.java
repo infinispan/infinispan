@@ -7,10 +7,8 @@ import java.util.Collection;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.RemoteMultimapCacheAPITWithDuplicatesTest")
@@ -25,7 +23,7 @@ public class RemoteMultimapCacheAPITWithDuplicatesTest extends SingleHotRodServe
         // Do not retry when the server response cannot be parsed, see ISPN-12596
         builder.forceReturnValues(isForceReturnValuesViaConfiguration()).maxRetries(0);
         builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
-        return new InternalRemoteCacheManager(builder.build());
+        return new RemoteCacheManager(builder.build());
     }
 
     @Override

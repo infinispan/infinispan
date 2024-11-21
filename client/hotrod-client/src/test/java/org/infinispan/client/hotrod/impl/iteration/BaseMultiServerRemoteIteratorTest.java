@@ -29,7 +29,6 @@ import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.marshall.Marshaller;
@@ -75,7 +74,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
    @Override
    protected RemoteCacheManager createClient(int i) {
       Configuration cfg = createHotRodClientConfigurationBuilder(server(i)).addContextInitializer(DslSCI.INSTANCE).build();
-      return new InternalRemoteCacheManager(cfg);
+      return new RemoteCacheManager(cfg);
    }
 
    protected <T> Entry<Object, T> convertEntry(Entry<Object, ?> entry) {

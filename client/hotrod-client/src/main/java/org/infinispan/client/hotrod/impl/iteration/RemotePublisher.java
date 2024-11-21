@@ -15,13 +15,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
+import org.infinispan.client.hotrod.impl.operations.CacheOperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
 import org.infinispan.client.hotrod.impl.operations.IterationEndResponse;
-import org.infinispan.client.hotrod.impl.operations.IterationNextOperation;
 import org.infinispan.client.hotrod.impl.operations.IterationNextResponse;
-import org.infinispan.client.hotrod.impl.operations.IterationStartOperation;
 import org.infinispan.client.hotrod.impl.operations.IterationStartResponse;
-import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.reactive.RxJavaInterop;
@@ -30,29 +30,30 @@ import org.infinispan.commons.util.IntSets;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 
-import io.netty.channel.Channel;
 import io.reactivex.rxjava3.core.Flowable;
 
 public class RemotePublisher<K, E> implements Publisher<Map.Entry<K, E>> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+   private final CacheOperationsFactory operationsFactory;
 
-   private final OperationsFactory operationsFactory;
+   private final OperationDispatcher dispatcher;
    private final String filterConverterFactory;
    private final byte[][] filterParams;
    private final IntSet segments;
    private final int batchSize;
    private final boolean metadata;
-   private final DataFormat dataFormat;
    private final KeyTracker segmentKeyTracker;
 
    private final Set<SocketAddress> failedServers = ConcurrentHashMap.newKeySet();
 
-   public RemotePublisher(OperationsFactory operationsFactory, String filterConverterFactory,
-         byte[][] filterParams, Set<Integer> segments, int batchSize, boolean metadata, DataFormat dataFormat) {
+   public RemotePublisher(CacheOperationsFactory operationsFactory, OperationDispatcher dispatcher, String filterConverterFactory,
+                          Object[] filterParams, Set<Integer> segments, int batchSize, boolean metadata, DataFormat dataFormat) {
       this.operationsFactory = operationsFactory;
+      this.dispatcher = dispatcher;
       this.filterConverterFactory = filterConverterFactory;
-      this.filterParams = filterParams;
-      SegmentConsistentHash segmentConsistentHash = (SegmentConsistentHash) operationsFactory.getConsistentHash();
+      this.filterParams = operationsFactory.marshallParams(filterParams);
+      String cacheName = operationsFactory.getRemoteCache().getName();
+      SegmentConsistentHash segmentConsistentHash = (SegmentConsistentHash) dispatcher.getConsistentHash(cacheName);
       if (segments == null) {
          if (segmentConsistentHash != null) {
             int maxSegment = segmentConsistentHash.getNumSegments();
@@ -68,9 +69,8 @@ public class RemotePublisher<K, E> implements Publisher<Map.Entry<K, E>> {
       }
       this.batchSize = batchSize;
       this.metadata = metadata;
-      this.dataFormat = dataFormat;
       this.segmentKeyTracker = KeyTrackerFactory.create(dataFormat, segmentConsistentHash,
-            operationsFactory.getTopologyId(), segments);
+            dispatcher.getTopologyId(cacheName), segments);
    }
 
    @Override
@@ -100,7 +100,8 @@ public class RemotePublisher<K, E> implements Publisher<Map.Entry<K, E>> {
       }
       Flowable.just(segments)
             .map(segments -> {
-               Map<SocketAddress, Set<Integer>> segmentsByAddress = operationsFactory.getPrimarySegmentsByAddress();
+               Map<SocketAddress, Set<Integer>> segmentsByAddress = dispatcher.getPrimarySegmentsByAddress(
+                     operationsFactory.getRemoteCache().getName());
                Map<SocketAddress, IntSet> actualTargets = new HashMap<>(segmentsByAddress.size());
                for (Map.Entry<SocketAddress, Set<Integer>> entry : segmentsByAddress.entrySet()) {
                   SocketAddress targetAddress = entry.getKey();
@@ -143,13 +144,15 @@ public class RemotePublisher<K, E> implements Publisher<Map.Entry<K, E>> {
    }
 
    void erroredServer(SocketAddress socketAddress) {
+      // socketAddress is null if we don't have a CH or if the CH contains an address that is already in failedServers
       if (socketAddress != null) {
          failedServers.add(socketAddress);
       }
    }
 
-   CompletionStage<Void> sendCancel(byte[] iterationId, Channel channel) {
-      CompletionStage<IterationEndResponse> endResponseStage = operationsFactory.newIterationEndOperation(iterationId, channel).execute();
+   CompletionStage<Void> sendCancel(byte[] iterationId, SocketAddress socketAddress) {
+      CompletionStage<IterationEndResponse> endResponseStage = dispatcher.executeOnSingleAddress(
+            operationsFactory.newIterationEndOperation(iterationId), socketAddress);
       return endResponseStage.handle((endResponse, t) -> {
          if (t != null) {
             HOTROD.ignoringErrorDuringIterationClose(iterationId(iterationId), t);
@@ -179,14 +182,17 @@ public class RemotePublisher<K, E> implements Publisher<Map.Entry<K, E>> {
 
    CompletionStage<IterationStartResponse> newIteratorStartOperation(SocketAddress address, IntSet segments,
          int batchSize) {
-      IterationStartOperation iterationStartOperation = operationsFactory.newIterationStartOperation(filterConverterFactory,
-            filterParams, segments, batchSize, metadata, dataFormat, address);
-      return iterationStartOperation.execute();
+      HotRodOperation<IterationStartResponse> op = operationsFactory.newIterationStartOperation(filterConverterFactory,
+            filterParams, segments, batchSize, metadata);
+      if (address == null) {
+         return dispatcher.execute(op);
+      }
+      return dispatcher.executeOnSingleAddress(op, address);
    }
 
-   CompletionStage<IterationNextResponse<K, E>> newIteratorNextOperation(byte[] iterationId, Channel channel) {
-      IterationNextOperation<K, E> iterationNextOperation = operationsFactory.newIterationNextOperation(iterationId,
-            channel, segmentKeyTracker, dataFormat);
-      return iterationNextOperation.execute();
+   CompletionStage<IterationNextResponse<K, E>> newIteratorNextOperation(byte[] iterationId, SocketAddress socketAddress) {
+      HotRodOperation<IterationNextResponse<K, E>> op = operationsFactory.newIterationNextOperation(iterationId,
+            segmentKeyTracker);
+      return dispatcher.executeOnSingleAddress(op, socketAddress);
    }
 }

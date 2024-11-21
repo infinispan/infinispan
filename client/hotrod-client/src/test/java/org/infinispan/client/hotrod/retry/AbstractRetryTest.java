@@ -8,13 +8,14 @@ import java.net.SocketAddress;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.client.hotrod.HitsAwareCacheManagersTest;
+import org.infinispan.client.hotrod.Internals;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -36,7 +37,7 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
 
    protected RemoteCacheImpl<Object, Object> remoteCache;
    protected RemoteCacheManager remoteCacheManager;
-   protected ChannelFactory channelFactory;
+   protected OperationDispatcher dispatcher;
    protected ConfigurationBuilder config;
    protected RoundRobinBalancingStrategy strategy;
 
@@ -72,7 +73,7 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
 
       remoteCacheManager = createRemoteCacheManager(hotRodServer1.getPort());
       remoteCache = (RemoteCacheImpl) remoteCacheManager.getCache();
-      channelFactory = remoteCacheManager.getChannelFactory();
+      dispatcher = Internals.dispatcher(remoteCacheManager);
       strategy = getLoadBalancer(remoteCacheManager);
       addInterceptors();
 
@@ -88,7 +89,7 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
          .connectionPool().maxActive(1); //this ensures that only one server is active at a time
       amendRemoteCacheManagerConfiguration(builder);
       builder.addServer().host("127.0.0.1").port(port);
-      return new InternalRemoteCacheManager(builder.build());
+      return new RemoteCacheManager(builder.build());
    }
 
    protected void amendRemoteCacheManagerConfiguration(org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder) {
@@ -130,7 +131,7 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
    protected abstract ConfigurationBuilder getCacheConfig();
 
    protected AdvancedCache<?, ?> cacheToHit(Object key) {
-      ConsistentHash consistentHash = channelFactory.getConsistentHash(RemoteCacheManager.cacheNameBytes());
+      ConsistentHash consistentHash = dispatcher.getConsistentHash(HotRodConstants.DEFAULT_CACHE_NAME);
       SocketAddress expectedServer = consistentHash.getServer(marshall(key));
       return addr2hrServer.get(expectedServer).getCacheManager().getCache().getAdvancedCache();
    }

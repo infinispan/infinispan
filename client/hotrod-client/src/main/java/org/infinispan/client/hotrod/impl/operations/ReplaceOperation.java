@@ -1,20 +1,14 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
-import org.infinispan.client.hotrod.DataFormat;
-import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
-import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
-import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -27,29 +21,33 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class ReplaceOperation<V> extends AbstractKeyValueOperation<V> {
 
-   public ReplaceOperation(Codec codec, ChannelFactory channelFactory,
-                           Object key, byte[] keyBytes, byte[] cacheName, AtomicReference<ClientTopology> clientTopology,
-                           int flags, Configuration cfg, byte[] value,
-                           long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit,
-                           DataFormat dataFormat, ClientStatistics clientStatistics, TelemetryService telemetryService) {
-      super(REPLACE_REQUEST, REPLACE_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, clientTopology, flags, cfg, value,
-            lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics, telemetryService);
+   public ReplaceOperation(InternalRemoteCache<?, ?> cache, byte[] keyBytes, byte[] value,
+                           long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+      super(cache, keyBytes, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      scheduleRead(channel);
-      sendKeyValueOperation(channel);
+   public V createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
+      return returnPossiblePrevValue(buf, status, codec, unmarshaller);
    }
 
    @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      if (HotRodConstants.isSuccess(status)) {
-         statsDataStore();
+   public void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, Object responseValue) {
+      if (HotRodConstants.isNotExist(status)) {
+         statistics.dataStore(startTime, 1);
       }
       if (HotRodConstants.hasPrevious(status)) {
-         statsDataRead(true);
+         statistics.dataRead(true, startTime, 1);
       }
-      complete(returnPossiblePrevValue(buf, status));
+   }
+
+   @Override
+   public short requestOpCode() {
+      return REPLACE_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return REPLACE_RESPONSE;
    }
 }

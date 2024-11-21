@@ -15,11 +15,13 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.tags.Resilience;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.infinispan.test.TestingUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -58,7 +60,6 @@ public class ResilienceMaxRetryIT {
       // Execute cache operations so the client connects to server1 or server2 and receives a topology update
       // The client keeps trying to connect to failed servers for each new operation,
       // so the number of operations we need depends on which server owns each key
-      byte[] cacheNameBytes = cache.getName().getBytes();
       for (int i = 0; i < 10; i++) {
          try {
             cache.get(ThreadLocalRandom.current().nextInt());
@@ -69,8 +70,9 @@ public class ResilienceMaxRetryIT {
          }
       }
 
+      String cacheName = cache.getName();
       // Check that the stopped server was properly removed from the list
-      Collection<InetSocketAddress> currentServers = cache.getRemoteCacheManager().getChannelFactory().getServers(cacheNameBytes);
+      Collection<InetSocketAddress> currentServers = ((OperationDispatcher) TestingUtil.extractField(cache, "dispatcher")).getServers(cacheName);
       assertEquals(new HashSet<>(asList(serverAddress1, serverAddress2)), new HashSet<>(resolveAddresses(currentServers)));
 
       // Stop server1 and server2, start server0
@@ -93,7 +95,7 @@ public class ResilienceMaxRetryIT {
       }
 
       // Check that the client switched to the initial server list
-      currentServers = cache.getRemoteCacheManager().getChannelFactory().getServers(cacheNameBytes);
+      currentServers = ((OperationDispatcher) TestingUtil.extractField(cache, "dispatcher")).getServers(cacheName);
       assertEquals(singletonList(serverAddress0), resolveAddresses(currentServers));
 
       // Do another operation, it should succeed
