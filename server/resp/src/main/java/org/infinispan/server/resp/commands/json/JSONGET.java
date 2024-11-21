@@ -14,6 +14,7 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter.Indenter;
@@ -62,13 +63,15 @@ public class JSONGET extends RespCommand implements Resp3Command {
             .create(FunctionalMapImpl.create(handler.typedCache(null)));
       int finalPos = args.pos();
       CompletionStage<String> cs = cache.eval(key, view -> {
-         DefaultPrettyPrinter rpp = (args.space() != null) ? new RespPrettyPrinter(args.space()) : new RespPrettyPrinter();
+         DefaultPrettyPrinter rpp = (args.space() != null) ? new RespPrettyPrinter(args.space())
+
+               : new RespPrettyPrinter();
 
          Indenter ind = new DefaultIndenter(args.indent(), args.newline());
          rpp.indentArraysWith(ind);
          rpp.indentObjectsWith(ind);
          int pathPos = finalPos;
-         ObjectMapper mapper = new ObjectMapper();
+         ObjectMapper mapper = JSONUtil.objectMapper;
          JsonDoc value = (JsonDoc) view.find().orElse(null);
          var doc = value == null ? null : value.bytesDocument();
          try {
@@ -96,8 +99,10 @@ public class JSONGET extends RespCommand implements Resp3Command {
             }
             String resp = mapper.writer(rpp).writeValueAsString(result);
             return resp;
+         } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
          } catch (IOException e) {
-            return e.getMessage();
+            throw new RuntimeException(e);
          }
       });
       return handler.stageToReturn(cs, ctx, ResponseWriter.SIMPLE_STRING);
@@ -133,9 +138,13 @@ public class JSONGET extends RespCommand implements Resp3Command {
 
 record Args(String indent, String newline, String space, int pos) {}
 class RespPrettyPrinter extends DefaultPrettyPrinter {
-   private String ofvs;
+   private final String ofvs;
+
+
 
    public RespPrettyPrinter() {
+
+
       super();
       ofvs = ":";
    }
@@ -144,15 +153,6 @@ class RespPrettyPrinter extends DefaultPrettyPrinter {
       super();
       ofvs = ":" + objectFieldValueSeparator;
    }
-   // @Override
-   // public void writeRootValueSeparator(JsonGenerator g) throws IOException {
-   // g.writeRaw("s");
-   // }
-
-   // @Override
-   // public void beforeObjectEntries(JsonGenerator g) throws IOException {
-   // g.writeRaw("i");
-   // }
 
    public RespPrettyPrinter(RespPrettyPrinter base) {
       super(base);
