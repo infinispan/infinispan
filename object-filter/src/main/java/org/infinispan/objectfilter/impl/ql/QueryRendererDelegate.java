@@ -64,6 +64,12 @@ public interface QueryRendererDelegate<TypeDescriptor> {
 
    void deactivateBoolean();
 
+   void activateFunction(Function function);
+
+   void deactivateFunction();
+
+   void spatialDistance(String lat, String lon);
+
    void predicateLess(String value);
 
    void predicateLessOrEqual(String value);
@@ -95,6 +101,18 @@ public interface QueryRendererDelegate<TypeDescriptor> {
    void predicateKNN(List<String> vector, String knn);
 
    void predicateKNN(String vector, String knn);
+
+   void predicateSpatialWithinCircle(String lat, String lon, String radius);
+
+   void predicateSpatialNotWithinCircle(String lat, String lon, String radius);
+
+   void predicateSpatialWithinBox(String tlLat, String tlLon, String brLat, String brLon);
+
+   void predicateSpatialNotWithinBox(String tlLat, String tlLon, String brLat, String brLon);
+
+   void predicateSpatialWithinPolygon(List<String> vector);
+
+   void predicateSpatialNotWithinPolygon(List<String> vector);
 
    enum Occur {
       MUST("+"),

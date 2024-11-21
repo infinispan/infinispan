@@ -1,22 +1,28 @@
 package org.infinispan.api.annotations.indexing.model;
 
+import org.infinispan.api.annotations.indexing.Longitude;
+import org.infinispan.api.annotations.indexing.Latitude;
+
 /**
  * A point in the geocentric coordinate system.
  * <p>
  * Simplified version for Infinispan of {@link org.hibernate.search.engine.spatial.GeoPoint}
  *
- * @since 14.0
+ * @since 15.1
  */
-public final class Point {
+public final class LatLng {
 
-   static Point of(double latitude, double longitude) {
-      return new Point(latitude, longitude);
+   public static LatLng of(double latitude, double longitude) {
+      return new LatLng(latitude, longitude);
    }
 
-   private final double latitude;
+   @Longitude
    private final double longitude;
 
-   public Point(double latitude, double longitude) {
+   @Latitude
+   private final double latitude;
+
+   public LatLng(double latitude, double longitude) {
       this.latitude = latitude;
       this.longitude = longitude;
    }

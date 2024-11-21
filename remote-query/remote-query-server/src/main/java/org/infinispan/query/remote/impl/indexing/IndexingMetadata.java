@@ -38,18 +38,21 @@ public final class IndexingMetadata {
     */
    private final Map<String, FieldMapping> fields;
 
+   private final Map<String, SpatialFieldMapping> spatialFields;
+
    /**
     * Key mapping. This is null if key indexing is disabled.
     */
    private final IndexingKeyMetadata indexingKey;
 
    public IndexingMetadata(boolean isIndexed, String indexName, String analyzer, Map<String, FieldMapping> fields,
-                           IndexingKeyMetadata indexingKey) {
+                           Map<String, SpatialFieldMapping> spatialFields, IndexingKeyMetadata indexingKey) {
       this.isIndexed = isIndexed;
       this.indexName = indexName;
       this.analyzer = analyzer;
       this.fields = fields;
       this.indexingKey = indexingKey;
+      this.spatialFields = spatialFields;
    }
 
    public boolean isIndexed() {
@@ -74,7 +77,11 @@ public final class IndexingMetadata {
          return isIndexed;
       }
       FieldMapping fieldMapping = fields.get(fieldName);
-      return fieldMapping != null && fieldMapping.searchable();
+      if (fieldMapping != null) {
+         return fieldMapping.searchable();
+      }
+      SpatialFieldMapping spatialField = spatialFields.get(fieldName);
+      return spatialField != null;
    }
 
    public boolean isFieldAnalyzed(String fieldName) {
@@ -98,7 +105,11 @@ public final class IndexingMetadata {
          return isIndexed;
       }
       FieldMapping fieldMapping = fields.get(fieldName);
-      return fieldMapping != null && fieldMapping.projectable();
+      if (fieldMapping != null) {
+         return fieldMapping.projectable();
+      }
+      SpatialFieldMapping spatialField = spatialFields.get(fieldName);
+      return spatialField != null && spatialField.projectable();
    }
 
    public boolean isFieldAggregable(String fieldName) {
@@ -125,6 +136,13 @@ public final class IndexingMetadata {
       return fieldMapping != null && fieldMapping.dimension() != null;
    }
 
+   public boolean isFieldSpatial(String fieldName) {
+      if (spatialFields == null) {
+         return false;
+      }
+      return spatialFields.containsKey(fieldName);
+   }
+
    public Object getNullMarker(String fieldName) {
       if (fields == null) {
          return null;
@@ -138,6 +156,10 @@ public final class IndexingMetadata {
          return null;
       }
       return fields.get(name);
+   }
+
+   public Map<String, SpatialFieldMapping> getSpatialFields() {
+      return spatialFields;
    }
 
    @Override

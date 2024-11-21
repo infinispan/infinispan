@@ -14,7 +14,7 @@ import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
 import org.infinispan.objectfilter.impl.syntax.ConstantBooleanExpr;
-import org.infinispan.objectfilter.impl.syntax.FullTextVisitor;
+import org.infinispan.objectfilter.impl.syntax.IndexedSearchPredicateDetector;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
@@ -209,8 +209,8 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    private void disallowFullText(IckleParsingResult<TypeMetadata> parsingResult) {
       if (parsingResult.getWhereClause() != null) {
-         if (parsingResult.getWhereClause().acceptVisitor(FullTextVisitor.INSTANCE)) {
-            throw log.getFiltersCannotUseFullTextSearchException();
+         if (IndexedSearchPredicateDetector.checkIndexingRequired(parsingResult.getWhereClause())) {
+            throw log.filtersCannotUseFullTextOrSpatialSearchException();
          }
       }
    }

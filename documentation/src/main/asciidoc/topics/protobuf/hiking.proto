@@ -1,0 +1,25 @@
+syntax = "proto3";
+package geo;
+
+import "latlng.proto";
+
+/**
+ * @Indexed
+ */
+message ProtoHiking {
+
+   /**
+    * @Keyword
+    */
+   string name = 1;
+
+   /**
+    * @GeoField
+    */
+   google.type.LatLng start = 2; // <1>
+
+   /**
+    * @GeoField
+    */
+   google.type.LatLng end = 3; // <1>
+}

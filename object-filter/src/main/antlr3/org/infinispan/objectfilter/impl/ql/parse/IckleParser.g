@@ -290,9 +290,30 @@ relationalExpression
 		|	member_of_key path
 			-> {isNegated}? ^(NOT_MEMBER_OF[$not_key.start, "not member of"] $relationalExpression ^(PATH path))
 			-> ^(member_of_key $relationalExpression ^(PATH path))
+		|   within_key geoShape
+			-> {isNegated}? ^(NOT_WITHIN[$not_key.start, "not within"] $relationalExpression geoShape)
+			-> ^(within_key $relationalExpression geoShape)
 		)
 	)?
 	;
+
+geoShape
+    : geoCircle
+    | geoBoundingBox
+    | geoPolygon
+    ;
+
+geoCircle
+    : circle_key^ LPAREN! lat=atom COMMA! lon=atom COMMA! radius=atom RPAREN!
+    ;
+
+geoBoundingBox
+    : boundingBox_key^ LPAREN! tlLat=atom COMMA! tlLon=atom COMMA! brLat=atom COMMA! brLon=atom RPAREN!
+    ;
+
+geoPolygon
+    : polygon_key^ LPAREN! expressionOrVector RPAREN!
+    ;
 
 likeEscape
 	:  escape_key^ additiveExpression
@@ -310,11 +331,16 @@ betweenList
 additiveExpression
    :  quantifiedExpression
    |  standardFunction
+   |  distanceFunction
    |  setFunction
    |  versionFunction
    |  scoreFunction
    |  collectionExpression
    |  atom
+   ;
+
+distanceFunction
+   : distance_key^ LPAREN! propertyReference COMMA! lat=atom COMMA! lon=atom RPAREN!
    ;
 
 quantifiedExpression
@@ -574,6 +600,26 @@ filtering_key
 with_key
    :   {validateSoftKeyword("with")}?=> IDENTIFIER -> WITH[$IDENTIFIER]
 	;
+
+within_key
+   :   {validateSoftKeyword("within")}?=> IDENTIFIER -> WITHIN[$IDENTIFIER]
+   ;
+
+distance_key
+   :   {validateSoftKeyword("distance")}?=> IDENTIFIER -> DISTANCE[$IDENTIFIER]
+   ;
+
+circle_key
+   :   {validateSoftKeyword("circle")}?=> IDENTIFIER -> CIRCLE[$IDENTIFIER]
+   ;
+
+boundingBox_key
+   :   {validateSoftKeyword("box")}?=> IDENTIFIER -> BOUNDINGBOX[$IDENTIFIER]
+   ;
+
+polygon_key
+   :   {validateSoftKeyword("polygon")}?=> IDENTIFIER -> POLYGON[$IDENTIFIER]
+   ;
 
 on_key
    :   {validateSoftKeyword("on")}?=> IDENTIFIER -> ON[$IDENTIFIER]

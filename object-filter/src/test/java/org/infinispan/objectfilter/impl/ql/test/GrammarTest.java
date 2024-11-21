@@ -139,6 +139,51 @@ public class GrammarTest extends TestBase {
    }
 
    @Test
+   public void testSpatial() {
+      String expectedFrom = "(QUERY (QUERY_SPEC (SELECT_FROM (from (PERSISTER_SPACE (ENTITY_PERSISTER_REF Cat cat))) ";
+
+      expectParserSuccess("from Cat cat where cat.location within circle(45.6, 39.4, 100)",
+            expectedFrom + "(SELECT (SELECT_LIST (SELECT_ITEM cat)))) (where (within (PATH (. cat location)) (circle 45.6 39.4 100)))))");
+
+      expectParserSuccess("from Cat cat where cat.location within circle(45.6, 39.4, 100) order by distance(cat.location, 40.3, 30.99)",
+            expectedFrom + "(SELECT (SELECT_LIST (SELECT_ITEM cat)))) (where (within (PATH (. cat location)) (circle 45.6 39.4 100)))) (order (SORT_SPEC (distance (PROPERTY_REFERENCE (. cat location)) 40.3 30.99) asc)))");
+
+      expectParserSuccess("select distance(cat.location, 40.3, 30.99) from Cat cat where cat.location within circle(45.6, 39.4, 100)",
+            expectedFrom + "(select (SELECT_LIST (SELECT_ITEM (distance (PROPERTY_REFERENCE (. cat location)) 40.3 30.99))))) (where (within (PATH (. cat location)) (circle 45.6 39.4 100)))))");
+
+      expectParserSuccess("select cat.name, distance(cat.location, 40.3, 30.99) from Cat cat where cat.location within circle(45.6, 39.4, 100)",
+            expectedFrom + "(select (SELECT_LIST (SELECT_ITEM (PATH (. cat name))) (SELECT_ITEM (distance (PROPERTY_REFERENCE (. cat location)) 40.3 30.99))))) (where (within (PATH (. cat location)) (circle 45.6 39.4 100)))))");
+   }
+
+   @Test
+   public void testSpatial_box() {
+      String expectedFrom = "(QUERY (QUERY_SPEC (SELECT_FROM (from (PERSISTER_SPACE (ENTITY_PERSISTER_REF Cat cat))) ";
+
+      expectParserSuccess("from Cat cat where cat.location within box(45.6, 39.4, 46.6, 40.4)",
+            expectedFrom + "(SELECT (SELECT_LIST (SELECT_ITEM cat)))) (where (within (PATH (. cat location)) (box 45.6 39.4 46.6 40.4)))))");
+
+      expectParserSuccess("from Cat cat where cat.location within box(45.6, 39.4, 46.6, 40.4) order by distance(cat.location, 40.3, 30.99)",
+            expectedFrom + "(SELECT (SELECT_LIST (SELECT_ITEM cat)))) (where (within (PATH (. cat location)) (box 45.6 39.4 46.6 40.4)))) (order (SORT_SPEC (distance (PROPERTY_REFERENCE (. cat location)) 40.3 30.99) asc)))");
+
+      expectParserSuccess("select distance(cat.location, 40.3, 30.99) from Cat cat where cat.location within box(45.6, 39.4, 46.6, 40.4)",
+            expectedFrom + "(select (SELECT_LIST (SELECT_ITEM (distance (PROPERTY_REFERENCE (. cat location)) 40.3 30.99))))) (where (within (PATH (. cat location)) (box 45.6 39.4 46.6 40.4)))))");
+   }
+
+   @Test
+   public void testSpatial_polygon() {
+      String expectedFrom = "(QUERY (QUERY_SPEC (SELECT_FROM (from (PERSISTER_SPACE (ENTITY_PERSISTER_REF Cat cat))) ";
+
+      expectParserSuccess("from Cat cat where cat.location within polygon((40.1, 20.4), (46.6, 20.4))",
+            expectedFrom + "(SELECT (SELECT_LIST (SELECT_ITEM cat)))) (where (within (PATH (. cat location)) (polygon (VECTOR_EXPR (VECTOR_EXPR 40.1 20.4) (VECTOR_EXPR 46.6 20.4)))))))");
+
+      expectParserSuccess("from Cat cat where cat.location within polygon((40.1, 20.4), (46.6, 20.4)) order by distance(cat.location, 40.3, 30.99)",
+            expectedFrom + "(SELECT (SELECT_LIST (SELECT_ITEM cat)))) (where (within (PATH (. cat location)) (polygon (VECTOR_EXPR (VECTOR_EXPR 40.1 20.4) (VECTOR_EXPR 46.6 20.4)))))) (order (SORT_SPEC (distance (PROPERTY_REFERENCE (. cat location)) 40.3 30.99) asc)))");
+
+      expectParserSuccess("select distance(cat.location, 40.3, 30.99) from Cat cat where cat.location within polygon((40.1, 20.4), (46.6, 20.4))",
+            expectedFrom + "(select (SELECT_LIST (SELECT_ITEM (distance (PROPERTY_REFERENCE (. cat location)) 40.3 30.99))))) (where (within (PATH (. cat location)) (polygon (VECTOR_EXPR (VECTOR_EXPR 40.1 20.4) (VECTOR_EXPR 46.6 20.4)))))))");
+   }
+
+   @Test
    public void testFtRange() {
       String expectedFrom = "(QUERY (QUERY_SPEC (SELECT_FROM (from (PERSISTER_SPACE (ENTITY_PERSISTER_REF Cat cat))) (SELECT (SELECT_LIST (SELECT_ITEM cat)))) ";
 

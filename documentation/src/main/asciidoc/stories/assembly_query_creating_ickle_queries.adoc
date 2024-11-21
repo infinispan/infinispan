@@ -7,6 +7,7 @@ include::{topics}/ref_query_ickle.adoc[leveloffset=+1]
 include::{topics}/ref_query_ickle_syntax.adoc[leveloffset=+1]
 include::{topics}/ref_query_full_text_search.adoc[leveloffset=+1]
 include::{topics}/ref_query_vector_search.adoc[leveloffset=+1]
+include::{topics}/ref_query_spatial_search.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

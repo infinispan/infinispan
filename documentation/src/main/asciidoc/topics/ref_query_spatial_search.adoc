@@ -1,0 +1,204 @@
+[id='spatial_search_{context}']
+= Spatial queries
+
+It is possible to define spatial fields in the index domain that can be queried using spatial predicates.
+
+A spatial field denotes a spatial point that is represented by a pair of geographical coordinatees:
+the latitude and the longitude.
+
+When entities are added to an indexed cache, and their type is configured to be indexed,
+the mapped spatial fields will be included in the indexes and available for querying.
+
+[NOTE]
+====
+Spatial queries are not supported by non-indexed queries.
+====
+
+== Spatial fields mapping
+
+=== Spatial mapping: `@GeoPoint`
+
+This option uses a type-level indexing annotation `@GeoPoint` for each spatial field to be defined.
+One or more `@GeoPoint`s can be added to the indexed entity.
+
+The only mandatory attribute is the `fieldName` attribute and it is used to denote the field name in the index domain.
+If more than one `@GeoPoint` are defined on the same entity, their names must be different.
+
+For each of them, we require to have on the same entity two double-typed fields:
+
+* one annotated with `@Latitude`, that will store the latitude of the given point
+* one annotated with `@Longitude`, that will store the longitude of the given point
+
+Where `@Latitude` and `@Longitude` must have `fieldName` attribute
+equals to the `fieldName` attribute of the corresponding `@GeoPoint` annotation.
+
+Here is an example of an entity defining two points: `departure` and `arrival`.
+
+.TrainRoute
+====
+[source, Java, indent=0, subs="+callouts"]
+----
+include::code_examples/TrainRoute.java[]
+----
+<1> The `@Proto` annotation, indicating that the entity is supposed to be used for remote queries
+<2> A `departure` point. Optionally sortable and projectable.
+<3> An `arrival` point. Optionally sortable and projectable.
+<4> The `departure` 's latitude.
+<5> The `departure` 's longitude.
+<6> The `arrival` 's latitude.
+<7> The `arrival` 's longitude.
+====
+
+Also a single point can be defined, here is an example:
+
+.Restaurant
+====
+[source, Java, indent=0, subs="+callouts"]
+----
+include::code_examples/Restaurant.java[]
+----
+<1> A `location` point. Optionally sortable and projectable.
+<2> The `location` 's latitude.
+<3> The `location` 's longitude.
+<4> Generate a protobuf schema for the specified entities
+====
+
+=== Spatial mapping: `@GeoField`
+
+Alternatively, the special field types `*.LatLng` can be used to define spatial fields.
+The spatial fields (or the corresponding properties) must be also annotated with `@GeoField`.
+
+Here is an example of embedded query mapping using `@GeoField` annotations on `LatLng` fields:
+
+.Hiking
+====
+[source, Java, indent=0, subs="+callouts"]
+----
+include::code_examples/Hiking.java[]
+----
+<1> For embedded queries, use `org.infinispan.api.annotations.indexing.model.LatLng` as type for any spatial field.
+<2> Annotate the spatial fields with `@GeoField`.
+====
+
+Here is an example of remote query mapping using `@GeoField` annotations on `LatLng` fields:
+
+.ProtoHiking
+====
+[source, Java, indent=0, subs="+callouts"]
+----
+include::code_examples/ProtoHiking.java[]
+----
+<1> For remote queries, use `org.infinispan.commons.api.query.geo.LatLng` as type for any spatial field.
+<2> Annotate the spatial fields with `@GeoField`.
+<3> The schema must be generated with the explicit dependency on `LatLng.LatLngSchema.class`.
+====
+
+The corresponding proto schema for remote queries will be:
+
+.hiking.proto
+====
+[source, Proto, indent=0, subs="+callouts"]
+----
+include::protobuf/hiking.proto[]
+----
+<1> The Google standard type `google.type.LatLng` will be used to store spatial fields in the data domain.
+====
+
+== Spatial predicates
+
+=== Spatial predicate: `circle`
+
+This predicate selects entities having points within a given distance from a center point.
+
+.Within circle
+====
+[source, Java, indent=0, subs="+callouts"]
+----
+include::code_examples/GeoQueries.java[tags=restaurants_withinCircle]
+----
+<1> We select all the restaurants within 100 meters from a given center, in this case 41.91, 12.46.
+<2> Parameters can be extracted for all the values passed to the `within circle` predicate.
+====
+
+=== Spatial predicate: `box`
+
+This predicate selects entities having points contained in a given rectangle (or box).
+The `within box` predicate has arity 4 and it takes as argument:
+
+1. The latitude of the top left box point.
+2. The longitude of the top left box point.
+3. The latitude of the bottom right box point.
+4. The longitude of the bottom right box point.
+
+.Within box
+====
+[source, Java, indent=0, subs="+callouts"]
+----
+include::code_examples/GeoQueries.java[tags=restaurants_withinBox]
+----
+<1> We select all the restaurants contained in the given box.
+====
+
+=== Spatial predicate: `polygon`
+
+This predicate selects entities having points within an arbitrary polygon.
+The `within polygon` predicate has n-arity, and each argument is a geo point expressed in terms of latitude and longitude.
+Each point is enclosed by brackets.
+
+.Within polygon
+====
+[source, Java, indent=0, subs="+callouts"]
+----
+include::code_examples/GeoQueries.java[tags=restaurants_withinPolygon]
+----
+<1> We select all the restaurants contained in the polygon identified by the provided vertex points.
+====
+
+== Spatial sorting
+
+Use any spatial field to sort the query result.
+In particular the result can be sorted according to the distance from a given point (the query point),
+by default in ascending order, to any spatial point owned by the entity.
+
+[NOTE]
+====
+In this case the spatial field must be sortable, by setting the attribute `sortable` to `true` of the corresponding `@GeoPoint`
+or `@GeoField` annotation used to map the spatial field.
+====
+
+Here is an example of usage:
+
+.Order by distance
+====
+[source, Java, indent=0, subs="+callouts"]
+----
+include::code_examples/GeoQueries.java[tags=restaurants_orderByDistances]
+----
+<1> Restaurants are ordered according to their distances from the given query point (41.91, 12.46).
+====
+
+== Spatial projections
+
+Project the distance between a given point (query point) and an entity's spatial field by using the `distance` predicate in the `from` clause.
+
+[NOTE]
+====
+In this case the spatial field must be projectable, setting the `projectable` attribute  to `true` of the corresponding `@GeoPoint`
+or `@GeoField` annotation used to map the spatial field.
+====
+
+Here is an example of usage:
+
+.Project the distances
+====
+[source, Java, indent=0, subs="+callouts"]
+----
+include::code_examples/GeoQueries.java[tags=restaurants_projectDistances]
+----
+<1> Pair the restaurant names with their respective distances from the query point (41.91, 12.46).
+====
+
+
+
+
+

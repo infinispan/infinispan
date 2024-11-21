@@ -167,6 +167,8 @@ predicate
 	|	^( NOT_MEMBER_OF rowValueConstructor rowValueConstructor  )
 	|	^( IS_EMPTY rowValueConstructor )
 	|	^( IS_NOT_EMPTY rowValueConstructor )
+	|	^( WITHIN rowValueConstructor spatialExpression )
+	|	^( NOT_WITHIN rowValueConstructor negatedSpatialExpression )
 	|	rowValueConstructor
 	;
 
@@ -235,10 +237,15 @@ propertyReferenceExpression
 
 function
 	: setFunction
+	| distanceFunction
 	| versionFunction
 	| scoreFunction
 	| standardFunction
 	;
+
+distanceFunction
+   : ^(DISTANCE propertyReferenceExpression numericValueExpression numericValueExpression)
+   ;
 
 setFunction
 	:	^(SUM numericValueExpression)
@@ -397,6 +404,18 @@ fullTextExpression
 
 knnExpression
    :  ^(ARROW propertyReferenceExpression ftClause)
+   ;
+
+spatialExpression
+   :  ^(CIRCLE rowValueConstructor rowValueConstructor rowValueConstructor)
+   |  ^(BOUNDINGBOX rowValueConstructor rowValueConstructor rowValueConstructor rowValueConstructor)
+   |  ^(POLYGON vectorExpression)
+   ;
+
+negatedSpatialExpression
+   :  ^(CIRCLE rowValueConstructor rowValueConstructor rowValueConstructor)
+   |  ^(BOUNDINGBOX rowValueConstructor rowValueConstructor rowValueConstructor rowValueConstructor)
+   |  ^(POLYGON vectorExpression)
    ;
 
 ftClause

@@ -199,7 +199,7 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
       cache().removeListener(listener);
    }
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028523: Filters cannot use full-text searches")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028523: Filters cannot use full-text or spatial queries")
    public void testDisallowFullTextQuery() {
       QueryFactory qf = Search.getQueryFactory(cache());
       Query<Person> query = qf.create("FROM " + Person.class.getName() + " WHERE name : 'john'");

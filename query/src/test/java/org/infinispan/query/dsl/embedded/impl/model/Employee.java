@@ -6,8 +6,11 @@ import java.util.List;
 import org.hibernate.search.mapper.pojo.mapping.definition.annotation.DocumentId;
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Embedded;
+import org.infinispan.api.annotations.indexing.GeoPoint;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Keyword;
+import org.infinispan.api.annotations.indexing.Latitude;
+import org.infinispan.api.annotations.indexing.Longitude;
 import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.api.annotations.indexing.option.Structure;
 
@@ -16,6 +19,8 @@ import org.infinispan.api.annotations.indexing.option.Structure;
  * @since 9.0
  */
 @Indexed
+@GeoPoint(fieldName = "location", projectable = true, sortable = true)
+@GeoPoint(fieldName = "officeLocation", projectable = true, sortable = true)
 public class Employee {
 
    public String id;
@@ -41,6 +46,18 @@ public class Employee {
    public List<ContactDetails> nestedContactDetails = new ArrayList<>();
 
    public List<ContactDetails> alternativeContactDetails = new ArrayList<>();
+
+   @Latitude(fieldName = "location")
+   private Double locationLat;
+
+   @Longitude(fieldName = "location")
+   private Double locationLon;
+
+   @Latitude(fieldName = "officeLocation")
+   private Double officeLocationLat;
+
+   @Longitude(fieldName = "officeLocation")
+   private Double officeLocationLon;
 
    // When an entity is created with Infinispan,
    // the document id is reserved to link the cache entry key to the value.

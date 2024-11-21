@@ -11,6 +11,6 @@ public class LatitudeProcessor implements PropertyMappingAnnotationProcessor<Lat
    @Override
    public void process(PropertyMappingStep mapping, Latitude annotation,
                        PropertyMappingAnnotationProcessorContext context) {
-      mapping.marker(GeoPointBinder.latitude().markerSet(annotation.marker()));
+      mapping.marker(GeoPointBinder.latitude().markerSet(annotation.fieldName()));
    }
 }

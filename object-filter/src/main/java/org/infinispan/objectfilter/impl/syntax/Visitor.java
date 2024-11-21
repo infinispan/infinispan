@@ -23,6 +23,12 @@ public interface Visitor<BE, VE> {
 
    BE visit(KnnPredicate knnPredicate);
 
+   BE visit(SpatialWithinCircleExpr spatialWithinCircleExpr);
+
+   BE visit(SpatialWithinBoxExpr spatialWithinBoxExpr);
+
+   BE visit(SpatialWithinPolygonExpr spatialWithinPolygonExpr);
+
    BE visit(NotExpr notExpr);
 
    BE visit(OrExpr orExpr);

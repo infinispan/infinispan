@@ -40,6 +40,21 @@ public class ExprVisitor implements Visitor<BooleanExpr, ValueExpr> {
    }
 
    @Override
+   public BooleanExpr visit(SpatialWithinCircleExpr spatialWithinCircleExpr) {
+      return spatialWithinCircleExpr;
+   }
+
+   @Override
+   public BooleanExpr visit(SpatialWithinBoxExpr spatialWithinBoxExpr) {
+      return spatialWithinBoxExpr;
+   }
+
+   @Override
+   public BooleanExpr visit(SpatialWithinPolygonExpr spatialWithinPolygonExpr) {
+      return spatialWithinPolygonExpr;
+   }
+
+   @Override
    public BooleanExpr visit(NotExpr notExpr) {
       return notExpr;
    }

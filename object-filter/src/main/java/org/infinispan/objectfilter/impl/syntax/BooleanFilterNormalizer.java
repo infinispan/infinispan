@@ -27,7 +27,14 @@ public final class BooleanFilterNormalizer {
       @Override
       public BooleanExpr visit(NotExpr notExpr) {
          // push the negation down the tree until it reaches a PrimaryPredicateExpr
-         return notExpr.getChild().acceptVisitor(deMorganVisitor);
+
+         BooleanExpr child = notExpr.getChild();
+         if (child instanceof SpatialWithinCircleExpr) {
+            // TODO [anistor] with the exception of spatial predicates, which cannot be logically negated
+            return notExpr;
+         }
+
+         return child.acceptVisitor(deMorganVisitor);
       }
 
       @Override

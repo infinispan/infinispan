@@ -45,6 +45,35 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
    }
 
    @Override
+   public boolean hasProperty(String[] propertyPath) {
+      Descriptor md = messageDescriptor;
+      int i = 0;
+      for (String p : propertyPath) {
+         i++;
+         FieldDescriptor field = null;
+         IndexingMetadata indexingMetadata = md.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+         if (indexingMetadata != null) {
+            FieldMapping fieldMapping = indexingMetadata.getFieldMapping(p);
+            if (fieldMapping != null) {
+               field = fieldMapping.getFieldDescriptor();
+            }
+         }
+         if (field == null) {
+            field = md.findFieldByName(p);
+         }
+         if (field == null) {
+            break;
+         }
+         if (field.getJavaType() == JavaType.MESSAGE) {
+            md = field.getMessageType();
+         } else {
+            return i == propertyPath.length;
+         }
+      }
+      return false;
+   }
+
+   @Override
    public boolean isSearchable(String[] propertyPath) {
       return getFlag(propertyPath, IndexingMetadata::isFieldSearchable);
    }
@@ -80,20 +109,31 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
    }
 
    @Override
+   public boolean isSpatial(String[] propertyPath) {
+      return getFlag(propertyPath, IndexingMetadata::isFieldSpatial);
+   }
+
+   @Override
    public Object getNullMarker(String[] propertyPath) {
       Descriptor md = messageDescriptor;
       int i = 0;
       for (String p : propertyPath) {
          i++;
-         FieldDescriptor field = md.findFieldByName(p);
+         FieldDescriptor field = null;
+         IndexingMetadata indexingMetadata = md.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+         if (indexingMetadata != null) {
+            FieldMapping fieldMapping = indexingMetadata.getFieldMapping(p);
+            if (fieldMapping != null) {
+               if (i == propertyPath.length) {
+                  return fieldMapping.indexNullAs();
+               }
+               field = fieldMapping.getFieldDescriptor();
+            }
+         }
          if (field == null) {
-            break;
+            field = md.findFieldByName(p);
          }
-         if (i == propertyPath.length) {
-            IndexingMetadata indexingMetadata = findProcessedAnnotation(md, IndexingMetadata.INDEXED_ANNOTATION);
-            return indexingMetadata == null ? null : indexingMetadata.getNullMarker(field.getName());
-         }
-         if (field.getJavaType() != JavaType.MESSAGE) {
+         if (i == propertyPath.length || field == null || field.getJavaType() != JavaType.MESSAGE) {
             break;
          }
          md = field.getMessageType();

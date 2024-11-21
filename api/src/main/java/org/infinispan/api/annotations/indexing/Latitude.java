@@ -17,7 +17,7 @@ import org.infinispan.api.common.annotations.indexing._private.LatitudeProcessor
  * <p>
  * Infinispan version of {@link org.hibernate.search.mapper.pojo.bridge.builtin.annotation.Latitude}
  *
- * @since 14.0
+ * @since 15.1
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD})
@@ -26,10 +26,10 @@ import org.infinispan.api.common.annotations.indexing._private.LatitudeProcessor
 public @interface Latitude {
 
    /**
-    * @return The name of the marker this marker belongs to.
-    * Set it to the value of {@link GeoCoordinates#marker()}
+    * @return The field Name this marker belongs to.
+    * Set it to the value of {@link GeoPoint#fieldName()}
     * so that the bridge detects this marker.
     */
-   String marker() default "";
+   String fieldName() default "";
 
 }

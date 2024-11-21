@@ -157,6 +157,11 @@ final class Target_HibernateSearchPropertyHelper_SearchFieldIndexingMetadata {
    public boolean isVector(String[] propertyPath) {
       return false;
    }
+
+   @Substitute
+   public boolean isSpatial(String[] propertyPath) {
+      return false;
+   }
 }
 
 @TargetClass(RemoteHibernateSearchPropertyHelper.class)
@@ -171,6 +176,11 @@ final class Target_RemoteHibernateSearchPropertyHelper {
 final class Target_RemoteHibernateSearchPropertyHelper_SearchFieldIndexingMetadata {
    @Substitute
    public boolean isVector(String[] propertyPath) {
+      return false;
+   }
+
+   @Substitute
+   public boolean isSpatial(String[] propertyPath) {
       return false;
    }
 }

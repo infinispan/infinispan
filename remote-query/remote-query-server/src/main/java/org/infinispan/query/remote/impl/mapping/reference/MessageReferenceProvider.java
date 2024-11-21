@@ -7,11 +7,13 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.search.engine.backend.document.IndexFieldReference;
 import org.hibernate.search.engine.backend.document.model.dsl.IndexSchemaElement;
 import org.hibernate.search.engine.backend.types.ObjectStructure;
+import org.hibernate.search.engine.spatial.GeoPoint;
 import org.infinispan.api.annotations.indexing.option.Structure;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
@@ -19,6 +21,7 @@ import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.query.remote.impl.indexing.FieldMapping;
 import org.infinispan.query.remote.impl.indexing.IndexingKeyMetadata;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
+import org.infinispan.query.remote.impl.indexing.SpatialFieldMapping;
 import org.infinispan.query.remote.impl.indexing.infinispan.IndexingMetadataHolder;
 
 /**
@@ -26,13 +29,14 @@ import org.infinispan.query.remote.impl.indexing.infinispan.IndexingMetadataHold
  *
  * @since 12.0
  */
-public class MessageReferenceProvider {
+public final class MessageReferenceProvider {
 
    public static final Set<String> COMMON_MESSAGE_TYPES =
          new HashSet<>(Arrays.asList(FieldReferenceProvider.COMMON_MESSAGE_TYPES));
 
    private final IndexingMetadata indexingMetadata;
    private final List<FieldReferenceProvider> fields;
+   private final List<SpatialReferenceProvider> geoFields;
    private final List<Embedded> embedded;
    private final String keyMessageName;
    private final String keyPropertyName;
@@ -49,8 +53,11 @@ public class MessageReferenceProvider {
       if (indexingMetadata == null) {
          keyMessageName = null;
          keyPropertyName = null;
+         geoFields = null;
          return;
       }
+
+      this.geoFields = new ArrayList<>(indexingMetadata.getSpatialFields().size());
 
       for (FieldDescriptor fieldDescriptor : descriptor.getFields()) {
          String fieldName = fieldDescriptor.getName();
@@ -74,7 +81,7 @@ public class MessageReferenceProvider {
 
          FieldReferenceProvider fieldReferenceProvider = new FieldReferenceProvider(fieldDescriptor, fieldMapping);
          if (!fieldReferenceProvider.nothingToBind()) {
-            fields.add(fieldReferenceProvider);
+            this.fields.add(fieldReferenceProvider);
          }
       }
 
@@ -87,6 +94,10 @@ public class MessageReferenceProvider {
          keyMessageName = null;
          keyPropertyName = null;
       }
+
+      for (SpatialFieldMapping field : indexingMetadata.getSpatialFields().values()) {
+         geoFields.add(new SpatialReferenceProvider(field));
+      }
    }
 
    public boolean isEmpty() {
@@ -98,6 +109,25 @@ public class MessageReferenceProvider {
       for (FieldReferenceProvider field : fields) {
          String newPath = ("".equals(basePath)) ? field.getName() : basePath + "." + field.getName();
          result.put(newPath, field.bind(indexSchemaElement));
+      }
+      return result;
+   }
+
+   public Map<String, IndexReferenceHolder.GeoIndexFieldReference> bindGeo(IndexSchemaElement indexSchemaElement, String basePath) {
+      Map<String, IndexReferenceHolder.GeoIndexFieldReference> result = new HashMap<>();
+      for (SpatialReferenceProvider field : geoFields) {
+         IndexFieldReference<GeoPoint> fieldReference = field.bind(indexSchemaElement);
+
+         String latitudePath = ("".equals(basePath)) ? field.latitudeName() : basePath + "." + field.latitudeName();
+         String longitudePath = ("".equals(basePath)) ? field.longitudeName() : basePath + "." + field.longitudeName();
+         IndexReferenceHolder.GeoIndexFieldReference latitudeRef =
+               new IndexReferenceHolder.GeoIndexFieldReference(IndexReferenceHolder.GeoIndexFieldReference.Role.LAT,
+                     fieldReference, field.indexName());
+         IndexReferenceHolder.GeoIndexFieldReference longitudeRef =
+               new IndexReferenceHolder.GeoIndexFieldReference(IndexReferenceHolder.GeoIndexFieldReference.Role.LON,
+                     fieldReference, field.indexName());
+         result.put(latitudePath, latitudeRef);
+         result.put(longitudePath, longitudeRef);
       }
       return result;
    }
@@ -118,7 +148,7 @@ public class MessageReferenceProvider {
       return indexingMetadata;
    }
 
-   public static class Embedded {
+   public static final class Embedded {
       private final String fieldName;
       private final String typeFullName;
       private final boolean repeated;
@@ -126,7 +156,7 @@ public class MessageReferenceProvider {
       private final ObjectStructure structure;
       private final IndexingMetadataHolder holder;
 
-      public Embedded(String fieldName, String typeFullName, boolean repeated, FieldMapping fieldMapping,
+      private Embedded(String fieldName, String typeFullName, boolean repeated, FieldMapping fieldMapping,
                       IndexingMetadataHolder holder) {
          this.fieldName = fieldName;
          this.typeFullName = typeFullName;
@@ -138,7 +168,7 @@ public class MessageReferenceProvider {
       }
 
       // typically invoked to create an index-embedded for the cache key
-      public Embedded(String fieldName, String typeFullName, Integer includeDepth) {
+      private Embedded(String fieldName, String typeFullName, Integer includeDepth) {
          this.fieldName = fieldName;
          this.typeFullName = typeFullName;
          this.repeated = false;

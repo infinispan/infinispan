@@ -29,6 +29,9 @@ import org.infinispan.objectfilter.impl.syntax.NestedExpr;
 import org.infinispan.objectfilter.impl.syntax.NotExpr;
 import org.infinispan.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
+import org.infinispan.objectfilter.impl.syntax.SpatialWithinBoxExpr;
+import org.infinispan.objectfilter.impl.syntax.SpatialWithinCircleExpr;
+import org.infinispan.objectfilter.impl.syntax.SpatialWithinPolygonExpr;
 import org.jboss.logging.Logger;
 
 /**
@@ -116,6 +119,27 @@ final class ExpressionBuilder<TypeMetadata> {
       Comparable lowerValue = (Comparable) propertyHelper.convertToBackendType(entityType, propertyPath.asArrayPath(), lower);
       Comparable upperValue = (Comparable) propertyHelper.convertToBackendType(entityType, propertyPath.asArrayPath(), upper);
       push(new BetweenExpr(makePropertyValueExpr(propertyPath), new ConstantValueExpr(lowerValue), new ConstantValueExpr(upperValue)));
+   }
+
+   public void addSpatialWithinCircle(PropertyPath<?> propertyPath, Object lat, Object lon, Object radius) {
+      push(new SpatialWithinCircleExpr(makePropertyValueExpr(propertyPath),
+            new ConstantValueExpr((Comparable) lat),
+            new ConstantValueExpr((Comparable) lon),
+            new ConstantValueExpr((Comparable) radius)));
+   }
+
+   public void addSpatialWithinBox(PropertyPath<?> propertyPath, Object tlLat, Object tlLon, Object brLat, Object brLon) {
+      push(new SpatialWithinBoxExpr(makePropertyValueExpr(propertyPath),
+            new ConstantValueExpr((Comparable) tlLat),
+            new ConstantValueExpr((Comparable) tlLon),
+            new ConstantValueExpr((Comparable) brLat),
+            new ConstantValueExpr((Comparable) brLon)
+      ));
+   }
+
+   public void addSpatialWithinPolygon(PropertyPath<?> propertyPath, List<Object> vector) {
+      push(new SpatialWithinPolygonExpr(makePropertyValueExpr(propertyPath),
+            vector.stream().map(item -> new ConstantValueExpr((Comparable) item)).toList()));
    }
 
    public void addIn(PropertyPath<?> propertyPath, List<Object> values) {
