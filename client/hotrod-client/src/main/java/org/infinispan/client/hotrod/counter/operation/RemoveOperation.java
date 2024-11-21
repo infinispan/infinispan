@@ -1,16 +1,13 @@
 package org.infinispan.client.hotrod.counter.operation;
 
-import java.util.concurrent.atomic.AtomicReference;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientTopology;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.operations.CacheUnmarshaller;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.api.WeakCounter;
+
+import io.netty.buffer.ByteBuf;
 
 /**
  * A counter operation for {@link CounterManager#remove(String)}, {@link StrongCounter#remove()} and {@link
@@ -20,19 +17,23 @@ import org.infinispan.counter.api.WeakCounter;
  * @since 9.2
  */
 public class RemoveOperation extends BaseCounterOperation<Void> {
-   public RemoveOperation(ChannelFactory transportFactory, AtomicReference<ClientTopology> topologyId,
-                          Configuration cfg, String counterName, boolean useConsistentHash) {
-      super(COUNTER_REMOVE_REQUEST, COUNTER_REMOVE_RESPONSE, transportFactory, topologyId, cfg, counterName, useConsistentHash);
+   public RemoveOperation(String counterName, boolean useConsistentHash) {
+      super(counterName, useConsistentHash);
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      sendHeaderAndCounterNameAndRead(channel);
-   }
-
-   @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+   public Void createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
       checkStatus(status);
-      complete(null);
+      return null;
+   }
+
+   @Override
+   public short requestOpCode() {
+      return COUNTER_REMOVE_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return COUNTER_REMOVE_RESPONSE;
    }
 }

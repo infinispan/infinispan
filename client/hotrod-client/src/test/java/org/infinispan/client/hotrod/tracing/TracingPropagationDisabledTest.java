@@ -12,15 +12,14 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.annotation.model.Author;
 import org.infinispan.client.hotrod.annotation.model.Poem;
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.server.core.telemetry.TelemetryServiceFactory;
-import org.infinispan.telemetry.SpanCategory;
 import org.infinispan.server.core.telemetry.inmemory.InMemoryTelemetryClient;
+import org.infinispan.telemetry.SpanCategory;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -59,7 +58,7 @@ public class TracingPropagationDisabledTest extends SingleHotRodServerTest {
    protected RemoteCacheManager getRemoteCacheManager() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder = createHotRodClientConfigurationBuilder("127.0.0.1", hotrodServer.getPort());
       builder.disableTracingPropagation(); // <-- tracing context propagation is disabled client side
-      return new InternalRemoteCacheManager(builder.build());
+      return new RemoteCacheManager(builder.build());
    }
 
    @Override

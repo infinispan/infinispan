@@ -643,4 +643,9 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    public ContinuousQuery<K, V> continuousQuery() {
       return delegate.continuousQuery();
    }
+
+   @Override
+   public Set<Flag> flags() {
+      return delegate.flags();
+   }
 }

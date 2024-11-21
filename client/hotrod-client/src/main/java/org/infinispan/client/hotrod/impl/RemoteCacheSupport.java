@@ -21,8 +21,8 @@ import org.infinispan.client.hotrod.RemoteCache;
  * @since 4.1
  */
 public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
-   protected long defaultLifespan;
-   protected long defaultMaxIdleTime;
+   protected final long defaultLifespan;
+   protected final long defaultMaxIdleTime;
 
    protected RemoteCacheSupport() {
       this(0, 0);

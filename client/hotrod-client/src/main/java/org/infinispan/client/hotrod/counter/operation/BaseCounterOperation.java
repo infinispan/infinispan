@@ -1,22 +1,15 @@
 package org.infinispan.client.hotrod.counter.operation;
 
-import static org.infinispan.client.hotrod.counter.impl.CounterOperationFactory.COUNTER_CACHE_NAME;
-
-import java.net.SocketAddress;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientTopology;
-import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
-import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.counter.impl.CounterOperationFactory;
+import org.infinispan.client.hotrod.impl.operations.AbstractNoCacheHotRodOperation;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.commons.util.Util;
 import org.infinispan.counter.exception.CounterException;
 
 import io.netty.buffer.ByteBuf;
@@ -28,39 +21,30 @@ import io.netty.channel.Channel;
  * @author Pedro Ruivo
  * @since 9.2
  */
-abstract class BaseCounterOperation<T> extends RetryOnFailureOperation<T> {
+abstract class BaseCounterOperation<T> extends AbstractNoCacheHotRodOperation<T> {
+
    private static final Charset CHARSET = StandardCharsets.UTF_8;
-   private static final byte[] EMPTY_CACHE_NAME = Util.EMPTY_BYTE_ARRAY;
    private final String counterName;
    private final boolean useConsistentHash;
 
-   BaseCounterOperation(short requestCode, short responseCode, ChannelFactory channelFactory, AtomicReference<ClientTopology> clientTopology, Configuration cfg,
-                        String counterName, boolean useConsistentHash) {
-      super(requestCode, responseCode, channelFactory.getNegotiatedCodec(), channelFactory, EMPTY_CACHE_NAME,
-            clientTopology, 0, cfg, null, null);
+   BaseCounterOperation(String counterName, boolean useConsistentHash) {
       this.counterName = counterName;
       this.useConsistentHash = useConsistentHash;
    }
 
-   /**
-    * Writes the operation header followed by the counter's name.
-    */
-   void sendHeaderAndCounterNameAndRead(Channel channel) {
-      ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, 0);
-      channel.writeAndFlush(buf);
+   @Override
+   public String getCacheName() {
+      return CounterOperationFactory.COUNTER_CACHE_NAME;
    }
 
-   ByteBuf getHeaderAndCounterNameBufferAndRead(Channel channel, int extraBytes) {
-      scheduleRead(channel);
+   @Override
+   public byte[] getCacheNameBytes() {
+      return RemoteCacheManager.cacheNameBytes(CounterOperationFactory.COUNTER_CACHE_NAME);
+   }
 
-      // counterName should never be null/empty
-      byte[] counterBytes = counterName.getBytes(HotRodConstants.HOTROD_STRING_CHARSET);
-      ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + ByteBufUtil.estimateArraySize(counterBytes) + extraBytes);
-      codec.writeHeader(buf, header);
+   @Override
+   public void writeOperationRequest(Channel channel, ByteBuf buf, Codec codec) {
       ByteBufUtil.writeString(buf, counterName);
-
-      setCacheName();
-      return buf;
    }
 
    /**
@@ -73,27 +57,9 @@ abstract class BaseCounterOperation<T> extends RetryOnFailureOperation<T> {
       }
    }
 
-   void setCacheName() {
-      header.cacheName(COUNTER_CACHE_NAME);
-   }
-
    @Override
-   protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
-      if (retryCount == 0 && useConsistentHash) {
-         channelFactory.fetchChannelAndInvoke(new ByteString(counterName), failedServers, COUNTER_CACHE_NAME, this);
-      } else {
-         channelFactory.fetchChannelAndInvoke(failedServers, COUNTER_CACHE_NAME, this);
-      }
-   }
-
-   @Override
-   protected Throwable handleException(Throwable cause, Channel channel, SocketAddress address) {
-      cause =  super.handleException(cause, channel, address);
-      if (cause instanceof CounterException) {
-         completeExceptionally(cause);
-         return null;
-      }
-      return cause;
+   public Object getRoutingObject() {
+      return useConsistentHash ? new ByteString(counterName) : null;
    }
 
    @Override

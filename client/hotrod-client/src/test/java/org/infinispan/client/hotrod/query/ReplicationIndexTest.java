@@ -14,7 +14,6 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.FixedServerBalancing;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -75,7 +74,7 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
             .port(server.getPort())
             .marshaller(new ProtoStreamMarshaller())
             .balancingStrategy(() -> new FixedServerBalancing(server));
-      return new InternalRemoteCacheManager(clientBuilder.build());
+      return new RemoteCacheManager(clientBuilder.build());
    }
 
    @Override

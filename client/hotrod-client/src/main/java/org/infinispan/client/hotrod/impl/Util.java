@@ -5,6 +5,7 @@ import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 import java.net.SocketTimeoutException;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -14,11 +15,14 @@ import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
-import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
-import org.infinispan.client.hotrod.impl.transaction.operations.PrepareTransactionOperation;
+import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
+import org.infinispan.client.hotrod.impl.operations.ManagerOperationsFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.WrappedByteArray;
+
+import io.netty.handler.codec.DecoderException;
 
 public class Util {
    private final static long BIG_DELAY_NANOS = TimeUnit.DAYS.toNanos(1);
@@ -61,6 +65,10 @@ public class Util {
       }
    }
 
+   public static <T> T await(CompletionStage<T> cf, long timeoutMillis) {
+      return await(cf.toCompletableFuture(), timeoutMillis);
+   }
+
    public static <T> T await(CompletableFuture<T> cf, long timeoutMillis) {
       try {
          return cf.get(timeoutMillis, TimeUnit.MILLISECONDS);
@@ -76,6 +84,21 @@ public class Util {
       }
    }
 
+   public static HotRodClientException rewrap(Throwable t) {
+      Throwable cause = t;
+      while ((cause instanceof CompletionException || cause instanceof DecoderException ||
+            cause instanceof TransportException) && cause.getCause() != null) {
+         cause = cause.getCause();
+      }
+      if (cause instanceof HotRodClientException hrce) {
+         return hrce;
+      } else if (t instanceof HotRodClientException hrce) {
+         return hrce;
+      } else {
+         return new TransportException(t, null);
+      }
+   }
+
    protected static RuntimeException rewrap(ExecutionException e) {
       Throwable cause = e.getCause();
       if (cause instanceof HotRodClientException) {
@@ -88,10 +111,10 @@ public class Util {
       }
    }
 
-   public static CompletionStage<Boolean> checkTransactionSupport(String cacheName, OperationsFactory factory) {
-      PrepareTransactionOperation op = factory.newPrepareTransactionOperation(DUMMY_XID, true, Collections.emptyList(),
+   public static CompletionStage<Boolean> checkTransactionSupport(String cacheName, ManagerOperationsFactory operationsFactory, OperationDispatcher dispatcher) {
+      HotRodOperation<Integer> op = operationsFactory.newPrepareTransaction(cacheName, DUMMY_XID, true, Collections.emptyList(),
             false, 60000);
-      return op.execute().handle((integer, throwable) -> {
+      return dispatcher.execute(op).handle((integer, throwable) -> {
          if (throwable != null) {
             HOTROD.invalidTxServerConfig(cacheName, throwable);
          }
@@ -99,16 +122,16 @@ public class Util {
       });
    }
 
-   public static boolean checkTransactionSupport(String cacheName, OperationsFactory factory, Log log) {
-      PrepareTransactionOperation op = factory.newPrepareTransactionOperation(DUMMY_XID, true, Collections.emptyList(),
+   public static boolean checkTransactionSupport(String cacheName, ManagerOperationsFactory factory, OperationDispatcher dispatcher, Log log) {
+      HotRodOperation<Integer> op = factory.newPrepareTransaction(cacheName, DUMMY_XID, true, Collections.emptyList(),
             false, 60000);
       try {
-         return op.execute().handle((integer, throwable) -> {
+         return dispatcher.execute(op).handle((integer, throwable) -> {
             if (throwable != null) {
                HOTROD.invalidTxServerConfig(cacheName, throwable);
             }
             return throwable == null;
-         }).get();
+         }).toCompletableFuture().get();
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
       } catch (ExecutionException e) {

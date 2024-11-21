@@ -8,14 +8,15 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.CacheTopologyInfo;
+import org.infinispan.client.hotrod.Internals;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.ClusterConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.ServerConfigurationBuilder;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.testng.AssertJUnit;
@@ -47,66 +48,66 @@ public class ClientIntelligenceClusterTest extends AbstractMultipleSitesTest {
    }
 
    public void testClusterInheritsIntelligence() {
-      try (InternalRemoteCacheManager irc = createClient(ClientIntelligence.BASIC, null)) {
+      try (RemoteCacheManager irc = createClient(ClientIntelligence.BASIC, null)) {
          RemoteCache<String, String> cache0 = irc.getCache();
-         byte[] cacheNameBytes = cache0.getName().getBytes();
+         String cacheName = cache0.getName();
          cache0.put("key", "value");
          AssertJUnit.assertEquals("value", cache0.get("key"));
-         assertBasicIntelligence(irc, cacheNameBytes);
+         assertBasicIntelligence(irc, cacheName);
 
          irc.switchToCluster("backup");
          cache0.put("key1", "value1");
          AssertJUnit.assertEquals("value1", cache0.get("key1"));
-         assertBasicIntelligence(irc, cacheNameBytes);
+         assertBasicIntelligence(irc, cacheName);
 
          irc.switchToDefaultCluster();
          cache0.put("key2", "value2");
          AssertJUnit.assertEquals("value2", cache0.get("key2"));
-         assertBasicIntelligence(irc, cacheNameBytes);
+         assertBasicIntelligence(irc, cacheName);
       }
    }
 
    public void testBackupClusterUsesBasicIntelligence() {
-      try (InternalRemoteCacheManager irc = createClient(ClientIntelligence.HASH_DISTRIBUTION_AWARE, ClientIntelligence.BASIC)) {
+      try (RemoteCacheManager irc = createClient(ClientIntelligence.HASH_DISTRIBUTION_AWARE, ClientIntelligence.BASIC)) {
          RemoteCache<String, String> cache0 = irc.getCache();
-         byte[] cacheNameBytes = cache0.getName().getBytes();
+         String cacheName = cache0.getName();
          cache0.put("key", "value");
          AssertJUnit.assertEquals("value", cache0.get("key"));
-         assertHashAwareIntelligence(irc, cacheNameBytes);
+         assertHashAwareIntelligence(irc, cacheName);
 
          irc.switchToCluster("backup");
          cache0.put("key1", "value1");
          AssertJUnit.assertEquals("value1", cache0.get("key1"));
-         assertBasicIntelligence(irc, cacheNameBytes);
+         assertBasicIntelligence(irc, cacheName);
 
          irc.switchToDefaultCluster();
          cache0.put("key2", "value2");
          AssertJUnit.assertEquals("value2", cache0.get("key2"));
-         assertHashAwareIntelligence(irc, cacheNameBytes);
+         assertHashAwareIntelligence(irc, cacheName);
       }
    }
 
    public void testBackupClusterUsesTopologyIntelligence() {
-      try (InternalRemoteCacheManager irc = createClient(ClientIntelligence.BASIC, ClientIntelligence.TOPOLOGY_AWARE)) {
+      try (RemoteCacheManager irc = createClient(ClientIntelligence.BASIC, ClientIntelligence.TOPOLOGY_AWARE)) {
          RemoteCache<String, String> cache0 = irc.getCache();
-         byte[] cacheNameBytes = cache0.getName().getBytes();
+         String cacheName = cache0.getName();
          cache0.put("key", "value");
          AssertJUnit.assertEquals("value", cache0.get("key"));
-         assertBasicIntelligence(irc, cacheNameBytes);
+         assertBasicIntelligence(irc, cacheName);
 
          irc.switchToCluster("backup");
          cache0.put("key1", "value1");
          AssertJUnit.assertEquals("value1", cache0.get("key1"));
-         assertTopologyAwareIntelligence(irc, cacheNameBytes);
+         assertTopologyAwareIntelligence(irc, cacheName);
 
          irc.switchToDefaultCluster();
          cache0.put("key2", "value2");
          AssertJUnit.assertEquals("value2", cache0.get("key2"));
-         assertBasicIntelligence(irc, cacheNameBytes);
+         assertBasicIntelligence(irc, cacheName);
       }
    }
 
-   private InternalRemoteCacheManager createClient(ClientIntelligence globalIntelligence, ClientIntelligence backupIntelligence) {
+   private RemoteCacheManager createClient(ClientIntelligence globalIntelligence, ClientIntelligence backupIntelligence) {
       ConfigurationBuilder builder = newRemoteConfigurationBuilder();
       if (globalIntelligence != null) {
          builder.clientIntelligence(globalIntelligence);
@@ -117,7 +118,7 @@ public class ClientIntelligenceClusterTest extends AbstractMultipleSitesTest {
 
       // second site
       addServer(builder.addCluster("backup").clusterClientIntelligence(backupIntelligence), siteName(1));
-      return new InternalRemoteCacheManager(builder.build());
+      return new RemoteCacheManager(builder.build());
    }
 
    private HotRodServer getFirstServer(String siteName) {
@@ -134,48 +135,48 @@ public class ClientIntelligenceClusterTest extends AbstractMultipleSitesTest {
       builder.addClusterNode(server.getHost(), server.getPort());
    }
 
-   private static void assertHashAwareIntelligence(InternalRemoteCacheManager ircm, byte[] cacheNameBytes) {
-      ChannelFactory factory = ircm.getChannelFactory();
+   private static void assertHashAwareIntelligence(RemoteCacheManager ircm, String cacheName) {
+      OperationDispatcher dispatcher = Internals.dispatcher(ircm);
 
-      log.debugf("Server list: %s", factory.getServers(cacheNameBytes));
-      log.debugf("Topology Info: %s", factory.getCacheTopologyInfo(cacheNameBytes));
-      log.debugf("Consistent Hash: %s", factory.getConsistentHash(cacheNameBytes));
+      log.debugf("Server list: %s", dispatcher.getServers(cacheName));
+      log.debugf("Topology Info: %s", dispatcher.getCacheTopologyInfo(cacheName));
+      log.debugf("Consistent Hash: %s", dispatcher.getConsistentHash(cacheName));
 
-      AssertJUnit.assertEquals(2, factory.getServers(cacheNameBytes).size());
-      CacheTopologyInfo topologyInfo = factory.getCacheTopologyInfo(cacheNameBytes);
+      AssertJUnit.assertEquals(2, dispatcher.getServers(cacheName).size());
+      CacheTopologyInfo topologyInfo = dispatcher.getCacheTopologyInfo(cacheName);
       AssertJUnit.assertNotNull(topologyInfo);
       AssertJUnit.assertEquals(2, topologyInfo.getSegmentsPerServer().size());
       AssertJUnit.assertNotNull(topologyInfo.getNumSegments());
-      AssertJUnit.assertNotNull(factory.getConsistentHash(cacheNameBytes));
+      AssertJUnit.assertNotNull(dispatcher.getConsistentHash(cacheName));
    }
 
-   private static void assertTopologyAwareIntelligence(InternalRemoteCacheManager ircm, byte[] cacheNameBytes) {
-      ChannelFactory factory = ircm.getChannelFactory();
+   private static void assertTopologyAwareIntelligence(RemoteCacheManager ircm, String cacheName) {
+      OperationDispatcher dispatcher = Internals.dispatcher(ircm);
 
-      log.debugf("Server list: %s", factory.getServers(cacheNameBytes));
-      log.debugf("Topology Info: %s", factory.getCacheTopologyInfo(cacheNameBytes));
-      log.debugf("Consistent Hash: %s", factory.getConsistentHash(cacheNameBytes));
+      log.debugf("Server list: %s", dispatcher.getServers(cacheName));
+      log.debugf("Topology Info: %s", dispatcher.getCacheTopologyInfo(cacheName));
+      log.debugf("Consistent Hash: %s", dispatcher.getConsistentHash(cacheName));
 
-      AssertJUnit.assertEquals(2, factory.getServers(cacheNameBytes).size());
-      CacheTopologyInfo topologyInfo = factory.getCacheTopologyInfo(cacheNameBytes);
+      AssertJUnit.assertEquals(2, dispatcher.getServers(cacheName).size());
+      CacheTopologyInfo topologyInfo = dispatcher.getCacheTopologyInfo(cacheName);
       AssertJUnit.assertNotNull(topologyInfo);
       AssertJUnit.assertEquals(2, topologyInfo.getSegmentsPerServer().size());
       AssertJUnit.assertNull(topologyInfo.getNumSegments());
-      AssertJUnit.assertNull(factory.getConsistentHash(cacheNameBytes));
+      AssertJUnit.assertNull(dispatcher.getConsistentHash(cacheName));
    }
 
-   private static void assertBasicIntelligence(InternalRemoteCacheManager ircm, byte[] cacheNameBytes) {
-      ChannelFactory factory = ircm.getChannelFactory();
+   private static void assertBasicIntelligence(RemoteCacheManager ircm, String cacheName) {
+      OperationDispatcher dispatcher = Internals.dispatcher(ircm);
 
-      log.debugf("Server list: %s", factory.getServers(cacheNameBytes));
-      log.debugf("Topology Info: %s", factory.getCacheTopologyInfo(cacheNameBytes));
-      log.debugf("Consistent Hash: %s", factory.getConsistentHash(cacheNameBytes));
+      log.debugf("Server list: %s", dispatcher.getServers(cacheName));
+      log.debugf("Topology Info: %s", dispatcher.getCacheTopologyInfo(cacheName));
+      log.debugf("Consistent Hash: %s", dispatcher.getConsistentHash(cacheName));
 
-      AssertJUnit.assertEquals(1, factory.getServers(cacheNameBytes).size());
-      CacheTopologyInfo topologyInfo = factory.getCacheTopologyInfo(cacheNameBytes);
+      AssertJUnit.assertEquals(1, dispatcher.getServers(cacheName).size());
+      CacheTopologyInfo topologyInfo = dispatcher.getCacheTopologyInfo(cacheName);
       AssertJUnit.assertNotNull(topologyInfo);
       AssertJUnit.assertEquals(1, topologyInfo.getSegmentsPerServer().size());
       AssertJUnit.assertNull(topologyInfo.getNumSegments());
-      AssertJUnit.assertNull(factory.getConsistentHash(cacheNameBytes));
+      AssertJUnit.assertNull(dispatcher.getConsistentHash(cacheName));
    }
 }

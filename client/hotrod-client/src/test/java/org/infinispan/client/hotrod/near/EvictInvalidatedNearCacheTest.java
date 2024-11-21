@@ -94,6 +94,8 @@ public class EvictInvalidatedNearCacheTest extends SingleHotRodServerTest {
       assertClient.expectNoNearEvents();
       for (int i = 0; i < entryCount; ++i) {
          assertClient.put(i, "v1").expectNearPreemptiveRemove(i);
+         // We wait until all pending bloom updates are done so our events are ordered as we expect
+         eventually(() -> !assertClient.hasPendingBloomUpdate());
          assertClient.get(i, "v1").expectNearGetMissWithValue(i, "v1");
       }
 

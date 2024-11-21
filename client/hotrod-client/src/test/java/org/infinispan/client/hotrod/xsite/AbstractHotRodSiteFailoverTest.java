@@ -17,7 +17,6 @@ import org.infinispan.client.hotrod.HitsAwareCacheManagersTest.HitCountIntercept
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.test.TestResourceTracker;
@@ -72,7 +71,7 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
          log.debugf("Client for site '%s' connecting to main server in port %d",
             siteName, server.getPort());
 
-      return new InternalRemoteCacheManager(clientBuilder.build());
+      return new RemoteCacheManager(clientBuilder.build());
    }
 
    int findServerPort(String siteName) {

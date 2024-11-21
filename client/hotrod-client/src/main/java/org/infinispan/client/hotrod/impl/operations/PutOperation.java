@@ -1,21 +1,16 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
-import org.infinispan.client.hotrod.DataFormat;
-import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
-import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
-import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -25,34 +20,36 @@ import net.jcip.annotations.Immutable;
  * @since 4.1
  */
 @Immutable
-public class PutOperation<V> extends AbstractKeyValueOperation<V> {
-
-   public PutOperation(Codec codec, ChannelFactory channelFactory,
-                       Object key, byte[] keyBytes, byte[] cacheName, AtomicReference<ClientTopology> clientTopology,
-                       int flags, Configuration cfg, byte[] value, long lifespan, TimeUnit lifespanTimeUnit,
-                       long maxIdle, TimeUnit maxIdleTimeUnit, DataFormat dataFormat, ClientStatistics clientStatistics,
-                       TelemetryService telemetryService) {
-      super(PUT_REQUEST, PUT_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, clientTopology,
-            flags, cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, dataFormat, clientStatistics,
-            telemetryService);
+public class PutOperation<V> extends AbstractKeyValueOperation<MetadataValue<V>> {
+   public PutOperation(InternalRemoteCache<?, ?> cache, byte[] keyBytes, byte[] valueBytes, long lifespan,
+                       TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+      super(cache, keyBytes, valueBytes, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      scheduleRead(channel);
-      sendKeyValueOperation(channel);
-   }
-
-   @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+   public MetadataValue<V> createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
       if (HotRodConstants.isSuccess(status)) {
-         statsDataStore();
-         if (HotRodConstants.hasPrevious(status)) {
-            statsDataRead(true);
-         }
-         complete(returnPossiblePrevValue(buf, status));
+         return returnMetadataValue(buf, status, codec, unmarshaller);
       } else {
          throw new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status));
       }
+   }
+
+   @Override
+   public void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, MetadataValue<V> responseValue) {
+      statistics.dataStore(startTime, 1);
+      if (HotRodConstants.hasPrevious(status)) {
+         statistics.dataRead(true, startTime, 1);
+      }
+   }
+
+   @Override
+   public short requestOpCode() {
+      return PUT_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return PUT_RESPONSE;
    }
 }

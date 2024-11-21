@@ -4,7 +4,7 @@ import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.logging.Log;
@@ -20,15 +20,13 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
 
    private static final Log log = LogFactory.getLog(RoundRobinBalancingStrategy.class);
 
-   private int index;
+   private final AtomicInteger index = new AtomicInteger();
 
-   private SocketAddress[] servers;
+   private volatile SocketAddress[] servers;
 
    @Override
    public void setServers(Collection<SocketAddress> servers) {
       this.servers = servers.toArray(new SocketAddress[0]);
-      // Always start with a random server after a topology update
-      index = ThreadLocalRandom.current().nextInt(this.servers.length);
       if (log.isTraceEnabled()) {
          log.tracef("New server list is: " + Arrays.toString(this.servers));
       }
@@ -40,10 +38,7 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
    @Override
    public SocketAddress nextServer(Set<SocketAddress> failedServers) {
       for (int i = 0;; ++i) {
-         SocketAddress server = getServerByIndex(index++);
-         // don't allow index to overflow and have a negative value
-         if (index >= servers.length)
-            index = 0;
+         SocketAddress server = getServerByIndex(index.incrementAndGet());
 
          if (failedServers == null || !failedServers.contains(server) || i >= failedServers.size()) {
             if (log.isTraceEnabled()) {
@@ -59,7 +54,9 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
    }
 
    private SocketAddress getServerByIndex(int pos) {
-      return servers[pos];
+      // Store to local variable to protect from concurrent update
+      SocketAddress[] servers = this.servers;
+      return servers[pos % servers.length];
    }
 
    public SocketAddress[] getServers() {

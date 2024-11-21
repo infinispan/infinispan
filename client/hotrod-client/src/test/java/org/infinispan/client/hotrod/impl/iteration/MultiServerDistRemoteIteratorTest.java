@@ -92,7 +92,7 @@ public class MultiServerDistRemoteIteratorTest extends BaseMultiServerRemoteIter
             .host("localhost")
             .port(serverPort)
             .maxRetries(maxRetries())
-            .balancingStrategy(() -> new PreferredServerBalancingStrategy(new InetSocketAddress("localhost", serverPort)));
+            .balancingStrategy(() -> new PreferredServerBalancingStrategy(InetSocketAddress.createUnresolved("localhost", serverPort)));
       return clientBuilder;
    }
 

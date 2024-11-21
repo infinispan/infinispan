@@ -38,7 +38,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.client.rest.RestResponse;
@@ -288,11 +288,10 @@ public class Common {
    }
 
    public static Integer getIntKeyForServer(RemoteCache<Integer, ?> cache, int server) {
-      ChannelFactory cf = cache.getRemoteCacheManager().getChannelFactory();
-      byte[] name = RemoteCacheManager.cacheNameBytes(cache.getName());
-      InetSocketAddress serverAddress = cf.getServers(name).stream().skip(server).findFirst().get();
+      OperationDispatcher dispatcher = TestingUtil.extractField(cache.getRemoteCacheContainer(), "dispatcher");
+      InetSocketAddress serverAddress = dispatcher.getServers(cache.getName()).stream().skip(server).findFirst().get();
       DataFormat df = cache.getDataFormat();
-      ConsistentHash ch = cf.getConsistentHash(name);
+      ConsistentHash ch = dispatcher.getConsistentHash(cache.getName());
       Random r = new Random();
       for(int i = 0; i < 1000; i++) {
          int aInt = r.nextInt();

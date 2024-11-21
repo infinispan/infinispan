@@ -84,8 +84,6 @@ public class HotRodClientJmxTest extends AbstractInfinispanTest {
       assertEquals(1, servers.length);
       assertEquals("localhost:" + hotrodServer.getPort(), servers[0]);
       assertEquals(1, mbeanServer.getAttribute(objectName, "ConnectionCount"));
-      assertEquals(1, mbeanServer.getAttribute(objectName, "IdleConnectionCount"));
-      assertEquals(0, mbeanServer.getAttribute(objectName, "ActiveConnectionCount"));
    }
 
    public void testRemoteCacheMBean() throws Exception {
@@ -130,20 +128,24 @@ public class HotRodClientJmxTest extends AbstractInfinispanTest {
       assertEquals(0L, mbeanServer.getAttribute(objectName, "RemoteRemoves"));
       remoteCache.remove("b");
       assertEquals(1L, mbeanServer.getAttribute(objectName, "RemoteRemoves"));
+   }
 
+   public void testStreamingCommands() throws Exception {
+      MBeanServer mbeanServer = mBeanServerLookup.getMBeanServer();
+      ObjectName objectName = remoteCacheObjectName(rcm, "org.infinispan.default");
       OutputStream os = remoteCache.streaming().put("s");
       os.write('s');
       os.close();
-      assertEquals(6L, mbeanServer.getAttribute(objectName, "RemoteStores"));
+      assertEquals(1L, mbeanServer.getAttribute(objectName, "RemoteStores"));
 
       InputStream is = remoteCache.streaming().get("s");
       while (is.read() >= 0) {
          //consume
       }
       is.close();
-      assertEquals(6L, mbeanServer.getAttribute(objectName, "RemoteHits"));
+      assertEquals(1L, mbeanServer.getAttribute(objectName, "RemoteHits"));
 
       assertNull(remoteCache.streaming().get("t"));
-      assertEquals(6L, mbeanServer.getAttribute(objectName, "RemoteHits"));
+      assertEquals(1L, mbeanServer.getAttribute(objectName, "RemoteHits"));
    }
 }

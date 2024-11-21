@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
-import java.io.IOException;
 import java.io.InputStream;
 
 import org.infinispan.client.hotrod.VersionedMetadata;
@@ -10,11 +9,9 @@ import net.jcip.annotations.NotThreadSafe;
 @NotThreadSafe
 public abstract class AbstractVersionedInputStream extends InputStream implements VersionedMetadata {
    protected final VersionedMetadata versionedMetadata;
-   protected final Runnable afterClose;
 
-   public AbstractVersionedInputStream(VersionedMetadata versionedMetadata, Runnable afterClose) {
+   public AbstractVersionedInputStream(VersionedMetadata versionedMetadata) {
       this.versionedMetadata = versionedMetadata;
-      this.afterClose = afterClose;
    }
 
    @Override
@@ -40,13 +37,5 @@ public abstract class AbstractVersionedInputStream extends InputStream implement
    @Override
    public int getMaxIdle() {
       return versionedMetadata.getMaxIdle();
-   }
-
-   @Override
-   public void close() throws IOException {
-      super.close();
-      if (afterClose != null) {
-         afterClose.run();
-      }
    }
 }

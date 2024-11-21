@@ -1,19 +1,13 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 import org.infinispan.client.hotrod.ServerStatistics;
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.ServerStatisticsImpl;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import net.jcip.annotations.Immutable;
 
 /**
  * Implements to the stats operation as defined by <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod protocol specification</a>.
@@ -21,30 +15,16 @@ import net.jcip.annotations.Immutable;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Immutable
-public class StatsOperation extends RetryOnFailureOperation<ServerStatistics> {
+public class StatsOperation extends AbstractCacheOperation<ServerStatistics> {
    private ServerStatisticsImpl result;
    private int numStats = -1;
 
-   public StatsOperation(Codec codec, ChannelFactory channelFactory,
-                         byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg) {
-      super(STATS_REQUEST, STATS_RESPONSE, codec, channelFactory, cacheName, clientTopology, flags, cfg, null, null);
+   public StatsOperation(InternalRemoteCache<?, ?> remoteCache) {
+      super(remoteCache);
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      sendHeaderAndRead(channel);
-   }
-
-   @Override
-   protected void reset() {
-      super.reset();
-      result = null;
-      numStats = -1;
-   }
-
-   @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+   public ServerStatistics createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
       if (numStats < 0) {
          numStats = ByteBufUtil.readVInt(buf);
          result = new ServerStatisticsImpl();
@@ -56,6 +36,22 @@ public class StatsOperation extends RetryOnFailureOperation<ServerStatistics> {
          result.addStats(statName, statValue);
          decoder.checkpoint();
       }
-      complete(result);
+      return result;
+   }
+
+   @Override
+   public short requestOpCode() {
+      return STATS_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return STATS_RESPONSE;
+   }
+
+   @Override
+   public void reset() {
+      numStats = -1;
+      result = null;
    }
 }

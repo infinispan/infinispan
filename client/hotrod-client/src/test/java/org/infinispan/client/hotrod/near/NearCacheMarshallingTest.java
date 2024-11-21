@@ -93,7 +93,7 @@ public class NearCacheMarshallingTest extends SingleHotRodServerTest {
       assertThat(cache1.get("K")).isEqualTo("V1");
 
       // The other cache eventually updates to reflect the replace.
-      eventually(() -> cache.get("K").equals("V1"));
+      eventuallyEquals("V1", () -> cache.get("K"));
 
       cacheManager.stop();
       cacheManager1.stop();

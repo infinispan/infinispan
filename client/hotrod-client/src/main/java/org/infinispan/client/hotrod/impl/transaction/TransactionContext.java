@@ -13,21 +13,23 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import jakarta.transaction.Transaction;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.MetadataValue;
-import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.CacheOperationsFactory;
 import org.infinispan.client.hotrod.impl.transaction.entry.Modification;
 import org.infinispan.client.hotrod.impl.transaction.entry.TransactionEntry;
 import org.infinispan.client.hotrod.impl.transaction.operations.PrepareTransactionOperation;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorSet;
+
+import jakarta.transaction.Transaction;
 
 /**
  * A context with the keys involved in a {@link Transaction}.
@@ -46,15 +48,18 @@ public class TransactionContext<K, V> {
    private final Map<WrappedKey<K>, TransactionEntry<K, V>> entries;
    private final Function<K, byte[]> keyMarshaller;
    private final Function<V, byte[]> valueMarshaller;
-   private final OperationsFactory operationsFactory;
+   private final CacheOperationsFactory operationsFactory;
+   private final OperationDispatcher dispatcher;
    private final String cacheName;
    private final boolean recoverable;
 
    TransactionContext(Function<K, byte[]> keyMarshaller, Function<V, byte[]> valueMarshaller,
-         OperationsFactory operationsFactory, String cacheName, boolean recoveryEnabled) {
+                      CacheOperationsFactory operationsFactory, OperationDispatcher dispatcher,
+                      String cacheName, boolean recoveryEnabled) {
       this.keyMarshaller = keyMarshaller;
       this.valueMarshaller = valueMarshaller;
       this.operationsFactory = operationsFactory;
+      this.dispatcher = dispatcher;
       this.cacheName = cacheName;
       this.recoverable = recoveryEnabled;
       entries = new ConcurrentHashMap<>();
@@ -185,7 +190,7 @@ public class TransactionContext<K, V> {
          do {
             operation = operationsFactory
                   .newPrepareTransactionOperation(xid, onePhaseCommit, modifications, recoverable, timeout);
-            xaReturnCode = operation.execute().get();
+            xaReturnCode = dispatcher.execute(operation).toCompletableFuture().get();
          } while (operation.shouldRetry());
          return xaReturnCode;
       } catch (Exception e) {

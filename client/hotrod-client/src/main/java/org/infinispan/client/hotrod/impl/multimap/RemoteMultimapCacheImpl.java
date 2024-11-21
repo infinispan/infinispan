@@ -10,15 +10,10 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
-import org.infinispan.client.hotrod.impl.multimap.operations.ContainsEntryMultimapOperation;
-import org.infinispan.client.hotrod.impl.multimap.operations.ContainsKeyMultimapOperation;
-import org.infinispan.client.hotrod.impl.multimap.operations.ContainsValueMultimapOperation;
-import org.infinispan.client.hotrod.impl.multimap.operations.GetKeyMultimapOperation;
-import org.infinispan.client.hotrod.impl.multimap.operations.GetKeyWithMetadataMultimapOperation;
+import org.infinispan.client.hotrod.impl.multimap.operations.DefaultMultimapOperationsFactory;
 import org.infinispan.client.hotrod.impl.multimap.operations.MultimapOperationsFactory;
-import org.infinispan.client.hotrod.impl.multimap.operations.PutKeyValueMultimapOperation;
-import org.infinispan.client.hotrod.impl.multimap.operations.RemoveEntryMultimapOperation;
-import org.infinispan.client.hotrod.impl.multimap.operations.RemoveKeyMultimapOperation;
+import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
@@ -41,19 +36,16 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
    private final InternalRemoteCache<K, Collection<V>> cache;
    private final RemoteCacheManager remoteCacheManager;
    private MultimapOperationsFactory operationsFactory;
+   private OperationDispatcher dispatcher;
    private Marshaller marshaller;
    private final BufferSizePredictor keySizePredictor = new AdaptiveBufferSizePredictor();
    private final BufferSizePredictor valueSizePredictor = new AdaptiveBufferSizePredictor();
-   private final long defaultLifespan = 0;
-   private final long defaultMaxIdleTime = 0;
    private final boolean supportsDuplicates;
 
    public void init() {
-      operationsFactory = new MultimapOperationsFactory(remoteCacheManager.getChannelFactory(),
-            cache.getName(),
-            remoteCacheManager.getConfiguration(),
-            cache.getDataFormat(),
-            cache.clientStatistics());
+      operationsFactory = new DefaultMultimapOperationsFactory(cache, remoteCacheManager.getMarshaller(),
+            new AdaptiveBufferSizePredictor(), new AdaptiveBufferSizePredictor());
+      dispatcher = cache.getDispatcher();
       this.marshaller = remoteCacheManager.getMarshaller();
    }
 
@@ -73,16 +65,13 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
    @Override
    public CompletableFuture<Void> put(K key, V value) {
       if (log.isTraceEnabled()) {
-         log.tracef("About to add (K,V): (%s, %s) lifespan:%d, maxIdle:%d", key, value, defaultLifespan, defaultMaxIdleTime);
+         log.tracef("About to add (K,V): (%s, %s) lifespan:%d, maxIdle:%d", key, value, 0, 0);
       }
       assertRemoteCacheManagerIsStarted();
-      K objectKey = isObjectStorage() ? key : null;
-      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, keySizePredictor);
-      byte[] marshallValue = MarshallerUtil.obj2bytes(marshaller, value, valueSizePredictor);
 
-      PutKeyValueMultimapOperation op = operationsFactory.newPutKeyValueOperation(objectKey,
-            marshallKey, marshallValue, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS, supportsDuplicates);
-      return op.execute();
+      HotRodOperation<Void> op = operationsFactory.newPutKeyValueOperation(key, value,
+             0, MILLISECONDS, 0, MILLISECONDS, supportsDuplicates);
+      return dispatcher.execute(op).toCompletableFuture();
    }
 
    @Override
@@ -91,11 +80,9 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
          log.tracef("About to call get (K): (%s)", key);
       }
       assertRemoteCacheManagerIsStarted();
-      K objectKey = isObjectStorage() ? key : null;
-      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, keySizePredictor);
 
-      GetKeyMultimapOperation<V> gco = operationsFactory.newGetKeyMultimapOperation(objectKey, marshallKey, supportsDuplicates);
-      return gco.execute();
+      HotRodOperation<Collection<V>> gco = operationsFactory.newGetKeyMultimapOperation(key, supportsDuplicates);
+      return dispatcher.execute(gco).toCompletableFuture();
    }
 
    @Override
@@ -104,11 +91,9 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
          log.tracef("About to call getWithMetadata (K): (%s)", key);
       }
       assertRemoteCacheManagerIsStarted();
-      K objectKey = isObjectStorage() ? key : null;
-      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, keySizePredictor);
-      GetKeyWithMetadataMultimapOperation<V> operation
-            = operationsFactory.newGetKeyWithMetadataMultimapOperation(objectKey, marshallKey, supportsDuplicates);
-      return operation.execute();
+      HotRodOperation<MetadataCollection<V>> operation
+            = operationsFactory.newGetKeyWithMetadataMultimapOperation(key, supportsDuplicates);
+      return dispatcher.execute(operation).toCompletableFuture();
    }
 
    @Override
@@ -117,10 +102,8 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
          log.tracef("About to remove (K): (%s)", key);
       }
       assertRemoteCacheManagerIsStarted();
-      K objectKey = isObjectStorage() ? key : null;
-      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, keySizePredictor);
-      RemoveKeyMultimapOperation removeOperation = operationsFactory.newRemoveKeyOperation(objectKey, marshallKey, supportsDuplicates);
-      return removeOperation.execute();
+      HotRodOperation<Boolean> removeOperation = operationsFactory.newRemoveKeyOperation(key, supportsDuplicates);
+      return dispatcher.execute(removeOperation).toCompletableFuture();
    }
 
    @Override
@@ -129,11 +112,8 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
          log.tracef("About to remove (K,V): (%s, %s)", key, value);
       }
       assertRemoteCacheManagerIsStarted();
-      K objectKey = isObjectStorage() ? key : null;
-      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, keySizePredictor);
-      byte[] marshallValue = MarshallerUtil.obj2bytes(marshaller, value, valueSizePredictor);
-      RemoveEntryMultimapOperation removeOperation = operationsFactory.newRemoveEntryOperation(objectKey, marshallKey, marshallValue, supportsDuplicates);
-      return removeOperation.execute();
+      HotRodOperation<Boolean> removeOperation = operationsFactory.newRemoveEntryOperation(key, value, supportsDuplicates);
+      return dispatcher.execute(removeOperation).toCompletableFuture();
    }
 
    @Override
@@ -142,10 +122,8 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
          log.tracef("About to call contains (K): (%s)", key);
       }
       assertRemoteCacheManagerIsStarted();
-      K objectKey = isObjectStorage() ? key : null;
-      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, keySizePredictor);
-      ContainsKeyMultimapOperation containsKeyOperation = operationsFactory.newContainsKeyOperation(objectKey, marshallKey, supportsDuplicates);
-      return containsKeyOperation.execute();
+      HotRodOperation<Boolean> containsKeyOperation = operationsFactory.newContainsKeyOperation(key, supportsDuplicates);
+      return dispatcher.execute(containsKeyOperation).toCompletableFuture();
    }
 
    @Override
@@ -155,8 +133,8 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
       }
       assertRemoteCacheManagerIsStarted();
       byte[] marshallValue = MarshallerUtil.obj2bytes(marshaller, value, valueSizePredictor);
-      ContainsValueMultimapOperation containsValueOperation = operationsFactory.newContainsValueOperation(marshallValue, supportsDuplicates);
-      return containsValueOperation.execute();
+      HotRodOperation<Boolean> containsValueOperation = operationsFactory.newContainsValueOperation(marshallValue, supportsDuplicates);
+      return dispatcher.execute(containsValueOperation).toCompletableFuture();
    }
 
    @Override
@@ -165,11 +143,8 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
          log.tracef("About to call contais(K,V): (%s, %s)", key, value);
       }
       assertRemoteCacheManagerIsStarted();
-      K objectKey = isObjectStorage() ? key : null;
-      byte[] marshallKey = MarshallerUtil.obj2bytes(marshaller, key, keySizePredictor);
-      byte[] marshallValue = MarshallerUtil.obj2bytes(marshaller, value, valueSizePredictor);
-      ContainsEntryMultimapOperation containsOperation = operationsFactory.newContainsEntryOperation(objectKey, marshallKey, marshallValue, supportsDuplicates);
-      return containsOperation.execute();
+      HotRodOperation<Boolean> containsOperation = operationsFactory.newContainsEntryOperation(key, value, supportsDuplicates);
+      return dispatcher.execute(containsOperation).toCompletableFuture();
    }
 
    @Override
@@ -178,7 +153,8 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
          log.trace("About to call size");
       }
       assertRemoteCacheManagerIsStarted();
-      return operationsFactory.newSizeOperation(supportsDuplicates).execute();
+      return dispatcher.execute(operationsFactory.newSizeOperation(supportsDuplicates))
+            .toCompletableFuture();
    }
 
    @Override
@@ -194,9 +170,5 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
          }
          throw new RemoteCacheManagerNotStartedException(message);
       }
-   }
-
-   private boolean isObjectStorage() {
-      return cache.isObjectStorage();
    }
 }

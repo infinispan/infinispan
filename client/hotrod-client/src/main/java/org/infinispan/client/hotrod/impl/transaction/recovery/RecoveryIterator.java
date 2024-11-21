@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
@@ -35,9 +35,9 @@ public class RecoveryIterator {
    private static final Xid[] NOTHING = new Xid[0];
    private final Set<Xid> uniqueFilter = Collections.synchronizedSet(new HashSet<>());
    private final BlockingDeque<Xid> inDoubtTransactions = new LinkedBlockingDeque<>();
-   private final CompletableFuture<Void> remoteRequest;
+   private final CompletionStage<Void> remoteRequest;
 
-   RecoveryIterator(Collection<Xid> localTransactions, CompletableFuture<Collection<Xid>> remoteRequest) {
+   RecoveryIterator(Collection<Xid> localTransactions, CompletionStage<Collection<Xid>> remoteRequest) {
       add(localTransactions);
       this.remoteRequest = remoteRequest.thenAccept(this::add);
    }
@@ -60,7 +60,7 @@ public class RecoveryIterator {
 
    public void finish(long timeout) {
       try {
-         remoteRequest.get(timeout, TimeUnit.MILLISECONDS);
+         remoteRequest.toCompletableFuture().get(timeout, TimeUnit.MILLISECONDS);
       } catch (InterruptedException | ExecutionException | TimeoutException e) {
          if (log.isTraceEnabled()) {
             log.trace("Exception while waiting for prepared transaction from server.", e);

@@ -1,19 +1,13 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.infinispan.client.hotrod.DataFormat;
-import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
-import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
-import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -24,30 +18,33 @@ import net.jcip.annotations.Immutable;
  * @since 4.1
  */
 @Immutable
-public class RemoveOperation<V> extends AbstractKeyOperation<V> {
+public class RemoveOperation<V> extends AbstractKeyOperation<MetadataValue<V>> {
 
-   public RemoveOperation(Codec codec, ChannelFactory channelFactory,
-                          Object key, byte[] keyBytes, byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags,
-                          Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics,
-                          TelemetryService telemetryService) {
-      super(REMOVE_REQUEST, REMOVE_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, clientTopology, flags, cfg,
-            dataFormat, clientStatistics, telemetryService);
+   public RemoveOperation(InternalRemoteCache<?, ?> cache, byte[] keyBytes) {
+      super(cache, keyBytes);
    }
 
    @Override
-   public void executeOperation(Channel channel) {
-      scheduleRead(channel);
-      sendArrayOperation(channel, keyBytes);
-   }
-
-   @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      V result = returnPossiblePrevValue(buf, status);
+   public MetadataValue<V> createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
+      MetadataValue<V> result = returnMetadataValue(buf, status, codec, unmarshaller);
       if (HotRodConstants.isNotExist(status)) {
-         complete(null);
-      } else {
-         statsDataRemove();
-         complete(result); // NO_ERROR_STATUS
+         return null;
       }
+      return result;
+   }
+
+   @Override
+   public void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, MetadataValue<V> responseValue) {
+      statistics.dataRemove(startTime, 1);
+   }
+
+   @Override
+   public short requestOpCode() {
+      return REMOVE_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return REMOVE_RESPONSE;
    }
 }

@@ -1,23 +1,17 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
-import org.infinispan.client.hotrod.DataFormat;
-import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
-import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 import org.jboss.logging.BasicLogger;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import net.jcip.annotations.Immutable;
 
 /**
  * Implements "putIfAbsent" operation as described in  <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod
@@ -26,40 +20,45 @@ import net.jcip.annotations.Immutable;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Immutable
-public class PutIfAbsentOperation<V> extends AbstractKeyValueOperation<V> {
+public class PutIfAbsentOperation<V> extends AbstractKeyValueOperation<MetadataValue<V>> {
 
    private static final BasicLogger log = LogFactory.getLog(PutIfAbsentOperation.class);
 
-   public PutIfAbsentOperation(Codec codec, ChannelFactory channelFactory,
-                               Object key, byte[] keyBytes, byte[] cacheName, AtomicReference<ClientTopology> clientTopology,
-                               int flags, Configuration cfg, byte[] value, long lifespan,
-                               TimeUnit lifespanTimeUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit,
-                               DataFormat dataFormat, ClientStatistics clientStatistics, TelemetryService telemetryService) {
-      super(PUT_IF_ABSENT_REQUEST, PUT_IF_ABSENT_RESPONSE, codec, channelFactory, key, keyBytes, cacheName, clientTopology, flags, cfg, value,
-            lifespan, lifespanTimeUnit, maxIdleTime, maxIdleTimeUnit, dataFormat, clientStatistics, telemetryService);
+   public PutIfAbsentOperation(InternalRemoteCache<?, ?> remoteCache, byte[] keyBytes, byte[] value, long lifespan,
+                               TimeUnit lifespanTimeUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      super(remoteCache, keyBytes, value, lifespan, lifespanTimeUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      scheduleRead(channel);
-      sendKeyValueOperation(channel);
-   }
-
-   @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+   public MetadataValue<V> createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
       if (HotRodConstants.isNotExecuted(status)) {
-         V prevValue = returnPossiblePrevValue(buf, status);
-         if (HotRodConstants.hasPrevious(status)) {
-            statsDataRead(true);
-         }
+         MetadataValue<V> prevValue = returnMetadataValue(buf, status, codec, unmarshaller);
          if (log.isTraceEnabled()) {
             log.tracef("Returning from putIfAbsent: %s", prevValue);
          }
-         complete(prevValue);
-      } else {
-         statsDataStore();
-         complete(null);
+         return prevValue;
       }
+      return null;
+   }
+
+   @Override
+   public void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, MetadataValue<V> responseValue) {
+      if (HotRodConstants.isNotExecuted(status)) {
+         if (HotRodConstants.hasPrevious(status)) {
+            statistics.dataRead(true, startTime, 1);
+         }
+      } else {
+         statistics.dataStore(startTime, 1);
+      }
+   }
+
+   @Override
+   public short requestOpCode() {
+      return PUT_IF_ABSENT_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return PUT_IF_ABSENT_RESPONSE;
    }
 }

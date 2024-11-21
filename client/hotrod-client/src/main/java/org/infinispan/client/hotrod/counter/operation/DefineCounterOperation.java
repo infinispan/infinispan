@@ -2,12 +2,9 @@ package org.infinispan.client.hotrod.counter.operation;
 
 import static org.infinispan.counter.api._private.CounterEncodeUtil.encodeConfiguration;
 
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.impl.operations.CacheUnmarshaller;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
@@ -25,22 +22,30 @@ public class DefineCounterOperation extends BaseCounterOperation<Boolean> {
 
    private final CounterConfiguration configuration;
 
-   public DefineCounterOperation(ChannelFactory channelFactory, AtomicReference<ClientTopology> topologyId,
-                                 Configuration cfg, String counterName, CounterConfiguration configuration) {
-      super(COUNTER_CREATE_REQUEST, COUNTER_CREATE_RESPONSE, channelFactory, topologyId, cfg, counterName, false);
+   public DefineCounterOperation(String counterName, CounterConfiguration configuration) {
+      super(counterName, false);
       this.configuration = configuration;
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, 28);
+   public void writeOperationRequest(Channel channel, ByteBuf buf, Codec codec) {
+      super.writeOperationRequest(channel, buf, codec);
       encodeConfiguration(configuration, buf::writeByte, buf::writeLong, i -> ByteBufUtil.writeVInt(buf, i));
-      channel.writeAndFlush(buf);
    }
 
    @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+   public Boolean createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
       checkStatus(status);
-      complete(status == NO_ERROR_STATUS);
+      return status == NO_ERROR_STATUS;
+   }
+
+   @Override
+   public short requestOpCode() {
+      return COUNTER_CREATE_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return COUNTER_CREATE_RESPONSE;
    }
 }

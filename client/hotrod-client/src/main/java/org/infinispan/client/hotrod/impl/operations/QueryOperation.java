@@ -5,15 +5,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
-import org.infinispan.client.hotrod.DataFormat;
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.query.RemoteQuery;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.SerializationContext;
@@ -21,29 +17,27 @@ import org.infinispan.query.remote.client.impl.BaseQueryResponse;
 import org.infinispan.query.remote.client.impl.QueryRequest;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
-public final class QueryOperation<T> extends RetryOnFailureOperation<BaseQueryResponse<T>> {
+public final class QueryOperation<T> extends AbstractCacheOperation<BaseQueryResponse<T>> {
 
    private final RemoteQuery<T> remoteQuery;
    private final QuerySerializer querySerializer;
    private final boolean withHitCount;
 
-   public QueryOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicReference<ClientTopology> clientTopology,
-                         int flags, Configuration cfg, RemoteQuery<T> remoteQuery, DataFormat dataFormat, boolean withHitCount) {
-      super(QUERY_REQUEST, QUERY_RESPONSE, codec, channelFactory, cacheName, clientTopology, flags, cfg, dataFormat, null);
+   public QueryOperation(InternalRemoteCache<?, ?> remoteCache, RemoteQuery<T> remoteQuery, boolean withHitCount) {
+      super(remoteCache);
       this.remoteQuery = remoteQuery;
-      this.querySerializer = QuerySerializer.findByMediaType(dataFormat.getValueType());
+      this.querySerializer = QuerySerializer.findByMediaType(remoteCache.getDataFormat().getValueType());
       this.withHitCount = withHitCount;
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
+   public void writeOperationRequest(Channel channel, ByteBuf buf, Codec codec) {
       QueryRequest queryRequest = new QueryRequest();
       queryRequest.setQueryString(remoteQuery.getQueryString());
 
@@ -69,15 +63,17 @@ public final class QueryOperation<T> extends RetryOnFailureOperation<BaseQueryRe
       // marshall and write the request
       byte[] requestBytes = querySerializer.serializeQueryRequest(remoteQuery, queryRequest);
 
-      scheduleRead(channel);
+      ByteBufUtil.writeArray(buf, requestBytes);
+   }
 
-      // Here we'll rather just serialize the header + payload length than copying the requestBytes around
-      ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + ByteBufUtil.estimateVIntSize(requestBytes.length));
+   @Override
+   public short requestOpCode() {
+      return QUERY_REQUEST;
+   }
 
-      codec.writeHeader(buf, header);
-      ByteBufUtil.writeVInt(buf, requestBytes.length);
-      channel.write(buf);
-      channel.writeAndFlush(Unpooled.wrappedBuffer(requestBytes));
+   @Override
+   public short responseOpCode() {
+      return QUERY_RESPONSE;
    }
 
    private List<QueryRequest.NamedParameter> getNamedParameters() {
@@ -109,8 +105,9 @@ public final class QueryOperation<T> extends RetryOnFailureOperation<BaseQueryRe
    }
 
    @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+   public BaseQueryResponse<T> createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
       byte[] responseBytes = ByteBufUtil.readArray(buf);
-      complete((BaseQueryResponse<T>) querySerializer.readQueryResponse(channelFactory.getMarshaller(), remoteQuery, responseBytes));
+      return (BaseQueryResponse<T>) querySerializer.readQueryResponse(
+            internalRemoteCache.getRemoteCacheManager().getMarshaller(), remoteQuery, responseBytes);
    }
 }

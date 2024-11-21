@@ -12,7 +12,8 @@ import java.util.concurrent.Executors;
 import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.retry.DistributionRetryTest;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
@@ -23,7 +24,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -137,9 +137,9 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
 
    public void testCorrectBalancingOfKeysAfterNodeKill() {
       //final AtomicInteger clientTopologyId = TestingUtil.extractField(remoteCacheManager, "defaultCacheTopologyId");
-      ChannelFactory channelFactory = TestingUtil.extractField(remoteCacheManager, "channelFactory");
+      OperationDispatcher dispatcher = remoteCacheManager.getOperationDispatcher();
 
-      final int topologyIdBeforeJoin = channelFactory.getTopologyId(new byte[]{});
+      final int topologyIdBeforeJoin = dispatcher.getTopologyId(HotRodConstants.DEFAULT_CACHE_NAME);
       log.tracef("Starting test with client topology id %d", topologyIdBeforeJoin);
       EmbeddedCacheManager cm5 = addClusterEnabledCacheManager(buildConfiguration());
       HotRodServer hotRodServer5 = HotRodClientTestingUtil.startHotRodServer(cm5);
@@ -149,7 +149,7 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
          // The get operation will update the client topology (if necessary)
          remoteCache.get("k");
 
-         CacheTopologyInfo topology = channelFactory.getCacheTopologyInfo(new byte[]{});
+         CacheTopologyInfo topology = dispatcher.getCacheTopologyInfo(HotRodConstants.DEFAULT_CACHE_NAME);
          return topology.getSegmentsPerServer().size() == 5;
       });
 
@@ -167,7 +167,7 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
          // The get operation will update the client topology (if necessary)
          remoteCache.get("k");
 
-         CacheTopologyInfo topology = channelFactory.getCacheTopologyInfo(new byte[]{});
+         CacheTopologyInfo topology = dispatcher.getCacheTopologyInfo(HotRodConstants.DEFAULT_CACHE_NAME);
          return topology.getSegmentsPerServer().size() == 4;
       });
 

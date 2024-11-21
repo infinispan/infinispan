@@ -1,10 +1,7 @@
 package org.infinispan.client.hotrod.counter.operation;
 
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientTopology;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.operations.CacheUnmarshaller;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.counter.api.StrongCounter;
@@ -23,25 +20,23 @@ public class SetOperation extends BaseCounterOperation<Long> {
 
    private final long value;
 
-   public SetOperation(ChannelFactory channelFactory, AtomicReference<ClientTopology> topologyId,
-                       Configuration cfg, String counterName, long value, boolean useConsistentHash) {
-      super(COUNTER_GET_AND_SET_REQUEST, COUNTER_GET_AND_SET_RESPONSE, channelFactory, topologyId, cfg, counterName, useConsistentHash);
+   public SetOperation(String counterName, long value, boolean useConsistentHash) {
+      super(counterName, useConsistentHash);
       this.value = value;
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, 8);
+   public void writeOperationRequest(Channel channel, ByteBuf buf, Codec codec) {
+      super.writeOperationRequest(channel, buf, codec);
       buf.writeLong(value);
-      channel.writeAndFlush(buf);
    }
 
    @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+   public Long createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
       checkStatus(status);
       assertBoundaries(status);
       assert status == NO_ERROR_STATUS;
-      complete(buf.readLong());
+      return buf.readLong();
    }
 
    private void assertBoundaries(short status) {
@@ -52,5 +47,15 @@ public class SetOperation extends BaseCounterOperation<Long> {
             throw Log.HOTROD.counterOurOfBounds(CounterOutOfBoundsException.LOWER_BOUND);
          }
       }
+   }
+
+   @Override
+   public short requestOpCode() {
+      return COUNTER_GET_AND_SET_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return COUNTER_GET_AND_SET_RESPONSE;
    }
 }

@@ -1,44 +1,29 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import java.net.SocketAddress;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
-import org.infinispan.client.hotrod.DataFormat;
-import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.ClientStatistics;
-import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
-import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
-import net.jcip.annotations.Immutable;
 
-/**
- * Implements "putAll" as defined by  <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod protocol specification</a>.
- *
- * @author William Burns
- * @since 7.2
- */
-@Immutable
-public class PutAllOperation extends StatsAffectingRetryingOperation<Void> {
+public class PutAllOperation extends AbstractCacheOperation<Void> {
+   protected final Map<byte[], byte[]> map;
+   protected final long lifespan;
+   private final TimeUnit lifespanTimeUnit;
+   protected final long maxIdle;
+   private final TimeUnit maxIdleTimeUnit;
 
-   public PutAllOperation(Codec codec, ChannelFactory channelFactory,
-                          Map<byte[], byte[]> map, byte[] cacheName, AtomicReference<ClientTopology> clientTopology,
-                          int flags, Configuration cfg,
-                          long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit,
-                          DataFormat dataFormat, ClientStatistics clientStatistics, TelemetryService telemetryService) {
-      super(PUT_ALL_REQUEST, PUT_ALL_RESPONSE, codec, channelFactory, cacheName, clientTopology, flags, cfg, dataFormat,
-            clientStatistics, telemetryService);
+   public PutAllOperation(InternalRemoteCache<?, ?> remoteCache, Map<byte[], byte[]> map,
+                          long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+      super(remoteCache);
       this.map = map;
       this.lifespan = lifespan;
       this.lifespanTimeUnit = lifespanTimeUnit;
@@ -46,46 +31,36 @@ public class PutAllOperation extends StatsAffectingRetryingOperation<Void> {
       this.maxIdleTimeUnit = maxIdleTimeUnit;
    }
 
-   protected final Map<byte[], byte[]> map;
-   protected final long lifespan;
-   private final TimeUnit lifespanTimeUnit;
-   protected final long maxIdle;
-   private final TimeUnit maxIdleTimeUnit;
-
    @Override
-   protected void executeOperation(Channel channel) {
-      scheduleRead(channel);
-
-      int bufSize = codec.estimateHeaderSize(header) + ByteBufUtil.estimateVIntSize(map.size()) +
-            codec.estimateExpirationSize(lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
-      for (Entry<byte[], byte[]> entry : map.entrySet()) {
-         bufSize += ByteBufUtil.estimateArraySize(entry.getKey());
-         bufSize += ByteBufUtil.estimateArraySize(entry.getValue());
-      }
-      ByteBuf buf = channel.alloc().buffer(bufSize);
-
-      codec.writeHeader(buf, header);
+   public void writeOperationRequest(Channel channel, ByteBuf buf, Codec codec) {
       codec.writeExpirationParams(buf, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
       ByteBufUtil.writeVInt(buf, map.size());
-      for (Entry<byte[], byte[]> entry : map.entrySet()) {
+      for (Map.Entry<byte[], byte[]> entry : map.entrySet()) {
          ByteBufUtil.writeArray(buf, entry.getKey());
          ByteBufUtil.writeArray(buf, entry.getValue());
       }
-      channel.writeAndFlush(buf);
    }
 
    @Override
-   protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
-      channelFactory.fetchChannelAndInvoke(map.keySet().iterator().next(), failedServers, cacheName(), this);
-   }
-
-   @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+   public Void createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
       if (HotRodConstants.isSuccess(status)) {
-         statsDataStore(map.size());
-         complete(null);
-         return;
+         return null;
       }
       throw new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status));
+   }
+
+   @Override
+   public void handleStatsCompletion(ClientStatistics statistics, long startTime, short status, Void responseValue) {
+      statistics.dataStore(startTime, map.size());
+   }
+
+   @Override
+   public short requestOpCode() {
+      return PUT_ALL_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return PUT_ALL_RESPONSE;
    }
 }

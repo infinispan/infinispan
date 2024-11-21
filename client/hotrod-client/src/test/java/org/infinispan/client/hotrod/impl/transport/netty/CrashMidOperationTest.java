@@ -4,17 +4,13 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.assertj.core.api.Assertions;
-import org.infinispan.client.hotrod.DataFormat;
-import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.TransportException;
-import org.infinispan.client.hotrod.impl.ClientTopology;
-import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
+import org.infinispan.client.hotrod.impl.operations.NoCachePingOperation;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.retry.AbstractRetryTest;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.test.Exceptions;
@@ -44,20 +40,22 @@ public class CrashMidOperationTest extends AbstractRetryTest {
    }
 
    public void killServerMidOperation() throws Exception {
-      ChannelFactory channelFactory = remoteCacheManager.getChannelFactory();
       InetSocketAddress address = InetSocketAddress.createUnresolved(hotRodServer1.getHost(), hotRodServer1.getPort());
 
       CountDownLatch operationLatch = new CountDownLatch(1);
       AtomicReference<Channel> channelRef = new AtomicReference<>();
 
-      NoopRetryingOperation firstOperation = new NoopRetryingOperation(0, channelFactory, remoteCacheManager.getConfiguration(),
-            channelRef, operationLatch);
-      fork(() -> channelFactory.fetchChannelAndInvoke(address, firstOperation));
+      NoopRetryingOperation firstOperation = new NoopRetryingOperation(0, channelRef, operationLatch);
+      fork(() -> dispatcher.executeOnSingleAddress(firstOperation, address));
 
       eventually(() -> channelRef.get() != null);
       Channel channel = channelRef.get();
 
       HotRodClientTestingUtil.killServers(hotRodServer1);
+
+      // We have to let the original operation to continue ahead now as it is executing in the event loop
+      operationLatch.countDown();
+
       eventually(() -> !channel.isActive());
 
       eventually(firstOperation::isDone);
@@ -65,64 +63,55 @@ public class CrashMidOperationTest extends AbstractRetryTest {
 
       // Since the first operation failed midway execution, we don't know if the server has failed or only the channel.
       // The second operation will try to connect and fail, and then update the failed list.
-      NoopRetryingOperation secondOperation = new NoopRetryingOperation(1, channelFactory, remoteCacheManager.getConfiguration(),
-            channelRef, operationLatch);
-      channelFactory.fetchChannelAndInvoke(address, remoteCache.getName().getBytes(StandardCharsets.UTF_8), secondOperation);
+      NoopRetryingOperation secondOperation = new NoopRetryingOperation(1, channelRef, operationLatch);
+      dispatcher.executeOnSingleAddress(secondOperation, address);
       eventually(secondOperation::isDone);
-      Assertions.assertThatThrownBy(() -> secondOperation.get(10, TimeUnit.SECONDS))
-            .cause()
-            .isInstanceOf(ConnectException.class);
-
-      // We only release the latch now, but notice that all the other operations were able to finish.
-      operationLatch.countDown();
+      try {
+         secondOperation.get(10, TimeUnit.SECONDS);
+         // It can possibly end without failure if the failed server was updated quick enough
+      } catch (Throwable t) {
+         Exceptions.assertRootCause(ConnectException.class, t);
+      }
 
       // The failed list was update, the next operation should succeed.
-      NoopRetryingOperation thirdOperation = new NoopRetryingOperation(2, channelFactory, remoteCacheManager.getConfiguration(),
-            channelRef, operationLatch);
-      channelFactory.fetchChannelAndInvoke(address, remoteCache.getName().getBytes(StandardCharsets.UTF_8), thirdOperation);
+      NoopRetryingOperation thirdOperation = new NoopRetryingOperation(2, channelRef, operationLatch);
+      dispatcher.executeOnSingleAddress(thirdOperation, address);
       eventually(thirdOperation::isDone);
       thirdOperation.get(10, TimeUnit.SECONDS);
    }
 
-   static class NoopRetryingOperation extends RetryOnFailureOperation<Void> {
+   static class NoopRetryingOperation extends NoCachePingOperation {
       private final AtomicReference<Channel> channelRef;
       private final CountDownLatch firstOp;
       private final int id;
 
-      protected NoopRetryingOperation(int nbr, ChannelFactory channelFactory, Configuration cfg,
-                                      AtomicReference<Channel> channelRef, CountDownLatch firstOp) {
-         super((short) 0, (short) 0, null, channelFactory, null,
-               new AtomicReference<>(new ClientTopology(-1, cfg.clientIntelligence())), 0, cfg,
-               DataFormat.builder().build(), null);
+      protected NoopRetryingOperation(int nbr, AtomicReference<Channel> channelRef, CountDownLatch firstOp) {
          this.channelRef = channelRef;
          this.firstOp = firstOp;
          this.id = nbr;
       }
 
       @Override
-      public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-         complete(null);
-      }
-
-      @Override
-      protected void executeOperation(Channel channel) {
+      public void writeOperationRequest(Channel channel, ByteBuf buf, Codec codec) {
          if (channelRef.compareAndSet(null, channel)) {
             try {
-               scheduleRead(channel);
                firstOp.await();
             } catch (InterruptedException e) {
                completeExceptionally(e);
             }
             assert isDone() : "Should be done";
-            return;
          }
+         super.writeOperationRequest(channel, buf, codec);
+      }
 
-         complete(null);
+      @Override
+      public boolean supportRetry() {
+         return true;
       }
 
       @Override
       public String toString() {
-         return "id = " + id;
+         return "NoOpRetryingOperation id = " + id;
       }
    }
 }

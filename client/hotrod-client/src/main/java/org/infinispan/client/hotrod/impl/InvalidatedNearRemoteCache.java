@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.impl;
 
-import static org.infinispan.client.hotrod.impl.Util.await;
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import java.lang.invoke.MethodHandles;
@@ -12,15 +11,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.MetadataValue;
+import org.infinispan.client.hotrod.impl.operations.CacheOperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.ClientListenerOperation;
-import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
-import org.infinispan.client.hotrod.impl.operations.RetryAwareCompletionStage;
-import org.infinispan.client.hotrod.impl.operations.UpdateBloomFilterOperation;
+import org.infinispan.client.hotrod.impl.operations.GetWithMetadataOperation;
+import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.near.NearCacheService;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
+
+import io.netty.channel.Channel;
 
 /**
  * Near {@link org.infinispan.client.hotrod.RemoteCache} implementation enabling
@@ -40,7 +43,8 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    // locally from reads. When a bloom filter is being replicated though the value will be odd and the
    // near cache cannot be updated.
    private final AtomicInteger bloomFilterUpdateVersion;
-   private volatile SocketAddress listenerAddress;
+   private final CacheOperationsFactory cacheOperationsFactory;
+   private volatile Channel listenerChannel;
 
    InvalidatedNearRemoteCache(InternalRemoteCache<K, V> remoteCache, ClientStatistics clientStatistics,
          NearCacheService<K, V> nearcache) {
@@ -48,6 +52,11 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
       this.clientStatistics = clientStatistics;
       this.nearcache = nearcache;
       this.bloomFilterUpdateVersion = nearcache.getBloomFilterBits() > 0 ? new AtomicInteger() : null;
+      this.cacheOperationsFactory = remoteCache.getOperationsFactory().newFactoryFor(this);
+   }
+
+   public CacheOperationsFactory getOperationsFactory() {
+      return cacheOperationsFactory;
    }
 
    @Override
@@ -66,7 +75,7 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
       return value.thenApply(v -> v != null ? v.getValue() : null);
    }
 
-   private int getCurrentVersion() {
+   public int getCurrentVersion() {
       if (bloomFilterUpdateVersion != null) {
          return bloomFilterUpdateVersion.get();
       }
@@ -84,32 +93,40 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
          MetadataValue<V> calculatingPlaceholder = new MetadataValueImpl<>(-1, -1, -1, -1, -1, null);
          boolean cache = nearcache.putIfAbsent(key, calculatingPlaceholder);
          int prevVersion = getCurrentVersion();
-         RetryAwareCompletionStage<MetadataValue<V>> remoteValue = super.getWithMetadataAsync(key, listenerAddress);
-         if (!cache) {
-            return remoteValue.toCompletableFuture();
+         CompletionStage<GetWithMetadataOperation.GetWithMetadataResult<V>> remoteValue = super.getWithMetadataAsync(key, listenerChannel);
+         // If previous version is odd we can't cache as that means it was started during
+         // a bloom filter update.
+         if (!cache || (prevVersion & 1) == 1) {
+            if (trace) {
+               log.tracef("Unable to cache returned value for key %s as either has concurrent operation or during a bloom filter update",
+                     org.infinispan.commons.util.Util.toStr(key));
+            }
+            nearcache.remove(key, calculatingPlaceholder);
+            return remoteValue.toCompletableFuture()
+                  .thenApply(GetWithMetadataOperation.GetWithMetadataResult::value);
          }
          return remoteValue.thenApply(v -> {
             boolean shouldRemove = true;
+            MetadataValue<V> value = v != null ? v.value() : null;
             // We cannot cache the value if a retry was required - which means we did not talk to the listener node
-            if (v != null) {
-               // If previous version is odd we can't cache as that means it was started during
-               // a bloom filter update. We also can't cache if the new version doesn't match the prior
-               // as it overlapped a bloom update.
-               if ((prevVersion & 1) == 1 || prevVersion != getCurrentVersion()) {
+            if (value != null) {
+               // We can't cache if the new version doesn't match the prior as it overlapped a bloom update.
+               if (prevVersion != getCurrentVersion()) {
                   if (trace) {
                      log.tracef("Unable to cache returned value for key %s as operation was performed during a" +
-                           " bloom filter update");
+                           " bloom filter update", org.infinispan.commons.util.Util.toStr(key));
                   }
                }
                // Having a listener address means it has a bloom filter. When we have a bloom filter we cannot
                // cache values upon a retry as we can't guarantee the bloom filter is updated on the server properly
-               else if (listenerAddress != null && remoteValue.wasRetried()) {
+               else if (listenerChannel != null && v.retried()) {
                   if (trace) {
-                     log.tracef("Unable to cache returned value for key %s as operation was retried", key);
+                     log.tracef("Unable to cache returned value for key %s as operation was retried",
+                           org.infinispan.commons.util.Util.toStr(key));
                   }
                } else {
-                  nearcache.replace(key, calculatingPlaceholder, v);
-                  if (v.getMaxIdle() > 0) {
+                  nearcache.replace(key, calculatingPlaceholder, value);
+                  if (value.getMaxIdle() > 0) {
                      HOTROD.nearCacheMaxIdleUnsupported();
                   }
                   shouldRemove = false;
@@ -118,7 +135,7 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
             if (shouldRemove) {
                nearcache.remove(key, calculatingPlaceholder);
             }
-            return v;
+            return value;
          }).toCompletableFuture();
       } else {
          clientStatistics.incrementNearCacheHits();
@@ -194,18 +211,18 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    }
 
    @Override
-   public void resolveStorage(MediaType key, MediaType value, boolean objectStorage) {
+   public void resolveStorage(MediaType key, MediaType value) {
       if (key != null && !delegate.getRemoteCacheManager().getMarshaller().mediaType().match(key)) {
          // The server has a storage type which the cache marshaller does not handle.
          // This could lead to losing events in the bloom filter, where the client and server see the key differently.
          // To avoid this issue, the client negotiate the type when installing the listener, but it needs a proper configuration.
          Class<? extends Marshaller> marshallerClass = delegate.getRemoteCacheManager().getMarshaller().getClass();
          log.invalidateNearDefaultMarshallerMismatch(delegate.getName(), marshallerClass, key);
-         listenerAddress = nearcache.start(this);
-         delegate.resolveStorage(key, value, objectStorage);
+         listenerChannel = nearcache.start(this);
+         delegate.resolveStorage(key, value);
       } else {
-         delegate.resolveStorage(key, value, objectStorage);
-         listenerAddress = nearcache.start(this);
+         delegate.resolveStorage(key, value);
+         listenerChannel = nearcache.start(this);
       }
    }
 
@@ -221,16 +238,14 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
 
    // Increments the bloom filter version if it is even and returns whether it was incremented
    private boolean incrementBloomVersionIfEven() {
-      if (bloomFilterUpdateVersion != null) {
-         int prev;
-         do {
-            prev = bloomFilterUpdateVersion.get();
-            // Odd number means we are already sending bloom filter
-            if ((prev & 1) == 1) {
-               return false;
-            }
-         } while (!bloomFilterUpdateVersion.compareAndSet(prev, prev + 1));
-      }
+      int prev;
+      do {
+         prev = bloomFilterUpdateVersion.get();
+         // Odd number means we are already sending bloom filter
+         if ((prev & 1) == 1) {
+            return false;
+         }
+      } while (!bloomFilterUpdateVersion.compareAndSet(prev, prev + 1));
       return true;
    }
 
@@ -244,6 +259,9 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
 
    @Override
    public CompletionStage<Void> updateBloomFilter() {
+      if (bloomFilterUpdateVersion == null) {
+         return CompletableFutures.completedNull();
+      }
       // Not being able to increment the even version means we have a concurrent update - so skip
       if (!incrementBloomVersionIfEven()) {
          if (trace) {
@@ -256,27 +274,26 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
 
       if (trace) {
          log.tracef("Sending bloom filter bits(%s) update to %s for listenerId(%s)",
-               org.infinispan.commons.util.Util.printArray(bloomFilterBits), listenerAddress,
+               org.infinispan.commons.util.Util.printArray(bloomFilterBits), listenerChannel,
                org.infinispan.commons.util.Util.printArray(nearcache.getListenerId()));
       }
-      OperationsFactory operationsFactory = getOperationsFactory();
-      UpdateBloomFilterOperation bloopOp = operationsFactory.newUpdateBloomFilterOperation(listenerAddress, bloomFilterBits);
-      return incrementBloomVersionUponCompletion(bloopOp.execute());
+      CacheOperationsFactory operationsFactory = getOperationsFactory();
+      HotRodOperation<Void> op = operationsFactory.newUpdateBloomFilterOperation(bloomFilterBits);
+      return incrementBloomVersionUponCompletion(getDispatcher().executeOnSingleAddress(op, ChannelRecord.of(listenerChannel)));
    }
 
    public SocketAddress getBloomListenerAddress() {
-      return listenerAddress;
+      return ChannelRecord.of(listenerChannel);
    }
 
-   public void setBloomListenerAddress(SocketAddress socketAddress) {
-      this.listenerAddress = socketAddress;
+   public void setBloomListenerAddress(Channel channel) {
+      this.listenerChannel = channel;
    }
 
    @Override
-   public SocketAddress addNearCacheListener(Object listener, int bloomBits) {
-      ClientListenerOperation op = getOperationsFactory().newAddNearCacheListenerOperation(listener, getDataFormat(),
-            bloomBits, this);
-      // no timeout, see below
-      return await(op.execute());
+   public Channel addNearCacheListener(Object listener, int bloomBits) {
+      ClientListenerOperation op = getOperationsFactory().newAddNearCacheListenerOperation(listener,
+            bloomBits);
+      return Util.await(getDispatcher().executeAddListener(op));
    }
 }

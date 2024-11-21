@@ -9,9 +9,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.client.hotrod.Internals;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -43,7 +43,7 @@ public class SocketTimeoutFailureRetryTest extends AbstractRetryTest {
             .maxRetries(1)
             .connectionPool().maxActive(1) //this ensures that only one server is active at a time
             .addServer().host("127.0.0.1").port(port);
-      return new InternalRemoteCacheManager(builder.build());
+      return new RemoteCacheManager(builder.build());
    }
 
    protected void addInterceptors(Cache<?, ?> cache) {
@@ -63,11 +63,11 @@ public class SocketTimeoutFailureRetryTest extends AbstractRetryTest {
       CompletableFuture<Void> delay = new CompletableFuture<>();
       interceptor.delayNextRequest(delay);
 
-      assertEquals(0, remoteCacheManager.getChannelFactory().getRetries());
-      int connectionsBefore = channelFactory.getNumActive() + channelFactory.getNumIdle();
+      assertEquals(0, Internals.dispatcher(remoteCacheManager).getRetries());
       assertEquals("v1", remoteCache.get(key));
-      assertEquals(1, remoteCacheManager.getChannelFactory().getRetries());
-      assertEquals(connectionsBefore, channelFactory.getNumActive() + channelFactory.getNumIdle());
+      assertEquals(1, Internals.dispatcher(remoteCacheManager).getRetries());
+      assertEquals("v1", remoteCache.get(key));
+      assertEquals(1, Internals.dispatcher(remoteCacheManager).getRetries());
 
       delay.complete(null);
    }

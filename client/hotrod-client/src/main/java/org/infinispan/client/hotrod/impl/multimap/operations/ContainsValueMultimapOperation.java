@@ -4,15 +4,13 @@ import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRod
 import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRodConstants.CONTAINS_VALUE_MULTIMAP_RESPONSE;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientTopology;
-import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
+import org.infinispan.client.hotrod.impl.operations.AbstractCacheOperation;
+import org.infinispan.client.hotrod.impl.operations.CacheUnmarshaller;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
@@ -25,7 +23,7 @@ import io.netty.channel.Channel;
  * @author Katia Aresti, karesti@redhat.com
  * @since 9.2
  */
-public class ContainsValueMultimapOperation extends RetryOnFailureOperation<Boolean> {
+public class ContainsValueMultimapOperation extends AbstractCacheOperation<Boolean> {
 
    protected final byte[] value;
    private final long lifespan;
@@ -34,11 +32,10 @@ public class ContainsValueMultimapOperation extends RetryOnFailureOperation<Bool
    private final TimeUnit maxIdleTimeUnit;
    private final boolean supportsDuplicates;
 
-   protected ContainsValueMultimapOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
-                                            AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg, byte[] value,
-                                            long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, boolean supportsDuplicates) {
-      super(CONTAINS_VALUE_MULTIMAP_REQUEST, CONTAINS_VALUE_MULTIMAP_RESPONSE, codec, channelFactory, cacheName,
-            clientTopology, flags, cfg, null, null);
+   protected ContainsValueMultimapOperation(InternalRemoteCache<?, ?> remoteCache, byte[] value,
+                                            long lifespan, TimeUnit lifespanTimeUnit, long maxIdle,
+                                            TimeUnit maxIdleTimeUnit, boolean supportsDuplicates) {
+      super(remoteCache);
       this.value = value;
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;
@@ -48,29 +45,28 @@ public class ContainsValueMultimapOperation extends RetryOnFailureOperation<Bool
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      scheduleRead(channel);
-      sendValueOperation(channel);
-   }
-
-   @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      if (HotRodConstants.isNotExist(status)) {
-         complete(Boolean.FALSE);
-      } else {
-         complete(buf.readByte() == 1 ? Boolean.TRUE : Boolean.FALSE);
-      }
-   }
-
-   protected void sendValueOperation(Channel channel) {
-      ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) +
-            codec.estimateExpirationSize(lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit) +
-            ByteBufUtil.estimateArraySize(value) +
-            codec.estimateSizeMultimapSupportsDuplicated());
-      codec.writeHeader(buf, header);
+   public void writeOperationRequest(Channel channel, ByteBuf buf, Codec codec) {
       codec.writeExpirationParams(buf, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
       ByteBufUtil.writeArray(buf, value);
       codec.writeMultimapSupportDuplicates(buf, supportsDuplicates);
-      channel.writeAndFlush(buf);
+   }
+
+   @Override
+   public Boolean createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
+      if (HotRodConstants.isNotExist(status)) {
+         return Boolean.FALSE;
+      } else {
+         return buf.readByte() == 1 ? Boolean.TRUE : Boolean.FALSE;
+      }
+   }
+
+   @Override
+   public short requestOpCode() {
+      return CONTAINS_VALUE_MULTIMAP_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return CONTAINS_VALUE_MULTIMAP_RESPONSE;
    }
 }

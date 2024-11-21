@@ -4,6 +4,7 @@ import static org.infinispan.client.hotrod.impl.Util.await;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.api.SyncStrongCounter;
@@ -18,22 +19,25 @@ class StrongCounterImpl extends BaseCounter implements StrongCounter {
    private final SyncStrongCounter syncCounter;
 
    StrongCounterImpl(String name, CounterConfiguration configuration, CounterOperationFactory operationFactory,
-                     NotificationManager notificationManager) {
-      super(configuration, name, operationFactory, notificationManager);
+                     OperationDispatcher dispatcher, NotificationManager notificationManager) {
+      super(configuration, name, operationFactory, dispatcher, notificationManager);
       this.syncCounter = new Sync();
    }
 
    public CompletableFuture<Long> getValue() {
-      return factory.newGetValueOperation(name, useConsistentHash()).execute();
+      return dispatcher.execute(factory.newGetValueOperation(name, useConsistentHash()))
+            .toCompletableFuture();
    }
 
    public CompletableFuture<Long> addAndGet(long delta) {
-      return factory.newAddOperation(name, delta, useConsistentHash()).execute();
+      return dispatcher.execute(factory.newAddOperation(name, delta, useConsistentHash()))
+            .toCompletableFuture();
    }
 
    @Override
    public CompletableFuture<Long> compareAndSwap(long expect, long update) {
-      return factory.newCompareAndSwapOperation(name, expect, update, super.getConfiguration()).execute();
+      return dispatcher.execute(factory.newCompareAndSwapOperation(name, expect, update, super.getConfiguration()))
+            .toCompletableFuture();
    }
 
    @Override
@@ -43,7 +47,8 @@ class StrongCounterImpl extends BaseCounter implements StrongCounter {
 
    @Override
    public CompletableFuture<Long> getAndSet(long value) {
-      return factory.newSetOperation(name, value, useConsistentHash()).execute();
+      return dispatcher.execute(factory.newSetOperation(name, value, useConsistentHash()))
+            .toCompletableFuture();
    }
 
    @Override

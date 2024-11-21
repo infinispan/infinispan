@@ -28,8 +28,11 @@ import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
 import org.infinispan.client.hotrod.impl.operations.ClientListenerOperation;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.Util;
+
+import io.netty.channel.Channel;
 
 public final class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
 
@@ -61,7 +64,7 @@ public final class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
    public static ClientEventDispatcher create(ClientListenerOperation op, SocketAddress address, Runnable cleanup,
                                               InternalRemoteCache<?, ?> remoteCache) {
       Map<Class<? extends Annotation>, List<ClientEventDispatcher.ClientListenerInvocation>> invocables = findMethods(op.listener);
-      return new ClientEventDispatcher(op, address, invocables, op.getCacheName(), cleanup, remoteCache);
+      return new ClientEventDispatcher(op, address, invocables, remoteCache.getName(), cleanup, remoteCache);
    }
 
    public static Map<Class<? extends Annotation>, List<ClientEventDispatcher.ClientListenerInvocation>> findMethods(Object listener) {
@@ -130,11 +133,13 @@ public final class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
 
    @Override
    public CompletableFuture<Void> executeFailover() {
-      CompletableFuture<SocketAddress> future = op.copy().execute();
+      OperationDispatcher dispatcher = remoteCache.getDispatcher();
+      CompletableFuture<Channel> future = dispatcher.executeAddListener(op.copy())
+            .toCompletableFuture();
       if (remoteCache instanceof InvalidatedNearRemoteCache) {
-         future = future.thenApply(socketAddress -> {
-            ((InvalidatedNearRemoteCache<?, ?>) remoteCache).setBloomListenerAddress(socketAddress);
-            return socketAddress;
+         future = future.thenApply(channel -> {
+            ((InvalidatedNearRemoteCache<?, ?>) remoteCache).setBloomListenerAddress(channel);
+            return channel;
          });
       }
       return future.thenApply(ignore -> null);
@@ -151,7 +156,7 @@ public final class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
    }
 
    DataFormat getDataFormat() {
-      return op.dataFormat();
+      return remoteCache.getDataFormat();
    }
 
    static final class ClientListenerInvocation {

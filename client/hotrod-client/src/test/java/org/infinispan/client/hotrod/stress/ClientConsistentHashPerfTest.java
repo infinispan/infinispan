@@ -4,14 +4,15 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.net.SocketAddress;
 
+import org.infinispan.client.hotrod.Internals;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 /**
@@ -39,8 +40,8 @@ public class ClientConsistentHashPerfTest extends MultiHotRodServersTest {
       // This will initialize the consistent hash
       cache.put("k", "v");
 
-      ChannelFactory channelFactory = TestingUtil.extractField(rcm, "channelFactory");
-      ConsistentHash ch = channelFactory.getConsistentHash(RemoteCacheManager.cacheNameBytes());
+      OperationDispatcher dispatcher = Internals.dispatcher(rcm);
+      ConsistentHash ch = dispatcher.getConsistentHash(HotRodConstants.DEFAULT_CACHE_NAME);
       byte[][] keys = new byte[NUM_KEYS][];
 
       for (int i = 0; i < NUM_KEYS; i++) {

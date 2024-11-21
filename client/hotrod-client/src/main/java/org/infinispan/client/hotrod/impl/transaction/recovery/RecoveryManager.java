@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod.impl.transaction.recovery;
 
 import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.transaction.xa.Xid;
@@ -25,7 +25,7 @@ public class RecoveryManager {
       preparedTransactions.remove(xid);
    }
 
-   public RecoveryIterator startScan(CompletableFuture<Collection<Xid>> requestFuture) {
+   public RecoveryIterator startScan(CompletionStage<Collection<Xid>> requestFuture) {
       return new RecoveryIterator(preparedTransactions, requestFuture);
    }
 }

@@ -479,6 +479,13 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    RemoteCache<K, V> noFlags();
 
    /**
+    * Returns the flags set for this RemoteCache instance.
+    * @return set containing all Flag enum instances that are set for operations on this cache instance
+    */
+   Set<Flag> flags();
+
+
+   /**
     * Returns the {@link org.infinispan.client.hotrod.RemoteCacheContainer} that created this cache.
     */
    RemoteCacheContainer getRemoteCacheContainer();

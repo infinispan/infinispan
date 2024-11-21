@@ -2,6 +2,10 @@ package org.infinispan.client.hotrod;
 
 import static org.infinispan.client.hotrod.marshall.MarshallerUtil.bytes2obj;
 import static org.infinispan.client.hotrod.marshall.MarshallerUtil.obj2bytes;
+import static org.infinispan.client.hotrod.marshall.MarshallerUtil.obj2stream;
+
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration;
 import org.infinispan.client.hotrod.impl.MarshallerRegistry;
@@ -82,14 +86,28 @@ public final class DataFormat {
          return IdentityMarshaller.INSTANCE;
       }
 
+      @Override
       public byte[] keyToBytes(Object key) {
          Marshaller keyMarshaller = resolveKeyMarshaller();
          return obj2bytes(keyMarshaller, key, keySizePredictor);
       }
 
+      @Override
+      public void keyToStream(Object key, OutputStream stream) {
+         Marshaller keyMarshaller = resolveKeyMarshaller();
+         obj2stream(keyMarshaller, key, stream, keySizePredictor);
+      }
+
+      @Override
       public byte[] valueToBytes(Object value) {
          Marshaller valueMarshaller = resolveValueMarshaller();
          return obj2bytes(valueMarshaller, value, valueSizePredictor);
+      }
+
+      @Override
+      public void valueToStream(Object value, OutputStream stream) {
+         Marshaller valueMarshaller = resolveValueMarshaller();
+         obj2stream(valueMarshaller, value, stream, valueSizePredictor);
       }
 
       @Override
@@ -99,9 +117,21 @@ public final class DataFormat {
       }
 
       @Override
+      public <T> T bytesToKey(InputStream inputStream, ClassAllowList allowList) {
+         Marshaller keyMarshaller = resolveKeyMarshaller();
+         return bytes2obj(keyMarshaller, inputStream, isObjectStorage(), allowList);
+      }
+
+      @Override
       public <T> T bytesToValue(byte[] bytes, ClassAllowList allowList) {
          Marshaller valueMarshaller = resolveValueMarshaller();
          return bytes2obj(valueMarshaller, bytes, isObjectStorage(), allowList);
+      }
+
+      @Override
+      public <T> T bytesToValue(InputStream inputStream, ClassAllowList allowList) {
+         Marshaller valueMarshaller = resolveValueMarshaller();
+         return bytes2obj(valueMarshaller, inputStream, isObjectStorage(), allowList);
       }
 
       public boolean match(DataFormatImpl other) {
@@ -156,16 +186,20 @@ public final class DataFormat {
       return client.getValueType();
    }
 
+   public Marshaller getDefaultMarshaller() {
+      return defaultMarshaller;
+   }
+
    /**
-    * @deprecated Replaced by {@link #initialize(RemoteCacheManager, String, boolean)}.
+    * @deprecated Replaced by {@link #initialize(RemoteCacheManager, String)}.
     */
    @Deprecated(forRemoval=true, since = "12.0")
-   public void initialize(RemoteCacheManager remoteCacheManager, boolean serverObjectStorage) {
+   public void initialize(RemoteCacheManager remoteCacheManager) {
       this.marshallerRegistry = remoteCacheManager.getMarshallerRegistry();
       this.defaultMarshaller = remoteCacheManager.getMarshaller();
    }
 
-   public void initialize(RemoteCacheManager remoteCacheManager, String cacheName, boolean serverObjectStorage) {
+   public void initialize(RemoteCacheManager remoteCacheManager, String cacheName) {
       this.marshallerRegistry = remoteCacheManager.getMarshallerRegistry();
       this.defaultMarshaller = remoteCacheManager.getMarshaller();
       RemoteCacheConfiguration remoteCacheConfiguration = remoteCacheManager.getConfiguration().remoteCaches().get(cacheName);
@@ -199,6 +233,10 @@ public final class DataFormat {
       return client.keyToBytes(key);
    }
 
+   public void keyToStream(Object key, OutputStream stream) {
+      client.keyToStream(key, stream);
+   }
+
    /**
     * @deprecated Since 12.0, will be removed in 15.0
     */
@@ -211,12 +249,24 @@ public final class DataFormat {
       return client.valueToBytes(value);
    }
 
+   public void valueToStream(Object value, OutputStream stream) {
+      client.valueToStream(value, stream);
+   }
+
    public <T> T keyToObj(byte[] bytes, ClassAllowList allowList) {
       return client.bytesToKey(bytes, allowList);
    }
 
+   public <T> T keyToObject(InputStream inputStream, ClassAllowList allowList) {
+      return client.bytesToKey(inputStream, allowList);
+   }
+
    public <T> T valueToObj(byte[] bytes, ClassAllowList allowList) {
       return client.bytesToValue(bytes, allowList);
+   }
+
+   public <T> T valueToObj(InputStream inputStream, ClassAllowList allowList) {
+      return client.bytesToValue(inputStream, allowList);
    }
 
    public MediaTypeMarshaller server() {

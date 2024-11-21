@@ -14,11 +14,9 @@ import java.net.InetSocketAddress;
 import java.util.Queue;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
-import org.infinispan.client.hotrod.test.NoopChannelOperation;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -44,7 +42,7 @@ import io.netty.util.concurrent.AbstractScheduledEventExecutor;
 public class ServerErrorTest extends SingleCacheManagerTest {
 
    private HotRodServer hotrodServer;
-   private InternalRemoteCacheManager remoteCacheManager;
+   private RemoteCacheManager remoteCacheManager;
    private RemoteCache<String, String> remoteCache;
 
    @Override
@@ -59,12 +57,12 @@ public class ServerErrorTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   protected InternalRemoteCacheManager getRemoteCacheManager() {
+   protected RemoteCacheManager getRemoteCacheManager() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host(hotrodServer.getHost()).port(hotrodServer.getPort());
       clientBuilder.connectionPool().maxActive(1).minIdle(1);
-      return new InternalRemoteCacheManager(clientBuilder.build());
+      return new RemoteCacheManager(clientBuilder.build());
    }
 
    @AfterClass
@@ -83,29 +81,22 @@ public class ServerErrorTest extends SingleCacheManagerTest {
       assertEquals(v(m), remoteCache.get(k(m)));
 
       // Obtain a reference to the single connection in the pool
-      ChannelFactory channelFactory = remoteCacheManager.getChannelFactory();
+      OperationDispatcher dispatcher = remoteCacheManager.getOperationDispatcher();
       InetSocketAddress address = InetSocketAddress.createUnresolved(hotrodServer.getHost(), hotrodServer.getPort());
-      Channel channel = channelFactory.fetchChannelAndInvoke(address, new NoopChannelOperation()).join();
+      Channel channel = dispatcher.getHandlerForAddress(address).getChannel();
 
       // Obtain a reference to the scheduled executor and its task queue
       AbstractScheduledEventExecutor scheduledExecutor = ((AbstractScheduledEventExecutor) channel.eventLoop());
       Queue<?> scheduledTaskQueue = TestingUtil.extractField(scheduledExecutor, "scheduledTaskQueue");
       int scheduledTasksBaseline = scheduledTaskQueue.size();
 
-      // Release the channel back into the pool
-      channelFactory.releaseChannel(channel);
-      assertEquals(0, channelFactory.getNumActive(address));
-      assertEquals(1, channelFactory.getNumIdle(address));
-
       log.debug("Sending failing operation to server");
       expectException(HotRodClientException.class,
                       () -> remoteCache.put("FailFailFail", "whatever..."));
-      assertEquals(0, channelFactory.getNumActive(address));
-      assertEquals(1, channelFactory.getNumIdle(address));
 
       // Check that the operation was completed
       HeaderDecoder headerDecoder = channel.pipeline().get(HeaderDecoder.class);
-      assertEquals(0, headerDecoder.registeredOperations());
+      assertEquals(0, headerDecoder.registeredOperationsById().size());
 
       // Check that the timeout task was cancelled
       assertEquals(scheduledTasksBaseline, scheduledTaskQueue.size());

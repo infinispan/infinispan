@@ -21,7 +21,6 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
@@ -50,7 +49,7 @@ public class SingleServerRemoteIteratorTest extends SingleHotRodServerTest {
    protected RemoteCacheManager getRemoteCacheManager() {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort()).addContextInitializer(DslSCI.INSTANCE);
-      return new InternalRemoteCacheManager(builder.build());
+      return new RemoteCacheManager(builder.build());
    }
 
    @Test

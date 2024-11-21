@@ -1,5 +1,8 @@
 package org.infinispan.client.hotrod.marshall;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+
 import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.MediaType;
 
@@ -34,6 +37,8 @@ public interface MediaTypeMarshaller {
 
    byte[] keyToBytes(Object key);
 
+   void keyToStream(Object key, OutputStream stream);
+
    /**
     * Transforms the value object to the marshalled form.
     * The marshalled format respects the define media type for the value.
@@ -42,6 +47,8 @@ public interface MediaTypeMarshaller {
     * @return The byte array representation of the object in the decided value media type.
     */
    byte[] valueToBytes(Object value);
+
+   void valueToStream(Object value, OutputStream stream);
 
    /**
     * Unmarshall the byte array into the object form.
@@ -53,6 +60,8 @@ public interface MediaTypeMarshaller {
     */
    <T> T bytesToKey(byte[] bytes, ClassAllowList allowList);
 
+   <T> T bytesToKey(InputStream inputStream, ClassAllowList allowList);
+
    /**
     * Unmarshall the byte array into the object form.
     * The unmarshalling follows the process by the decided value media type.
@@ -62,4 +71,6 @@ public interface MediaTypeMarshaller {
     * @return The object store in the byte array representation.
     */
    <T> T bytesToValue(byte[] bytes, ClassAllowList allowList);
+
+   <T> T bytesToValue(InputStream inputStream, ClassAllowList allowList);
 }

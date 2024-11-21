@@ -1,14 +1,9 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import static org.infinispan.client.hotrod.logging.Log.HOTROD;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.DataFormat;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
@@ -18,31 +13,42 @@ import io.netty.channel.Channel;
  * @author gustavonalle
  * @since 8.0
  */
-public class IterationEndOperation extends HotRodOperation<IterationEndResponse> {
+public class IterationEndOperation extends AbstractCacheOperation<IterationEndResponse> {
    private final byte[] iterationId;
-   private final Channel channel;
 
-   protected IterationEndOperation(Codec codec, int flags, Configuration cfg, byte[] cacheName,
-                                   AtomicReference<ClientTopology> clientTopology, byte[] iterationId, ChannelFactory channelFactory,
-                                   Channel channel) {
-      super(ITERATION_END_REQUEST, ITERATION_END_RESPONSE, codec, flags, cfg, cacheName, clientTopology, channelFactory);
+   protected IterationEndOperation(InternalRemoteCache<?, ?> cache, byte[] iterationId) {
+      super(cache);
       this.iterationId = iterationId;
-      this.channel = channel;
    }
 
    @Override
-   public CompletableFuture<IterationEndResponse> execute() {
-      if (!channel.isActive()) {
-         throw HOTROD.channelInactive(channel.remoteAddress(), channel.remoteAddress());
-      }
-      scheduleRead(channel);
-      sendArrayOperation(channel, iterationId);
-      releaseChannel(channel);
-      return this;
+   public void writeOperationRequest(Channel channel, ByteBuf buf, Codec codec) {
+      ByteBufUtil.writeArray(buf, iterationId);
    }
 
    @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      complete(new IterationEndResponse(status));
+   public IterationEndResponse createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
+      return new IterationEndResponse(status);
+   }
+
+   @Override
+   public short requestOpCode() {
+      return ITERATION_END_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return ITERATION_END_RESPONSE;
+   }
+
+   @Override
+   public boolean supportRetry() {
+      return false;
+   }
+
+   @Override
+   public DataFormat getDataFormat() {
+      // No data format sent for ending an iteration operation
+      return null;
    }
 }

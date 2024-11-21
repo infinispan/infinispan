@@ -48,6 +48,7 @@ public class CompleteShutdownDistRetryTest extends HitsAwareCacheManagersTest {
    public void testRetryAfterCompleteShutdown() {
       RemoteCache<byte[], String> client = client(0).getCache();
       int initialServerPort = addr2hrServer.values().iterator().next().getPort();
+      log.infof("InitialServerPort = %d", initialServerPort);
 
       addrs = getSocketAddressList();
       keys = genKeys();

@@ -4,6 +4,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.ASYNC_EX
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_CALLBACK_HANDLER;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_CLIENT_SUBJECT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_SERVER_NAME;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_FAILURE_TIMEOUT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.BATCH_SIZE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CACHE_CONFIGURATION_SUFFIX;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CACHE_MARSHALLER;
@@ -38,7 +39,6 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_BALANCING_STRATEGY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SASL_MECHANISM;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SASL_PROPERTIES_PREFIX;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_FAILURE_TIMEOUT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_LIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SNI_HOST_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SO_TIMEOUT;
@@ -85,7 +85,7 @@ import org.infinispan.protostream.SerializationContextInitializer;
  * @since 5.3
  */
 @BuiltBy(ConfigurationBuilder.class)
-public class Configuration {
+public class Configuration implements org.infinispan.api.configuration.Configuration {
 
    private final ExecutorFactoryConfiguration asyncExecutorFactory;
    private final Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory;

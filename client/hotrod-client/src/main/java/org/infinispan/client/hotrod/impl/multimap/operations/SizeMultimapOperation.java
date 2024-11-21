@@ -3,14 +3,11 @@ package org.infinispan.client.hotrod.impl.multimap.operations;
 import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRodConstants.SIZE_MULTIMAP_REQUEST;
 import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRodConstants.SIZE_MULTIMAP_RESPONSE;
 
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientTopology;
-import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
+import org.infinispan.client.hotrod.impl.operations.AbstractCacheOperation;
+import org.infinispan.client.hotrod.impl.operations.CacheUnmarshaller;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 
 import io.netty.buffer.ByteBuf;
@@ -23,37 +20,32 @@ import io.netty.channel.Channel;
  * @author Katia Aresti, karesti@redhat.com
  * @since 9.2
  */
-public class SizeMultimapOperation extends RetryOnFailureOperation<Long> {
+public class SizeMultimapOperation extends AbstractCacheOperation<Long> {
 
    private final boolean supportsDuplicates;
 
-   protected SizeMultimapOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags, Configuration cfg, boolean supportsDuplicates) {
-      super(SIZE_MULTIMAP_REQUEST, SIZE_MULTIMAP_RESPONSE, codec, channelFactory, cacheName, clientTopology, flags, cfg,
-            null, null);
+   protected SizeMultimapOperation(InternalRemoteCache<?, ?> remoteCache, boolean supportsDuplicates) {
+      super(remoteCache);
       this.supportsDuplicates = supportsDuplicates;
    }
 
    @Override
-   protected void executeOperation(Channel channel) {
-      sendHeaderAndRead(channel);
-   }
-
-   @Override
-   public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
-      complete(ByteBufUtil.readVLong(buf));
-   }
-
-   @Override
-   protected void sendHeaderAndRead(Channel channel) {
-      scheduleRead(channel);
-      sendHeader(channel);
-   }
-
-   @Override
-   protected void sendHeader(Channel channel) {
-      ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + codec.estimateSizeMultimapSupportsDuplicated());
-      codec.writeHeader(buf, header);
+   public void writeOperationRequest(Channel channel, ByteBuf buf, Codec codec) {
       codec.writeMultimapSupportDuplicates(buf, supportsDuplicates);
-      channel.writeAndFlush(buf);
+   }
+
+   @Override
+   public Long createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
+      return ByteBufUtil.readVLong(buf);
+   }
+
+   @Override
+   public short requestOpCode() {
+      return SIZE_MULTIMAP_REQUEST;
+   }
+
+   @Override
+   public short responseOpCode() {
+      return SIZE_MULTIMAP_RESPONSE;
    }
 }

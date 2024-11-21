@@ -25,6 +25,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
+import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
 
 class AssertsNearCache<K, V> {
    final InternalRemoteCache<K, V> remote;
@@ -255,6 +256,13 @@ class AssertsNearCache<K, V> {
       MockGetEvent get = assertGetKey(key);
       assertEquals(value, get.value == null ? null : get.value.getValue());
       return get;
+   }
+
+   public boolean hasPendingBloomUpdate() {
+      if (remote instanceof InvalidatedNearRemoteCache<K,V> inrc) {
+         return (inrc.getCurrentVersion() & 1) == 1;
+      }
+      return false;
    }
 
    public boolean isNearCacheConnected() {

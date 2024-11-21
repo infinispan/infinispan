@@ -1,72 +1,44 @@
 package org.infinispan.client.hotrod.impl.operations;
 
-import java.net.SocketAddress;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.infinispan.client.hotrod.DataFormat;
-import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.ClientStatistics;
-import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.MetadataValue;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
-import org.infinispan.client.hotrod.marshall.MediaTypeMarshaller;
-import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
-import org.infinispan.commons.util.Util;
+import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 
 import io.netty.buffer.ByteBuf;
-import net.jcip.annotations.Immutable;
+import io.netty.channel.Channel;
 
-/**
- * Basic class for all hot rod operations that manipulate a key.
- *
- * @author Mircea.Markus@jboss.com
- * @since 4.1
- */
-@Immutable
-public abstract class AbstractKeyOperation<T> extends StatsAffectingRetryingOperation<T> {
-   protected final Object key;
+public abstract class AbstractKeyOperation<V> extends AbstractCacheOperation<V> {
    protected final byte[] keyBytes;
 
-   protected AbstractKeyOperation(short requestCode, short responseCode, Codec codec, ChannelFactory channelFactory,
-                                  Object key, byte[] keyBytes, byte[] cacheName, AtomicReference<ClientTopology> clientTopology, int flags,
-                                  Configuration cfg, DataFormat dataFormat, ClientStatistics clientStatistics,
-                                  TelemetryService telemetryService) {
-      super(requestCode, responseCode, codec, channelFactory, cacheName, clientTopology, flags, cfg, dataFormat,
-            clientStatistics, telemetryService);
-      this.key = key;
+   protected AbstractKeyOperation(InternalRemoteCache<?, ?> internalRemoteCache, byte[] keyBytes) {
+      super(internalRemoteCache);
       this.keyBytes = keyBytes;
    }
 
    @Override
-   protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
-      if (retryCount == 0) {
-         channelFactory.fetchChannelAndInvoke(commandKey(), failedServers, cacheName(), this);
-      } else {
-         channelFactory.fetchChannelAndInvoke(failedServers, cacheName(), this);
-      }
+   public void writeOperationRequest(Channel channel, ByteBuf buf, Codec codec) {
+      ByteBufUtil.writeArray(buf, keyBytes);
    }
 
-   private Object commandKey() {
-      DataFormat df = dataFormat();
-      if (df == null) {
-         return key != null
-               ? key
-               : keyBytes;
-      }
-
-      return df.isObjectStorage()
-            ? key
-            : keyBytes;
+   @Override
+   public Object getRoutingObject() {
+      return keyBytes;
    }
 
-   protected T returnPossiblePrevValue(ByteBuf buf, short status) {
-      return (T) codec.returnPossiblePrevValue(buf, status, dataFormat(), flags(), cfg.getClassAllowList(), channelFactory.getMarshaller());
+   @SuppressWarnings("unchecked")
+   protected <T> T returnPossiblePrevValue(ByteBuf buf, short status, Codec codec, CacheUnmarshaller unmarshaller) {
+      return (T) codec.returnPossiblePrevValue(buf, status, unmarshaller);
    }
 
-   protected VersionedOperationResponse returnVersionedOperationResponse(ByteBuf buf, short status) {
+   protected <T> MetadataValue<T> returnMetadataValue(ByteBuf buf, short status, Codec codec, CacheUnmarshaller unmarshaller) {
+      return codec.returnMetadataValue(buf, status, unmarshaller);
+   }
+
+   protected <E> VersionedOperationResponse<E> returnVersionedOperationResponse(ByteBuf buf, short status, Codec codec,
+                                                                         CacheUnmarshaller unmarshaller) {
       VersionedOperationResponse.RspCode code;
       if (HotRodConstants.isSuccess(status)) {
          code = VersionedOperationResponse.RspCode.SUCCESS;
@@ -77,25 +49,7 @@ public abstract class AbstractKeyOperation<T> extends StatsAffectingRetryingOper
       } else {
          throw new IllegalStateException("Unknown response status: " + Integer.toHexString(status));
       }
-      Object prevValue = returnPossiblePrevValue(buf, status);
-      return new VersionedOperationResponse(prevValue, code);
-   }
-
-   @Override
-   protected void addParams(StringBuilder sb) {
-      sb.append(", key=").append(key == null ? Util.printArray(keyBytes) : key);
-   }
-
-   @Override
-   public Object routingObject(Object defaultObject) {
-      // We need to serialize the object and hash the bytes to retrieve the segment.
-      // To map to the correct segment, we need to utilize the server's target media-type.
-      DataFormat df = dataFormat();
-      if (df != null) {
-         MediaTypeMarshaller mtm = df.server();
-         if (mtm != null) return mtm.keyToBytes(key);
-      }
-
-      return defaultObject;
+      MetadataValue<E> metadata = returnMetadataValue(buf, status, codec, unmarshaller);
+      return new VersionedOperationResponse<>(metadata, code);
    }
 }

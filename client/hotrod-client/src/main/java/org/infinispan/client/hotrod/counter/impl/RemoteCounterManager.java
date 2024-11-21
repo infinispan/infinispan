@@ -8,9 +8,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
@@ -26,18 +25,21 @@ import org.infinispan.counter.exception.CounterException;
  * @since 9.2
  */
 public class RemoteCounterManager implements CounterManager {
-
    private final Map<String, Object> counters;
    private CounterOperationFactory factory;
+   private OperationDispatcher dispatcher;
    private NotificationManager notificationManager;
 
    public RemoteCounterManager() {
       counters = new ConcurrentHashMap<>();
    }
 
-   public void start(ChannelFactory channelFactory, Configuration configuration, ClientListenerNotifier listenerNotifier) {
-      this.factory = new CounterOperationFactory(configuration, channelFactory);
-      this.notificationManager = new NotificationManager(listenerNotifier, factory);
+   public void start(OperationDispatcher dispatcher, ClientListenerNotifier listenerNotifier) {
+      this.factory = new CounterOperationFactory();
+      this.dispatcher = dispatcher;
+      this.notificationManager = new NotificationManager(listenerNotifier, factory, dispatcher);
+
+      dispatcher.addCacheTopologyInfoIfAbsent(CounterOperationFactory.COUNTER_CACHE_NAME);
    }
 
    @Override
@@ -54,7 +56,7 @@ public class RemoteCounterManager implements CounterManager {
 
    @Override
    public boolean defineCounter(String name, CounterConfiguration configuration) {
-      return await(factory.newDefineCounterOperation(name, configuration).execute());
+      return await(dispatcher.execute(factory.newDefineCounterOperation(name, configuration)));
    }
 
    @Override
@@ -63,22 +65,22 @@ public class RemoteCounterManager implements CounterManager {
 
    @Override
    public boolean isDefined(String name) {
-      return await(factory.newIsDefinedOperation(name).execute());
+      return await(dispatcher.execute(factory.newIsDefinedOperation(name)));
    }
 
    @Override
    public CounterConfiguration getConfiguration(String counterName) {
-      return await(factory.newGetConfigurationOperation(counterName).execute());
+      return await(dispatcher.execute(factory.newGetConfigurationOperation(counterName)));
    }
 
    @Override
    public void remove(String counterName) {
-      await(factory.newRemoveOperation(counterName, true).execute());
+      await(dispatcher.execute(factory.newRemoveOperation(counterName, true)));
    }
 
    @Override
    public Collection<String> getCounterNames() {
-      return await(factory.newGetCounterNamesOperation().execute());
+      return await(dispatcher.execute(factory.newGetCounterNamesOperation()));
    }
 
    public void stop() {
@@ -105,10 +107,10 @@ public class RemoteCounterManager implements CounterManager {
    private WeakCounter createWeakCounter(String counterName) {
       CounterConfiguration configuration = getConfiguration(counterName);
       if (configuration == null) {
-         throw org.infinispan.client.hotrod.logging.Log.HOTROD.undefinedCounter(counterName);
+         throw Log.HOTROD.undefinedCounter(counterName);
       }
       assertWeakCounter(configuration);
-      return new WeakCounterImpl(counterName, configuration, factory, notificationManager);
+      return new WeakCounterImpl(counterName, configuration, factory, dispatcher, notificationManager);
    }
 
    private StrongCounter createStrongCounter(String counterName) {
@@ -117,7 +119,7 @@ public class RemoteCounterManager implements CounterManager {
          throw Log.HOTROD.undefinedCounter(counterName);
       }
       assertStrongCounter(configuration);
-      return new StrongCounterImpl(counterName, configuration, factory, notificationManager);
+      return new StrongCounterImpl(counterName, configuration, factory, dispatcher, notificationManager);
    }
 
    private void assertStrongCounter(CounterConfiguration configuration) {

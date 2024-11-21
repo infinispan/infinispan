@@ -4,7 +4,6 @@ import java.util.Map;
 
 import org.infinispan.commons.api.query.Query;
 
-
 /**
  * @author gustavonalle
  * @since 8.1

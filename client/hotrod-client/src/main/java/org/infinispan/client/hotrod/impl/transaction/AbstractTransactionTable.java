@@ -3,12 +3,15 @@ package org.infinispan.client.hotrod.impl.transaction;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.Xid;
 
-import org.infinispan.client.hotrod.impl.transaction.operations.CompleteTransactionOperation;
-import org.infinispan.client.hotrod.impl.transaction.operations.ForgetTransactionOperation;
+import org.infinispan.client.hotrod.impl.Util;
+import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
+import org.infinispan.client.hotrod.impl.operations.ManagerOperationsFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
@@ -26,24 +29,26 @@ abstract class AbstractTransactionTable implements TransactionTable {
    private static final Log log = LogFactory.getLog(AbstractTransactionTable.class, Log.class);
 
    private final long timeout;
-   private volatile TransactionOperationFactory operationFactory;
+   private volatile ManagerOperationsFactory operationFactory;
+   private volatile OperationDispatcher dispatcher;
 
    AbstractTransactionTable(long timeout) {
       this.timeout = timeout;
    }
 
    @Override
-   public final void start(TransactionOperationFactory operationFactory) {
+   public final void start(ManagerOperationsFactory operationFactory, OperationDispatcher dispatcher) {
       this.operationFactory = operationFactory;
+      this.dispatcher = dispatcher;
    }
 
    /**
-    * Check this component has started (i.e. {@link TransactionOperationFactory} isn't null)
+    * Check this component has started (i.e. {@link ManagerOperationsFactory} isn't null)
     *
-    * @return the {@link TransactionOperationFactory} to use.
+    * @return the {@link ManagerOperationsFactory} to use.
     */
-   TransactionOperationFactory assertStartedAndReturnFactory() {
-      TransactionOperationFactory tmp = operationFactory;
+   ManagerOperationsFactory assertStartedAndReturnFactory() {
+      ManagerOperationsFactory tmp = operationFactory;
       if (tmp == null) {
          throw log.transactionTableNotStarted();
       }
@@ -65,9 +70,9 @@ abstract class AbstractTransactionTable implements TransactionTable {
     */
    int completeTransaction(Xid xid, boolean commit) {
       try {
-         TransactionOperationFactory factory = assertStartedAndReturnFactory();
-         CompleteTransactionOperation operation = factory.newCompleteTransactionOperation(xid, commit);
-         return operation.execute().get();
+         ManagerOperationsFactory factory = assertStartedAndReturnFactory();
+         HotRodOperation<Integer> operation = factory.newCompleteTransactionOperation(xid, commit);
+         return Util.await(dispatcher.execute(operation));
       } catch (Exception e) {
          log.debug("Exception while commit/rollback.", e);
          return XAException.XA_HEURRB; //heuristically rolled-back
@@ -81,12 +86,12 @@ abstract class AbstractTransactionTable implements TransactionTable {
     */
    void forgetTransaction(Xid xid) {
       try {
-         TransactionOperationFactory factory = assertStartedAndReturnFactory();
-         ForgetTransactionOperation operation = factory.newForgetTransactionOperation(xid);
+         ManagerOperationsFactory factory = assertStartedAndReturnFactory();
+         HotRodOperation<Void> operation = factory.newForgetTransactionOperation(xid);
          //async.
          //we don't need the reply from server. If we can't forget for some reason (timeouts or other exception),
          // the server reaper will cleanup the completed transactions after a while. (default 1 min)
-         operation.execute();
+         dispatcher.execute(operation);
       } catch (Exception e) {
          if (log.isTraceEnabled()) {
             log.tracef(e, "Exception in forget transaction xid=%s", xid);
@@ -99,10 +104,11 @@ abstract class AbstractTransactionTable implements TransactionTable {
     *
     * @return A {@link CompletableFuture} which is completed with a collections of transaction {@link Xid}.
     */
-   CompletableFuture<Collection<Xid>> fetchPreparedTransactions() {
+   CompletionStage<Collection<Xid>> fetchPreparedTransactions() {
       try {
-         TransactionOperationFactory factory = assertStartedAndReturnFactory();
-         return factory.newRecoveryOperation().execute();
+         ManagerOperationsFactory factory = assertStartedAndReturnFactory();
+         HotRodOperation<Collection<Xid>> operation = factory.newRecoveryOperation();
+         return dispatcher.execute(operation);
       } catch (Exception e) {
          if (log.isTraceEnabled()) {
             log.trace("Exception while fetching prepared transactions", e);

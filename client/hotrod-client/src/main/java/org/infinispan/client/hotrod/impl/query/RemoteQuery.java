@@ -11,6 +11,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
+import org.infinispan.client.hotrod.impl.operations.QueryOperation;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.util.CloseableIterator;
@@ -92,9 +93,9 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
 
    private CompletableFuture<BaseQueryResponse<T>> executeRemotelyAsync(boolean withHitCount) {
       validateNamedParameters();
-      return cache.getOperationsFactory()
-            .newQueryOperation(this, cache.getDataFormat(), withHitCount)
-            .execute();
+      QueryOperation<T> op = cache.getOperationsFactory().newQueryOperation(this, withHitCount);
+      CompletionStage<BaseQueryResponse<T>> stage = cache.getDispatcher().execute(op);
+      return stage.toCompletableFuture();
    }
 
    /**
