@@ -9,8 +9,8 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 public class JsonDoc {
    byte[] bytesDocument;
    @ProtoFactory
-   JsonDoc(byte[] bytesDoc) {
-      this.bytesDocument=bytesDoc;
+   JsonDoc(byte[] bytesDocument) {
+      this.bytesDocument=bytesDocument;
    }
 
    @ProtoField(number = 1)
