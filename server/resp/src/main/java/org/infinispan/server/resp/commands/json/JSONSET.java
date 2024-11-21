@@ -1,6 +1,7 @@
 package org.infinispan.server.resp.commands.json;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -123,7 +124,7 @@ public class JSONSET extends RespCommand implements Resp3Command {
          try {
             var rootObjectNode = (ObjectNode) JSONUtil.objectMapper.readTree(doc.bytesDocument());
             var jpCtx = JsonPath.using(config).parse(rootObjectNode);
-            var pathStr = new String(path);
+            var pathStr = new String(path, StandardCharsets.UTF_8);
             JsonNode node = jpCtx.read(pathStr);
             if (node.isNull() && xx || !node.isNull() && nx) {
                return null;

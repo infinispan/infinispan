@@ -1,6 +1,7 @@
 package org.infinispan.server.resp.commands.json;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -84,7 +85,7 @@ public class JSONGET extends RespCommand implements Resp3Command {
             }
             // If only 1 path provided return all the matching nodes as array
             if (pathPos == arguments.size() - 1) {
-               var pathStr = new String(arguments.get(pathPos++));
+               var pathStr = new String(arguments.get(pathPos++), StandardCharsets.UTF_8);
                JsonNode node = jpCtx.read(pathStr);
                String resp = mapper.writer(rpp).writeValueAsString(node);
                return resp;
@@ -93,7 +94,7 @@ public class JSONGET extends RespCommand implements Resp3Command {
             // properties "path": [array of matching nodes]
             ObjectNode result = mapper.createObjectNode();
             while (pathPos < arguments.size()) {
-               var pathStr = new String(arguments.get(pathPos++));
+               var pathStr = new String(arguments.get(pathPos++), StandardCharsets.UTF_8);
                JsonNode node = jpCtx.read(pathStr);
                result.set(pathStr, node);
             }
