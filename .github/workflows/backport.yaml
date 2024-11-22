@@ -12,7 +12,7 @@ jobs:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
-      - if: contains(github.event.pull_request.labels.*.name, '13.0.x')
+      - if: contains(github.event.pull_request.labels.*.name, 'backport/13.0.x')
         name: 13.0.x Backport
         uses: kiegroup/git-backporting@v4.8.4
         with:
@@ -21,7 +21,7 @@ jobs:
           auth: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
           no-squash: true
 
-      - if: always() && contains(github.event.pull_request.labels.*.name, '14.0.x')
+      - if: always() && contains(github.event.pull_request.labels.*.name, 'backport/14.0.x')
         name: 14.0.x Backport
         uses: kiegroup/git-backporting@v4.8.4
         with:
@@ -30,7 +30,7 @@ jobs:
           auth: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
           no-squash: true
 
-      - if: always() && contains(github.event.pull_request.labels.*.name, '15.0.x')
+      - if: always() && contains(github.event.pull_request.labels.*.name, 'backport/15.0.x')
         name: 15.0.x Backport
         uses: kiegroup/git-backporting@v4.8.4
         with:
