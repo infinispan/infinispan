@@ -2,6 +2,7 @@ package org.infinispan.factories;
 
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.versioning.NumericVersionGenerator;
+import org.infinispan.container.versioning.RandomVersionGenerator;
 import org.infinispan.container.versioning.SimpleClusteredVersionGenerator;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
@@ -26,7 +27,7 @@ public class VersionGeneratorFactory extends AbstractNamedCacheComponentFactory 
       } else if (KnownComponentNames.HOT_ROD_VERSION_GENERATOR.equals(componentName)) {
          //Note: HotRod cannot use the same version generator as Optimistic Transaction.
          //the SimpleClusteredVersionGenerator#generateNew() always generates version=1. Not useful to detect conflicts.
-         return new NumericVersionGenerator();
+         return RandomVersionGenerator.INSTANCE;
       } else if (Configurations.isTxVersioned(configuration)) {
          return configuration.clustering().cacheMode().isClustered() ?
                 new SimpleClusteredVersionGenerator() :

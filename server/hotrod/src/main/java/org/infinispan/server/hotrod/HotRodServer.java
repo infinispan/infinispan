@@ -8,6 +8,7 @@ import static org.infinispan.counter.EmbeddedCounterManagerFactory.asCounterMana
 import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 
+import javax.security.auth.Subject;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -23,8 +24,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-
-import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -44,9 +43,9 @@ import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
@@ -621,6 +620,14 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
             ']';
    }
 
+   @SuppressWarnings("removal")
+   private static VersionGenerator getHotRodVersionGenerator(AdvancedCache<?,?> cache) {
+      return SecurityActions.getCacheComponentRegistry(cache)
+            .getComponent(BasicComponentRegistry.class)
+            .getComponent(KnownComponentNames.HOT_ROD_VERSION_GENERATOR, VersionGenerator.class)
+            .running();
+   }
+
    public static class ExtendedCacheInfo extends CacheInfo<byte[], byte[]> {
       final DistributionManager distributionManager;
       final VersionGenerator versionGenerator;
@@ -632,9 +639,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       ExtendedCacheInfo(AdvancedCache<byte[], byte[]> cache, Configuration configuration) {
          super(SecurityActions.anonymizeSecureCache(cache));
          this.distributionManager = SecurityActions.getDistributionManager(cache);
-         ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache);
          //Note: HotRod cannot use the same version generator as Optimistic Transaction.
-         this.versionGenerator = componentRegistry.getComponent(VersionGenerator.class, KnownComponentNames.HOT_ROD_VERSION_GENERATOR);
+         this.versionGenerator = getHotRodVersionGenerator(cache);
          this.configuration = configuration;
          this.transactional = configuration.transaction().transactionMode().isTransactional();
          this.clustered = configuration.clustering().cacheMode().isClustered();
