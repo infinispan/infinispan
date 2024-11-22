@@ -5,6 +5,7 @@ import static org.infinispan.server.Server.DEFAULT_SERVER_CONFIG;
 import static org.infinispan.server.test.core.Containers.DOCKER_CLIENT;
 import static org.infinispan.server.test.core.Containers.getDockerBridgeAddress;
 import static org.infinispan.server.test.core.Containers.imageArchitecture;
+import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_ULIMIT;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_LOG_FILE;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.JACOCO_REPORTS_DIR;
@@ -71,6 +72,7 @@ import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Mount;
 import com.github.dockerjava.api.model.MountType;
+import com.github.dockerjava.api.model.Ulimit;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -87,6 +89,14 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    public static final String INFINISPAN_SERVER_HOME = "/opt/infinispan";
    public static final String JACOCO_COVERAGE_CONTAINER_PATH = "/opt/jacoco.exec";
    public static final String JDK_BASE_IMAGE_NAME = "registry.access.redhat.com/ubi9/openjdk-21-runtime";
+   private static final String[] IMAGE_DEPENDENCIES = {
+         "file",
+         "gzip",
+         "iproute",
+         "lsof",
+         "tar",
+         "vim-minimal"
+   };
    public static final String IMAGE_USER = "185";
    public static final Integer[] EXPOSED_PORTS = {
          11222, // Protocol endpoint
@@ -307,6 +317,15 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                }
                if (IMAGE_MEMORY_SWAP != null) {
                   cmd.getHostConfig().withMemorySwap(IMAGE_MEMORY_SWAP);
+               }
+
+               String ulimit = configuration.properties().getProperty(INFINISPAN_TEST_SERVER_CONTAINER_ULIMIT);
+               if (ulimit != null) {
+                  String[] softHard = ulimit.split(",");
+                  assert softHard.length == 2 : "Ulimit property must have format '<soft>,<hard>'";
+                  long soft = Long.parseLong(softHard[0]);
+                  long hard = Long.parseLong(softHard[1]);
+                  cmd.getHostConfig().withUlimits(new Ulimit[] { new Ulimit("nofile", soft, hard) });
                }
             });
       if (configuration.numServers() == 1 && (OS.getCurrentOs().equals(OS.MAC_OS) || OS.getCurrentOs().equals(OS.WINDOWS))) {
@@ -608,7 +627,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                      .label("architecture", imageArchitecture())
                      .withStatement(new RawStatement("COPY", "--chown=" + IMAGE_USER + ":" + IMAGE_USER + " build " + INFINISPAN_SERVER_HOME))
                      .user("root")
-                     .run("microdnf install -y tar")
+                     .run(String.format("microdnf install -y %s", String.join(" ", IMAGE_DEPENDENCIES)))
                      .user(IMAGE_USER));
          log.infof("Building server snapshot image from %s", serverOutputPath);
          image.get();

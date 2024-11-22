@@ -1,6 +1,10 @@
 package org.infinispan.client.rest.impl.jdk;
 
+import static org.infinispan.client.rest.RestHeaders.ACCEPT;
+import static org.infinispan.client.rest.RestHeaders.ACCEPT_ENCODING;
+
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.IpFilterRule;
@@ -62,12 +66,12 @@ public class RestServerClientJDK implements RestServerClient {
 
    @Override
    public CompletionStage<RestResponse> report() {
-      return client.get(path + "/report");
+      return client.get(path + "/report", Map.of(ACCEPT, MediaType.APPLICATION_GZIP_TYPE, ACCEPT_ENCODING, "gzip"));
    }
 
    @Override
    public CompletionStage<RestResponse> report(String node) {
-      return client.get(path + "/report/" + node);
+      return client.get(path + "/report/" + node, Map.of(ACCEPT, MediaType.APPLICATION_GZIP_TYPE, ACCEPT_ENCODING, "gzip"));
    }
 
    @Override

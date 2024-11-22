@@ -20,9 +20,15 @@
       <defaultExcludedTestGroup/>
       <org.infinispan.test.server.dir>${project.basedir}/../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</org.infinispan.test.server.dir>
       <org.infinispan.test.server.lib.dir>${project.build.directory}/testlibs</org.infinispan.test.server.lib.dir>
+      <org.infinispan.test.server.container.ulimit>4096,65539</org.infinispan.test.server.container.ulimit>
       <infinispan.cluster.stack>test-tcp</infinispan.cluster.stack>
       <log4j.configurationFile>${project.build.testOutputDirectory}/configuration/log4j2.xml</log4j.configurationFile>
       <infinispan.server.log.path>${project.build.directory}</infinispan.server.log.path>
+
+      <test.driverArgs>
+         -Dorg.infinispan.test.server.dir=${org.infinispan.test.server.dir}
+         -Dorg.infinispan.test.server.container.ulimit=${org.infinispan.test.server.container.ulimit}
+      </test.driverArgs>
    </properties>
 
    <dependencies>
@@ -100,6 +106,13 @@
       <dependency>
          <groupId>io.vertx</groupId>
          <artifactId>vertx-junit5</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.apache.commons</groupId>
+         <artifactId>commons-compress</artifactId>
+         <version>${version.commons.compress}</version>
          <scope>test</scope>
       </dependency>
 
@@ -207,7 +220,7 @@
                   <usedefaultlisteners>false</usedefaultlisteners>
                   <listener>${junitListener},org.infinispan.server.test.junit4.InfinispanServerTestListener</listener>
                </properties>
-               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Dorg.infinispan.test.server.dir=${org.infinispan.test.server.dir} -Djdk.attach.allowAttachSelf=true -Ddir.jacoco=${dir.jacoco}</argLine>
+               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} ${test.driverArgs} -Djdk.attach.allowAttachSelf=true</argLine>
             </configuration>
             <executions>
                <execution>
@@ -234,8 +247,8 @@
             <activeByDefault>false</activeByDefault>
          </activation>
          <properties>
-            <container.argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Dorg.infinispan.test.server.dir=${org.infinispan.test.server.dir}
-               -Ddir.jacoco=${dir.jacoco} -Djdk.attach.allowAttachSelf=true -Dorg.infinispan.test.server.driver=CONTAINER
+            <container.argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} ${test.driverArgs}
+               -Djdk.attach.allowAttachSelf=true -Dorg.infinispan.test.server.driver=CONTAINER
             </container.argLine>
          </properties>
          <build>

@@ -1,5 +1,6 @@
 package org.infinispan.server.security.authorization;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.client.rest.RestHeaders.CONTENT_DISPOSITION;
 import static org.infinispan.client.rest.RestResponse.ACCEPTED;
 import static org.infinispan.client.rest.RestResponse.CREATED;
@@ -37,7 +38,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.GZIPInputStream;
 
+import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestClusterClient;
@@ -413,7 +418,7 @@ abstract class RESTAuthorizationTest {
    }
 
    @Test
-   public void testRestServerNodeReport() {
+   public void testRestServerNodeReport() throws Exception {
       ext.assumeContainerMode();
 
       RestClusterClient restClient = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().cluster();
@@ -425,10 +430,12 @@ abstract class RESTAuthorizationTest {
 
       RestServerClient client = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().server();
       for (String name : nodes) {
-         RestResponse response = CompletionStages.join(client.report(name));
-         assertEquals(OK, response.status());
-         assertEquals("application/gzip", response.header("content-type"));
-         assertTrue(response.header("Content-Disposition").startsWith("attachment;"));
+         try (RestResponse response = CompletionStages.join(client.report(name))) {
+            assertEquals(OK, response.status());
+            assertEquals(MediaType.APPLICATION_GZIP_TYPE, response.header("content-type"));
+            assertTrue(response.header("Content-Disposition").startsWith("attachment;"));
+            assertValidTar(response.bodyAsStream());
+         }
       }
 
       RestResponse response = CompletionStages.join(client.report("not-a-node-name"));
@@ -438,6 +445,39 @@ abstract class RESTAuthorizationTest {
          RestServerClient otherClient = ext.rest().withClientConfiguration(restBuilders.get(user)).get().server();
          assertStatus(FORBIDDEN, otherClient.report(ext.getMethodName()));
       }
+   }
+
+   @Test
+   public void testRestServerGeneralReport() throws Exception {
+      ext.assumeContainerMode();
+
+      RestServerClient client = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().server();
+
+      try (RestResponse response = CompletionStages.join(client.report())) {
+         assertEquals(OK, response.status());
+         assertEquals(MediaType.APPLICATION_GZIP_TYPE, response.header("content-type"));
+         assertTrue(response.header("Content-Disposition").startsWith("attachment;"));
+         assertValidTar(response.bodyAsStream());
+      }
+
+      for (TestUser user : EnumSet.complementOf(EnumSet.of(TestUser.ANONYMOUS, TestUser.ADMIN))) {
+         RestServerClient otherClient = ext.rest().withClientConfiguration(restBuilders.get(user)).get().server();
+         assertStatus(FORBIDDEN, otherClient.report());
+      }
+   }
+
+   private void assertValidTar(InputStream is) throws Exception {
+      long contentSize = 0;
+      try (GZIPInputStream gis = new GZIPInputStream(is);
+           TarArchiveInputStream tar = new TarArchiveInputStream(new GzipCompressorInputStream(gis))) {
+         ArchiveEntry entry;
+         while ((entry = tar.getNextEntry()) != null) {
+            if (entry.isDirectory()) continue;
+            contentSize += entry.getSize();
+         }
+      }
+
+      assertThat(contentSize).isPositive();
    }
 
    @Test
