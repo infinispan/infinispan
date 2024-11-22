@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -25,6 +26,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
 
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.resources.ContainerResource;
@@ -204,11 +206,13 @@ public class RestConnection implements Connection, Closeable {
             }
             break;
          case FILE:
-            String contentDisposition = parseHeaders(r).get("Content-Disposition").get(0);
+            Map<String, List<String>> headers = parseHeaders(r);
+            String contentDisposition = headers.get("Content-Disposition").get(0);
             String filename = Util.unquote(contentDisposition.split("filename=")[1]);
             Path file = workingDir.resolve(filename);
+            boolean gzip = MediaType.APPLICATION_GZIP_TYPE.equalsIgnoreCase(headers.get("content-type").get(0));
 
-            try (OutputStream os = Files.newOutputStream(file); InputStream is = parseBody(r, InputStream.class)) {
+            try (OutputStream os = Files.newOutputStream(file); InputStream is = parseResponseBody(r, gzip)) {
                byte[] buffer = new byte[8 * 1024];
                int bytesRead;
                while ((bytesRead = is.read(buffer)) != -1) {
@@ -226,6 +230,13 @@ public class RestConnection implements Connection, Closeable {
       }
       refreshServerInfo();
       return sb.toString();
+   }
+
+   private InputStream parseResponseBody(RestResponse r, boolean gzip) throws IOException {
+      InputStream is = parseBody(r, InputStream.class);
+      return gzip
+            ? new GZIPInputStream(Objects.requireNonNull(is), 8 * 1024)
+            : is;
    }
 
    @Override
