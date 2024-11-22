@@ -443,7 +443,7 @@ public class ServerResource implements ResourceHandler {
 
    private RestResponse createReportResponse(RestRequest request, Object report, String filename) {
       return invocationHelper.newResponse(request)
-            .contentType(MediaType.fromString("application/gzip"))
+            .contentType(MediaType.APPLICATION_GZIP_TYPE)
             .header("Content-Disposition",
                   String.format("attachment; filename=\"%s-%s-%3$tY%3$tm%3$td%3$tH%3$tM%3$tS-report.tar.gz\"",
                         Version.getBrandName().toLowerCase().replaceAll("\\s", "-"),
