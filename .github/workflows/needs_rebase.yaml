@@ -16,5 +16,5 @@ jobs:
     steps:
       - uses: eps1lon/actions-label-merge-conflict@releases/2.x
         with:
-          dirtyLabel: "Needs Rebase"
+          dirtyLabel: "pr/needs rebase"
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
