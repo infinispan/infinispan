@@ -230,6 +230,7 @@ public class RestRawClientJDK implements RestRawClient, AutoCloseable {
          return switch (mediaType.getTypeSubtype()) {
             case MediaType.APPLICATION_OCTET_STREAM_TYPE, MediaType.APPLICATION_PROTOSTREAM_TYPE,
                  MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE -> HttpResponse.BodyHandlers::ofByteArray;
+            case MediaType.APPLICATION_GZIP_TYPE -> HttpResponse.BodyHandlers::ofInputStream;
             default -> HttpResponse.BodyHandlers::ofString;
          };
       }
