@@ -103,6 +103,13 @@
          <scope>test</scope>
       </dependency>
 
+      <dependency>
+         <groupId>org.apache.commons</groupId>
+         <artifactId>commons-compress</artifactId>
+         <version>${version.commons.compress}</version>
+         <scope>test</scope>
+      </dependency>
+
       <!-- Database test dependencies -->
       <dependency>
          <groupId>com.h2database</groupId>

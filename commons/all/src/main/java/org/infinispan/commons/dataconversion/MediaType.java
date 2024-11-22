@@ -73,6 +73,7 @@ public final class MediaType {
    public static final String APPLICATION_XML_TYPE = "application/xml";
    public static final String APPLICATION_YAML_TYPE = "application/yaml";
    public static final String APPLICATION_ZIP_TYPE = "application/zip";
+   public static final String APPLICATION_GZIP_TYPE = "application/gzip";
    public static final String APPLICATION_JBOSS_MARSHALLING_TYPE = "application/x-jboss-marshalling";
    public static final String APPLICATION_PROTOSTREAM_TYPE = "application/x-protostream";
    /**
@@ -136,6 +137,7 @@ public final class MediaType {
    public static final MediaType APPLICATION_PDF = fromString(APPLICATION_PDF_TYPE);
    public static final MediaType APPLICATION_RTF = fromString(APPLICATION_RTF_TYPE);
    public static final MediaType APPLICATION_ZIP = fromString(APPLICATION_ZIP_TYPE);
+   public static final MediaType APPLICATION_GZIP = fromString(APPLICATION_GZIP_TYPE);
    /**
     * @deprecated Since 11.0, will be removed with ISPN-9622
     */
