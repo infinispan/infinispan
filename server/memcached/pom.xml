@@ -11,7 +11,9 @@
    <artifactId>infinispan-server-memcached</artifactId>
    <name>Infinispan Memcached Server</name>
    <description>Infinispan Memcached Server</description>
-
+   <properties>
+      <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
+   </properties>
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
