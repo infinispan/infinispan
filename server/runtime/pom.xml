@@ -326,7 +326,7 @@
             <executions>
                <execution>
                   <id>console</id>
-                  <phase>prepare-package</phase>
+                  <phase>generate-test-resources</phase>
                   <goals>
                      <goal>unpack</goal>
                   </goals>
@@ -418,7 +418,7 @@
                </execution>
                <execution>
                   <id>build-server</id>
-                  <phase>package</phase>
+                  <phase>process-test-resources</phase>
                   <goals>
                      <goal>run</goal>
                   </goals>
@@ -492,7 +492,7 @@
                   <goals>
                      <goal>transform</goal>
                   </goals>
-                  <phase>package</phase>
+                  <phase>process-test-resources</phase>
                   <configuration>
                      <transformationSets>
                         <transformationSet>
