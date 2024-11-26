@@ -205,7 +205,7 @@ As a result, best practices involve making frequent use of branches.
 Creating several topic branches a day, even, should not be considered excessive, and working on several topic branches simultaneously again should be commonplace.
 
 link:http://progit.org/book/ch3-4.html[Chapter 3, Section 4] of Pro Git has a detailed discussion of topic branches.
-For {brandname}, it makes sense to create a topic branch and name it after the JIRA it corresponds to. (if it doesn't correspond to a JIRA, a simple but descriptive name should be used).
+For {brandname}, it makes sense to create a topic branch and name it after the issue it corresponds to. (if it doesn't correspond to an issue, a simple but descriptive name should be used).
 
 ==== Topic Branches Affecting More Than One Release Branch
 Most topic branches will only affect a single release branch, e.g. features targeted at the current unstable release will only affect the main release branch.
@@ -238,7 +238,7 @@ This allows for proper parsing of logs by git tools.
 Read link:http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html[this article] on how to format comments for git and adhere to them.
 Further to the recommendations in the article, the short summary of the commit message should be in the following format:
 
-  ISPN-XXX Subject line of the JIRA in question
+  XXX Subject line of the issue in question
 
 This can optionally be followed by a detailed explanation of the commit.
 Why it was done, how much of it was completed, etc.
