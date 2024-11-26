@@ -29,19 +29,19 @@ As discussed in the linked page, this also includes:
 
 ## Create a test case
 
-If you have opened a JIRA issue but are not comfortable enough to contribute code directly, creating a self
+If you have opened an [issue](https://github.com/infinispan/infinispan/issues) but are not comfortable enough to contribute code directly, creating a self
 contained test case is a good first step towards contributing.
 
-Just fork the repository, build your test case and attach it as an archive to a JIRA issue.
+Just fork the repository, build your test case and attach it as an archive to an [issue](https://github.com/infinispan/infinispan/issues)
 
 ## Create a topic branch
 
 Create a "topic" branch on which you will work.  The convention is to name the branch
-using the JIRA issue key.  If there is not already a JIRA issue covering the work you
+using the issue key. If there is not already an issue covering the work you
 want to do, create one.  Assuming you will be working from the main branch and working
-on the JIRA ISPN-8760:
+on issue 12345:
 ```shell
-git checkout -b ISPN-8760 main
+git checkout -b 12345 origin/main
 ```
 
 ## Code
@@ -67,8 +67,7 @@ mvn verify -pl server/tests -Dit.test=RequestTracingIT -Dorg.infinispan.test.ser
 ## Commit
 
 * Make commits of logical units.
-* Be sure to start the commit messages with the JIRA issue key you are working on. This is how JIRA will pick
-up the related commits and display them on the JIRA issue.
+* Be sure to start the commit messages with the issue key you are working on. This allows easy cross-referencing on GitHub.
 * Avoid formatting changes to existing code as much as possible: they make the intent of your patch less clear.
 * Make sure you have added the necessary tests for your changes.
 * Run _all_ the tests to assure nothing else was accidentally broken:
@@ -94,4 +93,4 @@ git pull --rebase upstream main
 ## Submit
 * Push your changes to a topic branch in your fork of the repository.
 * Initiate a [pull request](http://help.github.com/send-pull-requests/).
-* Update the JIRA issue, using the "Link to pull request" button to include a link to the created pull request.
+* Cross-reference the issue key in the pull request description.
