@@ -14,50 +14,16 @@ In this chapter we quickly walk through the basics on contributing; future chapt
 
 == Issue Management
 
-{brandname} uses JIRA for issue management, hosted on link:https://issues.redhat.com/projects/ISPN/issues[issues.redhat.com].
-You can log in using your jboss.org username and password.
+{brandname} uses GitHub for issue management, hosted on link:https://github.com/infinispan/infinispan/issues[Infinispan Issues].
 
 === Reporting Issues
 If you need to create a new issue then follow these steps.
 
 . Choose between
-  * _Feature Request_ if you want to request an enhancement or new feature for {brandname}
-  * _Bug_ if you have discovered an issue
-  * _Task_ if you wish to request a documentation, sample or process (e.g. build system) enhancement or issue
-. Then enter a _Summary_ , describing briefly the problem - please try to be descriptive!
-. You should *not* set _Priority_.
-. Now, enter the version you are reporting an issue against in the _Affects Version_ field, and leave the _Fix Version_ field blank.
-. In the _Environment_ text area, provide as much detail as possible about your environment (e.g. Java runtime and version, operating system, any network topology which is relevant).
-. In the _Description_ field enter a detailed description of your problem or request.
-. If the issue has been discussed on the forums or the mailing list, enter a reference in the _Forum Reference_ field
-. Finally, hit _Create_
-
-=== Versioning Guidelines
-
-[WARNING]
-====
- Only {brandname} contributors should set the _Fix Version_ field.
-====
-
-When setting the _Fix Version_ field for bugs and issues in JIRA, the following guidelines apply:
-Version numbers are defined as `${major}.${minor}.${micro}.${modifier}`.  For example, `4.1.0.Beta1` would be:
-
-|===============
-|major|4
-|minor|1
-|micro|0
-|modifier|Beta1
-|===============
-
-If the issue relates to a _Task_ or _Feature Request_, please ensure that the `.Final` version is included in the _Fixed In_ field.
-For example, a new feature should contain `4.1.0.Beta1`, `4.1.0.Final` if it is new for 4.1.0 and was first made public in beta1.
-For example, see link:https://issues.redhat.com/browse/ISPN-299[ISPN-299] .
-
-If the issue relates to a bug which affected a previous Final version, then the _Fixed In_ field should also contain the Final version which contains the fix, in addition to any Alpha, Beta or CR release.
-For example, see link:https://issues.redhat.com/browse/ISPN-546[ISPN-546].
-If the issue pertains to a bug in the current release, then the Final version should not be in the _Fixed In_ field.
-For example, a bug found in 4.1.0.Alpha2 (but not in 4.1.0.Alpha1) should be marked as fixed in 4.1.0.Alpha3, but not in 4.1.0.Final.
-For example, see link:https://issues.redhat.com/browse/ISPN-416[ISPN-416].
+  * _Feature Request/Enhancement_ if you want to request an enhancement or new feature for {brandname}
+  * _Bug Report_ if you have discovered an issue
+. Provide the details requested in the issue forms. Please provide as much information as possible so that we can help you
+. If the issue has been discussed on link:https://infinispan.zulipchat.com[Zulip] or the link:https://github.com/infinispan/infinispan/discussions[Discussions], please provide a link to the specific conversation.
 
 == Version control
 {brandname} uses link:http://git-scm.com[git], hosted on link:http://github.com[GitHub], for version control.
@@ -79,9 +45,6 @@ This is tested on Eclipse, IntelliJ IDEA and Netbeans.
 
 ==== Eclipse
 Before we import the project, we need to clone the project as described above.
-
-. Install the m2eclipse plugin if you have not already installed it. This is bundled with Eclipse from version "Indigo" 3.7.
-For older versions follow instructions on link:http://eclipse.org/m2e/[].
 
 . Import the {brandname} maven project. Select File -> Import in your eclipse workbench. Select the Existing Maven Project importer.
 +
@@ -173,8 +136,7 @@ It is recommended that you use a spellchecker plugin for your IDE.
 
 === Check-in comments
 
-Please ensure any commit comments use link:#check_in_comments[this format] if related to a task or issue in JIRA.
-This helps JIRA pick out these checkins and display them on the issue, making it very useful for back/forward porting fixes.
+Please ensure any commit comments use link:#check_in_comments[this format] if related to an issue.
 If your comment does not follow this format, your commit may not be merged into upstream.
 
 == Logging
