@@ -63,9 +63,9 @@ body:
     attributes:
       label:  Output of `java -version`
   - type: input
-    id: quarkus_version
+    id: infinispan_version
     attributes:
-      label:  Quarkus version or git rev
+      label:  Infinispan version or git rev
   - type: input
     id: build_tool
     attributes:
