@@ -45,7 +45,7 @@ jobs:
         - if: >
              github.event.workflow_run.event == 'push'
              || github.event.workflow_run.event == 'pull_request'
-             && contains(fromJSON(env.LABELS), 'Image Required')
+             && contains(fromJSON(env.LABELS), 'pr/Image Required')
           id: publish-image-info
           run: echo "publish-image=true" >> $GITHUB_OUTPUT
 
