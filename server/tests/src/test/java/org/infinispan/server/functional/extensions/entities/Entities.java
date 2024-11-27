@@ -4,9 +4,9 @@ import java.util.Objects;
 
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.WrappedMessage;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.server.functional.extensions.filters.DynamicCacheEventFilterFactory;
 import org.infinispan.server.functional.extensions.filters.DynamicConverterFactory;
 import org.infinispan.server.functional.extensions.filters.FilterConverterFactory;
@@ -16,7 +16,7 @@ import org.infinispan.server.functional.extensions.filters.SimpleConverterFactor
 import org.infinispan.server.functional.extensions.filters.StaticCacheEventFilterFactory;
 import org.infinispan.server.functional.extensions.filters.StaticConverterFactory;
 
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       includeClasses = {
             Entities.CustomEvent.class,
             Entities.CustomKey.class,
@@ -29,7 +29,8 @@ import org.infinispan.server.functional.extensions.filters.StaticConverterFactor
             RawStaticConverterFactory.RawStaticConverter.class,
             SimpleConverterFactory.SimpleConverter.class,
             StaticConverterFactory.StaticConverter.class
-      }
+      },
+      service = false
 )
 public interface Entities extends GeneratedSchema {
    Entities INSTANCE = new EntitiesImpl();

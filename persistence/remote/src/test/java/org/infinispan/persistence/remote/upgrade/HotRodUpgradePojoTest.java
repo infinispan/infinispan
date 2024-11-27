@@ -89,6 +89,7 @@ public class HotRodUpgradePojoTest extends AbstractInfinispanTest {
    protected TestCluster configureTargetCluster(ConfigurationBuilder cacheConfig) {
       return new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
             .marshaller(GenericJBossMarshaller.class)
+            .ctx(SerializationCtx.INSTANCE)
             .cache().name(CACHE_NAME).configuredWith(cacheConfig)
             .remotePort(sourceCluster.getHotRodPort()).remoteStoreWrapping(false).remoteStoreRawValues(false)
             .remoteStoreMarshaller(GenericJBossMarshaller.class)

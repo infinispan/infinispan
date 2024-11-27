@@ -20,7 +20,8 @@ public record ProtoHiking(@Keyword(projectable = true) String name,
          includeClasses = ProtoHiking.class,
          schemaFileName = "hiking.proto",
          schemaPackageName = "geo",
-         syntax = ProtoSyntax.PROTO3
+         syntax = ProtoSyntax.PROTO3,
+         service = false
    )
    public interface ProtoHikingSchema extends GeneratedSchema {
       ProtoHikingSchema INSTANCE = new ProtoHikingSchemaImpl();

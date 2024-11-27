@@ -3,9 +3,9 @@ package org.infinispan.client.hotrod.query.testdomain.protobuf;
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 
 @Indexed
 public class Programmer {
@@ -32,8 +32,13 @@ public class Programmer {
       return contributions;
    }
 
-   @AutoProtoSchemaBuilder(includeClasses = { Programmer.class }, schemaFileName = "pro.proto",
-         schemaFilePath = "proto", schemaPackageName = "io.pro")
+   @ProtoSchema(
+         includeClasses = Programmer.class,
+         schemaFileName = "pro.proto",
+         schemaFilePath = "proto",
+         schemaPackageName = "io.pro",
+         service = false
+   )
    public interface ProgrammerSchema extends GeneratedSchema {
    }
 }

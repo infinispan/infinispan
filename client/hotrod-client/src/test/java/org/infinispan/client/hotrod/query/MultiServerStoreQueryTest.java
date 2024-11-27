@@ -19,8 +19,8 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.testng.annotations.Test;
 
 /**
@@ -163,7 +163,7 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
       assertEquals(news2, userCache.get(newsKey2));
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = {News.class, NewsKey.class},
          schemaFileName = "test.client.MultiServerStoreQueryTest.proto",
          schemaFilePath = "proto/generated",

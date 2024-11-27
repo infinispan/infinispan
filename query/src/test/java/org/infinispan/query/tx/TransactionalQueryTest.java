@@ -11,9 +11,9 @@ import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
@@ -78,7 +78,7 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
       }
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = Session.class,
          schemaFileName = "test.query.tx.TransactionalQueryTest.proto",
          schemaFilePath = "proto/generated",

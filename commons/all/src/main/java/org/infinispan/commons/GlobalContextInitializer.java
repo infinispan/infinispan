@@ -2,7 +2,7 @@ package org.infinispan.commons;
 
 import org.infinispan.commons.util.KeyValueWithPrevious;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 
 /**
  * Interface used to initialise the global {@link org.infinispan.protostream.SerializationContext} using the specified Pojos,
@@ -11,7 +11,7 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
  * @author Ryan Emerson
  * @since 10.0
  */
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       includeClasses = KeyValueWithPrevious.class,
       schemaFileName = "global.commons.proto",
       schemaFilePath = "proto/generated",

@@ -1,9 +1,9 @@
 package org.infinispan.client.hotrod.annotation.model;
 
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 
 public class Essay {
 
@@ -27,7 +27,7 @@ public class Essay {
       return content;
    }
 
-   @AutoProtoSchemaBuilder(includeClasses = {Essay.class}, schemaPackageName = "essay")
+   @ProtoSchema(includeClasses = {Essay.class}, schemaPackageName = "essay")
    public interface EssaySchema extends GeneratedSchema {
       EssaySchema INSTANCE = new EssaySchemaImpl();
    }

@@ -2,9 +2,9 @@ package org.infinispan.it.endpoints;
 
 import org.infinispan.client.hotrod.event.CustomEventLogListener;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       includeClasses = {
             CustomEventLogListener.CustomEvent.class,
             CustomKey.class,

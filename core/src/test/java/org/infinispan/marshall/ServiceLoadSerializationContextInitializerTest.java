@@ -6,8 +6,8 @@ import static org.testng.AssertJUnit.assertTrue;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -30,7 +30,8 @@ public class ServiceLoadSerializationContextInitializerTest extends AbstractInfi
       String field;
    }
 
-   @AutoProtoSchemaBuilder(
+   // Service must be true to ensure that the SCI is loaded as expected
+   @ProtoSchema(
          includeClasses = ServiceLoadedClass.class,
          schemaFileName = "test.core.protostream-service-loaded-class.proto",
          schemaFilePath = "proto/generated",

@@ -18,8 +18,8 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.Test;
 
@@ -138,7 +138,7 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
       assertEquals(1, queryCount("FROM Entity where name:'name1'", remoteCache));
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = {Entity.class},
          schemaFileName = "test.client.ReplicationIndexTest.proto",
          schemaFilePath = "proto/generated",

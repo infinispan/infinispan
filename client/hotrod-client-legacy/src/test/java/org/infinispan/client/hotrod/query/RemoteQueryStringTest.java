@@ -25,7 +25,7 @@ import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.query.dsl.embedded.QueryStringTest;
 import org.infinispan.query.dsl.embedded.testdomain.FlightRoute;
 import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
@@ -46,7 +46,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "client.hotrod.query.RemoteQueryStringTest")
 public class RemoteQueryStringTest extends QueryStringTest {
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = AnalyzerTestEntity.class,
          schemaFileName = "test.client.RemoteQueryStringTest",
          schemaFilePath = "proto/generated",

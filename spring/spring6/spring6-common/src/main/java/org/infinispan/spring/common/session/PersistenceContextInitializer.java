@@ -1,7 +1,7 @@
 package org.infinispan.spring.common.session;
 
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 
 /**
  * Interface used to initialise a {@link org.infinispan.protostream.SerializationContext} using the specified Pojos,
@@ -10,7 +10,7 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
  * @author Dan Berindei
  * @since 12.1
  */
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       includeClasses = {
             MapSessionProtoAdapter.class,
             MapSessionProtoAdapter.SessionAttribute.class,

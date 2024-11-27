@@ -30,6 +30,7 @@ public class HotRodUpgradeDynamicPojoTest extends HotRodUpgradePojoTest {
    protected TestCluster configureTargetCluster(ConfigurationBuilder cacheConfig) {
       return new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
             .marshaller(GenericJBossMarshaller.class)
+            .ctx(SerializationCtx.INSTANCE)
             .cache().name(CACHE_NAME).configuredWith(cacheConfig)
             .build();
    }

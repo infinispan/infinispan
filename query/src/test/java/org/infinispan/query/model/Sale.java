@@ -3,9 +3,9 @@ package org.infinispan.query.model;
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 
 @Indexed
 public class Sale {
@@ -60,7 +60,10 @@ public class Sale {
             '}';
    }
 
-   @AutoProtoSchemaBuilder(includeClasses = Sale.class)
+   @ProtoSchema(
+         includeClasses = Sale.class,
+         service = false
+   )
    public interface SaleSchema extends GeneratedSchema {
       SaleSchema INSTANCE = new SaleSchemaImpl();
    }

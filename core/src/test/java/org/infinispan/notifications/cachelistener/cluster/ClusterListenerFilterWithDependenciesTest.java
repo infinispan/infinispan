@@ -14,7 +14,7 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
@@ -85,7 +85,7 @@ public class ClusterListenerFilterWithDependenciesTest extends MultipleCacheMana
       }
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = {
                MagicKey.class,
                NoOpCacheEventFilterConverterWithDependencies.class

@@ -7,9 +7,9 @@ import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.api.annotations.indexing.option.Structure;
 import org.infinispan.api.annotations.indexing.option.TermVector;
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 
 @Indexed
 public class Poem {
@@ -43,7 +43,14 @@ public class Poem {
       return year;
    }
 
-   @AutoProtoSchemaBuilder(includeClasses = {Poem.class, Author.class}, schemaPackageName = "poem")
+   @ProtoSchema(
+         includeClasses = {
+               Author.class,
+               Poem.class
+         },
+         schemaPackageName = "poem",
+         service = false
+   )
    public interface PoemSchema extends GeneratedSchema {
       PoemSchema INSTANCE = new PoemSchemaImpl();
    }

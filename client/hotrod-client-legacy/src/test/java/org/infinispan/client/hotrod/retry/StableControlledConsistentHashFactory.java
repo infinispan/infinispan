@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
 
@@ -35,11 +35,12 @@ public class StableControlledConsistentHashFactory
       }
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = {StableControlledConsistentHashFactory.class},
          schemaFileName = "test.client.CompleteShutdownDistRetryTest.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.client.CompleteShutdownDistRetryTest"
+         schemaPackageName = "org.infinispan.test.client.CompleteShutdownDistRetryTest",
+         service = false
    )
    public interface SCI extends SerializationContextInitializer {
    }

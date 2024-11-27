@@ -4,8 +4,8 @@ import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 
 @Indexed
 public class Color {
@@ -62,7 +62,10 @@ public class Color {
       this.description = description;
    }
 
-   @AutoProtoSchemaBuilder(includeClasses = Color.class)
+   @ProtoSchema(
+         includeClasses = Color.class,
+         service = false
+   )
    public interface ColorSchema extends GeneratedSchema {
       ColorSchema INSTANCE = new ColorSchemaImpl();
    }

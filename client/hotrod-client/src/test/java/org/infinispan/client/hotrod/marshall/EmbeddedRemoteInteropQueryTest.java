@@ -31,7 +31,7 @@ import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
@@ -496,7 +496,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       assertEquals(42, account.getCreationDate().getTime());
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          dependsOn = NotIndexedSchema.class,
          includeClasses = {
                AddressHS.class,

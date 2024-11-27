@@ -13,8 +13,8 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoName;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestBlocking;
@@ -194,7 +194,7 @@ public class ReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
       }
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = SingleKeyConsistentHashFactory.class,
          schemaFileName = "test.core.ReadAfterLostOwnershipTest.proto",
          schemaFilePath = "proto/generated",

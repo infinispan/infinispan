@@ -14,9 +14,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.Test;
 
@@ -64,11 +64,12 @@ public class EvictionProtobufTest extends MultiHotRodServersTest {
       assertEquals(cache.size(), 0);
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = Book.class,
          schemaFileName = "test.EvictionProtobufTest.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "sample"
+         schemaPackageName = "sample",
+         service = false
    )
    interface TestSCI extends SerializationContextInitializer {
       EvictionProtobufTest.TestSCI INSTANCE = new TestSCIImpl();

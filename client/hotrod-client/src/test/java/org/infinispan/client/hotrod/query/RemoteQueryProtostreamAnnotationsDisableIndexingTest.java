@@ -15,8 +15,8 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -160,7 +160,7 @@ public class RemoteQueryProtostreamAnnotationsDisableIndexingTest extends Single
       assertEquals(2, memo.author.id);
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = {Author.class, Memo.class},
          schemaFileName = "test.client.RemoteQueryProtostreamAnnotationsDisableIndexingTest.proto",
          schemaFilePath = "proto/generated",

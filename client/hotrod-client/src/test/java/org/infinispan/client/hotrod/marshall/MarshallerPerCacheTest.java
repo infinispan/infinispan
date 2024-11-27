@@ -72,7 +72,8 @@ public class MarshallerPerCacheTest extends SingleHotRodServerTest {
          includeClasses = CustomValue.class,
          schemaFileName = "custom-value.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.client.MarshallerPerCacheTest"
+         schemaPackageName = "org.infinispan.test.client.MarshallerPerCacheTest",
+         service = false
    )
    interface CtxInitializer extends SerializationContextInitializer {
       CtxInitializer INSTANCE = new CtxInitializerImpl();

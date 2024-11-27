@@ -1,14 +1,14 @@
 package org.infinispan.server.resp;
 
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.server.resp.filter.GlobMatchFilterConverter;
 import org.infinispan.server.resp.filter.RespTypeFilterConverter;
 import org.infinispan.server.resp.hll.HyperLogLog;
 import org.infinispan.server.resp.hll.internal.CompactSet;
 import org.infinispan.server.resp.hll.internal.ExplicitSet;
 
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       dependsOn = org.infinispan.marshall.persistence.impl.PersistenceContextInitializer.class,
       includeClasses = {
             HyperLogLog.class,

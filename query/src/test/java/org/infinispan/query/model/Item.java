@@ -6,9 +6,9 @@ import org.infinispan.api.annotations.indexing.Keyword;
 import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.api.annotations.indexing.Vector;
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 
 @Indexed
 public class Item {
@@ -62,7 +62,10 @@ public class Item {
       return ordinal;
    }
 
-   @AutoProtoSchemaBuilder(includeClasses = Item.class)
+   @ProtoSchema(
+         includeClasses = Item.class,
+         service = false
+   )
    public interface ItemSchema extends GeneratedSchema {
       ItemSchema INSTANCE = new ItemSchemaImpl();
    }

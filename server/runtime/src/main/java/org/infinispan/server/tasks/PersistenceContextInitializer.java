@@ -1,7 +1,7 @@
 package org.infinispan.server.tasks;
 
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.security.impl.SubjectAdapter;
 import org.infinispan.tasks.TaskContext;
 
@@ -12,7 +12,7 @@ import org.infinispan.tasks.TaskContext;
  * @author Tristan Tarrant
  * @since 11.0
  */
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       includeClasses = {
             SubjectAdapter.class,
             TaskContext.class,

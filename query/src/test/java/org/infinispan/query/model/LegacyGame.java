@@ -7,9 +7,9 @@ import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 
 @Indexed(index = "legacy-game")
 public class LegacyGame {
@@ -47,7 +47,10 @@ public class LegacyGame {
       return releaseYear;
    }
 
-   @AutoProtoSchemaBuilder(includeClasses = {LegacyGame.class})
+   @ProtoSchema(
+         includeClasses = LegacyGame.class,
+         service = false
+   )
    public interface LegacyGameSchema extends GeneratedSchema {
       LegacyGameSchema INSTANCE = new LegacyGameSchemaImpl();
    }

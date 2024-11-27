@@ -1,13 +1,15 @@
 package org.infinispan.persistence.remote.upgrade;
 
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       includeClasses = {CustomObject.class},
       schemaFileName = "rolling.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.persistence.remote.upgrade")
+      schemaPackageName = "org.infinispan.persistence.remote.upgrade",
+      service = false
+)
 public interface SerializationCtx extends SerializationContextInitializer {
    SerializationCtx INSTANCE = new SerializationCtxImpl();
 }

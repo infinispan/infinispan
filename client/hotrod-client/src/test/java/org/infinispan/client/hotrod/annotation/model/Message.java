@@ -36,7 +36,12 @@ public class Message {
       this.body = body;
    }
 
-   @ProtoSchema(syntax = ProtoSyntax.PROTO3, includeClasses = {Message.class}, schemaPackageName = "model")
+   @ProtoSchema(
+         includeClasses = Message.class,
+         syntax = ProtoSyntax.PROTO3,
+         schemaPackageName = "model",
+         service = false
+   )
    public interface MessageSchema extends GeneratedSchema {
       MessageSchema INSTANCE = new MessageSchemaImpl();
    }

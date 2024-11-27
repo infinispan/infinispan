@@ -1,7 +1,7 @@
 package org.infinispan.query.test;
 
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.query.api.AnotherTestEntity;
 import org.infinispan.query.api.NotIndexedType;
 import org.infinispan.query.api.TestEntity;
@@ -10,7 +10,7 @@ import org.infinispan.query.indexedembedded.City;
 import org.infinispan.query.indexedembedded.Country;
 import org.infinispan.query.queries.faceting.Car;
 
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       dependsOn = org.infinispan.test.TestDataSCI.class,
       includeClasses = {
             AnotherGrassEater.class,

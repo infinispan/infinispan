@@ -10,9 +10,9 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.impl.AffinityPartitioner;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -72,7 +72,7 @@ public class AffinityPartitionerTest extends MultipleCacheManagersTest {
       }
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = AffinityKey.class,
          schemaFileName = "core.distribution.proto",
          schemaFilePath = "proto/generated",

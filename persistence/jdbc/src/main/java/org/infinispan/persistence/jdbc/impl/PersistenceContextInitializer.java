@@ -2,7 +2,7 @@ package org.infinispan.persistence.jdbc.impl;
 
 import org.infinispan.persistence.jdbc.impl.table.AbstractTableManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 
 /**
  * Interface used to initialise a {@link org.infinispan.protostream.SerializationContext} using the specified Pojos,
@@ -11,7 +11,7 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
  * @author Ryan Emerson
  * @since 12.0
  */
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       includeClasses = AbstractTableManager.MetadataImpl.class,
       schemaFileName = "persistence.jdbc.proto",
       schemaFilePath = "proto/generated",
