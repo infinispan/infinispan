@@ -5,9 +5,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -15,15 +12,8 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter.Indenter;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.Configuration;
-import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Option;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -59,56 +49,18 @@ public class JSONGET extends RespCommand implements Resp3Command {
          handler.writer().wrongArgumentNumber(this);
          return handler.myStage();
       }
-
-      FunctionalMap.ReadOnlyMap<byte[], Object> cache = ReadOnlyMapImpl
-            .create(FunctionalMapImpl.create(handler.typedCache(null)));
-      int finalPos = args.pos();
-      CompletionStage<String> cs = cache.eval(key, view -> {
-         DefaultPrettyPrinter rpp = (args.space() != null) ? new RespPrettyPrinter(args.space())
-
-               : new RespPrettyPrinter();
-
-         Indenter ind = new DefaultIndenter(args.indent(), args.newline());
-         rpp.indentArraysWith(ind);
-         rpp.indentObjectsWith(ind);
-         int pathPos = finalPos;
-         ObjectMapper mapper = JSONUtil.objectMapper;
-         JsonDoc value = (JsonDoc) view.find().orElse(null);
-         var doc = value == null ? null : value.bytesDocument();
-         try {
-            var rootNode = mapper.readTree(doc);
-            var jpCtx = JsonPath.using(config).parse(rootNode);
-            // If no path provided return root
-            if (pathPos == arguments.size()) {
-               String resp = mapper.writer(rpp).writeValueAsString(rootNode);
-               return resp;
-            }
-            // If only 1 path provided return all the matching nodes as array
-            if (pathPos == arguments.size() - 1) {
-               var pathStr = new String(arguments.get(pathPos++), StandardCharsets.UTF_8);
-               JsonNode node = jpCtx.read(pathStr);
-               String resp = mapper.writer(rpp).writeValueAsString(node);
-               return resp;
-            }
-            // If more than 1 path provided return an object with
-            // properties "path": [array of matching nodes]
-            ObjectNode result = mapper.createObjectNode();
-            while (pathPos < arguments.size()) {
-               var pathStr = new String(arguments.get(pathPos++), StandardCharsets.UTF_8);
-               JsonNode node = jpCtx.read(pathStr);
-               result.set(pathStr, node);
-            }
-            String resp = mapper.writer(rpp).writeValueAsString(result);
-            return resp;
-         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-         } catch (IOException e) {
-            throw new RuntimeException(e);
-         }
-      });
+      String[] paths = arguments.stream().skip(args.pos()).map(i -> new String(i, StandardCharsets.UTF_8))
+            .toArray(String[]::new);
+      EmbeddedJsonCache ejc = handler.getJsonDocCache();
+      CompletionStage<String> result = ejc.get(key, paths, args.space(), args.newline(), args.indent());
+      CompletionStage<String> cs = result;
       return handler.stageToReturn(cs, ctx, ResponseWriter.SIMPLE_STRING);
    }
 
+   /*
+    * Returns indent, newline, space and the pos of the
+    * next argument to process
+    */
    private Args parseArgs(List<byte[]> arguments) {
       String indent = "";
       String newline = "";
@@ -137,14 +89,13 @@ public class JSONGET extends RespCommand implements Resp3Command {
 
 }
 
-record Args(String indent, String newline, String space, int pos) {}
+record Args(String indent, String newline, String space, int pos) {
+}
+
 class RespPrettyPrinter extends DefaultPrettyPrinter {
    private final String ofvs;
 
-
-
    public RespPrettyPrinter() {
-
 
       super();
       ofvs = ":";

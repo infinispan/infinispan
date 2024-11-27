@@ -27,7 +27,6 @@ import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.json.arguments.JsonGetArgs;
 import io.lettuce.core.json.arguments.JsonSetArgs;
-
 @Test(groups = "functional", testName = "server.resp.JsonCommandsTest")
 public class JsonCommandsTest extends SingleNodeRespBaseTest {
    /**
@@ -46,6 +45,16 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       redis = redisConnection.sync();
    }
 
+   // @Test
+   // public void testJSONSET() {
+   //    String key = k();
+   //    JsonPath jp = new JsonPath("$");
+   //    JsonValue jv = new DefaultJsonParser().createJsonValue("{\"key\":\"value\"}");
+   //    assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+   //    var result = redis.jsonGet(key, jp);
+   //    assertThat(result).hasSize(1);
+   //    assertThat(compareJSON(result.get(0), jv)).isEqualTo(true);
+   // }
    @Test
    public void testJSONSET() {
       String key = k();

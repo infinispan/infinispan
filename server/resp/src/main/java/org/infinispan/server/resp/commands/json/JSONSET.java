@@ -1,27 +1,17 @@
 package org.infinispan.server.resp.commands.json;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.CacheException;
-import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.serialization.RespConstants;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.Configuration;
-import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Option;
-import com.jayway.jsonpath.PathNotFoundException;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -43,13 +33,13 @@ public class JSONSET extends RespCommand implements Resp3Command {
          .mappingProvider(new com.jayway.jsonpath.spi.mapper.JacksonMappingProvider())
          .build();
 
-   public static void jsonSetBiConsumer(CharSequence value, ResponseWriter writer) {
+   public static void jsonSetBiConsumer(String value, ResponseWriter writer) {
       if (value == null) {
          // Use null consumer
          writer.nulls();
          return;
       }
-      if (value.length() == 2 && value.charAt(0) == 'O' && value.charAt(1) == 'K') {
+      if ("OK".equals(value)) {
          // Use ok consumer
          writer.ok();
          return;
@@ -72,78 +62,25 @@ public class JSONSET extends RespCommand implements Resp3Command {
          handler.writer().syntaxError();
          return handler.myStage();
       }
-      boolean nx, xx; // must be effectively final
+      boolean nx=false, xx=false;
       if (arguments.size() == 4) {
          String arg = (new String(arguments.get(3)).toUpperCase());
          switch (arg) {
             case NX:
                nx = true;
-               xx = false;
                break;
             case XX:
                xx = true;
-               nx = false;
                break;
             default:
                handler.writer().syntaxError();
                return handler.myStage();
          }
-      } else {
-         nx = false;
-         xx = false;
       }
-      JsonNode newNode;
-      try {
-         newNode = JSONUtil.objectMapper.readTree(value);
-      } catch (IOException e) {
-         throw new CacheException(e);
-      }
-      FunctionalMap.ReadWriteMap<byte[], JsonDoc> cache = ReadWriteMapImpl
-            .create(FunctionalMapImpl.create(handler.typedCache(null)));
-      CompletionStage<CharSequence> cs = cache.eval(key, view -> {
-         var doc = (JsonDoc) view.find().orElse(null);
-         if (doc == null) {
-            if (xx) {
-               return null;
-            }
-            if (!isRoot(path)) {
-               throw new CacheException("new objects must be created at root");
-            }
-            view.set(new JsonDoc(value));
-            return RespConstants.OK;
-         }
-         if (nx) {
-            return null;
-         }
-         if (isRoot(path)) {
-            // Updating the root node is not allowed by jsonpath
-            // replacing the whole doc here
-            view.set(new JsonDoc(value));
-            return RespConstants.OK;
-         }
-         try {
-            var rootObjectNode = (ObjectNode) JSONUtil.objectMapper.readTree(doc.bytesDocument());
-            var jpCtx = JsonPath.using(config).parse(rootObjectNode);
-            var pathStr = new String(path, StandardCharsets.UTF_8);
-            JsonNode node = jpCtx.read(pathStr);
-            if (node.isNull() && xx || !node.isNull() && nx) {
-               return null;
-            }
-            jpCtx.set(pathStr, newNode);
-            view.set(new JsonDoc(JSONUtil.objectMapper.writeValueAsBytes(rootObjectNode)));
-            return RespConstants.OK;
-         } catch (PathNotFoundException ex) {
-            // mimicking redis. Not an error, do nothing and return null
-            return null;
-         } catch (Exception e) {
-            throw new CacheException(e);
-         }
-      });
+      EmbeddedJsonCache ejc = handler.getJsonDocCache();
+      CompletionStage<String> result = ejc.set(key, new String(value, StandardCharsets.UTF_8),
+            new String(path, StandardCharsets.UTF_8), nx, xx);
+      CompletionStage<String> cs = result;
       return handler.stageToReturn(cs, ctx, JSONSET::jsonSetBiConsumer);
    }
-
-   private static boolean isRoot(byte[] path) {
-      return path.length == 1 && path[0] == '$';
-   }
-
 }
