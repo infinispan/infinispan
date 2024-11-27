@@ -3,7 +3,6 @@ package org.infinispan.server.resp.commands.json;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Set;
 
@@ -57,7 +56,7 @@ public class JsonDocSetFunction
          if (!"$".equals(path)) {
             throw new CacheException("new objects must be created at root");
          }
-         entryView.set(new JsonDocBucket(value.getBytes(StandardCharsets.UTF_8)));
+         entryView.set(new JsonDocBucket(value));
          return RespConstants.OK;
       }
       if (nx) {
@@ -66,7 +65,7 @@ public class JsonDocSetFunction
       if ("$".equals(path)) {
          // Updating the root node is not allowed by jsonpath
          // replacing the whole doc here
-         entryView.set(new JsonDocBucket(value.getBytes(StandardCharsets.UTF_8)));
+         entryView.set(new JsonDocBucket(value));
          return RespConstants.OK;
       }
       try {
@@ -77,7 +76,7 @@ public class JsonDocSetFunction
             return null;
          }
          jpCtx.set(path, newNode);
-         entryView.set(new JsonDocBucket(JSONUtil.objectMapper.writeValueAsBytes(rootObjectNode)));
+         entryView.set(new JsonDocBucket(JSONUtil.objectMapper.writeValueAsString(rootObjectNode)));
          return RespConstants.OK;
       } catch (PathNotFoundException ex) {
          // mimicking redis. Not an error, do nothing and return null

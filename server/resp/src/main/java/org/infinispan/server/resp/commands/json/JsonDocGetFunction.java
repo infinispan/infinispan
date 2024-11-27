@@ -3,7 +3,6 @@ package org.infinispan.server.resp.commands.json;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -50,7 +49,7 @@ public class JsonDocGetFunction
       Optional<JsonDocBucket> existing = entryView.peek();
       if (existing.isEmpty())
          return null;
-      String doc = new String(existing.get().value, StandardCharsets.UTF_8);
+      String doc = existing.get().value;
       ObjectMapper mapper = JSONUtil.objectMapper;
       try {
          DefaultPrettyPrinter rpp = (space != null) ? new RespPrettyPrinter(space)

@@ -58,7 +58,7 @@ public class JSONGET extends RespCommand implements Resp3Command {
    }
 
    /*
-    * Returns indent, newline, space and the pos of the
+    * Returns in a record: indent, newline, space and the pos of the
     * next argument to process
     */
    private Args parseArgs(List<byte[]> arguments) {
