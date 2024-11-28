@@ -1,6 +1,5 @@
 package org.infinispan.server.resp.commands.json;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -11,8 +10,6 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.Option;
 
@@ -87,37 +84,4 @@ public class JSONGET extends RespCommand implements Resp3Command {
       return new Args(indent, newline, space, pos);
    }
 
-}
-
-record Args(String indent, String newline, String space, int pos) {
-}
-
-class RespPrettyPrinter extends DefaultPrettyPrinter {
-   private final String ofvs;
-
-   public RespPrettyPrinter() {
-
-      super();
-      ofvs = ":";
-   }
-
-   public RespPrettyPrinter(String objectFieldValueSeparator) {
-      super();
-      ofvs = ":" + objectFieldValueSeparator;
-   }
-
-   public RespPrettyPrinter(RespPrettyPrinter base) {
-      super(base);
-      this.ofvs = base.ofvs;
-   }
-
-   @Override
-   public void writeObjectFieldValueSeparator(JsonGenerator g) throws IOException {
-      g.writeRaw(ofvs);
-   }
-
-   @Override
-   public DefaultPrettyPrinter createInstance() {
-      return new RespPrettyPrinter(this);
-   }
 }

@@ -11,6 +11,9 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
+import org.infinispan.server.resp.json.JsonDocBucket;
+import org.infinispan.server.resp.json.JsonDocGetFunction;
+import org.infinispan.server.resp.json.JsonDocSetFunction;
 
 /**
  * SetCache with Set methods implementation

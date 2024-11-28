@@ -1,4 +1,4 @@
-package org.infinispan.server.resp.commands.json;
+package org.infinispan.server.resp.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 

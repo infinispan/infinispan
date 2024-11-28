@@ -1,4 +1,4 @@
-package org.infinispan.server.resp.commands.json;
+package org.infinispan.server.resp.json;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -13,6 +13,7 @@ import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.multimap.impl.ExternalizerIds;
 import org.infinispan.util.function.SerializableFunction;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
@@ -120,5 +121,37 @@ public class JsonDocGetFunction
       public Integer getId() {
          return ExternalizerIds.JSONDOC_GET_FUNCTION;
       }
+   }
+}
+record Args(String indent, String newline, String space, int pos) {
+}
+
+class RespPrettyPrinter extends DefaultPrettyPrinter {
+   private final String ofvs;
+
+   public RespPrettyPrinter() {
+
+      super();
+      ofvs = ":";
+   }
+
+   public RespPrettyPrinter(String objectFieldValueSeparator) {
+      super();
+      ofvs = ":" + objectFieldValueSeparator;
+   }
+
+   public RespPrettyPrinter(RespPrettyPrinter base) {
+      super(base);
+      this.ofvs = base.ofvs;
+   }
+
+   @Override
+   public void writeObjectFieldValueSeparator(JsonGenerator g) throws IOException {
+      g.writeRaw(ofvs);
+   }
+
+   @Override
+   public DefaultPrettyPrinter createInstance() {
+      return new RespPrettyPrinter(this);
    }
 }

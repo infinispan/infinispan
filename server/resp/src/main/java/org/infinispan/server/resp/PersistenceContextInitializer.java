@@ -2,8 +2,6 @@ package org.infinispan.server.resp;
 
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
-import org.infinispan.server.resp.commands.json.JsonDoc1;
-import org.infinispan.server.resp.commands.json.JsonDocBucket;
 import org.infinispan.server.resp.filter.GlobMatchFilterConverter;
 import org.infinispan.server.resp.filter.RespTypeFilterConverter;
 import org.infinispan.server.resp.hll.HyperLogLog;
@@ -13,13 +11,12 @@ import org.infinispan.server.resp.hll.internal.ExplicitSet;
 @AutoProtoSchemaBuilder(
       dependsOn = org.infinispan.marshall.persistence.impl.PersistenceContextInitializer.class,
       includeClasses = {
-            JsonDoc1.class,
             HyperLogLog.class,
             ExplicitSet.class,
             CompactSet.class,
             GlobMatchFilterConverter.class,
             RespTypeFilterConverter.class,
-            JsonDocBucket.class
+            org.infinispan.server.resp.json.JsonDocBucket.class
       },
       schemaFileName = "persistence.resp.proto",
       schemaFilePath = "proto/generated",
