@@ -64,7 +64,7 @@ public class JSONSET extends RespCommand implements Resp3Command {
       }
       boolean nx=false, xx=false;
       if (arguments.size() == 4) {
-         String arg = (new String(arguments.get(3)).toUpperCase());
+         String arg = (new String(arguments.get(3), StandardCharsets.UTF_8).toUpperCase());
          switch (arg) {
             case NX:
                nx = true;
