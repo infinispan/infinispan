@@ -84,4 +84,6 @@ public class JSONGET extends RespCommand implements Resp3Command {
       return new Args(indent, newline, space, pos);
    }
 
+   record Args(String indent, String newline, String space, int pos) {
+   }
 }

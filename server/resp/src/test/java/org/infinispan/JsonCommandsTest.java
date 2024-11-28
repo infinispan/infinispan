@@ -45,16 +45,6 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       redis = redisConnection.sync();
    }
 
-   // @Test
-   // public void testJSONSET() {
-   //    String key = k();
-   //    JsonPath jp = new JsonPath("$");
-   //    JsonValue jv = new DefaultJsonParser().createJsonValue("{\"key\":\"value\"}");
-   //    assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
-   //    var result = redis.jsonGet(key, jp);
-   //    assertThat(result).hasSize(1);
-   //    assertThat(compareJSON(result.get(0), jv)).isEqualTo(true);
-   // }
    @Test
    public void testJSONSET() {
       String key = k();
@@ -255,6 +245,19 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       String expected = """
       {21"key1":3"value1",21"key2":3"value2"2}""";
       assertThat(strResult).isEqualTo(expected);
+   }
+
+   @Test
+   public void testJSONSETWhiteSpaces() {
+      CustomStringCommands commands = CustomStringCommands.instance(redisConnection);
+      String value = """
+         { \t"k1"\u000d:\u000a"v1"}
+          """;
+      JsonValue jv = new DefaultJsonParser().createJsonValue(value);
+      assertThat(commands.jsonSet(k(), "$", value)).isEqualTo("OK");
+      List<JsonValue> result = redis.jsonGet(k());
+      assertThat(result).hasSize(1);
+      assertThat(compareJSON(jv, result.get(0))).isTrue();
    }
 
    private boolean compareJSONGet(JsonValue result, JsonValue doc, JsonPath... paths) {

@@ -123,8 +123,6 @@ public class JsonDocGetFunction
       }
    }
 }
-record Args(String indent, String newline, String space, int pos) {
-}
 
 class RespPrettyPrinter extends DefaultPrettyPrinter {
    private final String ofvs;
