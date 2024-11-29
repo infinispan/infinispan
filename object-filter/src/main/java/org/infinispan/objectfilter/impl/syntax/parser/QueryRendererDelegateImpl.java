@@ -18,6 +18,7 @@ import org.infinispan.objectfilter.impl.ql.QueryRendererDelegate;
 import org.infinispan.objectfilter.impl.syntax.ComparisonExpr;
 import org.infinispan.objectfilter.impl.syntax.ConstantValueExpr;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
+import org.infinispan.objectfilter.impl.syntax.SpatialWithinCircleExpr;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.CacheValuePropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
@@ -416,7 +417,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    }
 
    @Override
-   public void predicateSpatialWithinCircle(String lat, String lon, String radius) {
+   public void predicateSpatialWithinCircle(String lat, String lon, String radius, String unit) {
       ensureLeftSideIsAPropertyPath();
       PropertyPath<TypeDescriptor<TypeMetadata>> property = resolveAlias(propertyPath);
       if (property.isEmpty()) {
@@ -426,17 +427,18 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       Object latValue = parameterValue(Double.class, lat);
       Object lonValue = parameterValue(Double.class, lon);
       Object radiusValue = parameterValue(Double.class, radius);
+      Object unitValue = parameterValue(String.class, (unit == null) ? SpatialWithinCircleExpr.DEFAULT_UNIT : unit);
       if (phase == Phase.WHERE) {
-         expressionBuilder.whereBuilder().addSpatialWithinCircle(property, latValue, lonValue, radiusValue);
+         expressionBuilder.whereBuilder().addSpatialWithinCircle(property, latValue, lonValue, radiusValue, unitValue);
       } else {
          throw new IllegalStateException();
       }
    }
 
    @Override
-   public void predicateSpatialNotWithinCircle(String lat, String lon, String radius) {
+   public void predicateSpatialNotWithinCircle(String lat, String lon, String radius, String unit) {
       expressionBuilder.whereBuilder().pushNot();
-      predicateSpatialWithinCircle(lat, lon, radius);
+      predicateSpatialWithinCircle(lat, lon, radius, unit);
    }
 
    @Override

@@ -47,6 +47,7 @@ import org.hibernate.search.engine.search.sort.dsl.CompositeSortComponentsStep;
 import org.hibernate.search.engine.search.sort.dsl.DistanceSortOptionsStep;
 import org.hibernate.search.engine.search.sort.dsl.FieldSortOptionsStep;
 import org.hibernate.search.engine.search.sort.dsl.SearchSortFactory;
+import org.hibernate.search.engine.spatial.DistanceUnit;
 import org.hibernate.search.engine.spatial.GeoPoint;
 import org.hibernate.search.engine.spatial.GeoPolygon;
 import org.hibernate.search.util.common.data.RangeBoundInclusion;
@@ -497,12 +498,15 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
       ConstantValueExpr latValueExpr = (ConstantValueExpr) spatialWithinCircleExpr.getLatChild();
       ConstantValueExpr lonValueExpr = (ConstantValueExpr) spatialWithinCircleExpr.getLonChild();
       ConstantValueExpr radiusValueExpr = (ConstantValueExpr) spatialWithinCircleExpr.getRadiusChild();
+      ConstantValueExpr unitValueExpr = spatialWithinCircleExpr.getUnitChild();
 
       Double latValue = (Double) latValueExpr.getConstantValueAs(Double.class, namedParameters);
       Double lonValue = (Double) lonValueExpr.getConstantValueAs(Double.class, namedParameters);
       Double radiusValue = (Double) radiusValueExpr.getConstantValueAs(Double.class, namedParameters);
+      String unitValue = (String) unitValueExpr.getConstantValueAs(String.class, namedParameters);
+      DistanceUnit distanceUnit = DistanceUnitHelper.distanceUnit(unitValue);
 
-      return predicateFactory.spatial().within().field(path).circle(latValue, lonValue, radiusValue);
+      return predicateFactory.spatial().within().field(path).circle(latValue, lonValue, radiusValue, distanceUnit);
    }
 
    @Override
