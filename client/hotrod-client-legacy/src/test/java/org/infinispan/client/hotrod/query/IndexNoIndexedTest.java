@@ -28,7 +28,7 @@ public class IndexNoIndexedTest extends SingleHotRodServerTest {
             .addIndexedEntity("Reviewer")
             .addIndexedEntity("Revision");
 
-      EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager();
+      EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager(contextInitializer());
       manager.defineConfiguration("revisions", builder.build());
       return manager;
    }

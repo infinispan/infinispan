@@ -52,7 +52,7 @@ public class LargePutAllPressureTest extends SingleHotRodServerTest {
                .queueCount(1)
                .queueSize(200);
 
-      return TestCacheManagerFactory.createServerModeCacheManager(config);
+      return TestCacheManagerFactory.createServerModeCacheManager(contextInitializer(), config);
    }
 
    protected boolean useTransactions() {

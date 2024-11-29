@@ -20,6 +20,7 @@ import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.model.Item;
 import org.infinispan.query.remote.json.JsonQueryResponse;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -40,7 +41,7 @@ public class RestVectorSearchTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager();
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(Item.ItemSchema.INSTANCE);
       ConfigurationBuilder config = new ConfigurationBuilder();
       config
          .encoding()

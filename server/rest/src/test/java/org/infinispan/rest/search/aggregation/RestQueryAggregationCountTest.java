@@ -44,7 +44,7 @@ public class RestQueryAggregationCountTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager();
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(Sale.SaleSchema.INSTANCE);
       ConfigurationBuilder config = new ConfigurationBuilder();
       config
             .encoding()

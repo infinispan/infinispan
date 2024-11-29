@@ -29,7 +29,7 @@ public class MultipleIndexFieldAnnotationsTest extends SingleHotRodServerTest {
             .storage(IndexStorage.LOCAL_HEAP)
             .addIndexedEntity("Color");
 
-      EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager();
+      EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager(contextInitializer());
       manager.defineConfiguration("colors", builder.build());
       return manager;
    }

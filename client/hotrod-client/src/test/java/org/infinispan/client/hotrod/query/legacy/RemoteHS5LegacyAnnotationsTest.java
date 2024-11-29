@@ -26,7 +26,7 @@ public class RemoteHS5LegacyAnnotationsTest extends SingleHotRodServerTest {
             .storage(LOCAL_HEAP)
             .addIndexedEntity("LegacyGame");
 
-      EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager();
+      EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager(contextInitializer());
       manager.defineConfiguration("indexed-games", indexed.build());
       return manager;
    }
