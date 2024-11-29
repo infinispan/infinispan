@@ -54,7 +54,15 @@ public class MetadataHybridQuery<T, S> extends HybridQuery<T, S> {
    }
 
    private ObjectFilter.FilterResult filter(EntityEntry<Object, S> entry) {
-      ObjectFilter.FilterResult filter = objectFilter.filter(entry.key(), entry.value(), entry.metadata());
+      S value = entry.value();
+      if (value == null) {
+         // A value can be null in case of expired entity,
+         // there is a moment in which the index state and the data state are not aligned,
+         // in this case it is safe to return a null value result:
+         return null;
+      }
+
+      ObjectFilter.FilterResult filter = objectFilter.filter(entry.key(), value, entry.metadata());
       String[] projection = objectFilter.getProjection();
       if (projection == null) {
          return filter;
