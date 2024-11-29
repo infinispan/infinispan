@@ -121,11 +121,12 @@ final class ExpressionBuilder<TypeMetadata> {
       push(new BetweenExpr(makePropertyValueExpr(propertyPath), new ConstantValueExpr(lowerValue), new ConstantValueExpr(upperValue)));
    }
 
-   public void addSpatialWithinCircle(PropertyPath<?> propertyPath, Object lat, Object lon, Object radius) {
+   public void addSpatialWithinCircle(PropertyPath<?> propertyPath, Object lat, Object lon, Object radius, Object unit) {
       push(new SpatialWithinCircleExpr(makePropertyValueExpr(propertyPath),
             new ConstantValueExpr((Comparable) lat),
             new ConstantValueExpr((Comparable) lon),
-            new ConstantValueExpr((Comparable) radius)));
+            new ConstantValueExpr((Comparable) radius),
+            new ConstantValueExpr((Comparable) unit)));
    }
 
    public void addSpatialWithinBox(PropertyPath<?> propertyPath, Object tlLat, Object tlLon, Object brLat, Object brLon) {

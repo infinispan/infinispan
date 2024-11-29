@@ -102,9 +102,9 @@ public interface QueryRendererDelegate<TypeDescriptor> {
 
    void predicateKNN(String vector, String knn);
 
-   void predicateSpatialWithinCircle(String lat, String lon, String radius);
+   void predicateSpatialWithinCircle(String lat, String lon, String radius, String unit);
 
-   void predicateSpatialNotWithinCircle(String lat, String lon, String radius);
+   void predicateSpatialNotWithinCircle(String lat, String lon, String radius, String unit);
 
    void predicateSpatialWithinBox(String tlLat, String tlLon, String brLat, String brLon);
 

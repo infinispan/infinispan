@@ -110,6 +110,43 @@ public class RemoteGeoLocalQueryTest extends SingleHotRodServerTest {
             .containsExactlyInAnyOrder("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni");
 
       ickle = String.format("from %s r " +
+            "where r.location within circle(41.90847031512531, 12.455633288333539, 150m) ", RESTAURANT_ENTITY_NAME);
+      query = remoteCache.query(ickle);
+      list = query.list();
+      assertThat(list).extracting(Restaurant::name)
+            .containsExactlyInAnyOrder("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni");
+
+      ickle = String.format("from %s r " +
+            "where r.location within circle(41.90847031512531, 12.455633288333539, 0.15 km) ", RESTAURANT_ENTITY_NAME);
+      query = remoteCache.query(ickle);
+      list = query.list();
+      assertThat(list).extracting(Restaurant::name)
+            .containsExactlyInAnyOrder("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni");
+
+      ickle = String.format("from %s r " +
+            "where r.location within circle(41.90847031512531, 12.455633288333539, 0.0932057mi) ", RESTAURANT_ENTITY_NAME);
+      query = remoteCache.query(ickle);
+      list = query.list();
+      assertThat(list).extracting(Restaurant::name)
+            .containsExactlyInAnyOrder("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni");
+
+      ickle = String.format("from %s r " +
+            "where r.location within circle(41.90847031512531, 12.455633288333539, :distance yd) ", RESTAURANT_ENTITY_NAME);
+      query = remoteCache.query(ickle);
+      query.setParameter("distance", 164.042);
+      list = query.list();
+      assertThat(list).extracting(Restaurant::name)
+            .containsExactlyInAnyOrder("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni");
+
+      ickle = String.format("from %s r " +
+            "where r.location within circle(41.90847031512531, 12.455633288333539, :distance nmi) ", RESTAURANT_ENTITY_NAME);
+      query = remoteCache.query(ickle);
+      query.setParameter("distance", 0.0809935);
+      list = query.list();
+      assertThat(list).extracting(Restaurant::name)
+            .containsExactlyInAnyOrder("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni");
+
+      ickle = String.format("from %s r " +
             "where r.location within circle(41.90847031512531, 12.455633288333539, :distance) ", RESTAURANT_ENTITY_NAME);
       query = remoteCache.query(ickle);
       query.setParameter("distance", 250);

@@ -304,7 +304,7 @@ geoShape
     ;
 
 geoCircle
-    : circle_key^ LPAREN! lat=atom COMMA! lon=atom COMMA! radius=atom RPAREN!
+    : circle_key^ LPAREN! lat=atom COMMA! lon=atom COMMA! radius=distanceVal RPAREN!
     ;
 
 geoBoundingBox
@@ -405,6 +405,12 @@ atom
 	//validate using Scopes if it is enabled or not to use parameterSpecification.. if not generate an exception
    |  LPAREN! expressionOrVector RPAREN!
    |  vectorSearch
+   ;
+
+distanceVal
+   :  constant unit=IDENTIFIER?
+   |  parameterSpecification unit=IDENTIFIER? { if (!isParameterUsageEnabled()) throw new RecognitionException(input); }
+	//validate using Scopes if it is enabled or not to use parameterSpecification.. if not generate an exception
    ;
 
 parameterSpecification

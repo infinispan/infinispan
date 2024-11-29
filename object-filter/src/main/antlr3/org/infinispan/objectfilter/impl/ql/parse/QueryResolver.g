@@ -407,13 +407,13 @@ knnExpression
    ;
 
 spatialExpression
-   :  ^(CIRCLE rowValueConstructor rowValueConstructor rowValueConstructor)
+   :  ^(CIRCLE rowValueConstructor rowValueConstructor rowValueConstructor rowValueConstructor)
    |  ^(BOUNDINGBOX rowValueConstructor rowValueConstructor rowValueConstructor rowValueConstructor)
    |  ^(POLYGON vectorExpression)
    ;
 
 negatedSpatialExpression
-   :  ^(CIRCLE rowValueConstructor rowValueConstructor rowValueConstructor)
+   :  ^(CIRCLE rowValueConstructor rowValueConstructor rowValueConstructor rowValueConstructor)
    |  ^(BOUNDINGBOX rowValueConstructor rowValueConstructor rowValueConstructor rowValueConstructor)
    |  ^(POLYGON vectorExpression)
    ;
