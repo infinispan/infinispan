@@ -98,7 +98,7 @@ final class Target_IndexingConfigurationBuilder {
    private AttributeSet attributes;
 
    @Substitute
-   public Object addIndexedEntity(Class<?> indexedEntity) {
+   public IndexingConfigurationBuilder addIndexedEntity(Class<?> indexedEntity) {
       throw Util.unsupportedOperationException("Indexing");
    }
 
