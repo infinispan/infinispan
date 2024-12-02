@@ -128,9 +128,9 @@ public class RestQueryAggregationCountTest extends SingleCacheManagerTest {
    }
 
    private void writeEntries(RestCacheClient cacheClient) {
-      List<CompletionStage<RestResponse>> responses = new ArrayList<>(CHUNK_SIZE * NUMBER_OF_DAYS);
       for (int day = 1; day <= NUMBER_OF_DAYS; day++) {
          HashMap<String, Sale> chunk = chunk(day, fixedSeedPseudoRandom);
+         List<CompletionStage<RestResponse>> responses = new ArrayList<>(CHUNK_SIZE);
          for (Map.Entry<String, Sale> entry : chunk.entrySet()) {
             Sale sale = entry.getValue();
             String json = Json.object()
@@ -142,9 +142,9 @@ public class RestQueryAggregationCountTest extends SingleCacheManagerTest {
                   .toString();
             responses.add(cacheClient.put(entry.getKey(), RestEntity.create(MediaType.APPLICATION_JSON, json)));
          }
-      }
-      for (CompletionStage<RestResponse> response : responses) {
-         assertThat(response).isOk();
+         for (CompletionStage<RestResponse> response : responses) {
+            assertThat(response).isOk();
+         }
       }
    }
 }
