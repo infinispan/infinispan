@@ -186,6 +186,39 @@ public class RemoteGeoLocalQueryTest extends SingleHotRodServerTest {
       assertThat(projectList)
             .filteredOn(item -> item[1].equals(622.8579549605669)).extracting(item -> item[0]).first().isEqualTo("Scialla The Original Street Food");
 
+
+      ickle = String.format("select r.name, distance(r.location, 41.90847031512531, 12.455633288333539, km) from %s r", RESTAURANT_ENTITY_NAME);
+      projectQuery = remoteCache.query(ickle);
+      projectList = projectQuery.list();
+      assertThat(projectList)
+            .filteredOn(item -> item[1].equals(0.06578997502576356)).extracting(item -> item[0]).first().isEqualTo("La Locanda di Pietro");
+      assertThat(projectList)
+            .filteredOn(item -> item[1].equals(0.6228579549605668)).extracting(item -> item[0]).first().isEqualTo("Scialla The Original Street Food");
+
+      ickle = String.format("select r.name, distance(r.location, 41.90847031512531, 12.455633288333539, mi) from %s r", RESTAURANT_ENTITY_NAME);
+      projectQuery = remoteCache.query(ickle);
+      projectList = projectQuery.list();
+      assertThat(projectList)
+            .filteredOn(item -> item[1].equals(0.04087999521902312)).extracting(item -> item[0]).first().isEqualTo("La Locanda di Pietro");
+      assertThat(projectList)
+            .filteredOn(item -> item[1].equals(0.3870259900683551)).extracting(item -> item[0]).first().isEqualTo("Scialla The Original Street Food");
+
+      ickle = String.format("select r.name, distance(r.location, 41.90847031512531, 12.455633288333539, yd) from %s r", RESTAURANT_ENTITY_NAME);
+      projectQuery = remoteCache.query(ickle);
+      projectList = projectQuery.list();
+      assertThat(projectList)
+            .filteredOn(item -> item[1].equals(71.9487915854807)).extracting(item -> item[0]).first().isEqualTo("La Locanda di Pietro");
+      assertThat(projectList)
+            .filteredOn(item -> item[1].equals(681.165742520305)).extracting(item -> item[0]).first().isEqualTo("Scialla The Original Street Food");
+
+      ickle = String.format("select r.name, distance(r.location, 41.90847031512531, 12.455633288333539, nm) from %s r", RESTAURANT_ENTITY_NAME);
+      projectQuery = remoteCache.query(ickle);
+      projectList = projectQuery.list();
+      assertThat(projectList)
+            .filteredOn(item -> item[1].equals(0.03552374461434317)).extracting(item -> item[0]).first().isEqualTo("La Locanda di Pietro");
+      assertThat(projectList)
+            .filteredOn(item -> item[1].equals(0.33631639036747674)).extracting(item -> item[0]).first().isEqualTo("Scialla The Original Street Food");
+
       ickle = String.format("from %s r order by distance(r.location, 41.90847031512531, 12.455633288333539)", RESTAURANT_ENTITY_NAME);
       query = remoteCache.query(ickle);
       list = query.list();

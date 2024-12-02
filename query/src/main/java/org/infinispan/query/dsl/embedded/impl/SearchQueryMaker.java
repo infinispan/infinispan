@@ -209,6 +209,12 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
                   return (Double) distance.getArgs().get(1);
                }
             });
+            if (distance.getArgs().size() > 2) {
+               String unit = (String) distance.getArgs().get(2);
+               DistanceUnit distanceUnit = DistanceUnitHelper.distanceUnit(unit);
+               projectionStep.unit(distanceUnit);
+            }
+
             return SearchProjectionInfo.composite(projectionFactory, new SearchProjection[]{
                   isRepeatedProperty ? projectionStep.multi().toProjection() : projectionStep.toProjection()
             });
@@ -244,6 +250,11 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
                      return (Double) distance.getArgs().get(1);
                   }
                });
+               if (distance.getArgs().size() > 2) {
+                  String unit = (String) distance.getArgs().get(2);
+                  DistanceUnit distanceUnit = DistanceUnitHelper.distanceUnit(unit);
+                  projectionStep.unit(distanceUnit);
+               }
                searchProjections[i] = isMultiField ? projectionStep.multi().toProjection() : projectionStep.toProjection();
             } else {
                FieldProjectionValueStep<?, ?> projectionStep = projectionFactory.field(projection, projectedTypes[i]);

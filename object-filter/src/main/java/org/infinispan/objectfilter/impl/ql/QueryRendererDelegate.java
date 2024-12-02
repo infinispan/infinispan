@@ -68,7 +68,7 @@ public interface QueryRendererDelegate<TypeDescriptor> {
 
    void deactivateFunction();
 
-   void spatialDistance(String lat, String lon);
+   void spatialDistance(String lat, String lon, String unit);
 
    void predicateLess(String value);
 

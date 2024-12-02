@@ -245,7 +245,7 @@ function
 
 distanceFunction
 @after { delegate.deactivateFunction(); }
-   : ^(DISTANCE { delegate.activateFunction(Function.DISTANCE); } propertyReferenceExpression lat=numericValueExpression lon=numericValueExpression { delegate.spatialDistance( $lat.text, $lon.text ); })
+   : ^(DISTANCE { delegate.activateFunction(Function.DISTANCE); } propertyReferenceExpression lat=numericValueExpression lon=numericValueExpression unit=rowValueConstructor { delegate.spatialDistance( $lat.text, $lon.text, $unit.text ); })
    ;
 
 setFunction

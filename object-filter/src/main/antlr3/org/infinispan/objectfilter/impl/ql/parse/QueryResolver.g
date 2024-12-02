@@ -244,7 +244,7 @@ function
 	;
 
 distanceFunction
-   : ^(DISTANCE propertyReferenceExpression numericValueExpression numericValueExpression)
+   : ^(DISTANCE propertyReferenceExpression numericValueExpression numericValueExpression rowValueConstructor)
    ;
 
 setFunction
