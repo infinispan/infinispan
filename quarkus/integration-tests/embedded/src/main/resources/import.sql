@@ -1,2 +1,3 @@
-create schema quarkus;
-create table quarkus.books (keycolumn VARCHAR(255) PRIMARY KEY NOT NULL, value VARCHAR(255) NOT NULL);
+DROP SCHEMA IF EXISTS quarkus CASCADE;
+CREATE SCHEMA quarkus;
+CREATE TABLE quarkus.books (keycolumn VARCHAR(255) PRIMARY KEY NOT NULL, value VARCHAR(255) NOT NULL);

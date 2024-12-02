@@ -9,6 +9,8 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import io.micrometer.prometheusmetrics.PrometheusConfig;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import org.infinispan.commons.stat.CounterMetricInfo;
 import org.infinispan.commons.stat.CounterTracker;
 import org.infinispan.commons.stat.DistributionSummaryMetricInfo;
@@ -42,8 +44,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.TimeGauge;
 import io.micrometer.core.instrument.Timer;
-import io.micrometer.prometheus.PrometheusConfig;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
 
 /**
  * Concrete implementation of {@link MetricsRegistry}.

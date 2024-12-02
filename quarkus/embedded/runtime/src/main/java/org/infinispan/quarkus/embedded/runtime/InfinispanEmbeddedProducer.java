@@ -36,8 +36,8 @@ public class InfinispanEmbeddedProducer {
     @Singleton
     @Produces
     EmbeddedCacheManager manager() {
-        if (config.xmlConfig.isPresent()) {
-            String configurationFile = config.xmlConfig.get();
+        if (config.xmlConfig().isPresent()) {
+            String configurationFile = config.xmlConfig().get();
             try {
                 InputStream configurationStream = FileLookupFactory.newInstance().lookupFileStrict(configurationFile,
                         Thread.currentThread().getContextClassLoader());
