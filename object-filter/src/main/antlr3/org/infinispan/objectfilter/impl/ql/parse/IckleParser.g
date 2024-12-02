@@ -340,7 +340,11 @@ additiveExpression
    ;
 
 distanceFunction
-   : distance_key^ LPAREN! propertyReference COMMA! lat=atom COMMA! lon=atom RPAREN!
+   : distance_key^ LPAREN! propertyReference COMMA! lat=atom COMMA! lon=atom distanceFunctionUnit? RPAREN!
+   ;
+
+distanceFunctionUnit
+   : COMMA! unit=IDENTIFIER
    ;
 
 quantifiedExpression

@@ -797,9 +797,12 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    }
 
    @Override
-   public void spatialDistance(String lat, String lon) {
+   public void spatialDistance(String lat, String lon, String unit) {
       functionArgs.add(Double.parseDouble(lat));
       functionArgs.add(Double.parseDouble(lon));
+      if (unit != null) {
+         functionArgs.add(unit.substring(2));
+      }
    }
 
    private PropertyPath<TypeDescriptor<TypeMetadata>> resolveAlias(PropertyPath<TypeDescriptor<TypeMetadata>> path) {
