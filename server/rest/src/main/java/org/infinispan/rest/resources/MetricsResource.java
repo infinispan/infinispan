@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
+import io.prometheus.metrics.expositionformats.ExpositionFormats;
 import org.infinispan.commons.util.Util;
 import org.infinispan.metrics.impl.MetricsRegistry;
 import org.infinispan.rest.InvocationHelper;
@@ -17,8 +18,6 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.framework.impl.RestResponseBuilder;
-
-import io.prometheus.client.exporter.common.TextFormat;
 
 /**
  * Micrometer metrics resource.
@@ -56,7 +55,7 @@ public final class MetricsResource implements ResourceHandler {
 
          try {
             if (metricsRegistry.supportScrape()) {
-               String contentType = TextFormat.chooseContentType(request.getAcceptHeader());
+               String contentType = ExpositionFormats.init().findWriter(request.getAcceptHeader()).getContentType();
                builder.header("Content-Type", contentType);
                builder.entity(metricsRegistry.scrape(contentType));
             } else {

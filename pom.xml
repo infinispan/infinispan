@@ -525,14 +525,14 @@
                </exclusion>
                <exclusion>
                   <groupId>io.opentelemetry</groupId>
-                  <artifactId>opentelemetry-extension-incubator</artifactId>
+                  <artifactId>opentelemetry-api-incubator</artifactId>
                </exclusion>
             </exclusions>
          </dependency>
          <dependency>
             <groupId>io.opentelemetry</groupId>
             <artifactId>opentelemetry-exporter-sender-jdk</artifactId>
-            <version>${version.opentelemetry.alpha}</version>
+            <version>${version.opentelemetry}</version>
          </dependency>
          <dependency>
             <groupId>io.opentelemetry</groupId>
@@ -549,11 +549,6 @@
             <groupId>io.opentelemetry</groupId>
             <artifactId>opentelemetry-exporter-otlp-common</artifactId>
             <version>${version.opentelemetry}</version>
-         </dependency>
-         <dependency>
-            <groupId>io.opentelemetry</groupId>
-            <artifactId>opentelemetry-api-events</artifactId>
-            <version>${version.opentelemetry.alpha}</version>
          </dependency>
 
          <dependency>
@@ -1494,6 +1489,16 @@
             <artifactId>HdrHistogram</artifactId>
             <groupId>org.hdrhistogram</groupId>
             <version>${version.hdrhistogram}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient_common</artifactId>
+            <version>${version.io.prometheus.client}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>prometheus-metrics-exposition-formats</artifactId>
+            <version>${version.io.prometheus.server}</version>
          </dependency>
          <dependency>
             <groupId>org.mariadb.jdbc</groupId>

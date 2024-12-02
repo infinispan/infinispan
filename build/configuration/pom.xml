@@ -134,7 +134,7 @@
       <version.caffeine>3.1.8</version.caffeine>
       <version.commons.compress>1.26.2</version.commons.compress>
       <version.console>15.1.4.Final</version.console>
-      <version.fabric8.kubernetes-client>6.11.0</version.fabric8.kubernetes-client>
+      <version.fabric8.kubernetes-client>6.13.4</version.fabric8.kubernetes-client>
       <version.glassfish.jaxb>4.0.5</version.glassfish.jaxb>
       <version.graalvm>24.0.0</version.graalvm>
       <version.groovy>2.4.21</version.groovy>
@@ -148,7 +148,7 @@
       <version.insights>2.0.4</version.insights>
       <version.io.agroal>2.3</version.io.agroal>
       <version.io.lettuce>6.3.2.RELEASE</version.io.lettuce>
-      <version.vertx>4.5.11</version.vertx>
+      <version.vertx>4.5.10</version.vertx>
       <version.io.mashona>1.1.0</version.io.mashona>
       <version.jackson>2.16.2</version.jackson>
       <version.jackson.databind>2.16.0</version.jackson.databind>
@@ -156,7 +156,7 @@
       <version.jakarta.annotation-api>2.1.1</version.jakarta.annotation-api>
       <version.jakarta.json>2.0.1</version.jakarta.json>
       <version.jakarta.transaction>2.0.1</version.jakarta.transaction>
-      <version.jakarta.enterprise.cdi>4.0.1</version.jakarta.enterprise.cdi>
+      <version.jakarta.enterprise.cdi>4.1.0</version.jakarta.enterprise.cdi>
       <version.jakarta.persistence>3.1.0</version.jakarta.persistence>
       <version.javax.cache>1.1.1</version.javax.cache>
       <version.jboss.logging>3.6.1.Final</version.jboss.logging>
@@ -177,12 +177,12 @@
       <version.log4j>2.23.1</version.log4j>
       <version.lucene>9.11.1</version.lucene>
       <version.metainf-services>1.11</version.metainf-services>
-      <version.micrometer>1.12.13</version.micrometer>
+      <version.micrometer>1.13.5</version.micrometer>
       <version.mockito>5.14.2</version.mockito>
       <version.mockito_dep.bytebuddy>1.15.3</version.mockito_dep.bytebuddy>
       <version.mockito_dep.objenesis>3.3</version.mockito_dep.objenesis>
       <version.nashorn>15.4</version.nashorn>
-      <version.netty>4.1.109.Final</version.netty>
+      <version.netty>4.1.111.Final</version.netty>
       <version.netty.incubator.iouring>0.0.25.Final</version.netty.incubator.iouring>
       <version.openjdk.jmh>1.37</version.openjdk.jmh>
       <version.org.wildfly.arquillian>5.0.1.Final</version.org.wildfly.arquillian>
@@ -198,16 +198,16 @@
       <version.testng.engine>1.0.5</version.testng.engine>
 
       <!-- these versions must be kept in sync with ${version.micrometer}: -->
-      <version.io.prometheus>0.15.0</version.io.prometheus>
-      <version.hdrhistogram>2.1.12</version.hdrhistogram>
+      <version.io.prometheus.server>1.2.1</version.io.prometheus.server>
+      <version.io.prometheus.client>0.16.0</version.io.prometheus.client>
+      <version.hdrhistogram>2.2.2</version.hdrhistogram>
       <version.latencyutils>2.0.3</version.latencyutils>
 
-      <version.quarkus>3.8.6</version.quarkus>
+      <version.quarkus>3.15.2</version.quarkus>
       <version.graalvm>23.1.5</version.graalvm>
       <version.jandex>3.2.3</version.jandex>
 
-      <version.opentelemetry>1.32.0</version.opentelemetry>
-      <version.opentelemetry.alpha>1.32.0-alpha</version.opentelemetry.alpha>
+      <version.opentelemetry>1.39.0</version.opentelemetry>
 
       <version.smallrye-mutiny>2.6.2</version.smallrye-mutiny>
       <!-- Spring 6, Spring Boot 3 versions -->

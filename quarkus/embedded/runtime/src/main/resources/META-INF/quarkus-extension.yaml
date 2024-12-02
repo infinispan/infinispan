@@ -6,4 +6,3 @@ metadata:
   - "infinispan"
   categories:
   - "data"
-  guide: "https://quarkus.io/guides/infinispan-embedded"
