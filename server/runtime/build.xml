@@ -11,12 +11,8 @@
          <filterset refid="brandfilter"/>
       </copy>
       <chmod dir="${output.dir}/bin" perm="ugo+x" includes="*.sh"/>
-      <copy todir="${output.dir}/boot" flatten="true">
-         <fileset file="${project.build.directory}/${project.artifactId}-${project.version}-loader.jar"/>
-      </copy>
       <copy todir="${output.dir}/lib">
          <fileset refid="maven.project.dependencies"/>
-         <fileset file="${project.build.directory}/${project.artifactId}-${project.version}.jar"/>
          <chainedmapper>
             <flattenmapper/>
             <!-- hack to rewrite the netty os-arch classifier -->
@@ -33,16 +29,6 @@
       <copy todir="${test.lib.dir}" flatten="true">
          <fileset refid="maven.test.dependencies"/>
       </copy>
-      <unzip dest="${output.dir}/docs/schema">
-         <fileset dir="${output.dir}/lib">
-            <include name="infinispan-*.jar"/>
-            <include name="jgroups-*.jar"/>
-         </fileset>
-         <patternset>
-            <include name="**/*.xsd"/>
-         </patternset>
-         <mapper type="flatten"/>
-      </unzip>
       <copy todir="${output.dir}/docs/licenses/">
          <fileset dir="${licenses.template.dir}">
             <include name="licenses.css"/>
@@ -97,6 +83,26 @@
       <delete>
          <fileset dir="${output.dir}/static/console" includes="*.LICENSE.txt"/>
       </delete>
+   </target>
+
+   <target name="copy-runtime">
+      <chmod dir="${output.dir}/bin" perm="ugo+x" includes="*.sh"/>
+      <copy todir="${output.dir}/boot" flatten="true">
+         <fileset file="${project.build.directory}/${project.artifactId}-${project.version}-loader.jar"/>
+      </copy>
+      <copy todir="${output.dir}/lib">
+         <fileset file="${project.build.directory}/${project.artifactId}-${project.version}.jar"/>
+      </copy>
+      <unzip dest="${output.dir}/docs/schema">
+         <fileset dir="${output.dir}/lib">
+            <include name="infinispan-*.jar"/>
+            <include name="jgroups-*.jar"/>
+         </fileset>
+         <patternset>
+            <include name="**/*.xsd"/>
+         </patternset>
+         <mapper type="flatten"/>
+      </unzip>
    </target>
 
    <target name="default">
