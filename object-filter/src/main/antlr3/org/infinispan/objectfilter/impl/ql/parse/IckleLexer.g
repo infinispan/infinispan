@@ -99,11 +99,15 @@ tokens {
   IS_EMPTY;
   IS;
   JOIN;
+  KILOMETERS;
   LEFT;
   LIKE;
   MAX;
   MEMBER_OF;
+  METERS;
+  MILES;
   MIN;
+  NAUTICAL_MILES;
   NOT;
   OBJECT;
   ON;
@@ -122,6 +126,7 @@ tokens {
   WHERE;
   WITH;
   WITHIN;
+  YARDS;
 }
 
 @header {

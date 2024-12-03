@@ -106,6 +106,8 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
 
    private boolean asteriskCount = false;
 
+   private String unit;
+
    QueryRendererDelegateImpl(String queryString, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
       this.queryString = queryString;
       this.propertyHelper = propertyHelper;
@@ -417,7 +419,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    }
 
    @Override
-   public void predicateSpatialWithinCircle(String lat, String lon, String radius, String unit) {
+   public void predicateSpatialWithinCircle(String lat, String lon, String radius) {
       ensureLeftSideIsAPropertyPath();
       PropertyPath<TypeDescriptor<TypeMetadata>> property = resolveAlias(propertyPath);
       if (property.isEmpty()) {
@@ -436,9 +438,9 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    }
 
    @Override
-   public void predicateSpatialNotWithinCircle(String lat, String lon, String radius, String unit) {
+   public void predicateSpatialNotWithinCircle(String lat, String lon, String radius) {
       expressionBuilder.whereBuilder().pushNot();
-      predicateSpatialWithinCircle(lat, lon, radius, unit);
+      predicateSpatialWithinCircle(lat, lon, radius);
    }
 
    @Override
@@ -490,6 +492,31 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    public void predicateSpatialNotWithinPolygon(List<String> vector) {
       expressionBuilder.whereBuilder().pushNot();
       predicateSpatialWithinPolygon(vector);
+   }
+
+   @Override
+   public void meters() {
+      unit = "m";
+   }
+
+   @Override
+   public void kilometers() {
+      unit = "km";
+   }
+
+   @Override
+   public void miles() {
+      unit = "mi";
+   }
+
+   @Override
+   public void yards() {
+      unit = "yd";
+   }
+
+   @Override
+   public void nauticalMiles() {
+      unit = "nm";
    }
 
    private void checkAnalyzed(PropertyPath<?> propertyPath, boolean expectAnalyzed) {
@@ -797,11 +824,11 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    }
 
    @Override
-   public void spatialDistance(String lat, String lon, String unit) {
+   public void spatialDistance(String lat, String lon) {
       functionArgs.add(Double.parseDouble(lat));
       functionArgs.add(Double.parseDouble(lon));
       if (unit != null) {
-         functionArgs.add(unit.substring(2));
+         functionArgs.add(unit);
       }
    }
 

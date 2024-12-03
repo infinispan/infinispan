@@ -68,7 +68,7 @@ public interface QueryRendererDelegate<TypeDescriptor> {
 
    void deactivateFunction();
 
-   void spatialDistance(String lat, String lon, String unit);
+   void spatialDistance(String lat, String lon);
 
    void predicateLess(String value);
 
@@ -102,9 +102,9 @@ public interface QueryRendererDelegate<TypeDescriptor> {
 
    void predicateKNN(String vector, String knn);
 
-   void predicateSpatialWithinCircle(String lat, String lon, String radius, String unit);
+   void predicateSpatialWithinCircle(String lat, String lon, String radius);
 
-   void predicateSpatialNotWithinCircle(String lat, String lon, String radius, String unit);
+   void predicateSpatialNotWithinCircle(String lat, String lon, String radius);
 
    void predicateSpatialWithinBox(String tlLat, String tlLon, String brLat, String brLon);
 
@@ -113,6 +113,16 @@ public interface QueryRendererDelegate<TypeDescriptor> {
    void predicateSpatialWithinPolygon(List<String> vector);
 
    void predicateSpatialNotWithinPolygon(List<String> vector);
+
+   void meters();
+
+   void kilometers();
+
+   void miles();
+
+   void yards();
+
+   void nauticalMiles();
 
    enum Occur {
       MUST("+"),

@@ -245,7 +245,7 @@ function
 
 distanceFunction
 @after { delegate.deactivateFunction(); }
-   : ^(DISTANCE { delegate.activateFunction(Function.DISTANCE); } propertyReferenceExpression lat=numericValueExpression lon=numericValueExpression unit=rowValueConstructor { delegate.spatialDistance( $lat.text, $lon.text, $unit.text ); })
+   : ^(DISTANCE { delegate.activateFunction(Function.DISTANCE); } propertyReferenceExpression lat=numericValueExpression lon=numericValueExpression unitExpression? { delegate.spatialDistance( $lat.text, $lon.text ); })
    ;
 
 setFunction
@@ -388,15 +388,23 @@ knnExpression
    ;
 
 spatialExpression
-   : ^(CIRCLE lat=rowValueConstructor lon=rowValueConstructor radius=rowValueConstructor unit=rowValueConstructor { delegate.predicateSpatialWithinCircle( $lat.text, $lon.text, $radius.text, $unit.text ); })
+   : ^(CIRCLE lat=rowValueConstructor lon=rowValueConstructor radius=rowValueConstructor unitExpression? { delegate.predicateSpatialWithinCircle( $lat.text, $lon.text, $radius.text ); })
    | ^(BOUNDINGBOX tlLat=rowValueConstructor tlLon=rowValueConstructor brLat=rowValueConstructor brLon=rowValueConstructor { delegate.predicateSpatialWithinBox( $tlLat.text, $tlLon.text, $brLat.text, $brLon.text ); })
    | ^(POLYGON vectorExpression { delegate.predicateSpatialWithinPolygon($vectorExpression.elements); })
    ;
 
 negatedSpatialExpression
-   : ^(CIRCLE lat=rowValueConstructor lon=rowValueConstructor radius=rowValueConstructor unit=rowValueConstructor { delegate.predicateSpatialNotWithinCircle( $lat.text, $lon.text, $radius.text, $unit.text ); })
+   : ^(CIRCLE lat=rowValueConstructor lon=rowValueConstructor radius=rowValueConstructor unitExpression? { delegate.predicateSpatialNotWithinCircle( $lat.text, $lon.text, $radius.text ); })
    | ^(BOUNDINGBOX tlLat=rowValueConstructor tlLon=rowValueConstructor brLat=rowValueConstructor brLon=rowValueConstructor { delegate.predicateSpatialNotWithinBox( $tlLat.text, $tlLon.text, $brLat.text, $brLon.text ); })
    | ^(POLYGON vectorExpression { delegate.predicateSpatialNotWithinPolygon($vectorExpression.elements); })
+   ;
+
+unitExpression
+   : METERS { delegate.meters(); }
+   | KILOMETERS { delegate.kilometers(); }
+   | MILES { delegate.miles(); }
+   | YARDS { delegate.yards(); }
+   | NAUTICAL_MILES { delegate.nauticalMiles(); }
    ;
 
 ftClause
