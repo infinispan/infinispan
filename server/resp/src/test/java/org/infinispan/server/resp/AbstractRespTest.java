@@ -23,9 +23,9 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
+import org.infinispan.server.resp.test.RespAuthenticationConfigurer;
 import org.infinispan.server.resp.test.RespTestingUtil;
 import org.infinispan.server.resp.test.TestSetup;
-import org.infinispan.server.resp.test.RespAuthenticationConfigurer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
@@ -96,7 +96,7 @@ public abstract class AbstractRespTest extends MultipleCacheManagersTest {
    protected ClientOptions defineRespClientOptions() {
       return ClientOptions.builder()
             .protocolVersion(ProtocolVersion.RESP3)
-            .timeoutOptions(TimeoutOptions.enabled(Duration.of(15, ChronoUnit.SECONDS)))
+            .timeoutOptions(TimeoutOptions.enabled(Duration.of(timeout, ChronoUnit.MILLIS)))
             .build();
    }
 

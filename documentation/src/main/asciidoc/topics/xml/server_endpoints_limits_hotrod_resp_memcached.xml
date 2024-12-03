@@ -1,0 +1,13 @@
+<endpoints>
+  <endpoint socket-binding="default" security-realm="default">
+    <hotrod-connector name="hotrod" max-key-count="128" max-byte-array-size="10000000">
+      ...
+    </hotrod-connector>
+    <resp-connector name="resp" max-key-count="128" max-byte-array-size="10000000">
+      ...
+    </hotrod-connector>
+    <memcached-connector name="memcached" max-key-count="128" max-byte-array-size="10000000">
+      ...
+    </hotrod-connector>
+  </endpoint>
+</endpoints>

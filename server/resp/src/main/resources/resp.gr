@@ -38,6 +38,10 @@ init {
    List<byte[]> getArguments() {
       return resp3x_arguments;
    }
+
+   public RespDecoder(RespServer server) {
+      super(server);
+   }
 }
 
 beforedecode {
@@ -61,19 +65,19 @@ root request
    ;
 
 command returns RespCommand switch singleByte
-   : { BULK_STRING }? bulkCommand[longProcessor]
-   | { SIMPLE_STRING }? simpleCommand
+   : { BULK_STRING }? bulkCommand[longProcessor, maxArrayLength]
+   | { SIMPLE_STRING }? simpleCommand[maxArrayLength]
    | { throw new UnsupportedOperationException("Type not supported: " + singleByte); }
    ;
 number: readNumber[longProcessor] { readNumber -= 1; };
 array returns byte[] switch singleByte
-   : { BULK_STRING }? bulkArray[longProcessor] { bulkArray }
-   | { SIMPLE_STRING }? readTerminatedBytes
-   | { NUMERIC } ? readTerminatedBytes
+   : { BULK_STRING }? bulkArray[longProcessor, maxArrayLength]
+   | { SIMPLE_STRING }? readTerminatedBytes[maxArrayLength]
+   | { NUMERIC } ? readTerminatedBytes[maxArrayLength]
    | { throw new UnsupportedOperationException("Type not supported: " + singleByte); }
    ;
 arguments returns List<byte[]>
-   : { readNumber > 16 }? { new ArrayList<>((int) readNumber); }
+   : { readNumber > 16 }? { allocList((int) readNumber, maxKeyCount); }
    | { readNumber >= 1 }? { reusedList; }
    | { Collections.emptyList(); }
    ;
