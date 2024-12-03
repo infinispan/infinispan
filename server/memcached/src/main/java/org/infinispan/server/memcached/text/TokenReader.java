@@ -3,6 +3,7 @@ package org.infinispan.server.memcached.text;
 import java.util.BitSet;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.TooLongFrameException;
 import io.netty.util.ByteProcessor;
 import io.netty.util.Signal;
 
@@ -17,6 +18,7 @@ public class TokenReader implements ByteProcessor {
    private BitSet token;
    private boolean found;
    private int bytesRead = 0;
+   private int bytesAvailable;
 
    public TokenReader(ByteBuf output) {
       this.output = output;
@@ -26,11 +28,12 @@ public class TokenReader implements ByteProcessor {
       output.release();
    }
 
-   public TokenReader forToken(BitSet token) {
+   public TokenReader forToken(BitSet token, int bytesAvailable) {
       found = false;
       bytesRead = 0;
       output.resetReaderIndex().resetWriterIndex();
       this.token = token;
+      this.bytesAvailable = bytesAvailable;
       return this;
    }
 
@@ -51,7 +54,9 @@ public class TokenReader implements ByteProcessor {
       // This validation is done elsewhere, we can stop iterating.
       if (!output.isWritable()) return false;
 
-      bytesRead++;
+      if (++bytesRead > bytesAvailable) {
+         throw new TooLongFrameException("Request length exceeded");
+      }
 
       // Found a space, means we found the complete token.
       // We go one byte ahead to skip the space.

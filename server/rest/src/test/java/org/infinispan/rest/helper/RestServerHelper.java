@@ -35,7 +35,7 @@ public class RestServerHelper {
    public RestServerHelper(EmbeddedCacheManager cacheManager) {
       this.cacheManager = cacheManager;
       try {
-         restServerConfigurationBuilder.host("localhost").port(0).maxContentLength(1_000_000)
+         restServerConfigurationBuilder.host("localhost").port(0).maxContentLength("1MB")
                .staticResources(Paths.get(this.getClass().getResource("/static-test").toURI()));
       } catch (URISyntaxException ignored) {
       }

@@ -93,6 +93,7 @@
                <files>
                   <file>${basedir}/src/main/resources/hotrod.gr</file>
                </files>
+               <passContext>true</passContext>
             </configuration>
             <executions>
                <execution>

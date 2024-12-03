@@ -308,6 +308,7 @@
                 "socket-binding": "hotrod",
                 "external-host": "external",
                 "external-port": "12345",
+                "max-content-length": "1027",
                 "topology-state-transfer": {
                   "await-initial-retrieval": false,
                   "lock-timeout": "12",
@@ -427,6 +428,7 @@
             "memcached": {
               "memcached-connector": {
                 "cache": "string",
+                "max-content-length": "1029",
                 "idle-timeout": "1",
                 "receive-buffer-size": "3",
                 "send-buffer-size": "3",

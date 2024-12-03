@@ -10,6 +10,7 @@ constants org.infinispan.server.memcached.text.TextConstants;
 // methods vInt, vLong, array, byte...
 intrinsics org.infinispan.server.memcached.text.TextIntrinsics;
 
+import io.netty.handler.codec.TooLongFrameException;
 import java.time.Instant;
 import java.time.temporal.Temporal;
 import org.infinispan.server.memcached.MemcachedServer;
@@ -23,8 +24,13 @@ init {
 }
 
 exceptionally {
-   log.trace("Parsing error", t);
    state = 0;
+   if (t instanceof TooLongFrameException tlfe) {
+      log.requestTooLarge(ctx.channel(), tlfe);
+      ctx.close();
+      return;
+   }
+   log.trace("Parsing error", t);
 }
 
 deadend {
@@ -36,16 +42,17 @@ deadend {
 }
 
 root request
-   : command_name { requestStart = Instant.now(); } parameters
+   : { posBefore = buf.readerIndex(); }
+     command_name { requestStart = Instant.now(); } parameters
    ;
 
-key: text_key[reader];
-command_name: command[reader];
-exptime: long_number[reader];
-flags: int_number[reader];
-vsize: int_number[reader];
+key: text_key[reader, bytesAvailable(buf, requestBytes)];
+command_name: command[reader, bytesAvailable(buf, requestBytes)];
+exptime: long_number[reader, bytesAvailable(buf, requestBytes)];
+flags: int_number[reader, bytesAvailable(buf, requestBytes)];
+vsize: int_number[reader, bytesAvailable(buf, requestBytes)];
 value returns byte[]
-   : { vsize > 0 }? fixedArray[vsize]
+   : { vsize > 0 }? fixedArray[vsize, bytesAvailable(buf, requestBytes)]
    | { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
    ;
 eol: short;
