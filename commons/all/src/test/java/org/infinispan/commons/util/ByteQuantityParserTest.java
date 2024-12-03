@@ -9,7 +9,6 @@ public class ByteQuantityParserTest {
    @Test
    public void testParse() {
       assertIllegal("");
-      assertIllegal("-1");
       assertIllegal("1.23.5");
       assertIllegal("1,23");
       assertIllegal("10.2");
@@ -17,6 +16,8 @@ public class ByteQuantityParserTest {
       assertIllegal("0.0000001 MB");
       assertIllegal("100000000000000000000 GB");
       assertEquals(0, ByteQuantity.parse("0"));
+      assertEquals(-1,ByteQuantity.parse("-1"));
+      assertEquals(-1239,ByteQuantity.parse("-1239"));
       assertEquals(250_000, ByteQuantity.parse("250000 B"));
       assertEquals(1_000, ByteQuantity.parse("1000"));
       assertEquals(1_000, ByteQuantity.parse("1KB"));

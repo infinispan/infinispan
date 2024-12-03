@@ -14,9 +14,12 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
+import io.netty.handler.codec.TooLongFrameException;
 
 public class RespHandler extends ChannelInboundHandlerAdapter {
    protected final static Log log = LogFactory.getLog(RespHandler.class, Log.class);
+   protected final static org.infinispan.server.core.logging.Log coreLog =
+         LogFactory.getLog(RespHandler.class, org.infinispan.server.core.logging.Log.class);
    protected final static int MINIMUM_BUFFER_SIZE;
 
    protected final BaseRespDecoder resumeHandler;
@@ -181,9 +184,13 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
 
    @Override
    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-      log.unexpectedException(cause);
-      requestHandler.writer.error(cause);
-      flushBufferIfNeeded(ctx, false, null);
+      if (cause instanceof TooLongFrameException tlfe) {
+         coreLog.requestTooLarge(ctx.channel(), tlfe);
+      } else {
+         log.unexpectedException(cause);
+         requestHandler.writer.error(cause);
+         flushBufferIfNeeded(ctx, false, null);
+      }
       ctx.close();
    }
 }
