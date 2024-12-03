@@ -54,4 +54,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Scripts can only access named caches", id = 27512)
    IllegalArgumentException scriptsCanOnlyAccessNamedCaches();
 
+   @Message(value = "Script properties must be declared using the object notation, e.g. {\"name\": \"value\"}", id = 27513)
+   IllegalArgumentException propertiesNotObject();
+
 }

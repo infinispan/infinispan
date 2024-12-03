@@ -43,6 +43,10 @@ public class Resp3Handler extends Resp3AuthHandler {
       this.blockingManager = gcr.getComponent(BlockingManager.class);
    }
 
+   protected Resp3Handler(Resp3Handler delegate) {
+      this(delegate.respServer, delegate.valueMediaType, delegate.cache);
+   }
+
    @Override
    public void setCache(AdvancedCache<byte[], byte[]> cache) {
       super.setCache(cache);

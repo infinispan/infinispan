@@ -4,6 +4,7 @@
       <license name="Universal Permissive License, Version 1.0" url="http://opensource.org/licenses/UPL"/>
       <license name="Indiana University Extreme! Lab Software License"
                url="https://raw.githubusercontent.com/x-stream/mxparser/master/LICENSE.txt"/>
+      <license name="the mit license" url="http://opensource.org/licenses/MIT"/>
    </knownLicenses>
    <!-- required or it fails to parse -->
    <dependencies/>

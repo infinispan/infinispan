@@ -4,6 +4,7 @@ import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NA
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,13 +53,18 @@ import org.infinispan.util.logging.LogFactory;
 public class ScriptingManagerImpl implements ScriptingManager {
    private static final Log log = LogFactory.getLog(ScriptingManagerImpl.class, Log.class);
 
-   @Inject EmbeddedCacheManager cacheManager;
-   @Inject TaskManager taskManager;
+   @Inject
+   EmbeddedCacheManager cacheManager;
+   @Inject
+   TaskManager taskManager;
    @Inject
    Authorizer authorizer;
-   @Inject EncoderRegistry encoderRegistry;
-   @Inject GlobalConfiguration globalConfiguration;
-   @Inject BlockingManager blockingManager;
+   @Inject
+   EncoderRegistry encoderRegistry;
+   @Inject
+   GlobalConfiguration globalConfiguration;
+   @Inject
+   BlockingManager blockingManager;
 
    private ScriptEngineManager scriptEngineManager;
    private final ConcurrentMap<String, ScriptEngine> scriptEnginesByExtension = new ConcurrentHashMap<>(2);
@@ -88,10 +94,10 @@ public class ScriptingManagerImpl implements ScriptingManager {
       return scriptCache;
    }
 
-   CompletionStage<ScriptMetadata> compileScript(String name, String script) {
+   CompletionStage<ScriptMetadata> compileScript(String name, String script, ScriptMetadata metadata) {
       return blockingManager.supplyBlocking(() -> {
-         ScriptMetadata metadata = ScriptMetadataParser.parse(name, script);
          ScriptEngine engine = getEngineForScript(metadata);
+         String languageName = engine.getFactory().getLanguageName();
          if (engine instanceof Compilable) {
             try {
                CompiledScript compiledScript = ((Compilable) engine).compile(script);
@@ -117,6 +123,15 @@ public class ScriptingManagerImpl implements ScriptingManager {
    }
 
    @Override
+   public void addScript(String name, String script, ScriptMetadata metadata) {
+      ScriptEngine engine = getEngineForScript(metadata);
+      if (engine == null) {
+         throw log.noScriptEngineForScript(name);
+      }
+      getScriptCache().getAdvancedCache().put(name, script, metadata);
+   }
+
+   @Override
    public void removeScript(String name) {
       if (containsScript(name)) {
          getScriptCache().remove(name);
@@ -128,7 +143,17 @@ public class ScriptingManagerImpl implements ScriptingManager {
    @Override
    public String getScript(String name) {
       if (containsScript(name)) {
-         return SecurityActions.getUnwrappedCache(getScriptCache()).get(name);
+         return getUnwrappedScriptCache().get(name);
+      } else {
+         throw log.noNamedScript(name);
+      }
+   }
+
+   @Override
+   public ScriptWithMetadata getScriptWithMetadata(String name) {
+      CacheEntry<String, String> entry = getUnwrappedScriptCache().getAdvancedCache().getCacheEntry(name);
+      if (entry != null) {
+         return new ScriptWithMetadata(entry.getValue(), (ScriptMetadata) entry.getMetadata());
       } else {
          throw log.noNamedScript(name);
       }
@@ -136,23 +161,26 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
    @Override
    public Set<String> getScriptNames() {
-      return SecurityActions.getUnwrappedCache(getScriptCache()).keySet();
+      return getUnwrappedScriptCache().keySet();
    }
 
    boolean containsScript(String taskName) {
-      return SecurityActions.getUnwrappedCache(getScriptCache()).containsKey(taskName);
+      return getUnwrappedScriptCache().containsKey(taskName);
    }
 
    CompletionStage<Boolean> containsScriptAsync(String taskName) {
-      return SecurityActions.getUnwrappedCache(getScriptCache()).getAsync(taskName)
+      return getUnwrappedScriptCache().getAsync(taskName)
             .thenApply(Objects::nonNull);
+   }
+
+   private Cache<String, String> getUnwrappedScriptCache() {
+      return SecurityActions.getUnwrappedCache(getScriptCache());
    }
 
    @Override
    public <T> CompletionStage<T> runScript(String scriptName) {
       return runScript(scriptName, new TaskContext());
    }
-
 
    @Override
    public <T> CompletionStage<T> runScript(String scriptName, TaskContext context) {
@@ -186,7 +214,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
       systemBindings.put(SystemBindings.CACHE_MANAGER.toString(), dataTypedCacheManager);
       systemBindings.put(SystemBindings.SCRIPTING_MANAGER.toString(), this);
       context.getCache().ifPresent(cache -> {
-         if (requestMediaType != null && !requestMediaType.equals(MediaType.MATCH_ALL)) {
+         if (!requestMediaType.equals(MediaType.MATCH_ALL)) {
             cache = cache.getAdvancedCache().withMediaType(scriptMediaType, scriptMediaType);
          }
          systemBindings.put(SystemBindings.CACHE.toString(), cache);
@@ -230,10 +258,12 @@ public class ScriptingManagerImpl implements ScriptingManager {
    }
 
    ScriptEngine getEngineForScript(ScriptMetadata metadata) {
-      ScriptEngine engine;
-      if (metadata.language().isPresent()) {
-         engine = scriptEnginesByLanguage.computeIfAbsent(metadata.language().get(), getEngineByName);
-      } else {
+      ScriptEngine engine = null;
+      Optional<String> language = metadata.language();
+      if (language.isPresent()) {
+         engine = scriptEnginesByLanguage.computeIfAbsent(language.get(), getEngineByName);
+      }
+      if (engine == null) {
          engine = scriptEnginesByExtension.computeIfAbsent(metadata.extension(), getEngineByExtension);
       }
       if (engine == null) {
