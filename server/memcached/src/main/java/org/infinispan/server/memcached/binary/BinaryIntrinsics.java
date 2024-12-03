@@ -3,6 +3,7 @@ package org.infinispan.server.memcached.binary;
 import org.infinispan.server.core.transport.ExtendedByteBufJava;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.TooLongFrameException;
 
 public class BinaryIntrinsics {
 
@@ -30,7 +31,10 @@ public class BinaryIntrinsics {
       } else return 0;
    }
 
-   public static byte[] fixedArray(ByteBuf b, int length) {
+   public static byte[] fixedArray(ByteBuf b, int length, int maxArrayLength) {
+      if (maxArrayLength >= 0 && length > maxArrayLength) {
+         throw new TooLongFrameException("Array length " + length + " exceeded " + maxArrayLength);
+      }
       b.markReaderIndex();
       return ExtendedByteBufJava.readMaybeRangedBytes(b, length);
    }

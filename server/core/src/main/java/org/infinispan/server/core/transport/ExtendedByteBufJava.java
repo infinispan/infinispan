@@ -1,7 +1,5 @@
 package org.infinispan.server.core.transport;
 
-import java.nio.charset.StandardCharsets;
-
 import org.infinispan.commons.util.Util;
 
 import io.netty.buffer.ByteBuf;
@@ -54,24 +52,6 @@ public class ExtendedByteBufJava {
       }
       buf.resetReaderIndex();
       return Integer.MIN_VALUE;
-   }
-
-   public static String readString(ByteBuf bf) {
-      int length = readMaybeVInt(bf);
-      if (length == Integer.MIN_VALUE) {
-         return null;
-      } else if (length == 0) {
-         return "";
-      } else {
-         if (!bf.isReadable(length)) {
-            bf.resetReaderIndex();
-            return null;
-         }
-
-         int startIndex = bf.readerIndex();
-         bf.skipBytes(length);
-         return bf.toString(startIndex, length, StandardCharsets.UTF_8);
-      }
    }
 
    public static byte[] readMaybeRangedBytes(ByteBuf bf) {

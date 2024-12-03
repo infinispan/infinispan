@@ -117,6 +117,12 @@ public abstract class AbstractProtocolServerConfigurationChildBuilder<T extends 
    }
 
    @Override
+   public S maxContentLength(String maxContentLength) {
+      builder.maxContentLength(maxContentLength);
+      return self();
+   }
+
+   @Override
    public T build() {
       return builder.build();
    }

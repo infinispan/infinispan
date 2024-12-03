@@ -93,6 +93,10 @@ public class MemcachedServerConfigurationParser implements ConfigurationParser {
                builder.ioThreads(Integer.parseInt(value));
                break;
             }
+            case MAX_CONTENT_LENGTH: {
+               builder.maxContentLength(value);
+               break;
+            }
             case NAME: {
                builder.name(value);
                break;

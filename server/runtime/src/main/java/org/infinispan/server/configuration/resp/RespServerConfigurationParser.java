@@ -80,6 +80,10 @@ public class RespServerConfigurationParser implements ConfigurationParser {
                builder.defaultCacheName(value);
                break;
             }
+            case MAX_CONTENT_LENGTH: {
+               builder.maxContentLength(value);
+               break;
+            }
             case NAME: {
                builder.name(value);
                break;

@@ -1,6 +1,7 @@
 package org.infinispan.server.core.configuration;
 
 import org.infinispan.commons.configuration.Self;
+import org.infinispan.commons.util.ByteQuantity;
 import org.infinispan.server.core.admin.AdminOperationsHandler;
 
 /**
@@ -96,6 +97,13 @@ public interface ProtocolServerConfigurationChildBuilder<T extends ProtocolServe
     * Indicates whether this connector was added implicitly
     */
    S implicitConnector(boolean implicitConnector);
+
+   /**
+    * The maximum size a request can be, if exceeded the request will be rejected and possibly forcibly close the socket
+    * @param maxContentLength the maximum size a request can be, valid values are handled by {@link ByteQuantity}
+    * @return this builder
+    */
+   S maxContentLength(String maxContentLength);
 
    /**
     * Builds a configuration object

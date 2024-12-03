@@ -60,7 +60,7 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
       return this;
    }
 
-   public RestServerConfigurationBuilder maxContentLength(int maxContentLength) {
+   public RestServerConfigurationBuilder maxContentLength(String maxContentLength) {
       attributes.attribute(MAX_CONTENT_LENGTH).set(maxContentLength);
       return this;
    }
