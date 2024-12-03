@@ -120,6 +120,21 @@ include::code_examples/GeoQueries.java[tags=restaurants_withinCircle]
 <2> Parameters can be extracted for all the values passed to the `within circle` predicate.
 ====
 
+By default, meters will be applied as distance unit.
+It is possible to change it, for instance using kilometers:
+
+.Within circle specifying a different unit measure
+====
+[source, Java, indent=0, subs="+callouts"]
+----
+include::code_examples/GeoQueries.java[tags=restaurants_withinCircleKm]
+----
+<1> We select all the restaurants within 0.1 Km from a given center, in this case 41.91, 12.46.
+<2> Parameters can be extracted for all the values passed to the `within circle` predicate.
+====
+
+* See link:{query_docs}#spatial_search_unit_ickle-query-language[Supported unit measures]
+
 === Spatial predicate: `box`
 
 This predicate selects entities having points contained in a given rectangle (or box).
@@ -198,7 +213,44 @@ include::code_examples/GeoQueries.java[tags=restaurants_projectDistances]
 <1> Pair the restaurant names with their respective distances from the query point (41.91, 12.46).
 ====
 
+Also for spatial projections it is possible to change the default unit measure (meters).
+Here is an example:
 
+.Project the distances specifying a different unit measure
+====
+[source, Java, indent=0, subs="+callouts"]
+----
+include::code_examples/GeoQueries.java[tags=restaurants_projectDistancesYd]
+----
+<1> Pair the restaurant names with their respective distances (using yards as unit measure) from the query point (41.91, 12.46).
+====
+
+* See link:{query_docs}#spatial_search_unit_ickle-query-language[Supported unit measures]
+
+[id='spatial_search_unit_{context}']
+== Supported unit measures
+
+These are the supported unit measures that can be used in spatial queries:
+
+[cols="1,1"]
+|===
+|Supported unit measure |Symbol to use in the query
+
+|METERS (default)
+|`m`
+
+|KILOMETERS
+|`km`
+
+|MILES
+|`mi`
+
+|YARDS
+|`yd`
+
+|NAUTICAL_MILES
+|`nm`
+|===
 
 
 

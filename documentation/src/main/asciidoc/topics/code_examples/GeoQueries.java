@@ -8,6 +8,14 @@ class GeoQueries() {
       //end::restaurants_withinCircle[]
    }
 
+   public void restaurants_withinCircle_km() {
+      //tag::restaurants_withinCircleKm[]
+      Query<Restaurant> query = cache.query("from geo.Restaurant r where r.location within circle(41.91, 12.46, :distance km)"); // <1>
+      query.setParameter("distance", 0.1); // <2>
+      List<Restaurant> list = query.list();
+      //end::restaurants_withinCircleKm[]
+   }
+
    public void restaurants_withinBox() {
       //tag::restaurants_withinBox[]
       Query<Restaurant> query = cache.query("from geo.Restaurant r where r.location within box(41.91, 12.45, 41.90, 12.46)"); // <1>
@@ -31,8 +39,15 @@ class GeoQueries() {
 
    public void restaurants_projectDistances() {
       //tag::restaurants_projectDistances[]
-      Query<Object[]> projectQuery = remoteCache.query("select r.name, distance(r.location, 41.91, 12.46) from %s geo.Restaurant r");
+      Query<Object[]> projectQuery = remoteCache.query("select r.name, distance(r.location, 41.91, 12.46) from geo.Restaurant r");
       List<Object[]> projectList = projectQuery.list();
       //end::restaurants_projectDistances[]
+   }
+
+   public void restaurants_projectDistances_yd() {
+      //tag::restaurants_projectDistancesYd[]
+      Query<Object[]> projectQuery = remoteCache.query("select r.name, distance(r.location, 41.91, 12.46, yd) from geo.Restaurant r");
+      List<Object[]> projectList = projectQuery.list();
+      //end::restaurants_projectDistancesYd[]
    }
 }
