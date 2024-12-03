@@ -48,10 +48,13 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot find an appropriate script engine for script '%s'", id = 27510)
    IllegalArgumentException noEngineForScript(String name);
 
-   @Message(value = "Script parameters must be declared using the array notation, e.g. [a,b,c]", id = 27511)
+   @Message(value = "Script parameters must be declared using the unquoted array notation, e.g. [a,b,c]", id = 27511)
    IllegalArgumentException parametersNotArray();
 
    @Message(value = "Scripts can only access named caches", id = 27512)
    IllegalArgumentException scriptsCanOnlyAccessNamedCaches();
+
+   @Message(value = "Script properties must be declared using the unquoted object notation, e.g. {name: value}", id = 27513)
+   IllegalArgumentException propertiesNotObject();
 
 }
