@@ -344,7 +344,7 @@ distanceFunction
    ;
 
 distanceFunctionUnit
-   : COMMA! unit=IDENTIFIER
+   : COMMA! unit=unitVal
    ;
 
 quantifiedExpression
@@ -412,9 +412,17 @@ atom
    ;
 
 distanceVal
-   :  constant unit=IDENTIFIER?
-   |  parameterSpecification unit=IDENTIFIER? { if (!isParameterUsageEnabled()) throw new RecognitionException(input); }
+   :  constant unit=unitVal?
+   |  parameterSpecification unit=unitVal? { if (!isParameterUsageEnabled()) throw new RecognitionException(input); }
 	//validate using Scopes if it is enabled or not to use parameterSpecification.. if not generate an exception
+   ;
+
+unitVal
+   : meters_key
+   | kilometers_key
+   | miles_key
+   | yards_key
+   | nautical_miles_key
    ;
 
 parameterSpecification
@@ -634,6 +642,32 @@ polygon_key
 on_key
    :   {validateSoftKeyword("on")}?=> IDENTIFIER -> ON[$IDENTIFIER]
 	;
+
+meters_key
+   :  {validateSoftKeyword("m")}?=> IDENTIFIER -> METERS[$IDENTIFIER]
+   |  {validateSoftKeyword("meters")}?=> IDENTIFIER -> METERS[$IDENTIFIER]
+   ;
+
+kilometers_key
+   :  {validateSoftKeyword("km")}?=> IDENTIFIER -> KILOMETERS[$IDENTIFIER]
+   |  {validateSoftKeyword("kilometers")}?=> IDENTIFIER -> KILOMETERS[$IDENTIFIER]
+   ;
+
+miles_key
+   :  {validateSoftKeyword("mi")}?=> IDENTIFIER -> MILES[$IDENTIFIER]
+   |  {validateSoftKeyword("miles")}?=> IDENTIFIER -> MILES[$IDENTIFIER]
+   ;
+
+yards_key
+   :  {validateSoftKeyword("yd")}?=> IDENTIFIER -> YARDS[$IDENTIFIER]
+   |  {validateSoftKeyword("yards")}?=> IDENTIFIER -> YARDS[$IDENTIFIER]
+   ;
+
+nautical_miles_key
+   :  {validateSoftKeyword("nm")}?=> IDENTIFIER -> NAUTICAL_MILES[$IDENTIFIER]
+   |  {validateSoftKeyword("nmi")}?=> IDENTIFIER -> NAUTICAL_MILES[$IDENTIFIER]
+   |  {validateSoftKeyword("nauticalmiles")}?=> IDENTIFIER -> NAUTICAL_MILES[$IDENTIFIER]
+   ;
 
 indices_key
    :   {validateSoftKeyword("indices")}?=> IDENTIFIER -> INDICES[$IDENTIFIER]
