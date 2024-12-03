@@ -36,7 +36,7 @@ public class RespChannelInitializer implements NettyInitializer {
          initialHandler = respServer.newHandler(respServer.getCache());
       }
 
-      RespDecoder decoder = new RespDecoder();
+      RespDecoder decoder = new RespDecoder(respServer);
       pipeline.addLast(decoder);
       pipeline.addLast(new RespHandler(decoder, initialHandler));
    }

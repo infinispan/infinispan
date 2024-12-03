@@ -1,5 +1,9 @@
 package org.infinispan.server.resp;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -10,8 +14,19 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 public abstract class BaseRespDecoder extends ByteToMessageDecoder {
    protected final static Log log = LogFactory.getLog(BaseRespDecoder.class, Log.class);
    protected final Intrinsics.Resp2LongProcessor longProcessor = new Intrinsics.Resp2LongProcessor();
+   protected final int maxContentLength;
+   // And this is the ByteBuf pos before decode is performed
+   protected int posBefore;
 
    protected ChannelHandlerContext ctx;
+
+   protected BaseRespDecoder(RespServer respServer) {
+      maxContentLength = respServer != null ? respServer.getConfiguration().maxContentLengthBytes() : -1;
+   }
+
+   protected <T> List<T> allocList(int size) {
+      return size == 0 ? Collections.emptyList() : new ArrayList<>(size);
+   }
 
    @Override
    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {

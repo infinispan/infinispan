@@ -28,13 +28,14 @@ import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.security.Security;
+import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.memcached.logging.Header;
-import org.infinispan.server.memcached.logging.Log;
 import org.infinispan.server.memcached.logging.MemcachedAccessLogging;
 import org.infinispan.stats.Stats;
 import org.infinispan.util.logging.LogFactory;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
@@ -59,7 +60,10 @@ public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
    protected final Subject subject;
    protected final String principalName;
    protected final ByRef<MemcachedResponse> current = ByRef.create(null);
+   protected final int maxContentLength;
    private BiConsumer<ChannelHandlerContext, MemcachedResponse> errorHandler;
+   // And this is the ByteBuf pos before decode is performed
+   protected int posBefore;
 
    protected MemcachedBaseDecoder(MemcachedServer server, Subject subject, AdvancedCache<byte[], byte[]> cache) {
       this.server = server;
@@ -77,6 +81,14 @@ public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
       this.statistics = server.getStatistics();
       this.statsEnabled = statistics != null;
       this.accessLogging = MemcachedAccessLogging.isEnabled();
+      this.maxContentLength = server.getConfiguration().maxContentLengthBytes();
+   }
+
+   protected int bytesAvailable(ByteBuf buf, int requestBytes) {
+      if (maxContentLength > 0) {
+         return Math.max(maxContentLength - requestBytes - buf.readerIndex() + posBefore, 0);
+      }
+      return Integer.MAX_VALUE;
    }
 
    public void registerExceptionHandler(BiConsumer<ChannelHandlerContext, MemcachedResponse> handler) {
