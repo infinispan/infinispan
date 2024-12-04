@@ -25,8 +25,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -429,7 +429,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       }
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = {
                DelayedMarshallingPojo.class,
                DelayTransfer.class

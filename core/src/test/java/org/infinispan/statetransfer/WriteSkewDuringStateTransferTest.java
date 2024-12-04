@@ -33,6 +33,7 @@ import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -42,7 +43,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -51,7 +52,6 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.infinispan.util.BlockingLocalTopologyManager;
 import org.infinispan.util.ControlledRpcManager;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -432,7 +432,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
       NodeController controller;
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = ConsistentHashFactoryImpl.class,
          schemaFileName = "test.core.WriteSkewDuringStateTransferTest.proto",
          schemaFilePath = "proto/generated",

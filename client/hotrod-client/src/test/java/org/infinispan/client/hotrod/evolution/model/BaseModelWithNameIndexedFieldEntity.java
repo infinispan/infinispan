@@ -5,10 +5,10 @@ import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.client.hotrod.annotation.model.Model;
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoReserved;
+import org.infinispan.protostream.annotations.ProtoSchema;
 
 @Indexed
 @ProtoName("Model") // F
@@ -31,7 +31,7 @@ public class BaseModelWithNameIndexedFieldEntity implements Model {
       return id;
    }
 
-   @AutoProtoSchemaBuilder(includeClasses = BaseModelWithNameIndexedFieldEntity.class, schemaFileName = "evolution-schema.proto", schemaPackageName = "evolution", service = false)
+   @ProtoSchema(includeClasses = BaseModelWithNameIndexedFieldEntity.class, schemaFileName = "evolution-schema.proto", schemaPackageName = "evolution", service = false)
    public interface BaseModelWithNameIndexedFieldEntitySchema extends GeneratedSchema {
       BaseModelWithNameIndexedFieldEntitySchema INSTANCE = new BaseModelWithNameIndexedFieldEntitySchemaImpl();
    }

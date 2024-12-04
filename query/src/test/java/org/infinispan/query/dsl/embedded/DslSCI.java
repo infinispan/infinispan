@@ -1,7 +1,7 @@
 package org.infinispan.query.dsl.embedded;
 
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.User;
@@ -12,7 +12,7 @@ import org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
 import org.infinispan.query.test.QueryTestSCI;
 
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       dependsOn = QueryTestSCI.class,
       includeClasses = {
             AccountHS.class,

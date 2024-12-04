@@ -1,13 +1,13 @@
 package org.infinispan.query.core.stats.impl;
 
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.query.core.stats.IndexInfo;
 
 /**
  * @since 12.0
  */
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       includeClasses = {
             QueryMetrics.class,
             LocalQueryStatistics.class,
@@ -19,7 +19,8 @@ import org.infinispan.query.core.stats.IndexInfo;
       },
       schemaFileName = "persistence.query.core.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.persistence.query.core"
+      schemaPackageName = "org.infinispan.persistence.query.core",
+      service = false
 )
 interface PersistenceContextInitializer extends SerializationContextInitializer {
 }

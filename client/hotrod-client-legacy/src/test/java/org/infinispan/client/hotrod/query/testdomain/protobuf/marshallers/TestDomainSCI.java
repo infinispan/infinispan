@@ -7,12 +7,12 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.LimitsPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.TransactionPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.types.java.CommonTypes;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       dependsOn = CommonTypes.class,
       includeClasses = {
             AddressPB.class,

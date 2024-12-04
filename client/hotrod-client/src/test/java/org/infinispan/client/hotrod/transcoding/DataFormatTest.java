@@ -45,9 +45,9 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -327,11 +327,12 @@ public class DataFormatTest extends SingleHotRodServerTest {
       return remoteCache.getRemoteCacheContainer().getMarshaller().objectToByteBuffer(o);
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = {ComplexKey.class, ComplexValue.class},
          schemaFileName = "test.client.DataFormatTest.proto",
          schemaFilePath = "proto/generated",
-         schemaPackageName = "org.infinispan.test.client.DataFormatTest"
+         schemaPackageName = "org.infinispan.test.client.DataFormatTest",
+         service = false
    )
    interface SCI extends SerializationContextInitializer {
       SCI INSTANCE = new SCIImpl();

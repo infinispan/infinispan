@@ -31,7 +31,7 @@ public class PojoKeyEntriesRemoteQueryTest extends SingleHotRodServerTest {
             .storage(LOCAL_HEAP)
             .addIndexedEntity("model.Structure");
 
-      return TestCacheManagerFactory.createServerModeCacheManager(indexed);
+      return TestCacheManagerFactory.createServerModeCacheManager(contextInitializer(), indexed);
    }
 
    @Override

@@ -1,13 +1,13 @@
 package org.infinispan.rest;
 
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.rest.search.entity.Address;
 import org.infinispan.rest.search.entity.Gender;
 import org.infinispan.rest.search.entity.Person;
 import org.infinispan.rest.search.entity.PhoneNumber;
 
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       includeClasses = {
             Address.class,
             Gender.class,

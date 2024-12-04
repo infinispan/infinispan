@@ -25,6 +25,7 @@ import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.manager.CacheContainer;
@@ -48,16 +49,15 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConvert
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.mockito.AdditionalAnswers;
 import org.mockito.stubbing.Answer;
 
@@ -455,7 +455,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       TestingUtil.replaceComponent(cacheContainer, CacheManagerNotifier.class, mockNotifier, true);
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          dependsOn = org.infinispan.test.TestDataSCI.class,
          includeClasses = {
                AbstractClusterListenerUtilTest.FilterConverter.class,

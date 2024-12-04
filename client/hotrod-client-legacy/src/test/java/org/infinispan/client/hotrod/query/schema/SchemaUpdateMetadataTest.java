@@ -49,7 +49,7 @@ public class SchemaUpdateMetadataTest extends SingleHotRodServerTest {
       config.indexing().enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity("io.pro.Programmer");
-      return TestCacheManagerFactory.createServerModeCacheManager(config);
+      return TestCacheManagerFactory.createServerModeCacheManager(contextInitializer(), config);
    }
 
    @Override

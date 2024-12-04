@@ -1,9 +1,9 @@
 package org.infinispan.jcache;
 
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       dependsOn = JCacheCommonsTestSCI.class,
       includeClasses = {
             InvokeProcessorTest.Entry.class,

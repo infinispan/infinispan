@@ -22,10 +22,10 @@ import org.infinispan.filter.Converter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -150,9 +150,7 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
       return returnMap;
    }
 
-   @AutoProtoSchemaBuilder(
-         // TODO use this or just explicitly add required classes?
-//         dependsOn = org.infinispan.test.TestDataSCI.class,
+   @ProtoSchema(
          includeClasses = {
                BaseSetupStreamIteratorTest.StringTruncator.class,
                BaseSetupStreamIteratorTest.TestDefaultConsistentHashFactory.class,

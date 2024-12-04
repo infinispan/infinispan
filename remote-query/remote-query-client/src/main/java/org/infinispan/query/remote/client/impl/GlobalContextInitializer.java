@@ -1,10 +1,10 @@
 package org.infinispan.query.remote.client.impl;
 
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.query.remote.client.FilterResult;
 
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       includeClasses = {
             ContinuousQueryResult.class,
             ContinuousQueryResult.ResultType.class,

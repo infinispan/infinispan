@@ -36,8 +36,8 @@ import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoName;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.Address;
@@ -882,7 +882,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       BlockingLocalTopologyManager topologyManager;
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = SingleKeyConsistentHashFactory.class,
          schemaFileName = "test.core.RemoteGetDuringStateTransferTest.proto",
          schemaFilePath = "proto/generated",

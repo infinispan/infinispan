@@ -8,9 +8,9 @@ import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Keyword;
 import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.types.java.math.BigIntegerAdapter;
 
 @Indexed
@@ -67,9 +67,16 @@ public class Product {
       return moment;
    }
 
-   @AutoProtoSchemaBuilder(includeClasses = {Product.class, BigIntegerAdapter.class},
-         schemaFilePath = "/protostream", schemaFileName = "product-store.proto",
-         schemaPackageName = "store.product")
+   @ProtoSchema(
+         includeClasses = {
+               Product.class,
+               BigIntegerAdapter.class
+         },
+         schemaFilePath = "/protostream",
+         schemaFileName = "product-store.proto",
+         schemaPackageName = "store.product",
+         service = false
+   )
    public interface ProductSchema extends GeneratedSchema {
       ProductSchema INSTANCE = new ProductSchemaImpl();
    }

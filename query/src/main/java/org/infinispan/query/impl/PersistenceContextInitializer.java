@@ -3,9 +3,9 @@ package org.infinispan.query.impl;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.marshall.persistence.impl.PersistenceMarshallerImpl;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
@@ -15,7 +15,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  * @author Ryan Emerson
  * @since 10.0
  */
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       includeClasses = PersistenceContextInitializer.KnownClassKey.class,
       schemaFileName = "persistence.query.proto",
       schemaFilePath = "proto/generated",

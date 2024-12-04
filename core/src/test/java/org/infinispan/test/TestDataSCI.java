@@ -3,7 +3,7 @@ package org.infinispan.test;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.expiration.impl.ExpirationFunctionalTest;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.test.data.Address;
 import org.infinispan.test.data.BrokenMarshallingPojo;
 import org.infinispan.test.data.CountMarshallingPojo;
@@ -15,7 +15,7 @@ import org.infinispan.test.data.Sex;
 import org.infinispan.test.data.Value;
 import org.infinispan.xsite.irac.IracCustomConflictTest;
 
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       // TODO re-evaluate use of Person where Value is more appropriate
       includeClasses = {
             Address.class,

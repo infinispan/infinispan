@@ -33,7 +33,7 @@ public class RemoteGeoPointQueryTest extends SingleHotRodServerTest {
       config.indexing().enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity(HIKING_ENTITY_NAME);
-      return TestCacheManagerFactory.createServerModeCacheManager(config);
+      return TestCacheManagerFactory.createServerModeCacheManager(contextInitializer(), config);
    }
 
    @Override

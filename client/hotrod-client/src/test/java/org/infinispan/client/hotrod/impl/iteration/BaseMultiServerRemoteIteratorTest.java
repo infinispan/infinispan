@@ -42,10 +42,10 @@ import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.filter.ParamKeyValueFilterConverterFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.query.dsl.embedded.DslSCI;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
 import org.infinispan.test.TestingUtil;
@@ -270,7 +270,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
                  .collect(Collectors.toSet());
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          dependsOn = DslSCI.class,
          includeClasses = {
                ToHexConverterFactory.HexFilterConverter.class,

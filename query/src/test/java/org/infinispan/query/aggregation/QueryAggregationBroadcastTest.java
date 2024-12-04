@@ -36,7 +36,7 @@ public class QueryAggregationBroadcastTest extends MultipleCacheManagersTest {
             .storage(LOCAL_HEAP)
             .addIndexedEntity(Sale.class);
 
-      createClusteredCaches(8, indexed);
+      createClusteredCaches(8, Sale.SaleSchema.INSTANCE, indexed);
       cache = cache(0);
    }
 

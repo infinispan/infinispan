@@ -28,7 +28,7 @@ public class BigIntegerAdapterTest extends SingleHotRodServerTest {
       config.indexing().enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity("store.product.Product");
-      return TestCacheManagerFactory.createServerModeCacheManager(config);
+      return TestCacheManagerFactory.createServerModeCacheManager(contextInitializer(), config);
    }
 
    @Override

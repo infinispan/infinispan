@@ -1,9 +1,9 @@
 package org.infinispan.distribution.rehash;
 
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       includeClasses = {
             NonTxBackupOwnerBecomingPrimaryOwnerTest.CustomConsistentHashFactory.class,
             NonTxPrimaryOwnerBecomingNonOwnerTest.CustomConsistentHashFactory.class,

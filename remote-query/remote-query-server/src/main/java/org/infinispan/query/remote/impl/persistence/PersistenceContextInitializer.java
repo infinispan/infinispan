@@ -2,7 +2,7 @@ package org.infinispan.query.remote.impl.persistence;
 
 import org.infinispan.marshall.persistence.impl.PersistenceMarshallerImpl;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 
 /**
@@ -12,7 +12,7 @@ import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
  * @author Ryan Emerson
  * @since 10.0
  */
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       includeClasses = ProtobufValueWrapper.class,
       schemaFileName = "persistence.remote_query.proto",
       schemaFilePath = "proto/generated",

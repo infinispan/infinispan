@@ -30,7 +30,7 @@ public class VectorSearchBroadcastTest extends MultipleCacheManagersTest {
             .storage(LOCAL_HEAP)
             .addIndexedEntity(Item.class);
 
-      createClusteredCaches(3, indexed);
+      createClusteredCaches(3, Item.ItemSchema.INSTANCE, indexed);
       cache = cache(0);
    }
 

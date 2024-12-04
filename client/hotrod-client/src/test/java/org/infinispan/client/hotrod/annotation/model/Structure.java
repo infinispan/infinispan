@@ -49,7 +49,14 @@ public class Structure {
       return nested;
    }
 
-   @ProtoSchema(includeClasses = { Structure.class, StructureKey.class }, schemaPackageName = "model")
+   @ProtoSchema(
+         includeClasses = {
+               Structure.class,
+               StructureKey.class
+         },
+         schemaPackageName = "model",
+         service = false
+   )
    public interface StructureSchema extends GeneratedSchema {
       StructureSchema INSTANCE = new StructureSchemaImpl();
    }

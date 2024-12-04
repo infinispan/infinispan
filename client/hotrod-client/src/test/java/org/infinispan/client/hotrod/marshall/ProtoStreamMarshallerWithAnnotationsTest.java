@@ -15,9 +15,9 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.ProtobufUtil;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -125,7 +125,7 @@ public class ProtoStreamMarshallerWithAnnotationsTest extends SingleCacheManager
       assertEquals("Tom", user.getName());
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = {AnnotatedUser.class},
          schemaFileName = "test.client.ProtoStreamMarshallerWithAnnotationsTest.proto",
          schemaFilePath = "proto/generated",

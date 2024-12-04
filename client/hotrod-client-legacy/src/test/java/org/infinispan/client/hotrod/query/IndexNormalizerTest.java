@@ -22,7 +22,7 @@ public class IndexNormalizerTest extends SingleHotRodServerTest {
             .storage(LOCAL_HEAP)
             .addIndexedEntity("Book");
 
-      EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager();
+      EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager(contextInitializer());
       manager.defineConfiguration("books", builder.build());
       return manager;
    }

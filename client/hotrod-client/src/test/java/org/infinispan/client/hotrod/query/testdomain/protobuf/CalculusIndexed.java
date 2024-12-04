@@ -8,9 +8,9 @@ import org.infinispan.api.annotations.indexing.Decimal;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Keyword;
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.types.java.CommonTypes;
 
 @Indexed
@@ -56,9 +56,14 @@ public class CalculusIndexed {
       return decimal;
    }
 
-   @AutoProtoSchemaBuilder(includeClasses = CalculusIndexed.class, dependsOn = CommonTypes.class,
-         schemaFilePath = "/protostream", schemaFileName = "calculus-indexed.proto",
-         schemaPackageName = "lab.indexed")
+   @ProtoSchema(
+         includeClasses = CalculusIndexed.class,
+         dependsOn = CommonTypes.class,
+         schemaFilePath = "/protostream",
+         schemaFileName = "calculus-indexed.proto",
+         schemaPackageName = "lab.indexed",
+         service = false
+   )
    public interface CalculusIndexedSchema extends GeneratedSchema {
    }
 }

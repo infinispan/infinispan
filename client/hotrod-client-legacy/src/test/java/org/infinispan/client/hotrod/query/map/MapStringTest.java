@@ -23,7 +23,7 @@ public class MapStringTest extends SingleHotRodServerTest {
       indexed.indexing().enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity("model.Message");
-      return TestCacheManagerFactory.createServerModeCacheManager(indexed);
+      return TestCacheManagerFactory.createServerModeCacheManager(contextInitializer(), indexed);
    }
 
    @Override

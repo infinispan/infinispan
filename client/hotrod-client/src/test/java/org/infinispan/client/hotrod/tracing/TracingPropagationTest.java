@@ -44,6 +44,7 @@ public class TracingPropagationTest extends SingleHotRodServerTest {
 
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
       global.tracing().collectorEndpoint(TelemetryServiceFactory.IN_MEMORY_COLLECTOR_ENDPOINT);
+      global.serialization().addContextInitializer(contextInitializer());
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().enable()

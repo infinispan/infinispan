@@ -29,7 +29,7 @@ public class VectorSearchRemoteTest extends SingleHotRodServerTest {
             .storage(LOCAL_HEAP)
             .addIndexedEntity("Item");
 
-      return TestCacheManagerFactory.createServerModeCacheManager(indexed);
+      return TestCacheManagerFactory.createServerModeCacheManager(contextInitializer(), indexed);
    }
 
    @Override

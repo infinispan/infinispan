@@ -16,9 +16,9 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.marshall.core.impl.DelegatingUserMarshaller;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -111,7 +111,7 @@ public class ProtostreamUserMarshallerTest extends MultipleCacheManagersTest {
       int x;
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = ExampleUserPojo.class,
          schemaFileName = "test.core.protostream-user-marshall.proto",
          schemaFilePath = "proto/generated",
@@ -121,7 +121,7 @@ public class ProtostreamUserMarshallerTest extends MultipleCacheManagersTest {
    interface UserSCI extends SerializationContextInitializer {
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = AnotherExampleUserPojo.class,
          schemaFileName = "test.core.protostream-another-user-marshall.proto",
          schemaFilePath = "proto/generated",

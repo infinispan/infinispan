@@ -3,8 +3,8 @@ package org.infinispan.client.hotrod.query.testdomain.protobuf;
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 
 @Indexed
 public class Reviewer {
@@ -41,7 +41,13 @@ public class Reviewer {
       this.lastName = name;
    }
 
-   @AutoProtoSchemaBuilder(includeClasses = {Reviewer.class, Revision.class})
+   @ProtoSchema(
+         includeClasses = {
+               Reviewer.class,
+               Revision.class
+         },
+         service = false
+   )
    public interface ReviewerSchema extends GeneratedSchema {
       ReviewerSchema INSTANCE = new ReviewerSchemaImpl();
    }

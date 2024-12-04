@@ -34,9 +34,9 @@ import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.data.Key;
 import org.infinispan.test.data.Person;
@@ -154,7 +154,7 @@ public class TestUtil {
       return sb.toString();
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          dependsOn = TestDataSCI.class,
          includeClasses = TestObject.class,
          schemaFileName = "test.tools.proto",

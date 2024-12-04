@@ -20,6 +20,7 @@ import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.model.Item;
 import org.infinispan.query.remote.json.JsonQueryResponse;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -34,13 +35,14 @@ public class RestVectorSearchTest extends SingleCacheManagerTest {
 
    private static final String CACHE_NAME = "items";
    private static final int ENTRIES = 50;
+   private static final int ROUNDS = 5;
 
    private RestServerHelper restServer;
    private RestClient restClient;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager();
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(Item.ItemSchema.INSTANCE);
       ConfigurationBuilder config = new ConfigurationBuilder();
       config
          .encoding()
@@ -131,22 +133,24 @@ public class RestVectorSearchTest extends SingleCacheManagerTest {
    }
 
    private static void writeEntries(RestCacheClient cacheClient) {
-      List<CompletionStage<RestResponse>> responses = new ArrayList<>(ENTRIES);
-      for (byte item = 1; item <= ENTRIES; item++) {
-         String buggy = BUGGY_OPTIONS[item % 7];
+      for (int round = 0; round < ROUNDS; round++) {
+         List<CompletionStage<RestResponse>> responses = new ArrayList<>(ENTRIES / ROUNDS);
+         for (int i = 1; i <= ENTRIES / ROUNDS; i++) {
+            byte item = (byte) (round * ENTRIES / ROUNDS + i);
+            String buggy = BUGGY_OPTIONS[item % 7];
 
-         Json game = Json.object()
-               .set("_type", "Item")
-               .set("code", "c" + item)
-               .set("byteVector", byteArray(item))
-               .set("floatVector", new float[]{1.1f * item, 1.1f * item, 1.1f * item})
-               .set("buggy", buggy);
-
-         String json = game.toString();
-         responses.add(cacheClient.put("item-" + item, RestEntity.create(MediaType.APPLICATION_JSON, json)));
-      }
-      for (CompletionStage<RestResponse> response : responses) {
-         assertThat(response).isOk();
+            Json game = Json.object()
+                  .set("_type", "Item")
+                  .set("code", "c" + item)
+                  .set("byteVector", byteArray(item))
+                  .set("floatVector", new float[]{1.1f * item, 1.1f * item, 1.1f * item})
+                  .set("buggy", buggy);
+            String json = game.toString();
+            responses.add(cacheClient.put("item-" + item, RestEntity.create(MediaType.APPLICATION_JSON, json)));
+         }
+         for (CompletionStage<RestResponse> response : responses) {
+            assertThat(response).isOk();
+         }
       }
    }
 

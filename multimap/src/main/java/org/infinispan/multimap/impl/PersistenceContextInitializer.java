@@ -2,9 +2,9 @@ package org.infinispan.multimap.impl;
 
 import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       dependsOn = org.infinispan.marshall.persistence.impl.PersistenceContextInitializer.class,
       includeClasses = {
             Bucket.class,

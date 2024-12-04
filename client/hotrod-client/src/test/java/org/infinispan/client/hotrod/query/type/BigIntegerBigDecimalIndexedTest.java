@@ -28,7 +28,7 @@ public class BigIntegerBigDecimalIndexedTest extends SingleHotRodServerTest {
       config.indexing().enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity("lab.indexed.CalculusIndexed");
-      return TestCacheManagerFactory.createServerModeCacheManager(config);
+      return TestCacheManagerFactory.createServerModeCacheManager(contextInitializer(), config);
    }
 
    @Override

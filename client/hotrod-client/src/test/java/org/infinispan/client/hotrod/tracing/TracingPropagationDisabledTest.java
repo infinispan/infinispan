@@ -42,6 +42,7 @@ public class TracingPropagationDisabledTest extends SingleHotRodServerTest {
       assertThat(telemetryClient.finishedSpanItems()).isEmpty();
 
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
+      global.serialization().addContextInitializer(contextInitializer());
       global.tracing().collectorEndpoint(TelemetryServiceFactory.IN_MEMORY_COLLECTOR_ENDPOINT);
 
       ConfigurationBuilder builder = new ConfigurationBuilder();

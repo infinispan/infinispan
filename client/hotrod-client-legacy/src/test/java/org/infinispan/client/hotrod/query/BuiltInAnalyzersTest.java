@@ -17,7 +17,7 @@ import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeClass;
@@ -98,7 +98,7 @@ public class BuiltInAnalyzersTest extends SingleHotRodServerTest {
       assertEquals(0, remoteCache.query("From TestEntity where name6:'Georje'").execute().count().value());
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = TestEntity.class,
          schemaFileName = "test.client.BuiltInAnalyzersTest.proto",
          schemaFilePath = "proto/generated",

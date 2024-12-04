@@ -24,7 +24,7 @@ public class QueryLimitTest extends SingleHotRodServerTest {
             .storage(LOCAL_HEAP)
             .addIndexedEntity("KeywordEntity");
 
-      EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager();
+      EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager(contextInitializer());
       manager.defineConfiguration("keyword", builder.build());
       return manager;
    }

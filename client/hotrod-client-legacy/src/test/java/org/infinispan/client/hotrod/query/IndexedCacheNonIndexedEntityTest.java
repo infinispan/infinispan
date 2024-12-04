@@ -16,10 +16,10 @@ import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -107,7 +107,7 @@ public class IndexedCacheNonIndexedEntityTest extends SingleCacheManagerTest {
       cache.put("1", new Entity("name"));
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = {Entity.class, EvilTwin.class},
          schemaFileName = "test.client.IndexedCacheNonIndexedEntityTest.proto",
          schemaFilePath = "proto/generated",
