@@ -25,7 +25,6 @@ import org.infinispan.query.remote.impl.mapping.reference.MessageReferenceProvid
 final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldIndexingMetadata<Descriptor> {
 
    private final Descriptor messageDescriptor;
-   private final IndexingMetadata indexingMetadata;
    private final String keyProperty;
    private final Descriptor keyMessageDescriptor;
 
@@ -34,7 +33,7 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
          throw new IllegalArgumentException("argument cannot be null");
       }
       this.messageDescriptor = messageDescriptor;
-      indexingMetadata = findProcessedAnnotation(messageDescriptor, IndexingMetadata.INDEXED_ANNOTATION);
+      IndexingMetadata indexingMetadata = findProcessedAnnotation(messageDescriptor, IndexingMetadata.INDEXED_ANNOTATION);
       if (indexingMetadata != null && indexingMetadata.indexingKey() != null) {
          keyProperty = indexingMetadata.indexingKey().fieldName();
          keyMessageDescriptor = (Descriptor) genericDescriptors.get(indexingMetadata.indexingKey().typeFullName());
