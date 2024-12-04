@@ -25,35 +25,23 @@ import org.testng.annotations.Test;
 public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
 
    private static final class TestSCI implements SerializationContextInitializer {
-
-      @Override
-      public String getProtoFile() {
-         return "/** @Indexed */ message User {\n" +
-               "\n" +
-               "   /** @Basic(projectable = true) */ required string name = 1;\n" +
-               "\n" +
-               "   required string surname = 2;\n" +
-               "\n" +
-               "   /** @Indexed */" +
-               "   message Address {\n" +
-               "      /** @Basic(projectable = true) */ required string street = 10;\n" +
-               "      required string postCode = 20;\n" +
-               "   }\n" +
-               "\n" +
-               "   /** @Embedded */ repeated Address indexedAddresses = 3;\n" +
-               "\n" +
-               "   repeated Address unindexedAddresses = 4;\n" +
-               "}\n";
-      }
-
-      @Override
-      public String getProtoFileName() {
-         return "user_definition.proto";
-      }
+      private static final String PROTO_FILE = """
+            /** @Indexed */ message User {
+               /** @Basic(projectable = true) */ required string name = 1;
+               required string surname = 2;
+               /** @Indexed */
+               message Address {
+                  /** @Basic(projectable = true) */ required string street = 10;
+                  required string postCode = 20;
+               }
+               /** @Embedded */ repeated Address indexedAddresses = 3;
+               repeated Address unindexedAddresses = 4;
+            }
+            """;
 
       @Override
       public void registerSchema(SerializationContext serCtx) {
-         serCtx.registerProtoFiles(FileDescriptorSource.fromString(getProtoFileName(), getProtoFile()));
+         serCtx.registerProtoFiles(FileDescriptorSource.fromString("user_definition.proto", PROTO_FILE));
       }
 
       @Override
