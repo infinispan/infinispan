@@ -4,7 +4,6 @@ import static org.infinispan.protostream.FileDescriptorSource.fromString;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -109,18 +108,8 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
 
    private static class ContextInitializer implements SerializationContextInitializer {
       @Override
-      public String getProtoFileName() {
-         return EvictionPojo.class.getName();
-      }
-
-      @Override
-      public String getProtoFile() throws UncheckedIOException {
-         return "message EvictionPojo {optional int32 i=1;}";
-      }
-
-      @Override
       public void registerSchema(SerializationContext serCtx) {
-         serCtx.registerProtoFiles(fromString(getProtoFileName(), getProtoFile()));
+         serCtx.registerProtoFiles(fromString(EvictionPojo.class.getName(), "message EvictionPojo {optional int32 i=1;}"));
       }
 
       @Override
