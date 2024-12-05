@@ -28,5 +28,9 @@ public enum LockState {
    /**
     * The lock owner released the lock.
     */
-   RELEASED
+   RELEASED,
+   /**
+    * The lock is in an illegal state, for example, the associated transaction rolled back.
+    */
+   ILLEGAL,
 }

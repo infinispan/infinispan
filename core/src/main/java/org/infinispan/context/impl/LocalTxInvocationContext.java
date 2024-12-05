@@ -40,6 +40,21 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext<LocalT
    }
 
    @Override
+   public boolean isTransactionRolledBack() {
+      Transaction t = getTransaction();
+      int status = -1;
+      if (t != null) {
+         try {
+            status = t.getStatus();
+         } catch (SystemException ignore) { }
+      }
+
+      return status == Status.STATUS_ROLLEDBACK
+            || status == Status.STATUS_MARKED_ROLLBACK
+            || status == Status.STATUS_ROLLING_BACK;
+   }
+
+   @Override
    public final boolean isImplicitTransaction() {
       return getCacheTransaction().isImplicitTransaction();
    }

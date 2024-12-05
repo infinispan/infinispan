@@ -9,8 +9,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -21,6 +19,9 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import jakarta.transaction.Status;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
 import net.jcip.annotations.GuardedBy;
 
 /**
@@ -137,6 +138,7 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
             ", isMarkedForRollback=" + isMarkedForRollback() +
             ", lockedKeys=" + getLockedKeys() +
             ", backupKeyLocks=" + getBackupLockedKeys() +
+            ", inspectedKeys=" + getInspectedKeys() +
             ", topologyId=" + topologyId +
             ", stateTransferFlag=" + getStateTransferFlag() +
             "} " + super.toString();
@@ -209,6 +211,15 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
     */
    public synchronized boolean hasIracMetadata(Object key) {
       return iracMetadata != null && iracMetadata.containsKey(key);
+   }
+
+   public final boolean isActive() {
+      int status = -1;
+      try {
+         status = transaction.getStatus();
+      } catch (SystemException ignore) { }
+
+      return status == Status.STATUS_ACTIVE;
    }
 
    /**
