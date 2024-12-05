@@ -54,3 +54,21 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PROJECT_KEY: ISPN
           TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+
+  targetlabel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Labels Action
+        run: |
+         labels=$(gh api repos/${GH_REPO}/labels -q 'map(.name)')
+         echo "LABELS=$labels" >> $GITHUB_ENV
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+      - if: ${{ contains(fromJSON(env.LABELS), env.TARGET) }}
+        run: |
+          gh pr edit ${{ github.event.pull_request.number }} --add-label ${TARGET}
+        env:
+         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+         GH_REPO: ${{ github.repository }}
+         TARGET: target/${{ github.event.pull_request.base.ref }}
