@@ -1,10 +1,14 @@
 package org.infinispan.objectfilter.impl.syntax;
 
+import java.util.Objects;
+
 /**
  * @author anistor@redhat.com
  * @since 14.0
  */
 public final class SpatialWithinCircleExpr implements PrimaryPredicateExpr {
+
+   public static final String DEFAULT_UNIT = "m";
 
    private final ValueExpr leftChild;
 
@@ -14,11 +18,15 @@ public final class SpatialWithinCircleExpr implements PrimaryPredicateExpr {
 
    private final ValueExpr radiusChild;
 
-   public SpatialWithinCircleExpr(ValueExpr leftChild, ValueExpr latChild, ValueExpr lonChild, ValueExpr radiusChild) {
+   private final ConstantValueExpr unitChild;
+
+   public SpatialWithinCircleExpr(ValueExpr leftChild, ValueExpr latChild, ValueExpr lonChild,
+                                  ValueExpr radiusChild, ConstantValueExpr unitChild) {
       this.leftChild = leftChild;
       this.latChild = latChild;
       this.lonChild = lonChild;
       this.radiusChild = radiusChild;
+      this.unitChild = unitChild;
    }
 
    @Override
@@ -42,6 +50,10 @@ public final class SpatialWithinCircleExpr implements PrimaryPredicateExpr {
       return radiusChild;
    }
 
+   public ConstantValueExpr getUnitChild() {
+      return unitChild;
+   }
+
    @Override
    public <T> T acceptVisitor(Visitor<?, ?> visitor) {
       return (T) visitor.visit(this);
@@ -51,29 +63,20 @@ public final class SpatialWithinCircleExpr implements PrimaryPredicateExpr {
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-
-      SpatialWithinCircleExpr other = (SpatialWithinCircleExpr) o;
-      return leftChild.equals(other.leftChild)
-            && latChild.equals(other.latChild)
-            && lonChild.equals(other.lonChild)
-            && radiusChild.equals(other.radiusChild);
+      SpatialWithinCircleExpr that = (SpatialWithinCircleExpr) o;
+      return Objects.equals(leftChild, that.leftChild) && Objects.equals(latChild, that.latChild)
+            && Objects.equals(lonChild, that.lonChild) && Objects.equals(radiusChild, that.radiusChild)
+            && Objects.equals(unitChild, that.unitChild);
    }
 
    @Override
    public int hashCode() {
-      return 31 * (31 * (31 * leftChild.hashCode() + latChild.hashCode()) + lonChild.hashCode()) + radiusChild.hashCode();
+      return Objects.hash(leftChild, latChild, lonChild, radiusChild, unitChild);
    }
 
    @Override
    public String toString() {
-      return "WITHIN_CIRCLE(" + leftChild + ", " + latChild + ", " + lonChild + ", " + radiusChild + ")";
-   }
-
-   @Override
-   public String toQueryString() {
-      return leftChild.toQueryString() + " WITHIN CIRCLE( "
-            + latChild.toQueryString() + ", " + lonChild.toQueryString()
-            + ", " + radiusChild.toQueryString() + ")";
+      return "WITHIN_CIRCLE(" + leftChild + ", " + latChild + ", " + lonChild + ", " + radiusChild + ", " + unitChild + ")";
    }
 
    @Override
@@ -85,6 +88,7 @@ public final class SpatialWithinCircleExpr implements PrimaryPredicateExpr {
       lonChild.appendQueryString(sb);
       sb.append(", ");
       radiusChild.appendQueryString(sb);
-      sb.append(")");
+      sb.append(unitChild.getConstantValue());
+      sb.append(" )");
    }
 }
