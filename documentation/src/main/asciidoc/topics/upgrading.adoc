@@ -29,6 +29,13 @@ This allows for thread and virtual thread safety.
 
 The internal server templates have been removed.
 
+== REST Endpoint
+
+=== Endpoint `/rest/v2/container/config?action=listen` is deprecated
+
+The endpoint has been deprecated `/rest/v2/container/config?action=listen` and the endpoint `/rest/v2/container?action=listen` has been enhanced with filtering.
+Update your code to use `/rest/v2/container?action=listen&category=config` instead.
+
 == Upgrading from 14.0 to 15.0
 
 === Deprecations, removals and moved classes

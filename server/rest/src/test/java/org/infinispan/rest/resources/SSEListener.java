@@ -23,7 +23,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 13.0
  **/
 public class SSEListener implements RestEventListener {
-   protected static final Consumer<KeyValuePair<String, String>> NO_OP = ignore -> {};
+   public static final Consumer<KeyValuePair<String, String>> NO_OP = ignore -> {};
    private static final Log log = LogFactory.getLog(SSEListener.class);
 
    BlockingDeque<KeyValuePair<String, String>> events = new LinkedBlockingDeque<>();
@@ -44,7 +44,7 @@ public class SSEListener implements RestEventListener {
 
    @Override
    public void onMessage(String id, String type, String data) {
-      log.tracef("Received %s %s %s", id, type, data);
+      log.tracef("Received id=%s, type=%s, data=%s", id, type, data);
       this.events.add(new KeyValuePair<>(type, data));
    }
 
