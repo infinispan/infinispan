@@ -42,7 +42,7 @@ public abstract class AbstractRespTest extends MultipleCacheManagersTest {
    private List<AbstractRedisClient> clients;
    private boolean authorization;
 
-   protected int timeout = 15_000;
+   protected int timeout = 15_000_000;
    protected final ControlledTimeService timeService = new ControlledTimeService();
 
    @Override
@@ -96,7 +96,7 @@ public abstract class AbstractRespTest extends MultipleCacheManagersTest {
    protected ClientOptions defineRespClientOptions() {
       return ClientOptions.builder()
             .protocolVersion(ProtocolVersion.RESP3)
-            .timeoutOptions(TimeoutOptions.enabled(Duration.of(15, ChronoUnit.SECONDS)))
+            .timeoutOptions(TimeoutOptions.enabled(Duration.of(15000, ChronoUnit.SECONDS)))
             .build();
    }
 
