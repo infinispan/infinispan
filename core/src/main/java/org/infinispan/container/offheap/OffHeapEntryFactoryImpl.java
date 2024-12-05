@@ -10,6 +10,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
+import org.infinispan.commons.spi.OffHeapMemory;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -35,7 +36,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
  */
 @Scope(Scopes.NAMED_CACHE)
 public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
-   private static final OffHeapMemory MEMORY = OffHeapMemory.INSTANCE;
+   private static final OffHeapMemory MEMORY = org.infinispan.commons.jdkspecific.OffHeapMemory.getInstance();
 
    @Inject @ComponentName(KnownComponentNames.INTERNAL_MARSHALLER)
    StreamingMarshaller marshaller;

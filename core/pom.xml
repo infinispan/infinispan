@@ -20,6 +20,10 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-commons-spi</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-component-processor</artifactId>
       </dependency>
 
