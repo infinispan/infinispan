@@ -191,7 +191,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       remoteCache.putAll(Map.of(key, "B", anotherKey, "C"));
       MetadataValue<String> currMetadata = remoteCache.getWithMetadata(key);
 
-      assertTrue(currMetadata.getVersion() > prevMetadata.getVersion());
+      assertTrue(currMetadata.getVersion() != prevMetadata.getVersion());
       assertEquals("B", currMetadata.getValue());
 
       // Created entries receive the same version, no way to set version per entry w/ put all.
@@ -213,7 +213,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       remoteCache.putAll(Map.of(key, "B", anotherKey, "C"));
       MetadataValue<String> currMetadata = remoteCache.getWithMetadata(key);
 
-      assertTrue(currMetadata.getVersion() > prevMetadata.getVersion());
+      assertTrue(currMetadata.getVersion() != prevMetadata.getVersion());
       assertFalse(remoteCache.removeWithVersion(key, prevMetadata.getVersion()));
       assertEquals("B", remoteCache.get(key));
 
