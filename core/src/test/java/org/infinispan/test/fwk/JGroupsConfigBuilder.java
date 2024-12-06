@@ -6,6 +6,7 @@ import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_ALL2;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_ALL3;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_SOCK;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_SOCK2;
+import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.GMS;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.LOCAL_PING;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.MERGE3;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.MPING;
@@ -107,6 +108,7 @@ public class JGroupsConfigBuilder {
       }
       replaceTcpStartPort(jgroupsCfg, siteIndex);
       replaceMCastAddressAndPort(jgroupsCfg, fullTestName, siteIndex);
+      configureGMSTimeout(jgroupsCfg, flags);
       return jgroupsCfg.toString();
    }
 
@@ -193,6 +195,17 @@ public class JGroupsConfigBuilder {
       // In JGroups, the port_range is inclusive
       props.put("port_range", String.valueOf(portRange - 1));
       replaceProperties(jgroupsCfg, props, transportProtocol);
+   }
+
+   private static void configureGMSTimeout(JGroupsProtocolCfg jgroupsCfg, TransportFlags flags) {
+      if (!flags.isZeroJoinTimeout()) {
+         return;
+      }
+      var protocol = jgroupsCfg.getProtocol(GMS);
+      if (protocol == null) {
+         return;
+      }
+      protocol.getProperties().put("join_timeout", "0");
    }
 
    private static void replaceProperties(
