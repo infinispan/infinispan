@@ -33,6 +33,11 @@ public interface StoreConfigurationChildBuilder<S> extends ConfigurationChildBui
    S ignoreModifications(boolean b);
 
    /**
+    * Returns whether the cache store is purged when it starts up.
+    */
+   boolean purgeOnStartup();
+
+   /**
     * If true, purges this cache store when it starts up.
     */
    S purgeOnStartup(boolean b);

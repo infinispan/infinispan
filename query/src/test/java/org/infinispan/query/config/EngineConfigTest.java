@@ -100,7 +100,9 @@ public class EngineConfigTest extends AbstractInfinispanTest {
    @Test
    public void testNoIndexLocationWithoutGlobalState() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.indexing().enable().addIndexedEntity(Person.class).enable();
+      builder.indexing().enable()
+            .storage(IndexStorage.FILESYSTEM)
+            .addIndexedEntity(Person.class);
 
       Map<String, Object> properties = resolveIndexingProperties(new GlobalConfigurationBuilder(), builder);
       assertEquals(System.getProperty("user.dir") + File.separator + "defaultcache", properties.get("hibernate.search.backend.directory.root"));

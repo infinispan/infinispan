@@ -1203,7 +1203,7 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="storage" type="tns:index-storage" default="filesystem">
+          <xs:attribute name="storage" type="tns:index-storage" default="${Indexing.storage}">
             <xs:annotation>
               <xs:documentation>Specify index storage options.</xs:documentation>
             </xs:annotation>
@@ -2590,12 +2590,20 @@
     <xs:restriction base="xs:token">
       <xs:enumeration value="filesystem">
         <xs:annotation>
-          <xs:documentation>Local filesystem index storage. This is the default.</xs:documentation>
+          <xs:documentation>Local filesystem index storage.</xs:documentation>
         </xs:annotation>
       </xs:enumeration>
       <xs:enumeration value="local-heap">
         <xs:annotation>
           <xs:documentation>JVM heap index storage, not persisted between restarts. Only suitable for small datasets with low concurrency.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="define-at-startup">
+        <xs:annotation>
+          <xs:documentation>This value will be replaced when the cache configuration is created.
+            If no persistence stores are configured or all of them are purged at startup, local-heap is applied by default.
+            Otherwise, filesystem is applied.
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>

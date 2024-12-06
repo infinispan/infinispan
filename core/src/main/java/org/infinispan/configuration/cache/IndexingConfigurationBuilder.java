@@ -82,6 +82,10 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
       return this;
    }
 
+   public IndexStorage storage() {
+      return attributes.attribute(STORAGE).get();
+   }
+
    public IndexingConfigurationBuilder storage(IndexStorage storage) {
       attributes.attribute(STORAGE).set(storage);
       return this;
@@ -173,6 +177,10 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    @Override
    public void validate() {
       if (enabled()) {
+         if (IndexStorage.DEFINE_AT_STARTUP.equals(storage())) {
+            storage(defineIndexStorage());
+         }
+
          //Indexing is not conceptually compatible with Invalidation mode
          if (clustering().cacheMode().isInvalidation()) {
             throw CONFIG.invalidConfigurationIndexingWithInvalidation();
@@ -252,5 +260,13 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
             '}';
    }
 
-
+   private IndexStorage defineIndexStorage() {
+      boolean dataIsVolatile = this.persistence().stores().stream()
+            .allMatch(StoreConfigurationChildBuilder::purgeOnStartup);
+      if (dataIsVolatile) {
+         return IndexStorage.LOCAL_HEAP;
+      } else {
+         return IndexStorage.FILESYSTEM;
+      }
+   }
 }
