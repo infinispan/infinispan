@@ -31,6 +31,11 @@ public abstract class AbstractStoreConfigurationChildBuilder<S> extends Abstract
    }
 
    @Override
+   public boolean purgeOnStartup() {
+      return builder.purgeOnStartup();
+   }
+
+   @Override
    public S purgeOnStartup(boolean b) {
       return (S)builder.purgeOnStartup(b);
    }

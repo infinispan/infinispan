@@ -71,6 +71,14 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    }
 
    /**
+    * Returns whether the cache store is purged when it starts up.
+    */
+   @Override
+   public boolean purgeOnStartup() {
+      return attributes.attribute(READ_ONLY).get();
+   }
+
+   /**
     * If true, purges this cache store when it starts up.
     */
    @Override

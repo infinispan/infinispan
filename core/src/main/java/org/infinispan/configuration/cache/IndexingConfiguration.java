@@ -26,7 +26,7 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
    public static final AttributeDefinition<Set<String>> INDEXED_ENTITIES = AttributeDefinition.builder(Element.INDEXED_ENTITIES, null, (Class<Set<String>>) (Class<?>) Set.class)
          .copier(collectionCopier())
          .initializer(HashSet::new).build();
-   public static final AttributeDefinition<IndexStorage> STORAGE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STORAGE, IndexStorage.FILESYSTEM)
+   public static final AttributeDefinition<IndexStorage> STORAGE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STORAGE, IndexStorage.DEFINE_AT_STARTUP)
          .immutable().build();
    public static final AttributeDefinition<IndexStartupMode> STARTUP_MODE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STARTUP_MODE, IndexStartupMode.NONE)
          .immutable().build();
