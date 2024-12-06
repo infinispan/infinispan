@@ -1496,6 +1496,11 @@
             <version>${version.hdrhistogram}</version>
          </dependency>
          <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient_common</artifactId>
+            <version>${version.io.prometheus}</version>
+         </dependency>
+         <dependency>
             <groupId>org.mariadb.jdbc</groupId>
             <artifactId>mariadb-java-client</artifactId>
             <version>${versionx.org.mariadb.jdbc}</version>

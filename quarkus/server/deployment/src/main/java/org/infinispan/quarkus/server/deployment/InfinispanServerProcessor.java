@@ -116,26 +116,24 @@ class InfinispanServerProcessor {
    void addReflectionAndResources(BuildProducer<ReflectiveClassBuildItem> reflectionClass,
          BuildProducer<NativeImageResourceBuildItem> resources, CombinedIndexBuildItem combinedIndexBuildItem) {
 
-      reflectionClass.produce(new ReflectiveClassBuildItem(false, false, PrivateGlobalConfigurationBuilder.class.getName()));
-      reflectionClass.produce(new ReflectiveClassBuildItem(false, false, ServerConfigurationBuilder.class.getName()));
-
+      reflectionClass.produce(ReflectiveClassBuildItem.builder(PrivateGlobalConfigurationBuilder.class.getName()).build());
+      reflectionClass.produce(ReflectiveClassBuildItem.builder(ServerConfigurationBuilder.class.getName()).build());
       // Add the various protocol server implementations
-      reflectionClass.produce(new ReflectiveClassBuildItem(false, false, HotRodServer.class));
-      reflectionClass.produce(new ReflectiveClassBuildItem(false, false, MemcachedServer.class));
-      reflectionClass.produce(new ReflectiveClassBuildItem(false, false, RestServer.class));
-      reflectionClass.produce(new ReflectiveClassBuildItem(false, false, RespServer.class));
+     reflectionClass.produce(ReflectiveClassBuildItem.builder(HotRodServer.class).build());
+     reflectionClass.produce(ReflectiveClassBuildItem.builder(MemcachedServer.class).build());
+     reflectionClass.produce(ReflectiveClassBuildItem.builder(RestServer.class).build());
+     reflectionClass.produce(ReflectiveClassBuildItem.builder(RespServer.class).build());
 
       // We instantiate this during logging initialization
-      reflectionClass.produce(new ReflectiveClassBuildItem(false, false, "org.apache.logging.log4j.message.ReusableMessageFactory"));
-      reflectionClass.produce(new ReflectiveClassBuildItem(false, false, "org.apache.logging.log4j.message.DefaultFlowMessageFactory"));
-
-      reflectionClass.produce(new ReflectiveClassBuildItem(false, false, PasswordFactorySpiImpl.class));
+      reflectionClass.produce(ReflectiveClassBuildItem.builder("org.apache.logging.log4j.message.ReusableMessageFactory").build());
+      reflectionClass.produce(ReflectiveClassBuildItem.builder("org.apache.logging.log4j.message.DefaultFlowMessageFactory").build());
+      reflectionClass.produce(ReflectiveClassBuildItem.builder(PasswordFactorySpiImpl.class).build());
 
       IndexView combinedIndex = combinedIndexBuildItem.getIndex();
       addReflectionForClass(ProtocolServerConfigurationBuilder.class, false, combinedIndex, reflectionClass);
 
       // TODO: not sure why this is required for native runtime...
-      reflectionClass.produce(new ReflectiveClassBuildItem(false, false, NoTypePermission.class.getName()));
+      reflectionClass.produce(ReflectiveClassBuildItem.builder(NoTypePermission.class.getName()).build());
 
       resources.produce(new NativeImageResourceBuildItem("infinispan-server-templates.xml",
             "proto/generated/persistence.counters.proto",
@@ -163,15 +161,14 @@ class InfinispanServerProcessor {
       registerClass(reflectionClass, CacheManagerInfo.class, true, false, false);
       addReflectionForName(Task.class.getName(), true, combinedIndex, reflectionClass, true, false);
 
-      reflectionClass.produce(new ReflectiveClassBuildItem(true, false, "org.infinispan.health.impl.CacheHealthImpl"));
-      reflectionClass.produce(new ReflectiveClassBuildItem(true, false, "org.infinispan.health.impl.ClusterHealthImpl"));
-      reflectionClass.produce(new ReflectiveClassBuildItem(true, false, "org.infinispan.rest.resources.CacheManagerResource$HealthInfo"));
-      reflectionClass.produce(new ReflectiveClassBuildItem(true, false, "org.infinispan.rest.resources.CacheManagerResource$NamedCacheConfiguration"));
-      reflectionClass.produce(new ReflectiveClassBuildItem(true, true, "org.infinispan.rest.resources.CacheManagerResource$CacheInfo"));
+      reflectionClass.produce(ReflectiveClassBuildItem.builder("org.infinispan.health.impl.CacheHealthImpl").methods().build());
+      reflectionClass.produce(ReflectiveClassBuildItem.builder("org.infinispan.health.impl.ClusterHealthImpl").methods().build());
+      reflectionClass.produce(ReflectiveClassBuildItem.builder("org.infinispan.rest.resources.CacheManagerResource$HealthInfo").methods().build());
 
-      reflectionClass.produce(new ReflectiveClassBuildItem(false, true, "org.infinispan.rest.resources.ProtobufResource$ProtoSchema"));
-      reflectionClass.produce(new ReflectiveClassBuildItem(false, true, "org.infinispan.rest.resources.ProtobufResource$ValidationError"));
-
+      reflectionClass.produce(ReflectiveClassBuildItem.builder("org.infinispan.rest.resources.CacheManagerResource$NamedCacheConfiguration").methods().build());
+      reflectionClass.produce(ReflectiveClassBuildItem.builder("org.infinispan.rest.resources.CacheManagerResource$CacheInfo").methods().fields().build());
+      reflectionClass.produce(ReflectiveClassBuildItem.builder("org.infinispan.rest.resources.ProtobufResource$ProtoSchema").fields().build());
+      reflectionClass.produce(ReflectiveClassBuildItem.builder("org.infinispan.rest.resources.ProtobufResource$ValidationError").fields().build());
       // Register various Elytron classes
       String[] elytronClasses = new String[]{
             "org.wildfly.security.http.digest.DigestMechanismFactory",
@@ -190,11 +187,10 @@ class InfinispanServerProcessor {
             "org.wildfly.security.credential.SecretKeyCredential",
             "org.wildfly.security.credential.X509CertificateChainPrivateCredential",
       };
-      reflectionClass.produce(new ReflectiveClassBuildItem(true, false, elytronClasses));
-
-      reflectionClass.produce(new ReflectiveClassBuildItem(false, false, CounterManagerConfigurationBuilder.class));
-      reflectionClass.produce(new ReflectiveClassBuildItem(false, false, AnchoredKeysConfigurationBuilder.class));
-      reflectionClass.produce(new ReflectiveClassBuildItem(false, false, RespServerConfigurationBuilder.class));
+      reflectionClass.produce(ReflectiveClassBuildItem.builder(elytronClasses).methods().build());
+      reflectionClass.produce(ReflectiveClassBuildItem.builder(CounterManagerConfigurationBuilder.class).build());
+      reflectionClass.produce(ReflectiveClassBuildItem.builder(AnchoredKeysConfigurationBuilder.class).build());
+      reflectionClass.produce(ReflectiveClassBuildItem.builder(RespServerConfigurationBuilder.class).build());
    }
 
    @BuildStep
@@ -217,14 +213,14 @@ class InfinispanServerProcessor {
       }
 
       if (!classInfos.isEmpty()) {
-         reflectiveClass.produce(new ReflectiveClassBuildItem(methods, fields,
-               classInfos.stream().map(ClassInfo::toString).toArray(String[]::new)));
+         reflectiveClass.produce(ReflectiveClassBuildItem.builder(classInfos.stream().map(ClassInfo::toString).toArray(String[]::new))
+                 .methods(methods).fields(fields).build());
       }
    }
 
    private void registerClass(BuildProducer<ReflectiveClassBuildItem> reflectionClass, Class<?> clazz, boolean methods,
                               boolean fields, boolean ignoreNested) {
-      reflectionClass.produce(new ReflectiveClassBuildItem(methods, fields, clazz));
+      reflectionClass.produce(ReflectiveClassBuildItem.builder(clazz).methods(methods).fields(fields).build());
       if (!ignoreNested) {
          Class<?>[] declaredClasses = clazz.getDeclaredClasses();
          for (Class<?> declaredClass : declaredClasses)
