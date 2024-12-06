@@ -89,8 +89,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
          //we already have all specified flags
          return this;
       } else {
-         return new DecoratedCache<>(this.cacheImplementation, lockOwner, EnumUtil.mergeBitSets(this.flags, newFlags));
+         return newInstance(this.cacheImplementation, lockOwner, EnumUtil.mergeBitSets(this.flags, newFlags));
       }
+   }
+
+   protected DecoratedCache<K, V> newInstance(CacheImpl<K, V> impl, Object lockOwner, long newFlags) {
+      return new DecoratedCache<>(this.cacheImplementation, lockOwner, newFlags);
    }
 
    @Override
@@ -98,7 +102,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
       if (lockOwner == null) {
          return this.cacheImplementation;
       } else {
-         return new DecoratedCache<>(this.cacheImplementation, lockOwner, 0L);
+         return newInstance(this.cacheImplementation, lockOwner, 0L);
       }
    }
 
@@ -129,7 +133,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    public AdvancedCache<K, V> lockAs(Object lockOwner) {
       Objects.requireNonNull(lockOwner);
       if (lockOwner != this.lockOwner) {
-         return new DecoratedCache<>(cacheImplementation, lockOwner, flags);
+         return newInstance(cacheImplementation, lockOwner, flags);
       }
       return this;
    }
