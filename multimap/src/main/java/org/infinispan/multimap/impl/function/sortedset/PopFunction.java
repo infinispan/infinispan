@@ -37,11 +37,12 @@ public final class PopFunction<K, V> implements SortedSetBucketBaseFunction<K, V
       Optional<SortedSetBucket<V>> existing = entryView.peek();
       if (existing.isPresent()) {
          SortedSetBucket<V> sortedSetBucket = existing.get();
-         Collection<ScoredValue<V>> poppedValues = sortedSetBucket.pop(min, count);
-         if (sortedSetBucket.size() == 0) {
+         var result = sortedSetBucket.pop(min, count);
+         Collection<ScoredValue<V>> poppedValues = result.result();
+         if (result.bucket().size() == 0) {
             entryView.remove();
          } else {
-            entryView.set(sortedSetBucket);
+            entryView.set(result.bucket());
          }
          return poppedValues;
       }

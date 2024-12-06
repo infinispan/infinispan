@@ -35,14 +35,16 @@ public final class SRemoveFunction<K, V> implements SetBucketBaseFunction<K, V, 
    @Override
    public Long apply(EntryView.ReadWriteEntryView<K, SetBucket<V>> entryView) {
       Optional<SetBucket<V>> existing = entryView.peek();
-      Long removed = 0L;
-      if (!existing.isPresent()) {
+      long removed = 0L;
+      if (existing.isEmpty()) {
          return 0L;
       }
-      var s = existing.get();
-      var initSize = s.size();
-      if (s.removeAll(values)) {
-         removed = Long.valueOf(initSize - s.size());
+      SetBucket<V> s = existing.get();
+      int initSize = s.size();
+      var res = s.removeAll(values);
+      s = res.bucket();
+      if (res.result()) {
+         removed = initSize - s.size();
       }
       // don't change the cache if the value already exists. it avoids replicating a
       // no-op

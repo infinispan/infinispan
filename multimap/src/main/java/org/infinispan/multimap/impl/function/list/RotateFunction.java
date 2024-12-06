@@ -1,16 +1,16 @@
 package org.infinispan.multimap.impl.function.list;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
-import org.infinispan.multimap.impl.ListBucket;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.functional.EntryView;
+import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.multimap.impl.ListBucket;
 
 /**
  * Serializable function used by
@@ -33,7 +33,9 @@ public final class RotateFunction<K, V> implements ListBucketBaseFunction<K, V, 
    public V apply(EntryView.ReadWriteEntryView<K, ListBucket<V>> entryView) {
       Optional<ListBucket<V>> existing = entryView.peek();
       if (existing.isPresent()) {
-         return existing.get().rotate(rotateRight);
+         ListBucket.ListBucketResult<V, V> result = existing.get().rotate(rotateRight);
+         entryView.set(result.bucket());
+         return result.result();
       }
       // key does not exist
       return null;
