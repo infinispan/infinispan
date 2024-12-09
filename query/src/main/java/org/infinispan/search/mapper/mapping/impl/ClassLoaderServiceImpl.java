@@ -1,15 +1,14 @@
 package org.infinispan.search.mapper.mapping.impl;
 
 import java.io.InputStream;
-import java.lang.invoke.MethodHandles;
 import java.net.URL;
 import java.util.ServiceLoader;
 
 import org.hibernate.search.engine.environment.classpath.spi.ClassResolver;
 import org.hibernate.search.engine.environment.classpath.spi.ResourceResolver;
 import org.hibernate.search.engine.environment.classpath.spi.ServiceResolver;
-import org.hibernate.search.util.common.logging.impl.LoggerFactory;
 import org.infinispan.search.mapper.log.impl.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * An implementation of the {@link ClassResolver}, {@link ResourceResolver} and {@link ServiceResolver}
@@ -20,7 +19,7 @@ import org.infinispan.search.mapper.log.impl.Log;
  */
 public final class ClassLoaderServiceImpl implements ClassResolver, ResourceResolver, ServiceResolver {
 
-   private static final Log log = LoggerFactory.make( Log.class, MethodHandles.lookup() );
+   private static final Log log = LogFactory.getLog(ClassLoaderServiceImpl.class, Log.class);
 
    private final ClassLoader classLoader;
 

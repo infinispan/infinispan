@@ -1,6 +1,5 @@
 package org.infinispan.search.mapper.model.impl;
 
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
@@ -18,10 +17,10 @@ import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeModel;
 import org.hibernate.search.util.common.AssertionFailure;
 import org.hibernate.search.util.common.impl.ReflectionHelper;
-import org.hibernate.search.util.common.logging.impl.LoggerFactory;
 import org.hibernate.search.util.common.reflect.spi.ValueReadHandle;
 import org.hibernate.search.util.common.reflect.spi.ValueReadHandleFactory;
 import org.infinispan.search.mapper.log.impl.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A very simple introspector roughly following Java Beans conventions.
@@ -31,7 +30,7 @@ import org.infinispan.search.mapper.log.impl.Log;
 public class InfinispanBootstrapIntrospector extends AbstractPojoHCAnnBootstrapIntrospector
       implements PojoBootstrapIntrospector {
 
-   private static final Log log = LoggerFactory.make(Log.class, MethodHandles.lookup());
+   private static final Log log = LogFactory.getLog(InfinispanBootstrapIntrospector.class, Log.class);
 
    private final ValueReadHandleFactory valueReadHandleFactory;
    private final PojoHCannOrmGenericContextHelper genericContextHelper;
