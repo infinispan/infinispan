@@ -21,6 +21,13 @@ public @interface TestForIssue {
     *
     * @return The JIRA issue keys
     */
-   String[] jiraKey();
+   String[] jiraKey() default "";
+
+   /**
+    * The keys of the GitHub issues tested.
+    *
+    * @return The GitHub issue keys
+    */
+   String[] githubKey() default "";
 
 }
