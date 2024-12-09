@@ -1,16 +1,16 @@
 package org.infinispan.multimap.impl.function.list;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
-import org.infinispan.multimap.impl.ListBucket;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
+
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.functional.EntryView;
+import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.multimap.impl.ListBucket;
 
 /**
  * Serializable function used by
@@ -36,12 +36,15 @@ public final class RemoveCountFunction<K, V> implements ListBucketBaseFunction<K
       Optional<ListBucket<V>> existing = entryView.peek();
       if (existing.isPresent()) {
          ListBucket<V> prevBucket = existing.get();
-         long removedCount = existing.get().remove(count, element);
-         if (prevBucket.isEmpty()) {
+         ListBucket.ListBucketResult<Long, V> result = prevBucket.remove(count, element);
+         if (result.bucket().isEmpty()) {
             // if the list is empty, remove
             entryView.remove();
+            return result.result();
          }
-         return removedCount;
+
+         entryView.set(result.bucket());
+         return result.result();
       }
       // key does not exist
       return 0L;

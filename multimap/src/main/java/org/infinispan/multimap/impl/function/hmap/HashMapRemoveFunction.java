@@ -27,23 +27,21 @@ public class HashMapRemoveFunction<K, HK, HV> extends HashMapBucketBaseFunction<
 
    @Override
    public Integer apply(EntryView.ReadWriteEntryView<K, HashMapBucket<HK, HV>> view) {
-      int res = 0;
       Optional<HashMapBucket<HK, HV>> existing = view.peek();
+      if (existing.isEmpty()) return 0;
 
-      if (existing.isPresent()) {
-         HashMapBucket<HK, HV> bucket = existing.get();
-         res = bucket.removeAll(keys);
+      HashMapBucket<HK, HV> bucket = existing.get();
+      var res = bucket.removeAll(keys);
 
-         if (bucket.isEmpty()) {
-            view.remove();
-         } else {
-            view.set(bucket);
-         }
+      if (res.bucket().isEmpty()) {
+         view.remove();
+      } else {
+         view.set(res.bucket());
       }
-      return res;
+      return res.response();
    }
 
-   @SuppressWarnings({"rawtypes", "deprecation"})
+   @SuppressWarnings({"rawtypes"})
    private static class Externalizer implements AdvancedExternalizer<HashMapRemoveFunction> {
 
       @Override

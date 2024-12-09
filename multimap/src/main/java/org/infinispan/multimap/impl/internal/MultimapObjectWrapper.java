@@ -49,10 +49,11 @@ public class MultimapObjectWrapper<T> implements Comparable<MultimapObjectWrappe
       if (this == obj) return true;
       if (!(obj instanceof MultimapObjectWrapper<?> other)) return false;
 
-      if (object instanceof byte[] && other.object instanceof byte[])
-         return Arrays.equals((byte[]) object, (byte[]) other.object);
+      return wrappedEquals(this.object, other.object);
+   }
 
-      return Objects.equals(object, other.object);
+   public boolean wrappedEquals(Object obj) {
+      return MultimapObjectWrapper.wrappedEquals(this.object, obj);
    }
 
    public Double asDouble() {
@@ -99,5 +100,12 @@ public class MultimapObjectWrapper<T> implements Comparable<MultimapObjectWrappe
          return "MultimapObjectWrapper{" + "object=" + Util.hexDump((byte[])object) + '}';
       }
       return "MultimapObjectWrapper{" + "object=" + object + '}';
+   }
+
+   public static boolean wrappedEquals(Object thisWrapped, Object thatWrapped) {
+      if (thisWrapped instanceof byte[] left && thatWrapped instanceof byte[] right)
+         return Arrays.equals(left, right);
+
+      return Objects.equals(thisWrapped, thatWrapped);
    }
 }

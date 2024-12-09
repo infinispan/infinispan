@@ -35,10 +35,12 @@ public final class TrimFunction<K, V> implements ListBucketBaseFunction<K, V, Bo
    public Boolean apply(EntryView.ReadWriteEntryView<K, ListBucket<V>> entryView) {
       Optional<ListBucket<V>> existing = entryView.peek();
       if (existing.isPresent()) {
-         ListBucket bucket = existing.get();
-         bucket.trim(from, to);
-         if (bucket.isEmpty()) {
+         ListBucket<V> bucket = existing.get();
+         ListBucket<V> trimmed = bucket.trim(from, to);
+         if (trimmed.isEmpty()) {
             entryView.remove();
+         } else {
+            entryView.set(trimmed);
          }
          return true;
       }
