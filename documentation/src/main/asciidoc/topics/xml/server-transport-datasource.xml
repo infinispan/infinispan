@@ -1,7 +1,7 @@
 <infinispan>
     <jgroups>
         <stack name="jdbc" extends="tcp">
-            <JDBC_PING stack.combine="REPLACE" stack.position="MPING" />
+            <JDBC_PING2 stack.combine="REPLACE" stack.position="MPING" />
         </stack>
     </jgroups>
     <cache-container>
