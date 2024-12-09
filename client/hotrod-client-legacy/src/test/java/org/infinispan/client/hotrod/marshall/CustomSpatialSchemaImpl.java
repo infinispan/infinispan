@@ -43,7 +43,12 @@ public class CustomSpatialSchemaImpl extends SpatialSchemaImpl implements Genera
    }
 
    @Override
+   public String getProtoFileName() {
+      return "flight.proto";
+   }
+
+   @Override
    public void registerSchema(SerializationContext serCtx) {
-      serCtx.registerProtoFiles(org.infinispan.protostream.FileDescriptorSource.fromString(getProtoFileName(), getProtoFile()));
+      serCtx.registerProtoFiles(org.infinispan.protostream.FileDescriptorSource.fromString("flight.proto", getProtoFile()));
    }
 }
