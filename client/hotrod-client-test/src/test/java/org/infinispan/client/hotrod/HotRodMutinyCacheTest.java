@@ -46,19 +46,17 @@ public class HotRodMutinyCacheTest<K, V> extends AbstractMutinyCacheSingleServer
             .timeout(Duration.ofSeconds(15))
             .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
             .build();
-      final CacheEntryVersion version1 = new CacheEntryVersionImpl(1);
       assertEntry(key, null, kvGenerator, await(cache.put(key, v1, options)));
       kvGenerator.assertValueEquals(v1, await(cache.get(key)));
-      assertEntry(key, v1, kvGenerator, await(cache.getEntry(key)), options, version1);
+      assertEntry(key, v1, kvGenerator, await(cache.getEntry(key)), options);
 
       CacheWriteOptions optionsV1 = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(20))
             .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(30))
             .build();
-      final CacheEntryVersion version2 = new CacheEntryVersionImpl(2);
       final V v2 = kvGenerator.generateValue(cacheName, 1);
-      assertEntry(key, v1, kvGenerator, await(cache.put(key, v2, optionsV1)), options, version1);
-      assertEntry(key, v2, kvGenerator, await(cache.getEntry(key)), optionsV1, version2);
+      assertEntry(key, v1, kvGenerator, await(cache.put(key, v2, optionsV1)), options);
+      assertEntry(key, v2, kvGenerator, await(cache.getEntry(key)), optionsV1);
    }
 
    @MethodSource("parameterized")
@@ -71,9 +69,8 @@ public class HotRodMutinyCacheTest<K, V> extends AbstractMutinyCacheSingleServer
             .timeout(Duration.ofSeconds(15))
             .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
             .build();
-      final CacheEntryVersion version1 = new CacheEntryVersionImpl(1);
       assertAwaitEquals(null, cache.putIfAbsent(key, v1, options));
-      assertEntry(key, v1, kvGenerator, await(cache.getEntry(key)), options, version1);
+      assertEntry(key, v1, kvGenerator, await(cache.getEntry(key)), options);
 
       final V other = kvGenerator.generateValue(cacheName, 1);
       CacheEntry<K, V> previousEntry = await(cache.putIfAbsent(key, other));
@@ -81,7 +78,7 @@ public class HotRodMutinyCacheTest<K, V> extends AbstractMutinyCacheSingleServer
 
       kvGenerator.assertValueEquals(v1, previousEntry.value());
       kvGenerator.assertValueEquals(v1, await(cache.get(key)));
-      assertEntry(key, v1, kvGenerator, await(cache.getEntry(key)), options, version1);
+      assertEntry(key, v1, kvGenerator, await(cache.getEntry(key)), options);
    }
 
    @MethodSource("parameterized")
@@ -95,7 +92,7 @@ public class HotRodMutinyCacheTest<K, V> extends AbstractMutinyCacheSingleServer
             .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
             .build();
       assertAwaitEquals(true, cache.setIfAbsent(key, value, options));
-      assertEntry(key, value, kvGenerator, await(cache.getEntry(key)), options, new CacheEntryVersionImpl(1));
+      assertEntry(key, value, kvGenerator, await(cache.getEntry(key)), options);
 
       final V other = kvGenerator.generateValue(cacheName, 1);
       assertAwaitEquals(false, cache.setIfAbsent(key, other));
@@ -103,7 +100,7 @@ public class HotRodMutinyCacheTest<K, V> extends AbstractMutinyCacheSingleServer
       final V actual = await(cache.get(key));
       kvGenerator.assertValueEquals(value, actual);
 
-      assertEntry(key, value, kvGenerator, await(cache.getEntry(key)), options, new CacheEntryVersionImpl(1));
+      assertEntry(key, value, kvGenerator, await(cache.getEntry(key)), options);
    }
 
    @MethodSource("parameterized")
@@ -116,21 +113,19 @@ public class HotRodMutinyCacheTest<K, V> extends AbstractMutinyCacheSingleServer
             .timeout(Duration.ofSeconds(15))
             .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
             .build();
-      final CacheEntryVersion version1 = new CacheEntryVersionImpl(1);
       await(cache.set(key, v1, options));
-      assertEntry(key, v1, kvGenerator, await(cache.getEntry(key)), options, version1);
+      assertEntry(key, v1, kvGenerator, await(cache.getEntry(key)), options);
 
       final CacheWriteOptions optionsV2 = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(20))
             .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(30))
             .build();
-      final CacheEntryVersion version2 = new CacheEntryVersionImpl(2);
       final V v2 = kvGenerator.generateValue(cacheName, 1);
       await(cache.set(key, v2, optionsV2));
       V actual = await(cache.get(key));
       kvGenerator.assertValueEquals(v2, actual);
 
-      assertEntry(key, v2, kvGenerator, await(cache.getEntry(key)), optionsV2, version2);
+      assertEntry(key, v2, kvGenerator, await(cache.getEntry(key)), optionsV2);
    }
 
    @MethodSource("parameterized")
@@ -142,11 +137,10 @@ public class HotRodMutinyCacheTest<K, V> extends AbstractMutinyCacheSingleServer
             .timeout(Duration.ofSeconds(15))
             .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
             .build();
-      final CacheEntryVersion cev = new CacheEntryVersionImpl(1);
       assertEntry(key, null, kvGenerator, await(cache.put(key, value, options)));
 
-      assertEntry(key, value, kvGenerator, await(cache.getEntry(key)), options, cev);
-      assertEntry(key, value, kvGenerator, await(cache.getAndRemove(key)), options, cev);
+      assertEntry(key, value, kvGenerator, await(cache.getEntry(key)), options);
+      assertEntry(key, value, kvGenerator, await(cache.getAndRemove(key)), options);
 
       assertAwaitEquals(null, cache.get(key));
    }
@@ -167,9 +161,8 @@ public class HotRodMutinyCacheTest<K, V> extends AbstractMutinyCacheSingleServer
             .build();
       await(cache.putAll(entries, options));
 
-      final CacheEntryVersion cve = new CacheEntryVersionImpl(1);
       for (Map.Entry<K, V> entry : entries.entrySet()) {
-         assertEntry(entry.getKey(), entry.getValue(), kvGenerator, await(cache.getEntry(entry.getKey())), options, cve);
+         assertEntry(entry.getKey(), entry.getValue(), kvGenerator, await(cache.getEntry(entry.getKey())), options);
       }
 
       await(cache.clear());
@@ -235,12 +228,11 @@ public class HotRodMutinyCacheTest<K, V> extends AbstractMutinyCacheSingleServer
             .stream().collect(Collectors.toMap(CacheEntry::key, e -> e));
 
       assertEquals(entries.size(), retrieved.size());
-      final CacheEntryVersion cve = new CacheEntryVersionImpl(1);
       MapKVHelper<K, V> helper = new MapKVHelper<>(entries, kvGenerator);
       for (Map.Entry<K, CacheEntry<K, V>> entry : retrieved.entrySet()) {
          V expected = helper.get(entry.getKey());
          assertNotNull(expected);
-         assertEntry(entry.getKey(), expected, kvGenerator, entry.getValue(), options, cve);
+         assertEntry(entry.getKey(), expected, kvGenerator, entry.getValue(), options);
       }
 
       for (Map.Entry<K, V> entry : entries.entrySet()) {
@@ -258,15 +250,15 @@ public class HotRodMutinyCacheTest<K, V> extends AbstractMutinyCacheSingleServer
             .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
             .build();
 
-      // Returns false for an unexistent entry.
+      // Returns false for a nonexistent entry.
       final CacheEntryVersion cve0 = new CacheEntryVersionImpl(0);
       assertAwaitEquals(false, cache.replace(key, initialValue, cve0));
       assertEntry(key, null, kvGenerator, await(cache.put(key, initialValue, options)));
-      assertEntry(key, initialValue, kvGenerator, await(cache.getEntry(key)));
+      var entry = await(cache.getEntry(key));
+      assertEntry(key, initialValue, kvGenerator, entry);
 
       final V replaceValue = kvGenerator.generateValue(cacheName, 1);
-      final CacheEntryVersion cve2 = new CacheEntryVersionImpl(2);
-      assertAwaitEquals(true, cache.replace(key, replaceValue, cve2));
+      assertAwaitEquals(true, cache.replace(key, replaceValue, entry.metadata().version()));
 
       // Returns false for the wrong version.
       final V anyValue = kvGenerator.generateValue(cacheName, 1);
