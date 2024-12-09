@@ -16,6 +16,7 @@ import org.infinispan.server.resp.hll.internal.ExplicitSet;
             CompactSet.class,
             GlobMatchFilterConverter.class,
             RespTypeFilterConverter.class,
+            org.infinispan.server.resp.json.JsonDocBucket.class
       },
       schemaFileName = "persistence.resp.proto",
       schemaFilePath = "proto/generated",
