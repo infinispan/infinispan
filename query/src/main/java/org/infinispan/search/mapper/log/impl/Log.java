@@ -1,11 +1,14 @@
 package org.infinispan.search.mapper.log.impl;
 
+import static org.jboss.logging.Logger.Level.WARN;
+
 import org.hibernate.search.engine.environment.classpath.spi.ClassLoadingException;
 import org.hibernate.search.util.common.SearchException;
 import org.hibernate.search.util.common.logging.impl.ClassFormatter;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.FormatWith;
+import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.ValidIdRange;
@@ -39,4 +42,19 @@ public interface Log extends BasicLogger {
    SearchException invalidEntitySuperType(String entityName,
          @FormatWith(ClassFormatter.class) Class<?> expectedSuperType,
          @FormatWith(ClassFormatter.class) Class<?> actualJavaType);
+
+   @LogMessage(level = WARN)
+   @Message(id = 14507, value = "Data is volatile, while indexes are stored on filesystem, " +
+         "in the meantime the index startup mode configuration is set to none: " +
+         "this setting could lead to some inconsistency between the indexes and the data " +
+         "in case of restarting the nodes.")
+   void volatileDataPersistentIndexesStartupModeNone();
+
+   @LogMessage(level = WARN)
+   @Message(id = 14508, value = "Data is persistent, while indexes are volatile, " +
+         "in the meantime the index startup mode configuration is set to none or purge: " +
+         "this setting could lead to some inconsistency between the indexes and the data " +
+         "in case of restarting the nodes.")
+   void persistentDataVolatileIndexesStartupModeNoneOrPurge();
+
 }
