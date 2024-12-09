@@ -1,0 +1,29 @@
+[id='cli_start-{context}']
+= Connecting to {brandname} Servers running in a container
+Establishing a connection with {brandname} running in a container through the CLI.
+
+.Prerequisites
+
+* You have at least one {brandname} server instance running  in a container.
+
+.Procedure
+
+. Open a terminal.
+. Start the CLI.
++
+* *Podman or Docker:*
++
+[source,options="nowrap",subs=attributes+]
+----
+podman/docker run -it --net=host infinispan/cli
+----
+
+. Run the `connect` command to connect  to a {brandname} server running on the default port of `11222`. Enter your username and password when prompted. 
++
+[source,options="nowrap",subs=attributes+]
+----
+[disconnected]> connect
+Username: your_user_name
+Password: ********
+[6b0130c153e3-50183@cluster//containers/default]>
+----
