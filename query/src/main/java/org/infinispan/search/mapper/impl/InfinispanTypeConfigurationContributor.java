@@ -1,6 +1,5 @@
 package org.infinispan.search.mapper.impl;
 
-import java.lang.invoke.MethodHandles;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -11,12 +10,12 @@ import org.hibernate.search.mapper.pojo.mapping.spi.PojoMappingConfigurationCont
 import org.hibernate.search.mapper.pojo.mapping.spi.PojoMappingConfigurationContributor;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeModel;
-import org.hibernate.search.util.common.logging.impl.LoggerFactory;
 import org.infinispan.search.mapper.log.impl.Log;
+import org.infinispan.util.logging.LogFactory;
 
 class InfinispanTypeConfigurationContributor implements PojoMappingConfigurationContributor {
 
-   private static final Log log = LoggerFactory.make(Log.class, MethodHandles.lookup());
+   private static final Log log = LogFactory.getLog(InfinispanTypeConfigurationContributor.class, Log.class);
 
    private final PojoBootstrapIntrospector introspector;
 

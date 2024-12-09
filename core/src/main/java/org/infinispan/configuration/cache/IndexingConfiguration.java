@@ -28,7 +28,7 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
          .initializer(HashSet::new).build();
    public static final AttributeDefinition<IndexStorage> STORAGE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STORAGE, IndexStorage.FILESYSTEM)
          .immutable().build();
-   public static final AttributeDefinition<IndexStartupMode> STARTUP_MODE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STARTUP_MODE, IndexStartupMode.NONE)
+   public static final AttributeDefinition<IndexStartupMode> STARTUP_MODE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STARTUP_MODE, IndexStartupMode.AUTO)
          .immutable().build();
    public static final AttributeDefinition<String> PATH = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PATH, null, String.class).immutable().build();
    public static final AttributeDefinition<IndexingMode> INDEXING_MODE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.INDEXING_MODE, IndexingMode.AUTO)
