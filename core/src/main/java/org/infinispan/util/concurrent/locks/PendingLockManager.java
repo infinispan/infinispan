@@ -2,6 +2,7 @@ package org.infinispan.util.concurrent.locks;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import org.infinispan.context.impl.TxInvocationContext;
 
@@ -41,4 +42,10 @@ public interface PendingLockManager {
     */
    PendingLockPromise checkPendingTransactionsForKeys(TxInvocationContext<?> ctx, Collection<Object> keys, long time, TimeUnit unit);
 
+   /**
+    * Execute an operation on the existing pending promises.
+    *
+    * @param consumer: The consumer to handle each {@link PendingLockPromise}.
+    */
+   void onPendingPromises(Consumer<PendingLockPromise> consumer);
 }

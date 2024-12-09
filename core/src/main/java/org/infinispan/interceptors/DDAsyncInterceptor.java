@@ -36,6 +36,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.expiration.impl.TouchCommand;
+import org.infinispan.util.concurrent.locks.deadlock.DeadlockProbeCommand;
 
 /**
  * Interface for async interceptors using double-dispatch.
@@ -162,6 +163,11 @@ public abstract class DDAsyncInterceptor extends BaseAsyncInterceptor implements
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
          throws Throwable {
+      return handleDefault(ctx, command);
+   }
+
+   @Override
+   public Object visitDeadlockProbeCommand(TxInvocationContext ctx, DeadlockProbeCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 

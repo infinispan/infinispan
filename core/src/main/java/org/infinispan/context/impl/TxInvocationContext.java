@@ -57,11 +57,39 @@ public interface TxInvocationContext<T extends AbstractCacheTransaction> extends
    void addAffectedKey(Object key);
 
    /**
+    * Register a single key inspected by a lock command.
+    *
+    * @param key: The key inspected by the lock command.
+    */
+   void addInspectedKey(Object key);
+
+   /**
+    * Register a collection of keys inspected by a lock command.
+    *
+    * @param keys: The collection of keys.
+    */
+   void addAllInspectedKeys(Collection<?> keys);
+
+   /**
+    * Collection keeping track of all keys inspected by lock commands during this transaction.
+    *
+    * @return The collection with all keys inspected during pessimistic locking.
+    */
+   Set<Object> getInspectedKeys();
+
+   /**
     *
     * @return true if the current transaction is in a valid state to perform operations on (i.e.,RUNNING or PREPARING)
     * or false otherwise.
     */
    boolean isTransactionValid();
+
+   /**
+    * Check the transaction status and verify if it is (or should) roll back.
+    *
+    * @return <code>true</code> if transaction rolled back, <code>false</code>, otherwise.
+    */
+   boolean isTransactionRolledBack();
 
    boolean isImplicitTransaction();
 
