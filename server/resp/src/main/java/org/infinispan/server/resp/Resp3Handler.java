@@ -18,7 +18,7 @@ import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.commands.json.EmbeddedJsonCache;
+import org.infinispan.server.resp.json.EmbeddedJsonCache;
 import org.infinispan.util.concurrent.BlockingManager;
 
 import io.netty.channel.ChannelHandlerContext;

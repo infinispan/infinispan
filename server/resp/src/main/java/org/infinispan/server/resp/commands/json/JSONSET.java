@@ -8,6 +8,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.json.EmbeddedJsonCache;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import com.jayway.jsonpath.Configuration;
@@ -62,7 +63,7 @@ public class JSONSET extends RespCommand implements Resp3Command {
          handler.writer().syntaxError();
          return handler.myStage();
       }
-      boolean nx=false, xx=false;
+      boolean nx = false, xx = false;
       if (arguments.size() == 4) {
          String arg = (new String(arguments.get(3), StandardCharsets.UTF_8).toUpperCase());
          switch (arg) {
@@ -78,8 +79,7 @@ public class JSONSET extends RespCommand implements Resp3Command {
          }
       }
       EmbeddedJsonCache ejc = handler.getJsonDocCache();
-      CompletionStage<String> result = ejc.set(key, new String(value, StandardCharsets.UTF_8),
-            new String(path, StandardCharsets.UTF_8), nx, xx);
+      CompletionStage<String> result = ejc.set(key, value, path, nx, xx);
       CompletionStage<String> cs = result;
       return handler.stageToReturn(cs, ctx, JSONSET::jsonSetBiConsumer);
    }

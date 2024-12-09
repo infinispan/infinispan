@@ -1,7 +1,8 @@
-package org.infinispan.server.resp.commands.json;
+package org.infinispan.server.resp.json;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
@@ -11,9 +12,6 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.server.resp.json.JsonDocBucket;
-import org.infinispan.server.resp.json.JsonDocGetFunction;
-import org.infinispan.server.resp.json.JsonDocSetFunction;
 
 /**
  * SetCache with Set methods implementation
@@ -41,7 +39,7 @@ public class EmbeddedJsonCache {
     * @param key, the name of the set
     * @return the set with values if such exist, or null if the key is not present
     */
-   public CompletionStage<String> get(byte[] key, String[] paths, String space, String newline, String indent) {
+   public CompletionStage<String> get(byte[] key, List<byte[]> paths, byte[] space, byte[] newline, byte[] indent) {
       return readWriteMap.eval(key, new JsonDocGetFunction(paths, space, newline, indent));
    }
 
@@ -52,7 +50,7 @@ public class EmbeddedJsonCache {
     * @param value, the element to be inserted
     * @return {@link CompletionStage} containing a {@link Void}
     */
-   public CompletionStage<String> set(byte[] key, String value, String path, boolean nx, boolean xx) {
+   public CompletionStage<String> set(byte[] key, byte[] value, byte[] path, boolean nx, boolean xx) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       requireNonNull(value, ERR_VALUE_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new JsonDocSetFunction(value, path, nx, xx));

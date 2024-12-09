@@ -1,6 +1,5 @@
 package org.infinispan.server.resp.commands.json;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -8,6 +7,7 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.json.EmbeddedJsonCache;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import com.jayway.jsonpath.Configuration;
@@ -46,8 +46,7 @@ public class JSONGET extends RespCommand implements Resp3Command {
          handler.writer().wrongArgumentNumber(this);
          return handler.myStage();
       }
-      String[] paths = arguments.stream().skip(args.pos()).map(i -> new String(i, StandardCharsets.UTF_8))
-            .toArray(String[]::new);
+      List<byte[]> paths = arguments.subList(args.pos, arguments.size());
       EmbeddedJsonCache ejc = handler.getJsonDocCache();
       CompletionStage<String> result = ejc.get(key, paths, args.space(), args.newline(), args.indent());
       CompletionStage<String> cs = result;
@@ -59,22 +58,22 @@ public class JSONGET extends RespCommand implements Resp3Command {
     * next argument to process
     */
    private Args parseArgs(List<byte[]> arguments) {
-      String indent = "";
-      String newline = "";
-      String space = "";
+      byte[] indent = null;
+      byte[] newline = null;
+      byte[] space = null;
       int pos = 1;
       while (pos < arguments.size()) {
          switch ((new String(arguments.get(pos))).toUpperCase()) {
             case "INDENT":
-               indent = new String(arguments.get(++pos));
+               indent = arguments.get(++pos);
                ++pos;
                break;
             case "NEWLINE":
-               newline = new String(arguments.get(++pos));
+               newline = arguments.get(++pos);
                ++pos;
                break;
             case "SPACE":
-               space = new String(arguments.get(++pos));
+               space = arguments.get(++pos);
                ++pos;
                break;
             default:
@@ -84,6 +83,6 @@ public class JSONGET extends RespCommand implements Resp3Command {
       return new Args(indent, newline, space, pos);
    }
 
-   record Args(String indent, String newline, String space, int pos) {
+   record Args(byte[] indent, byte[] newline, byte[] space, int pos) {
    }
 }

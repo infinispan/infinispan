@@ -15,15 +15,15 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  */
 @ProtoTypeId(ProtoStreamTypeIds.RESP_JSONDOC_BUCKET)
 public class JsonDocBucket {
-   final String value;
+   final byte[] value;
 
    @ProtoFactory
-   public JsonDocBucket(String value) {
+   public JsonDocBucket(byte[] value) {
       this.value = value;
    }
 
    @ProtoField(number = 1)
-   public String getValue() {
+   public byte[] getValue() {
       return this.value;
    }
 

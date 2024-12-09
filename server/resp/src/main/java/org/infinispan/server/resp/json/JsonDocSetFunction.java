@@ -1,8 +1,11 @@
 package org.infinispan.server.resp.json;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Set;
 
@@ -10,7 +13,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.server.resp.ExternalizerIds;
 import org.infinispan.server.resp.serialization.RespConstants;
 import org.infinispan.util.function.SerializableFunction;
 
@@ -23,8 +26,11 @@ import com.jayway.jsonpath.PathNotFoundException;
 
 public class JsonDocSetFunction
       implements SerializableFunction<EntryView.ReadWriteEntryView<byte[], JsonDocBucket>, String> {
-   String value;
-   String path;
+   public static final String ERR_VALUE_CAN_T_BE_NULL = "value can't be null";
+   public static final String ERR_PATH_CAN_T_BE_NULL = "path can't be null";
+
+   byte[] value;
+   byte[] path;
    boolean nx;
    boolean xx;
 
@@ -33,7 +39,9 @@ public class JsonDocSetFunction
          .mappingProvider(new com.jayway.jsonpath.spi.mapper.JacksonMappingProvider())
          .build();
 
-   public JsonDocSetFunction(String value, String path, boolean nx, boolean xx) {
+   public JsonDocSetFunction(byte[] value, byte[] path, boolean nx, boolean xx) {
+      requireNonNull(value, ERR_VALUE_CAN_T_BE_NULL);
+      requireNonNull(path, ERR_PATH_CAN_T_BE_NULL);
       this.value = value;
       this.path = path;
       this.nx = nx;
@@ -53,7 +61,7 @@ public class JsonDocSetFunction
          if (xx) {
             return null;
          }
-         if (!"$".equals(path)) {
+         if (!isRoot()) {
             throw new CacheException("new objects must be created at root");
          }
          entryView.set(new JsonDocBucket(value));
@@ -62,7 +70,7 @@ public class JsonDocSetFunction
       if (nx) {
          return null;
       }
-      if ("$".equals(path)) {
+      if (isRoot()) {
          // Updating the root node is not allowed by jsonpath
          // replacing the whole doc here
          entryView.set(new JsonDocBucket(value));
@@ -71,12 +79,13 @@ public class JsonDocSetFunction
       try {
          var rootObjectNode = (ObjectNode) JSONUtil.objectMapper.readTree(doc.getValue());
          var jpCtx = JsonPath.using(config).parse(rootObjectNode);
-         JsonNode node = jpCtx.read(path);
+         var pathStr = new String(path, StandardCharsets.UTF_8);
+         JsonNode node = jpCtx.read(pathStr);
          if (node.isNull() && xx || !node.isNull() && nx) {
             return null;
          }
-         jpCtx.set(path, newNode);
-         entryView.set(new JsonDocBucket(JSONUtil.objectMapper.writeValueAsString(rootObjectNode)));
+         jpCtx.set(pathStr, newNode);
+         entryView.set(new JsonDocBucket(JSONUtil.objectMapper.writeValueAsBytes(rootObjectNode)));
          return RespConstants.OK;
       } catch (PathNotFoundException ex) {
          // mimicking redis. Not an error, do nothing and return null
@@ -86,20 +95,24 @@ public class JsonDocSetFunction
       }
    }
 
+   private boolean isRoot() {
+      return path != null && path.length == 1 && path[0] == '$';
+   }
+
    private static class Externalizer implements AdvancedExternalizer<JsonDocSetFunction> {
 
       @Override
       public void writeObject(ObjectOutput output, JsonDocSetFunction object) throws IOException {
-         output.writeUTF(object.value);
-         output.writeUTF(object.path);
+         output.writeObject(object.value);
+         output.writeObject(object.path);
          output.writeBoolean(object.nx);
          output.writeBoolean(object.xx);
       }
 
       @Override
       public JsonDocSetFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         String value = input.readUTF();
-         String path = input.readUTF();
+         byte[] value = (byte[]) input.readObject();
+         byte[] path = (byte[]) input.readObject();
          boolean nx = input.readBoolean();
          boolean xx = input.readBoolean();
          return new JsonDocSetFunction(value, path, nx, xx);

@@ -46,6 +46,4 @@ public interface ExternalizerIds {
    Integer SET_POP_FUNCTION = 2084;
    Integer REPLACE_LIST_FUNCTION = 2085;
    Integer SET_MISMEMBER_FUNCTION = 2086;
-   Integer JSONDOC_GET_FUNCTION = 2087;
-   Integer JSONDOC_SET_FUNCTION = 2088;
 }
