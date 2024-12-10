@@ -208,12 +208,12 @@
       <!-- These versions must be kept in sync with ${version.quarkus} -->
       <version.quarkus>3.8.4</version.quarkus>
       <version.graalvm>23.1.5</version.graalvm>
-      <version.jandex>3.1.8</version.jandex>
+      <version.jandex>3.2.3</version.jandex>
 
       <version.opentelemetry>1.32.0</version.opentelemetry>
       <version.opentelemetry.alpha>1.32.0-alpha</version.opentelemetry.alpha>
 
-      <version.smallrye-mutiny>2.6.0</version.smallrye-mutiny>
+      <version.smallrye-mutiny>2.6.2</version.smallrye-mutiny>
       <!-- Spring 6, Spring Boot 3 versions -->
       <version.spring>6.1.16</version.spring>
       <version.spring.boot>3.2.12</version.spring.boot>
