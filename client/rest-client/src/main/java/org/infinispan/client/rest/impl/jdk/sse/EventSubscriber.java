@@ -39,8 +39,8 @@ public class EventSubscriber implements Flow.Subscriber<String>, Closeable {
          Map<String, String> map = lines.stream()
                .map(l -> l.split(":", 2))
                .filter(pair -> !pair[0].isEmpty())
-               .collect(toMap(pair -> pair[0], pair -> pair[1].trim(), String::concat));
-         listener.onMessage(map.get("id"), map.get("event"), map.get("data"));
+               .collect(toMap(pair -> pair[0], pair -> pair[1], (s, s2) -> s + '\n' + s2));
+         listener.onMessage(map.get("id"), trim(map.get("event")), trim(map.get("data")));
          lines.clear();
       } else {
          lines.add(line);
@@ -79,9 +79,14 @@ public class EventSubscriber implements Flow.Subscriber<String>, Closeable {
       };
    }
 
+   @SuppressWarnings("OptionalGetWithoutIsPresent")
    public static Charset charsetFrom(HttpHeaders headers) {
       String type = headers.firstValue("Content-type").orElse("text/html; charset=utf-8");
       MediaType mediaType = MediaType.parseList(type).findFirst().get();
       return mediaType.getCharset();
+   }
+
+   private static String trim(String value) {
+      return value == null ? null : value.trim();
    }
 }
