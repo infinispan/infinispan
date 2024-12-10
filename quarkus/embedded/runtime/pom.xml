@@ -44,6 +44,12 @@
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-core-graalvm</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.prometheus</groupId>
+                    <artifactId>prometheus-metrics-exposition-formats</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.jgroups</groupId>
