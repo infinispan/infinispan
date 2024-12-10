@@ -65,7 +65,7 @@ See the xref:multi_command[MULTI] command.
 
 * link:https://redis.io/commands/flushall[FLUSHALL]
 +
-NOTE: This command behaves like `FLUSHDB` since {brandname} does not support multiple Redis databases yet.
+NOTE: This command behaves like `FLUSHDB` and flushes only the current database.
 
 * link:https://redis.io/commands/flushdb[FLUSHDB]
 
@@ -180,8 +180,7 @@ NOTE: This command always returns an empty list of modules.
 
 * link:https://redis.io/commands/multi[MULTI] [[multi_command]]
 +
-NOTE: The current implementation has a relaxed isolation level. Redis offers serializable transactions, but {brandname}
-provides a read-uncommitted isolation.
+NOTE: The current implementation has a relaxed isolation level. Redis offers serializable transactions.
 
 * link:https://redis.io/commands/persist[PERSIST]
 
@@ -289,6 +288,8 @@ the element. The operation is not atomic, it could remove the element from sourc
 * https://redis.io/docs/latest/commands/srem[SREM]
 
 * link:https://redis.io/commands/sscan[SSCAN]
+
+* link:https://redis.io/commands/lcs[STRALGO LCS]
 
 * link:https://redis.io/commands/strlen[STRLEN]
 
