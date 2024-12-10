@@ -3,7 +3,7 @@
 PROGNAME=$(basename "$0")
 DIRNAME=$(dirname "$0")
 
-count() { echo $#; }
+count() { echo "$@" | wc -l; }
 
 # Get the PID
 if [ "$1" = "" ]; then

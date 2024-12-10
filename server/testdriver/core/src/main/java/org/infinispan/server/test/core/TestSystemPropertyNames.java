@@ -86,6 +86,13 @@ public class TestSystemPropertyNames {
     * Specifies whether a docker volume should be created and mounted to the container
     */
    public static final String INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED= PREFIX + "container.volume";
+
+   /**
+    * Specifies the soft and hard ulimit to use in the container.
+    * Follows the format: `<code>soft,hard</code>`
+    */
+   public static final String INFINISPAN_TEST_SERVER_CONTAINER_ULIMIT = PREFIX + "container.ulimit";
+
    /**
     * Specifies the name of the keycloak base image
     */
