@@ -37,14 +37,14 @@ public abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() {
       for (int i = 0; i < nodeCount(); i++) {
-         EmbeddedCacheManager cm = createCacheManager();
-         cacheManagers.add(cm);
+         createAndAddCacheManager();
       }
       startCaches(cacheName());
    }
 
-   protected EmbeddedCacheManager createCacheManager() {
-      return TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration());
+   protected void createAndAddCacheManager() {
+      //noinspection resource
+      addClusterEnabledCacheManager(hotRodCacheConfiguration());
    }
 
    void startCaches(String cacheName) {
