@@ -17,6 +17,27 @@ updates:
       interval: daily
     open-pull-requests-limit: 10
     rebase-strategy: disabled
+
+  # 15.0.x
+  - package-ecosystem: maven
+    directory: "/"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+    rebase-strategy: disabled
+    ignore:
+      - dependency-name: "io.opentelemetry:opentelemetry-api"
+      - dependency-name: "*"
+        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
+    target-branch: "15.0.x"
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+    rebase-strategy: disabled
+    target-branch: "15.0.x"
+
   # 14.0.x Security Updates Only
   - package-ecosystem: maven
     directory: "/"
