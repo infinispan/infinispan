@@ -44,7 +44,7 @@ public class RestServerResource {
       assertEquals("default", security.at("security-realms").at(0).at("name").asString());
       assertEquals("hotrod", endpoint.at("hotrod-connector").at("name").asString());
       assertEquals("rest", endpoint.at("rest-connector").at("name").asString());
-      assertEquals("memcachedCache", endpoint.at("memcached-connector").at("cache").asString());
+      assertEquals("memcachedCache2", endpoint.at("memcached-connector").at("cache").asString());
    }
 
    @Test
