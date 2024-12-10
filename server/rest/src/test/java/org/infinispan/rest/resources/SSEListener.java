@@ -36,7 +36,7 @@ public class SSEListener implements RestEventListener {
 
    @Override
    public void onOpen(RestResponseInfo response) {
-      log.tracef("open");
+      log.warnf("open");
       if (response.status() < 300) {
          openLatch.countDown();
       }
@@ -44,7 +44,7 @@ public class SSEListener implements RestEventListener {
 
    @Override
    public void onMessage(String id, String type, String data) {
-      log.tracef("Received id=%s, type=%s, data=%s", id, type, data);
+      log.warnf("Received id=%s, type=%s, data=%s", id, type, data);
       this.events.add(new KeyValuePair<>(type, data));
    }
 
