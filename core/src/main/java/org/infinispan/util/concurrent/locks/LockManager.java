@@ -98,6 +98,14 @@ public interface LockManager {
    Object getOwner(Object key);
 
    /**
+    * Retrieves the pending owners enqueued to acquire the lock.
+    *
+    * @param key: The key to verify.
+    * @return A collection of lock owners waiting to acquire the lock.
+    */
+   Collection<Object> getPendingOwners(Object key);
+
+   /**
     * Prints lock information for all locks.
     *
     * @return the lock information

@@ -109,6 +109,7 @@ import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.util.UserRaisedFunctionalException;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.util.concurrent.locks.deadlock.DeadlockProbeCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -814,6 +815,12 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       // Nothing to do
+      return null;
+   }
+
+   @Override
+   public Object visitDeadlockProbeCommand(TxInvocationContext ctx, DeadlockProbeCommand command) throws Throwable {
+      // No op.
       return null;
    }
 
