@@ -1,13 +1,14 @@
 package org.infinispan.it.endpoints;
 
-import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
+import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.testng.Assert.assertEquals;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.testng.annotations.Test;
 
@@ -29,8 +30,8 @@ public class ProtoRegistrationJsonTest extends JsonIndexingProtobufStoreTest {
             .build());
 
       //initialize server-side serialization context via rest endpoint
-      RestEntity protoFile = RestEntity.create(MediaType.TEXT_PLAIN, sci.getProtoFile());
-      RestResponse response = join(restClient.cache(PROTOBUF_METADATA_CACHE_NAME).put(sci.getProtoFileName(), protoFile));
+      RestEntity protoFile = RestEntity.create(MediaType.TEXT_PLAIN, ((GeneratedSchema) sci).getProtoFile());
+      RestResponse response = join(restClient.cache(PROTOBUF_METADATA_CACHE_NAME).put(((GeneratedSchema) sci).getProtoFileName(), protoFile));
       assertEquals(response.status(), 204);
 
       return remoteCacheManager;
