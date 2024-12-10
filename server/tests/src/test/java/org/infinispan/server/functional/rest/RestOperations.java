@@ -172,23 +172,25 @@ public class RestOperations {
       var client = SERVERS.rest().withClientConfiguration(builder).create();
 
       // backwards compatible events
-      log.debug("Testing backwards compatible events");
+      log.warn("Testing backwards compatible events");
       var url = "/rest/v2/container?action=listen";
       testTasksEventsWith(url, client, serialization, false);
       testTasksEventsWith(url + "&pretty=true", client, serialization, false);
 
       // all
-      log.debug("Testing all events (no filter)");
+      log.warn("Testing all events (no filter)");
       url = "/rest/v2/container?action=listen&category=all";
       testTasksEventsWith(url, client, serialization, true);
       testTasksEventsWith(url + "&pretty=true", client, serialization, true);
 
       for (var combination : Util.generatePowerSet(List.of("config", "lifecycle", "cluster", "security", "tasks", "cross-site"))) {
-         log.debugf("Testing filter category=%s", String.join(",", combination));
+         log.warnf("Testing filter category=%s", String.join(",", combination));
          var tasks = combination.contains("tasks");
          url = "/rest/v2/container?action=listen&category=%s".formatted(String.join(",", combination));
          testTasksEventsWith(url, client, serialization, tasks);
+         log.warnf("Testing (pretty) filter category=%s", String.join(",", combination));
          testTasksEventsWith(url + "&pretty=true", client, serialization, tasks);
+         log.warnf("Done testing filter category=%s", String.join(",", combination));
       }
    }
 
