@@ -10,7 +10,7 @@ import java.util.Optional;
  * @author wburns
  */
 @ConfigRoot(phase = ConfigPhase.RUN_TIME)
-@ConfigMapping(prefix = "infinispan-embedded")
+@ConfigMapping(prefix = "quarkus.infinispan-embedded")
 public interface InfinispanEmbeddedRuntimeConfig {
 
     /**
