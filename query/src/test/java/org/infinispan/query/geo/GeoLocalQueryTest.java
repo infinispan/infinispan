@@ -108,6 +108,43 @@ public class GeoLocalQueryTest extends SingleCacheManagerTest {
             .containsExactlyInAnyOrder("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni");
 
       ickle = String.format("from %s r " +
+            "where r.location within circle(41.90847031512531, 12.455633288333539, 150m) ", RESTAURANT_ENTITY_NAME);
+      query = cache.query(ickle);
+      list = query.list();
+      assertThat(list).extracting(Restaurant::name)
+            .containsExactlyInAnyOrder("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni");
+
+      ickle = String.format("from %s r " +
+            "where r.location within circle(41.90847031512531, 12.455633288333539, 0.15 km) ", RESTAURANT_ENTITY_NAME);
+      query = cache.query(ickle);
+      list = query.list();
+      assertThat(list).extracting(Restaurant::name)
+            .containsExactlyInAnyOrder("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni");
+
+      ickle = String.format("from %s r " +
+            "where r.location within circle(41.90847031512531, 12.455633288333539, 0.0932057mi) ", RESTAURANT_ENTITY_NAME);
+      query = cache.query(ickle);
+      list = query.list();
+      assertThat(list).extracting(Restaurant::name)
+            .containsExactlyInAnyOrder("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni");
+
+      ickle = String.format("from %s r " +
+            "where r.location within circle(41.90847031512531, 12.455633288333539, :distance yd) ", RESTAURANT_ENTITY_NAME);
+      query = cache.query(ickle);
+      query.setParameter("distance", 164.042);
+      list = query.list();
+      assertThat(list).extracting(Restaurant::name)
+            .containsExactlyInAnyOrder("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni");
+
+      ickle = String.format("from %s r " +
+            "where r.location within circle(41.90847031512531, 12.455633288333539, :distance nmi) ", RESTAURANT_ENTITY_NAME);
+      query = cache.query(ickle);
+      query.setParameter("distance", 0.0809935);
+      list = query.list();
+      assertThat(list).extracting(Restaurant::name)
+            .containsExactlyInAnyOrder("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi", "Magazzino Scipioni");
+
+      ickle = String.format("from %s r " +
             "where r.location within circle(41.90847031512531, 12.455633288333539, :distance) ", RESTAURANT_ENTITY_NAME);
       query = cache.query(ickle);
       query.setParameter("distance", 250);
@@ -146,6 +183,38 @@ public class GeoLocalQueryTest extends SingleCacheManagerTest {
             .filteredOn(item -> item[1].equals(65.78997502576355)).extracting(item -> item[0]).first().isEqualTo("La Locanda di Pietro");
       assertThat(projectList)
             .filteredOn(item -> item[1].equals(622.8579549605669)).extracting(item -> item[0]).first().isEqualTo("Scialla The Original Street Food");
+
+      ickle = String.format("select r.name, distance(r.location, 41.90847031512531, 12.455633288333539, km) from %s r", RESTAURANT_ENTITY_NAME);
+      projectQuery = cache.query(ickle);
+      projectList = projectQuery.list();
+      assertThat(projectList)
+            .filteredOn(item -> item[1].equals(0.06578997502576356)).extracting(item -> item[0]).first().isEqualTo("La Locanda di Pietro");
+      assertThat(projectList)
+            .filteredOn(item -> item[1].equals(0.6228579549605668)).extracting(item -> item[0]).first().isEqualTo("Scialla The Original Street Food");
+
+      ickle = String.format("select r.name, distance(r.location, 41.90847031512531, 12.455633288333539, mi) from %s r", RESTAURANT_ENTITY_NAME);
+      projectQuery = cache.query(ickle);
+      projectList = projectQuery.list();
+      assertThat(projectList)
+            .filteredOn(item -> item[1].equals(0.04087999521902312)).extracting(item -> item[0]).first().isEqualTo("La Locanda di Pietro");
+      assertThat(projectList)
+            .filteredOn(item -> item[1].equals(0.3870259900683551)).extracting(item -> item[0]).first().isEqualTo("Scialla The Original Street Food");
+
+      ickle = String.format("select r.name, distance(r.location, 41.90847031512531, 12.455633288333539, yd) from %s r", RESTAURANT_ENTITY_NAME);
+      projectQuery = cache.query(ickle);
+      projectList = projectQuery.list();
+      assertThat(projectList)
+            .filteredOn(item -> item[1].equals(71.9487915854807)).extracting(item -> item[0]).first().isEqualTo("La Locanda di Pietro");
+      assertThat(projectList)
+            .filteredOn(item -> item[1].equals(681.165742520305)).extracting(item -> item[0]).first().isEqualTo("Scialla The Original Street Food");
+
+      ickle = String.format("select r.name, distance(r.location, 41.90847031512531, 12.455633288333539, nm) from %s r", RESTAURANT_ENTITY_NAME);
+      projectQuery = cache.query(ickle);
+      projectList = projectQuery.list();
+      assertThat(projectList)
+            .filteredOn(item -> item[1].equals(0.03552374461434317)).extracting(item -> item[0]).first().isEqualTo("La Locanda di Pietro");
+      assertThat(projectList)
+            .filteredOn(item -> item[1].equals(0.33631639036747674)).extracting(item -> item[0]).first().isEqualTo("Scialla The Original Street Food");
 
       ickle = String.format("from %s r order by distance(r.location, 41.90847031512531, 12.455633288333539)", RESTAURANT_ENTITY_NAME);
       query = cache.query(ickle);

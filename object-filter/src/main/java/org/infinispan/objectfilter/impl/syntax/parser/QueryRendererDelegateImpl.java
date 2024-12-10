@@ -18,6 +18,7 @@ import org.infinispan.objectfilter.impl.ql.QueryRendererDelegate;
 import org.infinispan.objectfilter.impl.syntax.ComparisonExpr;
 import org.infinispan.objectfilter.impl.syntax.ConstantValueExpr;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
+import org.infinispan.objectfilter.impl.syntax.SpatialWithinCircleExpr;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.CacheValuePropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
@@ -104,6 +105,8 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    private final String queryString;
 
    private boolean asteriskCount = false;
+
+   private String unit;
 
    QueryRendererDelegateImpl(String queryString, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
       this.queryString = queryString;
@@ -426,8 +429,9 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       Object latValue = parameterValue(Double.class, lat);
       Object lonValue = parameterValue(Double.class, lon);
       Object radiusValue = parameterValue(Double.class, radius);
+      Object unitValue = parameterValue(String.class, (unit == null) ? SpatialWithinCircleExpr.DEFAULT_UNIT : unit);
       if (phase == Phase.WHERE) {
-         expressionBuilder.whereBuilder().addSpatialWithinCircle(property, latValue, lonValue, radiusValue);
+         expressionBuilder.whereBuilder().addSpatialWithinCircle(property, latValue, lonValue, radiusValue, unitValue);
       } else {
          throw new IllegalStateException();
       }
@@ -488,6 +492,31 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    public void predicateSpatialNotWithinPolygon(List<String> vector) {
       expressionBuilder.whereBuilder().pushNot();
       predicateSpatialWithinPolygon(vector);
+   }
+
+   @Override
+   public void meters() {
+      unit = "m";
+   }
+
+   @Override
+   public void kilometers() {
+      unit = "km";
+   }
+
+   @Override
+   public void miles() {
+      unit = "mi";
+   }
+
+   @Override
+   public void yards() {
+      unit = "yd";
+   }
+
+   @Override
+   public void nauticalMiles() {
+      unit = "nm";
    }
 
    private void checkAnalyzed(PropertyPath<?> propertyPath, boolean expectAnalyzed) {
@@ -798,6 +827,9 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    public void spatialDistance(String lat, String lon) {
       functionArgs.add(Double.parseDouble(lat));
       functionArgs.add(Double.parseDouble(lon));
+      if (unit != null) {
+         functionArgs.add(unit);
+      }
    }
 
    private PropertyPath<TypeDescriptor<TypeMetadata>> resolveAlias(PropertyPath<TypeDescriptor<TypeMetadata>> path) {

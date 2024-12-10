@@ -304,7 +304,7 @@ geoShape
     ;
 
 geoCircle
-    : circle_key^ LPAREN! lat=atom COMMA! lon=atom COMMA! radius=atom RPAREN!
+    : circle_key^ LPAREN! lat=atom COMMA! lon=atom COMMA! radius=distanceVal RPAREN!
     ;
 
 geoBoundingBox
@@ -340,7 +340,11 @@ additiveExpression
    ;
 
 distanceFunction
-   : distance_key^ LPAREN! propertyReference COMMA! lat=atom COMMA! lon=atom RPAREN!
+   : distance_key^ LPAREN! propertyReference COMMA! lat=atom COMMA! lon=atom distanceFunctionUnit? RPAREN!
+   ;
+
+distanceFunctionUnit
+   : COMMA! unit=unitVal
    ;
 
 quantifiedExpression
@@ -405,6 +409,20 @@ atom
 	//validate using Scopes if it is enabled or not to use parameterSpecification.. if not generate an exception
    |  LPAREN! expressionOrVector RPAREN!
    |  vectorSearch
+   ;
+
+distanceVal
+   :  constant unit=unitVal?
+   |  parameterSpecification unit=unitVal? { if (!isParameterUsageEnabled()) throw new RecognitionException(input); }
+	//validate using Scopes if it is enabled or not to use parameterSpecification.. if not generate an exception
+   ;
+
+unitVal
+   : meters_key
+   | kilometers_key
+   | miles_key
+   | yards_key
+   | nautical_miles_key
    ;
 
 parameterSpecification
@@ -624,6 +642,32 @@ polygon_key
 on_key
    :   {validateSoftKeyword("on")}?=> IDENTIFIER -> ON[$IDENTIFIER]
 	;
+
+meters_key
+   :  {validateSoftKeyword("m")}?=> IDENTIFIER -> METERS[$IDENTIFIER]
+   |  {validateSoftKeyword("meters")}?=> IDENTIFIER -> METERS[$IDENTIFIER]
+   ;
+
+kilometers_key
+   :  {validateSoftKeyword("km")}?=> IDENTIFIER -> KILOMETERS[$IDENTIFIER]
+   |  {validateSoftKeyword("kilometers")}?=> IDENTIFIER -> KILOMETERS[$IDENTIFIER]
+   ;
+
+miles_key
+   :  {validateSoftKeyword("mi")}?=> IDENTIFIER -> MILES[$IDENTIFIER]
+   |  {validateSoftKeyword("miles")}?=> IDENTIFIER -> MILES[$IDENTIFIER]
+   ;
+
+yards_key
+   :  {validateSoftKeyword("yd")}?=> IDENTIFIER -> YARDS[$IDENTIFIER]
+   |  {validateSoftKeyword("yards")}?=> IDENTIFIER -> YARDS[$IDENTIFIER]
+   ;
+
+nautical_miles_key
+   :  {validateSoftKeyword("nm")}?=> IDENTIFIER -> NAUTICAL_MILES[$IDENTIFIER]
+   |  {validateSoftKeyword("nmi")}?=> IDENTIFIER -> NAUTICAL_MILES[$IDENTIFIER]
+   |  {validateSoftKeyword("nauticalmiles")}?=> IDENTIFIER -> NAUTICAL_MILES[$IDENTIFIER]
+   ;
 
 indices_key
    :   {validateSoftKeyword("indices")}?=> IDENTIFIER -> INDICES[$IDENTIFIER]

@@ -114,6 +114,16 @@ public interface QueryRendererDelegate<TypeDescriptor> {
 
    void predicateSpatialNotWithinPolygon(List<String> vector);
 
+   void meters();
+
+   void kilometers();
+
+   void miles();
+
+   void yards();
+
+   void nauticalMiles();
+
    enum Occur {
       MUST("+"),
       FILTER("#"),
