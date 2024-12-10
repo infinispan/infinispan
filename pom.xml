@@ -1498,7 +1498,12 @@
          <dependency>
             <groupId>io.prometheus</groupId>
             <artifactId>simpleclient_common</artifactId>
-            <version>${version.io.prometheus}</version>
+            <version>${version.io.prometheus.client}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>prometheus-metrics-exposition-formats</artifactId>
+            <version>${version.io.prometheus.server}</version>
          </dependency>
          <dependency>
             <groupId>org.mariadb.jdbc</groupId>
