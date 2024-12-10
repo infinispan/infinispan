@@ -9,14 +9,11 @@ import org.infinispan.server.core.security.UserPrincipal;
  * @since 7.0
  */
 
-public final class SimpleUserPrincipal implements UserPrincipal {
-   private final String name;
-
-   public SimpleUserPrincipal(final String name) {
+public record SimpleUserPrincipal(String name) implements UserPrincipal {
+   public SimpleUserPrincipal {
       if (name == null) {
          throw new IllegalArgumentException("name is null");
       }
-      this.name = name;
    }
 
    @Override
