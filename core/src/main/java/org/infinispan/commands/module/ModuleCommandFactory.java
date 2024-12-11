@@ -19,7 +19,10 @@ import org.infinispan.util.ByteString;
  *
  * @author Manik Surtani
  * @since 5.0
+ * @deprecated since 15.1. This will class will be removed in 16.0 when commands will be marshalled via Protostream
+ * <a href="https://github.com/infinispan/infinispan/issues/13247">#13247</a>
  */
+@Deprecated(since = "15.1", forRemoval = true)
 @Scope(Scopes.GLOBAL)
 public interface ModuleCommandFactory {
 
