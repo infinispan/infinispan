@@ -11,7 +11,7 @@ For instance:
 Query<Transaction> q = remoteCache.query("from sample_bank_account.Transaction where amount > 20");
 
 // Embedded Query using Java Objects
-Query<Transaction> q = cache.query("from org.infinispan.sample.Book where price > 20");
+Query<Book> q = cache.query("from org.infinispan.sample.Book where price > 20");
 
 // Execute the query
 QueryResult<Book> queryResult = q.execute();
