@@ -1,0 +1,25 @@
+name: Dependabot Auto Merge
+
+on:
+  pull_request_target:
+    branches:
+      - main
+      - 14.0.x
+      - 15.*.x
+
+    types:
+      - opened
+      - reopened
+
+jobs:
+  autoMerge:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Approve PR for auto-merge
+        run: gh pr merge --auto --rebase ${{ github.event.pull_request.number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.API_TOKEN_GITHUB }}
