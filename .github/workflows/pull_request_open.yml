@@ -59,7 +59,7 @@ jobs:
     steps:
       - name: Get Labels Action
         run: |
-         labels=$(gh api repos/${GH_REPO}/labels -q 'map(.name)')
+         labels=$(gh api repos/${GH_REPO}/labels -q 'map(.name)' --paginate)
          echo "LABELS=$labels" >> $GITHUB_ENV
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
