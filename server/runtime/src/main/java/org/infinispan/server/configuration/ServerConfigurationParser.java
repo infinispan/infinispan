@@ -54,6 +54,7 @@ import org.infinispan.server.core.configuration.IpFilterConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 import org.infinispan.server.core.configuration.SaslConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
+import org.infinispan.server.memcached.configuration.MemcachedProtocol;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.server.security.PasswordCredentialSource;
@@ -1661,7 +1662,8 @@ public class ServerConfigurationParser implements ConfigurationParser {
       if (endpoint.connectors().isEmpty()) {
          endpoint.addConnector(HotRodServerConfigurationBuilder.class).implicitConnector(true).startTransport(false).socketBinding(socketBinding);
          endpoint.addConnector(RespServerConfigurationBuilder.class).implicitConnector(true).startTransport(false).socketBinding(socketBinding);
-         endpoint.addConnector(MemcachedServerConfigurationBuilder.class).implicitConnector(true).startTransport(false).socketBinding(socketBinding);
+         endpoint.addConnector(MemcachedServerConfigurationBuilder.class).implicitConnector(true).startTransport(false).socketBinding(socketBinding)
+               .protocol(endpoint.securityRealm() == null ? MemcachedProtocol.BINARY : MemcachedProtocol.AUTO);
          RestServerConfigurationBuilder rest = endpoint.addConnector(RestServerConfigurationBuilder.class).implicitConnector(true).startTransport(false).socketBinding(socketBinding);
          configureEndpoint(reader.getProperties(), endpoint, rest);
       }
