@@ -132,7 +132,7 @@
       <version.arquillian>1.8.1.Final</version.arquillian>
       <version.blockhound>1.0.9.RELEASE</version.blockhound>
       <version.bouncycastle>1.70</version.bouncycastle>
-      <version.byteman>4.0.22</version.byteman>
+      <version.byteman>4.0.23</version.byteman>
       <version.caffeine>3.1.8</version.caffeine>
       <version.commons.compress>1.26.1</version.commons.compress>
       <version.console>15.0.11.Final</version.console>
