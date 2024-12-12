@@ -4,7 +4,6 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.ASYNC_EX
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_CALLBACK_HANDLER;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_CLIENT_SUBJECT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_SERVER_NAME;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_FAILURE_TIMEOUT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.BATCH_SIZE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CACHE_CONFIGURATION_SUFFIX;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CACHE_MARSHALLER;
@@ -39,6 +38,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_BALANCING_STRATEGY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SASL_MECHANISM;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SASL_PROPERTIES_PREFIX;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_FAILURE_TIMEOUT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_LIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SNI_HOST_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SO_TIMEOUT;
@@ -327,18 +327,15 @@ public class Configuration implements org.infinispan.api.configuration.Configura
     * @throws IllegalArgumentException if a cache configuration with the same name already exists
     */
    public RemoteCacheConfiguration addRemoteCache(String name, Consumer<RemoteCacheConfigurationBuilder> builderConsumer) {
-      synchronized (remoteCaches) {
-         if (remoteCaches.containsKey(name)) {
+      return remoteCaches.compute(name, (ignore, existent) -> {
+         if (existent != null)
             throw Log.HOTROD.duplicateCacheConfiguration(name);
-         } else {
-            RemoteCacheConfigurationBuilder builder = new RemoteCacheConfigurationBuilder(null, name);
-            builderConsumer.accept(builder);
-            builder.validate();
-            RemoteCacheConfiguration configuration = builder.create();
-            remoteCaches.put(name, configuration);
-            return configuration;
-         }
-      }
+
+         RemoteCacheConfigurationBuilder builder = new RemoteCacheConfigurationBuilder(null, name);
+         builderConsumer.accept(builder);
+         builder.validate();
+         return builder.create();
+      });
    }
 
    /**
