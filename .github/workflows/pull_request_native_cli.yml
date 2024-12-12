@@ -3,10 +3,12 @@ name: Native CLI
 on:
   push:
     branches:
+      - feature/*
       - main
       - 15.*.x
   pull_request:
     branches:
+      - feature/*
       - main
       - 15.*.x
 
