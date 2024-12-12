@@ -11,10 +11,10 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -99,11 +99,16 @@ public class ClusterInvalidatedNearCacheBloomTest extends MultiHotRodServersTest
    public void testInvalidationFromOtherClientModification() {
       int key = 0;
 
+      int bloomFilterVersion = client2.bloomFilterVersion();
+
       client1.get(key, null).expectNearGetMiss(key);
       client2.get(key, null).expectNearGetMiss(key);
 
       String value = "v1";
       client1.put(key, value).expectNearPreemptiveRemove(key);
+
+      // We wait until the pending bloom updates is complete to avoid out of turn updates
+      eventuallyEquals(bloomFilterVersion + 2, () -> client2.bloomFilterVersion());
 
       client2.get(key, value).expectNearGetMissWithValue(key, value);
       client2.get(key, value).expectNearGetValue(key, value);
