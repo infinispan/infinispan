@@ -627,8 +627,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
             throw new IllegalArgumentException("Both marshaller and marshallerClass attributes are present, but marshaller is not an instance of marshallerClass");
       }
 
-      Map<String, RemoteCacheConfiguration> remoteCaches = remoteCacheBuilders.entrySet().stream().collect(Collectors.toMap(
-            Map.Entry::getKey, e -> e.getValue().create()));
+      // Collect to a concurrent map to handle concurrent access for read/writes.
+      Map<String, RemoteCacheConfiguration> remoteCaches = remoteCacheBuilders.entrySet().stream()
+            .collect(Collectors.toConcurrentMap(Map.Entry::getKey, e -> e.getValue().create()));
 
       return new Configuration(asyncExecutorFactory.create(), balancingStrategyFactory, classLoader == null ? null : classLoader.get(),
             clientIntelligence, connectionPool.create(), connectionTimeout, consistentHashImpl,

@@ -323,18 +323,15 @@ public class Configuration {
     * @throws IllegalArgumentException if a cache configuration with the same name already exists
     */
    public RemoteCacheConfiguration addRemoteCache(String name, Consumer<RemoteCacheConfigurationBuilder> builderConsumer) {
-      synchronized (remoteCaches) {
-         if (remoteCaches.containsKey(name)) {
+      return remoteCaches.compute(name, (ignore, existent) -> {
+         if (existent != null)
             throw Log.HOTROD.duplicateCacheConfiguration(name);
-         } else {
-            RemoteCacheConfigurationBuilder builder = new RemoteCacheConfigurationBuilder(null, name);
-            builderConsumer.accept(builder);
-            builder.validate();
-            RemoteCacheConfiguration configuration = builder.create();
-            remoteCaches.put(name, configuration);
-            return configuration;
-         }
-      }
+
+         RemoteCacheConfigurationBuilder builder = new RemoteCacheConfigurationBuilder(null, name);
+         builderConsumer.accept(builder);
+         builder.validate();
+         return builder.create();
+      });
    }
 
    /**
