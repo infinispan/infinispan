@@ -16,6 +16,8 @@
     <properties>
         <test.image>infinispan-quarkus-test</test.image>
         <version.fabric8.maven.plugin>0.44.0</version.fabric8.maven.plugin>
+        <infinispan.server.log.path>${project.build.directory}</infinispan.server.log.path>
+        <log4j.configurationFile>${project.build.testOutputDirectory}/configuration/log4j2.xml</log4j.configurationFile>
     </properties>
 
     <dependencies>

@@ -10,3 +10,6 @@ runtime
 graal runtime
 4. Build the project
    * `mvn clean install -P native -am -pl quarkus`
+
+# Server Integration Test Logging
+You can modify the logging levels used in the server integration tests by modifying `quarkus/integration-tests/server/src/test/resources/configuration/log4j2.xml`.
