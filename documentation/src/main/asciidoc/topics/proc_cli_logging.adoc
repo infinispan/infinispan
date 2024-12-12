@@ -63,3 +63,50 @@ configuration, which means the root configuration is used instead:
 ----
 logging remove org.infinispan
 ----
+
+== Access logging
+
+The command also allows for enabling access logs during runtime to analyze issues.
+You can enable the access logging for a specific endpoint and utilize the CLI command to parse those files to generate server-side metrics.
+This technique is useful in identifying whether latency is an issue from the connection between client and server or intra-cluster.
+
+The workflow for this analysis involves a few steps:
+
+. Enable access logging with the CLI for the endpoint you are analyzing.
++
+[source,options="nowrap",subs=attributes+]
+----
+logging set --level=TRACE org.infinispan.RESP_ACCESS_LOG
+----
++
+In this example, enabling the access log for the RESP endpoint.
+
+. Run the tests to reproduce the issue or workload to measure.
+. Disable access logging with the CLI.
++
+[source,options="nowrap",subs=attributes+]
+----
+logging set --level=INFO org.infinispan.RESP_ACCESS_LOG
+----
+
+. Download the access log files.
++
+The link:{cli_docs}#server1[`server report`] command is also capable of downloading the log files.
+
+With the access log files available, you can utilize the CLI command to analyze the server's behavior more deeply.
+The link:{cli_docs}#troubleshoot1[CLI command] provides information about long-running commands, segmentation per client, and operations.
+
+[discrete]
+=== Categories
+
+{brandname} provides an access log for each endpoint available on the server.
+You can edit the logging level to enable each endpoint individually.
+The loggers available for each endpoint are:
+
+- `org.infinispan.HOTROD_ACCESS_LOG`: Enables the access log for the link:{server_docs}#hot_rod[Hot Rod endpoint].
+- `org.infinispan.REST_ACCESS_LOG`: Enables the access log for the link:{server_docs}#rest[REST endpoint].
+- `org.infinispan.MEMCACHED_ACCESS_LOG`: Enables the access log for the link:{server_docs}#memcached[Memcached endpoint].
+- `org.infinispan.RESP_ACCESS_LOG`: Enables the access log for the link:{server_docs}#resp[RESP endpoint].
+
+Observe that each logger can be activated individually and independently of the others.
+
