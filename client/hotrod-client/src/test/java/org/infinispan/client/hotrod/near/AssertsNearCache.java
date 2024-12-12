@@ -265,6 +265,10 @@ class AssertsNearCache<K, V> {
       return false;
    }
 
+   public int bloomFilterVersion() {
+      return ((InvalidatedNearRemoteCache<K, V>) remote).getCurrentVersion();
+   }
+
    public boolean isNearCacheConnected() {
       return this.nearCacheService.get().isConnected();
    }
