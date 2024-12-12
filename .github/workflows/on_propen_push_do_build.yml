@@ -3,6 +3,7 @@ on:
   pull_request:
   push:
     branches:
+      - feature/*
       - main
       - 15.[0-9]+.x
       - 14.0.x
