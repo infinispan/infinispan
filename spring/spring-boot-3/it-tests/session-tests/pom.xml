@@ -7,11 +7,11 @@
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-spring-boot3-starter-parent</artifactId>
       <version>15.1.1-SNAPSHOT</version>
-      <relativePath>../pom.xml</relativePath>
+      <relativePath>../../pom.xml</relativePath>
    </parent>
 
-   <name>Infinispan Spring Boot 3 Starter Integration Test</name>
-   <artifactId>infinispan-spring-boot3-starter-tests</artifactId>
+   <name>Infinispan Spring Boot 3 Starter Session Integration Test</name>
+   <artifactId>infinispan-spring-boot3-starter-session-tests</artifactId>
 
    <dependencies>
       <dependency>
@@ -56,24 +56,4 @@
          <scope>test</scope>
       </dependency>
    </dependencies>
-
-   <profiles>
-      <profile>
-         <id>java-alt-test</id>
-         <activation>
-            <activeByDefault>false</activeByDefault>
-         </activation>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-surefire-plugin</artifactId>
-                  <configuration>
-                     <skipTests>true</skipTests>
-                  </configuration>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-   </profiles>
 </project>

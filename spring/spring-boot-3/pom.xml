@@ -69,6 +69,7 @@
     <modules>
         <module>embedded</module>
         <module>remote</module>
-        <module>tests</module>
+        <module>it-tests/session-tests</module>
+        <module>it-tests/embedded-tests</module>
     </modules>
 </project>
