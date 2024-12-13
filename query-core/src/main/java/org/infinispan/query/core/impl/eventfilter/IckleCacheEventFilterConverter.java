@@ -29,7 +29,7 @@ public class IckleCacheEventFilterConverter<K, V, C> extends AbstractCacheEventF
    }
 
    @ProtoField(1)
-   public IckleFilterAndConverter<K, V> getFilterAndConverter() {
+   protected IckleFilterAndConverter<K, V> getFilterAndConverter() {
       return filterAndConverter;
    }
 
