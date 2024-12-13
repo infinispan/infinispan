@@ -9,6 +9,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
  * @since 16.0
  */
 @ProtoSchema(
+      allowNullFields = true,
       dependsOn = org.infinispan.protostream.types.java.CommonTypes.class,
       includeClasses = TaskExecutionImpl.class,
       schemaFileName = "global.tasks.manager.proto",

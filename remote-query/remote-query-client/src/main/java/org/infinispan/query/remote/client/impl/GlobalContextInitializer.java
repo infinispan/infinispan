@@ -6,6 +6,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.query.remote.client.FilterResult;
 
 @ProtoSchema(
+      allowNullFields = true,
       includeClasses = {
             ContinuousQueryResult.class,
             ContinuousQueryResult.ResultType.class,
