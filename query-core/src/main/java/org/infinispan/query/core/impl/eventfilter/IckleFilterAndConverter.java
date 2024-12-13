@@ -26,7 +26,7 @@ import org.infinispan.query.core.impl.QueryCache;
  * @author anistor@redhat.com
  * @since 7.0
  */
-@ProtoTypeId(ProtoStreamTypeIds.ICKE_FILTER_AND_CONVERTER)
+@ProtoTypeId(ProtoStreamTypeIds.ICKLE_FILTER_AND_CONVERTER)
 @Scope(Scopes.NONE)
 public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter<K, V, ObjectFilter.FilterResult> implements Function<Map.Entry<K, V>, ObjectFilter.FilterResult> {
 

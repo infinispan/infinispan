@@ -8,9 +8,9 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.core.impl.eventfilter.IckleCacheEventFilterConverter;
-import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
 import org.infinispan.query.remote.client.FilterResult;
 import org.infinispan.query.remote.impl.RemoteQueryManager;
 
@@ -24,8 +24,14 @@ public final class IckleProtobufCacheEventFilterConverter extends IckleCacheEven
    private RemoteQueryManager remoteQueryManager;
 
    @ProtoFactory
-   IckleProtobufCacheEventFilterConverter(IckleFilterAndConverter<Object, Object> filterAndConverter) {
+   IckleProtobufCacheEventFilterConverter(IckleProtobufFilterAndConverter filterAndConverter) {
       super(filterAndConverter);
+   }
+
+   @Override
+   @ProtoField(1)
+   protected IckleProtobufFilterAndConverter getFilterAndConverter() {
+      return (IckleProtobufFilterAndConverter) super.getFilterAndConverter();
    }
 
    @Inject

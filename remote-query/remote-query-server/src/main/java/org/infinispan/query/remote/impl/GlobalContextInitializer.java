@@ -8,6 +8,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
       allowNullFields = true,
       dependsOn = {
             org.infinispan.marshall.protostream.impl.GlobalContextInitializer.class,
+            org.infinispan.query.core.impl.GlobalContextInitializer.class,
             org.infinispan.query.remote.client.impl.GlobalContextInitializer.class
       },
       includeClasses = {
@@ -22,5 +23,5 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
       service = false,
       syntax = ProtoSyntax.PROTO3
 )
-interface GlobalContextInitializer extends SerializationContextInitializer {
+public interface GlobalContextInitializer extends SerializationContextInitializer {
 }
