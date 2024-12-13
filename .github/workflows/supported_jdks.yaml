@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         jdk:
-          - '22-ea'
+          - '24-ea'
 
     steps:
       - uses: actions/checkout@v4
