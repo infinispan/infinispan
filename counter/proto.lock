@@ -50,9 +50,9 @@
         } ]
       } ],
       "imports" : [ {
-        "path" : "persistence.core.proto"
+        "path" : "persistence.counters-api.proto"
       }, {
-        "path" : "persistence.commons.proto"
+        "path" : "persistence.core.proto"
       } ],
       "package" : {
         "name" : "org.infinispan.persistence.counters"

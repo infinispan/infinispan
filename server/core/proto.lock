@@ -70,7 +70,7 @@
         } ]
       } ],
       "imports" : [ {
-        "path" : "persistence.commons.proto"
+        "path" : "persistence.counters-api.proto"
       }, {
         "path" : "persistence.core.proto"
       } ],
