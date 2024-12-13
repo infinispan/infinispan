@@ -13,6 +13,7 @@ import org.infinispan.protostream.types.java.CommonTypes;
  * @since 10.0
  */
 @ProtoSchema(
+      allowNullFields = true,
       dependsOn = CommonTypes.class,
       includeClasses = {
             org.infinispan.commons.api.CacheContainerAdmin.AdminFlag.class,
