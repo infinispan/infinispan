@@ -5,6 +5,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.annotations.ProtoSyntax;
 
 @ProtoSchema(
+      allowNullFields = true,
       includeClasses = {
             ExitStatus.class,
             ExitStatus.ExitMode.class,

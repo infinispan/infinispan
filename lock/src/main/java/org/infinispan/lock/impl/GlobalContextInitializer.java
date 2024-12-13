@@ -5,6 +5,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.annotations.ProtoSyntax;
 
 @ProtoSchema(
+      allowNullFields = true,
       dependsOn = org.infinispan.marshall.persistence.impl.PersistenceContextInitializer.class,
       includeClasses = {
             org.infinispan.lock.impl.entries.ClusteredLockKey.class,
