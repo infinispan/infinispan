@@ -52,7 +52,7 @@ for TEST in "${TESTS[@]}"; do
       BODY=$(printf "### Target Branch: %s\n### Github Job:%s\n%s" "${TARGET_BRANCH}" "${GH_JOB_URL}" "${STACK_TRACE}")
     if [ ${TOTAL_ISSUES} == 0 ]; then
       echo "Existing issue not found, creating a new one"
-      gh issue create --title "${SUMMARY}" --body "${BODY}" --label "Flaky Test"
+      gh issue create --title "${SUMMARY}" --body "${BODY}" --label "kind/flaky test"
     else
       export ISSUE_KEY=$(echo "${ISSUES}" | jq  '.[0].number')
       # Re-open the issue if it was previously resolved
