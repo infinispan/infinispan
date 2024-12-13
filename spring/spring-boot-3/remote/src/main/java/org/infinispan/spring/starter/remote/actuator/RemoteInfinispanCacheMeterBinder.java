@@ -13,7 +13,7 @@ import org.infinispan.client.hotrod.RemoteCache;
  * @author Katia Aresti, karesti@redhat.com
  * @since 2.1
  */
-public class RemoteInfinispanCacheMeterBinder extends CacheMeterBinder {
+public class RemoteInfinispanCacheMeterBinder<K, V> extends CacheMeterBinder<RemoteCache<K, V>>  {
 
    private final RemoteCache cache;
 
