@@ -106,6 +106,8 @@ final class ExpressionBuilder<TypeMetadata> {
       if (!nestedExprMap.containsKey(joinAlias)) {
          nestedExprMap.put(joinAlias, new NestedExpr(getNestedPath(propertyPath)));
          push(nestedExprMap.get(joinAlias));
+      }else if(stack.peek() instanceof LazyNegationExpr && !nestedExprMap.isEmpty()){
+         push(nestedExprMap.get(joinAlias));
       }
       nestedExprMap.get(joinAlias).add(comparisonExpr);
    }
@@ -204,6 +206,9 @@ final class ExpressionBuilder<TypeMetadata> {
 
    public void pop() {
       stack.pop();
+      if(!nestedExprMap.isEmpty() && stack.peek() instanceof LazyOrExpr){
+         nestedExprMap.clear();
+      }
    }
 
    public BooleanExpr build() {
