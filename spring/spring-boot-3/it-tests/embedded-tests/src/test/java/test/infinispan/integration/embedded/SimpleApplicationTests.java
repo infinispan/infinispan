@@ -23,8 +23,7 @@ public class SimpleApplicationTests {
     protected TestRestTemplate testRestTemplate;
 
     @Test
-    void contextLoads() {
-
+    void prometheusMetricsTest() {
         ResponseEntity<String> response = testRestTemplate
                 .withBasicAuth("user", "password")
                 .getForEntity("http://localhost:" + port + "/actuator/prometheus", String.class);

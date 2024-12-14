@@ -26,13 +26,10 @@
          <artifactId>spring-boot-starter-actuator</artifactId>
       </dependency>
 
-      <!-- In 3.4 use micrometer-registry-prometheus instead-->
       <dependency>
          <groupId>io.micrometer</groupId>
-         <artifactId>micrometer-registry-prometheus-simpleclient</artifactId>
-         <version>${version.micrometer}</version>
+         <artifactId>micrometer-registry-prometheus</artifactId>
       </dependency>
-      <!-- change for 3.4 -->
 
       <dependency>
          <groupId>org.springframework.boot</groupId>
