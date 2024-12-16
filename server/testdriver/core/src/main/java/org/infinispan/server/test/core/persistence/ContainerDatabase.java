@@ -130,6 +130,14 @@ public class ContainerDatabase extends Database {
       return container.getMappedPort(port);
    }
 
+   public int getInternalPort() {
+      return port;
+   }
+
+   public String getHost() {
+      return Containers.ipAddress(container);
+   }
+
    @Override
    public String jdbcUrl() {
       String address = Containers.ipAddress(container);

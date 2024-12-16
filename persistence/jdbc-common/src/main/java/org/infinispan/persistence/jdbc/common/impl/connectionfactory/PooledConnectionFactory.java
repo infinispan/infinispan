@@ -3,8 +3,8 @@ package org.infinispan.persistence.jdbc.common.impl.connectionfactory;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Duration;
+import java.util.Collection;
 
-import io.agroal.api.configuration.AgroalConnectionPoolConfiguration;
 import org.infinispan.commons.util.Util;
 import org.infinispan.persistence.jdbc.common.JdbcUtil;
 import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryConfiguration;
@@ -16,13 +16,14 @@ import org.infinispan.util.logging.LogFactory;
 
 import io.agroal.api.AgroalDataSource;
 import io.agroal.api.configuration.AgroalConnectionFactoryConfiguration;
+import io.agroal.api.configuration.AgroalConnectionPoolConfiguration;
 import io.agroal.api.configuration.supplier.AgroalDataSourceConfigurationSupplier;
 import io.agroal.api.configuration.supplier.AgroalPropertiesReader;
 import io.agroal.api.security.NamePrincipal;
 import io.agroal.api.security.SimplePassword;
 
 /**
- * Pooled connection factory based upon Agroa https://agroal.github.io.
+ * Pooled connection factory based upon <a href="https://agroal.github.io">Agroal</a>.
  *
  * @author Mircea.Markus@jboss.com
  * @author Tristan Tarrant
@@ -105,9 +106,32 @@ public class PooledConnectionFactory extends ConnectionFactory {
       return dataSource.getConfiguration().connectionPoolConfiguration().maxSize();
    }
 
-
    public long getActiveConnections() {
       return dataSource.getMetrics().activeCount();
+   }
+
+   public String username() {
+      return dataSource.getConfiguration().connectionPoolConfiguration()
+            .connectionFactoryConfiguration()
+            .principal().getName();
+   }
+
+   public String password() {
+      Collection<Object> credentials = dataSource.getConfiguration().connectionPoolConfiguration()
+            .connectionFactoryConfiguration()
+            .credentials();
+
+      if (credentials.size() != 1)
+         throw new IllegalStateException("Unable to retrieve database credential");
+
+      SimplePassword sp = (SimplePassword) credentials.iterator().next();
+      return sp.getWord();
+   }
+
+   public String jdbcConnectionUrl() {
+      return dataSource.getConfiguration().connectionPoolConfiguration()
+            .connectionFactoryConfiguration()
+            .jdbcUrl();
    }
 
    private void log(Connection connection, boolean checkout) {

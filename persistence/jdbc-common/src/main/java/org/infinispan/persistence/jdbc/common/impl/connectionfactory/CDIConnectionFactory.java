@@ -84,4 +84,11 @@ public class CDIConnectionFactory extends ConnectionFactory {
          PERSISTENCE.sqlFailureClosingConnection(conn, e);
       }
    }
+
+   public DataSource dataSource() {
+      if (dataSource == null)
+         initDataSource();
+
+      return dataSource;
+   }
 }

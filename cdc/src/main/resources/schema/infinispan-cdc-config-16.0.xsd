@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" version="1.0"
+           targetNamespace="urn:infinispan:config:cdc:16.0"
+           xmlns:tns="urn:infinispan:config:cdc:16.0"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:jdbc-common="urn:infinispan:config:store:jdbc-common:16.0">
+
+    <xs:element name="change-data-capture" type="tns:cdc"/>
+
+    <xs:complexType name="cdc">
+        <xs:sequence>
+            <xs:choice minOccurs="1" maxOccurs="1">
+                <xs:element name="connection-pool" type="jdbc-common:connection-pool" />
+                <xs:element name="simple-connection" type="jdbc-common:simple-connection" />
+                <xs:element name="cdi-data-source" type="jdbc-common:cdi-data-source" />
+                <xs:element name="simple-connection" type="jdbc-common:simple-connection" />
+            </xs:choice>
+
+            <xs:element name="table" type="tns:table" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        Describes the table to capture the events.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+
+            <xs:element name="connector-properties" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        Inject properties into the Debezium connector.
+                    </xs:documentation>
+                </xs:annotation>
+
+                <xs:complexType>
+                    <xs:sequence>
+                        <!--Allowing arbitrary element names-->
+                        <xs:any minOccurs="0" maxOccurs="unbounded" processContents="lax"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+
+        <xs:attribute name="enabled" type="xs:boolean" use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    Enables anchored keys for the cache.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+
+        <xs:attribute name="expand-foreign-keys" type="tns:foreign-key-list" use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    Whether to expand foreign keys automatically.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="table">
+        <xs:sequence>
+            <xs:element name="primary-key" type="tns:primary-key" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        Primary key to generate the cache key.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="column" type="tns:column" minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        Describes the column.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>
+                    The name of the table to capture events.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="primary-key">
+        <xs:complexContent>
+            <xs:extension base="tns:column">
+                <xs:attribute name="key-transformation" type="xs:string">
+                    <xs:annotation>
+                        <xs:documentation>Transform the key before inserting the entry in the cache.</xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="column">
+        <xs:attribute name="name" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>The name of the column to read.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:simpleType name="foreign-key-list">
+        <xs:list itemType="xs:string" />
+    </xs:simpleType>
+</xs:schema>

@@ -1,5 +1,7 @@
 package org.infinispan.persistence.sql.configuration;
 
+import static org.infinispan.configuration.serializer.ConfigurationSerializerValidator.compareAttributeSets;
+
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.serializer.AbstractConfigurationSerializerTest;
 import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfiguration;
