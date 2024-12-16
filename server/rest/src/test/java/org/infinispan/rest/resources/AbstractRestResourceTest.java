@@ -123,7 +123,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
       globalBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
       TestCacheManagerFactory.configureJmx(globalBuilder, getClass().getSimpleName() + id, mBeanServerLookup);
       globalBuilder.cacheContainer().statistics(true);
-      globalBuilder.serialization().addContextInitializer(RestTestSCI.INSTANCE);
+      globalBuilder.serialization().addContextInitializers(RestTestSCI.INSTANCE);
       if (isSecurityEnabled()) addSecurity(globalBuilder);
       return globalBuilder.clusteredDefault().cacheManagerName("default");
    }
