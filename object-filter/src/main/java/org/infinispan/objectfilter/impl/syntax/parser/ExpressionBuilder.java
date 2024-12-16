@@ -106,7 +106,7 @@ final class ExpressionBuilder<TypeMetadata> {
       if (!nestedExprMap.containsKey(joinAlias)) {
          nestedExprMap.put(joinAlias, new NestedExpr(getNestedPath(propertyPath)));
          push(nestedExprMap.get(joinAlias));
-      }else if(stack.peek() instanceof LazyNegationExpr && !nestedExprMap.isEmpty()){
+      } else if (stack.peek() instanceof LazyNegationExpr) {
          push(nestedExprMap.get(joinAlias));
       }
       nestedExprMap.get(joinAlias).add(comparisonExpr);
