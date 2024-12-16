@@ -33,6 +33,7 @@ public class MemcachedClusteredStatsTest extends MemcachedMultiNodeTest {
    public EmbeddedCacheManager createCacheManager(int index) {
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       globalBuilder.defaultCacheName(cacheName);
+      globalBuilder.serialization().addContextInitializer(new org.infinispan.server.core.GlobalContextInitializerImpl());
       configureJmx(globalBuilder, JMX_DOMAIN + "-" + index, mBeanServerLookup);
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.REPL_SYNC);
