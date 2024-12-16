@@ -15,7 +15,7 @@ public class OptionalAdapter {
 
    @ProtoFactory
    static Optional<?> create(MarshallableObject<?> value) {
-      return Optional.ofNullable(value);
+      return Optional.ofNullable(MarshallableObject.unwrap(value));
    }
 
    @ProtoField(1)
