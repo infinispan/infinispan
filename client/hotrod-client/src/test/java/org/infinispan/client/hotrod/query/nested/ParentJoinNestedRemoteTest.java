@@ -110,4 +110,37 @@ public class ParentJoinNestedRemoteTest extends SingleHotRodServerTest {
       assertThat(result).extracting(Team::name).containsExactly("New Team", "Old Team");
       assertThat(queryStatistics.getLocalIndexedQueryCount()).isEqualTo(1);
    }
+
+   @Test
+   public void nested_usingJoinWithOr() {
+      RemoteCache<String, Team> remoteCache = remoteCacheManager.getCache();
+      Query<Object[]> query = remoteCache.query("select t.name from model.Team t " +
+            "join t.firstTeam p " +
+            "where (p.color ='red' AND p.number=7) or (p.color='blue' AND p.number=7)");
+      List<Object[]> result = query.list();
+      assertThat(result).extracting(array -> array[0]).containsExactly("New Team", "Old Team");
+      assertThat(queryStatistics.getLocalIndexedQueryCount()).isEqualTo(1);
+   }
+
+   @Test
+   public void nested_usingJoinWithNegation() {
+      RemoteCache<String, Team> remoteCache = remoteCacheManager.getCache();
+      Query<Object[]> query = remoteCache.query("select t.name from model.Team t " +
+            "join t.firstTeam p " +
+            "where (p.color ='red' AND p.number!=7)");
+      List<Object[]> result = query.list();
+      assertThat(result).extracting(array -> array[0]).containsExactly("New Team");
+      assertThat(queryStatistics.getLocalIndexedQueryCount()).isEqualTo(1);
+   }
+
+   @Test
+   public void nested_usingJoinWithIn() {
+      RemoteCache<String, Team> remoteCache = remoteCacheManager.getCache();
+      Query<Object[]> query = remoteCache.query("select t.name from model.Team t " +
+            "join t.firstTeam p " +
+            "where (p.color ='red' AND p.number IN (7,3))");
+      List<Object[]> result = query.list();
+      assertThat(result).extracting(array -> array[0]).containsExactly("New Team", "Old Team");
+      assertThat(queryStatistics.getLocalIndexedQueryCount()).isEqualTo(1);
+   }
 }
