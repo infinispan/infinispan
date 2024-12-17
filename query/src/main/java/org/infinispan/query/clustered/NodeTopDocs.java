@@ -37,10 +37,10 @@ public final class NodeTopDocs {
    }
 
    @ProtoFactory
-   NodeTopDocs(WrappedMessage address, TopDocs topDocs, int totalHitCount, boolean countIsExact, MarshallableArray<Object> keys,
+   NodeTopDocs(WrappedMessage address, WrappedMessage topDocs, int totalHitCount, boolean countIsExact, MarshallableArray<Object> keys,
                MarshallableArray<Object> projections) {
       this(
-            WrappedMessages.unwrap(address), topDocs, totalHitCount, countIsExact,
+            WrappedMessages.unwrap(address), WrappedMessages.unwrap(topDocs), totalHitCount, countIsExact,
             MarshallableArray.unwrap(keys, new Object[0]),
             MarshallableArray.unwrap(projections, new Object[0])
       );
@@ -52,8 +52,9 @@ public final class NodeTopDocs {
    }
 
    @ProtoField(2)
-   TopDocs getTopDocs() {
-      return topDocs;
+   WrappedMessage getTopDocs() {
+      // We must use a WrappedMessage here to allow for inheritance as this can either be TopDocs or TopFieldDocs
+      return WrappedMessages.orElseNull(topDocs);
    }
 
    @ProtoField(value = 3, defaultValue = "0")
