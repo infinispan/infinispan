@@ -20,28 +20,32 @@ import org.infinispan.protostream.annotations.ProtoField;
  */
 public abstract class ValidResponse implements Response {
 
-   @ProtoField(number = 1)
+   @ProtoField(1)
    protected MarshallableObject<?> object;
 
-   @ProtoField(number = 2)
+   @ProtoField(2)
    protected MarshallableCollection<?> collection;
 
-   @ProtoField(number = 3)
+   @ProtoField(3)
    protected MarshallableMap<?, ?> map;
 
-   @ProtoField(number = 4)
+   @ProtoField(4)
    protected MarshallableArray<?> array;
 
+   @ProtoField(5)
+   protected byte[] bytes;
+
    protected ValidResponse() {
-      this(null, null, null, null);
+      this(null, null, null, null, null);
    }
 
    protected ValidResponse(MarshallableObject<?> object, MarshallableCollection<?> collection,
-                 MarshallableMap<?, ?> map, MarshallableArray<?> array) {
+                           MarshallableMap<?, ?> map, MarshallableArray<?> array, byte[] bytes) {
       this.object = object;
       this.collection = collection;
       this.map = map;
       this.array = array;
+      this.bytes = bytes;
    }
 
    /**
@@ -60,7 +64,10 @@ public abstract class ValidResponse implements Response {
       if (map != null)
          return map.get();
 
-      return array == null ? null : array.get();
+      if (array != null)
+         return array.get();
+
+      return bytes;
    }
 
    /**

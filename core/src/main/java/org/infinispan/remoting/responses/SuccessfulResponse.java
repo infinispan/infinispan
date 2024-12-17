@@ -26,34 +26,40 @@ public class SuccessfulResponse<T> extends ValidResponse {
 
    @ProtoFactory
    static SuccessfulResponse protoFactory(MarshallableObject<?> object, MarshallableCollection<?> collection,
-                                          MarshallableMap<?, ?> map, MarshallableArray<?> array) {
-      return object == null && collection == null && map == null && array == null ?
+                                          MarshallableMap<?, ?> map, MarshallableArray<?> array, byte[] bytes) {
+      return object == null && collection == null && map == null && array == null && bytes == null?
             SUCCESSFUL_EMPTY_RESPONSE :
-            new SuccessfulResponse<>(object, collection, map, array);
+            new SuccessfulResponse<>(object, collection, map, array, bytes);
    }
 
    @SuppressWarnings("unchecked")
-   public static <T> SuccessfulResponse<T> create(T responseValue) {
-      if (responseValue == null) return SUCCESSFUL_EMPTY_RESPONSE;
-      // TODO how to make this more robust?
-      // We could introduce a check to see if the type is natively marshallable with the GlobalMarshaller, but this would
-      // require passing an additional component to the factory method.
-      if (responseValue instanceof Collection && !(responseValue instanceof IntSet))
-         return new SuccessfulResponse<>(null, MarshallableCollection.create((Collection<?>) responseValue),null, null);
-      else if (responseValue.getClass().isArray())
-         return new SuccessfulResponse<>(null, null, null, MarshallableArray.create((Object[]) responseValue));
-      else if (responseValue instanceof Map)
-         return new SuccessfulResponse<>(null, null, MarshallableMap.create((Map<?, ?>) responseValue), null);
-      return new SuccessfulResponse<>(responseValue);
+   public static <T> SuccessfulResponse<T> create(T rv) {
+      if (rv == null)
+         return SUCCESSFUL_EMPTY_RESPONSE;
+
+      if (rv instanceof Collection && !(rv instanceof IntSet))
+         return new SuccessfulResponse<>(null, MarshallableCollection.create((Collection<?>) rv), null, null, null);
+
+      if (rv.getClass().isArray()) {
+         if (rv instanceof byte[] bytes) {
+            return new SuccessfulResponse<>(null, null, null, null, bytes);
+         }
+         return new SuccessfulResponse<>(null, null, null, MarshallableArray.create((Object[]) rv), null);
+      }
+
+      if (rv instanceof Map)
+         return new SuccessfulResponse<>(null, null, MarshallableMap.create((Map<?, ?>) rv), null, null);
+
+      return new SuccessfulResponse<>(rv);
    }
 
    protected SuccessfulResponse(MarshallableObject<?> object, MarshallableCollection<?> collection, MarshallableMap<?, ?> map,
-                              MarshallableArray<?> array) {
-      super(object, collection, map, array);
+                                MarshallableArray<?> array, byte[] bytes) {
+      super(object, collection, map, array, bytes);
    }
 
    protected SuccessfulResponse(Object responseValue) {
-      this(MarshallableObject.create(responseValue), null, null, null);
+      this(MarshallableObject.create(responseValue), null, null, null, null);
    }
 
    @Override
