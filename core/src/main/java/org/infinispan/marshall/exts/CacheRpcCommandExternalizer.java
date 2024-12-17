@@ -59,8 +59,6 @@ import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublis
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
-import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
-import org.infinispan.xsite.commands.XSiteOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteSetStateTransferModeCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferCancelSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferClearStatusCommand;
@@ -70,8 +68,6 @@ import org.infinispan.xsite.commands.XSiteStateTransferRestartSendingCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStartReceiveCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStartSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStatusRequestCommand;
-import org.infinispan.xsite.commands.XSiteStatusCommand;
-import org.infinispan.xsite.commands.XSiteTakeOfflineCommand;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 
 /**
@@ -119,8 +115,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             ReductionPublisherRequestCommand.class,
             MultiClusterEventCommand.class, InitialPublisherCommand.class, NextPublisherCommand.class,
             CancelPublisherCommand.class, CheckTransactionRpcCommand.class,
-            XSiteAmendOfflineStatusCommand.class, XSiteBringOnlineCommand.class, XSiteOfflineStatusCommand.class,
-            XSiteStatusCommand.class, XSiteTakeOfflineCommand.class, XSiteStateTransferCancelSendCommand.class,
+            XSiteAmendOfflineStatusCommand.class, XSiteStateTransferCancelSendCommand.class,
             XSiteStateTransferClearStatusCommand.class, XSiteStateTransferFinishReceiveCommand.class,
             XSiteStateTransferFinishSendCommand.class, XSiteStateTransferRestartSendingCommand.class,
             XSiteStateTransferStartReceiveCommand.class, XSiteStateTransferStartSendCommand.class,
