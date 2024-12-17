@@ -21,7 +21,7 @@ public class UnsureResponse extends ValidResponse {
 
    @ProtoFactory
    static UnsureResponse protoFactory(MarshallableObject<?> object, MarshallableCollection<?> collection,
-                                      MarshallableMap<?, ?> map, MarshallableArray<?> array) {
+                                      MarshallableMap<?, ?> map, MarshallableArray<?> array, byte[] bytes) {
       return INSTANCE;
    }
 

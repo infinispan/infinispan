@@ -16,16 +16,16 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  */
 @ProtoTypeId(ProtoStreamTypeIds.UNSUCCESSFUL_RESPONSE)
 public class UnsuccessfulResponse extends ValidResponse {
-   public static final UnsuccessfulResponse EMPTY = new UnsuccessfulResponse(null, null, null, null);
+   public static final UnsuccessfulResponse EMPTY = new UnsuccessfulResponse(null, null, null, null, null);
 
    @ProtoFactory
    UnsuccessfulResponse(MarshallableObject<?> object, MarshallableCollection<?> collection,
-                        MarshallableMap<?, ?> map, MarshallableArray<?> array) {
-      super(object, collection, map, array);
+                        MarshallableMap<?, ?> map, MarshallableArray<?> array, byte[] bytes) {
+      super(object, collection, map, array, bytes);
    }
 
    public static UnsuccessfulResponse create(Object value) {
-      return value == null ? EMPTY : new UnsuccessfulResponse(new MarshallableObject<>(value), null, null, null);
+      return value == null ? EMPTY : new UnsuccessfulResponse(new MarshallableObject<>(value), null, null, null, null);
    }
 
    @Override
