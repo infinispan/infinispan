@@ -41,20 +41,20 @@ public class PrepareResponse extends ValidResponse {
 
    @ProtoFactory
    PrepareResponse(MarshallableObject<?> object, MarshallableCollection<?> collection,
-                   MarshallableMap<?, ?> map, MarshallableArray<?> array,
+                   MarshallableMap<?, ?> map, MarshallableArray<?> array, byte[] bytes,
                    MarshallableMap<Object, IncrementableEntryVersion> newWriteSkewVersions,
                    MarshallableMap<Integer, IracMetadata> newIracMetadata) {
-      super(null, null, map, null);
+      super(null, null, map, null, null);
       this.newWriteSkewVersions = MarshallableMap.unwrap(newWriteSkewVersions);
       this.newIracMetadata = MarshallableMap.unwrap(newIracMetadata);
    }
 
-   @ProtoField(5)
+   @ProtoField(6)
    MarshallableMap<Object, IncrementableEntryVersion> getNewWriteSkewVersions() {
       return MarshallableMap.create(newWriteSkewVersions);
    }
 
-   @ProtoField(6)
+   @ProtoField(7)
    MarshallableMap<Integer, IracMetadata> getNewIracMetadata() {
       return MarshallableMap.create(newIracMetadata);
    }
