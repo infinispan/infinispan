@@ -15,13 +15,13 @@ import org.infinispan.remoting.transport.Address;
 public class BiasRevocationResponse extends SuccessfulResponse {
 
    public BiasRevocationResponse(Object responseValue, Collection<Address> waitFor) {
-      super(MarshallableObject.create(responseValue), MarshallableCollection.create(waitFor), null, null);
+      super(MarshallableObject.create(responseValue), MarshallableCollection.create(waitFor), null, null, null);
    }
 
    @ProtoFactory
    BiasRevocationResponse(MarshallableObject<?> object, MarshallableCollection<?> collection,
-                          MarshallableMap<?, ?> map, MarshallableArray<?> array) {
-      super(object, collection, map, array);
+                          MarshallableMap<?, ?> map, MarshallableArray<?> array, byte[] bytes) {
+      super(object, collection, map, array, bytes);
    }
 
    public Collection<Address> getWaitList() {
