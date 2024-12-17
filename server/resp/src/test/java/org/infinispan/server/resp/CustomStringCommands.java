@@ -36,6 +36,15 @@ public interface CustomStringCommands extends Commands {
    @Command("JSON.SET :key :path :value")
    String jsonSet(@Param("key") String key, @Param("path") String path, @Param("value") String value);
 
+   @Command("JSON.GET :key :path")
+   String jsonGet(@Param("key") String key, @Param("path") String path);
+
+   @Command("JSON.GET :key :path1 :path2")
+   String jsonGet(@Param("key") String key, @Param("path") String path1, @Param("path") String path2);
+
+   @Command("JSON.GET :key :path1 :path2 :path3")
+   String jsonGet(@Param("key") String key, @Param("path") String path1, @Param("path") String path2, @Param("path") String path3);
+
    static CustomStringCommands instance(StatefulConnection<String, String> conn) {
       RedisCommandFactory factory = new RedisCommandFactory(conn);
       return factory.getCommands(CustomStringCommands.class);

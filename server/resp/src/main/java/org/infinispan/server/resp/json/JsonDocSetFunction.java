@@ -51,11 +51,12 @@ public class JsonDocSetFunction
          throw new CacheException(e);
       }
       var doc = (JsonDocBucket) entryView.find().orElse(null);
+      byte[] jsonPath = JSONUtil.toJsonPath(path);
       if (doc == null) {
          if (xx) {
             return null;
          }
-         if (!isRoot()) {
+         if (!JSONUtil.isRoot(jsonPath)) {
             throw new CacheException("new objects must be created at root");
          }
          entryView.set(new JsonDocBucket(value));
@@ -64,7 +65,7 @@ public class JsonDocSetFunction
       if (nx) {
          return null;
       }
-      if (isRoot()) {
+      if (JSONUtil.isRoot(jsonPath)) {
          // Updating the root node is not allowed by jsonpath
          // replacing the whole doc here
          entryView.set(new JsonDocBucket(value));
@@ -73,7 +74,7 @@ public class JsonDocSetFunction
       try {
          var rootObjectNode = (ObjectNode) JSONUtil.objectMapper.readTree(doc.value());
          var jpCtx = JsonPath.using(JSONUtil.config).parse(rootObjectNode);
-         var pathStr = new String(path, StandardCharsets.UTF_8);
+         var pathStr = new String(jsonPath, StandardCharsets.UTF_8);
          JsonNode node = jpCtx.read(pathStr);
          if (node.isNull() && xx || !node.isNull() && nx) {
             return null;
@@ -87,10 +88,6 @@ public class JsonDocSetFunction
       } catch (Exception e) {
          throw new CacheException(e);
       }
-   }
-
-   private boolean isRoot() {
-      return path != null && path.length == 1 && path[0] == '$';
    }
 
    private static class Externalizer implements AdvancedExternalizer<JsonDocSetFunction> {

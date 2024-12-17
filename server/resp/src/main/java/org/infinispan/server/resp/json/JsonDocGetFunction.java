@@ -23,8 +23,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter.Indenter;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.JsonPath;
 
@@ -38,6 +38,7 @@ public class JsonDocGetFunction
    byte[] newline;
    byte[] indent;
    List<byte[]> paths;
+   private boolean isLegacy;
 
    public JsonDocGetFunction(List<byte[]> paths, byte[] space, byte[] newline, byte[] indent) {
       requireNonNull(paths, ERR_PATHS_CAN_T_BE_NULL);
@@ -45,6 +46,7 @@ public class JsonDocGetFunction
       this.space = (space != null) ? space : EMPTY_BYTES;
       this.newline = (newline != null) ? newline : EMPTY_BYTES;
       this.indent = (indent != null) ? indent : EMPTY_BYTES;
+      isLegacy = true;
    }
 
    @Override
@@ -65,24 +67,46 @@ public class JsonDocGetFunction
 
          var rootNode = mapper.readTree(new String(doc, StandardCharsets.UTF_8));
          var jpCtx = JsonPath.using(JSONUtil.config).parse(rootNode);
-         // If no path provided return root
+         // If no path provided return root in legacy format
          if (paths == null || paths.size() == 0) {
             String resp = mapper.writer(rpp).writeValueAsString(rootNode);
             return resp;
          }
-         // If only 1 path provided return all the matching nodes as array
-         if (paths.size() == 1) {
-            JsonNode node = jpCtx.read(new String(paths.get(0), StandardCharsets.UTF_8));
-            String resp = mapper.writer(rpp).writeValueAsString(node);
+         // Convert to jsonpath and set legacy=false if any path is a jsonpath
+         List<byte[]> jsonPaths = paths.stream().map((p) -> {
+            var jp = JSONUtil.toJsonPath(p);
+            isLegacy &= (jp != p);
+            return jp;
+         }).toList();
+
+         // If only 1 path provided, return all the matching nodes as array
+         if (jsonPaths.size() == 1) {
+            ArrayNode nodeList = jpCtx.read(new String(jsonPaths.get(0), StandardCharsets.UTF_8));
+            // If legacy return just the first one
+            if (isLegacy) {
+               String resp = mapper.writer(rpp).writeValueAsString(nodeList.get(0));
+               return resp;
+            }
+            String resp = mapper.writer(rpp).writeValueAsString(nodeList);
             return resp;
          }
          // If more than 1 path provided return an object with
          // properties "path": [array of matching nodes]
+
          ObjectNode result = mapper.createObjectNode();
-         for (byte[] path : paths) {
+         for (int i = 0; i < jsonPaths.size(); i++) {
+            var jsonPath = jsonPaths.get(i);
+            var path = paths.get(i);
+            var jsonPathStr = new String(jsonPath, StandardCharsets.UTF_8);
+            // Result should contain original paths as keys
             var pathStr = new String(path, StandardCharsets.UTF_8);
-            JsonNode node = jpCtx.read(pathStr);
-            result.set(pathStr, node);
+            ArrayNode nodeList = jpCtx.read(jsonPathStr);
+            // If legacy return just the first one
+            if (isLegacy) {
+               result.set(pathStr, mapper.valueToTree(nodeList.get(0)));
+            } else {
+               result.set(pathStr, mapper.valueToTree(nodeList));
+            }
          }
          String resp = mapper.writer(rpp).writeValueAsString(result);
          return resp;
