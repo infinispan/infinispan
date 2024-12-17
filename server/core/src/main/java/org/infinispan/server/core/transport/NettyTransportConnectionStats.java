@@ -7,9 +7,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.ProtocolServer;
 
@@ -78,6 +80,7 @@ public class NettyTransportConnectionStats {
       return connectionCount.get();
    }
 
+   @ProtoTypeId(ProtoStreamTypeIds.SERVER_NETTY_CONNECTION_ADD_TASK)
    public static class ConnectionAdderTask implements Function<EmbeddedCacheManager, Integer> {
       @ProtoField(1)
       final String serverName;

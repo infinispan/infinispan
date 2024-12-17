@@ -81,7 +81,7 @@ public class AsymmetricRoutingTest extends HitsAwareCacheManagersTest {
    }
 
    private HotRodServer addHotRodServer() {
-      EmbeddedCacheManager cm = addClusterEnabledCacheManager(defaultBuilder);
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager(ControlledConsistentHashFactory.SCI.INSTANCE, defaultBuilder);
       cm.defineConfiguration(DIST_ONE_CACHE_NAME, distOneBuilder.build());
       cm.defineConfiguration(DIST_TWO_CACHE_NAME, distTwoBuilder.build());
       HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cm);

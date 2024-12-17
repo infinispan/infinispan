@@ -24,4 +24,5 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
       syntax = ProtoSyntax.PROTO3
 )
 public interface GlobalContextInitializer extends SerializationContextInitializer {
+      SerializationContextInitializer INSTANCE = new GlobalContextInitializerImpl();
 }
