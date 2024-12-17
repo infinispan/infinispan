@@ -101,7 +101,7 @@ public interface ReplicableCommand extends TracedCommand {
     * @throws IOException if an error occurred during the I/O.
     * @deprecated since 16.0 command objects should be marshalled directly by ProtoStream
     */
-   @Deprecated
+   @Deprecated(forRemoval = true, since = "16.0")
    default void writeTo(ObjectOutput output) throws IOException {
       // no-op
    }
@@ -114,7 +114,7 @@ public interface ReplicableCommand extends TracedCommand {
     * @throws ClassNotFoundException if it tries to load an undefined class.
     * @deprecated since 16.0 command objects should be marshalled directly by ProtoStream
     */
-   @Deprecated
+   @Deprecated(forRemoval = true, since = "16.0")
    default void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       // no-op
    }
