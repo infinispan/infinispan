@@ -110,8 +110,6 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
-import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
-import org.infinispan.xsite.commands.XSiteOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteSetStateTransferModeCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferCancelSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferClearStatusCommand;
@@ -121,8 +119,6 @@ import org.infinispan.xsite.commands.XSiteStateTransferRestartSendingCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStartReceiveCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStartSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStatusRequestCommand;
-import org.infinispan.xsite.commands.XSiteStatusCommand;
-import org.infinispan.xsite.commands.XSiteTakeOfflineCommand;
 import org.infinispan.xsite.commands.remote.IracClearKeysRequest;
 import org.infinispan.xsite.commands.remote.IracPutManyRequest;
 import org.infinispan.xsite.commands.remote.IracTombstoneCheckRequest;
@@ -538,26 +534,6 @@ public interface CommandsFactory {
    XSiteStateTransferControlRequest buildXSiteStateTransferControlRequest(boolean startReceiving);
 
    XSiteAmendOfflineStatusCommand buildXSiteAmendOfflineStatusCommand(String siteName, Integer afterFailures, Long minTimeToWait);
-
-   @Deprecated(since = "15.1", forRemoval = true)
-   default XSiteBringOnlineCommand buildXSiteBringOnlineCommand(String siteName) {
-      return null;
-   }
-
-   @Deprecated(since = "15.1", forRemoval = true)
-   default XSiteOfflineStatusCommand buildXSiteOfflineStatusCommand(String siteName)  {
-      return null;
-   }
-
-   @Deprecated(since = "15.1", forRemoval = true)
-   default XSiteStatusCommand buildXSiteStatusCommand() {
-      return null;
-   }
-
-   @Deprecated(since = "15.1", forRemoval = true)
-   default XSiteTakeOfflineCommand buildXSiteTakeOfflineCommand(String siteName) {
-      return null;
-   }
 
    /**
     * Builds XSiteStatePushCommand used to transfer a single chunk of data between sites.
