@@ -130,8 +130,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
-import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
-import org.infinispan.xsite.commands.XSiteOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteSetStateTransferModeCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferCancelSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferClearStatusCommand;
@@ -141,8 +139,6 @@ import org.infinispan.xsite.commands.XSiteStateTransferRestartSendingCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStartReceiveCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStartSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStatusRequestCommand;
-import org.infinispan.xsite.commands.XSiteStatusCommand;
-import org.infinispan.xsite.commands.XSiteTakeOfflineCommand;
 import org.infinispan.xsite.commands.remote.IracClearKeysRequest;
 import org.infinispan.xsite.commands.remote.IracPutManyRequest;
 import org.infinispan.xsite.commands.remote.IracTombstoneCheckRequest;
@@ -456,26 +452,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public XSiteAmendOfflineStatusCommand buildXSiteAmendOfflineStatusCommand(String siteName, Integer afterFailures, Long minTimeToWait) {
       return new XSiteAmendOfflineStatusCommand(cacheName, siteName, afterFailures, minTimeToWait);
-   }
-
-   @Override
-   public XSiteBringOnlineCommand buildXSiteBringOnlineCommand(String siteName) {
-      return new XSiteBringOnlineCommand(cacheName, siteName);
-   }
-
-   @Override
-   public XSiteOfflineStatusCommand buildXSiteOfflineStatusCommand(String siteName) {
-      return new XSiteOfflineStatusCommand(cacheName, siteName);
-   }
-
-   @Override
-   public XSiteStatusCommand buildXSiteStatusCommand() {
-      return new XSiteStatusCommand(cacheName);
-   }
-
-   @Override
-   public XSiteTakeOfflineCommand buildXSiteTakeOfflineCommand(String siteName) {
-      return new XSiteTakeOfflineCommand(cacheName, siteName);
    }
 
    @Override
