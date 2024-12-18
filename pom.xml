@@ -2898,22 +2898,6 @@
                            </arguments>
                         </configuration>
                      </execution>
-                     <execution>
-                        <id>githooks</id>
-                        <phase>validate</phase>
-                        <goals>
-                           <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                           <executable>git</executable>
-                           <arguments>
-                              <argument>config</argument>
-                              <argument>set</argument>
-                              <argument>core.hooksPath</argument>
-                              <argument>.githooks</argument>
-                           </arguments>
-                        </configuration>
-                     </execution>
                   </executions>
                </plugin>
             </plugins>
