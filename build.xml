@@ -1,0 +1,19 @@
+<project name="infinispan">
+
+    <condition property="isWindows">
+        <os family="windows" />
+    </condition>
+
+    <target name="git-config-windows" if="isWindows">
+        <exec executable="cmd">
+            <arg value="/c"/>
+            <arg value=".githooks/configure-hooks.bat"/>
+        </exec>
+    </target>
+
+    <target name="git-config-unix" unless="isWindows">
+        <exec executable=".githooks/configure-hooks"/>
+    </target>
+
+    <target name="git-config" depends="git-config-unix,git-config-windows"/>
+</project>
