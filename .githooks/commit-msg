@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+commit_regex='^\[#[0-9]+\]\s[A-Z].*\n(\n(\*\s.*\n)+)?$'
+error_msg="Commit message format is incorrect. Run the following command:\n\n  git config commit.template .gitmessage\n\nand  retry"
+if ! grep -qE "$commit_regex" "$1"; then
+    echo "$error_msg" >&2
+    exit 1
+fi
+
