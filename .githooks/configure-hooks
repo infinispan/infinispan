@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+BASEDIR=$(dirname "$0")/..
+BASEDIR_RESOLVED=$(realpath "$BASEDIR")
+
+git config get --local core.hooksPath || git config set --local core.hooksPath "$BASEDIR_RESOLVED"/.githooks
+git config get --local commit.template || git config set --local commit.template "$BASEDIR_RESOLVED"/.gitmessage
