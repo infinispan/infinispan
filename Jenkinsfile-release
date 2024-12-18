@@ -42,7 +42,7 @@ pipeline {
                     if ("${version}".endsWith('Final')) {
                         sh "$MAVEN_HOME/bin/mvn clean install -B -V -e -DskipTests -DcommitProtoLockChanges=true"
                         sh "git add '**/proto.lock'"
-                        sh "git diff-index --quiet HEAD || git commit -m 'Committing proto.lock files for ${version}'"
+                        sh "git diff-index --quiet HEAD || git commit --no-verify -m 'Committing proto.lock files for ${version}'"
                     }
                 }
             }
@@ -53,7 +53,7 @@ pipeline {
                 script {
                     sh "sed -i \"s/^:ispn_version:.*\$/:ispn_version: ${version}/\" documentation/src/main/asciidoc/topics/attributes/community-attributes.adoc"
                     sh "git add 'documentation/src/main/asciidoc/topics/attributes/community-attributes.adoc'"
-                    sh "git diff-index --quiet HEAD || git commit -m 'Committing ${version} to doc attribute file'"
+                    sh "git diff-index --quiet HEAD || git commit --no-verify -m 'Committing ${version} to doc attribute file'"
                 }
             }
         }
@@ -74,8 +74,9 @@ pipeline {
         stage('Tag') {
             steps {
                 // Commit and tag once everything is good
-                sh "$MAVEN_HOME/bin/mvn -B -V scm:checkin -Dmessage=\"Releasing version ${version}\" -DpushChanges=false"
-                sh "$MAVEN_HOME/bin/mvn -B -V scm:tag -Dtag=${version}"
+                sh "git commit --no-verify -m 'Releasing version ${version}' -a"
+                sh "git tag -a -m '${version}' ${version}"
+                sh "git push origin HEAD"
             }
         }
 
@@ -84,9 +85,10 @@ pipeline {
                 expression { params.nextVersion != '' }
             }
             steps {
-                sh "$MAVEN_HOME/bin/mvn -B -V versions:set -DnewVersion=${nextVersion} -DprocessAllModules=true"
-                sh "$MAVEN_HOME/bin/mvn -B -V versions:set-property -Dproperty=version.infinispan -DnewVersion=${nextVersion}"
-                sh "$MAVEN_HOME/bin/mvn -B -V -Dmessage='next version ${nextVersion}' -DscmVersion=${branch} -DscmVersionType=branch scm:checkin"
+                sh "$MAVEN_HOME/bin/mvn -B versions:set -DnewVersion=${nextVersion} -DprocessAllModules=true"
+                sh "$MAVEN_HOME/bin/mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${nextVersion}"
+                sh "git commit --no-verify -a -m 'Next version ${nextVersion}'"
+                sh "git push origin HEAD"
             }
         }
     }

@@ -3067,6 +3067,41 @@
 
       <!-- Only one of the root-dirX profiles will be active, and it will set infinispan.root to $REACTOR_ROOT -->
       <profile>
+         <id>root-dir0</id>
+         <activation>
+            <file>
+               <exists>${basedir}/maven-settings.xml</exists>
+            </file>
+         </activation>
+         <properties>
+            <infinispan.root>${basedir}</infinispan.root>
+         </properties>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>git-config</id>
+                        <phase>validate</phase>
+                        <goals>
+                           <goal>run</goal>
+                        </goals>
+                        <configuration>
+                           <target>
+                              <ant antfile="build.xml" inheritRefs="true">
+                                 <target name="git-config"/>
+                              </ant>
+                           </target>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+      <profile>
          <id>root-dir1</id>
          <activation>
             <file>
