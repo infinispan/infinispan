@@ -1,6 +1,5 @@
 package org.infinispan.search.mapper.mapping.impl;
 
-import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -23,7 +22,6 @@ import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.hibernate.search.mapper.pojo.scope.spi.PojoScopeDelegate;
 import org.hibernate.search.util.common.AssertionFailure;
 import org.hibernate.search.util.common.impl.Closer;
-import org.hibernate.search.util.common.logging.impl.LoggerFactory;
 import org.infinispan.query.concurrent.FailureCounter;
 import org.infinispan.query.impl.EntityLoaderFactory;
 import org.infinispan.query.impl.IndexerConfig;
@@ -42,11 +40,12 @@ import org.infinispan.search.mapper.session.impl.InfinispanSearchSessionMappingC
 import org.infinispan.search.mapper.work.SearchIndexer;
 import org.infinispan.search.mapper.work.impl.SearchIndexerImpl;
 import org.infinispan.util.concurrent.BlockingManager;
+import org.infinispan.util.logging.LogFactory;
 
 public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapping>
       implements SearchMapping, InfinispanSearchSessionMappingContext, EntityReferenceFactory {
 
-   private static final Log log = LoggerFactory.make(Log.class, MethodHandles.lookup());
+   private static final Log log = LogFactory.getLog(InfinispanMapping.class, Log.class);
 
    private final InfinispanTypeContextContainer typeContextContainer;
    private final EntityLoaderFactory<?> entityLoader;
