@@ -38,6 +38,7 @@ public class HyperLogLogTest extends AbstractInfinispanTest {
       assertThat(hll.cardinality()).isEqualTo(193);
    }
 
+   @Test
    public void testCompactRepresentationRelativeError() {
       CompactSet hll = new CompactSet();
       long max = (long) Math.pow(10, 7);
@@ -76,6 +77,7 @@ public class HyperLogLogTest extends AbstractInfinispanTest {
       assertThat(es.cardinality()).isEqualTo(1L);
    }
 
+   @Test
    public void testConcurrentOperationsHLL() throws Exception {
       HyperLogLog hll = new HyperLogLog();
       CyclicBarrier barrier = new CyclicBarrier(3);
