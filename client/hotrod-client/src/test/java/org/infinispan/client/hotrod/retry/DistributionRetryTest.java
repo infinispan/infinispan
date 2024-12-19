@@ -16,11 +16,11 @@ import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.junit.jupiter.api.Assertions;
 import org.testng.annotations.Test;
 
 /**
@@ -51,7 +51,14 @@ public class DistributionRetryTest extends AbstractRetryTest {
    }
 
    private void assertOperationFailsWithTransport(Object key) {
-      Exceptions.expectException(TransportException.class, ".*", () -> remoteCache.get(key));
+      try {
+         remoteCache.get(key);
+
+         // If the previous didn't fail, then it has to be one of the connection failed servers
+         Assertions.assertEquals(1, remoteCache.getDispatcher().getConnectionFailedServers().size());
+      } catch (TransportException te) {
+         // Is expected
+      }
 
       // Connection failed servers can take a bit to be propagated as it has to fail reconnecting
       eventuallyEquals(1, () -> remoteCache.getDispatcher().getConnectionFailedServers().size());
