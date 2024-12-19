@@ -1,3 +1,5 @@
+== Upgrading from 15.1 to 15.2
+
 == Upgrading from 15.0 to 15.1
 
 === Java HotRod Client Changes
