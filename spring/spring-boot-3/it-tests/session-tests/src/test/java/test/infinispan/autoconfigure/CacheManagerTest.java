@@ -2,9 +2,12 @@ package test.infinispan.autoconfigure;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.spring.starter.embedded.InfinispanEmbeddedAutoConfiguration;
 import org.infinispan.spring.starter.embedded.InfinispanEmbeddedCacheManagerAutoConfiguration;
+import org.infinispan.spring.starter.remote.InfinispanRemoteAutoConfiguration;
+import org.infinispan.spring.starter.remote.InfinispanRemoteCacheManagerAutoConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,8 +16,8 @@ import org.springframework.test.annotation.DirtiesContext;
 
 @SpringBootTest(
       classes = {
-//            InfinispanRemoteAutoConfiguration.class,
-//            InfinispanRemoteCacheManagerAutoConfiguration.class,
+            InfinispanRemoteAutoConfiguration.class,
+            InfinispanRemoteCacheManagerAutoConfiguration.class,
             InfinispanEmbeddedAutoConfiguration.class,
             InfinispanEmbeddedCacheManagerAutoConfiguration.class
       },
@@ -29,7 +32,7 @@ public class CacheManagerTest {
 
    @Test
    public void testRemoteCacheManager() {
-//      assertNotNull(context.getBean(RemoteCacheManager.class));
+      assertNotNull(context.getBean(RemoteCacheManager.class));
    }
 
    @Test
