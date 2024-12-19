@@ -20,6 +20,7 @@ The following table shows which versions are supported for vulnerability updates
 
 | Version | Supported          |
 | ------- | ------------------ |
+| 15.1.x  | :white_check_mark: |
 | 15.0.x  | :white_check_mark: |
 | 14.0.x  | :white_check_mark: |
 | < 14.0  | :x:                |
