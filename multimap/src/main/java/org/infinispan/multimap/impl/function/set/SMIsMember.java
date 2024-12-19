@@ -1,18 +1,16 @@
 package org.infinispan.multimap.impl.function.set;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.marshall.protostream.impl.MarshallableArray;
 import org.infinispan.multimap.impl.SetBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by
@@ -24,12 +22,24 @@ import org.infinispan.multimap.impl.SetBucket;
  *      Functions</a>
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_S_M_IS_MEMBER_FUNCTION)
 public final class SMIsMember<K, V> implements SetBucketBaseFunction<K, V, List<Long>> {
-   public static final AdvancedExternalizer<SMIsMember> EXTERNALIZER = new Externalizer();
+
    private final V[] values;
 
    public SMIsMember(V... values) {
       this.values = values;
+   }
+
+   @ProtoFactory
+   @SuppressWarnings("unchecked")
+   SMIsMember(MarshallableArray<V> values) {
+      this.values = MarshallableArray.unwrap(values, (V[]) new Object[0]);
+   }
+
+   @ProtoField(1)
+   MarshallableArray<V> getValues() {
+      return MarshallableArray.create(values);
    }
 
    @Override
@@ -41,36 +51,5 @@ public final class SMIsMember<K, V> implements SetBucketBaseFunction<K, V, List<
          result.add(s.contains(v) ? 1L : 0L);
       }
       return result;
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<SMIsMember> {
-
-      @Override
-      public Set<Class<? extends SMIsMember>> getTypeClasses() {
-         return Collections.singleton(SMIsMember.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.SET_MISMEMBER_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, SMIsMember object) throws IOException {
-         output.writeInt(object.values.length);
-         for (var el : object.values) {
-            output.writeObject(el);
-         }
-      }
-
-      @Override
-      public SMIsMember readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         int size = input.readInt();
-         Object[] values = new Object[size];
-         for (int i = 0; i < size; i++) {
-            values[i] = input.readObject();
-         }
-         return new SMIsMember<>(values);
-      }
    }
 }

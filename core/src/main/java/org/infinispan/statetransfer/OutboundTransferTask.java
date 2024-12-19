@@ -14,6 +14,7 @@ import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -22,7 +23,6 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

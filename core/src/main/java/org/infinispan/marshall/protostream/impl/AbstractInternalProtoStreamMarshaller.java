@@ -150,7 +150,7 @@ public abstract class AbstractInternalProtoStreamMarshaller implements Marshalle
       return !isMarshallableWithProtoStream(o);
    }
 
-   private boolean isMarshallableWithProtoStream(Object o) {
+   protected boolean isMarshallableWithProtoStream(Object o) {
       return getSerializationContext().canMarshall(o.getClass());
    }
 

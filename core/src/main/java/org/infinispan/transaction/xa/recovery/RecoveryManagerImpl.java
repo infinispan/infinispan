@@ -19,6 +19,7 @@ import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.tx.XidImpl;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
@@ -35,7 +36,6 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -238,8 +238,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
             if (!isSuccessful(r)) {
                throw new CacheException("Could not fetch in doubt transactions: " + r);
             }
-            // noinspection unchecked
-            Set<InDoubtTxInfo> infoInDoubtSet = ((SuccessfulResponse<Set<InDoubtTxInfo>>) r).getResponseValue();
+            Collection<InDoubtTxInfo> infoInDoubtSet = ((SuccessfulResponse) r).getResponseCollection();
             for (InDoubtTxInfo infoInDoubt : infoInDoubtSet) {
                InDoubtTxInfo inDoubtTxInfo = result.get(infoInDoubt.getXid());
                if (inDoubtTxInfo == null) {
@@ -338,8 +337,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
          log.expectedJustOneResponse(responseMap);
          throw new CacheException("Expected response size is 1, received " + responseMap);
       }
-      //noinspection rawtypes
-      return (String) ((SuccessfulResponse) responseMap.get(where)).getResponseValue();
+      return ((SuccessfulResponse) responseMap.get(where)).getResponseObject();
    }
 
    @Override

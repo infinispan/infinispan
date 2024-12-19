@@ -1,18 +1,14 @@
 package org.infinispan.counter.impl.function;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
-import org.infinispan.counter.impl.externalizers.ExternalizerIds;
-import org.infinispan.functional.impl.CounterConfigurationMetaParam;
 import org.infinispan.functional.EntryView;
+import org.infinispan.functional.impl.CounterConfigurationMetaParam;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * The adding function to update the {@link CounterValue}.
@@ -23,11 +19,13 @@ import org.infinispan.functional.EntryView;
  * @author Pedro Ruivo
  * @since 9.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.COUNTER_FUNCTION_CREATE_AND_ADD)
 public class CreateAndAddFunction<K extends CounterKey> extends BaseCreateFunction<K, CounterValue> {
 
-   public static final AdvancedExternalizer<CreateAndAddFunction> EXTERNALIZER = new Externalizer();
-   private final long delta;
+   @ProtoField(number = 2, defaultValue = "-1")
+   final long delta;
 
+   @ProtoFactory
    public CreateAndAddFunction(CounterConfiguration configuration, long delta) {
       super(configuration);
       this.delta = delta;
@@ -37,29 +35,5 @@ public class CreateAndAddFunction<K extends CounterKey> extends BaseCreateFuncti
    CounterValue apply(EntryView.ReadWriteEntryView<K, CounterValue> entryView, CounterValue currentValue,
          CounterConfigurationMetaParam metadata) {
       return FunctionHelper.add(entryView, currentValue, metadata, delta);
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<CreateAndAddFunction> {
-
-      @Override
-      public Set<Class<? extends CreateAndAddFunction>> getTypeClasses() {
-         return Collections.singleton(CreateAndAddFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.CREATE_ADD_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, CreateAndAddFunction object) throws IOException {
-         output.writeObject(object.configuration);
-         output.writeLong(object.delta);
-      }
-
-      @Override
-      public CreateAndAddFunction<?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new CreateAndAddFunction<>((CounterConfiguration) input.readObject(), input.readLong());
-      }
    }
 }

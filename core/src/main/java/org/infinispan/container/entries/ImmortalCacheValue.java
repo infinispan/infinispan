@@ -1,18 +1,16 @@
 package org.infinispan.container.entries;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Objects;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * An immortal cache value, to correspond with {@link org.infinispan.container.entries.ImmortalCacheEntry}
@@ -20,6 +18,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
  * @author Manik Surtani
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.IMMORTAL_CACHE_VALUE)
 public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
 
    public Object value;
@@ -29,8 +28,29 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
       this(value, null);
    }
 
-   protected ImmortalCacheValue(Object value, PrivateMetadata internalMetadata) {
-      this.value = value;
+   public ImmortalCacheValue(Object value, PrivateMetadata internalMetadata) {
+      this(MarshallableObject.create(value), internalMetadata);
+   }
+
+   @ProtoFactory
+   public ImmortalCacheValue(MarshallableObject<?> wrappedValue, PrivateMetadata internalMetadata) {
+      this.value = MarshallableObject.unwrap(wrappedValue);
+      this.internalMetadata = internalMetadata;
+   }
+
+   @ProtoField(number = 1, name ="value")
+   public MarshallableObject<?> getWrappedValue() {
+      return MarshallableObject.create(value);
+   }
+
+   @Override
+   @ProtoField(number = 2)
+   public final PrivateMetadata getInternalMetadata() {
+      return internalMetadata;
+   }
+
+   @Override
+   public final void setInternalMetadata(PrivateMetadata internalMetadata) {
       this.internalMetadata = internalMetadata;
    }
 
@@ -91,16 +111,6 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
    }
 
    @Override
-   public final PrivateMetadata getInternalMetadata() {
-      return internalMetadata;
-   }
-
-   @Override
-   public final void setInternalMetadata(PrivateMetadata internalMetadata) {
-      this.internalMetadata = internalMetadata;
-   }
-
-   @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof ImmortalCacheValue)) return false;
@@ -138,30 +148,5 @@ public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
    protected void appendFieldsToString(StringBuilder builder) {
       builder.append("value=").append(Util.toStr(value));
       builder.append(", internalMetadata=").append(internalMetadata);
-   }
-
-   public static class Externalizer extends AbstractExternalizer<ImmortalCacheValue> {
-      @Override
-      public void writeObject(ObjectOutput output, ImmortalCacheValue icv) throws IOException {
-         output.writeObject(icv.value);
-         output.writeObject(icv.internalMetadata);
-      }
-
-      @Override
-      public ImmortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object value = input.readObject();
-         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
-         return new ImmortalCacheValue(value, internalMetadata);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.IMMORTAL_VALUE;
-      }
-
-      @Override
-      public Set<Class<? extends ImmortalCacheValue>> getTypeClasses() {
-         return Collections.singleton(ImmortalCacheValue.class);
-      }
    }
 }

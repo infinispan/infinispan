@@ -1,25 +1,23 @@
 package org.infinispan.notifications.cachelistener.filter;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * @author anistor@redhat.com
  * @since 7.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.KEY_VALUE_FILTER_CONVERTER_AS_CACHE_EVENT_FILTER_CONVERTER)
 @Scope(Scopes.NONE)
 public class CacheEventFilterConverterAsKeyValueFilterConverter<K, V, C> extends AbstractKeyValueFilterConverter<K, V, C> {
 
@@ -31,6 +29,16 @@ public class CacheEventFilterConverterAsKeyValueFilterConverter<K, V, C> extends
       this.cacheEventFilterConverter = cacheEventFilterConverter;
    }
 
+   @ProtoFactory
+   CacheEventFilterConverterAsKeyValueFilterConverter(MarshallableObject<CacheEventFilterConverter<K, V, C>> converter) {
+      this.cacheEventFilterConverter = MarshallableObject.unwrap(converter);
+   }
+
+   @ProtoField(number = 1)
+   MarshallableObject<CacheEventFilterConverter<K, V, C>> getConverter() {
+      return MarshallableObject.create(cacheEventFilterConverter);
+   }
+
    @Override
    public C filterAndConvert(K key, V value, Metadata metadata) {
       return cacheEventFilterConverter.filterAndConvert(key, null, null, value, metadata, CREATE_EVENT);
@@ -39,28 +47,5 @@ public class CacheEventFilterConverterAsKeyValueFilterConverter<K, V, C> extends
    @Inject
    protected void injectDependencies(ComponentRegistry cr) {
       cr.wireDependencies(cacheEventFilterConverter);
-   }
-
-   public static class Externalizer extends AbstractExternalizer<CacheEventFilterConverterAsKeyValueFilterConverter> {
-
-      @Override
-      public Set<Class<? extends CacheEventFilterConverterAsKeyValueFilterConverter>> getTypeClasses() {
-         return Collections.singleton(CacheEventFilterConverterAsKeyValueFilterConverter.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, CacheEventFilterConverterAsKeyValueFilterConverter object) throws IOException {
-         output.writeObject(object.cacheEventFilterConverter);
-      }
-
-      @Override
-      public CacheEventFilterConverterAsKeyValueFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new CacheEventFilterConverterAsKeyValueFilterConverter((CacheEventFilterConverter) input.readObject());
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.CACHE_EVENT_FILTER_CONVERTER_AS_KEY_VALUE_FILTER_CONVERTER;
-      }
    }
 }

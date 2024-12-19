@@ -6,33 +6,33 @@
  */
 package org.infinispan.hibernate.cache.commons.util;
 
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 import org.infinispan.commands.functional.functions.InjectableComponent;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.MetaParam;
 import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * This is used both as the storage in entry, and for efficiency also directly in the cache.put() commands.
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
+@ProtoTypeId(ProtoStreamTypeIds.HIBERNATE_TOMBSTONE)
 public class Tombstone implements Function<EntryView.ReadWriteEntryView<Object, Object>, Void>, InjectableComponent, CompletableFunction {
 	public static final ExcludeTombstonesFilter EXCLUDE_TOMBSTONES = new ExcludeTombstonesFilter();
 
 	// the format of data is repeated (timestamp, UUID.LSB, UUID.MSB)
-	private final long[] data;
+	@ProtoField(1)
+	final long[] data;
 	private transient InfinispanDataRegion region;
 	private transient boolean complete;
 
@@ -40,7 +40,8 @@ public class Tombstone implements Function<EntryView.ReadWriteEntryView<Object, 
 		this.data = new long[] { timestamp, uuid.getLeastSignificantBits(), uuid.getMostSignificantBits() };
 	}
 
-	private Tombstone(long[] data) {
+	@ProtoFactory
+	Tombstone(long[] data) {
 		this.data = data;
 	}
 
@@ -191,63 +192,15 @@ public class Tombstone implements Function<EntryView.ReadWriteEntryView<Object, 
 		complete = true;
 	}
 
-	public static class Externalizer implements AdvancedExternalizer<Tombstone> {
-		@Override
-		public Set<Class<? extends Tombstone>> getTypeClasses() {
-			return Collections.<Class<? extends Tombstone>>singleton(Tombstone.class);
-		}
-
-		@Override
-		public Integer getId() {
-			return Externalizers.TOMBSTONE;
-		}
-
-		@Override
-		public void writeObject(ObjectOutput output, Tombstone tombstone) throws IOException {
-			output.writeInt(tombstone.data.length);
-			for (int i = 0; i < tombstone.data.length; ++i) {
-				output.writeLong(tombstone.data[i]);
-			}
-		}
-
-		@Override
-		public Tombstone readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-			int length = input.readInt();
-			long[] data = new long[length];
-			for (int i = 0; i < data.length; ++i) {
-				data[i] = input.readLong();
-			}
-			return new Tombstone(data);
-		}
-	}
-
+	@ProtoTypeId(ProtoStreamTypeIds.HIBERNATE_TOMBSTONE_EXCLUDE_EMPTY_VERSIONED_ENTRY)
 	public static class ExcludeTombstonesFilter implements Predicate<Map.Entry<Object, Object>> {
-		private ExcludeTombstonesFilter() {}
+
+		@ProtoFactory
+		ExcludeTombstonesFilter() {}
 
 		@Override
 		public boolean test(Map.Entry<Object, Object> entry) {
 			return !(entry.getValue() instanceof Tombstone);
-		}
-	}
-
-	public static class ExcludeTombstonesFilterExternalizer implements AdvancedExternalizer<ExcludeTombstonesFilter> {
-		@Override
-		public Set<Class<? extends ExcludeTombstonesFilter>> getTypeClasses() {
-			return Collections.<Class<? extends ExcludeTombstonesFilter>>singleton(ExcludeTombstonesFilter.class);
-		}
-
-		@Override
-		public Integer getId() {
-			return Externalizers.EXCLUDE_TOMBSTONES_FILTER;
-		}
-
-		@Override
-		public void writeObject(ObjectOutput output, ExcludeTombstonesFilter object) throws IOException {
-		}
-
-		@Override
-		public ExcludeTombstonesFilter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-			return EXCLUDE_TOMBSTONES;
 		}
 	}
 }

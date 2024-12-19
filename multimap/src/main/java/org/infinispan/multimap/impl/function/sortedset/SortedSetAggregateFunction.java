@@ -1,23 +1,18 @@
 package org.infinispan.multimap.impl.function.sortedset;
 
-import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
 import org.infinispan.multimap.impl.BaseSetBucket;
-import org.infinispan.multimap.impl.ExternalizerIds;
 import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.multimap.impl.SortedSetBucket;
+import org.infinispan.protostream.annotations.Proto;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.function.SerializableFunction;
 
 /**
@@ -28,13 +23,23 @@ import org.infinispan.util.function.SerializableFunction;
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_SORTED_SET_AGGREGATE_FUNCTION)
 public final class SortedSetAggregateFunction<K, V> implements SerializableFunction<EntryView.ReadWriteEntryView<K, ? extends BaseSetBucket<V>>, Collection<ScoredValue<V>>> {
-   public static final AdvancedExternalizer<SortedSetAggregateFunction> EXTERNALIZER = new Externalizer();
-   private final Collection<ScoredValue<V>> scoredValues;
-   private final double weight;
-   private final SortedSetBucket.AggregateFunction function;
-   private final AggregateType type;
 
+   @ProtoField(1)
+   final AggregateType type;
+
+   @ProtoField(value = 2)
+   final Collection<ScoredValue<V>> scoredValues;
+
+   @ProtoField(value = 3, defaultValue = "0.0")
+   final double weight;
+
+   @ProtoField(4)
+   final SortedSetBucket.AggregateFunction function;
+
+   @Proto
+   @ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_SORTED_SET_AGGREGATE_FUNCTION_TYPE)
    public enum AggregateType {
       UNION, INTER;
 
@@ -44,6 +49,7 @@ public final class SortedSetAggregateFunction<K, V> implements SerializableFunct
       }
    }
 
+   @ProtoFactory
    public SortedSetAggregateFunction(AggregateType type,
                                      Collection<ScoredValue<V>> scoredValues,
                                      double weight,
@@ -64,35 +70,5 @@ public final class SortedSetAggregateFunction<K, V> implements SerializableFunct
       return type == AggregateType.UNION
             ? bucket.union(scoredValues, weight, function)
             : bucket.inter(scoredValues, weight, function);
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<SortedSetAggregateFunction> {
-
-      @Override
-      public Set<Class<? extends SortedSetAggregateFunction>> getTypeClasses() {
-         return Collections.singleton(SortedSetAggregateFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.SORTED_SET_AGGREGATE_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, SortedSetAggregateFunction object) throws IOException {
-         MarshallUtil.marshallEnum(object.type, output);
-         MarshallUtil.marshallCollection(object.scoredValues, output);
-         output.writeDouble(object.weight);
-         MarshallUtil.marshallEnum(object.function, output);
-      }
-
-      @Override
-      public SortedSetAggregateFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         AggregateType aggregateType = MarshallUtil.unmarshallEnum(input, AggregateType::valueOf);
-         Collection<ScoredValue> scoredValues = unmarshallCollection(input, ArrayList::new);
-         double weight = input.readDouble();
-         SortedSetBucket.AggregateFunction aggregateFunction = MarshallUtil.unmarshallEnum(input, SortedSetBucket.AggregateFunction::valueOf);
-         return new SortedSetAggregateFunction(aggregateType, scoredValues, weight, aggregateFunction);
-      }
    }
 }

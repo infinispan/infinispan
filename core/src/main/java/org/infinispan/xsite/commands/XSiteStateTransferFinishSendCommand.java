@@ -1,12 +1,13 @@
 package org.infinispan.xsite.commands;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
@@ -17,22 +18,18 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
  * @author Ryan Emerson
  * @since 11.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.XSITE_STATE_TRANSFER_FINISH_SEND_COMMAND)
 public class XSiteStateTransferFinishSendCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = 108;
 
-   private String siteName;
-   private boolean statusOk;
+   @ProtoField(number = 2)
+   final String siteName;
 
-   // For CommandIdUniquenessTest only
-   public XSiteStateTransferFinishSendCommand() {
-      super(null);
-   }
+   @ProtoField(number = 3, defaultValue = "false")
+   final boolean statusOk;
 
-   public XSiteStateTransferFinishSendCommand(ByteString cacheName) {
-      this(cacheName, null, false);
-   }
-
+   @ProtoFactory
    public XSiteStateTransferFinishSendCommand(ByteString cacheName, String siteName, boolean statusOk) {
       super(cacheName);
       this.siteName = siteName;
@@ -54,18 +51,6 @@ public class XSiteStateTransferFinishSendCommand extends BaseRpcCommand {
    @Override
    public boolean isReturnValueExpected() {
       return false;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeUTF(siteName);
-      output.writeBoolean(statusOk);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      siteName = input.readUTF();
-      statusOk = input.readBoolean();
    }
 
    @Override

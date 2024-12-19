@@ -3,19 +3,15 @@ package org.infinispan.distribution.ch.impl;
 import static org.infinispan.distribution.ch.impl.SyncReplicatedConsistentHashFactory.computeMembersWithoutState;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -25,6 +21,7 @@ import org.infinispan.remoting.transport.Address;
  * @author anistor@redhat.com
  * @since 5.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.REPLICATED_CONSISTENT_HASH_FACTORY)
 public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<ReplicatedConsistentHash> {
 
    @Override
@@ -176,27 +173,5 @@ public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<Re
    @Override
    public int hashCode() {
       return -6053;
-   }
-
-   public static class Externalizer extends AbstractExternalizer<ReplicatedConsistentHashFactory> {
-
-      @Override
-      public void writeObject(ObjectOutput output, ReplicatedConsistentHashFactory chf) {
-      }
-
-      @Override
-      public ReplicatedConsistentHashFactory readObject(ObjectInput unmarshaller) {
-         return new ReplicatedConsistentHashFactory();
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.REPLICATED_CONSISTENT_HASH_FACTORY;
-      }
-
-      @Override
-      public Set<Class<? extends ReplicatedConsistentHashFactory>> getTypeClasses() {
-         return Util.asSet(ReplicatedConsistentHashFactory.class);
-      }
    }
 }

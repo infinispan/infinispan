@@ -1,33 +1,39 @@
 package org.infinispan.topology;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.partitionhandling.AvailabilityMode;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 /**
 * @author Dan Berindei
 * @since 7.0
 */
+@ProtoTypeId(ProtoStreamTypeIds.CACHE_STATUS_RESPONSE)
 public class CacheStatusResponse implements Serializable {
 
-   private static final CacheStatusResponse EMPTY = new CacheStatusResponse(null, null, null, null, null);
+   private static final CacheStatusResponse EMPTY = new CacheStatusResponse(null, null, null, null, (List<Address>) null);
 
-   private final CacheJoinInfo cacheJoinInfo;
-   private final CacheTopology cacheTopology;
-   private final CacheTopology stableTopology;
-   private final AvailabilityMode availabilityMode;
-   private final List<Address> current;
+   @ProtoField(1)
+   final CacheJoinInfo cacheJoinInfo;
+
+   @ProtoField(2)
+   final CacheTopology cacheTopology;
+
+   @ProtoField(3)
+   final CacheTopology stableTopology;
+
+   @ProtoField(4)
+   final AvailabilityMode availabilityMode;
+
+   final List<Address> current;
 
    public CacheStatusResponse(CacheJoinInfo cacheJoinInfo, CacheTopology cacheTopology, CacheTopology stableTopology,
                               AvailabilityMode availabilityMode, List<Address> current) {
@@ -36,6 +42,17 @@ public class CacheStatusResponse implements Serializable {
       this.stableTopology = stableTopology;
       this.availabilityMode = availabilityMode;
       this.current = current;
+   }
+
+   @ProtoFactory
+   static CacheStatusResponse create(CacheJoinInfo cacheJoinInfo, CacheTopology cacheTopology, CacheTopology stableTopology,
+                              AvailabilityMode availabilityMode, List<JGroupsAddress> current) {
+      return new CacheStatusResponse(cacheJoinInfo, cacheTopology, stableTopology, availabilityMode, (List<Address>)(List<?>) current);
+   }
+
+   @ProtoField(number = 5, collectionImplementation = ArrayList.class)
+   List<JGroupsAddress> getCurrent() {
+      return (List<JGroupsAddress>)(List<?>) current;
    }
 
    public static CacheStatusResponse empty() {
@@ -80,36 +97,5 @@ public class CacheStatusResponse implements Serializable {
             ", cacheTopology=" + cacheTopology +
             ", stableTopology=" + stableTopology +
             '}';
-   }
-
-   public static class Externalizer extends AbstractExternalizer<CacheStatusResponse> {
-      @Override
-      public void writeObject(ObjectOutput output, CacheStatusResponse cacheStatusResponse) throws IOException {
-         output.writeObject(cacheStatusResponse.cacheJoinInfo);
-         output.writeObject(cacheStatusResponse.cacheTopology);
-         output.writeObject(cacheStatusResponse.stableTopology);
-         output.writeObject(cacheStatusResponse.availabilityMode);
-         MarshallUtil.marshallCollection(cacheStatusResponse.current, output);
-      }
-
-      @Override
-      public CacheStatusResponse readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
-         CacheJoinInfo cacheJoinInfo = (CacheJoinInfo) unmarshaller.readObject();
-         CacheTopology cacheTopology = (CacheTopology) unmarshaller.readObject();
-         CacheTopology stableTopology = (CacheTopology) unmarshaller.readObject();
-         AvailabilityMode availabilityMode = (AvailabilityMode) unmarshaller.readObject();
-         List<Address> current = MarshallUtil.unmarshallCollection(unmarshaller, ArrayList::new);
-         return new CacheStatusResponse(cacheJoinInfo, cacheTopology, stableTopology, availabilityMode, current);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.CACHE_STATUS_RESPONSE;
-      }
-
-      @Override
-      public Set<Class<? extends CacheStatusResponse>> getTypeClasses() {
-         return Collections.<Class<? extends CacheStatusResponse>>singleton(CacheStatusResponse.class);
-      }
    }
 }

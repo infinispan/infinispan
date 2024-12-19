@@ -67,13 +67,14 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.jdkspecific.CallerId;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Version;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -101,7 +102,6 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.marshall.persistence.impl.PersistenceMarshallerImpl;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -142,7 +142,6 @@ import org.infinispan.statetransfer.StateTransferManagerImpl;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.DependencyGraph;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -1078,9 +1077,9 @@ public class TestingUtil {
       return extractComponentRegistry(cache).getComponent(LockManager.class);
    }
 
-   public static GlobalMarshaller extractGlobalMarshaller(EmbeddedCacheManager cm) {
+   public static Marshaller extractGlobalMarshaller(EmbeddedCacheManager cm) {
       GlobalComponentRegistry gcr = extractGlobalComponentRegistry(cm);
-      return (GlobalMarshaller) gcr.getComponent(StreamingMarshaller.class, KnownComponentNames.INTERNAL_MARSHALLER);
+      return gcr.getComponent(Marshaller.class, KnownComponentNames.INTERNAL_MARSHALLER);
    }
 
    public static PersistenceMarshallerImpl extractPersistenceMarshaller(EmbeddedCacheManager cm) {

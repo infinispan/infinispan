@@ -2,11 +2,8 @@ package org.infinispan.tools.store.migrator.marshaller.common;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.util.Util;
+import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 
@@ -16,20 +13,10 @@ import org.infinispan.metadata.impl.InternalMetadataImpl;
  * @author Ryan Emerson
  * @since 10.0
  */
-public class InternalMetadataImplExternalizer implements AdvancedExternalizer<InternalMetadataImpl> {
+public class InternalMetadataImplExternalizer extends AbstractMigratorExternalizer<InternalMetadata> {
 
-   private static final long serialVersionUID = -5291318076267612501L;
-
-   private final int id;
    public InternalMetadataImplExternalizer(int id) {
-      this.id = id;
-   }
-
-   @Override
-   public void writeObject(ObjectOutput output, InternalMetadataImpl b) throws IOException {
-      output.writeLong(b.created());
-      output.writeLong(b.lastUsed());
-      output.writeObject(b.actual());
+      super(InternalMetadataImpl.class, id);
    }
 
    @Override
@@ -38,16 +25,5 @@ public class InternalMetadataImplExternalizer implements AdvancedExternalizer<In
       long lastUsed = input.readLong();
       Metadata actual = (Metadata) input.readObject();
       return new InternalMetadataImpl(actual, created, lastUsed);
-   }
-
-   @Override
-   public Integer getId() {
-      return id;
-   }
-
-   @Override
-   @SuppressWarnings("unchecked")
-   public Set<Class<? extends InternalMetadataImpl>> getTypeClasses() {
-      return Util.asSet(InternalMetadataImpl.class);
    }
 }

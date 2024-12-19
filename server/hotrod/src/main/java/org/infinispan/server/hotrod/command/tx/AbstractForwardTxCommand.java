@@ -1,11 +1,9 @@
 package org.infinispan.server.hotrod.command.tx;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.tx.XidImpl;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.util.ByteString;
 
 /**
@@ -16,13 +14,17 @@ import org.infinispan.util.ByteString;
  */
 abstract class AbstractForwardTxCommand extends BaseRpcCommand {
 
+   @ProtoField(number = 2)
    protected XidImpl xid;
+
+   @ProtoField(value = 3, defaultValue = "-1")
    protected long timeout;
 
    AbstractForwardTxCommand(ByteString cacheName) {
       super(cacheName);
    }
 
+   @ProtoFactory
    AbstractForwardTxCommand(ByteString cacheName, XidImpl xid, long timeout) {
       super(cacheName);
       this.xid = xid;
@@ -37,17 +39,5 @@ abstract class AbstractForwardTxCommand extends BaseRpcCommand {
    @Override
    public boolean canBlock() {
       return true;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      XidImpl.writeTo(output, xid);
-      output.writeLong(timeout);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException {
-      xid = XidImpl.readFrom(input);
-      timeout = input.readLong();
    }
 }

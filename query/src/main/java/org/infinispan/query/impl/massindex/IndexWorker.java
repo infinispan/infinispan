@@ -1,30 +1,29 @@
 package org.infinispan.query.impl.massindex;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.protostream.impl.MarshallableCollection;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.impl.ComponentRegistryUtils;
-import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.security.actions.SecurityActions;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * Mass indexer task.
@@ -32,6 +31,7 @@ import org.infinispan.commons.util.concurrent.CompletionStages;
  * @author gustavonalle
  * @since 7.1
  */
+@ProtoTypeId(ProtoStreamTypeIds.INDEX_WORKER)
 public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
 
    private final String cacheName;
@@ -44,6 +44,31 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
       this.indexedTypes = indexedTypes;
       this.skipIndex = skipIndex;
       this.keys = keys;
+   }
+
+   @ProtoFactory
+   IndexWorker(String cacheName, MarshallableCollection<Class<?>> indexedTypes, boolean skipIndex, MarshallableCollection<Object> keys) {
+      this(cacheName, MarshallableCollection.unwrap(indexedTypes), skipIndex, MarshallableCollection.unwrap(keys, HashSet::new));
+   }
+
+   @ProtoField(1)
+   String getCacheName() {
+      return cacheName;
+   }
+
+   @ProtoField(2)
+   MarshallableCollection<Class<?>> getIndexedTypes() {
+      return MarshallableCollection.create(indexedTypes);
+   }
+
+   @ProtoField(value = 3, defaultValue = "false")
+   boolean isSkipIndex() {
+      return skipIndex;
+   }
+
+   @ProtoField(4)
+   MarshallableCollection<Object> getKeys() {
+      return MarshallableCollection.create(keys);
    }
 
    @Override
@@ -117,45 +142,4 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
       indexUpdater.refresh(indexedTypes);
       notifier.notifyIndexingCompletedSuccessfully();
    }
-
-   public static final class Externalizer extends AbstractExternalizer<IndexWorker> {
-
-      @Override
-      public Set<Class<? extends IndexWorker>> getTypeClasses() {
-         return Collections.singleton(IndexWorker.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, IndexWorker worker) throws IOException {
-         output.writeObject(worker.cacheName);
-         if (worker.indexedTypes == null) {
-            output.writeInt(0);
-         } else {
-            output.writeInt(worker.indexedTypes.size());
-            for (Class<?> entityType : worker.indexedTypes)
-               output.writeObject(entityType);
-         }
-         output.writeBoolean(worker.skipIndex);
-         output.writeObject(worker.keys);
-      }
-
-      @Override
-      public IndexWorker readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         String cacheName = (String) input.readObject();
-         int typesSize = input.readInt();
-         Set<Class<?>> types = new HashSet<>(typesSize);
-         for (int i = 0; i < typesSize; i++) {
-            types.add((Class<?>) input.readObject());
-         }
-         boolean skipIndex = input.readBoolean();
-         Set<Object> keys = (Set<Object>) input.readObject();
-         return new IndexWorker(cacheName, types, skipIndex, keys);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.INDEX_WORKER;
-      }
-   }
-
 }

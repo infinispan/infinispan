@@ -1,23 +1,17 @@
 package org.infinispan.multimap.impl.function.sortedset;
 
-import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.marshall.protostream.impl.MarshallableCollection;
 import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.multimap.impl.SortedSetAddArgs;
 import org.infinispan.multimap.impl.SortedSetBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by
@@ -27,15 +21,28 @@ import org.infinispan.multimap.impl.SortedSetBucket;
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_ADD_MANY_FUNCTION)
 public final class AddManyFunction<K, V> implements SortedSetBucketBaseFunction<K, V, Long> {
-   public static final AdvancedExternalizer<AddManyFunction> EXTERNALIZER = new Externalizer();
+
+   @ProtoField(value = 1, defaultValue = "false")
+   final boolean addOnly;
+
+   @ProtoField(value = 2, defaultValue = "false")
+   final boolean updateOnly;
+
+   @ProtoField(value = 3, defaultValue = "false")
+   final boolean updateLessScoresOnly;
+
+   @ProtoField(value = 4, defaultValue = "false")
+   final boolean updateGreaterScoresOnly;
+
+   @ProtoField(value = 5, defaultValue = "false")
+   final boolean returnChangedCount;
+
+   @ProtoField(value = 6, defaultValue = "false")
+   final boolean replace;
+
    private final Collection<ScoredValue<V>> scoredValues;
-   private final boolean addOnly;
-   private final boolean updateOnly;
-   private final boolean updateLessScoresOnly;
-   private final boolean updateGreaterScoresOnly;
-   private final boolean returnChangedCount;
-   private final boolean replace;
 
    public AddManyFunction(Collection<ScoredValue<V>> scoredValues, SortedSetAddArgs args) {
       this.scoredValues = scoredValues;
@@ -60,6 +67,18 @@ public final class AddManyFunction<K, V> implements SortedSetBucketBaseFunction<
       this.updateGreaterScoresOnly = updateGreaterScoresOnly;
       this.returnChangedCount = returnChangedCount;
       this.replace = replace;
+   }
+
+   @ProtoFactory
+   AddManyFunction(boolean addOnly, boolean updateOnly, boolean updateLessScoresOnly, boolean updateGreaterScoresOnly,
+                   boolean returnChangedCount, boolean replace, MarshallableCollection<ScoredValue<V>> scoredValues) {
+      this(MarshallableCollection.unwrap(scoredValues), addOnly, updateOnly, updateLessScoresOnly, updateGreaterScoresOnly,
+            returnChangedCount, replace);
+   }
+
+   @ProtoField(7)
+   MarshallableCollection<ScoredValue<V>> getScoredValues() {
+      return MarshallableCollection.create(scoredValues);
    }
 
    @Override
@@ -96,36 +115,5 @@ public final class AddManyFunction<K, V> implements SortedSetBucketBaseFunction<
       // nothing has been done
       return 0L;
 
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<AddManyFunction> {
-
-      @Override
-      public Set<Class<? extends AddManyFunction>> getTypeClasses() {
-         return Collections.singleton(AddManyFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.SORTED_SET_ADD_MANY_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, AddManyFunction object) throws IOException {
-         MarshallUtil.marshallCollection(object.scoredValues, output);
-         output.writeBoolean(object.addOnly);
-         output.writeBoolean(object.updateOnly);
-         output.writeBoolean(object.updateLessScoresOnly);
-         output.writeBoolean(object.updateGreaterScoresOnly);
-         output.writeBoolean(object.returnChangedCount);
-         output.writeBoolean(object.replace);
-      }
-
-      @Override
-      public AddManyFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Collection<ScoredValue> scoredValues = unmarshallCollection(input, ArrayList::new);
-         return new AddManyFunction(scoredValues, input.readBoolean(), input.readBoolean(),
-               input.readBoolean(), input.readBoolean(), input.readBoolean(), input.readBoolean());
-      }
    }
 }

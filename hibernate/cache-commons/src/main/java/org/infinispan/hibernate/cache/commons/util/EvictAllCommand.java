@@ -6,15 +6,19 @@
  */
 package org.infinispan.hibernate.cache.commons.util;
 
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.util.Collection;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * Evict all command
@@ -22,9 +26,35 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
  * @author Galder Zamarreño
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.HIBERNATE_EVICT_ALL_COMMAND)
 public class EvictAllCommand extends BaseRpcCommand {
 
+	final static ConcurrentMap<ByteString, InfinispanBaseRegion> allRegions = new ConcurrentHashMap<>();
+
+	/**
+	 * Add region so that commands can be cleared on shutdown.
+	 *
+	 * @param region instance to keep track of
+	 */
+	public static void addRegion(InfinispanBaseRegion region) {
+		allRegions.put(ByteString.fromString(region.getCache().getName()), region);
+	}
+
+	/**
+	 * Clear all regions from this command factory.
+	 *
+	 * @param regions collection of regions to clear
+	 */
+	public static void clearRegions(Collection<? extends InfinispanBaseRegion> regions) {
+		regions.forEach(region -> allRegions.remove(ByteString.fromString(region.getCache().getName())));
+	}
+
 	private final InfinispanBaseRegion region;
+
+	@ProtoFactory
+	static EvictAllCommand protoFactory(ByteString cacheName) {
+		return new EvictAllCommand(cacheName, allRegions.get(cacheName));
+	}
 
    /**
     * Evict all command constructor.
@@ -63,18 +93,7 @@ public class EvictAllCommand extends BaseRpcCommand {
 	}
 
 	@Override
-   public void writeTo(ObjectOutput output) {
-		// No-op
-	}
-
-	@Override
 	public boolean isReturnValueExpected() {
 		return false;
 	}
-
-	@Override
-   public void readFrom(ObjectInput input) {
-      // No-op
-   }
-
 }

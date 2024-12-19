@@ -1,17 +1,18 @@
 package org.infinispan.xsite.irac;
 
-import static org.infinispan.commons.io.UnsignedNumeric.readUnsignedInt;
-import static org.infinispan.commons.io.UnsignedNumeric.writeUnsignedInt;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Objects;
+
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * @author Pedro Ruivo
  * @since 14
  */
+@ProtoTypeId(ProtoStreamTypeIds.IRAC_MANAGER_KEY_INFO)
 public class IracManagerKeyInfo {
 
    final int segment;
@@ -24,6 +25,11 @@ public class IracManagerKeyInfo {
       this.owner = Objects.requireNonNull(owner);
    }
 
+   @ProtoFactory
+   IracManagerKeyInfo(int segment, MarshallableObject<Object> wrappedKey, MarshallableObject<Object> wrappedOwner) {
+      this(segment, MarshallableObject.unwrap(wrappedKey), MarshallableObject.unwrap(wrappedOwner));
+   }
+
    public Object getKey() {
       return key;
    }
@@ -32,8 +38,19 @@ public class IracManagerKeyInfo {
       return owner;
    }
 
+   @ProtoField(number = 1, defaultValue = "-1")
    public int getSegment() {
       return segment;
+   }
+
+   @ProtoField(2)
+   MarshallableObject<Object> getWrappedKey() {
+      return MarshallableObject.create(key);
+   }
+
+   @ProtoField(3)
+   MarshallableObject<Object> getWrappedOwner() {
+      return MarshallableObject.create(owner);
    }
 
    @Override
@@ -59,23 +76,5 @@ public class IracManagerKeyInfo {
    @Override
    public String toString() {
       return "IracManagerKeyInfoImpl{" + "segment=" + segment + ", key=" + key + ", owner=" + owner + '}';
-   }
-
-   public static void writeTo(ObjectOutput output, IracManagerKeyInfo keyInfo) throws IOException {
-      if (keyInfo == null) {
-         output.writeObject(null);
-         return;
-      }
-      output.writeObject(keyInfo.getKey());
-      writeUnsignedInt(output, keyInfo.getSegment());
-      output.writeObject(keyInfo.getOwner());
-   }
-
-   public static IracManagerKeyInfo readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      Object key = input.readObject();
-      if (key == null) {
-         return null;
-      }
-      return new IracManagerKeyInfo(readUnsignedInt(input), key, input.readObject());
    }
 }

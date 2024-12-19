@@ -10,6 +10,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "anchored.AnchoredKeysScalingTest")
@@ -57,6 +58,7 @@ public class AnchoredKeysScalingTest extends AbstractAnchoredKeysTest {
    private Address addNode() {
       GlobalConfigurationBuilder managerBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       managerBuilder.defaultCacheName(CACHE_NAME);
+      managerBuilder.serialization().addContextInitializer(ControlledConsistentHashFactory.SCI.INSTANCE);
 
       ConfigurationBuilder cacheBuilder = new ConfigurationBuilder();
       cacheBuilder.clustering().cacheMode(CacheMode.REPL_SYNC).hash().numSegments(4);

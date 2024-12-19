@@ -62,7 +62,7 @@ public class ResetOfflineStatusTest extends BaseSiteUnreachableTest {
          assertEquals("v" + i, cache(LON, 0).get(KEYS[i]));
       }
 
-      assertEquals(BringSiteOnlineResponse.BROUGHT_ONLINE, tom.bringSiteOnline(NYC));
+      assertEquals(BringSiteOnlineResponse.BSOR_BROUGHT_ONLINE, tom.bringSiteOnline(NYC));
 
       for (int i = 0; i < FAILURES - 1; i++) {
          try {
@@ -87,11 +87,12 @@ public class ResetOfflineStatusTest extends BaseSiteUnreachableTest {
       }
    }
 
+   @Override
    protected ConfigurationBuilder getLonActiveConfig() {
       return getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
    }
 
-   private void populateKeys(Cache primaryOwner) {
+   private static void populateKeys(Cache primaryOwner) {
       for (int i = 0; i < KEYS.length; ++i) {
          KEYS[i] = new MagicKey("k" + i, primaryOwner);
       }

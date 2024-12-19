@@ -1,22 +1,21 @@
 package org.infinispan.commands.functional.functions;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.infinispan.cache.impl.BiFunctionMapper;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.UserRaisedFunctionalException;
 
+@ProtoTypeId(ProtoStreamTypeIds.MERGE_FUNCTION)
 public class MergeFunction<K, V> implements Function<EntryView.ReadWriteEntryView<K, V>, V>, InjectableComponent, Serializable {
    private final BiFunction<? super V, ? super V, ? extends V> remappingFunction;
    private final V value;
@@ -26,6 +25,28 @@ public class MergeFunction<K, V> implements Function<EntryView.ReadWriteEntryVie
       this.remappingFunction = remappingFunction;
       this.value = value;
       this.metadata = metadata;
+   }
+
+   @ProtoFactory
+   MergeFunction(MarshallableObject<V> value, MarshallableObject<BiFunction<? super V, ? super V, ? extends V>> remappingFunction,
+                 MarshallableObject<Metadata> metadata) {
+      this(MarshallableObject.unwrap(value), MarshallableObject.unwrap(remappingFunction),
+            MarshallableObject.unwrap(metadata));
+   }
+
+   @ProtoField(number = 1)
+   MarshallableObject<V> getValue() {
+      return MarshallableObject.create(value);
+   }
+
+   @ProtoField(number = 2)
+   MarshallableObject<BiFunction<? super V, ? super V, ? extends V>> getRemappingFunction() {
+      return MarshallableObject.create(remappingFunction);
+   }
+
+   @ProtoField(number = 3)
+   MarshallableObject<Metadata> getMetadata() {
+      return MarshallableObject.create(metadata);
    }
 
    @Override
@@ -61,32 +82,5 @@ public class MergeFunction<K, V> implements Function<EntryView.ReadWriteEntryVie
    public void inject(ComponentRegistry registry) {
       registry.wireDependencies(this);
       registry.wireDependencies(remappingFunction);
-   }
-
-   public static class Externalizer implements AdvancedExternalizer<MergeFunction> {
-
-      @Override
-      public Set<Class<? extends MergeFunction>> getTypeClasses() {
-         return Collections.singleton(MergeFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.MERGE_FUNCTION_MAPPER;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, MergeFunction object) throws IOException {
-         output.writeObject(object.value);
-         output.writeObject(object.remappingFunction);
-         output.writeObject(object.metadata);
-      }
-
-      @Override
-      public MergeFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new MergeFunction(input.readObject(),
-               (BiFunction) input.readObject(),
-               (Metadata) input.readObject());
-      }
    }
 }

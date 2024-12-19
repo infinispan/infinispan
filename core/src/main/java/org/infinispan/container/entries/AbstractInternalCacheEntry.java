@@ -5,8 +5,10 @@ import java.util.Objects;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  * An abstract internal cache entry that is typically stored in the data container
@@ -24,6 +26,27 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
       this.key = key;
       this.value = value;
       this.internalMetadata = internalMetadata;
+   }
+
+   protected AbstractInternalCacheEntry(MarshallableObject<?> wrappedKey, MarshallableObject<?> wrappedValue,
+                                        PrivateMetadata internalMetadata) {
+      this(MarshallableObject.unwrap(wrappedKey), MarshallableObject.unwrap(wrappedValue), internalMetadata);
+   }
+
+   @ProtoField(number = 1, name = "key")
+   public MarshallableObject<?> getWrappedKey() {
+      return MarshallableObject.create(key);
+   }
+
+   @ProtoField(number = 2,  name = "value")
+   public MarshallableObject<?> getWrappedValue() {
+      return MarshallableObject.create(value);
+   }
+
+   @Override
+   @ProtoField(number = 3)
+   public PrivateMetadata getInternalMetadata() {
+      return internalMetadata;
    }
 
    @Override
@@ -116,11 +139,6 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
    @Override
    public boolean isL1Entry() {
       return false;
-   }
-
-   @Override
-   public final PrivateMetadata getInternalMetadata() {
-      return internalMetadata;
    }
 
    @Override
