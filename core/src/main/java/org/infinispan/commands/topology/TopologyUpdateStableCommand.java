@@ -1,21 +1,20 @@
 package org.infinispan.commands.topology;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.PersistentUUID;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Update the stable topology.
@@ -23,24 +22,56 @@ import org.infinispan.util.logging.LogFactory;
  * @author Ryan Emerson
  * @since 11.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.TOPOLOGY_UPDATE_STABLE_COMMAND)
 public class TopologyUpdateStableCommand extends AbstractCacheControlCommand {
-   private static final Log log = LogFactory.getLog(TopologyUpdateStableCommand.class);
 
    public static final byte COMMAND_ID = 97;
 
-   private String cacheName;
-   private ConsistentHash currentCH;
-   private ConsistentHash pendingCH;
-   private List<Address> actualMembers;
-   private List<PersistentUUID> persistentUUIDs;
-   private int rebalanceId;
-   private int topologyId;
-   private int viewId;
-   private boolean topologyRestored;
+   final List<Address> actualMembers;
 
-   // For CommandIdUniquenessTest only
-   public TopologyUpdateStableCommand() {
+   @ProtoField(number = 1)
+   final String cacheName;
+
+   @ProtoField(number = 2, collectionImplementation = ArrayList.class)
+   final List<PersistentUUID> persistentUUIDs;
+
+   @ProtoField(number = 3, defaultValue = "-1")
+   final int rebalanceId;
+
+   @ProtoField(number = 4, defaultValue = "-1")
+   final int topologyId;
+
+   @ProtoField(number = 5, defaultValue = "-1")
+   final int viewId;
+
+   @ProtoField(number = 6)
+   final WrappedMessage currentCH;
+
+   @ProtoField(number = 7)
+   final WrappedMessage pendingCH;
+
+   @ProtoField(number = 8, defaultValue = "false")
+   final boolean topologyRestored;
+
+   @ProtoField(number = 9, collectionImplementation = ArrayList.class)
+   List<JGroupsAddress> getActualMembers() {
+      return (List<JGroupsAddress>)(List<?>) actualMembers;
+   }
+
+   @ProtoFactory
+   TopologyUpdateStableCommand(String cacheName, List<PersistentUUID> persistentUUIDs, int rebalanceId, int topologyId,
+                               int viewId, WrappedMessage currentCH, WrappedMessage pendingCH, List<JGroupsAddress> actualMembers,
+                               boolean topologyRestored) {
       super(COMMAND_ID);
+      this.currentCH = currentCH;
+      this.pendingCH = pendingCH;
+      this.cacheName = cacheName;
+      this.actualMembers = (List<Address>)(List<?>) actualMembers;
+      this.persistentUUIDs = persistentUUIDs;
+      this.rebalanceId = rebalanceId;
+      this.topologyId = topologyId;
+      this.viewId = viewId;
+      this.topologyRestored = topologyRestored;
    }
 
    public TopologyUpdateStableCommand(String cacheName, Address origin, CacheTopology cacheTopology, int viewId) {
@@ -48,8 +79,8 @@ public class TopologyUpdateStableCommand extends AbstractCacheControlCommand {
       this.cacheName = cacheName;
       this.topologyId = cacheTopology.getTopologyId();
       this.rebalanceId = cacheTopology.getRebalanceId();
-      this.currentCH = cacheTopology.getCurrentCH();
-      this.pendingCH = cacheTopology.getPendingCH();
+      this.currentCH = new WrappedMessage(cacheTopology.getCurrentCH());
+      this.pendingCH = new WrappedMessage(cacheTopology.getPendingCH());
       this.actualMembers = cacheTopology.getActualMembers();
       this.persistentUUIDs = cacheTopology.getMembersPersistentUUIDs();
       this.viewId = viewId;
@@ -58,23 +89,18 @@ public class TopologyUpdateStableCommand extends AbstractCacheControlCommand {
 
    @Override
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry gcr) throws Throwable {
-      if (!gcr.isLocalTopologyManagerRunning()) {
-         log.debugf("Discard stable update because topology manager not running %s", this);
-         return CompletableFutures.completedNull();
-      }
-
-      CacheTopology topology = new CacheTopology(topologyId, rebalanceId, topologyRestored, currentCH, pendingCH,
+      CacheTopology topology = new CacheTopology(topologyId, rebalanceId, topologyRestored, getCurrentCH(), getPendingCH(),
             CacheTopology.Phase.NO_REBALANCE, actualMembers, persistentUUIDs);
       return gcr.getLocalTopologyManager()
             .handleStableTopologyUpdate(cacheName, topology, origin, viewId);
    }
 
    public ConsistentHash getCurrentCH() {
-      return currentCH;
+      return (ConsistentHash) currentCH.getValue();
    }
 
    public ConsistentHash getPendingCH() {
-      return pendingCH;
+      return (ConsistentHash) pendingCH.getValue();
    }
 
    public int getTopologyId() {
@@ -82,38 +108,12 @@ public class TopologyUpdateStableCommand extends AbstractCacheControlCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallString(cacheName, output);
-      output.writeObject(currentCH);
-      output.writeObject(pendingCH);
-      MarshallUtil.marshallCollection(actualMembers, output);
-      MarshallUtil.marshallCollection(persistentUUIDs, output);
-      output.writeInt(topologyId);
-      output.writeInt(rebalanceId);
-      output.writeInt(viewId);
-      output.writeBoolean(topologyRestored);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      cacheName = MarshallUtil.unmarshallString(input);
-      currentCH = (ConsistentHash) input.readObject();
-      pendingCH = (ConsistentHash) input.readObject();
-      actualMembers = MarshallUtil.unmarshallCollection(input, ArrayList::new);
-      persistentUUIDs = MarshallUtil.unmarshallCollection(input, ArrayList::new);
-      topologyId = input.readInt();
-      rebalanceId = input.readInt();
-      viewId = input.readInt();
-      topologyRestored = input.readBoolean();
-   }
-
-   @Override
    public String toString() {
       return "TopologyUpdateStableCommand{" +
             "cacheName='" + cacheName + '\'' +
             ", origin=" + origin +
-            ", currentCH=" + currentCH +
-            ", pendingCH=" + pendingCH +
+            ", currentCH=" + getCurrentCH() +
+            ", pendingCH=" + getPendingCH() +
             ", actualMembers=" + actualMembers +
             ", persistentUUIDs=" + persistentUUIDs +
             ", rebalanceId=" + rebalanceId +

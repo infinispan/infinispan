@@ -1,15 +1,11 @@
 package org.infinispan.commands.functional;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.function.Function;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.read.AbstractDataCommand;
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
@@ -17,7 +13,12 @@ import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
+@ProtoTypeId(ProtoStreamTypeIds.READ_ONLY_KEY_COMMAND)
 public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
 
    public static final int COMMAND_ID = 62;
@@ -27,17 +28,43 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
    protected DataConversion valueDataConversion;
 
    public ReadOnlyKeyCommand(Object key, Function<ReadEntryView<K, V>, R> f, int segment, Params params,
-                             DataConversion keyDataConversion,
-                             DataConversion valueDataConversion) {
-      super(key, segment, EnumUtil.EMPTY_BIT_SET);
+                             DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      super(key, segment, params.toFlagsBitSet());
       this.f = f;
       this.params = params;
       this.keyDataConversion = keyDataConversion;
       this.valueDataConversion = valueDataConversion;
-      this.setFlagsBitSet(params.toFlagsBitSet());
    }
 
-   public ReadOnlyKeyCommand() {
+   @ProtoFactory
+   ReadOnlyKeyCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
+                      MarshallableObject<Function<ReadEntryView<K, V>, R>> wrappedFunction, Params params,
+                      DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      super(wrappedKey, flagsWithoutRemote, topologyId, segment);
+      this.f = MarshallableObject.unwrap(wrappedFunction);
+      this.params = params;
+      this.keyDataConversion = keyDataConversion;
+      this.valueDataConversion = valueDataConversion;
+   }
+
+   @ProtoField(number = 5)
+   MarshallableObject<Function<ReadEntryView<K, V>, R>> getWrappedFunction() {
+      return MarshallableObject.create(f);
+   }
+
+   @ProtoField(number = 6)
+   public Params getParams() {
+      return params;
+   }
+
+   @ProtoField(number = 7)
+   public DataConversion getKeyDataConversion() {
+      return keyDataConversion;
+   }
+
+   @ProtoField(number = 8)
+   public DataConversion getValueDataConversion() {
+      return valueDataConversion;
    }
 
    @Override
@@ -54,27 +81,6 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
-      output.writeObject(f);
-      UnsignedNumeric.writeUnsignedInt(output, segment);
-      Params.writeObject(output, params);
-      DataConversion.writeTo(output, keyDataConversion);
-      DataConversion.writeTo(output, valueDataConversion);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      key = input.readObject();
-      f = (Function<ReadEntryView<K, V>, R>) input.readObject();
-      segment = UnsignedNumeric.readUnsignedInt(input);
-      params = Params.readObject(input);
-      this.setFlagsBitSet(params.toFlagsBitSet());
-      keyDataConversion = DataConversion.readFrom(input);
-      valueDataConversion = DataConversion.readFrom(input);
-   }
-
-   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitReadOnlyKeyCommand(ctx, this);
    }
@@ -88,33 +94,19 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
     * Apply function on entry without any data
     */
    public Object performOnLostData() {
-      return StatsEnvelope.create(f.apply(EntryViews.noValue((K) key, keyDataConversion)), true);
+      return StatsEnvelope.create(f.apply(EntryViews.noValue(key, keyDataConversion)), true);
    }
 
    @Override
    public String toString() {
-      final StringBuilder sb = new StringBuilder("ReadOnlyKeyCommand{");
-      sb.append(", key=").append(key);
-      sb.append(", f=").append(f.getClass().getName());
-      sb.append(", keyDataConversion=").append(keyDataConversion);
-      sb.append(", valueDataConversion=").append(valueDataConversion);
-      sb.append('}');
-      return sb.toString();
+      return "ReadOnlyKeyCommand{" + ", key=" + key +
+            ", f=" + f.getClass().getName() +
+            ", keyDataConversion=" + keyDataConversion +
+            ", valueDataConversion=" + valueDataConversion +
+            '}';
    }
 
    public Function<ReadEntryView<K, V>, R> getFunction() {
       return f;
-   }
-
-   public DataConversion getKeyDataConversion() {
-      return keyDataConversion;
-   }
-
-   public DataConversion getValueDataConversion() {
-      return valueDataConversion;
-   }
-
-   public Params getParams() {
-      return params;
    }
 }

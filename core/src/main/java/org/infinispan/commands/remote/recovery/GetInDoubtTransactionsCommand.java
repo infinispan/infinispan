@@ -5,8 +5,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
@@ -19,17 +22,14 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.GET_IN_DOUBT_TRANSACTIONS_COMMAND)
 public class GetInDoubtTransactionsCommand extends BaseRpcCommand {
 
    private static final Log log = LogFactory.getLog(GetInDoubtTransactionsCommand.class);
 
    public static final int COMMAND_ID = 21;
 
-   @SuppressWarnings("unused")
-   private GetInDoubtTransactionsCommand() {
-      super(null); // For command id uniqueness test
-   }
-
+   @ProtoFactory
    public GetInDoubtTransactionsCommand(ByteString cacheName) {
       super(cacheName);
    }

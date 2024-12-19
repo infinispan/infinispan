@@ -1,10 +1,6 @@
 package org.infinispan.encoding;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Objects;
-import java.util.Set;
 
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.Encoder;
@@ -16,21 +12,23 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.dataconversion.WrapperIds;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.Ids;
-import org.infinispan.commons.util.Util;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.encoding.impl.StorageConfigurationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.EncoderRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Handle conversions for Keys or values.
  *
  * @since 9.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.DATA_CONVERSION)
 @Scope(Scopes.NONE)
 public final class DataConversion {
 
@@ -103,6 +101,31 @@ public final class DataConversion {
       this.requestMediaType = MediaType.APPLICATION_OBJECT;
       encoderId = EncoderIds.NO_ENCODER;
       wrapperId = WrapperIds.NO_WRAPPER;
+   }
+
+   @ProtoFactory
+   static DataConversion protoFactory(boolean isKey, short encoderId, byte wrapperId, MediaType mediaType) {
+      return new DataConversion(encoderId, wrapperId, mediaType, isKey);
+   }
+
+   @ProtoField(value = 1, defaultValue = "false")
+   boolean getIsKey() {
+      return isKey;
+   }
+
+   @ProtoField(value = 2, defaultValue = "0")
+   short getEncoderId() {
+      return encoder.id();
+   }
+
+   @ProtoField(value = 3, defaultValue = "0")
+   byte getWrapperId() {
+      return customWrapper != null ? customWrapper.id() : WrapperIds.NO_WRAPPER;
+   }
+
+   @ProtoField(4)
+   MediaType getMediaType() {
+      return requestMediaType;
    }
 
    public DataConversion withRequestMediaType(MediaType requestMediaType) {
@@ -343,51 +366,4 @@ public final class DataConversion {
                                                        Class<? extends Wrapper> wrapperClass) {
       return new DataConversion(encoderClass, wrapperClass, MediaType.APPLICATION_OBJECT, false);
    }
-
-   public static void writeTo(ObjectOutput output, DataConversion dataConversion) throws IOException {
-      byte flags = 0;
-      if (dataConversion.isKey) flags = (byte) (flags | 2);
-      output.writeByte(flags);
-      output.writeShort(dataConversion.encoder.id());
-      if (dataConversion.customWrapper != null) {
-         output.writeByte(dataConversion.customWrapper.id());
-      } else {
-         output.writeByte(WrapperIds.NO_WRAPPER);
-      }
-      output.writeObject(dataConversion.requestMediaType);
-   }
-
-   public static DataConversion readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      byte flags = input.readByte();
-      boolean isKey = ((flags & 2) == 2);
-
-      short encoderId = input.readShort();
-      byte wrapperId = input.readByte();
-      MediaType requestMediaType = (MediaType) input.readObject();
-      return new DataConversion(encoderId, wrapperId, requestMediaType, isKey);
-   }
-
-   public static class Externalizer extends AbstractExternalizer<DataConversion> {
-
-      @Override
-      public Set<Class<? extends DataConversion>> getTypeClasses() {
-         return Util.asSet(DataConversion.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, DataConversion dataConversion) throws IOException {
-         writeTo(output, dataConversion);
-      }
-
-      @Override
-      public DataConversion readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return readFrom(input);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.DATA_CONVERSION;
-      }
-   }
-
 }

@@ -1,14 +1,7 @@
 package org.infinispan.server.resp.filter;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -17,12 +10,18 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.infinispan.server.resp.ExternalizerIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+
+@ProtoTypeId(ProtoStreamTypeIds.RESP_EVENT_LISTENER_CONVERTER)
 @Scope(Scopes.NONE)
 public class EventListenerConverter<K, V, C> implements CacheEventConverter<K, V, C> {
-   public static final AdvancedExternalizer<EventListenerConverter> EXTERNALIZER = new EventListenerConverter.Externalizer();
-   private final DataConversion dc;
 
+   @ProtoField(1)
+   final DataConversion dc;
+
+   @ProtoFactory
    public EventListenerConverter(DataConversion dc) {
       this.dc = dc;
    }
@@ -40,28 +39,5 @@ public class EventListenerConverter<K, V, C> implements CacheEventConverter<K, V
    @Override
    public MediaType format() {
       return MediaType.APPLICATION_OCTET_STREAM;
-   }
-
-   private static class Externalizer extends AbstractExternalizer<EventListenerConverter> {
-
-      @Override
-      public Set<Class<? extends EventListenerConverter>> getTypeClasses() {
-         return Collections.singleton(EventListenerConverter.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, EventListenerConverter object) throws IOException {
-         output.writeObject(object.dc);
-      }
-
-      @Override
-      public EventListenerConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new EventListenerConverter((DataConversion)input.readObject());
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.EVENT_LISTENER_CONVERTER;
-      }
    }
 }

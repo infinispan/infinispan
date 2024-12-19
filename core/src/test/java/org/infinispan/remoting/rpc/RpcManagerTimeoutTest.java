@@ -69,7 +69,7 @@ public class RpcManagerTimeoutTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
-      createClusteredCaches(4, CACHE_NAME, builder);
+      createClusteredCaches(4, CACHE_NAME, RpcSCI.INSTANCE, builder);
       waitForClusterToForm(CACHE_NAME);
    }
 

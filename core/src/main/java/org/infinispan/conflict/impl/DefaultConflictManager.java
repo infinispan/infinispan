@@ -433,10 +433,8 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
                if (log.isTraceEnabled()) log.tracef("%s received response %s from %s", this, entry.getValue(), entry.getKey());
                Response rsp = entry.getValue();
                if (rsp instanceof SuccessfulResponse) {
-                  SuccessfulResponse response = (SuccessfulResponse) rsp;
-                  Object rspVal = response.getResponseValue();
                   synchronized (versionsMap) {
-                     versionsMap.put(entry.getKey(), (InternalCacheValue<V>) rspVal);
+                     versionsMap.put(entry.getKey(), ((SuccessfulResponse) rsp).getResponseObject());
                   }
                } else if(rsp instanceof UnsureResponse) {
                   log.debugf("Received UnsureResponse, restarting request %s", this);

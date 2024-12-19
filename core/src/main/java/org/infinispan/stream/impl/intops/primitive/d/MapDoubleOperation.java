@@ -3,6 +3,9 @@ package org.infinispan.stream.impl.intops.primitive.d;
 import java.util.function.DoubleUnaryOperator;
 import java.util.stream.DoubleStream;
 
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.stream.impl.intops.MappingOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -17,13 +20,19 @@ public class MapDoubleOperation implements MappingOperation<Double, DoubleStream
       this.operator = operator;
    }
 
+   @ProtoFactory
+   MapDoubleOperation(MarshallableObject<DoubleUnaryOperator> operator) {
+      this.operator = MarshallableObject.unwrap(operator);
+   }
+
+   @ProtoField(number = 1)
+   MarshallableObject<DoubleUnaryOperator> getOperator() {
+      return MarshallableObject.create(operator);
+   }
+
    @Override
    public DoubleStream perform(DoubleStream stream) {
       return stream.map(operator);
-   }
-
-   public DoubleUnaryOperator getOperator() {
-      return operator;
    }
 
    @Override

@@ -1,22 +1,25 @@
 package org.infinispan.commands.remote;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.read.GetAllCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.marshall.protostream.impl.MarshallableCollection;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
@@ -24,11 +27,12 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * Issues a remote getAll call.  This is not a {@link org.infinispan.commands.VisitableCommand} and hence not passed up the
- * interceptor chain.
+ * Issues a remote getAll call.  This is not a {@link org.infinispan.commands.VisitableCommand} and hence not passed up
+ * the interceptor chain.
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
+@ProtoTypeId(ProtoStreamTypeIds.CLUSTERED_GET_ALL_COMMAND)
 public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
    public static final byte COMMAND_ID = 46;
    private static final Log log = LogFactory.getLog(ClusteredGetAllCommand.class);
@@ -36,28 +40,37 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
    private List<?> keys;
    private GlobalTransaction gtx;
 
-
-   ClusteredGetAllCommand() {
-      super(null, EnumUtil.EMPTY_BIT_SET);
-   }
-
-   public ClusteredGetAllCommand(ByteString cacheName) {
-      super(cacheName, EnumUtil.EMPTY_BIT_SET);
-   }
-
    public ClusteredGetAllCommand(ByteString cacheName, List<?> keys, long flags, GlobalTransaction gtx) {
-      super(cacheName, flags);
+      super(cacheName, -1, flags);
       this.keys = keys;
       this.gtx = gtx;
    }
 
+   @ProtoFactory
+   ClusteredGetAllCommand(ByteString cacheName, int topologyId, long flagsWithoutRemote, MarshallableCollection<?> wrappedKeys,
+                          GlobalTransaction globalTransaction) {
+      super(cacheName, topologyId, flagsWithoutRemote);
+      this.keys = MarshallableCollection.unwrap(wrappedKeys, ArrayList::new);
+      this.gtx = globalTransaction;
+   }
+
+   @ProtoField(number = 4, name = "keys")
+   MarshallableCollection<?> getWrappedKeys() {
+      return MarshallableCollection.create(keys);
+   }
+
+   @ProtoField(number = 5)
+   GlobalTransaction getGlobalTransaction() {
+      return gtx;
+   }
+
    @Override
    public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
-      if (!hasAnyFlag(FlagBitSets.FORCE_WRITE_LOCK)) {
+      if (!EnumUtil.containsAny(flags, FlagBitSets.FORCE_WRITE_LOCK)) {
          return invokeGetAll(componentRegistry);
       } else {
          return componentRegistry.getCommandsFactory()
-               .buildLockControlCommand(keys, getFlagsBitSet(), gtx)
+               .buildLockControlCommand(keys, flags, gtx)
                .invokeAsync(componentRegistry)
                .thenCompose(o -> invokeGetAll(componentRegistry));
       }
@@ -66,7 +79,7 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
    private CompletionStage<Object> invokeGetAll(ComponentRegistry cr) {
       // make sure the get command doesn't perform a remote call
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
-      GetAllCommand command = cr.getCommandsFactory().buildGetAllCommand(keys, getFlagsBitSet(), true);
+      GetAllCommand command = cr.getCommandsFactory().buildGetAllCommand(keys, flags, true);
       command.setTopologyId(topologyId);
       InvocationContext invocationContext = cr.getInvocationContextFactory().running().createRemoteInvocationContextForCommand(command, getOrigin());
       CompletionStage<Object> future = cr.getInterceptorChain().running().invokeAsync(invocationContext, command);
@@ -106,62 +119,24 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallCollection(keys, output);
-      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
-      output.writeObject(gtx);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
-      setFlagsBitSet(input.readLong());
-      gtx = (GlobalTransaction) input.readObject();
-   }
-
-   @Override
-   public boolean isReturnValueExpected() {
-      return true;
-   }
-
-   @Override
-   public String toString() {
-      final StringBuilder sb = new StringBuilder("ClusteredGetAllCommand{");
-      sb.append("keys=").append(keys);
-      sb.append(", flags=").append(printFlags());
-      sb.append(", topologyId=").append(topologyId);
-      sb.append('}');
-      return sb.toString();
-   }
-
-   @Override
-   public boolean equals(Object obj) {
-      if (this == obj)
-         return true;
-      if (obj == null)
-         return false;
-      if (getClass() != obj.getClass())
-         return false;
-      ClusteredGetAllCommand<?, ?> other = (ClusteredGetAllCommand<?, ?>) obj;
-      if (gtx == null) {
-         if (other.gtx != null)
-            return false;
-      } else if (!gtx.equals(other.gtx))
-         return false;
-      if (keys == null) {
-         if (other.keys != null)
-            return false;
-      } else if (!keys.equals(other.keys))
-         return false;
-      return true;
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      ClusteredGetAllCommand<?, ?> that = (ClusteredGetAllCommand<?, ?>) o;
+      return Objects.equals(keys, that.keys) &&
+            Objects.equals(gtx, that.gtx);
    }
 
    @Override
    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((gtx == null) ? 0 : gtx.hashCode());
-      result = prime * result + ((keys == null) ? 0 : keys.hashCode());
-      return result;
+      return Objects.hash(keys, gtx);
+   }
+
+   @Override
+   public String toString() {
+      return "ClusteredGetAllCommand{" + "keys=" + keys +
+            ", flags=" + EnumUtil.prettyPrintBitSet(flags, Flag.class) +
+            ", topologyId=" + topologyId +
+            '}';
    }
 }

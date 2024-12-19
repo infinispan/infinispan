@@ -26,9 +26,6 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,9 +41,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.marshall.Externalizer;
-import org.infinispan.commons.marshall.SerializeFunctionWith;
-import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -63,7 +57,12 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.function.SerializableFunction;
 import org.testng.annotations.Test;
@@ -77,6 +76,10 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "functional.FunctionalMapTest")
 public class FunctionalMapTest extends AbstractFunctionalTest {
+
+   public FunctionalMapTest() {
+      this.serializationContextInitializer = new FunctionalMapSCIImpl();
+   }
 
    public void testSimpleWriteConstantAndReadGetsValue() {
       checkSimpleCacheAvailable();
@@ -121,18 +124,18 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       );
    }
 
-   @SerializeWith(value = SetStringConstant.Externalizer0.class)
-   private static final class SetStringConstant<K> implements Consumer<WriteEntryView<K, String>> {
+   static final class SetStringConstant<K> implements Consumer<WriteEntryView<K, String>> {
       @Override
       public void accept(WriteEntryView<K, String> wo) {
          wo.set("one");
       }
 
-      private static final SetStringConstant INSTANCE = new SetStringConstant();
-      public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
+      @SuppressWarnings("unchecked")
+      @ProtoFactory
+      static <K> SetStringConstant<K> getInstance() {
+         return INSTANCE;
       }
+      static final SetStringConstant INSTANCE = new SetStringConstant<>();
    }
 
    public void testSimpleWriteValueAndReadValueAndMetadata() {
@@ -180,8 +183,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       );
    }
 
-   @SerializeWith(value = SetValueAndConstantLifespan.Externalizer0.class)
-   private static final class SetValueAndConstantLifespan<K, V>
+   static final class SetValueAndConstantLifespan<K, V>
          implements BiConsumer<V, WriteEntryView<K, V>> {
       @Override
       public void accept(V v, WriteEntryView<K, V> wo) {
@@ -189,16 +191,13 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       }
 
       @SuppressWarnings("unchecked")
-      private static <K, V> SetValueAndConstantLifespan<K, V> getInstance() {
+      @ProtoFactory
+      static <K, V> SetValueAndConstantLifespan<K, V> getInstance() {
          return INSTANCE;
       }
 
       private static final SetValueAndConstantLifespan INSTANCE =
          new SetValueAndConstantLifespan<>();
-      public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
-      }
    }
 
    public void testSimpleReadWriteGetsEmpty() {
@@ -277,8 +276,8 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       );
    }
 
-   @SerializeFunctionWith(value = SetStringConstantReturnPrevious.Externalizer0.class)
-   private static final class SetStringConstantReturnPrevious<K>
+
+   static final class SetStringConstantReturnPrevious<K>
          implements Function<ReadWriteEntryView<K, String>, Optional<String>> {
       @Override
       public Optional<String> apply(ReadWriteEntryView<K, String> rw) {
@@ -288,16 +287,12 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       }
 
       @SuppressWarnings("unchecked")
-      private static <K> SetStringConstantReturnPrevious<K> getInstance() {
+      @ProtoFactory
+      static <K> SetStringConstantReturnPrevious<K> getInstance() {
          return INSTANCE;
       }
 
-      private static final SetStringConstantReturnPrevious INSTANCE =
-         new SetStringConstantReturnPrevious<>();
-      public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
-      }
+      private static final SetStringConstantReturnPrevious INSTANCE = new SetStringConstantReturnPrevious<>();
    }
 
    public void testSimpleReadWriteForConditionalParamBasedReplace() {
@@ -373,8 +368,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       );
    }
 
-   @SerializeFunctionWith(value = SetStringAndVersionConstant.Externalizer0.class)
-   private static final class SetStringAndVersionConstant<K>
+   static final class SetStringAndVersionConstant<K>
          implements Function<ReadWriteEntryView<K, String>, Void> {
       @Override
       public Void apply(ReadWriteEntryView<K, String> rw) {
@@ -383,24 +377,23 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       }
 
       @SuppressWarnings("unchecked")
-      private static <K> SetStringAndVersionConstant<K> getInstance() {
+      @ProtoFactory
+      static <K> SetStringAndVersionConstant<K> getInstance() {
          return INSTANCE;
       }
 
       private static final SetStringAndVersionConstant INSTANCE =
          new SetStringAndVersionConstant<>();
-      public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
-      }
    }
 
-   @SerializeFunctionWith(value = VersionBasedConditionalReplace.Externalizer0.class)
-   private static final class VersionBasedConditionalReplace<K>
+   static final class VersionBasedConditionalReplace<K>
       implements Function<ReadWriteEntryView<K, String>, ReadWriteEntryView<K, String>> {
-      private final long version;
 
-      private VersionBasedConditionalReplace(long version) {
+      @ProtoField(value = 1, defaultValue = "-1")
+      final long version;
+
+      @ProtoFactory
+      VersionBasedConditionalReplace(long version) {
          this.version = version;
       }
 
@@ -412,19 +405,6 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
                rw.set("uno", new MetaEntryVersion(new NumericVersion(200)));
          });
          return rw;
-      }
-
-      public static final class Externalizer0 implements Externalizer<VersionBasedConditionalReplace<?>> {
-         @Override
-         public void writeObject(ObjectOutput output, VersionBasedConditionalReplace<?> object) throws IOException {
-            output.writeLong(object.version);
-         }
-
-         @Override
-         public VersionBasedConditionalReplace<?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-            long version = input.readLong();
-            return new VersionBasedConditionalReplace<>(version);
-         }
       }
    }
 
@@ -662,5 +642,23 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
    private void assumeNonTransactional() {
       SkipTestNG.skipIf(transactional == Boolean.TRUE,
                         "Transactions use SimpleClusteredVersions, not NumericVersions, and user is not supposed to modify those");
+   }
+
+
+   @ProtoSchema(
+         dependsOn = TestDataSCI.class,
+         includeClasses = {
+               FunctionalMapTest.SetStringConstant.class,
+               FunctionalMapTest.SetStringConstantReturnPrevious.class,
+               FunctionalMapTest.SetStringAndVersionConstant.class,
+               FunctionalMapTest.SetValueAndConstantLifespan.class,
+               FunctionalMapTest.VersionBasedConditionalReplace.class
+         },
+         schemaFileName = "test.core.functional.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.functional",
+         service = false
+   )
+   public interface FunctionalMapSCI extends SerializationContextInitializer {
    }
 }

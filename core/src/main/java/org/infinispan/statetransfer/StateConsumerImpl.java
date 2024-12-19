@@ -996,8 +996,7 @@ public class StateConsumerImpl implements StateConsumer {
          failed = true;
       }
       if (response instanceof SuccessfulResponse) {
-         //noinspection unchecked
-         List<TransactionInfo> transactions = ((SuccessfulResponse<List<TransactionInfo>>) response).getResponseValue();
+         Collection<TransactionInfo> transactions = ((SuccessfulResponse) response).getResponseCollection();
          applyTransactions(source, transactions, topologyId);
       } else if (response instanceof CacheNotFoundResponse) {
          log.debugf("Cache %s was stopped on node %s before sending transaction information", cacheName, source);
@@ -1044,9 +1043,7 @@ public class StateConsumerImpl implements StateConsumer {
          }
 
          if (response instanceof SuccessfulResponse) {
-            //noinspection unchecked
-            return CompletableFuture.completedFuture(
-                  (Collection<ClusterListenerReplicateCallable<Object, Object>>) response.getResponseValue());
+            return CompletableFuture.completedFuture(response.getResponseCollection());
          } else {
             log.unsuccessfulResponseForClusterListeners(source, response);
             return getClusterListeners(topologyId, sources.subList(1, sources.size()));

@@ -6,19 +6,20 @@
  */
 package org.infinispan.hibernate.cache.commons.util;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.util.Util;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
+import org.infinispan.marshall.protostream.impl.MarshallableArray;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * Sent in commit phase (after DB commit) to remote nodes in order to stop invalidating
@@ -26,13 +27,10 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
+@ProtoTypeId(ProtoStreamTypeIds.HIBERNATE_INVALIDATE_COMMAND_END)
 public class EndInvalidationCommand extends BaseRpcCommand {
 	private Object[] keys;
 	private Object lockOwner;
-
-	public EndInvalidationCommand(ByteString cacheName) {
-		this(cacheName, null, null);
-	}
 
 	/**
 	 * @param cacheName name of the cache to evict
@@ -41,6 +39,21 @@ public class EndInvalidationCommand extends BaseRpcCommand {
 		super(cacheName);
 		this.keys = keys;
 		this.lockOwner = lockOwner;
+	}
+
+	@ProtoFactory
+	EndInvalidationCommand(ByteString cacheName, MarshallableArray<Object> keys, MarshallableObject<Object> lockOwner) {
+		this(cacheName, MarshallableArray.unwrap(keys, new Object[0]), MarshallableObject.unwrap(lockOwner));
+	}
+
+	@ProtoField(2)
+	MarshallableArray<Object> getKeys() {
+		return MarshallableArray.create(keys);
+	}
+
+	@ProtoField(3)
+	MarshallableObject<Object> getLockOwner() {
+		return MarshallableObject.create(lockOwner);
 	}
 
 	@Override
@@ -56,18 +69,6 @@ public class EndInvalidationCommand extends BaseRpcCommand {
 	public byte getCommandId() {
 		return CacheCommandIds.END_INVALIDATION;
 	}
-
-	@Override
-	public void writeTo(ObjectOutput output) throws IOException {
-		MarshallUtil.marshallArray(keys, output);
-      LockOwner.writeTo( output, lockOwner );
-	}
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      keys = MarshallUtil.unmarshallArray(input, Util::objectArray);
-      lockOwner = LockOwner.readFrom(input);
-   }
 
 	@Override
 	public boolean isReturnValueExpected() {

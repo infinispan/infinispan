@@ -1,5 +1,13 @@
 package org.infinispan.multimap.impl;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
+import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,14 +18,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
-import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
-import org.infinispan.protostream.annotations.ProtoFactory;
-import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Bucket used to store ListMultimap values.

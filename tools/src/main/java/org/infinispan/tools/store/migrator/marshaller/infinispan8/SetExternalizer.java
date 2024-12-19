@@ -2,17 +2,13 @@ package org.infinispan.tools.store.migrator.marshaller.infinispan8;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.util.Util;
+import org.infinispan.tools.store.migrator.marshaller.common.AbstractMigratorExternalizer;
 
 import net.jcip.annotations.Immutable;
 
@@ -23,24 +19,12 @@ import net.jcip.annotations.Immutable;
  * @since 4.0
  */
 @Immutable
-class SetExternalizer extends AbstractExternalizer<Set> {
+class SetExternalizer extends AbstractMigratorExternalizer<Set> {
    private static final int HASH_SET = 0;
    private static final int TREE_SET = 1;
-   private final Map<Class<?>, Integer> numbers = new HashMap<>(2);
 
    public SetExternalizer() {
-      numbers.put(HashSet.class, HASH_SET);
-      numbers.put(TreeSet.class, TREE_SET);
-   }
-
-   @Override
-   public void writeObject(ObjectOutput output, Set set) throws IOException {
-      int number = numbers.getOrDefault(set.getClass(), -1);
-      output.writeByte(number);
-      if (number == TREE_SET)
-         output.writeObject(((TreeSet) set).comparator());
-
-      MarshallUtil.marshallCollection(set, output);
+      super(Set.of(HashSet.class, TreeSet.class), ExternalizerTable.JDK_SETS);
    }
 
    @Override
@@ -55,15 +39,5 @@ class SetExternalizer extends AbstractExternalizer<Set> {
          default:
             throw new IllegalStateException("Unknown Set type: " + magicNumber);
       }
-   }
-
-   @Override
-   public Integer getId() {
-      return ExternalizerTable.JDK_SETS;
-   }
-
-   @Override
-   public Set<Class<? extends Set>> getTypeClasses() {
-      return Util.asSet(HashSet.class, TreeSet.class);
    }
 }

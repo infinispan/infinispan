@@ -2,14 +2,12 @@ package org.infinispan.commands.read;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Implements functionality defined by {@link org.infinispan.Cache#get(Object)} and
@@ -18,15 +16,18 @@ import org.infinispan.context.impl.FlagBitSets;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.GET_KEY_VALUE_COMMAND)
 public class GetKeyValueCommand extends AbstractDataCommand {
 
    public static final byte COMMAND_ID = 4;
 
-   public GetKeyValueCommand(Object key, int segment, long flagsBitSet) {
-      super(key, segment, flagsBitSet);
+   @ProtoFactory
+   GetKeyValueCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment) {
+      super(wrappedKey, flagsWithoutRemote, topologyId, segment);
    }
 
-   public GetKeyValueCommand() {
+   public GetKeyValueCommand(Object key, int segment, long flagsBitSet) {
+      super(key, segment, flagsBitSet);
    }
 
    @Override
@@ -44,27 +45,10 @@ public class GetKeyValueCommand extends AbstractDataCommand {
       return COMMAND_ID;
    }
 
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
-      UnsignedNumeric.writeUnsignedInt(output, segment);
-      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      key = input.readObject();
-      segment = UnsignedNumeric.readUnsignedInt(input);
-      setFlagsBitSet(input.readLong());
-   }
-
    public String toString() {
-      return new StringBuilder()
-            .append("GetKeyValueCommand {key=")
-            .append(toStr(key))
-            .append(", flags=").append(printFlags())
-            .append("}")
-            .toString();
+      return "GetKeyValueCommand {key=" +
+            toStr(key) +
+            ", flags=" + printFlags() +
+            "}";
    }
-
 }

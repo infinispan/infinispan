@@ -1,15 +1,10 @@
 package org.infinispan.xsite.response;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
 
@@ -19,13 +14,17 @@ import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
  * @author Pedro Ruivo
  * @since 12.1
  */
+@ProtoTypeId(ProtoStreamTypeIds.XSITE_AUTO_STATE_TRANSFER_RESPONSE)
 public class AutoStateTransferResponse implements Response {
 
-   public static final AbstractExternalizer<AutoStateTransferResponse> EXTERNALIZER = new Externalizer();
    private static final XSiteStateTransferMode[] CACHED_VALUES = XSiteStateTransferMode.values();
-   private final boolean isOffline;
-   private final XSiteStateTransferMode stateTransferMode;
 
+   @ProtoField(value = 1, defaultValue = "false")
+   final boolean isOffline;
+   @ProtoField(2)
+   final XSiteStateTransferMode stateTransferMode;
+
+   @ProtoFactory
    public AutoStateTransferResponse(boolean isOffline, XSiteStateTransferMode stateTransferMode) {
       this.isOffline = isOffline;
       this.stateTransferMode = stateTransferMode;
@@ -55,29 +54,5 @@ public class AutoStateTransferResponse implements Response {
 
    public boolean canDoAutomaticStateTransfer() {
       return isOffline && stateTransferMode == XSiteStateTransferMode.AUTO;
-   }
-
-   private static class Externalizer extends AbstractExternalizer<AutoStateTransferResponse> {
-      @Override
-      public void writeObject(ObjectOutput output, AutoStateTransferResponse response) throws IOException {
-         output.writeBoolean(response.isOffline);
-         MarshallUtil.marshallEnum(response.stateTransferMode, output);
-      }
-
-      @Override
-      public AutoStateTransferResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new AutoStateTransferResponse(input.readBoolean(),
-               MarshallUtil.unmarshallEnum(input, AutoStateTransferResponse::valueOf));
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.XSITE_AUTO_TRANSFER_RESPONSE;
-      }
-
-      @Override
-      public Set<Class<? extends AutoStateTransferResponse>> getTypeClasses() {
-         return Collections.singleton(AutoStateTransferResponse.class);
-      }
    }
 }

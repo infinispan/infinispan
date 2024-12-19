@@ -49,9 +49,7 @@ public class CommitTimeoutTest extends MultipleCacheManagersTest {
       builder.clustering().hash().numSegments(1).consistentHashFactory(consistentHashFactory);
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
 
-      addClusterEnabledCacheManager(builder);
-      addClusterEnabledCacheManager(builder);
-      addClusterEnabledCacheManager(builder);
+      createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, builder, 3);
       waitForClusterToForm();
    }
 

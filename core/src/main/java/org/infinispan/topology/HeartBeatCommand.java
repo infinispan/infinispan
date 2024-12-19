@@ -1,9 +1,13 @@
 package org.infinispan.topology;
 
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.GlobalRpcCommand;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A hear-beat command used to ping members in {@link ClusterTopologyManagerImpl#confirmMembersAvailable()}.
@@ -11,11 +15,21 @@ import org.infinispan.commands.ReplicableCommand;
  * @author Pedro Ruivo
  * @since 9.2
  */
-public class HeartBeatCommand implements ReplicableCommand {
+@ProtoTypeId(ProtoStreamTypeIds.HEART_BEAT_COMMAND)
+public class HeartBeatCommand implements GlobalRpcCommand {
 
    public static final byte COMMAND_ID = 30;
    public static final HeartBeatCommand INSTANCE = new HeartBeatCommand();
 
+   @ProtoFactory
+   static HeartBeatCommand protoFactory() {
+      return INSTANCE;
+   }
+
+   @Override
+   public CompletionStage<?> invokeAsync(GlobalComponentRegistry globalComponentRegistry) throws Throwable {
+      return CompletableFutures.completedNull();
+   }
 
    @Override
    public byte getCommandId() {
@@ -25,15 +39,5 @@ public class HeartBeatCommand implements ReplicableCommand {
    @Override
    public boolean isReturnValueExpected() {
       return true;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output){
-      //nothing to write
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) {
-      //nothing to read
    }
 }

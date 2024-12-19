@@ -13,7 +13,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -40,7 +39,7 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
       dcc.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       consistentHashFactory = new ControlledConsistentHashFactory.Default(1);
       dcc.clustering().hash().numOwners(1).numSegments(1).consistentHashFactory(consistentHashFactory);
-      createCluster(TestDataSCI.INSTANCE, dcc, 2);
+      createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, dcc, 2);
       waitForClusterToForm();
    }
 
@@ -76,7 +75,7 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
 
       //now add a one new member
       consistentHashFactory.setOwnerIndexes(2);
-      addClusterEnabledCacheManager(TestDataSCI.INSTANCE, dcc);
+      addClusterEnabledCacheManager(ControlledConsistentHashFactory.SCI.INSTANCE, dcc);
       waitForClusterToForm();
 
 

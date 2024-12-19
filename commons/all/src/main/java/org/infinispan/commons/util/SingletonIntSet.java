@@ -10,14 +10,23 @@ import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+
 /**
  * Immutable implementation of IntSet that contains a single value
  * @author wburns
  * @since 9.3
  */
-class SingletonIntSet extends AbstractImmutableIntSet {
+@ProtoTypeId(ProtoStreamTypeIds.INTSET_SINGLETON)
+public class SingletonIntSet extends AbstractImmutableIntSet {
+
+   @ProtoField(number = 1, defaultValue = "0")
    final int value;
 
+   @ProtoFactory
    SingletonIntSet(int value) {
       if (value < 0) {
          throw new IllegalArgumentException("Value must be 0 or greater");

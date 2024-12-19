@@ -1,31 +1,25 @@
 package org.infinispan.server.resp.filter;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.marshall.MarshallUtil.CollectionBuilder;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Util;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.infinispan.server.resp.ExternalizerIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
+@ProtoTypeId(ProtoStreamTypeIds.RESP_EVENT_LISTENER_KEYS_FILTER)
 public class EventListenerKeysFilter implements CacheEventFilter<Object, Object> {
-   public static final AdvancedExternalizer<EventListenerKeysFilter> EXTERNALIZER = new EventListenerKeysFilter.Externalizer();
 
    private final Map<Integer, List<byte[]>> keys;
 
@@ -42,12 +36,20 @@ public class EventListenerKeysFilter implements CacheEventFilter<Object, Object>
       }
    }
 
+   public EventListenerKeysFilter(byte[] key) {
+      List<byte[]> list = new ArrayList<>(1);
+      list.add(key);
+      this.keys = Map.of(key.length, list);
+   }
+
+   @ProtoFactory
    EventListenerKeysFilter(List<byte[]> keys) {
       this(keys.toArray(Util.EMPTY_BYTE_ARRAY_ARRAY));
    }
 
-   public EventListenerKeysFilter(byte[] key) {
-      this.keys = Map.of(key.length, Collections.singletonList(key));
+   @ProtoField(1)
+   List<byte[]> getKeys() {
+      return keys.values().stream().flatMap(List::stream).collect(Collectors.toList());
    }
 
    @Override
@@ -70,30 +72,5 @@ public class EventListenerKeysFilter implements CacheEventFilter<Object, Object>
    @Override
    public MediaType format() {
       return null;
-   }
-
-   private static class Externalizer extends AbstractExternalizer<EventListenerKeysFilter> {
-
-      @Override
-      public Set<Class<? extends EventListenerKeysFilter>> getTypeClasses() {
-         return Collections.singleton(EventListenerKeysFilter.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, EventListenerKeysFilter object) throws IOException {
-         List<byte[]> keys = object.keys.values().stream().flatMap(List::stream).collect(Collectors.toList());
-         MarshallUtil.marshallCollection(keys, output);
-      }
-
-      @Override
-      public EventListenerKeysFilter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         List<byte[]> keys = (List<byte[]>)MarshallUtil.unmarshallCollection(input, (CollectionBuilder<byte[], List<byte[]>>)ArrayList::new);
-         return new EventListenerKeysFilter(keys);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.EVENT_LISTENER_FILTER;
-      }
    }
 }

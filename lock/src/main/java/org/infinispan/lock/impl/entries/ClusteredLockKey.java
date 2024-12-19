@@ -1,14 +1,11 @@
 package org.infinispan.lock.impl.entries;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Objects;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.lock.impl.externalizers.ExternalizerIds;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 
 /**
@@ -17,11 +14,13 @@ import org.infinispan.util.ByteString;
  * @author Katia Aresti, karesti@redhat.com
  * @since 9.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.CLUSTERED_LOCK_KEY)
 public class ClusteredLockKey {
-   public static final AdvancedExternalizer<ClusteredLockKey> EXTERNALIZER = new Externalizer();
 
-   private final ByteString name;
+   @ProtoField(1)
+   final ByteString name;
 
+   @ProtoFactory
    public ClusteredLockKey(ByteString name) {
       this.name = Objects.requireNonNull(name);
    }
@@ -54,31 +53,5 @@ public class ClusteredLockKey {
 
    public ByteString getName() {
       return name;
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<ClusteredLockKey> {
-
-      private Externalizer() {
-      }
-
-      @Override
-      public Set<Class<? extends ClusteredLockKey>> getTypeClasses() {
-         return Collections.singleton(ClusteredLockKey.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.CLUSTERED_LOCK_KEY;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, ClusteredLockKey object) throws IOException {
-         ByteString.writeObject(output, object.name);
-      }
-
-      @Override
-      public ClusteredLockKey readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new ClusteredLockKey(ByteString.readObject(input));
-      }
    }
 }

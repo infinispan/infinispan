@@ -20,7 +20,7 @@ public class ServiceLoadSerializationContextInitializerTest extends AbstractInfi
       try (EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(true)) {
          SerializationContextRegistry registry = TestingUtil.extractGlobalComponent(cm, SerializationContextRegistry.class);
          assertTrue(registry.getUserCtx().canMarshall(ServiceLoadedClass.class));
-         assertFalse(registry.getGlobalCtx().canMarshall(ServiceLoadedClass.class));
+         assertTrue(registry.getGlobalCtx().canMarshall(ServiceLoadedClass.class));
          assertFalse(registry.getPersistenceCtx().canMarshall(ServiceLoadedClass.class));
       }
    }

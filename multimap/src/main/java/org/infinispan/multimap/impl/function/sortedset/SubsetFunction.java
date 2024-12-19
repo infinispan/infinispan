@@ -1,20 +1,18 @@
 package org.infinispan.multimap.impl.function.sortedset;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
-import org.infinispan.multimap.impl.ScoredValue;
-import org.infinispan.multimap.impl.SortedSetBucket;
-import org.infinispan.multimap.impl.SortedSetSubsetArgs;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
+
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.functional.EntryView;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.multimap.impl.ScoredValue;
+import org.infinispan.multimap.impl.SortedSetBucket;
+import org.infinispan.multimap.impl.SortedSetSubsetArgs;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by
@@ -27,16 +25,29 @@ import java.util.Set;
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_SUBSET_FUNCTION)
 public class SubsetFunction<K, V, T> implements SortedSetBucketBaseFunction<K, V, Collection<ScoredValue<V>>> {
-   public static final AdvancedExternalizer<SubsetFunction> EXTERNALIZER = new Externalizer();
-   protected final boolean isRev;
-   protected final T start;
-   protected final T stop;
-   protected final boolean includeStart;
-   protected final boolean includeStop;
-   protected final Long offset;
-   protected final Long count;
-   protected final SortedSetOperationType subsetType;
+
+   @ProtoField(value = 1, defaultValue = "false", name = "rev")
+   final boolean isRev;
+
+   @ProtoField(value = 2, defaultValue = "false")
+   final boolean includeStart;
+
+   @ProtoField(value = 3, defaultValue = "false")
+   final boolean includeStop;
+
+   @ProtoField(4)
+   final Long offset;
+
+   @ProtoField(5)
+   final Long count;
+
+   @ProtoField(6)
+   final SortedSetOperationType subsetType;
+
+   final T start;
+   final T stop;
 
    public SubsetFunction(SortedSetSubsetArgs<T> args, SortedSetOperationType subsetType) {
       this.isRev = args.isRev();
@@ -49,16 +60,27 @@ public class SubsetFunction<K, V, T> implements SortedSetBucketBaseFunction<K, V
       this.count = args.getCount();
    }
 
-   public SubsetFunction(boolean isRev, T start, T stop, boolean includeStart, boolean includeStop,
-                         Long offset, Long count, SortedSetOperationType subsetType) {
+   @ProtoFactory
+   SubsetFunction(boolean isRev, boolean includeStart, boolean includeStop, Long offset, Long count,
+                  SortedSetOperationType subsetType, MarshallableObject<T> start, MarshallableObject<T> stop) {
       this.isRev = isRev;
-      this.start = start;
-      this.stop = stop;
       this.includeStart = includeStart;
       this.includeStop = includeStop;
       this.offset = offset;
       this.count = count;
       this.subsetType = subsetType;
+      this.start = MarshallableObject.unwrap(start);
+      this.stop = MarshallableObject.unwrap(stop);
+   }
+
+   @ProtoField(7)
+   MarshallableObject<T> getStart() {
+      return MarshallableObject.create(start);
+   }
+
+   @ProtoField(8)
+   MarshallableObject<T> getStop() {
+      return MarshallableObject.create(stop);
    }
 
    @Override
@@ -77,36 +99,5 @@ public class SubsetFunction<K, V, T> implements SortedSetBucketBaseFunction<K, V
 
       }
       return Collections.emptySet();
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<SubsetFunction> {
-
-      @Override
-      public Set<Class<? extends SubsetFunction>> getTypeClasses() {
-         return Set.of(SubsetFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.SORTED_SET_SUBSET_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, SubsetFunction object) throws IOException {
-         output.writeBoolean(object.isRev);
-         output.writeObject(object.start);
-         output.writeObject(object.stop);
-         output.writeBoolean(object.includeStart);
-         output.writeBoolean(object.includeStop);
-         output.writeObject(object.offset);
-         output.writeObject(object.count);
-         MarshallUtil.marshallEnum(object.subsetType, output);
-      }
-
-      @Override
-      public SubsetFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new SubsetFunction(input.readBoolean(), input.readObject(), input.readObject(), input.readBoolean(),
-               input.readBoolean(), (Long) input.readObject(), (Long) input.readObject(), MarshallUtil.unmarshallEnum(input, SortedSetOperationType::valueOf));
-      }
    }
 }
