@@ -32,7 +32,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.embedded.testdomain.User;
-import org.infinispan.query.remote.impl.GlobalContextInitializerImpl;
+import org.infinispan.query.remote.impl.GlobalContextInitializer;
 import org.infinispan.query.remote.impl.filter.IckleContinuousQueryProtobufCacheEventFilterConverterFactory;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.KeyValuePair;
@@ -72,7 +72,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
 
    @Override
    protected List<SerializationContextInitializer> contextInitializers() {
-      return List.of(new GlobalContextInitializerImpl(), TestDomainSCI.INSTANCE);
+      return List.of(GlobalContextInitializer.INSTANCE, TestDomainSCI.INSTANCE);
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {
