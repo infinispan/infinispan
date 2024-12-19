@@ -25,11 +25,11 @@ import org.infinispan.remoting.transport.Address;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class GlobalTransaction implements Cloneable {
+public class GlobalTransaction implements Cloneable, Comparable<GlobalTransaction> {
 
    private static final AtomicLong sid = new AtomicLong(0);
 
-   private long id;
+   private final long id;
    private Address addr;
    private int hash_code = -1;  // in the worst case, hashCode() returns 0, then increases, so we're safe here
    private boolean remote = false;
@@ -37,7 +37,11 @@ public class GlobalTransaction implements Cloneable {
    private volatile long internalId = -1;
 
    public GlobalTransaction(Address addr, boolean remote) {
-      this.id = sid.incrementAndGet();
+      this(sid.incrementAndGet(), addr, remote);
+   }
+
+   public GlobalTransaction(long id, Address addr, boolean remote) {
+      this.id = id;
       this.addr = addr;
       this.remote = remote;
    }
@@ -92,10 +96,6 @@ public class GlobalTransaction implements Cloneable {
       return getAddress() + ":" + getId();
    }
 
-   public void setId(long id) {
-      this.id = id;
-   }
-
    public void setAddress(Address address) {
       this.addr = address;
    }
@@ -134,6 +134,14 @@ public class GlobalTransaction implements Cloneable {
             ", xid=" + xid +
             ", internalId=" + internalId +
             '}';
+   }
+
+   @Override
+   public int compareTo(GlobalTransaction o) {
+      int compare = Long.compare(id, o.id);
+      return compare == 0 && addr != null
+            ? addr.compareTo(o.addr)
+            : compare;
    }
 
    public static class Externalizer implements AdvancedExternalizer<GlobalTransaction> {

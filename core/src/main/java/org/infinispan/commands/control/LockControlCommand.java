@@ -1,5 +1,7 @@
 package org.infinispan.commands.control;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -109,6 +111,9 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       if (ctx == null) {
          return CompletableFutures.completedNull();
       }
+      if (ctx.getCacheTransaction().hasReceivedDeadlock()) {
+         log.tracef("lock on already deadlocked tx: %s", globalTx);
+      }
       return registry.getInterceptorChain().running().invokeAsync(ctx, this);
    }
 
@@ -186,7 +191,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    public String toString() {
       return new StringBuilder()
          .append("LockControlCommand{cache=").append(cacheName)
-         .append(", keys=").append(keys)
+         .append(", keys=").append(toStr(keys))
          .append(", flags=").append(EnumUtil.prettyPrintBitSet(flags, Flag.class))
          .append(", unlock=").append(unlock)
          .append(", gtx=").append(globalTx)

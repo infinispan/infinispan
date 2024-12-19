@@ -38,6 +38,7 @@ import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.util.concurrent.locks.deadlock.DeadlockProbeCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -86,6 +87,12 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          throws Throwable {
       if (log.isTraceEnabled()) log.tracef("handleTxCommand for command %s, origin %s", command, getOrigin(ctx));
 
+      updateTopologyId(command);
+      return invokeNextAndHandle(ctx, command, handleTxReturn);
+   }
+
+   @Override
+   public Object visitDeadlockProbeCommand(TxInvocationContext ctx, DeadlockProbeCommand command) throws Throwable {
       updateTopologyId(command);
       return invokeNextAndHandle(ctx, command, handleTxReturn);
    }

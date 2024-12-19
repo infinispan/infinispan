@@ -56,6 +56,7 @@ import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCom
 import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherCommand;
 import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.locks.deadlock.DeadlockProbeCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
 import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
@@ -99,6 +100,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             .map(c -> (Class<CacheRpcCommand>) c)
             .collect(Collectors.toSet());
       collect.addAll(Set.of(LockControlCommand.class,
+            DeadlockProbeCommand.class,
             StateResponseCommand.class, ClusteredGetCommand.class,
             SingleRpcCommand.class, CommitCommand.class,
             PrepareCommand.class, RollbackCommand.class,

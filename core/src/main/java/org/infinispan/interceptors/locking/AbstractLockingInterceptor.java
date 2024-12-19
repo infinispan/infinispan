@@ -39,6 +39,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.TimeoutException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.DDAsyncInterceptor;
@@ -46,6 +47,7 @@ import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
 import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.concurrent.locks.LockState;
 import org.infinispan.util.logging.Log;
 
 /**
@@ -284,13 +286,13 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
 
    protected final InvocationStage lockAndRecord(InvocationContext context, VisitableCommand command, Object key,
                                                  long timeout) {
-      return lockManager.lock(key, context.getLockOwner(), timeout, TimeUnit.MILLISECONDS).toInvocationStage()
+      return assertValidContext(lockManager.lock(key, context.getLockOwner(), timeout, TimeUnit.MILLISECONDS), context)
                         .thenAcceptMakeStage(context, command, (rCtx, rCommand, rv) -> rCtx.addLockedKey(key));
    }
 
    final InvocationStage lockAllAndRecord(InvocationContext context, VisitableCommand command, Collection<?> keys,
                                           long timeout) {
-      return lockManager.lockAll(keys, context.getLockOwner(), timeout, TimeUnit.MILLISECONDS).toInvocationStage()
+      return assertValidContext(lockManager.lockAll(keys, context.getLockOwner(), timeout, TimeUnit.MILLISECONDS), context)
                         .andFinallyMakeStage(context, command, (rCtx, rCommand, rv, throwable) -> {
                            if (throwable == null) {
                               rCtx.addLockedKeys(keys);
@@ -322,5 +324,15 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
 
    private void handleUnlockAll(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable) {
       lockManager.unlockAll(rCtx);
+   }
+
+   private InvocationStage assertValidContext(KeyAwareLockPromise promise, InvocationContext ctx) {
+      // Check whether transaction rolled back while trying to acquire the locks.
+      // If all the locks are acquired, the operation has no effect, and locks are released by the rollback command.
+      if (ctx instanceof TxInvocationContext<?> txCtx && txCtx.isTransactionRolledBack()) {
+         promise.completeExceptionally(LockState.ILLEGAL);
+      }
+
+      return promise.toInvocationStage();
    }
 }

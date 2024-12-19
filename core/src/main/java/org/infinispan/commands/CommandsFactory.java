@@ -107,6 +107,7 @@ import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublis
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.locks.deadlock.DeadlockProbeCommand;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
@@ -469,6 +470,15 @@ public interface CommandsFactory {
 
 
    LockControlCommand buildLockControlCommand(Collection<?> keys, long flagsBitSet);
+
+   /**
+    * Builds a {@link DeadlockProbeCommand} for deadlock detection.
+    *
+    * @param initiator: The transaction initiating the detection.
+    * @param holder: The transaction to probe.
+    * @return A new command instance.
+    */
+   DeadlockProbeCommand buildDeadlockProbeCommand(GlobalTransaction initiator, GlobalTransaction holder);
 
    ConflictResolutionStartCommand buildConflictResolutionStartCommand(int topologyId, IntSet segments);
 
