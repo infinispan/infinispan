@@ -204,7 +204,6 @@ public class YamlConfigurationWriter extends AbstractConfigurationWriter {
       for (int i = 0; i < s.length(); i++) {
          char ch = s.charAt(i);
          switch (ch) {
-            case '\'' -> sb.append("\\'");
             case '"' -> sb.append("\\\"");
             case '\\' -> sb.append("\\\\");
             default -> sb.append(ch);
