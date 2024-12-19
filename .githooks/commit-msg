@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+REGEX='^\[#[0-9]+\]\s[A-Z].*\n(\n(\*\s.*\n)+)?$'
+if ! grep -qE "$REGEX" "$1"; then
+    echo "Commit message format is incorrect. Run the following command:" >&2
+    echo "  git config commit.template .gitmessage" >&2
+    echo "and retry" >&2
+    exit 1
+fi
