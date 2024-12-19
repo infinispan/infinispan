@@ -11,6 +11,7 @@ constants org.infinispan.server.hotrod.HotRodConstants;
 // methods vInt, vLong, array, byte...
 intrinsics org.infinispan.server.hotrod.Intrinsics;
 
+import io.netty.handler.codec.TooLongFrameException;
 import java.time.Instant;
 import java.time.temporal.Temporal;
 import java.util.Collections;
@@ -48,8 +49,13 @@ init {
 }
 
 exceptionally {
+   if (t instanceof TooLongFrameException tlfe) {
+      log.requestTooLarge(ctx.channel(), tlfe);
+      ctx.close();
+      return;
+   }
    log.trace("Parsing error", t);
-   cacheProcessor.writeException(getHeader(), t);
+   cacheProcessor.writeException(getHeader(), hr2x_messageId, t);
    state = 0;
 }
 
@@ -81,7 +87,7 @@ operation returns HotRodOperation
    : opCode { HotRodOperation.fromRequestOpCode(byte) }
    ;
 opCode: byte;
-cacheName: string;
+cacheName: string[maxByteArray];
 flags: vInt;
 intelligence: byte;
 topologyId: vInt;
@@ -98,14 +104,14 @@ mediaType returns MediaType
    ;
 mediaTypeDefinition: byte;
 mediaTypeId: vInt;
-mediaTypeName: string;
+mediaTypeName: string[maxByteArray];
 mediaTypeParams returns Map<String, String>
-   : mediaTypeParamsNum { mediaTypeParams = allocMap(mediaTypeParamsNum); }
+   : mediaTypeParamsNum { mediaTypeParams = allocMap(mediaTypeParamsNum, maxKeyCount); }
       #mediaTypeParamsNum ( mediaParamName mediaParamValue { mediaTypeParams.put(mediaParamName, mediaParamValue); } )
    ;
 mediaTypeParamsNum: vInt;
-mediaParamName: string;
-mediaParamValue: string;
+mediaParamName: string[maxByteArray];
+mediaParamValue: string[maxByteArray];
 mediaTypeDescription returns MediaType switch mediaTypeDefinition
    : { 0 }? { MediaType.APPLICATION_UNKNOWN }
    | { 1 }? mediaTypeId mediaTypeParams { MediaTypeIds.getMediaType((short) mediaTypeId).withParameters(mediaTypeParams) }
@@ -119,15 +125,15 @@ otherParams returns Map<String, byte[]>
    ;
 
 otherParamsNum: vInt;
-otherParamName: string;
-otherParamValue: array;
+otherParamName: string[maxByteArray];
+otherParamValue: array[maxByteArray];
 otherParamsRev returns Map<String, byte[]>
-   : otherParamsNum { otherParamsRev = allocMap(otherParamsNum); }
+   : otherParamsNum { otherParamsRev = allocMap(otherParamsNum, maxKeyCount); }
       #otherParamsNum ( otherParamName otherParamValue { otherParamsRev.put(otherParamName, otherParamValue); } )
    ;
 
-key: array;
-value: array;
+key: array[maxByteArray];
+value: array[maxByteArray];
 supportsDuplicates
    : { version >= VERSION_40 }? bool
    | { false }
@@ -160,11 +166,11 @@ timeUnits : byte;
 entryVersion: long;
 intValue: int;
 scope: vInt;
-queryBytes: array;
-authMech: string;
-authResponse: array;
+queryBytes: array[maxByteArray];
+authMech: string[maxByteArray];
+authResponse: array[maxByteArray];
 
-listenerId: array;
+listenerId: array[maxByteArray];
 includeCurrentState: bool;
 useRawEvents: bool;
 listenerParams
@@ -172,48 +178,48 @@ listenerParams
    | { version >= VERSION_21 }? filterFactory filterParams converterFactory converterParams useRawEvents
    | filterFactory filterParams converterFactory converterParams
    ;
-filterFactory: string;
+filterFactory: string[maxByteArray];
 filterParams returns List<byte[]>
-   : { !filterFactory.isEmpty() }? numParams { filterParams = allocList(numParams); }
+   : { !filterFactory.isEmpty() }? numParams { filterParams = allocList(numParams, maxKeyCount); }
       #numParams ( param { filterParams.add(param); })
    | { null }
    ;
-converterFactory: string;
+converterFactory: string[maxByteArray];
 converterParams returns List<byte[]>
-   : { !converterFactory.isEmpty() }? numParams { converterParams = allocList(numParams); }
+   : { !converterFactory.isEmpty() }? numParams { converterParams = allocList(numParams, maxKeyCount); }
       #numParams ( param { converterParams.add(param); })
    | { null; }
    ;
 numParams: byte;
-param: array;
+param: array[maxByteArray];
 listenerInterests: vInt;
 bloomBits: vInt;
 
-bloomArray: array;
+bloomArray: array[maxByteArray];
 
-taskName: string;
-taskParam: string;
-taskParamValue: array;
+taskName: string[maxByteArray];
+taskParam: string[maxByteArray];
+taskParamValue: array[maxByteArray];
 taskParams returns Map<String, byte[]>
-   : numParams { taskParams = allocMap(numParams); }
+   : numParams { taskParams = allocMap(numParams, maxKeyCount); }
       #numParams ( taskParam taskParamValue { taskParams.put(taskParam, taskParamValue); } )
    ;
 
 numEntries: vInt;
 entryMap returns Map<byte[], byte[]>
-   : numEntries { entryMap = allocMap(numEntries); }
+   : numEntries { entryMap = allocMap(numEntries, maxKeyCount); }
      #numEntries ( key value { entryMap.put(key, value); } )
    ;
 
 numKeys: vInt;
 keys returns Set<byte[]>:
-   numKeys { keys = allocSet(numKeys); } #numKeys ( key { keys.add(key); } )
+   numKeys { keys = allocSet(numKeys, maxKeyCount); } #numKeys ( key { keys.add(key); } )
    ;
 
-segmentMask: optionalArray;
-filterConverterFactory: optionalString;
+segmentMask: optionalArray[maxByteArray];
+filterConverterFactory: optionalString[maxByteArray];
 filterConverterParams returns List<byte[]>
-   : { filterConverterFactory != null }? numParams { filterConverterParams = allocList(numParams); }
+   : { filterConverterFactory != null }? numParams { filterConverterParams = allocList(numParams, maxKeyCount); }
       #numParams ( param { filterConverterParams.add(param); })
    | { null }
    ;
@@ -222,7 +228,7 @@ includeMetadata
    : { version >= VERSION_24 }? bool
    | { false }
    ;
-iterationId: string;
+iterationId: string[maxByteArray];
 
 offset: vInt;
 
@@ -248,17 +254,17 @@ chunkedValue returns ByteBuf
    : { chunkedValue = cacheProcessor.channel().alloc().buffer(); chunkLength = 1; } #chunkLength chunk
    ;
 
-xid returns XidImpl: xidFormat xidLength transactionId branchLength branchId { XidImpl.create(xidFormat, transactionId, branchId) };
+idByte: byte;
+xid returns XidImpl: xidFormat idByte transactionId branchLength branchId { XidImpl.create(xidFormat, transactionId, branchId) };
 xidFormat: signedVInt;
-xidLength: byte;
-// in case xidLength == 0 we would get into loop as we couldn't progress reading 0 bytes from buffer
+// in case idByte == 0 we would get into loop as we couldn't progress reading 0 bytes from buffer
 transactionId returns byte[]
-   :  { xidLength > 0 }? fixedArray[xidLength]
+   :  { idByte > 0 }? fixedArray[idByte, maxByteArray]
    |  { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
    ;
 branchLength: byte;
 branchId returns byte[]
-   :  { branchLength > 0 }? fixedArray[branchLength]
+   :  { idByte > 0 }? fixedArray[idByte, maxByteArray]
    |  { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
    ;
 
@@ -270,7 +276,7 @@ timeout: long;
 
 numModifications: vInt;
 modifications returns List<TransactionWrite>
-   : numModifications { modifications = allocList(numModifications); }
+   : numModifications { modifications = allocList(numModifications, maxKeyCount); }
       #numModifications ( modification { modifications.add(modification); } )
    ;
 modification
@@ -286,7 +292,7 @@ modificationData
    | { }
    ;
 
-counterName: string;
+counterName: string[maxByteArray];
 counterFlags: byte;
 counterConfiguration returns CounterConfiguration.Builder
    : counterFlags { counterConfiguration = CounterConfiguration.builder(CounterEncodeUtil.decodeType(counterFlags)).storage(CounterEncodeUtil.decodeStorage(counterFlags)) }

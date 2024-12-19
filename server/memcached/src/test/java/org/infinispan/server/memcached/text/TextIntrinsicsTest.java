@@ -14,7 +14,7 @@ import io.netty.buffer.Unpooled;
 @Test(groups = "unit", testName = "server.memcached.text.TextIntrinsicsTest")
 public class TextIntrinsicsTest {
 
-   private final TokenReader reader = new TokenReader(Unpooled.buffer(256));
+   private final TokenReader reader = new TokenReader(Unpooled.buffer(256), -1);
 
    @AfterClass
    protected void clearAfter() {

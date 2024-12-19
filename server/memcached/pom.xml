@@ -76,6 +76,7 @@
                   <file>${basedir}/src/main/resources/memcache-text-auth.gr</file>
                   <file>${basedir}/src/main/resources/memcache-text-op.gr</file>
                </files>
+               <passContext>true</passContext>
             </configuration>
             <executions>
                <execution>

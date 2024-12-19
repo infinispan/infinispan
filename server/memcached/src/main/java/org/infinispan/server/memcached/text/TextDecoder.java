@@ -20,10 +20,12 @@ import io.netty.util.concurrent.GenericFutureListener;
  **/
 abstract class TextDecoder extends MemcachedBaseDecoder {
 
+   protected final int maxArrayLength;
    protected TokenReader reader;
 
    protected TextDecoder(MemcachedServer server, Subject subject) {
       super(server, subject, server.getCache().getAdvancedCache().withMediaType(MediaType.TEXT_PLAIN, server.getConfiguration().clientEncoding()));
+      this.maxArrayLength = server != null ? server.getConfiguration().maxByteArraySize() : -1;
    }
 
    @Override
@@ -31,7 +33,7 @@ abstract class TextDecoder extends MemcachedBaseDecoder {
       super.handlerAdded(ctx);
 
       // It can exceed the 256 for large values, so we don't have a max capacity.
-      this.reader = new TokenReader(ctx.alloc().buffer(256));
+      this.reader = new TokenReader(ctx.alloc().buffer(256), server.getConfiguration().maxByteArraySize());
       ConnectionMetadata metadata = ConnectionMetadata.getInstance(ctx.channel());
       metadata.subject(subject);
       metadata.protocolVersion("MCTXT");

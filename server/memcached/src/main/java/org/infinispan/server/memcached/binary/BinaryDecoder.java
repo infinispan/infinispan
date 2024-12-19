@@ -29,9 +29,11 @@ import io.netty.util.concurrent.GenericFutureListener;
 abstract class BinaryDecoder extends MemcachedBaseDecoder {
 
    private final BinaryHeader singleHeader = new BinaryHeader();
+   protected final int maxArrayLength;
 
    protected BinaryDecoder(MemcachedServer server, Subject subject) {
       super(server, subject, server.getCache().getAdvancedCache().withMediaType(MediaType.APPLICATION_OCTET_STREAM, server.getConfiguration().clientEncoding()));
+      this.maxArrayLength = server.getConfiguration().maxByteArraySize();
    }
 
    // Used by the generated decoder.

@@ -79,6 +79,14 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                builder.proxyPort(Integer.parseInt(value));
                break;
             }
+            case MAX_BYTE_ARRAY_SIZE: {
+               builder.maxByteArraySize(Integer.parseInt(value));
+               break;
+            }
+            case MAX_KEY_COUNT: {
+               builder.maxKeyCount(Integer.parseInt(value));
+               break;
+            }
             case NAME: {
                builder.name(value);
                break;

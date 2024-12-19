@@ -6,6 +6,8 @@ import static org.infinispan.server.core.configuration.ProtocolServerConfigurati
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.IDLE_TIMEOUT;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.IMPLICIT_CONNECTOR;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.IO_THREADS;
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.MAX_BYTE_ARRAY_SIZE;
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.MAX_KEY_COUNT;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.NAME;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.PORT;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.RECV_BUF_SIZE;
@@ -150,6 +152,26 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
 
    public boolean implicitConnector() {
       return attributes.attribute(IMPLICIT_CONNECTOR).get();
+   }
+
+   @Override
+   public S maxByteArraySize(int maxByteSize) {
+      attributes.attribute(MAX_BYTE_ARRAY_SIZE).set(maxByteSize);
+      return this.self();
+   }
+
+   public int maxByteArraySize() {
+      return attributes.attribute(MAX_BYTE_ARRAY_SIZE).get();
+   }
+
+   @Override
+   public S maxKeyCount(int maxKeyCount) {
+      attributes.attribute(MAX_KEY_COUNT).set(maxKeyCount);
+      return this.self();
+   }
+
+   public int maxKeyCount() {
+      return attributes.attribute(MAX_KEY_COUNT).get();
    }
 
    @Override

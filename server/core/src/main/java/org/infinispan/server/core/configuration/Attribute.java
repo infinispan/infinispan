@@ -32,7 +32,9 @@ public enum Attribute {
    TCP_KEEPALIVE,
    TCP_NODELAY,
    VALUE,
-   ZERO_CAPACITY_NODE
+   ZERO_CAPACITY_NODE,
+   MAX_BYTE_ARRAY_SIZE,
+   MAX_KEY_COUNT,
    ;
 
    private static final Map<String, Attribute> ATTRIBUTES;
