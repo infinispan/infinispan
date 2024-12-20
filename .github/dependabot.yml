@@ -10,7 +10,7 @@ updates:
     ignore:
       - dependency-name: "io.opentelemetry:opentelemetry-api"
       - dependency-name: "*"
-        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
+        update-types: [ "version-update:semver-major" ]
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
@@ -30,6 +30,8 @@ updates:
       - dependency-name: "*"
         update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
     target-branch: "15.0.x"
+    commit-message:
+      prefix: "[15.0] "
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
@@ -37,6 +39,8 @@ updates:
     open-pull-requests-limit: 10
     rebase-strategy: disabled
     target-branch: "15.0.x"
+    commit-message:
+      prefix: "[15.0] "
 
   # 14.0.x Security Updates Only
   - package-ecosystem: maven
@@ -46,6 +50,8 @@ updates:
     open-pull-requests-limit: 0
     rebase-strategy: disabled
     target-branch: "14.0.x"
+    commit-message:
+      prefix: "[14.0] "
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
@@ -53,3 +59,5 @@ updates:
     open-pull-requests-limit: 10
     rebase-strategy: disabled
     target-branch: "14.0.x"
+    commit-message:
+      prefix: "[14.0] "
