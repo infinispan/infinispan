@@ -679,44 +679,28 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
    public void testFragments() {
       testFragment0(
-            """
-                  <local-cache name="mycache"/>
-                  """,
+            "<local-cache name=\"mycache\"/>",
             CacheMode.LOCAL, false);
       testFragment0(
-            """
-                  <local-cache-configuration name="mycache"/>
-                  """,
+            "<local-cache-configuration name=\"mycache\"/>",
             CacheMode.LOCAL, true);
       testFragment0(
-            """
-                  <distributed-cache name="mycache"/>
-                  """,
+            "<distributed-cache name=\"mycache\"/>",
             CacheMode.DIST_SYNC, false);
       testFragment0(
-            """
-                  <distributed-cache-configuration name="mycache"/>
-                  """,
+            "<distributed-cache-configuration name=\"mycache\"/>",
             CacheMode.DIST_SYNC, true);
       testFragment0(
-            """
-                  <invalidation-cache name="mycache"/>
-                  """,
+            "<invalidation-cache name=\"mycache\"/>",
             CacheMode.INVALIDATION_SYNC, false);
       testFragment0(
-            """
-                  <invalidation-cache-configuration name="mycache"/>
-                  """,
+            "<invalidation-cache-configuration name=\"mycache\"/>",
             CacheMode.INVALIDATION_SYNC, true);
       testFragment0(
-            """
-                  <replicated-cache name="mycache"/>
-                  """,
+            "<replicated-cache name=\"mycache\"/>",
             CacheMode.REPL_SYNC, false);
       testFragment0(
-            """
-                  <replicated-cache-configuration name="mycache"/>
-                  """,
+            "<replicated-cache-configuration name=\"mycache\"/>",
             CacheMode.REPL_SYNC, true);
 
 
