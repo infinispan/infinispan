@@ -1,6 +1,9 @@
 package org.infinispan.commands.write;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A policy for determining if a write command should be executed based on the current value in the cache.
@@ -13,12 +16,14 @@ import org.infinispan.Cache;
  * @author Dan Berindei
  * @since 6.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.VALUE_MATCHER)
 public enum ValueMatcher {
    /**
     * Always match. Used when the command is not conditional or when the value was already checked
     * (on the primary owner, in non-tx caches, or on the originator, in tx caches).
     * Also used when retrying {@link Cache#remove(Object)} operations.
     */
+   @ProtoEnumValue(number = 1)
    MATCH_ALWAYS() {
       @Override
       public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
@@ -35,6 +40,7 @@ public enum ValueMatcher {
     * Used for {@link Cache#putIfAbsent(Object, Object)}, {@link Cache#replace(Object, Object, Object)},
     * and {@link Cache#remove(Object, Object)}.
     */
+   @ProtoEnumValue(number = 2)
    MATCH_EXPECTED() {
       @Override
       public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
@@ -50,6 +56,7 @@ public enum ValueMatcher {
     * Match when the existing value is equal to the expected value or to the new value.
     * Used only in non-tx caches, when retrying a conditional command on the primary owner.
     */
+   @ProtoEnumValue(number = 3)
    MATCH_EXPECTED_OR_NEW() {
       @Override
       public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
@@ -64,7 +71,7 @@ public enum ValueMatcher {
          return MATCH_EXPECTED_OR_NEW;
       }
    },
-
+   @ProtoEnumValue(number = 4)
    MATCH_EXPECTED_OR_NULL() {
       @Override
       public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
@@ -79,6 +86,7 @@ public enum ValueMatcher {
    /**
     * Match any non-null value. Used for {@link Cache#replace(Object, Object)} and {@link Cache#remove(Object)}.
     */
+   @ProtoEnumValue(number = 5)
    MATCH_NON_NULL() {
       @Override
       public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
@@ -94,6 +102,7 @@ public enum ValueMatcher {
     * Never match. Only used in transactional mode, as unsuccessful commands are still sent remotely,
     * even though they should not be performed.
     */
+   @ProtoEnumValue(number = 6)
    MATCH_NEVER() {
       @Override
       public boolean matches(Object existingValue, Object expectedValue, Object newValue) {

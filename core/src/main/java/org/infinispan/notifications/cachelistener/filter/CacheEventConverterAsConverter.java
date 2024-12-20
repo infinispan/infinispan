@@ -1,20 +1,17 @@
 package org.infinispan.notifications.cachelistener.filter;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.Converter;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Converter that is implemented by using the provided CacheEventConverter.  The provided event type will always be
@@ -25,6 +22,7 @@ import org.infinispan.notifications.cachelistener.event.Event;
  * @author wburns
  * @since 7.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.CACHE_EVENT_CONVERTER_AS_CONVERTER)
 @Scope(Scopes.NONE)
 public class CacheEventConverterAsConverter<K, V, C> implements Converter<K, V, C> {
    private static final EventType CREATE_EVENT = new EventType(false, false, Event.Type.CACHE_ENTRY_CREATED);
@@ -35,6 +33,16 @@ public class CacheEventConverterAsConverter<K, V, C> implements Converter<K, V, 
       this.converter = converter;
    }
 
+   @ProtoFactory
+   CacheEventConverterAsConverter(MarshallableObject<CacheEventConverter<K, V, C>> converter) {
+      this.converter = MarshallableObject.unwrap(converter);
+   }
+
+   @ProtoField(number = 1)
+   MarshallableObject<CacheEventConverter<K, V, C>> getConverter() {
+      return MarshallableObject.create(converter);
+   }
+
    @Override
    public C convert(K key, V value, Metadata metadata) {
       return converter.convert(key, null, null, value, metadata, CREATE_EVENT);
@@ -43,27 +51,5 @@ public class CacheEventConverterAsConverter<K, V, C> implements Converter<K, V, 
    @Inject
    protected void injectDependencies(ComponentRegistry cr) {
       cr.wireDependencies(converter);
-   }
-
-   public static class Externalizer extends AbstractExternalizer<CacheEventConverterAsConverter> {
-      @Override
-      public Set<Class<? extends CacheEventConverterAsConverter>> getTypeClasses() {
-         return Collections.singleton(CacheEventConverterAsConverter.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, CacheEventConverterAsConverter object) throws IOException {
-         output.writeObject(object.converter);
-      }
-
-      @Override
-      public CacheEventConverterAsConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new CacheEventConverterAsConverter((CacheEventConverter)input.readObject());
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.CACHE_EVENT_CONVERTER_AS_CONVERTER;
-      }
    }
 }

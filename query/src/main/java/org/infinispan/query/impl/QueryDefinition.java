@@ -1,21 +1,20 @@
 package org.infinispan.query.impl;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.hibernate.search.engine.search.query.SearchQuery;
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.marshall.protostream.impl.MarshallableMap;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
-import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import org.infinispan.util.function.SerializableFunction;
 
 /**
@@ -24,20 +23,34 @@ import org.infinispan.util.function.SerializableFunction;
  *
  * @since 9.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.QUERY_DEFINITION)
 public final class QueryDefinition {
 
-   private final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider;
-   private final String queryString;
-   private final IckleParsingResult.StatementType statementType;
-   private SearchQueryBuilder searchQueryBuilder;
-   private int maxResults;
-   private int firstResult = 0;
-   private int hitCountAccuracy = -1;
-   private long timeout = -1;
-   private boolean scoreRequired = false;
+   @ProtoField(1)
+   final String queryString;
 
+   @ProtoField(2)
+   final IckleParsingResult.StatementType statementType;
+
+   @ProtoField(value = 3, defaultValue = "0")
+   int maxResults;
+
+   @ProtoField(value = 4, defaultValue = "0")
+   int firstResult = 0;
+
+   @ProtoField(value = 5, defaultValue = "-1")
+   int hitCountAccuracy = -1;
+
+   @ProtoField(value = 6, defaultValue = "-1")
+   long timeout = -1;
+
+   @ProtoField(value = 7, defaultValue = "false")
+   boolean scoreRequired = false;
+
+   private final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider;
    private final Map<String, Object> namedParameters = new HashMap<>();
    private final int originalMaxResults;
+   private SearchQueryBuilder searchQueryBuilder;
 
    public QueryDefinition(String queryString, IckleParsingResult.StatementType statementType,
                           SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider,
@@ -75,6 +88,30 @@ public final class QueryDefinition {
       this.queryEngineProvider = null;
       this.maxResults = originalMaxResults;
       this.originalMaxResults = originalMaxResults;
+   }
+
+   @ProtoFactory
+   static QueryDefinition protoFactory(String queryString, IckleParsingResult.StatementType statementType, int maxResults,
+                                       int firstResult, int hitCountAccuracy, long timeout, boolean scoreRequired,
+                                       MarshallableObject<SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>>> wrappedQueryEngineProvider,
+                                       MarshallableMap<String, Object> wrappedNamedParameters) {
+      QueryDefinition queryDefinition = new QueryDefinition(queryString, statementType, MarshallableObject.unwrap(wrappedQueryEngineProvider), maxResults);
+      queryDefinition.setFirstResult(firstResult);
+      queryDefinition.setHitCountAccuracy(hitCountAccuracy);
+      queryDefinition.timeout = timeout;
+      queryDefinition.scoreRequired = scoreRequired;
+      queryDefinition.setNamedParameters(MarshallableMap.unwrap(wrappedNamedParameters));
+      return queryDefinition;
+   }
+
+   @ProtoField(value = 8, name = "queryEngineProvider")
+   MarshallableObject<SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>>> getWrappedQueryEngineProvider() {
+      return MarshallableObject.create(queryEngineProvider);
+   }
+
+   @ProtoField(value = 9)
+   MarshallableMap<String, Object> getWrappedNamedParameters() {
+      return MarshallableMap.create(namedParameters);
    }
 
    public String getQueryString() {
@@ -172,70 +209,5 @@ public final class QueryDefinition {
 
    public boolean isScoreRequired() {
       return this.scoreRequired;
-   }
-
-   public static final class Externalizer implements AdvancedExternalizer<QueryDefinition> {
-
-      @Override
-      public Set<Class<? extends QueryDefinition>> getTypeClasses() {
-         return Collections.singleton(QueryDefinition.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.QUERY_DEFINITION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, QueryDefinition queryDefinition) throws IOException {
-         output.writeUTF(queryDefinition.queryString);
-         output.writeByte(queryDefinition.statementType.ordinal());
-         output.writeObject(queryDefinition.queryEngineProvider);
-         output.writeInt(queryDefinition.firstResult);
-         output.writeInt(queryDefinition.maxResults);
-         output.writeInt(queryDefinition.hitCountAccuracy);
-         output.writeLong(queryDefinition.timeout);
-         output.writeBoolean(queryDefinition.scoreRequired);
-         Map<String, Object> namedParameters = queryDefinition.namedParameters;
-         int paramSize = namedParameters.size();
-         output.writeShort(paramSize);
-         if (paramSize != 0) {
-            for (Map.Entry<String, Object> param : namedParameters.entrySet()) {
-               output.writeUTF(param.getKey());
-               output.writeObject(param.getValue());
-            }
-         }
-      }
-
-      @Override
-      public QueryDefinition readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         String queryString = input.readUTF();
-         IckleParsingResult.StatementType statementType = IckleParsingResult.StatementType.valueOf(input.readByte());
-         SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> engineProvider =
-               (SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>>) input.readObject();
-
-         int firstResult = input.readInt();
-         int maxResults = input.readInt();
-         int hitCountAccuracy = input.readInt();
-
-         // maxResults becomes the originalMaxResults of the distributed cloned queries
-         QueryDefinition queryDefinition = new QueryDefinition(queryString, statementType, engineProvider, maxResults);
-         queryDefinition.setHitCountAccuracy(hitCountAccuracy);
-         queryDefinition.setFirstResult(firstResult);
-
-         queryDefinition.timeout = input.readLong();
-         queryDefinition.scoreRequired = input.readBoolean();
-         short paramSize = input.readShort();
-         if (paramSize != 0) {
-            Map<String, Object> params = new HashMap<>(paramSize);
-            for (int i = 0; i < paramSize; i++) {
-               String key = input.readUTF();
-               Object value = input.readObject();
-               params.put(key, value);
-            }
-            queryDefinition.setNamedParameters(params);
-         }
-         return queryDefinition;
-      }
    }
 }

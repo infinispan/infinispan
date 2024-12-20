@@ -1,31 +1,33 @@
 package org.infinispan.commands.write;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.CLEAR_COMMAND)
 public class ClearCommand extends AbstractTopologyAffectedCommand implements WriteCommand {
 
    public static final byte COMMAND_ID = 5;
 
-   public ClearCommand() {
+   @ProtoFactory
+   ClearCommand(long flagsWithoutRemote, int topologyId) {
+      super(flagsWithoutRemote, topologyId);
    }
 
    public ClearCommand(long flagsBitSet) {
-      setFlagsBitSet(flagsBitSet);
+      super(flagsBitSet, -1);
    }
 
    @Override
@@ -39,22 +41,8 @@ public class ClearCommand extends AbstractTopologyAffectedCommand implements Wri
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      setFlagsBitSet(input.readLong());
-   }
-
-   @Override
    public String toString() {
-      return new StringBuilder()
-         .append("ClearCommand{flags=")
-         .append(printFlags())
-         .append("}")
-         .toString();
+      return "ClearCommand{flags=" + printFlags() + "}";
    }
 
    @Override

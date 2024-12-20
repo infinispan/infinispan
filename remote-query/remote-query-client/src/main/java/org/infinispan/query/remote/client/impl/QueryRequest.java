@@ -11,7 +11,6 @@ import java.util.Map;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -22,7 +21,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  * @since 6.0
  */
 @ProtoTypeId(ProtoStreamTypeIds.REMOTE_QUERY_REQUEST)
-@SerializeWith(Externalizers.QueryRequestExternalizer.class)
 public final class QueryRequest implements JsonSerialization {
 
    public static final String QUERY_STRING_FIELD = "queryString";
@@ -152,7 +150,6 @@ public final class QueryRequest implements JsonSerialization {
             .set(LOCAL_FIELD, Json.factory().bool(local));
    }
 
-   @SerializeWith(Externalizers.NamedParameterExternalizer.class)
    public static final class NamedParameter implements JsonSerialization {
       public static final String NAME_FIELD = "name";
       public static final String VALUE_FIELD = "value";

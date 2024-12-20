@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
@@ -18,7 +17,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  * @since 6.0
  */
 @ProtoTypeId(ProtoStreamTypeIds.REMOTE_QUERY_RESPONSE)
-@SerializeWith(Externalizers.QueryResponseExternalizer.class)
 public final class QueryResponse implements BaseQueryResponse {
 
    private int numResults;

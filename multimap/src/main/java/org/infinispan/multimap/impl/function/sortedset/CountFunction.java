@@ -1,17 +1,14 @@
 package org.infinispan.multimap.impl.function.sortedset;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
-import org.infinispan.multimap.impl.SortedSetBucket;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
+
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.functional.EntryView;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.multimap.impl.SortedSetBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by
@@ -22,8 +19,9 @@ import java.util.Set;
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_COUNT_FUNCTION)
 public final class CountFunction<K, V, T> implements SortedSetBucketBaseFunction<K, V, Long> {
-   public static final AdvancedExternalizer<CountFunction> EXTERNALIZER = new Externalizer();
+
    private final T min;
    private final T max;
    private final boolean includeMin;
@@ -42,6 +40,36 @@ public final class CountFunction<K, V, T> implements SortedSetBucketBaseFunction
       this.countType = countType;
    }
 
+   @ProtoFactory
+   CountFunction(MarshallableObject<T> min, boolean includeMin, MarshallableObject<T> max, boolean includeMax, SortedSetOperationType countType) {
+      this(MarshallableObject.unwrap(min), includeMin, MarshallableObject.unwrap(max), includeMax, countType);
+   }
+
+   @ProtoField(1)
+   MarshallableObject<T> getMin() {
+      return MarshallableObject.create(min);
+   }
+
+   @ProtoField(value = 2, defaultValue = "false")
+   boolean isIncludeMin() {
+      return includeMin;
+   }
+
+   @ProtoField(3)
+   MarshallableObject<T> getMax() {
+      return MarshallableObject.create(max);
+   }
+
+   @ProtoField(value = 4, defaultValue = "false")
+   boolean isIncludeMax() {
+      return includeMax;
+   }
+
+   @ProtoField(5)
+   SortedSetOperationType getCountType() {
+      return countType;
+   }
+
    @Override
    public Long apply(EntryView.ReadWriteEntryView<K, SortedSetBucket<V>> entryView) {
       Optional<SortedSetBucket<V>> existing = entryView.peek();
@@ -57,33 +85,5 @@ public final class CountFunction<K, V, T> implements SortedSetBucketBaseFunction
          }
       }
       return count;
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<CountFunction> {
-
-      @Override
-      public Set<Class<? extends CountFunction>> getTypeClasses() {
-         return Collections.singleton(CountFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.SORTED_SET_COUNT_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, CountFunction object) throws IOException {
-         output.writeObject(object.min);
-         output.writeBoolean(object.includeMin);
-         output.writeObject(object.max);
-         output.writeBoolean(object.includeMax);
-         MarshallUtil.marshallEnum(object.countType, output);
-      }
-
-      @Override
-      public CountFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new CountFunction(input.readObject(), input.readBoolean(), input.readObject(), input.readBoolean(),
-               MarshallUtil.unmarshallEnum(input, SortedSetOperationType::valueOf));
-      }
    }
 }

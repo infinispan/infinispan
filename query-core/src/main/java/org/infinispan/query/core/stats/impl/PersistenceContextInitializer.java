@@ -22,5 +22,5 @@ import org.infinispan.query.core.stats.IndexInfo;
       schemaPackageName = "org.infinispan.persistence.query.core",
       service = false
 )
-interface PersistenceContextInitializer extends SerializationContextInitializer {
+public interface PersistenceContextInitializer extends SerializationContextInitializer {
 }

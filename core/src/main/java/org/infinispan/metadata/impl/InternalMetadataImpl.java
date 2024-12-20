@@ -2,43 +2,37 @@ package org.infinispan.metadata.impl;
 
 import static java.lang.Math.min;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.Ids;
-import org.infinispan.commons.util.Util;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * @author Mircea Markus
  * @since 6.0
  */
 @Deprecated(forRemoval=true, since = "10.0")
+@ProtoTypeId(ProtoStreamTypeIds.INTERNAL_METADATA_IMPL)
 public class InternalMetadataImpl implements InternalMetadata {
    private final Metadata actual;
    private final long created;
    private final long lastUsed;
 
-   public InternalMetadataImpl() {
-      //required by the AZUL VM in order to run the tests
-      this(null, -1, -1);
+   @ProtoFactory
+   InternalMetadataImpl(long created, long lastUsed, MarshallableObject<Metadata> wrappedMetadata) {
+      this(MarshallableObject.unwrap(wrappedMetadata), created, lastUsed);
    }
 
    public InternalMetadataImpl(InternalCacheEntry ice) {
       this(ice.getMetadata(), ice.getCreated(), ice.getLastUsed());
-   }
-
-   public InternalMetadataImpl(InternalCacheValue icv) {
-      this(icv.getMetadata(), icv.getCreated(), icv.getLastUsed());
    }
 
    public InternalMetadataImpl(Metadata actual, long created, long lastUsed) {
@@ -73,17 +67,24 @@ public class InternalMetadataImpl implements InternalMetadata {
    }
 
    @Override
+   @ProtoField(value = 1, defaultValue = "-1")
    public long created() {
       return created;
    }
 
    @Override
+   @ProtoField(value = 2, defaultValue = "-1")
    public long lastUsed() {
       return lastUsed;
    }
 
    public Metadata actual() {
       return actual;
+   }
+
+   @ProtoField(value = 3)
+   MarshallableObject<Metadata> getWrappedMetadata() {
+      return MarshallableObject.create(actual);
    }
 
    static class InternalBuilder implements Builder {
@@ -197,32 +198,5 @@ public class InternalMetadataImpl implements InternalMetadata {
          }
       }
       return toCheck;
-   }
-
-   public static class Externalizer extends AbstractExternalizer<InternalMetadataImpl> {
-      @Override
-      public void writeObject(ObjectOutput output, InternalMetadataImpl b) throws IOException {
-         output.writeLong(b.created);
-         output.writeLong(b.lastUsed);
-         output.writeObject(b.actual);
-      }
-
-      @Override
-      public InternalMetadataImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         long created = input.readLong();
-         long lastUsed = input.readLong();
-         Metadata actual = (Metadata) input.readObject();
-         return new InternalMetadataImpl(actual, created, lastUsed);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.INTERNAL_METADATA_ID;
-      }
-
-      @Override
-      public Set<Class<? extends InternalMetadataImpl>> getTypeClasses() {
-         return Util.asSet(InternalMetadataImpl.class);
-      }
    }
 }

@@ -1,11 +1,6 @@
 package org.infinispan.commons.marshall;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -93,40 +88,5 @@ public class WrappedByteArray implements WrappedBytes {
    @Override
    public String toString() {
       return "WrappedByteArray[" + Util.hexDump(bytes) + ']';
-   }
-
-   public static final class Externalizer extends AbstractExternalizer<WrappedByteArray> {
-
-      @Override
-      public Set<Class<? extends WrappedByteArray>> getTypeClasses() {
-         return Collections.singleton(WrappedByteArray.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.WRAPPED_BYTE_ARRAY;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, WrappedByteArray object) throws IOException {
-         MarshallUtil.marshallByteArray(object.bytes, output);
-         if (object.initializedHashCode) {
-            output.writeBoolean(true);
-            output.writeInt(object.hashCode);
-         } else {
-            output.writeBoolean(false);
-         }
-      }
-
-      @Override
-      public WrappedByteArray readObject(ObjectInput input) throws IOException {
-         byte[] bytes = MarshallUtil.unmarshallByteArray(input);
-         boolean hasHashCode = input.readBoolean();
-         if (hasHashCode) {
-            return new WrappedByteArray(bytes, input.readInt());
-         } else {
-            return new WrappedByteArray(bytes);
-         }
-      }
    }
 }

@@ -3,23 +3,19 @@ package org.infinispan.distribution.ch.impl;
 import static java.lang.Math.min;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
-import java.util.Set;
 
 import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.topology.PersistentUUID;
@@ -42,6 +38,7 @@ import org.jgroups.util.UUID;
  * @author Dan Berindei
  * @since 5.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.SYNC_CONSISTENT_HASH)
 public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash> {
 
    @Override
@@ -585,28 +582,6 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
                   return String.valueOf(segment);
             }
          }
-      }
-   }
-
-   public static class Externalizer extends AbstractExternalizer<SyncConsistentHashFactory> {
-
-      @Override
-      public void writeObject(ObjectOutput output, SyncConsistentHashFactory chf) {
-      }
-
-      @Override
-      public SyncConsistentHashFactory readObject(ObjectInput unmarshaller) {
-         return new SyncConsistentHashFactory();
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.SYNC_CONSISTENT_HASH_FACTORY;
-      }
-
-      @Override
-      public Set<Class<? extends SyncConsistentHashFactory>> getTypeClasses() {
-         return Collections.singleton(SyncConsistentHashFactory.class);
       }
    }
 }

@@ -1,25 +1,24 @@
 package org.infinispan.distribution.ch.impl;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 
-import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.topology.PersistentUUID;
 
 import net.jcip.annotations.Immutable;
@@ -34,6 +33,7 @@ import net.jcip.annotations.Immutable;
  * @since 5.2
  */
 @Immutable
+@ProtoTypeId(ProtoStreamTypeIds.DEFAULT_CONSISTENT_HASH)
 public class DefaultConsistentHash extends AbstractConsistentHash {
    // State constants
    private static final String STATE_NUM_OWNERS = "numOwners";
@@ -66,23 +66,6 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
       this.hashCode = hashCodeInternal();
    }
 
-   // Only used by the externalizer, so we can skip copying collections
-   private DefaultConsistentHash(int numOwners, int numSegments, List<Address> members,
-                                 float[] capacityFactors, List<Address>[] segmentOwners) {
-      super(numSegments, members, capacityFactors);
-      if (numOwners < 1)
-         throw new IllegalArgumentException("The number of owners must be strictly positive");
-
-      this.numOwners = numOwners;
-      for (int i = 0; i < numSegments; i++) {
-         if (segmentOwners[i] == null || segmentOwners[i].isEmpty()) {
-            throw new IllegalArgumentException("Segment owner list cannot be null or empty");
-         }
-      }
-      this.segmentOwners = segmentOwners;
-      this.hashCode = hashCodeInternal();
-   }
-
    DefaultConsistentHash(ScopedPersistentState state) {
       super(state);
       this.numOwners = Integer.parseInt(state.getProperty(STATE_NUM_OWNERS));
@@ -97,6 +80,58 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
          }
       }
       this.hashCode = hashCodeInternal();
+   }
+
+   @ProtoFactory
+   DefaultConsistentHash(List<JGroupsAddress> jGroupsMembers, float[] capacityFactorsArray, int numOwners, SegmentOwnership[] segmentOwners) {
+      super(segmentOwners.length, (List<Address>)(List<?>) jGroupsMembers, capacityFactorsArray);
+      if (numOwners < 1)
+         throw new IllegalArgumentException("The number of owners must be strictly positive");
+
+      this.numOwners = numOwners;
+
+      int numSegments = segmentOwners.length;
+      this.segmentOwners = new List[numSegments];
+      for (int i = 0; i < numSegments; i++) {
+         int size = segmentOwners[i].indexes.length;
+         JGroupsAddress[] owners = new JGroupsAddress[size];
+         for (int j = 0; j < size; j++) {
+            int ownerIndex = segmentOwners[i].indexes[j];
+            owners[j] = jGroupsMembers.get(ownerIndex);
+         }
+         this.segmentOwners[i] = Immutables.immutableListWrap(owners);
+      }
+      for (int i = 0; i < numSegments; i++) {
+         if (this.segmentOwners[i] == null || this.segmentOwners[i].isEmpty()) {
+            throw new IllegalArgumentException("Segment owner list cannot be null or empty");
+         }
+      }
+      this.hashCode = hashCodeInternal();
+   }
+
+   @ProtoField(number = 1, name = "members", collectionImplementation = ArrayList.class)
+   List<JGroupsAddress> getJGroupsMembers() {
+      return (List<JGroupsAddress>)(List<?>) members;
+   }
+
+   @ProtoField(number = 2, name = "capacityFactors")
+   float[] getCapacityFactorsArray() {
+      return capacityFactors;
+   }
+
+   @ProtoField(number = 3, defaultValue = "-1")
+   public int getNumOwners() {
+      return numOwners;
+   }
+
+   @ProtoField(number = 4)
+   SegmentOwnership[] getSegmentOwners() {
+      SegmentOwnership[] segmentOwnership = new SegmentOwnership[segmentOwners.length];
+      HashMap<Address, Integer> memberIndexes = getMemberIndexMap(members);
+      for (int i = 0; i < segmentOwners.length; i++) {
+         segmentOwnership[i] = new SegmentOwnership(memberIndexes, segmentOwners[i]);
+      }
+      return segmentOwnership;
    }
 
    @Override
@@ -148,10 +183,6 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    @Override
    public Address locatePrimaryOwnerForSegment(int segmentId) {
       return segmentOwners[segmentId].get(0);
-   }
-
-   public int getNumOwners() {
-      return numOwners;
    }
 
    @Override
@@ -316,66 +347,5 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
          remappedSegmentOwners[i] = remappedOwners;
       }
       return remappedSegmentOwners;
-   }
-
-   public static class Externalizer extends InstanceReusingAdvancedExternalizer<DefaultConsistentHash> {
-
-      @Override
-      public void doWriteObject(ObjectOutput output, DefaultConsistentHash ch) throws IOException {
-         output.writeInt(ch.segmentOwners.length);
-         output.writeInt(ch.numOwners);
-         output.writeObject(ch.members);
-         output.writeObject(ch.capacityFactors);
-
-         // Avoid computing the identityHashCode for every ImmutableListCopy/Address
-         HashMap<Address, Integer> memberIndexes = getMemberIndexMap(ch.members);
-         for (int i = 0; i < ch.segmentOwners.length; i++) {
-            List<Address> owners = ch.segmentOwners[i];
-            output.writeInt(owners.size());
-            for (Address owner : owners) {
-               output.writeInt(memberIndexes.get(owner));
-            }
-         }
-      }
-
-      @Override
-      @SuppressWarnings("unchecked")
-      public DefaultConsistentHash doReadObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
-         int numSegments = unmarshaller.readInt();
-         int numOwners = unmarshaller.readInt();
-         List<Address> members = (List<Address>) unmarshaller.readObject();
-         float[] capacityFactors = (float[]) unmarshaller.readObject();
-
-         List<Address>[] segmentOwners = new List[numSegments];
-         for (int i = 0; i < numSegments; i++) {
-            int size = unmarshaller.readInt();
-            Address[] owners = new Address[size];
-            for (int j = 0; j < size; j++) {
-               int ownerIndex = unmarshaller.readInt();
-               owners[j] = members.get(ownerIndex);
-            }
-            segmentOwners[i] = Immutables.immutableListWrap(owners);
-         }
-
-         return new DefaultConsistentHash(numOwners, numSegments, members, capacityFactors, segmentOwners);
-      }
-
-      private HashMap<Address, Integer> getMemberIndexMap(List<Address> members) {
-         HashMap<Address, Integer> memberIndexes = new HashMap<>(members.size());
-         for (int i = 0; i < members.size(); i++) {
-            memberIndexes.put(members.get(i), i);
-         }
-         return memberIndexes;
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.DEFAULT_CONSISTENT_HASH;
-      }
-
-      @Override
-      public Set<Class<? extends DefaultConsistentHash>> getTypeClasses() {
-         return Collections.singleton(DefaultConsistentHash.class);
-      }
    }
 }

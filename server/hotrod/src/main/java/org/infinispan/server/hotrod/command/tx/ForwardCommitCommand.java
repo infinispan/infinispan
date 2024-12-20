@@ -3,12 +3,15 @@ package org.infinispan.server.hotrod.command.tx;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.tx.XidImpl;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.server.hotrod.command.Ids;
 import org.infinispan.server.hotrod.tx.operation.Util;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * A {@link CacheRpcCommand} implementation to forward the commit request from a client to the member that run the
@@ -17,12 +20,10 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
  * @author Pedro Ruivo
  * @since 9.1
  */
+@ProtoTypeId(ProtoStreamTypeIds.SERVER_HR_TX_FORWARD_COMMIT_COMMAND)
 public class ForwardCommitCommand extends AbstractForwardTxCommand {
 
-   public ForwardCommitCommand(ByteString cacheName) {
-      super(cacheName);
-   }
-
+   @ProtoFactory
    public ForwardCommitCommand(ByteString cacheName, XidImpl xid, long timeout) {
       super(cacheName, xid, timeout);
    }

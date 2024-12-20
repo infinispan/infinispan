@@ -1,18 +1,15 @@
 package org.infinispan.container.entries;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A cache entry that is transient, i.e., it can be considered expired after a period of not being used.
@@ -20,6 +17,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
  * @author Manik Surtani
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.TRANSIENT_CACHE_ENTRY)
 public class TransientCacheEntry extends AbstractInternalCacheEntry {
 
    protected long maxIdle;
@@ -36,11 +34,30 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       this.lastUsed = lastUsed;
    }
 
+   @ProtoFactory
+   TransientCacheEntry(MarshallableObject<?> wrappedKey, MarshallableObject<?> wrappedValue,
+                       PrivateMetadata internalMetadata, long maxIdle, long lastUsed) {
+      super(wrappedKey, wrappedValue, internalMetadata);
+      this.maxIdle = maxIdle;
+      this.lastUsed = lastUsed;
+   }
+
+   @Override
+   @ProtoField(number = 4, defaultValue = "-1")
+   public final long getMaxIdle() {
+      return maxIdle;
+   }
+
+   @Override
+   @ProtoField(number = 5, defaultValue = "-1")
+   public final long getLastUsed() {
+      return lastUsed;
+   }
+
    @Override
    public final void touch(long currentTimeMillis) {
       this.lastUsed = currentTimeMillis;
    }
-
 
    @Override
    public void reincarnate(long now) {
@@ -72,11 +89,6 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
-   public final long getLastUsed() {
-      return lastUsed;
-   }
-
-   @Override
    public long getLifespan() {
       return -1;
    }
@@ -84,11 +96,6 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
    @Override
    public long getExpiryTime() {
       return maxIdle > -1 ? lastUsed + maxIdle : -1;
-   }
-
-   @Override
-   public final long getMaxIdle() {
-      return maxIdle;
    }
 
    @Override
@@ -118,36 +125,5 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       super.appendFieldsToString(builder);
       builder.append(", lastUsed=").append(lastUsed);
       builder.append(", maxIdle=").append(maxIdle);
-   }
-
-   public static class Externalizer extends AbstractExternalizer<TransientCacheEntry> {
-      @Override
-      public void writeObject(ObjectOutput output, TransientCacheEntry tce) throws IOException {
-         output.writeObject(tce.key);
-         output.writeObject(tce.value);
-         output.writeObject(tce.internalMetadata);
-         UnsignedNumeric.writeUnsignedLong(output, tce.lastUsed);
-         output.writeLong(tce.maxIdle); // could be negative so should not use unsigned longs
-      }
-
-      @Override
-      public TransientCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object key = input.readObject();
-         Object value = input.readObject();
-         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
-         long lastUsed = UnsignedNumeric.readUnsignedLong(input);
-         long maxIdle = input.readLong();
-         return new TransientCacheEntry(key, value, internalMetadata, maxIdle, lastUsed);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.TRANSIENT_ENTRY;
-      }
-
-      @Override
-      public Set<Class<? extends TransientCacheEntry>> getTypeClasses() {
-         return Collections.singleton(TransientCacheEntry.class);
-      }
    }
 }

@@ -1,45 +1,36 @@
 package org.infinispan.commands.irac;
 
-import static org.infinispan.commons.marshall.MarshallUtil.marshallCollection;
-import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.versioning.irac.IracTombstoneInfo;
 import org.infinispan.container.versioning.irac.IracTombstoneManager;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * Response for a state request with the tombstones stored in the local node.
  *
  * @since 14.0
  */
-public class IracTombstoneStateResponseCommand implements CacheRpcCommand {
+@ProtoTypeId(ProtoStreamTypeIds.IRAC_TOMBSTONE_STATE_RESPONSE_COMMAND)
+public class IracTombstoneStateResponseCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = 39;
 
-   private ByteString cacheName;
-   private Collection<IracTombstoneInfo> state;
+   @ProtoField(number = 2)
+   final Collection<IracTombstoneInfo> state;
 
-   @SuppressWarnings("unused")
-   public IracTombstoneStateResponseCommand() {
-   }
-
-   public IracTombstoneStateResponseCommand(ByteString cacheName) {
-      this.cacheName = cacheName;
-   }
-
+   @ProtoFactory
    public IracTombstoneStateResponseCommand(ByteString cacheName, Collection<IracTombstoneInfo> state) {
-      this.cacheName = cacheName;
+      super(cacheName);
       this.state = state;
    }
 
@@ -60,21 +51,6 @@ public class IracTombstoneStateResponseCommand implements CacheRpcCommand {
    @Override
    public boolean isReturnValueExpected() {
       return false;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      marshallCollection(state, output, IracTombstoneInfo::writeTo);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      state = unmarshallCollection(input, ArrayList::new, IracTombstoneInfo::readFrom);
-   }
-
-   @Override
-   public ByteString getCacheName() {
-      return cacheName;
    }
 
    @Override

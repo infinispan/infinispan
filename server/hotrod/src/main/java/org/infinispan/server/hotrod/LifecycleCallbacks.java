@@ -1,26 +1,8 @@
 package org.infinispan.server.hotrod;
 
-import static org.infinispan.server.core.ExternalizerIds.CACHE_XID;
-import static org.infinispan.server.core.ExternalizerIds.CLIENT_ADDRESS;
-import static org.infinispan.server.core.ExternalizerIds.COMPLETE_FUNCTION;
-import static org.infinispan.server.core.ExternalizerIds.CONDITIONAL_MARK_ROLLBACK_FUNCTION;
-import static org.infinispan.server.core.ExternalizerIds.CREATE_STATE_FUNCTION;
-import static org.infinispan.server.core.ExternalizerIds.DECISION_FUNCTION;
-import static org.infinispan.server.core.ExternalizerIds.ITERATION_FILTER;
-import static org.infinispan.server.core.ExternalizerIds.KEY_VALUE_VERSION_CONVERTER;
-import static org.infinispan.server.core.ExternalizerIds.KEY_VALUE_WITH_PREVIOUS_CONVERTER;
-import static org.infinispan.server.core.ExternalizerIds.MULTI_HOMED_SERVER_ADDRESS;
-import static org.infinispan.server.core.ExternalizerIds.PREPARED_FUNCTION;
-import static org.infinispan.server.core.ExternalizerIds.PREPARING_FUNCTION;
-import static org.infinispan.server.core.ExternalizerIds.SINGLE_HOMED_SERVER_ADDRESS;
-import static org.infinispan.server.core.ExternalizerIds.TX_STATE;
-import static org.infinispan.server.core.ExternalizerIds.XID_PREDICATE;
-
 import java.util.EnumSet;
-import java.util.Map;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -31,31 +13,19 @@ import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.registry.InternalCacheRegistry;
-import org.infinispan.server.hotrod.event.KeyValueWithPreviousEventConverterExternalizer;
 import org.infinispan.server.hotrod.tx.ServerTransactionOriginatorChecker;
 import org.infinispan.server.hotrod.tx.table.CacheXid;
-import org.infinispan.server.hotrod.tx.table.ClientAddress;
 import org.infinispan.server.hotrod.tx.table.GlobalTxTable;
 import org.infinispan.server.hotrod.tx.table.PerCacheTxTable;
 import org.infinispan.server.hotrod.tx.table.TxState;
-import org.infinispan.server.hotrod.tx.table.functions.ConditionalMarkAsRollbackFunction;
-import org.infinispan.server.hotrod.tx.table.functions.CreateStateFunction;
-import org.infinispan.server.hotrod.tx.table.functions.PreparingDecisionFunction;
-import org.infinispan.server.hotrod.tx.table.functions.SetCompletedTransactionFunction;
-import org.infinispan.server.hotrod.tx.table.functions.SetDecisionFunction;
-import org.infinispan.server.hotrod.tx.table.functions.SetPreparedFunction;
-import org.infinispan.server.hotrod.tx.table.functions.XidPredicate;
-import org.infinispan.server.iteration.IterationFilter;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.TransactionOriginatorChecker;
 
 import net.jcip.annotations.GuardedBy;
 
 /**
- * Module lifecycle callbacks implementation that enables module specific {@link AdvancedExternalizer} implementations
- * to be registered.
- *
  * @author Galder Zamarreño
  * @since 5.0
  */
@@ -76,22 +46,9 @@ public class LifecycleCallbacks implements ModuleLifecycle {
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
       globalComponentRegistry = gcr;
       this.globalCfg = globalCfg;
-      Map<Integer, AdvancedExternalizer<?>> externalizers = globalCfg.serialization().advancedExternalizers();
-      externalizers.put(SINGLE_HOMED_SERVER_ADDRESS, new SingleHomedServerAddress.Externalizer());
-      externalizers.put(MULTI_HOMED_SERVER_ADDRESS, new MultiHomedServerAddress.Externalizer());
-      externalizers.put(KEY_VALUE_VERSION_CONVERTER, new KeyValueVersionConverter.Externalizer());
-      externalizers.put(KEY_VALUE_WITH_PREVIOUS_CONVERTER, new KeyValueWithPreviousEventConverterExternalizer());
-      externalizers.put(ITERATION_FILTER, new IterationFilter.IterationFilterExternalizer());
-      externalizers.put(TX_STATE, TxState.EXTERNALIZER);
-      externalizers.put(CACHE_XID, CacheXid.EXTERNALIZER);
-      externalizers.put(CLIENT_ADDRESS, ClientAddress.EXTERNALIZER);
-      externalizers.put(CREATE_STATE_FUNCTION, CreateStateFunction.EXTERNALIZER);
-      externalizers.put(PREPARING_FUNCTION, PreparingDecisionFunction.EXTERNALIZER);
-      externalizers.put(COMPLETE_FUNCTION, SetCompletedTransactionFunction.EXTERNALIZER);
-      externalizers.put(DECISION_FUNCTION, SetDecisionFunction.EXTERNALIZER);
-      externalizers.put(PREPARED_FUNCTION, SetPreparedFunction.EXTERNALIZER);
-      externalizers.put(XID_PREDICATE, XidPredicate.EXTERNALIZER);
-      externalizers.put(CONDITIONAL_MARK_ROLLBACK_FUNCTION, ConditionalMarkAsRollbackFunction.EXTERNALIZER);
+
+      SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.GLOBAL, new GlobalContextInitializerImpl());
 
       registerGlobalTxTable();
    }

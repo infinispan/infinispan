@@ -23,6 +23,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Java
+        uses: ./.github/actions/setup-java
+
+      - uses: actions/checkout@v4
+        with:
+          repository: ryanemerson/protostream
+          ref: 385/field_inheritance
+          path: protostream
+
+      - name: Build Protostream SNAPSHOT
+        run: ./mvnw -f protostream install -DskipTests
+
       - name: Build Infinispan
         uses: ./.github/actions/build-infinispan
 

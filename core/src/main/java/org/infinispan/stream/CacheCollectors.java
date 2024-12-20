@@ -1,8 +1,5 @@
 package org.infinispan.stream;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
@@ -10,8 +7,11 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
-import org.infinispan.commons.marshall.Externalizer;
-import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.function.SerializableSupplier;
 
 /**
@@ -43,15 +43,13 @@ public class CacheCollectors {
     * @param <T> The input type of the collector
     * @param <R> The resulting type of the collector
     * @return the collector which is serializable
-    * @see Externalizer
-    * @see org.infinispan.commons.marshall.AdvancedExternalizer
     */
    public static <T, R> Collector<T, ?, R> collector(Supplier<Collector<T, ?, R>> supplier) {
       return new CollectorSupplier<>(supplier);
    }
 
-   @SerializeWith(value = CollectorSupplier.CollectorSupplierExternalizer.class)
-   private static final class CollectorSupplier<T, R> implements Collector<T, Object, R> {
+   @ProtoTypeId(ProtoStreamTypeIds.CACHE_COLLECTORS_COLLECTOR_SUPPLIER)
+   public static final class CollectorSupplier<T, R> implements Collector<T, Object, R> {
       private final Supplier<Collector<T, ?, R>> supplier;
       private transient Collector<T, Object, R> collector;
 
@@ -64,6 +62,16 @@ public class CacheCollectors {
 
       CollectorSupplier(Supplier<Collector<T, ?, R>> supplier) {
          this.supplier = supplier;
+      }
+
+      @ProtoFactory
+      CollectorSupplier(MarshallableObject<Supplier<Collector<T, ?, R>>> supplier) {
+         this.supplier = MarshallableObject.unwrap(supplier);
+      }
+
+      @ProtoField(number = 1)
+      MarshallableObject<Supplier<Collector<T, ?, R>>> getSupplier() {
+         return MarshallableObject.create(supplier);
       }
 
       @Override
@@ -89,19 +97,6 @@ public class CacheCollectors {
       @Override
       public Set<Characteristics> characteristics() {
          return getCollector().characteristics();
-      }
-
-      public static final class CollectorSupplierExternalizer implements Externalizer<CollectorSupplier<?, ?>> {
-
-         @Override
-         public void writeObject(ObjectOutput output, CollectorSupplier object) throws IOException {
-            output.writeObject(object.supplier);
-         }
-
-         @Override
-         public CollectorSupplier readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-            return new CollectorSupplier((Supplier<Collector>) input.readObject());
-         }
       }
    }
 }

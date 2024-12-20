@@ -1,16 +1,14 @@
 package org.infinispan.multimap.impl.function.sortedset;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
-import org.infinispan.multimap.impl.SortedSetBucket;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
+
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.functional.EntryView;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.multimap.impl.SortedSetBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by
@@ -20,14 +18,30 @@ import java.util.Set;
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_INDEX_OF_SORTED_SET_FUNCTION)
 public final class IndexOfSortedSetFunction<K, V> implements SortedSetBucketBaseFunction<K, V, SortedSetBucket.IndexValue> {
-   public static final AdvancedExternalizer<IndexOfSortedSetFunction> EXTERNALIZER = new Externalizer();
+
    private final V member;
    private final boolean isRev;
 
    public IndexOfSortedSetFunction(V member, boolean isRev) {
       this.member = member;
       this.isRev = isRev;
+   }
+
+   @ProtoFactory
+   IndexOfSortedSetFunction(MarshallableObject<V> member, boolean rev) {
+      this(MarshallableObject.unwrap(member), rev);
+   }
+
+   @ProtoField(1)
+   MarshallableObject<V> getMember() {
+      return MarshallableObject.create(member);
+   }
+
+   @ProtoField(value = 2, defaultValue = "false")
+   boolean isRev() {
+      return isRev;
    }
 
    @Override
@@ -37,29 +51,5 @@ public final class IndexOfSortedSetFunction<K, V> implements SortedSetBucketBase
          return existing.get().indexOf(member, isRev);
       }
       return null;
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<IndexOfSortedSetFunction> {
-
-      @Override
-      public Set<Class<? extends IndexOfSortedSetFunction>> getTypeClasses() {
-         return Collections.singleton(IndexOfSortedSetFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.SORTED_SET_INDEX_OF_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, IndexOfSortedSetFunction object) throws IOException {
-         output.writeObject(object.member);
-         output.writeBoolean(object.isRev);
-      }
-
-      @Override
-      public IndexOfSortedSetFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new IndexOfSortedSetFunction(input.readObject(), input.readBoolean());
-      }
    }
 }

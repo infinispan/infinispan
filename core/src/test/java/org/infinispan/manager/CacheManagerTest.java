@@ -60,7 +60,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.marshall.core.GlobalMarshaller;
+import org.infinispan.marshall.protostream.impl.GlobalMarshaller;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
@@ -301,8 +301,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       CompletableFuture<Void> managerStopResumed = new CompletableFuture<>();
       try {
          manager.addListener(new MyListener(CACHE_NAME, cacheStartBlocked, cacheStartResumed));
-         replaceComponent(manager, GlobalMarshaller.class,
-               new LatchGlobalMarshaller(managerStopBlocked, managerStopResumed), true);
+         replaceComponent(manager, GlobalMarshaller.class, new LatchGlobalMarshaller(managerStopBlocked, managerStopResumed), true);
          // Need to start after replacing the global marshaller because we can't delegate to the old GlobalMarshaller
          manager.start();
 

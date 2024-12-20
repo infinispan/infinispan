@@ -1,13 +1,10 @@
 package org.infinispan.remoting.responses;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.marshall.protostream.impl.MarshallableThrowable;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A response that encapsulates an exception
@@ -15,48 +12,31 @@ import org.infinispan.marshall.core.Ids;
  * @author Manik Surtani
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.EXCEPTION_RESPONSE)
 public class ExceptionResponse extends InvalidResponse {
-   private Exception exception;
 
-   public ExceptionResponse() {
+   @ProtoField(number = 1)
+   MarshallableThrowable exception;
+
+   @ProtoFactory
+   ExceptionResponse(MarshallableThrowable exception) {
+      this.exception = exception;
    }
 
    public ExceptionResponse(Exception exception) {
-      this.exception = exception;
+      setException(exception);
    }
 
    public Exception getException() {
-      return exception;
+      return (Exception) exception.get();
    }
 
    public void setException(Exception exception) {
-      this.exception = exception;
+      this.exception = MarshallableThrowable.create(exception);
    }
 
    @Override
    public String toString() {
       return "ExceptionResponse(" + exception + ")";
-   }
-
-   public static class Externalizer extends AbstractExternalizer<ExceptionResponse> {
-      @Override
-      public void writeObject(ObjectOutput output, ExceptionResponse response) throws IOException {
-         output.writeObject(response.exception);
-      }
-
-      @Override
-      public ExceptionResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new ExceptionResponse((Exception) input.readObject());
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.EXCEPTION_RESPONSE;
-      }
-
-      @Override
-      public Set<Class<? extends ExceptionResponse>> getTypeClasses() {
-         return Util.<Class<? extends ExceptionResponse>>asSet(ExceptionResponse.class);
-      }
    }
 }

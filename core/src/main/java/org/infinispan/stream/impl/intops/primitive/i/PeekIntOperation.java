@@ -4,6 +4,9 @@ import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.stream.CacheAware;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -22,13 +25,19 @@ public class PeekIntOperation implements IntermediateOperation<Integer, IntStrea
       this.consumer = consumer;
    }
 
+   @ProtoFactory
+   PeekIntOperation(MarshallableObject<IntConsumer> consumer) {
+      this.consumer = MarshallableObject.unwrap(consumer);
+   }
+
+   @ProtoField(number = 1)
+   MarshallableObject<IntConsumer> getConsumer() {
+      return MarshallableObject.create(consumer);
+   }
+
    @Override
    public IntStream perform(IntStream stream) {
       return stream.peek(consumer);
-   }
-
-   public IntConsumer getConsumer() {
-      return consumer;
    }
 
    @Override

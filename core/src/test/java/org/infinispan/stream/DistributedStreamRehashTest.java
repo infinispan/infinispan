@@ -25,7 +25,6 @@ import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.reactive.publisher.impl.SegmentAwarePublisherSupplier;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.InCacheMode;
@@ -54,7 +53,7 @@ public class DistributedStreamRehashTest extends MultipleCacheManagersTest {
       if (cacheMode == CacheMode.DIST_SYNC) {
          builderUsed.clustering().clustering().hash().numOwners(2).numSegments(4).consistentHashFactory(consistentHashFactory);
       }
-      createClusteredCaches(4, CACHE_NAME, TestDataSCI.INSTANCE, builderUsed);
+      createClusteredCaches(4, CACHE_NAME, ControlledConsistentHashFactory.SCI.INSTANCE, builderUsed);
    }
 
    public void testNodeFailureDuringProcessingForCollect() throws InterruptedException, TimeoutException, ExecutionException {
