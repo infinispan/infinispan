@@ -211,7 +211,7 @@
 
       <version.smallrye-mutiny>2.6.2</version.smallrye-mutiny>
       <!-- Spring 6, Spring Boot 3 versions -->
-      <version.spring>6.1.16</version.spring>
+      <version.spring>6.2.1</version.spring>
       <version.spring.boot>3.2.12</version.spring.boot>
       <version.spring.session>3.2.7</version.spring.session>
 
