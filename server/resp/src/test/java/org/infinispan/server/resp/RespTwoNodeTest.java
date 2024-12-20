@@ -41,6 +41,9 @@ import io.lettuce.core.ScoredValue;
 import io.lettuce.core.SortArgs;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.json.DefaultJsonParser;
+import io.lettuce.core.json.JsonPath;
+import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.pubsub.RedisPubSubAdapter;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 
@@ -534,5 +537,21 @@ public class RespTwoNodeTest extends BaseMultipleRespTest {
       redisCmd2.rpush(keyA, "val2");
       assertThat(redisCmd1.lrange(keyA, 0,-1)).containsExactlyInAnyOrder("val1","val2");
       assertThat(redisCmd2.lrange(keyA, 0,-1)).containsExactlyInAnyOrder("val1","val2");
+   }
+
+   @Test
+   public void testJsonSetGet() {
+      RedisCommands<String, String> r0 = redisConnection1.sync();
+      RedisCommands<String, String> r1 = redisConnection2.sync();
+
+      // Create on node 0 only.
+      String numbers = getStringKeyForCache(respCache(0));
+      JsonValue jv = new DefaultJsonParser().createJsonValue("{\"key\":\"value\"}");
+      JsonPath jp = new JsonPath("$");
+
+      assertThat(r0.jsonSet(numbers, jp, jv)).isEqualTo("OK");
+      List<JsonValue> resultR0 = r0.jsonGet(numbers, jp);
+      List<JsonValue> resultR1 = r1.jsonGet(numbers, jp);
+      assertThat(resultR0.toString().equals(resultR1.toString()));
    }
 }
