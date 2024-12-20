@@ -248,6 +248,7 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
                   "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl",
 
                   // Internal Collection Implementations
+                  "java.util.Arrays$ArrayList",
                   "java.util.Collections$EmptyList",
                   "java.util.Collections$EmptySet",
                   "java.util.Collections$SingletonList",
