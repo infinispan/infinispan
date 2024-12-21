@@ -550,6 +550,11 @@
             <artifactId>opentelemetry-exporter-otlp-common</artifactId>
             <version>${version.opentelemetry}</version>
          </dependency>
+         <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-api-incubator</artifactId>
+            <version>${version.opentelemetry.alpha}</version>
+         </dependency>
 
          <dependency>
             <groupId>io.smallrye.reactive</groupId>

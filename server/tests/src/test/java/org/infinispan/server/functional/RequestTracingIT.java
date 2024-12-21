@@ -45,7 +45,7 @@ public class RequestTracingIT {
    @RegisterExtension
    public static final InfinispanServerExtension SERVER =
          InfinispanServerExtensionBuilder.config("configuration/TracingServerTest.xml")
-               .runMode(ServerRunMode.EMBEDDED)
+               .runMode(ServerRunMode.CONTAINER)
                .numServers(2)
                .addListener(new InfinispanServerListener() {
                   @Override
