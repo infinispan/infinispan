@@ -8,11 +8,11 @@ NAME
 benchmark - runs a performance benchmark against a cache.
 
 You can run performance benchmarks for the following HTTP and Hot Rod
-protocols: `http`, `https`, `hotrod`, and `hotrods`. You specify the protocol
+protocols: `http`, `https`, `hotrod`, `hotrods`, `redis` and `rediss`. You specify the protocol
 for the benchmark with a URI. If you do not specify a protocol, the benchmark
 uses the URI of the current CLI connection.
 
-Benchmarks for Hot Rod URIs connect to the entire cluster. For HTTP URIs,
+Benchmarks for Hot Rod URIs connect to the entire cluster. For HTTP and RESP URIs,
 benchmarks connect to a single node only.
 
 Benchmarks test performance against an existing cache. Before you run a
@@ -35,13 +35,13 @@ Specifies the number of threads to create. Defaults to `10`.
 *--cache*='cache'::
 Names the cache against which the benchmark is performed. Defaults to `benchmark`. You must create the cache before running the benchmark if it does not already exist.
 
-**--key-size*='num'::
+*--key-size*='num'::
 Sets the size, in bytes, of the key. Defaults to 16 bytes.
 
-**--value-size*='num'::
+*--value-size*='num'::
 Sets the size, in bytes, of the value. Defaults to 1000 bytes.
 
-**--keyset-size*='num'::
+*--keyset-size*='num'::
 Defines the size, in bytes, of the test key set. Defaults to `1000`.
 
 *--verbosity*=['SILENT', 'NORMAL', 'EXTRA']::
