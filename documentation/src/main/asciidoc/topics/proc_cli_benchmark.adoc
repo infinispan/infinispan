@@ -1,0 +1,17 @@
+[id='configuring-server-benchmark-cli_{context}']
+= Benchmark the {brandname} Server
+
+{brandname} provides a built-in benchmark utility accessible through the CLI to validate server configuration changes.
+This benchmark will run operations for writes and reads, submitting requests as fast as possible.
+Since this might be a contrived scenario that does not represent a real production environment, the numbers should be read carefully.
+Nevertheless, this approach is simple enough to verify for configuration changes.
+
+ifdef::community[]
+The recommended metric to read from this benchmark is **throughput**.
+link:https://hyperfoil.io/[Hyperfoil] with our link:https://github.com/infinispan/infinispan-ansible-benchmark[Ansible Benchmark automation],
+or link:https://github.com/jgroups-extras/IspnPerfTest[IspnPerfTest] for an embedded test provides a more flexible benchmarking alternative.
+However, these harnesses require an additional setup phase before running.
+endif::community[]
+
+Check the link:{cli_docs}#benchmark1[CLI command] documentation for more information.
+
