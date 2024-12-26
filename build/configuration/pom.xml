@@ -247,7 +247,7 @@
       <version.maven.source>3.3.1</version.maven.source>
       <version.maven.surefire>3.5.2</version.maven.surefire>
       <version.org.jboss.galleon>6.0.4.Final</version.org.jboss.galleon>
-      <version.org.wildfly.galleon-plugins>7.0.0.Final</version.org.wildfly.galleon-plugins>
+      <version.org.wildfly.galleon-plugins>7.3.1.Final</version.org.wildfly.galleon-plugins>
       <version.sonatype.nexus-staging-plugin>1.7.0</version.sonatype.nexus-staging-plugin>
       <!-- overwrite version in jboss-parent -->
       <version.pmd.plugin>3.26.0</version.pmd.plugin>
