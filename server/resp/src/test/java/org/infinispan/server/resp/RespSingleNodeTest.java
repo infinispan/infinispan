@@ -423,7 +423,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       }
 
       @Override
-      public String name() {
+      public String toString() {
          return name;
       }
    }
