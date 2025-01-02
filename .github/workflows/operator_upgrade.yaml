@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - main
-      - '*.0.x'
+      - '*.*.x'
   pull_request:
     branches:
       - main
-      - '*.0.x'
+      - '*.*.x'
 
 jobs:
   image:
@@ -77,3 +77,6 @@ jobs:
       operandArtifact: operand-image
       ref: 2.3.x
       repository: infinispan/infinispan-operator
+      skipList: '15.1.0,15.1.1'
+      testName: TestOperandUpgrades
+      upgradeDepth: 0
