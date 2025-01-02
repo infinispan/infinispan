@@ -30,6 +30,9 @@ public class ThreadCreator {
       return new ThreadCreatorImpl();
    }
 
+   public static boolean isVirtual(Thread thread) {
+      return INSTANCE.isVirtual(thread);
+   }
 
    public static Thread createThread(ThreadGroup threadGroup, Runnable target, boolean useVirtualThread) {
       return INSTANCE.createThread(threadGroup, target, useVirtualThread);
@@ -49,6 +52,11 @@ public class ThreadCreator {
       @Override
       public Optional<ExecutorService> newVirtualThreadPerTaskExecutor() {
          return Optional.empty();
+      }
+
+      @Override
+      public boolean isVirtual(Thread thread) {
+         return false;
       }
    }
 }
