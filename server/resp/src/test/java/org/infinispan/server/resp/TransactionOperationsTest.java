@@ -7,11 +7,9 @@ import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
@@ -38,6 +36,10 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
    protected void amendConfiguration(ConfigurationBuilder configurationBuilder) {
       configurationBuilder.invocationBatching().enable(true);
       configurationBuilder.transaction().lockingMode(LockingMode.PESSIMISTIC);
+   }
+
+   protected String getOperationKey(int i) {
+      return k(i);
    }
 
    @Test
@@ -89,9 +91,12 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
       assertThat(redis.multi()).isEqualTo(OK);
       assertThat(redisConnection.isMulti()).isTrue();
 
-      redis.set("tx-err-k1", "v1");
-      redis.hlen("tx-err-k1");
-      redis.set("tx-err-k2", "v2");
+      String k1 = getOperationKey(0);
+      String k2 = getOperationKey(1);
+
+      redis.set(k1, "v1");
+      redis.hlen(k1);
+      redis.set(k2, "v2");
 
       TransactionResult result = redis.exec();
       assertThat(result.<String>get(0)).isEqualTo(OK);
@@ -101,8 +106,8 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
 
       assertThat(redisConnection.isMulti()).isFalse();
 
-      assertThat(redis.get("tx-err-k1")).isEqualTo("v1");
-      assertThat(redis.get("tx-err-k2")).isEqualTo("v2");
+      assertThat(redis.get(k1)).isEqualTo("v1");
+      assertThat(redis.get(k2)).isEqualTo("v2");
    }
 
    @Test
@@ -127,13 +132,13 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
       assertThat(redis.multi()).isEqualTo(OK);
       assertThat(redisConnection.isMulti()).isTrue();
 
-      redis.set(k(), v());
-      redis.set(k(1), v(1));
+      redis.set(getOperationKey(0), v());
+      redis.set(getOperationKey(1), v(1));
 
       // This returns an -ERR, but lettuce just returns null when in TX context.
       assertThat(redis.watch("something")).isNull();
 
-      redis.set(k(2), v(2));
+      redis.set(getOperationKey(2), v(2));
 
       TransactionResult result = redis.exec();
       assertThat(result.wasDiscarded()).isFalse();
@@ -142,7 +147,7 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
             .allMatch(OK::equals);
 
       for (int i = 0; i < 3; i++) {
-         assertThat(redis.get(k(i))).isEqualTo(v(i));
+         assertThat(redis.get(getOperationKey(i))).isEqualTo(v(i));
       }
    }
 
@@ -150,18 +155,20 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
    public void testTransactionWithWatcher() {
       RedisCommands<String, String> redis = redisConnection.sync();
 
-      assertThat(redis.watch("tx-watcher-k1")).isEqualTo(OK);
+      String key = getOperationKey(0);
+
+      assertThat(redis.watch(key)).isEqualTo(OK);
       assertThat(redis.multi()).isEqualTo(OK);
       assertThat(redisConnection.isMulti()).isTrue();
 
-      assertThat(redis.set("tx-watcher-k1", "value")).isNull();
+      assertThat(redis.set(key, "value")).isNull();
 
       TransactionResult result = redis.exec();
       assertThat(result.<String>get(0)).isEqualTo(OK);
 
       assertThat(redisConnection.isMulti()).isFalse();
 
-      assertThat(redis.get("tx-watcher-k1")).isEqualTo("value");
+      assertThat(redis.get(key)).isEqualTo("value");
    }
 
    @Test
@@ -182,11 +189,13 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
       RedisCommands<String, String> tx = multi.sync();
       RedisCommands<String, String> redis = outside.sync();
 
+      String key = getOperationKey(0);
+
       // Start a watcher on the client which will execute the TX.
-      assertThat(tx.watch("tx-watcher-key")).isEqualTo(OK);
+      assertThat(tx.watch(key)).isEqualTo(OK);
 
       // Another client writes the key.
-      assertThat(redis.set("tx-watcher-key", "value-outside")).isEqualTo(OK);
+      assertThat(redis.set(key, "value-outside")).isEqualTo(OK);
 
       // UNWATCH before entering multi context. Now it should proceed even with changes.
       // The client that issue the watch is the one who needs to unwatch. Watching a key is not global.
@@ -199,7 +208,7 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
       assertThat(outside.isMulti()).isFalse();
 
       // Client in MULTI queues a write.
-      assertThat(tx.set("tx-watcher-key", "value-inside")).isNull();
+      assertThat(tx.set(key, "value-inside")).isNull();
 
       TransactionResult result = tx.exec();
       assertThat(result.wasDiscarded()).isEqualTo(!unwatchBeforeExec);
@@ -208,8 +217,8 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
       // If watch in place, the TX abort and only the outside write is visible.
       // If watcher removed, the TX succeeds and the inside write is visible.
       String expected = unwatchBeforeExec ? "value-inside" : "value-outside";
-      assertThat(redis.get("tx-watcher-key")).isEqualTo(expected);
-      assertThat(tx.get("tx-watcher-key")).isEqualTo(expected);
+      assertThat(redis.get(key)).isEqualTo(expected);
+      assertThat(tx.get(key)).isEqualTo(expected);
    }
 
    @Test
@@ -228,27 +237,29 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
       assertThat(redis.multi()).isEqualTo("OK");
       assertThat(redisConnection.isMulti()).isTrue();
 
-      assertThat(redis.set("tx-discard-k1", "value")).isNull();
+      String key = getOperationKey(0);
+      assertThat(redis.set(key, "value")).isNull();
       assertThat(redis.discard()).isEqualTo("OK");
 
       assertThat(redisConnection.isMulti()).isFalse();
       assertThatThrownBy(redis::exec)
             .isInstanceOf(RedisCommandExecutionException.class)
             .hasMessage("ERR EXEC without MULTI");
-      assertThat(redis.get("tx-discard-k1")).isNull();
+      assertThat(redis.get(key)).isNull();
    }
 
    @Test
    public void testDiscardRemoveListeners() {
       RedisCommands<String, String> redis = redisConnection.sync();
+      String key = getOperationKey(0);
 
       // Install watch before multi.
-      assertThat(redis.watch("tx-discard-k2")).isEqualTo("OK");
+      assertThat(redis.watch(key)).isEqualTo("OK");
 
       assertThat(redis.multi()).isEqualTo("OK");
       assertThat(redisConnection.isMulti()).isTrue();
 
-      assertThat(redis.set("tx-discard-k2", "value")).isNull();
+      assertThat(redis.set(key, "value")).isNull();
 
       // Discard and removes the listener.
       assertThat(redis.discard()).isEqualTo("OK");
@@ -259,26 +270,26 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
       assertThat(redis.multi()).isEqualTo("OK");
       assertThat(redisConnection.isMulti()).isTrue();
 
-      assertThat(redis.set("tx-discard-k2", "value-inside")).isNull();
+      assertThat(redis.set(key, "value-inside")).isNull();
 
       // Another client writes the key. Originally, this would notify the listener.
       StatefulRedisConnection<String, String> outside = newConnection();
       RedisCommands<String, String> outsideSync = outside.sync();
-      assertThat(outsideSync.set("tx-discard-k2", "value-outside")).isEqualTo("OK");
-      assertThat(outsideSync.get("tx-discard-k2")).isEqualTo("value-outside");
+      assertThat(outsideSync.set(key, "value-outside")).isEqualTo("OK");
+      assertThat(outsideSync.get(key)).isEqualTo("value-outside");
       outside.close();
 
       // Since the listener was removed with the discard. The operation will complete successfully.
       TransactionResult result = redis.exec();
       assertThat(result.wasDiscarded()).isFalse();
       assertThat(redisConnection.isMulti()).isFalse();
-      assertThat(redis.get("tx-discard-k2")).isEqualTo("value-inside");
+      assertThat(redis.get(key)).isEqualTo("value-inside");
    }
 
    public void testBlpopNotBlocking() {
       RedisCommands<String, String> redis = redisConnection.sync();
 
-      String key = k();
+      String key = getOperationKey(0);
       String v0 = v();
       String v1 = v(1);
 
@@ -333,12 +344,8 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
    }
 
    public void testBlockingPopWithTx() throws Throwable {
-      testBlockingPopWithTx(TestingUtil::k);
-   }
-
-   protected final void testBlockingPopWithTx(Supplier<String> keyFactory) throws Throwable {
       SkipTestNG.skipIf(!cache.getCacheConfiguration().transaction().transactionMode().isTransactional(), "Test does not have batching enabled.");
-      String key = keyFactory.get();
+      String key = getOperationKey(0);
 
       // Utilize a different connection for listener.
       RedisAsyncCommands<String, String> async = newConnection().async();
@@ -378,5 +385,25 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
       KeyValue<String, String> kv = listener.get();
       assertThat(kv.getKey()).isEqualTo(key);
       assertThat(kv.getValue()).isEqualTo("added-later");
+   }
+
+   public void testListAndStringSameKey() {
+      String key = getOperationKey(0);
+
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      assertThat(redis.multi()).isEqualTo("OK");
+      assertThat(redisConnection.isMulti()).isTrue();
+
+      redis.lpush(key, "value");
+      redis.del(key);
+      redis.set(key, "foo");
+
+      TransactionResult result = redis.exec();
+      assertThat(result.wasDiscarded()).isFalse();
+      assertThat(result).hasSize(3)
+            .containsExactly(1L, 1L, OK);
+
+      assertThat(redis.get(key)).isEqualTo("foo");
    }
 }
