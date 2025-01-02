@@ -22,10 +22,10 @@ public class AbstractSpringSessionTCK {
    protected InfinispanSessionListener httpSessionListener;
 
    @Autowired
-   TestRestTemplate testRestTemplate;
+   protected TestRestTemplate testRestTemplate;
 
    @LocalServerPort
-   private int port;
+   protected int port;
 
    @Test
    public void testCreatingSessionWhenUsingREST() {
