@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.ThreadGroups;
+import org.infinispan.commons.jdkspecific.ThreadCreator;
 import org.infinispan.commons.test.junit.JUnitThreadTrackerRule;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -39,9 +40,15 @@ public class ServerTaskEngineBlockingTest {
 
                @Override
                public Void call() {
-                  assertThat(Thread.currentThread().getThreadGroup())
+                  if (ThreadCreator.useVirtualThreads()) {
+                     assertThat(Thread.currentThread())
+                           .withFailMessage(String.format("%s is not a virtual thread", Thread.currentThread()))
+                           .matches(ThreadCreator::isVirtual);
+                  } else {
+                     assertThat(Thread.currentThread().getThreadGroup())
                         .withFailMessage(String.format("%s is not a blocking thread", Thread.currentThread()))
                         .isInstanceOf(ThreadGroups.ISPNBlockingThreadGroup.class);
+                  }
                   invocations.incrementAndGet();
                   return null;
                }
