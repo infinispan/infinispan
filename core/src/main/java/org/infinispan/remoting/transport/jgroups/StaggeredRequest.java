@@ -3,6 +3,8 @@ package org.infinispan.remoting.transport.jgroups;
 import java.util.Collection;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -27,6 +29,7 @@ public class StaggeredRequest<T> extends MultiTargetRequest<T> {
    private final long deadline;
    @GuardedBy("responseCollector")
    private int targetIndex;
+   private final Lock responseLock;
 
    StaggeredRequest(ResponseCollector<T> responseCollector, long requestId, RequestRepository repository,
                     Collection<Address> targets, Address excludedTarget, ReplicableCommand command,
@@ -37,6 +40,7 @@ public class StaggeredRequest<T> extends MultiTargetRequest<T> {
       this.deliverOrder = deliverOrder;
       this.transport = transport;
       this.deadline = transport.timeService.expectedEndTime(timeout, unit);
+      this.responseLock = new ReentrantLock();
    }
 
    @Override
@@ -45,9 +49,14 @@ public class StaggeredRequest<T> extends MultiTargetRequest<T> {
    }
 
    @Override
-   public synchronized void onResponse(Address sender, Response response) {
-      super.onResponse(sender, response);
-      sendNextMessage();
+   public void onResponse(Address sender, Response response) {
+      responseLock.lock();
+      try {
+         super.onResponse(sender, response);
+         sendNextMessage();
+      } finally {
+         responseLock.unlock();
+      }
    }
 
    @Override
