@@ -94,6 +94,10 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
          executorFactory = createThreadPoolFactoryWithDefaults(componentName, type);
       }
 
+      if (type == ExecutorServiceType.NON_BLOCKING && threadFactory instanceof DefaultThreadFactory dtf) {
+         dtf.useVirtualThread(false);
+      }
+
       switch (type) {
          case SCHEDULED:
             return (T) new LazyInitializingScheduledExecutorService(executorFactory, threadFactory);
