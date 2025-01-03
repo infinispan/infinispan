@@ -98,6 +98,7 @@ public class ClusterListenerReplicateCallable<K, V> implements Function<Embedded
          if (cacheManager.getMembers().contains(origin)) {
             // Prevent multiple invocations to get in here at once, which should prevent concurrent registration of
             // the same id.  Note we can't use a static CHM due to running more than 1 node in same JVM
+            // TODO virtual thread pinning, waiting on CF while inside the synchronized block
             synchronized (cacheNotifier) {
                boolean alreadyInstalled = false;
                // First make sure the listener is not already installed, if it is we don't do anything.

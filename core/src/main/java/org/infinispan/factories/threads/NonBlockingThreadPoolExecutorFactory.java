@@ -64,7 +64,7 @@ public class NonBlockingThreadPoolExecutorFactory extends AbstractThreadPoolExec
 
    @Override
    public String toString() {
-      return "BlockingThreadPoolExecutorFactory{" +
+      return "NonBlockingThreadPoolExecutorFactory{" +
             "maxThreads=" + maxThreads +
             ", coreThreads=" + coreThreads +
             ", queueLength=" + queueLength +

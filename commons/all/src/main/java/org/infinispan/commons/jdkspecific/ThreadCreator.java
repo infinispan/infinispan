@@ -47,6 +47,10 @@ public class ThreadCreator {
       return new ThreadCreatorImpl();
    }
 
+   public static boolean isVirtual(Thread thread) {
+      return INSTANCE.isVirtual(thread);
+   }
+
    private static class ThreadCreatorImpl implements org.infinispan.commons.spi.ThreadCreator {
 
       @Override
@@ -57,6 +61,11 @@ public class ThreadCreator {
       @Override
       public Optional<ExecutorService> newVirtualThreadPerTaskExecutor() {
          return Optional.empty();
+      }
+
+      @Override
+      public boolean isVirtual(Thread thread) {
+         return false;
       }
    }
 }
