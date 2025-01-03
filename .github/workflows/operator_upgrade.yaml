@@ -81,3 +81,6 @@ jobs:
       operandArtifact: operand-image
       ref: main
       repository: infinispan/infinispan-operator
+      skipList: '15.1.0,15.1.1'
+      testName: TestOperandUpgrades
+      upgradeDepth: 0
