@@ -170,10 +170,32 @@ public class BlockingManagerTest extends AbstractInfinispanTest {
 
       subscriber.assertComplete();
 
-
       Mockito.verify(blockingExecutor).execute(Mockito.any());
       // This is invoked 3 times because of how AsyncProcessor works - it submits once for request, once for onNext and
       // once for onComplete
       Mockito.verify(nonBlockingExecutor, Mockito.times(3)).execute(Mockito.any());
+   }
+
+   public void testBlockingPublisherInvokedNonBlockingThreadCancelled() {
+      BlockingManager blockingManager = createBlockingManager(false);
+
+      int takeAmount = 5;
+
+      Publisher<Integer> publisher = blockingManager.blockingPublisher(Flowable.range(1, 10)
+            .doOnNext(BlockHoundHelper::blockingConsume));
+
+      TestSubscriber<Integer> subscriber = TestSubscriber.create();
+      Flowable.fromPublisher(publisher)
+            .take(takeAmount)
+            // We should observe any value of returned Publisher from `blockingPublisher` on a non blocking thread
+            .doOnNext(ignore -> assertTrue(BlockHoundHelper.currentThreadRequiresNonBlocking()))
+            .subscribe(subscriber);
+
+      subscriber.assertComplete();
+
+      // This is invoked 2 times for the subscribe and another time for the cancel
+      Mockito.verify(blockingExecutor, Mockito.times(2)).execute(Mockito.any());
+      // This is invoked 6 times because of how AsyncProcessor works - it submits once for request, and once for each onNext
+      Mockito.verify(nonBlockingExecutor, Mockito.times(6)).execute(Mockito.any());
    }
 }
