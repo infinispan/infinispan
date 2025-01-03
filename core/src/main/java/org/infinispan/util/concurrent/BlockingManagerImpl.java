@@ -299,6 +299,7 @@ public class BlockingManagerImpl implements BlockingManager {
             log.tracef("Blocking publisher start %d", publisherId);
             return Flowable.fromPublisher(publisher)
                            .subscribeOn(blockingScheduler)
+                           .unsubscribeOn(blockingScheduler)
                            .observeOn(nonBlockingScheduler)
                            .doFinally(() -> log.tracef("Blocking publisher done %d", publisherId));
          }
