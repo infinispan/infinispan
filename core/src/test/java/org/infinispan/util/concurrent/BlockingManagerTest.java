@@ -48,6 +48,19 @@ public class BlockingManagerTest extends AbstractInfinispanTest {
       return blockingManager;
    }
 
+   // Make sure all "results" from the Flowable are published from the non blocking executor
+   private static <E> Flowable<E> ensureUserPublisherSubscribeCompleteOnBlockingThread(Publisher<E> publisher) {
+         return Flowable.fromPublisher(publisher)
+               .doOnSubscribe(sub -> assertFalse(BlockHoundHelper.currentThreadRequiresNonBlocking()))
+               .doOnComplete(() -> assertFalse(BlockHoundHelper.currentThreadRequiresNonBlocking()));
+   }
+
+   private static <E> Flowable<E> ensurePublisherValuesOnNonBlockingThread(Publisher<E> publisher) {
+      return Flowable.fromPublisher(publisher)
+            .doOnNext(ignore -> assertTrue(BlockHoundHelper.currentThreadRequiresNonBlocking()))
+            .doOnComplete(() -> assertTrue(BlockHoundHelper.currentThreadRequiresNonBlocking()));
+   }
+
    public void testBlockingPublishToVoidStageInvokedBlockingThread() {
       BlockingManager blockingManager = createBlockingManager(true);
 
@@ -131,13 +144,12 @@ public class BlockingManagerTest extends AbstractInfinispanTest {
    public void testBlockingPublisherInvokedNonBlockingThread() {
       BlockingManager blockingManager = createBlockingManager(false);
 
-      Publisher<Integer> publisher = blockingManager.blockingPublisher(Flowable.just(1)
-            .doOnNext(BlockHoundHelper::blockingConsume));
+      Publisher<Integer> publisher = blockingManager.blockingPublisher(
+            ensureUserPublisherSubscribeCompleteOnBlockingThread(Flowable.just(1))
+                  .doOnNext(BlockHoundHelper::blockingConsume));
 
       TestSubscriber<Integer> subscriber = TestSubscriber.create();
-      Flowable.fromPublisher(publisher)
-            // We should observe any value of returned Publisher from `blockingPublisher` on a non blocking thread
-            .doOnNext(ignore -> assertTrue(BlockHoundHelper.currentThreadRequiresNonBlocking()))
+      ensurePublisherValuesOnNonBlockingThread(publisher)
             .subscribe(subscriber);
 
       subscriber.assertComplete();
@@ -155,13 +167,12 @@ public class BlockingManagerTest extends AbstractInfinispanTest {
 
       processor.onNext(1);
 
-      Publisher<Integer> publisher = blockingManager.blockingPublisher(processor
-            .doOnNext(BlockHoundHelper::blockingConsume));
+      Publisher<Integer> publisher = blockingManager.blockingPublisher(
+            ensureUserPublisherSubscribeCompleteOnBlockingThread(processor)
+                  .doOnNext(BlockHoundHelper::blockingConsume));
 
       TestSubscriber<Integer> subscriber = TestSubscriber.create();
-      Flowable.fromPublisher(publisher)
-            // We should observe any value of returned Publisher from `blockingPublisher` on a non blocking thread
-            .doOnNext(ignore -> assertTrue(BlockHoundHelper.currentThreadRequiresNonBlocking()))
+      ensurePublisherValuesOnNonBlockingThread(publisher)
             .subscribe(subscriber);
 
       subscriber.assertNotComplete();
@@ -170,10 +181,35 @@ public class BlockingManagerTest extends AbstractInfinispanTest {
 
       subscriber.assertComplete();
 
-
       Mockito.verify(blockingExecutor).execute(Mockito.any());
       // This is invoked 3 times because of how AsyncProcessor works - it submits once for request, once for onNext and
       // once for onComplete
       Mockito.verify(nonBlockingExecutor, Mockito.times(3)).execute(Mockito.any());
+   }
+
+   public void testBlockingPublisherInvokedNonBlockingThreadCancelled() {
+      BlockingManager blockingManager = createBlockingManager(false);
+
+      int takeAmount = 5;
+
+      Publisher<Integer> publisher = blockingManager.blockingPublisher(
+            ensureUserPublisherSubscribeCompleteOnBlockingThread(Flowable.range(1, 10))
+            // We need to make sure the user provided publisher is only ever subscribed or completed on the blocking
+            // thread when using the blockingManager
+            .doOnSubscribe(sub -> assertFalse(BlockHoundHelper.currentThreadRequiresNonBlocking()))
+            .doOnComplete(() -> assertFalse(BlockHoundHelper.currentThreadRequiresNonBlocking()))
+            .doOnNext(BlockHoundHelper::blockingConsume));
+
+      TestSubscriber<Integer> subscriber = TestSubscriber.create();
+      ensurePublisherValuesOnNonBlockingThread(publisher)
+            .take(takeAmount)
+            .subscribe(subscriber);
+
+      subscriber.assertComplete();
+
+      // This is invoked 1 or 2 times depending on timing
+      Mockito.verify(blockingExecutor, Mockito.atMost(2)).execute(Mockito.any());
+      // This is invoked 6 times because of how AsyncProcessor works - it submits once for request, and once for each onNext
+      Mockito.verify(nonBlockingExecutor, Mockito.times(6)).execute(Mockito.any());
    }
 }
