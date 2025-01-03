@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.ByteQuantity;
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -45,7 +46,7 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
       this.executor = executor;
       this.server = server;
       HotRodServerConfiguration configuration = server.getConfiguration();
-      this.maxByteArray = configuration.maxByteArraySize();
+      this.maxByteArray = (int) ByteQuantity.parse(configuration.maxByteArraySize());
       this.maxKeyCount = configuration.maxKeyCount();
    }
 

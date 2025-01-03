@@ -5,6 +5,7 @@ import java.util.concurrent.CompletionStage;
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.util.ByteQuantity;
 import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.memcached.MemcachedBaseDecoder;
 import org.infinispan.server.memcached.MemcachedResponse;
@@ -25,7 +26,7 @@ abstract class TextDecoder extends MemcachedBaseDecoder {
 
    protected TextDecoder(MemcachedServer server, Subject subject) {
       super(server, subject, server.getCache().getAdvancedCache().withMediaType(MediaType.TEXT_PLAIN, server.getConfiguration().clientEncoding()));
-      this.maxArrayLength = server != null ? server.getConfiguration().maxByteArraySize() : -1;
+      this.maxArrayLength = server != null ? (int) ByteQuantity.parse(server.getConfiguration().maxByteArraySize()) : -1;
    }
 
    @Override
@@ -33,7 +34,7 @@ abstract class TextDecoder extends MemcachedBaseDecoder {
       super.handlerAdded(ctx);
 
       // It can exceed the 256 for large values, so we don't have a max capacity.
-      this.reader = new TokenReader(ctx.alloc().buffer(256), server.getConfiguration().maxByteArraySize());
+      this.reader = new TokenReader(ctx.alloc().buffer(256), maxArrayLength);
       ConnectionMetadata metadata = ConnectionMetadata.getInstance(ctx.channel());
       metadata.subject(subject);
       metadata.protocolVersion("MCTXT");

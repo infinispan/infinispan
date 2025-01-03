@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.infinispan.commons.util.ByteQuantity;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -21,7 +22,7 @@ public abstract class BaseRespDecoder extends ByteToMessageDecoder {
    protected ChannelHandlerContext ctx;
 
    protected BaseRespDecoder(RespServer respServer) {
-      maxArrayLength = respServer != null ? respServer.getConfiguration().maxByteArraySize() : -1;
+      maxArrayLength = respServer != null ? (int) ByteQuantity.parse(respServer.getConfiguration().maxByteArraySize()) : -1;
       maxKeyCount = respServer != null ? respServer.getConfiguration().maxKeyCount() : -1;
    }
 
