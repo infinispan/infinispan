@@ -117,6 +117,18 @@ public abstract class AbstractProtocolServerConfigurationChildBuilder<T extends 
    }
 
    @Override
+   public S maxByteArraySize(int maxByteSize) {
+      builder.maxByteArraySize(maxByteSize);
+      return self();
+   }
+
+   @Override
+   public S maxKeyCount(int maxKeyCount) {
+      builder.maxKeyCount(maxKeyCount);
+      return self();
+   }
+
+   @Override
    public T build() {
       return builder.build();
    }

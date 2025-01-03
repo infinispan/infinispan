@@ -14,6 +14,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
+import io.netty.handler.codec.TooLongFrameException;
 
 public class RespHandler extends ChannelInboundHandlerAdapter {
    protected final static Log log = LogFactory.getLog(RespHandler.class, Log.class);
@@ -182,8 +183,10 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
    @Override
    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
       log.unexpectedException(cause);
-      requestHandler.writer.error(cause);
-      flushBufferIfNeeded(ctx, false, null);
+      if (!(cause instanceof TooLongFrameException)) {
+         requestHandler.writer.error(cause);
+         flushBufferIfNeeded(ctx, false, null);
+      }
       ctx.close();
    }
 }

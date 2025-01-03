@@ -6,6 +6,8 @@ import java.util.Set;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.util.ByteQuantity;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.server.core.admin.AdminOperationsHandler;
 
@@ -33,14 +35,26 @@ public abstract class ProtocolServerConfiguration<T extends ProtocolServerConfig
    public static final AttributeDefinition<Boolean> ZERO_CAPACITY_NODE = AttributeDefinition.builder(Attribute.ZERO_CAPACITY_NODE, false).immutable().build();
    public static final AttributeDefinition<String> SOCKET_BINDING = AttributeDefinition.builder(Attribute.SOCKET_BINDING, null, String.class).immutable().build();
    public static final AttributeDefinition<Boolean> IMPLICIT_CONNECTOR = AttributeDefinition.builder("implicit-connector", false).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<String> MAX_BYTE_ARRAY_SIZE = AttributeDefinition.builder(Attribute.MAX_BYTE_ARRAY_SIZE, "10MB", String.class)
+         .matcher((a1, a2) -> maxSizeToBytes(a1.get()) == maxSizeToBytes(a2.get())).validator(a -> {
+            long total = ByteQuantity.parse(a);
+            if (total > Integer.MAX_VALUE) {
+               throw Log.CONFIG.attributeMustBeAnInteger(total, Attribute.MAX_BYTE_ARRAY_SIZE);
+            }
+         }).build();
+   public static final AttributeDefinition<Integer> MAX_KEY_COUNT = AttributeDefinition.builder(Attribute.MAX_KEY_COUNT, 512).immutable().build();
 
    private volatile boolean enabled = true;
+
+   static long maxSizeToBytes(String maxSizeStr) {
+      return maxSizeStr != null ? ByteQuantity.parse(maxSizeStr) : -1;
+   }
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(ProtocolServerConfiguration.class,
             DEFAULT_CACHE_NAME, NAME, HOST, PORT, IDLE_TIMEOUT, IGNORED_CACHES, RECV_BUF_SIZE, SEND_BUF_SIZE, START_TRANSPORT,
             TCP_NODELAY, TCP_KEEPALIVE, IO_THREADS, ADMIN_OPERATION_HANDLER, ZERO_CAPACITY_NODE, SOCKET_BINDING,
-            IMPLICIT_CONNECTOR);
+            IMPLICIT_CONNECTOR, MAX_BYTE_ARRAY_SIZE, MAX_KEY_COUNT);
    }
 
    protected final A authentication;
@@ -140,5 +154,13 @@ public abstract class ProtocolServerConfiguration<T extends ProtocolServerConfig
 
    public boolean isImplicit() {
       return attributes.attribute(IMPLICIT_CONNECTOR).get();
+   }
+
+   public String maxByteArraySize() {
+      return attributes.attribute(MAX_BYTE_ARRAY_SIZE).get();
+   }
+
+   public int maxKeyCount() {
+      return attributes.attribute(MAX_KEY_COUNT).get();
    }
 }
