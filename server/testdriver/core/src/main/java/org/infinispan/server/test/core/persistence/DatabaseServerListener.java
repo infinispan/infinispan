@@ -1,8 +1,12 @@
 package org.infinispan.server.test.core.persistence;
 
+import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_PROPERTIES;
+import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_TYPES;
+
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -10,9 +14,6 @@ import java.util.Properties;
 import org.infinispan.server.test.core.InfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerListener;
 import org.jboss.logging.Logger;
-
-import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_PROPERTIES;
-import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_TYPES;
 
 /**
  * @author Gustavo Lira &lt;glira@redhat.com&gt;
@@ -22,13 +23,19 @@ public class DatabaseServerListener implements InfinispanServerListener {
    private static final Logger log = Logger.getLogger(DatabaseServerListener.class);
    private static final String DATABASE_PROPERTIES = "org.infinispan.server.test.database.%s.%s";
    private final String[] databaseTypes;
+   private final Properties properties;
    public Map<String, Database> databases;
 
    public DatabaseServerListener(String... databaseTypes) {
-      String property = System.getProperty(INFINISPAN_TEST_CONTAINER_DATABASE_TYPES);
+      this(System.getProperties(), databaseTypes);
+   }
+
+   public DatabaseServerListener(Properties properties, String ... databaseTypes) {
+      this.properties = properties;
+      String property = properties.getProperty(INFINISPAN_TEST_CONTAINER_DATABASE_TYPES);
       if (property != null) {
          this.databaseTypes = property.split(",");
-         log.infof("Overriding databases: %s", this.databaseTypes);
+         log.infof("Overriding databases: %s", Arrays.toString(this.databaseTypes));
       } else {
          this.databaseTypes = databaseTypes;
       }
@@ -45,10 +52,13 @@ public class DatabaseServerListener implements InfinispanServerListener {
          if (databases.putIfAbsent(dbType, database) != null) {
             throw new RuntimeException("Duplicate database type " + dbType);
          }
-         addDbProperty(driver, database,"jdbcUrl", database.jdbcUrl());
-         addDbProperty(driver, database,"username", database.username());
-         addDbProperty(driver, database,"password", database.password());
-         addDbProperty(driver, database,"driver", database.driverClassName());
+
+         if (driver != null) {
+            addDbProperty(driver, database,"jdbcUrl", database.jdbcUrl());
+            addDbProperty(driver, database,"username", database.username());
+            addDbProperty(driver, database,"password", database.password());
+            addDbProperty(driver, database,"driver", database.driverClassName());
+         }
       }
    }
 
@@ -68,7 +78,7 @@ public class DatabaseServerListener implements InfinispanServerListener {
    }
 
    private Database initDatabase(String databaseType) {
-      String property = System.getProperty(INFINISPAN_TEST_CONTAINER_DATABASE_PROPERTIES);
+      String property = properties.getProperty(INFINISPAN_TEST_CONTAINER_DATABASE_PROPERTIES);
       try (InputStream inputStream = property != null ? Files.newInputStream(Paths.get(property).resolve(databaseType + ".properties")) : getClass().getResourceAsStream(String.format("/database/%s.properties", databaseType))) {
          Properties properties = new Properties();
          properties.load(inputStream);
