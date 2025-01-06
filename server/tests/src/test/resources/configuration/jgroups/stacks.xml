@@ -3,19 +3,19 @@
          xmlns="urn:infinispan:config:15.2"
          xmlns:ispn="urn:infinispan:config:15.2">
    <stack name="test-tcp" extends="tcp">
-      <MERGE3 min_interval="1000" max_interval="5000" ispn:stack.combine="REPLACE"/>
+      <MERGE3 min_interval="1s" max_interval="5s" ispn:stack.combine="REPLACE"/>
       <FD_SOCK2 connect_timeout="3000"/>
       <FD_ALL3 timeout="3000"
                interval="1000"/>
    </stack>
    <stack name="test-udp" extends="udp">
-      <MERGE3 min_interval="1000" max_interval="5000" ispn:stack.combine="REPLACE"/>
+      <MERGE3 min_interval="1s" max_interval="5s" ispn:stack.combine="REPLACE"/>
       <FD_SOCK2 connect_timeout="3000"/>
       <FD_ALL3 timeout="3000"
                interval="1000"/>
    </stack>
    <stack name="test-jdbc" extends="tcp">
-      <MERGE3 min_interval="1000" max_interval="5000" ispn:stack.combine="REPLACE"/>
+      <MERGE3 min_interval="1s" max_interval="5s" ispn:stack.combine="REPLACE"/>
       <FD_SOCK2 connect_timeout="3000"/>
       <FD_ALL3 timeout="3000"
                interval="1000"/>
@@ -25,7 +25,7 @@
                   return_entire_cache="false"
       />
       <pbcast.GMS print_local_addr="false"
-                  join_timeout="1000"
+                  join_timeout="1s"
                   max_join_attempts="10"
       />
    </stack>
