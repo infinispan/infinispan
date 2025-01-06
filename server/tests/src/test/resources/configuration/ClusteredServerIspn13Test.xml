@@ -7,10 +7,10 @@
 
     <jgroups>
         <stack name="test-tcp" extends="tcp">
-            <MERGE3 min_interval="1000" max_interval="5000" stack.combine="REPLACE"/>
+            <MERGE3 min_interval="1s" max_interval="5s" stack.combine="REPLACE"/>
         </stack>
         <stack name="test-udp" extends="udp">
-            <MERGE3 min_interval="1000" max_interval="5000" stack.combine="REPLACE"/>
+            <MERGE3 min_interval="1s" max_interval="5s" stack.combine="REPLACE"/>
         </stack>
     </jgroups>
 
