@@ -10,7 +10,7 @@
       <!-- Removes the FD_SOCK2 protocol from the stack. -->
       <FD_SOCK2 stack.combine="REMOVE"/>
       <!-- Modifies the timeout value for the VERIFY_SUSPECT2 protocol. -->
-      <VERIFY_SUSPECT2 timeout="2000"/>
+      <VERIFY_SUSPECT2 timeout="2s"/>
       <!-- Adds SYM_ENCRYPT to the stack after VERIFY_SUSPECT2. -->
       <SYM_ENCRYPT sym_algorithm="AES"
                    keystore_name="mykeystore.p12"
