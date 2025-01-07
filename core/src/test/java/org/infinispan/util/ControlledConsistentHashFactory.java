@@ -3,6 +3,7 @@ package org.infinispan.util;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -34,6 +35,8 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
    protected volatile int[][] ownerIndexes;
 
    protected volatile List<Address> membersToUse;
+
+   ControlledConsistentHashFactory() {}
 
    /**
     * Create a consistent hash factory with a single segment.
@@ -131,7 +134,9 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
       this.membersToUse = membersToUse;
    }
 
-   public static class Default extends ControlledConsistentHashFactory<DefaultConsistentHash> {
+   public static class Default extends ControlledConsistentHashFactory<DefaultConsistentHash> implements Serializable {
+
+      Default() {}
 
       @ProtoFactory
       Default(int numSegments, AbstractConsistentHash.SegmentOwnership[] segmentOwners, List<JGroupsAddress> jGroupsMembers) {
