@@ -22,6 +22,9 @@ jobs:
   image:
     runs-on: ubuntu-latest
 
+    outputs:
+      version: ${{ steps.infinispan.outputs.version }}
+
     steps:
       - if: ${{ github.event_name != 'pull_request' }}
         uses: actions/checkout@v4
@@ -43,10 +46,13 @@ jobs:
         uses: ./server/.github/actions/setup-java
 
       - name: Build Infinispan
+        id: infinispan
         working-directory: server
         run:  |
           ./mvnw install -DskipTests -am -pl server/runtime
           SERVER_VERSION=$(./mvnw -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+          OPERAND_VERSION=$(echo ${SERVER_VERSION} | cut -d '-' -f 1)
+          echo "version=${OPERAND_VERSION}" >> ${GITHUB_OUTPUT}
           cd server/runtime/target
           zip -r ${GITHUB_WORKSPACE}/server.zip infinispan-server-${SERVER_VERSION}
 
@@ -79,6 +85,7 @@ jobs:
     with:
       operand: localhost:5001/server:${{ github.sha }}
       operandArtifact: operand-image
+      operandVersion: ${{ needs.image.outputs.version }}
       ref: main
       repository: infinispan/infinispan-operator
       skipList: '15.1.0,15.1.1'
