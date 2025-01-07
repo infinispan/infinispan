@@ -10,9 +10,20 @@ on:
       - main
       - '*.*.x'
 
+concurrency:
+  # Cancel jobs same head_branch same repo, works
+  # both for pull_request and push
+  group: >
+      ${{ github.workflow }}-${{ github.event.repository.full_name }}-
+      ${{ github.event.pull_request.head.ref || github.event.push.ref }}
+  cancel-in-progress: true
+
 jobs:
   image:
     runs-on: ubuntu-latest
+
+    outputs:
+      version: ${{ steps.infinispan.outputs.version }}
 
     steps:
       - if: ${{ github.event_name != 'pull_request' }}
@@ -39,10 +50,13 @@ jobs:
           cache: maven
 
       - name: Build Infinispan
+        id: infinispan
         working-directory: server
         run:  |
           ./mvnw -s maven-settings.xml install -DskipTests -am -pl server/runtime
           SERVER_VERSION=$(./mvnw -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+          OPERAND_VERSION=$(echo ${SERVER_VERSION} | cut -d '-' -f 1)
+          echo "version=${OPERAND_VERSION}" >> ${GITHUB_OUTPUT}
           cd server/runtime/target
           zip -r ${GITHUB_WORKSPACE}/server.zip infinispan-server-${SERVER_VERSION}
 
@@ -71,11 +85,12 @@ jobs:
 
   tests:
     needs: image
-    uses: infinispan/infinispan-operator/.github/workflows/upgrade_tests.yaml@main
+    uses: infinispan/infinispan-operator/.github/workflows/test_upgrades.yml@main
     with:
       operand: localhost:5001/server:${{ github.sha }}
       operandArtifact: operand-image
-      ref: 2.3.x
+      operandVersion: ${{ needs.image.outputs.version }}
+      ref: main
       repository: infinispan/infinispan-operator
       skipList: '15.1.0,15.1.1'
       testName: TestOperandUpgrades
