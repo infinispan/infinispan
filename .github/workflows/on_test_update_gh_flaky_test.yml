@@ -35,7 +35,7 @@ jobs:
           env:
             RUNNER_DEBUG: 1
             FLAKY_TEST_GLOB: "**/target/*-reports*/**/TEST-*FLAKY.xml"
-            GH_JOB_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow.id }}"
+            GH_JOB_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}"
             GH_TOKEN: ${{ github.token }}
           run: |
             set +e
