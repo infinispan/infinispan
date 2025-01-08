@@ -39,11 +39,10 @@ jobs:
     uses: infinispan/infinispan-images/.github/workflows/release.yml@main
     secrets: inherit
     with:
-      # TODO set the branch accordingly once we branch for 16.0.x
-      branch: main
+      branch: 15.1.x
       repository: infinispan/infinispan-images
       ispnVersion: ${{ github.ref_name }}
-      latest: false
+      latest: true
 
   server-upload:
     needs: release
