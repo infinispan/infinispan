@@ -11,11 +11,13 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.jboss.marshalling.Externalize;
 
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
+@Externalize(Externalizers.QueryResponseExternalizer.class)
 @ProtoTypeId(ProtoStreamTypeIds.REMOTE_QUERY_RESPONSE)
 public final class QueryResponse implements BaseQueryResponse {
 

@@ -15,11 +15,13 @@ import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.jboss.marshalling.Externalize;
 
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
+@Externalize(Externalizers.QueryRequestExternalizer.class)
 @ProtoTypeId(ProtoStreamTypeIds.REMOTE_QUERY_REQUEST)
 public final class QueryRequest implements JsonSerialization {
 
@@ -150,6 +152,7 @@ public final class QueryRequest implements JsonSerialization {
             .set(LOCAL_FIELD, Json.factory().bool(local));
    }
 
+   @Externalize(Externalizers.NamedParameterExternalizer.class)
    public static final class NamedParameter implements JsonSerialization {
       public static final String NAME_FIELD = "name";
       public static final String VALUE_FIELD = "value";
@@ -199,4 +202,6 @@ public final class QueryRequest implements JsonSerialization {
          return new NamedParameter(name, value);
       }
    }
+
+
 }
