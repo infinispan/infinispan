@@ -18,7 +18,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 public class SingletonListAdapter {
    @ProtoFactory
    List<?> create(MarshallableObject<?> element) {
-      return Collections.singletonList(element);
+      return Collections.singletonList(MarshallableObject.unwrap(element));
    }
 
    @ProtoField(1)
