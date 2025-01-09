@@ -171,6 +171,17 @@ jobs:
             event-number.txt
             pr-number.txt
 
+      - name: Archive log files
+        if: (success() || failure())
+        uses: actions/upload-artifact@v4
+        with:
+          name: log-files
+          compression-level: 9
+          path: |
+            test_dir/infinispan/**/*.log
+            !**/*[:"<>\*\?]*/**/*.log
+            !**/*[:"<>\*\?]*.log
+
   db:
     needs: get-info
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
