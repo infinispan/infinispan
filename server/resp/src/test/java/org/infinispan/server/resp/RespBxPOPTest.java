@@ -4,10 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
@@ -346,14 +348,21 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
       try {
          var cf = registerListener(() -> bxPopAsync(0, "key"));
          var cf2 = registerListener(() -> bxPopAsync(0, "key"));
-         fork(() -> redis1.lpush("key", "first"));
-         fork(() -> redis2.lpush("key", "second", "third"));
+
+         List<Future<?>> pushes = new ArrayList<>();
+         pushes.add(fork(() -> redis1.lpush("key", "first")));
+         pushes.add(fork(() -> redis2.lpush("key", "second", "third")));
          var res = cf.get(10, TimeUnit.SECONDS);
          var res2 = cf2.get(10, TimeUnit.SECONDS);
          assertThat(res.getKey()).isEqualTo("key");
          assertThat(res2.getKey()).isEqualTo("key");
+
+         for (Future<?> f : pushes) {
+            f.get(10, TimeUnit.SECONDS);
+         }
+
          var rest = redis1.lrange("key", 0, -1);
-         assertThat(rest.size()).isEqualTo(1);
+         assertThat(rest).hasSize(1);
          assertThat(Arrays.asList(res.getValue(), res2.getValue(), rest.get(0)))
                .containsExactlyInAnyOrder("first", "second", "third");
       } finally {
