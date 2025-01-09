@@ -544,10 +544,13 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          RedisFuture<KeyValue<String, List<String>>> rf = blmpop(0, 3, key);
 
          redis.lpush(key, "v1");
+
+         // Must wait for BLMPOP.
+         // Otherwise, remaining pushes might happen concurrently with poll and remove more than one element.
+         KeyValue<String, List<String>> response = rf.get(10, TimeUnit.SECONDS);
+
          redis.lpush(key, "v2");
          redis.lpush(key, "v3", "v4", "v5");
-
-         KeyValue<String, List<String>> response = rf.get(10, TimeUnit.SECONDS);
 
          assertThat(response.getKey()).isEqualTo(key);
          assertThat(response.getValue()).containsExactly("v1");
