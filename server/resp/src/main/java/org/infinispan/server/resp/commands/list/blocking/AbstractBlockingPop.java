@@ -24,6 +24,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.RespUtil;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.filter.EventListenerConverter;
 import org.infinispan.server.resp.filter.EventListenerKeysFilter;
@@ -84,6 +85,7 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
       if (log.isTraceEnabled()) {
          log.tracef("Subscriber for keys: " + configuration.keys());
       }
+      log.info("Adding a pop subscriber");
       AdvancedCache<byte[], Object> cache = handler.typedCache(null);
       DataConversion vc = cache.getValueDataConversion();
       PubSubListener pubSubListener = new PubSubListener(handler, cache, configuration);
@@ -221,7 +223,12 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
          this.configuration = configuration;
          whenCompleteConsumer = (v, t) -> {
             if (t != null) {
-               resultFuture.completeExceptionally(t);
+               // Between installing the listener and doing the first poll, an entry was created.
+               // When trying to poll, we identify it is not a list element.
+               // We do not complete the future in this case, we leave it until the timeout elapses.
+               if (!RespUtil.isWrongTypeError(t)) {
+                  resultFuture.completeExceptionally(t);
+               }
             } else if (v != null && !v.isEmpty()) {
                resultFuture.complete(v);
             } else {
