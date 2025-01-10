@@ -20,7 +20,7 @@ import org.testng.AssertJUnit;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "query.distributed")
+@Test(groups = "functional", testName = "query.distributed.IndexWithSharedStoreTest")
 public class IndexWithSharedStoreTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
