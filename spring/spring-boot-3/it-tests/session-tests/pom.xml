@@ -50,6 +50,13 @@
          <artifactId>infinispan-commons-test</artifactId>
          <scope>test</scope>
       </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-remote-query-server</artifactId>
+         <scope>test</scope>
+      </dependency>
+
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-hotrod</artifactId>
