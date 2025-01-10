@@ -83,6 +83,27 @@ a warning message will be logged when the cache is startede starts
 include::xml/indexing_startup_reindex.xml[]
 ----
 
+=== Automatic strategy and shared cache stores
+
+In case of:
+
+1. A shared storage is configured
+2. The indexes are persistent on file system
+
+The `AUTO` startup mode will apply the `REINDEX` strategy.
+This is done in order to not miss potential updates in case of crash and recovery of an indexed node.
+
+Thus `AUTO` in this case may penalize the average user using a shared cache store that does not do any eviction,
+since more reindex than necessary will be triggered.
+For this reason if:
+
+1. A shared storage is configured
+2. The indexes are persistent on file system
+3. Automatic evictions are not possible: cache memory `max-size` and `max-count` are not used
+4. Manual eviction using the embedded API `cache.eviction()` is not used
+
+to use `NONE` in place of `AUTO` as the index startup strategy.
+
 [discrete]
 == Indexing mode
 
