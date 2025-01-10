@@ -399,8 +399,11 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          var cf = registerListener(() -> bxPopAsync(10, "key"));
          var cf2 = registerListener(() -> bxPopAsync(10, "key"));
          var cf3 = registerListener(() -> bxPopAsync(10, "key"));
-         fork(() -> xPush(redis1, "key", "first"));
-         fork(() -> xPush(redis2, "key", "second", "third", "fourth"));
+
+         List<Future<?>> pushes = List.of(
+               fork(() -> xPush(redis1, "key", "first")),
+               fork(() -> xPush(redis2, "key", "second", "third", "fourth"))
+         );
          var res = cf.get(10, TimeUnit.SECONDS);
          var res2 = cf2.get(10, TimeUnit.SECONDS);
          var res3 = cf3.get(10, TimeUnit.SECONDS);
@@ -408,9 +411,16 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          results.sort(null);
          List<String> expected1 = Arrays.asList("first", "fourth", "third");
          List<String> expected2 = Arrays.asList("fourth", "second", "third");
-         assertThat(results.size()).isEqualTo(3);
-         assertThat(results.containsAll(expected1) ||
-               results.containsAll(expected2)).isTrue();
+         assertThat(results)
+               .hasSize(3)
+               .satisfiesAnyOf(
+                     ignore -> assertThat(results).containsExactlyElementsOf(expected1),
+                     ignore -> assertThat(results).containsExactlyElementsOf(expected2));
+
+         for (Future<?> future : pushes) {
+            future.get(10, TimeUnit.SECONDS);
+         }
+
          var rest = redis1.lrange("key", 0, -1);
          assertThat(rest.size()).isEqualTo(1);
       } finally {
@@ -647,6 +657,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
 
       try {
          RedisFuture<KeyValue<String, List<String>>> rf = blmpop(3, 1, key);
+         assertThat(rf.isDone()).isFalse();
          redis.set(key, "some-value");
 
          KeyValue<String, List<String>> response = rf.get(10, TimeUnit.SECONDS);
