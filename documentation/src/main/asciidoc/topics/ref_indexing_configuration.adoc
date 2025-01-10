@@ -83,6 +83,20 @@ a warning message will be logged when the cache is startede starts
 include::xml/indexing_startup_reindex.xml[]
 ----
 
+=== Automatic strategy and shared cache stores
+
+In case of:
+
+1. A shared storage is configured
+2. The indexes are persistent on file system
+3. The cache memory is automatically limited configuring the `memory` `maxCount` or `maxSize`
+
+The `AUTO` startup mode will apply the `REINDEX` strategy.
+This is done in order to not miss potential updates in case of crash and recovery of an indexed node.
+
+In the case of (1) and (2) and the embedded cache eviction API is used to manually reduce the memory used by the cache,
+the recommended configuration is to set `REINDEX` as startup mode for this very use case.
+
 [discrete]
 == Indexing mode
 
