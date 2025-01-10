@@ -5,10 +5,12 @@ on:
     branches:
       - main
       - '*.0.x'
+      - '*.1.x'
   pull_request:
     branches:
       - main
       - '*.0.x'
+      - '*.1.x'
 
 jobs:
   image:
