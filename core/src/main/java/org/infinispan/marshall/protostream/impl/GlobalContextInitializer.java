@@ -212,6 +212,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.notifications.cachelistener.cluster.ClusterListenerRemoveCallable.class,
             org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable.class,
             org.infinispan.notifications.cachelistener.cluster.MultiClusterEventCommand.class,
+            org.infinispan.notifications.cachelistener.cluster.MultiClusterEventCommand.UUIDMap.class,
             org.infinispan.notifications.cachelistener.event.Event.Type.class,
             org.infinispan.notifications.cachelistener.filter.CacheEventConverterAsConverter.class,
             org.infinispan.notifications.cachelistener.filter.CacheEventFilterAsKeyValueFilter.class,
