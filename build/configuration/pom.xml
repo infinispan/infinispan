@@ -207,7 +207,7 @@
       <version.graalvm>23.1.5</version.graalvm>
       <version.jandex>3.2.3</version.jandex>
 
-      <version.opentelemetry>1.39.0</version.opentelemetry>
+      <version.opentelemetry>1.46.0</version.opentelemetry>
       <!-- used by the opentelemetry autoconfigure module as incubator runtime dependency -->
       <version.opentelemetry.alpha>${version.opentelemetry}-alpha</version.opentelemetry.alpha>
 
