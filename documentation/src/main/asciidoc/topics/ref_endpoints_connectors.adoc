@@ -31,6 +31,33 @@ include::xml/server_endpoints_default.xml[]
 |Includes the Memcached endpoint in the `endpoint` configuration.
 |===
 
+== Endpoint request limits
+
+Each of the endpoints support configuration options to limit request sizes. If a client exceeds this limit
+  the operation will fail. The following options are available for each of the end points respectively as attributes.
+
+.HotRod, RESP & Memcached endpoints
+
+These connectors all share the same limit configuration consisting of `max-byte-array-size` and `max-key-count`.
+The former prevents any allocation of a byte[] due to the request to exceed this limit (e.g. GET key argument byte length)
+and defaults to 10MB.
+The latter prevents allocating a collection thats size exceeds the limit (e.g. GETALL keys size) and defaults to 512.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/server_endpoints_limits_hotrod_resp_memcached.xml[]
+----
+
+.REST endpoint
+
+The REST endpoint can configure a max request size, which limits how large a single request can be in total. Note this is
+not specific to a key or value length or number of arguments. This is configured through the `max-content-length` attribute.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/server_endpoints_limits_rest.xml[]
+----
+
 [role="_additional-resources"]
 .Additional resources
 * link:{configdocroot}[{brandname} schema reference]

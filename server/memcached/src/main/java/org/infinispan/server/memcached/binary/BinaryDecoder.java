@@ -8,6 +8,7 @@ import java.util.concurrent.CompletionStage;
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.util.ByteQuantity;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.server.core.transport.ConnectionMetadata;
@@ -29,9 +30,11 @@ import io.netty.util.concurrent.GenericFutureListener;
 abstract class BinaryDecoder extends MemcachedBaseDecoder {
 
    private final BinaryHeader singleHeader = new BinaryHeader();
+   protected final int maxArrayLength;
 
    protected BinaryDecoder(MemcachedServer server, Subject subject) {
       super(server, subject, server.getCache().getAdvancedCache().withMediaType(MediaType.APPLICATION_OCTET_STREAM, server.getConfiguration().clientEncoding()));
+      this.maxArrayLength = (int) ByteQuantity.parse(server.getConfiguration().maxByteArraySize());
    }
 
    // Used by the generated decoder.

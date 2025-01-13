@@ -10,6 +10,7 @@ constants org.infinispan.server.memcached.text.TextConstants;
 // methods vInt, vLong, array, byte...
 intrinsics org.infinispan.server.memcached.text.TextIntrinsics;
 
+import io.netty.handler.codec.TooLongFrameException;
 import java.time.Instant;
 import java.time.temporal.Temporal;
 import java.util.concurrent.CompletableFuture;
@@ -34,6 +35,11 @@ init {
 
 exceptionally {
    state = 0;
+   if (t instanceof TooLongFrameException tlfe) {
+      log.requestTooLarge(ctx.channel(), tlfe);
+      ctx.close();
+      return;
+   }
    exceptionCaught(getHeader(), t);
 }
 
@@ -66,7 +72,7 @@ exptime: int_number[reader];
 flags: int_number[reader];
 vsize: int_number[reader];
 value returns byte[]
-   : { vsize > 0 }? fixedArray[vsize]
+   : { vsize > 0 }? fixedArray[vsize, maxArrayLength]
    | { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
    ;
 cas_unique: long_number[reader];

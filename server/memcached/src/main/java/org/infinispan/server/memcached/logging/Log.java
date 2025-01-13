@@ -2,7 +2,6 @@ package org.infinispan.server.memcached.logging;
 
 import static org.jboss.logging.Logger.Level.WARN;
 
-import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
@@ -18,7 +17,7 @@ import org.jboss.logging.annotations.ValidIdRange;
  */
 @MessageLogger(projectCode = "ISPN")
 @ValidIdRange(min = 11001, max = 12000)
-public interface Log extends BasicLogger {
+public interface Log extends org.infinispan.server.core.logging.Log {
    Log SERVER = Logger.getMessageLogger(Log.class, "org.infinispan.SERVER");;
 
 //   @LogMessage(level = ERROR)

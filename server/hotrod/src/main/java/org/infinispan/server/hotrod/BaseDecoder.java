@@ -10,11 +10,13 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.ByteQuantity;
 import org.infinispan.counter.EmbeddedCounterManagerFactory;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.ServerConstants;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.telemetry.InfinispanTelemetry;
 
@@ -22,6 +24,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.DecoderException;
+import io.netty.handler.codec.TooLongFrameException;
 
 abstract class BaseDecoder extends ByteToMessageDecoder {
    protected final static Log log = LogFactory.getLog(BaseDecoder.class, Log.class);
@@ -29,6 +32,8 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
    protected final EmbeddedCacheManager cacheManager;
    protected final Executor executor;
    protected final HotRodServer server;
+   protected final int maxByteArray;
+   protected final int maxKeyCount;
 
    protected Authentication auth;
    protected TransactionRequestProcessor cacheProcessor;
@@ -40,6 +45,9 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
       this.cacheManager = cacheManager;
       this.executor = executor;
       this.server = server;
+      HotRodServerConfiguration configuration = server.getConfiguration();
+      this.maxByteArray = (int) ByteQuantity.parse(configuration.maxByteArraySize());
+      this.maxKeyCount = configuration.maxKeyCount();
    }
 
    public Executor getExecutor() {
@@ -108,15 +116,24 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
    /**
     * We usually know the size of the map ahead, and we want to return static empty map if we're not going to add anything.
     */
-   protected <K, V> Map<K, V> allocMap(int size) {
+   protected <K, V> Map<K, V> allocMap(int size, int maxKeyCount) {
+      if (maxKeyCount > 0 && size > maxKeyCount) {
+         throw new TooLongFrameException("Map size " + size + " exceeded " + maxKeyCount);
+      }
       return size == 0 ? Collections.emptyMap() : new HashMap<>(size * 4/3, 0.75f);
    }
 
-   protected <T> List<T> allocList(int size) {
+   protected <T> List<T> allocList(int size, int maxKeyCount) {
+      if (maxKeyCount > 0 && size > maxKeyCount) {
+         throw new TooLongFrameException("List size " + size + " exceeded " + maxKeyCount);
+      }
       return size == 0 ? Collections.emptyList() : new ArrayList<>(size);
    }
 
-   protected <T> Set<T> allocSet(int size) {
+   protected <T> Set<T> allocSet(int size, int maxKeyCount) {
+      if (maxKeyCount > 0 && size > maxKeyCount) {
+         throw new TooLongFrameException("Set size " + size + " exceeded " + maxKeyCount);
+      }
       return size == 0 ? Collections.emptySet() : new HashSet<>(size);
    }
 }
