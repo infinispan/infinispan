@@ -25,3 +25,42 @@ Downloaded report 'infinispan-<hostname>-<timestamp>-report.tar.gz'
 ----
 . Move the `tar.gz` file to a suitable location on your filesystem.
 . Extract the `tar.gz` file with any archiving tool.
+
+== Understanding the report
+
+The report generated with the CLI contains different categories of files containing information about the environment and the application.
+We split the files into subcategories and briefly describe how to read each one.
+
+=== Environment
+
+These files contain metrics of the environment the {brandname} server is running on.
+In addition to understanding how the application behaves, external factors might cause issues, such as misconfiguration in the network, many processes running in the same host, etc.
+The following files shed light on these factors for investigation:
+
+.Host:
+* `cpuinfo`: Provides information about the host’s CPU.
+* `df`: Provides information about the host’s filesystem.
+* `lsof`: Describes the open files in the host.
+* `meminfo`: Provides information about the host’s memory.
+* `os-release`: Describes the current OS the server is running on.
+* `uname`: Additional system information.
+
+.Network:
+* `ip-address`: Describes the network interfaces in the host and the address and capabilities of each one.
+* `ip-maddress`: Describes the multicast address on each network interface in the host.
+* `ip-mroute`: Describes the multicast routing table in the host.
+* `ip-route`: Describes the the routing table in the host.
+* `ss-tcp`: List the TCP sockets in the host.
+* `ss-udp`: List the UDP sockets in the host.
+
+=== {brandname} server
+
+Additionally, the report collects information from the running server.
+The report generates a thread dump utilizing the `jstack` command.
+The server logs and configurations are also included in the files.
+
+[NOTE]
+====
+The report tries to collect all this information. However, some files might be missing if the host cannot run a specific command.
+====
+
