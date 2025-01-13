@@ -8,7 +8,7 @@ updates:
     open-pull-requests-limit: 10
     rebase-strategy: disabled
     ignore:
-      - dependency-name: "io.opentelemetry:opentelemetry-api"
+      - dependency-name: "io.opentelemetry:*"
       - dependency-name: "*"
         update-types: [ "version-update:semver-major" ]
   - package-ecosystem: github-actions
@@ -26,7 +26,7 @@ updates:
     open-pull-requests-limit: 10
     rebase-strategy: disabled
     ignore:
-      - dependency-name: "io.opentelemetry:opentelemetry-api"
+      - dependency-name: "io.opentelemetry:*"
       - dependency-name: "*"
         update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
     target-branch: "15.0.x"
