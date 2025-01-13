@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+        xmlns="urn:infinispan:config:${infinispan.core.schema.version}"
+        xmlns:cdc="urn:infinispan:config:cdc:${infinispan.core.schema.version}"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version}
+            https://infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd">
+
+    <cache-container default-cache="default">
+        <transport/>
+        <replicated-cache name="default" >
+            <change-data-capture xmlns="urn:infinispan:config:cdc:${infinispan.core.schema.version}">
+                <!-- Incomplete configuration, missing the connection configuration. -->
+            </change-data-capture>
+        </replicated-cache>
+    </cache-container>
+
+</infinispan>
