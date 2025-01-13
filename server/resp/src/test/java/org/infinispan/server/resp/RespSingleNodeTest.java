@@ -421,11 +421,6 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       public byte[] getBytes() {
          return name.getBytes(StandardCharsets.UTF_8);
       }
-
-      @Override
-      public String name() {
-         return name;
-      }
    }
 
    @Test
