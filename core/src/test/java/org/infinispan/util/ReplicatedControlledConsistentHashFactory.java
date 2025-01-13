@@ -1,18 +1,18 @@
 package org.infinispan.util;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 /**
  * ConsistentHashFactory implementation that allows the user to control who the owners are.
@@ -20,13 +20,16 @@ import org.infinispan.remoting.transport.Address;
  * @author Dan Berindei
  * @since 7.0
  */
-@SerializeWith(ReplicatedControlledConsistentHashFactory.Externalizer.class)
-public class ReplicatedControlledConsistentHashFactory
-      implements ConsistentHashFactory<ReplicatedConsistentHash>, Serializable {
-   private volatile List<Address> membersToUse;
-   private int[] primaryOwnerIndices;
+public class ReplicatedControlledConsistentHashFactory implements ConsistentHashFactory<ReplicatedConsistentHash>, Serializable {
 
-   private ReplicatedControlledConsistentHashFactory(List<Address> membersToUse, int[] primaryOwnerIndices) {
+   @ProtoField(number = 1, collectionImplementation = ArrayList.class)
+   volatile List<JGroupsAddress> membersToUse;
+
+   @ProtoField(number = 2)
+   int[] primaryOwnerIndices;
+
+   @ProtoFactory
+   ReplicatedControlledConsistentHashFactory(List<JGroupsAddress> membersToUse, int[] primaryOwnerIndices) {
       this.membersToUse = membersToUse;
       this.primaryOwnerIndices = primaryOwnerIndices;
    }
@@ -87,30 +90,18 @@ public class ReplicatedControlledConsistentHashFactory
       return firstSegmentOwners;
    }
 
-   /**
-    * @param membersToUse Owner indexes will be in this list, instead of the current list of members
-    */
-   public void setMembersToUse(List<Address> membersToUse) {
-      this.membersToUse = membersToUse;
-   }
-
-   public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<ReplicatedControlledConsistentHashFactory> {
-      @Override
-      public void writeObject(ObjectOutput output, ReplicatedControlledConsistentHashFactory object) throws IOException {
-         MarshallUtil.marshallCollection(object.membersToUse, output);
-         MarshallUtil.marshallSize(output, object.primaryOwnerIndices.length);
-         for (int i : object.primaryOwnerIndices)
-            output.writeInt(i);
-      }
-
-      @Override
-      public ReplicatedControlledConsistentHashFactory readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         List<Address> addresses = MarshallUtil.unmarshallCollection(input, ArrayList::new);
-         int size = MarshallUtil.unmarshallSize(input);
-         int[] indices = new int[size];
-         for (int i = 0; i < size; i++)
-            indices[i] = input.readInt();
-         return new ReplicatedControlledConsistentHashFactory(addresses, indices);
-      }
+   @ProtoSchema(
+         className = "ReplicatedControlledConsistentHashFactorySciImpl",
+         dependsOn = {
+               org.infinispan.marshall.persistence.impl.PersistenceContextInitializer.class,
+         },
+         includeClasses = ReplicatedControlledConsistentHashFactory.class,
+         schemaFileName = "test.core.ReplicatedControlledConsistentHashFactory.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.ReplicatedControlledConsistentHashFactory",
+         service = false
+   )
+   public interface SCI extends SerializationContextInitializer {
+      ReplicatedControlledConsistentHashFactory.SCI INSTANCE = new ReplicatedControlledConsistentHashFactorySciImpl();
    }
 }

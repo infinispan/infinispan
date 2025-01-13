@@ -1,20 +1,23 @@
 package org.infinispan.commands.read;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.marshall.protostream.impl.WrappedMessages;
+import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 
 /**
@@ -25,6 +28,7 @@ import org.infinispan.util.ByteString;
  * @author <a href="http://gleamynode.net/">Trustin Lee</a>
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.SIZE_COMMAND)
 public class SizeCommand extends BaseRpcCommand implements FlagAffectedCommand, TopologyAffectedCommand {
    public static final byte COMMAND_ID = 61;
 
@@ -42,12 +46,11 @@ public class SizeCommand extends BaseRpcCommand implements FlagAffectedCommand, 
       this.segments = segments;
    }
 
-   public SizeCommand(ByteString name) {
-      super(name);
+   @ProtoFactory
+   SizeCommand(ByteString cacheName, int topologyId, long flagsBitSet, WrappedMessage wrappedSegments) {
+      this(cacheName, WrappedMessages.unwrap(wrappedSegments), flagsBitSet);
+      this.topologyId = topologyId;
    }
-
-   // Only here for CommandIdUniquenessTest
-   private SizeCommand() { super(null); }
 
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
@@ -78,6 +81,7 @@ public class SizeCommand extends BaseRpcCommand implements FlagAffectedCommand, 
    }
 
    @Override
+   @ProtoField(number = 2, defaultValue = "-1")
    public int getTopologyId() {
       return topologyId;
    }
@@ -88,6 +92,7 @@ public class SizeCommand extends BaseRpcCommand implements FlagAffectedCommand, 
    }
 
    @Override
+   @ProtoField(number = 3, defaultValue = "-1")
    public long getFlagsBitSet() {
       return flags;
    }
@@ -101,16 +106,9 @@ public class SizeCommand extends BaseRpcCommand implements FlagAffectedCommand, 
       return segments;
    }
 
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeLong(flags);
-      output.writeObject(segments);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      setFlagsBitSet(input.readLong());
-      segments = (IntSet) input.readObject();
+   @ProtoField(4)
+   WrappedMessage getWrappedSegments() {
+      return WrappedMessages.orElseNull(segments);
    }
 
    @Override

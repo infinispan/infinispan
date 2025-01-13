@@ -7,9 +7,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
@@ -17,6 +17,7 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.testng.annotations.Test;
@@ -44,7 +45,7 @@ public class PrepareProcessedAfterOriginatorCrashTest extends MultipleCacheManag
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       dcc.clustering().hash().numOwners(1);
-      createClusteredCaches(2, dcc);
+      createClusteredCaches(2, TestDataSCI.INSTANCE, dcc);
    }
 
    public void testBelatedTransactionDoesntLeak() throws Throwable {

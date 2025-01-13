@@ -34,6 +34,7 @@ public class L1LockTest extends MultipleCacheManagersTest {
       assertNotLocked(localKey);
 
       log.trace("About to perform 2nd get...");
+      Object o = cache(1).get(localKey);
       assertEquals("foo", cache(1).get(localKey));
 
       assertNotLocked(localKey);

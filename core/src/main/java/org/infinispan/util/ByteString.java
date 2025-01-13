@@ -1,7 +1,5 @@
 package org.infinispan.util;
 
-import java.io.IOException;
-import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -28,16 +26,26 @@ public final class ByteString implements Comparable<ByteString> {
    private transient String s;
    private transient final int hash;
 
-   @ProtoField(number = 1)
    final byte[] bytes;
 
-   @ProtoFactory
    ByteString(byte[] bytes) {
       if (bytes.length > MAX_LENGTH) {
          throw new IllegalArgumentException("ByteString must be less than 256 bytes");
       }
       this.bytes = bytes;
       this.hash = Arrays.hashCode(bytes);
+   }
+
+   @ProtoFactory
+   static ByteString protoFactory(byte[] bytes) {
+      if (bytes == null || bytes.length == 0)
+         return EMPTY;
+      return new ByteString(bytes);
+   }
+
+   @ProtoField(number = 1)
+   byte[] getBytes() {
+      return bytes.length == 0 ? null : bytes;
    }
 
    public static ByteString fromString(String s) {
@@ -50,6 +58,7 @@ public final class ByteString implements Comparable<ByteString> {
    public static boolean isValid(String s) {
       return s.getBytes(CHARSET).length <= MAX_LENGTH;
    }
+
 
    public static ByteString emptyString() {
       return EMPTY;
@@ -74,23 +83,6 @@ public final class ByteString implements Comparable<ByteString> {
          s = new String(bytes, CHARSET);
       }
       return s;
-   }
-
-   public static void writeObject(ObjectOutput output, ByteString object) throws IOException {
-      output.writeByte(object.bytes.length);
-      if (object.bytes.length > 0) {
-         output.write(object.bytes);
-      }
-   }
-
-   public static ByteString readObject(ObjectInput input) throws IOException {
-      int len = input.readUnsignedByte();
-      if (len == 0)
-         return EMPTY;
-
-      byte[] b = new byte[len];
-      input.readFully(b);
-      return new ByteString(b);
    }
 
    @Override

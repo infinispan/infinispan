@@ -1,8 +1,5 @@
 package org.infinispan.query.clustered;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.BitSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -10,22 +7,33 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.impl.ModuleCommandIds;
 import org.infinispan.util.ByteString;
 
 /**
  * @since 10.1
  */
+@ProtoTypeId(ProtoStreamTypeIds.SEGMENTS_CLUSTERED_QUERY_COMMAND)
 public class SegmentsClusteredQueryCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = ModuleCommandIds.SEGMENT_CLUSTERED_QUERY;
 
-   private ClusteredQueryOperation clusteredQueryOperation;
-   private BitSet segments;
+   @ProtoField(2)
+   ClusteredQueryOperation clusteredQueryOperation;
 
-   public SegmentsClusteredQueryCommand(ByteString cacheName) {
+   @ProtoField(3)
+   BitSet segments;
+
+   @ProtoFactory
+   SegmentsClusteredQueryCommand(ByteString cacheName, ClusteredQueryOperation clusteredQueryOperation, BitSet segments) {
       super(cacheName);
+      this.clusteredQueryOperation = clusteredQueryOperation;
+      this.segments = segments;
    }
 
    public SegmentsClusteredQueryCommand(String cacheName, ClusteredQueryOperation clusteredQueryOperation, BitSet segments) {
@@ -56,18 +64,6 @@ public class SegmentsClusteredQueryCommand extends BaseRpcCommand {
       return true;
    }
 
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(clusteredQueryOperation);
-      byte[] bytes = segments.toByteArray();
-      int length = bytes.length;
-      output.write(length);
-      if (length > 0) {
-         output.write(bytes);
-      }
-   }
-
    @Override
    public CompletableFuture<?> invokeAsync(ComponentRegistry componentRegistry) {
       AdvancedCache<?, ?> cache = componentRegistry.getCache().wired();
@@ -75,21 +71,7 @@ public class SegmentsClusteredQueryCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      this.clusteredQueryOperation = (ClusteredQueryOperation) input.readObject();
-      int len = input.readUnsignedByte();
-      BitSet bitSet = null;
-      if (len > 0) {
-         byte[] b = new byte[len];
-         input.readFully(b);
-         bitSet = BitSet.valueOf(b);
-      }
-      this.segments = bitSet;
-   }
-
-   @Override
    public boolean canBlock() {
       return true;
    }
-
 }

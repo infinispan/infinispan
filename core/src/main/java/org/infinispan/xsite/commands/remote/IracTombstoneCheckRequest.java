@@ -1,8 +1,5 @@
 package org.infinispan.xsite.commands.remote;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,21 +10,25 @@ import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.marshall.protostream.impl.MarshallableCollection;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ValidSingleResponseCollector;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.xsite.irac.IracManager;
 
 /**
@@ -38,17 +39,24 @@ import org.infinispan.xsite.irac.IracManager;
  *
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.IRAC_TOMBSTONE_CHECKOUT_REQUEST)
 public class IracTombstoneCheckRequest extends XSiteCacheRequest<IntSet> {
 
    private List<Object> keys;
 
-   public IracTombstoneCheckRequest() {
-      super(null);
-   }
-
    public IracTombstoneCheckRequest(ByteString cacheName, List<Object> keys) {
       super(cacheName);
       this.keys = keys;
+   }
+
+   @ProtoFactory
+   IracTombstoneCheckRequest(ByteString cacheName, MarshallableCollection<Object> keys) {
+      this(cacheName, (List<Object>) MarshallableCollection.unwrap(keys, ArrayList::new));
+   }
+
+   @ProtoField(2)
+   MarshallableCollection<Object> getKeys() {
+      return MarshallableCollection.create(keys);
    }
 
    @Override
@@ -92,23 +100,9 @@ public class IracTombstoneCheckRequest extends XSiteCacheRequest<IntSet> {
       return Ids.IRAC_TOMBSTONE_CHECK;
    }
 
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallCollection(keys, output);
-      super.writeTo(output);
-   }
-
-   @Override
-   public XSiteRequest<IntSet> readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
-      return super.readFrom(input);
-   }
-
-
    @Override
    public String toString() {
-      return "IracSiteTombstoneCheckCommand{" +
+      return "IracTombstoneCheckRequest{" +
             "cacheName=" + cacheName +
             ", keys=" + keys.stream().map(Util::toStr).collect(Collectors.joining(",")) +
             '}';

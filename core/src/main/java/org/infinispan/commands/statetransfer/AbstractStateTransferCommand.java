@@ -1,13 +1,11 @@
 package org.infinispan.commands.statetransfer;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IntSetsExternalization;
+import org.infinispan.marshall.protostream.impl.WrappedMessages;
+import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.util.ByteString;
 
 /**
@@ -34,13 +32,19 @@ abstract class AbstractStateTransferCommand extends BaseRpcCommand implements To
    }
 
    @Override
-   public boolean isReturnValueExpected() {
-      return true;
+   @ProtoField(value = 2, defaultValue = "-1")
+   public int getTopologyId() {
+      return topologyId;
+   }
+
+   @ProtoField(3)
+   WrappedMessage getWrappedSegments() {
+      return WrappedMessages.orElseNull(segments);
    }
 
    @Override
-   public int getTopologyId() {
-      return topologyId;
+   public boolean isReturnValueExpected() {
+      return true;
    }
 
    @Override
@@ -55,15 +59,5 @@ abstract class AbstractStateTransferCommand extends BaseRpcCommand implements To
    @Override
    public byte getCommandId() {
       return commandId;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      IntSetsExternalization.writeTo(output, segments);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      segments = IntSetsExternalization.readFrom(input);
    }
 }

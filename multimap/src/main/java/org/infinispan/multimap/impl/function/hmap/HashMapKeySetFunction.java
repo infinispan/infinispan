@@ -1,17 +1,13 @@
 package org.infinispan.multimap.impl.function.hmap;
 
-import static org.infinispan.multimap.impl.ExternalizerIds.HASH_MAP_KEYSET_FUNCTION;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
 import org.infinispan.multimap.impl.HashMapBucket;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by {@link org.infinispan.multimap.impl.EmbeddedMultimapPairCache#keySet(Object)}.
@@ -25,10 +21,8 @@ import org.infinispan.multimap.impl.HashMapBucket;
  * @since 15.0
  * @see BaseFunction
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_HASH_MAP_KEY_SET_FUNCTION)
 public class HashMapKeySetFunction<K, HK, HV> extends HashMapBucketBaseFunction<K, HK, HV, Set<HK>> {
-
-   public static final Externalizer EXTERNALIZER = new Externalizer();
-
 
    @Override
    public Set<HK> apply(EntryView.ReadWriteEntryView<K, HashMapBucket<HK, HV>> view) {
@@ -36,29 +30,6 @@ public class HashMapKeySetFunction<K, HK, HV> extends HashMapBucketBaseFunction<
       if (existing.isPresent()) {
          return existing.get().keySet();
       }
-
       return Collections.emptySet();
-   }
-
-   @SuppressWarnings({"rawtypes", "deprecation"})
-   private static class Externalizer implements AdvancedExternalizer<HashMapKeySetFunction> {
-
-      @Override
-      public Set<Class<? extends HashMapKeySetFunction>> getTypeClasses() {
-         return Collections.singleton(HashMapKeySetFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return HASH_MAP_KEYSET_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, HashMapKeySetFunction object) throws IOException { }
-
-      @Override
-      public HashMapKeySetFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new HashMapKeySetFunction();
-      }
    }
 }

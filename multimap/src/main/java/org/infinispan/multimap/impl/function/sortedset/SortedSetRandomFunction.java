@@ -1,18 +1,16 @@
 package org.infinispan.multimap.impl.function.sortedset;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
-import org.infinispan.multimap.impl.ScoredValue;
-import org.infinispan.multimap.impl.SortedSetBucket;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
+
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.functional.EntryView;
+import org.infinispan.multimap.impl.ScoredValue;
+import org.infinispan.multimap.impl.SortedSetBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by
@@ -22,10 +20,13 @@ import java.util.Set;
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_SORTED_SET_RANDOM_FUNCTION)
 public final class SortedSetRandomFunction<K, V> implements SortedSetBucketBaseFunction<K, V, List<ScoredValue<V>>> {
-   public static final AdvancedExternalizer<SortedSetRandomFunction> EXTERNALIZER = new Externalizer();
-   private final int count;
 
+   @ProtoField(value = 1, defaultValue = "-1")
+   final int count;
+
+   @ProtoFactory
    public SortedSetRandomFunction(int count) {
       this.count = count;
    }
@@ -37,28 +38,5 @@ public final class SortedSetRandomFunction<K, V> implements SortedSetBucketBaseF
          return Collections.emptyList();
       }
       return existing.get().randomMembers(count);
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<SortedSetRandomFunction> {
-
-      @Override
-      public Set<Class<? extends SortedSetRandomFunction>> getTypeClasses() {
-         return Collections.singleton(SortedSetRandomFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.SORTED_SET_RANDOM_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, SortedSetRandomFunction object) throws IOException {
-         output.writeInt(object.count);
-      }
-
-      @Override
-      public SortedSetRandomFunction readObject(ObjectInput input) throws IOException {
-         return new SortedSetRandomFunction(input.readInt());
-      }
    }
 }

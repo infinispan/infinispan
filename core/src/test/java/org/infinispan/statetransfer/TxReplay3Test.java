@@ -31,7 +31,6 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.AbstractDelegatingRpcManager;
@@ -88,7 +87,7 @@ public class TxReplay3Test extends MultipleCacheManagersTest {
       });
 
       sequencer.enter(JOIN_NEW_NODE);
-      addClusterEnabledCacheManager(config()).getCache();
+      addClusterEnabledCacheManager(ControlledConsistentHashFactory.SCI.INSTANCE, config()).getCache();
       waitForClusterToForm();
       sequencer.exit(JOIN_NEW_NODE);
 
@@ -101,7 +100,7 @@ public class TxReplay3Test extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createClusteredCaches(3, TestDataSCI.INSTANCE, config());
+      createClusteredCaches(3, ControlledConsistentHashFactory.SCI.INSTANCE, config());
    }
 
    private static ConfigurationBuilder config() {

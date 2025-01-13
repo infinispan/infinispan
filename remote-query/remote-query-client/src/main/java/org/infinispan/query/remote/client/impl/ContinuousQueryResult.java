@@ -16,7 +16,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  * @author anistor@redhat.com
  * @since 8.0
  */
-@ProtoTypeId(ProtoStreamTypeIds.ICKLE_CONTINUOUS_QUERY_RESULT)
+@ProtoTypeId(ProtoStreamTypeIds.REMOTE_QUERY_ICKLE_CONTINUOUS_QUERY_RESULT)
 public final class ContinuousQueryResult {
 
    public enum ResultType {

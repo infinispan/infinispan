@@ -64,6 +64,11 @@
          <artifactId>infinispan-server-hotrod</artifactId>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-remote-query-server</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <build>

@@ -1,20 +1,18 @@
 package org.infinispan.persistence.remote.upgrade;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
 import java.util.function.Function;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.logging.Log;
-import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -22,12 +20,15 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @since 12.1
  */
+@ProtoTypeId(ProtoStreamTypeIds.REMOTE_STORE_DISCONNECT)
 public class DisconnectRemoteStoreTask implements Function<EmbeddedCacheManager, Void> {
 
    private static final Log log = LogFactory.getLog(DisconnectRemoteStoreTask.class, Log.class);
 
-   private final String cacheName;
+   @ProtoField(1)
+   final String cacheName;
 
+   @ProtoFactory
    public DisconnectRemoteStoreTask(String cacheName) {
       this.cacheName = cacheName;
    }
@@ -42,24 +43,4 @@ public class DisconnectRemoteStoreTask implements Function<EmbeddedCacheManager,
          throw new CacheException(e);
       }
    }
-
-   public static class Externalizer extends AbstractExternalizer<DisconnectRemoteStoreTask> {
-
-      @Override
-      public Set<Class<? extends DisconnectRemoteStoreTask>> getTypeClasses() {
-         return Collections.singleton(DisconnectRemoteStoreTask.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, DisconnectRemoteStoreTask task) throws IOException {
-         output.writeObject(task.cacheName);
-      }
-
-      @Override
-      public DisconnectRemoteStoreTask readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         String cacheName = (String) input.readObject();
-         return new DisconnectRemoteStoreTask(cacheName);
-      }
-   }
-
 }

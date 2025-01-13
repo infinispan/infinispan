@@ -1,3 +1,13 @@
+== Upgrading from 15.2 to 16.0
+
+=== Marshalling Changes
+
+In order to support zero-downtime upgrades, the Infinispan internal marshaller has been completely rewritten to be based
+upon Protostream. As a consequence it's no longer possible to define `AdvancedExternalizer` instances as part of the global
+configuration or `@SerializeWith` annotations on classes. Users of the jboss-marshalling library which depended on
+`AdvancedExternalizer` should either 1) migrate to using Protostream based marshalling (recommended), or 2) replace
+`AdvancedExternalizer` with `org.jboss.marshalling.Externalize` implementations.
+
 == Upgrading from 15.1 to 15.2
 
 == Upgrading from 15.0 to 15.1

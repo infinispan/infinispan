@@ -1,18 +1,21 @@
 package org.infinispan.container.versioning.irac;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Objects;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.impl.IracMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A data class to store the tombstone information for a key.
  *
  * @since 14.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.IRAC_TOMBSTONE_INFO)
 public class IracTombstoneInfo {
 
    private final Object key;
@@ -25,14 +28,26 @@ public class IracTombstoneInfo {
       this.metadata = Objects.requireNonNull(metadata);
    }
 
+   @ProtoFactory
+   IracTombstoneInfo(MarshallableObject<Object> wrappedKey, int segment, IracMetadata metadata) {
+      this(MarshallableObject.unwrap(wrappedKey), segment, metadata);
+   }
+
+   @ProtoField(number = 1)
+   MarshallableObject<Object> getWrappedKey() {
+      return MarshallableObject.create(key);
+   }
+
    public Object getKey() {
       return key;
    }
 
+   @ProtoField(number = 2, defaultValue = "-1")
    public int getSegment() {
       return segment;
    }
 
+   @ProtoField(number = 3)
    public IracMetadata getMetadata() {
       return metadata;
    }
@@ -64,20 +79,5 @@ public class IracTombstoneInfo {
             ", segment=" + segment +
             ", metadata=" + metadata +
             '}';
-   }
-
-   public static void writeTo(ObjectOutput output, IracTombstoneInfo tombstone) throws IOException {
-      if (tombstone == null) {
-         output.writeObject(null);
-         return;
-      }
-      output.writeObject(tombstone.key);
-      output.writeInt(tombstone.segment);
-      IracMetadata.writeTo(output, tombstone.metadata);
-   }
-
-   public static IracTombstoneInfo readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      Object key = input.readObject();
-      return key == null ? null : new IracTombstoneInfo(key, input.readInt(), IracMetadata.readFrom(input));
    }
 }

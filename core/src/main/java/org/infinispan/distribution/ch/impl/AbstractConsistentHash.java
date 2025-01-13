@@ -7,10 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.UnaryOperator;
 
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.util.Util;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.PersistentUUID;
 
@@ -70,10 +72,6 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
       return members;
    }
 
-   protected static Hash parseHashFunction(ScopedPersistentState state) {
-      return Util.getInstance(state.getProperty(ConsistentHashPersistenceConstants.STATE_HASH_FUNCTION), null);
-   }
-
    protected static float[] parseCapacityFactors(ScopedPersistentState state) {
       int numCapacityFactors = Integer.parseInt(state.getProperty(STATE_CAPACITY_FACTORS));
       float[] capacityFactors = new float[numCapacityFactors];
@@ -117,7 +115,7 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
       }
    }
 
-   static HashMap<Address, Integer> getMemberIndexMap(List<Address> members) {
+   public static HashMap<Address, Integer> getMemberIndexMap(List<Address> members) {
       HashMap<Address, Integer> memberIndexes = new HashMap<>(members.size());
       for (int i = 0; i < members.size(); i++) {
          memberIndexes.put(members.get(i), i);
@@ -192,5 +190,34 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
          remappedMembers.add(a);
       }
       return remappedMembers;
+   }
+
+   /**
+    * A wrapper object to allow List<Address>[] to be represented in protobuf.
+    *
+    * Should be used as part an array SegmentOwnership[].
+    */
+   @ProtoTypeId(ProtoStreamTypeIds.SEGMENT_OWNERSHIP)
+   public static class SegmentOwnership {
+
+      int[] indexes;
+
+      @ProtoField(number = 1)
+      public int[] getIndexes() {
+         return indexes;
+      }
+
+      @ProtoFactory
+      public SegmentOwnership(int[] indexes) {
+         this.indexes = indexes;
+      }
+
+      SegmentOwnership(HashMap<Address, Integer> memberIndexMap, List<Address> owners) {
+         this.indexes = new int[owners.size()];
+         for (int i = 0; i < owners.size(); i++) {
+            Address owner = owners.get(i);
+            indexes[i] = owner == null ? -1 : memberIndexMap.get(owners.get(i));
+         }
+      }
    }
 }
