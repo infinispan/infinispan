@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.function.BiFunction;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
@@ -72,7 +73,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                operation, System.identityHashCode(operation), operation.header().messageId(), channel);
       }
       if (closing) {
-         throw HOTROD.noMoreOperationsAllowed();
+         throw new RejectedExecutionException(HOTROD.noMoreOperationsAllowed());
       }
       HotRodOperation<?> prev = incomplete.put(operation.header().messageId(), operation);
       assert prev == null || prev == operation : "Already registered: " + prev + ", new: " + operation;
@@ -288,6 +289,10 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
       if (log.isTraceEnabled()) {
          log.tracef("Decoder %08X removed? %s listener %s", hashCode(), Boolean.toString(removed), Util.printArray(listenerId));
       }
+   }
+
+   public boolean isClosing() {
+      return closing;
    }
 
    enum State {

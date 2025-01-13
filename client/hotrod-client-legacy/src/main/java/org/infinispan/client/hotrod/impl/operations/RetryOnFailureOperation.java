@@ -77,7 +77,11 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
          }
          executeOperation(channel);
       } catch (Throwable t) {
-         completeExceptionally(t);
+         SocketAddress address = ChannelRecord.of(channel).getUnresolvedAddress();
+         Throwable cause = handleException(t, channel, address);
+         if (cause != null) {
+            completeExceptionally(cause);
+         }
       } finally {
          releaseChannel(channel);
       }

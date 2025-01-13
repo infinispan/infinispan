@@ -354,7 +354,7 @@ class ChannelPool {
     * @param removeBeforeInvoke: Whether to de-queue the callback before executing it.
     * @return <code>true</code> if executed the callback, <code>false</code>, otherwise.
     */
-   private boolean invokeCallback(Channel channel, ChannelOperation callback, boolean removeBeforeInvoke) {
+   boolean invokeCallback(Channel channel, ChannelOperation callback, boolean removeBeforeInvoke) {
       if (removeBeforeInvoke && !removeCallback(callback)) {
          log.debugf("Operation %s picked-up twice, returning channel to pool", callback);
          release(channel, ChannelRecord.of(channel));

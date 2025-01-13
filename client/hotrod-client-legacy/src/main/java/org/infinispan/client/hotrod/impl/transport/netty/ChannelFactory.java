@@ -878,12 +878,12 @@ public class ChannelFactory {
    }
 
    public int getNumActive(SocketAddress address) {
-      ChannelPool pool = channelPoolMap.get(address);
+      ChannelPool pool = getPool(address);
       return pool == null ? 0 : pool.getActive();
    }
 
    public int getNumIdle(SocketAddress address) {
-      ChannelPool pool = channelPoolMap.get(address);
+      ChannelPool pool = getPool(address);
       return pool == null ? 0 : pool.getIdle();
    }
 
@@ -910,6 +910,10 @@ public class ChannelFactory {
    public void incrementRetryCount() {
       totalRetries.increment();
       totalRetriesMetric.increment();
+   }
+
+   ChannelPool getPool(SocketAddress address) {
+      return channelPoolMap.get(address);
    }
 
    public ClientIntelligence getClientIntelligence() {
