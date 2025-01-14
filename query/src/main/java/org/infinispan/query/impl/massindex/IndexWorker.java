@@ -1,19 +1,25 @@
 package org.infinispan.query.impl.massindex;
 
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -23,8 +29,9 @@ import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.security.actions.SecurityActions;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
+
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * Mass indexer task.
@@ -64,19 +71,27 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
       if (keys == null || keys.isEmpty()) {
          preIndex(cache, indexUpdater, notifier);
          MassIndexerProgressState progressState = new MassIndexerProgressState(notifier);
+
          if (!skipIndex) {
             try (Stream<CacheEntry<Object, Object>> stream = reindexCache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL)
                   .cacheEntrySet().stream()) {
-               stream.forEach(entry -> {
-                  Object key = entry.getKey();
-                  Object value = valueDataConversion.extractIndexable(entry.getValue(), javaEmbeddedEntities);
-                  int segment = keyPartitioner.getSegment(key);
+               Iterator<UpdateRecord> records = stream.map(entry -> {
+                        Object key = entry.getKey();
+                        Object value = valueDataConversion.extractIndexable(entry.getValue(), javaEmbeddedEntities);
+                        int segment = keyPartitioner.getSegment(key);
 
-                  if (value != null && indexUpdater.typeIsIndexed(value, indexedTypes)) {
-                     progressState.addItem(key, value,
-                           indexUpdater.updateIndex(key, value, segment));
-                  }
-               });
+                        if (value != null && indexUpdater.typeIsIndexed(value, indexedTypes)) {
+                           return new UpdateRecord(key, value, segment);
+                        }
+                        return new UpdateRecord(null, null, -1);
+                     }).filter(record -> record.key != null)
+                     .iterator();
+
+               join(CompletionStages.performConcurrently(() -> records, 100, Schedulers.from(new WithinThreadExecutor()), record -> {
+                  CompletableFuture<?> updated = indexUpdater.updateIndex(record.key, record.value, record.segment);
+                  progressState.addItem(record.key, record.value, updated);
+                  return updated;
+               }));
             }
          }
          postIndex(indexUpdater, progressState, notifier);
@@ -156,6 +171,9 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
       public Integer getId() {
          return ExternalizerIds.INDEX_WORKER;
       }
+   }
+
+   record UpdateRecord(Object key, Object value, int segment) {
    }
 
 }
