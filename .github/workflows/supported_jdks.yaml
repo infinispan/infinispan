@@ -4,12 +4,12 @@ on:
   push:
     branches:
       - main
-      - '*.0.x'
+      - '*.*.x'
 
   pull_request:
     branches:
       - main
-      - '*.0.x'
+      - '*.*.x'
 
 concurrency:
   # Cancel jobs same head_branch same repo, works
