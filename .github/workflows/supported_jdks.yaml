@@ -17,7 +17,7 @@ concurrency:
   group: >
       ${{ github.workflow }}-${{ github.event.repository.full_name }}-
       ${{ github.event.pull_request.head.ref || github.event.push.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
