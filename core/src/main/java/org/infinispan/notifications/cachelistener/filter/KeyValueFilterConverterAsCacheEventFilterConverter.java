@@ -39,8 +39,7 @@ public class KeyValueFilterConverterAsCacheEventFilterConverter<K, V, C> impleme
 
    @ProtoFactory
    KeyValueFilterConverterAsCacheEventFilterConverter(MarshallableObject<KeyValueFilterConverter<K, V, C>> converter, MediaType format) {
-      this.keyValueFilterConverter = MarshallableObject.unwrap(converter);
-      this.format = format;
+      this(MarshallableObject.unwrap(converter), format);
    }
 
    @ProtoField(1)

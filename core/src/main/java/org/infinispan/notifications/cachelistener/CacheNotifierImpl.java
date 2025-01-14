@@ -1775,9 +1775,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
          if (needsTransform) {
             CacheEntryEvent<K, V> event = wrapped.getEvent();
             EventImpl<K, V> eventImpl = (EventImpl<K, V>) event;
-            // Only transform if the key hasn't already been converted to prevent key/value being transcoded twice
-            if (event.getKey() == wrapped.getKey())
-               wrapped.setEvent(convertEventToRequestFormat(eventImpl, filter, converter, eventImpl.getValue()));
+            wrapped.setEvent(convertEventToRequestFormat(eventImpl, filter, converter, eventImpl.getValue()));
          }
 
          if (skipQueue) {

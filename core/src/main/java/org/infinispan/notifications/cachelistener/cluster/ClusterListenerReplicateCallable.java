@@ -17,6 +17,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.ListenerHolder;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -58,10 +59,10 @@ public class ClusterListenerReplicateCallable<K, V> implements Function<Embedded
    @ProtoField(number = 5, collectionImplementation = HashSet.class)
    final Set<Class<? extends Annotation>> filterAnnotations;
 
-   @ProtoField(number = 6)
+   @ProtoField(6)
    final DataConversion keyDataConversion;
 
-   @ProtoField(number = 7)
+   @ProtoField(7)
    final DataConversion valueDataConversion;
 
    @ProtoField(number = 8, defaultValue = "false")
@@ -87,23 +88,35 @@ public class ClusterListenerReplicateCallable<K, V> implements Function<Embedded
    }
 
    @ProtoFactory
-   ClusterListenerReplicateCallable(UUID identifier, String cacheName, JGroupsAddress origin, boolean sync,
-                                    Set<Class<? extends Annotation>> filterAnnotations, DataConversion keyDataConversion,
-                                    DataConversion valueDataConversion, boolean useStorageFormat,
-                                    MarshallableObject<CacheEventFilter<K, V>> filter,
-                                    MarshallableObject<CacheEventConverter<K, V, ?>> converter) {
-      this(cacheName, identifier, origin, MarshallableObject.unwrap(filter), MarshallableObject.unwrap(converter), sync,
-            filterAnnotations, keyDataConversion, valueDataConversion, useStorageFormat);
+   static <K, V> ClusterListenerReplicateCallable<K, V> protoFactory(UUID identifier, String cacheName, JGroupsAddress origin, boolean sync,
+                                                        Set<Class<? extends Annotation>> filterAnnotations, DataConversion keyDataConversion,
+                                                        DataConversion valueDataConversion, boolean useStorageFormat,
+                                                        MarshallableObject<CacheEventFilter<K, V>> filter,
+                                                        MarshallableObject<CacheEventConverter<K, V, ?>> converter,
+                                                        boolean sameConverter) {
+      CacheEventFilter<K, V> f = MarshallableObject.unwrap(filter);
+      CacheEventConverter<K, V, ?> cec;
+      if (sameConverter) {
+         cec = (CacheEventFilterConverter<K, V, ?>) f;
+      } else {
+         cec = MarshallableObject.unwrap(converter);
+      }
+      return new ClusterListenerReplicateCallable<>(cacheName, identifier, origin, f, cec, sync, filterAnnotations, keyDataConversion, valueDataConversion, useStorageFormat);
    }
 
-   @ProtoField(number = 9)
+   @ProtoField(9)
    MarshallableObject<CacheEventFilter<K, V>> getFilter() {
       return MarshallableObject.create(filter);
    }
 
-   @ProtoField(number = 10)
+   @ProtoField(10)
    MarshallableObject<CacheEventConverter<K, V, ?>> getConverter() {
-      return MarshallableObject.create(converter);
+      return isSameConverter() ? null :MarshallableObject.create(converter);
+   }
+
+   @ProtoField(11)
+   boolean isSameConverter() {
+      return filter == converter && filter instanceof CacheEventFilterConverter<?,?,?>;
    }
 
    @Override
