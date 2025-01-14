@@ -54,14 +54,16 @@ public class JSONUtil {
     */
    public static byte[] toJsonPath(byte[] path) {
       if (!isJsonPath(path)) {
-         // Null, empty or '.' return json root '$'
-         if (path == null || path.length == 0 || (path[0] == '.' && path.length == 1)) {
+         // For '.' return json root '$'
+         if (path.length == 1 && path[0] == '.') {
             return new byte[] { '$' };
          }
-         // append $ to the beginning
-         byte[] result = new byte[(path != null ? path.length + 1 : 0)];
+         // append $. to the beginning
+         // Using "$." so wrong legacy path like "" and " " will fail
+         byte[] result = new byte[(path != null ? path.length + 2 : 2)];
          result[0] = '$';
-         System.arraycopy(path, 0, result, 1, path.length);
+         result[1] = '.';
+         System.arraycopy(path, 0, result, 2, path.length);
          return result;
       }
       return path;

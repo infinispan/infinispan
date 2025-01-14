@@ -85,7 +85,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       var jv = new DefaultJsonParser().createJsonValue(v);
       String p = ".";
       var jp = new JsonPath(p);
-      assertThat(command.jsonSet(key, "", v)).isEqualTo("OK");
+      assertThat(command.jsonSet(key, ".", v)).isEqualTo("OK");
       var result = new DefaultJsonParser().createJsonValue(command.jsonGet(key, "."));
       // No need to wrap since jv is a legacy path
       assertThat(compareJSONGet(result, jv, jp)).isEqualTo(true);
@@ -147,6 +147,21 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       var result = redis.jsonGet(key, jpRoot);
       assertThat(result).hasSize(1);
       assertThat(compareJSONSet(result.get(0), jvDoc, "$.root.k1", jvNew));
+   }
+
+   @Test
+   public void testJSONSETInvalidPath() {
+      String key = k();
+      // Create json
+      JsonPath jpRoot = new JsonPath("$");
+      JsonValue jvDoc = new DefaultJsonParser().createJsonValue("{\"root\": { \"k1\" : \"v1\", \"k2\":\"v2\"}}");
+      assertThat(redis.jsonSet(key, jpRoot, jvDoc)).isEqualTo("OK");
+
+      CustomStringCommands command = CustomStringCommands.instance(redisConnection);
+      // Modify json
+      assertThatThrownBy(() -> {
+         command.jsonSet(key, "", "\"newValue\"");
+      }).isInstanceOf(RedisCommandExecutionException.class);
    }
 
    @Test
