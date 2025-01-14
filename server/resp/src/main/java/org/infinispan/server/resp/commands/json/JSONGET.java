@@ -34,9 +34,8 @@ public class JSONGET extends RespCommand implements Resp3Command {
          List<byte[]> arguments) {
       byte[] key = arguments.get(0);
       Args args;
-      try {
-         args = parseArgs(arguments);
-      } catch (Exception ex) {
+      args = parseArgs(arguments);
+      if (args == null) {
          handler.writer().wrongArgumentNumber(this);
          return handler.myStage();
       }
@@ -58,16 +57,22 @@ public class JSONGET extends RespCommand implements Resp3Command {
       while (pos < arguments.size()) {
          switch ((new String(arguments.get(pos))).toUpperCase()) {
             case "INDENT":
-               indent = arguments.get(++pos);
-               ++pos;
+               if (++pos >= arguments.size()) {
+                  return null;
+               }
+               indent = arguments.get(pos++);
                break;
             case "NEWLINE":
-               newline = arguments.get(++pos);
-               ++pos;
+               if (++pos >= arguments.size()) {
+                  return null;
+               }
+               newline = arguments.get(pos++);
                break;
             case "SPACE":
-               space = arguments.get(++pos);
-               ++pos;
+               if (++pos >= arguments.size()) {
+                  return null;
+               }
+               space = arguments.get(pos++);
                break;
             default:
                return new Args(indent, newline, space, pos);

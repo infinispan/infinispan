@@ -35,7 +35,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
     * @since 15.1
     */
    RedisCommands<String, String> redis;
-   private Configuration config = JSONUtil.config;
+   private Configuration configList = JSONUtil.configList;
 
    @BeforeMethod
    public void initConnection() {
@@ -175,28 +175,39 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
    public void testJSONSETWithXX() {
       String key = k();
       JsonPath jp = new JsonPath("$");
-      JsonValue jv = new DefaultJsonParser().createJsonValue("{\"key\":\"value\"}");
-      JsonValue jv1 = new DefaultJsonParser().createJsonValue("{\"key1\":\"value1\"}");
+      JsonValue jv = new DefaultJsonParser().createJsonValue("{\"k\":\"v\"}");
+      JsonValue jvNew = new DefaultJsonParser().createJsonValue("{\"kNew\":\"vNew\"}");
       JsonSetArgs args = JsonSetArgs.Builder.xx();
       assertThat(redis.jsonSet(key, jp, jv, args)).isNull();
       assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
-      assertThat(redis.jsonSet(key, jp, jv1, args)).isEqualTo("OK");
+      assertThat(redis.jsonSet(key, jp, jvNew, args)).isEqualTo("OK");
       var result = redis.jsonGet(key, new JsonPath("$"));
       assertThat(result).hasSize(1);
-      assertThat(compareJSON(result.get(0), jv1)).isEqualTo(true);
+      assertThat(compareJSON(result.get(0), jvNew)).isEqualTo(true);
+      // Test non root behaviour
+      JsonPath jp1 = new JsonPath("$.key1");
+      JsonValue jv1New = new DefaultJsonParser().createJsonValue("{\"k1\":\"v1\"}");
+      assertThat(redis.jsonSet(key, jp1, jv1New, args)).isNull();
+      assertThat(redis.jsonSet(key, jp1, jv)).isEqualTo("OK");
+      assertThat(redis.jsonSet(key, jp1, jv1New, args)).isEqualTo("OK");
    }
 
    @Test
    public void testJSONSETWithNX() {
       String key = k();
       JsonPath jp = new JsonPath("$");
-      JsonValue jv = new DefaultJsonParser().createJsonValue("{\"key\":\"value\"}");
+      JsonValue jv = new DefaultJsonParser().createJsonValue("{\"k\":\"v\"}");
       JsonSetArgs args = JsonSetArgs.Builder.nx();
       assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
       var result = redis.jsonGet(key, new JsonPath("$"));
       assertThat(result).hasSize(1);
       assertThat(compareJSON(result.get(0), jv)).isEqualTo(true);
       assertThat(redis.jsonSet(key, jp, jv, args)).isNull();
+      // Test non root behaviour
+      JsonPath jp1 = new JsonPath("$.key1");
+      JsonValue jv1New = new DefaultJsonParser().createJsonValue("{\"k1\":\"v1\"}");
+      assertThat(redis.jsonSet(key, jp1, jv1New, args)).isEqualTo("OK");
+      assertThat(redis.jsonSet(key, jp1, jv1New, args)).isNull();
    }
 
    @Test
@@ -389,7 +400,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       try {
          rootObjectNode = (JsonNode) mapper.readTree(expected.toString());
          resultNode = (JsonNode) mapper.readTree(result.toString());
-         var jpCtx = com.jayway.jsonpath.JsonPath.using(config).parse(rootObjectNode);
+         var jpCtx = com.jayway.jsonpath.JsonPath.using(configList).parse(rootObjectNode);
          boolean isLegacy = true;
          // If all paths are legacy, return results in legacy mode. i.e. no array
          for (JsonPath path : paths) {
@@ -425,7 +436,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
          var newRootNode = mapper.readTree(unwrapIfArray(newDoc).toString());
          var oldRootNode = mapper.readTree(unwrapIfArray(oldDoc).toString());
          // Unwrap objects if in an array
-         var jpCtx = com.jayway.jsonpath.JsonPath.using(config).parse(oldRootNode);
+         var jpCtx = com.jayway.jsonpath.JsonPath.using(configList).parse(oldRootNode);
          var pathStr = new String(path);
          var newNode = mapper.readTree(node.toString());
          jpCtx.set(pathStr, newNode);
@@ -434,7 +445,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
             return false;
          }
          // Check the node is set correctly
-         var newJpCtx = com.jayway.jsonpath.JsonPath.using(config).parse(newRootNode);
+         var newJpCtx = com.jayway.jsonpath.JsonPath.using(configList).parse(newRootNode);
          var newNodeFromNewDoc = newJpCtx.read(pathStr);
          var expectedNode = jpCtx.read(pathStr);
          return newNodeFromNewDoc.equals(expectedNode);

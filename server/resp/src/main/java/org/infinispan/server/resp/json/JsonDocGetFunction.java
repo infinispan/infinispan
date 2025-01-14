@@ -66,7 +66,7 @@ public class JsonDocGetFunction
          rpp.indentObjectsWith(ind);
 
          var rootNode = mapper.readTree(new String(doc, StandardCharsets.UTF_8));
-         var jpCtx = JsonPath.using(JSONUtil.config).parse(rootNode);
+         var jpCtx = JsonPath.using(JSONUtil.configList).parse(rootNode);
          // If no path provided return root in legacy format
          if (paths == null || paths.size() == 0) {
             String resp = mapper.writer(rpp).writeValueAsString(rootNode);

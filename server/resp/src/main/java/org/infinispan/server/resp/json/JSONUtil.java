@@ -10,7 +10,15 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.Option;
 
 public class JSONUtil {
-   public static final Configuration config = Configuration.builder().options(Option.DEFAULT_PATH_LEAF_TO_NULL).options(Option.ALWAYS_RETURN_LIST)
+   // JSONPath config that always return a list as a read result. Useful with jsonpath wildcards
+   public static final Configuration configList = Configuration.builder().options(Option.DEFAULT_PATH_LEAF_TO_NULL)
+         .options(Option.ALWAYS_RETURN_LIST)
+         .jsonProvider(new com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider())
+         .mappingProvider(new com.jayway.jsonpath.spi.mapper.JacksonMappingProvider())
+         .build();
+
+   // JSONPath config that returns Node as a read result. Useful to check if a node exists.
+   public static final Configuration config = Configuration.builder().options(Option.DEFAULT_PATH_LEAF_TO_NULL)
          .jsonProvider(new com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider())
          .mappingProvider(new com.jayway.jsonpath.spi.mapper.JacksonMappingProvider())
          .build();
@@ -38,10 +46,11 @@ public class JSONUtil {
       return path != null && path.length == 1 && path[0] == '$';
    }
 
-   /** Returns a jsonpath version of path
+   /**
+    * Returns a jsonpath version of path
     *
     * @return path itself if path is already in Jsonpath format
-    * or the jsonpath equivalent in a new byte[]
+    *         or the jsonpath equivalent in a new byte[]
     */
    public static byte[] toJsonPath(byte[] path) {
       if (!isJsonPath(path)) {
@@ -60,10 +69,10 @@ public class JSONUtil {
 
    public static boolean isJsonPath(byte[] path) {
       return (path != null && path.length > 0 && path[0] == '$'
-      && (path.length < 2 || path[1] == '.' || path[1] == '['));
+            && (path.length < 2 || path[1] == '.' || path[1] == '['));
    }
 
    public static boolean isJsonPath(String path) {
-      return path==null ? false : isJsonPath(path.getBytes(StandardCharsets.UTF_8));
+      return path == null ? false : isJsonPath(path.getBytes(StandardCharsets.UTF_8));
    }
 }

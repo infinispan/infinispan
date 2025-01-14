@@ -62,10 +62,10 @@ public class JsonDocSetFunction
          entryView.set(new JsonDocBucket(value));
          return RespConstants.OK;
       }
-      if (nx) {
-         return null;
-      }
       if (JSONUtil.isRoot(jsonPath)) {
+         if (nx) {
+            return null;
+         }
          // Updating the root node is not allowed by jsonpath
          // replacing the whole doc here
          entryView.set(new JsonDocBucket(value));
