@@ -66,7 +66,7 @@ public class JsonDocGetFunction
          rpp.indentObjectsWith(ind);
 
          var rootNode = mapper.readTree(new String(doc, StandardCharsets.UTF_8));
-         var jpCtx = JsonPath.using(JSONUtil.configList).parse(rootNode);
+         var jpCtx = JsonPath.using(JSONUtil.configForGet).parse(rootNode);
          // If no path provided return root in legacy format
          if (paths == null || paths.size() == 0) {
             String resp = mapper.writer(rpp).writeValueAsString(rootNode);
@@ -100,7 +100,7 @@ public class JsonDocGetFunction
             var jsonPathStr = new String(jsonPath, StandardCharsets.UTF_8);
             // Result should contain original paths as keys
             var pathStr = new String(path, StandardCharsets.UTF_8);
-            ArrayNode nodeList = jpCtx.read(jsonPathStr);
+            ArrayNode nodeList = (ArrayNode)jpCtx.read(jsonPathStr);
             // If legacy return just the first one
             if (isLegacy) {
                result.set(pathStr, mapper.valueToTree(nodeList.get(0)));
@@ -164,11 +164,15 @@ class RespPrettyPrinter extends DefaultPrettyPrinter {
 
    public RespPrettyPrinter(String objectFieldValueSeparator) {
       super();
+      super._arrayEmptySeparator = "";
+      super._objectEmptySeparator = "";
       ofvs = ":" + objectFieldValueSeparator;
    }
 
    public RespPrettyPrinter(RespPrettyPrinter base) {
       super(base);
+      super._arrayEmptySeparator = "";
+      super._objectEmptySeparator = "";
       this.ofvs = base.ofvs;
    }
 

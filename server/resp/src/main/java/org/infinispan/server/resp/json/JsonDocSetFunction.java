@@ -73,7 +73,7 @@ public class JsonDocSetFunction
       }
       try {
          var rootObjectNode = (ObjectNode) JSONUtil.objectMapper.readTree(doc.value());
-         var jpCtx = JsonPath.using(JSONUtil.config).parse(rootObjectNode);
+         var jpCtx = JsonPath.using(JSONUtil.configForSet).parse(rootObjectNode);
          var pathStr = new String(jsonPath, StandardCharsets.UTF_8);
          JsonNode node = jpCtx.read(pathStr);
          if (node.isNull() && xx || !node.isNull() && nx) {

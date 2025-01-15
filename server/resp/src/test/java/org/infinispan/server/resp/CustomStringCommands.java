@@ -36,6 +36,9 @@ public interface CustomStringCommands extends Commands {
    @Command("JSON.SET :key :path :value")
    String jsonSet(@Param("key") String key, @Param("path") String path, @Param("value") String value);
 
+   @Command("JSON.GET :key")
+   String jsonGet(@Param("key") String key);
+
    @Command("JSON.GET :key :path")
    String jsonGet(@Param("key") String key, @Param("path") String path);
 

@@ -10,15 +10,14 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.Option;
 
 public class JSONUtil {
-   // JSONPath config that always return a list as a read result. Useful with jsonpath wildcards
-   public static final Configuration configList = Configuration.builder().options(Option.DEFAULT_PATH_LEAF_TO_NULL)
-         .options(Option.ALWAYS_RETURN_LIST)
+   // JSONPath config that returns null instead of failing for missing leaf. Used to set new leaf
+   public static final Configuration configForSet = Configuration.builder().options(Option.DEFAULT_PATH_LEAF_TO_NULL)
          .jsonProvider(new com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider())
          .mappingProvider(new com.jayway.jsonpath.spi.mapper.JacksonMappingProvider())
          .build();
 
-   // JSONPath config that returns Node as a read result. Useful to check if a node exists.
-   public static final Configuration config = Configuration.builder().options(Option.DEFAULT_PATH_LEAF_TO_NULL)
+   // JSONPath config that returns list as result. Useful for get multipath
+   public static final Configuration configForGet = Configuration.builder().options(Option.ALWAYS_RETURN_LIST)
          .jsonProvider(new com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider())
          .mappingProvider(new com.jayway.jsonpath.spi.mapper.JacksonMappingProvider())
          .build();
@@ -54,13 +53,20 @@ public class JSONUtil {
     */
    public static byte[] toJsonPath(byte[] path) {
       if (!isJsonPath(path)) {
-         // For '.' return json root '$'
-         if (path.length == 1 && path[0] == '.') {
-            return new byte[] { '$' };
+         if (path.length >= 1 && path[0] == '.') {
+            if (path.length == 1) {
+               // For '.' return json root '$'
+               return new byte[] { '$' };
+            }
+            // Just append $ to the beginning
+            byte[] result = new byte[(path.length + 1)];
+            result[0] = '$';
+            System.arraycopy(path, 0, result, 1, path.length);
+            return result;
          }
          // append $. to the beginning
          // Using "$." so wrong legacy path like "" and " " will fail
-         byte[] result = new byte[(path != null ? path.length + 2 : 2)];
+         byte[] result = new byte[(path.length + 2)];
          result[0] = '$';
          result[1] = '.';
          System.arraycopy(path, 0, result, 2, path.length);
