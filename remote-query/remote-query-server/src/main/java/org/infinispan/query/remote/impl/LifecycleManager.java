@@ -30,7 +30,6 @@ import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.impl.EntityLoaderFactory;
 import org.infinispan.query.remote.ProtobufMetadataManager;
-import org.infinispan.query.remote.client.impl.GlobalContextInitializerImpl;
 import org.infinispan.query.remote.impl.persistence.PersistenceContextInitializerImpl;
 import org.infinispan.query.stats.impl.LocalIndexStatistics;
 import org.infinispan.registry.InternalCacheRegistry;
@@ -58,7 +57,7 @@ public final class LifecycleManager implements ModuleLifecycle {
       SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
       ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
       ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.GLOBAL, org.infinispan.query.remote.client.impl.GlobalContextInitializerImpl.INSTANCE);
-      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.GLOBAL, new GlobalContextInitializerImpl());
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.GLOBAL, org.infinispan.query.remote.impl.GlobalContextInitializerImpl.INSTANCE);
 
       initProtobufMetadataManager(bcr);
    }
