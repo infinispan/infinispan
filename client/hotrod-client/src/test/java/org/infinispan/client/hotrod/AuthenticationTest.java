@@ -13,12 +13,15 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.security.simple.SimpleSaslAuthenticator;
 import org.infinispan.server.core.test.ServerTestingUtil;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.TestCallbackHandler;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.SkipException;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -27,15 +30,40 @@ import org.testng.annotations.Test;
  */
 @Test(testName = "client.hotrod.AuthenticationTest", groups = "functional")
 public class AuthenticationTest extends AbstractAuthenticationTest {
+   private CacheMode cacheMode;
+
+   public AuthenticationTest cacheMode(CacheMode cacheMode) {
+      this.cacheMode = cacheMode;
+      return this;
+   }
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
+      org.infinispan.configuration.cache.ConfigurationBuilder builder = hotRodCacheConfiguration();
+      builder.clustering().cacheMode(cacheMode);
+      if (cacheMode.isClustered()) {
+         cacheManager = TestCacheManagerFactory.createClusteredCacheManager(builder);
+      } else {
+         cacheManager = TestCacheManagerFactory.createCacheManager(builder);
+      }
       cacheManager.getCache();
 
       hotrodServer = initServer(Collections.emptyMap(), 0);
 
       return cacheManager;
+   }
+
+   @Factory
+   public Object[] factory() {
+      return new Object[]{
+            new AuthenticationTest().cacheMode(CacheMode.LOCAL),
+            new AuthenticationTest().cacheMode(CacheMode.DIST_SYNC),
+      };
+   }
+
+   @Override
+   protected String parameters() {
+      return "[" + cacheMode + "]";
    }
 
    @Override
@@ -57,7 +85,7 @@ public class AuthenticationTest extends AbstractAuthenticationTest {
 
    @Test
    public void testAuthenticationViaURI() {
-      remoteCacheManager = new RemoteCacheManager("hotrod://user:password@127.0.0.1:" + hotrodServer.getPort() + "?auth_realm=realm&socket_timeout=3000&max_retries=3&connection_pool.max_active=1&sasl_mechanism=CRAM-MD5&default_executor_factory.threadname_prefix=" + TestResourceTracker.getCurrentTestShortName() + "-Client-Async");
+      remoteCacheManager = new RemoteCacheManager("hotrod://user:password@localhost:" + hotrodServer.getPort() + "?auth_realm=realm&socket_timeout=3000&max_retries=3&connection_pool.max_active=1&sasl_mechanism=CRAM-MD5&default_executor_factory.threadname_prefix=" + TestResourceTracker.getCurrentTestShortName() + "-Client-Async");
       RemoteCache<String, String> defaultRemote = remoteCacheManager.getCache();
       defaultRemote.put("a", "a");
       assertEquals("a", defaultRemote.get("a"));
@@ -87,6 +115,10 @@ public class AuthenticationTest extends AbstractAuthenticationTest {
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN006017:.*")
    public void testAuthenticationFailNoAuth() {
+      if (cacheMode.isClustered()) {
+         // Test doesn't work with clustered as it registers a HotRodServer on the same cacheManager
+         throw new SkipException("Test only supports local mode");
+      }
       HotRodServer noAnonymousServer = initServer(Collections.singletonMap(Sasl.POLICY_NOANONYMOUS, "true"), 1);
       try {
          ConfigurationBuilder clientBuilder = newClientBuilder(1);
