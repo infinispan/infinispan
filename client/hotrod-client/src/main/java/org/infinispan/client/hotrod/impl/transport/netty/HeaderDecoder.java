@@ -129,7 +129,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
    }
 
    public long registerOperation(HotRodOperation<?> operation) {
-      log.tracef("Decoder is %s Channel is %s", this, channel);
+      log.tracef("Decoder is %s Channel is %s for operation %s", this, channel, operation);
       assert channel.eventLoop().inEventLoop();
 
       long messageId = messageOffset++;

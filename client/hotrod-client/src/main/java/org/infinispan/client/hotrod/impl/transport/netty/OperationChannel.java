@@ -239,6 +239,13 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
 
    public List<HotRodOperation<?>> close() {
       acceptingRequests = false;
+      CompletableFuture<Void> future = attemptedConnect.getAndSet(null);
+      if (future != null) {
+         // If we closed a channel before we even established the connection fully just finish normally.
+         // This is most likely due to interruption or connecting to a server that returned a topology without
+         // itself in the list (which can happen with DNS hostnames, proxy hosts, etc.).
+         future.complete(null);
+      }
       if (channel != null) {
          channel.close();
       }
