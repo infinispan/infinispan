@@ -36,7 +36,6 @@ public class LifecycleCallbacks implements ModuleLifecycle {
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration gc) {
       SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
       ctxRegistry.addContextInitializer(MarshallerType.PERSISTENCE, new org.infinispan.server.logging.events.PersistenceContextInitializerImpl());
-      ctxRegistry.addContextInitializer(MarshallerType.PERSISTENCE, new org.infinispan.server.state.PersistenceContextInitializerImpl());
       ctxRegistry.addContextInitializer(MarshallerType.GLOBAL, new GlobalContextInitializerImpl());
 
       EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);

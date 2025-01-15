@@ -16,7 +16,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.CacheRoleImpl;
-import org.infinispan.security.impl.SubjectAdapter;
+import org.infinispan.marshall.protostream.impl.adapters.SubjectAdapter;
 import org.infinispan.security.mappers.ClusterRoleMapper;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.events.EventLogCategory;

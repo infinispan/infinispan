@@ -1,20 +1,17 @@
-package org.infinispan.tasks.impl;
+package org.infinispan.tasks.api.impl;
 
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.annotations.ProtoSyntax;
+import org.infinispan.tasks.TaskContext;
 
-/**
- * @author Ryan Emerson
- * @since 16.0
- */
 @ProtoSchema(
       allowNullFields = true,
-      dependsOn = org.infinispan.protostream.types.java.CommonTypes.class,
-      includeClasses = TaskExecutionImpl.class,
-      schemaFileName = "global.tasks.manager.proto",
+      dependsOn = org.infinispan.marshall.persistence.impl.PersistenceContextInitializer.class,
+      includeClasses = TaskContext.class,
+      schemaFileName = "global.tasks.api.proto",
       schemaFilePath = "proto/generated",
-      schemaPackageName = "org.infinispan.global.tasks.manager",
+      schemaPackageName = "org.infinispan.global.tasks.api",
       service = false,
       syntax = ProtoSyntax.PROTO3
 )

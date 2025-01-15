@@ -1,4 +1,4 @@
-package org.infinispan.security.impl;
+package org.infinispan.marshall.protostream.impl.adapters;
 
 import java.security.Principal;
 import java.util.Set;
