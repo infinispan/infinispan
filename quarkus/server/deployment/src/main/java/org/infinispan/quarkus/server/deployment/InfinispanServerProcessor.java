@@ -132,6 +132,7 @@ class InfinispanServerProcessor {
             "proto/generated/global.scripting.proto",
             "proto/generated/global.server.core.proto",
             "proto/generated/global.server.hotrod.proto",
+            "proto/generated/global.server.rest.proto",
             "proto/generated/global.server.runtime.proto",
             "proto/generated/global.tasks.manager.proto",
 
