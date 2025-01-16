@@ -49,4 +49,12 @@
                           new-connection-sql="SELECT 1" />
       <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
    </data-source>
+   <data-source name="db2" jndi-name="jdbc/db2" statistics="true">
+      <connection-factory driver="${org.infinispan.server.test.database.db2.driver:com.ibm.db2.jcc.DB2Driver}"
+                          username="${org.infinispan.server.test.database.db2.username}"
+                          password="${org.infinispan.server.test.database.db2.password}"
+                          url="${org.infinispan.server.test.database.db2.jdbcUrl}"
+                          new-connection-sql="VALUES 1" />
+      <connection-pool max-size="10" background-validation="1000" idle-removal="1" initial-size="1" leak-detection="10000"/>
+   </data-source>
 </data-sources>
