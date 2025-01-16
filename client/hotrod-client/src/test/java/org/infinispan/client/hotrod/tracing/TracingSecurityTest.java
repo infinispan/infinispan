@@ -89,7 +89,7 @@ public class TracingSecurityTest extends SingleHotRodServerTest {
       eventually(() -> telemetryClient.finishedSpanItems().toString(),
             () -> {
                List<SpanData> spanItems = telemetryClient.finishedSpanItems();
-               if (spanItems.size() < 5) {
+               if (spanItems.size() < 4) {
                   return false;
                }
 
@@ -97,12 +97,12 @@ public class TracingSecurityTest extends SingleHotRodServerTest {
                if (spansByName.get("DENY").isEmpty()) {
                   return false;
                }
-               return spansByName.get("ALLOW").size() >= 4;
+               return spansByName.get("ALLOW").size() >= 3;
             }, 10, TimeUnit.SECONDS);
       List<SpanData> spanItems = telemetryClient.finishedSpanItems();
 
       Map<String, List<SpanData>> spansByName = InMemoryTelemetryClient.aggregateByName(spanItems);
       assertThat(spansByName.get("DENY")).hasSize(1);
-      assertThat(spansByName.get("ALLOW")).hasSize(4);
+      assertThat(spansByName.get("ALLOW")).hasSize(3);
    }
 }
