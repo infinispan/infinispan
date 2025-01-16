@@ -43,8 +43,12 @@ public class ManagedConnectionOperations {
    @ParameterizedTest
    @ArgumentsSource(Common.DatabaseProvider.class)
    public void testTwoCachesSameCacheStore(Database database) {
-      RemoteCache<String, String> cache1 = SERVERS.hotrod().withServerConfiguration(createConfigurationBuilder(database)).withQualifier("1").create();
-      RemoteCache<String, String> cache2 = SERVERS.hotrod().withServerConfiguration(createConfigurationBuilder(database)).withQualifier("2").create();
+      RemoteCache<String, String> cache1 = SERVERS.hotrod()
+              .withClientConfiguration(database.getHotrodClientProperties())
+              .withServerConfiguration(createConfigurationBuilder(database)).withQualifier("1").create();
+      RemoteCache<String, String> cache2 = SERVERS.hotrod()
+              .withClientConfiguration(database.getHotrodClientProperties())
+              .withServerConfiguration(createConfigurationBuilder(database)).withQualifier("2").create();
       cache1.put("k1", "v1");
       String firstK1 = cache1.get("k1");
       assertEquals("v1", firstK1);
@@ -60,7 +64,9 @@ public class ManagedConnectionOperations {
    @ParameterizedTest
    @ArgumentsSource(Common.DatabaseProvider.class)
    public void testPutGetRemove(Database database) {
-      RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(createConfigurationBuilder(database)).create();
+      RemoteCache<String, String> cache = SERVERS.hotrod()
+              .withClientConfiguration(database.getHotrodClientProperties())
+              .withServerConfiguration(createConfigurationBuilder(database)).create();
       cache.put("k1", "v1");
       cache.put("k2", "v2");
 

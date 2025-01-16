@@ -78,6 +78,7 @@ jobs:
         dbs:
           - mssql
           - oracle
+          - db2
     steps:
     - name: Set run_id based on event type
       id: run_id
