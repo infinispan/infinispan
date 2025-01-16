@@ -112,15 +112,7 @@ jobs:
 
       - name: Archive commit sha PR
         if: >
-          (success() || failure()) &&
-          needs.get-info.outputs.source-event == 'pull_request'
-        run: |
-           echo -n ${{ needs.get-info.outputs.source-head-sha }} > github-sha.txt
-
-      - name: Archive commit sha push
-        if: >
-          (success() || failure()) &&
-          needs.get-info.outputs.source-event  == 'push'
+          (success() || failure())
         run: |
            echo -n ${{ needs.get-info.outputs.source-head-sha }} > github-sha.txt
 
@@ -130,12 +122,12 @@ jobs:
         with:
           name: surefire-test-report
           path: |
-            test_dir/infinispan/**/surefire-reports/TEST-*.xml
+            test_dir/infinispan/**/target/*-reports*/**/TEST-*.xml
+            !test_dir/infinispan/**/*-reports*/**/TEST-*FLAKY.xml
+            !test_dir/infinispan/**/*-reports*/TEST-*RocksDB*.xml
             test_dir/infinispan/**/*.dump*
             test_dir/infinispan/**/hs_err_*
             github-sha.txt
-            !test_dir/infinispan/**/*-reports*/**/TEST-*FLAKY.xml
-            !test_dir/infinispan/**/*-reports*/TEST-*RocksDB*.xml
 
 # Create artifact with branch name and surefile flaky test report
       - name: Check flaky report existence
@@ -237,18 +229,24 @@ jobs:
             -Dorg.infinispan.test.database.types=${{ matrix.dbs }} \
             -Dorg.infinispan.test.server.dir=/tmp/infinispan-server-${{ steps.dis.outputs.server-version }}
 
+      - name: Archive commit sha PR
+        if: >
+          (success() || failure())
+        run: |
+           echo -n ${{ needs.get-info.outputs.source-head-sha }} > github-sha.txt
+
       - name: Archive surefire test report
         if: (success() || failure())
         uses: actions/upload-artifact@v4
         with:
           name: surefire-test-report-${{ matrix.dbs }}
           path: |
-            test_dir/infinispan/**/failsafe-reports/TEST-*.xml
+            test_dir/infinispan/**/target/*-reports*/**/TEST-*.xml
+            !test_dir/infinispan/**/target/*-reports*/**/TEST-*FLAKY.xml
             test_dir/infinispan/**/*.dump*
             test_dir/infinispan/**/hs_err_*
             test_dir/infinispan/**/failsafe-summary.xml
             github-sha.txt
-            !test_dir/infinispan/**/target/*-reports*/**/TEST-*FLAKY.xml
       - name: set-commit-status-conclusion
         if: success()
         uses: myrotvorets/set-commit-status-action@v2.0.1
