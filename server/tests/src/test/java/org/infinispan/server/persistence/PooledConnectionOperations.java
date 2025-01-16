@@ -28,8 +28,12 @@ public class PooledConnectionOperations {
    @ArgumentsSource(Common.DatabaseProvider.class)
    public void testTwoCachesSameCacheStore(Database database) {
       JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.DIST_SYNC, database, false, false);
-      RemoteCache<String, String> cache1 = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).withQualifier("1").create();
-      RemoteCache<String, String> cache2 = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).withQualifier("2").create();
+      RemoteCache<String, String> cache1 = SERVERS.hotrod()
+              .withClientConfiguration(database.getHotrodClientProperties())
+              .withServerConfiguration(jdbcUtil.getConfigurationBuilder()).withQualifier("1").create();
+      RemoteCache<String, String> cache2 = SERVERS.hotrod()
+              .withClientConfiguration(database.getHotrodClientProperties())
+              .withServerConfiguration(jdbcUtil.getConfigurationBuilder()).withQualifier("2").create();
 
       cache1.put("k1", "v1");
       String firstK1 = cache1.get("k1");
@@ -48,7 +52,9 @@ public class PooledConnectionOperations {
    @ArgumentsSource(Common.DatabaseProvider.class)
    public void testPutGetRemove(Database database) {
       JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.DIST_SYNC, database, false, false);
-      RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
+      RemoteCache<String, String> cache = SERVERS.hotrod()
+              .withClientConfiguration(database.getHotrodClientProperties())
+              .withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
 
       cache.put("k1", "v1");
       cache.put("k2", "v2");
@@ -73,7 +79,9 @@ public class PooledConnectionOperations {
    public void testPreload(Database database) throws Exception {
       JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, false, true)
               .setLockingConfigurations();
-      RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
+      RemoteCache<String, String> cache = SERVERS.hotrod()
+              .withClientConfiguration(database.getHotrodClientProperties())
+              .withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
       cache.put("k1", "v1");
       cache.put("k2", "v2");
 
@@ -93,7 +101,9 @@ public class PooledConnectionOperations {
       JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, true, false)
               .setEviction()
               .setLockingConfigurations();
-      RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
+      RemoteCache<String, String> cache = SERVERS.hotrod()
+              .withClientConfiguration(database.getHotrodClientProperties())
+              .withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
       cache.put("k1", "v1");
       cache.put("k2", "v2");
       cache.put("k3", "v3");

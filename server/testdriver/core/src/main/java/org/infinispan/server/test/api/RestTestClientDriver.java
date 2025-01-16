@@ -96,6 +96,7 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
                   throw new RuntimeException("Could not obtain rest client = " + response.status());
             }
          } else {
+            testClient.registerRestCache(name, restClient);
             // If the request succeeded without authn but we were expecting to authenticate, it's an error
             if (restClient.getConfiguration().security().authentication().enabled() && !response.usedAuthentication()) {
                throw new SecurityException("Authentication expected but anonymous access succeeded");
