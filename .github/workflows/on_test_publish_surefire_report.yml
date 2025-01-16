@@ -70,3 +70,41 @@ jobs:
                 description: Fail. ${{ steps.test-number.outputs.test_count }} test ran, minimum required is ${{ steps.test-number.outputs.test_min }}
                 targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
+   db:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dbs:
+          - mssql
+          - oracle
+          - db2
+    steps:
+    - name: Set run_id based on event type
+      id: run_id
+      run: |
+         echo "runid=${{ github.event.workflow_run.id }}" >> $GITHUB_OUTPUT
+
+    - name: Download a Build Artifact
+      uses: actions/download-artifact@v4.1.8
+      with:
+        name: surefire-test-report-${{ matrix.dbs }}
+        github-token: ${{ github.token }}
+        run-id: ${{ steps.run_id.outputs.runid }}
+
+    - name: Get github sha
+      id: github_sha
+      uses: juliangruber/read-file-action@v1
+      with:
+        path: ./github-sha.txt
+
+    - name: Publish Test Report
+      if: success() || failure()
+      uses: ScaCap/action-surefire-report@v1.9.0
+      with:
+        check_name: Test Report Result ${{ matrix.dbs }}
+        commit: ${{ steps.github_sha.outputs.content }}
+        ignore_flaky_tests: true
+        report_paths: |
+          **/*-reports*/**/TEST-*.xml
