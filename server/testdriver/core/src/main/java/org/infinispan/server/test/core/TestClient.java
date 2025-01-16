@@ -7,7 +7,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -46,6 +48,8 @@ public class TestClient {
    protected InfinispanServerTestConfiguration configuration;
    protected TestServer testServer;
    protected List<AutoCloseable> resources;
+   protected Map<String, RemoteCacheManager> hotrodCacheMap;
+   protected Map<String, RestClient> restCacheMap;
    private String methodName;
 
    public TestClient(TestServer testServer) {
@@ -55,6 +59,14 @@ public class TestClient {
    public <T extends AutoCloseable> T registerResource(T resource) {
       resources.add(resource);
       return resource;
+   }
+
+   public void registerHotRodCache(String name, RemoteCacheManager remoteCacheManager) {
+      hotrodCacheMap.put(name, remoteCacheManager);
+   }
+
+   public void registerRestCache(String name, RestClient restClient) {
+      restCacheMap.put(name, restClient);
    }
 
    public InfinispanServerDriver getServerDriver() {
@@ -99,6 +111,14 @@ public class TestClient {
    }
 
    public void clearResources() {
+      if (hotrodCacheMap != null) {
+         hotrodCacheMap.forEach( (n, rcm) -> rcm.administration().removeCache(n));
+         hotrodCacheMap.clear();
+      }
+      if (restCacheMap != null) {
+         restCacheMap.forEach( (n, rc) -> rc.cache(n).delete());
+         restCacheMap.clear();
+      }
       if (resources != null) {
          ExecutorService executor = Executors.newSingleThreadExecutor();
          try {
@@ -120,6 +140,8 @@ public class TestClient {
 
    public void initResources() {
       resources = new ArrayList<>();
+      hotrodCacheMap = new HashMap<>();
+      restCacheMap = new HashMap<>();
    }
 
    public String addScript(RemoteCacheManager remoteCacheManager, String script) {

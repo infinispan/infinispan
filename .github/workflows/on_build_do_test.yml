@@ -181,6 +181,7 @@ jobs:
         dbs:
           - mssql
           - oracle
+          - db2
     steps:
       - name: set-commit-status-pending
         uses: myrotvorets/set-commit-status-action@v2.0.1
