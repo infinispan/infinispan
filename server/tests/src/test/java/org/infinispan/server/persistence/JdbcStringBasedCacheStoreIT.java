@@ -39,7 +39,9 @@ public class JdbcStringBasedCacheStoreIT {
     public void testFailover(Database database) throws Exception {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, false, true)
                 .setLockingConfigurations();
-        RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
+        RemoteCache<String, String> cache = SERVERS.hotrod()
+                .withClientConfiguration(database.getHotrodClientProperties())
+                .withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
         try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration())) {
             cache.put("k1", "v1");
             cache.put("k2", "v2");
@@ -68,7 +70,9 @@ public class JdbcStringBasedCacheStoreIT {
     public void testPreload(Database database) throws Exception {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, false, true)
                 .setLockingConfigurations();
-        RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
+        RemoteCache<String, String> cache = SERVERS.hotrod()
+                .withClientConfiguration(database.getHotrodClientProperties())
+                .withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
         try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration())) {
             cache.clear();
             cache.put("k1", "v1");
@@ -96,7 +100,9 @@ public class JdbcStringBasedCacheStoreIT {
     public void testDefaultTwoWayKey2StringMapper(Database database) {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, false, true)
                 .setLockingConfigurations();
-        RemoteCache<Object, Object> cache = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
+        RemoteCache<Object, Object> cache = SERVERS.hotrod()
+                .withClientConfiguration(database.getHotrodClientProperties())
+                .withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
         try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration())) {
             Double doubleKey = 10.0;
             Double doubleValue = 20.0;
@@ -115,7 +121,9 @@ public class JdbcStringBasedCacheStoreIT {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, true, false)
               .setEviction()
               .setLockingConfigurations();
-        RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
+        RemoteCache<String, String> cache = SERVERS.hotrod()
+                .withClientConfiguration(database.getHotrodClientProperties())
+                .withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
         try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration())) {
             cache.put("k1", "v1");
             cache.put("k2", "v2");
@@ -150,7 +158,10 @@ public class JdbcStringBasedCacheStoreIT {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, true, false)
               .setEviction()
               .setLockingConfigurations();
-        RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
+
+        RemoteCache<String, String> cache = SERVERS.hotrod()
+                .withClientConfiguration(database.getHotrodClientProperties())
+                .withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
         try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration())) {
             cache.put("k1", "v1");
             cache.put("k2", "v2");
@@ -181,7 +192,9 @@ public class JdbcStringBasedCacheStoreIT {
         configBuilder.expiration()
               .lifespan(1)
               .wakeUpInterval(10);
-        RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(configBuilder).create();
+        RemoteCache<String, String> cache = SERVERS.hotrod()
+                .withClientConfiguration(database.getHotrodClientProperties())
+                .withServerConfiguration(configBuilder).create();
         cache.put("Key", "Value");
         Eventually.eventually(cache::isEmpty);
         try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration())) {

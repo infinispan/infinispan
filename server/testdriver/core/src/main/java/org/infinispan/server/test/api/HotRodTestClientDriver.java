@@ -10,6 +10,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
 
+import java.util.Properties;
+
 /**
  *  Hot Rod operations for the testing framework
  *
@@ -56,6 +58,11 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
     */
    public HotRodTestClientDriver withClientConfiguration(ClientIntelligence clientIntelligence) {
       clientConfiguration.clientIntelligence(clientIntelligence);
+      return this;
+   }
+
+   public HotRodTestClientDriver withClientConfiguration(Properties properties) {
+      clientConfiguration.withProperties(properties);
       return this;
    }
 
@@ -120,13 +127,16 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
          remoteCacheManager = createRemoteCacheManager();
       }
       String name = testClient.getMethodName(qualifiers);
+      RemoteCache<K, V> remoteCache;
       if (serverConfiguration != null) {
-         return remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, serverConfiguration);
+         remoteCache = remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, serverConfiguration);
       } else if (mode != null) {
-         return remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, "org.infinispan." + mode.name());
+         remoteCache = remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, "org.infinispan." + mode.name());
       } else {
-         return remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, "org.infinispan." + CacheMode.DIST_SYNC.name());
+         remoteCache = remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, "org.infinispan." + CacheMode.DIST_SYNC.name());
       }
+      testClient.registerHotRodCache(name, remoteCacheManager);
+      return remoteCache;
    }
 
    public RemoteCacheManager createRemoteCacheManager() {

@@ -60,6 +60,15 @@ public abstract class Database {
       return properties.getProperty("database.test.sql-file");
    }
 
+   public Properties getHotrodClientProperties() {
+      Properties clientProperties = new Properties();
+      properties.forEach((k,v) -> {
+         if (k.toString().startsWith("infinispan.client.hotrod"))
+            clientProperties.put(k, v);
+      });
+      return clientProperties;
+   }
+
    public static Database fromProperties(String type, Properties properties) {
       String mode = properties.getProperty("database.mode");
       switch (mode) {
