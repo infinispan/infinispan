@@ -81,9 +81,13 @@ public class JsonDocGetFunction
 
          // If only 1 path provided, return all the matching nodes as array
          if (jsonPaths.size() == 1) {
-            ArrayNode nodeList = jpCtx.read(new String(jsonPaths.get(0), StandardCharsets.UTF_8));
+            String pathStr = new String(jsonPaths.get(0), StandardCharsets.UTF_8);
+            ArrayNode nodeList = jpCtx.read(pathStr);
             // If legacy return just the first one
             if (isLegacy) {
+               if (nodeList.size()==0) {
+                  throw new RuntimeException("Path '"+pathStr+"' does not exists");
+               }
                String resp = mapper.writer(rpp).writeValueAsString(nodeList.get(0));
                return resp;
             }
@@ -103,6 +107,9 @@ public class JsonDocGetFunction
             ArrayNode nodeList = (ArrayNode)jpCtx.read(jsonPathStr);
             // If legacy return just the first one
             if (isLegacy) {
+               if (nodeList.size()==0) {
+                  throw new RuntimeException("Path '"+jsonPathStr+"' does not exists");
+               }
                result.set(pathStr, mapper.valueToTree(nodeList.get(0)));
             } else {
                result.set(pathStr, mapper.valueToTree(nodeList));

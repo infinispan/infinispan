@@ -25,6 +25,7 @@ public class JSONUtil {
 
    // JSONPath config that returns list as result. Useful for get multipath
    public static final Configuration configForGet = Configuration.builder().options(Option.ALWAYS_RETURN_LIST)
+         .options(Option.SUPPRESS_EXCEPTIONS)
          .jsonProvider(new com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider())
          .mappingProvider(new com.jayway.jsonpath.spi.mapper.JacksonMappingProvider())
          .build();

@@ -398,6 +398,20 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       JsonPath jp5 = new JsonPath("$.key1");
       result = redis.jsonGet(k(), jp4, jp5);
       assertThat(compareJSONGet(result.get(0), jv, jp4, jp5)).isEqualTo(true);
+
+      // Missing key
+      jp5 = new JsonPath("$.key5");
+      result = redis.jsonGet(k(), jp5);
+      assertThat(result).hasSize(1);
+      assertThat(result.get(0).isJsonArray()).isTrue();
+      assertThat(result.get(0).asJsonArray().asList()).hasSize(0);
+      assertThat(compareJSONGet(result.get(0), jv, jp5)).isEqualTo(true);
+
+      // Multiple path one missing key
+      jp5 = new JsonPath("$.key5");
+      result = redis.jsonGet(k(), jp5, jp2);
+      assertThat(result).hasSize(1);
+      assertThat(compareJSONGet(result.get(0), jv, jp5, jp2)).isEqualTo(true);
    }
 
    @Test
@@ -450,7 +464,6 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       String p8 = ".key5";
       JsonPath jp6 = new JsonPath(p6);
       JsonPath jp7 = new JsonPath(p7);
-      JsonPath jp8 = new JsonPath(p8);
 
       result = new DefaultJsonParser().createJsonValue(command.jsonGet(k(), p1, p2, p6));
       assertThat(compareJSONGet(result, jv, jp1, jp2, jp6)).isEqualTo(true);
