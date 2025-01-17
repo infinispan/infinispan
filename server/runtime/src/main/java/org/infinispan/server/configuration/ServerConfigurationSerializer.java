@@ -134,7 +134,7 @@ public class ServerConfigurationSerializer
                   writeRealm(writer, (PropertiesRealmConfiguration) provider);
                } else if (provider instanceof TokenRealmConfiguration) {
                   writeRealm(writer, (TokenRealmConfiguration) provider);
-               } else if (provider instanceof TrustStoreConfiguration) {
+               } else if (provider instanceof TrustStoreRealmConfiguration) {
                   writeRealm(writer, (TrustStoreRealmConfiguration) provider);
                } else if (provider instanceof DistributedRealmConfiguration) {
                   writeRealm(writer, (DistributedRealmConfiguration) provider);

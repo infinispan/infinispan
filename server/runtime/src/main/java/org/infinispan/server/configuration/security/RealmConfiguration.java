@@ -60,7 +60,7 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
    RealmConfiguration(AttributeSet attributes,
                       ServerIdentitiesConfiguration serverIdentitiesConfiguration,
                       List<RealmProvider> realmConfigurations) {
-      super(Element.SECURITY_REALM, attributes);
+      super(Element.SECURITY_REALM, attributes, realmConfigurations.stream().map(p -> (ConfigurationElement)p).toArray(ConfigurationElement[]::new));
       this.serverIdentitiesConfiguration = serverIdentitiesConfiguration;
       this.realmProviders = realmConfigurations;
    }

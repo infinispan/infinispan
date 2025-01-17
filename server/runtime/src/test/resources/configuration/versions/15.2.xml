@@ -111,7 +111,7 @@
                      <credential-reference store="credentials" alias="oauth2"/>
                   </oauth2-introspection>
                </token-realm>
-               <truststore-realm />
+               <truststore-realm/>
             </security-realm>
             <security-realm name="basic">
                <properties-realm groups-attribute="Roles">
