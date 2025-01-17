@@ -169,6 +169,14 @@ public class ContainerDatabase extends Database {
       }
 
       @Override
+      protected void waitUntilContainerStarted() {
+         // Override JdbcContainerAdapter#waitUntulContainerStarted to ensure that any additional waitStrategies defined,
+         // e.g. LogMessageWaitStrategy, are respected
+         getWaitStrategy().waitUntilReady(this);
+         super.waitUntilContainerStarted();
+      }
+
+      @Override
       public String getJdbcUrl() {
          return database.jdbcUrl();
       }
