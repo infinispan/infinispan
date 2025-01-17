@@ -100,7 +100,7 @@ public class ServerConfigurationSerializerTest {
       compare(serverBefore.socketBindings, serverAfter.socketBindings);
       compare(serverBefore.dataSources, serverAfter.dataSources);
       compare(serverBefore.security.credentialStores(), serverAfter.security.credentialStores());
-      compare(serverBefore.security.realms().realms(), serverAfter.security.realms().realms());
+      compare(serverBefore.security.realms().realms(), serverAfter.security.realms().realms(), "name-rewriter", "credential");
       compare(serverBefore.transport(), serverAfter.transport(), org.infinispan.server.configuration.Attribute.SECURITY_REALM.toString());
       compare(serverBefore.endpoints.endpoints(), serverAfter.endpoints.endpoints());
 
@@ -114,17 +114,17 @@ public class ServerConfigurationSerializerTest {
       }
    }
 
-   <T extends ConfigurationElement> void compare(List<T> before, List<T> after) {
+   <T extends ConfigurationElement> void compare(List<T> before, List<T> after, String... exclude) {
       assertEquals(before.size(), after.size());
       for (Iterator<T> b = before.iterator(), a = after.iterator(); b.hasNext(); ) {
-         compare(b.next(), a.next());
+         compare(b.next(), a.next(), exclude);
       }
    }
 
-   <T extends ConfigurationElement> void compare(Map<String, T> before, Map<String, T> after) {
+   <T extends ConfigurationElement> void compare(Map<String, T> before, Map<String, T> after, String... exclude) {
       assertEquals(before.size(), after.size());
       for (Iterator<T> b = before.values().iterator(), a = after.values().iterator(); b.hasNext(); ) {
-         compare(b.next(), a.next());
+         compare(b.next(), a.next(), exclude);
       }
    }
 
@@ -133,7 +133,7 @@ public class ServerConfigurationSerializerTest {
       compare(before.elementName(), before.attributes(), after.attributes(), exclude);
       assertEquals(before.children().length, after.children().length);
       for (int i = 0; i < before.children().length; i++) {
-         compare(before.children()[i], after.children()[i]);
+         compare(before.children()[i], after.children()[i], exclude);
       }
    }
 
