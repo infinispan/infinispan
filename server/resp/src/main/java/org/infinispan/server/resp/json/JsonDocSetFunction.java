@@ -75,13 +75,23 @@ public class JsonDocSetFunction
          var rootObjectNode = (ObjectNode) JSONUtil.objectMapper.readTree(doc.value());
          var jpCtx = JsonPath.using(JSONUtil.configForSet).parse(rootObjectNode);
          var pathStr = new String(jsonPath, StandardCharsets.UTF_8);
-         JsonNode node = jpCtx.read(pathStr);
-         if (node.isNull() && xx || !node.isNull() && nx) {
+         JsonPath jpath = JsonPath.compile(pathStr);
+         JsonNode node = jpath.read(rootObjectNode, JSONUtil.configForSet); // jpCtx.read(pathStr);
+         if ((node == null || node.isNull()) && xx || node != null && !node.isNull() && nx) {
             return null;
          }
-         jpCtx.set(pathStr, newNode);
-         entryView.set(new JsonDocBucket(JSONUtil.objectMapper.writeValueAsBytes(rootObjectNode)));
-         return RespConstants.OK;
+         Object resObj;
+         if (jpath.isDefinite()) {
+            resObj = jpath.set(jpCtx.json(), newNode, JSONUtil.configForDefiniteSet);
+         } else {
+            resObj = jpath.set(jpCtx.json(), newNode, JSONUtil.configForSet);
+         }
+         if (resObj != null) {
+            entryView.set(new JsonDocBucket(JSONUtil.objectMapper.writeValueAsBytes(rootObjectNode)));
+            return RespConstants.OK;
+         } else {
+            return null;
+         }
       } catch (PathNotFoundException ex) {
          // mimicking redis. Not an error, do nothing and return null
          return null;
