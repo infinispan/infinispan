@@ -208,7 +208,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       JsonPath jpRoot = new JsonPath("$");
       JsonValue jvDoc = new DefaultJsonParser().createJsonValue(
             """
-                  {"r1": { "k1" : "v1", "k2":"v2"}, "r2": { "k1" : "v1", "k2": "v2"}, "r3": { "k2": "v2"}}"
+                  {"r1": { "k1" : "v1", "k2":"v2"}, "r2": { "k1" : "v1", "k2": "v2"}, "r3": { "k2": "v2"}}
                   """);
       assertThat(redis.jsonSet(key, jpRoot, jvDoc)).isEqualTo("OK");
 
