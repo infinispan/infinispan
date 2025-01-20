@@ -134,6 +134,7 @@ class InfinispanServerProcessor {
             "proto/generated/global.server.hotrod.proto",
             "proto/generated/global.server.rest.proto",
             "proto/generated/global.server.runtime.proto",
+            "proto/generated/global.tasks.api.proto",
             "proto/generated/global.tasks.manager.proto",
 
             "proto/generated/persistence.counters.proto",
