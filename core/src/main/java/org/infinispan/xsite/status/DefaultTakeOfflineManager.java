@@ -261,12 +261,16 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
 
       @Override
       public void siteOnline() {
+         // TODO, remove CLUSTER events with ISPN 16 or later (https://github.com/infinispan/infinispan/issues/13188)
          getEventLogger().info(EventLogCategory.CLUSTER, MESSAGES.siteOnline(siteName));
+         getEventLogger().info(EventLogCategory.CROSS_SITE, MESSAGES.siteOnline(siteName));
       }
 
       @Override
       public void siteOffline() {
+         // TODO, remove CLUSTER events with ISPN 16 or later (https://github.com/infinispan/infinispan/issues/13188)
          getEventLogger().info(EventLogCategory.CLUSTER, MESSAGES.siteOffline(siteName));
+         getEventLogger().info(EventLogCategory.CROSS_SITE, MESSAGES.siteOffline(siteName));
          log.debug("Touching all in memory entries as a site has gone offline");
          long currentTimeMillis = timeService.wallClockTime();
          dataContainer.forEachSegment((map, segment) -> map.touchAll(currentTimeMillis));
