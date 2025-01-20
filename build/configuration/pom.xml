@@ -148,7 +148,7 @@
       <version.infinispan.doclets>1.4.0.Final</version.infinispan.doclets>
       <version.infinispan.maven-plugins>1.0.8.Final</version.infinispan.maven-plugins>
       <version.insights>2.0.4</version.insights>
-      <version.io.agroal>2.3</version.io.agroal>
+      <version.io.agroal>2.4</version.io.agroal>
       <version.io.lettuce>6.3.2.RELEASE</version.io.lettuce>
       <version.vertx>4.5.11</version.vertx>
       <version.io.mashona>1.1.0</version.io.mashona>
@@ -206,7 +206,7 @@
       <version.latencyutils>2.0.3</version.latencyutils>
 
       <!-- These versions must be kept in sync with ${version.quarkus} -->
-      <version.quarkus>3.8.4</version.quarkus>
+      <version.quarkus>3.8.6</version.quarkus>
       <version.graalvm>23.1.5</version.graalvm>
       <version.jandex>3.2.3</version.jandex>
 
