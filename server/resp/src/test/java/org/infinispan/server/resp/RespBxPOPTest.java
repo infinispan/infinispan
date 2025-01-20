@@ -4,10 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
@@ -346,14 +348,21 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
       try {
          var cf = registerListener(() -> bxPopAsync(0, "key"));
          var cf2 = registerListener(() -> bxPopAsync(0, "key"));
-         fork(() -> redis1.lpush("key", "first"));
-         fork(() -> redis2.lpush("key", "second", "third"));
+
+         List<Future<?>> pushes = new ArrayList<>();
+         pushes.add(fork(() -> redis1.lpush("key", "first")));
+         pushes.add(fork(() -> redis2.lpush("key", "second", "third")));
          var res = cf.get(10, TimeUnit.SECONDS);
          var res2 = cf2.get(10, TimeUnit.SECONDS);
          assertThat(res.getKey()).isEqualTo("key");
          assertThat(res2.getKey()).isEqualTo("key");
+
+         for (Future<?> f : pushes) {
+            f.get(10, TimeUnit.SECONDS);
+         }
+
          var rest = redis1.lrange("key", 0, -1);
-         assertThat(rest.size()).isEqualTo(1);
+         assertThat(rest).hasSize(1);
          assertThat(Arrays.asList(res.getValue(), res2.getValue(), rest.get(0)))
                .containsExactlyInAnyOrder("first", "second", "third");
       } finally {
@@ -390,8 +399,11 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          var cf = registerListener(() -> bxPopAsync(10, "key"));
          var cf2 = registerListener(() -> bxPopAsync(10, "key"));
          var cf3 = registerListener(() -> bxPopAsync(10, "key"));
-         fork(() -> xPush(redis1, "key", "first"));
-         fork(() -> xPush(redis2, "key", "second", "third", "fourth"));
+
+         List<Future<?>> pushes = List.of(
+               fork(() -> xPush(redis1, "key", "first")),
+               fork(() -> xPush(redis2, "key", "second", "third", "fourth"))
+         );
          var res = cf.get(10, TimeUnit.SECONDS);
          var res2 = cf2.get(10, TimeUnit.SECONDS);
          var res3 = cf3.get(10, TimeUnit.SECONDS);
@@ -399,9 +411,16 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          results.sort(null);
          List<String> expected1 = Arrays.asList("first", "fourth", "third");
          List<String> expected2 = Arrays.asList("fourth", "second", "third");
-         assertThat(results.size()).isEqualTo(3);
-         assertThat(results.containsAll(expected1) ||
-               results.containsAll(expected2)).isTrue();
+         assertThat(results)
+               .hasSize(3)
+               .satisfiesAnyOf(
+                     ignore -> assertThat(results).containsExactlyElementsOf(expected1),
+                     ignore -> assertThat(results).containsExactlyElementsOf(expected2));
+
+         for (Future<?> future : pushes) {
+            future.get(10, TimeUnit.SECONDS);
+         }
+
          var rest = redis1.lrange("key", 0, -1);
          assertThat(rest.size()).isEqualTo(1);
       } finally {
@@ -544,10 +563,13 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          RedisFuture<KeyValue<String, List<String>>> rf = blmpop(0, 3, key);
 
          redis.lpush(key, "v1");
+
+         // Must wait for BLMPOP.
+         // Otherwise, remaining pushes might happen concurrently with poll and remove more than one element.
+         KeyValue<String, List<String>> response = rf.get(10, TimeUnit.SECONDS);
+
          redis.lpush(key, "v2");
          redis.lpush(key, "v3", "v4", "v5");
-
-         KeyValue<String, List<String>> response = rf.get(10, TimeUnit.SECONDS);
 
          assertThat(response.getKey()).isEqualTo(key);
          assertThat(response.getValue()).containsExactly("v1");
@@ -635,6 +657,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
 
       try {
          RedisFuture<KeyValue<String, List<String>>> rf = blmpop(3, 1, key);
+         assertThat(rf.isDone()).isFalse();
          redis.set(key, "some-value");
 
          KeyValue<String, List<String>> response = rf.get(10, TimeUnit.SECONDS);
