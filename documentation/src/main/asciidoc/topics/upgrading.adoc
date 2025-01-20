@@ -1,5 +1,9 @@
 == Upgrading from 15.1 to 15.2
 
+=== Native Server
+The native server and it's associated quay.io/infinispan/server-native images are no longer provided. Instead users should
+use the JVM based server as it provides significant performance issues over it's native counterpart and is fully supported.
+
 == Upgrading from 15.0 to 15.1
 
 === Java HotRod Client Changes
