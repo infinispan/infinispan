@@ -63,8 +63,14 @@ public abstract class RespRequestHandler {
     * @return a {@link ResponseWriter}
     */
    public ResponseWriter writer() {
-      assert ctx.channel().eventLoop().inEventLoop() : "Buffer allocation should occur in event loop, it was " + Thread.currentThread().getName();
+      assert writer.isInternal() || ctx.channel().eventLoop().inEventLoop() : "Buffer allocation should occur in event loop, it was " + Thread.currentThread().getName();
       return writer;
+   }
+
+   public ResponseWriter writer(ResponseWriter newWriter) {
+      ResponseWriter oldWriter = writer;
+      this.writer = newWriter;
+      return oldWriter;
    }
 
    public final CompletionStage<RespRequestHandler> handleRequest(ChannelHandlerContext ctx, RespCommand command, List<byte[]> arguments) {
@@ -139,7 +145,7 @@ public abstract class RespRequestHandler {
    }
 
    public CompletionStage<RespRequestHandler> stageToReturn(CompletionStage<RespRequestHandler> stage, ChannelHandlerContext ctx) {
-      assert ctx.channel().eventLoop().inEventLoop();
+      assert (writer != null && writer.isInternal()) || ctx.channel().eventLoop().inEventLoop();
       if (CompletionStages.isCompletedSuccessfully(stage)) {
          RespRequestHandler rrh = CompletionStages.join(stage);
          return rrh.myStage();
@@ -173,7 +179,7 @@ public abstract class RespRequestHandler {
     */
    private <E> CompletionStage<RespRequestHandler> stageToReturn(CompletionStage<E> stage, ChannelHandlerContext ctx,
          BiConsumer<? super E, ResponseWriter> biConsumer, Function<E, RespRequestHandler> handlerWhenComplete) {
-      assert ctx.channel().eventLoop().inEventLoop();
+      assert (writer != null && writer.isInternal()) || ctx.channel().eventLoop().inEventLoop();
       // Only one or the other can be null
       assert (biConsumer != null && handlerWhenComplete == null) || (biConsumer == null && handlerWhenComplete != null) :
             "triConsumer was: " + biConsumer + " and handlerWhenComplete was: " + handlerWhenComplete;
@@ -215,5 +221,4 @@ public abstract class RespRequestHandler {
          return handlerWhenComplete.apply(value);
       }, ctx.channel().eventLoop());
    }
-
 }

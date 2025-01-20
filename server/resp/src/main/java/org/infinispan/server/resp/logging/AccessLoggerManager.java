@@ -8,6 +8,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.commands.BaseResp3Command;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -129,7 +130,7 @@ public class AccessLoggerManager implements IntConsumer {
       }
    }
 
-   private static final class UnknownCommand extends RespCommand {
+   private static final class UnknownCommand extends RespCommand implements BaseResp3Command {
       private static final UnknownCommand UNKNOWN_COMMAND = new UnknownCommand();
 
       private UnknownCommand() {

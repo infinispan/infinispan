@@ -4,6 +4,10 @@
 {brandname} provides different guarantees compared to Redis for some functionalities.
 This chapter summarizes the differences and, when possible, alternative configurations for a similar behavior.
 
+== Protocol version
+
+{brandname} only supports RESP version 3. Attempting to use version 2, will result in an error.
+
 == Isolation
 
 Redis utilizes a single thread to handle user requests, which provides serializable isolation and atomic behavior for multi-key requests.
@@ -31,3 +35,8 @@ Additionally, the transactions are distributed in cluster mode and can operate a
 The recommended configuration utilizes `PESSIMISTIC` locking and transaction mode different from `NONE`.
 See the link:{config_docs}#transaction_manager[cache configuration guide] for more information.
 ====
+
+== Lua Scripts
+
+Lua scripts executed by {brandname} serialize responses using the RESP3 protocol.
+This is equivalent to invoking `redis.setresp(3)` in every script.

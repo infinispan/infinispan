@@ -25,13 +25,13 @@ public abstract class POP extends RespCommand implements Resp3Command {
       if (res instanceof Collection<?>) {
          @SuppressWarnings("unchecked")
          Collection<ScoredValue<byte[]>> cast = (Collection<ScoredValue<byte[]>>) res;
-         writer.array(cast, ScoredValueSerializer.INSTANCE);
+         writer.array(cast, ScoredValueSerializer.WITH_SCORE);
          return;
       }
 
       @SuppressWarnings("unchecked")
       ScoredValue<byte[]> sv = (ScoredValue<byte[]>) res;
-      writer.write(sv, ScoredValueSerializer.INSTANCE);
+      writer.write(sv, ScoredValueSerializer.WITH_SCORE);
    };
 
    private final boolean min;
