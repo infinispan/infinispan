@@ -27,11 +27,7 @@
     </properties>
 
     <modules>
-        <module>embedded</module>
         <module>cli</module>
-        <module>server</module>
-        <module>integration-tests</module>
-        <module>server-runner</module>
     </modules>
 
     <build>
