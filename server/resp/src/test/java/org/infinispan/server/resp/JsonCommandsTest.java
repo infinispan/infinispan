@@ -224,6 +224,31 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testJSONSETArray() {
+      String key = k();
+      JsonPath jp = new JsonPath("$");
+      JsonValue jv = new DefaultJsonParser().createJsonValue("{}");
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+      jp = new JsonPath("$.foo");
+      jv = new DefaultJsonParser().createJsonValue("[]");
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+      jp = new JsonPath("$.foo");
+      jv = new DefaultJsonParser().createJsonValue("[0]");
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+      jp = new JsonPath("$.foo[1]");
+      // Appending a value at the end of an array is allowed
+      jv = new DefaultJsonParser().createJsonValue("[1]");
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+      // Appending a value "beyond" the end of an array raises exception
+      JsonPath jp1 = new JsonPath("$.foo[3]");
+      JsonValue jv1 = new DefaultJsonParser().createJsonValue("3");
+      assertThatThrownBy(() -> {
+         redis.jsonSet(key, jp1, jv1);
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageStartingWith("ERR ");
+   }
+
+   @Test
    public void testJSONSETWithXX() {
       String key = k();
       JsonPath jp = new JsonPath("$");
