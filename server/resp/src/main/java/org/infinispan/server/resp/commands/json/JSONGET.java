@@ -41,8 +41,8 @@ public class JSONGET extends RespCommand implements Resp3Command {
       }
       List<byte[]> paths = arguments.subList(args.pos, arguments.size());
       EmbeddedJsonCache ejc = handler.getJsonDocCache();
-      CompletionStage<String> result = ejc.get(key, paths, args.space(), args.newline(), args.indent());
-      return handler.stageToReturn(result, ctx, ResponseWriter.BULK_STRING);
+      CompletionStage<byte[]> result = ejc.get(key, paths, args.space(), args.newline(), args.indent());
+      return handler.stageToReturn(result, ctx, ResponseWriter.BULK_STRING_BYTES);
    }
 
    /*

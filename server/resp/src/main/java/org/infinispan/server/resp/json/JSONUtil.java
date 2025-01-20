@@ -10,13 +10,15 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.Option;
 
 public class JSONUtil {
-   // JSONPath config that returns null instead of failing for missing leaf. Used to set new leaf
+   // JSONPath config that returns null instead of failing for missing leaf. Used to set new leaf for undefined
+   // path.
    public static final Configuration configForSet = Configuration.builder().options(Option.SUPPRESS_EXCEPTIONS)
          .jsonProvider(new com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider())
          .mappingProvider(new com.jayway.jsonpath.spi.mapper.JacksonMappingProvider())
          .build();
 
-   // JSONPath config that returns null instead of failing for missing leaf. Used to set new leaf
+   // JSONPath config that returns null missing path, NullNode for missing leaf instead rise exception. Used to set new leaf
+   // with definite path.
    public static final Configuration configForDefiniteSet = Configuration.builder().options(Option.SUPPRESS_EXCEPTIONS)
          .options(Option.DEFAULT_PATH_LEAF_TO_NULL)
          .jsonProvider(new com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider())

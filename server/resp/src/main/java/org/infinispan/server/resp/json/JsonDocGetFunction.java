@@ -29,7 +29,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.JsonPath;
 
 public class JsonDocGetFunction
-      implements SerializableFunction<EntryView.ReadWriteEntryView<byte[], JsonDocBucket>, String> {
+      implements SerializableFunction<EntryView.ReadWriteEntryView<byte[], JsonDocBucket>, byte[]> {
    public static final AdvancedExternalizer<JsonDocGetFunction> EXTERNALIZER = new JsonDocGetFunction.Externalizer();
    static final byte[] EMPTY_BYTES = new byte[0];
    public static final String ERR_PATHS_CAN_T_BE_NULL = "paths can't be null";
@@ -50,7 +50,7 @@ public class JsonDocGetFunction
    }
 
    @Override
-   public String apply(ReadWriteEntryView<byte[], JsonDocBucket> entryView) {
+   public byte[] apply(ReadWriteEntryView<byte[], JsonDocBucket> entryView) {
       Optional<JsonDocBucket> existing = entryView.peek();
       if (existing.isEmpty())
          return null;
@@ -69,7 +69,7 @@ public class JsonDocGetFunction
          var jpCtx = JsonPath.using(JSONUtil.configForGet).parse(rootNode);
          // If no path provided return root in legacy format
          if (paths == null || paths.size() == 0) {
-            String resp = mapper.writer(rpp).writeValueAsString(rootNode);
+            byte[] resp = mapper.writer(rpp).writeValueAsBytes(rootNode);
             return resp;
          }
          // Convert to jsonpath and set legacy=false if any path is a jsonpath
@@ -88,10 +88,10 @@ public class JsonDocGetFunction
                if (nodeList.size()==0) {
                   throw new RuntimeException("Path '"+pathStr+"' does not exists");
                }
-               String resp = mapper.writer(rpp).writeValueAsString(nodeList.get(0));
+               byte[] resp = mapper.writer(rpp).writeValueAsBytes(nodeList.get(0));
                return resp;
             }
-            String resp = mapper.writer(rpp).writeValueAsString(nodeList);
+            byte[] resp = mapper.writer(rpp).writeValueAsBytes(nodeList);
             return resp;
          }
          // If more than 1 path provided return an object with
@@ -115,7 +115,7 @@ public class JsonDocGetFunction
                result.set(pathStr, mapper.valueToTree(nodeList));
             }
          }
-         String resp = mapper.writer(rpp).writeValueAsString(result);
+         byte[] resp = mapper.writer(rpp).writeValueAsBytes(result);
          return resp;
       } catch (JsonProcessingException e) {
          throw new RuntimeException(e);

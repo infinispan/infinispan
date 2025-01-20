@@ -76,6 +76,22 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testJSONSETFloat() {
+   String key = k();
+   JsonValue jv = new DefaultJsonParser().createJsonValue("-1.2");
+   JsonPath jp = new JsonPath("$");
+   assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+   var result = redis.jsonGet(key, new JsonPath("$"));
+   assertThat(result).hasSize(1);
+   assertThat(compareJSON(result.get(0), jv)).isEqualTo(true);
+
+   JsonPath jpDot = new JsonPath(".");
+   result = redis.jsonGet(key, jpDot);
+   assertThat(result).hasSize(1);
+   assertThat(compareJSONGet(result.get(0), jv, jpDot)).isEqualTo(true);
+   }
+
+   @Test
    public void testJSONSETAddNode() {
       String key = k();
       JsonPath jpRoot = new JsonPath("$");

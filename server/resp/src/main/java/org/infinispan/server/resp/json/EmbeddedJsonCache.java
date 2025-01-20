@@ -39,7 +39,7 @@ public class EmbeddedJsonCache {
     * @param key, the name of the set
     * @return the set with values if such exist, or null if the key is not present
     */
-   public CompletionStage<String> get(byte[] key, List<byte[]> paths, byte[] space, byte[] newline, byte[] indent) {
+   public CompletionStage<byte[]> get(byte[] key, List<byte[]> paths, byte[] space, byte[] newline, byte[] indent) {
       return readWriteMap.eval(key, new JsonDocGetFunction(paths, space, newline, indent));
    }
 
