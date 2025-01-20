@@ -386,6 +386,11 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-change-data-capture</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-quarkus-embedded</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
