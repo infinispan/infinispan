@@ -869,12 +869,12 @@ public class ChannelFactory {
    }
 
    public int getNumActive(SocketAddress address) {
-      ChannelPool pool = channelPoolMap.get(address);
+      ChannelPool pool = getPool(address);
       return pool == null ? 0 : pool.getActive();
    }
 
    public int getNumIdle(SocketAddress address) {
-      ChannelPool pool = channelPoolMap.get(address);
+      ChannelPool pool = getPool(address);
       return pool == null ? 0 : pool.getIdle();
    }
 
@@ -909,6 +909,10 @@ public class ChannelFactory {
       } finally {
          lock.readLock().unlock();
       }
+   }
+
+   ChannelPool getPool(SocketAddress address) {
+      return channelPoolMap.get(address);
    }
 
    private class ReleaseChannelOperation implements ChannelOperation {

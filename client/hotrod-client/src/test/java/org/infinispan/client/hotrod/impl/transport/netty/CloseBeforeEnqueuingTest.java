@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -13,12 +14,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
+import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
 import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
 import org.infinispan.client.hotrod.impl.protocol.CodecHolder;
 import org.infinispan.client.hotrod.retry.AbstractRetryTest;
@@ -26,6 +30,7 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
@@ -60,6 +65,86 @@ public class CloseBeforeEnqueuingTest extends AbstractRetryTest {
       RemoteCacheManager remoteCacheManager = new InternalRemoteCacheManager(configuration, new CustomChannelFactory(configuration));
       remoteCacheManager.start();
       return remoteCacheManager;
+   }
+
+   public void testSubmittingOnClosedPool() {
+      ChannelFactory channelFactory = remoteCacheManager.getChannelFactory();
+      InetSocketAddress address = InetSocketAddress.createUnresolved(hotRodServer1.getHost(), hotRodServer1.getPort());
+
+      CountDownLatch operationLatch = new CountDownLatch(1);
+      AtomicReference<Channel> channelRef = new AtomicReference<>();
+
+      NoopRetryingOperation firstOperation = new NoopRetryingOperation(0, channelFactory, remoteCacheManager.getConfiguration(),
+            channelRef, operationLatch);
+      fork(() -> channelFactory.fetchChannelAndInvoke(address, firstOperation));
+
+      eventually(() -> channelRef.get() != null);
+      Channel channel = channelRef.get();
+
+      ChannelPool pool = channelFactory.getPool(address);
+      operationLatch.countDown();
+      ChannelRecord.of(channel).release(channel);
+      pool.close();
+
+      String key = getKeyForServer(address, channelFactory.getConsistentHash(RemoteCacheManager.cacheNameBytes()));
+      remoteCache.put(key, "something");
+   }
+
+   public void testClosingPoolDuringExecution() {
+      ChannelFactory channelFactory = remoteCacheManager.getChannelFactory();
+      assertTrue(channelFactory instanceof CustomChannelFactory);
+
+      HotRodOperation<Void> dummy = new HotRodOperation<>((short) 0, (short) 0, null, 0, null, null, null, channelFactory, null) {
+         private final CompletableFuture<Void> cf = new CompletableFuture<>();
+
+         @Override
+         public CompletableFuture<Void> execute() {
+            return cf;
+         }
+
+         @Override
+         public void acceptResponse(ByteBuf buf, short status, HeaderDecoder decoder) {
+            cf.complete(null);
+         }
+      };
+
+      AtomicBoolean once = new AtomicBoolean(true);
+      ((CustomChannelFactory) channelFactory).setBeforeInvoke(channel -> {
+         if (once.getAndSet(false)) {
+            HeaderDecoder decoder = channel.pipeline().get(HeaderDecoder.class);
+            // We need to register a dummy operation that never completes.
+            // If the channel closes, the pipeline is tear down by Netty, and the HeaderDecoder is removed.
+            decoder.registerOperation(channel, dummy);
+
+            ChannelPool pool = channelFactory.getPool(ChannelRecord.of(channel).getUnresolvedAddress());
+
+            // Add the channel in the queue to trigger the shutdown event.
+            ChannelRecord.of(channel).release(channel);
+            pool.close();
+
+            // The shutdown even is triggered asynchronously.
+            // The header decoder is marked as shutting down but the channel will remain open because of the dummy operation.
+            // This will guarantee the header decoder is still present.
+            eventually(decoder::isClosing);
+            assertThat(channel.pipeline().get(HeaderDecoder.NAME)).isNotNull();
+            assertThat(channel.isOpen()).isTrue();
+         }
+      });
+      // Operation should retry and succeed on another server.
+      remoteCache.put("something", "something");
+      dummy.acceptResponse(null, (short) 0, null);
+   }
+
+   private String getKeyForServer(SocketAddress address, ConsistentHash ch) {
+      int i = 0;
+      while (i++ < 100) {
+         String k = UUID.randomUUID().toString();
+         SocketAddress owner = ch.getServer(HotRodTestingUtil.marshall(k));
+         if (owner.equals(address))
+            return k;
+      }
+
+      throw new IllegalStateException("Unable to find key for: " + address);
    }
 
    public void testClosingAndEnqueueing() throws Exception {
@@ -255,6 +340,7 @@ public class CloseBeforeEnqueuingTest extends AbstractRetryTest {
 
       private final Configuration configuration;
       private Supplier<Boolean> executeInstead;
+      private Consumer<Channel> beforeInvoke;
 
       public CustomChannelFactory(Configuration cfg) {
          super(cfg, new CodecHolder(cfg.version().getCodec()));
@@ -264,6 +350,10 @@ public class CloseBeforeEnqueuingTest extends AbstractRetryTest {
 
       public void setExecuteInstead(Supplier<Boolean> supplier) {
          this.executeInstead = supplier;
+      }
+
+      public void setBeforeInvoke(Consumer<Channel> beforeInvoke) {
+         this.beforeInvoke = beforeInvoke;
       }
 
       @Override
@@ -283,6 +373,13 @@ public class CloseBeforeEnqueuingTest extends AbstractRetryTest {
                   return false;
                }
                return super.executeDirectlyIfPossible(callback, checkCallback);
+            }
+
+            @Override
+            boolean invokeCallback(Channel channel, ChannelOperation callback, boolean removeBeforeInvoke) {
+               if (beforeInvoke != null)
+                  beforeInvoke.accept(channel);
+               return super.invokeCallback(channel, callback, removeBeforeInvoke);
             }
          };
       }
