@@ -71,7 +71,7 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
                .addMarshaller(userObjectMarshaller)
                .addMarshaller(new MarshallableArray.Marshaller(getFqTypeName(MarshallableArray.class), globalMarshaller.wired()))
                .addMarshaller(new MarshallableCollection.Marshaller(getFqTypeName(MarshallableCollection.class), globalMarshaller.wired()))
-               .addMarshaller(new MarshallableMap.Marshaller(getFqTypeName(MarshallableMap.class)))
+               .addMarshaller(new MarshallableMap.Marshaller(getFqTypeName(MarshallableMap.class), globalMarshaller.wired()))
                .addMarshaller(new MarshallableObject.Marshaller(getFqTypeName(MarshallableObject.class), globalMarshaller.wired()))
       );
 
