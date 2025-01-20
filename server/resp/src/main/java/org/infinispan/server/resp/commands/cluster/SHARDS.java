@@ -51,12 +51,14 @@ public class SHARDS extends RespCommand implements Resp3Command {
 
    private static final BiConsumer<List<ShardInformation>, ResponseWriter> SERIALIZER = (res, writer) -> {
       // Write the size of the response array first.
-      writer.writeNumericPrefix(RespConstants.ARRAY, res.size());
+      writer.arrayStart(res.size());
 
       // Proceed to serialize each element.
       for (ShardInformation si : res) {
+         writer.arrayNext();
          writer.write(si, si);
       }
+      writer.arrayEnd();
    };
 
    @GuardedBy("this")
@@ -223,10 +225,12 @@ public class SHARDS extends RespCommand implements Resp3Command {
 
          // Key and value for nodes.
          writer.simpleString("nodes");
-         writer.writeNumericPrefix(RespConstants.ARRAY, nodes.size());
+         writer.arrayStart(nodes.size());
          for (NodeInformation node : nodes) {
+            writer.arrayNext();
             writer.write(node, node);
          }
+         writer.arrayEnd();
       }
    }
 

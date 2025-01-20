@@ -6,13 +6,13 @@ import java.util.Collection;
 import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.server.resp.RespUtil;
 import org.infinispan.server.resp.commands.ArgumentUtils;
+import org.infinispan.server.resp.response.ScoredValueSerializer;
 import org.infinispan.server.resp.serialization.JavaObjectSerializer;
-import org.infinispan.server.resp.serialization.RespConstants;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
 public final class ZSetCommonUtils {
    public static final byte[] WITHSCORES = "WITHSCORES".getBytes();
-   public static final byte EXCLUDE = ((byte)'(');
+   public static final byte EXCLUDE = ((byte) '(');
 
    private ZSetCommonUtils() {
    }
@@ -48,17 +48,17 @@ public final class ZSetCommonUtils {
       }
 
       Lex lex = new Lex();
-      if (arg.length == 1 && (arg[0] == (byte)'-')) {
+      if (arg.length == 1 && (arg[0] == (byte) '-')) {
          lex.unboundedMin = true;
          return lex;
       }
-      if (arg.length == 1 && (arg[0] == (byte)'+')) {
+      if (arg.length == 1 && (arg[0] == (byte) '+')) {
          lex.unboundedMax = true;
          return lex;
       }
 
       lex.include = arg[0] == (byte) '[';
-      if (lex.include || arg[0] == (byte)'(') {
+      if (lex.include || arg[0] == (byte) '(') {
          lex.value = Arrays.copyOfRange(arg, 1, arg.length);
       } else {
          // The value MUST start with '(' or '['
@@ -97,34 +97,25 @@ public final class ZSetCommonUtils {
     * Transforms the resulting collection depending on the zrank options
     * - return scores
     * - limit results
+    *
     * @param scoredValues, scoresValues retrieved
-    * @param withScores, return with scores
+    * @param withScores,   return with scores
     * @return The Z operation response object to serialize in the RESP3 format.
     */
    public static ZOperationResponse response(Collection<ScoredValue<byte[]>> scoredValues, boolean withScores) {
       return new ZOperationResponse(scoredValues, withScores);
    }
 
-   public record ZOperationResponse(Collection<ScoredValue<byte[]>> values, boolean withScores) implements JavaObjectSerializer<ZOperationResponse> {
+   public record ZOperationResponse(Collection<ScoredValue<byte[]>> values,
+                                    boolean withScores) implements JavaObjectSerializer<ZOperationResponse> {
 
       @Override
       public void accept(ZOperationResponse ignore, ResponseWriter writer) {
          if (values == null) {
-            writer.writeNumericPrefix(RespConstants.ARRAY, 0);
+            writer.arrayEmpty();
             return;
          }
-
-         writer.writeNumericPrefix(RespConstants.ARRAY, values.size());
-
-         for (ScoredValue<byte[]> sv : values) {
-            if (withScores) {
-               writer.writeNumericPrefix(RespConstants.ARRAY, 2);
-               writer.string(sv.getValue());
-               writer.doubles(sv.score());
-            } else {
-               writer.string(sv.getValue());
-            }
-         }
+         writer.array(values, withScores ? ScoredValueSerializer.WITH_SCORE : ScoredValueSerializer.WITHOUT_SCORE);
       }
    }
 }

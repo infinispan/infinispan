@@ -8,6 +8,6 @@ import org.infinispan.server.resp.RespRequestHandler;
 
 import io.netty.channel.ChannelHandlerContext;
 
-public interface AuthResp3Command {
+public interface AuthResp3Command extends BaseResp3Command {
    CompletionStage<RespRequestHandler> perform(Resp3AuthHandler handler, ChannelHandlerContext ctx, List<byte[]> arguments);
 }

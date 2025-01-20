@@ -1,0 +1,7 @@
+<licenseSummary>
+   <knownLicenses>
+      <license name="the mit license" url="http://opensource.org/licenses/MIT"/>
+   </knownLicenses>
+   <!-- required or it fails to parse -->
+   <dependencies/>
+</licenseSummary>

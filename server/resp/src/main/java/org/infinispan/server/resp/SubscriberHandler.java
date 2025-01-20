@@ -25,7 +25,6 @@ import org.infinispan.server.resp.commands.pubsub.RespCacheListener;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.server.resp.meta.ClientMetadata;
 import org.infinispan.server.resp.serialization.Resp3Type;
-import org.infinispan.server.resp.serialization.RespConstants;
 import org.infinispan.server.resp.serialization.bytebuf.ByteBufResponseWriter;
 import org.infinispan.server.resp.serialization.bytebuf.ByteBufferUtils;
 
@@ -183,10 +182,13 @@ public class SubscriberHandler extends CacheRespRequestHandler {
          for (byte[] keyChannel : keyChannels) {
             counter = Math.max(0, counter + (isSubscribe ? 1 : -1));
             long c = counter;
-            writer.writeNumericPrefix(RespConstants.ARRAY, 3);
-            writer.string(type);
-            writer.string(keyChannel);
-            writer.integers(c);
+            writer.array(List.of(type, keyChannel, c), (o, w) -> {
+               if (o instanceof byte[]) {
+                  w.string((byte[]) o);
+               } else {
+                  w.integers((Number) o);
+               }
+            });
          }
 
          if (counter == 0) {

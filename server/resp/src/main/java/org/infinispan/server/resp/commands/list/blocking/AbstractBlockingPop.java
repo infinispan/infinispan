@@ -62,7 +62,7 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
       }
 
       // If all the keys are empty or null, create a listener
-      // otherwise return the left value of the first non empty list
+      // otherwise return the left value of the first non-empty list
       var pollStage = pollAllKeys(listMultimap, configuration);
 
       // Running blocking pop from EXEC should not block.

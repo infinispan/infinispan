@@ -97,4 +97,11 @@ public interface ScriptingManager {
     * @return {@link Set<String>} containing names of available scripts.
     */
    Set<String> getScriptNames();
+
+   /**
+    * Returns whether a script exists
+    * @param scriptName the name of the script
+    * @return a boolean indicating script existence
+    */
+   boolean containsScript(String scriptName);
 }
