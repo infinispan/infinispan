@@ -118,8 +118,6 @@
          </authorization>
       </security-->
       <serialization>
-         <advanced-externalizer class="org.infinispan.quarkus.embedded.TestAdvancedExternalizer$IdViaConfigObj$Externalizer" id="9001" />
-         <advanced-externalizer class="org.infinispan.quarkus.embedded.TestAdvancedExternalizer$IdViaAnnotationObj$Externalizer" id="9002" />
          <allow-list>
             <class>org.infinispan.test.data.Person</class>
             <regex>org.infinispan.test.data.*</regex>

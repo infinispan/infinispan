@@ -1,18 +1,9 @@
 package org.infinispan.metadata;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
@@ -345,75 +336,6 @@ public class EmbeddedMetadata implements Metadata {
                "version=" + version +
                ", maxIdle=" + maxIdle +
                '}';
-      }
-   }
-
-   public static class Externalizer extends AbstractExternalizer<EmbeddedMetadata> {
-
-      private static final int IMMORTAL = 0;
-      private static final int EXPIRABLE = 1;
-      private static final int LIFESPAN_EXPIRABLE = 2;
-      private static final int MAXIDLE_EXPIRABLE = 3;
-      private final Map<Class<?>, Integer> numbers = new HashMap<>(2);
-
-      public Externalizer() {
-         numbers.put(EmbeddedMetadata.class, IMMORTAL);
-         numbers.put(EmbeddedExpirableMetadata.class, EXPIRABLE);
-         numbers.put(EmbeddedLifespanExpirableMetadata.class, LIFESPAN_EXPIRABLE);
-         numbers.put(EmbeddedMaxIdleExpirableMetadata.class, MAXIDLE_EXPIRABLE);
-      }
-
-      @Override
-      public Set<Class<? extends EmbeddedMetadata>> getTypeClasses() {
-         return Util.asSet(EmbeddedMetadata.class, EmbeddedExpirableMetadata.class,
-               EmbeddedLifespanExpirableMetadata.class, EmbeddedMaxIdleExpirableMetadata.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.EMBEDDED_METADATA;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, EmbeddedMetadata object) throws IOException {
-         int number = numbers.getOrDefault(object.getClass(), -1);
-         output.write(number);
-         switch (number) {
-            case EXPIRABLE:
-               output.writeLong(object.lifespan());
-               output.writeLong(object.maxIdle());
-               break;
-            case LIFESPAN_EXPIRABLE:
-               output.writeLong(object.lifespan());
-               break;
-            case MAXIDLE_EXPIRABLE:
-               output.writeLong(object.maxIdle());
-               break;
-         }
-         output.writeObject(object.version());
-      }
-
-      @Override
-      public EmbeddedMetadata readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         int number = input.readByte();
-         long lifespan;
-         long maxIdle;
-         switch (number) {
-            case IMMORTAL:
-               return new EmbeddedMetadata((EntryVersion) input.readObject());
-            case EXPIRABLE:
-               lifespan = toMillis(input.readLong(), TimeUnit.MILLISECONDS);
-               maxIdle = toMillis(input.readLong(), TimeUnit.MILLISECONDS);
-               return new EmbeddedExpirableMetadata(lifespan, maxIdle, (EntryVersion) input.readObject());
-            case LIFESPAN_EXPIRABLE:
-               lifespan = toMillis(input.readLong(), TimeUnit.MILLISECONDS);
-               return new EmbeddedLifespanExpirableMetadata(lifespan, (EntryVersion) input.readObject());
-            case MAXIDLE_EXPIRABLE:
-               maxIdle = toMillis(input.readLong(), TimeUnit.MILLISECONDS);
-               return new EmbeddedMaxIdleExpirableMetadata(maxIdle, (EntryVersion) input.readObject());
-            default:
-               throw new IllegalStateException("Unknown metadata type " + number);
-         }
       }
    }
 

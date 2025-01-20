@@ -1,17 +1,14 @@
 package org.infinispan.globalstate.impl;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.Set;
+import java.util.List;
 
 import org.infinispan.commons.api.CacheContainerAdmin;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.Ids;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Cache State information stored in a cluster-wide cache
@@ -19,7 +16,7 @@ import org.infinispan.commons.marshall.SerializeWith;
  * @author Tristan Tarrant
  * @since 9.2
  */
-@SerializeWith(CacheState.Externalizer.class)
+@ProtoTypeId(ProtoStreamTypeIds.CACHE_STATE)
 public class CacheState {
    private final String template;
    private final String configuration;
@@ -32,43 +29,27 @@ public class CacheState {
       this.flags = flags.clone();
    }
 
+   @ProtoFactory
+   CacheState(String template, String configuration, List<CacheContainerAdmin.AdminFlag> flagList) {
+      this(template, configuration, flagList == null || flagList.isEmpty() ? EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class) : EnumSet.copyOf(flagList));
+   }
+
+   @ProtoField(number = 1)
    public String getTemplate() {
       return template;
    }
 
+   @ProtoField(number = 2)
    public String getConfiguration() {
       return configuration;
    }
 
-   public EnumSet<CacheContainerAdmin.AdminFlag> getFlags() {
-      return flags;
+   @ProtoField(number = 3, collectionImplementation = ArrayList.class)
+   List<CacheContainerAdmin.AdminFlag> getFlagList() {
+      return flags == null || flags.isEmpty() ? null : new ArrayList<>(flags);
    }
 
-   public static class Externalizer implements AdvancedExternalizer<CacheState> {
-
-      @Override
-      public void writeObject(ObjectOutput output, CacheState state) throws IOException {
-         MarshallUtil.marshallString(state.template, output);
-         MarshallUtil.marshallString(state.configuration, output);
-         output.writeObject(state.flags);
-      }
-
-      @Override
-      public CacheState readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         String template = MarshallUtil.unmarshallString(input);
-         String configuration = MarshallUtil.unmarshallString(input);
-         EnumSet<CacheContainerAdmin.AdminFlag> flags = (EnumSet<CacheContainerAdmin.AdminFlag>) input.readObject();
-         return new CacheState(template, configuration, flags == null ? EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class) : flags);
-      }
-
-      @Override
-      public Set<Class<? extends CacheState>> getTypeClasses() {
-         return Collections.singleton(CacheState.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.CACHE_STATE;
-      }
+   public EnumSet<CacheContainerAdmin.AdminFlag> getFlags() {
+      return flags;
    }
 }

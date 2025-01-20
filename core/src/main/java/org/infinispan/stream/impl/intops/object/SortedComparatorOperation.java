@@ -3,6 +3,9 @@ package org.infinispan.stream.impl.intops.object;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -17,13 +20,19 @@ public class SortedComparatorOperation<S> implements IntermediateOperation<S, St
       this.comparator = comparator;
    }
 
+   @ProtoFactory
+   SortedComparatorOperation(MarshallableObject<Comparator<? super S>> comparator) {
+      this.comparator = MarshallableObject.unwrap(comparator);
+   }
+
+   @ProtoField(number = 1)
+   MarshallableObject<Comparator<? super S>> getComparator() {
+      return MarshallableObject.create(comparator);
+   }
+
    @Override
    public Stream<S> perform(Stream<S> stream) {
       return stream.sorted(comparator);
-   }
-
-   public Comparator<? super S> getComparator() {
-      return comparator;
    }
 
    @Override

@@ -3,6 +3,7 @@ package org.infinispan.stream.impl.intops.primitive.i;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.stream.impl.intops.MappingOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -14,6 +15,7 @@ public class BoxedIntOperation implements MappingOperation<Integer, IntStream, I
    private static final BoxedIntOperation OPERATION = new BoxedIntOperation();
    private BoxedIntOperation() { }
 
+   @ProtoFactory
    public static BoxedIntOperation getInstance() {
       return OPERATION;
    }

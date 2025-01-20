@@ -3,9 +3,12 @@ package org.infinispan.commands.tx;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -17,20 +20,17 @@ import org.infinispan.util.ByteString;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.ROLLBACK_COMMAND)
 public class RollbackCommand extends AbstractTransactionBoundaryCommand {
    public static final byte COMMAND_ID = 13;
 
-   private RollbackCommand() {
-      super(null); // For command id uniqueness test
-   }
-
    public RollbackCommand(ByteString cacheName, GlobalTransaction globalTransaction) {
-      super(cacheName);
-      this.globalTx = globalTransaction;
+      super(-1, cacheName, globalTransaction);
    }
 
-   public RollbackCommand(ByteString cacheName) {
-      super(cacheName);
+   @ProtoFactory
+   public RollbackCommand(int topologyId, ByteString cacheName, GlobalTransaction globalTransaction) {
+      super(topologyId, cacheName, globalTransaction);
    }
 
    @Override

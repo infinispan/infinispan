@@ -418,7 +418,7 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
    private void takeSiteOffline(String cacheName, String remoteSite) {
       for (int i = 0; i < defaultNumberOfNodes(); ++i) {
          var manager = takeOfflineManager(i, cacheName);
-         assertNotSame(TakeSiteOfflineResponse.NO_SUCH_SITE, manager.takeSiteOffline(remoteSite));
+         assertNotSame(TakeSiteOfflineResponse.TSOR_NO_SUCH_SITE, manager.takeSiteOffline(remoteSite));
          assertEquals(SiteState.OFFLINE, manager.getSiteState(remoteSite));
       }
    }
@@ -426,7 +426,7 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
    private void bringSiteOnline(String cacheName, String remoteSite) {
       for (int i = 0; i < defaultNumberOfNodes(); ++i) {
          var manager = takeOfflineManager(i, cacheName);
-         assertNotSame(BringSiteOnlineResponse.NO_SUCH_SITE, manager.bringSiteOnline(remoteSite));
+         assertNotSame(BringSiteOnlineResponse.BSOR_NO_SUCH_SITE, manager.bringSiteOnline(remoteSite));
          assertEquals(SiteState.ONLINE, manager.getSiteState(remoteSite));
       }
    }

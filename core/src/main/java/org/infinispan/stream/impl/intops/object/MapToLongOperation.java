@@ -4,6 +4,9 @@ import java.util.function.ToLongFunction;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.stream.impl.intops.MappingOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -19,13 +22,19 @@ public class MapToLongOperation<I> implements MappingOperation<I, Stream<I>, Lon
       this.function = function;
    }
 
+   @ProtoFactory
+   MapToLongOperation(MarshallableObject<ToLongFunction<? super I>> function) {
+      this.function = MarshallableObject.unwrap(function);
+   }
+
+   @ProtoField(number = 1)
+   MarshallableObject<ToLongFunction<? super I>> getFunction() {
+      return MarshallableObject.create(function);
+   }
+
    @Override
    public LongStream perform(Stream<I> stream) {
       return stream.mapToLong(function);
-   }
-
-   public ToLongFunction<? super I> getFunction() {
-      return function;
    }
 
    @Override

@@ -6,6 +6,8 @@ import java.util.Collections;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
 /**
@@ -18,7 +20,10 @@ public abstract class AbstractDataWriteCommand extends AbstractDataCommand imple
 
    protected CommandInvocationId commandInvocationId;
 
-   protected AbstractDataWriteCommand() {
+   protected AbstractDataWriteCommand(MarshallableObject<?> wrappedKey, long flags, int topologyId, int segment,
+                                      CommandInvocationId commandInvocationId) {
+      super(wrappedKey, flags, topologyId, segment);
+      this.commandInvocationId = commandInvocationId;
    }
 
    protected AbstractDataWriteCommand(Object key, int segment, long flagsBitSet, CommandInvocationId commandInvocationId) {
@@ -28,7 +33,7 @@ public abstract class AbstractDataWriteCommand extends AbstractDataCommand imple
 
    @Override
    public Collection<?> getAffectedKeys() {
-      return Collections.singleton(key);
+      return Collections.singleton(getKey());
    }
 
    @Override
@@ -57,6 +62,7 @@ public abstract class AbstractDataWriteCommand extends AbstractDataCommand imple
    }
 
    @Override
+   @ProtoField(number = 5)
    public CommandInvocationId getCommandInvocationId() {
       return commandInvocationId;
    }

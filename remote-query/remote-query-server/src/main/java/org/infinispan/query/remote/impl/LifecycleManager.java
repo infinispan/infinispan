@@ -4,8 +4,6 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 
-import java.util.Map;
-
 import javax.management.ObjectName;
 
 import org.infinispan.AdvancedCache;
@@ -15,7 +13,6 @@ import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.internal.InternalCacheNames;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ContentTypeConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -25,7 +22,6 @@ import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ModuleLifecycle;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.SerializationContext;
@@ -34,15 +30,6 @@ import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.impl.EntityLoaderFactory;
 import org.infinispan.query.remote.ProtobufMetadataManager;
-import org.infinispan.query.remote.client.impl.Externalizers.QueryRequestExternalizer;
-import org.infinispan.query.remote.client.impl.GlobalContextInitializerImpl;
-import org.infinispan.query.remote.client.impl.QueryRequest;
-import org.infinispan.query.remote.impl.filter.ContinuousQueryResultExternalizer;
-import org.infinispan.query.remote.impl.filter.FilterResultExternalizer;
-import org.infinispan.query.remote.impl.filter.IckleBinaryProtobufFilterAndConverter;
-import org.infinispan.query.remote.impl.filter.IckleContinuousQueryProtobufCacheEventFilterConverter;
-import org.infinispan.query.remote.impl.filter.IckleProtobufCacheEventFilterConverter;
-import org.infinispan.query.remote.impl.filter.IckleProtobufFilterAndConverter;
 import org.infinispan.query.remote.impl.persistence.PersistenceContextInitializerImpl;
 import org.infinispan.query.stats.impl.LocalIndexStatistics;
 import org.infinispan.registry.InternalCacheRegistry;
@@ -66,24 +53,13 @@ public final class LifecycleManager implements ModuleLifecycle {
          queryModule.enableRemoteQuery();
       }
 
-      Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
-      externalizerMap.put(ExternalizerIds.ICKLE_PROTOBUF_CACHE_EVENT_FILTER_CONVERTER, new IckleProtobufCacheEventFilterConverter.Externalizer());
-      externalizerMap.put(ExternalizerIds.ICKLE_PROTOBUF_FILTER_AND_CONVERTER, new IckleProtobufFilterAndConverter.Externalizer());
-      externalizerMap.put(ExternalizerIds.ICKLE_CONTINUOUS_QUERY_CACHE_EVENT_FILTER_CONVERTER, new IckleContinuousQueryProtobufCacheEventFilterConverter.Externalizer());
-      externalizerMap.put(ExternalizerIds.ICKLE_BINARY_PROTOBUF_FILTER_AND_CONVERTER, new IckleBinaryProtobufFilterAndConverter.Externalizer());
-      externalizerMap.put(ExternalizerIds.ICKLE_CONTINUOUS_QUERY_RESULT, new ContinuousQueryResultExternalizer());
-      externalizerMap.put(ExternalizerIds.ICKLE_FILTER_RESULT, new FilterResultExternalizer());
-
       BasicComponentRegistry bcr = gcr.getComponent(BasicComponentRegistry.class);
       SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
       ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
-      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.GLOBAL, GlobalContextInitializerImpl.INSTANCE);
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.GLOBAL, org.infinispan.query.remote.client.impl.GlobalContextInitializerImpl.INSTANCE);
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.GLOBAL, org.infinispan.query.remote.impl.GlobalContextInitializerImpl.INSTANCE);
 
       initProtobufMetadataManager(bcr);
-
-      EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
-      cacheManager.getClassAllowList()
-            .addClasses(QueryRequest.class, QueryRequestExternalizer.class);
    }
 
    private void initProtobufMetadataManager(BasicComponentRegistry bcr) {

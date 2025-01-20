@@ -2,21 +2,17 @@ package org.infinispan.container.entries.metadata;
 
 import static java.lang.Math.min;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.container.entries.AbstractInternalCacheEntry;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A form of {@link TransientMortalCacheEntry} that stores {@link Metadata}
@@ -24,6 +20,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
  * @author Manik Surtani
  * @since 5.1
  */
+@ProtoTypeId(ProtoStreamTypeIds.METADATA_TRANSIENT_MORTAL_CACHE_ENTRY)
 public class MetadataTransientMortalCacheEntry extends AbstractInternalCacheEntry implements MetadataAware {
 
    Metadata metadata;
@@ -46,6 +43,33 @@ public class MetadataTransientMortalCacheEntry extends AbstractInternalCacheEntr
       this.created = created;
    }
 
+   @ProtoFactory
+   MetadataTransientMortalCacheEntry(MarshallableObject<?> wrappedKey, MarshallableObject<?> wrappedValue,
+                                     PrivateMetadata internalMetadata, MarshallableObject<Metadata> wrappedMetadata,
+                                     long created, long lastUsed) {
+      super(wrappedKey, wrappedValue, internalMetadata);
+      this.metadata = MarshallableObject.unwrap(wrappedMetadata);
+      this.created = created;
+      this.lastUsed = lastUsed;
+   }
+
+   @ProtoField(number = 4, name ="metadata")
+   public MarshallableObject<Metadata> getWrappedMetadata() {
+      return MarshallableObject.create(metadata);
+   }
+
+   @Override
+   @ProtoField(number = 5, defaultValue = "-1")
+   public long getCreated() {
+      return created;
+   }
+
+   @Override
+   @ProtoField(number = 6, defaultValue = "-1")
+   public long getLastUsed() {
+      return lastUsed;
+   }
+
    @Override
    public long getLifespan() {
       return metadata.lifespan();
@@ -54,11 +78,6 @@ public class MetadataTransientMortalCacheEntry extends AbstractInternalCacheEntr
    @Override
    public final boolean canExpire() {
       return true;
-   }
-
-   @Override
-   public long getCreated() {
-      return created;
    }
 
    @Override
@@ -93,11 +112,6 @@ public class MetadataTransientMortalCacheEntry extends AbstractInternalCacheEntr
    }
 
    @Override
-   public long getLastUsed() {
-      return lastUsed;
-   }
-
-   @Override
    public final void touch(long currentTimeMillis) {
       lastUsed = currentTimeMillis;
    }
@@ -128,39 +142,5 @@ public class MetadataTransientMortalCacheEntry extends AbstractInternalCacheEntr
       builder.append(", metadata=").append(metadata);
       builder.append(", created=").append(created);
       builder.append(", lastUsed=").append(lastUsed);
-   }
-
-   public static class Externalizer extends AbstractExternalizer<MetadataTransientMortalCacheEntry> {
-      @Override
-      public void writeObject(ObjectOutput output, MetadataTransientMortalCacheEntry ice) throws IOException {
-         output.writeObject(ice.key);
-         output.writeObject(ice.value);
-         output.writeObject(ice.internalMetadata);
-         output.writeObject(ice.metadata);
-         UnsignedNumeric.writeUnsignedLong(output, ice.created);
-         UnsignedNumeric.writeUnsignedLong(output, ice.lastUsed);
-      }
-
-      @Override
-      public MetadataTransientMortalCacheEntry readObject(ObjectInput input)
-            throws IOException, ClassNotFoundException {
-         Object key = input.readObject();
-         Object value = input.readObject();
-         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
-         Metadata metadata = (Metadata) input.readObject();
-         long created = UnsignedNumeric.readUnsignedLong(input);
-         long lastUsed = UnsignedNumeric.readUnsignedLong(input);
-         return new MetadataTransientMortalCacheEntry(key, value, internalMetadata, metadata, lastUsed, created);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.METADATA_TRANSIENT_MORTAL_ENTRY;
-      }
-
-      @Override
-      public Set<Class<? extends MetadataTransientMortalCacheEntry>> getTypeClasses() {
-         return Collections.singleton(MetadataTransientMortalCacheEntry.class);
-      }
    }
 }

@@ -10,9 +10,7 @@ import net.jcip.annotations.ThreadSafe;
 
 /**
  * A minimal interface that facilitates the marshalling/unmarshalling of objects from the provided {@link
- * java.io.InputStream}/{@link java.io.OutputStream}. Unlike the deprecated {@link StreamingMarshaller} this interface
- * does not rely on the use of {@link java.io.ObjectInput} and {@link java.io.ObjectOutput} to read/write objects,
- * which provides greater flexibility when marshalling objects to streams using third party libraries.
+ * java.io.InputStream}/{@link java.io.OutputStream}.
  *
  * @author Ryan Emerson
  * @since 10.0

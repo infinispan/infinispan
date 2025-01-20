@@ -4,6 +4,9 @@ import java.util.function.DoubleConsumer;
 import java.util.stream.DoubleStream;
 
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.stream.CacheAware;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -22,13 +25,19 @@ public class PeekDoubleOperation implements IntermediateOperation<Double, Double
       this.consumer = consumer;
    }
 
+   @ProtoFactory
+   PeekDoubleOperation(MarshallableObject<DoubleConsumer> consumer) {
+      this.consumer = MarshallableObject.unwrap(consumer);
+   }
+
+   @ProtoField(number = 1)
+   MarshallableObject<DoubleConsumer> getConsumer() {
+      return MarshallableObject.create(consumer);
+   }
+
    @Override
    public DoubleStream perform(DoubleStream stream) {
       return stream.peek(consumer);
-   }
-
-   public DoubleConsumer getConsumer() {
-      return consumer;
    }
 
    @Override

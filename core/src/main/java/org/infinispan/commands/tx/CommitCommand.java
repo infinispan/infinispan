@@ -2,19 +2,18 @@ package org.infinispan.commands.tx;
 
 import static org.infinispan.util.logging.Log.CONTAINER;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.marshall.protostream.impl.MarshallableMap;
 import org.infinispan.metadata.impl.IracMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
@@ -25,23 +24,26 @@ import org.infinispan.util.ByteString;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.COMMIT_COMMAND)
 public class CommitCommand extends AbstractTransactionBoundaryCommand {
    public static final byte COMMAND_ID = 14;
 
    //IRAC versions are segment based and they are generated during prepare phase. We can save some space here.
    private Map<Integer, IracMetadata> iracMetadataMap;
 
-   private CommitCommand() {
-      super(null); // For command id uniqueness test
+   public CommitCommand(ByteString cacheName, GlobalTransaction globalTransaction) {
+      super(cacheName, globalTransaction);
    }
 
-   public CommitCommand(ByteString cacheName, GlobalTransaction gtx) {
-      super(cacheName);
-      this.globalTx = gtx;
+   @ProtoFactory
+   CommitCommand(int topologyId, ByteString cacheName, GlobalTransaction globalTransaction, MarshallableMap<Integer, IracMetadata> iracMetadataMap) {
+      super(topologyId, cacheName, globalTransaction);
+      this.iracMetadataMap = MarshallableMap.unwrap(iracMetadataMap);
    }
 
-   public CommitCommand(ByteString cacheName) {
-      super(cacheName);
+   @ProtoField(4)
+   MarshallableMap<Integer, IracMetadata> getIracMetadataMap() {
+      return MarshallableMap.create(iracMetadataMap);
    }
 
    @Override
@@ -73,20 +75,8 @@ public class CommitCommand extends AbstractTransactionBoundaryCommand {
    @Override
    public String toString() {
       return "CommitCommand{" +
-             "iracMetadataMap=" + iracMetadataMap + ", " +
-             super.toString();
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      super.writeTo(output);
-      MarshallUtil.marshallMap(iracMetadataMap, DataOutput::writeInt, IracMetadata::writeTo, output);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      super.readFrom(input);
-      iracMetadataMap = MarshallUtil.unmarshallMap(input, DataInput::readInt, IracMetadata::readFrom, HashMap::new);
+            "iracMetadataMap=" + iracMetadataMap + ", " +
+            super.toString();
    }
 
    public void addIracMetadata(int segment, IracMetadata metadata) {

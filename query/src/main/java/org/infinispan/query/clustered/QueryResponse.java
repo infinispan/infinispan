@@ -1,13 +1,9 @@
 package org.infinispan.query.clustered;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.query.impl.externalizers.ExternalizerIds;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * The response for a {@link ClusteredQueryOperation}.
@@ -15,6 +11,7 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
  * @author Israel Lacerra &lt;israeldl@gmail.com&gt;
  * @since 5.1
  */
+@ProtoTypeId(ProtoStreamTypeIds.QUERY_RESPONSE)
 public final class QueryResponse {
 
    private final NodeTopDocs nodeTopDocs;
@@ -33,8 +30,19 @@ public final class QueryResponse {
       this.nodeTopDocs = nodeTopDocs;
    }
 
+   @ProtoFactory
+   static QueryResponse protoFactory(NodeTopDocs nodeTopDocs, Integer boxedResultSize) {
+      return nodeTopDocs == null ? new QueryResponse(boxedResultSize) : new QueryResponse(nodeTopDocs);
+   }
+
+   @ProtoField(1)
    public NodeTopDocs getNodeTopDocs() {
       return nodeTopDocs;
+   }
+
+   @ProtoField(value = 2, name = "resultSize")
+   Integer getBoxedResultSize() {
+      return nodeTopDocs == null ? resultSize : null;
    }
 
    public int getResultSize() {
@@ -43,35 +51,5 @@ public final class QueryResponse {
 
    public boolean countIsExact() {
       return countIsExact;
-   }
-
-   public static final class Externalizer implements AdvancedExternalizer<QueryResponse> {
-
-      @Override
-      public Set<Class<? extends QueryResponse>> getTypeClasses() {
-         return Collections.singleton(QueryResponse.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.CLUSTERED_QUERY_COMMAND_RESPONSE;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, QueryResponse queryResponse) throws IOException {
-         output.writeObject(queryResponse.nodeTopDocs);
-         if (queryResponse.nodeTopDocs == null) {
-            output.writeInt(queryResponse.resultSize);
-         }
-      }
-
-      @Override
-      public QueryResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         NodeTopDocs nodeTopDocs = (NodeTopDocs) input.readObject();
-         if (nodeTopDocs != null) {
-            return new QueryResponse(nodeTopDocs);
-         }
-         return new QueryResponse(input.readInt());
-      }
    }
 }

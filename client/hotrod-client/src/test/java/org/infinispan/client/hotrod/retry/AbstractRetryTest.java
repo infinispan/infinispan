@@ -20,6 +20,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 
@@ -49,21 +50,21 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       assert nbrOfServers > 0 && nbrOfServers <= 3 : "nbrOfServers must be between 1 and 3";
       config = hotRodCacheConfiguration(getCacheConfig());
-      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(config);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(ControlledConsistentHashFactory.SCI.INSTANCE, config);
       registerCacheManager(cm1);
 
       hotRodServer1 = createStartHotRodServer(manager(0));
       addr2hrServer.put(getAddress(hotRodServer1), hotRodServer1);
 
       if (nbrOfServers > 1) {
-         EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(config);
+         EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(ControlledConsistentHashFactory.SCI.INSTANCE, config);
          registerCacheManager(cm2);
          hotRodServer2 = createStartHotRodServer(manager(1));
          addr2hrServer.put(getAddress(hotRodServer2), hotRodServer2);
       }
 
       if (nbrOfServers > 2) {
-         EmbeddedCacheManager cm3 = TestCacheManagerFactory.createClusteredCacheManager(config);
+         EmbeddedCacheManager cm3 = TestCacheManagerFactory.createClusteredCacheManager(ControlledConsistentHashFactory.SCI.INSTANCE, config);
          registerCacheManager(cm3);
          hotRodServer3 = createStartHotRodServer(manager(2));
          addr2hrServer.put(getAddress(hotRodServer3), hotRodServer3);
