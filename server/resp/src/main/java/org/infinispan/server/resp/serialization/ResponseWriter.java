@@ -38,6 +38,8 @@ public interface ResponseWriter {
     */
    BiConsumer<Map<byte[], byte[]>, ResponseWriter> MAP_BULK_STRING_KV = (m, writer) -> writer.map(m, Resp3Type.BULK_STRING);
 
+   boolean isInternal();
+
    void nulls();
 
    void ok();
@@ -66,11 +68,15 @@ public interface ResponseWriter {
 
    void set(Set<?> set, Resp3Type contentType);
 
+   <T> void set(Set<?> set, JavaObjectSerializer<T> serializer);
+
    void map(Map<?, ?> value);
 
    void map(Map<?, ?> value, Resp3Type contentType);
 
    void map(Map<?, ?> value, Resp3Type keyType, Resp3Type valueType);
+
+   void map(Map<?, ?> map, SerializationHint.KeyValueHint keyValueHint);
 
    void error(CharSequence value);
 

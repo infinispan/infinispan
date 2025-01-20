@@ -113,26 +113,21 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
    @Override
    public void addScript(String name, String script) {
-      ScriptMetadata metadata = ScriptMetadataParser.parse(name, script).build();
-      ScriptEngine engine = getEngineForScript(metadata);
-      if (engine == null) {
-         throw log.noScriptEngineForScript(name);
-      }
-      getScriptCache().getAdvancedCache().put(name, script, metadata);
+      addScript(name, script, ScriptMetadataParser.parse(name, script).build());
    }
 
    @Override
    public void addScript(String name, String script, ScriptMetadata metadata) {
-      Objects.requireNonNull(metadata);
-      ScriptEngine engine = getEngineForScript(metadata);
-      if (engine == null) {
-         throw log.noScriptEngineForScript(name);
-      }
+      Objects.requireNonNull(name, "name");
+      Objects.requireNonNull(script, "script");
+      Objects.requireNonNull(metadata, "metadata");
+      getEngineForScript(metadata); // checks that we have an engine that can run the script
       getScriptCache().getAdvancedCache().put(name, script, metadata);
    }
 
    @Override
    public void removeScript(String name) {
+      Objects.requireNonNull(name, "name");
       if (containsScript(name)) {
          getScriptCache().remove(name);
       } else {
@@ -142,6 +137,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
    @Override
    public String getScript(String name) {
+      Objects.requireNonNull(name, "name");
       if (containsScript(name)) {
          return getUnwrappedScriptCache().get(name);
       } else {
@@ -151,6 +147,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
    @Override
    public ScriptWithMetadata getScriptWithMetadata(String name) {
+      Objects.requireNonNull(name, "name");
       CacheEntry<String, String> entry = getUnwrappedScriptCache().getAdvancedCache().getCacheEntry(name);
       if (entry != null) {
          return new ScriptWithMetadata(entry.getValue(), (ScriptMetadata) entry.getMetadata());
@@ -164,12 +161,14 @@ public class ScriptingManagerImpl implements ScriptingManager {
       return getUnwrappedScriptCache().keySet();
    }
 
-   boolean containsScript(String taskName) {
-      return getUnwrappedScriptCache().containsKey(taskName);
+   @Override
+   public boolean containsScript(String name) {
+      Objects.requireNonNull(name, "name");
+      return getUnwrappedScriptCache().containsKey(name);
    }
 
-   CompletionStage<Boolean> containsScriptAsync(String taskName) {
-      return getUnwrappedScriptCache().getAsync(taskName)
+   CompletionStage<Boolean> containsScriptAsync(String name) {
+      return getUnwrappedScriptCache().getAsync(name)
             .thenApply(Objects::nonNull);
    }
 
@@ -178,13 +177,16 @@ public class ScriptingManagerImpl implements ScriptingManager {
    }
 
    @Override
-   public <T> CompletionStage<T> runScript(String scriptName) {
-      return runScript(scriptName, new TaskContext());
+   public <T> CompletionStage<T> runScript(String name) {
+      Objects.requireNonNull(name, "name");
+      return runScript(name, new TaskContext());
    }
 
    @Override
-   public <T> CompletionStage<T> runScript(String scriptName, TaskContext context) {
-      ScriptMetadata metadata = getScriptMetadata(scriptName);
+   public <T> CompletionStage<T> runScript(String name, TaskContext context) {
+      Objects.requireNonNull(name, "name");
+      Objects.requireNonNull(context, "context");
+      ScriptMetadata metadata = getScriptMetadata(name);
       if (authorizer != null) {
          AuthorizationManager authorizationManager = context.getCache().isPresent() ?
                SecurityActions.getCacheAuthorizationManager(context.getCache().get().getAdvancedCache()) : null;
@@ -257,7 +259,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
       }, "ScriptingManagerImpl - execute");
    }
 
-   ScriptEngine getEngineForScript(ScriptMetadata metadata) {
+   private ScriptEngine getEngineForScript(ScriptMetadata metadata) {
       ScriptEngine engine;
       Optional<String> language = metadata.language();
       if (language.isPresent()) {
