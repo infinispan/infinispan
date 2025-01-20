@@ -151,7 +151,7 @@ public class ScriptMetadata implements Metadata {
       private String extension;
       private String language;
       private String role;
-      private ExecutionMode mode;
+      private ExecutionMode mode = ExecutionMode.LOCAL;
       private Set<String> parameters = Collections.emptySet();
       private MediaType dataType = MediaType.APPLICATION_OBJECT;
       private Map<String, String> properties;

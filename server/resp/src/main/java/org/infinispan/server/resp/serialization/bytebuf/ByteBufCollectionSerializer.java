@@ -56,8 +56,8 @@ final class ByteBufCollectionSerializer {
 
       @Override
       public boolean test(Object object) {
-         // Handle any collection which is not a set.
-         return object instanceof Collection<?> && !(object instanceof Set<?>);
+         // Handle any collection
+         return object instanceof Collection<?>;
       }
    }
 
