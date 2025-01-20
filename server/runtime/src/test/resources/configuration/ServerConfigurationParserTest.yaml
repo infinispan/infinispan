@@ -215,6 +215,8 @@ infinispan:
               socketBinding: hotrod
               externalHost: external
               externalPort: '12345'
+              maxKeyCount: '13'
+              maxByteArraySize: '1027'
               topologyStateTransfer:
                 awaitInitialRetrieval: false
                 lockTimeout: '12'
@@ -296,6 +298,8 @@ infinispan:
           memcached:
             memcachedConnector:
               cache: string
+              maxKeyCount: '14'
+              maxByteArraySize: '1029'
               idleTimeout: '1'
               receiveBufferSize: '3'
               sendBufferSize: '3'

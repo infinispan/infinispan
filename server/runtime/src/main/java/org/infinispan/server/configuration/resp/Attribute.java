@@ -11,6 +11,8 @@ public enum Attribute {
    UNKNOWN(null), // must be first
 
    CACHE,
+   MAX_BYTE_ARRAY_SIZE,
+   MAX_KEY_COUNT,
    NAME,
    SECURITY_REALM,
    SOCKET_BINDING;

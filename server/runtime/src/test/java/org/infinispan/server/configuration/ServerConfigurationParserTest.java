@@ -102,6 +102,13 @@ public class ServerConfigurationParserTest extends AbstractConfigurationParserTe
       assertTrue(connectors.get(1) instanceof RestServerConfiguration);
       assertTrue(connectors.get(2) instanceof MemcachedServerConfiguration);
 
+      // Ensure HotRod and Memcached support max request limits (these positions were asserted in previous block)
+      assertEquals(13, connectors.get(0).maxKeyCount());
+      assertEquals(1027, connectors.get(0).maxByteArraySize());
+
+      assertEquals(14, connectors.get(2).maxKeyCount());
+      assertEquals(1029, connectors.get(2).maxByteArraySize());
+
       // Ensure endpoints are bound to the interfaces
       SinglePortRouterConfiguration singlePortRouter = configuration.endpoints().endpoints().get(0).singlePortRouter();
       assertEquals(socketBindings.get("default").interfaceConfiguration().getNetworkAddress().getAddress().getHostAddress(), singlePortRouter.host());

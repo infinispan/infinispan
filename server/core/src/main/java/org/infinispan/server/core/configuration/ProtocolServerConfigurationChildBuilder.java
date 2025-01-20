@@ -98,6 +98,20 @@ public interface ProtocolServerConfigurationChildBuilder<T extends ProtocolServe
    S implicitConnector(boolean implicitConnector);
 
    /**
+    * The maximum size a single array can be, if exceeded the socket will be closed forcibly
+    * @param maxByteSize the maximum size an array can be
+    * @return this builder
+    */
+   S maxByteArraySize(int maxByteSize);
+
+   /**
+    * The maximum number of keys that can be used in a single operation, if exceeded the socket will be closed forcibly
+    * @param maxKeyCount the maximum number of keys that can be used in a single call
+    * @return this builder
+    */
+   S maxKeyCount(int maxKeyCount);
+
+   /**
     * Builds a configuration object
     */
    T build();

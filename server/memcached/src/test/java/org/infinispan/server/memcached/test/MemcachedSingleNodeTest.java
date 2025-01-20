@@ -65,10 +65,14 @@ public abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest {
          enableEncryption(builder);
       }
       server = MemcachedTestingUtil.createMemcachedServer(decoderReplay);
-      server.start(builder.build(), cacheManager);
+      startServer(server, builder);
       client = createMemcachedClient(server);
       cache = cacheManager.getCache(server.getConfiguration().defaultCacheName());
       return cacheManager;
+   }
+
+   protected void startServer(MemcachedServer server, MemcachedServerConfigurationBuilder builder) {
+      server.start(builder.build(), cacheManager);
    }
 
    protected EmbeddedCacheManager createTestCacheManager() {
