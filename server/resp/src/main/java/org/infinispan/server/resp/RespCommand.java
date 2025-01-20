@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.server.resp.commands.BaseResp3Command;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.infinispan.server.resp.serialization.bytebuf.ByteBufferUtils;
@@ -19,7 +20,7 @@ import org.infinispan.util.logging.LogFactory;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
-public abstract class RespCommand {
+public abstract class RespCommand implements BaseResp3Command {
    protected final static Log log = LogFactory.getLog(RespCommand.class, Log.class);
    private final String name;
    private final int arity;
@@ -33,13 +34,9 @@ public abstract class RespCommand {
       // A positive integer means a fixed number of arguments.
       // A negative integer means a minimal number of arguments.
       int numberOfArgs = Math.abs(arity) - 1;
-      if ((arity > 0 && arguments.size() != numberOfArgs)
-            || (arity < 0 && arguments.size() < numberOfArgs)) {
-         // ERROR
-         return false;
-      }
-
-      return true;
+      // ERROR
+      return (arity <= 0 || arguments.size() == numberOfArgs)
+            && (arity >= 0 || arguments.size() >= numberOfArgs);
    }
 
    public CompletionStage<RespRequestHandler> handleException(RespRequestHandler handler, Throwable t) {
@@ -120,6 +117,33 @@ public abstract class RespCommand {
       return null;
    }
 
+   public static RespCommand fromString(String s) {
+      byte[] buf = s.getBytes(StandardCharsets.US_ASCII);
+      byte b0 = buf[0];
+      byte ignoreCase = b0 >= 97 ? (byte) (b0 - 97) : (byte) (b0 - 65);
+      if (ignoreCase < 0 || ignoreCase > 25) {
+         return null;
+      }
+      RespCommand[] target = ALL_COMMANDS[ignoreCase];
+      if (target == null) {
+         return null;
+      }
+      for (RespCommand possible : target) {
+         next:
+         if (possible.bytes.length == buf.length) {
+            for(int i = 1; i < buf.length; i++) {
+               byte a = possible.bytes[i];
+               byte b = buf[i];
+               if (a != b && a + 32 != b) {
+                  break next;
+               }
+            }
+            return possible;
+         }
+      }
+      return null;
+   }
+
    public final boolean match(byte[] other) {
       return match(Unpooled.wrappedBuffer(other), other.length, 0);
    }
@@ -192,8 +216,6 @@ public abstract class RespCommand {
       }
       return keys.toArray(Util.EMPTY_BYTE_ARRAY_ARRAY);
    }
-
-   public abstract long aclMask();
 
    @Override
    public String toString() {

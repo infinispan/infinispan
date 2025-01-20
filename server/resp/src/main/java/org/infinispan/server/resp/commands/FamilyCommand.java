@@ -6,7 +6,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
-import org.infinispan.server.resp.commands.cluster.CLUSTER;
+import org.infinispan.server.resp.commands.scripting.eval.SCRIPT;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -14,7 +14,7 @@ import io.netty.channel.ChannelHandlerContext;
  * An umbrella command.
  * <p>
  * This command represents a family of commands. Usually, the ones with multiple keywords, for example,
- * {@link CLUSTER} or ACL.
+ * {@link org.infinispan.server.resp.commands.cluster.CLUSTER} or {@link SCRIPT}
  *
  * @since 15.0
  */
