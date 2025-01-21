@@ -10,8 +10,8 @@ import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
@@ -39,12 +39,11 @@ public class NativeCliIT {
       assertEquals(200, restResponse.status());
       assertEquals("HEALTHY", restResponse.body());
 
-      String cliPath = resource("ispn-cli");
+      String cliPath = Paths.get(System.getProperty("user.dir"), "..", "..", "cli", "target", "infinispan-cli").toString();
       String batchFile = resource("batch.file");
       String hostname = SERVERS.getTestServer().getDriver().getServerAddress(0).getHostAddress() + ":11222";
-      String cliCmd = String.format("%s --connect %s --file=%s", cliPath, hostname, batchFile);
 
-      ProcessBuilder pb = new ProcessBuilder("bash", "-c", cliCmd);
+      ProcessBuilder pb = new ProcessBuilder(cliPath, "--connect", hostname, "--file=" + batchFile);
       pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
       Process p = pb.start();
       StringBuilder sb = new StringBuilder();

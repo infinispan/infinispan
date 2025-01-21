@@ -42,6 +42,7 @@ jobs:
       branch: 15.1.x
       repository: infinispan/infinispan-images
       ispnVersion: ${{ github.ref_name }}
+      images: "server, cli"
       latest: true
 
   server-upload:
