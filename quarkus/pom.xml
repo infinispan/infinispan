@@ -79,6 +79,12 @@
 
     <profiles>
         <profile>
+            <id>native</id>
+            <modules>
+                <module>integration-tests/cli</module>
+            </modules>
+        </profile>
+        <profile>
             <id>distribution</id>
             <properties>
                 <native-build-args/>
