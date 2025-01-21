@@ -74,7 +74,7 @@
         <profile>
             <id>native</id>
             <modules>
-               <module>server</module>
+               <module>cli</module>
             </modules>
         </profile>
     </profiles>
