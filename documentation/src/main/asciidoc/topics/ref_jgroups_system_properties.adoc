@@ -51,9 +51,9 @@ Use the following properties to customize JGroups cluster transport.
 | 2000
 | Optional
 
-|`jgroups.thread_dumps_threshold`
-| Number of times a thread pool needs to be full before a thread dump is logged.
-| 10000
+|`jgroups.thread_dumps_enabled`
+| Dump threads when the thread pool is full.
+| `false`
 | Optional
 
 | `jgroups.fd.port-offset`

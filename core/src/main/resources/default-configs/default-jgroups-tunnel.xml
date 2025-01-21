@@ -3,10 +3,14 @@
         xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.3.xsd">
    <TUNNEL bind_addr="${jgroups.tunnel.address,jgroups.bind.address:SITE_LOCAL}"
            bind_port="${jgroups.tunnel.port,jgroups.bind.port:0}"
+
            diag.enabled="${jgroups.diag.enabled:false}"
+           diag.enable_tcp="${jgroups.diag.enable_tcp:true}"
+           diag.enable_udp="${jgroups.diag.enable_udp:false}"
 
            thread_naming_pattern="pl"
            linger="${jgroups.tcp.linger:-1}"
+           tcp_nodelay="${jgroups.tcp_nodelay:true}"
            bundler_type="${jgroups.bundler.type:transfer-queue}"
            bundler.max_size="${jgroups.bundler.max_size:64000}"
            non_blocking_sends="${jgroups.non_blocking_sends:false}"
@@ -14,7 +18,7 @@
            thread_pool.min_threads="${jgroups.thread_pool.min_threads:0}"
            thread_pool.max_threads="${jgroups.thread_pool.max_threads:200}"
            thread_pool.keep_alive_time="60000"
-           thread_pool.thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
+           thread_pool.thread_dumps_enabled="${jgroups.thread_dumps_enabled:false}"
 
            use_virtual_threads="${jgroups.thread.virtual,org.infinispan.threads.virtual:false}"
 

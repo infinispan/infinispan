@@ -14,15 +14,19 @@
         ip_ttl="${jgroups.ip_ttl:2}"
         ip_mcast="${jgroups.ip_mcast:true}"
         thread_naming_pattern="pl"
+
         diag.enabled="${jgroups.diag.enabled:false}"
+        diag.enable_tcp="${jgroups.diag.enable_tcp:false}"
+        diag.enable_udp="${jgroups.diag.enable_udp:true}"
+
         bundler_type="${jgroups.bundler.type:transfer-queue}"
         bundler.max_size="${jgroups.bundler.max_size:64000}"
 
         thread_pool.min_threads="${jgroups.thread_pool.min_threads:0}"
         thread_pool.max_threads="${jgroups.thread_pool.max_threads:200}"
         thread_pool.keep_alive_time="60000"
+        thread_pool.thread_dumps_enabled="${jgroups.thread_dumps_enabled:false}"
 
-        thread_pool.thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
         use_virtual_threads="${jgroups.thread.virtual,org.infinispan.threads.virtual:false}"
    />
    <RED/>
