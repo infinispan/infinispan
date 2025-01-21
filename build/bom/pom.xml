@@ -361,11 +361,6 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-quarkus-embedded</artifactId>
-                <version>${version.infinispan}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-commons-graalvm</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>

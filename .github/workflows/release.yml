@@ -43,6 +43,7 @@ jobs:
       repository: infinispan/infinispan-images
       ispnVersion: ${{ github.ref_name }}
       latest: false
+      images: "server, cli"
 
   server-upload:
     needs: release
