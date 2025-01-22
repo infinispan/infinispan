@@ -207,7 +207,7 @@
 
       <!-- These versions must be kept in sync with ${version.quarkus} -->
       <version.quarkus>3.8.6</version.quarkus>
-      <version.graalvm>23.1.5</version.graalvm>
+      <version.graalvm>23.1.6</version.graalvm>
       <version.jandex>3.2.3</version.jandex>
 
       <version.opentelemetry>1.32.0</version.opentelemetry>
