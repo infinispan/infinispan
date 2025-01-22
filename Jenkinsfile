@@ -117,45 +117,6 @@ pipeline {
             }
         }
 
-        stage('Native Image') {
-            when {
-                expression {
-                    return !env.BRANCH_NAME.startsWith("PR-") || pullRequest.labels.contains('pr/Native Image Required')
-                }
-            }
-            steps {
-                script {
-                    def mvnCmd = '-q -Dexec.executable=echo -Dexec.args=\'${project.version}\' --non-recursive exec:exec'
-                    def SERVER_VERSION = sh(
-                            script: "${MAVEN_HOME}/bin/mvn ${mvnCmd}",
-                            returnStdout: true
-                    ).trim()
-                    def REPO = 'quay.io/infinispan-test/server-native'
-                    def TAG = env.BRANCH_NAME
-                    def IMAGE_BRANCH = env.CHANGE_ID ? pullRequest.base : env.BRANCH_NAME
-
-                    sh "rm -rf infinispan-images"
-                    sh "git clone --single-branch --branch ${IMAGE_BRANCH} --depth 1 https://github.com/infinispan/infinispan-images.git"
-
-
-                    dir('infinispan-images') {
-                        sh "cekit -v --descriptor server-dev-native.yaml build --overrides '{\"name\":\"${REPO}\", \"version\":\"${TAG}\"}' --overrides '{\"artifacts\":[{\"name\":\"server\",\"path\":\"../quarkus/server-runner/target/infinispan-quarkus-server-runner-${SERVER_VERSION}-runner\"},{\"name\":\"cli\",\"path\":\"../quarkus/cli/target/infinispan-cli\"}]}' docker\n"
-
-                        withDockerRegistry(credentialsId: 'Quay-InfinispanTest', url: 'https://quay.io') {
-                            sh "docker push ${REPO}:${TAG}"
-                        }
-                        sh "docker rmi ${REPO}:${TAG}"
-                        deleteDir()
-                    }
-
-                    // CHANGE_ID is set only for pull requests, so it is safe to access the pullRequest global variable
-                    if (env.CHANGE_ID) {
-                        pullRequest.comment("Image pushed for Jenkins build [#${env.BUILD_NUMBER}](${env.BUILD_URL}):\n```\n${REPO}:${TAG}\n```")
-                    }
-                }
-            }
-        }
-
         stage('Tests') {
             steps {
                 timeout(time: 180, unit: 'MINUTES') {
