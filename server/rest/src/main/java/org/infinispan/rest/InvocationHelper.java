@@ -116,8 +116,8 @@ public class InvocationHelper {
       // All browser's user agents start with "Mozilla"
       if (userAgent != null && userAgent.startsWith("Mozilla")) {
          builder.header("X-Frame-Options", "sameorigin").header("X-XSS-Protection", "1; mode=block").
-               header("X-Content-Type-Options", "nosniff").
-               header("Content-Security-Policy", "default-src 'self' data:; style-src 'self' 'unsafe-inline'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; plugin-types 'none'; report-uri 'self';");
+                 header("X-Content-Type-Options", "nosniff").
+                 header("Content-Security-Policy", "default-src 'self' http://keycloak:8080 data:; style-src 'self' 'unsafe-inline'; base-uri 'self'; form-action 'self'; frame-src 'self' http://keycloak:8080; frame-ancestors 'self'; plugin-types 'none'; report-uri 'self';");
          // Only if we are using HTTPS
          if (configuration.ssl().enabled() || uri.startsWith("https")) {
             builder.header("Strict-Transport-Security", "max-age=31536000 ; includeSubDomains");
