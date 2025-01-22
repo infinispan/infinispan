@@ -540,12 +540,12 @@ public class Server extends BaseServerManagement implements AutoCloseable {
          // Find the token realm
          RealmConfiguration realm = serverConfiguration.security().realms().getRealm(rest.authentication().securityRealm());
          TokenRealmConfiguration realmConfiguration = realm.realmProviders().stream().filter(r -> r instanceof TokenRealmConfiguration).map(r -> (TokenRealmConfiguration) r).findFirst().get();
-         loginConfiguration.put("mode", "OIDC");
-         loginConfiguration.put("url", realmConfiguration.authServerUrl());
-         loginConfiguration.put("realm", realmConfiguration.name());
-         loginConfiguration.put("clientId", realmConfiguration.clientId());
+         loginConfiguration.put(MODE, "OIDC");
+         loginConfiguration.put(URL, realmConfiguration.authServerUrl());
+         loginConfiguration.put(REALM, realmConfiguration.name());
+         loginConfiguration.put(CLIENT_ID, realmConfiguration.clientId());
       } else {
-         loginConfiguration.put("mode", "HTTP");
+         loginConfiguration.put(MODE, "HTTP");
          for (String mechanism : rest.authentication().mechanisms()) {
             loginConfiguration.put(mechanism, "true");
          }
