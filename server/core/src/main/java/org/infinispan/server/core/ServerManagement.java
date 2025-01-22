@@ -21,6 +21,14 @@ import org.infinispan.tasks.TaskManager;
  */
 public interface ServerManagement {
 
+   /**
+    * These constants are used as keys in the Map returned by #getLoginConfiguration()
+    */
+   String MODE = "mode";
+   String URL = "url";
+   String REALM = "realm";
+   String CLIENT_ID = "clientId";
+
    ComponentStatus getStatus();
 
    void serializeConfiguration(ConfigurationWriter writer);

@@ -1,5 +1,6 @@
 package org.infinispan.rest;
 
+import java.net.URI;
 import java.util.concurrent.Executor;
 
 import org.infinispan.configuration.parsing.ParserRegistry;
@@ -32,6 +33,7 @@ public class InvocationHelper {
    private final EncoderRegistry encoderRegistry;
    private final MetricsRegistry metricsRegistry;
    private final ProtobufMetadataManager protobufMetadataManager;
+   private final String cspHeader;
 
    InvocationHelper(RestServer protocolServer, RestCacheManager<Object> restCacheManager, EmbeddedCounterManager counterManager,
                     RestServerConfiguration configuration, ServerManagement server, Executor executor) {
@@ -46,6 +48,16 @@ public class InvocationHelper {
       this.encoderRegistry = globalComponentRegistry.getComponent(EncoderRegistry.class);
       this.metricsRegistry = globalComponentRegistry.getComponent(MetricsRegistry.class);
       this.protobufMetadataManager = globalComponentRegistry.getComponent(ProtobufMetadataManager.class);
+
+      String url = server.getLoginConfiguration(protocolServer).get(ServerManagement.URL);
+      String baseAuthUrl;
+      if (url != null) {
+         URI uri = URI.create(url);
+         baseAuthUrl = uri.getScheme() + "://" + uri.getHost() + ":" + uri.getPort();
+      } else {
+         baseAuthUrl = "";
+      }
+      cspHeader = String.format("default-src 'self' %s data:; style-src 'self' 'unsafe-inline'; base-uri 'self'; form-action 'self'; frame-src 'self' %s; frame-ancestors 'self'; object-src 'none'; report-uri 'self';", baseAuthUrl, baseAuthUrl);
    }
 
    public ParserRegistry getParserRegistry() {
@@ -117,7 +129,7 @@ public class InvocationHelper {
       if (userAgent != null && userAgent.startsWith("Mozilla")) {
          builder.header("X-Frame-Options", "sameorigin").header("X-XSS-Protection", "1; mode=block").
                header("X-Content-Type-Options", "nosniff").
-               header("Content-Security-Policy", "default-src 'self' data:; style-src 'self' 'unsafe-inline'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; plugin-types 'none'; report-uri 'self';");
+               header("Content-Security-Policy", cspHeader);
          // Only if we are using HTTPS
          if (configuration.ssl().enabled() || uri.startsWith("https")) {
             builder.header("Strict-Transport-Security", "max-age=31536000 ; includeSubDomains");
@@ -125,8 +137,6 @@ public class InvocationHelper {
       }
       return builder;
    }
-
-
 
    public NettyRestResponse newResponse(RestRequest request, HttpResponseStatus status) {
       return newResponse(request, status, null);
