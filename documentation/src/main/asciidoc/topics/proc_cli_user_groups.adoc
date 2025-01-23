@@ -1,5 +1,5 @@
 [id='adding-users-to-groups_{context}']
-= Adding users to groups
+== Adding users to groups
 
 Groups let you change permissions for multiple users.
 You assign a role to a group and then add users to that group.

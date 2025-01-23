@@ -160,7 +160,9 @@
                                 <toclevels>5</toclevels>
                                 <numbered>true</numbered>
                                 <icons>font</icons>
-                                <docinfo>true</docinfo>
+                                <docinfo>shared-head,private-head</docinfo>
+                                <docinfodir>${project.basedir}/src/main/asciidoc/docinfo</docinfodir>
+                                <stem>latexmath</stem>
                                 <experimental>true</experimental>
                                 <infinispanversion>${infinispan.base.version}</infinispanversion>
                                 <infinispancomponentversion>${version.infinispan}</infinispancomponentversion>
@@ -236,7 +238,9 @@
                                         <toclevels>3</toclevels>
                                         <numbered>true</numbered>
                                         <icons>font</icons>
-                                        <docinfo>true</docinfo>
+                                        <docinfo>shared-head,private-head</docinfo>
+                                        <docinfodir>${project.basedir}/src/main/asciidoc/docinfo</docinfodir>
+                                        <stem>latexmath</stem>
                                         <experimental>true</experimental>
                                         <infinispanversion>${infinispan.base.version}</infinispanversion>
                                         <infinispancomponentversion>${version.infinispan}</infinispancomponentversion>
