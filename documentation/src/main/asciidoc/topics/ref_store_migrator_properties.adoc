@@ -197,7 +197,7 @@ target.location=/path/to/sfs.dat
 
 [%header,cols=3*]
 |===
-|Property |Description |Value |Required/Optional
+|Property |Description |Required/Optional
 |`location`
 |Sets the database directory.
 |Required
