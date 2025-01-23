@@ -369,8 +369,12 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
          segmentOwners = null;
       }
 
-      dispatcher.updateTopology(cacheName, operation, newTopologyId,
-            addresses, segmentOwners, hashFunctionVersion);
+      // Only update the topology if this channel is fully connected and authenticated
+      OperationChannel operationChannel = channel.attr(OperationChannel.OPERATION_CHANNEL_ATTRIBUTE_KEY).get();
+      if (operationChannel != null && operationChannel.isAcceptingRequests()) {
+         dispatcher.updateTopology(cacheName, operation, newTopologyId,
+               addresses, segmentOwners, hashFunctionVersion);
+      }
    }
 
    private InetSocketAddress[] readTopology(ByteBuf buf) {
