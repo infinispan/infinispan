@@ -56,7 +56,7 @@ User credentials are stored in traditional key/value format: the key corresponds
 corresponds to the password. Encrypted passwords are represented as semi-colon-separated algorithm/hash pairs, with the
 hash encoded in Base64.
 
-[WARN]
+[WARNING]
 ====
 Credentials are encrypted using the realm name. Changing a realm's name requires re-encrypting all the passwords.
 Use the {brandname} CLI to enter the correct security realm name to the file.
