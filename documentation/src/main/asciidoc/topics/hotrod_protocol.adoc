@@ -1436,7 +1436,7 @@ Request (0x2B):
 | Parameter 1 Name | string | The name of the first parameter
 | Parameter 1 Length | vInt | The length of the first parameter
 | Parameter 1 Value | byte array | The value of the first parameter
-| ...
+| ... | ... | ...
 |==============================================================================
 
 Response (0x2C):
@@ -1760,14 +1760,14 @@ Response (0x34):
 | Value1 projection1            | byte array | retrieved value1 first projection
 | Value1 projection2 length     | vInt       | length of value2 second projection
 | Value1 projection2            | byte array | retrieved value2 second projection
-|... continues until all projections for the value retrieved
+| ... continues until all projections for the value retrieved | |
 | Key2 Length                   | vInt       | same as protocol version 2.3.
 | Key2                          | byte array | same as protocol version 2.3.
 | Value2 projection1 length     | vInt       | length of value 2 first projection
 | Value2 projection1            | byte array | retrieved value 2 first projection
 | Value2 projection2 length     | vInt       | length of value 2 second projection
 | Value2 projection2            | byte array | retrieved value 2 second projection
-|... continues until entry count is reached ||
+| ... continues until entry count is reached  | |
 |==============================================================================
 
 . Stats:
@@ -3457,7 +3457,7 @@ Request (0xEF)
 
 | Header              | variable   | Request header
 | Key Length          | vInt       | Length of key. Note that the size of a
-vint can be up to 5 bytes which in theory can produce bigger numbers than
+`vint` can be up to 5 bytes which in theory can produce bigger numbers than
 Integer.MAX_VALUE. However, Java cannot create a single array that?s bigger
 than Integer.MAX_VALUE, hence the protocol is limiting vint array lengths to
 Integer.MAX_VALUE.
@@ -3481,7 +3481,7 @@ maxIdle of the entry in seconds. This value is returned only if the flag's
 | Entry Version       | 8 bytes    | Unique value of an existing entry's modification.
 The protocol does not mandate that entry_version values are sequential.
 They just need to be unique per update at the key level.
-|| Entry Version       | 8 bytes    | Possible values +
+| Entry Version       | 8 bytes    | Possible values +
 0 = Unconditional put +
 -1 = Put If Absent +
 Other values =  pass a version obtained by `GetWithMetadata` operation to perform a conditional replace.
