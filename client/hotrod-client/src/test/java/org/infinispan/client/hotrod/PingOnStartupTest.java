@@ -41,6 +41,8 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
             new InternalRemoteCacheManager(clientBuilder.build())) {
          @Override
          public void call() {
+            // The topology isn't installed until the first operation now
+            assertEquals(0, rcm.getCache().size());
             OperationDispatcher dispatcher = rcm.getOperationDispatcher();
             eventuallyEquals(2, () -> dispatcher.getServers().size());
          }
