@@ -762,7 +762,7 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
       try {
          channel = configurator.createChannel(configuration.transport().clusterName());
       } catch (Exception e) {
-         throw CLUSTER.errorCreatingChannelFromConfigurator(configurator.getProtocolStackString(), e);
+         throw CLUSTER.errorCreatingChannelFromConfigurator(configurator.getName(), e);
       }
    }
 
