@@ -48,12 +48,19 @@ $(document).ready(function() {
     });
 
     $('ul.sectlevel1').wrap('<div id="toctree"></div>');
+    var plugins = [ "search", "wholerow" ];
+
+    // We only enable the state plugin if the user allows functionality cookies
+    var cookiePrefs = CookieConsent.getUserPreferences();
+    if (cookiePrefs.acceptedCategories.includes("functionality")) {
+        plugins.push("state")
+    }
 
     $('#toctree').jstree({
         "core" : {
         "themes" : {"variant" : "small", "icons" : false}
     },
-    "plugins" : [ "search", "state", "wholerow" ] })
+    "plugins" : plugins })
           .on("activate_node.jstree", function (e, data) { location.href = data.node.a_attr.href; });
     $('#toctree').before('<input placeholder="&#xf002; Search" id="tocsearch" type="text">');
     var searchTimeout = false;
