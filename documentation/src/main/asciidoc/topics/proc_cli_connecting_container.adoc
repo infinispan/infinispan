@@ -1,4 +1,4 @@
-[id='cli_start-{context}']
+[id='cli_connecting_container-{context}']
 = Connecting to {brandname} Servers running in a container
 Establishing a connection with {brandname} running in a container through the CLI.
 

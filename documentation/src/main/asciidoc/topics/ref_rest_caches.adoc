@@ -251,7 +251,7 @@ Invoke a `POST` request to change a mutable cache configuration attribute.
 POST /rest/v2/caches/{name}?action=set-mutable-attributes&attribute-name={attributeName}&attribute-value={attributeValue}
 ----
 
-[id='rest_v2_cache_mutable_attribute_set']
+[id='rest_v2_cache_assign_alias']
 = Assign cache alias
 Invoke a `POST` request to assign an alias to a cache. If the alias is already assigned to a different cache, it will
 be reassigned to the specified one.
