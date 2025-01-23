@@ -39,14 +39,14 @@ class GeoQueries() {
 
    public void restaurants_projectDistances() {
       //tag::restaurants_projectDistances[]
-      Query<Object[]> projectQuery = remoteCache.query("select r.name, distance(r.location, 41.91, 12.46) from geo.Restaurant r");
+      Query<Object[]> projectQuery = remoteCache.query("select r.name, distance(r.location, 41.91, 12.46) from geo.Restaurant r"); // <1>
       List<Object[]> projectList = projectQuery.list();
       //end::restaurants_projectDistances[]
    }
 
    public void restaurants_projectDistances_yd() {
       //tag::restaurants_projectDistancesYd[]
-      Query<Object[]> projectQuery = remoteCache.query("select r.name, distance(r.location, 41.91, 12.46, yd) from geo.Restaurant r");
+      Query<Object[]> projectQuery = remoteCache.query("select r.name, distance(r.location, 41.91, 12.46, yd) from geo.Restaurant r"); // <1>
       List<Object[]> projectList = projectQuery.list();
       //end::restaurants_projectDistancesYd[]
    }

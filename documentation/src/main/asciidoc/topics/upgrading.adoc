@@ -10,7 +10,7 @@ The new approach requires less system resources (file descriptors/threads) and a
 The existing client that used a connection pool to handle concurrent requests has been moved to a new module `hotrod-client-legacy`.
 
 The new client is effectively a drop in replacement. The only exceptions were if you were referencing some internal classes
-such as the ChannelFactory (non public API), which have been removed since they related to the underlying channel.
+such as the ChannelFactory (non-public API), which have been removed since they related to the underlying channel.
 
 The connection pool configuration is deprecated and no longer used.
 
@@ -21,7 +21,7 @@ which was then cleared when an invocation of the cache was done.
 This does not work with Virtual Threads and is very error prone if the
 same RemoteCache is shared between threads.
 
-Instead now withFlags will return a new instance if new flags are applied
+Instead, now withFlags will return a new instance if new flags are applied
 and the previous instance will be untouched.
 This allows for thread and virtual thread safety.
 
@@ -261,7 +261,7 @@ The same configuration should be changed to the following instead.
 === Fetch Persistent State Remove
 
 The store property named fetch-persistent-state has been deprecated and removed from xml configuration.
-Instead the first configured non shared store that allows for bulk loading will be used for state transfer of entries.
+Instead, the first configured non-shared store that allows for bulk loading will be used for state transfer of entries.
 This reduces configuration complexity and does not allow for a configuration that could lose data due to not
 transferring entries stored in a store.
 
@@ -278,7 +278,7 @@ cli.sh install org.rocksdb:rocksdbjni:6.22.1.1
 
 === JDBC Store database versions configuration deprecated
 
-Prior we allowed a user to specify the database major and minor versions when configuring the database parameters.
+Previously, we allowed a user to specify the database major and minor versions when configuring the database parameters.
 These two options are now deprecated and ignored as we always retrieve them from the JDBC metadata directly.
 This affects all three of the JDBC based stores (string-keyed-jdbc-store, table-jdbc-store and query-jdbc-store).
 
@@ -339,17 +339,17 @@ The following table summarizes the mapping of fields between Hibernate Search 5 
 |===
 | HS5 annotations | Indexing attributes| {brandname} native annotations| Description
 
-| @Field(index=Index.YES) | searchable | @Basic, @Decimal, @Keyword, @Text |Fields previously marked as indexed are now searchable.
+| `@Field(index=Index.YES)` | `searchable` | `@Basic`, `@Decimal`, `@Keyword`, `@Text` |Fields previously marked as indexed are now searchable.
 
-| @Field(store = Store.YES) | projectable = true | @Basic, @Decimal, @Keyword, @Text| Fields previously marked as stored are now projectable.
+| `@Field(store = Store.YES)` | `projectable = true` | `@Basic`, `@Decimal`, `@Keyword`, `@Text`| Fields previously marked as stored are now projectable.
 
-| type String && @Field(analyze = Analyze.YES) | analyzer = "<definition>"| @Text| String fields that were marked with analyzer definitions remain being analyzed during indexing.
+| type `String && @Field(analyze = Analyze.YES)` | `analyzer = "<definition>"`| `@Text`| String fields that were marked with analyzer definitions remain being analyzed during indexing.
 
-| @Field(analyze = Analyze.NO) && (@Field(store = Store.YES) OR @Field(sortable = Sortable.YES)) | sortable = true| @Basic, @Decimal, @Keyword| Fields that were not analyzed but were either stored in the index or marked as sortable are now considered sortable.
+| `@Field(analyze = Analyze.NO) && (@Field(store = Store.YES) OR @Field(sortable = Sortable.YES))` | `sortable = true` | `@Basic`, `@Decimal`, `@Keyword`| Fields that were not analyzed but were either stored in the index or marked as sortable are now considered sortable.
 
-| N/A | aggregable = true| @Basic, @Decimal, @Keyword| Performing aggregation operations using the Hibernate 5 Search annotations was not possible.
+| N/A | `aggregable = true`| `@Basic`, `@Decimal`, `@Keyword`| Performing aggregation operations using the Hibernate 5 Search annotations was not possible.
 
-| N/A | normalizer = "lowercase"| @Keyword| Mapping fields that were analyzed or normalized is not possible due to the potential data loss in the process.
+| N/A | `normalizer = "lowercase"`| `@Keyword`| Mapping fields that were analyzed or normalized is not possible due to the potential data loss in the process.
 |===
 
 === Query efficiency
