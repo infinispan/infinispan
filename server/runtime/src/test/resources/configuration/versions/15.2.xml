@@ -12,6 +12,24 @@
          <interface name="another">
             <loopback/>
          </interface>
+         <interface name="non-loopback">
+            <non-loopback/>
+         </interface>
+         <interface name="match-host">
+            <match-host value=".*"/>
+         </interface>
+         <interface name="match-address">
+            <match-address value=".*"/>
+         </interface>
+         <interface name="match-inteface">
+            <match-interface value=".*"/>
+         </interface>
+         <interface name="site-local">
+            <site-local/>
+         </interface>
+         <interface name="any-address">
+            <any-address/>
+         </interface>
       </interfaces>
 
       <socket-bindings default-interface="default" port-offset="${infinispan.socket.binding.port-offset:0}">
