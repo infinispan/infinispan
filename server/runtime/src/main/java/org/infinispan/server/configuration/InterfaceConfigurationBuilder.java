@@ -42,29 +42,18 @@ public class InterfaceConfigurationBuilder implements Builder<InterfaceConfigura
       String interfaceName = this.name();
       AddressType addressType = address.addressType();
       String addressValue = address.value();
-      switch (addressType) {
-         case ANY_ADDRESS:
-            return NetworkAddress.anyAddress(interfaceName);
-         case INET_ADDRESS:
-            return NetworkAddress.fromString(interfaceName, addressValue);
-         case LINK_LOCAL:
-            return NetworkAddress.linkLocalAddress(interfaceName);
-         case GLOBAL:
-            return NetworkAddress.globalAddress(interfaceName);
-         case LOOPBACK:
-            return NetworkAddress.loopback(interfaceName);
-         case NON_LOOPBACK:
-            return NetworkAddress.nonLoopback(interfaceName);
-         case SITE_LOCAL:
-            return NetworkAddress.siteLocal(interfaceName);
-         case MATCH_INTERFACE:
-            return NetworkAddress.matchInterface(interfaceName, addressValue);
-         case MATCH_ADDRESS:
-            return NetworkAddress.matchAddress(interfaceName, addressValue);
-         case MATCH_HOST:
-            return NetworkAddress.matchHost(interfaceName, addressValue);
-      }
-      return null;
+      return switch (addressType) {
+         case ANY_ADDRESS -> NetworkAddress.anyAddress(interfaceName);
+         case INET_ADDRESS -> NetworkAddress.fromString(interfaceName, addressValue);
+         case LINK_LOCAL -> NetworkAddress.linkLocalAddress(interfaceName);
+         case GLOBAL -> NetworkAddress.globalAddress(interfaceName);
+         case LOOPBACK -> NetworkAddress.loopback(interfaceName);
+         case NON_LOOPBACK -> NetworkAddress.nonLoopback(interfaceName);
+         case SITE_LOCAL -> NetworkAddress.siteLocal(interfaceName);
+         case MATCH_INTERFACE -> NetworkAddress.matchInterface(interfaceName, addressValue);
+         case MATCH_ADDRESS -> NetworkAddress.matchAddress(interfaceName, addressValue);
+         case MATCH_HOST -> NetworkAddress.matchHost(interfaceName, addressValue);
+      };
    }
 
    @Override

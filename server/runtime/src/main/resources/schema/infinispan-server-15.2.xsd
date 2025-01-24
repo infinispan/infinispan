@@ -47,43 +47,100 @@
    <xs:complexType name="interface">
       <xs:all>
          <xs:element type="tns:interface-inet-address" name="inet-address" minOccurs="0"/>
+         <xs:element type="tns:interface-any-address" name="any-address" minOccurs="0"/>
          <xs:element type="tns:interface-global" name="global" minOccurs="0"/>
          <xs:element type="tns:interface-link-local" name="link-local" minOccurs="0"/>
          <xs:element type="tns:interface-loopback" name="loopback" minOccurs="0"/>
          <xs:element type="tns:interface-non-loopback" name="non-loopback" minOccurs="0"/>
          <xs:element type="tns:interface-site-local" name="site-local" minOccurs="0"/>
+         <xs:element type="tns:interface-match-host" name="match-host" minOccurs="0"/>
          <xs:element type="tns:interface-match-interface" name="match-interface" minOccurs="0"/>
          <xs:element type="tns:interface-match-address" name="match-address" minOccurs="0"/>
       </xs:all>
-      <xs:attribute type="xs:string" name="name"/>
+      <xs:attribute type="xs:string" name="name" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               The name to give to this interface.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="interface-match-interface">
-      <xs:attribute name="value"/>
+      <xs:attribute type="xs:string" name="value" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               A regular expression used to match an interface name. For example `eth[0-9]+`.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="interface-match-address">
-      <xs:attribute name="value"/>
+      <xs:attribute type="xs:string" name="value" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               A regular expression used to match an interface address. For example `10\.[0-9]+\.[0-9]+\.[0-9]+`.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="interface-match-host">
-      <xs:attribute name="value"/>
+      <xs:attribute type="xs:string" name="value" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               A regular expression used to match a host name. For example `[a-z]+\.mydomain`.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="socket-bindings">
       <xs:sequence>
          <xs:element type="tns:socket-binding" name="socket-binding" maxOccurs="unbounded" minOccurs="0"/>
       </xs:sequence>
-      <xs:attribute type="xs:string" name="default-interface"/>
-      <xs:attribute type="xs:string" name="port-offset"/>
+      <xs:attribute type="xs:string" name="default-interface">
+         <xs:annotation>
+            <xs:documentation>
+               The network interface used by default.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="port-offset">
+         <xs:annotation>
+            <xs:documentation>
+               An optional offset to add to all the ports associated with this socket binding.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="socket-binding">
       <xs:simpleContent>
          <xs:extension base="xs:string">
-            <xs:attribute type="xs:string" name="name" use="required"/>
-            <xs:attribute type="xs:string" name="port" use="required"/>
-            <xs:attribute type="xs:string" name="interface"/>
+            <xs:attribute type="xs:string" name="name" use="required">
+               <xs:annotation>
+                  <xs:documentation>
+                     A unique name for this socket binding.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute type="xs:string" name="port" use="required">
+               <xs:annotation>
+                  <xs:documentation>
+                     The network port to associate with this socket binding.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute type="xs:string" name="interface">
+               <xs:annotation>
+                  <xs:documentation>
+                     An optional network interface to use for this binding. If not specified, the
+                     socket-bindings.default-interface will be used.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
          </xs:extension>
       </xs:simpleContent>
    </xs:complexType>
@@ -265,11 +322,6 @@
             <xs:documentation>Specifies the socket this connector binds to. If no socket binding is declared, the server does not listen to TCP connections. </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="cache-container" type="xs:string">
-         <xs:annotation>
-            <xs:documentation>Names the cache container this connector exposes.</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
       <xs:attribute name="io-threads" type="xs:int">
          <xs:annotation>
             <xs:documentation>Sets the number of I/O threads. Defaults to 2 * cpu cores. This configuration is ignored
@@ -388,7 +440,13 @@
    </xs:complexType>
 
    <xs:complexType name="ip-rule">
-      <xs:attribute name="from" type="xs:string"/>
+      <xs:attribute name="from" type="xs:string">
+         <xs:annotation>
+            <xs:documentation>
+               A network mask using CIDR notation.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="hotrod-connector">
@@ -435,20 +493,30 @@
             </xs:all>
             <xs:attribute name="cache" type="xs:string">
                <xs:annotation>
-                  <xs:documentation>Names the cache that the Memcached connector exposes. Defaults to memcachedCache.
+                  <xs:documentation>
+                     Names the cache that the Memcached connector exposes. Defaults to memcachedCache.
                   </xs:documentation>
                </xs:annotation>
             </xs:attribute>
             <xs:attribute name="client-encoding" type="xs:string">
                <xs:annotation>
-                  <xs:documentation>Sets client encoding for values. Applies to memcached text protocol only.
+                  <xs:documentation>
+                     Sets client encoding for values. Applies to memcached text protocol only.
                   </xs:documentation>
                </xs:annotation>
             </xs:attribute>
-            <xs:attribute name="protocol" type="tns:memcached-protocol" default="AUTO"/>
+            <xs:attribute name="protocol" type="tns:memcached-protocol" default="AUTO">
+               <xs:annotation>
+                  <xs:documentation>
+                     The protocol supported by this connector. One of AUTO (default), TEXT or BINARY.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
             <xs:attribute name="security-realm" type="xs:string">
                <xs:annotation>
-                  <xs:documentation>Names the security realm to use for authentication, cache authorization, and encryption. </xs:documentation>
+                  <xs:documentation>
+                     Names the security realm to use for authentication, cache authorization, and encryption.
+                  </xs:documentation>
                </xs:annotation>
             </xs:attribute>
          </xs:extension>
@@ -585,27 +653,17 @@
    <xs:complexType name="sasl">
       <xs:annotation>
          <xs:documentation>
-            <![CDATA[
-                The configuration of the SASL authentication layer for this server.
-
-                The optional "include-mechanisms" attribute contains a list of allowed SASL mechanism names.
-                No mechanisms will be allowed which are not present in this list.
-
-                The optional "qop" attribute contains a list of quality-of-protection values, in decreasing order
-                of preference.
-
-                The optional "strength" attribute contains a list of cipher strength values, in decreasing order
-                of preference.
-
-                The optional "policy" attribute contains a list of policies to use to narrow down the available set
-                of mechanisms.
-
-                The optional nested "property" elements specify additional properties required by the specified mechanisms
-            ]]>
+           The configuration of the SASL authentication layer for this server.
          </xs:documentation>
       </xs:annotation>
       <xs:sequence>
-         <xs:element name="property" type="tns:property" minOccurs="0" maxOccurs="unbounded"/>
+         <xs:element name="property" type="tns:property" minOccurs="0" maxOccurs="unbounded">
+            <xs:annotation>
+               <xs:documentation>
+                  Specify additional properties required by the specified mechanisms
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
       </xs:sequence>
       <xs:attribute name="server-principal" type="xs:string">
          <xs:annotation>
@@ -620,10 +678,36 @@
             <xs:documentation>Names the server that is exposed to clients.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="mechanisms" type="tns:name-list"/>
-      <xs:attribute name="qop" type="tns:qop-list"/>
-      <xs:attribute name="strength" type="tns:strength"/>
-      <xs:attribute name="policy" type="tns:policy-list"/>
+      <xs:attribute name="mechanisms" type="tns:name-list">
+         <xs:annotation>
+            <xs:documentation>
+               A list of allowed SASL mechanism names. If unspecified, the server will select all the mechanisms
+               supported by the security realm.
+               No mechanisms will be allowed which are not present in this list.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="qop" type="tns:qop-list">
+         <xs:annotation>
+            <xs:documentation>
+               A list of quality-of-protection values, in decreasing order of preference.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="strength" type="tns:strength">
+         <xs:annotation>
+            <xs:documentation>
+               A list of cipher strength values, in decreasing order of preference.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="policy" type="tns:policy-list">
+         <xs:annotation>
+            <xs:documentation>
+               A list of policies to use to narrow down the available set of mechanisms.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:simpleType name="policy-list">
@@ -1151,18 +1235,67 @@
    </xs:complexType>
 
    <xs:complexType name="interface-inet-address">
-      <xs:attribute type="xs:string" name="value" use="required"/>
+      <xs:annotation>
+         <xs:documentation>
+            Selects a specific IP address, which can be public, private, or loopback. This is the default network interface.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:attribute type="xs:string" name="value" use="required">
+         <xs:annotation>
+            <xs:documentation>
+               The IP address.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
-   <xs:complexType name="interface-global"/>
+   <xs:complexType name="interface-any-address">
+      <xs:annotation>
+         <xs:documentation>
+            Uses the `INADDR_ANY` wildcard address which will listen for inbound client requests on all interfaces.
+         </xs:documentation>
+      </xs:annotation>
+   </xs:complexType>
 
-   <xs:complexType name="interface-link-local"/>
+   <xs:complexType name="interface-global">
+      <xs:annotation>
+         <xs:documentation>
+            Selects a global (non-loopback, non-site-local, non-link-local) IP address in an IPv4 or IPv6 address block.
+         </xs:documentation>
+      </xs:annotation>
+   </xs:complexType>
 
-   <xs:complexType name="interface-loopback"/>
+   <xs:complexType name="interface-link-local">
+      <xs:annotation>
+         <xs:documentation>
+            Selects a link-local (private) IP address in an IPv4 or IPv6 address block.
+         </xs:documentation>
+      </xs:annotation>
+   </xs:complexType>
 
-   <xs:complexType name="interface-non-loopback"/>
+   <xs:complexType name="interface-loopback">
+      <xs:annotation>
+         <xs:documentation>
+            Selects an IP address in an IPv4 or IPv6 loopback address block.
+         </xs:documentation>
+      </xs:annotation>
+   </xs:complexType>
 
-   <xs:complexType name="interface-site-local"/>
+   <xs:complexType name="interface-non-loopback">
+      <xs:annotation>
+         <xs:documentation>
+            Selects an IP address in an IPv4 or IPv6 non-loopback address block.
+         </xs:documentation>
+      </xs:annotation>
+   </xs:complexType>
+
+   <xs:complexType name="interface-site-local">
+      <xs:annotation>
+         <xs:documentation>
+            Selects a site-local (private) IP address in an IPv4 or IPv6 address block.
+         </xs:documentation>
+      </xs:annotation>
+   </xs:complexType>
 
    <xs:complexType name="security-realm-server-identities">
       <xs:sequence>
@@ -1306,13 +1439,21 @@
          <xs:annotation>
             <xs:documentation>
                The type of the truststore. Normally the type will be auto-detected. This attribute is required for
-               file-less truststores, for example when using the `SunPKCS11-nss-fips` provider.
+               file-less trust-stores, for example when using the `SunPKCS11-nss-fips` provider.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
    </xs:complexType>
    <xs:complexType name="security-realm-ssl-engine">
-      <xs:attribute type="tns:name-list" name="enabled-protocols"/>
+      <xs:attribute type="tns:name-list" name="enabled-protocols">
+         <xs:annotation>
+            <xs:documentation>
+               A list of SSL protocol names to enable in order of preference. If unspecified, all the
+               protocols supported by the underlying SSL provider will be enabled. For example, "TLSv1.3" will enable
+               only TLS 1.3.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
       <xs:attribute type="xs:string" name="enabled-ciphersuites" default="DEFAULT">
          <xs:annotation>
             <xs:documentation>
@@ -1323,7 +1464,7 @@
       <xs:attribute type="xs:string" name="enabled-ciphersuites-tls13" default="TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256">
          <xs:annotation>
             <xs:documentation>
-               The ciphersuite names to use for the TLSv1.3 engine.
+               The cipher suite names to use for the TLSv1.3 engine.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -1334,7 +1475,7 @@
          <xs:element type="tns:security-realm-user-properties" name="user-properties" minOccurs="0"/>
          <xs:element type="tns:security-realm-group-properties" name="group-properties" minOccurs="0"/>
       </xs:sequence>
-      <xs:attribute type="xs:string" name="name">
+      <xs:attribute type="xs:string" name="name" default="properties">
          <xs:annotation>
             <xs:documentation>
                Names the security realm to logically separate multiple realms of the same type.
@@ -1352,8 +1493,20 @@
    </xs:complexType>
 
    <xs:complexType name="security-realm-group-properties">
-      <xs:attribute type="xs:string" name="path" default="groups.properties"/>
-      <xs:attribute type="xs:string" name="relative-to" default="infinispan.server.config.path"/>
+      <xs:attribute type="xs:string" name="path" default="groups.properties">
+         <xs:annotation>
+            <xs:documentation>
+               The path to the properties file to use for user to group mapping.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="relative-to" default="infinispan.server.config.path">
+         <xs:annotation>
+            <xs:documentation>
+               The name of a system property which will be used to resolve the path to the group properties file.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="security-realm-ldap">
@@ -1367,7 +1520,7 @@
          <xs:element type="tns:name-rewriter" name="name-rewriter" minOccurs="0"/>
          <xs:element type="tns:ldap-identity-mapping" name="identity-mapping" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
-      <xs:attribute type="xs:string" name="name">
+      <xs:attribute type="xs:string" name="name" default="ldap">
          <xs:annotation>
             <xs:documentation>
                Names the security realm to logically separate multiple realms of the same type.
@@ -1735,7 +1888,13 @@
          <xs:element type="tns:jwt" name="jwt"/>
          <xs:element type="tns:oauth2-introspection" name="oauth2-introspection"/>
       </xs:choice>
-      <xs:attribute type="xs:string" name="name" use="required"/>
+      <xs:attribute type="xs:string" name="name" default="token">
+         <xs:annotation>
+            <xs:documentation>
+               Names the security realm to logically separate multiple realms of the same type.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
       <xs:attribute type="xs:string" name="auth-server-url" use="required"/>
       <xs:attribute type="xs:string" name="client-id" use="required"/>
       <xs:attribute type="xs:string" name="principal-claim" default="username"/>
@@ -1877,7 +2036,13 @@
    </xs:complexType>
 
    <xs:complexType name="security-realm-local">
-      <xs:attribute type="xs:string" name="name" default="local"/>
+      <xs:attribute type="xs:string" name="name" default="local">
+         <xs:annotation>
+            <xs:documentation>
+               Names the security realm to logically separate multiple realms of the same type.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="security-realm-kerberos">
@@ -1990,7 +2155,13 @@
    </xs:complexType>
 
    <xs:complexType name="security-realm-trust">
-      <xs:attribute type="xs:string" name="name"/>
+      <xs:attribute type="xs:string" name="name" default="trust">
+         <xs:annotation>
+            <xs:documentation>
+               Names the security realm to logically separate multiple realms of the same type.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="security-realm-distributed">
@@ -1999,7 +2170,13 @@
             A realm definition for authentication and authorization of identities distributed between multiple realms.
          </xs:documentation>
       </xs:annotation>
-      <xs:attribute type="xs:string" name="name"/>
+      <xs:attribute type="xs:string" name="name" default="distributed">
+         <xs:annotation>
+            <xs:documentation>
+               Names the security realm to logically separate multiple realms of the same type.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
       <xs:attribute name="realms" type="tns:name-list">
          <xs:annotation>
             <xs:documentation>
@@ -2019,8 +2196,14 @@
       <xs:sequence>
          <xs:element type="tns:name-rewriter" name="name-rewriter" minOccurs="0"/>
       </xs:sequence>
-      <xs:attribute type="xs:string" name="name"/>
-      <xs:attribute name="authentication-realm" use="required">
+      <xs:attribute type="xs:string" name="name" default="aggregate">
+         <xs:annotation>
+            <xs:documentation>
+               Names the security realm to logically separate multiple realms of the same type.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute type="xs:string" name="authentication-realm" use="required">
          <xs:annotation>
             <xs:documentation>
                The name of a security realm that should be used for authentication.

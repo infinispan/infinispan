@@ -97,7 +97,8 @@
                 class CDATA #REQUIRED>
         <!ELEMENT xsl:text (#PCDATA)>
         ]>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:xs="http://www.w3.org/2001/XMLSchema" version="1.0" exclude-result-prefixes="xs html">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:xs="http://www.w3.org/2001/XMLSchema" version="1.0" exclude-result-prefixes="xs html">
    <xsl:output method="html" encoding="ISO-8859-1" standalone="yes" version="1.0" doctype-public="-//W3C//DTD XHTML 1.0 Strict//EN" doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd" indent="yes" />
 
    <xsl:key name="simpleTypes" match="/xs:schema/xs:simpleType" use="@name"/>
@@ -247,8 +248,8 @@
             <xsl:apply-templates select="xs:attribute" />
          </table>
       </xsl:if>
-      <xsl:if test="xs:all | xs:sequence | xs:complexContent">
-         <xsl:apply-templates select="xs:all | xs:sequence | xs:complexContent" />
+      <xsl:if test="xs:all | xs:sequence | xs:complexContent | xs:choice">
+         <xsl:apply-templates select="xs:all | xs:sequence | xs:complexContent | xs:choice" />
       </xsl:if>
       <div>
          <xsl:apply-templates select="/xs:schema" mode="lookup-type">
@@ -331,7 +332,7 @@
          </td>
          <td>
             <xsl:if test="@default">
-               <xsl:value-of select="@default"></xsl:value-of>
+               <xsl:value-of select="@default"/>
             </xsl:if>
          </td>
          <td>
