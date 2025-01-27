@@ -736,14 +736,14 @@ public class ServerConfigurationParser implements ConfigurationParser {
                ldapRealmConfigBuilder.pageSize(ParseUtils.parseInt(reader, i, value));
                break;
             case SEARCH_DN:
-               ParseUtils.removedSince(reader, 13, 0);
+               ParseUtils.attributeRemovedSince(reader, 13, 0, i);
                ldapRealmConfigBuilder.identityMapping().searchBaseDn(value);
                break;
             case CLIENT_SSL_CONTEXT:
                ldapRealmConfigBuilder.clientSSLContext(value);
                break;
             case RDN_IDENTIFIER:
-               ParseUtils.removedSince(reader, 13, 0);
+               ParseUtils.attributeRemovedSince(reader, 13, 0, i);
                ldapRealmConfigBuilder.identityMapping().rdnIdentifier(value);
                break;
             case CONNECTION_POOLING:
@@ -893,7 +893,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                userMapperBuilder.from(value);
                break;
             case WRITABLE:
-               ParseUtils.removedSince(reader, 13, 0);
+               ParseUtils.attributeRemovedSince(reader, 13, 0, i);
                ignoreAttribute(reader, i);
                break;
             case VERIFIABLE:
@@ -1714,7 +1714,7 @@ public class ServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case WORKER_THREADS: {
-               ParseUtils.removedSince(reader, 14, 0);
+               ParseUtils.attributeRemovedSince(reader, 14, 0, i);
                CONFIG.ignoredAttribute(attribute.toString(), "14.0", attribute.name(), reader.getLocation().getLineNumber());
                break;
             }

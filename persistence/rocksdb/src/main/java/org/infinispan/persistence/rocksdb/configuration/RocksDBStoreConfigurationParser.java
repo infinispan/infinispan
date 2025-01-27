@@ -5,6 +5,7 @@ import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfi
 
 import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.parsing.CacheParser;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
@@ -98,7 +99,7 @@ public class RocksDBStoreConfigurationParser implements ConfigurationParser {
                break;
             }
             default: {
-               Parser.parseStoreElement(reader, builder);
+               CacheParser.parseStoreElement(reader, builder);
             }
          }
       }

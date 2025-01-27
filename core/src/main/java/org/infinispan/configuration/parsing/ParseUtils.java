@@ -332,7 +332,7 @@ public final class ParseUtils {
     }
 
     public static void ignoreAttribute(ConfigurationReader reader, String attributeName) {
-        CONFIG.ignoreAttribute(attributeName, reader.getLocation());
+        CONFIG.ignoreAttribute(reader.getLocalName(), attributeName, reader.getLocation());
     }
 
     public static void ignoreAttribute(ConfigurationReader reader, int attributeIndex) {
@@ -340,29 +340,20 @@ public final class ParseUtils {
     }
 
     public static void ignoreAttribute(ConfigurationReader reader, Enum<?> attribute) {
-        CONFIG.ignoreAttribute(attribute, reader.getLocation());
+        CONFIG.ignoreAttribute(reader.getLocalName(), attribute, reader.getLocation());
     }
 
     public static void ignoreElement(ConfigurationReader reader, Enum<?> element) {
         CONFIG.ignoreXmlElement(element, reader.getLocation());
     }
 
-    public static CacheConfigurationException elementRemoved(ConfigurationReader reader, String newElementName) {
-        return CONFIG.elementRemovedUseOther(reader.getLocalName(), newElementName, reader.getLocation());
-    }
-
     public static CacheConfigurationException elementRemoved(ConfigurationReader reader) {
         return CONFIG.elementRemoved(reader.getLocalName(), reader.getLocation());
     }
 
-    public static CacheConfigurationException attributeRemoved(ConfigurationReader reader, int attributeIndex, String newAttributeName) {
-        String attributeName = reader.getAttributeName(attributeIndex);
-        return CONFIG.attributeRemovedUseOther(attributeName, newAttributeName, reader.getLocation());
-    }
-
     public static CacheConfigurationException attributeRemoved(ConfigurationReader reader, int attributeIndex) {
         String attributeName = reader.getAttributeName(attributeIndex);
-        return CONFIG.attributeRemoved(attributeName, reader.getLocation());
+        return CONFIG.attributeRemoved(reader.getLocalName(), attributeName, reader.getLocation());
     }
 
     public static void parseAttributes(ConfigurationReader reader, Builder<?> builder) {
@@ -376,7 +367,7 @@ public final class ParseUtils {
             org.infinispan.commons.configuration.attributes.Attribute<Object> attribute = attributes.attribute(name);
             if (attribute == null) {
                 if (attributes.isRemoved(name, major, minor)) {
-                    CONFIG.ignoreAttribute(name, reader.getLocation());
+                    CONFIG.ignoreAttribute(reader.getLocalName(), name, reader.getLocation());
                 } else {
                     throw ParseUtils.unexpectedAttribute(reader, i);
                 }
@@ -431,9 +422,15 @@ public final class ParseUtils {
         }
     }
 
-    public static void removedSince(ConfigurationReader reader, int major, int minor) {
+    public static void elementRemovedSince(ConfigurationReader reader, int major, int minor) {
         if (reader.getSchema().since(major, minor)) {
             throw ParseUtils.elementRemoved(reader);
+        }
+    }
+
+    public static void attributeRemovedSince(ConfigurationReader reader, int major, int minor, int index) {
+        if (reader.getSchema().since(major, minor)) {
+            throw ParseUtils.attributeRemoved(reader, index);
         }
     }
 }
