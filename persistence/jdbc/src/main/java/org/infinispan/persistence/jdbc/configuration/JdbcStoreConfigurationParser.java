@@ -6,6 +6,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.configuration.parsing.CacheParser;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
@@ -68,7 +69,7 @@ public class JdbcStoreConfigurationParser extends AbstractJdbcStoreConfiguration
             if (attribute == Attribute.KEY_TO_STRING_MAPPER) {
                builder.key2StringMapper(value);
             } else {
-               Parser.parseStoreAttribute(reader, i, builder);
+               CacheParser.parseStoreAttribute(reader, i, builder);
             }
          }
       }
@@ -78,7 +79,7 @@ public class JdbcStoreConfigurationParser extends AbstractJdbcStoreConfiguration
             if (element == Element.STRING_KEYED_TABLE) {
                parseTable(reader, builder.table());
             } else {
-               Parser.parseStoreElement(reader, builder);
+               CacheParser.parseStoreElement(reader, builder);
             }
          }
       }

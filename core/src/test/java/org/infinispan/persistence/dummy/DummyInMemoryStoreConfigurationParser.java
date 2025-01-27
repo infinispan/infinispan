@@ -4,6 +4,7 @@ import static org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationPa
 
 import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.parsing.CacheParser;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
@@ -55,13 +56,13 @@ public class DummyInMemoryStoreConfigurationParser implements ConfigurationParse
                builder.storeName(value);
                break;
             default: {
-               Parser.parseStoreAttribute(reader, i, builder);
+               CacheParser.parseStoreAttribute(reader, i, builder);
             }
          }
       }
 
       while (reader.inTag()) {
-         Parser.parseStoreElement(reader, builder);
+         CacheParser.parseStoreElement(reader, builder);
       }
    }
 

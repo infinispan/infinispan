@@ -1080,8 +1080,8 @@ public interface Log extends BasicLogger {
 //   void unrecognizedAttribute(String property);
 
    @LogMessage(level = INFO)
-   @Message(value = "Ignoring attribute %s at %s, please remove from configuration file", id = 293)
-   void ignoreAttribute(Object attribute, Location location);
+   @Message(value = "Ignoring attribute '%2$s' of element '%1$s' at '%3$s', please remove from configuration file", id = 293)
+   void ignoreAttribute(String element, Object attribute, Location location);
 
    @LogMessage(level = INFO)
    @Message(value = "Ignoring element %s at %s, please remove from configuration file", id = 294)
@@ -2136,8 +2136,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Attribute '%1$s' has been removed at %3$s. Please use attribute '%2$s' instead", id = 623)
    CacheConfigurationException attributeRemovedUseOther(String attributeName, String newAttributeName, Location location);
 
-   @Message(value = "Attribute '%s' at %s has been removed with no replacement", id = 624)
-   CacheConfigurationException attributeRemoved(String attributeName, Location location);
+   @Message(value = "Attribute '%2$s' of element '%1$s' at '%3$s' has been removed with no replacement", id = 624)
+   CacheConfigurationException attributeRemoved(String elementName, String attributeName, Location location);
 
    @LogMessage(level = WARN)
    @Message(value = "Index path not provided and global state disabled, will use the current working directory for storage.", id = 625)

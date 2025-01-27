@@ -37,6 +37,7 @@ import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.global.AllowListConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalJmxConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalRoleConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalSecurityConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalStateConfigurationBuilder;
@@ -126,7 +127,7 @@ public class Parser extends CacheParser {
                break;
             }
             case VERSION: {
-               ParseUtils.removedSince(reader, 11, 0);
+               ParseUtils.attributeRemovedSince(reader, 11, 0, i);
                ignoreAttribute(reader, i);
                break;
             }
@@ -170,7 +171,7 @@ public class Parser extends CacheParser {
                break;
             }
             case WHITE_LIST:
-               ParseUtils.removedSince(reader, 12, 0);
+               ParseUtils.elementRemovedSince(reader, 12, 0);
                CONFIG.configDeprecatedUseOther(Element.WHITE_LIST, Element.ALLOW_LIST, reader.getLocation());
                parseAllowList(reader, builder.serialization().allowList(), Element.WHITE_LIST);
                break;
@@ -678,7 +679,7 @@ public class Parser extends CacheParser {
             case START:
             case ASYNC_EXECUTOR:
             case PERSISTENCE_EXECUTOR: {
-               ParseUtils.removedSince(reader, 11, 0);
+               ParseUtils.attributeRemovedSince(reader, 11, 0, i);
                ignoreAttribute(reader, i);
                break;
             }
@@ -688,7 +689,7 @@ public class Parser extends CacheParser {
                break;
             }
             case EVICTION_EXECUTOR:
-               ParseUtils.removedSince(reader, 11, 0);
+               ParseUtils.attributeRemovedSince(reader, 11, 0, i);
                CONFIG.evictionExecutorDeprecated();
 
                // fallthrough
@@ -775,7 +776,7 @@ public class Parser extends CacheParser {
             }
             case SCATTERED_CACHE:
             case SCATTERED_CACHE_CONFIGURATION: {
-               ParseUtils.removedSince(reader, 15, 0);
+               ParseUtils.elementRemovedSince(reader, 15, 0);
                parseScatteredCache(reader, element);
                break;
             }
@@ -1152,31 +1153,28 @@ public class Parser extends CacheParser {
    }
 
    private void parseJmx(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
+      GlobalJmxConfigurationBuilder builder = holder.getGlobalConfigurationBuilder().jmx();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case ENABLED: {
-               builder.jmx().enabled(ParseUtils.parseBoolean(reader, i, value));
+               builder.enabled(ParseUtils.parseBoolean(reader, i, value));
                break;
             }
             case DOMAIN: {
-               builder.jmx().domain(value);
+               builder.domain(value);
                break;
             }
             case MBEAN_SERVER_LOOKUP: {
-               builder.jmx().mBeanServerLookup(Util.getInstance(value, holder.getClassLoader()));
+               builder.mBeanServerLookup(Util.getInstance(value, holder.getClassLoader()));
                break;
             }
             case ALLOW_DUPLICATE_DOMAINS: {
-               if (!reader.getSchema().since(11, 0)) {
-                  ignoreAttribute(reader, i);
-                  break;
-               } else {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               }
+               ParseUtils.attributeRemovedSince(reader, 11, 0, i);
+               ignoreAttribute(reader, i);
+               break;
             }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -1185,13 +1183,7 @@ public class Parser extends CacheParser {
       }
 
       Properties properties = parseProperties(reader, Element.JMX);
-      builder.jmx().withProperties(properties);
-   }
-
-   private void parseModules(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      while (reader.inTag()) {
-         reader.handleAny(holder);
-      }
+      builder.withProperties(properties);
    }
 
    private void parseTransport(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
@@ -1214,7 +1206,7 @@ public class Parser extends CacheParser {
                }
                case EXECUTOR:
                case REMOTE_COMMAND_EXECUTOR: {
-                  ParseUtils.removedSince(reader, 11, 0);
+                  ParseUtils.attributeRemovedSince(reader, 11, 0, i);
                   break;
                }
                case LOCK_TIMEOUT: {

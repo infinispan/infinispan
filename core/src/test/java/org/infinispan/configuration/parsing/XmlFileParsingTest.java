@@ -1,5 +1,6 @@
 package org.infinispan.configuration.parsing;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -714,8 +715,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
                   <replicated-cache-configuration name="mycache"/>
                   """,
             CacheMode.REPL_SYNC, true);
-
-
    }
 
    private void testFragment0(String config, CacheMode mode, boolean isTemplate) {
@@ -724,6 +723,28 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       Configuration cfg = holder.getNamedConfigurationBuilders().get("mycache").build();
       assertEquals(mode, cfg.clustering().cacheMode());
       assertEquals(isTemplate, cfg.isTemplate());
+   }
+
+   public void testRemovedElement() {
+      String config = TestingUtil.wrapXMLWithSchema(
+            """
+               <cache-container>
+                  <scattered-cache/>
+               </cache-container>
+            """
+      );
+      assertThatThrownBy(() -> parseStringConfiguration(config)).hasMessage("ISPN000622: Element 'scattered-cache' at [4,25] has been removed with no replacement");
+   }
+
+   public void testRemovedAttribute() {
+      String config = TestingUtil.wrapXMLWithSchema(
+            """
+               <cache-container>
+                  <serialization version="1"/>
+               </cache-container>
+            """
+      );
+      assertThatThrownBy(() -> parseStringConfiguration(config)).hasMessage("ISPN000624: Attribute 'version' of element 'serialization' at '[3,54]' has been removed with no replacement");
    }
 
    public static class CustomTransport extends JGroupsTransport {

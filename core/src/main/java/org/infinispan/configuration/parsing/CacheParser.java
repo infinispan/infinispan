@@ -133,7 +133,7 @@ public class CacheParser implements ConfigurationParser {
          }
          case SCATTERED_CACHE:
          case SCATTERED_CACHE_CONFIGURATION: {
-            ParseUtils.removedSince(reader, 15, 0);
+            ParseUtils.elementRemovedSince(reader, 15, 0);
             parseScatteredCache(reader, element);
             break;
          }
@@ -235,7 +235,7 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case ENABLED: {
-               ParseUtils.removedSince(reader, 11, 0);
+               ParseUtils.attributeRemovedSince(reader, 11, 0, i);
                ignoreAttribute(reader, i);
                break;
             }
@@ -245,7 +245,7 @@ public class CacheParser implements ConfigurationParser {
             }
             case MERGE_POLICY: {
                MergePolicy mp = MergePolicy.fromString(value);
-               EntryMergePolicy mergePolicy = mp == MergePolicy.CUSTOM ? Util.getInstance(value, holder.getClassLoader()) : mp;
+               EntryMergePolicy<?, ?> mergePolicy = mp == MergePolicy.CUSTOM ? Util.getInstance(value, holder.getClassLoader()) : mp;
                ph.mergePolicy(mergePolicy);
                break;
             }
@@ -373,7 +373,7 @@ public class CacheParser implements ConfigurationParser {
             break;
          }
          case CUSTOM_INTERCEPTORS: {
-            ParseUtils.removedSince(reader, 15, 0);
+            ParseUtils.elementRemovedSince(reader, 15, 0);
             CONFIG.customInterceptorsIgnored();
             while (reader.inTag(Element.CUSTOM_INTERCEPTORS)) {
                // Skip interceptors
@@ -582,7 +582,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case TRANSACTION_PROTOCOL: {
-               ParseUtils.removedSince(reader, 11, 0);
+               ParseUtils.attributeRemovedSince(reader, 11, 0, i);
                break;
             }
             case AUTO_COMMIT: {
@@ -605,7 +605,7 @@ public class CacheParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private final void parseDataType(ConfigurationReader reader, ConfigurationBuilder builder, ConfigurationBuilderHolder holder) {
+   private void parseDataType(ConfigurationReader reader, ConfigurationBuilder builder, ConfigurationBuilderHolder holder) {
       EncodingConfigurationBuilder encodingBuilder = builder.encoding();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -753,7 +753,7 @@ public class CacheParser implements ConfigurationParser {
          }
          case QUEUE_SIZE:
          case QUEUE_FLUSH_INTERVAL: {
-            ParseUtils.removedSince(reader, 11, 0);
+            ParseUtils.attributeRemovedSince(reader, 11, 0, index);
             break;
          }
          case REMOTE_TIMEOUT: {
@@ -819,7 +819,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case CAPACITY:
-               ParseUtils.removedSince(reader, 13, 0);
+               ParseUtils.attributeRemovedSince(reader, 13, 0, i);
                CONFIG.configDeprecatedUseOther(Attribute.CAPACITY, Attribute.CAPACITY_FACTOR, reader.getLocation());
                break;
             case CAPACITY_FACTOR: {
@@ -984,7 +984,7 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case RELATIVE_TO: {
-               ParseUtils.removedSince(reader, 11, 0);
+               ParseUtils.attributeRemovedSince(reader, 11, 0, i);
                ignoreAttribute(reader, i);
                break;
             }
@@ -1058,7 +1058,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case RELATIVE_TO: {
-               ParseUtils.removedSince(reader, 13, 0);
+               ParseUtils.attributeRemovedSince(reader, 13, 0, i);
                ignoreAttribute(reader, i);
                break;
             }
@@ -1085,12 +1085,12 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case RELATIVE_TO: {
-               ParseUtils.removedSince(reader, 13, 0);
+               ParseUtils.attributeRemovedSince(reader, 13, 0, i);
                ignoreAttribute(reader, i);
                break;
             }
             case SEGMENTS:
-               ParseUtils.removedSince(reader, 15, 0);
+               ParseUtils.attributeRemovedSince(reader, 15, 0, i);
                ignoreAttribute(reader, i);
                break;
             case INDEX_QUEUE_LENGTH:
@@ -1116,7 +1116,7 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case RELATIVE_TO: {
-               ParseUtils.removedSince(reader, 11, 0);
+               ParseUtils.attributeRemovedSince(reader, 11, 0, i);
                ignoreAttribute(reader, i);
                break;
             }
@@ -1160,7 +1160,7 @@ public class CacheParser implements ConfigurationParser {
             break;
          }
          case FETCH_STATE: {
-            ParseUtils.removedSince(reader, 14, 0);
+            ParseUtils.attributeRemovedSince(reader, 14, 0, index);
             ignoreAttribute(reader, index);
             break;
          }
@@ -1226,7 +1226,7 @@ public class CacheParser implements ConfigurationParser {
                storeBuilder.failSilently(ParseUtils.parseBoolean(reader, i, value));
                break;
             case THREAD_POOL_SIZE: {
-               ParseUtils.removedSince(reader, 11, 0);
+               ParseUtils.attributeRemovedSince(reader, 11, 0, i);
                ignoreAttribute(reader, i);
                break;
             }
