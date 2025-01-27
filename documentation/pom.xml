@@ -26,7 +26,7 @@
         <maven.min.version>3.8</maven.min.version>
         <skipTests>true</skipTests>
         <defaults.file>${project.build.directory}/default-attributes.adoc</defaults.file>
-        <asciidoctorj.version>2.5.13</asciidoctorj.version>
+        <asciidoctorj.version>3.0.0</asciidoctorj.version>
         <asciidoctor.maven.plugin.version>3.1.1</asciidoctor.maven.plugin.version>
         <asciidoctorj.pdf.version>2.3.19</asciidoctorj.pdf.version>
         <jruby.version>9.4.10.0</jruby.version>
@@ -146,14 +146,12 @@
                             <backend>html5</backend>
                             <doctype>book</doctype>
                             <outputDirectory>${project.build.directory}/generated/${infinispan.base.version}/html</outputDirectory>
-                            <imagesDir>.</imagesDir>
                             <preserveDirectories>true</preserveDirectories>
                             <relativeBaseDir>true</relativeBaseDir>
                             <sourceDocumentExtensions>
                                 <sourceDocumentExtension>asciidoc</sourceDocumentExtension>
                                 <sourceDocumentExtension>asciidoctorj-tabbed-code-extension</sourceDocumentExtension>
                             </sourceDocumentExtensions>
-                            <sourceHighlighter>coderay</sourceHighlighter>
                             <attributes>
                                 <idprefix />
                                 <sectanchors>true</sectanchors>
@@ -185,6 +183,8 @@
                                 <code_tutorials>${infinispan.tutorials}</code_tutorials>
                                 <imagesdir>../../topics/images</imagesdir>
                                 <postgresqlversion>${postgresql.database.version}</postgresqlversion>
+                                <source-highlighter>highlight.js</source-highlighter>
+                                <highlightjs-theme>github</highlightjs-theme>
                             </attributes>
                         </configuration>
                     </execution>
@@ -225,14 +225,12 @@
                                     <backend>pdf</backend>
                                     <doctype>book</doctype>
                                     <outputDirectory>${project.build.directory}/generated/${infinispan.base.version}/pdf</outputDirectory>
-                                    <imagesDir>.</imagesDir>
                                     <preserveDirectories>false</preserveDirectories>
                                     <relativeBaseDir>true</relativeBaseDir>
                                     <sourceDocumentExtensions>
                                         <sourceDocumentExtension>asciidoc</sourceDocumentExtension>
                                         <sourceDocumentExtension>asciidoctorj-tabbed-code-extension</sourceDocumentExtension>
                                     </sourceDocumentExtensions>
-                                    <sourceHighlighter>coderay</sourceHighlighter>
                                     <attributes>
                                         <idprefix />
                                         <sectanchors>true</sectanchors>
@@ -261,6 +259,7 @@
                                         <code_tutorials>${infinispan.tutorials}</code_tutorials>
                                         <imagesdir>../../topics/images</imagesdir>
                                         <postgresqlversion>${postgresql.database.version}</postgresqlversion>
+                                        <source-highlighter>pygments</source-highlighter>
                                     </attributes>
                                 </configuration>
                             </execution>
