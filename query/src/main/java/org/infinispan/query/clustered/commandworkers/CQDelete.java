@@ -4,6 +4,7 @@ import static org.infinispan.query.core.impl.Log.CONTAINER;
 
 import java.util.BitSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
@@ -36,8 +37,9 @@ final class CQDelete extends CQWorker {
       SearchQueryBuilder query = queryDefinition.getSearchQueryBuilder();
       return blockingManager.supplyBlocking(() -> fetchIds(query), this)
             .thenCompose(queryResult -> CompletionStages.performConcurrently(queryResult, concurrencyLevel,
-                  Schedulers.from(new WithinThreadExecutor()), cache::removeAsync,
-                  Collectors.summingInt(prev -> prev != null ? 1 : 0)))
+                  Schedulers.from(new WithinThreadExecutor()), (key) -> cache.removeAsync(key)
+                        .thenApply(Objects::nonNull),
+                  Collectors.summingInt(prev -> prev ? 1 : 0)))
             .thenApply(QueryResponse::new);
    }
 
