@@ -90,7 +90,6 @@ import org.infinispan.reactive.publisher.PublisherReducers;
 import org.infinispan.reactive.publisher.PublisherTransformers;
 import org.infinispan.reactive.publisher.impl.commands.batch.PublisherResponseExternalizer;
 import org.infinispan.reactive.publisher.impl.commands.reduction.SegmentPublisherResult;
-import org.infinispan.remoting.responses.BiasRevocationResponse;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.PrepareResponse;
@@ -136,7 +135,6 @@ final class InternalExternalizers {
       // Add the rest of stateless externalizers
       addInternalExternalizer(new AcceptAllKeyValueFilter.Externalizer(), exts);
       addInternalExternalizer(new AvailabilityMode.Externalizer(), exts);
-      addInternalExternalizer(new BiasRevocationResponse.Externalizer(), exts);
       addInternalExternalizer(new BiFunctionMapper.Externalizer(), exts);
       addInternalExternalizer(new ByteBufferImpl.Externalizer(), exts);
       addInternalExternalizer(new CacheEventConverterAsConverter.Externalizer(), exts);
