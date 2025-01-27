@@ -82,7 +82,7 @@ public class CollectionExternalizerTest extends AbstractExternalizerTest<Collect
    }
 
    public void emptySet() throws Exception {
-      Set<Object> set = Collections.emptySet();
+      Set<Object> set = new HashSet<>();
       Collection deserialized = deserialize(set);
       assertEquals(set, deserialized);
    }

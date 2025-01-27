@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
@@ -89,8 +90,8 @@ public final class ReplaceListFunction<K, V> implements ListBucketBaseFunction<K
 
       @Override
       public ReplaceListFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Deque values = unmarshallCollection(input, ArrayDeque::new);
-         return new ReplaceListFunction(values);
+         List<Object> values = unmarshallCollection(input, ArrayList::new);
+         return new ReplaceListFunction(new ArrayDeque<>(values));
       }
    }
 }

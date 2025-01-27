@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
@@ -24,10 +23,10 @@ import io.reactivex.rxjava3.core.Flowable;
  * @param <R>
  */
 public final class CacheStreamIntermediateReducer<R> implements Function<Publisher<Object>, CompletionStage<R>>, InjectableComponent {
-   private final Queue<IntermediateOperation> intOps;
+   private final Iterable<IntermediateOperation> intOps;
    private final Function<? super Publisher<Object>, ? extends CompletionStage<R>> transformer;
 
-   CacheStreamIntermediateReducer(Queue<IntermediateOperation> intOps, Function<? super Publisher<Object>, ? extends CompletionStage<R>> transformer) {
+   CacheStreamIntermediateReducer(Iterable<IntermediateOperation> intOps, Function<? super Publisher<Object>, ? extends CompletionStage<R>> transformer) {
       this.intOps = intOps;
       this.transformer = transformer;
    }
@@ -57,7 +56,7 @@ public final class CacheStreamIntermediateReducer<R> implements Function<Publish
 
       @Override
       public CacheStreamIntermediateReducer readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new CacheStreamIntermediateReducer((Queue) input.readObject(), (Function) input.readObject());
+         return new CacheStreamIntermediateReducer((Iterable<IntermediateOperation>) input.readObject(), (Function) input.readObject());
       }
 
       @Override

@@ -1,11 +1,13 @@
-package org.infinispan.marshall.exts;
+package org.infinispan.tools.store.migrator.marshaller.common;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.AbstractMap;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,6 +35,8 @@ public class CollectionExternalizer implements AdvancedExternalizer<Collection> 
    private static final int SINGLETON_SET = 6;
    private static final int SYNCHRONIZED_SET = 7;
    private static final int ARRAY_DEQUE = 8;
+   private static final int READ_ONLY_SEGMENT_AWARE_COLLECTION = 9;
+   private static final int ENTRY_SET = 10;
    private static final int EMPTY_SET = 11;
    private static final int SYNCHRONIZED_LIST = 12;
 
@@ -57,8 +61,10 @@ public class CollectionExternalizer implements AdvancedExternalizer<Collection> 
       numbers.put(getPrivateSingletonSetClass(), SINGLETON_SET);
       numbers.put(getPrivateSynchronizedSetClass(), SYNCHRONIZED_SET);
       numbers.put(getPrivateUnmodifiableSetClass(), HASH_SET);
+      numbers.put(ReadOnlySegmentAwareCollection.class, READ_ONLY_SEGMENT_AWARE_COLLECTION);
       numbers.put(FastCopyHashMap.KeySet.class, HASH_SET);
       numbers.put(FastCopyHashMap.Values.class, ARRAY_LIST);
+      numbers.put(FastCopyHashMap.EntrySet.class, ENTRY_SET);
    }
 
    @Override
@@ -72,6 +78,7 @@ public class CollectionExternalizer implements AdvancedExternalizer<Collection> 
          case SYNCHRONIZED_SET:
          case SYNCHRONIZED_LIST:
          case ARRAY_DEQUE:
+         case READ_ONLY_SEGMENT_AWARE_COLLECTION:
             MarshallUtil.marshallCollection(collection, output);
             break;
          case SINGLETON_LIST:
@@ -84,6 +91,13 @@ public class CollectionExternalizer implements AdvancedExternalizer<Collection> 
             output.writeObject(((TreeSet) collection).comparator());
             MarshallUtil.marshallCollection(collection, output);
             break;
+         case ENTRY_SET:
+            MarshallUtil.marshallCollection(collection, output, (out, element) -> {
+               Map.Entry entry = (Map.Entry) element;
+               out.writeObject(entry.getKey());
+               out.writeObject(entry.getValue());
+            });
+            break;
       }
    }
 
@@ -91,24 +105,23 @@ public class CollectionExternalizer implements AdvancedExternalizer<Collection> 
    public Collection readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int magicNumber = input.readUnsignedByte();
       return switch (magicNumber) {
-         case ARRAY_LIST, ARRAY_DEQUE, LINKED_LIST, SYNCHRONIZED_LIST -> MarshallUtil.unmarshallCollection(input, ArrayList::new);
-         case EMPTY_LIST -> new ArrayList<>();
-         case SINGLETON_LIST -> {
-            List<Object> list = new ArrayList<>();
-            list.add(input.readObject());
-            yield list;
-         }
-         case HASH_SET, SYNCHRONIZED_SET -> MarshallUtil.unmarshallCollection(input, s -> new HashSet<>());
+         case ARRAY_LIST, READ_ONLY_SEGMENT_AWARE_COLLECTION -> MarshallUtil.unmarshallCollection(input, ArrayList::new);
+         case LINKED_LIST -> MarshallUtil.unmarshallCollectionUnbounded(input, LinkedList::new);
+         case SINGLETON_LIST -> Collections.singletonList(input.readObject());
+         case SYNCHRONIZED_LIST -> Collections.synchronizedList(MarshallUtil.unmarshallCollection(input, ArrayList::new));
+         case EMPTY_LIST -> Collections.emptyList();
+         case HASH_SET -> MarshallUtil.unmarshallCollection(input, s -> new HashSet<>());
          case TREE_SET -> {
             Comparator<Object> comparator = (Comparator<Object>) input.readObject();
             yield MarshallUtil.unmarshallCollection(input, s -> new TreeSet<>(comparator));
          }
-         case SINGLETON_SET -> {
-            Set<Object> set = new HashSet<>();
-            set.add(input.readObject());
-            yield set;
-         }
-         case EMPTY_SET -> new HashSet<>();
+         case SINGLETON_SET -> Collections.singleton(input.readObject());
+         case SYNCHRONIZED_SET -> Collections.synchronizedSet(
+               MarshallUtil.unmarshallCollection(input, s -> new HashSet<>()));
+         case ARRAY_DEQUE -> MarshallUtil.unmarshallCollection(input, ArrayDeque::new);
+         case ENTRY_SET -> MarshallUtil.<Map.Entry, Set<Map.Entry>>unmarshallCollection(input, s -> new HashSet(),
+               in -> new AbstractMap.SimpleEntry(in.readObject(), in.readObject()));
+         case EMPTY_SET -> Collections.emptySet();
          default -> throw new IllegalStateException("Unknown Set type: " + magicNumber);
       };
    }

@@ -18,13 +18,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.commands.CommandInvocationId;
@@ -177,18 +175,6 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
 
       marshallAndAssertEquality(m5);
-   }
-
-   public void testSetMarshalling() throws Exception {
-      Set<Integer> s1 = new HashSet<>();
-      Set<Integer> s2 = new TreeSet<>();
-      for (int i = 0; i < 10; i++) {
-         Integer integ = 1000 * i;
-         s1.add(integ);
-         s2.add(integ);
-      }
-      marshallAndAssertEquality(s1);
-      marshallAndAssertEquality(s2);
    }
 
    public void testSingletonListMarshalling() throws Exception {
