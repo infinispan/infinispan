@@ -5,6 +5,13 @@ The native server and its associated `quay.io/infinispan/server-native` images a
 use the JVM based server instead as it provides significant performance issues over its native counterpart, without 
 compromising on features, and is fully supported.
 
+=== Default Index startup mode is now AUTO
+
+The default used to be `NONE`, meaning that no actions at cache startup time are taken in case
+potential index data inconsistencies are detected from the cache configuration.
+With `AUTO`, for instance, a purge is automatically triggered if the cache is not persistent while the indexes are.
+For complete detail see link:{query_docs}#indexing-configuration_startup-mode[Index startup mode].
+
 == Upgrading from 15.0 to 15.1
 
 === Java HotRod Client Changes

@@ -39,6 +39,7 @@ When setting a custom value, ensure that there are no conflicts between caches u
 ====
 
 [discrete]
+[id='indexing-configuration_startup-mode']
 == Index startup mode
 
 When {brandname} starts caches it can perform operations to ensure the index is consistent with data in the cache.
