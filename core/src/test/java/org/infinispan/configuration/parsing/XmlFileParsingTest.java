@@ -744,7 +744,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
                </cache-container>
             """
       );
-      assertThatThrownBy(() -> parseStringConfiguration(config)).hasMessage("ISPN000624: Attribute 'version' of element 'serialization' at '[3,54]' has been removed with no replacement");
+      assertThatThrownBy(() -> parseStringConfiguration(config)).hasMessage("ISPN000624: Attribute 'version' of element 'serialization' at '[4,35]' has been removed with no replacement");
    }
 
    public static class CustomTransport extends JGroupsTransport {
