@@ -80,6 +80,15 @@ public class JGroupsJdbcPing2IT {
 
       var clusterName = "test";
       var datasource = new DummyDataSource(db.jdbcUrl(), db.username(), db.password());
+      eventually(
+            () -> DriverManager.drivers().anyMatch(d -> {
+               try {
+                  return d.acceptsURL(db.jdbcUrl());
+               } catch (SQLException e) {
+                  throw new RuntimeException("DB Driver unavailable", e);
+               }
+            })
+      );
       try (var c1 = createChannel(databaseType, 7800, datasource);
            var c2 = createChannel(databaseType, 7801, datasource)) {
          c1.connect(clusterName);
