@@ -11,12 +11,12 @@ clientBuilder
          // Clients use the trust store to verify {brandname} Server identities.
          .trustStoreFileName("/path/to/server/truststore")
          .trustStorePassword("truststorepassword".toCharArray())
-         .trustStoreType("PCKS12")
+         .trustStoreType("PKCS12")
          // Keystore that contains client certificates.
          // Clients present these certificates to {brandname} Server.
          .keyStoreFileName("/path/to/client/keystore")
          .keyStorePassword("keystorepassword".toCharArray())
-         .keyStoreType("PCKS12")
+         .keyStoreType("PKCS12")
       .authentication()
          // Clients must use the EXTERNAL mechanism for certificate authentication.
          .saslMechanism("EXTERNAL");
