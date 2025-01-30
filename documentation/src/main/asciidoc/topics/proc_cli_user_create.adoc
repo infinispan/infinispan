@@ -17,7 +17,7 @@ Create an `admin` user the first time you add credentials to gain full `ADMIN` p
 .Procedure
 
 . Open a terminal in `{server_home}`.
-. Create an `admin` user with the [command]`user create` command.
+. Create an `admin` user, belonging to the `admin` group with the [command]`user create` command.
 +
 [source,sh,options="nowrap",subs=attributes+]
 ----
