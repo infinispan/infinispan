@@ -8,7 +8,6 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.concurrent.CompletionStages;
-import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
@@ -23,7 +22,6 @@ import org.infinispan.util.logging.events.EventLoggerNotifier;
  * @since 8.2
  */
 public class BasicEventLogger implements EventLogger {
-
    private final EventLoggerNotifier notifier;
    private final TimeService timeService;
 
@@ -54,7 +52,7 @@ public class BasicEventLogger implements EventLogger {
 
    @Override
    public void log(EventLogLevel level, EventLogCategory category, String message) {
-      LogFactory.getLogger(category.toString()).log(level.toLoggerLevel(), message);
+      category.logger().log(level.toLoggerLevel(), message);
       CompletionStages.join(notifier.notifyEventLogged(new BaseEventLog(timeService.instant(), level, category, message)));
    }
 

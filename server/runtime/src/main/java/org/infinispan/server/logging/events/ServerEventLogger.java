@@ -15,11 +15,11 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLog;
@@ -62,7 +62,7 @@ public class ServerEventLogger implements EventLogger {
    }
 
    void textLog(EventLogLevel level, EventLogCategory category, String message) {
-      LogFactory.getLogger(category.toString()).log(level.toLoggerLevel(), message);
+      category.logger().log(level.toLoggerLevel(), message);
    }
 
    void eventLog(ServerEventImpl event) {
