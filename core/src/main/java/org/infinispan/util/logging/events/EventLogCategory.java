@@ -3,6 +3,8 @@ package org.infinispan.util.logging.events;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.logging.LogFactory;
+import org.jboss.logging.Logger;
 
 /**
  * EventLogCategory.
@@ -23,5 +25,15 @@ public enum EventLogCategory {
    SECURITY,
 
    @ProtoEnumValue(number = 3)
-   TASKS
+   TASKS;
+
+   private final Logger logger;
+
+   EventLogCategory() {
+      this.logger = LogFactory.getLogger(this.toString());
+   }
+
+   public Logger logger() {
+      return logger;
+   }
 }
