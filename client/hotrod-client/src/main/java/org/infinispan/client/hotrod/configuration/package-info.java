@@ -281,7 +281,7 @@
  *          <td><b>infinispan.client.hotrod.trust_store_type</b></td>
  *          <td>String</td>
  *          <td>JKS</td>
- *          <td>The {@link org.infinispan.client.hotrod.configuration.SslConfigurationBuilder#trustStoreType(String) type} of the trust store. Valid values are <tt>JKS</tt>, <tt>JCEKS</tt>, <tt>PCKS12</tt> and <tt>PEM</tt></td>
+ *          <td>The {@link org.infinispan.client.hotrod.configuration.SslConfigurationBuilder#trustStoreType(String) type} of the trust store. Valid values are <tt>JKS</tt>, <tt>JCEKS</tt>, <tt>PKCS12</tt> and <tt>PEM</tt></td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.trust_store_password</b></td>
