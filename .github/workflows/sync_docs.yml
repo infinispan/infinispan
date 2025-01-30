@@ -22,8 +22,8 @@ jobs:
     - name: Setup Maven
       uses: s4u/setup-maven-action@v1.18.0
       with:
-        java-version: 17
-        maven-version: 3.9.0
+        java-version: 21
+        maven-version: 3.9.9
 
     - name: Build docs with Maven
       run: mvn install -Pdistribution -pl documentation -am
@@ -35,12 +35,17 @@ jobs:
         ref: master
         path: infinispan.github.io
 
+    - if: github.ref != 'refs/heads/main'
+      name: Copy docs to version
+      run: |
+        cp -r documentation/target/generated/1*/html/* infinispan.github.io/docs/${{ github.ref_name }}
+
     - if: github.ref == 'refs/heads/main'
       name: Copy docs to dev
       run: |
         cp -r documentation/target/generated/1*/html/* infinispan.github.io/docs/dev/
 
-    - if: github.ref == 'refs/heads/15.0.x'
+    - if: github.ref == 'refs/heads/15.1.x'
       name: Copy docs to stable
       run: |
         cp -r documentation/target/generated/1*/html/* infinispan.github.io/docs/stable/
