@@ -196,7 +196,8 @@ pipeline {
                          skipBlames: true,
                          quiet: true,
                          tools: [
-                mavenConsole(), java(), javaDoc(),
+                mavenConsole(),
+                java(),
                 checkStyle(),
                 spotBugs(),
                 pmdParser(pattern: '**/target/pmd.xml'),
