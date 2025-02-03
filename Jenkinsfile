@@ -158,7 +158,7 @@ pipeline {
 
         stage('Tests') {
             steps {
-                timeout(time: 180, unit: 'MINUTES') {
+                timeout(time: 210, unit: 'MINUTES') {
                     sh "$MAVEN_HOME/bin/mvn verify -B -e -DrerunFailingTestsCount=2 -Dmaven.test.failure.ignore=true -Dansi.strip=true  -Dlicense.skipDownloadLicenses=true -Pnative $HIBERNATE_MATRIX $ALT_TEST_BUILD"
                 }
                 // Remove any default TestNG report files as this will result in tests being counted twice by Jenkins statistics
