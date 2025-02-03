@@ -134,7 +134,7 @@
       <version.caffeine>3.2.0</version.caffeine>
       <version.commons.compress>1.27.1</version.commons.compress>
       <version.console>15.2.0.Final</version.console>
-      <version.fabric8.kubernetes-client>6.13.5</version.fabric8.kubernetes-client>
+      <version.fabric8.kubernetes-client>7.1.0</version.fabric8.kubernetes-client>
       <version.glassfish.jaxb>4.0.5</version.glassfish.jaxb>
       <version.graalvm>24.0.0</version.graalvm>
       <version.groovy>2.4.21</version.groovy>
@@ -183,7 +183,7 @@
       <version.mockito_dep.bytebuddy>1.15.3</version.mockito_dep.bytebuddy>
       <version.mockito_dep.objenesis>3.3</version.mockito_dep.objenesis>
       <version.nashorn>15.6</version.nashorn>
-      <version.netty>4.1.111.Final</version.netty>
+      <version.netty>4.1.117.Final</version.netty>
       <version.netty.incubator.iouring>0.0.26.Final</version.netty.incubator.iouring>
       <version.openjdk.jmh>1.37</version.openjdk.jmh>
       <version.org.wildfly.arquillian>5.0.1.Final</version.org.wildfly.arquillian>
