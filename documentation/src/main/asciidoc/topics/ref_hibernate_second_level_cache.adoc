@@ -1,14 +1,27 @@
 [id='hibernate-cache_{context}']
 == Adding dependencies
 
-Applications running in environments where {brandname} is not default cache provider for Hibernate will need to depend on the correct cache provider version.
+Applications running in environments where {brandname} is not the default cache provider for Hibernate ORM
+will need to depend on the correct cache provider version.
 
-With the divergence of Jakarta packages compared to javax, Hibernate 6 is the only version Infinispan supports using the Jakarta namespace.
-Therefore, if you need to use javax namespace you will still need to utilize Hibernate 5.3.
+With the divergence of Jakarta packages compared to Java EE, Hibernate ORM 6.x is the only version Infinispan supports
+using the `jakarta` namespace.
+Therefore, if you need to use `javax` namespace you will still need to utilize Hibernate ORM 5.3.
 
-The {brandname} cache provider version suitable for your application depends on the Hibernate version in use:
+The {brandname} cache provider version suitable for your application depends on the Hibernate ORM version in use:
 
-.Hibernate 6.0
+.Hibernate ORM 6.2+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::dependencies_maven/hibernate_v6.2.xml[]
+----
+
+[NOTE]
+====
+Hibernate ORM 6.0 is supported with {brandname} 14.0.x and older.
+====
+
+.Hibernate ORM 6.0
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::dependencies_maven/hibernate_v6.0.xml[]
@@ -16,10 +29,10 @@ include::dependencies_maven/hibernate_v6.0.xml[]
 
 [NOTE]
 ====
-hibernate 5.3 is supported with {brandname} 13.0.x and older.
+Hibernate ORM 5.3 is supported with {brandname} 13.0.x and older.
 ====
 
-.Hibernate 5.3
+.Hibernate ORM 5.3
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::dependencies_maven/hibernate_v5.3.xml[]
@@ -27,25 +40,25 @@ include::dependencies_maven/hibernate_v5.3.xml[]
 
 [NOTE]
 ====
-hibernate 5.2 is supported with {brandname} 9.2.x only.
+Hibernate ORM 5.2 is supported with {brandname} 9.2.x only.
 ====
 
-.Hibernate 5.2
+.Hibernate ORM 5.2
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::dependencies_maven/hibernate_v5.2.xml[]
 ----
 
-.Hibernate 5.1
+.Hibernate ORM 5.1
 [source,xml,options="nowrap",subs=attributes+]
 ----
 include::dependencies_maven/hibernate_v5.1.xml[]
 ----
 
-.Hibernate version 5.0 and earlier
-The {brandname} cache provider is shipped by Hibernate.
+.Hibernate ORM version 5.0 and earlier
+The {brandname} cache provider is shipped by Hibernate ORM.
 Documentation and Maven coordinates are located in the
-link:https://docs.jboss.org/hibernate/orm/5.0/userguide/html_single/Hibernate_User_Guide.html#caching-provider-infinispan[Hibernate documentation].
+link:https://docs.jboss.org/hibernate/orm/5.0/userguide/html_single/Hibernate_User_Guide.html#caching-provider-infinispan[Hibernate ORM documentation].
 
 == Enabling second-level caches
 
@@ -72,7 +85,7 @@ Then make sure shared cache mode is set to `ENABLE_SELECTIVE`:
 
 NOTE: This is the most common way of selecting which entities/collections to cache.
 However, there are alternative ways to which are explained in the
-link:https://docs.jboss.org/hibernate/orm/5.2/userguide/html_single/Hibernate_User_Guide.html#caching-mappings[Hibernate documentation].
+link:https://docs.jboss.org/hibernate/orm/5.2/userguide/html_single/Hibernate_User_Guide.html#caching-mappings[Hibernate ORM documentation].
 
 Optionally, queries can also be cached but for that query cache needs to be enabled:
 
@@ -101,12 +114,12 @@ Statistics are disabled by default, so it is recommended that you enable statist
 
 How to configure {brandname} to be the second level cache provider varies slightly depending on the deployment scenario:
 
-=== Single-node standalone Hibernate application
+=== Single-node standalone Hibernate ORM application
 
-In standalone library mode, a JPA/Hibernate application runs inside a Java SE application or inside containers that don’t offer {brandname} integration.
+In standalone library mode, a JPA/Hibernate ORM application runs inside a Java SE application or inside containers that don’t offer {brandname} integration.
 
-Enabling {brandname} second level cache provider inside a JPA/Hibernate application that runs in single node is very straightforward.
-First, make sure the Hibernate {brandname} cache provider is available in the classpath.
+Enabling {brandname} second level cache provider inside a JPA/Hibernate ORM application that runs in single node is very straightforward.
+First, make sure the Hibernate ORM {brandname} cache provider is available in the classpath.
 Then, modify the persistence.xml to include these properties:
 
 [source,xml,options="nowrap",subs=attributes+]
@@ -114,20 +127,20 @@ Then, modify the persistence.xml to include these properties:
 include::xml/ispn_second_level_cache.xml[]
 ----
 
-By default when running standalone, the {brandname} second-level cache provider uses an {brandname} configuration that’s designed for clustered environments.
+By default, when running standalone, the {brandname} second-level cache provider uses an {brandname} configuration that’s designed for clustered environments.
 However, {brandname} also provides a configuration designed for local, single node, environments.
 To enable that configuration, set `hibernate.cache.infinispan.cfg` to `org/infinispan/hibernate/cache/commons/builder/infinispan-configs-local.xml` value.
 You can find more about the configuration check the link:#default_local_configuration_second_level[Default Local Configuration] section.
 
-A simple tutorial showing how to use {brandname} as Hibernate cache provider in a standalone application can be found
+A simple tutorial showing how to use {brandname} as Hibernate ORM cache provider in a standalone application can be found
 link:https://github.com/infinispan/infinispan-simple-tutorials/tree/main/hibernate-cache/local[here].
 
 === Single-node standalone Spring application
 
-Using Hibernate within Spring applications is a very common use case.
-In this section you will learn what you need to do configure Hibernate within Spring to use {brandname} as second-level cache provider.
+Using Hibernate ORM within Spring applications is a very common use case.
+In this section you will learn what you need to do configure Hibernate ORM within Spring to use {brandname} as second-level cache provider.
 
-As in the previous case, start by making sure that Hibernate {brandname} Cache provider is available in the classpath.
+As in the previous case, start by making sure that Hibernate ORM {brandname} Cache provider is available in the classpath.
 Then, modify `application.properties` file to contain:
 
     # Use Infinispan second level cache provider
@@ -137,17 +150,17 @@ Then, modify `application.properties` file to contain:
     # Otherwise a clustered configuration is loaded.
     spring.jpa.properties.hibernate.cache.infinispan.cfg=org/infinispan/hibernate/cache/commons/builder/infinispan-configs-local.xml
 
-By default when running standalone, the {brandname} second-level cache provider uses an {brandname} configuration that’s designed for clustered environments.
+By default, when running standalone, the {brandname} second-level cache provider uses an {brandname} configuration that’s designed for clustered environments.
 However, {brandname} also provides a configuration designed for local, single node, environments.
 To enable that configuration, set `spring.jpa.properties.hibernate.cache.infinispan.cfg` to `org/infinispan/hibernate/cache/commons/builder/infinispan-configs-local.xml` value.
 You can find more about the configuration check the link:#default_local_configuration_second_level[Default Local Configuration] section.
 
-A simple tutorial showing how to use {brandname} as Hibernate cache provider in a Spring application can be found
+A simple tutorial showing how to use {brandname} as Hibernate ORM cache provider in a Spring application can be found
 link:https://github.com/infinispan/infinispan-simple-tutorials/tree/main/hibernate-cache/spring-local[here].
 
 === Single-node WildFly application
 
-In WildFly, {brandname} is the default second level cache provider for JPA/Hibernate.
+In WildFly, {brandname} is the default second level cache provider for JPA/Hibernate ORM.
 This means that when using JPA in WildFly, region factory is already set to `infinispan`.
 {brandname}'s configuration is located in WildFly's `standalone.xml` file.
 It follows the same settings explained in link:#default_local_configuration_second_level[Default Local Configuration] section.
@@ -159,15 +172,15 @@ Several aspects of the {brandname} second level cache provider can be configured
 This means that some of those tweaks do not require changing WildFly's `standalone.xml` file.
 You can find out more about these changes in the link:#configuration_properties[Configuration Properties] section.
 
-So, to enable Hibernate to use {brandname} as second-level cache, all you need to do is enable second-level cache.
+So, to enable Hibernate ORM to use {brandname} as second-level cache, all you need to do is enable second-level cache.
 This is explained in detail in the introduction of this chapter.
 
-A simple tutorial showing how to use {brandname} as Hibernate cache provider in a WildFly application can be found
+A simple tutorial showing how to use {brandname} as Hibernate ORM cache provider in a WildFly application can be found
 link:https://github.com/infinispan/infinispan-simple-tutorials/tree/main/hibernate-cache/wildfly-local[here].
 
-=== Multi-node standalone Hibernate application
+=== Multi-node standalone Hibernate ORM application
 
-When running a JPA/Hibernate in a multi-node environment and enabling {brandname} second-level cache, it is necessary to cluster the second-level cache so that cache consistency can be guaranteed.
+When running a JPA/Hibernate ORM in a multi-node environment and enabling {brandname} second-level cache, it is necessary to cluster the second-level cache so that cache consistency can be guaranteed.
 Clustering the {brandname} second-level cache provider is as simple as adding the following property to the `persistence.xml` file:
 
 [source,xml,options="nowrap",subs=attributes+]
@@ -180,7 +193,7 @@ You can find more about the configuration check the link:#default_cluster_config
 
 === Multi-node standalone Spring application
 
-If interested in running a Spring application that uses Hibernate and {brandname} as second level cache, the cache needs to be clustered.
+If interested in running a Spring application that uses Hibernate ORM and {brandname} as second level cache, the cache needs to be clustered.
 Clustering the {brandname} second-level cache provider is as simple as adding the following property to the `application.properties` file:
 
     # Use Infinispan second level cache provider
@@ -191,18 +204,18 @@ You can find more about the configuration check the link:#default_cluster_config
 
 === Multi-node WildFly application
 
-As mentioned in the single node WildFly case, {brandname} is the default second level cache provider for JPA/Hibernate when running inside WildFly.
+As mentioned in the single node WildFly case, {brandname} is the default second level cache provider for JPA/Hibernate ORM when running inside WildFly.
 This means that when using JPA in WildFly, region factory is already set to `infinispan`.
 
 When running WildFly multi-node clusters, it is recommended that you start off by using `clustered.xml` configuration file.
-Within this file you can find Hibernate {brandname} caches configured with the correct settings to work in a clustered environment.
+Within this file you can find Hibernate ORM {brandname} caches configured with the correct settings to work in a clustered environment.
 You can find more about the configuration check the link:#default_cluster_configuration_second_level[Default Cluster Configuration] section.
 
 Several aspects of the {brandname} second level cache provider can be configured directly in `persistence.xml`.
 This means that some of those tweaks do not require changing WildFly's `standalone-ha.xml` file.
 You can find out more about these changes in the link:#configuration_properties[Configuration Properties] section.
 
-So, to enable Hibernate to use {brandname} as second-level cache, all you need to do is enable second-level cache.
+So, to enable Hibernate ORM to use {brandname} as second-level cache, all you need to do is enable second-level cache.
 Enabling second-level cache is explained in detail in the introduction of this chapter.
 
 == Configuration reference
@@ -219,7 +232,7 @@ Entities, collections, queries and timestamps are stored in non-transactional lo
 
 Entities and collections query caches are configured with the following eviction settings:
 
-* Eviction wake up interval is 5 seconds.
+* Eviction wake-up interval is 5 seconds.
 * Max number of entries are 10,000.
 * Max idle time before expiration is 100 seconds.
 * Default eviction algorithm is LRU, least recently used.
@@ -238,7 +251,7 @@ These are the characteristics of such configuration:
 
 .Entities and Collections
 
-By default all _entities and collections are configured to use a synchronous invalidation_ as clustering mode.
+By default, all _entities and collections are configured to use a synchronous invalidation_ as clustering mode.
 Whenever a new _entity or collection is read from database_ and needs to be cached, _it's only cached locally_ in order to reduce intra-cluster traffic.
 This option can be changed so that entities/collections are cached cluster wide, by switching the entity/collection cache to be replicated or distributed.
 How to change this option is explained in the link:#configuration_properties[Configuration Properties] section.
@@ -278,7 +291,7 @@ However, replication for query cache only makes sense if, and only if, all of th
 * The same query is very likely to be repeatedly executed on different cluster nodes.
 * The query is unlikely to be invalidated out of the cache
 
-NOTE: Hibernate must aggressively invalidate query results from the cache any time any instance of one of the entity types targeted by the query.
+NOTE: Hibernate ORM must aggressively invalidate query results from the cache any time any instance of one of the entity types targeted by the query.
 All such query results are invalidated, even if the change made to the specific entity instance would not have affected the query result.
 For example: the cached result of `SELECT id FROM cars where color = 'red'` is thrown away when you call `INSERT INTO cars VALUES ..., color = 'blue'`.
 Also, the result of an update within a transaction is not visible to the result obtained from the query cache.
@@ -287,7 +300,7 @@ _query cache_ uses the _same eviction/expiration settings as for entities/collec
 
 _query cache has initial state transfer disabled_. It is not recommended that this is enabled.
 
-Up to Hibernate 5.2 both transactional and non-transactional query caches have been supported, though non-transactional variant is recommended. Hibernate 5.3 onwards drops support for transactional caches, only non-transactional variant is supported. If the cache is configured with transactions this setting is ignored and warning is logged.
+Up to Hibernate ORM 5.2 both transactional and non-transactional query caches have been supported, though non-transactional variant is recommended. Hibernate ORM 5.3 onwards drops support for transactional caches, only non-transactional variant is supported. If the cache is configured with transactions this setting is ignored and a warning is logged.
 
 .Timestamps
 
@@ -299,7 +312,7 @@ IMPORTANT: Asynchronous replication was selected as default for timestamps cache
 A side effect of this choice is that when an entity/collection is updated, for a very brief period of time stale queries might be returned.
 It's important to note that due to how {brandname} deals with asynchronous replication, stale queries might be found even query is done right after an entity/collection update on same node.
 
-NOTE: Hibernate must aggressively invalidate query results from the cache any time any instance of one of the entity types is modified.
+NOTE: Hibernate ORM must aggressively invalidate query results from the cache any time any instance of one of the entity types is modified.
 All cached query results referencing given entity type are invalidated, even if the change made to the specific entity instance would not have affected the query result.
 The timestamps cache plays here an important role - it contains last modification timestamp for each entity type.
 After a cached query results is loaded, its timestamp is compared to all timestamps of the entity types that are referenced in the query.
@@ -325,7 +338,7 @@ See examples below on how entity/collection specific configurations can be appli
 include::xml/ispn_caching_provider.xml[]
 ----
 
-NOTE: If the cache is configured as transactional, {brandname} cache provider automatically sets transaction manager so that the TM used by {brandname} is the same as TM used by Hibernate.
+NOTE: If the cache is configured as transactional, {brandname} cache provider automatically sets transaction manager so that the TM used by {brandname} is the same as TM used by Hibernate ORM.
 
 Cache configuration can differ for each type of data stored in the cache.
 In order to override the cache configuration template, use property `hibernate.cache.infinispan._data-type_.cfg` where `_data-type_` can be one of:
@@ -422,18 +435,18 @@ include::xml/hibernate_cache_deployment.xml[]
 
 == Cache strategies
 
-{brandname} cache provider supports all Hibernate cache strategies:
+{brandname} cache provider supports all Hibernate ORM cache strategies:
 `transactional`, `read-write`, `nonstrict-read-write` and `read-only`.
 
-Integrations with Hibernate 4.x required _transactional invalidation caches_ and in integrations with Hibernate &le; 5.2 _transactional invalidation caches_ are supported (in JTA environment). However for all 5.x versions _non-transactional caches_ are preferred. With Hibernate 5.3 onward the support for transactional caches has been dropped completely, and both `read-write` and `transactional` use the same implementation. {brandname} provides the same consistency guarantees for both `transactional` and `read-write` strategies, use of transactions is considered an implementation detail.
+Integrations with Hibernate ORM 4.x required _transactional invalidation caches_ and in integrations with Hibernate &le; 5.2 _transactional invalidation caches_ are supported (in JTA environment). However, for all 5.x versions _non-transactional caches_ are preferred. With Hibernate ORM 5.3 onward the support for transactional caches has been dropped completely, and both `read-write` and `transactional` use the same implementation. {brandname} provides the same consistency guarantees for both `transactional` and `read-write` strategies, use of transactions is considered an implementation detail.
 
-In integrations with Hibernate 5.2 or lower the actual setting of cache concurrency mode (`read-write` vs. `transactional`) is not honored on invalidation caches, the appropriate strategy is selected based on the cache configuration (_non-transactional_ vs. _transactional_).
+In integrations with Hibernate ORM 5.2 or lower the actual setting of cache concurrency mode (`read-write` vs. `transactional`) is not honored on invalidation caches, the appropriate strategy is selected based on the cache configuration (_non-transactional_ vs. _transactional_).
 
 Support for _replicated/distributed_ caches for `read-write` and `read-only` strategies has been added during 5.x development and this requires exclusively _non-transactional configuration_.
-Also eviction should not be used in this configuration as it can lead to consistency issues. Expiration (with reasonably long max-idle times) can be used.
+Also, eviction should not be used in this configuration as it can lead to consistency issues. Expiration (with reasonably long max-idle times) can be used.
 
 `Nonstrict-read-write` strategy is supported on _non-transactional distributed/replicated_ caches, but the eviction should be turned off as well. In addition to that, the entities must use versioning. This means that this strategy cannot be used for caching natural IDs (which are never versioned). This mode mildly relaxes the consistency - between DB commit and end of transaction commit a stale read may occur in another transaction.
-However this strategy uses less RPCs and can be more performant than the other ones.
+However, this strategy uses less RPCs and can be more performant than the other ones.
 
 `Read-only` mode is supported in all configurations mentioned above but use of this mode currently does not bring any performance gains.
 
@@ -453,7 +466,7 @@ The available combinations are summarized in table below:
 
 Changing caches to behave different to the default behaviour explained in previous section is explained in the link:#configuration_properties[Configuration Properties] section.
 
-IMPORTANT: Use of transactional caches is possible only in JTA environment. Hibernate supports JDBC-only transactions but {brandname} transactional caches do not integrate with these. Therefore, in non-JTA environment the only option is to use `read-write`, `nonstrict-read-write` or `read-only` on non-transactional cache. Configuring the cache as transactional in non-JTA can lead to undefined behaviour.
+IMPORTANT: Use of transactional caches is possible only in JTA environment. Hibernate ORM supports JDBC-only transactions but {brandname} transactional caches do not integrate with these. Therefore, in non-JTA environment the only option is to use `read-write`, `nonstrict-read-write` or `read-only` on non-transactional cache. Configuring the cache as transactional in non-JTA can lead to undefined behaviour.
 
 [[caching_provider_infinispan_stale_read_example]]
 .Stale read with `nonstrict-read-write` strategy
@@ -464,5 +477,5 @@ include::code_examples/StaleReadExample.java[]
 
 == Using minimal puts
 
-Hibernate offers a configuration option `hibernate.cache.use_minimal_puts` which is off by default in {brandname} implementation. This option checks if the cache contains given key before updating the value from database (put-from-load) and omits the update if the cached value is already present.
+Hibernate ORM offers a configuration option `hibernate.cache.use_minimal_puts` which is off by default in {brandname} implementation. This option checks if the cache contains given key before updating the value from database (put-from-load) and omits the update if the cached value is already present.
 When using invalidation caches it makes sense to keep this off as the put-from-load is local node-only and silently fails if the entry is locked. With replicated/distributed caches the update is applied to remote nodes, even if the local node already contains the entry, and this has higher performance impact, so it might make sense to turn this option on and avoid updating the cache.
