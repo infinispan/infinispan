@@ -55,4 +55,9 @@ public class EmbeddedJsonCache {
       requireNonNull(value, ERR_VALUE_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new JsonSetFunction(value, path, nx, xx));
    }
+
+   public CompletionStage<List<Long>> objlen(byte[] key, byte[] path) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new JsonObjlenFunction(path));
+   }
 }

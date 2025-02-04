@@ -545,7 +545,48 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThat(compareJSONGet(result, jv)).isTrue();
    }
 
-   // Lattuce Json object doesn't implement comparison. Implementing here
+   @Test
+   public void testJSONOBJLEN() {
+      String key = k();
+      JsonPath jp = new JsonPath("$");
+      String jsonValue = """
+      {
+       "root":  {
+             "name": "Example Name",
+             "nested": {
+                 "field1": "value1",
+                 "field2": 42
+             },
+             "items": [
+                 { "id": 1, "value": "Item One" },
+                 { "id": 2, "value": "Item Two" },
+                 { "id": 3, "value": "Item Three" }
+             ]
+         }
+      }
+         """;
+      JsonValue jv = defaultJsonParser.createJsonValue(jsonValue);
+      redis.jsonSet(key, jp, jv);
+      var result = redis.jsonObjlen(key, jp);
+      assertThat(result).containsExactly(1L);
+      jp = new JsonPath("$.root");
+      result = redis.jsonObjlen(key, jp);
+      assertThat(result).containsExactly(3L);
+      jp = new JsonPath("$.root.*");
+      result = redis.jsonObjlen(key, jp);
+      assertThat(result).containsExactly(null, 2L, null);
+      // No path or old style path returns null on non existing object
+      assertThat(redis.jsonObjlen("notExistingKey")).contains(new Long[]{null});
+      jp = new JsonPath(".");
+      assertThat(redis.jsonObjlen("notExistingKey", jp)).contains(new Long[]{null});
+      // Jsonpath style returns error on non exsisting object. Cannot use
+      // a simple "$" path, since lettuce doesn't pass it to the server
+      assertThatThrownBy(() -> { redis.jsonObjlen("notExistingKey", new JsonPath("$.root"));
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageStartingWith("ERR ");
+   }
+
+   // Lettuce Json object doesn't implement comparison. Implementing here
    private boolean compareJSONGet(JsonValue result, JsonValue expected, JsonPath... paths) {
       ObjectMapper mapper = new ObjectMapper();
       JsonNode expectedObjectNode, resultNode;
