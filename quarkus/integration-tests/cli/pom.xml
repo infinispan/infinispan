@@ -93,54 +93,6 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy-runner</id>
-                        <phase>process-test-resources</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.testSourceDirectory}/opt/infinispan/bin</outputDirectory>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.infinispan</groupId>
-                                    <artifactId>infinispan-quarkus-cli</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>bin</type>
-                                    <overWrite>true</overWrite>
-                                    <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
-                                    <destFileName>ispn-cli</destFileName>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>script-chmod</id>
-                        <phase>process-test-resources</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>chmod</executable>
-                            <basedir>${project.build.testOutputDirectory}</basedir>
-                            <arguments>
-                                <argument>+x</argument>
-                                <argument>ispn-cli</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
                     <argLine>-Dorg.infinispan.test.server.driver=CONTAINER -Dorg.infinispan.test.server.dir=${project.basedir}/../../../server/runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version} -Dinfinispan.server.log.path=${project.build.directory}</argLine>
