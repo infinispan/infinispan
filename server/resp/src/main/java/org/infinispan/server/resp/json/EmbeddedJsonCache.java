@@ -97,4 +97,17 @@ public class EmbeddedJsonCache {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new JsonLenFunction(path, JsonLenFunction.LenType.STRING));
    }
+
+   /**
+    * Reports the type of the JSON value at the specified path within the given JSON.
+    * The result will indicate the type of the value at each path in the list.
+    *
+    * @param key   The key representing the JSON document, provided as a byte array.
+    * @param path  The JSON path at which the type of the value should be determined, provided as a byte array.
+    * @return A {@link CompletionStage} containing a {@link List} of type strings, representing the type of
+    *         the JSON value at each path (e.g., "object", "array", "string", etc.).
+    */
+   public CompletionStage<List<String>> type(byte[] key, byte[] path) {
+      return readWriteMap.eval(key, new JsonTypeFunction(path));
+   }
 }

@@ -8,9 +8,11 @@ import static org.infinispan.test.TestingUtil.v;
 
 import java.util.List;
 
+import io.lettuce.core.json.JsonType;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.IntegerOutput;
+import io.lettuce.core.output.StringListOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
 import org.infinispan.server.resp.json.JSONUtil;
@@ -630,7 +632,44 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
 
       //  JSON.STRLEN doc $..a
       assertThat(redis.jsonStrlen(key, new JsonPath("$..a"))).containsExactly(3L, 5L, null);
+   }
 
+   @Test
+   public void testJSONTYPE() {
+      JsonPath jp = new JsonPath("$");
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      JsonValue jv = defaultJsonParser.createJsonValue("""
+                 {"a":2,
+                 "null_value": null,
+                 "float_value": 12.3,
+                 "arr_value": ["one", "two", "three"],
+                 "nested":
+                    {"a": true},
+                 "foo": "bar"}
+              """);
+      String key = k();
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+      // JSON.TYPE doc
+      assertThat(redis.jsonType(key)).containsExactly(JsonType.OBJECT);
+      // JSON.TYPE doc $..foo
+      assertThat(redis.jsonType(key, new JsonPath("$..foo"))).containsExactly(JsonType.STRING);
+      // JSON.TYPE doc $..null_value
+      assertThat(redis.jsonType(key, new JsonPath("$..null_value"))).containsExactly(JsonType.UNKNOWN);
+      assertThat(redis.dispatch(CommandType.JSON_TYPE, new StringListOutput<>(codec),
+              new CommandArgs<>(codec)
+                      .addKey(key).add("$..null_value"))).containsExactly("null");
+      // JSON.TYPE doc $..a
+      assertThat(redis.jsonType(key, new JsonPath("$..a"))).containsExactly(JsonType.INTEGER, JsonType.BOOLEAN);
+      // JSON.TYPE doc $..float_value
+      assertThat(redis.jsonType(key, new JsonPath("$..float_value"))).containsExactly(JsonType.NUMBER);
+      // JSON.TYPE doc $..arr_value
+      assertThat(redis.jsonType(key, new JsonPath("$..arr_value"))).containsExactly(JsonType.ARRAY);
+      // JSON.TYPE doc $..dummy
+      assertThat(redis.jsonType(key, new JsonPath("$..dummy"))).isEmpty();
+      // JSON.TYPE notExistingKey
+      assertThat(redis.dispatch(CommandType.JSON_TYPE, new IntegerOutput<>(codec),
+              new CommandArgs<>(codec)
+                      .addKey("notExistingKey"))).isNull();
    }
 
    // Lettuce Json object doesn't implement comparison. Implementing here
