@@ -8,6 +8,8 @@ import static org.infinispan.server.test.core.Containers.imageArchitecture;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_ULIMIT;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_LOG_FILE;
+import static org.infinispan.server.test.core.TestSystemPropertyNames.JACOCO_REPORTS_DIR;
+import static org.infinispan.server.test.core.TestSystemPropertyNames.COVERAGE_ENABLED;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -85,6 +87,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    private static final Long IMAGE_MEMORY = Long.getLong(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_MEMORY, null);
    private static final Long IMAGE_MEMORY_SWAP = Long.getLong(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_MEMORY_SWAP, null);
    public static final String INFINISPAN_SERVER_HOME = "/opt/infinispan";
+   public static final String JACOCO_COVERAGE_CONTAINER_PATH = "/opt/jacoco.exec";
    public static final String JDK_BASE_IMAGE_NAME = "registry.access.redhat.com/ubi9/openjdk-21-runtime";
    private static final String[] IMAGE_DEPENDENCIES = {
          "file",
@@ -346,6 +349,11 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          javaOpts = javaOpts == null ? debugJvmOption() : javaOpts + " " + debugJvmOption();
          log.infof("Container debug enabled with options '%s'%n", javaOpts);
       }
+      String isCoverageEnabled = System.getProperty(COVERAGE_ENABLED);
+      if (Boolean.parseBoolean(isCoverageEnabled)) {
+         javaOpts = javaOpts == null ? "-javaagent:/opt/infinispan/server/lib/org.jacoco.agent-0.8.12-runtime.jar=output=file,destfile=" + JACOCO_COVERAGE_CONTAINER_PATH
+                 : javaOpts + " " + "-javaagent:/opt/infinispan/server/lib/org.jacoco.agent-0.8.12-runtime.jar=output=file,destfile=" + JACOCO_COVERAGE_CONTAINER_PATH;
+      }
 
       if (javaOpts != null) {
          container.withEnv("JAVA_OPTS", javaOpts);
@@ -435,6 +443,11 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          CountdownLatchLoggingConsumer latch = new CountdownLatchLoggingConsumer(1, SHUTDOWN_MESSAGE_REGEX);
          container.withLogConsumer(latch);
          container.stop();
+         String isCoverageEnabled = System.getProperty(COVERAGE_ENABLED);
+         if (Boolean.parseBoolean(isCoverageEnabled)) {
+            //Getting Jacoco Coverage Report after stopping the container
+            container.uploadCoverageInfoToHost(JACOCO_COVERAGE_CONTAINER_PATH, System.getProperty(JACOCO_REPORTS_DIR) + this.name + "-" + server + ".exec");
+         }
          eventually("Container wasn't stopped.", () -> !isRunning(server));
          System.out.printf("[%d] STOP %n", server);
       }
