@@ -27,6 +27,7 @@ public interface ResponseWriter {
    BiConsumer<Collection<byte[]>, ResponseWriter> ARRAY_BULK_STRING = (c, writer) -> writer.array(c, Resp3Type.BULK_STRING);
    BiConsumer<Collection<? extends Number>, ResponseWriter> ARRAY_INTEGER = (c, writer) -> writer.array(c, Resp3Type.INTEGER);
    BiConsumer<Collection<? extends Number>, ResponseWriter> ARRAY_DOUBLE = (c, writer) -> writer.array(c, Resp3Type.DOUBLE);
+   BiConsumer<Collection<? extends String>, ResponseWriter> ARRAY_STRING = (c, writer) -> writer.array(c, Resp3Type.BULK_STRING);
 
    /**
     * List the consumers for set responses with the different types needed.

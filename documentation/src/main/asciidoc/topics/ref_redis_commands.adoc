@@ -130,6 +130,11 @@ NOTE: This implementation attempts to return all attributes that a real Redis se
 * link:https://redis.io/commands/json.objlen[JSON.OBJLEN]
 
 * link:https://redis.io/commands/json.set[JSON.SET]
+
+* link:https://redis.io/commands/json.strlen[JSON.STRLEN]
+
+* link:https://redis.io/commands/json.type[JSON.TYPE]
+
 +
 NOTE: The current implementation allows to add element at the end of an array, while Redis returns error.
 

@@ -18,6 +18,7 @@ import org.infinispan.server.resp.filter.EventListenerKeysFilter;
 import org.infinispan.server.resp.json.JsonGetFunction;
 import org.infinispan.server.resp.json.JsonSetFunction;
 import org.infinispan.server.resp.json.JsonLenFunction;
+import org.infinispan.server.resp.json.JsonTypeFunction;
 
 @InfinispanModule(name = "resp", requiredModules = "core")
 public class RespModuleLifecycle implements ModuleLifecycle {
@@ -34,6 +35,7 @@ public class RespModuleLifecycle implements ModuleLifecycle {
       externalizerMap.put(JsonGetFunction.EXTERNALIZER.getId(), JsonGetFunction.EXTERNALIZER);
       externalizerMap.put(JsonSetFunction.EXTERNALIZER.getId(), JsonSetFunction.EXTERNALIZER);
       externalizerMap.put(JsonLenFunction.EXTERNALIZER.getId(), JsonLenFunction.EXTERNALIZER);
+      externalizerMap.put(JsonTypeFunction.EXTERNALIZER.getId(), JsonTypeFunction.EXTERNALIZER);
 
       // Externalizer that could be loaded by other modules.
       externalizerMap.put(ITERATION_FILTER, new IterationFilter.IterationFilterExternalizer());
