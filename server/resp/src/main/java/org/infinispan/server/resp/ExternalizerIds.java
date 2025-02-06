@@ -11,4 +11,5 @@ public interface ExternalizerIds {
    Integer JSON_SET_FUNCTION = 2205;
    Integer JSON_LEN_FUNCTION = 2206;
    Integer JSON_TYPE_FUNCTION = 2207;
+   Integer JSON_DEL_FUNCTION = 2208;
 }

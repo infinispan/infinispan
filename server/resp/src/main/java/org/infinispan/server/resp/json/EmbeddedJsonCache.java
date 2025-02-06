@@ -14,12 +14,14 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 
 /**
- * A cache implementation for JSON data, providing various methods for interacting with
- * and manipulating JSON objects, arrays, and values.
- * This class includes methods for setting, retrieving, and querying JSON data in an embedded cache.
+ * A cache implementation for JSON data, providing various methods for interacting with and
+ * manipulating JSON objects, arrays, and values. This class includes methods for setting,
+ * retrieving, and querying JSON data in an embedded cache.
  *
- * <p>Note: The implementation provides a set of functionalities for handling JSON objects,
- * including operations like recursively extracting values, checking types, and working with specific paths.</p>
+ * <p>
+ * Note: The implementation provides a set of functionalities for handling JSON objects, including
+ * operations like recursively extracting values, checking types, and working with specific paths.
+ * </p>
  *
  * @author Vittorio Rigamonti
  * @author Katia Aresti
@@ -40,14 +42,21 @@ public class EmbeddedJsonCache {
    }
 
    /**
-    * Retrieves the JSON value at the specified paths within the given key. The resulting
-    * JSON content can be formatted with the provided spacing, newline, and indentation settings.
+    * Retrieves the JSON value at the specified paths within the given key. The resulting JSON
+    * content can be formatted with the provided spacing, newline, and indentation settings.
     *
-    * @param key     The key from which the JSON value will be retrieved, represented as a byte array.
-    * @param paths   A list of JSON paths used to access specific values within the JSON, each represented as a byte array.
-    * @param space   The byte array used to represent spaces for formatting the JSON output.
-    * @param newline The byte array used to represent newline characters for formatting the JSON output.
-    * @param indent  The byte array used to represent indentation characters for formatting the JSON output.
+    * @param key
+    *           The key from which the JSON value will be retrieved, represented as a byte array.
+    * @param paths
+    *           A list of JSON paths used to access specific values within the JSON, each
+    *           represented as a byte array.
+    * @param space
+    *           The byte array used to represent spaces for formatting the JSON output.
+    * @param newline
+    *           The byte array used to represent newline characters for formatting the JSON output.
+    * @param indent
+    *           The byte array used to represent indentation characters for formatting the JSON
+    *           output.
     * @return A {@link CompletionStage} containing the formatted JSON content as a byte array.
     */
    public CompletionStage<byte[]> get(byte[] key, List<byte[]> paths, byte[] space, byte[] newline, byte[] indent) {
@@ -57,11 +66,18 @@ public class EmbeddedJsonCache {
    /**
     * Sets a JSON value at the specified path in the given key.
     *
-    * @param key   The key in which the JSON value should be stored, represented as a byte array.
-    * @param value The JSON value to set, represented as a byte array.
-    * @param path  The JSON path where the value should be inserted, represented as a byte array.
-    * @param nx    If {@code true}, the operation will only succeed if the key does not already exist (NX - "Not Exists").
-    * @param xx    If {@code true}, the operation will only succeed if the key already exists (XX - "Exists").
+    * @param key
+    *           The key in which the JSON value should be stored, represented as a byte array.
+    * @param value
+    *           The JSON value to set, represented as a byte array.
+    * @param path
+    *           The JSON path where the value should be inserted, represented as a byte array.
+    * @param nx
+    *           If {@code true}, the operation will only succeed if the key does not already exist
+    *           (NX - "Not Exists").
+    * @param xx
+    *           If {@code true}, the operation will only succeed if the key already exists (XX -
+    *           "Exists").
     * @return A {@link CompletionStage} containing the result of the operation as a {@link String}.
     */
    public CompletionStage<String> set(byte[] key, byte[] value, byte[] path, boolean nx, boolean xx) {
@@ -71,11 +87,14 @@ public class EmbeddedJsonCache {
    }
 
    /**
-    * Recursively retrieves an array of integer replies representing the length of objects
-    * at the specified JSON path. If the matching JSON value is not an object, {@code null} is returned.
+    * Recursively retrieves an array of integer replies representing the length of objects at the
+    * specified JSON path. If the matching JSON value is not an object, {@code null} is returned.
     *
-    * @param key  The key representing the JSON document, provided as a byte array.
-    * @param path The JSON path at which the object's length should be determined, provided as a byte array.
+    * @param key
+    *           The key representing the JSON document, provided as a byte array.
+    * @param path
+    *           The JSON path at which the object's length should be determined, provided as a byte
+    *           array.
     * @return A {@link CompletionStage} containing a {@link List} of object lengths, or {@code null}
     *         if the matching value is not an object.
     */
@@ -85,11 +104,14 @@ public class EmbeddedJsonCache {
    }
 
    /**
-    * Recursively retrieves an array of integer replies representing the length of strings
-    * at the specified JSON path. If the matching JSON value is not a string, {@code null} is returned.
+    * Recursively retrieves an array of integer replies representing the length of strings at the
+    * specified JSON path. If the matching JSON value is not a string, {@code null} is returned.
     *
-    * @param key  The key representing the JSON document, provided as a byte array.
-    * @param path The JSON path at which the string's length should be determined, provided as a byte array.
+    * @param key
+    *           The key representing the JSON document, provided as a byte array.
+    * @param path
+    *           The JSON path at which the string's length should be determined, provided as a byte
+    *           array.
     * @return A {@link CompletionStage} containing a {@link List} of string lengths, or {@code null}
     *         if the matching value is not a string.
     */
@@ -99,15 +121,31 @@ public class EmbeddedJsonCache {
    }
 
    /**
-    * Reports the type of the JSON value at the specified path within the given JSON.
-    * The result will indicate the type of the value at each path in the list.
+    * Reports the type of the JSON value at the specified path within the given JSON. The result
+    * will indicate the type of the value at each path in the list.
     *
-    * @param key   The key representing the JSON document, provided as a byte array.
-    * @param path  The JSON path at which the type of the value should be determined, provided as a byte array.
-    * @return A {@link CompletionStage} containing a {@link List} of type strings, representing the type of
-    *         the JSON value at each path (e.g., "object", "array", "string", etc.).
+    * @param key
+    *           The key representing the JSON document, provided as a byte array.
+    * @param path
+    *           The JSON path at which the type of the value should be determined, provided as a
+    *           byte array.
+    * @return A {@link CompletionStage} containing a {@link List} of type strings, representing the
+    *         type of the JSON value at each path (e.g., "object", "array", "string", etc.).
     */
    public CompletionStage<List<String>> type(byte[] key, byte[] path) {
       return readWriteMap.eval(key, new JsonTypeFunction(path));
+   }
+
+   /**
+    * Deletes the value at the given path in the JSON document.
+    *
+    * @param key
+    *           the key of the JSON document
+    * @param path
+    *           the path to the value to be deleted
+    * @return a {@link CompletionStage} of the number of bytes deleted
+    */
+   public CompletionStage<Long> del(byte[] key, byte[] path) {
+      return readWriteMap.eval(key, new JsonDelFunction(path));
    }
 }
