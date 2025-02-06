@@ -12,6 +12,8 @@ import com.jayway.jsonpath.Option;
 import com.jayway.jsonpath.ParseContext;
 
 public class JSONUtil {
+   private static byte JSON_ROOT_BYTE = '$';
+   public static byte[] JSON_ROOT = new byte[] { '$' };
    // JSONPath config that returns null instead of failing for missing leaf. Used
    // to set new leaf for undefined
    // path.
@@ -35,7 +37,7 @@ public class JSONUtil {
    // GET operation needs ALWAYS_RETURN_LIST to handle multipath results
    public static final Configuration configForGet = Configuration.builder().options(Option.ALWAYS_RETURN_LIST)
          .options(Option.SUPPRESS_EXCEPTIONS)
-         .jsonProvider(new com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider())
+         .jsonProvider(new InfinispanJacksonJsonNodeProvider())
          .mappingProvider(new com.jayway.jsonpath.spi.mapper.JacksonMappingProvider())
          .build();
 
@@ -61,7 +63,7 @@ public class JSONUtil {
    }
 
    public static boolean isRoot(byte[] path) {
-      return path != null && path.length == 1 && path[0] == '$';
+      return path != null && path.length == 1 && path[0] == JSON_ROOT_BYTE;
    }
 
    /**
@@ -75,18 +77,18 @@ public class JSONUtil {
          if (path.length >= 1 && path[0] == '.') {
             if (path.length == 1) {
                // For '.' return json root '$'
-               return new byte[] { '$' };
+               return JSON_ROOT;
             }
             // Just append $ to the beginning
             byte[] result = new byte[(path.length + 1)];
-            result[0] = '$';
+            result[0] = JSON_ROOT_BYTE;
             System.arraycopy(path, 0, result, 1, path.length);
             return result;
          }
          // append $. to the beginning
          // Using "$." so wrong legacy path like "" and " " will fail
          byte[] result = new byte[(path.length + 2)];
-         result[0] = '$';
+         result[0] = JSON_ROOT_BYTE;
          result[1] = '.';
          System.arraycopy(path, 0, result, 2, path.length);
          return result;
@@ -95,7 +97,7 @@ public class JSONUtil {
    }
 
    public static boolean isJsonPath(byte[] path) {
-      return (path != null && path.length > 0 && path[0] == '$'
+      return (path != null && path.length > 0 && path[0] == JSON_ROOT_BYTE
             && (path.length < 2 || path[1] == '.' || path[1] == '['));
    }
 

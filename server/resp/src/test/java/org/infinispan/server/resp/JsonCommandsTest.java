@@ -672,7 +672,83 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
                       .addKey("notExistingKey"))).isNull();
    }
 
-   // Lettuce Json object doesn't implement comparison. Implementing here
+   public void testJSONDEL() {
+      String key = k();
+      JsonPath jp = new JsonPath("$");
+      String jsonStr = """
+               {
+                  "name": "Alice",
+                  "age": 30,
+                  "isStudent": false,
+                  "grades": [85, 90, 78],
+                  "address": {
+                    "verified": true,
+                    "city": "New York",
+                    "zip": "10001"
+                  },
+                  "phone": null
+                }
+            """;
+      JsonValue jv = defaultJsonParser.createJsonValue(jsonStr);
+      redis.jsonSet(key, jp, jv);
+      // Deleting whole object
+      assertThat(redis.jsonDel(key, jp)).isEqualTo(1);
+      // Not using json.get since lettuce json.get fails with RESP3 null
+      assertThat(redis.get(key)).isNull();
+      redis.jsonSet(key, jp, jv);
+      // Deleting nested element
+      jp = new JsonPath("$.address.city");
+      assertThat(redis.jsonDel(key, jp)).isEqualTo(1);
+      // Deleting multiple elements
+      jp = new JsonPath("$.address.*");
+      assertThat(redis.jsonDel(key, jp)).isEqualTo(2);
+      // Deleting null element
+      jp = new JsonPath("$.phone");
+      assertThat(redis.jsonDel(key, jp)).isEqualTo(1);
+      // Deleting array element
+      jp = new JsonPath("$.grades[2]");
+      assertThat(redis.jsonDel(key, jp)).isEqualTo(1);
+      List<JsonValue> jsonGetResult = redis.jsonGet(key);
+      assertThat(jsonGetResult).hasSize(1);
+      // Deleting non existing array element
+      jp = new JsonPath("$.grades[3]");
+      assertThat(redis.jsonDel(key, jp)).isEqualTo(0);
+      // Deleting all root element
+      jp = new JsonPath("$.*");
+      assertThat(redis.jsonDel(key, jp)).isEqualTo(5);
+      // Chech that the entry contains an empty json object
+      jsonGetResult = redis.jsonGet(key);
+      assertThat(jsonGetResult).hasSize(1);
+      assertThat(jsonGetResult.get(0).toString()).isEqualTo("{}");
+      // Repeat test with legacy path
+      jp = new JsonPath(".");
+      jv = defaultJsonParser.createJsonValue(jsonStr);
+      redis.jsonSet(key, jp, jv);
+      // Deleting whole object
+      assertThat(redis.jsonDel(key, jp)).isEqualTo(1);
+      // Not using json.get since lettuce json.get fails with RESP3 null
+      assertThat(redis.get(key)).isNull();
+      redis.jsonSet(key, jp, jv);
+      // Deleting nested element
+      jp = new JsonPath(".address.city");
+      assertThat(redis.jsonDel(key, jp)).isEqualTo(1);
+      // Deleting multiple elements
+      jp = new JsonPath(".address.*");
+      assertThat(redis.jsonDel(key, jp)).isEqualTo(2);
+      // Deleting null element
+      jp = new JsonPath(".phone");
+      assertThat(redis.jsonDel(key, jp)).isEqualTo(1);
+      // Deleting array element
+      jp = new JsonPath(".grades[2]");
+      assertThat(redis.jsonDel(key, jp)).isEqualTo(1);
+      jsonGetResult = redis.jsonGet(key);
+      assertThat(jsonGetResult).hasSize(1);
+      // Deleting non existing array element
+      jp = new JsonPath(".grades[3]");
+      assertThat(redis.jsonDel(key, jp)).isEqualTo(0);
+   }
+
+   // Lattuce Json object doesn't implement comparison. Implementing here
    private boolean compareJSONGet(JsonValue result, JsonValue expected, JsonPath... paths) {
       ObjectMapper mapper = new ObjectMapper();
       JsonNode expectedObjectNode, resultNode;
