@@ -1,27 +1,29 @@
 package org.infinispan.server.resp.commands.json;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-
+import com.fasterxml.jackson.databind.util.JSONPObject;
+import com.jayway.jsonpath.DocumentContext;
+import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.json.EmbeddedJsonCache;
+import org.infinispan.server.resp.json.JSONUtil;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 /**
- * JSON.GET
+ * JSON.TYPE
  *
- * @see <a href="https://redis.io/commands/json.get/">JSON.GET</a>
+ * @see <a href="https://redis.io/commands/json.type/">JSON.TYPE</a>
  * @since 15.2
  */
-public class JSONGET extends RespCommand implements Resp3Command {
+public class JSONTYPE extends RespCommand implements Resp3Command {
 
-   public JSONGET() {
-      super("JSON.GET", -1, 1, 1, 1);
+   public JSONTYPE() {
+      super("JSON.TYPE", -2, 1, 1, 1);
    }
 
    @Override
@@ -41,8 +43,24 @@ public class JSONGET extends RespCommand implements Resp3Command {
       }
       List<byte[]> paths = arguments.subList(args.pos, arguments.size());
       EmbeddedJsonCache ejc = handler.getJsonCache();
-      CompletionStage<byte[]> result = ejc.get(key, paths, args.space(), args.newline(), args.indent());
-      return handler.stageToReturn(result, ctx, ResponseWriter.BULK_STRING_BYTES);
+      CompletionStage<String> result = ejc.get(key, paths, args.space(), args.newline(), args.indent())
+              .thenApply(json -> {
+                 if (json == null) {
+                    return null;
+                 }
+                 DocumentContext parse = JSONUtil.parserForGet.parse(json);
+
+                 return "object";
+              });
+
+//      "json": If the root key contains a JSON object.
+//      "array": If the value is a JSON array.
+//              "string": If the value is a string.
+//      "number": If the value is a number.
+//      "boolean": If the value is a boolean (true or false).
+//      "null": If the value is null.
+
+      return handler.stageToReturn(result, ctx, ResponseWriter.BULK_STRING);
    }
 
    /*

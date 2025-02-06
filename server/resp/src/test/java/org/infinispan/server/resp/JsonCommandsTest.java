@@ -8,6 +8,7 @@ import static org.infinispan.test.TestingUtil.v;
 
 import java.util.List;
 
+import io.lettuce.core.json.JsonType;
 import org.infinispan.server.resp.json.JSONUtil;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -545,7 +546,30 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThat(compareJSONGet(result, jv)).isTrue();
    }
 
-   // Lattuce Json object doesn't implement comparison. Implementing here
+   @Test
+   public void testJSONTYPE() {
+      JsonPath jp = new JsonPath("$");
+      JsonValue jv = defaultJsonParser.createJsonValue("""
+               {"a":2, 
+               "nested": 
+                  {"a": true}, 
+               "foo": "bar"}
+            """);
+      String key = k();
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+
+//      // JSON.TYPE doc
+//      assertThat(redis.jsonType(key)).hasSize(1);
+//      // "object"
+//      assertThat(redis.jsonType(key).get(0)).isEqualTo(JsonType.OBJECT);
+//      // JSON.TYPE doc $..foo
+//      assertThat(redis.jsonType(key,new JsonPath("$..foo"))).hasSize(1);
+      assertThat(redis.jsonType(key,new JsonPath("$..a"))).hasSize(2);
+      // 1) "string"
+      assertThat(redis.jsonType(key).get(0)).isEqualTo(JsonType.STRING);
+   }
+
+   // Lettuce Json object doesn't implement comparison. Implementing here
    private boolean compareJSONGet(JsonValue result, JsonValue expected, JsonPath... paths) {
       ObjectMapper mapper = new ObjectMapper();
       JsonNode expectedObjectNode, resultNode;
