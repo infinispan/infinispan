@@ -121,5 +121,15 @@ public class TestSystemPropertyNames {
     * Specifies the type of sasl mechanism for the Hot Rod client. Not all tests are using it.
     */
    public static final String HOTROD_CLIENT_SASL_MECHANISM = "org.infinispan.test.hotrod.client.salsmechanism";
+   /**
+    * The property specifying the path to jacoco exec files.
+    */
+   public static final String JACOCO_REPORTS_DIR = "dir.jacoco";
+   /**
+    * Specifies if the coverage profile is enabled. Is used for enableing jacoco agent during container run.
+    */
+   public static final String COVERAGE_ENABLED = "coverage.enabled";
+
+
 
 }

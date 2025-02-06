@@ -124,7 +124,7 @@
       <defaultTestNGGroups>functional,unit,xsite,arquillian</defaultTestNGGroups>
       <org.infinispan.tests.threads.virtual>false</org.infinispan.tests.threads.virtual>
       <dir.ispn>../</dir.ispn>
-      <dir.jacoco>${session.executionRootDirectory}/jacoco/</dir.jacoco>
+      <dir.jacoco>${maven.multiModuleProjectDirectory}/jacoco/</dir.jacoco>
       <dir.jacoco.merged>../jacoco/merged/</dir.jacoco.merged>
       <dir.jacoco.report>../jacoco/report/</dir.jacoco.report>
       <rerunFailingTestsCount>0</rerunFailingTestsCount>
@@ -2742,6 +2742,16 @@
          <build>
             <plugins>
                <plugin>
+                  <artifactId>maven-failsafe-plugin</artifactId>
+                  <version>${version.maven.surefire}</version>
+                  <configuration>
+                     <systemPropertyVariables>
+                        <coverage.enabled>true</coverage.enabled>
+                     </systemPropertyVariables>
+                  </configuration>
+               </plugin>
+
+               <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
@@ -2905,39 +2915,63 @@
                         </goals>
                         <configuration>
                            <sources>
+                              <source>${dir.ispn}/anchored-keys/src/main/java</source>
                               <source>${dir.ispn}/api/src/main/java</source>
                               <source>${dir.ispn}/cdi/common/src/main/java</source>
                               <source>${dir.ispn}/cdi/embedded/src/main/java</source>
                               <source>${dir.ispn}/cdi/remote/src/main/java</source>
-                              <source>${dir.ispn}/checkstyle/src/main/java</source>
-                              <source>${dir.ispn}/cli/cli-client/src/main/java</source>
+                              <source>${dir.ispn}/cli/src/main/java</source>
+                              <source>${dir.ispn}/client/hotrod/src/main/java</source>
                               <source>${dir.ispn}/client/hotrod-client/src/main/java</source>
-                              <source>${dir.ispn}/client/infinispan-key-value-store-hotrod/src/main/java</source>
                               <source>${dir.ispn}/client/rest-client/src/main/java</source>
-                              <source>${dir.ispn}/commons/src/main/java</source>
-                              <source>${dir.ispn}/commons-test/src/main/java</source>
+                              <source>${dir.ispn}/commons/all/src/main/java</source>
+                              <source>${dir.ispn}/commons/jdk21/src/main/java</source>
+                              <source>${dir.ispn}/commons/spi/src/main/java</source>
                               <source>${dir.ispn}/core/src/main/java</source>
-                              <source>${dir.ispn}/lucene/directory-provider/src/main/java</source>
-                              <source>${dir.ispn}/lucene/lucene-directory/src/main/java</source>
+                              <source>${dir.ispn}/counter/src/main/java</source>
+                              <source>${dir.ispn}/counter-api/src/main/java</source>
+                              <source>${dir.ispn}/graalvm/client-hotrod/src/main/java</source>
+                              <source>${dir.ispn}/graalvm/commons/src/main/java</source>
+                              <source>${dir.ispn}/graalvm/core/src/main/java</source>
+                              <source>${dir.ispn}/gridfs/src/main/java</source>
+                              <source>${dir.ispn}/hibernate/cache-commons/src/main/java</source>
+                              <source>${dir.ispn}/hibernate/cache-spi/src/main/java</source>
+                              <source>${dir.ispn}/hibernate/cache-v62/src/main/java</source>
+                              <source>${dir.ispn}/jboss-marshalling/src/main/java</source>
+                              <source>${dir.ispn}/jcache/commons/src/main/java</source>
+                              <source>${dir.ispn}/jcache/embedded/src/main/java</source>
+                              <source>${dir.ispn}/jcache/remote/src/main/java</source>
+                              <source>${dir.ispn}/lock/src/main/java</source>
+                              <source>${dir.ispn}/multimap/src/main/java</source>
                               <source>${dir.ispn}/object-filter/src/main/java</source>
-                              <source>${dir.ispn}/persistence/cli/src/main/java</source>
                               <source>${dir.ispn}/persistence/jdbc/src/main/java</source>
-                              <source>${dir.ispn}/persistence/leveldb/src/main/java</source>
+                              <source>${dir.ispn}/persistence/jdbc-common/src/main/java</source>
                               <source>${dir.ispn}/persistence/remote/src/main/java</source>
                               <source>${dir.ispn}/persistence/rocksdb/src/main/java</source>
+                              <source>${dir.ispn}/persistence/sql/src/main/java</source>
+                              <source>${dir.ispn}/quarkus/cli/src/main/java</source>
                               <source>${dir.ispn}/query-core/src/main/java</source>
                               <source>${dir.ispn}/query/src/main/java</source>
                               <source>${dir.ispn}/query-dsl/src/main/java</source>
                               <source>${dir.ispn}/remote-query/remote-query-client/src/main/java</source>
                               <source>${dir.ispn}/remote-query/remote-query-server/src/main/java</source>
-                              <source>${dir.ispn}/scripting/src/main/java</source>
-                              <source>${dir.ispn}/spring/spring/src/main/java</source>
-                              <source>${dir.ispn}/spring/spring-boot/embedded/src/main/java</source>
-                              <source>${dir.ispn}/spring/spring-boot/remote/src/main/java</source>
-                              <source>${dir.ispn}/tasks/src/main/java</source>
-                              <source>${dir.ispn}/tasks-api/src/main/java</source>
+                              <source>${dir.ispn}/server/core/src/main/java</source>
+                              <source>${dir.ispn}/server/hotrod/src/main/java</source>
+                              <source>${dir.ispn}/server/insights/src/main/java</source>
+                              <source>${dir.ispn}/server/memcached/src/main/java</source>
+                              <source>${dir.ispn}/server/resp/src/main/java</source>
+                              <source>${dir.ispn}/server/rest/src/main/java</source>
+                              <source>${dir.ispn}/server/router/src/main/java</source>
+                              <source>${dir.ispn}/server/runtime/src/main/java</source>
+                              <source>${dir.ispn}/spring/spring6/spring6-common/src/main/java</source>
+                              <source>${dir.ispn}/spring/spring6/spring6-embedded/src/main/java</source>
+                              <source>${dir.ispn}/spring/spring6/spring6-remote/src/main/java</source>
+                              <source>${dir.ispn}/spring/spring-boot-3/embedded/src/main/java</source>
+                              <source>${dir.ispn}/spring/spring-boot-3/remote/src/main/java</source>
+                              <source>${dir.ispn}/tasks/api/src/main/java</source>
+                              <source>${dir.ispn}/tasks/manager/src/main/java</source>
+                              <source>${dir.ispn}/tasks/scripting/src/main/java</source>
                               <source>${dir.ispn}/tools/src/main/java</source>
-                              <source>${dir.ispn}/tree/src/main/java</source>
                            </sources>
                         </configuration>
                      </execution>

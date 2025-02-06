@@ -116,4 +116,8 @@ public class InfinispanGenericContainer {
    private DockerClient dockerClient() {
       return DockerClientFactory.instance().client();
    }
+
+   public void uploadCoverageInfoToHost(String containerPath, String destinationPath) {
+      this.genericContainer.copyFileFromContainer(containerPath, destinationPath);
+   }
 }
