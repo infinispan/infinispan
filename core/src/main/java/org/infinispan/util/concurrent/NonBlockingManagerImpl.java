@@ -10,9 +10,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import org.infinispan.executors.LocalExecutorThreadLocal;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.logging.Log;
@@ -30,6 +32,12 @@ public class NonBlockingManagerImpl implements NonBlockingManager {
    @Inject ScheduledExecutorService scheduler;
    @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
    @Inject Executor executor;
+   Scheduler rxScheduler;
+
+   @Start
+   public void start() {
+      rxScheduler = Schedulers.from(executor);
+   }
 
    @Override
    public AutoCloseable scheduleWithFixedDelay(Supplier<CompletionStage<?>> supplier, long initialDelay, long delay,
@@ -139,5 +147,17 @@ public class NonBlockingManagerImpl implements NonBlockingManager {
    @Override
    public Scheduler asScheduler() {
       return Schedulers.from(executor);
+   }
+
+   @Override
+   public Scheduler localScheduler() {
+      Executor localExecutor = LocalExecutorThreadLocal.localExecutor();
+      return localExecutor != null ? Schedulers.from(localExecutor) : rxScheduler;
+   }
+
+   @Override
+   public Executor localExecutor() {
+      Executor localExecutor = LocalExecutorThreadLocal.localExecutor();
+      return localExecutor != null ? localExecutor : executor;
    }
 }

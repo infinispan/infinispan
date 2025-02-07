@@ -46,18 +46,15 @@ public class BlockingManagerImpl implements BlockingManager {
    // This should eventually be the only reference to blocking executor
    @Inject @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR)
    Executor blockingExecutor;
-   @Inject
-   NonBlockingManager nonBlockingManager;
+   @Inject NonBlockingManager nonBlockingManager;
    @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService scheduledExecutorService;
 
    private Scheduler blockingScheduler;
-   private Scheduler nonBlockingScheduler;
 
    @Start
    void start() {
       blockingScheduler = Schedulers.from(new ReentrantBlockingExecutor());
-      nonBlockingScheduler = Schedulers.from(nonBlockingExecutor);
    }
 
    private String nextTraceId() {
@@ -280,7 +277,7 @@ public class BlockingManagerImpl implements BlockingManager {
          } else if (log.isTraceEnabled()) {
             log.tracef("Continuing execution of id %s", traceId);
          }
-      }, nonBlockingExecutor);
+      }, nonBlockingManager.localExecutor());
    }
 
    @Override
@@ -300,12 +297,12 @@ public class BlockingManagerImpl implements BlockingManager {
             return Flowable.fromPublisher(publisher)
                            .subscribeOn(blockingScheduler)
                            .unsubscribeOn(blockingScheduler)
-                           .observeOn(nonBlockingScheduler)
+                           .observeOn(nonBlockingManager.localScheduler())
                            .doFinally(() -> log.tracef("Blocking publisher done %d", publisherId));
          }
          return Flowable.fromPublisher(publisher)
                         .subscribeOn(blockingScheduler)
-                        .observeOn(nonBlockingScheduler);
+                        .observeOn(nonBlockingManager.localScheduler());
       });
    }
 

@@ -2,16 +2,14 @@ package org.infinispan.util.concurrent.locks.impl;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.concurrent.locks.DeadlockChecker;
 import org.infinispan.util.concurrent.locks.ExtendedLockPromise;
 
@@ -26,8 +24,7 @@ public class PerKeyLockContainer implements LockContainer {
 
    private static final int INITIAL_CAPACITY = 32;
    private final ConcurrentMap<Object, InfinispanLock> lockMap;
-   @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
-   @Inject protected Executor nonBlockingExecutor;
+   @Inject protected NonBlockingManager nonBlockingManager;
    private TimeService timeService;
 
    public PerKeyLockContainer() {
@@ -103,7 +100,7 @@ public class PerKeyLockContainer implements LockContainer {
    }
 
    private InfinispanLock createInfinispanLock(Object key, Object owner, ByRef<ExtendedLockPromise> promise) {
-      return new InfinispanLock(nonBlockingExecutor, timeService, createReleaseRunnable(key), owner, promise);
+      return new InfinispanLock(nonBlockingManager, timeService, createReleaseRunnable(key), owner, promise);
    }
 
    private Runnable createReleaseRunnable(Object key) {

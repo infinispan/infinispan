@@ -2,6 +2,7 @@ package org.infinispan.util.concurrent;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -77,4 +78,8 @@ public interface NonBlockingManager {
     * @return schduler to use within the RxJava ecosystem
     */
    Scheduler asScheduler();
+
+   Executor localExecutor();
+
+   Scheduler localScheduler();
 }

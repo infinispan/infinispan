@@ -15,8 +15,10 @@ import org.reactivestreams.Publisher;
 import org.testng.annotations.Test;
 
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.processors.AsyncProcessor;
 import io.reactivex.rxjava3.processors.UnicastProcessor;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 
 @Test(groups = "unit", testName = "util.concurrent.BlockingManagerTest")
@@ -43,6 +45,17 @@ public class BlockingManagerTest extends AbstractInfinispanTest {
 
       blockingManager.nonBlockingExecutor = nonBlockingExecutor;
       blockingManager.blockingExecutor = blockingExecutor;
+      blockingManager.nonBlockingManager = new NonBlockingManagerImpl() {
+         @Override
+         public Executor localExecutor() {
+            return nonBlockingExecutor;
+         }
+
+         @Override
+         public Scheduler localScheduler() {
+            return Schedulers.from(nonBlockingExecutor);
+         }
+      };
       blockingManager.start();
 
       return blockingManager;

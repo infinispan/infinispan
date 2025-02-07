@@ -36,6 +36,7 @@ import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 import org.infinispan.util.concurrent.locks.ExtendedLockPromise;
 import org.infinispan.util.concurrent.locks.KeyAwareLockListener;
@@ -65,8 +66,7 @@ public class DefaultLockManager implements LockManager {
    @Inject Configuration configuration;
    @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService scheduler;
-   @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
-   Executor nonBlockingExecutor;
+   @Inject NonBlockingManager nonBlockingManager;
 
    @Override
    public KeyAwareLockPromise lock(Object key, Object lockOwner, long time, TimeUnit unit) {
@@ -120,7 +120,7 @@ public class DefaultLockManager implements LockManager {
                unit);
       }
 
-      final CompositeLockPromise compositeLockPromise = new CompositeLockPromise(uniqueKeys.size(), nonBlockingExecutor);
+      final CompositeLockPromise compositeLockPromise = new CompositeLockPromise(uniqueKeys.size(), nonBlockingManager.localExecutor());
       //needed to avoid internal deadlock when 2 or more lock owner invokes this method with the same keys.
       //ordering will not solve the problem since acquire() is non-blocking and each lock owner can iterate faster/slower than the other.
       synchronized (this) {

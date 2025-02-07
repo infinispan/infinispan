@@ -26,6 +26,7 @@ import org.infinispan.commons.util.FilterSpliterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -33,8 +34,6 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.expiration.impl.InternalExpirationManager;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
@@ -42,9 +41,9 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.L1Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.infinispan.util.concurrent.DataOperationOrderer.Operation;
+import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -70,8 +69,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    @Inject protected Configuration configuration;
    @Inject protected KeyPartitioner keyPartitioner;
    @Inject protected DataOperationOrderer orderer;
-   @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
-   Executor nonBlockingExecutor;
+   @Inject protected NonBlockingManager nonBlockingManager;
 
    protected final List<Consumer<Iterable<InternalCacheEntry<K, V>>>> listeners = new CopyOnWriteArrayList<>();
 
@@ -237,7 +235,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          // return the value somehow
          // - we don't need an orderer as it is handled in OrderedClusteringDependentLogic
          // - we don't need eviction manager either as it is handled in NotifyHelper
-         evictionStageRef.set(handleEviction(entry, null, passivator.running(), null, this, nonBlockingExecutor, null));
+         evictionStageRef.set(handleEviction(entry, null, passivator.running(), null, this, nonBlockingManager.localExecutor(), null));
          computeEntryRemoved(o, entry);
          entryRemoved(entry);
          return null;
@@ -533,7 +531,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          CompletableFuture<Void> future = new CompletableFuture<>();
          ensureEvictionDone.put(key, future);
          handleEviction(value, orderer, passivator.running(), evictionManager, AbstractInternalDataContainer.this,
-               nonBlockingExecutor, future);
+               nonBlockingManager.localExecutor(), future);
       }
 
       // It is very important that the fact that this method is invoked AFTER the entry has been evicted outside of the

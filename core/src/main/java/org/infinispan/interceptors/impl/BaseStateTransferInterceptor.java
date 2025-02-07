@@ -2,7 +2,6 @@ package org.infinispan.interceptors.impl;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +37,7 @@ import org.infinispan.statetransfer.AllOwnersLostException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -55,8 +55,8 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
 
    @Inject Configuration configuration;
    @Inject protected StateTransferLock stateTransferLock;
-   @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
-   Executor nonBlockingExecutor;
+   @Inject
+   NonBlockingManager nonBlockingManager;
    @Inject DistributionManager distributionManager;
    @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService timeoutExecutor;
@@ -106,7 +106,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          CancellableRetry<T> cancellableRetry = new CancellableRetry<>(command, topologyId);
          // We have to use handleAsync and rethrow the exception in the handler, rather than
          // thenComposeAsync(), because if `future` completes with an exception we want to continue in remoteExecutor
-         CompletableFuture<Void> retryFuture = future.handleAsync(cancellableRetry, nonBlockingExecutor);
+         CompletableFuture<Void> retryFuture = future.handleAsync(cancellableRetry, nonBlockingManager.localExecutor());
          cancellableRetry.setRetryFuture(retryFuture);
          // We want to time out the current command future, not the main topology-waiting future,
          // but the command future can take longer time to finish.
