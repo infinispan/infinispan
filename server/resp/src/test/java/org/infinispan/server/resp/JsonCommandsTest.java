@@ -8,6 +8,11 @@ import static org.infinispan.test.TestingUtil.v;
 
 import java.util.List;
 
+import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.IntegerOutput;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandType;
 import org.infinispan.server.resp.json.JSONUtil;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -575,15 +580,57 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       jp = new JsonPath("$.root.*");
       result = redis.jsonObjlen(key, jp);
       assertThat(result).containsExactly(null, 2L, null);
-      // No path or old style path returns null on non existing object
-      assertThat(redis.jsonObjlen("notExistingKey")).contains(new Long[]{null});
+      // No path or old style path returns null on non-existing object
+      assertThat(redis.jsonObjlen("notExistingKey").get(0)).isNull();
       jp = new JsonPath(".");
-      assertThat(redis.jsonObjlen("notExistingKey", jp)).contains(new Long[]{null});
-      // Jsonpath style returns error on non exsisting object. Cannot use
+      assertThat(redis.jsonObjlen("notExistingKey", jp).get(0)).isNull();
+      // Jsonpath style returns error on non-existing object. Cannot use
       // a simple "$" path, since lettuce doesn't pass it to the server
       assertThatThrownBy(() -> { redis.jsonObjlen("notExistingKey", new JsonPath("$.root"));
       }).isInstanceOf(RedisCommandExecutionException.class)
-            .hasMessageStartingWith("ERR ");
+            .hasMessageStartingWith("ERR Path '$.root' does not exist or not an object");
+   }
+
+   @Test
+   public void testJSONSTRLEN() {
+      JsonPath jpDollar = new JsonPath("$");
+      // JSON.STRLEN notExistingKey $
+      assertThatThrownBy(() -> {
+         RedisCodec<String, String> codec = StringCodec.UTF8;
+         redis.dispatch(CommandType.JSON_STRLEN, new IntegerOutput<>(codec),
+                 new CommandArgs<>(codec)
+                         .addKey("notExistingKey")
+                         .add("$"));
+      }).isInstanceOf(RedisCommandExecutionException.class)
+              .hasMessage("ERR could not perform this operation on a key that doesn't exist");
+      // No path or old style path returns null on non-existing key
+      // JSON.STRLEN notExistingKey
+      assertThat(redis.jsonStrlen("notExistingKey").get(0)).isNull();
+      // JSON.STRLEN notExistingKey .
+      assertThat(redis.jsonStrlen("notExistingKey", new JsonPath(".")).get(0)).isNull();
+
+      // Not a JSON
+      redis.set("errorRaise", "world");
+      // JSON.STRLEN errorRaise $
+      assertThatThrownBy(() -> {
+         redis.jsonStrlen("errorRaise", jpDollar);
+      }).isInstanceOf(RedisCommandExecutionException.class)
+              .hasMessage("WRONGTYPE Operation against a key holding the wrong kind of value");
+
+      JsonValue jv = defaultJsonParser.createJsonValue("""
+               {"a":"foo", "nested": {"a": "hello"}, "nested2": {"a": 31}}
+            """);
+
+      String key = "doc";
+      // JSON.SET doc $ '{"a":"foo", "nested": {"a": "hello"}, "nested2": {"a": 31}}'
+      assertThat(redis.jsonSet(key, jpDollar, jv)).isEqualTo("OK");
+
+      //  JSON.STRLEN doc $
+      assertThat(redis.jsonStrlen(key, jpDollar).get(0)).isNull();
+
+      //  JSON.STRLEN doc $..a
+      assertThat(redis.jsonStrlen(key, new JsonPath("$..a"))).containsExactly(3L, 5L, null);
+
    }
 
    // Lettuce Json object doesn't implement comparison. Implementing here

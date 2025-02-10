@@ -14,9 +14,15 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 
 /**
- * JsonCache with Json methods implementation
+ * A cache implementation for JSON data, providing various methods for interacting with
+ * and manipulating JSON objects, arrays, and values.
+ * This class includes methods for setting, retrieving, and querying JSON data in an embedded cache.
+ *
+ * <p>Note: The implementation provides a set of functionalities for handling JSON objects,
+ * including operations like recursively extracting values, checking types, and working with specific paths.</p>
  *
  * @author Vittorio Rigamonti
+ * @author Katia Aresti
  * @since 15.2
  */
 public class EmbeddedJsonCache {
@@ -34,21 +40,29 @@ public class EmbeddedJsonCache {
    }
 
    /**
-    * Get the entry by key and return it as json byte array
+    * Retrieves the JSON value at the specified paths within the given key. The resulting
+    * JSON content can be formatted with the provided spacing, newline, and indentation settings.
     *
-    * @param key, the name of the set
-    * @return the set with values if such exist, or null if the key is not present
+    * @param key     The key from which the JSON value will be retrieved, represented as a byte array.
+    * @param paths   A list of JSON paths used to access specific values within the JSON, each represented as a byte array.
+    * @param space   The byte array used to represent spaces for formatting the JSON output.
+    * @param newline The byte array used to represent newline characters for formatting the JSON output.
+    * @param indent  The byte array used to represent indentation characters for formatting the JSON output.
+    * @return A {@link CompletionStage} containing the formatted JSON content as a byte array.
     */
    public CompletionStage<byte[]> get(byte[] key, List<byte[]> paths, byte[] space, byte[] newline, byte[] indent) {
       return readWriteMap.eval(key, new JsonGetFunction(paths, space, newline, indent));
    }
 
    /**
-    * Add the specified element to the set, creates the set in case
+    * Sets a JSON value at the specified path in the given key.
     *
-    * @param key,   the name of the set
-    * @param value, the element to be inserted
-    * @return {@link CompletionStage} containing a {@link Void}
+    * @param key   The key in which the JSON value should be stored, represented as a byte array.
+    * @param value The JSON value to set, represented as a byte array.
+    * @param path  The JSON path where the value should be inserted, represented as a byte array.
+    * @param nx    If {@code true}, the operation will only succeed if the key does not already exist (NX - "Not Exists").
+    * @param xx    If {@code true}, the operation will only succeed if the key already exists (XX - "Exists").
+    * @return A {@link CompletionStage} containing the result of the operation as a {@link String}.
     */
    public CompletionStage<String> set(byte[] key, byte[] value, byte[] path, boolean nx, boolean xx) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
@@ -56,8 +70,31 @@ public class EmbeddedJsonCache {
       return readWriteMap.eval(key, new JsonSetFunction(value, path, nx, xx));
    }
 
+   /**
+    * Recursively retrieves an array of integer replies representing the length of objects
+    * at the specified JSON path. If the matching JSON value is not an object, {@code null} is returned.
+    *
+    * @param key  The key representing the JSON document, provided as a byte array.
+    * @param path The JSON path at which the object's length should be determined, provided as a byte array.
+    * @return A {@link CompletionStage} containing a {@link List} of object lengths, or {@code null}
+    *         if the matching value is not an object.
+    */
    public CompletionStage<List<Long>> objlen(byte[] key, byte[] path) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
-      return readWriteMap.eval(key, new JsonObjlenFunction(path));
+      return readWriteMap.eval(key, new JsonLenFunction(path, JsonLenFunction.LenType.OBJECT));
+   }
+
+   /**
+    * Recursively retrieves an array of integer replies representing the length of strings
+    * at the specified JSON path. If the matching JSON value is not a string, {@code null} is returned.
+    *
+    * @param key  The key representing the JSON document, provided as a byte array.
+    * @param path The JSON path at which the string's length should be determined, provided as a byte array.
+    * @return A {@link CompletionStage} containing a {@link List} of string lengths, or {@code null}
+    *         if the matching value is not a string.
+    */
+   public CompletionStage<List<Long>> strLen(byte[] key, byte[] path) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new JsonLenFunction(path, JsonLenFunction.LenType.STRING));
    }
 }

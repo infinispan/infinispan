@@ -9,5 +9,5 @@ public interface ExternalizerIds {
    Integer COMPOSED_FILTER_CONVERTER = 2203;
    Integer JSON_GET_FUNCTION = 2204;
    Integer JSON_SET_FUNCTION = 2205;
-   Integer JSON_OBJLEN_FUNCTION = 2206;
+   Integer JSON_LEN_FUNCTION = 2206;
 }
