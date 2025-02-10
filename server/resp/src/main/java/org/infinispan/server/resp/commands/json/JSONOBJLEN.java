@@ -43,16 +43,16 @@ public class JSONOBJLEN extends RespCommand implements Resp3Command {
       // To keep compatibility, considering the first path only. Additional args will
       // be ignored
       // If missing, default path '.' is used, it's in legacy style, i.e. not jsonpath
-      byte[] path = arguments.size() > 1 ? arguments.get(1): DEFAULT_PATH;
-      byte[] jsonPath  = JSONUtil.toJsonPath(path);
+      byte[] path = arguments.size() > 1 ? arguments.get(1) : DEFAULT_PATH;
+      byte[] jsonPath = JSONUtil.toJsonPath(path);
       boolean withPath = path == jsonPath;
       EmbeddedJsonCache ejc = handler.getJsonCache();
       CompletionStage<List<Long>> cs = ejc.objlen(key, jsonPath);
-      // Retun value depends on some logic:
-      // for jsonpath return an array of lenghts for all the matching path
-      //    or an error if entry doesn't exists
+      // Return value depends on some logic:
+      // for jsonpath return an array of lengths for all the matching path
+      //    or an error if entry doesn't exist
       // for old legacy path return one length as a Number or nil if entry
-      //    doesn't exists.
+      //    doesn't exist.
       // Handling these cases here and keeping JsonObjlenFunction simple
       if (withPath) {
          return handler.stageToReturn(cs, ctx, newArrayOrErrorWriter(jsonPath));
@@ -62,15 +62,16 @@ public class JSONOBJLEN extends RespCommand implements Resp3Command {
    }
    static BiConsumer<List<Long>, ResponseWriter> newArrayOrErrorWriter(byte[] path) {
       return (c, writer) -> {
-         if (c==null || c.size() == 0) {
-            writer.error("-ERR Path '"+RespUtil.ascii(path)+"' does not exist or not an object");
-         } else {
-            writer.array(c, Resp3Type.INTEGER);
+         if (c == null) {
+            throw new RuntimeException("Path '" + RespUtil.ascii(path) + "' does not exist or not an object");
          }
+
+         writer.array(c, Resp3Type.INTEGER);
       };
    }
+
    static void integerOrNullWriter(List<Long> c, ResponseWriter w) {
-      if (c==null || c.size()==0) {
+      if (c == null || c.size() == 0) {
          w.nulls();
       } else {
          w.integers(c.get(0));
