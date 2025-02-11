@@ -42,6 +42,17 @@ public class JSONTYPE extends RespCommand implements Resp3Command {
       byte[] jsonPath  = JSONUtil.toJsonPath(path);
       EmbeddedJsonCache ejc = handler.getJsonCache();
       CompletionStage<List<String>> result = ejc.type(key, jsonPath);
+      if (!JSONUtil.isJsonPath(path)) { // Check if the original path is a jsonpath
+         // Legacy path
+         return handler.stageToReturn(result.thenApply(r -> {
+            // return the first one
+            if (r != null && r.size() > 0) {
+               return r.get(0);
+            }
+            // return null in the other cases
+            return null;
+         }), ctx, ResponseWriter.SIMPLE_STRING);
+      }
       return handler.stageToReturn(result, ctx, ResponseWriter.ARRAY_STRING);
    }
 }

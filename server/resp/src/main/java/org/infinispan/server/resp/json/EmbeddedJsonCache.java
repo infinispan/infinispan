@@ -87,37 +87,25 @@ public class EmbeddedJsonCache {
    }
 
    /**
-    * Recursively retrieves an array of integer replies representing the length of objects at the
-    * specified JSON path. If the matching JSON value is not an object, {@code null} is returned.
+    * Retrieves the length of a JSON value at the specified path based on the given {@link LenType}.
+    * <p>
+    * Returns:
+    * </p>
+    * <ul>
+    *   <li>Object → Number of key-value pairs</li>
+    *   <li>Array → Number of elements</li>
+    *   <li>String → Character count</li>
+    * </ul>
+    * Returns {@code null} if the value does not match the specified {@code lenType}.
     *
-    * @param key
-    *           The key representing the JSON document, provided as a byte array.
-    * @param path
-    *           The JSON path at which the object's length should be determined, provided as a byte
-    *           array.
-    * @return A {@link CompletionStage} containing a {@link List} of object lengths, or {@code null}
-    *         if the matching value is not an object.
+    * @param key     The JSON document key.
+    * @param path    The JSON path to evaluate.
+    * @param lenType The type (OBJECT, ARRAY, STRING) whose length to compute.
+    * @return A {@link CompletionStage} with a {@link List} of lengths or {@code null} if mismatched.
     */
-   public CompletionStage<List<Long>> objlen(byte[] key, byte[] path) {
+   public CompletionStage<List<Long>> len(byte[] key, byte[] path, LenType lenType) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
-      return readWriteMap.eval(key, new JsonLenFunction(path, JsonLenFunction.LenType.OBJECT));
-   }
-
-   /**
-    * Recursively retrieves an array of integer replies representing the length of strings at the
-    * specified JSON path. If the matching JSON value is not a string, {@code null} is returned.
-    *
-    * @param key
-    *           The key representing the JSON document, provided as a byte array.
-    * @param path
-    *           The JSON path at which the string's length should be determined, provided as a byte
-    *           array.
-    * @return A {@link CompletionStage} containing a {@link List} of string lengths, or {@code null}
-    *         if the matching value is not a string.
-    */
-   public CompletionStage<List<Long>> strLen(byte[] key, byte[] path) {
-      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
-      return readWriteMap.eval(key, new JsonLenFunction(path, JsonLenFunction.LenType.STRING));
+      return readWriteMap.eval(key, new JsonLenFunction(path, lenType));
    }
 
    /**
