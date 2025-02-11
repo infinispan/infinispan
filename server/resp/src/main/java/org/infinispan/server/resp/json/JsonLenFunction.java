@@ -33,14 +33,6 @@ public class JsonLenFunction
 
    byte[] path;
 
-   public enum LenType {
-      OBJECT, STRING;
-      private static final LenType[] CACHED_VALUES = values();
-      public static LenType valueOf(int ordinal) {
-         return CACHED_VALUES[ordinal];
-      }
-   }
-
    public JsonLenFunction(byte[] path, LenType lenType) {
       requireNonNull(path, ERR_PATH_CAN_T_BE_NULL);
       this.lenType = lenType;
@@ -63,6 +55,7 @@ public class JsonLenFunction
          switch (lenType) {
             case OBJECT -> addNodeSize(result, nodeList, JsonNode::isObject, jsonNode -> (long) jsonNode.size());
             case STRING -> addNodeSize(result, nodeList, JsonNode::isTextual, jsonNode -> (long) jsonNode.asText().length());
+            case ARRAY -> addNodeSize(result, nodeList, JsonNode::isArray, jsonNode -> (long) jsonNode.size());
          }
          return result;
       } catch (CacheException e) {

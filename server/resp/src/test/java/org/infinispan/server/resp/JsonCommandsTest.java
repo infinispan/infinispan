@@ -1,36 +1,35 @@
 package org.infinispan.server.resp;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
-
-import java.util.List;
-
-import io.lettuce.core.json.JsonType;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.json.DefaultJsonParser;
+import io.lettuce.core.json.JsonPath;
+import io.lettuce.core.json.JsonType;
+import io.lettuce.core.json.JsonValue;
+import io.lettuce.core.json.arguments.JsonGetArgs;
+import io.lettuce.core.json.arguments.JsonSetArgs;
 import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.output.StringListOutput;
+import io.lettuce.core.output.ValueOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
 import org.infinispan.server.resp.json.JSONUtil;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.List;
 
-import io.lettuce.core.RedisCommandExecutionException;
-import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.json.DefaultJsonParser;
-import io.lettuce.core.json.JsonPath;
-import io.lettuce.core.json.JsonValue;
-import io.lettuce.core.json.arguments.JsonGetArgs;
-import io.lettuce.core.json.arguments.JsonSetArgs;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
 
 @Test(groups = "functional", testName = "server.resp.JsonCommandsTest")
 public class JsonCommandsTest extends SingleNodeRespBaseTest {
@@ -635,6 +634,58 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testJSONARRLEN() {
+      JsonPath jpDollar = new JsonPath("$");
+      // JSON.ARRLEN notExistingKey $
+      assertThatThrownBy(() -> {
+         RedisCodec<String, String> codec = StringCodec.UTF8;
+         redis.dispatch(CommandType.JSON_ARRLEN, new IntegerOutput<>(codec),
+                 new CommandArgs<>(codec)
+                         .addKey("notExistingKey")
+                         .add("$"));
+      }).isInstanceOf(RedisCommandExecutionException.class)
+              .hasMessage("ERR could not perform this operation on a key that doesn't exist");
+      // No path or old style path returns null on non-existing key
+      // JSON.ARRLEN notExistingKey
+      assertThat(redis.jsonArrlen("notExistingKey").get(0)).isNull();
+      // JSON.ARRLEN notExistingKey .
+      assertThat(redis.jsonArrlen("notExistingKey", new JsonPath(".")).get(0)).isNull();
+
+      // SET errorRaise world
+      redis.set("errorRaise", "world");
+      // JSON.ARRLEN errorRaise $
+      assertThatThrownBy(() -> {
+         redis.jsonArrlen("errorRaise", jpDollar);
+      }).isInstanceOf(RedisCommandExecutionException.class)
+              .hasMessage("WRONGTYPE Operation against a key holding the wrong kind of value");
+
+      JsonValue jv = defaultJsonParser.createJsonValue("""
+               {
+                   "name":"Wireless earbuds",
+                   "description":"Wireless Bluetooth in-ear headphones",
+                   "connection":{"wireless":true,"type":"Bluetooth"},
+                   "price":64.99,"stock":17,
+                   "colors":["black","white"],
+                   "max_level":[80, 100, 120]
+                }
+            """);
+
+      String key = "item:2";
+      // JSON.SET item:2 $ '{"name":"Wireless earbuds","description":"Wireless Bluetooth in-ear headphones","connection":{"wireless":true,"type":"Bluetooth"},"price":64.99,"stock":17,"colors":["black","white"], "max_level":[80, 100, 120]}'
+      assertThat(redis.jsonSet(key, jpDollar, jv)).isEqualTo("OK");
+
+      // JSON.ARRLEN item:2 $
+      assertThat(redis.jsonArrlen(key, jpDollar)).hasSize(1);
+      assertThat(redis.jsonArrlen(key, jpDollar).get(0)).isNull();
+
+      // JSON.ARRLEN item:2 $..max_level
+      assertThat(redis.jsonArrlen(key, new JsonPath("$..max_level"))).containsExactly(3L);
+
+      // JSON.ARRLEN item:2 $.[*]
+      assertThat(redis.jsonArrlen(key, new JsonPath("$.[*]"))).containsExactly(null, null, null, null, null, 2L, 3L);
+   }
+
+   @Test
    public void testJSONTYPE() {
       JsonPath jp = new JsonPath("$");
       RedisCodec<String, String> codec = StringCodec.UTF8;
@@ -649,6 +700,10 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
               """);
       String key = k();
       assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+      // Legacy: JSON.TYPE doc ..a
+      assertThat(redis.dispatch(CommandType.JSON_TYPE, new ValueOutput<>(codec),
+              new CommandArgs<>(codec)
+                      .addKey(key).add("..a"))).isEqualTo("integer");
       // JSON.TYPE doc
       assertThat(redis.jsonType(key)).containsExactly(JsonType.OBJECT);
       // JSON.TYPE doc $..foo
