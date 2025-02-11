@@ -159,7 +159,7 @@
       <version.party.iroiro.luajava>4.0.2</version.party.iroiro.luajava>
       <version.picketbox>5.0.3.Final</version.picketbox>
       <version.picketlink>2.5.5.SP12</version.picketlink>
-      <version.protostream>6.0.0.Dev02</version.protostream>
+      <version.protostream>6.0.0.Dev03</version.protostream>
       <version.reactivestreams>1.0.4</version.reactivestreams>
       <version.rocksdb>9.10.0</version.rocksdb>
       <version.rxjava>3.1.10</version.rxjava>
