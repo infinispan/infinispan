@@ -747,7 +747,83 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       jp = new JsonPath(".grades[3]");
       assertThat(redis.jsonDel(key, jp)).isEqualTo(0);
    }
+   @Test
+   public void testSTRAPPEND() {
+      JsonPath jp = new JsonPath("$");
+      JsonValue jv = defaultJsonParser.createJsonValue("\"string\"");
+      String key = k();
+      // Append to root
+      redis.jsonSet(key, jp, jv);
+      JsonValue append = defaultJsonParser.fromObject("Append");
+      assertThat(redis.jsonStrappend(key, jp, append)).containsExactly(12L);
+      List<JsonValue> jsonGet = redis.jsonGet(key, jp);
+      assertThat(jsonGet.get(0).toString()).isEqualTo("[\"stringAppend\"]");
+      jv = defaultJsonParser.createJsonValue("""
+               {"a":2,
+               "null_value": null,
+               "float_value": 12.3,
+               "arr_value": ["one", "two", "three"],
+               "nested":
+                  {"a": true,
+                  "foo": false,
+                  "nested2": {
+                   "foo": "fore"}},
+               "foo": "bar"}
+            """);
+      key = k(1);
+      redis.jsonSet(key, jp, jv);
+      // Append to single element
+      jp = new JsonPath("$.foo");
+      assertThat(redis.jsonStrappend(key, jp, append)).containsExactly(9L);
+      jsonGet = redis.jsonGet(key, jp);
+      assertThat(jsonGet.get(0).toString()).isEqualTo("[\"barAppend\"]");
+      // Append to multiple elements
+      jp = new JsonPath("$..foo");
+      assertThat(redis.jsonStrappend(key, jp, append)).containsExactly(15L, null, 10L);
+      // Append to nonstring element
+      jp = new JsonPath("$.float_value");
+      List<Long> jsonStrappend = redis.jsonStrappend(key, jp, append);
+      assertThat(jsonStrappend).containsExactly((Long) null);
 
+      // Test legacy path
+      // Append to root
+      jp = new JsonPath(".");
+      jv = defaultJsonParser.createJsonValue("\"string\"");
+      redis.jsonSet(key, jp, jv);
+      append = defaultJsonParser.fromObject("Append");
+      assertThat(redis.jsonStrappend(key, jp, append)).containsExactly(12L);
+      jsonGet = redis.jsonGet(key, jp);
+      assertThat(jsonGet.get(0).toString()).isEqualTo("\"stringAppend\"");
+      jv = defaultJsonParser.createJsonValue("""
+               {"a":2,
+               "null_value": null,
+               "float_value": 12.3,
+               "arr_value": ["one", "two", "three"],
+               "nested":
+                  {"a": true,
+                  "foo": false,
+                  "nested2": {
+                   "foo": "fore"}},
+               "foo": "bar"}
+            """);
+      key = k(1);
+      redis.jsonSet(key, jp, jv);
+      // Append to single element
+      jp = new JsonPath(".foo");
+      assertThat(redis.jsonStrappend(key, jp, append)).containsExactly(9L);
+      jsonGet = redis.jsonGet(key, jp);
+      assertThat(jsonGet.get(0).toString()).isEqualTo("\"barAppend\"");
+      // Append to nonstring element
+      jp = new JsonPath(".float_value");
+      var keyFinal = key;
+      var jpFinal = jp;
+      var appendFinal = append;
+      assertThatThrownBy(() -> {
+         redis.jsonStrappend(keyFinal, jpFinal, appendFinal);
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR Path '$.float_value' does not exist or not a string");
+      assertThat(jsonStrappend).containsExactly((Long) null);
+   }
    // Lattuce Json object doesn't implement comparison. Implementing here
    private boolean compareJSONGet(JsonValue result, JsonValue expected, JsonPath... paths) {
       ObjectMapper mapper = new ObjectMapper();

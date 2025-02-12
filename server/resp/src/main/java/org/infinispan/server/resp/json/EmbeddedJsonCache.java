@@ -148,4 +148,7 @@ public class EmbeddedJsonCache {
    public CompletionStage<Long> del(byte[] key, byte[] path) {
       return readWriteMap.eval(key, new JsonDelFunction(path));
    }
+   public CompletionStage<List<Long>> strAppend(byte[] key, byte[] path, byte[] value, AppendType type) {
+      return readWriteMap.eval(key, new JsonAppendFunction(path, value, type));
+   }
 }

@@ -24,27 +24,27 @@ public class JSONUtil {
    public static final Configuration configForDefiniteSet = Configuration.builder().options(Option.SUPPRESS_EXCEPTIONS)
          .options(Option.DEFAULT_PATH_LEAF_TO_NULL)
          .jsonProvider(new com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider())
-         .mappingProvider(new com.jayway.jsonpath.spi.mapper.JacksonMappingProvider())
-         .build();
+         .mappingProvider(new com.jayway.jsonpath.spi.mapper.JacksonMappingProvider()).build();
 
    public static final Configuration configForSet = Configuration.builder().options(Option.SUPPRESS_EXCEPTIONS)
          .jsonProvider(new com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider())
-         .mappingProvider(new com.jayway.jsonpath.spi.mapper.JacksonMappingProvider())
-         .build();
-
+         .mappingProvider(new com.jayway.jsonpath.spi.mapper.JacksonMappingProvider()).build();
    public static ParseContext parserForSet = JsonPath.using(configForSet);
 
    // GET operation needs ALWAYS_RETURN_LIST to handle multipath results
    public static final Configuration configForGet = Configuration.builder().options(Option.ALWAYS_RETURN_LIST)
-         .options(Option.SUPPRESS_EXCEPTIONS)
-         .jsonProvider(new InfinispanJacksonJsonNodeProvider())
-         .mappingProvider(new com.jayway.jsonpath.spi.mapper.JacksonMappingProvider())
-         .build();
-
+         .options(Option.SUPPRESS_EXCEPTIONS).jsonProvider(new InfinispanJacksonJsonNodeProvider())
+         .mappingProvider(new com.jayway.jsonpath.spi.mapper.JacksonMappingProvider()).build();
    public static ParseContext parserForGet = JsonPath.using(configForGet);
 
-   public static final ObjectMapper objectMapper = new ObjectMapper();
+   // Modifier operations need ALWAYS_RETURN_LIST and AS_PATH_LIST
+   public static final Configuration configForMod = Configuration.builder().options(Option.AS_PATH_LIST)
+         .options(Option.SUPPRESS_EXCEPTIONS)
+         .jsonProvider(new com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider())
+         .mappingProvider(new com.jayway.jsonpath.spi.mapper.JacksonMappingProvider()).build();
+   public static ParseContext parserForMod = JsonPath.using(configForMod);
 
+   public static final ObjectMapper objectMapper = new ObjectMapper();
    public static void writeBytes(ObjectOutput output, byte[] b) throws IOException {
       output.writeInt(b.length);
       if (b.length > 0) {
@@ -69,8 +69,8 @@ public class JSONUtil {
    /**
     * Returns a jsonpath version of path
     *
-    * @return path itself if path is already in Jsonpath format
-    *         or the jsonpath equivalent in a new byte[]
+    * @return path itself if path is already in Jsonpath format or the jsonpath equivalent in a new
+    *         byte[]
     */
    public static byte[] toJsonPath(byte[] path) {
       if (!isJsonPath(path)) {
@@ -104,4 +104,6 @@ public class JSONUtil {
    public static boolean isJsonPath(String path) {
       return path == null ? false : isJsonPath(path.getBytes(StandardCharsets.UTF_8));
    }
+
+   public static byte[] DEFAULT_PATH = { '.' };
 }
