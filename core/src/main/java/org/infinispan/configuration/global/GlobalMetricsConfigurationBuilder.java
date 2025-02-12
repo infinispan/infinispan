@@ -85,14 +85,14 @@ public class GlobalMetricsConfigurationBuilder extends AbstractGlobalConfigurati
    }
 
    /**
-    * Put the cache manager and cache name in tags rather then include them in the metric name.
+    * Put the cache manager and cache name in tags rather than including them in the metric name.
     */
    public boolean namesAsTags() {
       return attributes.attribute(NAMES_AS_TAGS).get();
    }
 
    /**
-    * Put the cache manager and cache name in tags rather then include them in the metric name.
+    * Put the cache manager and cache name in tags rather than including them in the metric name.
     */
    public GlobalMetricsConfigurationBuilder namesAsTags(boolean namesAsTags) {
       attributes.attribute(NAMES_AS_TAGS).set(namesAsTags);

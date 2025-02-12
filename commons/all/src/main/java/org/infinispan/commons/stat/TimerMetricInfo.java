@@ -13,4 +13,9 @@ public final class TimerMetricInfo<T> extends BaseSetterMetricInfo<T, TimerTrack
    public TimerMetricInfo(String name, String description, Map<String, String> map, BiConsumer<T, TimerTracker> setter) {
       super(name, description, map, setter);
    }
+
+   @Override
+   public String getType() {
+      return "histogram";
+   }
 }

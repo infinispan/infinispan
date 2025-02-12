@@ -105,7 +105,7 @@ public class BasicComponentRegistryImpl implements BasicComponentRegistry {
       }
 
       return new MBeanMetadata(metadata.getJmxObjectName(), metadata.getDescription(), null,
-            attributes.values(), operations.values());
+            metadata.scope(), attributes.values(), operations.values());
    }
 
    <T, U extends T> ComponentRef<T> getComponent0(String name, Class<U> componentType, boolean needInstance) {
