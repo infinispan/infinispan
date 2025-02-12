@@ -19,6 +19,8 @@ import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -31,13 +33,14 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 /**
  * This is a convenient base class for implementing a cache delegate. The only constructor takes a {@link Cache}
  * argument, to which each method call is delegated. One can extend this class and override the method sub-set it is
- * interested in. There is also an similar implementation for {@link org.infinispan.AdvancedCache}: {@link
+ * interested in. There is also a similar implementation for {@link org.infinispan.AdvancedCache}: {@link
  * org.infinispan.cache.impl.AbstractDelegatingAdvancedCache}.
  *
  * @author Mircea.Markus@jboss.com
  * @see org.infinispan.cache.impl.AbstractDelegatingAdvancedCache
  */
 @MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents an individual cache instance.")
+@Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V>, InternalCache<K, V> {
 
    protected final Cache<K, V> cache;
