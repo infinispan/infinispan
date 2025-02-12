@@ -141,7 +141,7 @@ final class TransactionDecorator {
     * encoding of keys and values must <b>always</b> happen before invoking the command with the decorated cache.
     * </p>
     */
-   private static class RespExecDecoratedCache extends DecoratedCache<byte[], byte[]> {
+   static class RespExecDecoratedCache extends DecoratedCache<byte[], byte[]> {
       private final InvocationContext ctx;
 
       private RespExecDecoratedCache(InvocationContext ctx, CacheImpl<byte[], byte[]> delegate, long flags) {

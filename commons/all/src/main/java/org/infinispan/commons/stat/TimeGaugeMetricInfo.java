@@ -35,4 +35,9 @@ public final class TimeGaugeMetricInfo<T> extends BaseMetricInfo {
    public TimeUnit getTimeUnit() {
       return timeUnit;
    }
+
+   @Override
+   public String getType() {
+      return "time gauge";
+   }
 }

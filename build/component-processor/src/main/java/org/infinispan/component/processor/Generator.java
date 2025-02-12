@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -73,6 +74,7 @@ public class Generator {
          writer.printf("import org.infinispan.factories.impl.MBeanMetadata.AttributeMetadata;%n");
          writer.printf("import org.infinispan.factories.impl.MBeanMetadata.OperationMetadata;%n");
          writer.printf("import org.infinispan.factories.impl.MBeanMetadata.OperationParameterMetadata;%n");
+         writer.printf("import org.infinispan.factories.impl.Scopes;%n");
          writer.printf("import org.infinispan.factories.impl.WireContext;%n");
          writer.printf("import org.infinispan.lifecycle.ModuleLifecycle;%n");
          writer.printf("%n");
@@ -81,6 +83,16 @@ public class Generator {
          writer.printf("public final class %sPackageImpl {%n", model.module.classPrefix);
          writer.printf("   public static void registerMetadata(ModuleMetadataBuilder.ModuleBuilder builder) {%n");
 
+         p.annotatedTypes.sort(new Comparator<Model.AnnotatedType>() {
+            @Override
+            public int compare(Model.AnnotatedType o1, Model.AnnotatedType o2) {
+               if (o1.mComponent != null && o2.mComponent != null) {
+                  return o1.mComponent.mbean.objectName().compareTo(o2.mComponent.mbean.objectName());
+               } else {
+                  return o1.qualifiedName.compareTo(o2.qualifiedName);
+               }
+            }
+         });
          for (Model.AnnotatedType c : p.annotatedTypes) {
             writer.printf("//start %s%n", c.typeElement.getQualifiedName());
 
@@ -96,7 +108,7 @@ public class Generator {
          }
 
          for (Model.ParsedType parsedType : p.parsedTypes) {
-            for (String line : parsedType.code) {
+            for (String line : parsedType.code()) {
                writer.println(line);
             }
          }
@@ -143,20 +155,20 @@ public class Generator {
          writer.printf("         protected void wire(%s instance, WireContext context, boolean start) {%n",
                        simpleClassName);
          for (Model.InjectField injectField : c.injectFields) {
-            String componentType = injectField.typeName;
-            CharSequence componentName = injectField.componentName;
-            String lazy = injectField.isComponentRef ? "Lazy" : "";
+            String componentType = injectField.typeName();
+            CharSequence componentName = injectField.componentName();
+            String lazy = injectField.isComponentRef() ? "Lazy" : "";
             writer.printf("            instance.%s = context.get%s(\"%s\", %s.class, start);%n",
-                          injectField.name, lazy, componentName, componentType);
+                  injectField.name(), lazy, componentName, componentType);
          }
          for (Model.InjectMethod injectMethod : c.injectMethods) {
-            writer.printf("            instance.%s(%n", injectMethod.name);
-            List<Model.InjectField> parameters = injectMethod.parameters;
+            writer.printf("            instance.%s(%n", injectMethod.name());
+            List<Model.InjectField> parameters = injectMethod.parameters();
             for (int i = 0; i < parameters.size(); i++) {
                Model.InjectField parameter = parameters.get(i);
-               String componentType = parameter.typeName;
-               CharSequence componentName = parameter.componentName;
-               String lazy = parameter.isComponentRef ? "Lazy" : "";
+               String componentType = parameter.typeName();
+               CharSequence componentName = parameter.componentName();
+               String lazy = parameter.isComponentRef() ? "Lazy" : "";
                writer.printf("               context.get%s(\"%s\", %s.class, start)%s%n",
                              lazy, componentName, componentType, optionalComma(i, parameters.size()));
             }
@@ -192,21 +204,21 @@ public class Generator {
 
    private void writeLifecycleMethodInvocations(PrintWriter writer, List<Model.LifecycleMethod> methods) {
       for (Model.LifecycleMethod method : methods) {
-         writer.printf("            instance.%s();%n", method.name);
+         writer.printf("            instance.%s();%n", method.name());
       }
    }
 
    private List<CharSequence> getEagerDependencies(Model.Component c) {
       List<CharSequence> eagerDependencies = new ArrayList<>();
       for (Model.InjectField injectField : c.injectFields) {
-         if (!injectField.isComponentRef) {
-            eagerDependencies.add(injectField.componentName);
+         if (!injectField.isComponentRef()) {
+            eagerDependencies.add(injectField.componentName());
          }
       }
       for (Model.InjectMethod injectMethod : c.injectMethods) {
-         for (Model.InjectField parameter : injectMethod.parameters) {
-            if (!parameter.isComponentRef) {
-               eagerDependencies.add(parameter.componentName);
+         for (Model.InjectField parameter : injectMethod.parameters()) {
+            if (!parameter.isComponentRef()) {
+               eagerDependencies.add(parameter.componentName());
             }
          }
       }
@@ -217,6 +229,11 @@ public class Generator {
       CharSequence binaryName = c.binaryName;
       Model.MComponent m = c.mComponent;
       MBean mbean = m.mbean;
+      Model.Component component = c.component;
+      Scopes scope = Scopes.NONE;
+      if (component != null) {
+         scope = c.component.scope.value();
+      }
       CharSequence superMBeanName = stringLiteral(m.superBinaryName);
       List<Model.MAttribute> attributes = m.attributes;
       List<Model.MOperation> operations = m.operations;
@@ -224,27 +241,29 @@ public class Generator {
       writer.printf("      builder.registerMBeanMetadata(\"%s\",%n", binaryName);
 
       int count = attributes.size() + operations.size();
-      writer.printf("         MBeanMetadata.of(\"%s\", \"%s\", %s%s%n",
-                    mbean.objectName(), mbean.description(), superMBeanName, optionalComma(-1, count));
+      writer.printf("         MBeanMetadata.of(\"%s\", \"%s\", %s, Scopes.%s%s%n",
+                    mbean.objectName(), mbean.description(), superMBeanName, scope.name(), optionalComma(-1, count));
 
       int i = 0;
+      attributes.sort(Comparator.comparing(Model.MAttribute::name));
       for (Model.MAttribute attribute : attributes) {
-         writeManagedAttribute(writer, attribute.name, attribute.attribute, attribute.useSetter, attribute.type,
-               attribute.is, makeGetterFunction(c, attribute), makeSetterFunction(c, attribute), optionalComma(i++, count));
+         writeManagedAttribute(writer, attribute.name(), attribute.attribute(), attribute.useSetter(), attribute.type(),
+               attribute.is(), makeGetterFunction(c, attribute), makeSetterFunction(c, attribute), optionalComma(i++, count));
       }
+      operations.sort(Comparator.comparing(Model.MOperation::name));
       for (Model.MOperation method : operations) {
-         ManagedOperation operation = method.operation;
+         ManagedOperation operation = method.operation();
          // OperationMetadata(String methodName, String operationName, String description, String returnType,
          //    OperationParameterMetadata... methodParameters)
-         List<Model.MParameter> parameters = method.parameters;
+         List<Model.MParameter> parameters = method.parameters();
          writer.printf("            new OperationMetadata(\"%s\", \"%s\", \"%s\", \"%s\"%s%n",
-                       method.name, operation.name(), operation.description(),
-                       method.returnType, optionalComma(-1, parameters.size()));
+               method.name(), operation.name(), operation.description(),
+               method.returnType(), optionalComma(-1, parameters.size()));
          for (int j = 0; j < parameters.size(); j++) {
             Model.MParameter parameter = parameters.get(j);
             // OperationParameterMetadata(String name, String type, String description)
             writer.printf("               new OperationParameterMetadata(\"%s\", \"%s\", \"%s\")%s%n",
-                          parameter.name, parameter.type, parameter.description,
+                  parameter.name(), parameter.type(), parameter.description(),
                           optionalComma(j, parameters.size()));
          }
          writer.printf("            )%s%n", optionalComma(i++, count));
@@ -254,22 +273,22 @@ public class Generator {
 
    private String makeGetterFunction(Model.AnnotatedType clazz, Model.MAttribute attribute) {
       // provide accessor function only for a select list of types that are interesting for metrics
-      if (attribute.attribute.dataType() == DataType.MEASUREMENT && (
-            attribute.boxedType.equals("java.lang.Integer") || attribute.boxedType.equals("java.lang.Long") ||
-                  attribute.boxedType.equals("java.lang.Short") || attribute.boxedType.equals("java.lang.Byte") ||
-                  attribute.boxedType.equals("java.lang.Float") || attribute.boxedType.equals("java.lang.Double") ||
-                  attribute.boxedType.equals("java.math.BigDecimal") || attribute.boxedType.equals("java.math.BigInteger"))) {
+      if (attribute.attribute().dataType() == DataType.MEASUREMENT && (
+            attribute.boxedType().equals("java.lang.Integer") || attribute.boxedType().equals("java.lang.Long") ||
+                  attribute.boxedType().equals("java.lang.Short") || attribute.boxedType().equals("java.lang.Byte") ||
+                  attribute.boxedType().equals("java.lang.Float") || attribute.boxedType().equals("java.lang.Double") ||
+                  attribute.boxedType().equals("java.math.BigDecimal") || attribute.boxedType().equals("java.math.BigInteger"))) {
          return "(java.util.function.Function<" + clazz.qualifiedName + ", ?>) "
-               + (attribute.useSetter ? clazz.qualifiedName + "::" : "_x -> _x.") + attribute.propertyAccessor;
+               + (attribute.useSetter() ? clazz.qualifiedName + "::" : "_x -> _x.") + attribute.propertyAccessor();
       }
       return "null";
    }
 
    private String makeSetterFunction(Model.AnnotatedType clazz, Model.MAttribute attribute) {
       // no need for setter unless it is a histogram or timer
-      if (attribute.attribute.dataType() == DataType.HISTOGRAM || attribute.attribute.dataType() == DataType.TIMER) {
-         return "(" + clazz.qualifiedName + " _x, Object _y) -> _x." + attribute.propertyAccessor
-               + (attribute.useSetter ? "((" + attribute.boxedType + ") _y)" : " = (" + attribute.boxedType + ") _y");
+      if (attribute.attribute().dataType() == DataType.HISTOGRAM || attribute.attribute().dataType() == DataType.TIMER) {
+         return "(" + clazz.qualifiedName + " _x, Object _y) -> _x." + attribute.propertyAccessor()
+               + (attribute.useSetter() ? "((" + attribute.boxedType() + ") _y)" : " = (" + attribute.boxedType() + ") _y");
       }
       return "null";
    }

@@ -27,7 +27,10 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.DataType;
+import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -46,6 +49,8 @@ import jakarta.transaction.TransactionManager;
  * @author Tristan Tarrant
  * @see org.infinispan.cache.impl.AbstractDelegatingCache
  */
+@MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents an individual cache instance.")
+@Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCache<K, V> implements AdvancedCache<K, V>, InternalCache<K, V> {
 
    protected final AdvancedCache<K, V> cache;

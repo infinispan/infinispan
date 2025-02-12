@@ -19,5 +19,10 @@ public enum Scopes {
    /**
     * The component is not cached between requests, but a subclass may be either {@code GLOBAL} or {@code NAMED_CACHE}.
     */
-   NONE
+   NONE,
+
+   /**
+    * The component is bound to the lifecycle of the server
+    */
+   SERVER
 }

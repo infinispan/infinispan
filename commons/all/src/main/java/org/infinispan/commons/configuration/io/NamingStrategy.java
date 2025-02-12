@@ -56,6 +56,26 @@ public enum NamingStrategy {
             } else if (c == '-') {
                b.append('_');
             } else {
+               b.append(Character.toLowerCase(c));
+            }
+         }
+         return b.toString();
+      }
+   },
+   TITLE_CASE {
+      @Override
+      public String convert(String s) {
+         StringBuilder b = new StringBuilder();
+         for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (i == 0) {
+               b.append(Character.toUpperCase(c));
+            } else if (isWordBoundary(c, s.charAt(i - 1))) {
+               b.append(' ');
+               b.append(Character.toUpperCase(c));
+            } else if (!Character.isLetterOrDigit(c)) {
+               b.append(' ');
+            } else {
                b.append(c);
             }
          }

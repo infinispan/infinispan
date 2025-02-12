@@ -16,4 +16,8 @@ public final class CounterMetricInfo<T> extends BaseSetterMetricInfo<T, CounterT
       super(name, description, map, setter);
    }
 
+   @Override
+   public String getType() {
+      return "counter";
+   }
 }
