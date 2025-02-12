@@ -140,6 +140,8 @@
 //Titles & Headings
 :sizing_title: {brandname} performance considerations and tuning guidelines
 
+:metrics_docs: ../metrics/metrics.html
+
 //
 // Include topic-specific attributes
 //

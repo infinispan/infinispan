@@ -29,8 +29,9 @@ public final class MBeanMetadata {
    private final String superMBeanClassName;
    private final Collection<AttributeMetadata> attributes;
    private final Collection<OperationMetadata> operations;
+   private final Scopes scope;
 
-   public static MBeanMetadata of(String objectName, String description, String superMBeanClassName,
+   public static MBeanMetadata of(String objectName, String description, String superMBeanClassName, Scopes scope,
                                   Object... attributesAndOperations) {
       List<AttributeMetadata> attributes = new ArrayList<>();
       List<OperationMetadata> operations = new ArrayList<>();
@@ -43,14 +44,15 @@ public final class MBeanMetadata {
             throw new IllegalArgumentException();
          }
       }
-      return new MBeanMetadata(objectName, description, superMBeanClassName, attributes, operations);
+      return new MBeanMetadata(objectName, description, superMBeanClassName, scope, attributes, operations);
    }
 
-   public MBeanMetadata(String jmxObjectName, String description, String superMBeanClassName,
+   public MBeanMetadata(String jmxObjectName, String description, String superMBeanClassName, Scopes scope,
                         Collection<AttributeMetadata> attributes, Collection<OperationMetadata> operations) {
       this.jmxObjectName = jmxObjectName == null  || jmxObjectName.trim().isEmpty() ? null : jmxObjectName;
       this.description = description;
       this.superMBeanClassName = superMBeanClassName;
+      this.scope = scope;
       this.attributes = attributes;
       this.operations = operations;
    }
@@ -65,6 +67,10 @@ public final class MBeanMetadata {
 
    public String getSuperMBeanClassName() {
       return superMBeanClassName;
+   }
+
+   public Scopes scope() {
+      return scope;
    }
 
    public Collection<AttributeMetadata> getAttributes() {

@@ -587,9 +587,9 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
             aPackage.typeElements.add(annotatedType.typeElement);
          }
          for (Model.ParsedType parsedType : parsedTypes.values()) {
-            Model.Package aPackage = packages.computeIfAbsent(parsedType.packageName, Model.Package::new);
+            Model.Package aPackage = packages.computeIfAbsent(parsedType.packageName(), Model.Package::new);
             aPackage.parsedTypes.add(parsedType);
-            aPackage.typeElements.add(parsedType.typeElement);
+            aPackage.typeElements.add(parsedType.typeElement());
          }
 
          return new Model(module, annotatedTypes, parsedTypes, packages);
