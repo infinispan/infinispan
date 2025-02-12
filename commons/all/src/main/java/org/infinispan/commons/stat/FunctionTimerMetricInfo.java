@@ -16,5 +16,8 @@ public final class FunctionTimerMetricInfo<T> extends BaseSetterMetricInfo<T, Ti
       super(name, description, map, setter);
    }
 
-
+   @Override
+   public String getType() {
+      return "duration";
+   }
 }

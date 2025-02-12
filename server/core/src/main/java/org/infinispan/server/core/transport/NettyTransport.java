@@ -10,6 +10,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -50,6 +52,7 @@ import net.jcip.annotations.GuardedBy;
  */
 @MBean(objectName = "Transport",
       description = "Transport component manages read and write operations to/from server.")
+@Scope(Scopes.SERVER)
 public class NettyTransport implements Transport {
 
    static private final Log log = LogFactory.getLog(NettyTransport.class, Log.class);
