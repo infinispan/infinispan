@@ -15,4 +15,9 @@ public final class DistributionSummaryMetricInfo<T> extends BaseSetterMetricInfo
    public DistributionSummaryMetricInfo(String name, String description, Map<String, String> map, BiConsumer<T, DistributionSummaryTracker> setter) {
       super(name, description, map, setter);
    }
+
+   @Override
+   public String getType() {
+      return "distribution summary";
+   }
 }
