@@ -1,5 +1,18 @@
 package org.infinispan.component.processor.external;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
@@ -8,18 +21,6 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.external.JGroupsProtocolComponent;
 import org.jgroups.annotations.ManagedAttribute;
@@ -145,7 +146,7 @@ public class JGroupsComponentProcessor extends AbstractProcessor {
    }
 
    private static Map<String, JGroupsMetrics> findAndWriteMetrics(Class<?> clazz, Class<?> rootClass) {
-      Map<String, JGroupsMetrics> metrics = new HashMap<>();
+      Map<String, JGroupsMetrics> metrics = new TreeMap<>();
       String className = rootClass == null ? clazz.getName() : rootClass.getName();
       for (Method method : clazz.getMethods()) {
          ManagedAttribute annotation = method.getAnnotation(ManagedAttribute.class);

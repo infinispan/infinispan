@@ -1,0 +1,26 @@
+//Directory attributes
+:generated: ../../../../../target/generated-asciidoc
+:stories: ../../stories
+:topics: ../topics
+:imagesdir: ../{topics}/images
+
+//Community doc attributes
+include::../{topics}/attributes/community-attributes.adoc[]
+
+//Community title attributes
+:toc2:
+:icons: font
+:toclevels: 4
+:numbered:
+:sectanchors:
+:stem: asciimath
+:context: metrics
+
+//Title
+= {brandname} Metrics
+
+This is a list of all available {brandname} metrics, including their names, the environment in which they are available
+(link:{server_docs}#configuring-metrics_statistics-jmx[OpenMetrics] or link:{config_docs}#statistics-jmx[JMX]) and their types.
+
+//User stories
+include::stories.adoc[]
