@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * Class that represent the information about a metrics.
  * <p>
- * Includes the metrics's name, description and tags. Subclasses can add more information about it.
+ * Includes the metrics' name, description and tags. Subclasses can add more information about it.
  *
  * @since 15.0
  */
@@ -28,4 +28,6 @@ public interface MetricInfo {
    default Map<String, String> getTags() {
       return Collections.emptyMap();
    }
+
+   String getType();
 }

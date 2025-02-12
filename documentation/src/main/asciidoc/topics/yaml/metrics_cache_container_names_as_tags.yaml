@@ -1,0 +1,5 @@
+infinispan:
+  cacheContainer:
+    statistics: "true"
+    metrics:
+      namesAsTags: "true"
