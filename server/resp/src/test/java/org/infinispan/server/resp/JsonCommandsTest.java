@@ -106,7 +106,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThat(result).hasSize(1);
       assertThat(
             compareJSONSet(result.get(0).asJsonArray().getFirst(), jv0.asJsonArray().getFirst(), "$.key1b.key2b", jv))
-            .isEqualTo(true);
+                  .isEqualTo(true);
    }
 
    @Test
@@ -178,10 +178,9 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       String key = k();
       // Create json
       JsonPath jpRoot = new JsonPath("$");
-      JsonValue jvDoc = defaultJsonParser.createJsonValue(
-            """
-                  {"r1": { "k1" : "v1", "k2":"v2"}, "r2": { "k1" : "v1", "k2": "v2"}, "r3": { "k2": "v2"}}
-                  """);
+      JsonValue jvDoc = defaultJsonParser.createJsonValue("""
+            {"r1": { "k1" : "v1", "k2":"v2"}, "r2": { "k1" : "v1", "k2": "v2"}, "r3": { "k2": "v2"}}
+            """);
       assertThat(redis.jsonSet(key, jpRoot, jvDoc)).isEqualTo("OK");
       // Modify json
       JsonPath jpLeaf = new JsonPath("$..k1");
@@ -245,8 +244,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       commands.jsonSet(k(), "$", "{ \"k1\": \"v1\"}");
       assertThatThrownBy(() -> {
          commands.jsonSet(k(), "b a d", "{ \"k1\": \"v1\"}");
-      }).isInstanceOf(RedisCommandExecutionException.class)
-            .hasMessageStartingWith("ERR ");
+      }).isInstanceOf(RedisCommandExecutionException.class).hasMessageStartingWith("ERR ");
    }
 
    @Test
@@ -312,8 +310,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       JsonValue jv1 = defaultJsonParser.createJsonValue("3");
       assertThatThrownBy(() -> {
          redis.jsonSet(key, jp1, jv1);
-      }).isInstanceOf(RedisCommandExecutionException.class)
-            .hasMessageStartingWith("ERR ");
+      }).isInstanceOf(RedisCommandExecutionException.class).hasMessageStartingWith("ERR ");
    }
 
    @Test
@@ -356,14 +353,12 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       JsonValue jv1 = defaultJsonParser.createJsonValue("1");
       assertThatThrownBy(() -> {
          redis.jsonSet(key, jp1, jv1);
-      }).isInstanceOf(RedisCommandExecutionException.class)
-            .hasMessageStartingWith("ERR ");
+      }).isInstanceOf(RedisCommandExecutionException.class).hasMessageStartingWith("ERR ");
       JsonPath jp2 = new JsonPath("$..[0]");
       JsonValue jv2 = defaultJsonParser.createJsonValue("2");
       assertThatThrownBy(() -> {
          redis.jsonSet(key, jp2, jv2);
-      }).isInstanceOf(RedisCommandExecutionException.class)
-            .hasMessageStartingWith("ERR ");
+      }).isInstanceOf(RedisCommandExecutionException.class).hasMessageStartingWith("ERR ");
    }
 
    @Test
@@ -482,8 +477,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
 
       assertThatThrownBy(() -> {
          command.jsonGet(k(), p1, p2, p8);
-      }).isInstanceOf(RedisCommandExecutionException.class)
-            .hasMessageStartingWith("ERR ");
+      }).isInstanceOf(RedisCommandExecutionException.class).hasMessageStartingWith("ERR ");
 
       // Multiple path multiple results, legacy and not
       result = defaultJsonParser.createJsonValue(command.jsonGet(k(), p4, p6));
@@ -495,8 +489,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       CustomStringCommands command = CustomStringCommands.instance(redisConnection);
       assertThatThrownBy(() -> {
          command.jsonSet(k(), "..", "{ \"k1\": \"v1\"}");
-      }).isInstanceOf(RedisCommandExecutionException.class)
-            .hasMessageStartingWith("ERR ");
+      }).isInstanceOf(RedisCommandExecutionException.class).hasMessageStartingWith("ERR ");
    }
 
    @Test
@@ -556,21 +549,21 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       String key = k();
       JsonPath jp = new JsonPath("$");
       String jsonValue = """
-      {
-       "root":  {
-             "name": "Example Name",
-             "nested": {
-                 "field1": "value1",
-                 "field2": 42
-             },
-             "items": [
-                 { "id": 1, "value": "Item One" },
-                 { "id": 2, "value": "Item Two" },
-                 { "id": 3, "value": "Item Three" }
-             ]
-         }
-      }
-         """;
+            {
+             "root":  {
+                   "name": "Example Name",
+                   "nested": {
+                       "field1": "value1",
+                       "field2": 42
+                   },
+                   "items": [
+                       { "id": 1, "value": "Item One" },
+                       { "id": 2, "value": "Item Two" },
+                       { "id": 3, "value": "Item Three" }
+                   ]
+               }
+            }
+               """;
       JsonValue jv = defaultJsonParser.createJsonValue(jsonValue);
       redis.jsonSet(key, jp, jv);
       var result = redis.jsonObjlen(key, jp);
@@ -587,7 +580,8 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.jsonObjlen("notExistingKey", jp).get(0)).isNull();
       // Jsonpath style returns error on non-existing object. Cannot use
       // a simple "$" path, since lettuce doesn't pass it to the server
-      assertThatThrownBy(() -> { redis.jsonObjlen("notExistingKey", new JsonPath("$.root"));
+      assertThatThrownBy(() -> {
+         redis.jsonObjlen("notExistingKey", new JsonPath("$.root"));
       }).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessageStartingWith("ERR Path '$.root' does not exist or not an object");
    }
@@ -599,11 +593,9 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThatThrownBy(() -> {
          RedisCodec<String, String> codec = StringCodec.UTF8;
          redis.dispatch(CommandType.JSON_STRLEN, new IntegerOutput<>(codec),
-                 new CommandArgs<>(codec)
-                         .addKey("notExistingKey")
-                         .add("$"));
+               new CommandArgs<>(codec).addKey("notExistingKey").add("$"));
       }).isInstanceOf(RedisCommandExecutionException.class)
-              .hasMessage("ERR could not perform this operation on a key that doesn't exist");
+            .hasMessage("ERR could not perform this operation on a key that doesn't exist");
       // No path or old style path returns null on non-existing key
       // JSON.STRLEN notExistingKey
       assertThat(redis.jsonStrlen("notExistingKey").get(0)).isNull();
@@ -616,7 +608,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThatThrownBy(() -> {
          redis.jsonStrlen("errorRaise", jpDollar);
       }).isInstanceOf(RedisCommandExecutionException.class)
-              .hasMessage("WRONGTYPE Operation against a key holding the wrong kind of value");
+            .hasMessage("WRONGTYPE Operation against a key holding the wrong kind of value");
 
       JsonValue jv = defaultJsonParser.createJsonValue("""
                {"a":"foo", "nested": {"a": "hello"}, "nested2": {"a": 31}}
@@ -690,14 +682,14 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       JsonPath jp = new JsonPath("$");
       RedisCodec<String, String> codec = StringCodec.UTF8;
       JsonValue jv = defaultJsonParser.createJsonValue("""
-                 {"a":2,
-                 "null_value": null,
-                 "float_value": 12.3,
-                 "arr_value": ["one", "two", "three"],
-                 "nested":
-                    {"a": true},
-                 "foo": "bar"}
-              """);
+               {"a":2,
+               "null_value": null,
+               "float_value": 12.3,
+               "arr_value": ["one", "two", "three"],
+               "nested":
+                  {"a": true},
+               "foo": "bar"}
+            """);
       String key = k();
       assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
       // Legacy: JSON.TYPE doc ..a
@@ -711,8 +703,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       // JSON.TYPE doc $..null_value
       assertThat(redis.jsonType(key, new JsonPath("$..null_value"))).containsExactly(JsonType.UNKNOWN);
       assertThat(redis.dispatch(CommandType.JSON_TYPE, new StringListOutput<>(codec),
-              new CommandArgs<>(codec)
-                      .addKey(key).add("$..null_value"))).containsExactly("null");
+            new CommandArgs<>(codec).addKey(key).add("$..null_value"))).containsExactly("null");
       // JSON.TYPE doc $..a
       assertThat(redis.jsonType(key, new JsonPath("$..a"))).containsExactly(JsonType.INTEGER, JsonType.BOOLEAN);
       // JSON.TYPE doc $..float_value
@@ -723,8 +714,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.jsonType(key, new JsonPath("$..dummy"))).isEmpty();
       // JSON.TYPE notExistingKey
       assertThat(redis.dispatch(CommandType.JSON_TYPE, new IntegerOutput<>(codec),
-              new CommandArgs<>(codec)
-                      .addKey("notExistingKey"))).isNull();
+            new CommandArgs<>(codec).addKey("notExistingKey"))).isNull();
    }
 
    public void testJSONDEL() {
@@ -802,6 +792,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       jp = new JsonPath(".grades[3]");
       assertThat(redis.jsonDel(key, jp)).isEqualTo(0);
    }
+
    @Test
    public void testSTRAPPEND() {
       JsonPath jp = new JsonPath("$");
@@ -879,6 +870,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
             .hasMessage("ERR Path '$.float_value' does not exist or not a string");
       assertThat(jsonStrappend).containsExactly((Long) null);
    }
+
    // Lattuce Json object doesn't implement comparison. Implementing here
    private boolean compareJSONGet(JsonValue result, JsonValue expected, JsonPath... paths) {
       ObjectMapper mapper = new ObjectMapper();
@@ -899,15 +891,13 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
             // jpctx.read doesn't like legacy ".", change it to "$". everything else seems
             // to work
             String pathStr = ".".equals(paths[0].toString()) ? "$" : paths[0].toString();
-            JsonNode node = isLegacy ? ((ArrayNode) jpCtx.read(pathStr)).get(0)
-                  : jpCtx.read(pathStr);
+            JsonNode node = isLegacy ? ((ArrayNode) jpCtx.read(pathStr)).get(0) : jpCtx.read(pathStr);
             return resultNode.equals(node);
          }
          ObjectNode root = mapper.createObjectNode();
          for (JsonPath path : paths) {
             String pathStr = path.toString();
-            JsonNode node = isLegacy ? ((ArrayNode) jpCtx.read(pathStr)).get(0)
-                  : jpCtx.read(pathStr);
+            JsonNode node = isLegacy ? ((ArrayNode) jpCtx.read(pathStr)).get(0) : jpCtx.read(pathStr);
             root.set(pathStr, node);
          }
          return resultNode.equals(root);
