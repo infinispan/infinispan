@@ -92,16 +92,20 @@ public class EmbeddedJsonCache {
     * Returns:
     * </p>
     * <ul>
-    *   <li>Object → Number of key-value pairs</li>
-    *   <li>Array → Number of elements</li>
-    *   <li>String → Character count</li>
+    * <li>Object → Number of key-value pairs</li>
+    * <li>Array → Number of elements</li>
+    * <li>String → Character count</li>
     * </ul>
     * Returns {@code null} if the value does not match the specified {@code lenType}.
     *
-    * @param key     The JSON document key.
-    * @param path    The JSON path to evaluate.
-    * @param lenType The type (OBJECT, ARRAY, STRING) whose length to compute.
-    * @return A {@link CompletionStage} with a {@link List} of lengths or {@code null} if mismatched.
+    * @param key
+    *           The JSON document key.
+    * @param path
+    *           The JSON path to evaluate.
+    * @param lenType
+    *           The type (OBJECT, ARRAY, STRING) whose length to compute.
+    * @return A {@link CompletionStage} with a {@link List} of lengths or {@code null} if
+    *         mismatched.
     */
    public CompletionStage<List<Long>> len(byte[] key, byte[] path, LenType lenType) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
@@ -136,7 +140,42 @@ public class EmbeddedJsonCache {
    public CompletionStage<Long> del(byte[] key, byte[] path) {
       return readWriteMap.eval(key, new JsonDelFunction(path));
    }
-   public CompletionStage<List<Long>> strAppend(byte[] key, byte[] path, byte[] value, AppendType type) {
-      return readWriteMap.eval(key, new JsonAppendFunction(path, value, type));
+
+   /**
+    * Appends the given values to the array at the specified paths in the JSON document associated
+    * with the specified key. If the paths does not refer to an array, no changes are made to the
+    * document.
+    *
+    * @param key
+    *           The key of the JSON document to update.
+    * @param path
+    *           The JSON path of the array to append to.
+    * @param values
+    *           The values to append to the array.
+    * @return A {@link CompletionStage} that will complete with the returning a list of the new
+    *         lengths of the changed arrays. Null is returned for the matching paths that are not
+    *         arrays.
+    */
+   public CompletionStage<List<Long>> arrAppend(byte[] key, byte[] path, List<byte[]> values) {
+      return readWriteMap.eval(key, new JsonAppendFunction(path, values));
+   }
+
+   /**
+    * Appends the given value to the string at the specified paths in the JSON document associated
+    * with the specified key. If the path exists but is not a string, no changes are made.
+    * {@link IllegalArgumentException} is thrown.
+    *
+    * @param key
+    *           the key identifying the JSON document
+    * @param path
+    *           the path to the array in the JSON document
+    * @param value
+    *           the value to append to the array
+    * @return A {@link CompletionStage} that will complete with the returning a list of the new
+    *         lengths of the changed string. Null is returned for the matching paths that are not
+    *         string.
+    */
+   public CompletionStage<List<Long>> strAppend(byte[] key, byte[] path, byte[] value) {
+      return readWriteMap.eval(key, new JsonAppendFunction(path, value));
    }
 }
