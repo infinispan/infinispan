@@ -183,8 +183,8 @@ public class JGroupsComponentProcessor extends AbstractProcessor {
       }
 
       void write(PrintWriter w) {
-         w.printf("      attributes.add(new GaugeMetricInfo<>(\"%s\", \"%s\", null, %s::%s));%n",
-               name, description, className, name);
+         w.printf("      attributes.add(new GaugeMetricInfo<%s>(\"%s\", \"%s\", null, %s::%s));%n",
+               className, name, description, className, name);
       }
 
       void writeComponent(PrintWriter w, String componentGetterMethod) {
