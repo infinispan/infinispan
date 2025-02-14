@@ -6,7 +6,6 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.json.EmbeddedJsonCache;
-import org.infinispan.server.resp.json.JSONUtil;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import java.util.List;
@@ -34,18 +33,12 @@ public class JSONTYPE extends RespCommand implements Resp3Command {
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx,
          List<byte[]> arguments) {
-      byte[] key = arguments.get(0);
-      // To keep compatibility, considering the first path only. Additional args will
-      // be ignored
-      // If missing, default path '.' is used, it's in legacy style, i.e. not jsonpath
-      byte[] path = arguments.size() > 1 ? arguments.get(1): DEFAULT_PATH;
-      byte[] jsonPath  = JSONUtil.toJsonPath(path);
+      JSONCommandArgumentReader.CommandArgs commandArgs = JSONCommandArgumentReader.readCommandArgs(arguments);
       EmbeddedJsonCache ejc = handler.getJsonCache();
-      CompletionStage<List<String>> result = ejc.type(key, jsonPath);
-      if (!JSONUtil.isJsonPath(path)) { // Check if the original path is a jsonpath
-         // Legacy path
+      CompletionStage<List<String>> result = ejc.type(commandArgs.key(), commandArgs.jsonPath());
+      if (commandArgs.isLegacy()) {
          return handler.stageToReturn(result.thenApply(r -> {
-            // return the first one
+            // return the first one only
             if (r != null && r.size() > 0) {
                return r.get(0);
             }

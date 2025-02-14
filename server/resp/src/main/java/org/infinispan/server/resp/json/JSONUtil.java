@@ -104,6 +104,4 @@ public class JSONUtil {
    public static boolean isJsonPath(String path) {
       return path == null ? false : isJsonPath(path.getBytes(StandardCharsets.UTF_8));
    }
-
-   public static byte[] DEFAULT_PATH = { '.' };
 }

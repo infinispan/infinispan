@@ -6,7 +6,6 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.json.EmbeddedJsonCache;
-import org.infinispan.server.resp.json.JSONUtil;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import java.util.List;
@@ -20,6 +19,9 @@ import java.util.concurrent.CompletionStage;
  */
 public class JSONTOGGLE extends RespCommand implements Resp3Command {
 
+    private static final String FALSE = Boolean.toString(false);
+    private static final String TRUE = Boolean.toString(true);
+
     public JSONTOGGLE() {
         super("JSON.TOGGLE", -2, 1, 1, 1);
     }
@@ -32,19 +34,16 @@ public class JSONTOGGLE extends RespCommand implements Resp3Command {
     @Override
     public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx,
                                                        List<byte[]> arguments) {
-        final byte[] key = arguments.get(0);
-        final byte[] path = arguments.get(1);
-        final byte[] jsonPath = JSONUtil.toJsonPath(path);
-        boolean isLegacy = path != jsonPath;
+        JSONCommandArgumentReader.CommandArgs commandArgs = JSONCommandArgumentReader.readCommandArgs(arguments);
         EmbeddedJsonCache ejc = handler.getJsonCache();
-        CompletionStage<List<Integer>> lengths = ejc.toggle(key, jsonPath);
+        CompletionStage<List<Integer>> lengths = ejc.toggle(commandArgs.key(), commandArgs.jsonPath());
 
-        if (isLegacy) {
+        if (commandArgs.isLegacy()) {
             return handler.stageToReturn(lengths.thenApply(l -> {
                 if (l.isEmpty()) {
-                    throw new RuntimeException(String.format("Path '%s' does not exist or not a bool", new String(jsonPath)));
+                    throw new RuntimeException(String.format("Path '%s' does not exist or not a bool", new String(commandArgs.jsonPath())));
                 }
-                return l.get(0) == 0 ? "false" : "true";
+                return l.get(0) == 0 ? FALSE : TRUE;
             }), ctx, ResponseWriter.SIMPLE_STRING);
         }
         return handler.stageToReturn(lengths, ctx, ResponseWriter.ARRAY_INTEGER);

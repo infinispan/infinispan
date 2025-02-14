@@ -43,6 +43,7 @@ public class JSONDEL extends RespCommand implements Resp3Command {
          handler.writer().syntaxError();
          return handler.myStage();
       }
+
       byte[] key = arguments.get(0);
       byte[] path = (arguments.size() >= 2) ? arguments.get(1) : JSON_ROOT;
       EmbeddedJsonCache ejc = handler.getJsonCache();

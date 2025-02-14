@@ -135,6 +135,8 @@ NOTE: This implementation attempts to return all attributes that a real Redis se
 
 * link:https://redis.io/commands/json.get[JSON.GET]
 
+* link:https://redis.io/commands/json.numincrby[JSON.NUMINCRBY]
+
 * link:https://redis.io/commands/json.objkeys[JSON.OBJKEYS]
 
 * link:https://redis.io/commands/json.objlen[JSON.OBJLEN]
@@ -144,6 +146,8 @@ NOTE: This implementation attempts to return all attributes that a real Redis se
 * link:https://redis.io/commands/json.strappend[JSON.STRAPPEND]
 
 * link:https://redis.io/commands/json.strlen[JSON.STRLEN]
+
+* link:https://redis.io/commands/json.toggle[JSON.TOGGLE]
 
 * link:https://redis.io/commands/json.type[JSON.TYPE]
 

@@ -7,9 +7,9 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.json.AppendType;
 import org.infinispan.server.resp.json.EmbeddedJsonCache;
-import org.infinispan.server.resp.json.JSONUtil;
 
 import io.netty.channel.ChannelHandlerContext;
+import org.infinispan.server.resp.json.JSONUtil;
 
 /**
  * JSON.STRAPPEND
@@ -26,21 +26,20 @@ public class JSONSTRAPPEND extends JSONAPPEND {
     @Override
     public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx,
                                                        List<byte[]> arguments) {
-        byte[] key = arguments.get(0);
-        byte[] path = JSONUtil.DEFAULT_PATH;
+
+        JSONCommandArgumentReader.CommandArgs commandArgs = JSONCommandArgumentReader.readCommandArgs(arguments);
         byte[] value = arguments.get(1);
+        byte[] jsonPath;
         if (arguments.size() > 2) {
-            path = arguments.get(1);
+            jsonPath = commandArgs.jsonPath();
             value = arguments.get(2);
+        } else {
+            jsonPath = JSONUtil.toJsonPath(JSONCommandArgumentReader.DEFAULT_COMMAND_PATH);
         }
-        // To keep compatibility, considering the first path only. Additional args will
-        // be ignored
-        // If missing, default path '.' is used, it's in legacy style, i.e. not jsonpath
-        byte[] jsonPath = JSONUtil.toJsonPath(path);
-        boolean withPath = path == jsonPath;
+
         EmbeddedJsonCache ejc = handler.getJsonCache();
-        CompletionStage<List<Long>> lengths = ejc.strAppend(key, jsonPath, value);
-        return returnResult(handler, ctx, jsonPath, withPath, lengths);
+        CompletionStage<List<Long>> lengths = ejc.strAppend(commandArgs.key(), jsonPath, value);
+        return returnResult(handler, ctx, jsonPath, commandArgs.isLegacy(), lengths);
     }
 
     @Override
