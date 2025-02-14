@@ -43,10 +43,10 @@ public interface CustomStringCommands extends Commands {
    String jsonGet(@Param("key") String key, @Param("path") String path);
 
    @Command("JSON.GET :key :path1 :path2")
-   String jsonGet(@Param("key") String key, @Param("path") String path1, @Param("path") String path2);
+   String jsonGet(@Param("key") String key, @Param("path1") String path1, @Param("path2") String path2);
 
    @Command("JSON.GET :key :path1 :path2 :path3")
-   String jsonGet(@Param("key") String key, @Param("path") String path1, @Param("path") String path2, @Param("path") String path3);
+   String jsonGet(@Param("key") String key, @Param("path1") String path1, @Param("path2") String path2, @Param("path3") String path3);
 
    // Lettuce arrAppend command has a bug, it doesn't support root path, so we need to use a custom command
    @Command("JSON.ARRAPPEND :key :path :v1 :v2 :v3")

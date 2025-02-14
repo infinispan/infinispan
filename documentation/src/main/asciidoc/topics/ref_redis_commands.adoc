@@ -133,6 +133,8 @@ NOTE: This implementation attempts to return all attributes that a real Redis se
 
 * link:https://redis.io/commands/json.get[JSON.GET]
 
+* link:https://redis.io/commands/json.objkeys[JSON.OBJKEYS]
+
 * link:https://redis.io/commands/json.objlen[JSON.OBJLEN]
 
 * link:https://redis.io/commands/json.set[JSON.SET]
