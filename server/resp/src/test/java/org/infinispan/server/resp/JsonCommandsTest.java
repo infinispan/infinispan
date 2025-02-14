@@ -106,7 +106,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThat(result).hasSize(1);
       assertThat(
             compareJSONSet(result.get(0).asJsonArray().getFirst(), jv0.asJsonArray().getFirst(), "$.key1b.key2b", jv))
-                  .isEqualTo(true);
+            .isEqualTo(true);
    }
 
    @Test
@@ -952,7 +952,64 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       }
    }
 
-   // Lattuce Json object doesn't implement comparison. Implementing here
+   // Lettuce Json object doesn't implement comparison. Implementing here
+   @Test
+   public void testJSONTOGGLE() {
+      JsonPath jp = new JsonPath("$");
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      JsonValue jv = defaultJsonParser.createJsonValue("""
+                 {"bool":true,
+                 "null_value": null,
+                 "arr_value": ["one", "two", "three"],
+                 "nested":
+                    {"bool": false},
+                 "foo": "bar",
+                 "legacy": true}
+              """);
+      String key = k();
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+
+      // Legacy
+      // JSON.TOGGLE doc ..legacy
+      assertThat(redis.dispatch(CommandType.JSON_TOGGLE, new ValueOutput<>(codec),
+              new CommandArgs<>(codec)
+                      .addKey(key)
+                      .add("..legacy"))).isEqualTo("false");
+      // JSON.TOGGLE doc ..legacy
+      assertThat(redis.dispatch(CommandType.JSON_TOGGLE, new ValueOutput<>(codec),
+              new CommandArgs<>(codec)
+                      .addKey(key)
+                      .add("..legacy"))).isEqualTo("true");
+      // JSON.TOGGLE doc ..notExistingPathLegacy
+      assertThatThrownBy(() ->
+              redis.dispatch(CommandType.JSON_TOGGLE, new ValueOutput<>(codec),
+                      new CommandArgs<>(codec)
+                              .addKey(key)
+                              .add("..notExistingPathLegacy"))
+      ).isInstanceOf(RedisCommandExecutionException.class)
+              .hasMessage("ERR Path '$..notExistingPathLegacy' does not exist or not a bool");
+
+      // JSON.TOGGLE doc $..bool
+      assertThat(redis.jsonToggle(key, new JsonPath("$..bool"))).containsExactly(0L, 1L);
+      // JSON.TOGGLE doc $..bool
+      assertThat(redis.jsonToggle(key, new JsonPath("$..bool"))).containsExactly(1L, 0L);
+      // JSON.TOGGLE doc $.bool
+      assertThat(redis.jsonToggle(key, new JsonPath("$.bool"))).containsExactly(0L);
+
+      // JSON.TOGGLE doc $..notExistingPath
+      assertThat(redis.jsonToggle(key, new JsonPath("$..notExistingPath"))).isEmpty();
+
+      // JSON.TOGGLE doc $..null_value
+      assertThat(redis.jsonToggle(key, new JsonPath("$..null_value")).get(0)).isNull();
+
+      // JSON.TOGGLE notExistingKey $..value
+      assertThatThrownBy(() ->
+              redis.jsonToggle("notExistingKey", new JsonPath("$..value")
+      )).isInstanceOf(RedisCommandExecutionException.class)
+              .hasMessage("ERR could not perform this operation on a key that doesn't exist");
+   }
+
+   // Lettuce Json object doesn't implement comparison. Implementing here
    private boolean compareJSONGet(JsonValue result, JsonValue expected, JsonPath... paths) {
       ObjectMapper mapper = new ObjectMapper();
       JsonNode expectedObjectNode, resultNode;
@@ -960,8 +1017,8 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
          paths = new JsonPath[] { new JsonPath("$") };
       }
       try {
-         expectedObjectNode = (JsonNode) mapper.readTree(expected.toString());
-         resultNode = (JsonNode) mapper.readTree(result.toString());
+         expectedObjectNode = mapper.readTree(expected.toString());
+         resultNode = mapper.readTree(result.toString());
          var jpCtx = JSONUtil.parserForGet.parse(expectedObjectNode);
          boolean isLegacy = true;
          // If all paths are legacy, return results in legacy mode. i.e. no array

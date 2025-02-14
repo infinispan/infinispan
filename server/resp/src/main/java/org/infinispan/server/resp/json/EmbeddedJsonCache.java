@@ -178,4 +178,22 @@ public class EmbeddedJsonCache {
    public CompletionStage<List<Long>> strAppend(byte[] key, byte[] path, byte[] value) {
       return readWriteMap.eval(key, new JsonAppendFunction(path, value));
    }
+
+   /**
+    * Toggles the boolean value at the specified JSON path in the stored JSON document.
+    * If the value is `true`, it becomes `false`, and vice versa.
+    * Non-boolean values result in `null`.
+    *
+    * @param key  The key identifying the JSON document in the Infinispan cache.
+    * @param path The JSON path where the boolean value should be toggled.
+    * @return A {@code CompletionStage} with a {@code List<Integer>} of results:
+    *         <ul>
+    *           <li>{@code 1} if toggled to {@code true}</li>
+    *           <li>{@code 0} if toggled to {@code false}</li>
+    *           <li>{@code null} if the value is not a boolean</li>
+    *         </ul>
+    */
+   public CompletionStage<List<Integer>> toggle(byte[] key, byte[] path) {
+      return readWriteMap.eval(key, new JsonToggleFunction(path));
+   }
 }

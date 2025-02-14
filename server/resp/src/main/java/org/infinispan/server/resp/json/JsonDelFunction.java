@@ -34,7 +34,7 @@ public class JsonDelFunction
 
    @Override
    public Long apply(ReadWriteEntryView<byte[], JsonBucket> entryView) {
-      var doc = (JsonBucket) entryView.find().orElse(null);
+      var doc = entryView.find().orElse(null);
       if (doc == null) {
          return 0L;
       }
