@@ -38,6 +38,12 @@ public class InfinispanGenericContainer {
       dockerClient().unpauseContainerCmd(this.containerId).exec();
    }
 
+   public void start() {
+      if (!isRunning()) {
+         dockerClient().startContainerCmd(this.containerId).exec();
+      }
+   }
+
    public void stop() {
       // it could be stopped by the rest call and then NotModifiedException will be throw
       if (isRunning()) {
@@ -124,6 +130,10 @@ public class InfinispanGenericContainer {
 
    private DockerClient dockerClient() {
       return DockerClientFactory.instance().client();
+   }
+
+   public GenericContainer getGenericContainer() {
+      return genericContainer;
    }
 
    public void uploadCoverageInfoToHost(String containerPath, String destinationPath) {
