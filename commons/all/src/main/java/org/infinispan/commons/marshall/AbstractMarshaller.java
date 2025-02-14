@@ -91,17 +91,13 @@ public abstract class AbstractMarshaller implements Marshaller {
    public Object objectFromInputStream(InputStream inputStream) throws IOException, ClassNotFoundException {
       int len = inputStream.available();
       LazyByteArrayOutputStream bytes;
-      byte[] buf;
       if(len > 0) {
          bytes = new LazyByteArrayOutputStream(len);
-         buf = new byte[Math.min(len, 1024)];
       } else {
          // Some input stream providers do not implement available()
          bytes = new LazyByteArrayOutputStream();
-         buf = new byte[1024];
       }
-      int bytesRead;
-      while ((bytesRead = inputStream.read(buf, 0, buf.length)) != -1) bytes.write(buf, 0, bytesRead);
+      inputStream.transferTo(bytes);
       return objectFromByteBuffer(bytes.getRawBuffer(), 0, bytes.size());
    }
 
