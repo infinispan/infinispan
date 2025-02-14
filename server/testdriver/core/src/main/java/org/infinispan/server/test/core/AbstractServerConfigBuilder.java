@@ -19,12 +19,14 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
    private final Properties properties;
    private String[] mavenArtifacts;
    private int numServers = 2;
+   private int expectedServers = -1;
    private ServerRunMode runMode = ServerRunMode.DEFAULT;
    private JavaArchive[] archives;
    private String[] features;
    private boolean jmx;
    private boolean parallelStartup = true;
    private final List<InfinispanServerListener> listeners = new ArrayList<>();
+   private String clusterName;
    private String siteName;
    private int portOffset = 0;
    private String[] dataFiles;
@@ -43,8 +45,8 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
    }
 
    public InfinispanServerTestConfiguration createServerTestConfiguration() {
-      return new InfinispanServerTestConfiguration(configurationFile, numServers, runMode, this.properties, mavenArtifacts,
-                  archives, jmx, parallelStartup, defaultFile, listeners, siteName, portOffset, features, dataFiles);
+      return new InfinispanServerTestConfiguration(configurationFile, numServers, expectedServers, runMode, this.properties, mavenArtifacts,
+                  archives, jmx, parallelStartup, defaultFile, listeners, clusterName, siteName, portOffset, features, dataFiles);
    }
 
    public T mavenArtifacts(String... mavenArtifacts) {
@@ -54,6 +56,14 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
 
    public T numServers(int numServers) {
       this.numServers = numServers;
+      return (T) this;
+   }
+
+   public T expectedServers(int expectedServers) {
+      if (expectedServers >= 0 && expectedServers < numServers) {
+         throw new IllegalStateException("Expected " + expectedServers + " number of servers must be greater than or equal to " + numServers + "number of servers being added");
+      }
+      this.expectedServers = expectedServers;
       return (T) this;
    }
 
@@ -98,6 +108,14 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
     */
    public T parallelStartup(boolean parallel) {
       this.parallelStartup = parallel;
+      return (T) this;
+   }
+
+   /**
+    * Sets the cluster name - if not specified the name of the driver will be used instead
+    */
+   public T clusterName(String clusterName) {
+      this.clusterName = clusterName;
       return (T) this;
    }
 

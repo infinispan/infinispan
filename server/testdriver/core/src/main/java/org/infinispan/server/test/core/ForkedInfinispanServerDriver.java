@@ -80,45 +80,53 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
    }
 
    @Override
-   protected void start(String name, File rootDir, File configurationFile) {
+   protected void start(String name, File rootDir) {
       for (int i = 0; i < configuration.numServers(); i++) {
-         ForkedServer server;
-         Path destConfDir;
-         if (serverDataPath != null) {
-            String serverHome = serverHomes.get(0).toString();
-            File serverRootPath = new File(String.format(serverDataPath, i));
-            createServerStructure(serverHome, serverRootPath);
-            destConfDir = getServerConfDir(serverRootPath.getAbsolutePath());
-            server = new ForkedServer(serverHome);
-            server.addSystemProperty(Server.INFINISPAN_SERVER_ROOT_PATH, serverRootPath);
-         } else {
-            String serverHome = serverHomes.get(i).toString();
-            destConfDir = getServerConfDir(serverHome);
-            server = new ForkedServer(serverHome);
-         }
-         server
-               .setServerConfiguration(configurationFile.getPath())
-               .setPortsOffset(i);
-         server.addSystemProperty(Server.INFINISPAN_CLUSTER_STACK, System.getProperty(Server.INFINISPAN_CLUSTER_STACK));
-         if (i == 0 && configuration.site() == null) {
-            server.addSystemProperty(JOIN_TIMEOUT, "0");
-         }
-         try {
-            File sourceServerConfiguration = new File(server.getServerConfiguration());
-            Files.copy(Paths.get(server.getServerConfiguration()), destConfDir.resolve(sourceServerConfiguration.getName()));
-         } catch (IOException e) {
-            throw new UncheckedIOException("Cannot copy the server to temp directory", e);
-         }
-         // Replace 99 with index of server to debug
-         if (i == 99) {
-            server.setJvmOptions(debugJvmOption());
-         }
-         if (configuration.isJMXEnabled()) {
-            server.addArgument("--jmx "+ JMX_PORT);
-         }
-         copyArtifactsToUserLibDir(server.getServerLib());
-         forkedServers.add(server.start());
+         startAdditionalServer(-1);
       }
+   }
+
+   @Override
+   public void startAdditionalServer(int expectedClusterSize) {
+      // expectedClusterSize is not used as we can't verify completion
+      int i = forkedServers.size();
+      ForkedServer server;
+      Path destConfDir;
+      if (serverDataPath != null) {
+         String serverHome = serverHomes.get(0).toString();
+         File serverRootPath = new File(String.format(serverDataPath, i));
+         createServerStructure(serverHome, serverRootPath);
+         destConfDir = getServerConfDir(serverRootPath.getAbsolutePath());
+         server = new ForkedServer(serverHome);
+         server.addSystemProperty(Server.INFINISPAN_SERVER_ROOT_PATH, serverRootPath);
+      } else {
+         String serverHome = serverHomes.get(i).toString();
+         destConfDir = getServerConfDir(serverHome);
+         server = new ForkedServer(serverHome);
+      }
+      server
+            .setServerConfiguration(new File(configuration.configurationFile()).getPath())
+            .setPortsOffset(i);
+      server.addSystemProperty(Server.INFINISPAN_CLUSTER_STACK, System.getProperty(Server.INFINISPAN_CLUSTER_STACK));
+      if (i == 0 && configuration.site() == null && !Boolean.parseBoolean(configuration.properties().getProperty(
+            TestSystemPropertyNames.INFINISPAN_TEST_SERVER_REQUIRE_JOIN_TIMEOUT))) {
+         server.addSystemProperty(JOIN_TIMEOUT, "0");
+      }
+      try {
+         File sourceServerConfiguration = new File(server.getServerConfiguration());
+         Files.copy(Paths.get(server.getServerConfiguration()), destConfDir.resolve(sourceServerConfiguration.getName()));
+      } catch (IOException e) {
+         throw new UncheckedIOException("Cannot copy the server to temp directory", e);
+      }
+      // Replace 99 with index of server to debug
+      if (i == 99) {
+         server.setJvmOptions(debugJvmOption());
+      }
+      if (configuration.isJMXEnabled()) {
+         server.addArgument("--jmx "+ JMX_PORT);
+      }
+      copyArtifactsToUserLibDir(server.getServerLib());
+      forkedServers.add(server.start());
    }
 
    private void createServerStructure(String serverHome, File serverRootPath) {
@@ -200,6 +208,11 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
          return !(Util.getRootCause(r) instanceof ConnectException);
       }
       return true;
+   }
+
+   @Override
+   public int serverCount() {
+      return forkedServers.size();
    }
 
    @Override
