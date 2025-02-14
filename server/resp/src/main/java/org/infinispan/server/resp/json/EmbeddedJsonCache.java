@@ -196,4 +196,18 @@ public class EmbeddedJsonCache {
    public CompletionStage<List<Integer>> toggle(byte[] key, byte[] path) {
       return readWriteMap.eval(key, new JsonToggleFunction(path));
    }
+
+   /**
+    * Retrieves the keys of the JSON object at the specified path within the given JSON document.
+    *
+    * @param key
+    *           The key representing the JSON document, provided as a byte array.
+    * @param path
+    *           The JSON path at which the keys should be retrieved, provided as a byte array.
+    * @return A {@link CompletionStage} containing a {@link List} of list of byte arrays, each representing
+    *         a key in the JSON object or null if object is not a json object.
+    */
+   public CompletionStage<List<List<byte[]>>> objkeys(byte[] key, byte[] path) {
+      return readWriteMap.eval(key, new JsonObjkeysFunction(path));
+   }
 }
