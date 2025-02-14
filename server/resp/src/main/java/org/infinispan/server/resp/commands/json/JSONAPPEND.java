@@ -26,17 +26,13 @@ public abstract class JSONAPPEND extends RespCommand implements Resp3Command {
     }
 
     protected CompletionStage<RespRequestHandler> returnResult(Resp3Handler handler, ChannelHandlerContext ctx,
-                                                               byte[] jsonPath, boolean withPath,
+                                                               byte[] jsonPath, boolean isLegacy,
                                                                CompletionStage<List<Long>> lengths) {
-        /*
-         * Return value depends on some logic: for jsonpath return an array of lengths for all the
-         * matching path, empty array is allowed for old legacy path return one length as a Number
-         * an error if path doesn't exist or is not of the right type.
-         */
-        if (withPath) {
-            return handler.stageToReturn(lengths, ctx, ResponseWriter.ARRAY_INTEGER);
+        if (isLegacy) {
+            return handler.stageToReturn(lengths, ctx, newIntegerOrErrorWriter(jsonPath, getOpType()));
         }
-        return handler.stageToReturn(lengths, ctx, newIntegerOrErrorWriter(jsonPath, getOpType()));
+
+        return handler.stageToReturn(lengths, ctx, ResponseWriter.ARRAY_INTEGER);
     }
 
     @Override
@@ -50,7 +46,7 @@ public abstract class JSONAPPEND extends RespCommand implements Resp3Command {
             if (c == null || c.size() == 0 || c.get(0) == null) {
                 throw new CacheException("Path '" + RespUtil.ascii(path) + "' does not exist or not a " + opType);
             }
-            // For compatibility, last non null result is returned
+            // For compatibility, last non-null result is returned
             for (int i = c.size() - 1; i >= 0; i--) {
                 if (c.get(i) != null) {
                     writer.integers(c.get(i));

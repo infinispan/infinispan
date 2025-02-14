@@ -11,7 +11,6 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.RespUtil;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.json.EmbeddedJsonCache;
-import org.infinispan.server.resp.json.JSONUtil;
 import org.infinispan.server.resp.serialization.Resp3Type;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
@@ -37,13 +36,10 @@ public class JSONOBJKEYS extends RespCommand implements Resp3Command {
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
-      byte[] key = arguments.get(0);
-      byte[] path = arguments.size() > 1 ? arguments.get(1) : JSONUtil.DEFAULT_PATH;
-      final byte[] jsonPath = JSONUtil.toJsonPath(path);
-      boolean isLegacy = path != jsonPath;
+      JSONCommandArgumentReader.CommandArgs commandArgs = JSONCommandArgumentReader.readCommandArgs(arguments);
       EmbeddedJsonCache ejc = handler.getJsonCache();
-      CompletionStage<List<List<byte[]>>> result = ejc.objkeys(key, jsonPath);
-      return (isLegacy) ? handler.stageToReturn(result, ctx, newIntegerOrErrorWriter(jsonPath))
+      CompletionStage<List<List<byte[]>>> result = ejc.objkeys(commandArgs.key(), commandArgs.jsonPath());
+      return (commandArgs.isLegacy()) ? handler.stageToReturn(result, ctx, newIntegerOrErrorWriter(commandArgs.jsonPath()))
             : handler.stageToReturn(result, ctx, JSONOBJKEYS::arrayOfArrayWriter);
    }
 
