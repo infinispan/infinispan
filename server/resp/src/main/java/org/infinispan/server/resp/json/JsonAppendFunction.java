@@ -50,7 +50,7 @@ public class JsonAppendFunction
         }
         var pathStr = new String(path, StandardCharsets.UTF_8);
         try {
-            var rootNode = (JsonNode) JSONUtil.objectMapper.readTree(doc.value());
+            var rootNode = JSONUtil.objectMapper.readTree(doc.value());
             var jpCtxPath = JSONUtil.parserForMod.parse(rootNode);
             var jpCtx = JSONUtil.parserForGet.parse(rootNode);
             JsonPath jpath = JsonPath.compile(pathStr);
@@ -84,7 +84,7 @@ public class JsonAppendFunction
                     }
                     break;
                 case STRING:
-                    var textNode = (TextNode) JSONUtil.objectMapper.readTree(value);
+                    var textNode = JSONUtil.objectMapper.readTree(value);
                     changed = false;
                     for (JsonNode pathAsNode : pathList) {
                         String asText = pathAsNode.asText();
