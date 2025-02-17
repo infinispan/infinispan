@@ -222,4 +222,21 @@ public class EmbeddedJsonCache {
    public CompletionStage<List<Number>> incrby(byte[] key, byte[] path, byte[] increment) {
       return readWriteMap.eval(key, new JsonNumIncrByFunction(path, increment));
    }
+
+   /**
+    * Finds the first index of the specified value in the JSON array at the given path.
+    * The search is performed within the specified range [start, stop].
+    *
+    * @param key       The key identifying the JSON document.
+    * @param jsonPath  The JSON path to the array in which to search for the value.
+    * @param value     The value to search for in the array.
+    * @param start     The starting index of the range to search within.
+    * @param stop      The ending index of the range to search within.
+    * @param isLegacy  A boolean indicating whether to use legacy behavior.
+    * @return A {@link CompletionStage} that will complete with a list of indices where the value is found.
+    *         If the value is not found, the list will contain -1.
+    */
+   public CompletionStage<List<Integer>> arrindex(byte[] key, byte[] jsonPath, byte[] value, int start, int stop, boolean isLegacy) {
+      return readWriteMap.eval(key, new JsonArrindexFunction(jsonPath, value, start, stop, isLegacy));
+}
 }

@@ -60,6 +60,7 @@ import org.infinispan.server.resp.commands.hash.HSTRLEN;
 import org.infinispan.server.resp.commands.hash.HVALS;
 import org.infinispan.server.resp.commands.hll.PFADD;
 import org.infinispan.server.resp.commands.json.JSONARRAPPEND;
+import org.infinispan.server.resp.commands.json.JSONARRINDEX;
 import org.infinispan.server.resp.commands.json.JSONARRLEN;
 import org.infinispan.server.resp.commands.json.JSONDEL;
 import org.infinispan.server.resp.commands.json.JSONFORGET;
@@ -188,18 +189,19 @@ public final class Commands {
       // Just manual for now, but we may want to dynamically at some point.
       // NOTE that the order within the sub array matters, commands we want to have the lowest latency should be first
       // in this array as they are looked up sequentially for matches
-      ALL_COMMANDS[0] = new RespCommand[]{new APPEND(), new AUTH()};
-      ALL_COMMANDS[1] = new RespCommand[]{new BLPOP(), new BRPOP(), new BLMPOP()};
-      ALL_COMMANDS[2] = new RespCommand[]{new CONFIG(), new COMMAND(), new CLUSTER(), new CLIENT() };
+      ALL_COMMANDS[0] = new RespCommand[] { new APPEND(), new AUTH() };
+      ALL_COMMANDS[1] = new RespCommand[] { new BLPOP(), new BRPOP(), new BLMPOP() };
+      ALL_COMMANDS[2] = new RespCommand[] { new CONFIG(), new COMMAND(), new CLUSTER(), new CLIENT() };
       // DEL should always be first here
-      ALL_COMMANDS[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY(), new DBSIZE(), new DISCARD()};
-      ALL_COMMANDS[4] = new RespCommand[]{new ECHO(), new EXISTS(), new EXPIRE(), new EXPIREAT(), new EXPIRETIME(), new EXEC()};
-      ALL_COMMANDS[5] = new RespCommand[]{new FLUSHDB(), new FLUSHALL()};
+      ALL_COMMANDS[3] = new RespCommand[] { new DEL(), new DECR(), new DECRBY(), new DBSIZE(), new DISCARD() };
+      ALL_COMMANDS[4] = new RespCommand[] { new ECHO(), new EXISTS(), new EXPIRE(), new EXPIREAT(), new EXPIRETIME(),
+            new EXEC() };
+      ALL_COMMANDS[5] = new RespCommand[] { new FLUSHDB(), new FLUSHALL() };
       // GET should always be first here
       ALL_COMMANDS[6] = new RespCommand[]{new GET(), new GETDEL(), new GETEX(), new GETRANGE(), new GETSET()};
       ALL_COMMANDS[7] = new RespCommand[]{new HELLO(), new HGET(), new HSET(), new HLEN(), new HEXISTS(), new HDEL(), new HMGET(), new HSETNX(), new HKEYS(), new HVALS(), new HSCAN(), new HGETALL(), new HMSET(), new HINCRBY(), new HINCRBYFLOAT(), new HRANDFIELD(), new HSTRLEN()};
       ALL_COMMANDS[8] = new RespCommand[]{new INCR(), new INCRBY(), new INCRBYFLOAT(), new INFO()};
-      ALL_COMMANDS[9] = new RespCommand[]{new JSONGET(), new JSONSET(), new JSONARRLEN(), new JSONOBJLEN(), new JSONSTRLEN(), new JSONTYPE(), new JSONDEL(), new JSONSTRAPPEND(), new JSONARRAPPEND(), new JSONTOGGLE(), new JSONOBJKEYS(), new JSONNUMINCRBY(), new JSONFORGET()};
+      ALL_COMMANDS[9] = new RespCommand[]{new JSONGET(), new JSONSET(), new JSONARRLEN(), new JSONOBJLEN(), new JSONSTRLEN(), new JSONTYPE(), new JSONDEL(), new JSONSTRAPPEND(), new JSONARRAPPEND(), new JSONTOGGLE(), new JSONOBJKEYS(), new JSONNUMINCRBY(), new JSONFORGET(), new JSONARRINDEX()};
       ALL_COMMANDS[10] = new RespCommand[]{new KEYS()};
       ALL_COMMANDS[11] = new RespCommand[]{new LINDEX(), new LINSERT(), new LPUSH(), new LPUSHX(), new LPOP(), new LRANGE(), new LLEN(), new LPOS(), new LREM(), new LSET(), new LTRIM(), new LMOVE(), new LMPOP(), new LCS()};
       ALL_COMMANDS[12] = new RespCommand[]{new MGET(), new MSET(), new MSETNX(), new MULTI(), new MODULE(), new MEMORY()};
@@ -207,14 +209,20 @@ public final class Commands {
       ALL_COMMANDS[16] = new RespCommand[]{new QUIT()};
       ALL_COMMANDS[17] = new RespCommand[]{new RPUSH(), new RPUSHX(), new RPOP(), new RESET(), new READWRITE(), new READONLY(), new RPOPLPUSH(), new RENAME(), new RENAMENX(), new RANDOMKEY() };
       // SET should always be first here
-      ALL_COMMANDS[18] = new RespCommand[]{new SET(), new SETEX(), new SETNX(), new SMEMBERS(), new SISMEMBER(), new SMISMEMBER(), new SADD(), new STRLEN(), new SMOVE(), new SCARD(), new SINTER(), new SINTERSTORE(), new SINTERCARD(), new SUNION(), new SUNIONSTORE(), new SPOP(), new SRANDMEMBER(), new SREM(), new SDIFF(), new SDIFFSTORE(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SSCAN(), new SETRANGE(), new SORT(), new SORT_RO(), new SUBSTR()};
-      ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE(), new TOUCH(), new TIME() };
-      ALL_COMMANDS[20] = new RespCommand[]{new UNSUBSCRIBE(), new UNWATCH()};
-      ALL_COMMANDS[22] = new RespCommand[]{new WATCH()};
-      ALL_COMMANDS[25] = new RespCommand[]{new ZADD(), new ZCARD(), new ZCOUNT(), new ZLEXCOUNT(), new ZDIFF(), new ZDIFFSTORE(), new ZINCRBY(), new ZINTER(), new ZINTERCARD(), new ZINTERSTORE(),
-            new ZMPOP(), new ZPOPMAX(), new ZPOPMIN(), new ZRANGE(), new ZRANGESTORE(), new ZREVRANGE(), new ZRANGEBYSCORE(), new ZRANK(), new ZREVRANGEBYSCORE(),
-            new ZRANGEBYLEX(), new ZREVRANGEBYLEX(), new ZREVRANK(),  new ZREM(), new ZREMRANGEBYRANK(), new ZREMRANGEBYLEX(), new ZREMRANGEBYSCORE(),
-            new ZSCORE(), new ZMSCORE(), new ZUNION(), new ZUNIONSTORE(), new ZRANDMEMBER(), new ZSCAN() };
+      ALL_COMMANDS[18] = new RespCommand[] { new SET(), new SETEX(), new SETNX(), new SMEMBERS(), new SISMEMBER(),
+            new SMISMEMBER(), new SADD(), new STRLEN(), new SMOVE(), new SCARD(), new SINTER(), new SINTERSTORE(),
+            new SINTERCARD(), new SUNION(), new SUNIONSTORE(), new SPOP(), new SRANDMEMBER(), new SREM(), new SDIFF(),
+            new SDIFFSTORE(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SSCAN(), new SETRANGE(),
+            new SORT(), new SORT_RO(), new SUBSTR() };
+      ALL_COMMANDS[19] = new RespCommand[] { new TTL(), new TYPE(), new TOUCH(), new TIME() };
+      ALL_COMMANDS[20] = new RespCommand[] { new UNSUBSCRIBE(), new UNWATCH() };
+      ALL_COMMANDS[22] = new RespCommand[] { new WATCH() };
+      ALL_COMMANDS[25] = new RespCommand[] { new ZADD(), new ZCARD(), new ZCOUNT(), new ZLEXCOUNT(), new ZDIFF(),
+            new ZDIFFSTORE(), new ZINCRBY(), new ZINTER(), new ZINTERCARD(), new ZINTERSTORE(), new ZMPOP(),
+            new ZPOPMAX(), new ZPOPMIN(), new ZRANGE(), new ZRANGESTORE(), new ZREVRANGE(), new ZRANGEBYSCORE(),
+            new ZRANK(), new ZREVRANGEBYSCORE(), new ZRANGEBYLEX(), new ZREVRANGEBYLEX(), new ZREVRANK(), new ZREM(),
+            new ZREMRANGEBYRANK(), new ZREMRANGEBYLEX(), new ZREMRANGEBYSCORE(), new ZSCORE(), new ZMSCORE(),
+            new ZUNION(), new ZUNIONSTORE(), new ZRANDMEMBER(), new ZSCAN() };
    }
 
    public static List<RespCommand> all() {
