@@ -48,6 +48,9 @@ public interface CustomStringCommands extends Commands {
    @Command("JSON.GET :key :path1 :path2 :path3")
    String jsonGet(@Param("key") String key, @Param("path1") String path1, @Param("path2") String path2, @Param("path3") String path3);
 
+   @Command("JSON.FORGET :key :path")
+   Long jsonForget(@Param("key") String key, @Param("path") String path);
+
    // Lettuce arrAppend command has a bug, it doesn't support root path, so we need to use a custom command
    @Command("JSON.ARRAPPEND :key :path :v1 :v2 :v3")
    Long jsonArrappend(@Param("key") String key, @Param("path") String path, @Param("v1") String v1, @Param("v2") String v2, @Param("v2") String v3);

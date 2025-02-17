@@ -131,6 +131,8 @@ NOTE: This implementation attempts to return all attributes that a real Redis se
 
 * link:https://redis.io/commands/json.del[JSON.DEL]
 
+* link:https://redis.io/commands/json.forget[JSON.FORGET]
+
 * link:https://redis.io/commands/json.get[JSON.GET]
 
 * link:https://redis.io/commands/json.objkeys[JSON.OBJKEYS]

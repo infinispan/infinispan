@@ -27,6 +27,10 @@ public class JSONDEL extends RespCommand implements Resp3Command {
       super("JSON.DEL", -2, 1, 1, 1);
    }
 
+   protected JSONDEL(String name, int arity, int firstKeyPos, int lastKeyPos, int steps) {
+      super(name, arity, firstKeyPos, lastKeyPos, steps);
+   }
+
    @Override
    public long aclMask() {
       return 0;

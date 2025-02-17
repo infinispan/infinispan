@@ -791,6 +791,32 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testJSONFORGET() {
+      // JSON.FORGET is an alias for JSON.DEL. Check if alias is in place
+      String key = k();
+      String jsonStr = """
+               {
+                  "name": "Alice",
+                  "age": 30,
+                  "isStudent": false,
+                  "grades": [85, 90, 78],
+                  "address": {
+                    "verified": true,
+                    "city": "New York",
+                    "zip": "10001"
+                  },
+                  "phone": null
+                }
+            """;
+      JsonValue jv = defaultJsonParser.createJsonValue(jsonStr);
+      redis.jsonSet(key, new JsonPath("$"), jv);
+      CustomStringCommands command = CustomStringCommands.instance(redisConnection);
+      // Deleting whole object
+      assertThat(command.jsonForget(key, "$")).isEqualTo(1);
+      // Not using json.get since lettuce json.get fails with RESP3 null
+      assertThat(redis.get(key)).isNull();
+   }
+   @Test
    public void testJSONSTRAPPEND() {
       JsonPath jp = new JsonPath("$");
       JsonValue jv = defaultJsonParser.createJsonValue("\"string\"");
