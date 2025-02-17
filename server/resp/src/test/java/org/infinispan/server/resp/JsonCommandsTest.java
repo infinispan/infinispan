@@ -13,6 +13,7 @@ import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.json.JsonType;
 import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.json.arguments.JsonGetArgs;
+import io.lettuce.core.json.arguments.JsonRangeArgs;
 import io.lettuce.core.json.arguments.JsonSetArgs;
 import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.output.StringListOutput;
@@ -1097,6 +1098,71 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
               redis.jsonNumincrby("notExistingKey",  new JsonPath("$..a"), 2))
               .isInstanceOf(RedisCommandExecutionException.class)
               .hasMessage("ERR could not perform this operation on a key that doesn't exist");
+   }
+   public void testJSONARRINDEX() {
+      JsonPath jp = new JsonPath("$");
+      JsonValue jv = defaultJsonParser.createJsonValue("""
+               {"bool":true,
+               "null_value": null,
+               "arr_value": ["one", "two", "three"],
+               "nested":
+                  {"bool": false,
+                   "arr_value": ["one", "three","four"],
+                   "stringKey": "aString"},
+               "nested1":
+                  {"bool": false,
+                   "arr_value": "not an array",
+                   "stringKey": "aString"},
+               "foo": "bar",
+               "legacy": true}
+            """);
+      String key = k();
+      redis.jsonSet(key, jp, jv);
+      jp = new JsonPath("$.arr_value");
+      JsonValue jv1 = defaultJsonParser.createJsonValue("\"three\"");
+      List<Long> result = redis.jsonArrindex(key, jp, jv1);
+      assertThat(result).containsExactly(2L);
+
+      // Test args conditions
+      result = redis.jsonArrindex(key, jp, jv1, JsonRangeArgs.Builder.start(0).stop(-1));
+      assertThat(result).containsExactly(-1L);
+      result = redis.jsonArrindex(key, jp, jv1, JsonRangeArgs.Builder.start(1).stop(0));
+      assertThat(result).containsExactly(2L);
+      result = redis.jsonArrindex(key, jp, jv1, JsonRangeArgs.Builder.start(0).stop(10));
+      assertThat(result).containsExactly(2L);
+      result = redis.jsonArrindex(key, jp, jv1, JsonRangeArgs.Builder.start(0).stop(10));
+      assertThat(result).containsExactly(2L);
+      result = redis.jsonArrindex(key, jp, jv1, JsonRangeArgs.Builder.start(5).stop(1));
+      assertThat(result).containsExactly(-1L);
+
+      // Multiple matches
+      jp = new JsonPath("$..arr_value");
+      result = redis.jsonArrindex(key, jp, jv1);
+      assertThat(result).containsExactly(2L, 1L, null);
+      result = redis.jsonArrindex(key, jp, jv1, JsonRangeArgs.Builder.start(0).stop(-1));
+      assertThat(result).containsExactly(-1L, 1L, null);
+
+      // Key non existent, path non existent
+      JsonPath jp1 = new JsonPath("$.bool");
+      JsonValue jv2 = jv1;
+      assertThatThrownBy(() -> redis.jsonArrindex("non-existent", jp1, jv2))
+            .isInstanceOf(RedisCommandExecutionException.class).hasMessage("ERR Path '$.bool' does not exist");
+      JsonPath jp2 = new JsonPath("$.non-existent");
+      assertThat(redis.jsonArrindex(key, jp2, jv1)).isEmpty();
+
+      // Test legacy path
+      jp = new JsonPath("$.arr_value");
+      jv1 = defaultJsonParser.createJsonValue("\"three\"");
+      result = redis.jsonArrindex(key, jp, jv1);
+      assertThat(result).containsExactly(2L);
+      JsonPath jp3 = new JsonPath(".non-existent");
+      jp = new JsonPath("..arr_value");
+      result = redis.jsonArrindex(key, jp, jv1);
+      assertThat(result).containsExactly(2L);
+      result = redis.jsonArrindex(key, jp, jv1, JsonRangeArgs.Builder.start(0).stop(-1));
+      assertThat(result).containsExactly(-1L);
+      assertThatThrownBy(() -> redis.jsonArrindex(key, jp3, jv2)).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR Path '$.non-existent' does not exist");
    }
 
    // Lettuce Json object doesn't implement comparison. Implementing here

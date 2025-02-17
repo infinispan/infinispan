@@ -16,4 +16,5 @@ public interface ExternalizerIds {
    Integer JSON_TOGGLE_FUNCTION = 2210;
    Integer JSON_OBJKEYS_FUNCTION = 2211;
    Integer JSON_NUMINCRBY_FUNCTION = 2212;
+   Integer JSON_ARRINDEX_FUNCTION = 2213;
 }
