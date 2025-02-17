@@ -14,11 +14,7 @@
    <packaging>pom</packaging>
    <name>Infinispan Common Parent</name>
    <description>Infinispan common parent POM module</description>
-   <url>http://www.infinispan.org</url>
-   <organization>
-      <name>JBoss, a division of Red Hat</name>
-      <url>http://www.jboss.org</url>
-   </organization>
+   <url>https://infinispan.org</url>
    <licenses>
       <license>
          <name>Apache License 2.0</name>
@@ -29,44 +25,18 @@
    <developers>
       <developer>
          <id>placeholder</id>
-         <name>See http://www.infinispan.org for a complete list of contributors</name>
+         <name>See https://github.com/infinispan/infinispan/graphs/contributors</name>
       </developer>
    </developers>
-   <mailingLists>
-      <mailingList>
-         <name>Infinispan Issues</name>
-         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-issues</subscribe>
-         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-issues</unsubscribe>
-         <post>infinispan-issues@lists.jboss.org</post>
-         <archive>http://lists.jboss.org/pipermail/infinispan-issues/</archive>
-      </mailingList>
-      <mailingList>
-         <name>Infinispan Developers</name>
-         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</subscribe>
-         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</unsubscribe>
-         <post>infinispan-dev@lists.jboss.org</post>
-         <archive>http://lists.jboss.org/pipermail/infinispan-dev/</archive>
-      </mailingList>
-   </mailingLists>
    <scm>
       <connection>scm:git:git@github.com:infinispan/infinispan.git</connection>
       <developerConnection>scm:git:git@github.com:infinispan/infinispan.git</developerConnection>
       <url>https://github.com/infinispan/infinispan</url>
    </scm>
    <issueManagement>
-      <system>jira</system>
-      <url>https://issues.jboss.org/browse/ISPN</url>
+      <system>github</system>
+      <url>https://github.com/infinispan/infinispan/issues</url>
    </issueManagement>
-   <ciManagement>
-      <system>Jenkins</system>
-      <url>https://ci.infinispan.org</url>
-      <notifiers>
-         <notifier>
-            <type>mail</type>
-            <address>infinispan-commits@lists.jboss.org</address>
-         </notifier>
-      </notifiers>
-   </ciManagement>
    <modules>
       <module>build/configuration</module>
       <module>build/bom</module>
@@ -210,19 +180,7 @@
       <infinispan.test.parallel.threads>8</infinispan.test.parallel.threads>
       <server.test.provisioning>thin</server.test.provisioning>
       <skipArtifactUpload>false</skipArtifactUpload>
-      <upload.keyFile>${env.HOME}/.ssh/infinispan</upload.keyFile>
-      <upload.username>infinispan</upload.username>
-      <upload.host>filemgmt-prod-sync.jboss.org</upload.host>
-      <upload.remotePort>2222</upload.remotePort>
-      <upload.downloadsRemotePath>/downloads_htdocs/infinispan/${project.version}</upload.downloadsRemotePath>
-      <upload.downloadsDir>${upload.username}@${upload.host}:${upload.downloadsRemotePath}</upload.downloadsDir>
-      <upload.docsRemotePath>/docs_htdocs/infinispan/${infinispan.base.version}</upload.docsRemotePath>
-      <upload.docsDir>${upload.username}@${upload.host}:${upload.docsRemotePath}</upload.docsDir>
-      <upload.schemaRemotePath>/schema_htdocs/infinispan</upload.schemaRemotePath>
-      <upload.schemaDir>${upload.username}@${upload.host}:${upload.schemaRemotePath}</upload.schemaDir>
-      <rsync.failonerror>true</rsync.failonerror>
       <junitListener>org.infinispan.commons.test.JUnitTestListener</junitListener>
-      <m2e.apt.activation>jdt_apt</m2e.apt.activation>
       <module.skipCopyDependencies>true</module.skipCopyDependencies>
       <packaging>jar</packaging>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -1918,6 +1876,11 @@
          <plugins>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-archetype-plugin</artifactId>
+               <version>${version.maven.archetype}</version>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-enforcer-plugin</artifactId>
                <version>${version.maven.enforcer}</version>
             </plugin>
@@ -1985,6 +1948,7 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-deploy-plugin</artifactId>
+               <version>${version.maven.deploy}</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -2028,7 +1992,7 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-assembly-plugin</artifactId>
-               <version>3.7.1</version>
+               <version>${version.maven.assembly}</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -2130,15 +2094,10 @@
             </plugin>
             <plugin>
                <artifactId>maven-war-plugin</artifactId>
-               <version>3.4.0</version>
+               <version>${version.maven.war}</version>
                <configuration>
                   <attachClasses>false</attachClasses>
                </configuration>
-            </plugin>
-            <plugin>
-               <groupId>org.codehaus.mojo</groupId>
-               <artifactId>appassembler-maven-plugin</artifactId>
-               <version>2.1.0</version>
             </plugin>
             <plugin>
                <groupId>org.codehaus.mojo</groupId>
@@ -2149,11 +2108,6 @@
                <groupId>org.codehaus.mojo</groupId>
                <artifactId>exec-maven-plugin</artifactId>
                <version>${version.maven.exec}</version>
-            </plugin>
-            <plugin>
-               <groupId>org.codehaus.mojo</groupId>
-               <artifactId>ideauidesigner-maven-plugin</artifactId>
-               <version>1.0-beta-1</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -2191,7 +2145,7 @@
             </plugin>
             <plugin>
                <artifactId>maven-compiler-plugin</artifactId>
-               <version>${version.maven-compiler-plugin}</version>
+               <version>${version.maven.compiler}</version>
                <configuration>
                   <release>${maven.compiler.release}</release>
                   <encoding>UTF-8</encoding>
@@ -2553,159 +2507,6 @@
 
    <profiles>
       <profile>
-         <id>m2e</id>
-         <activation>
-            <property>
-               <name>m2e.version</name>
-            </property>
-         </activation>
-
-         <properties>
-            <!-- Eclipse doesn't handle well the dependency on uberjars for the modules which use them (e.g. demos).
-                 Mark the dependencies of the uberjar modules as not-optional when inside Eclipse. -->
-            <uberjar.deps.optional>false</uberjar.deps.optional>
-         </properties>
-
-         <build>
-            <pluginManagement>
-               <plugins>
-                  <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-                  <plugin>
-                     <groupId>org.eclipse.m2e</groupId>
-                     <artifactId>lifecycle-mapping</artifactId>
-                     <version>1.0.0</version>
-                     <configuration>
-                        <lifecycleMappingMetadata>
-                           <pluginExecutions>
-                              <pluginExecution>
-                                 <pluginExecutionFilter>
-                                    <groupId>org.apache.maven.plugins</groupId>
-                                    <artifactId>maven-antrun-plugin</artifactId>
-                                    <versionRange>[1.3,)</versionRange>
-                                    <goals>
-                                       <goal>run</goal>
-                                    </goals>
-                                 </pluginExecutionFilter>
-                                 <action>
-                                    <ignore />
-                                 </action>
-                              </pluginExecution>
-                              <pluginExecution>
-                                 <pluginExecutionFilter>
-                                    <groupId>org.apache.maven.plugins</groupId>
-                                    <artifactId>maven-dependency-plugin</artifactId>
-                                    <versionRange>[2.6,)</versionRange>
-                                    <goals>
-                                       <goal>copy</goal>
-                                       <goal>copy-dependencies</goal>
-                                       <goal>unpack</goal>
-                                       <goal>unpack-dependencies</goal>
-                                    </goals>
-                                 </pluginExecutionFilter>
-                                 <action>
-                                    <ignore />
-                                 </action>
-                              </pluginExecution>
-                              <pluginExecution>
-                                 <pluginExecutionFilter>
-                                    <groupId>org.apache.maven.plugins</groupId>
-                                    <artifactId>maven-enforcer-plugin</artifactId>
-                                    <versionRange>[1.3.1,)</versionRange>
-                                    <goals>
-                                       <goal>enforce</goal>
-                                    </goals>
-                                 </pluginExecutionFilter>
-                                 <action>
-                                    <ignore />
-                                 </action>
-                              </pluginExecution>
-                              <pluginExecution>
-                                 <pluginExecutionFilter>
-                                    <groupId>org.apache.maven.plugins</groupId>
-                                    <artifactId>maven-invoker-plugin</artifactId>
-                                    <versionRange>[1.8,)</versionRange>
-                                    <goals>
-                                       <goal>install</goal>
-                                    </goals>
-                                 </pluginExecutionFilter>
-                                 <action>
-                                    <ignore />
-                                 </action>
-                              </pluginExecution>
-                              <pluginExecution>
-                                 <pluginExecutionFilter>
-                                    <groupId>org.apache.maven.plugins</groupId>
-                                    <artifactId>maven-javadoc-plugin</artifactId>
-                                    <versionRange>[3.2,)</versionRange>
-                                    <goals>
-                                       <goal>javadoc</goal>
-                                    </goals>
-                                 </pluginExecutionFilter>
-                                 <action>
-                                    <ignore />
-                                 </action>
-                              </pluginExecution>
-                              <pluginExecution>
-                                 <pluginExecutionFilter>
-                                    <groupId>org.apache.maven.plugins</groupId>
-                                    <artifactId>maven-remote-resources-plugin</artifactId>
-                                    <versionRange>[1.1,)</versionRange>
-                                    <goals>
-                                       <goal>process</goal>
-                                    </goals>
-                                 </pluginExecutionFilter>
-                                 <action>
-                                    <ignore />
-                                 </action>
-                              </pluginExecution>
-                              <pluginExecution>
-                                 <pluginExecutionFilter>
-                                    <groupId>org.apache.servicemix.tooling</groupId>
-                                    <artifactId>depends-maven-plugin</artifactId>
-                                    <versionRange>[1.2,)</versionRange>
-                                    <goals>
-                                       <goal>generate-depends-file</goal>
-                                    </goals>
-                                 </pluginExecutionFilter>
-                                 <action>
-                                    <ignore />
-                                 </action>
-                              </pluginExecution>
-                              <pluginExecution>
-                                 <pluginExecutionFilter>
-                                    <groupId>org.codehaus.mojo</groupId>
-                                    <artifactId>exec-maven-plugin</artifactId>
-                                    <versionRange>[1.0.2,)</versionRange>
-                                    <goals>
-                                       <goal>java</goal>
-                                    </goals>
-                                 </pluginExecutionFilter>
-                                 <action>
-                                    <ignore />
-                                 </action>
-                              </pluginExecution>
-                              <pluginExecution>
-                                 <pluginExecutionFilter>
-                                    <groupId>org.codehaus.mojo</groupId>
-                                    <artifactId>ideauidesigner-maven-plugin</artifactId>
-                                    <versionRange>[1.0-beta-1,)</versionRange>
-                                    <goals>
-                                       <goal>javac2</goal>
-                                    </goals>
-                                 </pluginExecutionFilter>
-                                 <action>
-                                    <ignore />
-                                 </action>
-                              </pluginExecution>
-                           </pluginExecutions>
-                        </lifecycleMappingMetadata>
-                     </configuration>
-                  </plugin>
-               </plugins>
-            </pluginManagement>
-         </build>
-      </profile>
-      <profile>
          <id>distribution</id>
          <modules>
             <module>documentation</module>
@@ -2716,39 +2517,6 @@
             <skipTests>true</skipTests>
             <dependencies.excludeGroupIds>org.infinispan,org.jgroups,org.jboss.marshalling,org.jboss.logging,net.jcip,org.kohsuke.metainf-services</dependencies.excludeGroupIds>
          </properties>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-antrun-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>upload-schemas</id>
-                        <phase>deploy</phase>
-                        <goals>
-                           <goal>run</goal>
-                        </goals>
-                        <configuration>
-                           <skip>${skipArtifactUpload}</skip>
-                           <target>
-                              <available file="${project.build.outputDirectory}/schema" type="dir" property="hasSchema"/>
-
-                              <echo level="info" message="Uploading Schema files to ${upload.schemaDir}" if:set="hasSchema" xmlns:if="ant:if"/>
-                              <exec dir="${project.build.outputDirectory}/schema" executable="rsync" failonerror="${rsync.failonerror}" if:set="hasSchema" xmlns:if="ant:if">
-                                 <arg value="-rvm"/>
-                                 <arg line="--protocol=29"/>
-                                 <arg line="-e &quot;ssh -o StrictHostKeyChecking=accept-new -i ${upload.keyFile} -p ${upload.remotePort}&quot;"/>
-                                 <arg line="--include='*-${infinispan.core.schema.version}.xsd'"/>
-                                 <arg value="."/>
-                                 <arg value="${upload.schemaDir}"/>
-                              </exec>
-                           </target>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-            </plugins>
-         </build>
       </profile>
       <profile>
          <id>java21-test</id>
