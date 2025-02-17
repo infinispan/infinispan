@@ -2,14 +2,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
 
-   <parent>
-      <groupId>org.jboss</groupId>
-      <artifactId>jboss-parent</artifactId>
-      <version>43</version>
-      <!-- prevent the default ../pom.xml: the parent pom lives elsewhere -->
-      <relativePath/>
-   </parent>
-
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-build-configuration-parent</artifactId>
    <version>15.2.0-SNAPSHOT</version>
@@ -18,10 +10,6 @@
    <name>Infinispan Common Parent</name>
    <description>Infinispan common parent POM module</description>
    <url>http://www.infinispan.org</url>
-   <organization>
-      <name>JBoss, a division of Red Hat</name>
-      <url>http://www.jboss.org</url>
-   </organization>
    <licenses>
       <license>
          <name>Apache License 2.0</name>
@@ -32,44 +20,18 @@
    <developers>
       <developer>
          <id>placeholder</id>
-         <name>See http://www.infinispan.org for a complete list of contributors</name>
+         <name>See https://github.com/infinispan/infinispan/graphs/contributors</name>
       </developer>
    </developers>
-   <mailingLists>
-      <mailingList>
-         <name>Infinispan Issues</name>
-         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-issues</subscribe>
-         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-issues</unsubscribe>
-         <post>infinispan-issues@lists.jboss.org</post>
-         <archive>http://lists.jboss.org/pipermail/infinispan-issues/</archive>
-      </mailingList>
-      <mailingList>
-         <name>Infinispan Developers</name>
-         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</subscribe>
-         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</unsubscribe>
-         <post>infinispan-dev@lists.jboss.org</post>
-         <archive>http://lists.jboss.org/pipermail/infinispan-dev/</archive>
-      </mailingList>
-   </mailingLists>
    <scm>
       <connection>scm:git:git@github.com:infinispan/infinispan.git</connection>
       <developerConnection>scm:git:git@github.com:infinispan/infinispan.git</developerConnection>
       <url>https://github.com/infinispan/infinispan</url>
    </scm>
    <issueManagement>
-      <system>jira</system>
-      <url>https://issues.jboss.org/browse/ISPN</url>
+      <system>github</system>
+      <url>https://github.com/infinispan/infinispan/issues</url>
    </issueManagement>
-   <ciManagement>
-      <system>Jenkins</system>
-      <url>https://ci.infinispan.org</url>
-      <notifiers>
-         <notifier>
-            <type>mail</type>
-            <address>infinispan-commits@lists.jboss.org</address>
-         </notifier>
-      </notifiers>
-   </ciManagement>
    <distributionManagement>
       <snapshotRepository>
          <id>${maven.snapshots.repo.id}</id>
@@ -80,6 +42,7 @@
          <url>${maven.releases.repo.url}</url>
       </repository>
    </distributionManagement>
+   <inceptionYear>2009</inceptionYear>
 
    <properties>
       <maven.compiler.source>17</maven.compiler.source>
@@ -228,34 +191,40 @@
       <version.maven>3.9.9</version.maven>
       <version.maven.antlr3>3.5.2</version.maven.antlr3>
       <version.maven.antrun>3.1.0</version.maven.antrun>
+      <version.maven.archetype>3.3.1</version.maven.archetype>
+      <version.maven.assembly>3.7.1</version.maven.assembly>
       <version.maven.buildhelper>3.6.0</version.maven.buildhelper>
       <version.maven.bundle>4.2.1</version.maven.bundle>
-      <version.maven.gpg>3.2.7</version.maven.gpg>
       <version.maven.clean>3.4.0</version.maven.clean>
-      <version.maven-compiler-plugin>3.13.0</version.maven-compiler-plugin>
+      <version.maven.compiler>3.13.0</version.maven.compiler>
+      <version.maven.dependency>3.8.1</version.maven.dependency>
+      <version.maven.deploy>3.1.3</version.maven.deploy>
       <version.maven.enforcer>3.5.0</version.maven.enforcer>
       <version.maven.exec>3.5.0</version.maven.exec>
+      <version.maven.gpg>3.2.7</version.maven.gpg>
+      <version.maven.help>3.5.1</version.maven.help>
       <version.maven.install>3.1.3</version.maven.install>
       <version.maven.invoker>3.9.0</version.maven.invoker>
       <version.maven.jar>3.4.2</version.maven.jar>
       <version.maven.javadoc>3.11.2</version.maven.javadoc>
       <version.maven-plugin-plugin>3.15.1</version.maven-plugin-plugin>
+      <version.maven.project-info-reports>3.8.0</version.maven.project-info-reports>
       <version.maven.os>1.7.1</version.maven.os>
       <version.maven.release>3.1.1</version.maven.release>
       <version.maven.remote.resource>3.1.0</version.maven.remote.resource>
       <version.maven.resources>3.3.1</version.maven.resources>
+      <version.maven.scm>2.1.0</version.maven.scm>
       <version.maven.shade>3.6.0</version.maven.shade>
       <version.maven.source>3.3.1</version.maven.source>
       <version.maven.surefire>3.5.2</version.maven.surefire>
+      <version.maven.war>3.4.0</version.maven.war>
       <version.org.jboss.galleon>6.0.4.Final</version.org.jboss.galleon>
       <version.org.wildfly.galleon-plugins>7.3.1.Final</version.org.wildfly.galleon-plugins>
       <version.sonatype.nexus-staging-plugin>1.7.0</version.sonatype.nexus-staging-plugin>
-      <!-- overwrite version in jboss-parent -->
       <version.pmd.plugin>3.26.0</version.pmd.plugin>
       <version.owasp-dependency-check-plugin>9.2.0</version.owasp-dependency-check-plugin>
       <version.spotbugs.plugin>4.8.6.6</version.spotbugs.plugin>
       <version.weld-servlet>5.1.3.Final</version.weld-servlet>
-      <version.deploy.plugin>3.1.1</version.deploy.plugin>
 
       <!-- versionx -->
       <versionx.com.puppycrawl.tools.checkstyle>10.21.2</versionx.com.puppycrawl.tools.checkstyle>
