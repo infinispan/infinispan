@@ -281,8 +281,8 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       }).finish();
 
       // Confirm state transfer (phase 1, READ_OLD_WRITE_ALL)
-      ctm.handleRebalancePhaseConfirm(CACHE_NAME, A, rebalanceTopologyId, null, rebalanceViewId);
-      ctm.handleRebalancePhaseConfirm(CACHE_NAME, B, rebalanceTopologyId, null, rebalanceViewId);
+      ctm.handleRebalancePhaseConfirm(CACHE_NAME, A, rebalanceTopologyId, null);
+      ctm.handleRebalancePhaseConfirm(CACHE_NAME, B, rebalanceTopologyId, null);
 
       // CTMI starts phase 2, READ_ALL_WRITE_ALL
       ltm.expectTopology(rebalanceTopologyId + 1, initialMembers, finalMembers,
@@ -295,8 +295,8 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       }).finish();
 
       // Confirm phase 2
-      ctm.handleRebalancePhaseConfirm(CACHE_NAME, A, rebalanceTopologyId + 1, null, rebalanceViewId);
-      ctm.handleRebalancePhaseConfirm(CACHE_NAME, B, rebalanceTopologyId + 1, null, rebalanceViewId);
+      ctm.handleRebalancePhaseConfirm(CACHE_NAME, A, rebalanceTopologyId + 1, null);
+      ctm.handleRebalancePhaseConfirm(CACHE_NAME, B, rebalanceTopologyId + 1, null);
 
       // CTMI starts phase 3: READ_NEW_WRITE_ALL
       ltm.expectTopology(rebalanceTopologyId + 2, initialMembers, finalMembers,
@@ -309,8 +309,8 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
       }).finish();
 
       // Confirm phase 3
-      ctm.handleRebalancePhaseConfirm(CACHE_NAME, A, rebalanceTopologyId + 2, null, rebalanceViewId);
-      ctm.handleRebalancePhaseConfirm(CACHE_NAME, B, rebalanceTopologyId + 2, null, rebalanceViewId);
+      ctm.handleRebalancePhaseConfirm(CACHE_NAME, A, rebalanceTopologyId + 2, null);
+      ctm.handleRebalancePhaseConfirm(CACHE_NAME, B, rebalanceTopologyId + 2, null);
 
       // CTMI finishes rebalance
       ltm.expectTopology(rebalanceTopologyId + 3, finalMembers, null, CacheTopology.Phase.NO_REBALANCE);
