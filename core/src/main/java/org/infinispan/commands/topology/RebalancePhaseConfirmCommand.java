@@ -22,25 +22,23 @@ public class RebalancePhaseConfirmCommand extends AbstractCacheControlCommand {
    private String cacheName;
    private Throwable throwable;
    private int topologyId;
-   private int viewId;
 
    // For CommandIdUniquenessTest only
    public RebalancePhaseConfirmCommand() {
       super(COMMAND_ID);
    }
 
-   public RebalancePhaseConfirmCommand(String cacheName, Address origin, Throwable throwable, int topologyId, int viewId) {
+   public RebalancePhaseConfirmCommand(String cacheName, Address origin, Throwable throwable, int topologyId) {
       super(COMMAND_ID, origin);
       this.cacheName = cacheName;
       this.throwable = throwable;
       this.topologyId = topologyId;
-      this.viewId = viewId;
    }
 
    @Override
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry gcr) throws Throwable {
       return gcr.getClusterTopologyManager()
-            .handleRebalancePhaseConfirm(cacheName, origin, topologyId, throwable, viewId);
+            .handleRebalancePhaseConfirm(cacheName, origin, topologyId, throwable);
    }
 
    public String getCacheName() {
@@ -52,7 +50,6 @@ public class RebalancePhaseConfirmCommand extends AbstractCacheControlCommand {
       MarshallUtil.marshallString(cacheName, output);
       output.writeObject(throwable);
       output.writeInt(topologyId);
-      output.writeInt(viewId);
    }
 
    @Override
@@ -60,7 +57,6 @@ public class RebalancePhaseConfirmCommand extends AbstractCacheControlCommand {
       cacheName = MarshallUtil.unmarshallString(input);
       throwable = (Throwable) input.readObject();
       topologyId = input.readInt();
-      viewId = input.readInt();
    }
 
    @Override
@@ -70,7 +66,6 @@ public class RebalancePhaseConfirmCommand extends AbstractCacheControlCommand {
             ", origin=" + origin +
             ", throwable=" + throwable +
             ", topologyId=" + topologyId +
-            ", viewId=" + viewId +
             '}';
    }
 }
