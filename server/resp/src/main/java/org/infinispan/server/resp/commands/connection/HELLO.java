@@ -9,12 +9,13 @@ import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3AuthHandler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.RespVersion;
+import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.AuthResp3Command;
 import org.infinispan.server.resp.serialization.RespConstants;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.CharsetUtil;
 
 /**
  * HELLO
@@ -48,14 +49,12 @@ public class HELLO extends RespCommand implements AuthResp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
       CompletionStage<Boolean> successStage = null;
-
-      byte[] respProtocolBytes = arguments.get(0);
-      String version = new String(respProtocolBytes, CharsetUtil.UTF_8);
-      if (!version.equals("3")) {
+      try {
+         handler.writer().version(RespVersion.of(ArgumentUtils.toInt(arguments.get(0))));
+      } catch (IllegalArgumentException e) {
          handler.writer().error("-NOPROTO sorry this protocol version is not supported");
          return handler.myStage();
       }
-
       if (arguments.size() == 4) {
          successStage = handler.performAuth(ctx, arguments.get(2), arguments.get(3));
       } else if (!handler.isAuthorized() && handler.canUseCertAuth()) {

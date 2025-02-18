@@ -16,7 +16,6 @@ import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.serialization.JavaObjectSerializer;
 import org.infinispan.server.resp.serialization.Resp3Type;
-import org.infinispan.server.resp.serialization.RespConstants;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.jgroups.util.CompletableFutures;
 
@@ -143,9 +142,13 @@ public class LMPOP extends RespCommand implements Resp3Command {
 
       @Override
       public void accept(PopResult ignore, ResponseWriter writer) {
-         writer.writeNumericPrefix(RespConstants.ARRAY, 2);
-         writer.string(key);
-         writer.array(values, Resp3Type.BULK_STRING);
+         writer.array(List.of(key, values), (o, w) -> {
+            if (o instanceof Collection<?>) {
+               w.array((Collection<byte[]>) o, Resp3Type.BULK_STRING);
+            } else {
+               w.string((byte[]) o);
+            }
+         });
       }
    }
 }
