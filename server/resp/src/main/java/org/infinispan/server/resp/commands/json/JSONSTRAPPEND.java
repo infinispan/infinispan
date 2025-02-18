@@ -5,7 +5,6 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespRequestHandler;
-import org.infinispan.server.resp.json.AppendType;
 import org.infinispan.server.resp.json.EmbeddedJsonCache;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -18,7 +17,7 @@ import org.infinispan.server.resp.json.JSONUtil;
  * @since 15.2
  */
 public class JSONSTRAPPEND extends JSONAPPEND {
-    public static String STR_TYPE_NAME = AppendType.STRING.name().toLowerCase();
+    public static String STR_TYPE_NAME = "string";
     public JSONSTRAPPEND() {
         super("JSON.STRAPPEND", -3, 1, 1, 1);
     }

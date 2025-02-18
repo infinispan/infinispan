@@ -157,7 +157,7 @@ public class EmbeddedJsonCache {
     *         arrays.
     */
    public CompletionStage<List<Long>> arrAppend(byte[] key, byte[] path, List<byte[]> values) {
-      return readWriteMap.eval(key, new JsonAppendFunction(path, values));
+      return readWriteMap.eval(key, new JsonArrayAppendFunction(path, values));
    }
 
    /**
@@ -176,7 +176,7 @@ public class EmbeddedJsonCache {
     *         string.
     */
    public CompletionStage<List<Long>> strAppend(byte[] key, byte[] path, byte[] value) {
-      return readWriteMap.eval(key, new JsonAppendFunction(path, value));
+      return readWriteMap.eval(key, new JsonStringAppendFunction(path, value));
    }
 
    /**
