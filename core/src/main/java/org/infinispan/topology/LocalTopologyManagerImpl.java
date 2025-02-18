@@ -2,9 +2,9 @@ package org.infinispan.topology;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.commons.util.concurrent.CompletableFutures.completedNull;
+import static org.infinispan.commons.util.concurrent.CompletionStages.handleAndCompose;
 import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
-import static org.infinispan.commons.util.concurrent.CompletionStages.handleAndCompose;
 import static org.infinispan.util.logging.Log.CLUSTER;
 import static org.infinispan.util.logging.Log.CONFIG;
 import static org.infinispan.util.logging.Log.CONTAINER;
@@ -38,6 +38,7 @@ import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Version;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
@@ -68,7 +69,6 @@ import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.ActionSequencer;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
@@ -339,7 +339,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       log.debugf("Node %s leaving cache %s", transport.getAddress(), cacheName);
       runningCaches.remove(cacheName);
 
-      ReplicableCommand command = new CacheLeaveCommand(cacheName, transport.getAddress(), transport.getViewId());
+      ReplicableCommand command = new CacheLeaveCommand(cacheName, transport.getAddress());
       try {
          CompletionStages.join(helper.executeOnCoordinator(transport, command, timeout));
       } catch (Exception e) {
@@ -353,7 +353,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          // Note that if the coordinator changes again after we sent the command, we will get another
          // query for the status of our running caches. So we don't need to retry if the command failed.
          helper.executeOnCoordinatorAsync(transport,
-               new RebalancePhaseConfirmCommand(cacheName, transport.getAddress(), throwable, topologyId, transport.getViewId()));
+               new RebalancePhaseConfirmCommand(cacheName, transport.getAddress(), throwable, topologyId));
       } catch (Exception e) {
          log.debugf(e, "Error sending the rebalance completed notification for cache %s to the coordinator",
                     cacheName);
