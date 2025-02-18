@@ -240,7 +240,7 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
                   });
          }
          return forwardedAnswer.answer(invocation);
-      }).when(mock).handleRebalancePhaseConfirm(anyString(), any(Address.class), anyInt(), isNull(), anyInt());
+      }).when(mock).handleRebalancePhaseConfirm(anyString(), any(Address.class), anyInt(), isNull());
       TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, mock, true);
    }
 }
