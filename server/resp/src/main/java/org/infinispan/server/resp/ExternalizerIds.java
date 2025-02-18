@@ -17,4 +17,5 @@ public interface ExternalizerIds {
    Integer JSON_OBJKEYS_FUNCTION = 2211;
    Integer JSON_NUMINCRBY_FUNCTION = 2212;
    Integer JSON_ARRINDEX_FUNCTION = 2213;
+   Integer JSON_BUCKET = 2214;
 }
