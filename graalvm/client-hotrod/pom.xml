@@ -182,16 +182,13 @@
                   </executions>
                   <configuration>
                      <buildArgs>
-                        -J-Xmx5g
-                        -Ob
-                        -J-Djava.util.logging.manager=org.jboss.logmanager.LogManager
-                        --no-fallback
-                        --verbose
-                        -H:+AddAllCharsets
-                        -H:+ReportExceptionStackTraces
-                        -H:ReflectionConfigurationResources=reflect-config.json
-                        -H:ResourceConfigurationResources=resource-config.json
-                        -H:+AllowDeprecatedBuilderClassesOnImageClasspath
+                        <buildArg>-J-Xmx5g</buildArg>
+                        <buildArg>-J-Djava.util.logging.manager=org.jboss.logmanager.LogManager</buildArg>
+                        <buildArg>-H:+AddAllCharsets</buildArg>
+                        <buildArg>-H:+ReportExceptionStackTraces</buildArg>
+                        <buildArg>-H:ReflectionConfigurationResources=reflect-config.json</buildArg>
+                        <buildArg>-H:ResourceConfigurationResources=resource-config.json</buildArg>
+                        <buildArg>-H:+AllowDeprecatedBuilderClassesOnImageClasspath</buildArg>
                      </buildArgs>
                      <metadataRepository>
                         <enabled>true</enabled>
@@ -203,6 +200,9 @@
                            </dependency>
                         </dependencies>
                      </metadataRepository>
+                     <fallback>false</fallback>
+                     <quickBuild>true</quickBuild>
+                     <verbose>true</verbose>
                   </configuration>
                </plugin>
             </plugins>
