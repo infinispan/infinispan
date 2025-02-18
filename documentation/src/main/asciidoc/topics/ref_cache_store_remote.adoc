@@ -93,6 +93,6 @@ include::code_examples/ConfigRemoteStore.java[]
 
 .Reference
 
-* link:{configdocroot}infinispan-cachestore-remote-config-{schemaversion}.html[Remote cache store configuration schema]
-* link:{javadocroot}/org/infinispan/persistence/remote/RemoteStore.html[RemoteStore]
-* link:{javadocroot}/org/infinispan/persistence/remote/configuration/RemoteStoreConfigurationBuilder.html[RemoteStoreConfigurationBuilder]
+* link:../../configuration-schema/infinispan-cachestore-remote-config-{schemaversion}.html[Remote cache store configuration schema]
+* link:../../apidocs/org/infinispan/persistence/remote/RemoteStore.html[RemoteStore]
+* link:../../apidocs/org/infinispan/persistence/remote/configuration/RemoteStoreConfigurationBuilder.html[RemoteStoreConfigurationBuilder]

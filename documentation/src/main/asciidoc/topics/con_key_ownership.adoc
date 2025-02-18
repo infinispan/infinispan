@@ -62,4 +62,4 @@ include::code_examples/HashingConfiguration.java[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/distribution/ch/KeyPartitioner.html[KeyPartitioner]
+* link:../../apidocs/org/infinispan/distribution/ch/KeyPartitioner.html[KeyPartitioner]

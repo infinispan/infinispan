@@ -16,7 +16,7 @@ Properties in this file take the format of `infinispan.client.hotrod.*`, for exa
 infinispan.client.hotrod.server_list=127.0.0.1:11222
 ----
 
-* link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html[Hot Rod client configuration API]
+* link:../../apidocs/org/infinispan/client/hotrod/configuration/package-summary.html[Hot Rod client configuration API]
 
 [discrete]
 == `application.properties`

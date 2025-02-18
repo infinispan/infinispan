@@ -23,5 +23,5 @@ case you cannot disable it.
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/configuration/cache/ExpirationConfigurationBuilder.html[org.infinispan.configuration.cache.ExpirationConfigurationBuilder]
-* link:{javadocroot}/org/infinispan/expiration/ExpirationManager.html[org.infinispan.expiration.ExpirationManager]
+* link:../../apidocs/org/infinispan/configuration/cache/ExpirationConfigurationBuilder.html[org.infinispan.configuration.cache.ExpirationConfigurationBuilder]
+* link:../../apidocs/org/infinispan/expiration/ExpirationManager.html[org.infinispan.expiration.ExpirationManager]

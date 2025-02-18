@@ -55,4 +55,4 @@ It is possible to flush the ACL cache using the `GlobalSecurityManager` MBean, a
 
 [role="_additional-resources"]
 .Additional resources
-* link:{configdocroot}[{brandname} configuration schema reference]
+* link:../../configuration-schema/index.html[{brandname} configuration schema reference]

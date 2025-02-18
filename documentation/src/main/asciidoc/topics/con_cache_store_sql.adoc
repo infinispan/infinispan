@@ -38,5 +38,5 @@ Expiration removes stale values from memory, causing the cache to fetch the valu
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/persistence/jdbc/common/DatabaseType.html[DatabaseType Enum lists supported database dialects]
-* link:{configdocroot}infinispan-cachestore-sql-config-{schemaversion}.html[{brandname} SQL store configuration reference]
+* link:../../apidocs/org/infinispan/persistence/jdbc/common/DatabaseType.html[DatabaseType Enum lists supported database dialects]
+* link:../../configuration-schema/infinispan-cachestore-sql-config-{schemaversion}.html[{brandname} SQL store configuration reference]

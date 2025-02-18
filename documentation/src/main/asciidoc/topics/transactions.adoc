@@ -100,7 +100,7 @@ Default is `org.infinispan.transaction.lookup.GenericTransactionManagerLookup`.
 
 
 For more details on how Two-Phase-Commit (2PC) is implemented in {brandname} and how locks are being acquired see the section below.
-More details about the configuration settings are available in link:{configdocroot}[Configuration reference].
+More details about the configuration settings are available in link:../../configuration-schema/index.html[Configuration reference].
 
 [[tx_isolation_levels]]
 == Isolation levels
@@ -251,7 +251,7 @@ try {
 ----
 
 == Dealing with exceptions
-If a link:{javadocroot}/org/infinispan/commons/CacheException.html[CacheException] (or a subclass of it) is thrown by a cache method within the scope of a JTA transaction, then the transaction is automatically marked for rollback.
+If a link:../../apidocs/org/infinispan/commons/CacheException.html[CacheException] (or a subclass of it) is thrown by a cache method within the scope of a JTA transaction, then the transaction is automatically marked for rollback.
 
 [[tx_sync_enlist]]
 == Enlisting Synchronizations

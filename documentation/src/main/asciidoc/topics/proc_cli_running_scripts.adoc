@@ -49,4 +49,4 @@ include::code_examples/TaskExecute.java[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[org.infinispan.client.hotrod.RemoteCache]
+* link:../../apidocs/org/infinispan/client/hotrod/RemoteCache.html[org.infinispan.client.hotrod.RemoteCache]

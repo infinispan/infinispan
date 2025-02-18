@@ -77,5 +77,5 @@ include::code_examples/GlobalPersistentLocation.java[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{configdocroot}[{brandname} configuration schema]
-* link:{javadocroot}/org/infinispan/configuration/global/GlobalStateConfiguration.html[org.infinispan.configuration.global.GlobalStateConfiguration]
+* link:../../configuration-schema/index.html[{brandname} configuration schema]
+* link:../../apidocs/org/infinispan/configuration/global/GlobalStateConfiguration.html[org.infinispan.configuration.global.GlobalStateConfiguration]

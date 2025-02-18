@@ -32,7 +32,7 @@ include::code_examples/EmbeddedCacheConfiguration.java[]
 
 .`getCache()` method
 
-Invoke the link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html#getCache(java.lang.String)[`getCache(String)`] method to obtain caches, as follows:
+Invoke the link:../../apidocs/org/infinispan/manager/EmbeddedCacheManager.html#getCache(java.lang.String)[`getCache(String)`] method to obtain caches, as follows:
 
 [source,java,options="nowrap"]
 ----
@@ -45,7 +45,7 @@ Using the `getCache()` method creates the cache only on the node where you invok
 
 .`createCache()` method
 
-Invoke the link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManagerAdmin.html#createCache(java.lang.String,java.lang.String)[`createCache()`] method to create caches dynamically across the entire cluster.
+Invoke the link:../../apidocs/org/infinispan/manager/EmbeddedCacheManagerAdmin.html#createCache(java.lang.String,java.lang.String)[`createCache()`] method to create caches dynamically across the entire cluster.
 
 [source,java]
 ----
@@ -67,11 +67,11 @@ include::code_examples/CreateCacheWithFlagsPermanent.java[]
 
 For the +PERMANENT+ flag to take effect, you must enable global state and set a configuration storage provider.
 
-For more information about configuration storage providers, see link:{javadocroot}/org/infinispan/configuration/global/GlobalStateConfigurationBuilder.html#configurationStorage(org.infinispan.globalstate.ConfigurationStorage)[GlobalStateConfigurationBuilder#configurationStorage()].
+For more information about configuration storage providers, see link:../../apidocs/org/infinispan/configuration/global/GlobalStateConfigurationBuilder.html#configurationStorage(org.infinispan.globalstate.ConfigurationStorage)[GlobalStateConfigurationBuilder#configurationStorage()].
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html[EmbeddedCacheManager]
-* link:{javadocroot}/org/infinispan/configuration/global/package-summary.html[EmbeddedCacheManager Configuration]
-* link:{javadocroot}/org/infinispan/configuration/global/GlobalConfiguration.html[org.infinispan.configuration.global.GlobalConfiguration]
-* link:{javadocroot}/org/infinispan/configuration/cache/ConfigurationBuilder.html[org.infinispan.configuration.cache.ConfigurationBuilder]
+* link:../../apidocs/org/infinispan/manager/EmbeddedCacheManager.html[EmbeddedCacheManager]
+* link:../../apidocs/org/infinispan/configuration/global/package-summary.html[EmbeddedCacheManager Configuration]
+* link:../../apidocs/org/infinispan/configuration/global/GlobalConfiguration.html[org.infinispan.configuration.global.GlobalConfiguration]
+* link:../../apidocs/org/infinispan/configuration/cache/ConfigurationBuilder.html[org.infinispan.configuration.cache.ConfigurationBuilder]

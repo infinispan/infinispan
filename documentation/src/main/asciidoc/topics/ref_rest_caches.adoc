@@ -51,7 +51,7 @@ PUT /rest/v2/caches/{cacheName}
 |Sets the https://en.wikipedia.org/wiki/Media_type[MediaType] for the
 {brandname} configuration payload; either `application/xml` or
 `application/json`.
-| `Flags` | OPTIONAL | Used to set link:{javadocroot}/org/infinispan/commons/api/CacheContainerAdmin.AdminFlag.html[AdminFlags]
+| `Flags` | OPTIONAL | Used to set link:../../apidocs/org/infinispan/commons/api/CacheContainerAdmin.AdminFlag.html[AdminFlags]
 |===
 
 [id='rest_v2_cache_exists']

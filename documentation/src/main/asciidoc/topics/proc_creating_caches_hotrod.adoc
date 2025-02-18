@@ -35,5 +35,5 @@ If the name of your remote cache contains the `.` character, you must enclose it
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html[Hot Rod Client Configuration]
-* link:{javadocroot}/org/infinispan/client/hotrod/configuration/RemoteCacheConfigurationBuilder.html[org.infinispan.client.hotrod.configuration.RemoteCacheConfigurationBuilder]
+* link:../../apidocs/org/infinispan/client/hotrod/configuration/package-summary.html[Hot Rod Client Configuration]
+* link:../../apidocs/org/infinispan/client/hotrod/configuration/RemoteCacheConfigurationBuilder.html[org.infinispan.client.hotrod.configuration.RemoteCacheConfigurationBuilder]

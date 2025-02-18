@@ -14,4 +14,4 @@ When you use this table with a SQL cache store, {brandname} adds an entry to the
 
 [role="_additional-resources"]
 .Additional resources
-* link:{configdocroot}infinispan-cachestore-sql-config-{schemaversion}.html[{brandname} SQL store configuration reference]
+* link:../../configuration-schema/infinispan-cachestore-sql-config-{schemaversion}.html[{brandname} SQL store configuration reference]

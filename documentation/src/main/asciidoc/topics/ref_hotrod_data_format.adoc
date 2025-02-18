@@ -93,4 +93,4 @@ For example, the preceding `get(key)` call returns values such as:
 
 .Reference
 
-link:{javadocroot}/org/infinispan/client/hotrod/DataFormat.html[org.infinispan.client.hotrod.DataFormat]
+link:../../apidocs/org/infinispan/client/hotrod/DataFormat.html[org.infinispan.client.hotrod.DataFormat]

@@ -70,7 +70,7 @@ include::xml/grouper_registration.xml[]
 
 `AdvancedCache` has two group-specific methods:
 
-* `link:{javadocroot}/org/infinispan/AdvancedCache.html#getGroup-java.lang.String-[getGroup(groupName)]` retrieves all keys in the cache that belong to a group.
-* `link:{javadocroot}/org/infinispan/AdvancedCache.html#removeGroup-java.lang.String-[removeGroup(groupName)]` removes all the keys in the cache that belong to a group.
+* `link:../../apidocs/org/infinispan/AdvancedCache.html#getGroup-java.lang.String-[getGroup(groupName)]` retrieves all keys in the cache that belong to a group.
+* `link:../../apidocs/org/infinispan/AdvancedCache.html#removeGroup-java.lang.String-[removeGroup(groupName)]` removes all the keys in the cache that belong to a group.
 
 Both methods iterate over the entire data container and store (if present), so they can be slow when a cache contains lots of small groups.

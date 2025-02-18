@@ -39,4 +39,4 @@ infinispan.client.hotrod.cache.somecaches*.force_return_values = true
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/client/hotrod/Flag.html#FORCE_RETURN_VALUE[org.infinispan.client.hotrod.Flag]
+* link:../../apidocs/org/infinispan/client/hotrod/Flag.html#FORCE_RETURN_VALUE[org.infinispan.client.hotrod.Flag]

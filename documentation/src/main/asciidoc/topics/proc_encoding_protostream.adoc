@@ -34,5 +34,5 @@ Alternatively you can use the same encoding for keys and values:
 
 [role="_additional-resources"]
 .Additional resources
-* link:{configdocroot}[{brandname} Schema Reference]
-* link:{javadocroot}/org/infinispan/configuration/cache/ConfigurationBuilder.html[org.infinispan.configuration.cache.ConfigurationBuilder]
+* link:../../configuration-schema/index.html[{brandname} Schema Reference]
+* link:../../apidocs/org/infinispan/configuration/cache/ConfigurationBuilder.html[org.infinispan.configuration.cache.ConfigurationBuilder]

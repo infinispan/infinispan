@@ -42,4 +42,4 @@ include::code_examples/ServerHinting.java[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/configuration/global/TransportConfigurationBuilder.html[org.infinispan.configuration.global.TransportConfigurationBuilder]
+* link:../../apidocs/org/infinispan/configuration/global/TransportConfigurationBuilder.html[org.infinispan.configuration.global.TransportConfigurationBuilder]

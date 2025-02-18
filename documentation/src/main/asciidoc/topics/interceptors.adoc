@@ -18,14 +18,14 @@ include::xml/custom_interceptors.xml[]
 ----
 
 == Adding custom interceptors programmatically
-In order to do that one needs to obtain a reference to the link:{javadocroot}/org/infinispan/AdvancedCache.html[`AdvancedCache`]. This can be done as follows:
+In order to do that one needs to obtain a reference to the link:../../apidocs/org/infinispan/AdvancedCache.html[`AdvancedCache`]. This can be done as follows:
 
 [source,java]
 ----
 include::code_examples/CustomInterceptors.java[]
 ----
 
-Then one of the _addInterceptor()_ methods should be used to add the actual interceptor. For further documentation refer to link:{javadocroot}/org/infinispan/AdvancedCache.html[`AdvancedCache`] javadoc.
+Then one of the _addInterceptor()_ methods should be used to add the actual interceptor. For further documentation refer to link:../../apidocs/org/infinispan/AdvancedCache.html[`AdvancedCache`] javadoc.
 
 == Custom interceptor design
 When writing a custom interceptor, you need to abide by the following rules.

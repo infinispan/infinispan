@@ -38,5 +38,5 @@ include::xml/jgroups_custom_udp.xml[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/configuration/global/TransportConfigurationBuilder.html[org.infinispan.configuration.global.TransportConfigurationBuilder]
+* link:../../apidocs/org/infinispan/configuration/global/TransportConfigurationBuilder.html[org.infinispan.configuration.global.TransportConfigurationBuilder]
 endif::embedded_caches[]

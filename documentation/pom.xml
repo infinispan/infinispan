@@ -18,8 +18,6 @@
     <properties>
         <download.url>https://infinispan.org/download/</download.url>
         <infinispan.tutorials>https://infinispan.org/tutorials/simple/simple_tutorials.html</infinispan.tutorials>
-        <javadoc.root>https://docs.jboss.org/infinispan/${infinispan.base.version}/apidocs</javadoc.root>
-        <configdoc.root>https://docs.jboss.org/infinispan/${infinispan.base.version}/configdocs/</configdoc.root>
         <jdk.root>https://docs.oracle.com/en/java/javase/${maven.compiler.release}</jdk.root>
         <jdk.docroot>${jdk.root}/docs/api</jdk.docroot>
         <javaee.docroot>https://jakarta.ee/specifications/platform/9/apidocs</javaee.docroot>
@@ -171,12 +169,10 @@
                                 <moduleprefix>${infinispan.module.slot.prefix}</moduleprefix>
                                 <infinispanslot>${infinispanslot}</infinispanslot>
                                 <defaults>${defaults.file}</defaults>
-                                <javadocroot>${javadoc.root}</javadocroot>
                                 <jdkroot>${jdk.root}</jdkroot>
                                 <jdkminversion>${maven.compiler.release}</jdkminversion>
                                 <mavenminversion>${maven.min.version}</mavenminversion>
                                 <protostreamdocroot>${protostream.api.docs}</protostreamdocroot>
-                                <configdocroot>${configdoc.root}</configdocroot>
                                 <jdkdocroot>${jdk.docroot}</jdkdocroot>
                                 <javaeedocroot>${javaee.docroot}</javaeedocroot>
                                 <download_url>${download.url}</download_url>
@@ -248,9 +244,7 @@
                                         <fullbrandname>${infinispan.brand.name}</fullbrandname>
                                         <defaults>${defaults.file}</defaults>
                                         <infinispanslot>${infinispanslot}</infinispanslot>
-                                        <javadocroot>${javadoc.root}</javadocroot>
                                         <protostreamdocroot>${protostream.api.docs}</protostreamdocroot>
-                                        <configdocroot>${configdoc.root}</configdocroot>
                                         <jdkdocroot>${jdk.docroot}</jdkdocroot>
                                         <javaeedocroot>${javaee.docroot}</javaeedocroot>
                                         <jdkminversion>${maven.compiler.release}</jdkminversion>
@@ -321,11 +315,51 @@
                         <artifactId>maven-antrun-plugin</artifactId>
                         <executions>
                             <execution>
+                                <id>xsdocgen</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <property name="plugin_classpath" refid="maven.plugin.classpath"/>
+                                        <echo level="info" message="Base dir: ${basedir}"/>
+                                        <path id="xsd.fileset.path">
+                                            <fileset casesensitive="yes" dir="${basedir}/..">
+                                                <!-- make sure core comes first -->
+                                                <include name="core/target/classes/schema/infinispan-config-${infinispan.core.schema.version}.xsd"/>
+                                                <include
+                                                        name="persistence/*/target/classes/schema/*-${infinispan.core.schema.version}.xsd"/>
+                                                <include
+                                                        name="server/runtime/target/classes/schema/*-${infinispan.core.schema.version}.xsd"/>
+                                                <include
+                                                        name="counter/target/classes/schema/*-${infinispan.core.schema.version}.xsd"/>
+                                                <include
+                                                        name="lock/target/classes/schema/*-${infinispan.core.schema.version}.xsd"/>
+                                            </fileset>
+                                        </path>
+                                        <pathconvert pathsep=" " property="xsd.fileset" refid="xsd.fileset.path"/>
+                                        <echo level="info" message="XSDs: ${xsd.fileset}"/>
+                                        <java classname="org.infinispan.tools.xsd.XSDoc">
+                                            <arg value="-o"/>
+                                            <arg value="${project.build.directory}/generated/${infinispan.base.version}/html/configuration-schema"/>
+                                            <arg value="-s"/>
+                                            <!-- file contains only abstract types. Skip rendering to HTML-->
+                                            <arg value="infinispan-cachestore-jdbc-common-config-${infinispan.core.schema.version}.xsd"/>
+                                            <arg line="${xsd.fileset}"/>
+                                            <classpath>
+                                                <pathelement path="${plugin_classpath}"/>
+                                            </classpath>
+                                        </java>
+                                    </target>
+                                </configuration>
+                            </execution>
+                            <execution>
                                 <id>create-logging-report</id>
                                 <goals>
                                     <goal>run</goal>
                                 </goals>
-                                <phase>install</phase>
+                                <phase>prepare-package</phase>
                                 <configuration>
                                     <target>
                                         <ant antfile="collect-logs.xml" inheritRefs="true"/>
@@ -333,6 +367,13 @@
                                 </configuration>
                             </execution>
                         </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.infinispan</groupId>
+                                <artifactId>infinispan-tools</artifactId>
+                                <version>${project.version}</version>
+                            </dependency>
+                        </dependencies>
                     </plugin>
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
@@ -344,7 +385,7 @@
                                 <goals>
                                     <goal>transform</goal>
                                 </goals>
-                                <phase>install</phase>
+                                <phase>prepare-package</phase>
                                 <configuration>
                                     <transformationSets>
                                         <transformationSet>
