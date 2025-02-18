@@ -36,7 +36,7 @@ You can optionally configure the Hot Rod connector to use the netmask that the h
 
 [role="_additional-resources"]
 .Additional resources
-* link:{configdocroot}infinispan-server-{schemaversion}.html[{brandname} Server schema reference]
+* link:../../configuration-schema/infinispan-server-{schemaversion}.html[{brandname} Server schema reference]
 * link:https://datatracker.ietf.org/doc/html/rfc1112[RFC 1112]
 * link:https://datatracker.ietf.org/doc/html/rfc1918[RFC 1918]
 * link:https://datatracker.ietf.org/doc/html/rfc3513[RFC 3513]

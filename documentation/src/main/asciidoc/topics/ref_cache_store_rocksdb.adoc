@@ -102,9 +102,9 @@ include::code_examples/ConfigRocksDbProperties.java[]
 
 .Reference
 
-* link:{configdocroot}infinispan-cachestore-rocksdb-config-{schemaversion}.html[RocksDB cache store configuration schema]
-* link:{javadocroot}/org/infinispan/persistence/rocksdb/RocksDBStore.html[RocksDBStore]
-* link:{javadocroot}/org/infinispan/persistence/rocksdb/configuration/RocksDBStoreConfiguration.html[RocksDBStoreConfiguration]
+* link:../../configuration-schema/infinispan-cachestore-rocksdb-config-{schemaversion}.html[RocksDB cache store configuration schema]
+* link:../../apidocs/org/infinispan/persistence/rocksdb/RocksDBStore.html[RocksDBStore]
+* link:../../apidocs/org/infinispan/persistence/rocksdb/configuration/RocksDBStoreConfiguration.html[RocksDBStoreConfiguration]
 * link:http://rocksdb.org/[rocksdb.org]
 * link:https://github.com/facebook/rocksdb/wiki/RocksDB-Tuning-Guide[RocksDB Tuning Guide]
 //Community only

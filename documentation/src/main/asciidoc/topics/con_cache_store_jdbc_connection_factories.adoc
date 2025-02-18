@@ -93,6 +93,6 @@ include::code_examples/PersistenceJdbcConnectionSimple.java[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/persistence/jdbc/common/configuration/PooledConnectionFactoryConfigurationBuilder.html[PooledConnectionFactoryConfigurationBuilder]
-*  link:{javadocroot}/org/infinispan/persistence/jdbc/common/configuration/ManagedConnectionFactoryConfigurationBuilder.html[ManagedConnectionFactoryConfigurationBuilder]
-*  link:{javadocroot}/org/infinispan/persistence/jdbc/common/configuration/SimpleConnectionFactoryConfigurationBuilder.html[SimpleConnectionFactoryConfigurationBuilder]
+* link:../../apidocs/org/infinispan/persistence/jdbc/common/configuration/PooledConnectionFactoryConfigurationBuilder.html[PooledConnectionFactoryConfigurationBuilder]
+*  link:../../apidocs/org/infinispan/persistence/jdbc/common/configuration/ManagedConnectionFactoryConfigurationBuilder.html[ManagedConnectionFactoryConfigurationBuilder]
+*  link:../../apidocs/org/infinispan/persistence/jdbc/common/configuration/SimpleConnectionFactoryConfigurationBuilder.html[SimpleConnectionFactoryConfigurationBuilder]

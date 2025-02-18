@@ -57,4 +57,4 @@ words, when the `close()` method is invoked on the `OutputStream`.
 
 .Reference
 
-* link:{javadocroot}/org/infinispan/client/hotrod/StreamingRemoteCache.html[org.iinfinispan.client.hotrod.StreamingRemoteCache]
+* link:../../apidocs/org/infinispan/client/hotrod/StreamingRemoteCache.html[org.iinfinispan.client.hotrod.StreamingRemoteCache]

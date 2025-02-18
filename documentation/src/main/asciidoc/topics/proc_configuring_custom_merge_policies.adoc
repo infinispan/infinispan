@@ -65,4 +65,4 @@ include::code_examples/CustomMergePolicy.java[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/conflict/EntryMergePolicy.html[org.infinispan.conflict.EntryMergePolicy]
+* link:../../apidocs/org/infinispan/conflict/EntryMergePolicy.html[org.infinispan.conflict.EntryMergePolicy]

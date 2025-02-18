@@ -38,8 +38,8 @@ include::code_examples/Stream.java[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/manager/ClusterExecutor.html[org.infinispan.manager.ClusterExecutor]
-* link:{javadocroot}/org/infinispan/CacheStream.html[org.infinispan.CacheStream]
+* link:../../apidocs/org/infinispan/manager/ClusterExecutor.html[org.infinispan.manager.ClusterExecutor]
+* link:../../apidocs/org/infinispan/CacheStream.html[org.infinispan.CacheStream]
 
 [discrete]
 == Remote caches

@@ -54,8 +54,8 @@ ALL_WRITE ALL_READ LISTEN
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/security/package-summary.html[{brandname} Security API]
-* link:{javadocroot}/org/infinispan/security/PrincipalRoleMapper.html[org.infinispan.security.PrincipalRoleMapper]
-* link:{javadocroot}/org/infinispan/security/RolePermissionMapper.html[org.infinispan.security.RolePermissionMapper]
-* link:{javadocroot}/org/infinispan/security/mappers/IdentityRoleMapper.html[org.infinispan.security.mappers.IdentityRoleMapper]
-* link:{javadocroot}/org/infinispan/security/mappers/CommonNameRoleMapper.html[org.infinispan.security.mappers.CommonNameRoleMapper]
+* link:../../apidocs/org/infinispan/security/package-summary.html[{brandname} Security API]
+* link:../../apidocs/org/infinispan/security/PrincipalRoleMapper.html[org.infinispan.security.PrincipalRoleMapper]
+* link:../../apidocs/org/infinispan/security/RolePermissionMapper.html[org.infinispan.security.RolePermissionMapper]
+* link:../../apidocs/org/infinispan/security/mappers/IdentityRoleMapper.html[org.infinispan.security.mappers.IdentityRoleMapper]
+* link:../../apidocs/org/infinispan/security/mappers/CommonNameRoleMapper.html[org.infinispan.security.mappers.CommonNameRoleMapper]

@@ -29,4 +29,4 @@ include::xml/jgroups_relay.xml[]
 [role="_additional-resources"]
 .Additional resources
 * link:#ref_relay-xsite[JGroups RELAY2 Stacks]
-* link:{configdocroot}[{brandname} configuration schema reference]
+* link:../../configuration-schema/index.html[{brandname} configuration schema reference]

@@ -24,5 +24,5 @@ include::code_examples/HotRodNearCaching.java[]
 [role="_additional-resources"]
 .Additional resources
 
-* link:{javadocroot}/org/infinispan/client/hotrod/configuration/NearCacheConfiguration.html[org.infinispan.client.hotrod.configuration.NearCacheConfiguration]
-* link:{javadocroot}/org/infinispan/client/hotrod/configuration/ExhaustedAction.html[org.infinispan.client.hotrod.configuration.ExhaustedAction]
+* link:../../apidocs/org/infinispan/client/hotrod/configuration/NearCacheConfiguration.html[org.infinispan.client.hotrod.configuration.NearCacheConfiguration]
+* link:../../apidocs/org/infinispan/client/hotrod/configuration/ExhaustedAction.html[org.infinispan.client.hotrod.configuration.ExhaustedAction]

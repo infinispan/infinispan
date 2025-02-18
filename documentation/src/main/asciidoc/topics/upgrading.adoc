@@ -1126,26 +1126,26 @@ however users should not rely on this code as it could be removed in the future 
 === Marshalling
 The internal marshalling capabilities of {brandname} have undergone a significant refactoring in 10.0. The marshalling of
 internal {brandname} objects and user objects are now truly isolated. This means that it's now possible to configure
-link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html[Marshaller] implementations in embedded mode or on the
+link:../../apidocs/org/infinispan/commons/marshall/Marshaller.html[Marshaller] implementations in embedded mode or on the
 server, without having to handle the marshalling of {brandname} internal classes. Consequently, it's possible to easily
 change the marshaller implementation, in a similar manner to how users of the HotRod client are accustomed.
 
 As a consequence of the above changes, the default marshaller used for marshalling user types is no longer based upon JBoss Marshalling. Instead
 we now utilise the ProtoStream library to store user types in the language agnostic link:https://developers.google.com/protocol-buffers[Protocol Buffers]
-format. It is still possible to utilise the old default, link:{javadocroot}/org/infinispan/jboss/marshalling/core/JBossUserMarshaller.html[JBossUserMarshaller],
+format. It is still possible to utilise the old default, link:../../apidocs/org/infinispan/jboss/marshalling/core/JBossUserMarshaller.html[JBossUserMarshaller],
 however it's necessary to add the `org.infinispan:infinispan-jboss-marshalling` artifact to your application's classpath.
 
 ==== Externalizer Deprecations
 The following interfaces/annotations have been deprecated as a consequence of the marshalling refactoring:
 
-* link:{javadocroot}/org/infinispan/commons/marshall/Externalizer.html[Externalizer],
-* link:{javadocroot}/org/infinispan/commons/marshall/AdvancedExternalizer.html[AdvancedExternalizer]
-* link:{javadocroot}/org/infinispan/commons/marshall/SerializeWith.html[SerializeWith]
+* link:../../apidocs/org/infinispan/commons/marshall/Externalizer.html[Externalizer],
+* link:../../apidocs/org/infinispan/commons/marshall/AdvancedExternalizer.html[AdvancedExternalizer]
+* link:../../apidocs/org/infinispan/commons/marshall/SerializeWith.html[SerializeWith]
 
-For cluster communication any configured link:{javadocroot}/org/infinispan/commons/marshall/Externalizer.html[Externalizer]'s
+For cluster communication any configured link:../../apidocs/org/infinispan/commons/marshall/Externalizer.html[Externalizer]'s
 are still utilised to marshall objects, however they are ignored when persisting data to cache stores unless the
-link:{javadocroot}/org/infinispan/jboss/marshalling/core/JBossUserMarshaller.html[JBossUserMarshaller] is explicitly configured
-via the global link:{javadocroot}/org/infinispan/configuration/global/SerializationConfiguration.html[SerializationConfiguration].
+link:../../apidocs/org/infinispan/jboss/marshalling/core/JBossUserMarshaller.html[JBossUserMarshaller] is explicitly configured
+via the global link:../../apidocs/org/infinispan/configuration/global/SerializationConfiguration.html[SerializationConfiguration].
 
 It's highly recommended to migrate from the old Externalizer and JBoss marshalling approach to the new ProtoStream based
 marshalling, as the interfaces listed above and the JBossUserMarshaller implementation will be removed in future versions.
@@ -1203,7 +1203,7 @@ The previously deprecated Compatibility Mode has been removed.
 
 === Removed the implicit default cache
 
-The default cache must now be named explicitly via the link:{javadocroot}/org/infinispan/configuration/global/GlobalConfigurationBuilder.html#defaultCacheName(java.lang.String)[GlobalConfigurationBuilder#defaultCacheName()] method.
+The default cache must now be named explicitly via the link:../../apidocs/org/infinispan/configuration/global/GlobalConfigurationBuilder.html#defaultCacheName(java.lang.String)[GlobalConfigurationBuilder#defaultCacheName()] method.
 
 === Removed DistributedExecutor
 
@@ -1238,7 +1238,7 @@ Previously a value &lt;= 0 would transfer the entire cache in a single batch, wh
 ==== Marshalling Changes
 The default marshaller is no longer GenericJbossMarshaller. We now utilise the link:https://github.com/infinispan/protostream[ProtoStream]
 library as the default. If Java Serialization is required by clients, we strongly recommend utilising the
-link:link:{javadocroot}/org/infinispan/commons/marshall/JavaSerializationMarshaller[JavaSerializationMarshaller] instead.
+link:link:../../apidocs/org/infinispan/commons/marshall/JavaSerializationMarshaller[JavaSerializationMarshaller] instead.
 However if the GenericJbossMarshaller must be used, it's necessary to add the `org.infinispan:infinispan-jboss-marshalling`
 artifact to your client's classpath and for the `GenericJbossMarshaller` to be configured as the marshaller.
 
@@ -1360,7 +1360,7 @@ The WebSocket endpoint has been unmaintained for several years. It has been remo
 Since the Hot Rod client was overhauled in 9.2, the way the connection pool configuration is handled has changed.
 Infinispan 9.4 introduces a new naming scheme for the connection pool properties which deprecates the old _commons-pool_
 names. For a complete reference of the available configuration options for the properties file please refer to
-link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html#package.description[remote client configuration] javadoc.
+link:../../apidocs/org/infinispan/client/hotrod/configuration/package-summary.html#package.description[remote client configuration] javadoc.
 
 ==== Server thread pools
 The threads that handle the child Netty event loops have been renamed from *-ServerWorker to *-ServerIO

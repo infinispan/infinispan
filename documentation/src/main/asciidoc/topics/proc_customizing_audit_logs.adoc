@@ -21,4 +21,4 @@ include::xml/server_audit_custom.xml[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/security/AuditLogger.html[`org.infinispan.security.AuditLogger`]
+* link:../../apidocs/org/infinispan/security/AuditLogger.html[`org.infinispan.security.AuditLogger`]

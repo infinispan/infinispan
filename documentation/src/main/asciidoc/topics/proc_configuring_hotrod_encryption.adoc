@@ -43,6 +43,6 @@ Add a client trust store to the `{server_home}/server/conf` directory and config
 [role="_additional-resources"]
 .Additional resources
 * link:{server_docs}#endpoint-encryption[Encrypting {brandname} Server Connections]
-* link:{javadocroot}/org/infinispan/client/hotrod/configuration/SslConfigurationBuilder.html[SslConfigurationBuilder]
-* link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html[Hot Rod client configuration properties]
+* link:../../apidocs/org/infinispan/client/hotrod/configuration/SslConfigurationBuilder.html[SslConfigurationBuilder]
+* link:../../apidocs/org/infinispan/client/hotrod/configuration/package-summary.html[Hot Rod client configuration properties]
 * link:https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/securing_networks/using-shared-system-certificates_securing-networks[Using Shared System Certificates] (Red Hat Enterprise Linux 9 Securing Networks)

@@ -32,5 +32,5 @@ config.security().authorization().enable().role("myroleone");
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/configuration/global/GlobalSecurityConfigurationBuilder.html[org.infinispan.configuration.global.GlobalSecurityConfigurationBuilder]
-* link:{javadocroot}/org/infinispan/configuration/cache/ConfigurationBuilder.html[org.infinispan.configuration.cache.ConfigurationBuilder]
+* link:../../apidocs/org/infinispan/configuration/global/GlobalSecurityConfigurationBuilder.html[org.infinispan.configuration.global.GlobalSecurityConfigurationBuilder]
+* link:../../apidocs/org/infinispan/configuration/cache/ConfigurationBuilder.html[org.infinispan.configuration.cache.ConfigurationBuilder]

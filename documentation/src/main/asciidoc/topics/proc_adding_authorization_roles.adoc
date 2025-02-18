@@ -20,4 +20,4 @@ include::code_examples/MutableRolePermissionMapper.java[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/security/RolePermissionMapper.html[org.infinispan.security.RolePermissionMapper]
+* link:../../apidocs/org/infinispan/security/RolePermissionMapper.html[org.infinispan.security.RolePermissionMapper]

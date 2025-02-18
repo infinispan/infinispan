@@ -26,5 +26,5 @@ Security.doAs(mySubject, (PrivilegedAction<String>)() -> cache.put("key", "value
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/security/Security.html[org.infinispan.security.Security]
-* link:{javadocroot}/org/infinispan/security/SecureCache.html[org.infinispan.security.SecureCache]
+* link:../../apidocs/org/infinispan/security/Security.html[org.infinispan.security.Security]
+* link:../../apidocs/org/infinispan/security/SecureCache.html[org.infinispan.security.SecureCache]

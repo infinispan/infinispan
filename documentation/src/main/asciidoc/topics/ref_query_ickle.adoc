@@ -130,5 +130,5 @@ You should always invoke `executeStatement()` to modify data and invoke `execute
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/query/dsl/Query.html#execute()[org.infinispan.query.dsl.Query.execute()]
-* link:{javadocroot}/org/infinispan/query/dsl/Query.html#executeStatement()[org.infinispan.query.dsl.Query.executeStatement()]
+* link:../../apidocs/org/infinispan/query/dsl/Query.html#execute()[org.infinispan.query.dsl.Query.execute()]
+* link:../../apidocs/org/infinispan/query/dsl/Query.html#executeStatement()[org.infinispan.query.dsl.Query.executeStatement()]

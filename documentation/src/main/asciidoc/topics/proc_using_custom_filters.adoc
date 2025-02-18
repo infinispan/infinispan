@@ -54,4 +54,4 @@ installation directory.
 
 .Reference
 
-* link:{javadocroot}/org/infinispan/filter/KeyValueFilterConverterFactory.html[KeyValueFilterConverterFactory]
+* link:../../apidocs/org/infinispan/filter/KeyValueFilterConverterFactory.html[KeyValueFilterConverterFactory]
