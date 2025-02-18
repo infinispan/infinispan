@@ -66,7 +66,7 @@ public interface InfinispanServerDriver {
 
    /**
     * Returns how many servers have been registered. Note this may vary with the configuration if additional
-    * servers have been started via {@link #}
+    * servers have been started via {@link #startAdditionalServer(int)}.
     * @return the number of servers
     */
    int serverCount();

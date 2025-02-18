@@ -126,9 +126,13 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    }
 
    public static void cleanup() {
+      cleanup(SNAPSHOT_IMAGE);
+   }
+
+   public static void cleanup(String imageName) {
       try {
          log.infof("Removing temporary image %s", SNAPSHOT_IMAGE);
-         DOCKER_CLIENT.removeImageCmd(SNAPSHOT_IMAGE).exec();
+         DOCKER_CLIENT.removeImageCmd(imageName).exec();
          log.infof("Removed temporary image %s", SNAPSHOT_IMAGE);
       } catch (Exception e) {
          // Ignore
@@ -603,9 +607,11 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       }
    }
 
-   static String createServerImage(String serverOutputDir, String versionToUse) {
+   String createServerImage(String serverOutputDir, String versionToUse) {
+      String snapshotImageName = configuration.properties().getProperty(
+            TestSystemPropertyNames.INFINISPAN_TEST_SERVER_SNAPSHOT_IMAGE_NAME, SNAPSHOT_IMAGE);
       try {
-         InspectImageResponse response = DOCKER_CLIENT.inspectImageCmd(SNAPSHOT_IMAGE).exec();
+         InspectImageResponse response = DOCKER_CLIENT.inspectImageCmd(snapshotImageName).exec();
          log.infof("Reusing existing image");
          return response.getConfig().getImage();
       } catch (NotFoundException e) {
@@ -614,7 +620,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          if (Files.notExists(serverOutputPath)) {
             throw new RuntimeException("Cannot create server image: no server at " + serverOutputPath);
          }
-         ImageFromDockerfile image = new ImageFromDockerfile(SNAPSHOT_IMAGE, false)
+         ImageFromDockerfile image = new ImageFromDockerfile(snapshotImageName, false)
                .withFileFromPath("build", cleanServerDirectory(serverOutputPath))
                .withDockerfileFromBuilder(builder -> builder
                      .from(JDK_BASE_IMAGE_NAME)
