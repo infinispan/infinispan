@@ -148,19 +148,19 @@
                         <phase>integration-test</phase>
                         <configuration>
                            <buildArgs>
-                              -J-Xmx5g
-                              -Ob
-                              -J-Djava.util.logging.manager=org.jboss.logmanager.LogManager
-                              -H:+AllowDeprecatedBuilderClassesOnImageClasspath
-                              -H:IncludeResources=embedded.xml
-                              -H:IncludeResources=stacks/udp.xml
-                              -H:IncludeResources=stacks/tcp.xml
-                              -H:IncludeResources=stacks/tcp_mping/tcp1.xml
-                              -H:ServiceLoaderFeatureExcludeServiceProviders=org.infinispan.marshall.ServiceLoadedSciImpl
-                              --enable-url-protocols=http
-                              --no-fallback
-                              --trace-class-initialization=org.junit.platform.launcher.core.LauncherConfig
+                              <buildArg>-J-Xmx5g</buildArg>
+                              <buildArg>-J-Djava.util.logging.manager=org.jboss.logmanager.LogManager</buildArg>
+                              <buildArg>-H:+AllowDeprecatedBuilderClassesOnImageClasspath</buildArg>
+                              <buildArg>-H:IncludeResources=embedded.xml</buildArg>
+                              <buildArg>-H:IncludeResources=stacks/udp.xml</buildArg>
+                              <buildArg>-H:IncludeResources=stacks/tcp.xml</buildArg>
+                              <buildArg>-H:IncludeResources=stacks/tcp_mping/tcp1.xml</buildArg>
+                              <buildArg>-H:ServiceLoaderFeatureExcludeServiceProviders=org.infinispan.marshall.ServiceLoadedSciImpl</buildArg>
+                              <buildArg>--enable-url-protocols=http</buildArg>
+                              <buildArg>--trace-class-initialization=org.junit.platform.launcher.core.LauncherConfig</buildArg>
                            </buildArgs>
+                           <fallback>false</fallback>
+                           <quickBuild>true</quickBuild>
                         </configuration>
                      </execution>
                   </executions>
