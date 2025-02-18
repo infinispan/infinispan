@@ -27,35 +27,37 @@ public class XmlReportWriter implements AutoCloseable {
       xmlWriter = new IndentingXmlWriter(factory.createXMLStreamWriter(writer));
    }
 
-   public void writeHeader(final String title) throws XMLStreamException   {
-         xmlWriter.writeStartDocument();
-         xmlWriter.writeStartElement("report");
-         if (title != null) {
-            xmlWriter.writeAttribute("class", title);
-         }
-         xmlWriter.writeComment("DescriptionDocumentation");
-         xmlWriter.writeStartElement("logs");
+   public void writeHeader(final String title) throws XMLStreamException {
+      xmlWriter.writeStartDocument();
+      xmlWriter.writeStartElement("report");
+      if (title != null) {
+         xmlWriter.writeAttribute("class", title);
+      }
+      xmlWriter.writeComment("DescriptionDocumentation");
+      xmlWriter.writeStartElement("logs");
    }
 
    public void writeDetail(final Element element) throws XMLStreamException {
-         Description description = element.getAnnotation(Description.class);
-         Message message = element.getAnnotation(Message.class);
-         LogMessage logMessage = element.getAnnotation(LogMessage.class);
-         MessageLogger messageLogger = element.getEnclosingElement().getAnnotation(MessageLogger.class);
-         String strMsgId = String.valueOf(message.id());
-         int padding = messageLogger.length() - strMsgId.length();
-         StringBuilder prjCode = new StringBuilder(messageLogger.projectCode());
-         for (int i = 0; i < padding; i++) {
-            prjCode.append(0);
-         }
-         prjCode.append(strMsgId);
-         xmlWriter.writeStartElement("log");
+      MessageLogger messageLogger = element.getEnclosingElement().getAnnotation(MessageLogger.class);
+      if (messageLogger == null || messageLogger.projectCode().isEmpty()) {
+         return;
+      }
+      Description description = element.getAnnotation(Description.class);
+      Message message = element.getAnnotation(Message.class);
+      LogMessage logMessage = element.getAnnotation(LogMessage.class);
+      String strMsgId = String.valueOf(message.id());
+      int padding = messageLogger.length() - strMsgId.length();
+      String prjCode = messageLogger.projectCode() + "0".repeat(Math.max(0, padding)) +
+            strMsgId;
+      xmlWriter.writeStartElement("log");
 
-         writeCharacters("id", prjCode.toString());
-         writeCharacters("message", message.value());
+      writeCharacters("id", prjCode);
+      writeCharacters("message", message.value());
+      if (description != null) {
          writeCharacters("description", description.value());
-         writeCharacters("level", logMessage == null ? "EXCEPTION" : logMessage.level().name());
-         xmlWriter.writeEndElement();
+      }
+      writeCharacters("level", logMessage == null ? "EXCEPTION" : logMessage.level().name());
+      xmlWriter.writeEndElement();
    }
 
    private void writeCharacters(String elementName, String elementValue) throws XMLStreamException {
@@ -65,9 +67,9 @@ public class XmlReportWriter implements AutoCloseable {
    }
 
    public void writeFooter() throws XMLStreamException {
-         xmlWriter.writeEndElement(); // end <logs/>
-         xmlWriter.writeEndElement(); // end <report/>
-         xmlWriter.writeEndDocument();
+      xmlWriter.writeEndElement(); // end <logs/>
+      xmlWriter.writeEndElement(); // end <report/>
+      xmlWriter.writeEndDocument();
    }
 
    public void close() throws IOException {
