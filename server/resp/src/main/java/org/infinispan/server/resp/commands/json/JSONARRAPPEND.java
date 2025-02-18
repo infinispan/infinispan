@@ -3,7 +3,6 @@ package org.infinispan.server.resp.commands.json;
 import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespRequestHandler;
-import org.infinispan.server.resp.json.AppendType;
 import org.infinispan.server.resp.json.EmbeddedJsonCache;
 
 import java.util.List;
@@ -16,7 +15,7 @@ import java.util.concurrent.CompletionStage;
  * @since 15.2
  */
 public class JSONARRAPPEND extends JSONAPPEND {
-    public static String ARR_TYPE_NAME = AppendType.ARRAY.name().toLowerCase();
+    public static String ARR_TYPE_NAME = "array";
     public JSONARRAPPEND() {
         super("JSON.ARRAPPEND", -3, 1, 1, 1);
     }
