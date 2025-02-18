@@ -224,6 +224,18 @@ public class EmbeddedJsonCache {
    }
 
    /**
+    * Clears container values (arrays/objects) and sets numeric values to 0 at the
+    * specified JSON path for the given key.
+    *
+    * @param key The key identifying the data.
+    * @param path The JSON path of the data to clear.
+    * @return A CompletionStage indicating the result of the operation.
+    */
+   public CompletionStage<Integer> clear(byte[] key, byte[] path) {
+      return readWriteMap.eval(key, new JsonClearFunction(path));
+   }
+
+   /**
     * Finds the first index of the specified value in the JSON array at the given path.
     * The search is performed within the specified range [start, stop].
     *

@@ -1254,6 +1254,69 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
    private static List<String> jsonValueListToStringList(List<JsonValue> jsonValues) {
       return jsonValues.stream().map(JsonValue::toString).collect(Collectors.toList());
    }
+   @Test
+   public void testJSONCLEAR() {
+      JsonPath jp = new JsonPath("$");
+
+      String key = k();
+      // JSON.SET doc $ 3
+      assertThat(redis.jsonSet(key, jp, defaultJsonParser.createJsonValue("3"))).isEqualTo("OK");
+      // JSON.GET doc
+      assertThat(redis.jsonGet(key).get(0).asNumber()).isEqualTo(3);
+      // JSON.CLEAR doc
+      assertThat(redis.jsonClear(key)).isEqualTo(1L);
+      // JSON.GET doc
+      assertThat(redis.jsonGet(key).get(0).asNumber()).isEqualTo(0);
+
+      // JSON.SET doc $ '["hello", "world"]'
+      JsonValue arrayJson = defaultJsonParser.createJsonValue("""
+              ["hello", "world"]""");
+      assertThat(redis.jsonSet(key, jp, arrayJson)).isEqualTo("OK");
+      assertThat(redis.jsonGet(key).get(0).asJsonArray().size()).isEqualTo(2);
+      assertThat(redis.jsonClear(key)).isEqualTo(1L);
+      assertThat(redis.jsonGet(key).get(0).asJsonArray().size()).isZero();
+
+      // JSON.SET doc $ '"infinispan"'
+      assertThat(redis.jsonSet(key, jp, defaultJsonParser.createJsonValue("\"infinispan\""))).isEqualTo("OK");
+      assertThat(redis.jsonGet(key).get(0).asString()).isEqualTo("infinispan");
+      assertThat(redis.jsonClear(key)).isZero();
+      assertThat(redis.jsonGet(key).get(0).asString()).isEqualTo("infinispan");
+
+      JsonValue jv = defaultJsonParser.createJsonValue("""
+                {"a":"b", "b": [{"a":2}, {"a":"c"}, {"a":5}, {"a":true}, {"a":{"h": 10}}, {"a":["hello"]}]}
+              """);
+
+      // JSON.SET doc $ '{"a":"b", "b": [{"a":2}, {"a":"c"}, {"a":5}, {"a":true}, {"a":{"h": 10}}, {"a":["hello"]}]}'
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+      // JSON.CLEAR doc
+      assertThat(redis.jsonClear(key)).isEqualTo(1L);
+      // JSON.GET doc
+      List<JsonValue> jsonValues = redis.jsonGet(key);
+      assertThat(jsonValues).hasSize(1);
+      assertThat(jsonValues.get(0).asJsonObject().toString()).isEqualTo("{}");
+
+      // JSON.SET doc $ '{"a":"b", "b": [{"a":2}, {"a":"c"}, {"a":5}, {"a":true}, {"a":{"h": 10}}, {"a":["hello"]}]}'
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+      // JSON.CLEAR doc $..noexistpath
+      assertThat(redis.jsonClear(key, new JsonPath("$..noexistpath"))).isZero();
+      // JSON.CLEAR doc $..a
+      assertThat(redis.jsonClear(key, new JsonPath("$..a"))).isEqualTo(4L);
+      // JSON.GET doc
+      String afterClearJson = """
+              {"a":"b","b":[{"a":0},{"a":"c"},{"a":0},{"a":true},{"a":{}},{"a":[]}]}""";
+      assertThat(redis.jsonGet(key).get(0).asJsonObject().toString()).isEqualTo(afterClearJson);
+      // JSON.CLEAR doc $..a
+      assertThat(redis.jsonClear(key, new JsonPath("$..a"))).isZero();
+      // JSON.GET doc
+      assertThat(redis.jsonGet(key).get(0).asJsonObject().toString()).isEqualTo(afterClearJson);
+
+      // JSON.CLEAR notExistingKey
+      assertThatThrownBy(() ->
+              redis.jsonClear("notExistingKey"))
+              .isInstanceOf(RedisCommandExecutionException.class)
+              .hasMessage("ERR could not perform this operation on a key that doesn't exist");
+   }
+
    // Lettuce Json object doesn't implement comparison. Implementing here
    private boolean compareJSONGet(JsonValue result, JsonValue expected, JsonPath... paths) {
       ObjectMapper mapper = new ObjectMapper();

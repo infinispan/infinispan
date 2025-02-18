@@ -15,6 +15,7 @@ import org.infinispan.server.resp.commands.tx.WATCH;
 import org.infinispan.server.resp.filter.ComposedFilterConverter;
 import org.infinispan.server.resp.filter.EventListenerConverter;
 import org.infinispan.server.resp.filter.EventListenerKeysFilter;
+import org.infinispan.server.resp.json.JsonClearFunction;
 import org.infinispan.server.resp.json.JsonArrayAppendFunction;
 import org.infinispan.server.resp.json.JsonArrindexFunction;
 import org.infinispan.server.resp.json.JsonArrtrimFunction;
@@ -50,6 +51,7 @@ public class RespModuleLifecycle implements ModuleLifecycle {
       externalizerMap.put(JsonArrayAppendFunction.EXTERNALIZER.getId(), JsonArrayAppendFunction.EXTERNALIZER);
       externalizerMap.put(JsonStringAppendFunction.EXTERNALIZER.getId(), JsonStringAppendFunction.EXTERNALIZER);
       externalizerMap.put(JsonToggleFunction.EXTERNALIZER.getId(), JsonToggleFunction.EXTERNALIZER);
+      externalizerMap.put(JsonClearFunction.EXTERNALIZER.getId(), JsonClearFunction.EXTERNALIZER);
       externalizerMap.put(JsonObjkeysFunction.EXTERNALIZER.getId(), JsonObjkeysFunction.EXTERNALIZER);
       externalizerMap.put(JsonNumIncrByFunction.EXTERNALIZER.getId(), JsonNumIncrByFunction.EXTERNALIZER);
       externalizerMap.put(JsonArrindexFunction.EXTERNALIZER.getId(), JsonArrindexFunction.EXTERNALIZER);
