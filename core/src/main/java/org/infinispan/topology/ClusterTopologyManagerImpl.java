@@ -3,9 +3,9 @@ package org.infinispan.topology;
 
 import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
-import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.util.logging.Log.CLUSTER;
 
 import java.util.ArrayList;
@@ -41,7 +41,9 @@ import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ProcessorInfo;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -75,8 +77,6 @@ import org.infinispan.remoting.transport.ValidResponseCollector;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.statetransfer.RebalanceType;
 import org.infinispan.util.concurrent.ActionSequencer;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.ConditionFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -299,7 +299,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
    }
 
    @Override
-   public CompletionStage<Void> handleLeave(String cacheName, Address leaver, int viewId) throws Exception {
+   public CompletionStage<Void> handleLeave(String cacheName, Address leaver) throws Exception {
       if (!clusterManagerStatus.isRunning()) {
          log.debugf("Ignoring leave request from %s for cache %s, the local cache manager is shutting down",
                     leaver, cacheName);
@@ -322,7 +322,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
 
    @Override
    public CompletionStage<Void> handleRebalancePhaseConfirm(String cacheName, Address node, int topologyId,
-                                                            Throwable throwable, int viewId) throws Exception {
+                                                            Throwable throwable) throws Exception {
       if (throwable != null) {
          // TODO We could try to update the pending CH such that nodes reporting errors are not considered to hold
          //  any state
