@@ -48,15 +48,33 @@ public interface ClusterTopologyManager {
     */
    CompletionStage<CacheStatusResponse> handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo, int viewId) throws Exception;
 
+
+   /**
+    * Signals that a member is leaving the cache.
+    * @param viewId is always ignored
+    * @deprecated since 16.0, use {@link #handleLeave(String, Address)} instead
+    */
+   @Deprecated(since = "16.0", forRemoval = true)
+   default CompletionStage<Void> handleLeave(String cacheName, Address leaver, int viewId) throws Exception {
+      return handleLeave(cacheName, leaver);
+   }
+
    /**
     * Signals that a member is leaving the cache.
     */
-   CompletionStage<Void> handleLeave(String cacheName, Address leaver, int viewId) throws Exception;
+   CompletionStage<Void> handleLeave(String cacheName, Address leaver) throws Exception;
 
    /**
     * Marks the rebalance as complete on the sender.
+    * @param viewId is always ignored
+    * @deprecated since 16.0, use {@link #handleRebalancePhaseConfirm(String, Address, int, Throwable)} instead
     */
-   CompletionStage<Void> handleRebalancePhaseConfirm(String cacheName, Address node, int topologyId, Throwable throwable, int viewId) throws Exception;
+   @Deprecated(since = "16.0", forRemoval = true)
+   default CompletionStage<Void> handleRebalancePhaseConfirm(String cacheName, Address node, int topologyId, Throwable throwable, int viewId) throws Exception {
+      return handleRebalancePhaseConfirm(cacheName, node, topologyId, throwable);
+   }
+
+   CompletionStage<Void> handleRebalancePhaseConfirm(String cacheName, Address node, int topologyId, Throwable throwable) throws Exception;
 
    boolean isRebalancingEnabled();
 
