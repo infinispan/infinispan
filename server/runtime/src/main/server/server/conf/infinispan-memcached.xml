@@ -1,6 +1,6 @@
 <!--
-    This configuration starts a dedicated `resp` connector on port 6379 with no authentication to mimic a default
-    Redis server.
+    This configuration starts a dedicated `memcached` connector on port 11211 with no authentication and no clustering to mimic a default
+    Memcached server.
 -->
 <infinispan
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -10,7 +10,6 @@
         xmlns:server="urn:infinispan:server:15.2">
 
     <cache-container name="default" statistics="true">
-        <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack:tcp}" node-name="${infinispan.node.name:}"/>
         <security>
             <authorization/>
         </security>
