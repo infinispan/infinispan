@@ -94,8 +94,8 @@
       <jdk.min.version>17</jdk.min.version>
 
       <!-- Dependency versions -->
-      <version.aesh>2.7</version.aesh>
-      <version.aesh-readline>2.4</version.aesh-readline>
+      <version.aesh>2.8.2</version.aesh>
+      <version.aesh-readline>2.6</version.aesh-readline>
       <version.ant>1.10.15</version.ant>
       <version.ant-nodeps>1.8.1</version.ant-nodeps>
       <version.ant-contrib>1.0b3</version.ant-contrib>
@@ -105,9 +105,9 @@
       <version.bouncycastle>1.70</version.bouncycastle>
       <version.byteman>4.0.24</version.byteman>
       <version.caffeine>3.1.8</version.caffeine>
-      <version.commons.compress>1.26.2</version.commons.compress>
+      <version.commons.compress>1.27.1</version.commons.compress>
       <version.console>15.0.11.Final</version.console>
-      <version.fabric8.kubernetes-client>6.11.0</version.fabric8.kubernetes-client>
+      <version.fabric8.kubernetes-client>6.13.5</version.fabric8.kubernetes-client>
       <version.glassfish.jaxb>4.0.5</version.glassfish.jaxb>
       <version.graalvm>24.0.0</version.graalvm>
       <version.groovy>2.4.21</version.groovy>
@@ -132,9 +132,9 @@
       <version.jakarta.enterprise.cdi>4.0.1</version.jakarta.enterprise.cdi>
       <version.jakarta.persistence>3.1.0</version.jakarta.persistence>
       <version.javax.cache>1.1.1</version.javax.cache>
-      <version.jboss.logging>3.5.3.Final</version.jboss.logging>
-      <version.jboss.logging.processor>2.2.1.Final</version.jboss.logging.processor>
-      <version.jboss.marshalling>2.1.6.Final</version.jboss.marshalling>
+      <version.jboss.logging>3.6.1.Final</version.jboss.logging>
+      <version.jboss.logging.processor>3.0.1.Final</version.jboss.logging.processor>
+      <version.jboss.marshalling>2.2.2.Final</version.jboss.marshalling>
       <version.jboss.naming>5.0.6.CR1</version.jboss.naming>
       <version.jboss.narayana>7.0.2.Final</version.jboss.narayana>
       <version.jboss.security>3.0.6.Final</version.jboss.security>
@@ -155,8 +155,8 @@
       <version.mockito>5.11.0</version.mockito>
       <version.mockito_dep.bytebuddy>1.14.4</version.mockito_dep.bytebuddy>
       <version.mockito_dep.objenesis>3.3</version.mockito_dep.objenesis>
-      <version.nashorn>15.4</version.nashorn>
-      <version.netty>4.1.109.Final</version.netty>
+      <version.nashorn>15.6</version.nashorn>
+      <version.netty>4.1.115.Final</version.netty>
       <version.netty.incubator.iouring>0.0.26.Final</version.netty.incubator.iouring>
       <version.openjdk.jmh>1.37</version.openjdk.jmh>
       <version.org.wildfly.arquillian>5.0.1.Final</version.org.wildfly.arquillian>
@@ -176,10 +176,9 @@
       <version.hdrhistogram>2.1.12</version.hdrhistogram>
       <version.latencyutils>2.0.3</version.latencyutils>
 
-      <!-- These versions must be kept in sync with ${version.quarkus} -->
-      <version.quarkus>3.8.6</version.quarkus>
-      <version.graalvm>23.1.5</version.graalvm>
-      <version.jandex>3.2.6</version.jandex>
+      <version.quarkus>3.15.3</version.quarkus>
+      <version.graalvm>23.1.6</version.graalvm>
+      <version.jandex>3.2.7</version.jandex>
 
       <version.opentelemetry>1.32.0</version.opentelemetry>
       <version.opentelemetry.alpha>1.32.0-alpha</version.opentelemetry.alpha>
@@ -195,8 +194,8 @@
       <version.xstream>1.4.21</version.xstream>
 
       <!-- Plugin dependencies -->
-      <version.checkstyle.maven-plugin>3.3.1</version.checkstyle.maven-plugin>
-      <version.native.maven.plugin>0.10.2</version.native.maven.plugin>
+      <version.checkstyle.maven-plugin>3.6.0</version.checkstyle.maven-plugin>
+      <version.native.maven.plugin>0.10.5</version.native.maven.plugin>
       <version.maven>3.9.9</version.maven>
       <version.maven.antlr3>3.5.3</version.maven.antlr3>
       <version.maven.antrun>3.1.0</version.maven.antrun>
