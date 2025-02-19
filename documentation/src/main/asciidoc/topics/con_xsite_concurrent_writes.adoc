@@ -66,6 +66,6 @@ However you can use the synchronous backup strategy with an Active/Active config
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/xsite/spi/XSiteMergePolicy.html[`XSiteMergePolicy` enum lists all merge polices that {brandname} provides]
-* link:{javadocroot}/org/infinispan/xsite/spi/XSiteEntryMergePolicy.html[`XSiteEntryMergePolicy` SPI]
+* link:../../apidocs/org/infinispan/xsite/spi/XSiteMergePolicy.html[`XSiteMergePolicy` enum lists all merge polices that {brandname} provides]
+* link:../../apidocs/org/infinispan/xsite/spi/XSiteEntryMergePolicy.html[`XSiteEntryMergePolicy` SPI]
 * link:https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#compareTo-java.lang.String-[java.lang.String#compareTo()]

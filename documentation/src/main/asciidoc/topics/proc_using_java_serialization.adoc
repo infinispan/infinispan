@@ -28,4 +28,4 @@ include::code_examples/SerializationMarshaller.java[]
 [role="_additional-resources"]
 .Additional resources
 * link:{jdkdocroot}/java/io/Serializable.html[Serializable]
-* link:{javadocroot}/org/infinispan/commons/marshall/JavaSerializationMarshaller.html[org.infinispan.commons.marshall.JavaSerializationMarshaller]
+* link:../../apidocs/org/infinispan/commons/marshall/JavaSerializationMarshaller.html[org.infinispan.commons.marshall.JavaSerializationMarshaller]

@@ -17,4 +17,4 @@ and statistics, see the _{brandname} JMX Components_ documentation.
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/jmxComponents.html[{brandname} JMX Components]
+* link:../../apidocs/jmxComponents.html[{brandname} JMX Components]

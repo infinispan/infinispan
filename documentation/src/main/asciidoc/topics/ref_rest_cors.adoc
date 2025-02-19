@@ -37,7 +37,7 @@ Because the "allow ALL" rule permits all origins, any script that has an origin
 other than "http://host1" or "https://host1" can perform the allowed methods
 and use the supplied headers.
 
-For information about configuring CORS rules, see the link:{configdocroot}[{brandname} Server Configuration Schema].
+For information about configuring CORS rules, see the link:../../configuration-schema/index.html[{brandname} Server Configuration Schema].
 
 == Allowing all CORS permissions for some origins
 

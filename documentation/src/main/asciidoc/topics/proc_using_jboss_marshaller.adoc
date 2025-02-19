@@ -22,4 +22,4 @@ include::code_examples/JBossUserMarshaller.java[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/commons/marshall/AdvancedExternalizer.html[AdvancedExternalizer]
+* link:../../apidocs/org/infinispan/commons/marshall/AdvancedExternalizer.html[AdvancedExternalizer]

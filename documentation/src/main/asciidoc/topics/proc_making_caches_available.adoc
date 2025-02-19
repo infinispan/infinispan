@@ -31,4 +31,4 @@ include::code_examples/AdvancedCacheAvailibilityMode.java[]
 [role="_additional-resources"]
 .Additional resources
 * link:{rest_docs}#rest_v2_caches_set_availability[REST API: Setting cache availability]
-* link:{javadocroot}/org/infinispan/AdvancedCache.html[org.infinispan.AdvancedCache]
+* link:../../apidocs/org/infinispan/AdvancedCache.html[org.infinispan.AdvancedCache]

@@ -33,4 +33,4 @@ include::xml/server_endpoints_default.xml[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{configdocroot}[{brandname} schema reference]
+* link:../../configuration-schema/index.html[{brandname} schema reference]

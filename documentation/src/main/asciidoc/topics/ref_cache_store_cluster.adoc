@@ -48,6 +48,6 @@ include::code_examples/PersistenceClusterLoader.java[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{configdocroot}infinispan-config-{schemaversion}.html[{brandname} configuration schema]
-* link:{javadocroot}/org/infinispan/persistence/cluster/ClusterLoader.html[ClusterLoader]
-* link:{javadocroot}/org/infinispan/configuration/cache/ClusterLoaderConfiguration.html[ClusterLoaderConfiguration]
+* link:../../configuration-schema/infinispan-config-{schemaversion}.html[{brandname} configuration schema]
+* link:../../apidocs/org/infinispan/persistence/cluster/ClusterLoader.html[ClusterLoader]
+* link:../../apidocs/org/infinispan/configuration/cache/ClusterLoaderConfiguration.html[ClusterLoaderConfiguration]

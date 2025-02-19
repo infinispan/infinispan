@@ -1,43 +1,43 @@
 [id='cache-modes_{context}']
 = Cache API
 
-{brandname} provides a link:{javadocroot}/org/infinispan/Cache.html[Cache] interface that exposes simple methods for adding, retrieving and removing entries, including atomic mechanisms exposed by the JDK's ConcurrentMap interface.  Based on the cache mode used, invoking these methods will trigger a number of things to happen, potentially even including replicating an entry to a remote node or looking up an entry from a remote node, or potentially a cache store.
+{brandname} provides a link:../../apidocs/org/infinispan/Cache.html[Cache] interface that exposes simple methods for adding, retrieving and removing entries, including atomic mechanisms exposed by the JDK's ConcurrentMap interface.  Based on the cache mode used, invoking these methods will trigger a number of things to happen, potentially even including replicating an entry to a remote node or looking up an entry from a remote node, or potentially a cache store.
 
 For simple usage, using the Cache API should be no different from using the JDK Map API, and hence migrating from simple in-memory caches based on a Map to {brandname}'s Cache should be trivial.
 
 .Performance Concerns of Certain Map Methods
 Certain methods exposed in Map have certain performance consequences when used with {brandname}, such as
-link:{javadocroot}/org/infinispan/Cache.html#size()[size()] ,
-link:{javadocroot}/org/infinispan/Cache.html#values()[values()] ,
-link:{javadocroot}/org/infinispan/Cache.html#keySet()[keySet()] and
-link:{javadocroot}/org/infinispan/Cache.html#entrySet()[entrySet()] .
+link:../../apidocs/org/infinispan/Cache.html#size()[size()] ,
+link:../../apidocs/org/infinispan/Cache.html#values()[values()] ,
+link:../../apidocs/org/infinispan/Cache.html#keySet()[keySet()] and
+link:../../apidocs/org/infinispan/Cache.html#entrySet()[entrySet()] .
 Specific methods on the `keySet`, `values` and `entrySet` are fine for use please see their Javadoc for further details.
 
 Attempting to perform these operations globally would have large performance impact as well as become a scalability bottleneck.  As such, these methods should only be used for informational or debugging purposes only.
 
-It should be noted that using certain flags with the link:{javadocroot}/org/infinispan/AdvancedCache.html#withFlags(java.util.Collection)[withFlags()] method can mitigate some of these concerns, please check each method's documentation for more details.
+It should be noted that using certain flags with the link:../../apidocs/org/infinispan/AdvancedCache.html#withFlags(java.util.Collection)[withFlags()] method can mitigate some of these concerns, please check each method's documentation for more details.
 
 .Mortal and Immortal Data
-Further to simply storing entries, {brandname}'s cache API allows you to attach mortality information to data.  For example, simply using link:{jdkdocroot}/java/util/Map.html#put-K-V-[put(key, value)] would create an _immortal_ entry, i.e., an entry that lives in the cache forever, until it is removed (or evicted from memory to prevent running out of memory).  If, however, you put data in the cache using link:{javadocroot}/org/infinispan/commons/api/BasicCache.html#put(K,V,long,java.util.concurrent.TimeUnit)[put(key, value, lifespan, timeunit)] , this creates a _mortal_ entry, i.e., an entry that has a fixed lifespan and expires after that lifespan.
+Further to simply storing entries, {brandname}'s cache API allows you to attach mortality information to data.  For example, simply using link:{jdkdocroot}/java/util/Map.html#put-K-V-[put(key, value)] would create an _immortal_ entry, i.e., an entry that lives in the cache forever, until it is removed (or evicted from memory to prevent running out of memory).  If, however, you put data in the cache using link:../../apidocs/org/infinispan/commons/api/BasicCache.html#put(K,V,long,java.util.concurrent.TimeUnit)[put(key, value, lifespan, timeunit)] , this creates a _mortal_ entry, i.e., an entry that has a fixed lifespan and expires after that lifespan.
 
 In addition to _lifespan_ , {brandname} also supports _maxIdle_ as an additional metric with which to determine expiration.  Any combination of lifespans or maxIdles can be used.
 
 .`putForExternalRead` operation
-{brandname}'s link:{javadocroot}/org/infinispan/Cache.html[Cache] class contains a different 'put' operation called link:{javadocroot}/org/infinispan/Cache.html#putForExternalRead(K,V)[putForExternalRead] . This operation is particularly useful when {brandname} is used as a temporary cache for data that is persisted elsewhere.  Under heavy read scenarios, contention in the cache should not delay the real transactions at hand, since caching should just be an optimization and not something that gets in the way.
+{brandname}'s link:../../apidocs/org/infinispan/Cache.html[Cache] class contains a different 'put' operation called link:../../apidocs/org/infinispan/Cache.html#putForExternalRead(K,V)[putForExternalRead] . This operation is particularly useful when {brandname} is used as a temporary cache for data that is persisted elsewhere.  Under heavy read scenarios, contention in the cache should not delay the real transactions at hand, since caching should just be an optimization and not something that gets in the way.
 
 To achieve this, `putForExternalRead()` acts as a put call that only operates if the key is not present in the cache, and fails fast and silently if another thread is trying to store the same key at the same time. In this particular scenario, caching data is a way to optimise the system and it's not desirable that a failure in caching affects the on-going transaction, hence why failure is handled differently. `putForExternalRead()` is considered to be a fast operation because regardless of whether it's successful or not, it doesn't wait for any locks, and so returns to the caller promptly.
 
-To understand how to use this operation, let's look at basic example. Imagine a cache of Person instances, each keyed by a PersonId , whose data originates in a separate data store. The following code shows the most common pattern of using link:{javadocroot}/org/infinispan/Cache.html#putForExternalRead(K,V)[putForExternalRead] within the context of this example:
+To understand how to use this operation, let's look at basic example. Imagine a cache of Person instances, each keyed by a PersonId , whose data originates in a separate data store. The following code shows the most common pattern of using link:../../apidocs/org/infinispan/Cache.html#putForExternalRead(K,V)[putForExternalRead] within the context of this example:
 
 [source,java]
 ----
 include::code_examples/PersonId.java[]
 ----
 
-Note that link:{javadocroot}/org/infinispan/Cache.html#putForExternalRead(K,V)[putForExternalRead] should never be used as a mechanism to update the cache with a new Person instance originating from application execution (i.e. from a transaction that modifies a Person's address). When updating cached values, please use the standard link:{jdkdocroot}/java/util/Map.html#put-K-V-[put] operation, otherwise the possibility of caching corrupt data is likely.
+Note that link:../../apidocs/org/infinispan/Cache.html#putForExternalRead(K,V)[putForExternalRead] should never be used as a mechanism to update the cache with a new Person instance originating from application execution (i.e. from a transaction that modifies a Person's address). When updating cached values, please use the standard link:{jdkdocroot}/java/util/Map.html#put-K-V-[put] operation, otherwise the possibility of caching corrupt data is likely.
 
 == AdvancedCache API
-In addition to the simple Cache interface, {brandname} offers an link:{javadocroot}/org/infinispan/AdvancedCache.html[AdvancedCache] interface, geared towards extension authors.  The AdvancedCache offers the ability to access certain internal components and to apply flags to alter the default behavior of certain cache methods.  The following code snippet depicts how an AdvancedCache can be obtained:
+In addition to the simple Cache interface, {brandname} offers an link:../../apidocs/org/infinispan/AdvancedCache.html[AdvancedCache] interface, geared towards extension authors.  The AdvancedCache offers the ability to access certain internal components and to apply flags to alter the default behavior of certain cache methods.  The following code snippet depicts how an AdvancedCache can be obtained:
 
 [source,java]
 ----
@@ -45,7 +45,7 @@ include::code_examples/GetAdvancedCache.java[]
 ----
 
 === Flags
-Flags are applied to regular cache methods to alter the behavior of certain methods.  For a list of all available flags, and their effects, see the link:{javadocroot}/org/infinispan/context/Flag.html[Flag] enumeration.  Flags are applied using link:{javadocroot}/org/infinispan/AdvancedCache.html#withFlags(java.util.Collection)[AdvancedCache.withFlags()] .  This builder method can be used to apply any number of flags to a cache invocation, for example:
+Flags are applied to regular cache methods to alter the behavior of certain methods.  For a list of all available flags, and their effects, see the link:../../apidocs/org/infinispan/context/Flag.html[Flag] enumeration.  Flags are applied using link:../../apidocs/org/infinispan/AdvancedCache.html#withFlags(java.util.Collection)[AdvancedCache.withFlags()] .  This builder method can be used to apply any number of flags to a cache invocation, for example:
 
 [source,java]
 ----
@@ -56,7 +56,7 @@ include::code_examples/AdvancedCacheWithFlags.java[]
 ==  Asynchronous API
 In addition to synchronous API methods like link:{jdkdocroot}/java/util/Map.html#put-K-V-[Cache.put()] , link:{jdkdocroot}/java/util/Map.html#remove-java.lang.Object-[Cache.remove()] , etc., {brandname} also has an asynchronous, non-blocking API where you can achieve the same results in a non-blocking fashion.
 
-These methods are named in a similar fashion to their blocking counterparts, with "Async" appended.  E.g., link:{javadocroot}/org/infinispan/commons/api/AsyncCache.html#putAsync(K,V)[Cache.putAsync()] , link:{javadocroot}/org/infinispan/commons/api/AsyncCache.html#removeAsync(java.lang.Object)[Cache.removeAsync()] , etc.  These asynchronous counterparts return a link:{jdkdocroot}/java/util/concurrent/CompletableFuture.html[CompletableFuture] that contains the actual result of the operation.
+These methods are named in a similar fashion to their blocking counterparts, with "Async" appended.  E.g., link:../../apidocs/org/infinispan/commons/api/AsyncCache.html#putAsync(K,V)[Cache.putAsync()] , link:../../apidocs/org/infinispan/commons/api/AsyncCache.html#removeAsync(java.lang.Object)[Cache.removeAsync()] , etc.  These asynchronous counterparts return a link:{jdkdocroot}/java/util/concurrent/CompletableFuture.html[CompletableFuture] that contains the actual result of the operation.
 
 For example, in a cache parameterized as `Cache<String, String>`, `Cache.put(String key, String value)` returns `String` while `Cache.putAsync(String key, String value)` returns `CompletableFuture<String>`.
 

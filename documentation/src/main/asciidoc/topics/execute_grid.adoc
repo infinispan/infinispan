@@ -5,7 +5,7 @@ Since you have a group of machines, it makes sense to leverage their combined
 computing power for executing code on all of them them.
 The Cache Manager comes with a nice utility that allows you to
 execute arbitrary code in the cluster. Note this feature requires no Cache to be used.  This
-link:{javadocroot}/org/infinispan/manager/ClusterExecutor.html[Cluster Executor]
+link:../../apidocs/org/infinispan/manager/ClusterExecutor.html[Cluster Executor]
 can be retrieved by calling +executor()+ on the `EmbeddedCacheManager`. This executor is retrievable
 in both clustered and non clustered configurations.
 
@@ -60,7 +60,7 @@ as configured on the Transport Configuration. This timeout works in both a clust
 Cache Manager. The executor may or may not interrupt the threads executing a task when the timeout expires. However
 when the timeout occurs any `Consumer` or `Future` will be completed passing back a `TimeoutException`.
 This value can be overridden by ivoking the
-link:{javadocroot}/org/infinispan/manager/ClusterExecutor.html#timeout-long-java.util.concurrent.TimeUnit-[timeout]
+link:../../apidocs/org/infinispan/manager/ClusterExecutor.html#timeout-long-java.util.concurrent.TimeUnit-[timeout]
 method and supplying the desired duration.
 
 == Single Node Submission
@@ -85,7 +85,7 @@ the command again.
 When this occurs the Cluster Executor will choose a single node again to resubmit the command to
 up to the desired number of failover attempts. Note the chosen node could be any node that passes
 the topology or predicate check. Failover is enabled by invoking the overridden
-link:{javadocroot}/org/infinispan/manager/ClusterExecutor.html#singleNodeSubmission-int-[singleNodeSubmission]
+link:../../apidocs/org/infinispan/manager/ClusterExecutor.html#singleNodeSubmission-int-[singleNodeSubmission]
 method. The given command will be resubmitted again to a single node until either
 the command completes without exception or the total submission amount is equal to the provided
 failover count.

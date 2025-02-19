@@ -85,5 +85,5 @@ include::yaml/infinispan_caches.yaml[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{configdocroot}[{brandname} configuration schema reference]
-* link:http://infinispan.org/schemas/infinispan-config-{schemaversion}.xsd[infinispan-config-{schemaversion}.xsd]
+* link:../../configuration-schema/index.html[{brandname} configuration schema reference]
+* link:https://infinispan.org/schemas/infinispan-config-{schemaversion}.xsd[infinispan-config-{schemaversion}.xsd]

@@ -61,6 +61,6 @@ Following this, **NYC** starts a unidirectional state transfer to **LON**.
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/Cache.html#clear()[org.infinispan.Cache.clear()]
+* link:../../apidocs/org/infinispan/Cache.html#clear()[org.infinispan.Cache.clear()]
 * link:{cli_docs}[Using the {brandname} Command Line Interface]
 * link:{rest_docs}[{brandname} REST API]

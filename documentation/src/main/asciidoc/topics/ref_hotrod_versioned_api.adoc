@@ -19,4 +19,4 @@ RemoteCacheManager remoteCacheManager = new RemoteCacheManager();
 
 .Reference
 
-* link:{javadocroot}/org/infinispan/client/hotrod/MetadataValue.html[org.infinispan.client.hotrod.MetadataValue]
+* link:../../apidocs/org/infinispan/client/hotrod/MetadataValue.html[org.infinispan.client.hotrod.MetadataValue]

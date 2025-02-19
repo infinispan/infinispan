@@ -11,4 +11,4 @@ include::code_examples/ScriptAdd.java[]
 
 .Reference
 
-link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[org.infinispan.client.hotrod.RemoteCache]
+link:../../apidocs/org/infinispan/client/hotrod/RemoteCache.html[org.infinispan.client.hotrod.RemoteCache]

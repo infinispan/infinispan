@@ -64,6 +64,6 @@ public class HelloTask implements ServerTask<String> {
 ----
 
 .Reference
-* link:{javadocroot}/org/infinispan/tasks/ServerTask.html[`org.infinispan.tasks.ServerTask`]
+* link:../../apidocs/org/infinispan/tasks/ServerTask.html[`org.infinispan.tasks.ServerTask`]
 * http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Callable.html?is-external=true#call--[`java.util.concurrent.Callable.call()`]
 * link:https://docs.oracle.com/javase/8/docs/api/java/util/ServiceLoader.html[`java.util.ServiceLoader`]

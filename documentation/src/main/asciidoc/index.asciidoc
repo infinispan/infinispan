@@ -48,3 +48,10 @@ Use Infinispan caching capabilities to boost application performance with a faul
 * link:titles/memcached/memcached.html[Using the Memcached protocol endpoint with Infinispan]
 * link:titles/resp/resp-endpoint.html[Using the Redis-compatible RESP protocol endpoint with Infinispan]
 * link:titles/spring/spring.html[Spring Cache and Spring Sessions with Infinispan]
+
+[discrete]
+== Reference documentation
+
+[unstyled]
+* link:apidocs/index.html[JavaDoc APIs]
+* link:logging/logs.html[Log messages]

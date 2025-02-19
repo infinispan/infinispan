@@ -262,4 +262,4 @@ Invoke the `Query.executeStatement()` method to execute DELETE statements.
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/query/dsl/Query.html#executeStatement()[org.infinispan.query.dsl.Query.executeStatement()]
+* link:../../apidocs/org/infinispan/query/dsl/Query.html#executeStatement()[org.infinispan.query.dsl.Query.executeStatement()]

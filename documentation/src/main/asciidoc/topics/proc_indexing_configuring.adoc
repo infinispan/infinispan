@@ -65,4 +65,4 @@ include::code_examples/IndexBasicConfiguration.java[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/configuration/cache/IndexingConfigurationBuilder.html[`org.infinispan.configuration.cache.IndexingConfigurationBuilder`]
+* link:../../apidocs/org/infinispan/configuration/cache/IndexingConfigurationBuilder.html[`org.infinispan.configuration.cache.IndexingConfigurationBuilder`]

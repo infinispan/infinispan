@@ -2,7 +2,7 @@
 = Asynchronous replication
 
 All clustered cache modes can be configured to use asynchronous communications with the
-link:{configdocroot}[`mode="ASYNC"`]
+link:../../configuration-schema/index.html[`mode="ASYNC"`]
 attribute on the `<replicated-cache/>`, `<distributed-cache>`, or `<invalidation-cache/>`
 element.
 

@@ -20,4 +20,4 @@ include::json/john_doe.json[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/AdvancedCache.html[org.infinispan.AdvancedCache]
+* link:../../apidocs/org/infinispan/AdvancedCache.html[org.infinispan.AdvancedCache]

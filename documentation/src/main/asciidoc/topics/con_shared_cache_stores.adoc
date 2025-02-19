@@ -37,4 +37,4 @@ Purging deletes data, which is not typically the desired behavior for persistent
 
 [role="_additional-resources"]
 .Additional resources
-* link:{configdocroot}[{brandname} Configuration Schema]
+* link:../../configuration-schema/index.html[{brandname} Configuration Schema]

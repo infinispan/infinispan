@@ -62,7 +62,7 @@ include::yaml/xsite_resolver_custom.yaml[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/xsite/spi/XSiteEntryMergePolicy.html[org.infinispan.xsite.spi.XSiteEntryMergePolicy]
-* link:{javadocroot}/org/infinispan/xsite/spi/XSiteMergePolicy.html[org.infinispan.xsite.spi.XSiteMergePolicy]
-* link:{javadocroot}/org/infinispan/xsite/spi/SiteEntry.html[org.infinispan.xsite.spi.SiteEntry]
-* link:{configdocroot}[{brandname} configuration schema reference]
+* link:../../apidocs/org/infinispan/xsite/spi/XSiteEntryMergePolicy.html[org.infinispan.xsite.spi.XSiteEntryMergePolicy]
+* link:../../apidocs/org/infinispan/xsite/spi/XSiteMergePolicy.html[org.infinispan.xsite.spi.XSiteMergePolicy]
+* link:../../apidocs/org/infinispan/xsite/spi/SiteEntry.html[org.infinispan.xsite.spi.SiteEntry]
+* link:../../configuration-schema/index.html[{brandname} configuration schema reference]

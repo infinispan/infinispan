@@ -3,9 +3,9 @@
 
 Cache-level events occur on a per-cache basis, and by default are only raised on nodes where the events occur.  Note in a distributed cache these events are only raised on the owners of data being affected.  Examples of cache-level events are entries being added, removed, modified, etc.  These events trigger notifications to listeners registered to a specific cache.
 
-Please see the link:{javadocroot}/org/infinispan/notifications/cachelistener/annotation/package-summary.html[Javadocs on the org.infinispan.notifications.cachelistener.annotation package] for a comprehensive list of all cache-level notifications, and their respective method-level annotations.
+Please see the link:../../apidocs/org/infinispan/notifications/cachelistener/annotation/package-summary.html[Javadocs on the org.infinispan.notifications.cachelistener.annotation package] for a comprehensive list of all cache-level notifications, and their respective method-level annotations.
 
-NOTE: Please refer to the link:{javadocroot}/org/infinispan/notifications/cachelistener/annotation/package-summary.html[Javadocs on the org.infinispan.notifications.cachelistener.annotation package] for the list of cache-level notifications available in {brandname}.
+NOTE: Please refer to the link:../../apidocs/org/infinispan/notifications/cachelistener/annotation/package-summary.html[Javadocs on the org.infinispan.notifications.cachelistener.annotation package] for the list of cache-level notifications available in {brandname}.
 
 [discrete]
 == Cluster listeners
@@ -25,7 +25,7 @@ There are some limitations to cluster listeners from a non clustered listener.
 
 [discrete]
 == Event filtering and conversion
-All applicable events on the node where the listener is installed will be raised to the listener.  It is possible to dynamically filter what events are raised by using a link:{javadocroot}/org/infinispan/filter/KeyFilter.html[KeyFilter] (only allows filtering on keys) or link:{javadocroot}/org/infinispan/notifications/cachelistener/filter/CacheEventFilter.html[CacheEventFilter] (used to filter for keys, old value, old metadata, new value, new metadata, whether command was retried, if the event is before the event (ie. isPre) and also the command type).
+All applicable events on the node where the listener is installed will be raised to the listener.  It is possible to dynamically filter what events are raised by using a link:../../apidocs/org/infinispan/filter/KeyFilter.html[KeyFilter] (only allows filtering on keys) or link:../../apidocs/org/infinispan/notifications/cachelistener/filter/CacheEventFilter.html[CacheEventFilter] (used to filter for keys, old value, old metadata, new value, new metadata, whether command was retried, if the event is before the event (ie. isPre) and also the command type).
 
 The example here shows a simple `KeyFilter` that will only allow events to be raised when an event modified the entry for the key `Only Me`.
 
@@ -36,7 +36,7 @@ include::code_examples/ListenerKeyFilter.java[]
 
 This can be useful when you want to limit what events you receive in a more efficient manner.
 
-There is also a link:{javadocroot}/org/infinispan/notifications/cachelistener/filter/CacheEventConverter.html[CacheEventConverter] that can be supplied that allows for converting a value to another before raising the event.  This can be nice to modularize any code that does value conversions.
+There is also a link:../../apidocs/org/infinispan/notifications/cachelistener/filter/CacheEventConverter.html[CacheEventConverter] that can be supplied that allows for converting a value to another before raising the event.  This can be nice to modularize any code that does value conversions.
 
 NOTE: The mentioned filters and converters are especially beneficial when used in conjunction with a Cluster Listener.  This is because the filtering and conversion is done on the node where the event originated and not on the node where event is listened to.  This can provide benefits of not having to replicate events across the cluster (filter) or even have reduced payloads (converter).
 
@@ -62,4 +62,4 @@ If more than one event is generated {brandname} will mark the event that it was 
 include::code_examples/ListenerMyRetry.java[]
 ----
 
-Also when using a `CacheEventFilter` or `CacheEventConverter` the link:{javadocroot}/org/infinispan/notifications/cachelistener/filter/EventType.html[EventType] contains a method `isRetry` to tell if the event was generated due to retry.
+Also when using a `CacheEventFilter` or `CacheEventConverter` the link:../../apidocs/org/infinispan/notifications/cachelistener/filter/EventType.html[EventType] contains a method `isRetry` to tell if the event was generated due to retry.

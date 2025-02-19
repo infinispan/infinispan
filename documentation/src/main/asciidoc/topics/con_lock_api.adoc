@@ -22,6 +22,6 @@ acquires the lock if it is available and the second call is blocked.
 
 .Reference
 
-* link:{javadocroot}/org/infinispan/lock/EmbeddedClusteredLockManagerFactory.html[EmbeddedClusteredLockManagerFactory]
-* link:{javadocroot}/org/infinispan/lock/api/ClusteredLockManager.html[ClusteredLockManager]
-* link:{javadocroot}/org/infinispan/lock/api/ClusteredLock.html[ClusteredLock]
+* link:../../apidocs/org/infinispan/lock/EmbeddedClusteredLockManagerFactory.html[EmbeddedClusteredLockManagerFactory]
+* link:../../apidocs/org/infinispan/lock/api/ClusteredLockManager.html[ClusteredLockManager]
+* link:../../apidocs/org/infinispan/lock/api/ClusteredLock.html[ClusteredLock]

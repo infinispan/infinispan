@@ -136,7 +136,7 @@ GET /rest/v2/container/config
 
 .Reference
 
-link:{javadocroot}/org/infinispan/configuration/global/GlobalConfiguration.html[GlobalConfiguration]
+link:../../apidocs/org/infinispan/configuration/global/GlobalConfiguration.html[GlobalConfiguration]
 
 
 [id='rest_v2_container_caches_config']

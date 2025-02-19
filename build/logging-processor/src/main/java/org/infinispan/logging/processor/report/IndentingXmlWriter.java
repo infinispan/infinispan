@@ -2,6 +2,7 @@ package org.infinispan.logging.processor.report;
 
 
 import java.util.Arrays;
+
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
@@ -95,7 +96,7 @@ class IndentingXmlWriter implements XMLStreamWriter {
 
    @Override
    public void writeAttribute(String prefix, String namespaceURI, String localName, String value)
-      throws XMLStreamException {
+         throws XMLStreamException {
       writer.writeAttribute(prefix, namespaceURI, localName, value);
    }
 

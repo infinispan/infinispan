@@ -58,4 +58,4 @@ include::yaml/xsite_backup_lon.yaml[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{configdocroot}[{brandname} configuration schema reference]
+* link:../../configuration-schema/index.html[{brandname} configuration schema reference]

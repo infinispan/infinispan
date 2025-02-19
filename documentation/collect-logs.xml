@@ -4,13 +4,12 @@
 	<property name="work.dir" value="${logging.html.tmp}" />
 
 	<target name="copy-files">
-		<property name="search.string" value="DescriptionDocumentation" />
+		<property name="search.string" value="--DescriptionDocumentation--" />
 		<delete dir="${work.dir}" />
 		<mkdir dir="${work.dir}" />
 		<copy todir="${work.dir}" failonerror="false" >
 			<fileset dir="${src.dir}" defaultexcludes="true">
 				<include name="**/*.xml" />
-				<exclude name="**/descriptionreport.xml" />
 				<contains text="${search.string}" casesensitive="yes" />
 			</fileset>
 		</copy>

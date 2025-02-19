@@ -75,4 +75,4 @@ include::yaml/cluster_role_mapper_rewrite_regex.yaml[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{configdocroot}[{brandname} configuration schema reference]
+* link:../../configuration-schema/index.html[{brandname} configuration schema reference]

@@ -40,5 +40,5 @@ include::xml/clustered_lock_manager.xml[]
 
 .Reference
 
-* link:{javadocroot}/org/infinispan/lock/configuration/ClusteredLockManagerConfiguration.html[ClusteredLockManagerConfiguration]
-* link:{configdocroot}infinispan-clustered-locks-config-infinispan-clustered-locks-config-12.0.html.html[Clustered Locks Configuration Schema]
+* link:../../apidocs/org/infinispan/lock/configuration/ClusteredLockManagerConfiguration.html[ClusteredLockManagerConfiguration]
+* link:../../configuration-schema/infinispan-clustered-locks-config-infinispan-clustered-locks-config-12.0.html.html[Clustered Locks Configuration Schema]

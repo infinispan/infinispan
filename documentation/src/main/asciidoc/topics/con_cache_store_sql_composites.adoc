@@ -50,4 +50,4 @@ include::protobuf/books_composite_keys_values.protobuf[]
 [role="_additional-resources"]
 .Additional resources
 * link:{encoding_docs}[Cache encoding and marshalling: Generate Protobuf schema and register them with {brandname}]
-* link:{configdocroot}infinispan-cachestore-sql-config-{schemaversion}.html[{brandname} SQL store configuration reference]
+* link:../../configuration-schema/infinispan-cachestore-sql-config-{schemaversion}.html[{brandname} SQL store configuration reference]

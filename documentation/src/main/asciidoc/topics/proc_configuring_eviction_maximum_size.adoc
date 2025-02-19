@@ -53,7 +53,7 @@ include::code_examples/MaxSizeMemory.java[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{configdocroot}[{brandname} configuration schema reference]
-* link:{javadocroot}/org/infinispan/configuration/cache/EncodingConfiguration.html[org.infinispan.configuration.cache.EncodingConfiguration]
-* link:{javadocroot}/org/infinispan/configuration/cache/MemoryConfigurationBuilder.html[org.infinispan.configuration.cache.MemoryConfigurationBuilder]
+* link:../../configuration-schema/index.html[{brandname} configuration schema reference]
+* link:../../apidocs/org/infinispan/configuration/cache/EncodingConfiguration.html[org.infinispan.configuration.cache.EncodingConfiguration]
+* link:../../apidocs/org/infinispan/configuration/cache/MemoryConfigurationBuilder.html[org.infinispan.configuration.cache.MemoryConfigurationBuilder]
 * link:{encoding_docs}[Cache Encoding and Marshalling]

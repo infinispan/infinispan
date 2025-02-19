@@ -25,4 +25,4 @@ shared.
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/persistence/jdbc/common/DatabaseType.html[DatabaseType Enum lists supported database dialects]
+* link:../../apidocs/org/infinispan/persistence/jdbc/common/DatabaseType.html[DatabaseType Enum lists supported database dialects]

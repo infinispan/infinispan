@@ -22,4 +22,4 @@ For example if you configure cache encoding as `text/plain; charset=UTF-8` then 
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/commons/marshall/UTF8StringMarshaller.html[org.infinispan.commons.marshall.UTF8StringMarshaller]
+* link:../../apidocs/org/infinispan/commons/marshall/UTF8StringMarshaller.html[org.infinispan.commons.marshall.UTF8StringMarshaller]

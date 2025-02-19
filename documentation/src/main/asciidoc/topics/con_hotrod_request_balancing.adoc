@@ -31,4 +31,4 @@ include::properties/hotrod-custom-balancing.properties[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/client/hotrod/FailoverRequestBalancingStrategy.html[org.infinispan.client.hotrod.FailoverRequestBalancingStrategy]
+* link:../../apidocs/org/infinispan/client/hotrod/FailoverRequestBalancingStrategy.html[org.infinispan.client.hotrod.FailoverRequestBalancingStrategy]

@@ -29,4 +29,4 @@ You cannot perform a state transfer operation in invalidation mode.
 .Additional resources
 * link:{config_docs}#statistics-jmx[Enabling and configuring {brandname} statistics and JMX monitoring ({brandname} caches)]
 
-* link:{javadocroot}jmxComponents.html#StateTransferManager[`StateTransferManager` ({brandname} {schemaversion} API)]
+* link:../../apidocsjmxComponents.html#StateTransferManager[`StateTransferManager` ({brandname} {schemaversion} API)]

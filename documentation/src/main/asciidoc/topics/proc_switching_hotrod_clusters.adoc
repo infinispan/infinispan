@@ -14,4 +14,4 @@ configuration, which is defined as a list of {brandname} servers.
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager]
+* link:../../apidocs/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager]

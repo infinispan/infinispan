@@ -48,6 +48,6 @@ include::code_examples/HotRodClientProperties.java[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html[Hot Rod Client Configuration]
-* link:{javadocroot}/org/infinispan/client/hotrod/configuration/ConfigurationBuilder.html[org.infinispan.client.hotrod.configuration.ConfigurationBuilder]
-* link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html#RemoteCacheManager-java.net.URL-[org.infinispan.client.hotrod.RemoteCacheManager]
+* link:../../apidocs/org/infinispan/client/hotrod/configuration/package-summary.html[Hot Rod Client Configuration]
+* link:../../apidocs/org/infinispan/client/hotrod/configuration/ConfigurationBuilder.html[org.infinispan.client.hotrod.configuration.ConfigurationBuilder]
+* link:../../apidocs/org/infinispan/client/hotrod/RemoteCacheManager.html#RemoteCacheManager-java.net.URL-[org.infinispan.client.hotrod.RemoteCacheManager]

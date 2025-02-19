@@ -24,6 +24,6 @@ writing to the wire.
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/persistence/spi/package-summary.html[Persistence SPI]
-* link:{javadocroot}/org/infinispan/persistence/spi/NonBlockingStore.html[NonBlockingStore]
+* link:../../apidocs/org/infinispan/persistence/spi/package-summary.html[Persistence SPI]
+* link:../../apidocs/org/infinispan/persistence/spi/NonBlockingStore.html[NonBlockingStore]
 * link:http://jcp.org/en/jsr/detail?id=107[JSR-107]

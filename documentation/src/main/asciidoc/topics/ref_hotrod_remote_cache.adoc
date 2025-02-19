@@ -13,7 +13,7 @@ These collections adhere to the `Map` specification being that `add` and
 One thing to note is the `Iterator.remove` and `Set.remove` or
 `Collection.remove` methods require more than 1 round trip to the server to
 operate. You can check out the
-link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache]
+link:../../apidocs/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache]
 Javadoc to see more details about these and the other methods.
 
 .Iterator Usage
@@ -22,7 +22,7 @@ The iterator method of these collections uses `retrieveEntries` internally,
 which is described below. If you notice `retrieveEntries` takes an argument for
 the batch size. There is no way to provide this to the iterator. As such the
 batch size can be configured via system property
-`infinispan.client.hotrod.batch_size` or through the link:{javadocroot}/org/infinispan/client/hotrod/configuration/ConfigurationBuilder.html#batchSize-int-[ConfigurationBuilder] when configuring the
+`infinispan.client.hotrod.batch_size` or through the link:../../apidocs/org/infinispan/client/hotrod/configuration/ConfigurationBuilder.html#batchSize-int-[ConfigurationBuilder] when configuring the
 `RemoteCacheManager`.
 
 Also the `retrieveEntries` iterator returned is `Closeable` as such the

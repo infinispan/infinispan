@@ -26,5 +26,5 @@ GET /rest/v2/container/health
 [role="_additional-resources"]
 .Additional resources
 * link:{rest_docs}#rest_v2_cache_manager_health[REST API: Getting cluster health]
-* link:{javadocroot}/org/infinispan/AdvancedCache.html#getAvailability()[org.infinispan.AdvancedCache.getAvailability]
-* link:{javadocroot}/org/infinispan/partitionhandling/AvailabilityMode.html[Enum AvailabilityMode]
+* link:../../apidocs/org/infinispan/AdvancedCache.html#getAvailability()[org.infinispan.AdvancedCache.getAvailability]
+* link:../../apidocs/org/infinispan/partitionhandling/AvailabilityMode.html[Enum AvailabilityMode]

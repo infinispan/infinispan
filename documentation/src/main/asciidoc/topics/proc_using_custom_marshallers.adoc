@@ -5,7 +5,7 @@
 [TIP]
 ====
 Custom marshaller implementations can access a configured access list via the
-link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html#initialize(org.infinispan.commons.configuration.ClassAllowList)[initialize()] method, which is called during startup.
+link:../../apidocs/org/infinispan/commons/marshall/Marshaller.html#initialize(org.infinispan.commons.configuration.ClassAllowList)[initialize()] method, which is called during startup.
 ====
 
 .Procedure
@@ -28,4 +28,4 @@ include::code_examples/CustomMarshaller.java[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html[org.infinispan.commons.marshall.Marshaller]
+* link:../../apidocs/org/infinispan/commons/marshall/Marshaller.html[org.infinispan.commons.marshall.Marshaller]

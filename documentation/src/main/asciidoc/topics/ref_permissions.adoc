@@ -93,4 +93,4 @@ User roles are sets of permissions with different access levels.
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/security/package-summary.html[{brandname} Security API]
+* link:../../apidocs/org/infinispan/security/package-summary.html[{brandname} Security API]

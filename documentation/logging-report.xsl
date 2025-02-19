@@ -11,6 +11,7 @@
 
     <xsl:template match="/html/body/table/placeholder">
         <xsl:for-each select="collection(concat($directory,'?select=*.xml;recurse=yes'))//report/logs/log">
+            <xsl:sort select="id"/>
             <tr>
                 <td>
                     <xsl:value-of select="id"/>

@@ -84,5 +84,5 @@ include::properties/hotrod-client-failed-server-timeout.properties[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{javadocroot}/org/infinispan/client/hotrod/configuration/ClientIntelligence.html[org.infinispan.client.hotrod.configuration.ClientIntelligence]
+* link:../../apidocs/org/infinispan/client/hotrod/configuration/ClientIntelligence.html[org.infinispan.client.hotrod.configuration.ClientIntelligence]
 
