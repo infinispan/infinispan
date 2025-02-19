@@ -1,9 +1,22 @@
 package org.infinispan.server.resp;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
+
+import java.util.List;
+
+import org.infinispan.server.resp.json.JSONUtil;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.RedisCodec;
@@ -20,17 +33,6 @@ import io.lettuce.core.output.StringListOutput;
 import io.lettuce.core.output.ValueOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
-import org.infinispan.server.resp.json.JSONUtil;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
 
 @Test(groups = "functional", testName = "server.resp.JsonCommandsTest")
 public class JsonCommandsTest extends SingleNodeRespBaseTest {
@@ -817,6 +819,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       // Not using json.get since lettuce json.get fails with RESP3 null
       assertThat(redis.get(key)).isNull();
    }
+
    @Test
    public void testJSONSTRAPPEND() {
       JsonPath jp = new JsonPath("$");
@@ -885,95 +888,95 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
 
    @Test
    public void testJSONARRAPPEND() {
-       CustomStringCommands command = CustomStringCommands.instance(redisConnection);
-       JsonPath jp = new JsonPath("$");
-       JsonValue jv = defaultJsonParser.createJsonValue("[1, \"a\", {\"o\":\"v\"}]");
-       String key = k();
-       // Append to root
-       redis.jsonSet(key, jp, jv);
-       List<JsonValue> arr = redis.jsonGet(key, jp);
-       assertThat(arr).isNotNull();
-       Long res = command.jsonArrappend(key, "$", "\"aString\"", "1", "{\"aObj\": null}");
-       assertThat(res).isEqualTo(6);
-       List<JsonValue> jsonGet = redis.jsonGet(key, jp);
-       assertThat(jsonGet.get(0).toString()).isEqualTo("[[1,\"a\",{\"o\":\"v\"},\"aString\",1,{\"aObj\":null}]]");
-       jv = defaultJsonParser.createJsonValue("""
-                  {"a": 2,
-                  "arr_value": ["one", "two", "three"],
-                  "nested":
-                     {"a": true,
-                     "nested2": {
-                      "foo": "fore"},
-                      "arr_value": [1,2,3,4]
-                     },
-                  "nested1":
-                     {
-                      "arr_value": null
-                     },
-                  "nested2":
-                     {
-                      "arr_value": 1
-                     }
+      CustomStringCommands command = CustomStringCommands.instance(redisConnection);
+      JsonPath jp = new JsonPath("$");
+      JsonValue jv = defaultJsonParser.createJsonValue("[1, \"a\", {\"o\":\"v\"}]");
+      String key = k();
+      // Append to root
+      redis.jsonSet(key, jp, jv);
+      List<JsonValue> arr = redis.jsonGet(key, jp);
+      assertThat(arr).isNotNull();
+      Long res = command.jsonArrappend(key, "$", "\"aString\"", "1", "{\"aObj\": null}");
+      assertThat(res).isEqualTo(6);
+      List<JsonValue> jsonGet = redis.jsonGet(key, jp);
+      assertThat(jsonGet.get(0).toString()).isEqualTo("[[1,\"a\",{\"o\":\"v\"},\"aString\",1,{\"aObj\":null}]]");
+      jv = defaultJsonParser.createJsonValue("""
+               {"a": 2,
+               "arr_value": ["one", "two", "three"],
+               "nested":
+                  {"a": true,
+                  "nested2": {
+                   "foo": "fore"},
+                   "arr_value": [1,2,3,4]
+                  },
+               "nested1":
+                  {
+                   "arr_value": null
+                  },
+               "nested2":
+                  {
+                   "arr_value": 1
                   }
-               """);
-       key = k(1);
-       redis.jsonSet(key, jp, jv);
-       // Append to single element
-       jp = new JsonPath("$.nested.arr_value");
-       JsonValue app1 = defaultJsonParser.fromObject("aString");
-       JsonValue app2 = defaultJsonParser.fromObject(1);
-       JsonValue app3 = defaultJsonParser.createJsonValue("{\"aObj\": null}");
-       List<Long> jsonArrappend = redis.jsonArrappend(key, jp, app1, app2, app3);
-       assertThat(jsonArrappend).containsExactly(7L);
-       jsonGet = redis.jsonGet(key, jp);
-       assertThat(jsonGet.get(0).toString()).isEqualTo("[[1,2,3,4,\"aString\",1,{\"aObj\":null}]]");
-       // Append to multiple elements
+               }
+            """);
+      key = k(1);
+      redis.jsonSet(key, jp, jv);
+      // Append to single element
+      jp = new JsonPath("$.nested.arr_value");
+      JsonValue app1 = defaultJsonParser.fromObject("aString");
+      JsonValue app2 = defaultJsonParser.fromObject(1);
+      JsonValue app3 = defaultJsonParser.createJsonValue("{\"aObj\": null}");
+      List<Long> jsonArrappend = redis.jsonArrappend(key, jp, app1, app2, app3);
+      assertThat(jsonArrappend).containsExactly(7L);
+      jsonGet = redis.jsonGet(key, jp);
+      assertThat(jsonGet.get(0).toString()).isEqualTo("[[1,2,3,4,\"aString\",1,{\"aObj\":null}]]");
+      // Append to multiple elements
 
-       jp = new JsonPath("$..arr_value");
-       assertThat(redis.jsonArrappend(key, jp, app1, app2, app3)).containsExactly(6L, 10L, null, null);
+      jp = new JsonPath("$..arr_value");
+      assertThat(redis.jsonArrappend(key, jp, app1, app2, app3)).containsExactly(6L, 10L, null, null);
 
-       // Test legacy path
-       command = CustomStringCommands.instance(redisConnection);
-       jp = new JsonPath("$");
-       jv = defaultJsonParser.createJsonValue("[1, \"a\", {\"o\":\"v\"}]");
-       key = k();
-       // Append to root
-       redis.jsonSet(key, jp, jv);
-       arr = redis.jsonGet(key, jp);
-       assertThat(arr).isNotNull();
-       res = command.jsonArrappend(key, ".", "\"aString\"", "1", "{\"aObj\": null}");
-       assertThat(res).isEqualTo(6);
-       jsonGet = redis.jsonGet(key, jp);
-       assertThat(jsonGet.get(0).toString()).isEqualTo("[[1,\"a\",{\"o\":\"v\"},\"aString\",1,{\"aObj\":null}]]");
-       jv = defaultJsonParser.createJsonValue("""
-                  {"a": 2,
-                  "arr_value": ["one", "two", "three"],
-                  "nested":
-                     {"a": true,
-                     "nested2": {
-                      "foo": "fore"},
-                      "arr_value": [1,2,3,4]
-                     },
-                  "nested1":
-                     {
-                      "arr_value": null
-                     },
-                  "nested2":
-                     {
-                      "arr_value": 1
-                     }
+      // Test legacy path
+      command = CustomStringCommands.instance(redisConnection);
+      jp = new JsonPath("$");
+      jv = defaultJsonParser.createJsonValue("[1, \"a\", {\"o\":\"v\"}]");
+      key = k();
+      // Append to root
+      redis.jsonSet(key, jp, jv);
+      arr = redis.jsonGet(key, jp);
+      assertThat(arr).isNotNull();
+      res = command.jsonArrappend(key, ".", "\"aString\"", "1", "{\"aObj\": null}");
+      assertThat(res).isEqualTo(6);
+      jsonGet = redis.jsonGet(key, jp);
+      assertThat(jsonGet.get(0).toString()).isEqualTo("[[1,\"a\",{\"o\":\"v\"},\"aString\",1,{\"aObj\":null}]]");
+      jv = defaultJsonParser.createJsonValue("""
+               {"a": 2,
+               "arr_value": ["one", "two", "three"],
+               "nested":
+                  {"a": true,
+                  "nested2": {
+                   "foo": "fore"},
+                   "arr_value": [1,2,3,4]
+                  },
+               "nested1":
+                  {
+                   "arr_value": null
+                  },
+               "nested2":
+                  {
+                   "arr_value": 1
                   }
-               """);
-       key = k(1);
-       redis.jsonSet(key, jp, jv);
-       // Append to single element
-       jp = new JsonPath(".nested.arr_value");
-       app1 = defaultJsonParser.fromObject("aString");
-       app2 = defaultJsonParser.fromObject(1);
-       app3 = defaultJsonParser.createJsonValue("{\"aObj\": null}");
-       assertThat(redis.jsonArrappend(key, jp, app1, app2, app3)).containsExactly(7L);
-       jsonGet = redis.jsonGet(key, jp);
-       assertThat(jsonGet.get(0).toString()).isEqualTo("[1,2,3,4,\"aString\",1,{\"aObj\":null}]");
+               }
+            """);
+      key = k(1);
+      redis.jsonSet(key, jp, jv);
+      // Append to single element
+      jp = new JsonPath(".nested.arr_value");
+      app1 = defaultJsonParser.fromObject("aString");
+      app2 = defaultJsonParser.fromObject(1);
+      app3 = defaultJsonParser.createJsonValue("{\"aObj\": null}");
+      assertThat(redis.jsonArrappend(key, jp, app1, app2, app3)).containsExactly(7L);
+      jsonGet = redis.jsonGet(key, jp);
+      assertThat(jsonGet.get(0).toString()).isEqualTo("[1,2,3,4,\"aString\",1,{\"aObj\":null}]");
    }
 
    @Test
@@ -1063,7 +1066,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThat(result).containsExactly("bool", "null_value", "arr_value", "nested", "foo", "legacy");
       JsonPath jp1 = new JsonPath(".bool");
       assertThatThrownBy(() -> redis.jsonObjkeys(key, jp1)).isInstanceOf(RedisCommandExecutionException.class)
-              .hasMessage("ERR Path '$.bool' does not exist or not an object");
+            .hasMessage("ERR Path '$.bool' does not exist or not an object");
       jp = new JsonPath("$.non_existing");
       result = redis.jsonObjkeys(key, jp);
       assertThat(result).isEmpty();
@@ -1073,8 +1076,8 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
    public void testJSONNUMINCRBY() {
       JsonPath jp = new JsonPath("$");
       JsonValue jv = defaultJsonParser.createJsonValue("""
-                {"a":"b", "b": [{"a":2}, {"a":"c"}, {"a":5.4}, {"a":true}, {"a":["hello"]}]}
-              """);
+              {"a":"b", "b": [{"a":2}, {"a":"c"}, {"a":5.4}, {"a":true}, {"a":["hello"]}]}
+            """);
       String key = k();
       // JSON.SET doc $ '{"a":"b", "b": [{"a":2}, {"a":"c"}, {"a":5.4}, {"a":true},{"h":1}, {"a":["hello"]}]}'
       assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
@@ -1094,11 +1097,11 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.jsonNumincrby(key, new JsonPath(".notExisting"), 12.0)).isEmpty();
 
       // JSON.NUMINCRBY notExistingKey $..value
-      assertThatThrownBy(() ->
-              redis.jsonNumincrby("notExistingKey",  new JsonPath("$..a"), 2))
-              .isInstanceOf(RedisCommandExecutionException.class)
-              .hasMessage("ERR could not perform this operation on a key that doesn't exist");
+      assertThatThrownBy(() -> redis.jsonNumincrby("notExistingKey", new JsonPath("$..a"), 2))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR could not perform this operation on a key that doesn't exist");
    }
+
    public void testJSONARRINDEX() {
       JsonPath jp = new JsonPath("$");
       JsonValue jv = defaultJsonParser.createJsonValue("""
@@ -1198,6 +1201,133 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       } catch (Exception ex) {
          throw new RuntimeException(ex);
       }
+   }
+
+   @Test
+   public void testJSONARRINSERT() {
+      CustomStringCommands command = CustomStringCommands.instance(redisConnection);
+      JsonPath jp = new JsonPath("$");
+      JsonValue jv = defaultJsonParser.createJsonValue("[1, \"a\", {\"o\":\"v\"}]");
+      String key = k();
+
+      // Append to root
+      redis.jsonSet(key, jp, jv);
+      Long res = (Long) command.jsonArrinsert(key, "$", 2, "\"aString\"", "1", "{\"aObj\": null }");
+      assertThat(res).isEqualTo(6);
+      List<JsonValue> jsonGet = redis.jsonGet(key, jp);
+      assertThat(jsonGet.get(0).toString()).isEqualTo("[[1,\"a\",\"aString\",1,{\"aObj\":null},{\"o\":\"v\"}]]");
+
+      // Test negative index
+      redis.jsonSet(key, jp, jv);
+      res = (Long) command.jsonArrinsert(key, "$", -1, "1", "2", "3");
+      assertThat(res).isEqualTo(6);
+      jsonGet = redis.jsonGet(key, jp);
+      assertThat(jsonGet.get(0).toString()).isEqualTo("[[1,\"a\",1,2,3,{\"o\":\"v\"}]]");
+
+      // Test out of bounds index
+      assertThatThrownBy(() -> command.jsonArrinsert(key, "$", 99, "1", "2", "3"))
+            .isInstanceOf(RedisCommandExecutionException.class).hasMessage("ERR index out of bounds");
+      jv = defaultJsonParser.createJsonValue("""
+               {"a": 2,
+               "arr_value": ["one", "two", "three"],
+               "nested":
+                  {"a": true,
+                  "nested2": {
+                   "foo": "fore"},
+                   "arr_value": [1,2,3,4]
+                  },
+               "nested1":
+                  {
+                   "arr_value": null
+                  },
+               "nested2":
+                  {
+                   "arr_value": 1,
+                   "string": "aString"
+                  }
+               }
+            """);
+      redis.jsonSet(key, jp, jv);
+
+      // Insert to single element (at the end)
+      jp = new JsonPath("$.nested.arr_value");
+      JsonValue v1 = defaultJsonParser.fromObject("aString");
+      JsonValue v2 = defaultJsonParser.fromObject(1);
+      JsonValue v3 = defaultJsonParser.createJsonValue("{\"aObj\": null}");
+      List<Long> jsonArrappend = redis.jsonArrinsert(key, jp, 4, v1, v2, v3);
+      assertThat(jsonArrappend).containsExactly(7L);
+      jsonGet = redis.jsonGet(key, jp);
+      assertThat(jsonGet.get(0).toString()).isEqualTo("[[1,2,3,4,\"aString\",1,{\"aObj\":null}]]");
+
+      // Append to multiple elements
+      jp = new JsonPath("$..arr_value");
+      assertThat(redis.jsonArrinsert(key, jp, 1, v1, v2, v3)).containsExactly(6L, 10L, null, null);
+      jp = new JsonPath("$.nested.*");
+      assertThat(redis.jsonArrinsert(key, jp, 1, v1, v2, v3)).containsExactly(null, null, 13L);
+      jp = new JsonPath("$.nested2.*");
+      assertThat(redis.jsonArrinsert(key, jp, 1, v1, v2, v3)).containsExactly(null, null);
+      jp = new JsonPath("$.non-existent");
+      assertThat(redis.jsonArrinsert(key, jp, 1, v1, v2, v3)).isEmpty();
+
+      // Test legacy path
+      jp = new JsonPath("$");
+      jv = defaultJsonParser.createJsonValue("[1, \"a\", {\"o\":\"v\"}]");
+      // Append to root
+      redis.jsonSet(key, jp, jv);
+      res = (Long) command.jsonArrinsert(key, ".", 2, "\"aString\"", "1", "{\"aObj\": null }");
+      assertThat(res).isEqualTo(6);
+      jsonGet = redis.jsonGet(key, jp);
+      assertThat(jsonGet.get(0).toString()).isEqualTo("[[1,\"a\",\"aString\",1,{\"aObj\":null},{\"o\":\"v\"}]]");
+      assertThatThrownBy(() -> command.jsonArrinsert("non-existent", "$", 1, "v1", "v2", "v3"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR could not perform this operation on a key that doesn't exist");
+
+      jv = defaultJsonParser.createJsonValue("""
+               {"a": 2,
+               "arr_value": ["one", "two", "three"],
+               "nested":
+                  {"a": true,
+                  "nested2": {
+                   "foo": "fore"},
+                   "arr_value": [1,2,3,4]
+                  },
+               "nested1":
+                  {
+                   "arr_value": null
+                  },
+               "nested2":
+                  {
+                   "arr_value": 1
+                  }
+               }
+            """);
+
+      redis.jsonSet(key, jp, jv);
+      // Insert to single element (at the end)
+      jp = new JsonPath(".nested.arr_value");
+      JsonValue v4 = defaultJsonParser.fromObject("aString");
+      JsonValue v5 = defaultJsonParser.fromObject(1);
+      JsonValue v6 = defaultJsonParser.createJsonValue("{\"aObj\": null}");
+      jsonArrappend = redis.jsonArrinsert(key, jp, 4, v4, v5, v6);
+      assertThat(jsonArrappend).containsExactly(7L);
+      jsonGet = redis.jsonGet(key, jp);
+      assertThat(jsonGet.get(0).toString()).isEqualTo("[1,2,3,4,\"aString\",1,{\"aObj\":null}]");
+      // Append to multiple elements
+      jp = new JsonPath("..arr_value");
+      assertThat(redis.jsonArrinsert(key, jp, 1, v4, v5, v6)).containsExactly(10L);
+      jp = new JsonPath(".nested.*");
+      assertThat(redis.jsonArrinsert(key, jp, 1, v4, v5, v6)).containsExactly(13L);
+      JsonPath jp1 = new JsonPath(".nested2.*");
+      assertThatThrownBy(() -> redis.jsonArrinsert(key, jp1, 1, v4, v5, v6))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR Path '$.nested2.*' does not exist or not an array");
+      JsonPath jp2 = new JsonPath(".non-existent");
+      assertThatThrownBy(() -> redis.jsonArrinsert(key, jp2, 1, v4, v5, v6))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR Path '$.non-existent' does not exist or not an array");
+      assertThatThrownBy(() -> command.jsonArrinsert("non-existent", "$", 1, "v1", "v2", "v3"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR could not perform this operation on a key that doesn't exist");
    }
 
    private boolean compareJSONGet(List<JsonValue> results, JsonValue expected, JsonPath... paths) {
