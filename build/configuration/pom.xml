@@ -97,6 +97,7 @@
       <version.caffeine>3.2.0</version.caffeine>
       <version.commons.compress>1.27.1</version.commons.compress>
       <version.console>15.2.0.Final</version.console>
+      <version.ehcache.sizeof>0.3.0</version.ehcache.sizeof>
       <version.fabric8.kubernetes-client>6.13.5</version.fabric8.kubernetes-client>
       <version.glassfish.jaxb>4.0.5</version.glassfish.jaxb>
       <version.graalvm>24.0.0</version.graalvm>
