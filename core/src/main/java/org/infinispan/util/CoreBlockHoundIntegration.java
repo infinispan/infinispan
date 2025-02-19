@@ -17,6 +17,7 @@ import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.sifs.TemporaryTable;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.statetransfer.StateTransferLockImpl;
+import org.infinispan.topology.ClusterCacheStatus;
 import org.infinispan.topology.ClusterTopologyManagerImpl;
 import org.infinispan.topology.LocalTopologyManagerImpl;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -62,6 +63,9 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
          builder.allowBlockingCallsInside(TransactionTable.class.getName(), "calculateMinTopologyId");
 
          builder.allowBlockingCallsInside(ClusterTopologyManagerImpl.class.getName(), "acquireUpdateLock");
+
+         builder.allowBlockingCallsInside(ClusterCacheStatus.class.getName(), "acquireLock");
+         builder.allowBlockingCallsInside(ClusterCacheStatus.class.getName() + "$ConflictResolution", "acquireLock");
 
          builder.allowBlockingCallsInside(PersistenceManagerImpl.class.getName(), "acquireReadLock");
 
