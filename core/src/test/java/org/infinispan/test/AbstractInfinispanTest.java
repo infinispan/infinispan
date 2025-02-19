@@ -24,6 +24,7 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
@@ -52,6 +53,8 @@ import org.infinispan.test.fwk.FakeTestClass;
 import org.infinispan.test.fwk.NamedTestMethod;
 import org.infinispan.test.fwk.TestSelector;
 import org.infinispan.util.EmbeddedTimeService;
+import org.infinispan.util.concurrent.NonBlockingManager;
+import org.infinispan.util.concurrent.NonBlockingManagerImpl;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jgroups.stack.Protocol;
@@ -67,6 +70,8 @@ import org.testng.internal.MethodInstance;
 
 import com.sun.management.UnixOperatingSystemMXBean;
 
+import io.reactivex.rxjava3.core.Scheduler;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.transaction.TransactionManager;
 
 
@@ -99,6 +104,17 @@ public abstract class AbstractInfinispanTest {
                60L, TimeUnit.SECONDS,
                new SynchronousQueue<>(),
                defaultThreadFactory));
+   private final NonBlockingManager testNonBlockingManager = new NonBlockingManagerImpl() {
+      @Override
+      public Executor localExecutor() {
+         return testExecutor;
+      }
+
+      @Override
+      public Scheduler localScheduler() {
+         return Schedulers.from(testExecutor);
+      }
+   };
    public static final TimeService TIME_SERVICE = new EmbeddedTimeService();
 
    public static class OrderByInstance implements IMethodInterceptor {
@@ -474,6 +490,10 @@ public abstract class AbstractInfinispanTest {
 
    protected ExecutorService testExecutor() {
       return testExecutor;
+   }
+
+   protected NonBlockingManager testNonBlockingManager() {
+      return testNonBlockingManager;
    }
 
    private static class ThreadCleaner extends TestResourceTracker.Cleaner<Thread> {

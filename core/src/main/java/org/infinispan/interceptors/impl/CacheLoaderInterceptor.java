@@ -13,7 +13,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
@@ -46,7 +45,9 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -59,8 +60,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupManager;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
@@ -79,8 +78,7 @@ import org.infinispan.persistence.manager.PersistenceStatus;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.util.EntryLoader;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -106,8 +104,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
    @Inject GroupManager groupManager;
    @Inject ComponentRef<Cache<K, V>> cache;
    @Inject KeyPartitioner partitioner;
-   @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
-   protected ExecutorService nonBlockingExecutor;
+   @Inject protected NonBlockingManager nonBlockingManager;
 
    protected boolean activation;
    private volatile boolean usingStores;
@@ -335,7 +332,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
             log.tracef("Piggybacking on concurrent load for key %s", key);
          }
          // Resume on a different CPU thread so we don't have to wait until the other command completes
-         return otherCF.thenAcceptAsync(entry -> putInContext(ctx, key, cmd, entry), nonBlockingExecutor);
+         return otherCF.thenAcceptAsync(entry -> putInContext(ctx, key, cmd, entry), nonBlockingManager.localExecutor());
       }
 
       try {
