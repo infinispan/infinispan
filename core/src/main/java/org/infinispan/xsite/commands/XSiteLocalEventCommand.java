@@ -1,15 +1,14 @@
 package org.infinispan.xsite.commands;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.GlobalRpcCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.xsite.events.XSiteEvent;
 import org.infinispan.xsite.events.XSiteEventsManager;
 
@@ -18,14 +17,15 @@ import org.infinispan.xsite.events.XSiteEventsManager;
  *
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.XSITE_LOCAL_EVENT_COMMAND)
 public class XSiteLocalEventCommand implements GlobalRpcCommand {
 
    public static final byte COMMAND_ID = 2;
-   private List<XSiteEvent> events;
 
-   public XSiteLocalEventCommand() {
-   }
+   @ProtoField(1)
+   List<XSiteEvent> events;
 
+   @ProtoFactory
    public XSiteLocalEventCommand(List<XSiteEvent> events) {
       this.events = events;
    }
@@ -43,16 +43,6 @@ public class XSiteLocalEventCommand implements GlobalRpcCommand {
    @Override
    public boolean isReturnValueExpected() {
       return false;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallCollection(events, output, XSiteEvent::writeTo);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      events = MarshallUtil.unmarshallCollection(input, ArrayList::new, XSiteEvent::readFrom);
    }
 
    @Override

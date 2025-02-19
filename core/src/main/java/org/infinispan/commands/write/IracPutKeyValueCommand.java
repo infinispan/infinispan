@@ -1,20 +1,21 @@
 package org.infinispan.commands.write;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CallInterceptor;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.xsite.spi.SiteEntry;
 import org.infinispan.xsite.spi.XSiteEntryMergePolicy;
 
@@ -31,6 +32,7 @@ import org.infinispan.xsite.spi.XSiteEntryMergePolicy;
  * @author Pedro Ruivo
  * @since 12.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.IRAC_PUT_KEY_VALUE_COMMAND)
 public class IracPutKeyValueCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
 
    public static final byte COMMAND_ID = 28;
@@ -38,10 +40,8 @@ public class IracPutKeyValueCommand extends AbstractDataWriteCommand implements 
    private Object value;
    private Metadata metadata;
    private PrivateMetadata privateMetadata;
-   private boolean successful = true;
+   private transient boolean successful = true;
    private boolean expiration;
-
-   public IracPutKeyValueCommand() {}
 
    public IracPutKeyValueCommand(Object key, int segment, CommandInvocationId commandInvocationId, Object value,
          Metadata metadata, PrivateMetadata privateMetadata) {
@@ -52,7 +52,34 @@ public class IracPutKeyValueCommand extends AbstractDataWriteCommand implements 
       this.privateMetadata = privateMetadata;
    }
 
+   @ProtoFactory
+   IracPutKeyValueCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
+                          CommandInvocationId commandInvocationId, MarshallableObject<Object> wrappedValue,
+                          MarshallableObject<Metadata> wrappedMetadata, boolean expiration, PrivateMetadata internalMetadata) {
+      super(wrappedKey, FlagBitSets.IRAC_UPDATE, topologyId, segment, commandInvocationId);
+      this.value = MarshallableObject.unwrap(wrappedValue);
+      this.metadata = MarshallableObject.unwrap(wrappedMetadata);
+      this.expiration = expiration;
+      this.privateMetadata = internalMetadata;
+   }
+
+   @ProtoField(6)
+   MarshallableObject<Object> getWrappedValue() {
+      return MarshallableObject.create(value);
+   }
+
+   @ProtoField(7)
+   MarshallableObject<Metadata> getWrappedMetadata() {
+      return MarshallableObject.create(metadata);
+   }
+
+   @ProtoField(8)
+   boolean getExpiration() {
+      return expiration;
+   }
+
    @Override
+   @ProtoField(9)
    public PrivateMetadata getInternalMetadata() {
       return privateMetadata;
    }
@@ -155,29 +182,6 @@ public class IracPutKeyValueCommand extends AbstractDataWriteCommand implements 
    public void updateCommand(SiteEntry<Object> siteEntry) {
       this.value = siteEntry.getValue();
       setMetadata(siteEntry.getMetadata());
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
-      output.writeObject(value);
-      output.writeObject(metadata);
-      CommandInvocationId.writeTo(output, commandInvocationId);
-      output.writeObject(privateMetadata);
-      UnsignedNumeric.writeUnsignedInt(output, segment);
-      output.writeBoolean(expiration);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      key = input.readObject();
-      value = input.readObject();
-      metadata = (Metadata) input.readObject();
-      commandInvocationId = CommandInvocationId.readFrom(input);
-      privateMetadata = (PrivateMetadata) input.readObject();
-      segment = UnsignedNumeric.readUnsignedInt(input);
-      expiration = input.readBoolean();
-      setFlagsBitSet(FlagBitSets.IRAC_UPDATE);
    }
 
    public boolean isExpiration() {

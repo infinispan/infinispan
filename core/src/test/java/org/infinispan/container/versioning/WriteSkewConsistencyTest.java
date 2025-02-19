@@ -29,6 +29,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -44,12 +45,10 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
@@ -149,7 +148,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
                   new ControlledConsistentHashFactory.Replicated(1) :
                   new ControlledConsistentHashFactory.Default(1, 0);
       builder.clustering().hash().numSegments(1).consistentHashFactory(consistentHashFactory);
-      createClusteredCaches(4, TestDataSCI.INSTANCE, builder);
+      createClusteredCaches(4, ControlledConsistentHashFactory.SCI.INSTANCE, builder);
    }
 
    private static BackupOwnerInterceptor injectBackupOwnerInterceptor(Cache<?, ?> cache) {

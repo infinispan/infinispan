@@ -6,19 +6,18 @@
  */
 package org.infinispan.hibernate.cache.commons.util;
 
+import java.util.UUID;
+import java.util.function.Function;
+
 import org.infinispan.commands.functional.functions.InjectableComponent;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
 import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-import java.util.UUID;
-import java.util.function.Function;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Request to update the tombstone, coming from insert/update/remove operation.
@@ -27,6 +26,7 @@ import java.util.function.Function;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
+@ProtoTypeId(ProtoStreamTypeIds.HIBERNATE_FUTURE_UPDATE)
 public class FutureUpdate implements Function<EntryView.ReadWriteEntryView<Object, Object>, Void>, InjectableComponent {
 	private final UUID uuid;
 	private final long timestamp;
@@ -39,6 +39,11 @@ public class FutureUpdate implements Function<EntryView.ReadWriteEntryView<Objec
 		this.value = value;
 	}
 
+	@ProtoFactory
+	FutureUpdate(UUID uuid, long timestamp, MarshallableObject<?> value) {
+		this(uuid, timestamp, MarshallableObject.unwrap(value));
+	}
+
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder("FutureUpdate{");
@@ -49,16 +54,19 @@ public class FutureUpdate implements Function<EntryView.ReadWriteEntryView<Objec
 		return sb.toString();
 	}
 
+	@ProtoField(1)
 	public UUID getUuid() {
 		return uuid;
 	}
 
-	public Object getValue() {
-		return value;
-	}
-
+	@ProtoField(2)
 	public long getTimestamp() {
 		return timestamp;
+	}
+
+	@ProtoField(3)
+	public MarshallableObject<?> getValue() {
+		return MarshallableObject.create(value);
 	}
 
 	@Override
@@ -85,35 +93,5 @@ public class FutureUpdate implements Function<EntryView.ReadWriteEntryView<Objec
 	@Override
 	public void inject(ComponentRegistry registry) {
 		region = registry.getComponent(InfinispanDataRegion.class);
-	}
-
-	public static class Externalizer implements AdvancedExternalizer<FutureUpdate> {
-
-		@Override
-		public void writeObject(ObjectOutput output, FutureUpdate object) throws IOException {
-			output.writeLong(object.uuid.getMostSignificantBits());
-			output.writeLong(object.uuid.getLeastSignificantBits());
-			output.writeLong(object.timestamp);
-			output.writeObject(object.value);
-		}
-
-		@Override
-		public FutureUpdate readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-			long msb = input.readLong();
-			long lsb = input.readLong();
-			long timestamp = input.readLong();
-			Object value = input.readObject();
-			return new FutureUpdate(new UUID(msb, lsb), timestamp, value);
-		}
-
-		@Override
-		public Set<Class<? extends FutureUpdate>> getTypeClasses() {
-			return Collections.<Class<? extends FutureUpdate>>singleton(FutureUpdate.class);
-		}
-
-		@Override
-		public Integer getId() {
-			return Externalizers.FUTURE_UPDATE;
-		}
 	}
 }

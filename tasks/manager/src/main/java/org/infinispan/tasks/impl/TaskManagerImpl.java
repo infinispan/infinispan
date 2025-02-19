@@ -6,7 +6,6 @@ import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -105,7 +104,7 @@ public class TaskManagerImpl implements TaskManager {
                return null;
             }
          });
-         Optional<String> who = Optional.ofNullable(subject == null ? null : Security.getSubjectUserPrincipal(subject).getName());
+         String who = subject == null ? null : Security.getSubjectUserPrincipal(subject).getName();
          TaskExecutionImpl exec = new TaskExecutionImpl(name, address == null ? "local" : address.toString(), who, context);
          exec.setStart(timeService.instant());
          runningTasks.put(exec.getUUID(), exec);
@@ -113,7 +112,9 @@ public class TaskManagerImpl implements TaskManager {
          return task.whenComplete((r, e) -> {
             if (context.isLogEvent()) {
                EventLogger eventLog = eventLogManager.getEventLogger().scope(cacheManager.getAddress());
-               who.ifPresent(eventLog::who);
+               if (who != null)
+                  eventLog.who(who);
+
                context.getCache().ifPresent(eventLog::context);
                if (e != null) {
                   eventLog.detail(e)

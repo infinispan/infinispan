@@ -7,6 +7,7 @@ import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.functional.impl.CounterConfigurationMetaParam;
 import org.infinispan.functional.EntryView;
+import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  * A base function to update a counter, even if it doesn't exist.
@@ -19,6 +20,7 @@ import org.infinispan.functional.EntryView;
 abstract class BaseCreateFunction<K extends CounterKey, R> implements
       Function<EntryView.ReadWriteEntryView<K, CounterValue>, R> {
 
+   @ProtoField(1)
    final CounterConfiguration configuration;
 
    BaseCreateFunction(CounterConfiguration configuration) {

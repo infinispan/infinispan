@@ -1,19 +1,17 @@
 package org.infinispan.commons.tx;
 
-import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
 
 import javax.transaction.xa.Xid;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.Ids;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A {@link Xid} implementation.
@@ -24,14 +22,16 @@ import org.infinispan.commons.util.Util;
  * @author Pedro Ruivo
  * @since 9.1
  */
+@ProtoTypeId(ProtoStreamTypeIds.XID_IMPL)
 public class XidImpl implements Xid {
 
-   public static final AdvancedExternalizer<XidImpl> EXTERNALIZER = new Externalizer();
-
-   private final int formatId;
+   @ProtoField(1)
+   final int formatId;
    //first byte is the first byte of branch id.
    //The rest of the array is the GlobalId + BranchId
-   private final byte[] rawId;
+   @ProtoField(2)
+   final byte[] rawId;
+
    private transient int cachedHashCode;
 
    protected XidImpl(int formatId, byte[] globalTransactionId, byte[] branchQualifier) {
@@ -42,7 +42,8 @@ public class XidImpl implements Xid {
       System.arraycopy(branchQualifier, 0, rawId, globalTransactionId.length + 1, branchQualifier.length);
    }
 
-   private XidImpl(int formatId, byte[] rawId) {
+   @ProtoFactory
+   XidImpl(int formatId, byte[] rawId) {
       this.formatId = formatId;
       this.rawId = rawId;
    }
@@ -57,15 +58,6 @@ public class XidImpl implements Xid {
       validateArray("GlobalTransactionId", globalTransactionId, MAXGTRIDSIZE);
       validateArray("BranchQualifier", branchQualifier, MAXBQUALSIZE);
       return new XidImpl(formatId, globalTransactionId, branchQualifier);
-   }
-
-   public static void writeTo(ObjectOutput output, XidImpl xid) throws IOException {
-      output.writeInt(xid.formatId);
-      MarshallUtil.marshallByteArray(xid.rawId, output);
-   }
-
-   public static XidImpl readFrom(ObjectInput input) throws IOException {
-      return new XidImpl(input.readInt(), MarshallUtil.unmarshallByteArray(input));
    }
 
    public static XidImpl copy(Xid externalXid) {
@@ -182,28 +174,5 @@ public class XidImpl implements Xid {
          }
       }
       return true;
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<XidImpl> {
-
-      @Override
-      public Set<Class<? extends XidImpl>> getTypeClasses() {
-         return Collections.singleton(XidImpl.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.XID_IMPL;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, XidImpl object) throws IOException {
-         writeTo(output, object);
-      }
-
-      @Override
-      public XidImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return readFrom(input);
-      }
    }
 }

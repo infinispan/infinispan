@@ -10,53 +10,50 @@ import static org.infinispan.configuration.parsing.Element.LOCAL_CACHE_CONFIGURA
 import static org.infinispan.configuration.parsing.Element.REPLICATED_CACHE;
 import static org.infinispan.configuration.parsing.Element.REPLICATED_CACHE_CONFIGURATION;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.configuration.parsing.Element;
-import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.annotations.Proto;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Cache replication mode.
  */
+@Proto
+@ProtoTypeId(ProtoStreamTypeIds.CACHE_MODE)
 public enum CacheMode {
    /**
     * Data is not replicated.
     */
-   @ProtoEnumValue(number = 0)
    LOCAL,
 
    /**
     * Data replicated synchronously.
     */
-   @ProtoEnumValue(number = 1)
    REPL_SYNC,
 
    /**
     * Data replicated asynchronously.
     */
-   @ProtoEnumValue(number = 2)
    REPL_ASYNC,
 
    /**
     * Data invalidated synchronously.
     */
-   @ProtoEnumValue(number = 3)
    INVALIDATION_SYNC,
 
    /**
     * Data invalidated asynchronously.
     */
-   @ProtoEnumValue(number = 4)
    INVALIDATION_ASYNC,
 
    /**
     * Synchronous DIST
     */
-   @ProtoEnumValue(number = 5)
    DIST_SYNC,
 
    /**
     * Async DIST
     */
-   @ProtoEnumValue(number = 6)
    DIST_ASYNC;
 
    private static final CacheMode[] cachedValues = values();

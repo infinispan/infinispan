@@ -5,15 +5,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
@@ -30,6 +24,7 @@ public class JGroupsAddress implements Address {
 
    protected final org.jgroups.Address address;
    private final int hashCode;
+   private volatile byte[] bytes;
 
    public JGroupsAddress(final org.jgroups.Address address) {
       if (address == null)
@@ -39,10 +34,14 @@ public class JGroupsAddress implements Address {
    }
 
    @ProtoFactory
-   JGroupsAddress(byte[] bytes) throws IOException {
+   static JGroupsAddress protoFactory(byte[] bytes) throws IOException {
       try (DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes))) {
-         this.address = org.jgroups.util.Util.readAddress(in);
-         this.hashCode = address.hashCode();
+         // Note: Use org.jgroups.Address, not the concrete UUID class.
+         // Otherwise applications that only use local caches would have to bundle the JGroups jar,
+         // because the verifier needs to check the arguments of fromJGroupsAddress
+         // even if this method is never called.
+         org.jgroups.Address address = org.jgroups.util.Util.readAddress(in);
+         return (JGroupsAddress) JGroupsAddressCache.fromJGroupsAddress(address);
       } catch (ClassNotFoundException e) {
          throw new MarshallingException(e);
       }
@@ -50,11 +49,14 @@ public class JGroupsAddress implements Address {
 
    @ProtoField(1)
    byte[] getBytes() throws IOException {
-      try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-           DataOutputStream out = new DataOutputStream(baos)) {
-         org.jgroups.util.Util.writeAddress(address, out);
-         return baos.toByteArray();
+      if (bytes == null) {
+         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+              DataOutputStream out = new DataOutputStream(baos)) {
+            org.jgroups.util.Util.writeAddress(address, out);
+            bytes = baos.toByteArray();
+         }
       }
+      return bytes;
    }
 
    @Override
@@ -85,45 +87,5 @@ public class JGroupsAddress implements Address {
    public int compareTo(Address o) {
       JGroupsAddress oa = (JGroupsAddress) o;
       return address.compareTo(oa.address);
-   }
-
-   public static final class Externalizer extends InstanceReusingAdvancedExternalizer<JGroupsAddress> {
-
-      public Externalizer() {
-         super(false);
-      }
-
-      @Override
-      public void doWriteObject(ObjectOutput output, JGroupsAddress address) throws IOException {
-         try {
-            org.jgroups.util.Util.writeAddress(address.address, output);
-         } catch (Exception e) {
-            throw new IOException(e);
-         }
-      }
-
-      @Override
-      public JGroupsAddress doReadObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
-         try {
-            // Note: Use org.jgroups.Address, not the concrete UUID class.
-            // Otherwise applications that only use local caches would have to bundle the JGroups jar,
-            // because the verifier needs to check the arguments of fromJGroupsAddress
-            // even if this method is never called.
-            org.jgroups.Address address = org.jgroups.util.Util.readAddress(unmarshaller);
-            return (JGroupsAddress) JGroupsAddressCache.fromJGroupsAddress(address);
-         } catch (Exception e) {
-            throw new IOException(e);
-         }
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.JGROUPS_ADDRESS;
-      }
-
-      @Override
-      public Set<Class<? extends JGroupsAddress>> getTypeClasses() {
-         return Util.<Class<? extends JGroupsAddress>>asSet(JGroupsAddress.class);
-      }
    }
 }

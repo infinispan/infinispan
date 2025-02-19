@@ -3,19 +3,16 @@ package org.infinispan.server.resp.json;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.server.resp.ExternalizerIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.function.SerializableFunction;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -27,18 +24,28 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+@ProtoTypeId(ProtoStreamTypeIds.RESP_JSON_GET_FUNCTION)
 public class JsonGetFunction
       implements SerializableFunction<EntryView.ReadWriteEntryView<byte[], JsonBucket>, byte[]> {
-   public static final AdvancedExternalizer<JsonGetFunction> EXTERNALIZER = new JsonGetFunction.Externalizer();
+
    static final byte[] EMPTY_BYTES = new byte[0];
    public static final String ERR_PATHS_CAN_T_BE_NULL = "paths can't be null";
 
-   byte[] space;
-   byte[] newline;
-   byte[] indent;
-   List<byte[]> paths;
+   @ProtoField(1)
+   final byte[] space;
+
+   @ProtoField(2)
+   final byte[] newline;
+
+   @ProtoField(3)
+   final byte[] indent;
+
+   @ProtoField(4)
+   final List<byte[]> paths;
+
    private boolean isLegacy;
 
+   @ProtoFactory
    public JsonGetFunction(List<byte[]> paths, byte[] space, byte[] newline, byte[] indent) {
       requireNonNull(paths, ERR_PATHS_CAN_T_BE_NULL);
       this.paths = paths;
@@ -118,43 +125,6 @@ public class JsonGetFunction
          return resp;
       } catch (JsonProcessingException e) {
          throw new RuntimeException(e);
-      }
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<JsonGetFunction> {
-
-      @Override
-      public void writeObject(ObjectOutput output, JsonGetFunction object) throws IOException {
-         JSONUtil.writeBytes(output, object.space);
-         JSONUtil.writeBytes(output, object.newline);
-         JSONUtil.writeBytes(output, object.indent);
-         output.writeInt(object.paths.size());
-         for (byte[] path : object.paths) {
-            JSONUtil.writeBytes(output, path);
-         }
-      }
-
-      @Override
-      public JsonGetFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         byte[] space = JSONUtil.readBytes(input);
-         byte[] newline = JSONUtil.readBytes(input);
-         byte[] indent = JSONUtil.readBytes(input);
-         int length = input.readInt();
-         List<byte[]> paths = new ArrayList<>();
-         for (int i = 0; i < length; i++) {
-            paths.add(JSONUtil.readBytes(input));
-         }
-         return new JsonGetFunction(paths, space, newline, indent);
-      }
-
-      @Override
-      public Set<Class<? extends JsonGetFunction>> getTypeClasses() {
-         return Collections.singleton(JsonGetFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.JSON_GET_FUNCTION;
       }
    }
 }

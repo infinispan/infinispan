@@ -30,6 +30,7 @@ import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -50,6 +51,8 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class ReplCommandRetryTest extends MultipleCacheManagersTest {
 
+   private static final SerializationContextInitializer SCI = ReplicatedControlledConsistentHashFactory.SCI.INSTANCE;
+
    @Override
    protected void createCacheManagers() {
       // do nothing, each test will create its own cache managers
@@ -69,12 +72,14 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
 
    public void testRetryAfterJoinNonTransactional() throws Exception {
       GlobalConfigurationBuilder gc1 = globalConfiguration(PutKeyValueCommand.class, true);
+      gc1.serialization().addContextInitializer(SCI);
       EmbeddedCacheManager cm1 = addClusterEnabledCacheManager(gc1, buildConfig(null));
       final Cache<Object, Object> c1 = cm1.getCache();
       DelayInterceptor di1 = findInterceptor(c1, DelayInterceptor.class);
       int initialTopologyId = c1.getAdvancedCache().getDistributionManager().getCacheTopology().getTopologyId();
 
       GlobalConfigurationBuilder gc2 = globalConfiguration(PutKeyValueCommand.class, true);
+      gc2.serialization().addContextInitializer(SCI);
       EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(gc2, buildConfig(null));
       final Cache<Object, Object> c2 = cm2.getCache();
       DelayInterceptor di2 = findInterceptor(c2, DelayInterceptor.class);
@@ -90,6 +95,7 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       di2.waitUntilBlocked(1);
 
       GlobalConfigurationBuilder gc3 = globalConfiguration(PutKeyValueCommand.class, false);
+      gc3.serialization().addContextInitializer(SCI);
 
       // c3 joins, topology id changes
       EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(gc3, buildConfig(null));
@@ -110,6 +116,7 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       di2.unblock(2);
 
       GlobalConfigurationBuilder gc4 = globalConfiguration(PutKeyValueCommand.class, false);
+      gc4.serialization().addContextInitializer(SCI);
       // c4 joins, topology id changes
       EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(gc4, buildConfig(null));
       Cache<Object, Object> c4 = cm4.getCache();
@@ -174,12 +181,14 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
 
    private void testRetryAfterJoinTransactional(LockingMode lockingMode, Class<?> commandClass) throws Exception {
       GlobalConfigurationBuilder gc1 = globalConfiguration(commandClass, false);
+      gc1.serialization().addContextInitializer(SCI);
       EmbeddedCacheManager cm1 = addClusterEnabledCacheManager(gc1, buildConfig(lockingMode));
       final Cache<Object, Object> c1 = cm1.getCache();
       DelayInterceptor di1 = findInterceptor(c1, DelayInterceptor.class);
       int initialTopologyId = c1.getAdvancedCache().getDistributionManager().getCacheTopology().getTopologyId();
 
       GlobalConfigurationBuilder gc2 = globalConfiguration(commandClass, true);
+      gc2.serialization().addContextInitializer(SCI);
       EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(gc2, buildConfig(lockingMode));
       final Cache<String, String> c2 = cm2.getCache();
       DelayInterceptor di2 = findInterceptor(c2, DelayInterceptor.class);
@@ -197,6 +206,7 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
 
       // c3 joins, topology id changes
       GlobalConfigurationBuilder gc3 = globalConfiguration(commandClass, false);
+      gc3.serialization().addContextInitializer(SCI);
       EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(gc3, buildConfig(lockingMode));
       Cache c3 = cm3.getCache();
       DelayInterceptor di3 = findInterceptor(c3, DelayInterceptor.class);
@@ -213,6 +223,7 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
 
       // c4 joins, topology id changes
       GlobalConfigurationBuilder gc4 = globalConfiguration(commandClass, false);
+      gc4.serialization().addContextInitializer(SCI);
       EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(gc4, buildConfig(lockingMode));
       Cache c4 = cm4.getCache();
       DelayInterceptor di4 = findInterceptor(c4, DelayInterceptor.class);

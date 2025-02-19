@@ -1,17 +1,16 @@
 package org.infinispan.commands.remote;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.responses.SuccessfulCollectionResponse;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
@@ -26,30 +25,26 @@ import org.infinispan.util.ByteString;
  * @author Pedro Ruivo
  * @since 10.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.CHECK_TRANSACTION_RPC_COMMAND)
 public class CheckTransactionRpcCommand implements CacheRpcCommand {
 
    public static final int COMMAND_ID = 83;
    private static final ResponseCollectorImpl INSTANCE = new ResponseCollectorImpl();
 
-   private final ByteString cacheName;
-   private Collection<GlobalTransaction> gtxToCheck;
+   @ProtoField(1)
+   final ByteString cacheName;
 
-   @SuppressWarnings("unused")
-   public CheckTransactionRpcCommand() {
-      this(null);
-   }
-
-   public CheckTransactionRpcCommand(ByteString cacheName, Collection<GlobalTransaction> gtxToCheck) {
-      this.cacheName = cacheName;
-      this.gtxToCheck = gtxToCheck;
-   }
-
-   public CheckTransactionRpcCommand(ByteString cacheName) {
-      this.cacheName = cacheName;
-   }
+   @ProtoField(2)
+   final Collection<GlobalTransaction> gtxToCheck;
 
    public static ResponseCollector<Collection<GlobalTransaction>> responseCollector() {
       return INSTANCE;
+   }
+
+   @ProtoFactory
+   public CheckTransactionRpcCommand(ByteString cacheName, Collection<GlobalTransaction> gtxToCheck) {
+      this.cacheName = cacheName;
+      this.gtxToCheck = gtxToCheck;
    }
 
    @Override
@@ -68,16 +63,6 @@ public class CheckTransactionRpcCommand implements CacheRpcCommand {
    @Override
    public boolean isReturnValueExpected() {
       return true;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallCollection(gtxToCheck, output);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      gtxToCheck = MarshallUtil.unmarshallCollection(input, ArrayList::new);
    }
 
    @Override
@@ -113,9 +98,8 @@ public class CheckTransactionRpcCommand implements CacheRpcCommand {
 
       @Override
       protected Collection<GlobalTransaction> withValidResponse(Address sender, ValidResponse response) {
-         if (response instanceof SuccessfulResponse) {
-            //noinspection unchecked
-            return (Collection<GlobalTransaction>) response.getResponseValue();
+         if (response instanceof SuccessfulCollectionResponse<?> rsp) {
+            return (Collection<GlobalTransaction>) rsp.getResponseValue();
          } else {
             return Collections.emptyList();
          }

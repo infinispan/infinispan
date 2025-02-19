@@ -1,11 +1,17 @@
 package org.infinispan.commands.triangle;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import static org.infinispan.commands.triangle.SingleKeyBackupWriteCommand.Operation.COMPUTE;
+import static org.infinispan.commands.triangle.SingleKeyBackupWriteCommand.Operation.COMPUTE_IF_ABSENT;
+import static org.infinispan.commands.triangle.SingleKeyBackupWriteCommand.Operation.COMPUTE_IF_PRESENT;
+import static org.infinispan.commands.triangle.SingleKeyBackupWriteCommand.Operation.REMOVE;
+import static org.infinispan.commands.triangle.SingleKeyBackupWriteCommand.Operation.REMOVE_EXPIRED;
+import static org.infinispan.commands.triangle.SingleKeyBackupWriteCommand.Operation.REPLACE;
+import static org.infinispan.commands.triangle.SingleKeyBackupWriteCommand.Operation.WRITE;
+
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.DataWriteCommand;
@@ -15,11 +21,17 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.Proto;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoName;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 
 /**
@@ -28,133 +40,104 @@ import org.infinispan.util.ByteString;
  * @author Pedro Ruivo
  * @since 9.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.SINGLE_KEY_BACKUP_WRITE_COMMAND)
 public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
 
    public static final byte COMMAND_ID = 76;
-   private static final Operation[] CACHED_OPERATION = Operation.values();
 
-   private Operation operation;
-   private Object key;
-   private Object valueOrFunction;
-   private Metadata metadata;
-   private PrivateMetadata internalMetadata;
+   final Operation operation;
+   final Object key;
+   final Object valueOrFunction;
+   final Metadata metadata;
+   final PrivateMetadata internalMetadata;
 
-   //for testing
-   @SuppressWarnings("unused")
-   public SingleKeyBackupWriteCommand() {
-      super(null);
+   public static SingleKeyBackupWriteCommand create(ByteString cacheName, PutKeyValueCommand command, long sequence, int segmentId) {
+      return new SingleKeyBackupWriteCommand(cacheName, command, sequence, segmentId, WRITE,
+            command.getKey(), command.getValue(), command.getMetadata(), command.getInternalMetadata());
    }
 
-   public SingleKeyBackupWriteCommand(ByteString cacheName) {
-      super(cacheName);
+   public static SingleKeyBackupWriteCommand create(ByteString cacheName, RemoveCommand command, long sequence, int segmentId) {
+      boolean removeExpired = command instanceof RemoveExpiredCommand;
+      Operation operation = removeExpired ? REMOVE_EXPIRED : REMOVE;
+      Object value = removeExpired ? command.getValue() : null;
+      return new SingleKeyBackupWriteCommand(cacheName, command, sequence, segmentId, operation, command.getKey(), value,
+            null, command.getInternalMetadata());
    }
 
-   private static Operation valueOf(int index) {
-      return CACHED_OPERATION[index];
+   public static SingleKeyBackupWriteCommand create(ByteString cacheName, ReplaceCommand command, long sequence, int segmentId) {
+      return new SingleKeyBackupWriteCommand(cacheName, command, sequence, segmentId, REPLACE, command.getKey(),
+            command.getNewValue(), command.getMetadata(), command.getInternalMetadata());
+   }
+
+
+   public static SingleKeyBackupWriteCommand create(ByteString cacheName, ComputeIfAbsentCommand command, long sequence, int segmentId) {
+      return new SingleKeyBackupWriteCommand(cacheName, command, sequence, segmentId, COMPUTE_IF_ABSENT,
+            command.getKey(), command.getMappingFunction(), command.getMetadata(), command.getInternalMetadata());
+   }
+
+   public static SingleKeyBackupWriteCommand create(ByteString cacheName, ComputeCommand command, long sequence, int segmentId) {
+      Operation operation = command.isComputeIfPresent() ? COMPUTE_IF_PRESENT : COMPUTE;
+      return new SingleKeyBackupWriteCommand(cacheName, command, sequence, segmentId, operation, command.getKey(),
+            command.getRemappingBiFunction(), command.getMetadata(), command.getInternalMetadata());
+   }
+
+   public static SingleKeyBackupWriteCommand create(ByteString cacheName, IracPutKeyValueCommand command, long sequence, int segmentId) {
+      return new SingleKeyBackupWriteCommand(cacheName, command, sequence, segmentId, WRITE, command.getKey(),
+            command.getValue(), command.getMetadata(), command.getInternalMetadata());
+   }
+
+   private SingleKeyBackupWriteCommand(ByteString cacheName, WriteCommand command, long sequence, int segmentId,
+                                      Operation operation, Object key, Object valueOrFunction, Metadata metadata,
+                                       PrivateMetadata internalMetadata) {
+      super(cacheName, command, sequence, segmentId);
+      this.operation = operation;
+      this.key = key;
+      this.valueOrFunction = valueOrFunction;
+      this.metadata = metadata;
+      this.internalMetadata = internalMetadata;
+   }
+
+   @ProtoFactory
+   SingleKeyBackupWriteCommand(ByteString cacheName, CommandInvocationId commandInvocationId, int topologyId,
+                               long flags, long sequence, int segmentId, Operation operation, MarshallableObject<?> key,
+                               MarshallableObject<?> valueOrFunction, MarshallableObject<Metadata> metadata,
+                               PrivateMetadata internalMetadata) {
+      super(cacheName, commandInvocationId, topologyId, flags, sequence, segmentId);
+      this.operation = operation;
+      this.key = MarshallableObject.unwrap(key);
+      this.valueOrFunction = MarshallableObject.unwrap(valueOrFunction);
+      this.metadata = MarshallableObject.unwrap(metadata);
+      this.internalMetadata = internalMetadata;
+   }
+
+   @ProtoField(7)
+   Operation getOperation() {
+      return operation;
+   }
+
+   @ProtoField(8)
+   MarshallableObject<?> getKey() {
+      return MarshallableObject.create(key);
+   }
+
+   @ProtoField(9)
+   MarshallableObject<?> getValueOrFunction() {
+      return MarshallableObject.create(valueOrFunction);
+   }
+
+   @ProtoField(10)
+   MarshallableObject<Metadata> getMetadata() {
+      return MarshallableObject.create(metadata);
+   }
+
+   @ProtoField(11)
+   PrivateMetadata getInternalMetadata() {
+      return internalMetadata;
    }
 
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
-   }
-
-   public void setPutKeyValueCommand(PutKeyValueCommand command) {
-      this.operation = Operation.WRITE;
-      setCommonAttributesFromCommand(command);
-      this.key = command.getKey();
-      this.valueOrFunction = command.getValue();
-      this.metadata = command.getMetadata();
-      this.internalMetadata = command.getInternalMetadata();
-   }
-
-   public void setIracPutKeyValueCommand(IracPutKeyValueCommand command) {
-      this.operation = Operation.WRITE;
-      setCommonAttributesFromCommand(command);
-      this.key = command.getKey();
-      this.valueOrFunction = command.getValue();
-      this.metadata = command.getMetadata();
-      this.internalMetadata = command.getInternalMetadata();
-   }
-
-   public void setRemoveCommand(RemoveCommand command, boolean removeExpired) {
-      this.operation = removeExpired ? Operation.REMOVE_EXPIRED : Operation.REMOVE;
-      setCommonAttributesFromCommand(command);
-      this.key = command.getKey();
-      this.valueOrFunction = command.getValue();
-      this.internalMetadata = command.getInternalMetadata();
-   }
-
-   public void setReplaceCommand(ReplaceCommand command) {
-      this.operation = Operation.REPLACE;
-      setCommonAttributesFromCommand(command);
-      this.key = command.getKey();
-      this.valueOrFunction = command.getNewValue();
-      this.metadata = command.getMetadata();
-      this.internalMetadata = command.getInternalMetadata();
-   }
-
-   public void setComputeCommand(ComputeCommand command) {
-      this.operation = command.isComputeIfPresent() ? Operation.COMPUTE_IF_PRESENT : Operation.COMPUTE;
-      setCommonAttributesFromCommand(command);
-      this.key = command.getKey();
-      this.valueOrFunction = command.getRemappingBiFunction();
-      this.metadata = command.getMetadata();
-      this.internalMetadata = command.getInternalMetadata();
-   }
-
-   public void setComputeIfAbsentCommand(ComputeIfAbsentCommand command) {
-      this.operation = Operation.COMPUTE_IF_ABSENT;
-      setCommonAttributesFromCommand(command);
-      this.key = command.getKey();
-      this.valueOrFunction = command.getMappingFunction();
-      this.metadata = command.getMetadata();
-      this.internalMetadata = command.getInternalMetadata();
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      writeBase(output);
-      MarshallUtil.marshallEnum(operation, output);
-      output.writeObject(key);
-      output.writeObject(internalMetadata);
-      switch (operation) {
-         case COMPUTE_IF_PRESENT:
-         case COMPUTE_IF_ABSENT:
-         case COMPUTE:
-         case REPLACE:
-         case WRITE:
-            output.writeObject(metadata);
-         // falls through
-         case REMOVE_EXPIRED:
-            output.writeObject(valueOrFunction);
-            break;
-         case REMOVE:
-            break;
-         default:
-      }
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      readBase(input);
-      operation = MarshallUtil.unmarshallEnum(input, SingleKeyBackupWriteCommand::valueOf);
-      key = input.readObject();
-      internalMetadata = (PrivateMetadata) input.readObject();
-      switch (operation) {
-         case COMPUTE_IF_PRESENT:
-         case COMPUTE_IF_ABSENT:
-         case COMPUTE:
-         case REPLACE:
-         case WRITE:
-            metadata = (Metadata) input.readObject();
-         // falls through
-         case REMOVE_EXPIRED:
-            valueOrFunction = input.readObject();
-            break;
-         case REMOVE:
-            break;
-         default:
-      }
    }
 
    @Override
@@ -175,7 +158,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
                   new PutKeyValueCommand(key, valueOrFunction, false, false, metadata, segmentId, getFlags(), getCommandInvocationId());
             break;
          case COMPUTE:
-            command = new ComputeCommand(key, (BiFunction) valueOrFunction, false, segmentId, getFlags(),
+            command = new ComputeCommand(key, (BiFunction<?, ?, ?>) valueOrFunction, false, segmentId, getFlags(),
                   getCommandInvocationId(), metadata);
             break;
          case REPLACE:
@@ -188,11 +171,11 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
                   getCommandInvocationId());
             break;
          case COMPUTE_IF_PRESENT:
-            command = new ComputeCommand(key, (BiFunction) valueOrFunction, true, segmentId, getFlags(),
+            command = new ComputeCommand(key, (BiFunction<?, ?, ?>) valueOrFunction, true, segmentId, getFlags(),
                   getCommandInvocationId(), metadata);
             break;
          case COMPUTE_IF_ABSENT:
-            command = new ComputeIfAbsentCommand(key, (Function) valueOrFunction, segmentId, getFlags(),
+            command = new ComputeIfAbsentCommand(key, (Function<?, ?>) valueOrFunction, segmentId, getFlags(),
                   getCommandInvocationId(), metadata);
             break;
          default:
@@ -212,7 +195,10 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
             ", internalMetadata=" + internalMetadata;
    }
 
-   private enum Operation {
+   @Proto
+   @ProtoName(value = "SingleKeyBackupOperation")
+   @ProtoTypeId(ProtoStreamTypeIds.SINGLE_KEY_BACKUP_WRITE_COMMAND_OPERATION)
+   public enum Operation {
       WRITE,
       REMOVE,
       REMOVE_EXPIRED,

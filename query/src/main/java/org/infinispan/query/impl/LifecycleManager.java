@@ -24,7 +24,6 @@ import org.infinispan.Cache;
 import org.infinispan.cache.impl.QueryProducer;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.AggregatedClassLoader;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
@@ -52,27 +51,13 @@ import org.infinispan.query.Transformer;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.backend.TxQueryInterceptor;
-import org.infinispan.query.clustered.ClusteredQueryOperation;
-import org.infinispan.query.clustered.NodeTopDocs;
-import org.infinispan.query.clustered.QueryResponse;
 import org.infinispan.query.core.QueryProducerImpl;
 import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
-import org.infinispan.query.impl.externalizers.ExternalizerIds;
-import org.infinispan.query.impl.externalizers.LuceneBytesRefExternalizer;
-import org.infinispan.query.impl.externalizers.LuceneFieldDocExternalizer;
-import org.infinispan.query.impl.externalizers.LuceneScoreDocExternalizer;
-import org.infinispan.query.impl.externalizers.LuceneSortExternalizer;
-import org.infinispan.query.impl.externalizers.LuceneSortFieldExternalizer;
-import org.infinispan.query.impl.externalizers.LuceneTopDocsExternalizer;
-import org.infinispan.query.impl.externalizers.LuceneTopFieldDocsExternalizer;
-import org.infinispan.query.impl.externalizers.LuceneTotalHitsExternalizer;
-import org.infinispan.query.impl.externalizers.PojoRawTypeIdentifierExternalizer;
 import org.infinispan.query.impl.massindex.DistributedExecutorMassIndexer;
-import org.infinispan.query.impl.massindex.IndexWorker;
 import org.infinispan.query.stats.impl.LocalIndexStatistics;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.InternalCacheRegistry.Flag;
@@ -427,23 +412,7 @@ public class LifecycleManager implements ModuleLifecycle {
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
       SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
-      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
-
-      Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
-      externalizerMap.put(ExternalizerIds.LUCENE_SORT, new LuceneSortExternalizer());
-      externalizerMap.put(ExternalizerIds.LUCENE_SORT_FIELD, new LuceneSortFieldExternalizer());
-      externalizerMap.put(ExternalizerIds.CLUSTERED_QUERY_TOPDOCS, new NodeTopDocs.Externalizer());
-      externalizerMap.put(ExternalizerIds.LUCENE_TOPDOCS, new LuceneTopDocsExternalizer());
-      externalizerMap.put(ExternalizerIds.LUCENE_FIELD_SCORE_DOC, new LuceneFieldDocExternalizer());
-      externalizerMap.put(ExternalizerIds.LUCENE_SCORE_DOC, new LuceneScoreDocExternalizer());
-      externalizerMap.put(ExternalizerIds.LUCENE_TOPFIELDDOCS, new LuceneTopFieldDocsExternalizer());
-      externalizerMap.put(ExternalizerIds.INDEX_WORKER, new IndexWorker.Externalizer());
-      externalizerMap.put(ExternalizerIds.LUCENE_BYTES_REF, new LuceneBytesRefExternalizer());
-      externalizerMap.put(ExternalizerIds.QUERY_DEFINITION, new QueryDefinition.Externalizer());
-      externalizerMap.put(ExternalizerIds.CLUSTERED_QUERY_COMMAND_RESPONSE, new QueryResponse.Externalizer());
-      externalizerMap.put(ExternalizerIds.CLUSTERED_QUERY_OPERATION, new ClusteredQueryOperation.Externalizer());
-      externalizerMap.put(ExternalizerIds.POJO_TYPE_IDENTIFIER, new PojoRawTypeIdentifierExternalizer());
-      externalizerMap.put(ExternalizerIds.LUCENE_TOTAL_HITS, new LuceneTotalHitsExternalizer());
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.GLOBAL, new GlobalContextInitializerImpl());
    }
 
    @Override

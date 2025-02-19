@@ -365,9 +365,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
       protected CacheStatusResponseCollector addValidResponse(Address sender, ValidResponse response) {
          if (response.isSuccessful()) {
             ManagerStatusResponse nodeStatus = (ManagerStatusResponse) response.getResponseValue();
-            rebalancingEnabled &= nodeStatus.isRebalancingEnabled();
+            rebalancingEnabled &= nodeStatus.rebalancingEnabled();
 
-            for (Entry<String, CacheStatusResponse> entry : nodeStatus.getCaches().entrySet()) {
+            for (Entry<String, CacheStatusResponse> entry : nodeStatus.caches().entrySet()) {
                String cacheName = entry.getKey();
                CacheStatusResponse csr = entry.getValue();
                CacheTopology cacheTopology = intern(seenTopologies, csr.getCacheTopology());
