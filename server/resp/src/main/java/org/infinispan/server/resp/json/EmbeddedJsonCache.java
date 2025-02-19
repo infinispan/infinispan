@@ -239,4 +239,19 @@ public class EmbeddedJsonCache {
    public CompletionStage<List<Integer>> arrindex(byte[] key, byte[] jsonPath, byte[] value, int start, int stop, boolean isLegacy) {
       return readWriteMap.eval(key, new JsonArrindexFunction(jsonPath, value, start, stop, isLegacy));
 }
+
+   /**
+    * Inserts the given values into the array at the specified index in the JSON document
+    * identified by the given key.
+    *
+    * @param key The key identifying the JSON document.
+    * @param jsonPath The JSON path specifying the array.
+    * @param index The index at which to insert the values.
+    * @param values The values to insert.
+    * @return A {@link CompletionStage} that will complete with the list of the new lengths of the changed arrays.
+    *         Null is returned for the matching paths that are not arrays.
+    */
+   public CompletionStage<List<Integer>> arrInsert(byte[] key, byte[] jsonPath, int index, List<byte[]> values) {
+      return readWriteMap.eval(key, new JsonArrinsertFunction(jsonPath, index, values));
+   }
 }

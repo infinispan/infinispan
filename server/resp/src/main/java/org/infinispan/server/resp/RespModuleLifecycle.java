@@ -19,6 +19,7 @@ import org.infinispan.server.resp.json.JsonArrayAppendFunction;
 import org.infinispan.server.resp.json.JsonArrindexFunction;
 import org.infinispan.server.resp.json.JsonBucket;
 import org.infinispan.server.resp.json.JsonDelFunction;
+import org.infinispan.server.resp.json.JsonArrinsertFunction;
 import org.infinispan.server.resp.json.JsonGetFunction;
 import org.infinispan.server.resp.json.JsonLenFunction;
 import org.infinispan.server.resp.json.JsonNumIncrByFunction;
@@ -52,6 +53,7 @@ public class RespModuleLifecycle implements ModuleLifecycle {
       externalizerMap.put(JsonNumIncrByFunction.EXTERNALIZER.getId(), JsonNumIncrByFunction.EXTERNALIZER);
       externalizerMap.put(JsonArrindexFunction.EXTERNALIZER.getId(), JsonArrindexFunction.EXTERNALIZER);
       externalizerMap.put(JsonBucket.EXTERNALIZER.getId(), JsonBucket.EXTERNALIZER);
+      externalizerMap.put(JsonArrinsertFunction.EXTERNALIZER.getId(), JsonArrinsertFunction.EXTERNALIZER);
 
       // Externalizer that could be loaded by other modules.
       externalizerMap.put(ITERATION_FILTER, new IterationFilter.IterationFilterExternalizer());
