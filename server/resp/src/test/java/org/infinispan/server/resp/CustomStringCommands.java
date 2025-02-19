@@ -55,6 +55,9 @@ public interface CustomStringCommands extends Commands {
    @Command("JSON.ARRAPPEND :key :path :v1 :v2 :v3")
    Long jsonArrappend(@Param("key") String key, @Param("path") String path, @Param("v1") String v1, @Param("v2") String v2, @Param("v2") String v3);
 
+   @Command("JSON.ARRINSERT :key :path :index :v1 :v2 :v3")
+   Long jsonArrinsert(@Param("key") String key, @Param("path") String path, @Param("index") int index, @Param("v1") String v1, @Param("v2") String v2, @Param("v2") String v3);
+
    static CustomStringCommands instance(StatefulConnection<String, String> conn) {
       RedisCommandFactory factory = new RedisCommandFactory(conn);
       return factory.getCommands(CustomStringCommands.class);

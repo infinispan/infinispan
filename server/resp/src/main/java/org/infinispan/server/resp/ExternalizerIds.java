@@ -19,4 +19,5 @@ public interface ExternalizerIds {
    Integer JSON_ARRINDEX_FUNCTION = 2213;
    Integer JSON_BUCKET = 2214;
    Integer JSON_STRING_APPEND_FUNCTION = 2215;
+   Integer JSON_ARRINSERT_FUNCTION = 2216;
 }
