@@ -17,7 +17,7 @@ import java.util.concurrent.CompletionStage;
 public class JSONARRAPPEND extends JSONAPPEND {
     public static String ARR_TYPE_NAME = "array";
     public JSONARRAPPEND() {
-        super("JSON.ARRAPPEND", -3, 1, 1, 1);
+        super("JSON.ARRAPPEND", -4, 1, 1, 1);
     }
 
     @Override

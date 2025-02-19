@@ -129,6 +129,8 @@ NOTE: This implementation attempts to return all attributes that a real Redis se
 
 * link:https://redis.io/commands/json.arrindex[JSON.ARRINDEX]
 
+* link:https://redis.io/commands/json.arrindex[JSON.ARRINSERT]
+
 * link:https://redis.io/commands/json.arrlen[JSON.ARRLEN]
 
 * link:https://redis.io/commands/json.del[JSON.DEL]
