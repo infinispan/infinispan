@@ -15,6 +15,7 @@ public enum Attribute {
    CLIENT_ENCODING,
    IDLE_TIMEOUT,
    IO_THREADS,
+   MAX_CONTENT_LENGTH,
    NAME,
    PROTOCOL,
    SECURITY_REALM,

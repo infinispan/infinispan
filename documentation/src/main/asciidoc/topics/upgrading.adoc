@@ -12,6 +12,11 @@ potential index data inconsistencies are detected from the cache configuration.
 With `AUTO`, for instance, a purge is automatically triggered if the cache is not persistent while the indexes are.
 For complete detail see link:{query_docs}#indexing-configuration_startup-mode[Index startup mode].
 
+=== Server Endpoints
+Each server endpoint (HotRod, RESP, Memcached & REST) all now support a default `max-content-length` of 10 MB for each
+request by default. That means if a request is larger than this size it will be rejected by the server. If you
+need to increase this limit please set the value explicitly in the server configuration.
+
 == Upgrading from 15.0 to 15.1
 
 === Java HotRod Client Changes

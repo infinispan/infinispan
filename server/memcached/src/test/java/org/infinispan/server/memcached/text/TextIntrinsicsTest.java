@@ -25,7 +25,7 @@ public class TextIntrinsicsTest {
       byte[] datum = "key1 key2\r\n".getBytes(StandardCharsets.US_ASCII);
 
       ByteBuf buf = Unpooled.wrappedBuffer(datum);
-      List<byte[]> keys = TextIntrinsics.text_key_list(buf, reader);
+      List<byte[]> keys = TextIntrinsics.text_key_list(buf, reader, Integer.MAX_VALUE);
 
       assertThat(buf.isReadable()).isFalse();
       assertThat(keys).hasSize(2);
@@ -35,7 +35,7 @@ public class TextIntrinsicsTest {
       byte[] datum = "key1 ke".getBytes(StandardCharsets.US_ASCII);
 
       ByteBuf buf = Unpooled.wrappedBuffer(datum);
-      List<byte[]> keys = TextIntrinsics.text_key_list(buf, reader);
+      List<byte[]> keys = TextIntrinsics.text_key_list(buf, reader, Integer.MAX_VALUE);
 
       assertThat(buf.readerIndex()).isZero();
       assertThat(keys).hasSize(0);

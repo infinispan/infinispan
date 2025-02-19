@@ -1,0 +1,13 @@
+<endpoints>
+  <endpoint socket-binding="default" security-realm="default">
+    <hotrod-connector name="hotrod" max-content-length="5MB">
+      ...
+    </hotrod-connector>
+    <resp-connector name="resp" max-content-length="5MB">
+      ...
+    </hotrod-connector>
+    <memcached-connector name="memcached" max-content-length="5MB">
+      ...
+    </hotrod-connector>
+  </endpoint>
+</endpoints>
