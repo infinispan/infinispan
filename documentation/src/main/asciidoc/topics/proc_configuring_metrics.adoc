@@ -86,4 +86,5 @@ endif::remote_caches[]
 
 [role="_additional-resources"]
 .Additional resources
+* link:{metrics_docs}[{brandname} Metrics]
 * link:https://micrometer.io/docs/registry/prometheus[Micrometer Prometheus]

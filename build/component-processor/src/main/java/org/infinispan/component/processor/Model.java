@@ -48,18 +48,7 @@ public class Model {
       }
    }
 
-   static class ParsedType {
-      final TypeElement typeElement;
-      final String qualifiedName;
-      final String packageName;
-      final List<String> code;
-
-      ParsedType(TypeElement typeElement, String qualifiedName, String packageName, List<String> code) {
-         this.typeElement = typeElement;
-         this.qualifiedName = qualifiedName;
-         this.packageName = packageName;
-         this.code = code;
-      }
+   record ParsedType(TypeElement typeElement, String qualifiedName, String packageName, List<String> code) {
    }
 
    public static class AnnotatedType {
@@ -109,36 +98,13 @@ public class Model {
       }
    }
 
-   static class LifecycleMethod {
-      final String name;
-
-      LifecycleMethod(String name) {
-         this.name = name;
-      }
+   record LifecycleMethod(String name) {
    }
 
-   static class InjectMethod {
-      final String name;
-      final List<InjectField> parameters;
-
-      InjectMethod(String name, List<InjectField> parameters) {
-         this.name = name;
-         this.parameters = parameters;
-      }
+   record InjectMethod(String name, List<InjectField> parameters) {
    }
 
-   static class InjectField {
-      final String name;
-      final String typeName;
-      final String componentName;
-      final boolean isComponentRef;
-
-      InjectField(String name, String typeName, String componentName, boolean isComponentRef) {
-         this.name = name;
-         this.typeName = typeName;
-         this.componentName = componentName;
-         this.isComponentRef = isComponentRef;
-      }
+   record InjectField(String name, String typeName, String componentName, boolean isComponentRef) {
    }
 
    static class MComponent {
@@ -154,50 +120,14 @@ public class Model {
       }
    }
 
-   static class MAttribute {
-      final String name;
-      final String propertyAccessor;
-      final ManagedAttribute attribute;
-      final boolean useSetter;
-      final String type;
-      final String boxedType;
-      final boolean is;
-
-      MAttribute(String name, String propertyAccessor, ManagedAttribute attribute, boolean useSetter, String type, String boxedType, boolean is) {
-         this.name = name;
-         this.propertyAccessor = propertyAccessor;
-         this.attribute = attribute;
-         this.useSetter = useSetter;
-         this.type = type;
-         this.boxedType = boxedType;
-         this.is = is;
-      }
+   record MAttribute(String name, String propertyAccessor, ManagedAttribute attribute, boolean useSetter, String type,
+                     String boxedType, boolean is) {
    }
 
-   static class MOperation {
-      final String name;
-      final ManagedOperation operation;
-      final String returnType;
-      final List<MParameter> parameters;
-
-      MOperation(String name, ManagedOperation operation, String returnType, List<MParameter> parameters) {
-         this.name = name;
-         this.operation = operation;
-         this.returnType = returnType;
-         this.parameters = parameters;
-      }
+   record MOperation(String name, ManagedOperation operation, String returnType, List<MParameter> parameters) {
    }
 
-   static class MParameter {
-      final String name;
-      final String type;
-      final String description;
-
-      MParameter(String name, String type, String description) {
-         this.name = name;
-         this.type = type;
-         this.description = description;
-      }
+   record MParameter(String name, String type, String description) {
    }
 
    static class Package {

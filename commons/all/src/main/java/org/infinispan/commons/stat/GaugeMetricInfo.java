@@ -27,4 +27,9 @@ public final class GaugeMetricInfo<T> extends BaseMetricInfo {
    public Supplier<Number> getGauge(T instance) {
       return () -> function.apply(instance);
    }
+
+   @Override
+   public String getType() {
+      return "gauge";
+   }
 }
