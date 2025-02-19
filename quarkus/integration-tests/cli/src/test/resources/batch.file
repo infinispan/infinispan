@@ -1,0 +1,1 @@
+create cache --file=target/test-classes/dcache.json mybatch

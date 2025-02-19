@@ -1077,11 +1077,11 @@
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-quarkus-server</artifactId>
             <version>${version.infinispan}</version>
-         </dependency>
-         <dependency>
+        </dependency>
+        <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-quarkus-server-runner</artifactId>
-            <version>${version.infinispan}</version>
+           <version>${version.infinispan}</version>
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
