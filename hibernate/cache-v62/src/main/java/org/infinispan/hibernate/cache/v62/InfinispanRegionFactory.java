@@ -58,6 +58,7 @@ import org.infinispan.hibernate.cache.v62.impl.QueryResultsRegionImpl;
 import org.infinispan.hibernate.cache.v62.impl.Sync;
 import org.infinispan.hibernate.cache.v62.impl.TimestampsRegionImpl;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.transaction.TransactionMode;
 
 /**
@@ -283,7 +284,6 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
 
    protected void stopCacheRegions() {
       log.debug("Clear region references");
-      getCacheCommandFactory().clearRegions(regions);
       // Ensure we cleanup any caches we created
       regions.forEach(region -> {
          region.destroy();
@@ -299,7 +299,9 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
 
    private void startRegion(InfinispanBaseRegion region) {
       regions.add(region);
-      getCacheCommandFactory().addRegion(region);
+      var cr = SecurityActions.getCacheComponentRegistry(region.getCache());
+      if (cr.getComponent(InfinispanBaseRegion.class) == null)
+         cr.registerComponent(region, InfinispanBaseRegion.class);
    }
 
    private void parseProperty(int prefixLoc, String key, String value) {
