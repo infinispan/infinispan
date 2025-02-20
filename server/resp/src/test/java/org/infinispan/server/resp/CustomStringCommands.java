@@ -53,7 +53,11 @@ public interface CustomStringCommands extends Commands {
 
    // Lettuce arrAppend command has a bug, it doesn't support root path, so we need to use a custom command
    @Command("JSON.ARRAPPEND :key :path :v1 :v2 :v3")
-   Long jsonArrappend(@Param("key") String key, @Param("path") String path, @Param("v1") String v1, @Param("v2") String v2, @Param("v2") String v3);
+   Long jsonArrappend(@Param("key") String key, @Param("path") String path, @Param("v1") String v1, @Param("v2") String v2, @Param("v3") String v3);
+
+   // Lettuce arrtrim command has a bug, it doesn't support start==0 and stop==0 or stop==0, so we need to use a custom command
+   @Command("JSON.ARRTRIM :key :path :start :stop")
+   Long jsonArrtrim(@Param("key") String key, @Param("path") String path, @Param("start") int start, @Param("stop") int stop);
 
    @Command("JSON.ARRINSERT :key :path :index :v1 :v2 :v3")
    Long jsonArrinsert(@Param("key") String key, @Param("path") String path, @Param("index") int index, @Param("v1") String v1, @Param("v2") String v2, @Param("v2") String v3);

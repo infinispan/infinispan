@@ -254,4 +254,21 @@ public class EmbeddedJsonCache {
    public CompletionStage<List<Integer>> arrInsert(byte[] key, byte[] jsonPath, int index, List<byte[]> values) {
       return readWriteMap.eval(key, new JsonArrinsertFunction(jsonPath, index, values));
    }
+
+   /**
+    * Trims the elements in an array out of the specified range.
+    *
+    * @param key
+    *           The key of the array to trim.
+    * @param jsonPath
+    *           The JSON path of the array to trim.
+    * @param start
+    *           The starting index of the range to keep (inclusive).
+    * @param stop
+    *           The ending index of the range to keep (inclusive).
+    * @return A {@link CompletionStage} that will complete with a list of length of the trimmed array.
+    */
+   public CompletionStage<List<Integer>> arrArrtrim(byte[] key, byte[] jsonPath, int start, int stop) {
+      return readWriteMap.eval(key, new JsonArrtrimFunction(jsonPath, start, stop));
+   }
 }
