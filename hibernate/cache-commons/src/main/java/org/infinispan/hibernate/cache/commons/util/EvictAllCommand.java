@@ -11,10 +11,10 @@ import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * Evict all command
@@ -24,33 +24,20 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
  */
 public class EvictAllCommand extends BaseRpcCommand {
 
-	private final InfinispanBaseRegion region;
-
-   /**
-    * Evict all command constructor.
-    *
-    * @param regionName name of the region to evict
-    * @param region to evict
-    */
-	public EvictAllCommand(ByteString regionName, InfinispanBaseRegion region) {
-		// region name and cache names are the same...
-		super( regionName );
-		this.region = region;
-	}
-
    /**
     * Evict all command constructor.
     *
     * @param regionName name of the region to evict
     */
 	public EvictAllCommand(ByteString regionName) {
-		this( regionName, null );
+		super(regionName);
 	}
 
 	@Override
 	public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
 		// When a node is joining the cluster, it may receive an EvictAllCommand before the regions
 		// are started up. It's safe to ignore such invalidation at this point since no data got in.
+		var region = registry.getComponent(InfinispanBaseRegion.class);
 		if (region != null) {
 			region.invalidateRegion();
 		}
@@ -76,5 +63,4 @@ public class EvictAllCommand extends BaseRpcCommand {
    public void readFrom(ObjectInput input) {
       // No-op
    }
-
 }
