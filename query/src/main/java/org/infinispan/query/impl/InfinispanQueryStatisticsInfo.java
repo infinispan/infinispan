@@ -40,74 +40,89 @@ public final class InfinispanQueryStatisticsInfo {
       this.authorizer = authorizer;
    }
 
-   @ManagedOperation
+   @ManagedOperation(description = "Clear all query statistics.",
+         displayName = "Clear query statistics.")
    public void clear() {
       authorizer.checkPermission(AuthorizationPermission.ADMIN);
       queryStatistics.clear();
    }
 
-   @ManagedAttribute
+   @ManagedAttribute(description = "Number of queries executed in the local index.",
+         displayName = "Local indexed query count.")
    public long getSearchQueryExecutionCount() {
       return queryStatistics.getLocalIndexedQueryCount();
    }
 
-   @ManagedAttribute
+   @ManagedAttribute(description = "The total time in nanoseconds of all indexed queries.",
+         displayName = "Local indexed query total time.")
    public long getSearchQueryTotalTime() {
       return queryStatistics.getLocalIndexedQueryTotalTime();
    }
 
-   @ManagedAttribute
+   @ManagedAttribute(description = "The time in nanoseconds of the slowest indexed query.",
+         displayName = "Local indexed query max time.")
    public long getSearchQueryExecutionMaxTime() {
       return queryStatistics.getLocalIndexedQueryMaxTime();
    }
 
-   @ManagedAttribute
+   @ManagedAttribute(description = "The average time in nanoseconds of all indexed queries.",
+         displayName = "Local indexed query avg time.")
    public long getSearchQueryExecutionAvgTime() {
       return ((Double) queryStatistics.getLocalIndexedQueryAvgTime()).longValue();
    }
 
-   @ManagedAttribute
+   @ManagedAttribute(description = "The Ickle query string of the slowest indexed query.",
+         displayName = "Local slowest query.")
    public String getSearchQueryExecutionMaxTimeQueryString() {
       String query = queryStatistics.getSlowestLocalIndexedQuery();
       return query == null ? "" : query;
    }
 
-   @ManagedAttribute
+   @ManagedAttribute(description = "The total time to load entities from a Cache after an indexed query.",
+         displayName = "Entity loading total time.")
    public long getObjectLoadingTotalTime() {
-      return queryStatistics.getLoadCount();
-   }
-
-   @ManagedAttribute
-   public long getObjectLoadingExecutionMaxTime() {
       return queryStatistics.getLoadTotalTime();
    }
 
-   @ManagedAttribute
+   @ManagedAttribute(description = "The max time in nanoseconds to load entities from a Cache after an indexed query.",
+         displayName = "Entity loading max time.")
+   public long getObjectLoadingExecutionMaxTime() {
+      return queryStatistics.getLoadMaxTime();
+   }
+
+   @ManagedAttribute(description = " The average time in nanoseconds to load entities from a Cache after an indexed query.",
+         displayName = "Entity loading avg time.")
    public long getObjectLoadingExecutionAvgTime() {
       return ((Double) queryStatistics.getLoadAvgTime()).longValue();
    }
 
-   @ManagedAttribute
+   @ManagedAttribute(description = "The number of operations to load entities from a Cache after an indexed query.",
+         displayName = "Entity loading count.")
    public long getObjectsLoadedCount() {
       return queryStatistics.getLoadCount();
    }
 
-   @ManagedAttribute
+   @ManagedAttribute(description = "True if the Cache has statistics enabled.",
+         displayName = "Statistics enabled.")
    public boolean isStatisticsEnabled() {
       return queryStatistics.isEnabled();
    }
 
-   @ManagedAttribute
+   @ManagedAttribute(description = "The Hibernate Search version used as query engine for the cache.",
+         displayName = "Hibernate Search version.")
    public String getSearchVersion() {
       return Version.versionString();
    }
 
-   @ManagedAttribute
+   @ManagedAttribute(description = "The name of all indexed entities configured in the cache. The name of the entity " +
+         "is either the class name annotated with @Index, or the protobuf Message name.",
+         displayName = "Indexed entity names")
    public Set<String> getIndexedClassNames() {
-      return blockingIndexInfos().keySet();
+      return indexStatistics.indexedEntities();
    }
 
-   @ManagedOperation
+   @ManagedOperation(description = "The number of indexed entities for a given entity.",
+         displayName = "Indexed entries by entity.")
    public int getNumberOfIndexedEntities(String entity) {
       return find(blockingIndexInfos(), entity).map(IndexInfo::count).orElse(0L).intValue();
    }
@@ -117,18 +132,21 @@ public final class InfinispanQueryStatisticsInfo {
             .map(Map.Entry::getValue).findFirst();
    }
 
-   @ManagedOperation
+   @ManagedOperation(description = "The number of indexed entities for all entities.",
+         displayName = "Indexed entries by entities.")
    public Map<String, Integer> indexedEntitiesCount() {
       return blockingIndexInfos().entrySet().stream()
             .collect(Collectors.toMap(Map.Entry::getKey, e -> (int) e.getValue().count()));
    }
 
-   @ManagedOperation
+   @ManagedOperation(description = "The index size for a given index name.",
+         displayName = "Index size by name.")
    public long getIndexSize(String indexName) {
       return find(blockingIndexInfos(), indexName).map(IndexInfo::size).orElse(0L);
    }
 
-   @ManagedOperation
+   @ManagedOperation(description = "All index sizes by their names.",
+         displayName = "Index sizes by names.")
    public Map<String, Long> indexSizes() {
       return blockingIndexInfos().entrySet().stream()
             .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().size()));
