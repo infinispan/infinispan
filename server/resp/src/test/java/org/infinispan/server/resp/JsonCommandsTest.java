@@ -7,6 +7,7 @@ import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.infinispan.server.resp.json.JSONUtil;
 import org.testng.annotations.BeforeMethod;
@@ -1168,6 +1169,91 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
             .hasMessage("ERR Path '$.non-existent' does not exist");
    }
 
+   @Test
+   public void testJSONARRTRIM() {
+      var command = CustomStringCommands.instance(redisConnection);
+      JsonPath jpRoot = new JsonPath("$");
+      JsonValue jv = defaultJsonParser.createJsonValue("""
+               {"bool":true,
+               "null_value": null,
+               "arr_value": ["one", "two", "three", "four"],
+               "nested":
+                  {"bool": false,
+                   "arr_value": [1,2,3],
+                   "stringKey": "aString"},
+               "nested1":
+                  {"bool": false,
+                   "arr_value": "not an array",
+                   "stringKey": "aString"},
+               "foo": "bar",
+               "legacy": true}
+            """);
+      String key = k();
+      redis.jsonSet(key, jpRoot, jv);
+      JsonPath jp = new JsonPath("$.arr_value");
+      List<Long> result = redis.jsonArrtrim(key, jp, JsonRangeArgs.Builder.start(0).stop(1));
+      assertThat(result).containsExactly(2L);
+      assertThat(redis.jsonGet(key, jp).get(0).toString()).isEqualTo("[[\"one\",\"two\"]]");
+
+      // start > arraysize
+      redis.jsonSet(key, jpRoot, jv);
+      Long result1 = command.jsonArrtrim(key, "$.arr_value", 4, 5);
+      assertThat(result1).isEqualTo(0L);
+      List<JsonValue> jsonGet = redis.jsonGet(key, jp);
+      assertThat(jsonGet.get(0).toString()).isEqualTo("[[]]");
+
+      // start > stop
+      redis.jsonSet(key, jpRoot, jv);
+      result1 = (Long)command.jsonArrtrim(key, "$.arr_value", 1, 0);
+      assertThat(result1).isEqualTo(0L);
+      assertThat(redis.jsonGet(key, jp).get(0).toString()).isEqualTo("[[]]");
+
+      // start and stop < 0
+      redis.jsonSet(key, jpRoot, jv);
+      result = redis.jsonArrtrim(key, jp, JsonRangeArgs.Builder.start(-2).stop(-1));
+      assertThat(result).containsExactly(2L);
+      assertThat(redis.jsonGet(key, jp).get(0).toString()).isEqualTo("[[\"three\",\"four\"]]");
+
+      // stop > size
+      redis.jsonSet(key, jpRoot, jv);
+      result = redis.jsonArrtrim(key, jp, JsonRangeArgs.Builder.start(2).stop(5));
+      assertThat(result).containsExactly(2L);
+      assertThat(redis.jsonGet(key, jp).get(0).toString()).isEqualTo("[[\"three\",\"four\"]]");
+
+      // Multiple match
+      redis.jsonSet(key, jpRoot, jv);
+      jp = new JsonPath("$..arr_value");
+      result = redis.jsonArrtrim(key, jp, JsonRangeArgs.Builder.start(2).stop(4));
+      assertThat(result).containsExactly(2L,1L,null);
+      List<JsonValue> jsonGet2 = redis.jsonGet(key, jp).get(0).asJsonArray().asList();
+      assertThat(jsonValueListToStringList(jsonGet2)).containsExactly("[\"three\",\"four\"]","[3]", "\"not an array\"");
+
+      // Non existing key
+      assertThatThrownBy(() -> redis.jsonArrtrim("non-existent", new JsonPath("$.arr_value"), JsonRangeArgs.Builder.start(0).stop(1)))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR could not perform this operation on a key that doesn't exist");
+
+      // Non existing path
+      assertThat(redis.jsonArrtrim(key, new JsonPath("$.non-existent"), JsonRangeArgs.Builder.start(0).stop(1))).isEmpty();
+
+      // Test legacy path
+      redis.jsonSet(key, jpRoot, jv);
+      jp = new JsonPath("..arr_value");
+      result = redis.jsonArrtrim(key, jp, JsonRangeArgs.Builder.start(2).stop(4));
+      assertThat(result).containsExactly(1L);
+      JsonValue jsonGet3 = redis.jsonGet(key, jp).get(0);
+      assertThat(jsonGet3.toString()).isEqualTo("[\"three\",\"four\"]");
+
+      // Non existing path with legacy
+      assertThatThrownBy(() -> redis.jsonArrtrim(key, new JsonPath(".non-existing"), JsonRangeArgs.Builder.start(0).stop(1)))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR Path '$.non-existing' does not exist or not an array");
+   }
+
+   // A function that receive a List<JsonValue> and a return a List<String>
+   private static List<String> jsonValueListToStringList(List<JsonValue> jsonValues) {
+      return jsonValues.stream().map(JsonValue::toString).collect(Collectors.toList());
+   }
    // Lettuce Json object doesn't implement comparison. Implementing here
    private boolean compareJSONGet(JsonValue result, JsonValue expected, JsonPath... paths) {
       ObjectMapper mapper = new ObjectMapper();
