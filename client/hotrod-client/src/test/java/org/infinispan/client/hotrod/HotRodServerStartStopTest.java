@@ -10,8 +10,15 @@ import static org.testng.AssertJUnit.assertNull;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 
+import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.client.hotrod.impl.transport.netty.DefaultTransportFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -21,12 +28,17 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
+import io.netty.channel.EventLoopGroup;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
 @Test(testName = "client.hotrod.HotRodServerStartStopTest", groups = "functional")
 public class HotRodServerStartStopTest extends MultipleCacheManagersTest {
+   public HotRodServerStartStopTest() {
+      cleanup =  CleanupPhase.AFTER_METHOD;
+   }
 
    private static int randomPort() {
       try {
@@ -99,5 +111,31 @@ public class HotRodServerStartStopTest extends MultipleCacheManagersTest {
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotRodServer1);
       hotRodServer1 = null;
+   }
+
+   public void testStartManagerWithClosedEventLoop() {
+      try {
+         org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
+               HotRodClientTestingUtil.newRemoteConfigurationBuilder();
+         clientBuilder.addServer().host("localhost").port(hotRodServer1.getPort());
+         clientBuilder.transportFactory(new DefaultTransportFactory() {
+            @Override
+            public EventLoopGroup createEventLoopGroup(int maxExecutors, ExecutorService executorService) {
+               EventLoopGroup elg = super.createEventLoopGroup(maxExecutors, executorService);
+               try {
+                  elg.shutdownGracefully(0, 0, TimeUnit.SECONDS).get();
+               } catch (InterruptedException | ExecutionException e) {
+                  throw new RuntimeException(e);
+               }
+               return elg;
+            }
+         });
+         try (RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build(), true)) {
+            Exceptions.expectException(TransportException.class, RejectedExecutionException.class,
+                  remoteCacheManager::getCache);
+         }
+      } finally {
+         killServers(hotRodServer1, hotRodServer2, hotRodServer3);
+      }
    }
 }
