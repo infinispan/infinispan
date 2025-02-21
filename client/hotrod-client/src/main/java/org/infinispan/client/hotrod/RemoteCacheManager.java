@@ -587,7 +587,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       TransactionMode transactionMode = getTransactionMode(transactionModeOverride, cacheConfiguration);
       InternalRemoteCache<K, V> remoteCache;
       if (transactionMode == TransactionMode.NONE) {
-         remoteCache = createRemoteCache(cacheName, factoryFunction);
+         remoteCache = createRemoteCache(cacheName, cacheConfiguration, factoryFunction);
       } else {
          if (!await(checkTransactionSupport(cacheName, managerOpFactory, dispatcher).toCompletableFuture())) {
             throw HOTROD.cacheDoesNotSupportTransactions(cacheName);
@@ -624,8 +624,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       return irc -> new ObjectRoutingCacheOperationsFactory(factoryFunction.apply(irc));
    }
 
-   private <K, V> InternalRemoteCache<K, V> createRemoteCache(String cacheName, Function<InternalRemoteCache<K, V>, CacheOperationsFactory> factoryFunction) {
-      RemoteCacheConfiguration remoteCacheConfiguration = configuration.remoteCaches().get(cacheName);
+   private <K, V> InternalRemoteCache<K, V> createRemoteCache(String cacheName, RemoteCacheConfiguration remoteCacheConfiguration,
+                                                              Function<InternalRemoteCache<K, V>, CacheOperationsFactory> factoryFunction) {
       NearCacheConfiguration nearCache;
       if (remoteCacheConfiguration != null) {
          nearCache = new NearCacheConfiguration(remoteCacheConfiguration.nearCacheMode(), remoteCacheConfiguration.nearCacheMaxEntries(),
