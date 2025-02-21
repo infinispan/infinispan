@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.configuration;
 
 import java.net.URI;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -260,6 +261,9 @@ public interface ConfigurationChildBuilder {
 
    /**
     * Set the TransportFactory. It defaults to {@link org.infinispan.client.hotrod.impl.transport.netty.DefaultTransportFactory}
+    * Defaults to {@link TransportFactory#DEFAULT}. If any other factory is used, any event loop created/used via
+    * {@link TransportFactory#createEventLoopGroup(int, ExecutorService)} will not be closed upon shutdown of the
+    * {@link org.infinispan.client.hotrod.RemoteCacheManager}.
     * @param transportFactory an instance of {@link TransportFactory}
     */
    ConfigurationBuilder transportFactory(TransportFactory transportFactory);

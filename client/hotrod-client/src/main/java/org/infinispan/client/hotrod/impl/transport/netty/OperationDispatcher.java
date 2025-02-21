@@ -325,6 +325,10 @@ public class OperationDispatcher {
       return getCacheInfo(cacheName).getClientTopologyRef().get();
    }
 
+   public ChannelHandler getChannelHandler() {
+      return channelHandler;
+   }
+
    public Map<SocketAddress, Set<Integer>> getPrimarySegmentsByAddress(String cacheName) {
       CacheInfo cacheInfo = getCacheInfo(cacheName);
       return cacheInfo != null ? cacheInfo.getPrimarySegments() : null;
