@@ -225,6 +225,10 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
       return bloomFilterBits;
    }
 
+   public NearCacheConfiguration getConfig() {
+      return config;
+   }
+
    public byte[] getListenerId() {
       return listenerId;
    }

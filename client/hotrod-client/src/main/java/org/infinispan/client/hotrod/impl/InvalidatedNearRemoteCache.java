@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.MetadataValue;
+import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
 import org.infinispan.client.hotrod.impl.operations.CacheOperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.ClientListenerOperation;
 import org.infinispan.client.hotrod.impl.operations.GetWithMetadataOperation;
@@ -288,6 +289,10 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
 
    public void setBloomListenerAddress(Channel channel) {
       this.listenerChannel = channel;
+   }
+
+   public NearCacheConfiguration getNearCacheConfiguration() {
+      return nearcache.getConfig();
    }
 
    @Override
