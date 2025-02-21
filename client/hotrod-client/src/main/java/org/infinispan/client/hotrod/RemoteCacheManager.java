@@ -311,7 +311,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    }
 
    private <K, V> InternalRemoteCache<K, V> getInternalCache(String cacheName) {
-      return createRemoteCache(cacheName, configuration.forceReturnValues(), null, null);
+      return moteCache(cacheName, configuration.forceReturnValues(), null, null);
    }
 
    public CompletableFuture<Void> startAsync() {
@@ -625,7 +625,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    }
 
    private <K, V> InternalRemoteCache<K, V> createRemoteCache(String cacheName, Function<InternalRemoteCache<K, V>, CacheOperationsFactory> factoryFunction) {
-      RemoteCacheConfiguration remoteCacheConfiguration = configuration.remoteCaches().get(cacheName);
+      RemoteCacheConfiguration cacheConfiguration = findConfiguration(cacheName);
       NearCacheConfiguration nearCache;
       if (remoteCacheConfiguration != null) {
          nearCache = new NearCacheConfiguration(remoteCacheConfiguration.nearCacheMode(), remoteCacheConfiguration.nearCacheMaxEntries(),
