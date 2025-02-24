@@ -21,5 +21,9 @@ include::../{topics}/attributes/community-attributes.adoc[]
 Learn how to upgrade and migrate your Infinispan deployments to the latest version or between later versions.
 Find out how to perform rolling upgrades of Infinispan Server deployments and how to migrate persistent data between cache stores.
 
+== {brandname} Version Details
+
+Learn about link:{changes_docs}[changes] in Infinispan versions before you upgrade.
+
 //User stories
 include::stories.adoc[]
