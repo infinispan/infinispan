@@ -1168,6 +1168,59 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThatThrownBy(() -> redis.jsonArrindex(key, jp3, jv2)).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessage("ERR Path '$.non-existent' does not exist");
    }
+   @Test
+   public void testJSONARRPOP() {
+      JsonPath jpRoot = new JsonPath("$");
+      JsonValue jv = defaultJsonParser.createJsonValue("""
+               ["one", "two", "three","four"]
+            """);
+      String key = k();
+      redis.jsonSet(key, jpRoot, jv);
+      List<JsonValue> result = redis.jsonArrpop(key);
+      assertThat(result.toString()).isEqualTo("[\"four\"]");
+      result = redis.jsonArrpop(key, jpRoot, 0);
+      assertThat(result.toString()).isEqualTo("[\"one\"]");
+      result = redis.jsonArrpop(key, jpRoot, -1);
+      assertThat(result.toString()).isEqualTo("[\"three\"]");
+      result = redis.jsonArrpop(key, jpRoot, 1);
+      assertThat(result.toString()).isEqualTo("[\"two\"]");
+      // Not testing pop from empty array, bug in lettuce?
+      // see https://github.com/redis/lettuce/issues/3196
+      // result = redis.jsonArrpop(key, jp, 1);
+      // assertThat(result1).isNull();
+      // result = redis.jsonGet(key, jp);
+      // assertThat(result.toString()).isEqualTo("[[[]]]");
+
+      jv = defaultJsonParser.createJsonValue("""
+               {"bool":true,
+               "null_value": null,
+               "arr_value": ["one", "two", "three"],
+               "nested":
+                  {"bool": false,
+                   "arr_value": [1, 2, 3, 4],
+                   "stringKey": "aString"},
+               "foo": "bar",
+               "legacy": true}
+            """);
+      redis.jsonSet(key, jpRoot, jv);
+      JsonPath jp = new JsonPath("$..arr_value");
+      result = redis.jsonArrpop(key, jp , 1);
+      assertThat(result.toString()).isEqualTo("[\"two\", 2]");
+      result = redis.jsonArrpop(key, jp , -1);
+      assertThat(result.toString()).isEqualTo("[\"three\", 4]");
+      result = redis.jsonArrpop(key, jp , 0);
+      assertThat(result.toString()).isEqualTo("[\"one\", 1]");
+
+      // Test legacy path
+      redis.jsonSet(key, jpRoot, jv);
+      jp = new JsonPath("..arr_value");
+      result = redis.jsonArrpop(key, jp , 1);
+      assertThat(result.toString()).isEqualTo("[2]");
+      result = redis.jsonArrpop(key, jp , -1);
+      assertThat(result.toString()).isEqualTo("[4]");
+      result = redis.jsonArrpop(key, jp , 0);
+      assertThat(result.toString()).isEqualTo("[1]");
+   }
 
    @Test
    public void testJSONARRTRIM() {
