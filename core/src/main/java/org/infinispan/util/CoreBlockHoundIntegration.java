@@ -67,6 +67,8 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
          builder.allowBlockingCallsInside(ClusterCacheStatus.class.getName(), "acquireLock");
          builder.allowBlockingCallsInside(ClusterCacheStatus.class.getName() + "$ConflictResolution", "acquireLock");
 
+         builder.allowBlockingCallsInside("org.infinispan.topology.RebalanceConfirmationCollector", "acquireLock");
+
          builder.allowBlockingCallsInside(PersistenceManagerImpl.class.getName(), "acquireReadLock");
 
          builder.allowBlockingCallsInside(JGroupsTransport.class.getName(), "withView");
