@@ -51,9 +51,9 @@ public class JdbcStoreCompatibilityTest extends AbstractPersistenceCompatibility
 
    @Override
    protected void beforeStartCache() {
-      Path path = Paths.get(System.getProperty("build.directory"), "test-classes", data.get(oldVersion));
+      Path sqlFile = Paths.get(System.getProperty("build.directory"), "test-classes", data.get(oldVersion));
       // Create the DB
-      try (Connection c = DriverManager.getConnection(String.format("jdbc:h2:file:%s;DB_CLOSE_DELAY=-1;INIT=RUNSCRIPT FROM '%s'", Paths.get(System.getProperty("java.io.tmpdir"), oldVersion.toString()), path), "sa", "")) {
+      try (Connection c = DriverManager.getConnection(String.format("jdbc:h2:file:%s;DB_CLOSE_DELAY=-1;INIT=RUNSCRIPT FROM '%s'", dbPath(), sqlFile), "sa", "")) {
          // Nothing to do
       } catch (SQLException e) {
          throw new RuntimeException(e);
@@ -80,7 +80,11 @@ public class JdbcStoreCompatibilityTest extends AbstractPersistenceCompatibility
       jdbcB.connectionPool()
             .driverClass(org.h2.Driver.class)
             //-1 = never closed (== thread leak reported at the end), 0 = close when all connections are closed
-            .connectionUrl(String.format("jdbc:h2:file:%s;DB_CLOSE_DELAY=0", Paths.get(System.getProperty("java.io.tmpdir"), oldVersion.toString())))
+            .connectionUrl(String.format("jdbc:h2:file:%s;DB_CLOSE_DELAY=0", dbPath()))
             .username("sa");
+   }
+
+   private Path dbPath() {
+      return Paths.get(tmpDirectory, oldVersion.toString());
    }
 }
