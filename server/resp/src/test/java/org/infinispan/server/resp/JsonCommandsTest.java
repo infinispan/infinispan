@@ -1,23 +1,9 @@
 package org.infinispan.server.resp;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
-
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.infinispan.server.resp.json.JSONUtil;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.RedisCodec;
@@ -30,10 +16,25 @@ import io.lettuce.core.json.arguments.JsonGetArgs;
 import io.lettuce.core.json.arguments.JsonRangeArgs;
 import io.lettuce.core.json.arguments.JsonSetArgs;
 import io.lettuce.core.output.IntegerOutput;
+import io.lettuce.core.output.NumberListOutput;
 import io.lettuce.core.output.StringListOutput;
 import io.lettuce.core.output.ValueOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ProtocolKeyword;
+import org.infinispan.server.resp.json.JSONUtil;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
 
 @Test(groups = "functional", testName = "server.resp.JsonCommandsTest")
 public class JsonCommandsTest extends SingleNodeRespBaseTest {
@@ -1080,6 +1081,14 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
               {"a":"b", "b": [{"a":2}, {"a":"c"}, {"a":5.4}, {"a":true}, {"a":["hello"]}]}
             """);
       String key = k();
+      // JSON.SET doc $ '1'
+      assertThat(redis.jsonSet(key, jp, defaultJsonParser.createJsonValue("1"))).isEqualTo("OK");
+      // JSON.NUMINCRBY doc $ 2 or JSON.NUMINCRBY doc . 2
+      assertThat(redis.jsonNumincrby(key, jp, 2)).containsExactly(3L);
+      // JSON.GET doc
+      assertThat(redis.jsonGet(key).get(0).isNumber()).isTrue();
+      assertThat(redis.jsonGet(key).get(0).asNumber().intValue()).isEqualTo(3);
+
       // JSON.SET doc $ '{"a":"b", "b": [{"a":2}, {"a":"c"}, {"a":5.4}, {"a":true},{"h":1}, {"a":["hello"]}]}'
       assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
       //JSON.NUMINCRBY doc $..a 2
@@ -1102,6 +1111,51 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
             .isInstanceOf(RedisCommandExecutionException.class)
             .hasMessage("ERR could not perform this operation on a key that doesn't exist");
    }
+
+   @Test
+   public void testJSONNUMMULTRBY() {
+      JsonPath jp = new JsonPath("$");
+      JsonValue jv = defaultJsonParser.createJsonValue("""
+              {"a":"b", "b": [{"a":2}, {"a":"c"}, {"a":5.4}, {"a":true}, {"a":["hello"]}]}
+            """);
+      String key = k();
+      // JSON.SET doc $ '{"a":"b", "b": [{"a":2}, {"a":"c"}, {"a":5.4}, {"a":true},{"h":1}, {"a":["hello"]}]}'
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+      // JSON.NUMMULTBY doc $..a 2
+      assertThat(jsonMultBy(key, "$..a", 2)).containsExactly(null, 4L, null, 10.8, null, null);
+
+      assertThatThrownBy(() ->
+              jsonMultBy("notExistingKey", "$", 2))
+              .isInstanceOf(RedisCommandExecutionException.class)
+              .hasMessage("ERR could not perform this operation on a key that doesn't exist");
+   }
+
+   private List<Number> jsonMultBy(String key, String path, int multiplier) {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      return redis.dispatch(TestCommandType.JSON_NUMMULTBY, new NumberListOutput<>(codec),
+              new CommandArgs<>(codec).addKey(key).add(path).add(multiplier));
+   }
+
+   enum TestCommandType implements ProtocolKeyword {
+      JSON_NUMMULTBY("JSON.NUMMULTBY"),;
+
+      public final byte[] bytes;
+      private final String command;
+
+      TestCommandType(String name) {
+         this.command = name;
+         this.bytes = name.getBytes(StandardCharsets.US_ASCII);
+      }
+
+      public String toString() {
+         return this.command;
+      }
+
+      public byte[] getBytes() {
+         return this.bytes;
+      }
+   }
+
 
    public void testJSONARRINDEX() {
       JsonPath jp = new JsonPath("$");

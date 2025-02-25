@@ -6,18 +6,18 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.server.resp.json.EmbeddedJsonCache;
 
 /**
- * JSON.NUMINCRBY
+ * JSON.NUMMULTBY
  *
- * @see <a href="https://redis.io/commands/json.numincrby/">JSON.NUMINCRBY</a>
+ * @see <a href="https://redis.io/commands/json.nummultby/">JSON.NUMMULTBY</a>
  * @since 15.2
  */
-public class JSONNUMINCRBY extends JSONNUM {
-    public JSONNUMINCRBY() {
-        super("JSON.NUMINCRBY");
+public class JSONNUMMULTBY extends JSONNUM {
+    public JSONNUMMULTBY() {
+        super("JSON.NUMMULTBY");
     }
 
     @Override
     CompletionStage<List<Number>> perform(EmbeddedJsonCache ejc, byte[] key, byte[] jsonPath, byte[] value) {
-        return ejc.numIncBy(key, jsonPath, value);
+        return ejc.numMultBy(key, jsonPath, value);
     }
 }
