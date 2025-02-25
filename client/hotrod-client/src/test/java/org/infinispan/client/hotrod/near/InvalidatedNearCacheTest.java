@@ -224,12 +224,30 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
    }
 
    public void testNearCacheNamePattern() {
-      cacheManager.defineConfiguration("nearcache", new org.infinispan.configuration.cache.ConfigurationBuilder().build());
+      cacheManager.defineConfiguration("nearcachepattern", new org.infinispan.configuration.cache.ConfigurationBuilder().build());
+      ConfigurationBuilder builder = clientConfiguration();
+      int maxEntries = 50;
+      builder.remoteCache("near*").nearCacheMode(NearCacheMode.INVALIDATED).nearCacheMaxEntries(maxEntries);
+      RemoteCacheManager manager = new RemoteCacheManager(builder.build());
+      try {
+         RemoteCache<?, ?> nearcache = manager.getCache("nearcachepattern");
+         assertTrue(nearcache instanceof InvalidatedNearRemoteCache);
+         assertEquals(maxEntries, ((InvalidatedNearRemoteCache) nearcache).getNearCacheConfiguration().maxEntries());
+         RemoteCache<?, ?> cache = manager.getCache();
+         assertTrue(cache instanceof InvalidatedNearRemoteCache);
+         assertEquals(-1, ((InvalidatedNearRemoteCache) cache).getNearCacheConfiguration().maxEntries());
+      } finally {
+         HotRodClientTestingUtil.killRemoteCacheManager(manager);
+      }
+   }
+
+   public void testNearCacheNamePattern2() {
+      cacheManager.defineConfiguration("nearcachepattern2", new org.infinispan.configuration.cache.ConfigurationBuilder().build());
       ConfigurationBuilder builder = clientConfiguration();
       builder.nearCache().cacheNamePattern("near.*");
       RemoteCacheManager manager = new RemoteCacheManager(builder.build());
       try {
-         RemoteCache<?, ?> nearcache = manager.getCache("nearcache");
+         RemoteCache<?, ?> nearcache = manager.getCache("nearcachepattern2");
          assertTrue(nearcache instanceof InvalidatedNearRemoteCache);
          RemoteCache<?, ?> cache = manager.getCache();
          assertFalse(cache instanceof InvalidatedNearRemoteCache);
