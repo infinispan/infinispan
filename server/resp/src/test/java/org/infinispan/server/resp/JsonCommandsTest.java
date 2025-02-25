@@ -1425,6 +1425,131 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
               .isInstanceOf(RedisCommandExecutionException.class)
               .hasMessage("ERR could not perform this operation on a key that doesn't exist");
    }
+   public void testJSONMERGE() {
+      var command = CustomStringCommands.instance(redisConnection);
+      JsonPath jpRoot = new JsonPath("$");
+      JsonValue jv = defaultJsonParser.createJsonValue("""
+                     {
+              "name": "Example Object",
+              "id": 123,
+              "obj1": {
+                "type": "Nested Object",
+                "status": "active",
+                "nestedObj": {
+                  "level": 2,
+                  "description": "This is a deeply nested object"
+                }
+              }
+            }
+                     """);
+
+      // Test create field
+      String update = """
+            {"obj1":{"nestedObj":{"added":"field"}}}
+               """;
+      // //JsonValue jvUpdate = defaultJsonParser.createJsonValue(update);
+      String key = k();
+      assertThat(redis.jsonSet(key, jpRoot, jv)).isEqualTo("OK");
+      assertThat(command.jsonMerge(key, "$", update)).isEqualTo("OK");
+      List<JsonValue> result = redis.jsonGet(key, jpRoot);
+      assertThat(result.toString()).isEqualTo(
+            """
+                  [[{"name":"Example Object","id":123,"obj1":{"type":"Nested Object","status":"active","nestedObj":{"level":2,"description":"This is a deeply nested object","added":"field"}}}]]""");
+
+      // test delete field
+      update = """
+            { "name": "Example Object", "id": 123, "obj1": {"nestedObj": null}} }
+            """;
+      assertThat(command.jsonMerge(key, "$", update)).isEqualTo("OK");
+      result = redis.jsonGet(key, jpRoot);
+      assertThat(result.toString()).isEqualTo("""
+            [[{"name":"Example Object","id":123,"obj1":{"type":"Nested Object","status":"active"}}]]""");
+
+      // test replace field
+      update = """
+            { "name": "Example Object", "id": 123, "obj1": {"status": true}} }
+            """;
+      assertThat(command.jsonMerge(key, "$", update)).isEqualTo("OK");
+      result = redis.jsonGet(key, jpRoot);
+      assertThat(result.toString()).isEqualTo("""
+            [[{"name":"Example Object","id":123,"obj1":{"type":"Nested Object","status":true}}]]""");
+
+      // test merge with null
+      update = "null";
+      JsonValue jvUpdate = defaultJsonParser.createJsonValue(update);
+      assertThat(redis.jsonMerge(key, new JsonPath("$.obj1"), jvUpdate)).isEqualTo("OK");
+      result = redis.jsonGet(key, new JsonPath("$.obj1"));
+      assertThat(result.toString()).isEqualTo("[[null]]");
+
+      // Test create field on non root
+      update = """
+            {"added":"field"}
+               """;
+      jvUpdate = defaultJsonParser.createJsonValue(update);
+      assertThat(redis.jsonSet(key, jpRoot, jv)).isEqualTo("OK");
+      assertThat(redis.jsonMerge(key,  new JsonPath("$.obj1.nestedObj"), jvUpdate)).isEqualTo("OK");
+      result = redis.jsonGet(key, jpRoot);
+      assertThat(result.toString()).isEqualTo(
+            """
+            [[{"name":"Example Object","id":123,"obj1":{"type":"Nested Object","status":"active","nestedObj":{"level":2,"description":"This is a deeply nested object","added":"field"}}}]]""");
+
+      // Test delete field on non root
+      update = """
+            {"added":null}
+               """;
+      jvUpdate = defaultJsonParser.createJsonValue(update);
+      assertThat(redis.jsonMerge(key, new JsonPath("$.obj1.nestedObj"), jvUpdate)).isEqualTo("OK");
+      result = redis.jsonGet(key, jpRoot);
+      assertThat(result.toString()).isEqualTo(
+            """
+                  [[{"name":"Example Object","id":123,"obj1":{"type":"Nested Object","status":"active","nestedObj":{"level":2,"description":"This is a deeply nested object"}}}]]""");
+
+      // Test replace field on non root
+      update = """
+            {"status": true }
+               """;
+      jvUpdate = defaultJsonParser.createJsonValue(update);
+      assertThat(redis.jsonMerge(key, new JsonPath("$.obj1"), jvUpdate)).isEqualTo("OK");
+      result = redis.jsonGet(key, jpRoot);
+      assertThat(result.toString()).isEqualTo(
+            """
+                  [[{"name":"Example Object","id":123,"obj1":{"type":"Nested Object","status":true,"nestedObj":{"level":2,"description":"This is a deeply nested object"}}}]]""");
+
+      // Test create field leaf on non root
+      update = """
+            {"added":"field"}
+               """;
+      jvUpdate = defaultJsonParser.createJsonValue(update);
+      assertThat(redis.jsonSet(key, jpRoot, jv)).isEqualTo("OK");
+      assertThat(redis.jsonMerge(key, new JsonPath("$.obj1.nonexist"), jvUpdate)).isEqualTo("OK");
+      result = redis.jsonGet(key, jpRoot);
+      assertThat(result.toString()).isEqualTo(
+            """
+                  [[{"name":"Example Object","id":123,"obj1":{"type":"Nested Object","status":"active","nestedObj":{"level":2,"description":"This is a deeply nested object"},"nonexist":{"added":"field"}}}]]""");
+
+      // Test create field on non leaf
+      assertThat(redis.jsonSet(key, jpRoot, jv)).isEqualTo("OK");
+      assertThat(redis.jsonMerge(key, new JsonPath("$.nonexist1.nonexist2"), jvUpdate)).isNull();
+
+
+      jv = defaultJsonParser.createJsonValue("""
+            {"o11":{"o21":{"o31":"field31", "sameKey": null}, "sameKey": "value", "o22": {"o32": 42}}, "sameKey": {"o22":true }}
+               """);
+      assertThat(redis.jsonSet(key, jpRoot, jv)).isEqualTo("OK");
+      assertThat(redis.jsonMerge(key, new JsonPath("$..sameKey"), jvUpdate)).isEqualTo("OK");
+      result = redis.jsonGet(key, jpRoot);
+      assertThat(result.toString()).isEqualTo(
+            """
+      [[{"o11":{"o21":{"o31":"field31","sameKey":{"added":"field"}},"sameKey":{"added":"field"},"o22":{"o32":42}},"sameKey":{"o22":true,"added":"field"}}]]"""
+      );
+
+      // Test create field on non leaf
+      assertThat(redis.jsonSet(key, jpRoot, jv)).isEqualTo("OK");
+      var updateFinal = update;
+      var jvUpdateFinal = jvUpdate;
+      assertThatThrownBy(() -> redis.jsonMerge(key, new JsonPath("$..nonexist1"), jvUpdateFinal)).isInstanceOf(RedisCommandExecutionException.class)
+      .hasMessage("ERR Err wrong static path");
+   }
 
    // Lettuce Json object doesn't implement comparison. Implementing here
    private boolean compareJSONGet(JsonValue result, JsonValue expected, JsonPath... paths) {
