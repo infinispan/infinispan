@@ -6,9 +6,12 @@ import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import io.lettuce.core.output.NumberListOutput;
+import io.lettuce.core.protocol.ProtocolKeyword;
 import org.infinispan.server.resp.json.JSONUtil;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -1102,6 +1105,49 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
             .isInstanceOf(RedisCommandExecutionException.class)
             .hasMessage("ERR could not perform this operation on a key that doesn't exist");
    }
+
+   @Test
+   public void testJSONNUMMULTRBY() {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      JsonPath jp = new JsonPath("$");
+      JsonValue jv = defaultJsonParser.createJsonValue("""
+              {"a":"b", "b": [{"a":2}, {"a":"c"}, {"a":5.4}, {"a":true}, {"a":["hello"]}]}
+            """);
+      String key = k();
+      // JSON.SET doc $ '{"a":"b", "b": [{"a":2}, {"a":"c"}, {"a":5.4}, {"a":true},{"h":1}, {"a":["hello"]}]}'
+      assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
+      // JSON.NUMMULTBY doc $..a 2
+      assertThat(redis.dispatch(TestCommandType.JSON_NUMMULTBY, new NumberListOutput<>(codec),
+              new CommandArgs<>(codec).addKey(key).add("$..a").add(2)))
+              .containsExactly(null, 4L, null, 10.8, null, null);
+
+      assertThatThrownBy(() ->
+              redis.dispatch(TestCommandType.JSON_NUMMULTBY, new NumberListOutput<>(codec),
+              new CommandArgs<>(codec).addKey("notExistingKey").add("$..a").add(2)))
+              .isInstanceOf(RedisCommandExecutionException.class)
+              .hasMessage("ERR could not perform this operation on a key that doesn't exist");
+   }
+
+   enum TestCommandType implements ProtocolKeyword {
+      JSON_NUMMULTBY("JSON.NUMMULTBY"),;
+
+      public final byte[] bytes;
+      private final String command;
+
+      TestCommandType(String name) {
+         this.command = name;
+         this.bytes = name.getBytes(StandardCharsets.US_ASCII);
+      }
+
+      public String toString() {
+         return this.command;
+      }
+
+      public byte[] getBytes() {
+         return this.bytes;
+      }
+   }
+
 
    public void testJSONARRINDEX() {
       JsonPath jp = new JsonPath("$");

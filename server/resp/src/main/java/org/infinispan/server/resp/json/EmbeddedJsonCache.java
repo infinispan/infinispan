@@ -1,5 +1,10 @@
 package org.infinispan.server.resp.json;
 
+import static java.util.Objects.requireNonNull;
+
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.container.impl.InternalEntryFactory;
@@ -7,11 +12,6 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
-
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * A cache implementation for JSON data, providing various methods for interacting with and
@@ -216,11 +216,23 @@ public class EmbeddedJsonCache {
     *
     * @param key       the key identifying the JSON document
     * @param path      the JSON path to the number to be incremented
-    * @param increment the value to increment by
+    * @param value     the value to operate by
     * @return a {@code CompletionStage} resolving to a list of updated numbers
     */
-   public CompletionStage<List<Number>> incrby(byte[] key, byte[] path, byte[] increment) {
-      return readWriteMap.eval(key, new JsonNumIncrByFunction(path, increment));
+   public CompletionStage<List<Number>> numIncBy(byte[] key, byte[] path, byte[] value) {
+      return readWriteMap.eval(key, new JsonNumIncrOpFunction(path, value));
+   }
+
+   /**
+    * Multiply the number at the specified JSON path by the given value.
+    *
+    * @param key       the key identifying the JSON document
+    * @param path      the JSON path to the number to be multiplied
+    * @param value     the value to operate by
+    * @return a {@code CompletionStage} resolving to a list of updated numbers
+    */
+   public CompletionStage<List<Number>> numMultBy(byte[] key, byte[] path, byte[] value) {
+      return readWriteMap.eval(key, new JsonNumMultOpFunction(path, value));
    }
 
    /**
