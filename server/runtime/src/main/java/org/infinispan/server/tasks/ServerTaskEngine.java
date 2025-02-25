@@ -10,7 +10,6 @@ import java.util.concurrent.CompletableFuture;
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
@@ -101,7 +100,6 @@ public class ServerTaskEngine implements TaskEngine {
       if (globalauthorizer != null) {
          Subject subject = context.getSubject().orElseGet(Security::getSubject);
          if (context.getCache().isPresent()) {
-            Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(context.getCache().get().getAdvancedCache());
             AuthorizationManager authorizationManager = SecurityActions.getCacheAuthorizationManager(context.getCache().get().getAdvancedCache());
             if (authorizationManager != null) {
                authorizationManager.checkPermission(subject, AuthorizationPermission.EXEC, role);

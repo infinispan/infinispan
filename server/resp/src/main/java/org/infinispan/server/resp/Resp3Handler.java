@@ -45,6 +45,10 @@ public class Resp3Handler extends Resp3AuthHandler {
       this.blockingManager = gcr.getComponent(BlockingManager.class);
    }
 
+   protected Resp3Handler(Resp3Handler delegate) {
+      this(delegate.respServer, delegate.valueMediaType, delegate.cache);
+   }
+
    @Override
    public void setCache(AdvancedCache<byte[], byte[]> cache) {
       super.setCache(cache);
@@ -88,8 +92,7 @@ public class Resp3Handler extends Resp3AuthHandler {
    @Override
    protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, RespCommand type,
          List<byte[]> arguments) {
-      if (type instanceof Resp3Command) {
-         Resp3Command resp3Command = (Resp3Command) type;
+      if (type instanceof Resp3Command resp3Command) {
          return resp3Command.perform(this, ctx, arguments);
       }
       return super.actualHandleRequest(ctx, type, arguments);
