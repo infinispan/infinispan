@@ -238,5 +238,22 @@ public class EmbeddedJsonCache {
     */
    public CompletionStage<List<Integer>> arrindex(byte[] key, byte[] jsonPath, byte[] value, int start, int stop, boolean isLegacy) {
       return readWriteMap.eval(key, new JsonArrindexFunction(jsonPath, value, start, stop, isLegacy));
-}
+   }
+
+   /**
+    * Removes the element at the specified index from the array at the specified JSON path in the
+    * document associated with the specified key.
+    *
+    * @param key
+    *           The key of the document.
+    * @param jsonPath
+    *           The JSON path to the array.
+    * @param index
+    *           The index of the element to remove.
+    * @return A {@link CompletionStage} that will complete with the remove elements of all the
+    *         matching paths.
+    */
+   public CompletionStage<List<byte[]>> arrpop(byte[] key, byte[] jsonPath, int index) {
+      return readWriteMap.eval(key, new JsonArrpopFunction(jsonPath, index));
+   }
 }
