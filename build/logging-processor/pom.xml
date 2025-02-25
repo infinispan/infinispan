@@ -41,7 +41,7 @@
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>${version.maven-compiler-plugin}</version>
+                <version>${version.maven.compiler}</version>
                 <configuration>
                     <annotationProcessorPaths>
                         <path>
@@ -59,6 +59,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
+                <version>${version.maven.source}</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
