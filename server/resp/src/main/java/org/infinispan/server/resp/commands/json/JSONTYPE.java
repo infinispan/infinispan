@@ -21,8 +21,6 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class JSONTYPE extends RespCommand implements Resp3Command {
 
-   private byte[] DEFAULT_PATH = { '.' };
-
    public JSONTYPE() {
       super("JSON.TYPE", -1, 1, 1, 1, AclCategory.JSON.mask() | AclCategory.READ.mask() | AclCategory.SLOW.mask());
    }
