@@ -38,6 +38,17 @@ init {
    List<byte[]> getArguments() {
       return resp3x_arguments;
    }
+
+   public RespDecoder(RespServer server) {
+      super(server);
+   }
+
+   protected int bytesAvailable(ByteBuf buf) {
+      if (maxContentLength > 0) {
+         return Math.max(maxContentLength - requestBytes - buf.readerIndex() + posBefore, 0);
+      }
+      return -1;
+   }
 }
 
 beforedecode {
@@ -52,7 +63,8 @@ beforedecode {
 
 // this is the root
 root request
-   : singleByte { if (singleByte != ARRAY) throw new UnsupportedOperationException("Only array types are supported, received: " + singleByte); reusedList.clear(); }
+   : { posBefore = buf.readerIndex(); }
+     singleByte { if (singleByte != ARRAY) throw new UnsupportedOperationException("Only array types are supported, received: " + singleByte); reusedList.clear(); }
      number
      singleByte
      command
@@ -61,19 +73,19 @@ root request
    ;
 
 command returns RespCommand switch singleByte
-   : { BULK_STRING }? bulkCommand[longProcessor]
-   | { SIMPLE_STRING }? simpleCommand
+   : { BULK_STRING }? bulkCommand[longProcessor, bytesAvailable(buf)]
+   | { SIMPLE_STRING }? simpleCommand[bytesAvailable(buf)]
    | { throw new UnsupportedOperationException("Type not supported: " + singleByte); }
    ;
 number: readNumber[longProcessor] { readNumber -= 1; };
 array returns byte[] switch singleByte
-   : { BULK_STRING }? bulkArray[longProcessor] { bulkArray }
-   | { SIMPLE_STRING }? readTerminatedBytes
-   | { NUMERIC } ? readTerminatedBytes
+   : { BULK_STRING }? bulkArray[longProcessor, bytesAvailable(buf)]
+   | { SIMPLE_STRING }? readTerminatedBytes[bytesAvailable(buf)]
+   | { NUMERIC } ? readTerminatedBytes[bytesAvailable(buf)]
    | { throw new UnsupportedOperationException("Type not supported: " + singleByte); }
    ;
 arguments returns List<byte[]>
-   : { readNumber > 16 }? { new ArrayList<>((int) readNumber); }
+   : { readNumber > 16 }? { allocList((int) readNumber); }
    | { readNumber >= 1 }? { reusedList; }
    | { Collections.emptyList(); }
    ;

@@ -6,6 +6,7 @@ import static org.infinispan.server.core.configuration.ProtocolServerConfigurati
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.IDLE_TIMEOUT;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.IMPLICIT_CONNECTOR;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.IO_THREADS;
+import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.MAX_CONTENT_LENGTH;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.NAME;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.PORT;
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.RECV_BUF_SIZE;
@@ -150,6 +151,16 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
 
    public boolean implicitConnector() {
       return attributes.attribute(IMPLICIT_CONNECTOR).get();
+   }
+
+   @Override
+   public S maxContentLength(String maxContentLength) {
+      attributes.attribute(MAX_CONTENT_LENGTH).set(maxContentLength);
+      return this.self();
+   }
+
+   public String maxContentLength() {
+      return attributes.attribute(MAX_CONTENT_LENGTH).get();
    }
 
    @Override

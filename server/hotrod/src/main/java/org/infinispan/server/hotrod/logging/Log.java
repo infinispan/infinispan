@@ -9,7 +9,6 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.server.hotrod.MissingFactoryException;
-import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
@@ -27,7 +26,7 @@ import org.jboss.logging.annotations.ValidIdRange;
  */
 @MessageLogger(projectCode = "ISPN")
 @ValidIdRange(min = 6001, max = 7000)
-public interface Log extends BasicLogger {
+public interface Log extends org.infinispan.server.core.logging.Log {
    Log CONFIG = Logger.getMessageLogger(Log.class, "org.infinispan.CONFIG");
 
    @LogMessage(level = ERROR)

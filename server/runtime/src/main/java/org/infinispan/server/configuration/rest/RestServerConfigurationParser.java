@@ -91,7 +91,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case MAX_CONTENT_LENGTH: {
-               builder.maxContentLength(ParseUtils.parseInt(reader, i, value));
+               builder.maxContentLength(value);
                break;
             }
             case COMPRESSION_LEVEL: {

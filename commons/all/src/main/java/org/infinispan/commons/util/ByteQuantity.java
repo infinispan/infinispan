@@ -13,7 +13,7 @@ import org.infinispan.commons.logging.LogFactory;
  * @since 11.0
  */
 public final class ByteQuantity {
-   private static final Pattern REGEX_PATTERN = Pattern.compile("^(\\d*\\.?\\d+)\\s*((?:(?:[KMGT]i?)B)|B)?$");
+   private static final Pattern REGEX_PATTERN = Pattern.compile("^(-?\\d*\\.?\\d+)\\s*((?:(?:[KMGT]i?)B)|B)?$");
    private static final BigDecimal KILO = new BigDecimal(1000);
    private static final BigDecimal KIBI = new BigDecimal(1024);
 
