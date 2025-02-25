@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
 import org.infinispan.multimap.impl.HashMapBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
@@ -23,6 +24,16 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  */
 @ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_HASH_MAP_VALUES_FUNCTION)
 public class HashMapValuesFunction<K, HK, HV> extends HashMapBucketBaseFunction<K, HK, HV, Collection<HV>> {
+
+   static final HashMapValuesFunction<?, ?, ?> INSTANCE = new HashMapValuesFunction<>();
+
+   private HashMapValuesFunction() {}
+
+   @ProtoFactory
+   @SuppressWarnings("unchecked")
+   public static <K, HK, HV> HashMapValuesFunction<K, HK, HV> instance() {
+      return (HashMapValuesFunction<K, HK, HV>) INSTANCE;
+   }
 
    @Override
    public Collection<HV> apply(EntryView.ReadWriteEntryView<K, HashMapBucket<HK, HV>> view) {
