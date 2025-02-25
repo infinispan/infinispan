@@ -32,9 +32,8 @@ public final class SMIsMember<K, V> implements SetBucketBaseFunction<K, V, List<
    }
 
    @ProtoFactory
-   @SuppressWarnings("unchecked")
    SMIsMember(MarshallableArray<V> values) {
-      this.values = MarshallableArray.unwrap(values, (V[]) new Object[0]);
+      this.values = MarshallableArray.unwrap(values);
    }
 
    @ProtoField(1)
