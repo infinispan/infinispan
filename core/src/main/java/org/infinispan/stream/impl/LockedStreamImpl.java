@@ -19,6 +19,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.TimeoutException;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.factories.annotations.Inject;
@@ -27,6 +28,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.EntryWrapper;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
@@ -256,7 +258,7 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
       }
    }
 
-   // TODO add TypeId? Previously just used class name with Externalizer
+   @ProtoTypeId(ProtoStreamTypeIds.STREAM_LOCKED_STREAM_CACHE_ENTRY_FUNCTION)
    @Scope(Scopes.NONE)
    public static class CacheEntryFunction<K, V, R> extends LockHelper<K, V, KeyValuePair<K, R>> implements Function<CacheEntry<K, V>, Stream<KeyValuePair<K, R>>> {
       private final BiFunction<Cache<K, V>, ? super CacheEntry<K, V>, R> biFunction;
@@ -291,7 +293,7 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
       }
    }
 
-   // TODO add TypeId? Previously just used class name with Externalizer
+   @ProtoTypeId(ProtoStreamTypeIds.STREAM_LOCKED_STREAM_CACHE_ENTRY_CONSUMER)
    public static class CacheEntryConsumer<K, V> extends LockHelper<K, V, Void> implements BiConsumer<Cache<K, V>, CacheEntry<K, V>> {
       private final BiConsumer<Cache<K, V>, ? super CacheEntry<K, V>> realConsumer;
 

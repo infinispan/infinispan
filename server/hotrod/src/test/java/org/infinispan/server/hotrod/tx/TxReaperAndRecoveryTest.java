@@ -21,12 +21,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.Synchronization;
-
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.configuration.cache.CacheMode;
@@ -36,6 +34,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.server.hotrod.HotRodMultiNodeTest;
 import org.infinispan.server.hotrod.counter.response.RecoveryTestResponse;
 import org.infinispan.server.hotrod.test.TestResponse;
@@ -51,16 +50,17 @@ import org.infinispan.server.hotrod.tx.table.functions.SetCompletedTransactionFu
 import org.infinispan.server.hotrod.tx.table.functions.SetDecisionFunction;
 import org.infinispan.server.hotrod.tx.table.functions.SetPreparedFunction;
 import org.infinispan.server.hotrod.tx.table.functions.TxFunction;
-import org.infinispan.topology.PersistentUUID;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.AbstractDelegatingRpcManager;
-import org.infinispan.commons.time.ControlledTimeService;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Synchronization;
 
 /**
  * Transaction Recovery and Reaper test.
@@ -81,7 +81,7 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
 
    private static Address newAddress() {
       //test address isn't serializable and we just need an address that doesn't belong to the cluster (simulates a leaver)
-      return PersistentUUID.randomUUID();
+      return new JGroupsAddress(org.jgroups.util.UUID.randomUUID());
    }
 
    @BeforeClass(alwaysRun = true)

@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -12,10 +13,11 @@ import org.infinispan.lock.impl.entries.ClusteredLockKey;
 import org.infinispan.lock.impl.entries.ClusteredLockState;
 import org.infinispan.lock.impl.entries.ClusteredLockValue;
 import org.infinispan.lock.logging.Log;
-import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 /**
  * Function that allows to unlock the lock, if it's not already released.
@@ -38,24 +40,21 @@ public class UnlockFunction implements Function<EntryView.ReadWriteEntryView<Clu
    private static final Log log = LogFactory.getLog(UnlockFunction.class, Log.class);
 
    private final String requestId;
-   private final Set<Object> requesters;
+   private final Set<Address> requesters;
 
-   public UnlockFunction(Object requestor) {
+   public UnlockFunction(Address requestor) {
       this.requestId = null;
       this.requesters = Collections.singleton(requestor);
    }
 
-   public UnlockFunction(String requestId, Set<Object> requesters) {
+   public UnlockFunction(String requestId, Set<Address> requesters) {
       this.requestId = requestId;
       this.requesters = requesters;
    }
 
    @ProtoFactory
-   static UnlockFunction protoFactory(String requestId, Set<WrappedMessage> requesters) {
-      return new UnlockFunction(
-            requestId,
-            requesters == null ? null : requesters.stream().map(WrappedMessage::getValue).collect(Collectors.toSet())
-      );
+   UnlockFunction(String requestId, Stream<JGroupsAddress> requesters) {
+      this(requestId, requesters.collect(Collectors.toSet()));
    }
 
    @ProtoField(1)
@@ -64,8 +63,8 @@ public class UnlockFunction implements Function<EntryView.ReadWriteEntryView<Clu
    }
 
    @ProtoField(2)
-   Set<WrappedMessage> getRequesters() {
-      return requesters == null ? null : requesters.stream().map(WrappedMessage::new).collect(Collectors.toSet());
+   Stream<JGroupsAddress> getRequesters() {
+      return requesters.stream().map(JGroupsAddress.class::cast);
    }
 
    @Override

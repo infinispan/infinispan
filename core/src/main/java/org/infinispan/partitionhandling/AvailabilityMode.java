@@ -28,10 +28,4 @@ public enum AvailabilityMode {
          return DEGRADED_MODE;
       return AVAILABLE;
    }
-
-   private static final AvailabilityMode[] CACHED_VALUES = values();
-
-   public static AvailabilityMode valueOf(int ordinal) {
-      return CACHED_VALUES[ordinal];
-   }
 }

@@ -50,19 +50,14 @@ public class SortedSetBucket<V> implements SortableBucket<V>, BaseSetBucket<V> {
       }, MIN {
          @Override
          public double apply(double first, double second) {
-            return first < second ? first : second;
+            return Math.min(first, second);
          }
       }, MAX {
          @Override
          public double apply(double first, double second) {
-            return first > second ? first : second;
+            return Math.max(first, second);
          }
       };
-
-      private static final SortedSetBucket.AggregateFunction[] CACHED_VALUES = values();
-      public static SortedSetBucket.AggregateFunction valueOf(int ordinal) {
-         return CACHED_VALUES[ordinal];
-      }
 
       public abstract double apply(double first, double second);
    }

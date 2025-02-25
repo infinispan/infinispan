@@ -22,7 +22,6 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.util.ByteString;
 
 /**
@@ -72,7 +71,7 @@ public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implemen
    ReductionPublisherRequestCommand(ByteString cacheName, boolean parallelStream, DeliveryGuarantee deliveryGuarantee,
                                     WrappedMessage wrappedSegments, MarshallableSet<K> keys, long explicitFlags, boolean entryStream,
                                     MarshallableSet<K> excludedKeys, MarshallableObject<Function<?, ?>> transformer,
-                                    MarshallableObject<Function<?, ?>> finalizer, JGroupsAddress origin, int topologyId) {
+                                    MarshallableObject<Function<?, ?>> finalizer, int topologyId) {
       super(cacheName);
       this.parallelStream = parallelStream;
       this.deliveryGuarantee = deliveryGuarantee;
@@ -83,7 +82,6 @@ public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implemen
       this.entryStream = entryStream;
       this.finalizer = MarshallableObject.unwrap(finalizer);
       this.transformer = transformer == null ? this.finalizer : MarshallableObject.unwrap(transformer);
-      this.origin = origin;
       this.topologyId = topologyId;
    }
 
@@ -113,13 +111,8 @@ public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implemen
       return MarshallableObject.create(finalizer);
    }
 
-   @ProtoField(11)
-   public JGroupsAddress getOrigin() {
-      return (JGroupsAddress) origin;
-   }
-
    @Override
-   @ProtoField(12)
+   @ProtoField(11)
    public int getTopologyId() {
       return topologyId;
    }

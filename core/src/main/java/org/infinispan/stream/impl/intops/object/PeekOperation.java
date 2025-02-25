@@ -3,10 +3,12 @@ package org.infinispan.stream.impl.intops.object;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.stream.CacheAware;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -17,6 +19,7 @@ import io.reactivex.rxjava3.core.Single;
 /**
  * Performs peek operation on a regular {@link Stream}
  */
+@ProtoTypeId(ProtoStreamTypeIds.STREAM_INTOP_PEEK_OPERATION)
 public class PeekOperation<S> implements IntermediateOperation<S, Stream<S>, S, Stream<S>> {
    private final Consumer<? super S> consumer;
    private BlockingManager blockingManager;

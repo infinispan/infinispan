@@ -1,16 +1,15 @@
 package org.infinispan.server.resp.filter;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.commons.util.Util;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
@@ -23,33 +22,23 @@ public class EventListenerKeysFilter implements CacheEventFilter<Object, Object>
 
    private final Map<Integer, List<byte[]>> keys;
 
-   public EventListenerKeysFilter(byte[][] keys) {
-      this.keys = new HashMap<>();
-      for (byte[] key : keys) {
-         this.keys.compute(key.length, (ignore, arr) -> {
-            if (arr == null) {
-               arr = new ArrayList<>();
-            }
-            arr.add(key);
-            return arr;
-         });
-      }
-   }
-
    public EventListenerKeysFilter(byte[] key) {
-      List<byte[]> list = new ArrayList<>(1);
-      list.add(key);
-      this.keys = Map.of(key.length, list);
+      this.keys = Map.of(key.length, List.of(key));
    }
 
    @ProtoFactory
-   EventListenerKeysFilter(List<byte[]> keys) {
-      this(keys.toArray(Util.EMPTY_BYTE_ARRAY_ARRAY));
+   public EventListenerKeysFilter(Stream<byte[]> keys) {
+      this.keys = keys.collect(
+            Collectors.groupingBy(
+                  k -> k.length,
+                  Collectors.mapping(Function.identity(), Collectors.toList())
+            )
+      );
    }
 
    @ProtoField(1)
-   List<byte[]> getKeys() {
-      return keys.values().stream().flatMap(List::stream).collect(Collectors.toList());
+   Stream<byte[]> getKeys() {
+      return keys.values().stream().flatMap(List::stream);
    }
 
    @Override

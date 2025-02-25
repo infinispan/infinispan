@@ -3,12 +3,11 @@ package org.infinispan.server.hotrod.tx.table;
 import java.util.Objects;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.marshall.protostream.impl.WrappedMessages;
-import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 /**
  * A {@link Address} implementation for a client transaction.
@@ -28,13 +27,13 @@ public class ClientAddress implements Address {
    }
 
    @ProtoFactory
-   ClientAddress(WrappedMessage wrappedLocalAddress) {
-      this.localAddress = WrappedMessages.unwrap(wrappedLocalAddress);
+   ClientAddress(JGroupsAddress localAddress) {
+      this.localAddress = localAddress;
    }
 
-   @ProtoField(number = 1, name = "localAddress")
-   WrappedMessage getWrappedLocalAddress() {
-      return WrappedMessages.orElseNull(localAddress);
+   @ProtoField(number = 1, javaType = JGroupsAddress.class)
+   Address getLocalAddress() {
+      return localAddress;
    }
 
    @Override
@@ -70,9 +69,5 @@ public class ClientAddress implements Address {
       return "ClientAddress{" +
             "localAddress=" + localAddress +
             '}';
-   }
-
-   Address getLocalAddress() {
-      return localAddress;
    }
 }

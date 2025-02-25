@@ -33,7 +33,7 @@ public final class ClusteredQueryOperation {
    final int docIndex;
 
    @ProtoFactory
-   public ClusteredQueryOperation(CQCommandType commandType, QueryDefinition queryDefinition, UUID queryId, int docIndex) {
+   ClusteredQueryOperation(CQCommandType commandType, QueryDefinition queryDefinition, UUID queryId, int docIndex) {
       this.commandType = commandType;
       this.queryDefinition = queryDefinition;
       this.queryId = queryId;

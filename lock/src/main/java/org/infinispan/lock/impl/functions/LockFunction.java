@@ -9,11 +9,11 @@ import org.infinispan.lock.impl.entries.ClusteredLockKey;
 import org.infinispan.lock.impl.entries.ClusteredLockState;
 import org.infinispan.lock.impl.entries.ClusteredLockValue;
 import org.infinispan.lock.logging.Log;
-import org.infinispan.marshall.protostream.impl.WrappedMessages;
-import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 /**
  * Lock function that allows to acquire the lock by a requestor, if such action is possible. It returns {@link
@@ -28,17 +28,16 @@ public class LockFunction implements Function<EntryView.ReadWriteEntryView<Clust
    private static final Log log = LogFactory.getLog(LockFunction.class, Log.class);
 
    private final String requestId;
-   private final Object requestor;
+   private final Address requestor;
 
-   public LockFunction(String requestId, Object requestor) {
+   public LockFunction(String requestId, Address requestor) {
       this.requestId = requestId;
       this.requestor = requestor;
    }
 
    @ProtoFactory
-   LockFunction(String requestId, WrappedMessage requestor) {
-      this.requestId = requestId;
-      this.requestor = WrappedMessages.unwrap(requestor);
+   LockFunction(String requestId, JGroupsAddress requestor) {
+      this(requestId, (Address) requestor);
    }
 
    @ProtoField(1)
@@ -46,9 +45,9 @@ public class LockFunction implements Function<EntryView.ReadWriteEntryView<Clust
       return requestId;
    }
 
-   @ProtoField(2)
-   WrappedMessage getRequestor() {
-      return WrappedMessages.orElseNull(requestor);
+   @ProtoField(value = 2, javaType = JGroupsAddress.class)
+   Address getRequestor() {
+      return requestor;
    }
 
    @Override

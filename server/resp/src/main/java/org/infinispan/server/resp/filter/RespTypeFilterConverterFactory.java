@@ -2,6 +2,7 @@ package org.infinispan.server.resp.filter;
 
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.ParamKeyValueFilterConverterFactory;
+import org.infinispan.server.resp.RespTypes;
 
 /**
  * @since 15.0
@@ -20,6 +21,6 @@ public class RespTypeFilterConverterFactory implements ParamKeyValueFilterConver
 
    static KeyValueFilterConverter<byte[], Object, Object> create(byte[] params) {
       byte ordinal = params[0];
-      return new RespTypeFilterConverter<>(ordinal);
+      return new RespTypeFilterConverter<>(RespTypes.fromOrdinal(ordinal));
    }
 }

@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
-import org.infinispan.marshall.protostream.impl.MarshallableCollection;
 import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.multimap.impl.SortedSetAddArgs;
 import org.infinispan.multimap.impl.SortedSetBucket;
@@ -71,14 +70,14 @@ public final class AddManyFunction<K, V> implements SortedSetBucketBaseFunction<
 
    @ProtoFactory
    AddManyFunction(boolean addOnly, boolean updateOnly, boolean updateLessScoresOnly, boolean updateGreaterScoresOnly,
-                   boolean returnChangedCount, boolean replace, MarshallableCollection<ScoredValue<V>> scoredValues) {
-      this(MarshallableCollection.unwrap(scoredValues), addOnly, updateOnly, updateLessScoresOnly, updateGreaterScoresOnly,
+                   boolean returnChangedCount, boolean replace, Collection<ScoredValue<V>> scoredValues) {
+      this(scoredValues, addOnly, updateOnly, updateLessScoresOnly, updateGreaterScoresOnly,
             returnChangedCount, replace);
    }
 
    @ProtoField(7)
-   MarshallableCollection<ScoredValue<V>> getScoredValues() {
-      return MarshallableCollection.create(scoredValues);
+   Collection<ScoredValue<V>> getScoredValues() {
+      return scoredValues;
    }
 
    @Override
