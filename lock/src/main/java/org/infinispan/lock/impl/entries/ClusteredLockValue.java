@@ -3,11 +3,11 @@ package org.infinispan.lock.impl.entries;
 import java.util.Objects;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.marshall.protostream.impl.WrappedMessages;
-import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 /**
  * Lock object inside the cache. Holds the lock owner, the lock request id and the status of the lock.
@@ -20,18 +20,18 @@ public class ClusteredLockValue {
 
    public static final ClusteredLockValue INITIAL_STATE = new ClusteredLockValue(null, null, ClusteredLockState.RELEASED);
    private final String requestId;
-   private final Object owner;
+   private final Address owner;
    private final ClusteredLockState state;
 
-   public ClusteredLockValue(String requestId, Object owner, ClusteredLockState state) {
+   public ClusteredLockValue(String requestId, Address owner, ClusteredLockState state) {
       this.requestId = requestId;
       this.owner = owner;
       this.state = state;
    }
 
    @ProtoFactory
-   static ClusteredLockValue protoFactory(String requestId, WrappedMessage wrappedOwner, ClusteredLockState state) {
-      return new ClusteredLockValue(requestId, WrappedMessages.unwrap(wrappedOwner), state);
+   ClusteredLockValue(String requestId, JGroupsAddress owner, ClusteredLockState state) {
+      this(requestId, (Address) owner, state);
    }
 
    @ProtoField(1)
@@ -39,9 +39,9 @@ public class ClusteredLockValue {
       return requestId;
    }
 
-   @ProtoField(2)
-   WrappedMessage getWrappedOwner() {
-      return WrappedMessages.orElseNull(owner);
+   @ProtoField(value = 2, javaType = JGroupsAddress.class)
+   public Address getOwner() {
+      return owner;
    }
 
    @ProtoField(3)
@@ -73,9 +73,5 @@ public class ClusteredLockValue {
             " owner=" + owner +
             " state=" + state +
             '}';
-   }
-
-   public Object getOwner() {
-      return owner;
    }
 }

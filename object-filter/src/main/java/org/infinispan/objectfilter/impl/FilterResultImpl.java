@@ -45,7 +45,7 @@ public final class FilterResultImpl implements ObjectFilter.FilterResult {
             MarshallableObject.unwrap(wrappedKey),
             MarshallableObject.unwrap(wrappedInstance),
             MarshallableArray.unwrap(wrappedProjection),
-            MarshallableArray.unwrap(wrappedSortProjection, new Comparable[0])
+            MarshallableArray.unwrap(wrappedSortProjection)
       );
    }
 

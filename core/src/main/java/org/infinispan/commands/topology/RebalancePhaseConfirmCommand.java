@@ -40,7 +40,7 @@ public class RebalancePhaseConfirmCommand extends AbstractCacheControlCommand {
       this(cacheName, null, MarshallableThrowable.unwrap(throwable), topologyId);
    }
 
-   @ProtoField(4)
+   @ProtoField(3)
    MarshallableThrowable getThrowable() {
       return MarshallableThrowable.create(throwable);
    }

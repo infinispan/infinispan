@@ -7,6 +7,7 @@ import java.util.Set;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
 import org.infinispan.multimap.impl.HashMapBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
@@ -23,6 +24,16 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  */
 @ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_HASH_MAP_KEY_SET_FUNCTION)
 public class HashMapKeySetFunction<K, HK, HV> extends HashMapBucketBaseFunction<K, HK, HV, Set<HK>> {
+
+   static final HashMapKeySetFunction<?, ?, ?> INSTANCE = new HashMapKeySetFunction<>();
+
+   private HashMapKeySetFunction() {}
+
+   @ProtoFactory
+   @SuppressWarnings("unchecked")
+   public static <K, HK, HV> HashMapKeySetFunction<K, HK, HV> instance() {
+      return (HashMapKeySetFunction<K, HK, HV>) INSTANCE;
+   }
 
    @Override
    public Set<HK> apply(EntryView.ReadWriteEntryView<K, HashMapBucket<HK, HV>> view) {

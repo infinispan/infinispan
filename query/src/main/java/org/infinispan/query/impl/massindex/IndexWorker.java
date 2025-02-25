@@ -21,7 +21,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.protostream.impl.MarshallableCollection;
 import org.infinispan.marshall.protostream.impl.MarshallableSet;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -55,8 +54,8 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
    }
 
    @ProtoFactory
-   IndexWorker(String cacheName, MarshallableCollection<Class<?>> indexedTypes, boolean skipIndex, MarshallableSet<Object> keys) {
-      this(cacheName, MarshallableCollection.unwrap(indexedTypes), skipIndex, MarshallableSet.unwrap(keys));
+   IndexWorker(String cacheName, Collection<Class<?>> indexedTypes, boolean skipIndex, MarshallableSet<Object> keys) {
+      this(cacheName, indexedTypes, skipIndex, MarshallableSet.unwrap(keys));
    }
 
    @ProtoField(1)
@@ -65,8 +64,8 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
    }
 
    @ProtoField(2)
-   MarshallableCollection<Class<?>> getIndexedTypes() {
-      return MarshallableCollection.create(indexedTypes);
+   Collection<Class<?>> getIndexedTypes() {
+      return indexedTypes;
    }
 
    @ProtoField(3)

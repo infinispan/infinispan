@@ -7,7 +7,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
@@ -67,16 +66,15 @@ public class WATCH extends RespCommand implements Resp3Command, TransactionResp3
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
       AdvancedCache<byte[], byte[]> cache = handler.cache();
-      byte[][] keys = arguments.toArray(Util.EMPTY_BYTE_ARRAY_ARRAY);
-      TxKeysListener listener = new TxKeysListener(keys.length);
+      TxKeysListener listener = new TxKeysListener(arguments.size());
 
-      CacheEventFilter<Object, Object> filter = new EventListenerKeysFilter(keys);
+      CacheEventFilter<Object, Object> filter = new EventListenerKeysFilter(arguments.stream());
       CompletionStage<Void> cs = cache.addListenerAsync(listener, filter, new TxEventConverterEmpty())
             .thenAccept(ignore -> register(ctx, listener))
             .thenAccept(ignore -> {
                ClientMetadata metadata = handler.respServer().metadataRepository().client();
                metadata.incrementWatchingClients();
-               metadata.recordWatchedKeys(keys.length);
+               metadata.recordWatchedKeys(arguments.size());
             });
       return handler.stageToReturn(cs, ctx, ResponseWriter.OK);
    }
