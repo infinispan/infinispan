@@ -70,7 +70,7 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     // from Jenkins docs: Note that the build result can only get worse, so you cannot change the result to SUCCESS if the current result is UNSTABLE or worse
                     script {
-                        if (!env.BRANCH_NAME.startsWith('PR-')) {
+                        if (!env.BRANCH_NAME.startsWith('PR-') && !env.BRANCH_NAME.startsWith("feature/")) {
                             sh "$MAVEN_HOME/bin/mvn deploy -B -e -Pdistribution -Drelease-mode=upstream -DdeployServerZip=true -DskipTests -Dcheckstyle.skip=true -Dlicense.skipDownloadLicenses=true"
                         }
                     }
