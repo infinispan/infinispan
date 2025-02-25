@@ -147,6 +147,8 @@ NOTE: This implementation attempts to return all attributes that a real Redis se
 
 * link:https://redis.io/commands/json.numincrby[JSON.NUMINCRBY]
 
+* link:https://redis.io/commands/json.nummultby[JSON.NUMMULTBY]
+
 * link:https://redis.io/commands/json.objkeys[JSON.OBJKEYS]
 
 * link:https://redis.io/commands/json.objlen[JSON.OBJLEN]
