@@ -42,11 +42,6 @@ public final class SortedSetAggregateFunction<K, V> implements SerializableFunct
    @ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_SORTED_SET_AGGREGATE_FUNCTION_TYPE)
    public enum AggregateType {
       UNION, INTER;
-
-      private static final SortedSetAggregateFunction.AggregateType[] CACHED_VALUES = values();
-      public static SortedSetAggregateFunction.AggregateType valueOf(int ordinal) {
-         return CACHED_VALUES[ordinal];
-      }
    }
 
    @ProtoFactory

@@ -29,12 +29,6 @@ public enum CQCommandType {
    GET_RESULT_SIZE(CQGetResultSize::new),
    DELETE(CQDelete::new);
 
-   private static final CQCommandType[] CACHED_VALUES = values();
-
-   public static CQCommandType valueOf(int ordinal) {
-      return CACHED_VALUES[ordinal];
-   }
-
    private final Supplier<CQWorker> workerSupplier;
 
    CQCommandType(Supplier<CQWorker> workerSupplier) {
