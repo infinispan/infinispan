@@ -39,7 +39,8 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.server.resp.json.JsonStringAppendFunction.class,
             org.infinispan.server.resp.json.JsonToggleFunction.class,
             org.infinispan.server.resp.json.JsonTypeFunction.class,
-            org.infinispan.server.resp.RespTypes.class
+            org.infinispan.server.resp.RespTypes.class,
+            org.infinispan.server.resp.json.JsonDebugMemoryFunction.class,
       },
       schemaFileName = "global.resp.proto",
       schemaFilePath = "proto/generated",
