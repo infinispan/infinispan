@@ -98,14 +98,27 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
             Throwable cause = f.cause();
             log.tracef("Connection attempt to %s encountered exception for %s", address, cause);
             // Allow another attempt later
-            connectFuture.completeExceptionally(cause);
-            attemptedConnect.compareAndSet(connectFuture, null);
-            TransportException transportCause = new TransportException(cause, address);
-            // HeaderDecoder should handle already sent operations
-            connectionFailureListener.accept(this, transportCause);
+            handleError(connectFuture, cause);
          }
       });
+      // This check here is in case if there is an issue with the event loop executor where it doesn't actually run
+      // the listener above, which can happen if the event loop group is shutdown
+      Throwable immediateError = channelFuture.cause();
+      if (immediateError != null) {
+         log.tracef("Connection to %s encountered immediate exception from %s", address, immediateError);
+         // Allow another attempt later
+         handleError(connectFuture, immediateError);
+      }
       return connectFuture;
+   }
+
+   private void handleError(CompletableFuture<Void> connectFuture, Throwable throwable) {
+      // Allow another attempt later
+      connectFuture.completeExceptionally(throwable);
+      attemptedConnect.compareAndSet(connectFuture, null);
+      TransportException transportCause = new TransportException(throwable, address);
+      // HeaderDecoder should handle already sent operations
+      connectionFailureListener.accept(this, transportCause);
    }
 
    public void setCodec(Codec codec) {
