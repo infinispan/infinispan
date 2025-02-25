@@ -20,16 +20,13 @@ import org.infinispan.server.resp.RespTypes;
 @ProtoTypeId(ProtoStreamTypeIds.RESP_TYPE_FILTER_CONVERTER)
 public class RespTypeFilterConverter<V> extends AbstractKeyValueFilterConverter<byte[], V, V> {
 
-   private final RespTypes type;
-
-   @ProtoFactory
-   public RespTypeFilterConverter(byte ordinal) {
-      this.type = RespTypes.fromOrdinal(ordinal);
-   }
 
    @ProtoField(1)
-   byte ordinal() {
-      return (byte) type.ordinal();
+   final RespTypes type;
+
+   @ProtoFactory
+   public RespTypeFilterConverter(RespTypes type) {
+      this.type = type;
    }
 
    @Override
