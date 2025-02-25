@@ -30,8 +30,6 @@ import java.util.stream.StreamSupport;
 import javax.security.auth.Subject;
 import javax.transaction.xa.XAResource;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
@@ -103,13 +101,15 @@ import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import jakarta.transaction.TransactionManager;
+
 /**
  * Simple local cache without interceptor stack.
  * The cache still implements {@link AdvancedCache} since it is too troublesome to omit that.
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-@MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents a simplified cache instance.")
+@MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents an individual cache instance.")
 @Scope(Scopes.NAMED_CACHE)
 public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V> {
    private final static Log log = LogFactory.getLog(SimpleCacheImpl.class);

@@ -1,7 +1,16 @@
 package org.infinispan.query.impl;
 
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
+
 import org.hibernate.search.engine.Version;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -11,13 +20,6 @@ import org.infinispan.query.core.stats.QueryStatistics;
 import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.Authorizer;
-import org.infinispan.commons.util.concurrent.CompletionStages;
-
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.CompletionStage;
-import java.util.stream.Collectors;
 
 /**
  * This MBean exposes the query statistics from the Hibernate Search's SearchIntegrator Statistics object via
@@ -28,6 +30,7 @@ import java.util.stream.Collectors;
  * @since 6.1
  */
 @MBean(objectName = "Statistics", description = "Statistics for index based query")
+@Scope(Scopes.NAMED_CACHE)
 public final class InfinispanQueryStatisticsInfo {
 
    private final QueryStatistics queryStatistics;

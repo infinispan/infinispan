@@ -1,0 +1,34 @@
+//Directory attributes
+:generated: ../../../../../target/generated-asciidoc
+:stories: ../../stories
+:topics: ../topics
+:imagesdir: ../{topics}/images
+
+//Community doc attributes
+include::../{topics}/attributes/community-attributes.adoc[]
+
+//Community title attributes
+:toc2:
+:icons: font
+:toclevels: 4
+:numbered:
+:sectanchors:
+:stem: asciimath
+:context: metrics
+
+//Title
+= {brandname} Metrics
+
+This is a list of all available {brandname} metrics, including their names, the environment in which they are available
+(link:{server_docs}#configuring-metrics_statistics-jmx[OpenMetrics] or link:{config_docs}#statistics-jmx[JMX]) and their types.
+For OpenMetrics, the list includes both names with embedded attributes or as tags.
+
+The following placeholders are used:
+
+* `${cache_manager}`: the name of the cache manager. The default is `default`.
+* `${cache}`: the name of the cache.
+* `${cluster}`: the name of the cluster. The default is `default`.
+* `${node}`: the name of the node.
+
+//User stories
+include::stories.adoc[]

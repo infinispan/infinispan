@@ -468,6 +468,7 @@ public class TxInterceptor extends DDAsyncInterceptor implements JmxStatisticsEx
    }
 
    @ManagedAttribute(
+         description = "Enables or disables the gathering of statistics by this component",
          displayName = "Statistics enabled",
          dataType = DataType.TRAIT,
          writable = true
