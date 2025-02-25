@@ -14,6 +14,7 @@ import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.rest.assertion.ResponseAssertion;
+import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,7 @@ public class OverviewReportIT {
    @RegisterExtension
    public static final InfinispanServerExtension SERVERS =
          InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
+               .runMode(ServerRunMode.CONTAINER)
                .numServers(2)
                .build();
 
