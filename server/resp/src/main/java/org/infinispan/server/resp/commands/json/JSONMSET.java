@@ -12,6 +12,7 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.RespUtil;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.json.EmbeddedJsonCache;
+import org.infinispan.server.resp.json.JSONUtil;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -44,7 +45,7 @@ public class JSONMSET extends RespCommand implements Resp3Command {
       }
       List<byte[][]> argsList = new ArrayList<>();
       for (int i = 0; i < arguments.size(); i += 3) {
-         if (isValueInvalid(arguments.get(i + 2))) {
+         if (JSONUtil.isValueInvalid(arguments.get(i + 2))) {
             handler.writer().customError("Invalid json value for JSON.MSET");
             return handler.myStage();
          }
@@ -61,40 +62,5 @@ public class JSONMSET extends RespCommand implements Resp3Command {
          return null;
       }
       throw CompletableFutures.asCompletionException(ex);
-   }
-
-   // Invalid values for Redis. Expecially '\0xa' breaks RESP, seen as end of data
-   private boolean isValueInvalid(byte[] value) {
-      if (value.length == 0)
-         return true;
-      if (value.length == 1) {
-         switch (value[0]) {
-            case ' ':
-            case '{':
-            case '}':
-            case '[':
-            case ']':
-            case '\\':
-            case '\'':
-            case 0:
-            case 0x0a:
-            case 0x0c:
-               return true;
-            default:
-               return false;
-         }
-      }
-      if (value.length == 2) {
-         if (value[0] == '\\' && (value[1] == '\\' || value[1] == '"' || value[1] == '[')) {
-            return true;
-         }
-         if (value[0] == '{' && value[1] == ']') {
-            return true;
-         }
-         if (value[0] == '[' && value[1] == '}') {
-            return true;
-         }
-      }
-      return false;
    }
 }

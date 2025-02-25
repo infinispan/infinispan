@@ -24,4 +24,5 @@ public interface ExternalizerIds {
    Integer JSON_ARRTRIM_FUNCTION = 2218;
    Integer JSON_CLEAR_FUNCTION = 2219;
    Integer JSON_ARRPOP_FUNCTION = 2220;
+   Integer JSON_MERGE_FUNCTION = 2221;
 }
