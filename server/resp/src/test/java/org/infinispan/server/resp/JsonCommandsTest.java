@@ -33,6 +33,7 @@ import io.lettuce.core.json.arguments.JsonMsetArgs;
 import io.lettuce.core.json.arguments.JsonRangeArgs;
 import io.lettuce.core.json.arguments.JsonSetArgs;
 import io.lettuce.core.output.ArrayOutput;
+import io.lettuce.core.output.IntegerListOutput;
 import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.output.NumberListOutput;
 import io.lettuce.core.output.StringListOutput;
@@ -1217,7 +1218,8 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
    }
 
    enum TestCommandType implements ProtocolKeyword {
-      JSON_NUMMULTBY("JSON.NUMMULTBY"),;
+      JSON_NUMMULTBY("JSON.NUMMULTBY"),
+      JSON_DEBUG("JSON.DEBUG");
 
       public final byte[] bytes;
       private final String command;
@@ -1919,6 +1921,43 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThatThrownBy(() -> resp(key, ".non-existent")).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessage("ERR Path '$.non-existent' does not exist");
       assertThat(resp("non-existent", "$")).containsExactly((Object) null);
+   }
+
+   @Test
+   void testJSONDEBUG() {
+      JsonPath jpRoot = new JsonPath("$");
+      String key = "doc";
+      // JSON.DEBUG MEMORY doc .
+      assertThat(jsonDebugLegacy("MEMORY", key, ".")).isZero();
+      assertThat(jsonDebug("MEMORY", key, "$")).containsExactly(0L);
+      // JSON.SET doc $ '"a"'
+      JsonValue jv = defaultJsonParser.createJsonValue("\"a\"");
+      assertThat(redis.jsonSet(key, jpRoot, jv)).isEqualTo("OK");
+      // JSON.DEBUG MEMORY doc .
+      assertThat(jsonDebugLegacy("MEMORY", key, ".")).isEqualTo(24L);
+      assertThat(jsonDebug("MEMORY", key, "$")).containsExactly(24L);
+      // JSON.SET doc $ '{"a":"b", "b": [{"a":2}, {"a":"c"}, {"a":5.4}, {"a":true},{"h":1}, {"a":["hello"]}]}'
+      jv = defaultJsonParser.createJsonValue("""
+              {"a":"b", "b": [{"a":2}, {"a":"c"}, {"a":5.4}, {"a":true}, {"a":["hello"]}]}
+            """);
+      assertThat(redis.jsonSet(key, jpRoot, jv)).isEqualTo("OK");
+      // JSON.DEBUG MEMORY doc .
+      assertThat(jsonDebugLegacy("MEMORY", key, ".")).isEqualTo(88L);
+      assertThat(jsonDebug("MEMORY", key, "$")).containsExactly(88L);
+      assertThatThrownBy(() -> jsonDebug("BADCOMMAND", key, "$")).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR unknown subcommand - try `JSON.DEBUG HELP`");
+   }
+
+   private Long jsonDebugLegacy(String subCommand, String key, String path) {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      return redis.dispatch(TestCommandType.JSON_DEBUG, new IntegerOutput<>(codec),
+              new CommandArgs<>(codec).add(subCommand).addKey(key).add(path));
+   }
+
+   private List<Long> jsonDebug(String subCommand, String key, String path) {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      return redis.dispatch(TestCommandType.JSON_DEBUG, new IntegerListOutput<>(codec),
+              new CommandArgs<>(codec).add(subCommand).addKey(key).add(path));
    }
 
    private boolean compareJSONGet(List<JsonValue> results, JsonValue expected, JsonPath... paths) {

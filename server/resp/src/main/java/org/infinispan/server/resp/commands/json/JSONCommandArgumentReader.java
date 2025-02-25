@@ -4,6 +4,8 @@ import org.infinispan.server.resp.json.JSONUtil;
 
 import java.util.List;
 
+import static org.infinispan.server.resp.json.JSONUtil.JSON_ROOT;
+
 /**
  * Helper class for reading JSON command arguments.
  */
@@ -18,8 +20,9 @@ public final class JSONCommandArgumentReader {
      * @param path      the path associated with the command as a byte array
      * @param jsonPath  the JSON path for extracting specific data as a byte array
      * @param isLegacy  a flag indicating whether the command follows a legacy format
+     * @param isRoot    a flag indicating whether the command has root path
      */
-    record CommandArgs(byte[] key, byte[] path, byte[] jsonPath, boolean isLegacy){
+    record CommandArgs(byte[] key, byte[] path, byte[] jsonPath, boolean isLegacy, boolean isRoot){
     }
 
     /**
@@ -31,9 +34,14 @@ public final class JSONCommandArgumentReader {
      */
     public static CommandArgs readCommandArgs(List<byte[]> arguments) {
         byte[] key = arguments.get(0);
-        byte[] path = arguments.size() > 1 ? arguments.get(1) : DEFAULT_COMMAND_PATH;
+        return readCommandArgs(arguments, key, 1);
+    }
+
+    public static CommandArgs readCommandArgs(List<byte[]> arguments,  byte[] key , int pos) {
+        byte[] path = arguments.size() > pos ? arguments.get(pos) : DEFAULT_COMMAND_PATH;
         final byte[] jsonPath = JSONUtil.toJsonPath(path);
         boolean isLegacy = path != jsonPath;
-        return new CommandArgs(key, path, jsonPath, isLegacy);
+        boolean isRoot = path.length == 1 && (path[0] == JSON_ROOT[0] || path[0] == DEFAULT_COMMAND_PATH[0]);
+        return new CommandArgs(key, path, jsonPath, isLegacy, isRoot);
     }
 }

@@ -362,4 +362,17 @@ public class EmbeddedJsonCache {
    public CompletionStage<List<Object>> resp(byte[] key, byte[] jsonPath) {
       return readWriteMap.eval(key, new JsonRespFunction(jsonPath));
    }
+
+   /**
+    * Returns a list of size in bytes for all the jsonpath matches
+    *
+    * @param key
+    *           The key of the document.
+    * @param jsonPath
+    *           The JSON path.
+    * @return A {@link CompletionStage} that will complete with a list of sizes
+    */
+   public CompletionStage<List<Long>> debug(byte[] key, byte[] jsonPath) {
+      return readWriteMap.eval(key, new JsonDebugMemoryFunction(jsonPath));
+   }
 }

@@ -67,6 +67,7 @@ import org.infinispan.server.resp.commands.json.JSONARRLEN;
 import org.infinispan.server.resp.commands.json.JSONARRPOP;
 import org.infinispan.server.resp.commands.json.JSONARRTRIM;
 import org.infinispan.server.resp.commands.json.JSONCLEAR;
+import org.infinispan.server.resp.commands.json.JSONDEBUG;
 import org.infinispan.server.resp.commands.json.JSONDEL;
 import org.infinispan.server.resp.commands.json.JSONFORGET;
 import org.infinispan.server.resp.commands.json.JSONGET;
@@ -216,7 +217,7 @@ public final class Commands {
       ALL_COMMANDS[6] = new RespCommand[]{new GET(), new GETDEL(), new GETEX(), new GETRANGE(), new GETSET()};
       ALL_COMMANDS[7] = new RespCommand[]{new HELLO(), new HGET(), new HSET(), new HLEN(), new HEXISTS(), new HDEL(), new HMGET(), new HSETNX(), new HKEYS(), new HVALS(), new HSCAN(), new HGETALL(), new HMSET(), new HINCRBY(), new HINCRBYFLOAT(), new HRANDFIELD(), new HSTRLEN()};
       ALL_COMMANDS[8] = new RespCommand[]{new INCR(), new INCRBY(), new INCRBYFLOAT(), new INFO()};
-      ALL_COMMANDS[9] = new RespCommand[]{new JSONGET(), new JSONSET(), new JSONARRLEN(), new JSONOBJLEN(), new JSONSTRLEN(), new JSONTYPE(), new JSONDEL(), new JSONSTRAPPEND(), new JSONARRAPPEND(), new JSONTOGGLE(), new JSONOBJKEYS(), new JSONNUMINCRBY(), new JSONNUMMULTBY(), new JSONFORGET(), new JSONARRINDEX(), new JSONARRINSERT(), new JSONARRTRIM(), new JSONCLEAR(), new JSONARRPOP(), new JSONMSET(), new JSONMERGE(), new JSONMGET(), new JSONRESP()};
+      ALL_COMMANDS[9] = new RespCommand[]{new JSONGET(), new JSONSET(), new JSONARRLEN(), new JSONOBJLEN(), new JSONSTRLEN(), new JSONTYPE(), new JSONDEL(), new JSONSTRAPPEND(), new JSONARRAPPEND(), new JSONTOGGLE(), new JSONOBJKEYS(), new JSONNUMINCRBY(), new JSONNUMMULTBY(), new JSONFORGET(), new JSONARRINDEX(), new JSONARRINSERT(), new JSONARRTRIM(), new JSONCLEAR(), new JSONARRPOP(), new JSONMSET(), new JSONMERGE(), new JSONMGET(), new JSONRESP(), new JSONDEBUG()};
       ALL_COMMANDS[10] = new RespCommand[]{new KEYS()};
       ALL_COMMANDS[11] = new RespCommand[]{new LINDEX(), new LINSERT(), new LPUSH(), new LPUSHX(), new LPOP(), new LRANGE(), new LLEN(), new LPOS(), new LREM(), new LSET(), new LTRIM(), new LMOVE(), new LMPOP(), new LCS(), new LOLWUT()};
       ALL_COMMANDS[12] = new RespCommand[]{new MGET(), new MSET(), new MSETNX(), new MULTI(), new MODULE(), new MEMORY()};
