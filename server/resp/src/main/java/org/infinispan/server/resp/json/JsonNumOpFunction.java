@@ -6,6 +6,7 @@ import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.server.resp.ExternalizerIds;
 import org.infinispan.util.function.SerializableFunction;
@@ -22,27 +23,29 @@ import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 
-public class JsonNumIncrByFunction
+public class JsonNumOpFunction
       implements SerializableFunction<ReadWriteEntryView<byte[], JsonBucket>, List<Number>> {
    public static final String ERR_PATH_CAN_T_BE_NULL = "path can't be null";
    public static final String ERR_INCREMENT_CANT_BE_NULL = "increment can't be null";
-   public static final AdvancedExternalizer<JsonNumIncrByFunction> EXTERNALIZER = new JsonNumIncrByFunction.Externalizer();
+   public static final AdvancedExternalizer<JsonNumOpFunction> EXTERNALIZER = new JsonNumOpFunction.Externalizer();
 
    byte[] path;
-   byte[] increment;
+   byte[] value;
+   NumOpType numOpType;
 
-   public JsonNumIncrByFunction(byte[] path, byte[] increment) {
+   public JsonNumOpFunction(byte[] path, byte[] increment, NumOpType numOpType) {
        requireNonNull(path, ERR_PATH_CAN_T_BE_NULL);
        requireNonNull(increment, ERR_INCREMENT_CANT_BE_NULL);
-       this.increment = increment;
+       this.value = increment;
        this.path = path;
+       this.numOpType = numOpType;
    }
 
    @Override
    public List<Number> apply(ReadWriteEntryView<byte[], JsonBucket> entryView) {
       JsonNode incrNode;
       try {
-         incrNode = JSONUtil.objectMapper.readTree(increment);
+         incrNode = JSONUtil.objectMapper.readTree(value);
          if (!incrNode.isNumber()) {
             throw new IllegalArgumentException("Non a valid increment number: " + incrNode.asText());
          }
@@ -68,7 +71,7 @@ public class JsonNumIncrByFunction
             String pathAsText = pathAsNode.asText();
             ArrayNode node = getForContext.read(pathAsText);
             if (node.get(0).isNumber()) {
-               Number incremented = incrementValue(node.get(0), incrNode);
+               Number incremented = operate(node.get(0), incrNode);
                modifiableCtx.set(pathAsText, incremented);
                resList.add(incremented);
                changed = true;
@@ -87,7 +90,19 @@ public class JsonNumIncrByFunction
       }
    }
 
-   private Number incrementValue(JsonNode numNode, JsonNode incrNode) {
+   private Number operate(JsonNode numNode, JsonNode valueNode) {
+      switch (numOpType){
+         case INCR -> {
+            return increment(numNode, valueNode);
+         }
+         case MULT -> {
+            return multiply(numNode, valueNode);
+         }
+      }
+      throw new IllegalArgumentException("Unknown numOpType: " + numOpType);
+   }
+
+   private Number increment(JsonNode numNode, JsonNode incrNode) {
       if (numNode.isDouble() || incrNode.isDouble()) {
          return numNode.doubleValue() + incrNode.doubleValue();
       }
@@ -111,29 +126,55 @@ public class JsonNumIncrByFunction
       return numNode.intValue() + incrNode.intValue();
    }
 
-   private static class Externalizer implements AdvancedExternalizer<JsonNumIncrByFunction> {
+   private Number multiply(JsonNode numNode, JsonNode multiply) {
+      if (numNode.isDouble() || multiply.isDouble()) {
+         return numNode.doubleValue() * multiply.doubleValue();
+      }
+
+      if (numNode.isFloat() || multiply.isFloat()) {
+         return numNode.floatValue() * multiply.floatValue();
+      }
+
+      if (numNode.isLong() || multiply.isLong()) {
+         return numNode.longValue() * multiply.longValue();
+      }
+
+      if (numNode.isBigInteger() || multiply.isBigInteger()) {
+         return numNode.bigIntegerValue().multiply(multiply.bigIntegerValue());
+      }
+
+      if (numNode.isBigDecimal() || multiply.isBigDecimal()) {
+         return new BigDecimal(numNode.asText()).multiply(new BigDecimal(multiply.asText()));
+      }
+
+      return numNode.intValue() * multiply.intValue();
+   }
+
+   private static class Externalizer implements AdvancedExternalizer<JsonNumOpFunction> {
 
       @Override
-      public void writeObject(ObjectOutput output, JsonNumIncrByFunction object) throws IOException {
+      public void writeObject(ObjectOutput output, JsonNumOpFunction object) throws IOException {
          JSONUtil.writeBytes(output, object.path);
-         JSONUtil.writeBytes(output, object.increment);
+         JSONUtil.writeBytes(output, object.value);
+         MarshallUtil.marshallEnum(object.numOpType, output);
       }
 
       @Override
-      public JsonNumIncrByFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public JsonNumOpFunction readObject(ObjectInput input) throws IOException {
          byte[] path = JSONUtil.readBytes(input);
          byte[] increment = JSONUtil.readBytes(input);
-         return new JsonNumIncrByFunction(path, increment);
+         var numOpType = MarshallUtil.unmarshallEnum(input, NumOpType::valueOf);
+         return new JsonNumOpFunction(path, increment, numOpType);
       }
 
       @Override
-      public Set<Class<? extends JsonNumIncrByFunction>> getTypeClasses() {
-         return Collections.singleton(JsonNumIncrByFunction.class);
+      public Set<Class<? extends JsonNumOpFunction>> getTypeClasses() {
+         return Collections.singleton(JsonNumOpFunction.class);
       }
 
       @Override
       public Integer getId() {
-         return ExternalizerIds.JSON_NUMINCRBY_FUNCTION;
+         return ExternalizerIds.JSON_NUMOPBY_FUNCTION;
       }
    }
 

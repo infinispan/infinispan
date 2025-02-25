@@ -216,11 +216,12 @@ public class EmbeddedJsonCache {
     *
     * @param key       the key identifying the JSON document
     * @param path      the JSON path to the number to be incremented
-    * @param increment the value to increment by
+    * @param value     the value to operate by
+    * @param numOpType operation type, incr or mult
     * @return a {@code CompletionStage} resolving to a list of updated numbers
     */
-   public CompletionStage<List<Number>> incrby(byte[] key, byte[] path, byte[] increment) {
-      return readWriteMap.eval(key, new JsonNumIncrByFunction(path, increment));
+   public CompletionStage<List<Number>> numOp(byte[] key, byte[] path, byte[] value, NumOpType numOpType) {
+      return readWriteMap.eval(key, new JsonNumOpFunction(path, value, numOpType));
    }
 
    /**
