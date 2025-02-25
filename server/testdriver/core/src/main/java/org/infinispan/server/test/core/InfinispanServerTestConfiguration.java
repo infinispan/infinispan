@@ -27,6 +27,7 @@ public class InfinispanServerTestConfiguration {
 
    private final String configurationFile;
    private final int numServers;
+   private final int expectedServers;
    private final ServerRunMode runMode;
    private final Properties properties;
    private final String[] mavenArtifacts;
@@ -35,18 +36,20 @@ public class InfinispanServerTestConfiguration {
    private final boolean parallelStartup;
    private final List<InfinispanServerListener> listeners;
    private final boolean defaultFile;
+   private final String clusterName;
    private final String site;
    private final int portOffset;
    private final String[] features;
    private final String[] dataFiles;
 
-   public InfinispanServerTestConfiguration(String configurationFile, int numServers, ServerRunMode runMode,
-                                            Properties properties, String[] mavenArtifacts, JavaArchive[] archives,
-                                            boolean jmx, boolean parallelStartup, boolean defaultFile,
-                                            List<InfinispanServerListener> listeners, String site, int portOffset,
-                                            String[] features, String[] dataFiles) {
+   public InfinispanServerTestConfiguration(String configurationFile, int numServers, int expectedServers,
+                                            ServerRunMode runMode, Properties properties, String[] mavenArtifacts,
+                                            JavaArchive[] archives, boolean jmx, boolean parallelStartup,
+                                            boolean defaultFile, List<InfinispanServerListener> listeners, String clusterName, String site,
+                                            int portOffset, String[] features, String[] dataFiles) {
       this.configurationFile = configurationFile;
       this.numServers = numServers;
+      this.expectedServers = expectedServers;
       this.runMode = runMode;
       this.properties = properties;
       this.mavenArtifacts = mavenArtifacts;
@@ -55,6 +58,7 @@ public class InfinispanServerTestConfiguration {
       this.parallelStartup = parallelStartup;
       this.defaultFile = defaultFile;
       this.listeners = List.copyOf(listeners);
+      this.clusterName = clusterName;
       this.site = site;
       this.portOffset = portOffset;
       this.features = features;
@@ -67,6 +71,10 @@ public class InfinispanServerTestConfiguration {
 
    public int numServers() {
       return numServers;
+   }
+
+   public int expectedServers() {
+      return expectedServers;
    }
 
    public ServerRunMode runMode() {
@@ -99,6 +107,10 @@ public class InfinispanServerTestConfiguration {
 
    public List<InfinispanServerListener> listeners() {
       return listeners;
+   }
+
+   public String getClusterName() {
+      return clusterName;
    }
 
    public String site() {

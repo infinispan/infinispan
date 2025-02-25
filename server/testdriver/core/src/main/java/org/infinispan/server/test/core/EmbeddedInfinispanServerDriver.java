@@ -45,7 +45,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
    }
 
    @Override
-   protected void start(String name, File rootDir, File configurationFile) {
+   protected void start(String name, File rootDir) {
       if ((configuration.archives() != null && configuration.archives().length > 0) || (configuration.mavenArtifacts() != null && configuration.mavenArtifacts().length > 0)) {
          throw new IllegalArgumentException("EmbeddedInfinispanServerDriver doesn't support server artifacts.");
       }
@@ -54,7 +54,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
       for (int i = 0; i < configuration.numServers(); i++) {
          File serverRoot = createServerHierarchy(rootDir, Integer.toString(i));
          copyArtifactsToDataDir();
-         Server server = createServerInstance(name, rootDir, configurationFile, i, serverRoot);
+         Server server = createServerInstance(name, rootDir, new File(configuration.configurationFile()), i, serverRoot);
          serverFutures.add(server.run());
          servers.add(server);
       }
@@ -63,6 +63,20 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
       if(cacheManagers.size() > 1) {
          blockUntilViewsReceived(cacheManagers);
       }
+   }
+
+   @Override
+   public void startAdditionalServer(int expectedClusterSize) {
+      // expectedClusterSize is not used as there could be other managers not managed by us in the cluster
+      int serverNumber = servers.size();
+      File serverRoot = createServerHierarchy(rootDir, Integer.toString(serverNumber));
+      copyArtifactsToDataDir();
+      Server server = createServerInstance(name, rootDir, new File(configuration.configurationFile()), serverNumber, serverRoot);
+      serverFutures.add(server.run());
+      servers.add(server);
+
+      List<EmbeddedCacheManager> cacheManagers = servers.stream().map(Server::getCacheManager).collect(Collectors.toList());
+      blockUntilViewsReceived(cacheManagers);
    }
 
    private Server createServerInstance(String name, File rootDir, File configurationFile, int serverIndex, File serverRoot) {
@@ -74,7 +88,8 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
       properties.setProperty(Server.INFINISPAN_CLUSTER_STACK, System.getProperty(Server.INFINISPAN_CLUSTER_STACK));
       properties.setProperty(TEST_HOST_ADDRESS, testHostAddress.getHostName());
       properties.setProperty(Server.INFINISPAN_LOG4J_SHUTDOWN, "false");
-      if (serverIndex == 0 && configuration.site() == null) {
+      if (serverIndex == 0 && configuration.site() == null && !Boolean.parseBoolean(configuration.properties().getProperty(
+            TestSystemPropertyNames.INFINISPAN_TEST_SERVER_REQUIRE_JOIN_TIMEOUT))) {
          properties.setProperty(JOIN_TIMEOUT, "0");
       }
       configureSite(properties);
@@ -164,6 +179,11 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
    public boolean isRunning(int serverIndex) {
       Server server = servers.get(serverIndex);
       return server != null && server.getStatus().allowInvocations();
+   }
+
+   @Override
+   public int serverCount() {
+      return servers.size();
    }
 
    @Override
