@@ -2,7 +2,6 @@ package org.infinispan.server.resp.json;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.JsonPath;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
@@ -49,7 +48,7 @@ public class JsonTypeFunction
          return null;
       }
       try {
-         var rootNode = (ObjectNode) JSONUtil.objectMapper.readTree(doc.value());
+         var rootNode = JSONUtil.objectMapper.readTree(doc.value());
          var jpCtx = JSONUtil.parserForGet.parse(rootNode);
          JsonPath jpath = JsonPath.compile(pathStr);
          ArrayNode nodeList = jpCtx.read(jpath);
