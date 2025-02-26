@@ -87,29 +87,51 @@ public class EmbeddedJsonCache {
    }
 
    /**
-    * Retrieves the length of a JSON value at the specified path based on the given {@link LenType}.
+    * Retrieves the length of an array at the specified JSON path.
     * <p>
-    * Returns:
+    * If the value at the path is an array, it returns the number of elements.
+    * Returns {@code null} if the value is not an array.
     * </p>
-    * <ul>
-    * <li>Object → Number of key-value pairs</li>
-    * <li>Array → Number of elements</li>
-    * <li>String → Character count</li>
-    * </ul>
-    * Returns {@code null} if the value does not match the specified {@code lenType}.
     *
-    * @param key
-    *           The JSON document key.
-    * @param path
-    *           The JSON path to evaluate.
-    * @param lenType
-    *           The type (OBJECT, ARRAY, STRING) whose length to compute.
-    * @return A {@link CompletionStage} with a {@link List} of lengths or {@code null} if
-    *         mismatched.
+    * @param key  the key identifying the JSON document
+    * @param path the JSON path to evaluate
+    * @return a {@link CompletionStage} resolving to a {@link List} of array lengths, or {@code null} if the value is not an array
     */
-   public CompletionStage<List<Long>> len(byte[] key, byte[] path, LenType lenType) {
+   public CompletionStage<List<Long>> arrLen(byte[] key, byte[] path) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
-      return readWriteMap.eval(key, new JsonLenFunction(path, lenType));
+      return readWriteMap.eval(key, new JsonLenArrayFunction(path));
+   }
+
+   /**
+    * Retrieves the length of a string at the specified JSON path.
+    * <p>
+    * If the value at the path is a string, it returns the number of characters.
+    * Returns {@code null} if the value is not a string.
+    * </p>
+    *
+    * @param key  the key identifying the JSON document
+    * @param path the JSON path to evaluate
+    * @return a {@link CompletionStage} resolving to a {@link List} of string lengths, or {@code null} if the value is not a string
+    */
+   public CompletionStage<List<Long>> srtLen(byte[] key, byte[] path) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new JsonLenStrFunction(path));
+   }
+
+   /**
+    * Retrieves the number of key-value pairs in an object at the specified JSON path.
+    * <p>
+    * If the value at the path is an object, it returns the number of keys.
+    * Returns {@code null} if the value is not an object.
+    * </p>
+    *
+    * @param key  the key identifying the JSON document
+    * @param path the JSON path to evaluate
+    * @return a {@link CompletionStage} resolving to a {@link List} of object sizes, or {@code null} if the value is not an object
+    */
+   public CompletionStage<List<Long>> objLen(byte[] key, byte[] path) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new JsonLenObjFunction(path));
    }
 
    /**
@@ -207,7 +229,7 @@ public class EmbeddedJsonCache {
     * @return A {@link CompletionStage} containing a {@link List} of list of byte arrays, each representing
     *         a key in the JSON object or null if object is not a json object.
     */
-   public CompletionStage<List<List<byte[]>>> objkeys(byte[] key, byte[] path) {
+   public CompletionStage<List<List<byte[]>>> objKeys(byte[] key, byte[] path) {
       return readWriteMap.eval(key, new JsonObjkeysFunction(path));
    }
 
@@ -260,7 +282,7 @@ public class EmbeddedJsonCache {
     * @return A {@link CompletionStage} that will complete with a list of indices where the value is found.
     *         If the value is not found, the list will contain -1.
     */
-   public CompletionStage<List<Integer>> arrindex(byte[] key, byte[] jsonPath, byte[] value, int start, int stop, boolean isLegacy) {
+   public CompletionStage<List<Integer>> arrIndex(byte[] key, byte[] jsonPath, byte[] value, int start, int stop, boolean isLegacy) {
       return readWriteMap.eval(key, new JsonArrindexFunction(jsonPath, value, start, stop, isLegacy));
 }
 
@@ -292,7 +314,7 @@ public class EmbeddedJsonCache {
     *           The ending index of the range to keep (inclusive).
     * @return A {@link CompletionStage} that will complete with a list of length of the trimmed array.
     */
-   public CompletionStage<List<Integer>> arrArrtrim(byte[] key, byte[] jsonPath, int start, int stop) {
+   public CompletionStage<List<Integer>> arrTrim(byte[] key, byte[] jsonPath, int start, int stop) {
       return readWriteMap.eval(key, new JsonArrtrimFunction(jsonPath, start, stop));
    }
 

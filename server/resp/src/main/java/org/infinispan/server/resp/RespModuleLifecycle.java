@@ -1,9 +1,5 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.core.ExternalizerIds.ITERATION_FILTER;
-
-import java.util.Map;
-
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -18,13 +14,15 @@ import org.infinispan.server.resp.filter.EventListenerKeysFilter;
 import org.infinispan.server.resp.json.JsonArrayAppendFunction;
 import org.infinispan.server.resp.json.JsonArrindexFunction;
 import org.infinispan.server.resp.json.JsonArrinsertFunction;
-import org.infinispan.server.resp.json.JsonArrtrimFunction;
 import org.infinispan.server.resp.json.JsonArrpopFunction;
+import org.infinispan.server.resp.json.JsonArrtrimFunction;
 import org.infinispan.server.resp.json.JsonBucket;
 import org.infinispan.server.resp.json.JsonClearFunction;
 import org.infinispan.server.resp.json.JsonDelFunction;
 import org.infinispan.server.resp.json.JsonGetFunction;
-import org.infinispan.server.resp.json.JsonLenFunction;
+import org.infinispan.server.resp.json.JsonLenArrayFunction;
+import org.infinispan.server.resp.json.JsonLenObjFunction;
+import org.infinispan.server.resp.json.JsonLenStrFunction;
 import org.infinispan.server.resp.json.JsonNumIncrOpFunction;
 import org.infinispan.server.resp.json.JsonNumMultOpFunction;
 import org.infinispan.server.resp.json.JsonMergeFunction;
@@ -33,6 +31,10 @@ import org.infinispan.server.resp.json.JsonSetFunction;
 import org.infinispan.server.resp.json.JsonStringAppendFunction;
 import org.infinispan.server.resp.json.JsonToggleFunction;
 import org.infinispan.server.resp.json.JsonTypeFunction;
+
+import java.util.Map;
+
+import static org.infinispan.server.core.ExternalizerIds.ITERATION_FILTER;
 
 @InfinispanModule(name = "resp", requiredModules = "core")
 public class RespModuleLifecycle implements ModuleLifecycle {
@@ -48,7 +50,9 @@ public class RespModuleLifecycle implements ModuleLifecycle {
       externalizerMap.put(ComposedFilterConverter.EXTERNALIZER.getId(), ComposedFilterConverter.EXTERNALIZER);
       externalizerMap.put(JsonGetFunction.EXTERNALIZER.getId(), JsonGetFunction.EXTERNALIZER);
       externalizerMap.put(JsonSetFunction.EXTERNALIZER.getId(), JsonSetFunction.EXTERNALIZER);
-      externalizerMap.put(JsonLenFunction.EXTERNALIZER.getId(), JsonLenFunction.EXTERNALIZER);
+      externalizerMap.put(JsonLenArrayFunction.EXTERNALIZER.getId(), JsonLenArrayFunction.EXTERNALIZER);
+      externalizerMap.put(JsonLenObjFunction.EXTERNALIZER.getId(), JsonLenObjFunction.EXTERNALIZER);
+      externalizerMap.put(JsonLenStrFunction.EXTERNALIZER.getId(), JsonLenStrFunction.EXTERNALIZER);
       externalizerMap.put(JsonTypeFunction.EXTERNALIZER.getId(), JsonTypeFunction.EXTERNALIZER);
       externalizerMap.put(JsonDelFunction.EXTERNALIZER.getId(), JsonDelFunction.EXTERNALIZER);
       externalizerMap.put(JsonArrayAppendFunction.EXTERNALIZER.getId(), JsonArrayAppendFunction.EXTERNALIZER);

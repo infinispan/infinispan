@@ -38,7 +38,7 @@ public class JSONOBJKEYS extends RespCommand implements Resp3Command {
                                                       List<byte[]> arguments) {
       JSONCommandArgumentReader.CommandArgs commandArgs = JSONCommandArgumentReader.readCommandArgs(arguments);
       EmbeddedJsonCache ejc = handler.getJsonCache();
-      CompletionStage<List<List<byte[]>>> result = ejc.objkeys(commandArgs.key(), commandArgs.jsonPath());
+      CompletionStage<List<List<byte[]>>> result = ejc.objKeys(commandArgs.key(), commandArgs.jsonPath());
       return (commandArgs.isLegacy()) ? handler.stageToReturn(result, ctx, newIntegerOrErrorWriter(commandArgs.jsonPath()))
             : handler.stageToReturn(result, ctx, JSONOBJKEYS::arrayOfArrayWriter);
    }
