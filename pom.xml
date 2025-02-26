@@ -82,8 +82,6 @@
       <module>client/hotrod</module>
       <module>client/infinispan-key-value-store-hotrod</module>
       <module>archetypes</module>
-      <module>all</module>
-      <module>all/cli</module>
       <module>spring/spring6</module>
       <module>spring/spring-boot-3</module>
       <module>cli</module>
@@ -978,11 +976,6 @@
             <artifactId>infinispan-cachestore-jdbc-common</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
-            <version>${version.infinispan}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-cli</artifactId>
             <version>${version.infinispan}</version>
          </dependency>
          <dependency>
