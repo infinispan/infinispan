@@ -23,8 +23,6 @@ import org.infinispan.util.ByteString;
 @ProtoTypeId(ProtoStreamTypeIds.IRAC_METADATA_REQUEST_COMMAND)
 public class IracMetadataRequestCommand extends BaseIracCommand implements TopologyAffectedCommand {
 
-   public static final byte COMMAND_ID = 124;
-
    @ProtoField(2)
    int segment;
    @ProtoField(3)
@@ -47,11 +45,6 @@ public class IracMetadataRequestCommand extends BaseIracCommand implements Topol
    @Override
    public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
       return completedFuture(registry.getIracVersionGenerator().running().generateNewMetadata(segment, versionSeen));
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

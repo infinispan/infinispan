@@ -21,8 +21,6 @@ import org.infinispan.xsite.status.TakeOfflineManager;
 @ProtoTypeId(ProtoStreamTypeIds.XSITE_AMEND_OFFLINE_STATUS_COMMAND)
 public class XSiteAmendOfflineStatusCommand extends BaseRpcCommand {
 
-   public static final int COMMAND_ID = 103;
-
    @ProtoField(2)
    final String siteName;
 
@@ -50,11 +48,6 @@ public class XSiteAmendOfflineStatusCommand extends BaseRpcCommand {
    @Override
    public final boolean isReturnValueExpected() {
       return false;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

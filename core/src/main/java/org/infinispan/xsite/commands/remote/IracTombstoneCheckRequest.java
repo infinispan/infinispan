@@ -97,11 +97,6 @@ public class IracTombstoneCheckRequest extends XSiteCacheRequest<IntSet> {
    }
 
    @Override
-   public byte getCommandId() {
-      return Ids.IRAC_TOMBSTONE_CHECK;
-   }
-
-   @Override
    public String toString() {
       return "IracTombstoneCheckRequest{" +
             "cacheName=" + cacheName +

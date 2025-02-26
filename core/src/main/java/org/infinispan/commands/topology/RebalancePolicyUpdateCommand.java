@@ -17,8 +17,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.REBALANCE_POLICY_UPDATE_COMMAND)
 public class RebalancePolicyUpdateCommand extends AbstractCacheControlCommand {
 
-   public static final byte COMMAND_ID = 88;
-
    @ProtoField(1)
    final String cacheName;
 
@@ -27,7 +25,6 @@ public class RebalancePolicyUpdateCommand extends AbstractCacheControlCommand {
 
    @ProtoFactory
    public RebalancePolicyUpdateCommand(String cacheName, boolean enabled) {
-      super(COMMAND_ID);
       this.cacheName = cacheName;
       this.enabled = enabled;
    }

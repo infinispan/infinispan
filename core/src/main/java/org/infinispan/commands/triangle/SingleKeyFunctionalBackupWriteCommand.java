@@ -39,8 +39,6 @@ import org.infinispan.util.ByteString;
 @ProtoTypeId(ProtoStreamTypeIds.SINGLE_KEY_FUNCTIONAL_BACKUP_WRITE_COMMAND)
 public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWriteCommand {
 
-   public static final byte COMMAND_ID = 77;
-
    private Operation operation;
    private Object key;
    private Object value;
@@ -117,11 +115,6 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
    @ProtoField(15)
    MarshallableObject<Metadata> getPrevMetadata() {
       return MarshallableObject.create(prevMetadata);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

@@ -19,8 +19,6 @@ import org.infinispan.remoting.transport.Address;
 @ProtoTypeId(ProtoStreamTypeIds.REBALANCE_PHASE_CONFIRM_COMMAND)
 public class RebalancePhaseConfirmCommand extends AbstractCacheControlCommand {
 
-   public static final byte COMMAND_ID = 87;
-
    @ProtoField(1)
    final String cacheName;
    @ProtoField(2)
@@ -29,7 +27,7 @@ public class RebalancePhaseConfirmCommand extends AbstractCacheControlCommand {
    final Throwable throwable;
 
    public RebalancePhaseConfirmCommand(String cacheName, Address origin, Throwable throwable, int topologyId) {
-      super(COMMAND_ID, origin);
+      super(origin);
       this.cacheName = cacheName;
       this.throwable = throwable;
       this.topologyId = topologyId;

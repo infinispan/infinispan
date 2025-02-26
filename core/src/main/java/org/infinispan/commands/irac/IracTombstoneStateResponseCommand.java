@@ -21,8 +21,6 @@ import org.infinispan.util.ByteString;
 @ProtoTypeId(ProtoStreamTypeIds.IRAC_TOMBSTONE_STATE_RESPONSE_COMMAND)
 public class IracTombstoneStateResponseCommand extends BaseIracCommand {
 
-   public static final byte COMMAND_ID = 39;
-
    @ProtoField(2)
    final Collection<IracTombstoneInfo> state;
 
@@ -39,11 +37,6 @@ public class IracTombstoneStateResponseCommand extends BaseIracCommand {
          tombstoneManager.storeTombstoneIfAbsent(data);
       }
       return CompletableFutures.completedNull();
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

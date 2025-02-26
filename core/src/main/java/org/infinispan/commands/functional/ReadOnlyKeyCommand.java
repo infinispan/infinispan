@@ -21,7 +21,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.READ_ONLY_KEY_COMMAND)
 public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
 
-   public static final int COMMAND_ID = 62;
    protected Function<ReadEntryView<K, V>, R> f;
    protected Params params;
    protected DataConversion keyDataConversion;
@@ -73,11 +72,6 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
       componentRegistry.wireDependencies(valueDataConversion);
       if (f instanceof InjectableComponent)
          ((InjectableComponent) f).inject(componentRegistry);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

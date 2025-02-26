@@ -45,12 +45,7 @@ public class BeginInvalidationCommand extends InvalidateCommand {
 		return lockOwner;
 	}
 
-	@Override
-	public byte getCommandId() {
-		return CacheCommandIds.BEGIN_INVALIDATION;
-	}
-
-	@Override
+   @Override
 	public boolean equals(Object o) {
 		if (!super.equals(o)) {
 			return false;

@@ -15,8 +15,6 @@ import org.infinispan.protostream.annotations.ProtoField;
  */
 public class CustomReplicableCommand implements VisitableCommand, Serializable {
 
-   public static final byte COMMAND_ID = 127;
-
    private static final long serialVersionUID = -1L;
 
    final Object arg;
@@ -38,11 +36,6 @@ public class CustomReplicableCommand implements VisitableCommand, Serializable {
 
       // echo the arg back to the caller
       return arg;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @ProtoField(1)

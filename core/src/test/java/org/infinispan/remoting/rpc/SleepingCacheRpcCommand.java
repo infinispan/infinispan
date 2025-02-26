@@ -15,8 +15,6 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
  */
 public class SleepingCacheRpcCommand extends BaseRpcCommand {
 
-   public static final byte COMMAND_ID = 125;
-
    @ProtoField(2)
    final long sleepTime;
 
@@ -34,11 +32,6 @@ public class SleepingCacheRpcCommand extends BaseRpcCommand {
    public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
       Thread.sleep(sleepTime);
       return CompletableFutures.completedNull();
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

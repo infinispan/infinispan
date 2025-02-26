@@ -40,8 +40,6 @@ import org.infinispan.util.logging.LogFactory;
 public class TxCompletionNotificationCommand extends BaseRpcCommand implements TopologyAffectedCommand {
    private static final Log log = LogFactory.getLog(TxCompletionNotificationCommand.class);
 
-   public static final int COMMAND_ID = 22;
-
    @ProtoField(2)
    final XidImpl xid;
 
@@ -163,11 +161,6 @@ public class TxCompletionNotificationCommand extends BaseRpcCommand implements T
          // and they must be OOB + asynchronous
          rpcManager.sendToMany(newTargets, this, DeliverOrder.NONE);
       }
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

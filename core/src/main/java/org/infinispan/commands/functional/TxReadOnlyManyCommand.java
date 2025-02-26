@@ -20,7 +20,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 
 @ProtoTypeId(ProtoStreamTypeIds.TX_READ_ONLY_MANY_COMMAND)
 public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R> {
-   public static final byte COMMAND_ID = 65;
 
    // These mutations must have the same order of iteration as keys. We can guarantee that because the mutations
    // are set only when replicating the command to other nodes where we have already narrowed the key set
@@ -62,11 +61,6 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
             }
          }
       }
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

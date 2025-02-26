@@ -18,8 +18,6 @@ import org.infinispan.remoting.transport.Address;
 @ProtoTypeId(ProtoStreamTypeIds.CACHE_LEAVE_COMMAND)
 public class CacheLeaveCommand extends AbstractCacheControlCommand {
 
-   public static final byte COMMAND_ID = 86;
-
    @ProtoField(1)
    final String cacheName;
 
@@ -29,7 +27,7 @@ public class CacheLeaveCommand extends AbstractCacheControlCommand {
    }
 
    public CacheLeaveCommand(String cacheName, Address origin) {
-      super(COMMAND_ID, origin);
+      super(origin);
       this.cacheName = cacheName;
    }
 
