@@ -452,7 +452,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public XSiteStatePushCommand buildXSiteStatePushCommand(XSiteState[] chunk) {
+   public XSiteStatePushCommand buildXSiteStatePushCommand(List<XSiteState> chunk) {
       return actual.buildXSiteStatePushCommand(chunk);
    }
 
@@ -749,7 +749,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public XSiteStatePushRequest buildXSiteStatePushRequest(XSiteState[] chunk, long timeoutMillis) {
+   public XSiteStatePushRequest buildXSiteStatePushRequest(List<XSiteState> chunk, long timeoutMillis) {
       return actual.buildXSiteStatePushRequest(chunk, timeoutMillis);
    }
 
