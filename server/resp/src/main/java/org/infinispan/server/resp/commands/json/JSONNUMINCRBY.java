@@ -36,7 +36,7 @@ public class JSONNUMINCRBY extends RespCommand implements Resp3Command {
         JSONCommandArgumentReader.CommandArgs commandArgs = JSONCommandArgumentReader.readCommandArgs(arguments);
         final byte[] increment = arguments.get(2);
         EmbeddedJsonCache ejc = handler.getJsonCache();
-        CompletionStage<List<Number>> incrementedValuesCS = ejc.incrby(commandArgs.key(), commandArgs.jsonPath(), increment);
+        CompletionStage<List<Number>> incrementedValuesCS = ejc.incrBy(commandArgs.key(), commandArgs.jsonPath(), increment);
         return handler.stageToReturn(incrementedValuesCS, ctx, JSONNUMINCRBY::collectionNumbers);
     }
 
