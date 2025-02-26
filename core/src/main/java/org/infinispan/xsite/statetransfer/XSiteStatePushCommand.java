@@ -1,5 +1,6 @@
 package org.infinispan.xsite.statetransfer;
 
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
@@ -21,16 +22,16 @@ import org.infinispan.util.ByteString;
 public class XSiteStatePushCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = 33;
-   private XSiteState[] chunk;
+   private List<XSiteState> chunk;
 
    @ProtoFactory
-   public XSiteStatePushCommand(ByteString cacheName, XSiteState[] chunk) {
+   public XSiteStatePushCommand(ByteString cacheName, List<XSiteState> chunk) {
       super(cacheName);
       this.chunk = chunk;
    }
 
    @ProtoField(2)
-   public XSiteState[] getChunk() {
+   public List<XSiteState> getChunk() {
       return chunk;
    }
 
@@ -60,7 +61,7 @@ public class XSiteStatePushCommand extends BaseRpcCommand {
    public String toString() {
       return "XSiteStatePushCommand{" +
             "cacheName=" + cacheName +
-            " (" + chunk.length + " keys)" +
+            " (" + chunk.size() + " keys)" +
             '}';
    }
 }

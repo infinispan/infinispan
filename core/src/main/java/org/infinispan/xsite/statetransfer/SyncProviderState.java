@@ -59,14 +59,12 @@ public class SyncProviderState extends BaseXSiteStateProviderState<SyncProviderS
       public CompletableSource apply(List<XSiteState> xSiteStates) {
          //Flowable#concatMapCompletable method
          XSiteBackup backup = state.getBackup();
-         //TODO!? can we use xSiteStates directly instead of copying?
-         XSiteState[] privateBuffer = xSiteStates.toArray(new XSiteState[0]);
 
          if (log.isDebugEnabled()) {
-            log.debugf("Sending chunk to site '%s'. Chunk has %s keys.", backup.getSiteName(), privateBuffer.length);
+            log.debugf("Sending chunk to site '%s'. Chunk has %s keys.", backup.getSiteName(), xSiteStates.size());
          }
 
-         XSiteStatePushRequest command = provider.getCommandsFactory().buildXSiteStatePushRequest(privateBuffer, backup.getTimeout());
+         XSiteStatePushRequest command = provider.getCommandsFactory().buildXSiteStatePushRequest(xSiteStates, backup.getTimeout());
          return Completable.fromCompletionStage(new CommandRetry(backup, command, provider, state.getWaitTimeMillis(), state.getMaxRetries()).send());
       }
    }

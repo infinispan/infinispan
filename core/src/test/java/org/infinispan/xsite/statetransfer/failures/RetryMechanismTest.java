@@ -6,6 +6,7 @@ import static org.infinispan.xsite.statetransfer.XSiteStateTransferManager.STATU
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -223,7 +224,7 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
       }
 
       @Override
-      public void applyState(XSiteState[] chunk) throws Exception {
+      public void applyState(List<XSiteState> chunk) throws Exception {
          boolean fail;
          synchronized (this) {
             fail = nFailures == FAIL_FOR_EVER;
@@ -351,7 +352,7 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
       }
 
       @Override
-      public CompletionStage<Void> handleStateTransferState(XSiteState[] chunk, long timeoutMs) {
+      public CompletionStage<Void> handleStateTransferState(List<XSiteState> chunk, long timeoutMs) {
          counter.getAndIncrement();
          return super.handleStateTransferState(chunk, timeoutMs);
       }

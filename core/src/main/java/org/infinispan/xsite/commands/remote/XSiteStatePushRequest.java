@@ -1,5 +1,6 @@
 package org.infinispan.xsite.commands.remote;
 
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -21,12 +22,12 @@ import org.infinispan.xsite.statetransfer.XSiteState;
 public class XSiteStatePushRequest extends XSiteCacheRequest<Void> {
 
    @ProtoField(2)
-   final XSiteState[] chunk;
+   final List<XSiteState> chunk;
    @ProtoField(3)
    long timeoutMillis;
 
    @ProtoFactory
-   public XSiteStatePushRequest(ByteString cacheName, XSiteState[] chunk, long timeoutMillis) {
+   public XSiteStatePushRequest(ByteString cacheName, List<XSiteState> chunk, long timeoutMillis) {
       super(cacheName);
       this.chunk = chunk;
       this.timeoutMillis = timeoutMillis;

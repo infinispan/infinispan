@@ -1,5 +1,6 @@
 package org.infinispan.xsite;
 
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.VisitableCommand;
@@ -51,7 +52,7 @@ public abstract class BackupReceiverDelegator implements BackupReceiver {
    }
 
    @Override
-   public CompletionStage<Void> handleStateTransferState(XSiteState[] chunk, long timeoutMs) {
+   public CompletionStage<Void> handleStateTransferState(List<XSiteState> chunk, long timeoutMs) {
       return delegate.handleStateTransferState(chunk, timeoutMs);
    }
 

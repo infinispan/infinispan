@@ -1,5 +1,6 @@
 package org.infinispan.xsite;
 
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.VisitableCommand;
@@ -67,7 +68,7 @@ public interface BackupReceiver {
     * It handles the state transfer state from a remote site. It is possible to have a single node applying the state or
     * forward the state to respective primary owners.
     */
-   CompletionStage<Void> handleStateTransferState(XSiteState[] chunk, long timeoutMs);
+   CompletionStage<Void> handleStateTransferState(List<XSiteState> chunk, long timeoutMs);
 
    /**
     * It handles starting or finishing, base on {@code startReceiving}, of the state transfer from a remote site.
