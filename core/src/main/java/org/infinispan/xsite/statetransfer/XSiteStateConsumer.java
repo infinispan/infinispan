@@ -1,5 +1,7 @@
 package org.infinispan.xsite.statetransfer;
 
+import java.util.List;
+
 /**
  * It contains the logic needed to consume the state sent from other site.
  *
@@ -29,7 +31,7 @@ public interface XSiteStateConsumer {
     * @param chunk a chunk of keys
     * @throws Exception if something go wrong while applying the state
     */
-   void applyState(XSiteState[] chunk) throws Exception;
+   void applyState(List<XSiteState> chunk) throws Exception;
 
    /**
     * @return the site name that is sending the state.
