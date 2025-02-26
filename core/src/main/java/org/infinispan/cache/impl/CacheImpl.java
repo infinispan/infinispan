@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -1016,6 +1017,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V>
       if (keys == null || keys.isEmpty()) {
          throw new IllegalArgumentException("Cannot lock empty list of keys");
       }
+      // Create defensive copy in order to support replaceKey operation
+      keys = List.copyOf(keys);
       InvocationContext ctx = invocationContextFactory.createInvocationContext(true, UNBOUNDED);
       LockControlCommand command = commandsFactory.buildLockControlCommand(keys, flagsBitSet);
       if (ctx.getLockOwner() == null) {
