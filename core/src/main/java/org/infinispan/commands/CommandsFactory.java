@@ -1,5 +1,6 @@
 package org.infinispan.commands;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -539,8 +540,20 @@ public interface CommandsFactory {
     *
     * @param chunk         the data chunk
     * @return the XSiteStatePushCommand created
+    * @deprecated since 16.0, use {@link #buildXSiteStatePushCommand(List)} instead
     */
-   XSiteStatePushCommand buildXSiteStatePushCommand(XSiteState[] chunk);
+   @Deprecated(since = "16.0", forRemoval = true)
+   default XSiteStatePushCommand buildXSiteStatePushCommand(XSiteState[] chunk) {
+      return buildXSiteStatePushCommand(Arrays.asList(chunk));
+   }
+
+   /**
+    * Builds XSiteStatePushCommand used to transfer a single chunk of data between sites.
+    *
+    * @param chunk         the data chunk
+    * @return the XSiteStatePushCommand created
+    */
+   XSiteStatePushCommand buildXSiteStatePushCommand(List<XSiteState> chunk);
 
    /**
     * Builds SingleRpcCommand used to perform {@link org.infinispan.commands.VisitableCommand} on the backup site,
@@ -681,7 +694,15 @@ public interface CommandsFactory {
 
    IracPutManyRequest buildIracPutManyCommand(int capacity);
 
-   XSiteStatePushRequest buildXSiteStatePushRequest(XSiteState[] chunk, long timeoutMillis);
+   /**
+    * @deprecated since 16.0, use {@link #buildXSiteStatePushRequest(List, long)} instead
+    */
+   @Deprecated(since = "16.0", forRemoval = true)
+   default XSiteStatePushRequest buildXSiteStatePushRequest(XSiteState[] chunk, long timeoutMillis) {
+      return buildXSiteStatePushRequest(Arrays.asList(chunk), timeoutMillis);
+   }
+
+   XSiteStatePushRequest buildXSiteStatePushRequest(List<XSiteState> chunk, long timeoutMillis);
 
    IracTombstoneCheckRequest buildIracTombstoneCheckRequest(List<Object> keys);
 
