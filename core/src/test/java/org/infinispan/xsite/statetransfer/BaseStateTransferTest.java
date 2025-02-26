@@ -16,6 +16,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -329,7 +330,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
          }
 
          @Override
-         public void beforeState(XSiteState[] chunk) throws Exception {
+         public void beforeState(List<XSiteState> chunk) throws Exception {
             checkPoint.trigger("before-state");
             //wait until the command is received with the new value. so we make sure that the command saw the old value
             //and will commit a new value
@@ -341,7 +342,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
          }
 
          @Override
-         public void afterState(XSiteState[] chunk) {
+         public void afterState(List<XSiteState> chunk) {
             if (!performBeforeState && containsKey(chunk, key)) {
                //state before command... let the command go...
                checkPoint.trigger("update-key");
@@ -440,7 +441,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
          }
 
          @Override
-         public void beforeState(XSiteState[] chunk) throws Exception {
+         public void beforeState(List<XSiteState> chunk) throws Exception {
             checkPoint.trigger("before-state");
             checkPoint.awaitStrict("before-update", 30, TimeUnit.SECONDS);
          }
@@ -494,8 +495,8 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       return false;
    }
 
-   private boolean containsKey(XSiteState[] states, Object key) {
-      if (states == null || states.length == 0 || key == null) {
+   private boolean containsKey(List<XSiteState> states, Object key) {
+      if (states == null || states.isEmpty() || key == null) {
          return false;
       }
       for (XSiteState state : states) {
@@ -795,11 +796,11 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
          //no-op by default
       }
 
-      void beforeState(XSiteState[] chunk) throws Exception {
+      void beforeState(List<XSiteState> chunk) throws Exception {
          //no-op by default
       }
 
-      void afterState(XSiteState[] chunk) {
+      void afterState(List<XSiteState> chunk) {
          //no-op by default
       }
    }
@@ -824,7 +825,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       }
 
       @Override
-      public CompletionStage<Void> handleStateTransferState(XSiteState[] chunk, long timeoutMs) {
+      public CompletionStage<Void> handleStateTransferState(List<XSiteState> chunk, long timeoutMs) {
          try {
             listener.beforeState(chunk);
          } catch (Exception e) {

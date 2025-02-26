@@ -145,7 +145,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    }
 
    @Override
-   public CompletionStage<Void> handleStateTransferState(XSiteState[] chunk, long timeoutMs) {
+   public CompletionStage<Void> handleStateTransferState(List<XSiteState> chunk, long timeoutMs) {
       //split the state and forward it to the primary owners...
       CompletableFuture<Void> allowInvocation = checkInvocationAllowedFuture();
       if (allowInvocation != null) {
@@ -157,7 +157,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       Address localAddress = rpcManager.getAddress();
 
       if (log.isTraceEnabled()) {
-         log.tracef("Received X-Site state transfer %s keys. Splitting by primary owner.", chunk.length);
+         log.tracef("Received X-Site state transfer %s keys. Splitting by primary owner.", chunk.size());
       }
 
       for (XSiteState state : chunk) {
@@ -244,7 +244,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    }
 
    private XSiteStatePushCommand newStatePushCommand(List<XSiteState> stateList) {
-      return commandsFactory.buildXSiteStatePushCommand(stateList.toArray(new XSiteState[0]));
+      return commandsFactory.buildXSiteStatePushCommand(stateList);
    }
 
    @Override

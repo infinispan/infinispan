@@ -6,6 +6,7 @@ import static org.infinispan.context.Flag.PUT_FOR_X_SITE_STATE_TRANSFER;
 import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
 import static org.infinispan.context.Flag.SKIP_XSITE_BACKUP;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -96,9 +97,9 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
    }
 
    @Override
-   public void applyState(XSiteState[] chunk) throws Exception {
+   public void applyState(List<XSiteState> chunk) throws Exception {
       if (log.isDebugEnabled()) {
-         log.debugf("Received state: %s keys", chunk.length);
+         log.debugf("Received state: %s keys", chunk.size());
       }
       if (isTransactional) {
          applyStateInTransaction(chunk);
@@ -112,7 +113,7 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
       return sendingSite.get();
    }
 
-   private void applyStateInTransaction(XSiteState[] chunk) {
+   private void applyStateInTransaction(List<XSiteState> chunk) {
       XSiteApplyStateTransaction tx = new XSiteApplyStateTransaction();
       InvocationContext ctx = invocationContextFactory.createInvocationContext(tx, false);
       assert ctx instanceof LocalTxInvocationContext;
@@ -128,7 +129,7 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
          }
          invoke1PCPrepare(localTransaction);
          if (log.isDebugEnabled()) {
-            log.debugf("Successfully applied state. %s keys inserted", chunk.length);
+            log.debugf("Successfully applied state. %s keys inserted", chunk.size());
          }
       } catch (Exception e) {
          log.unableToApplyXSiteState(e);
@@ -139,7 +140,7 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
       }
    }
 
-   private void applyStateInNonTransaction(XSiteState[] chunk) {
+   private void applyStateInNonTransaction(List<XSiteState> chunk) {
       SingleKeyNonTxInvocationContext ctx = (SingleKeyNonTxInvocationContext) invocationContextFactory
             .createSingleKeyNonTxInvocationContext();
 
@@ -153,7 +154,7 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
          }
       }
       if (log.isDebugEnabled()) {
-         log.debugf("Successfully applied state. %s keys inserted", chunk.length);
+         log.debugf("Successfully applied state. %s keys inserted", chunk.size());
       }
    }
 
