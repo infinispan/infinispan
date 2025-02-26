@@ -72,6 +72,7 @@ public class InfinispanEmbeddedAutoConfiguration {
             // and the classes we need for spring embedded
             globalConfigurationBuilder.serialization().marshaller(new JavaSerializationMarshaller());
          }
+         globalConfigurationCustomizers.forEach(customizer -> customizer.customize(globalConfigurationBuilder));
          allowInternalClasses(globalConfigurationBuilder);
          manager = new DefaultCacheManager(holder, false);
       } else {
