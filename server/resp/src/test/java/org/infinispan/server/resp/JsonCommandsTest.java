@@ -555,6 +555,11 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
    public void testJSONOBJLEN() {
       String key = k();
       JsonPath jp = new JsonPath("$");
+      // JSON.SET doc . {}
+      assertThat(redis.jsonSet(key, jp, defaultJsonParser.createJsonValue("{}"))).isEqualTo("OK");
+      // JSON.OBJTLEN doc
+      assertThat(redis.jsonObjlen(key)).containsExactly(0L);
+
       String jsonValue = """
             {
              "root":  {
@@ -581,6 +586,9 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       jp = new JsonPath("$.root.*");
       result = redis.jsonObjlen(key, jp);
       assertThat(result).containsExactly(null, 2L, null);
+      jp = new JsonPath("$.nowhere");
+      result = redis.jsonObjlen(key, jp);
+      assertThat(result).isEmpty();
       // No path or old style path returns null on non-existing object
       assertThat(redis.jsonObjlen("notExistingKey").get(0)).isNull();
       jp = new JsonPath(".");
@@ -617,16 +625,25 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       }).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessage("WRONGTYPE Operation against a key holding the wrong kind of value");
 
+      String key = "doc";
+
+      // JSON.SET doc . '"infinispan"'
+      assertThat(redis.jsonSet(key, jpDollar, defaultJsonParser.createJsonValue("\"infinispan\""))).isEqualTo("OK");
+      // JSON.STRLEN doc
+      assertThat(redis.jsonStrlen(key)).containsExactly(10L);
+
       JsonValue jv = defaultJsonParser.createJsonValue("""
                {"a":"foo", "nested": {"a": "hello"}, "nested2": {"a": 31}}
             """);
 
-      String key = "doc";
       // JSON.SET doc $ '{"a":"foo", "nested": {"a": "hello"}, "nested2": {"a": 31}}'
       assertThat(redis.jsonSet(key, jpDollar, jv)).isEqualTo("OK");
 
-      //  JSON.STRLEN doc $
-      assertThat(redis.jsonStrlen(key, jpDollar).get(0)).isNull();
+      //  JSON.STRLEN doc .
+      assertThatThrownBy(() ->
+         redis.jsonStrlen(key, new JsonPath("."))
+      ).isInstanceOf(RedisCommandExecutionException.class)
+              .hasMessage("ERR Path '.' does not exist or not a string");
 
       //  JSON.STRLEN doc $..a
       assertThat(redis.jsonStrlen(key, new JsonPath("$..a"))).containsExactly(3L, 5L, null);
@@ -635,9 +652,20 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
    @Test
    public void testJSONARRLEN() {
       JsonPath jpDollar = new JsonPath("$");
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      JsonValue jv = defaultJsonParser.createJsonValue("""
+               {
+                   "name":"Wireless earbuds",
+                   "description":"Wireless Bluetooth in-ear headphones",
+                   "connection":{"wireless":true,"type":"Bluetooth"},
+                   "price":64.99,"stock":17,
+                   "colors":["black","white"],
+                   "max_level":[80, 100, 120]
+                }
+            """);
+
       // JSON.ARRLEN notExistingKey $
       assertThatThrownBy(() -> {
-         RedisCodec<String, String> codec = StringCodec.UTF8;
          redis.dispatch(CommandType.JSON_ARRLEN, new IntegerOutput<>(codec),
                new CommandArgs<>(codec).addKey("notExistingKey").add("$"));
       }).isInstanceOf(RedisCommandExecutionException.class)
@@ -656,29 +684,43 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       }).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessage("WRONGTYPE Operation against a key holding the wrong kind of value");
 
-      JsonValue jv = defaultJsonParser.createJsonValue("""
-               {
-                   "name":"Wireless earbuds",
-                   "description":"Wireless Bluetooth in-ear headphones",
-                   "connection":{"wireless":true,"type":"Bluetooth"},
-                   "price":64.99,"stock":17,
-                   "colors":["black","white"],
-                   "max_level":[80, 100, 120]
-                }
-            """);
+      // Test root elements
+      // JSON.SET doc . []
+      String key = "doc";
+      assertThat(redis.jsonSet(key, jpDollar, defaultJsonParser.createJsonValue("[]"))).isEqualTo("OK");
+      // JSON.ARRLEN doc
+      assertThat(redis.jsonArrlen(key)).containsExactly(0L);
+      // JSON.SET doc . '"hello"'
+      assertThat(redis.jsonSet(key, jpDollar, defaultJsonParser.createJsonValue("\"hello\""))).isEqualTo("OK");
+      // JSON.ARRLEN doc
+      assertThatThrownBy(() ->
+         redis.jsonArrlen(key)
+      ).isInstanceOf(RedisCommandExecutionException.class)
+              .hasMessage("ERR Path '.' does not exist or not an array");
+      // JSON.SET doc . '{"v1": 2}'
+      assertThat(redis.jsonSet(key, jpDollar, defaultJsonParser.createJsonValue("{\"v1\": 2}"))).isEqualTo("OK");
+      // JSON.ARRLEN doc
+      assertThatThrownBy(() ->
+              redis.jsonArrlen(key)
+      ).isInstanceOf(RedisCommandExecutionException.class)
+              .hasMessage("ERR Path '.' does not exist or not an array");
 
-      String key = "item:2";
-      // JSON.SET item:2 $ '{"name":"Wireless earbuds","description":"Wireless Bluetooth in-ear headphones","connection":{"wireless":true,"type":"Bluetooth"},"price":64.99,"stock":17,"colors":["black","white"], "max_level":[80, 100, 120]}'
+      // JSON.SET doc $ '{"name":"Wireless earbuds","description":"Wireless Bluetooth in-ear headphones","connection":{"wireless":true,"type":"Bluetooth"},"price":64.99,"stock":17,"colors":["black","white"], "max_level":[80, 100, 120]}'
       assertThat(redis.jsonSet(key, jpDollar, jv)).isEqualTo("OK");
+      assertThatThrownBy(() ->
+              redis.jsonArrlen(key, new JsonPath("."))
+      ).isInstanceOf(RedisCommandExecutionException.class)
+              .hasMessage("ERR Path '.' does not exist or not an array");
 
-      // JSON.ARRLEN item:2 $
-      assertThat(redis.jsonArrlen(key, jpDollar)).hasSize(1);
-      assertThat(redis.jsonArrlen(key, jpDollar).get(0)).isNull();
+      assertThatThrownBy(() ->
+              redis.jsonArrlen(key, new JsonPath("..notExists"))
+      ).isInstanceOf(RedisCommandExecutionException.class)
+              .hasMessage("ERR Path '..notExists' does not exist");
 
-      // JSON.ARRLEN item:2 $..max_level
+      // JSON.ARRLEN doc $..max_level
       assertThat(redis.jsonArrlen(key, new JsonPath("$..max_level"))).containsExactly(3L);
 
-      // JSON.ARRLEN item:2 $.[*]
+      // JSON.ARRLEN doc $.[*]
       assertThat(redis.jsonArrlen(key, new JsonPath("$.[*]"))).containsExactly(null, null, null, null, null, 2L, 3L);
    }
 
@@ -686,6 +728,32 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
    public void testJSONTYPE() {
       JsonPath jp = new JsonPath("$");
       RedisCodec<String, String> codec = StringCodec.UTF8;
+      String key = k();
+      // JSON.SET doc . []
+      assertThat(redis.jsonSet(key, jp, defaultJsonParser.createJsonValue("[]"))).isEqualTo("OK");
+      // JSON.TYPE doc
+      assertThat(redis.jsonType(key)).containsExactly(JsonType.ARRAY);
+      // JSON.SET doc . '"hello json string"'
+      assertThat(redis.jsonSet(key, jp, defaultJsonParser.createJsonValue("\"hello json string\""))).isEqualTo("OK");
+      // JSON.TYPE doc
+      assertThat(redis.jsonType(key)).containsExactly(JsonType.STRING);
+      // JSON.SET doc . '1'
+      assertThat(redis.jsonSet(key, jp, defaultJsonParser.createJsonValue("1"))).isEqualTo("OK");
+      // JSON.TYPE doc
+      assertThat(redis.jsonType(key)).containsExactly(JsonType.INTEGER);
+      // JSON.SET doc . 'true'
+      assertThat(redis.jsonSet(key, jp, defaultJsonParser.createJsonValue("true"))).isEqualTo("OK");
+      // JSON.TYPE doc
+      assertThat(redis.jsonType(key)).containsExactly(JsonType.BOOLEAN);
+      // JSON.SET doc . '{}'
+      assertThat(redis.jsonSet(key, jp, defaultJsonParser.createJsonValue("{}"))).isEqualTo("OK");
+      // JSON.TYPE doc
+      assertThat(redis.jsonType(key)).containsExactly(JsonType.OBJECT);
+      // JSON.SET doc . '2.0'
+      assertThat(redis.jsonSet(key, jp, defaultJsonParser.createJsonValue("2.0"))).isEqualTo("OK");
+      // JSON.TYPE doc
+      assertThat(redis.jsonType(key)).containsExactly(JsonType.NUMBER);
+
       JsonValue jv = defaultJsonParser.createJsonValue("""
                {"a":2,
                "null_value": null,
@@ -695,7 +763,6 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
                   {"a": true},
                "foo": "bar"}
             """);
-      String key = k();
       assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
       // Legacy: JSON.TYPE doc ..a
       assertThat(redis.dispatch(CommandType.JSON_TYPE, new ValueOutput<>(codec),

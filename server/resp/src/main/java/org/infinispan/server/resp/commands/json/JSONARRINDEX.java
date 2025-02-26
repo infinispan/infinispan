@@ -48,7 +48,7 @@ public class JSONARRINDEX extends RespCommand implements Resp3Command {
         byte[] jsonPath = JSONUtil.toJsonPath(path);
         boolean isLegacy = path != jsonPath;
         EmbeddedJsonCache ejc = handler.getJsonCache();
-        CompletionStage<List<Integer>> result = ejc.arrindex(key, jsonPath, value, start, stop, isLegacy);
+        CompletionStage<List<Integer>> result = ejc.arrIndex(key, jsonPath, value, start, stop, isLegacy);
         return (isLegacy) ? handler.stageToReturn(result.thenApply(l -> l.get(0)), ctx, ResponseWriter.INTEGER)
                 : handler.stageToReturn(result, ctx, ResponseWriter.ARRAY_INTEGER);
     }

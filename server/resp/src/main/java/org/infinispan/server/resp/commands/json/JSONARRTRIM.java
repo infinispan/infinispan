@@ -35,7 +35,7 @@ public class JSONARRTRIM extends RespCommand implements Resp3Command {
         int start = Integer.parseInt(new String(arguments.get(2)));
         int stop = Integer.parseInt(new String(arguments.get(3)));
         EmbeddedJsonCache ejc = handler.getJsonCache();
-        CompletionStage<List<Integer>> lengths = ejc.arrArrtrim(commandArgs.key(), commandArgs.jsonPath(), start, stop);
+        CompletionStage<List<Integer>> lengths = ejc.arrTrim(commandArgs.key(), commandArgs.jsonPath(), start, stop);
         if (commandArgs.isLegacy()) {
             return handler.stageToReturn(lengths, ctx, legacyReturn(commandArgs.jsonPath()));
         }
