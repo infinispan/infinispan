@@ -28,8 +28,6 @@ import org.infinispan.util.concurrent.BlockingManager;
 @Scope(Scopes.NONE)
 public class ReplicableManagerFunctionCommand implements GlobalRpcCommand {
 
-   public static final byte COMMAND_ID = 60;
-
    final Function<? super EmbeddedCacheManager, ?> function;
    final Subject subject;
 
@@ -64,11 +62,6 @@ public class ReplicableManagerFunctionCommand implements GlobalRpcCommand {
             return Security.doAs(subject, function, new UnwrappingEmbeddedCacheManager(globalComponentRegistry.getCacheManager()));
          }
       }, "replicable-manager-function").toCompletableFuture();
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

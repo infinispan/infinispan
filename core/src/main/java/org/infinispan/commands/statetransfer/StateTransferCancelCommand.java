@@ -22,15 +22,13 @@ import org.infinispan.util.ByteString;
 @ProtoTypeId(ProtoStreamTypeIds.STATE_TRANSFER_CANCEL_COMMAND)
 public class StateTransferCancelCommand extends AbstractStateTransferCommand {
 
-   public static final byte COMMAND_ID = 117;
-
    @ProtoFactory
    StateTransferCancelCommand(ByteString cacheName, int topologyId, WrappedMessage wrappedSegments) {
       this(cacheName, topologyId, WrappedMessages.<IntSet>unwrap(wrappedSegments));
    }
 
    public StateTransferCancelCommand(ByteString cacheName, int topologyId, IntSet segments) {
-      super(COMMAND_ID, cacheName, topologyId, segments);
+      super(cacheName, topologyId, segments);
    }
 
    @Override

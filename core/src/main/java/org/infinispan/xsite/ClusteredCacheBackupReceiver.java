@@ -39,7 +39,9 @@ import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -74,9 +76,7 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.irac.DiscardUpdateException;
@@ -316,17 +316,17 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
 
       @Override
       public CompletionStage<Void> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {
-         return blockingManager.runBlocking(() -> txHandler.handlePrepareCommand(command), command.getCommandId());
+         return blockingManager.runBlocking(() -> txHandler.handlePrepareCommand(command), command.getClass().getSimpleName());
       }
 
       @Override
       public CompletionStage<Void> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) {
-         return blockingManager.runBlocking(() -> txHandler.handleCommitCommand(command), command.getCommandId());
+         return blockingManager.runBlocking(() -> txHandler.handleCommitCommand(command), command.getClass().getSimpleName());
       }
 
       @Override
       public CompletionStage<Void> visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) {
-         return blockingManager.runBlocking(() -> txHandler.handleRollbackCommand(command), command.getCommandId());
+         return blockingManager.runBlocking(() -> txHandler.handleRollbackCommand(command), command.getClass().getSimpleName());
       }
 
       @Override

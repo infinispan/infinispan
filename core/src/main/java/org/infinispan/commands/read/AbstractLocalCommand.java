@@ -16,10 +16,6 @@ public abstract class AbstractLocalCommand extends AbstractFlagAffectedCommand i
       super(0);
    }
 
-   public byte getCommandId() {
-      return 0;  // no-op
-   }
-
    public boolean isReturnValueExpected() {
       return false;
    }

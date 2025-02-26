@@ -22,7 +22,6 @@ import org.infinispan.util.ByteString;
  */
 @ProtoTypeId(ProtoStreamTypeIds.IRAC_UPDATE_VERSION_COMMAND)
 public class IracUpdateVersionCommand extends BaseIracCommand {
-   public static final byte COMMAND_ID = 32;
 
    @ProtoField(2)
    final Map<Integer, IracEntryVersion> versions;
@@ -38,11 +37,6 @@ public class IracUpdateVersionCommand extends BaseIracCommand {
       IracVersionGenerator versionGenerator = registry.getIracVersionGenerator().running();
       versions.forEach(versionGenerator::updateVersion);
       return CompletableFutures.completedNull();
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

@@ -24,7 +24,6 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -62,8 +61,6 @@ import org.infinispan.util.logging.LogFactory;
 public class PrepareCommand extends AbstractTransactionBoundaryCommand implements TransactionalRemoteLockCommand {
 
    private static final Log log = LogFactory.getLog(PrepareCommand.class);
-
-   public static final byte COMMAND_ID = 12;
 
    protected List<WriteCommand> modifications;
    protected boolean onePhaseCommit;
@@ -155,32 +152,35 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
          if (writeCommand.hasAnyFlag(FlagBitSets.SKIP_LOCKING)) {
             continue;
          }
-         switch (writeCommand.getCommandId()) {
-            case PutKeyValueCommand.COMMAND_ID:
-            case RemoveCommand.COMMAND_ID:
-            case ComputeCommand.COMMAND_ID:
-            case ComputeIfAbsentCommand.COMMAND_ID:
-            case RemoveExpiredCommand.COMMAND_ID:
-            case ReplaceCommand.COMMAND_ID:
-            case ReadWriteKeyCommand.COMMAND_ID:
-            case ReadWriteKeyValueCommand.COMMAND_ID:
-            case WriteOnlyKeyCommand.COMMAND_ID:
-            case WriteOnlyKeyValueCommand.COMMAND_ID:
-               set.add(((DataWriteCommand) writeCommand).getKey());
-               break;
-            case PutMapCommand.COMMAND_ID:
-            case InvalidateCommand.COMMAND_ID:
-            case ReadWriteManyCommand.COMMAND_ID:
-            case ReadWriteManyEntriesCommand.COMMAND_ID:
-            case WriteOnlyManyCommand.COMMAND_ID:
-            case WriteOnlyManyEntriesCommand.COMMAND_ID:
-               set.addAll(writeCommand.getAffectedKeys());
-               break;
-            default:
-               break;
+
+         if (isSingleKeyCommand(writeCommand)) {
+            set.add(((DataWriteCommand) writeCommand).getKey());
+         } else if (isMultiKeyCommand(writeCommand)) {
+            set.addAll(writeCommand.getAffectedKeys());
          }
       }
       return set;
+   }
+
+   private boolean isSingleKeyCommand(WriteCommand cmd) {
+      return cmd instanceof ComputeCommand ||
+            cmd instanceof ComputeIfAbsentCommand ||
+            cmd instanceof PutKeyValueCommand ||
+            cmd instanceof ReadWriteKeyCommand ||
+            cmd instanceof ReadWriteKeyValueCommand ||
+            cmd instanceof RemoveCommand ||
+            cmd instanceof ReplaceCommand ||
+            cmd instanceof WriteOnlyKeyCommand ||
+            cmd instanceof WriteOnlyKeyValueCommand;
+   }
+
+   private boolean isMultiKeyCommand(WriteCommand cmd) {
+      return cmd instanceof InvalidateCommand ||
+            cmd instanceof PutMapCommand ||
+            cmd instanceof ReadWriteManyCommand ||
+            cmd instanceof ReadWriteManyEntriesCommand ||
+            cmd instanceof WriteOnlyManyCommand ||
+            cmd instanceof WriteOnlyManyEntriesCommand;
    }
 
    @Override
@@ -211,11 +211,6 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
 
    public List<WriteCommand> getModifications() {
       return modifications;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

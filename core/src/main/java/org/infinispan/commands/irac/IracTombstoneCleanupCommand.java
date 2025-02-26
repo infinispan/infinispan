@@ -27,8 +27,6 @@ import org.infinispan.util.ByteString;
 @ProtoTypeId(ProtoStreamTypeIds.IRAC_TOMBSTONE_CLEANUP_COMMAND)
 public class IracTombstoneCleanupCommand extends BaseIracCommand {
 
-   public static final byte COMMAND_ID = 37;
-
    @ProtoField(2)
    final Collection<IracTombstoneInfo> tombstonesToRemove;
 
@@ -49,11 +47,6 @@ public class IracTombstoneCleanupCommand extends BaseIracCommand {
       IracTombstoneManager tombstoneManager = registry.getIracTombstoneManager().running();
       tombstonesToRemove.forEach(tombstoneManager::removeTombstone);
       return CompletableFutures.completedNull();
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

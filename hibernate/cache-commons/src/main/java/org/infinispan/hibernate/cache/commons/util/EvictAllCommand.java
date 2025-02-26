@@ -47,12 +47,7 @@ public class EvictAllCommand extends BaseRpcCommand {
 		return CompletableFutures.completedNull();
 	}
 
-	@Override
-	public byte getCommandId() {
-		return CacheCommandIds.EVICT_ALL;
-	}
-
-	@Override
+   @Override
 	public boolean isReturnValueExpected() {
 		return false;
 	}

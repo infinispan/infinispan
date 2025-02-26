@@ -21,30 +21,31 @@ public class NonTxPerCacheInboundInvocationHandler extends BasePerCacheInboundIn
    @Override
    public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
       try {
-         final int commandTopologyId = extractCommandTopologyId(command);
          final boolean onExecutorService = executeOnExecutorService(order, command);
-         final boolean sync = order.preserveOrder();
-         final BlockingRunnable runnable;
-
-         boolean waitForTransactionalData = true;
-         switch (command.getCommandId()) {
-            case SingleRpcCommand.COMMAND_ID:
-               runnable = createDefaultRunnable(command, reply, commandTopologyId, onExecutorService ? TopologyMode.READY_TX_DATA : TopologyMode.WAIT_TX_DATA, sync);
-               break;
-            case ConflictResolutionStartCommand.COMMAND_ID:
-            case StateTransferCancelCommand.COMMAND_ID:
-            case StateTransferGetListenersCommand.COMMAND_ID:
-            case StateTransferGetTransactionsCommand.COMMAND_ID:
-            case StateTransferStartCommand.COMMAND_ID:
-               waitForTransactionalData = false;
-            default:
-               runnable = createDefaultRunnable(command, reply, commandTopologyId, waitForTransactionalData, onExecutorService, sync);
-               break;
-         }
+         final BlockingRunnable runnable = createRunnable(command, onExecutorService, reply, order);
          handleRunnable(runnable, onExecutorService);
       } catch (Throwable throwable) {
          reply.reply(exceptionHandlingCommand(command, throwable));
       }
+   }
+
+   private BlockingRunnable createRunnable(CacheRpcCommand cmd, boolean onExecutorService, Reply reply, DeliverOrder order) {
+      final int commandTopologyId = extractCommandTopologyId(cmd);
+      final boolean sync = order.preserveOrder();
+
+      if (cmd instanceof SingleRpcCommand) {
+         var topologyMode = onExecutorService ? TopologyMode.READY_TX_DATA : TopologyMode.WAIT_TX_DATA;
+         return createDefaultRunnable(cmd, reply, commandTopologyId, topologyMode, sync);
+      }
+
+      if (cmd instanceof ConflictResolutionStartCommand ||
+            cmd instanceof StateTransferCancelCommand ||
+            cmd instanceof StateTransferGetListenersCommand ||
+            cmd instanceof StateTransferGetTransactionsCommand ||
+            cmd instanceof StateTransferStartCommand) {
+         return createDefaultRunnable(cmd, reply, commandTopologyId, false, onExecutorService, sync);
+      }
+      return createDefaultRunnable(cmd, reply, commandTopologyId, true, onExecutorService, sync);
    }
 
 }

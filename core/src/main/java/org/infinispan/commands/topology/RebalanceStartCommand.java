@@ -24,8 +24,6 @@ import org.infinispan.topology.PersistentUUID;
 @ProtoTypeId(ProtoStreamTypeIds.REBALANCE_START_COMMAND)
 public class RebalanceStartCommand extends AbstractCacheControlCommand {
 
-   public static final byte COMMAND_ID = 92;
-
    @ProtoField(1)
    final String cacheName;
 
@@ -56,7 +54,6 @@ public class RebalanceStartCommand extends AbstractCacheControlCommand {
    RebalanceStartCommand(String cacheName, WrappedMessage currentCH, WrappedMessage pendingCH,
                                 CacheTopology.Phase phase, List<PersistentUUID> persistentUUIDs,
                                 int rebalanceId, int topologyId, int viewId, List<JGroupsAddress> actualMembers) {
-      super(COMMAND_ID);
       this.cacheName = cacheName;
       this.currentCH = currentCH;
       this.pendingCH = pendingCH;
@@ -69,7 +66,7 @@ public class RebalanceStartCommand extends AbstractCacheControlCommand {
    }
 
    public RebalanceStartCommand(String cacheName, Address origin, CacheTopology cacheTopology, int viewId) {
-      super(COMMAND_ID, origin);
+      super(origin);
       this.cacheName = cacheName;
       this.topologyId = cacheTopology.getTopologyId();
       this.rebalanceId = cacheTopology.getRebalanceId();
