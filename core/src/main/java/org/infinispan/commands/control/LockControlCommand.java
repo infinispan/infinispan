@@ -1,9 +1,7 @@
 package org.infinispan.commands.control;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 
@@ -20,7 +18,7 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.marshall.protostream.impl.MarshallableList;
+import org.infinispan.marshall.protostream.impl.MarshallableCollection;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
@@ -48,14 +46,14 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
 
    public static final int COMMAND_ID = 3;
 
-   private List<Object> keys;
+   private Collection<Object> keys;
    private boolean unlock = false;
    private long flags;
 
+   @SuppressWarnings("unchecked")
    public LockControlCommand(Collection<?> keys, ByteString cacheName, long flags, GlobalTransaction globalTx) {
       super(cacheName, globalTx);
-      //building defensive copies is here in order to support replaceKey operation
-      this.keys = keys == null ? Collections.emptyList() : new ArrayList<>(keys);
+      this.keys = (Collection<Object>) keys;
       this.flags = flags;
       this.globalTx = globalTx;
    }
@@ -65,17 +63,17 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    }
 
    @ProtoFactory
-   LockControlCommand(int topologyId, ByteString cacheName, GlobalTransaction globalTransaction, MarshallableList<Object> wrappedKeys,
+   LockControlCommand(int topologyId, ByteString cacheName, GlobalTransaction globalTransaction, MarshallableCollection<Object> wrappedKeys,
                       boolean unlock, long flagsBitSetWithoutRemote) {
       super(topologyId, cacheName, globalTransaction);
-      this.keys = MarshallableList.unwrap(wrappedKeys);
+      this.keys = MarshallableCollection.unwrap(wrappedKeys);
       this.unlock = unlock;
       this.flags = flagsBitSetWithoutRemote;
    }
 
    @ProtoField(number = 4, name = "keys")
-   MarshallableList<Object> getWrappedKeys() {
-      return MarshallableList.create(keys);
+   MarshallableCollection<Object> getWrappedKeys() {
+      return MarshallableCollection.create(keys);
    }
 
    @ProtoField(5)
@@ -109,7 +107,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       if (keys.isEmpty())
          return null;
 
-      return keys.get(0);
+      return keys.iterator().next();
    }
 
    @Override
