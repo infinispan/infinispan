@@ -3,6 +3,7 @@ package org.infinispan.xsite.statetransfer.failures;
 import static org.infinispan.test.TestingUtil.wrapComponent;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -147,7 +148,7 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
       }
 
       @Override
-      public CompletionStage<Void> handleStateTransferState(XSiteState[] chunk, long timeoutMs) {
+      public CompletionStage<Void> handleStateTransferState(List<XSiteState> chunk, long timeoutMs) {
          checkPoint.trigger("before-chunk");
          return delegate.handleStateTransferState(chunk, timeoutMs);
       }
@@ -168,7 +169,7 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
       }
 
       @Override
-      public CompletionStage<Void> handleStateTransferState(XSiteState[] chunk, long timeoutMs) {
+      public CompletionStage<Void> handleStateTransferState(List<XSiteState> chunk, long timeoutMs) {
          if (!discard.get()) {
             return delegate.handleStateTransferState(chunk, timeoutMs);
          }
