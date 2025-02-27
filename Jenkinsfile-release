@@ -76,7 +76,7 @@ pipeline {
                 // Commit and tag once everything is good
                 sh "git commit --no-verify -m 'Releasing version ${version}' -a"
                 sh "git tag -a -m '${version}' ${version}"
-                sh "git push origin HEAD"
+                sh "git push git@github.com:infinispan/infinispan.git HEAD"
             }
         }
 
@@ -88,7 +88,7 @@ pipeline {
                 sh "$MAVEN_HOME/bin/mvn -B versions:set -DnewVersion=${nextVersion} -DprocessAllModules=true"
                 sh "$MAVEN_HOME/bin/mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${nextVersion}"
                 sh "git commit --no-verify -a -m 'Next version ${nextVersion}'"
-                sh "git push origin HEAD"
+                sh "git push git@github.com:infinispan/infinispan.git HEAD"
             }
         }
     }
