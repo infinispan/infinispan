@@ -6,7 +6,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-spring-boot3-starter-parent</artifactId>
-      <version>15.0.14.Final</version>
+      <version>15.0.15-SNAPSHOT</version>
       <relativePath>../../pom.xml</relativePath>
    </parent>
 
