@@ -57,6 +57,10 @@ jobs:
             targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ".github"
+          sparse-checkout-cone-mode: false
+          fetch-depth: 1
 
       - name: Setup Java
         uses: ./.github/actions/setup-java
@@ -86,12 +90,15 @@ jobs:
           mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
 
       - name: Maven Test
+        env:
+          env:
+          HIBERNATE_MATRIX: ${{ github.event.workflow_run.event == 'push' && '-Phibernate-matrix' || '' }}
         id: maven-test
         shell: bash
         run: >
             cd test_dir/infinispan &&
             ./mvnw verify -V -B -e -DrerunFailingTestsCount=2
-            -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative
+            -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative $HIBERNATE_MATRIX
 
       - name: set-commit-status-conclusion
         if: success()
