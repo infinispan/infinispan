@@ -76,7 +76,7 @@ pipeline {
                 // Commit and tag once everything is good
                 sh "git commit --no-verify -m 'Releasing version ${version}' -a"
                 sh "git tag -a -m '${version}' ${version}"
-                sh "git push git@github.com:infinispan/infinispan.git HEAD"
+                sh "git push git@github.com:infinispan/infinispan.git HEAD '${version}'"
             }
         }
 
