@@ -16,6 +16,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import org.infinispan.client.hotrod.TransportFactory;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.SslConfiguration;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
@@ -126,7 +127,11 @@ public class ChannelHandler {
          if (watcher != null) {
             watcher.stop();
          }
-         eventLoopGroup.shutdownGracefully(0, 0, TimeUnit.MILLISECONDS).get();
+         // We only want to shutdown the EventLoop when using the default TransportFactory. This way users can control
+         // the lifecycle of the EventLoop themselves.
+         if (configuration.transportFactory() == TransportFactory.DEFAULT) {
+            eventLoopGroup.shutdownGracefully(0, 0, TimeUnit.MILLISECONDS).get();
+         }
       } catch (Exception e) {
          log.warn("Exception while shutting down the channel handler.", e);
       }
@@ -262,6 +267,10 @@ public class ChannelHandler {
                         .values().stream()
                   : Stream.empty()
       );
+   }
+
+   public EventLoopGroup getEventLoopGroup() {
+      return eventLoopGroup;
    }
 
    public OperationChannel getChannelForAddress(SocketAddress socketAddress) {

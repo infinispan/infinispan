@@ -135,6 +135,10 @@ NOTE: This implementation attempts to return all attributes that a real Redis se
 
 * link:https://redis.io/commands/json.arrtrim[JSON.ARRTRIM]
 
+* link:https://redis.io/commands/json.clear[JSON.CLEAR]
+
+* link:https://redis.io/commands/json.arrpop[JSON.ARRPOP]
+
 * link:https://redis.io/commands/json.del[JSON.DEL]
 
 * link:https://redis.io/commands/json.forget[JSON.FORGET]

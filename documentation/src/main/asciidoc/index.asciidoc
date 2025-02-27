@@ -16,6 +16,7 @@ Infinispan provides distributed, in-memory data storage for modern cloud-native 
 [unstyled]
 * link:titles/getting_started/getting_started.html[Getting started with Infinispan]
 * link:titles/contributing/contributing.html[Contributor's guide]
+* link:titles/changes/changes.html[Changes between Infinispan versions]
 
 [discrete]
 == Deploying and operating Infinispan clusters
@@ -55,3 +56,4 @@ Use Infinispan caching capabilities to boost application performance with a faul
 [unstyled]
 * link:apidocs/index.html[JavaDoc APIs]
 * link:logging/logs.html[Log messages]
+* link:titles/metrics/metrics.html[Metrics]

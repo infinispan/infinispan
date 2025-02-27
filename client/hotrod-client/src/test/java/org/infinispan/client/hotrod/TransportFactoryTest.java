@@ -2,11 +2,14 @@ package org.infinispan.client.hotrod;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
@@ -44,30 +47,45 @@ public class TransportFactoryTest extends SingleCacheManagerTest {
       super.teardown();
    }
 
-   public void testTransportFactoryProgrammatic() {
+   public void testTransportFactoryProgrammatic() throws ExecutionException, InterruptedException {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       TestTransportFactory transportFactory = new TestTransportFactory();
       clientBuilder.addServer().host("localhost").port(hotrodServer.getPort()).transportFactory(transportFactory);
+      EventLoopGroup eventLoopGroup;
       try (RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build())) {
          assertEquals(0, transportFactory.socketChannelLatch.getCount());
          assertEquals(0, transportFactory.createEventLoopGroupLatch.getCount());
+
+         eventLoopGroup = remoteCacheManager.getOperationDispatcher().getChannelHandler().getEventLoopGroup();
       }
+
+      assertFalse(eventLoopGroup.isShutdown());
+
+      eventLoopGroup.shutdownGracefully(0, 0, TimeUnit.MILLISECONDS).get();
    }
 
-   public void testTransportFactoryDeclarative() {
+   public void testTransportFactoryDeclarative() throws ExecutionException, InterruptedException {
       Properties p = new Properties();
       p.setProperty(ConfigurationProperties.TRANSPORT_FACTORY, TestTransportFactory.class.getName());
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("localhost").port(hotrodServer.getPort()).withProperties(p);
+
+      EventLoopGroup eventLoopGroup;
       try (RemoteCacheManager remoteCacheManager = new RemoteCacheManager(clientBuilder.build())) {
          Configuration configuration = remoteCacheManager.getConfiguration();
          assertTrue(configuration.transportFactory() instanceof TestTransportFactory);
          TestTransportFactory transportFactory = (TestTransportFactory) configuration.transportFactory();
          assertEquals(0, transportFactory.socketChannelLatch.getCount());
          assertEquals(0, transportFactory.createEventLoopGroupLatch.getCount());
+
+         eventLoopGroup = remoteCacheManager.getOperationDispatcher().getChannelHandler().getEventLoopGroup();
       }
+
+      assertFalse(eventLoopGroup.isShutdown());
+
+      eventLoopGroup.shutdownGracefully(0, 0, TimeUnit.MILLISECONDS).get();
    }
 
    @Override

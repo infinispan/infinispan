@@ -81,6 +81,9 @@
 //Migration Guide
 :migration_docs: ../upgrading/upgrading.html
 
+//Changes
+:changes_docs: ../changes/changes.html
+
 //Query
 :query_docs: ../query/query.html
 
@@ -136,6 +139,8 @@
 
 //Titles & Headings
 :sizing_title: {brandname} performance considerations and tuning guidelines
+
+:metrics_docs: ../metrics/metrics.html
 
 //
 // Include topic-specific attributes
