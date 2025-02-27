@@ -119,7 +119,7 @@ The _type_ parameter for `application/x-java-object` is restricted to:
 * Bytes, making `application/x-java-object;type=Bytes` equivalent to `application/octet-stream;encoding=hex`.
 
 [id='rest_json_proto_conversion']
-== JSON/Protostream Conversion
+== JSON/ProtoStream Conversion
 When caches are indexed, or specifically configured to store `application/x-protostream`, you can send and receive JSON documents that are automatically converted to and from Protobuf.
 
 You must register a Protobuf schema for the conversion to work.
