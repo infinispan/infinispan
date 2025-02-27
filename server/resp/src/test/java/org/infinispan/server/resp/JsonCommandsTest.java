@@ -9,6 +9,7 @@ import static org.infinispan.test.TestingUtil.v;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import io.lettuce.core.output.ValueListOutput;
 import org.infinispan.server.resp.json.JSONUtil;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -1281,7 +1282,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       List<JsonValue> jsonGet2 = redis.jsonGet(key, jp).get(0).asJsonArray().asList();
       assertThat(jsonValueListToStringList(jsonGet2)).containsExactly("[\"three\",\"four\"]","[3]", "\"not an array\"");
 
-      // Non existing key
+      // Non-existing key
       assertThatThrownBy(() -> redis.jsonArrtrim("non-existent", new JsonPath("$.arr_value"), JsonRangeArgs.Builder.start(0).stop(1)))
             .isInstanceOf(RedisCommandExecutionException.class)
             .hasMessage("ERR could not perform this operation on a key that doesn't exist");
@@ -1297,7 +1298,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       JsonValue jsonGet3 = redis.jsonGet(key, jp).get(0);
       assertThat(jsonGet3.toString()).isEqualTo("[\"three\",\"four\"]");
 
-      // Non existing path with legacy
+      // Non-existing path with legacy
       assertThatThrownBy(() -> redis.jsonArrtrim(key, new JsonPath(".non-existing"), JsonRangeArgs.Builder.start(0).stop(1)))
             .isInstanceOf(RedisCommandExecutionException.class)
             .hasMessage("ERR Path '$.non-existing' does not exist or not an array");
@@ -1368,41 +1369,6 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
               redis.jsonClear("notExistingKey"))
               .isInstanceOf(RedisCommandExecutionException.class)
               .hasMessage("ERR could not perform this operation on a key that doesn't exist");
-   }
-
-   // Lettuce Json object doesn't implement comparison. Implementing here
-   private boolean compareJSONGet(JsonValue result, JsonValue expected, JsonPath... paths) {
-      ObjectMapper mapper = new ObjectMapper();
-      JsonNode expectedObjectNode, resultNode;
-      if (paths.length == 0) {
-         paths = new JsonPath[] { new JsonPath("$") };
-      }
-      try {
-         expectedObjectNode = mapper.readTree(expected.toString());
-         resultNode = mapper.readTree(result.toString());
-         var jpCtx = JSONUtil.parserForGet.parse(expectedObjectNode);
-         boolean isLegacy = true;
-         // If all paths are legacy, return results in legacy mode. i.e. no array
-         for (JsonPath path : paths) {
-            isLegacy &= !JSONUtil.isJsonPath(path.toString());
-         }
-         if (paths.length == 1) {
-            // jpctx.read doesn't like legacy ".", change it to "$". everything else seems
-            // to work
-            String pathStr = ".".equals(paths[0].toString()) ? "$" : paths[0].toString();
-            JsonNode node = isLegacy ? ((ArrayNode) jpCtx.read(pathStr)).get(0) : jpCtx.read(pathStr);
-            return resultNode.equals(node);
-         }
-         ObjectNode root = mapper.createObjectNode();
-         for (JsonPath path : paths) {
-            String pathStr = path.toString();
-            JsonNode node = isLegacy ? ((ArrayNode) jpCtx.read(pathStr)).get(0) : jpCtx.read(pathStr);
-            root.set(pathStr, node);
-         }
-         return resultNode.equals(root);
-      } catch (Exception ex) {
-         throw new RuntimeException(ex);
-      }
    }
 
    @Test
@@ -1530,6 +1496,84 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThatThrownBy(() -> command.jsonArrinsert("non-existent", "$", 1, "v1", "v2", "v3"))
             .isInstanceOf(RedisCommandExecutionException.class)
             .hasMessage("ERR could not perform this operation on a key that doesn't exist");
+   }
+
+   @Test
+   public void testJSONMGet() {
+      JsonPath jpRoot = new JsonPath("$");
+      JsonValue jv1 = defaultJsonParser.createJsonValue("[1, \"a\", {\"o\":\"v\"}]");
+      String key1 = k();
+      String key2 = k(1);
+      String key3 = k(2);
+      JsonValue jv2 = defaultJsonParser.createJsonValue("""
+               {"a": 2,
+               "arr_value": ["one", "two", "three"],
+               "nested":
+                  {"a": true,
+                  "nested2": {
+                   "foo": "fore"},
+                   "arr_value": [1,2,3,4]
+                  },
+               "nested1":
+                  {
+                   "arr_value": null
+                  },
+               "nested2":
+                  {
+                   "arr_value": 1,
+                   "string": "aString"
+                  }
+               }
+            """);
+      JsonValue jv3 = defaultJsonParser.createJsonValue("\"string\"");
+      redis.jsonSet(key1, jpRoot, jv1);
+      redis.jsonSet(key2, jpRoot, jv2);
+      redis.jsonSet(key3, jpRoot, jv3);
+      redis.set("not-a-json", "a-string");
+      List<JsonValue> jsonValues = redis.jsonMGet(jpRoot, key1, key2, key3);
+      assertThat(jsonValues).map(jv -> jv.asJsonArray().size())
+              .containsExactly(1, 1, 1);
+      assertThat(jsonValues).map(jv -> jv.asJsonArray().getFirst().asString())
+              .containsExactly(jv1.asString(), jv2.asString(), jv3.asString());
+      // Not testing non-existent key, bug in lettuce?
+      // see https://github.com/redis/lettuce/issues/3196
+      // var result = redis.jsonMGet(jpRoot, key1, "non-existent", key2);
+      // var result = redis.jsonMGet(jpRoot, "not-a-json", key1, key2);
+   }
+
+   // Lettuce Json object doesn't implement comparison. Implementing here
+   private boolean compareJSONGet(JsonValue result, JsonValue expected, JsonPath... paths) {
+      ObjectMapper mapper = new ObjectMapper();
+      JsonNode expectedObjectNode, resultNode;
+      if (paths.length == 0) {
+         paths = new JsonPath[] { new JsonPath("$") };
+      }
+      try {
+         expectedObjectNode = mapper.readTree(expected.toString());
+         resultNode = mapper.readTree(result.toString());
+         var jpCtx = JSONUtil.parserForGet.parse(expectedObjectNode);
+         boolean isLegacy = true;
+         // If all paths are legacy, return results in legacy mode. i.e. no array
+         for (JsonPath path : paths) {
+            isLegacy &= !JSONUtil.isJsonPath(path.toString());
+         }
+         if (paths.length == 1) {
+            // jpctx.read doesn't like legacy ".", change it to "$". everything else seems
+            // to work
+            String pathStr = ".".equals(paths[0].toString()) ? "$" : paths[0].toString();
+            JsonNode node = isLegacy ? ((ArrayNode) jpCtx.read(pathStr)).get(0) : jpCtx.read(pathStr);
+            return resultNode.equals(node);
+         }
+         ObjectNode root = mapper.createObjectNode();
+         for (JsonPath path : paths) {
+            String pathStr = path.toString();
+            JsonNode node = isLegacy ? ((ArrayNode) jpCtx.read(pathStr)).get(0) : jpCtx.read(pathStr);
+            root.set(pathStr, node);
+         }
+         return resultNode.equals(root);
+      } catch (Exception ex) {
+         throw new RuntimeException(ex);
+      }
    }
 
    private boolean compareJSONGet(List<JsonValue> results, JsonValue expected, JsonPath... paths) {
