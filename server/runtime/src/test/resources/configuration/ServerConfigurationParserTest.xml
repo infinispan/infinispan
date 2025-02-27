@@ -147,7 +147,7 @@
                    tcp-nodelay="true">
             <hotrod-connector name="hotrod" io-threads="23" tcp-nodelay="false" tcp-keepalive="false"
                               send-buffer-size="10" receive-buffer-size="20" idle-timeout="2" socket-binding="hotrod"
-                              external-host="external" external-port="12345">
+                              external-host="external" external-port="12345"  max-content-length="1027">
                <topology-state-transfer await-initial-retrieval="false" lazy-retrieval="false" lock-timeout="12"
                                         replication-timeout="13"/>
                <authentication security-realm="default">
@@ -182,7 +182,8 @@
             </rest-connector>
             <memcached-connector name="memcached" socket-binding="memcached" io-threads="1"
                                  idle-timeout="1" tcp-nodelay="true" tcp-keepalive="true" send-buffer-size="3"
-                                 receive-buffer-size="3" cache="string" client-encoding="application/json"/>
+                                 receive-buffer-size="3" cache="string" client-encoding="application/json"
+                                 max-content-length="1029"/>
          </endpoint>
       </endpoints>
    </server>

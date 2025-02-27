@@ -15,7 +15,8 @@ import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.ServerConstants;
-import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.server.core.logging.Log;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.telemetry.InfinispanTelemetry;
 
 import io.netty.channel.Channel;
@@ -29,6 +30,9 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
    protected final EmbeddedCacheManager cacheManager;
    protected final Executor executor;
    protected final HotRodServer server;
+   protected final int maxContentLength;
+   // And this is the ByteBuf pos before decode is performed
+   protected int posBefore;
 
    protected Authentication auth;
    protected TransactionRequestProcessor cacheProcessor;
@@ -40,6 +44,8 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
       this.cacheManager = cacheManager;
       this.executor = executor;
       this.server = server;
+      HotRodServerConfiguration configuration = server.getConfiguration();
+      this.maxContentLength = configuration.maxContentLengthBytes();
    }
 
    public Executor getExecutor() {

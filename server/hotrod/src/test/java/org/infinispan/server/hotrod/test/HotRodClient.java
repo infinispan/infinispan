@@ -146,6 +146,10 @@ public class HotRodClient implements Closeable {
       return defaultCacheName;
    }
 
+   public Channel getChannel() {
+      return ch;
+   }
+
    private Channel initializeChannel() {
       Bootstrap bootstrap = new Bootstrap();
       bootstrap.group(eventLoopGroup);
@@ -333,6 +337,17 @@ public class HotRodClient implements Closeable {
          future.syncUninterruptibly();
       }
       return future.isSuccess();
+   }
+
+   public ChannelFuture writeOps(Op... ops) {
+      log.tracef("Sending request %s", Arrays.toString(ops));
+      ChannelFuture future = null;
+      for (Op op : ops) {
+         idToOp.put(op.id, op);
+         future = ch.write(op);
+      }
+      ch.flush();
+      return future;
    }
 
    public TestGetResponse get(byte[] k, int flags) {
