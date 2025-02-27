@@ -152,6 +152,47 @@ are specified, then the order will dictate their precedence.
 FROM org.infinispan.sample.Book WHERE title like '%Data Grid%' ORDER BY publicationYear DESC, title ASC
 ----
 
+[id='ickle-query-syntax-nested-objects_joins_{context}']
+== Nested objects joins
+
+When multivalued link:{query_docs}#indexing-annotations-overview_indexing-caches[`NESTED` embedded entities] are defined on a parent entity,
+it is possible to treat the parent / embedded relation as a one to many relation.
+This means that the `join` operator can be used to select all the parent entities that contain an embedded
+entity satisfying some conditions.
+This is in general not possible if the embedded reference is marked as `FLATTENED`, because in this case the
+embedded fields will be treated as (multivalued) parent entity fields.
+
+=== Nested objects joins: example
+
+Suppose we have a parent entity `Team` having `Player` as a multivalued nested embedded entity:
+
+[source,java]
+----
+@Proto
+@Indexed
+public record Team(@Basic String name, @Embedded(structure = Structure.NESTED) List<Player> firstTeam, @Embedded(structure = Structure.FLATTENED) List<Player> replacements) {
+
+   @ProtoSchema(includeClasses = {Team.class, Player.class}, schemaPackageName = "model")
+   public interface TeamSchema extends GeneratedSchema {
+      TeamSchema INSTANCE = new TeamSchemaImpl();
+   }
+}
+
+@Proto
+public record Player(@Basic String name, @Basic String color, @Basic Integer number) {
+}
+----
+
+Given this mapping, the following query:
+
+[source,sql]
+----
+select t.name from model.Team t join t.firstTeam p where (p.color ='red' AND p.number=7) or (p.color='blue' AND p.number=7)
+----
+
+will return all the teams present on the system having at least one player in the first team group
+in turn having number 7 and color red or blue.
+
 == Grouping and aggregation
 
 {brandname} has the ability to group query results according to a set of grouping fields and construct aggregations of
