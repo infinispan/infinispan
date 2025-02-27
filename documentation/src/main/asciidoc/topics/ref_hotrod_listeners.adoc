@@ -93,8 +93,8 @@ public static class StaticCacheEventFilterFactory implements CacheEventFilterFac
 }
 
 
-// Serializable, Externalizable or marshallable with Infinispan Externalizers
-// needed when running in a cluster
+// Class needs to be marshallable when running in a cluster
+@Proto
 class StaticCacheEventFilter implements CacheEventFilter<Integer, String>, Serializable {
    @Override
    public boolean accept(Integer key, String oldValue, Metadata oldMetadata,
@@ -150,7 +150,7 @@ parameters received by the filter factories to enable this option, for example:
 
 [source,java]
 ----
-import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
+import java.util.Arrays;import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 
 class DynamicCacheEventFilterFactory implements CacheEventFilterFactory {
@@ -160,13 +160,23 @@ class DynamicCacheEventFilterFactory implements CacheEventFilterFactory {
    }
 }
 
-// Serializable, Externalizable or marshallable with Infinispan Externalizers
-// needed when running in a cluster
+// Class needs to be marshallable when running in a cluster
 class DynamicCacheEventFilter implements CacheEventFilter<Integer, String>, Serializable {
    final Object[] params;
 
    DynamicCacheEventFilter(Object[] params) {
       this.params = params;
+   }
+
+   @ProtoFactory
+   DynamicCacheEventFilter(Stream<WrappedMessage> wrappedParams) {
+      this.params = wrappedParams.toArray();
+   }
+
+   @ProtoField(1)
+   Stream<WrappedMessage> getParams() {
+      // We must wrap the parameter in a WrappedMessage as the type is not known until runtime
+      return Arrays.stream(params).map(WrappedMessage::new);
    }
 
    @Override
@@ -192,8 +202,7 @@ cache.addClientListener(new EventPrintListener(), new Object[]{1}, null);
 WARNING: Filter instances have to marshallable when they are deployed in a
 cluster so that the filtering can happen right where the event is generated,
 even if the even is generated in a different node to where the listener is
-registered. To make them marshallable, either make them extend `Serializable`,
-`Externalizable`, or provide a custom `Externalizer` for them.
+registered.
 
 [[skipping_notifications]]
 == Skipping Notifications
@@ -232,23 +241,15 @@ class StaticConverterFactory implements CacheEventConverterFactory {
    }
 }
 
-// Serializable, Externalizable or marshallable with Infinispan Externalizers
-// needed when running in a cluster
 class StaticCacheEventConverter implements CacheEventConverter<Integer, String, CustomEvent>, Serializable {
    public CustomEvent convert(Integer key, String oldValue, Metadata oldMetadata, String newValue, Metadata newMetadata, EventType eventType) {
       return new CustomEvent(key, newValue);
    }
 }
 
-// Needs to be Serializable, Externalizable or marshallable with Infinispan Externalizers
-// regardless of cluster or local caches
-static class CustomEvent implements Serializable {
-   final Integer key;
-   final String value;
-   CustomEvent(Integer key, String value) {
-      this.key = key;
-      this.value = value;
-   }
+// Class needs to be marshallable when running in a cluster
+@Proto
+static record CustomEvent(Integer key, String value) {
 }
 ----
 
@@ -257,10 +258,7 @@ includes the value as well as the key in the event. This will result in bigger
 event payloads compared with default events, but if combined with filtering,
 it can reduce its network bandwidth cost.
 
-WARNING: The target type of the converter must be either `Serializable` or
-`Externalizable`. In this particular case of converters, providing an
-Externalizer will not work by default since the default Hot Rod client
-marshaller does not support them.
+WARNING: The target type of the converter needs to be marshallable when running in a cluster
 
 Handling custom events requires a slightly different client listener
 implementation to the one demonstrated previously. To be more precise, it
@@ -339,12 +337,23 @@ class DynamicCacheEventConverterFactory implements CacheEventConverterFactory {
    }
 }
 
-// Serializable, Externalizable or marshallable with Infinispan Externalizers needed when running in a cluster
+// Class needs to be marshallable when running in a cluster
 class DynamicCacheEventConverter implements CacheEventConverter<Integer, String, CustomEvent>, Serializable {
    final Object[] params;
 
    DynamicCacheEventConverter(Object[] params) {
       this.params = params;
+   }
+
+   @ProtoFactory
+   DynamicCacheEventFilter(Stream<WrappedMessage> wrappedParams) {
+      this.params = wrappedParams.toArray();
+   }
+
+   @ProtoField(1)
+   Stream<WrappedMessage> getParams() {
+      // We must wrap the parameter in a WrappedMessage as the type is not known until runtime
+      return Arrays.stream(params).map(WrappedMessage::new);
    }
 
    public CustomEvent convert(Integer key, String oldValue, Metadata oldMetadata,
@@ -370,8 +379,7 @@ cache.addClientListener(new EventPrintListener(), null, new Object[]{1});
 WARNING: Converter instances have to marshallable when they are deployed in a
 cluster, so that the conversion can happen right where the event is generated,
 even if the event is generated in a different node to where the listener is
-registered. To make them marshallable, either make them extend `Serializable`,
-`Externalizable`, or provide a custom `Externalizer` for them.
+registered.
 
 == Filter and Custom Events
 
@@ -395,13 +403,23 @@ class DynamicCacheEventFilterConverterFactory implements CacheEventFilterConvert
    }
 }
 
-// Serializable, Externalizable or marshallable with Infinispan Externalizers needed when running in a cluster
-//
+// Class needs to be marshallable when running in a cluster
 class DynamicCacheEventFilterConverter extends AbstractCacheEventFilterConverter<Integer, String, CustomEvent>, Serializable {
    final Object[] params;
 
    DynamicCacheEventFilterConverter(Object[] params) {
       this.params = params;
+   }
+
+   @ProtoFactory
+   DynamicCacheEventFilterConverter(Stream<WrappedMessage> wrappedParams) {
+      this.params = wrappedParams.toArray();
+   }
+
+   @ProtoField(1)
+   Stream<WrappedMessage> getParams() {
+      // We must wrap the parameter in a WrappedMessage as the type is not known until runtime
+      return Arrays.stream(params).map(WrappedMessage::new);
    }
 
    public CustomEvent filterAndConvert(Integer key, String oldValue, Metadata oldMetadata,
@@ -483,7 +501,7 @@ Note that the Marshaller could be deployed in either a separate jar, or in the
 same jar as the `CacheEventConverter` and/or `CacheEventFilter` instances.
 
 [[protostream_deployment]]
-=== Deploying Protostream Marshallers
+=== Deploying ProtoStream Marshallers
 
 If a cache stores Protobuf content, as it happens when using ProtoStream marshaller in the Hot Rod client,
 it's not necessary to deploy a custom marshaller since the format is already support by the server: there are

@@ -70,7 +70,7 @@ When you delete fields or change index field definitions, you must rebuild the i
 [NOTE]
 ====
 Rebuilding Protobuf schema using REST, CLI, {brandname} Console or remote client might lead to inconsistencies.
-Remote clients might have different versions of the Protostream entity and this might lead to unreliable behavior.
+Remote clients might have different versions of the ProtoStream entity and this might lead to unreliable behavior.
 ====
 
 Reindex all data in caches with `POST` requests and the `?action=reindex` parameter.

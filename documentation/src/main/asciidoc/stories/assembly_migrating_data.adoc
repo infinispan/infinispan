@@ -16,7 +16,7 @@ endif::community[]
 ifdef::downstream[]
 8.0
 endif::downstream[]
-changes the default marshaller to Protostream. In previous {brandname}
+changes the default marshaller to ProtoStream. In previous {brandname}
 versions, cache stores use a binary format that is not compatible with the
 changes to marshalling. This means that {brandname}
 ifdef::community[]

@@ -38,7 +38,7 @@ Request and send data in different encodings specified by a `org.infinispan.comm
 
 [source,java]
 ----
-// Existing remote cache using ProtostreamMarshaller
+// Existing remote cache using ProtoStreamMarshaller
 RemoteCache<String, Pojo> protobufCache = ...
 
 // Request values returned as JSON

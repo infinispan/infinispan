@@ -3,46 +3,26 @@
 {brandname} can be extended to provide the ability for an end user to add
 additional configurations, operations and components outside of the scope of the ones normally provided by {brandname}.
 
+{brandname} is extended by providing implementations of the link:../../apidocs/org/infinispan/lifecycle/ModuleLifecyle.html[`ModuleLifecycle`]
+interface. This interface allows {brandname} to be extended and modified at various stages of its lifecycle.
+
 == Custom Commands
 {brandname} makes use of a link:http://en.wikipedia.org/wiki/Command_pattern[command/visitor pattern] to
 implement the various top-level methods you see on the public-facing API.
 
-While the core commands - and their corresponding visitors - are hard-coded as
-a part of {brandname}'s core module, module authors can extend and enhance {brandname}
-by creating new custom commands.
-
-As a module author (such as link:https://github.com/infinispan/infinispan/tree/main/query[infinispan-query], etc.) you can define your own commands.
+Module authors can extend and enhance {brandname} by creating new custom commands and registering them with the `EmbeddedCacheManager`.
 
 You do so by:
 
-. Create a `META-INF/services/org.infinispan.commands.module.ModuleCommandExtensions` file and ensure this is packaged in your jar.
-. Implementing link:https://github.com/infinispan/infinispan/blob/main/core/src/main/java/org/infinispan/commands/module/ModuleCommandFactory.java[`ModuleCommandFactory`] and
-link:https://github.com/infinispan/infinispan/blob/main/core/src/main/java/org/infinispan/commands/module/ModuleCommandExtensions.java[`ModuleCommandExtensions`]
-. Specifying the fully-qualified class name of the  link:https://github.com/infinispan/infinispan/blob/main/core/src/main/java/org/infinispan/commands/module/ModuleCommandExtensions.java[`ModuleCommandExtensions`]
-implementation in `META-INF/services/org.infinispan.commands.module.ModuleCommandExtensions`.
-. Implement your custom commands and visitors for these commands
+. Implementing custom commands and interceptors to provide the desired functionality
+. Add ProtoStream annotations to commands to ensure they can be marshalled
+. Generate `.proto` schema files and marshaller code by creating an interface annotated with `@ProtoSchema`
+. Register the generated `SerilaizationContextInitializer` with the `GLOBAL` `SerializationContextRegistry`
 
-
-=== An Example
-Here is an example of an `META-INF/services/org.infinispan.commands.module.ModuleCommandExtensions` file, configured accordingly:
-
-.org.infinispan.commands.module.ModuleCommandExtensions
-----
-org.infinispan.query.QueryModuleCommandExtensions
-----
-
-=== Preassigned Custom Command Id Ranges
-This is the list of `Command` identifiers that are used by {brandname} based modules or frameworks.
-{brandname} users should avoid using ids within these ranges. (RANGES to be finalised yet!)
-Being this a single byte, ranges can't be too large.
-
-|===============
-|{brandname} Query:|100 - 119
-|Hibernate Search:|120 - 139
-|Hot Rod Server:  |140 - 141
-|===============
+See the link:https://github.com/infinispan/infinispan/tree/main/query[infinispan-query] module as an example of a custom
+module that adds both custom commands and interceptors.
 
 == Extending the configuration builders and parsers
-If your custom module requires configuration, it is possible to enhance {brandname}'s configuration builders and
+If a custom module requires configuration, it is possible to enhance {brandname}'s configuration builders and
 parsers. Look at the link:https://github.com/infinispan/infinispan/blob/main/core/src/test/java/org/infinispan/configuration/module[custom module tests]
 for a detail example on how to implement this.

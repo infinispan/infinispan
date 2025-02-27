@@ -156,12 +156,10 @@ Map<Object, String> jbossValues = map.entrySet().stream()
               .collect(CacheCollectors.serializableCollector(() -> Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
 ----
 
-The recommended and most performant way is to use an
-`AdvancedExternalizer` as this provides the smallest payload.  Unfortunately
-this means you cannot use lamdbas as advanced externalizers require defining
-the class before hand.
+The recommended and most performant way is to use ProtoStream as this provides the smallest payload.  Unfortunately
+this means you cannot use lamdbas as this requires defining the class beforehand.
 
-You can use an advanced externalizer as shown below:
+You can use an ProtoStream as shown below:
 
 [source,java]
 ----
@@ -170,8 +168,11 @@ You can use an advanced externalizer as shown below:
               .collect(() -> Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
    class ContainsFilter implements Predicate<Map.Entry<Object, String>> {
-      private final String target;
 
+      @ProtoField(1)
+      final String target;
+
+      @ProtoFactory()
       ContainsFilter(String target) {
          this.target = target;
       }
@@ -181,33 +182,9 @@ You can use an advanced externalizer as shown below:
          return e.getValue().contains(target);
       }
    }
-
-   class JbossFilterExternalizer implements AdvancedExternalizer<ContainsFilter> {
-
-      @Override
-      public Set<Class<? extends ContainsFilter>> getTypeClasses() {
-         return Util.asSet(ContainsFilter.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return CUSTOM_ID;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, ContainsFilter object) throws IOException {
-         output.writeUTF(object.target);
-      }
-
-      @Override
-      public ContainsFilter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new ContainsFilter(input.readUTF());
-      }
-   }
 ----
 
-You could also use an advanced externalizer for the collector supplier to reduce the
-payload size even further.
+You could also use ProtoStream for the collector supplier to reduce the payload size even further.
 
 [source,java]
 ----
@@ -218,33 +195,16 @@ Map<Object, String> map = (Map<Object, String>) cache.entrySet().stream()
  class ToMapCollectorSupplier<K, U> implements Supplier<Collector<Map.Entry<K, U>, ?, Map<K, U>>> {
       static final ToMapCollectorSupplier INSTANCE = new ToMapCollectorSupplier();
 
+      @ProtoFactory()
+      static ToMapCollectorSupplier factory() {
+         return INSTANCE;
+      }
+
       private ToMapCollectorSupplier() { }
 
       @Override
       public Collector<Map.Entry<K, U>, ?, Map<K, U>> get() {
          return Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue);
-      }
-   }
-
-   class ToMapCollectorSupplierExternalizer implements AdvancedExternalizer<ToMapCollectorSupplier> {
-
-      @Override
-      public Set<Class<? extends ToMapCollectorSupplier>> getTypeClasses() {
-         return Util.asSet(ToMapCollectorSupplier.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return CUSTOM_ID;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, ToMapCollectorSupplier object) throws IOException {
-      }
-
-      @Override
-      public ToMapCollectorSupplier readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return ToMapCollectorSupplier.INSTANCE;
       }
    }
 ----
