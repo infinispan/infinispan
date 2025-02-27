@@ -1626,41 +1626,6 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       .hasMessage("ERR Err wrong static path");
    }
 
-   // Lettuce Json object doesn't implement comparison. Implementing here
-   private boolean compareJSONGet(JsonValue result, JsonValue expected, JsonPath... paths) {
-      ObjectMapper mapper = new ObjectMapper();
-      JsonNode expectedObjectNode, resultNode;
-      if (paths.length == 0) {
-         paths = new JsonPath[] { new JsonPath("$") };
-      }
-      try {
-         expectedObjectNode = mapper.readTree(expected.toString());
-         resultNode = mapper.readTree(result.toString());
-         var jpCtx = JSONUtil.parserForGet.parse(expectedObjectNode);
-         boolean isLegacy = true;
-         // If all paths are legacy, return results in legacy mode. i.e. no array
-         for (JsonPath path : paths) {
-            isLegacy &= !JSONUtil.isJsonPath(path.toString());
-         }
-         if (paths.length == 1) {
-            // jpctx.read doesn't like legacy ".", change it to "$". everything else seems
-            // to work
-            String pathStr = ".".equals(paths[0].toString()) ? "$" : paths[0].toString();
-            JsonNode node = isLegacy ? ((ArrayNode) jpCtx.read(pathStr)).get(0) : jpCtx.read(pathStr);
-            return resultNode.equals(node);
-         }
-         ObjectNode root = mapper.createObjectNode();
-         for (JsonPath path : paths) {
-            String pathStr = path.toString();
-            JsonNode node = isLegacy ? ((ArrayNode) jpCtx.read(pathStr)).get(0) : jpCtx.read(pathStr);
-            root.set(pathStr, node);
-         }
-         return resultNode.equals(root);
-      } catch (Exception ex) {
-         throw new RuntimeException(ex);
-      }
-   }
-
    @Test
    public void testJSONARRINSERT() {
       CustomStringCommands command = CustomStringCommands.instance(redisConnection);
@@ -1808,10 +1773,10 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
             """);
       JsonValue jv2 = defaultJsonParser.createJsonValue("\"string\"");
       JsonValue jv3 = defaultJsonParser.createJsonValue("3");
-      List<JsonMsetArgs<String,String>> msetArgs = new ArrayList<>();
-      msetArgs.add(new JsonMsetArgs<String,String>(key1, jpRoot, jv1));
-      msetArgs.add(new JsonMsetArgs<String,String>(key2, jpRoot, jv2));
-      msetArgs.add(new JsonMsetArgs<String,String>(key3, jpRoot, jv3));
+      List<JsonMsetArgs<String, String>> msetArgs = new ArrayList<>();
+      msetArgs.add(new JsonMsetArgs<String, String>(key1, jpRoot, jv1));
+      msetArgs.add(new JsonMsetArgs<String, String>(key2, jpRoot, jv2));
+      msetArgs.add(new JsonMsetArgs<String, String>(key3, jpRoot, jv3));
       assertThat(redis.jsonMSet(msetArgs)).isEqualTo("OK");
       List<JsonValue> jsonGet = redis.jsonGet(key1, jpRootLegacy);
       assertThat(jsonGet).hasSize(1);
@@ -1826,16 +1791,17 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       JsonPath jp = new JsonPath("$.added");
       msetArgs = new ArrayList<>();
       // Adding a leaf to an existing object
-      msetArgs.add(new JsonMsetArgs<String,String>(key1, jp, jv4));
+      msetArgs.add(new JsonMsetArgs<String, String>(key1, jp, jv4));
       // Replacing a root object
-      msetArgs.add(new JsonMsetArgs<String,String>(key2, jpRoot, jv4));
+      msetArgs.add(new JsonMsetArgs<String, String>(key2, jpRoot, jv4));
       // Trying to add a leaf to a non object
-      msetArgs.add(new JsonMsetArgs<String,String>(key3, jp, jv4));
+      msetArgs.add(new JsonMsetArgs<String, String>(key3, jp, jv4));
       assertThat(redis.jsonMSet(msetArgs)).isEqualTo("OK");
       jsonGet = redis.jsonGet(key1, jpRootLegacy);
       assertThat(jsonGet).hasSize(1);
-      assertThat(jsonGet.get(0).toString()).isEqualTo("""
-         {"a":2,"arr_value":["one","two","three"],"nested":{"a":true,"nested2":{"foo":"fore"},"arr_value":[1,2,3,4]},"added":{"k1":"v1"}}""");
+      assertThat(jsonGet.get(0).toString()).isEqualTo(
+            """
+                  {"a":2,"arr_value":["one","two","three"],"nested":{"a":true,"nested2":{"foo":"fore"},"arr_value":[1,2,3,4]},"added":{"k1":"v1"}}""");
       jsonGet = redis.jsonGet(key2, jpRootLegacy);
       assertThat(jsonGet).hasSize(1);
       assertThat(jsonGet.get(0).toString()).isEqualTo(jv4.toString());
@@ -1844,12 +1810,87 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThat(jsonGet.get(0).toString()).isEqualTo(jv3.toString());
 
       // Test an error behavior
-      List<JsonMsetArgs<String,String>> msetArgs1 = new ArrayList<>();
-      msetArgs1.add(new JsonMsetArgs<String,String>("non-existent", jp, jv4));
-      msetArgs1.add(new JsonMsetArgs<String,String>(key2, jpRoot, jv4));
-      assertThatThrownBy(() -> redis.jsonMSet(msetArgs1))
-      .isInstanceOf(RedisCommandExecutionException.class)
-      .hasMessage("ERR new objects must be created at root");
+      List<JsonMsetArgs<String, String>> msetArgs1 = new ArrayList<>();
+      msetArgs1.add(new JsonMsetArgs<String, String>("non-existent", jp, jv4));
+      msetArgs1.add(new JsonMsetArgs<String, String>(key2, jpRoot, jv4));
+      assertThatThrownBy(() -> redis.jsonMSet(msetArgs1)).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR new objects must be created at root");
+   }
+
+   public void testJSONMGET() {
+      JsonPath jpRoot = new JsonPath("$");
+      JsonValue jv1 = defaultJsonParser.createJsonValue("[1, \"a\", {\"o\":\"v\"}]");
+      String key1 = k();
+      String key2 = k(1);
+      String key3 = k(2);
+      JsonValue jv2 = defaultJsonParser.createJsonValue("""
+            {"a": 2,
+            "arr_value": ["one", "two", "three"],
+            "nested":
+               {"a": true,
+               "nested2": {
+                "foo": "fore"},
+                "arr_value": [1,2,3,4]
+               },
+               "nested1":
+                  {
+                   "arr_value": null
+                  },
+               "nested2":
+                  {
+                   "arr_value": 1,
+                   "string": "aString"
+                  }
+               }
+            """);
+      JsonValue jv3 = defaultJsonParser.createJsonValue("\"string\"");
+      redis.jsonSet(key1, jpRoot, jv1);
+      redis.jsonSet(key2, jpRoot, jv2);
+      redis.jsonSet(key3, jpRoot, jv3);
+      redis.set("not-a-json", "a-string");
+      List<JsonValue> jsonValues = redis.jsonMGet(jpRoot, key1, key2, key3);
+      assertThat(jsonValues).map(jv -> jv.asJsonArray().size()).containsExactly(1, 1, 1);
+      assertThat(jsonValues).map(jv -> jv.asJsonArray().getFirst().asString()).containsExactly(jv1.asString(),
+            jv2.asString(), jv3.asString());
+      // Not testing non-existent key, bug in lettuce?
+      // see https://github.com/redis/lettuce/issues/3196
+      // var result = redis.jsonMGet(jpRoot, key1, "non-existent", key2);
+      // var result = redis.jsonMGet(jpRoot, "not-a-json", key1, key2);
+   }
+
+   // Lettuce Json object doesn't implement comparison. Implementing here
+   private boolean compareJSONGet(JsonValue result, JsonValue expected, JsonPath... paths) {
+      ObjectMapper mapper = new ObjectMapper();
+      JsonNode expectedObjectNode, resultNode;
+      if (paths.length == 0) {
+         paths = new JsonPath[] { new JsonPath("$") };
+      }
+      try {
+         expectedObjectNode = mapper.readTree(expected.toString());
+         resultNode = mapper.readTree(result.toString());
+         var jpCtx = JSONUtil.parserForGet.parse(expectedObjectNode);
+         boolean isLegacy = true;
+         // If all paths are legacy, return results in legacy mode. i.e. no array
+         for (JsonPath path : paths) {
+            isLegacy &= !JSONUtil.isJsonPath(path.toString());
+         }
+         if (paths.length == 1) {
+            // jpctx.read doesn't like legacy ".", change it to "$". everything else seems
+            // to work
+            String pathStr = ".".equals(paths[0].toString()) ? "$" : paths[0].toString();
+            JsonNode node = isLegacy ? ((ArrayNode) jpCtx.read(pathStr)).get(0) : jpCtx.read(pathStr);
+            return resultNode.equals(node);
+         }
+         ObjectNode root = mapper.createObjectNode();
+         for (JsonPath path : paths) {
+            String pathStr = path.toString();
+            JsonNode node = isLegacy ? ((ArrayNode) jpCtx.read(pathStr)).get(0) : jpCtx.read(pathStr);
+            root.set(pathStr, node);
+         }
+         return resultNode.equals(root);
+      } catch (Exception ex) {
+         throw new RuntimeException(ex);
+      }
    }
 
    private boolean compareJSONGet(List<JsonValue> results, JsonValue expected, JsonPath... paths) {
