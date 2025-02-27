@@ -62,6 +62,9 @@ public interface CustomStringCommands extends Commands {
    @Command("JSON.ARRINSERT :key :path :index :v1 :v2 :v3")
    Long jsonArrinsert(@Param("key") String key, @Param("path") String path, @Param("index") int index, @Param("v1") String v1, @Param("v2") String v2, @Param("v2") String v3);
 
+   @Command("JSON.MERGE :key :path :value")
+   String jsonMerge(@Param("key") String key, @Param("path") String path, @Param("value") String value);
+
    static CustomStringCommands instance(StatefulConnection<String, String> conn) {
       RedisCommandFactory factory = new RedisCommandFactory(conn);
       return factory.getCommands(CustomStringCommands.class);
