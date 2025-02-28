@@ -4,7 +4,7 @@
 When you enable indexing in caches, you configure {brandname} to create indexes.
 You also need to provide {brandname} with a structured representation of the entities in your caches so it can actually index them.
 
-[discrete]
+[id='indexing-annotations-overview_{context}`]
 == Overview of the {brandname} indexing annotations
 
 @Indexed:: Indicates entities, or Protobuf message types, that {brandname} indexes.
@@ -27,6 +27,8 @@ Keyword fields are not analyzed or tokenized during indexing.
 @Embedded:: Use this annotation to mark a field as an embedded object within the parent entity.
 The `NESTED` structure preserves the original object relationship structure while the `FLATTENED` structure makes the leaf fields multivalued of the parent entity.
 The default structure used by `@Embedded` is `NESTED`.
+
+`NESTED` embedded can be used in link:{query_docs}#ickle-query-syntax-nested-objects_joins_ickle-query-language[nested objects joins].
 
 Each of the annotations supports a set of attributes that you can use to further describe how the entity is indexed.
 
