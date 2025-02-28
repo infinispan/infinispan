@@ -107,7 +107,8 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
 
    @Override
    public AsyncStoreConfigurationBuilder<S> read(AsyncStoreConfiguration template, Combine combine) {
-      this.attributes.read(template.attributes(), combine);
+      if (template != null)
+         this.attributes.read(template.attributes(), combine);
       return this;
    }
 
