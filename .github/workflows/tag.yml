@@ -1,0 +1,91 @@
+name: Tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "The Infinispan branch to checkout when cutting the release."
+        required: true
+        default: "main"
+      version:
+        description: "Release version"
+        required: true
+      nextVersion:
+        description: "Next version"
+        required: true
+      dryRun:
+        description: "Dry run (doesn't push to Central)"
+        type: boolean
+        default: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '23'
+          distribution: 'temurin'
+          server-id: ossrh
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+          gpg-private-key: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: Checkout Source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Configure Git User
+        run: |
+          git config user.email "infinispan@infinispan.org"
+          git config user.name "Infinispan"
+
+      - name: Update proto.lock files
+        run: |
+          mvn -B clean install -DskipTests -DcommitProtoLockChanges=true -Dcheckstyle.skip
+
+      - name: Set release version
+        run: |
+          mvn -B versions:set -DprocessAllModules=true -DnewVersion=${{ github.event.inputs.version }}
+          mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ github.event.inputs.version }}
+          sed -i \"s/^:ispn_version:.*\$/:ispn_version: ${{ github.event.inputs.version }}/\" documentation/src/main/asciidoc/topics/attributes/community-attributes.adoc
+          git commit -a -m --no-verify "Releasing ${{ github.event.inputs.version }}"
+
+      - name: Publish to Central
+        if: ${{ ! github.event.inputs.dryRun }}
+        run: mvn -B -Drelease-mode=upstream -Pdistribution -DskipTests clean deploy -Dinfinispan.brand.version=${{ github.event.inputs.version }}
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}
+
+      - name: Tag Release
+        if: ${{ ! github.event.inputs.dryRun }}
+        run: |
+          git tag -a ${{ github.event.inputs.version }} -m ${{ github.event.inputs.version }} 
+
+      - name: Next Version
+        run: |
+          mvn -B versions:set -DprocessAllModules=true -DnewVersion=${{ github.event.inputs.nextVersion }}
+          mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ github.event.inputs.nextVersion }}
+          git commit -a -m --no-verify "Next version ${{ github.event.inputs.nextVersion }}"
+
+      - name: Push changes
+        if: ${{ ! github.event.inputs.dryRun }}
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.event.inputs.branch }}
+          tags: true
+          ssh: true
+
+      - name: Create Release
+        run: |
+          gh release create ${{ github.event.inputs.version }} --generate-notes
+          gh release upload ${{ github.event.inputs.version }} distribution/target/distribution/infinispan-server-${{ github.event.inputs.version }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
