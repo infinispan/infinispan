@@ -13,6 +13,7 @@ import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.json.JsonType;
 import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.json.arguments.JsonGetArgs;
+import io.lettuce.core.json.arguments.JsonMsetArgs;
 import io.lettuce.core.json.arguments.JsonRangeArgs;
 import io.lettuce.core.json.arguments.JsonSetArgs;
 import io.lettuce.core.output.IntegerOutput;
@@ -27,6 +28,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -1584,6 +1586,70 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThatThrownBy(() -> command.jsonArrinsert("non-existent", "$", 1, "v1", "v2", "v3"))
             .isInstanceOf(RedisCommandExecutionException.class)
             .hasMessage("ERR could not perform this operation on a key that doesn't exist");
+   }
+
+   @Test
+   void testJSONMSET() {
+      String key1 = k(1);
+      String key2 = k(2);
+      String key3 = k(3);
+      JsonPath jpRoot = new JsonPath("$");
+      JsonPath jpRootLegacy = new JsonPath(".");
+      JsonValue jv1 = defaultJsonParser.createJsonValue("""
+               {"a": 2,
+               "arr_value": ["one", "two", "three"],
+               "nested":
+                  {"a": true,
+                  "nested2": {
+                   "foo": "fore"},
+                   "arr_value": [1,2,3,4]
+                  }
+               }
+            """);
+      JsonValue jv2 = defaultJsonParser.createJsonValue("\"string\"");
+      JsonValue jv3 = defaultJsonParser.createJsonValue("3");
+      List<JsonMsetArgs<String,String>> msetArgs = new ArrayList<>();
+      msetArgs.add(new JsonMsetArgs<String,String>(key1, jpRoot, jv1));
+      msetArgs.add(new JsonMsetArgs<String,String>(key2, jpRoot, jv2));
+      msetArgs.add(new JsonMsetArgs<String,String>(key3, jpRoot, jv3));
+      assertThat(redis.jsonMSet(msetArgs)).isEqualTo("OK");
+      List<JsonValue> jsonGet = redis.jsonGet(key1, jpRootLegacy);
+      assertThat(jsonGet).hasSize(1);
+      assertThat(jsonGet.get(0).toString()).isEqualTo(jv1.toString());
+      jsonGet = redis.jsonGet(key2, jpRootLegacy);
+      assertThat(jsonGet).hasSize(1);
+      assertThat(jsonGet.get(0).toString()).isEqualTo(jv2.toString());
+      jsonGet = redis.jsonGet(key3, jpRootLegacy);
+      assertThat(jsonGet).hasSize(1);
+      assertThat(jsonGet.get(0).toString()).isEqualTo(jv3.toString());
+      JsonValue jv4 = defaultJsonParser.createJsonValue("{\"k1\":\"v1\"}");
+      JsonPath jp = new JsonPath("$.added");
+      msetArgs = new ArrayList<>();
+      // Adding a leaf to an existing object
+      msetArgs.add(new JsonMsetArgs<String,String>(key1, jp, jv4));
+      // Replacing a root object
+      msetArgs.add(new JsonMsetArgs<String,String>(key2, jpRoot, jv4));
+      // Trying to add a leaf to a non object
+      msetArgs.add(new JsonMsetArgs<String,String>(key3, jp, jv4));
+      assertThat(redis.jsonMSet(msetArgs)).isEqualTo("OK");
+      jsonGet = redis.jsonGet(key1, jpRootLegacy);
+      assertThat(jsonGet).hasSize(1);
+      assertThat(jsonGet.get(0).toString()).isEqualTo("""
+         {"a":2,"arr_value":["one","two","three"],"nested":{"a":true,"nested2":{"foo":"fore"},"arr_value":[1,2,3,4]},"added":{"k1":"v1"}}""");
+      jsonGet = redis.jsonGet(key2, jpRootLegacy);
+      assertThat(jsonGet).hasSize(1);
+      assertThat(jsonGet.get(0).toString()).isEqualTo(jv4.toString());
+      jsonGet = redis.jsonGet(key3, jpRootLegacy);
+      assertThat(jsonGet).hasSize(1);
+      assertThat(jsonGet.get(0).toString()).isEqualTo(jv3.toString());
+
+      // Test an error behavior
+      List<JsonMsetArgs<String,String>> msetArgs1 = new ArrayList<>();
+      msetArgs1.add(new JsonMsetArgs<String,String>("non-existent", jp, jv4));
+      msetArgs1.add(new JsonMsetArgs<String,String>(key2, jpRoot, jv4));
+      assertThatThrownBy(() -> redis.jsonMSet(msetArgs1))
+      .isInstanceOf(RedisCommandExecutionException.class)
+      .hasMessage("ERR new objects must be created at root");
    }
 
    private boolean compareJSONGet(List<JsonValue> results, JsonValue expected, JsonPath... paths) {
