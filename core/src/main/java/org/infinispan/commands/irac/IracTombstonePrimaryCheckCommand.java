@@ -25,8 +25,6 @@ import org.infinispan.xsite.irac.IracManager;
 @ProtoTypeId(ProtoStreamTypeIds.IRAC_TOMBSTONE_PRIMARY_CHECK_COMMAND)
 public class IracTombstonePrimaryCheckCommand extends BaseIracCommand {
 
-   public static final byte COMMAND_ID = 47;
-
    @ProtoField(2)
    final Collection<IracTombstoneInfo> tombstoneToCheck;
 
@@ -40,11 +38,6 @@ public class IracTombstonePrimaryCheckCommand extends BaseIracCommand {
    public CompletionStage<Void> invokeAsync(ComponentRegistry registry) {
       registry.getIracTombstoneManager().running().checkStaleTombstone(tombstoneToCheck);
       return CompletableFutures.completedNull();
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

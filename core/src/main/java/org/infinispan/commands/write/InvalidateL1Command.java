@@ -23,7 +23,6 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
  */
 @ProtoTypeId(ProtoStreamTypeIds.INVALIDATE_L1_COMMAND)
 public class InvalidateL1Command extends InvalidateCommand {
-   public static final int COMMAND_ID = 7;
 
    @ProtoField(number = 5, javaType = JGroupsAddress.class)
    final Address writeOrigin;
@@ -43,11 +42,6 @@ public class InvalidateL1Command extends InvalidateCommand {
          CommandInvocationId commandInvocationId) {
       super(flagsBitSet, keys, commandInvocationId);
       this.writeOrigin = writeOrigin;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    public void setKeys(Object[] keys) {

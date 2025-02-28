@@ -19,8 +19,6 @@ import org.infinispan.topology.RebalancingStatus;
 @ProtoTypeId(ProtoStreamTypeIds.REBALANCE_STATUS_REQUEST_COMMAND)
 public class RebalanceStatusRequestCommand extends AbstractCacheControlCommand {
 
-   public static final byte COMMAND_ID = 90;
-
    @ProtoField(1)
    final String cacheName;
 
@@ -30,7 +28,6 @@ public class RebalanceStatusRequestCommand extends AbstractCacheControlCommand {
 
    @ProtoFactory
    public RebalanceStatusRequestCommand(String cacheName) {
-      super(COMMAND_ID);
       this.cacheName = cacheName;
    }
 

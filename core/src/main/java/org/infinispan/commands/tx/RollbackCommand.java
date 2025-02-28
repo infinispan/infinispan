@@ -22,7 +22,6 @@ import org.infinispan.util.ByteString;
  */
 @ProtoTypeId(ProtoStreamTypeIds.ROLLBACK_COMMAND)
 public class RollbackCommand extends AbstractTransactionBoundaryCommand {
-   public static final byte COMMAND_ID = 13;
 
    public RollbackCommand(ByteString cacheName, GlobalTransaction globalTransaction) {
       super(-1, cacheName, globalTransaction);
@@ -49,11 +48,6 @@ public class RollbackCommand extends AbstractTransactionBoundaryCommand {
    @Override
    public void visitRemoteTransaction(RemoteTransaction tx) {
       tx.markForRollback(true);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

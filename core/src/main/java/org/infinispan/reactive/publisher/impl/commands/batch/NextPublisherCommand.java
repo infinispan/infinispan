@@ -14,7 +14,6 @@ import org.infinispan.util.ByteString;
 
 @ProtoTypeId(ProtoStreamTypeIds.NEXT_PUBLISHER_COMMAND)
 public class NextPublisherCommand extends BaseRpcCommand implements TopologyAffectedCommand {
-   public static final byte COMMAND_ID = 25;
 
    @ProtoField(2)
    final String requestId;
@@ -40,11 +39,6 @@ public class NextPublisherCommand extends BaseRpcCommand implements TopologyAffe
    @Override
    public void setTopologyId(int topologyId) {
       this.topologyId = topologyId;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

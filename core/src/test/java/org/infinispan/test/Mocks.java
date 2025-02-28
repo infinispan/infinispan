@@ -468,11 +468,6 @@ public class Mocks {
             ReplicableCommand wrapped = new GlobalRpcCommand() {
 
                @Override
-               public byte getCommandId() {
-                  return command.getCommandId();
-               }
-
-               @Override
                public boolean isReturnValueExpected() {
                   return command.isReturnValueExpected();
                }

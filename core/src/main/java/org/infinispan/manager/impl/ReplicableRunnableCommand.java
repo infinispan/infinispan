@@ -20,8 +20,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.REPLICABLE_RUNNABLE_COMMAND)
 public class ReplicableRunnableCommand implements GlobalRpcCommand {
 
-   public static final byte COMMAND_ID = 59;
-
    final Runnable runnable;
 
    public ReplicableRunnableCommand(Runnable runnable) {
@@ -42,11 +40,6 @@ public class ReplicableRunnableCommand implements GlobalRpcCommand {
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry globalComponentRegistry) throws Throwable {
       runnable.run();
       return CompletableFutures.completedNull();
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

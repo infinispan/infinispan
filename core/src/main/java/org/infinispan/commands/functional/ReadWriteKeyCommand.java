@@ -25,8 +25,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.READ_WRITE_KEY_COMMAND)
 public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<K, V> {
 
-   public static final byte COMMAND_ID = 50;
-
    private Function<ReadWriteEntryView<K, V>, R> f;
 
    public ReadWriteKeyCommand(Object key, Function<ReadWriteEntryView<K, V>, R> f, int segment,
@@ -58,11 +56,6 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       super.init(componentRegistry);
       if (f instanceof InjectableComponent)
          ((InjectableComponent) f).inject(componentRegistry);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

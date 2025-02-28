@@ -19,8 +19,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.CLEAR_COMMAND)
 public class ClearCommand extends AbstractTopologyAffectedCommand implements WriteCommand {
 
-   public static final byte COMMAND_ID = 5;
-
    @ProtoFactory
    ClearCommand(long flagsWithoutRemote, int topologyId) {
       super(flagsWithoutRemote, topologyId);
@@ -33,11 +31,6 @@ public class ClearCommand extends AbstractTopologyAffectedCommand implements Wri
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitClearCommand(ctx, this);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

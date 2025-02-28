@@ -22,7 +22,6 @@ import org.infinispan.util.ByteString;
  */
 @ProtoTypeId(ProtoStreamTypeIds.VERSIONED_COMMIT_COMMAND)
 public class VersionedCommitCommand extends CommitCommand {
-   public static final byte COMMAND_ID = 27;
 
    @ProtoField(5)
    MarshallableMap<Object, IncrementableEntryVersion> updatedVersions;
@@ -45,11 +44,6 @@ public class VersionedCommitCommand extends CommitCommand {
 
    public void setUpdatedVersions(Map<Object, IncrementableEntryVersion> updatedVersions) {
       this.updatedVersions = MarshallableMap.create(updatedVersions);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

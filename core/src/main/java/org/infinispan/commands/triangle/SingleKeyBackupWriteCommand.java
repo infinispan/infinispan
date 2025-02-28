@@ -43,8 +43,6 @@ import org.infinispan.util.ByteString;
 @ProtoTypeId(ProtoStreamTypeIds.SINGLE_KEY_BACKUP_WRITE_COMMAND)
 public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
 
-   public static final byte COMMAND_ID = 76;
-
    final Operation operation;
    final Object key;
    final Object valueOrFunction;
@@ -133,11 +131,6 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
    @ProtoField(11)
    PrivateMetadata getInternalMetadata() {
       return internalMetadata;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

@@ -25,8 +25,6 @@ import org.infinispan.xsite.irac.IracManagerKeyInfo;
 @ProtoTypeId(ProtoStreamTypeIds.IRAC_CLEANUP_KEYS_COMMAND)
 public class IracCleanupKeysCommand extends BaseIracCommand {
 
-   public static final byte COMMAND_ID = 122;
-
    private final Collection<IracManagerKeyInfo> cleanup;
 
    @ProtoFactory
@@ -45,11 +43,6 @@ public class IracCleanupKeysCommand extends BaseIracCommand {
       IracManager manager = componentRegistry.getIracManager().running();
       cleanup.forEach(manager::removeState);
       return CompletableFutures.completedNull();
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override
