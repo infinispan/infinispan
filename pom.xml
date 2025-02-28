@@ -1437,6 +1437,11 @@
             <version>${version.io.prometheus.server}</version>
          </dependency>
          <dependency>
+            <groupId>org.ehcache</groupId>
+            <artifactId>sizeof</artifactId>
+            <version>${version.ehcache.sizeof}</version>
+         </dependency>
+         <dependency>
             <groupId>org.mariadb.jdbc</groupId>
             <artifactId>mariadb-java-client</artifactId>
             <version>${versionx.org.mariadb.jdbc}</version>
