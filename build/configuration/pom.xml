@@ -198,7 +198,7 @@
       <version.maven.clean>3.4.1</version.maven.clean>
       <version.maven.compiler>3.14.0</version.maven.compiler>
       <version.maven.dependency>3.8.1</version.maven.dependency>
-      <version.maven.deploy>3.1.3</version.maven.deploy>
+      <version.maven.deploy>3.1.4</version.maven.deploy>
       <version.maven.enforcer>3.5.0</version.maven.enforcer>
       <version.maven.exec>3.5.0</version.maven.exec>
       <version.maven.gpg>3.2.7</version.maven.gpg>
