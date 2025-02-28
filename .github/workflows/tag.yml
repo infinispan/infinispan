@@ -53,7 +53,7 @@ jobs:
           mvn -B versions:set -DprocessAllModules=true -DnewVersion=${{ github.event.inputs.version }}
           mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ github.event.inputs.version }}
           sed -i "s/^:ispn_version:.*\$/:ispn_version: ${{ github.event.inputs.version }}/" documentation/src/main/asciidoc/topics/attributes/community-attributes.adoc
-          git commit -a -m --no-verify "Releasing ${{ github.event.inputs.version }}"
+          git commit --no-verify -a -m "Releasing ${{ github.event.inputs.version }}"
 
       - name: Publish to Central
         if: ${{ ! github.event.inputs.dryRun }}
@@ -72,7 +72,7 @@ jobs:
         run: |
           mvn -B versions:set -DprocessAllModules=true -DnewVersion=${{ github.event.inputs.nextVersion }}
           mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ github.event.inputs.nextVersion }}
-          git commit -a -m --no-verify "Next version ${{ github.event.inputs.nextVersion }}"
+          git commit --no-verify -a -m "Next version ${{ github.event.inputs.nextVersion }}"
 
       - name: Push changes
         if: ${{ ! github.event.inputs.dryRun }}
