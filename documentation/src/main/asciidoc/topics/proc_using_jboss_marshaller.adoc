@@ -17,9 +17,5 @@ include::xml/jboss_user_marshaller.xml[]
 .Programmatic
 [source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::code_examples/JBossUserMarshaller.java[]
+include::code_examples/GenericJBossMarshaller.java[]
 ----
-
-[role="_additional-resources"]
-.Additional resources
-* link:../../apidocs/org/infinispan/commons/marshall/AdvancedExternalizer.html[AdvancedExternalizer]
