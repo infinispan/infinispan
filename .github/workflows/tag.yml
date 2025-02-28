@@ -52,7 +52,7 @@ jobs:
         run: |
           mvn -B versions:set -DprocessAllModules=true -DnewVersion=${{ github.event.inputs.version }}
           mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ github.event.inputs.version }}
-          sed -i \"s/^:ispn_version:.*\$/:ispn_version: ${{ github.event.inputs.version }}/\" documentation/src/main/asciidoc/topics/attributes/community-attributes.adoc
+          sed -i "s/^:ispn_version:.*\$/:ispn_version: ${{ github.event.inputs.version }}/" documentation/src/main/asciidoc/topics/attributes/community-attributes.adoc
           git commit -a -m --no-verify "Releasing ${{ github.event.inputs.version }}"
 
       - name: Publish to Central
