@@ -51,7 +51,7 @@ import org.infinispan.remoting.transport.Address;
  * <h2>Partition handling</h2>
  *
  * @author Katia Aresti, karesti@redhat.com
- * @see <a href="http://infinispan.org/documentation/">Infinispan documentation</a>
+ * @see <a href="https://infinispan.org/documentation/">Infinispan documentation</a>
  * @since 9.2
  */
 public class ClusteredLockImpl implements ClusteredLock {

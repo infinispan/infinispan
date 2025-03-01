@@ -35,16 +35,16 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Infinispan's implementation of {@link javax.cache.CacheManager}.
  * <p>
- * It is possible to manipulate the configuration programmatically by supplying objects through the <tt>properties</tt>
+ * It is possible to manipulate the configuration programmatically by supplying objects through the <code>properties</code>
  * parameter. The following list contains the supported special property names:
  * <ul>
- *    <li><tt>org.infinispan.configuration.parsing.ConfigurationBuilderHolder</tt> an instance of {@link ConfigurationBuilderHolder}
- *    that will be used instead of attempting to load the configuration file specified by the <tt>uri</tt> parameter.</li>
- *    <li><tt>org.infinispan.configuration.global.GlobalConfigurationBuilder</tt> an instance of {@link GlobalConfigurationBuilder}
- *    that will be used as thebase GlobalConfigurationBuilder before parsing the file specified by the <tt>uri</tt> parameter.</li>
- *    <li><tt>org.infinispan.configuration.global.GlobalConfigurationBuilder-Consumer</tt> an instance of {@link Consumer<GlobalConfigurationBuilder>}
- *    that will be used to manipulate the global configuration after parsing the file specified by the <tt>uri</tt> parameter.</li>
- *    <li><tt>org.infinispan.configuration.cache.Configuration-Function</tt> an instance of {@link Function<String, org.infinispan.configuration.cache.Configuration>}
+ *    <li><code>org.infinispan.configuration.parsing.ConfigurationBuilderHolder</code> an instance of {@link ConfigurationBuilderHolder}
+ *    that will be used instead of attempting to load the configuration file specified by the <code>uri</code> parameter.</li>
+ *    <li><code>org.infinispan.configuration.global.GlobalConfigurationBuilder</code> an instance of {@link GlobalConfigurationBuilder}
+ *    that will be used as thebase GlobalConfigurationBuilder before parsing the file specified by the <code>uri</code> parameter.</li>
+ *    <li><code>org.infinispan.configuration.global.GlobalConfigurationBuilder-Consumer</code> an instance of {@link Consumer<GlobalConfigurationBuilder>}
+ *    that will be used to manipulate the global configuration after parsing the file specified by the <code>uri</code> parameter.</li>
+ *    <li><code>org.infinispan.configuration.cache.Configuration-Function</code> an instance of {@link Function<String, org.infinispan.configuration.cache.Configuration>}
  *    that will be used to obtain the configuration for a cache. If the function returns null, it will use the default configuration.</li>
  * </ul>
  *

@@ -51,19 +51,16 @@ public interface FilteringListenable<K, V> extends Listenable {
    /**
     * Registers a listener limiting the cache-entry specific events only to
     * annotations that are passed in as parameter.
-    * <p/>
-    * For example, if the listener passed in contains callbacks for
+        * For example, if the listener passed in contains callbacks for
     * {@link CacheEntryCreated} and {@link CacheEntryModified},
     * and filtered annotations contains only {@link CacheEntryCreated},
     * then the listener will be registered only for {@link CacheEntryCreated}
     * callbacks.
-    * <p/>
-    * Callback filtering only applies to {@link CacheEntryCreated},
+        * Callback filtering only applies to {@link CacheEntryCreated},
     * {@link CacheEntryModified}, {@link CacheEntryRemoved}
     * and {@link CacheEntryExpired} annotations.
     * If the listener contains other annotations, these are preserved.
-    * <p/>
-    * This methods enables dynamic registration of listener interests at
+        * This methods enables dynamic registration of listener interests at
     * runtime without the need to create several different listener classes.
     *
     * @param listener The listener to callback upon event notifications.  Must not be null.

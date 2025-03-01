@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 
 /**
  * ClusterRoleMapper. This class implements both a {@link MutablePrincipalRoleMapper} storing the mappings in a
- * persistent replicated internal cache named <tt>org.infinispan.ROLES</tt>
+ * persistent replicated internal cache named <code>org.infinispan.ROLES</code>
  *
  * @author Tristan Tarrant
  * @since 7.0

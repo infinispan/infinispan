@@ -9,7 +9,6 @@ import java.lang.annotation.Target;
 /**
  * Method level annotation that indicates a (no-param) method to be called on a component registered in the
  * component registry when the registry starts.
- * <p/>
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0

@@ -19,7 +19,7 @@ import java.util.Set;
  * to retrieve the sublist with indexes.
  *
  * @author Katia Aresti
- * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
+ * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
 public final class SubListFunction<K, V> implements ListBucketBaseFunction<K, V, Collection<V>> {

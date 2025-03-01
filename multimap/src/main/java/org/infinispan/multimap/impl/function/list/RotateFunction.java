@@ -18,7 +18,7 @@ import org.infinispan.multimap.impl.ListBucket;
  * to remove an element.
  *
  * @author Katia Aresti
- * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
+ * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
 public final class RotateFunction<K, V> implements ListBucketBaseFunction<K, V, V> {

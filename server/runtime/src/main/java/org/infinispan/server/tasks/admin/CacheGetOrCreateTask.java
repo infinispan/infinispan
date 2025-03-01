@@ -12,10 +12,10 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * Admin operation to create a cache
  * Parameters:
  * <ul>
- *    <li><strong>name</strong> the name of the cache to create</li>
- *    <li><strong>template</strong> the name of the template to use</li>
- *    <li><strong>configuration</strong> the XML configuration to use</li>
- *    <li><strong>flags</strong> any flags, e.g. PERMANENT</li>
+ *    <li><b>name</b> the name of the cache to create</li>
+ *    <li><b>template</b> the name of the template to use</li>
+ *    <li><b>configuration</b> the XML configuration to use</li>
+ *    <li><b>flags</b> any flags, e.g. PERMANENT</li>
  * </ul>
  *
  * @author Tristan Tarrant

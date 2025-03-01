@@ -89,8 +89,7 @@ public interface CacheTransaction {
    /**
     * Sets the version read for this key. The version is only set at the first time, i.e. multiple invocation of this
     * method will not change the state.
-    * <p/>
-    * Note: used in Repeatable Read + Write Skew + Clustering + Versioning.
+        * Note: used in Repeatable Read + Write Skew + Clustering + Versioning.
     */
    void addVersionRead(Object key, EntryVersion version);
 

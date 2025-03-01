@@ -1,7 +1,5 @@
 package org.infinispan.anchored.configuration;
 
-import static org.infinispan.anchored.impl.Log.CONFIG;
-
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
@@ -15,6 +13,8 @@ import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.partitionhandling.PartitionHandling;
 
+import static org.infinispan.anchored.impl.Log.CONFIG;
+
 /**
  * Configuration module builder to transform an {@link CacheMode#INVALIDATION_SYNC} cache into an "anchored keys" cache.
  *
@@ -24,7 +24,6 @@ import org.infinispan.partitionhandling.PartitionHandling;
  * cacheBuilder.clustering().cacheMode(CacheMode.INVALIDATION_SYNC);
  * cacheBuilder.addModule(AnchoredKeysConfigurationBuilder.class).enabled(true);
  * </pre>
- * </p>
  * @see AnchoredKeysConfiguration
  *
  * @since 11

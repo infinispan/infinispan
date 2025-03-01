@@ -35,10 +35,10 @@ import java.io.Serializable;
  * It's common practice to include externalizer implementations within the
  * classes that they marshall/unmarshall as <code>public static classes</code>.
  * To make externalizer implementations easier to code and more typesafe, make
- * sure you define type <T> as the type of object that's being
+ * sure you define type &lt;T&gt; as the type of object that's being
  * marshalled/unmarshalled.
  *
- * Even though this way of defining externalizers is very user friendly, it has
+ * Even though this way of defining externalizers is very user-friendly, it has
  * some disadvantages:
  *
  * <ul>
@@ -61,15 +61,15 @@ import java.io.Serializable;
  *
  * Please note that even though Externalizer is marked as {@link Serializable},
  * the need to marshall the externalizer is only really needed when developing
- * user friendly externalizers (using {@link SerializeWith}). {@link AdvancedExternalizer}
+ * user-friendly externalizers (using {@link SerializeWith}). {@link AdvancedExternalizer}
  * instances do not require the externalizer to be serializable since the
  * externalizer itself is not marshalled.
  *
  * Even though it's not strictly necessary, to avoid breaking compatibility
  * with old clients, {@link Externalizer} implements {@link Serializable} but
- * this requirement is only needed for those user friendly externalizers.
+ * this requirement is only needed for those user-friendly externalizers.
  * There's a chance that in future major releases {@link Externalizer} won't
- * extend {@link Serializable} any more, hence we strongly recommend that any
+ * extend {@link Serializable} anymore, hence we strongly recommend that any
  * user-friendly externalizer users mark their externalizer implementations as
  * either {@link Serializable} or {@link java.io.Externalizable}.
  *

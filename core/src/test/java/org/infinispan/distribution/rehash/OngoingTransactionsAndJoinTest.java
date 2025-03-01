@@ -42,8 +42,7 @@ import jakarta.transaction.Transaction;
 
 /**
  * This tests the following scenario:
- * <p/>
- * 1 node exists.  Transactions running.  Some complete, some in prepare, some in commit. New node joins, rehash occurs.
+  * 1 node exists.  Transactions running.  Some complete, some in prepare, some in commit. New node joins, rehash occurs.
  * Test that the new node is the owner and receives this state.
  */
 @Test(groups = "unstable", testName = "distribution.rehash.OngoingTransactionsAndJoinTest",

@@ -43,7 +43,7 @@ public interface ClusteredLockManager {
     *
     * @param name, the name of the lock
     * @return {@link ClusteredLock} instance
-    * @throws ClusteredLockException, when the lock is not defined
+    * @throws ClusteredLockException when the lock is not defined
     */
    ClusteredLock get(String name);
 
@@ -54,7 +54,7 @@ public interface ClusteredLockManager {
     *
     * @param name, the name of the lock
     * @return {@link ClusteredLockConfiguration} for this lock
-    * @throws ClusteredLockException, when the lock is not defined
+    * @throws ClusteredLockException when the lock is not defined
     */
    ClusteredLockConfiguration getConfiguration(String name);
 

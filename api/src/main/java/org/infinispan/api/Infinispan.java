@@ -22,9 +22,9 @@ public interface Infinispan extends AutoCloseable {
     * Calling create with the same URI multiple times should return the same object. Ref count the object.
     *
     * <ul>
-    *   <li><tt>file:///.../infinispan.xml</tt> Embedded Infinispan configured via XML/JSON/Yaml file</li>
-    *   <li><tt>classpath:///.../infinispan.xml</tt> Embedded Infinispan configured via XML/JSON/Yaml classpath resource</li>
-    *   <li><tt>hotrod[s]://[username[:password]@]host:port[,host2:port]?property=value[&property=value]</tt> </li>
+    *   <li><code>file:///.../infinispan.xml</code> Embedded Infinispan configured via XML/JSON/Yaml file</li>
+    *   <li><code>classpath:///.../infinispan.xml</code> Embedded Infinispan configured via XML/JSON/Yaml classpath resource</li>
+    *   <li><code>hotrod[s]://[username[:password]@]host:port[,host2:port]?property=value[&amp;property=value]</code> </li>
     * </ul>
     *
     * @param uri one of the supported Infinispan URIs:

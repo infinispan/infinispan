@@ -70,8 +70,6 @@ public interface ClusterExecutor extends Executor {
    /**
     * The same as {@link ClusterExecutor#submit(Runnable)}, except the Runnable must also implement Serializable.
     * <p>
-    *
-    * <p>
     * This method will be used automatically by lambdas, which prevents users from having to manually cast to
     * a Serializable lambda.
     * @param command the command to execute

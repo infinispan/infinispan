@@ -402,11 +402,9 @@ public interface CommandsFactory {
    /**
     * Initializes a {@link org.infinispan.commands.ReplicableCommand} read from a data stream with components specific
     * to the target cache instance.
-    * <p/>
-    * Implementations should also be deep, in that if the command contains other commands, these should be recursed
+        * Implementations should also be deep, in that if the command contains other commands, these should be recursed
     * into.
-    * <p/>
-    *
+        *
     * @param command command to initialize.  Cannot be null.
     * @param isRemote
     * @deprecated since 11.0, please use {@link org.infinispan.commands.remote.CacheRpcCommand#invokeAsync(ComponentRegistry)}

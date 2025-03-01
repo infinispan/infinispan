@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Olaf Bergner
  * @author Matej Cimbora (mcimbora@redhat.com)
  */
 
@@ -36,13 +36,13 @@ public class CachedBookServiceImpl implements CachedBookService {
     * </ol>
     * </p>
     * <p>
-    * Note that it is <strong>important</strong> that we explicitly tell Spring to use {@code bookId}
-    * as the cache key. Otherwise, Spring would <strong>derive</strong> a cache key from the
+    * Note that it is <b>important</b> that we explicitly tell Spring to use {@code bookId}
+    * as the cache key. Otherwise, Spring would <b>derive</b> a cache key from the
     * parameters passed in (in our case only {@code bookId}), a cache key we have no control over.
     * This would get us into trouble when in {@link #updateBook(Book)} we need a book's cache key to
     * remove it from the cache. But we wouldn't know that cache key since we don't know Spring's key
     * generation algorithm. Therefore, we consistently use {@code key = "#bookId"} or
-    * {@code key = "#book.id"} to tell Spring to <strong>always</strong> use a book's id as its
+    * {@code key = "#book.id"} to tell Spring to <b>always</b> use a book's id as its
     * cache key.
     * </p>
     */

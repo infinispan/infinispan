@@ -12,10 +12,8 @@ import org.infinispan.configuration.parsing.Element;
  *
  * Controls certain tuning parameters that may break some of Infinispan's public API contracts in
  * exchange for better performance in some cases.
- * <p />
  * Use with care, only after thoroughly reading and understanding the documentation about a specific
  * feature.
- * <p />
  *
  * @see UnsafeConfigurationBuilder
  */

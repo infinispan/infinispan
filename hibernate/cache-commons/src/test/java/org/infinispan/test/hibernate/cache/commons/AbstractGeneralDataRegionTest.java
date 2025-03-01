@@ -108,8 +108,7 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
 
 	/**
 	 * Test method for {@link QueryResultsRegion#evictAll()}.
-	 * <p/>
-	 * FIXME add testing of the "immediately without regard for transaction isolation" bit in the
+	 	 * FIXME add testing of the "immediately without regard for transaction isolation" bit in the
 	 * CollectionRegionAccessStrategy API.
 	 */
 	public void testEvictAll() throws Exception {

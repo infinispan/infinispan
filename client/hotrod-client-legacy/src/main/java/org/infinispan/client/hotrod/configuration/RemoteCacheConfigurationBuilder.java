@@ -1,21 +1,5 @@
 package org.infinispan.client.hotrod.configuration;
 
-import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.CONFIGURATION;
-import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.FORCE_RETURN_VALUES;
-import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.MARSHALLER;
-import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.MARSHALLER_CLASS;
-import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NAME;
-import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_BLOOM_FILTER;
-import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_FACTORY;
-import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_MAX_ENTRIES;
-import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_MODE;
-import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.TEMPLATE_NAME;
-import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.TRANSACTION_MANAGER;
-import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.TRANSACTION_MODE;
-import static org.infinispan.client.hotrod.logging.Log.HOTROD;
-import static org.infinispan.commons.util.Util.getInstance;
-import static org.infinispan.commons.util.Util.loadClass;
-
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -39,6 +23,21 @@ import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.TypedProperties;
 
 import jakarta.transaction.TransactionManager;
+import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.CONFIGURATION;
+import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.FORCE_RETURN_VALUES;
+import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.MARSHALLER;
+import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.MARSHALLER_CLASS;
+import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NAME;
+import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_BLOOM_FILTER;
+import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_FACTORY;
+import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_MAX_ENTRIES;
+import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.NEAR_CACHE_MODE;
+import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.TEMPLATE_NAME;
+import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.TRANSACTION_MANAGER;
+import static org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration.TRANSACTION_MODE;
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+import static org.infinispan.commons.util.Util.getInstance;
+import static org.infinispan.commons.util.Util.loadClass;
 
 /**
  * Per-cache configuration.
@@ -62,7 +61,7 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
    }
 
    /**
-    * Whether or not to implicitly FORCE_RETURN_VALUE for all calls to this cache.
+    * Whether to implicitly FORCE_RETURN_VALUE for all calls to this cache.
     */
    public RemoteCacheConfigurationBuilder forceReturnValues(boolean forceReturnValues) {
       attributes.attribute(FORCE_RETURN_VALUES).set(forceReturnValues);
@@ -166,8 +165,8 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
     * @param template the template to use
     * @return an instance of the builder
     * @deprecated since default templates have been removed, use {@link #configuration(String)} and supply the cache type
-    * using the declarative configuration, for example <tt>{"replicated-cache": { "mode": "sync"}}</tt> in place of
-    * <tt>org.infinispan.REPL_SYNC</tt>
+    * using the declarative configuration, for example <code>{"replicated-cache": { "mode": "sync"}}</code> in place of
+    * <code>org.infinispan.REPL_SYNC</code>
     */
    @Deprecated(forRemoval = true, since = "15.1")
    public RemoteCacheConfigurationBuilder templateName(DefaultTemplate template) {
@@ -219,7 +218,7 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
    }
 
    /**
-    * The {@link javax.transaction.TransactionManager} to use for the cache
+    * The {@link jakarta.transaction.TransactionManager} to use for the cache
     *
     * @param manager an instance of a TransactionManager
     * @return an instance of the builder

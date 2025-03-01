@@ -139,7 +139,7 @@ public interface XmlPullParser {
 
    /**
     * Signalize that parser is at the very beginning of the document and nothing was read yet. This event type can only
-    * be observed by calling getEvent() before the first call to next(), nextToken, or nextTag()</a>).
+    * be observed by calling getEvent() before the first call to next(), nextToken, or nextTag()).
     *
     * @see #next
     * @see #nextToken
@@ -149,7 +149,7 @@ public interface XmlPullParser {
    /**
     * Logical end of the xml document. Returned from getEventType, next() and nextToken() when the end of the input
     * document has been reached.
-    * <p><strong>NOTE:</strong> calling again
+    * <p><b>NOTE:</b> calling again
     * <a href="#next()">next()</a> or <a href="#nextToken()">nextToken()</a>
     * will result in exception being thrown.
     *
@@ -197,7 +197,7 @@ public interface XmlPullParser {
 
    /**
     * Character data was read and will is available by calling getText().
-    * <p><strong>Please note:</strong> <a href="#next()">next()</a> will
+    * <p><b>Please note:</b> <a href="#next()">next()</a> will
     * accumulate multiple events into one TEXT event, skipping IGNORABLE_WHITESPACE, PROCESSING_INSTRUCTION and COMMENT
     * events, In contrast, <a href="#nextToken()">nextToken()</a> will stop reading text when any other event is
     * observed. Also, when the state was reached by calling next(), the text value will be normalized, whereas getText()
@@ -240,7 +240,7 @@ public interface XmlPullParser {
     * parsers may be able to detect ignorable whitespace at other locations. The ignorable whitespace string is
     * available by calling getText()
     *
-    * <p><strong>NOTE:</strong> this is different from calling the
+    * <p><b>NOTE:</b> this is different from calling the
     * isWhitespace() method, since text content may be whitespace but not ignorable.
     * <p>
     * Ignorable whitespace is skipped by next() automatically; this event type is never returned from next().
@@ -307,7 +307,7 @@ public interface XmlPullParser {
 
    /**
     * This feature determines whether the parser processes namespaces. As for all features, the default value is false.
-    * <p><strong>NOTE:</strong> The value can not be changed during
+    * <p><b>NOTE:</b> The value can not be changed during
     * parsing an must be set before parsing.
     *
     * @see #getFeature
@@ -332,7 +332,7 @@ public interface XmlPullParser {
     * <p>
     * If this featue is activated, then the document declaration must be processed by the parser.
     *
-    * <p><strong>Please note:</strong> If the document type declaration
+    * <p><b>Please note:</b> If the document type declaration
     * was ignored, entity references may cause exceptions later in the parsing process. The default value of this
     * feature is false. It cannot be changed during parsing.
     *
@@ -346,7 +346,7 @@ public interface XmlPullParser {
     * If this feature is activated, all validation errors as defined in the XML 1.0 sepcification are reported. This
     * implies that FEATURE_PROCESS_DOCDECL is true and both, the internal and external document type declaration will be
     * processed.
-    * <p><strong>Please Note:</strong> This feature can not be changed
+    * <p><b>Please Note:</b> This feature can not be changed
     * during parsing. The default value is false.
     *
     * @see #getFeature
@@ -371,8 +371,8 @@ public interface XmlPullParser {
 
    /**
     * Returns the current value of the given feature.
-    * <p><strong>Please note:</strong> unknown features are
-    * <strong>always</strong> returned as false.
+    * <p><b>Please note:</b> unknown features are
+    * <b>always</b> returned as false.
     *
     * @param name The name of feature to be retrieved.
     * @return The value of the feature.
@@ -396,7 +396,7 @@ public interface XmlPullParser {
     * Look up the value of a property.
     * <p>
     * The property name is any fully-qualified URI.
-    * <p><strong>NOTE:</strong> unknown properties are <strong>always</strong>
+    * <p><b>NOTE:</b> unknown properties are <b>always</b>
     * returned as null.
     *
     * @param name The name of property to be retrieved.
@@ -417,7 +417,7 @@ public interface XmlPullParser {
     * Sets the input stream the parser is going to process. This call resets the parser state and sets the event type to
     * the initial value START_DOCUMENT.
     *
-    * <p><strong>NOTE:</strong> If an input encoding string is passed,
+    * <p><b>NOTE:</b> If an input encoding string is passed,
     * it MUST be used. Otherwise, if inputEncoding is null, the parser SHOULD try to determine input encoding following
     * XML 1.0 specification (see below). If encoding detection is supported then following feature
     * <a href="http://xmlpull.org/v1/doc/features.html#detect-encoding">http://xmlpull.org/v1/doc/features.html#detect-encoding</a>
@@ -526,7 +526,7 @@ public interface XmlPullParser {
     *  return null;
     * </pre>
     *
-    * <p><strong>Please note:</strong> parser implementations
+    * <p><b>Please note:</b> parser implementations
     * may provide more efifcient lookup, e.g. using a Hashtable. The 'xml' prefix is bound to
     * "http://www.w3.org/XML/1998/namespace", as defined in the
     * <a href="http://www.w3.org/TR/REC-xml-names/#ns-using">Namespaces in XML</a>
@@ -605,7 +605,7 @@ public interface XmlPullParser {
     * See description of nextToken() for detailed description of possible returned values for different types of
     * events.
     *
-    * <p><strong>NOTE:</strong> in case of ENTITY_REF, this method returns
+    * <p><b>NOTE:</b> in case of ENTITY_REF, this method returns
     * the entity replacement text (or null if not available). This is the only case where getText() and
     * getTextCharacters() return different values.
     *
@@ -620,7 +620,7 @@ public interface XmlPullParser {
     * Returns the buffer that contains the text of the current event, as well as the start offset and length relevant
     * for the current event. See getText(), next() and nextToken() for description of possible returned values.
     *
-    * <p><strong>Please note:</strong> this buffer must not
+    * <p><b>Please note:</b> this buffer must not
     * be modified and its content MAY change after a call to next() or nextToken(). This method will always return the
     * same value as getText(), except for ENTITY_REF. In the case of ENTITY ref, getText() returns the replacement text
     * and this method returns the actual input buffer containing the entity name. If getText() returns null, this method
@@ -687,12 +687,12 @@ public interface XmlPullParser {
     * namespaces are not enabled or the attribute has no namespace. Throws an IndexOutOfBoundsException if the index is
     * out of range or the current event type is not START_TAG.
     *
-    * <p><strong>NOTE:</strong> if FEATURE_REPORT_NAMESPACE_ATTRIBUTES is set
+    * <p><b>NOTE:</b> if FEATURE_REPORT_NAMESPACE_ATTRIBUTES is set
     * then namespace attributes (xmlns:ns='...') must be reported with namespace
     * <a href="http://www.w3.org/2000/xmlns/">http://www.w3.org/2000/xmlns/</a>
     * (visit this URL for description!). The default namespace attribute (xmlns="...") will be reported with empty
     * namespace.
-    * <p><strong>NOTE:</strong>The xml prefix is bound as defined in
+    * <p><b>NOTE:</b>The xml prefix is bound as defined in
     * <a href="http://www.w3.org/TR/REC-xml-names/#ns-using">Namespaces in XML</a>
     * specification to "http://www.w3.org/XML/1998/namespace".
     *
@@ -743,7 +743,7 @@ public interface XmlPullParser {
     * Returns the given attributes value. Throws an IndexOutOfBoundsException if the index is out of range or current
     * event type is not START_TAG.
     *
-    * <p><strong>NOTE:</strong> attribute value must be normalized
+    * <p><b>NOTE:</b> attribute value must be normalized
     * (including entity replacement text if PROCESS_DOCDECL is false) as described in
     * <a href="http://www.w3.org/TR/REC-xml#AVNormalize">XML 1.0 section
     * 3.3.3 Attribute-Value Normalization</a>
@@ -758,7 +758,7 @@ public interface XmlPullParser {
     * Returns the attributes value identified by namespace URI and namespace localName. If namespaces are disabled
     * namespace must be null. If current event type is not START_TAG then IndexOutOfBoundsException will be thrown.
     *
-    * <p><strong>NOTE:</strong> attribute value must be normalized
+    * <p><b>NOTE:</b> attribute value must be normalized
     * (including entity replacement text if PROCESS_DOCDECL is false) as described in
     * <a href="http://www.w3.org/TR/REC-xml#AVNormalize">XML 1.0 section
     * 3.3.3 Attribute-Value Normalization</a>
@@ -862,14 +862,14 @@ public interface XmlPullParser {
     * </dd>
     * </dl>
     *
-    * <p><strong>NOTE:</strong> there is no gurantee that there will only one TEXT or
+    * <p><b>NOTE:</b> there is no gurantee that there will only one TEXT or
     * IGNORABLE_WHITESPACE event from nextToken() as parser may chose to deliver element content in multiple tokens
     * (dividing element content into chunks)
     *
-    * <p><strong>NOTE:</strong> whether returned text of token is end-of-line normalized
+    * <p><b>NOTE:</b> whether returned text of token is end-of-line normalized
     * is depending on FEATURE_XML_ROUNDTRIP.
     *
-    * <p><strong>NOTE:</strong> XMLDecl (&lt;?xml ...?&gt;) is not reported but its content
+    * <p><b>NOTE:</b> XMLDecl (&lt;?xml ...?&gt;) is not reported but its content
     * is available through optional properties (see class description above).
     *
     * @see #next
@@ -911,9 +911,10 @@ public interface XmlPullParser {
     * parser will be positioned on END_TAG.
     *
     * <p>The motivation for this function is to allow to parse consistently both
-    * empty elements and elements that has non empty content, for example for input: <ol>
-    * <li>&lt;tag&gt;foo&lt;/tag&gt;
-    * <li>&lt;tag&gt;&lt;/tag&gt; (which is equivalent to &lt;tag/&gt;
+    * empty elements and elements that has non empty content, for example for input: <ul>
+    * <li>&lt;tag&gt;foo&lt;/tag&gt;</li>
+    * <li>&lt;tag&gt;&lt;/tag&gt; (which is equivalent to &lt;tag/&gt;</li>
+    * </ul>
     * both input can be parsed with the same code:
     * <pre>
     *   p.nextTag()

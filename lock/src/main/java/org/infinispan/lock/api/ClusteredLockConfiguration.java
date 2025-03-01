@@ -6,7 +6,7 @@ package org.infinispan.lock.api;
  * The only mode supported now is "non reentrant" locks for "nodes".
  *
  * @author Katia Aresti, karesti@redhat.com
- * @see <a href="http://infinispan.org/documentation/">Infinispan documentation</a>
+ * @see <a href="https://infinispan.org/documentation/">Infinispan documentation</a>
  * @since 9.2
  */
 public class ClusteredLockConfiguration {

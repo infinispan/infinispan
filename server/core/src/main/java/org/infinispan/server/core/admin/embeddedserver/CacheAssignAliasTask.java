@@ -13,9 +13,9 @@ import org.infinispan.server.core.admin.AdminServerTask;
  * Admin operation to (re)-assign an alias to a cache
  * Parameters:
  * <ul>
- *    <li><strong>name</strong> the name of the cache to which the alias should be assigned</li>
- *    <li><strong>alias</strong> the name of the alias</li>
- *    <li><strong>flags</strong> unused</li>
+ *    <li><b>name</b> the name of the cache to which the alias should be assigned</li>
+ *    <li><b>alias</b> the name of the alias</li>
+ *    <li><b>flags</b> unused</li>
  * </ul>
  *
  * @author Tristan Tarrant

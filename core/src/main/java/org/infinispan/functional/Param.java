@@ -49,7 +49,7 @@ public interface Param<P> {
     * the write operation only in the in-memory contents of the caches in
     * the cluster.
     *
-    * @apiNote Previously this flag had only two options; PERSIST and SKIP
+    * Previously this flag had only two options; PERSIST and SKIP
     * since it was assumed that an implementation can use write-only command
     * when it is not interested in the previous value. However sometimes
     * we are interested in the memory-only data but cannot afford to load it

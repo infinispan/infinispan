@@ -17,8 +17,8 @@ import org.infinispan.server.core.admin.AdminServerTask;
  * Admin operation to create a cache
  * Parameters:
  * <ul>
- *    <li><strong>name</strong> the name of the cache to create</li>
- *    <li><strong>flags</strong> any flags, e.g. PERMANENT</li>
+ *    <li><b>name</b> the name of the cache to create</li>
+ *    <li><b>flags</b> any flags, e.g. PERMANENT</li>
  * </ul>
  *
  * @author Tristan Tarrant

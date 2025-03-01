@@ -12,7 +12,7 @@ import org.springframework.beans.factory.InitializingBean;
 /**
  * HotrodServerLifecycleBean.
  *
- * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Olaf Bergner
  * @since 5.1
  */
 public class HotrodServerLifecycleBean implements InitializingBean, DisposableBean {

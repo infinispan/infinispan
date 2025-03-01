@@ -22,7 +22,7 @@ import org.infinispan.multimap.impl.HashMapBucket;
  * This function inserts a collection of key-value pairs into the multimap. If it not exists, a new one is created.
  *
  * @author José Bolina
- * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
+ * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
 public class HashMapPutFunction<K, HK, HV> extends HashMapBucketBaseFunction<K, HK, HV, Integer> {

@@ -4,7 +4,6 @@ import org.infinispan.commons.CacheException;
 
 /**
  * Thrown when the version of entry has changed between loading the entry to the context and committing new value.
- * @see ScatteredDistributionInterceptor
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */

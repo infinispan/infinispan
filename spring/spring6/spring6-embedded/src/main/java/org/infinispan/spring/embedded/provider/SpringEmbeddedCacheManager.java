@@ -17,13 +17,13 @@ import org.springframework.util.Assert;
  * <code>Infinispan EmbeddedCacheManager</code>} instance.
  * </p>
  * <p>
- * Note that this <code>CacheManager</code> <strong>does</strong> support adding new
+ * Note that this <code>CacheManager</code> <b>does</b> support adding new
  * {@link org.infinispan.Cache <code>Caches</code>} at runtime, i.e. <code>Caches</code> added
  * programmatically to the backing <code>EmbeddedCacheManager</code> after this
  * <code>CacheManager</code> has been constructed will be seen by this <code>CacheManager</code>.
  * </p>
  *
- * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Olaf Bergner
  * @author Marius Bogoevici
  *
  */
@@ -31,7 +31,7 @@ public class SpringEmbeddedCacheManager implements CacheManager {
 
    private final EmbeddedCacheManager nativeCacheManager;
    private final ConcurrentMap<String, SpringCache> springCaches = new ConcurrentHashMap<>();
-   private boolean reactive;
+   private final boolean reactive;
 
    /**
     * @param nativeCacheManager Underlying cache manager

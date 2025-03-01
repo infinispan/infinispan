@@ -171,10 +171,10 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    }
 
    /**
-    * Specifies the TLS SNI hostname for the connection
+    * Specifies the TLS SNI hostname for the connection.
+    * Setting this property also implicitly enables SSL/TLS (see {@link #enable()}
     *
-    * @see javax.net.ssl.SSLParameters#setServerNames(List). Setting this property also implicitly enables SSL/TLS (see
-    * {@link #enable()}
+    * @see javax.net.ssl.SSLParameters#setServerNames(List)
     */
    public SslConfigurationBuilder sniHostName(String sniHostName) {
       this.sniHostName = sniHostName;

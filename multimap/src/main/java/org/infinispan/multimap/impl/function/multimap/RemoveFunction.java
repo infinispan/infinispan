@@ -20,7 +20,7 @@ import org.infinispan.multimap.impl.ExternalizerIds;
  * key/value pair and will return {@link Boolean#FALSE} if the key or key/value pair does not exist
  *
  * @author Katia Aresti - karesti@redhat.com
- * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
+ * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 9.2
  */
 public final class RemoveFunction<K, V> implements BaseFunction<K, V, Boolean> {

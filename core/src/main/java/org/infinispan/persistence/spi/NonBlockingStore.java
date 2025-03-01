@@ -9,18 +9,17 @@ import java.util.concurrent.Executor;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import jakarta.transaction.Transaction;
 
 /**
  * The contract for defining how caches interface with external sources of data, such as databases or filesystems.
@@ -198,8 +197,7 @@ public interface NonBlockingStore<K, V> {
     * This method is to be invoked when the store should clean up all underlying data and storage of said data. For
     * example a database store would remove the underlying table(s) that it is using and a file based store would
     * remove all of the various files or directories it may have created.
-    * @implSpec
-    * The default implementation invokes the {@link #stop()} method returning the stage it returned.
+        * The default implementation invokes the {@link #stop()} method returning the stage it returned.
     * @return a stage that, when complete, indicates that this store is stopped and all data and storage for it are also
     *    cleaned up
     */
@@ -212,8 +210,7 @@ public interface NonBlockingStore<K, V> {
     * to determine which methods of the store can be used and how the data in the store can be handled.
     * <p>
     * Refer to {@link Characteristic} and its values for descriptions of each characteristic for stores.
-    * @implSpec
-    * The default implementation returns an empty set.
+        * The default implementation returns an empty set.
     * @return the set of characteristics that this store supports.
     */
    default Set<Characteristic> characteristics() {
@@ -236,8 +233,7 @@ public interface NonBlockingStore<K, V> {
     modification-queue becoming full. This allows for this store to be unavailable for short periods of time without a
     {@link StoreUnavailableException} being thrown; however if the store does not become available before the queue
     fills, then a {@link StoreUnavailableException} is thrown.
-    * @implSpec
-    * The default implementation returns a completed stage with the value {@code Boolean.TRUE}.
+        * The default implementation returns a completed stage with the value {@code Boolean.TRUE}.
     * @return stage that, when complete, indicates if the store is available.
     */
    default CompletionStage<Boolean> isAvailable() {
@@ -248,24 +244,23 @@ public interface NonBlockingStore<K, V> {
     * Returns a stage that will contain the value loaded from the store. If a {@link MarshallableEntry} needs to be
     * created here, {@link InitializationContext#getMarshallableEntryFactory()} and
     * {@link InitializationContext#getByteBufferFactory()} should be used.
-    * <p>
     * <h4>Summary of Characteristics Effects</h4>
-    * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
+    * <table border="1" ><caption>Summary of Characteristics Effects</caption>
     *    <tr>
-    *       <th bgcolor="#CCCCFF" align="left">Characteristic</th>
-    *       <th bgcolor="#CCCCFF" align="left">Effect</th>
+    *       <th>Characteristic</th>
+    *       <th>Effect</th>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#WRITE_ONLY}</td>
-    *       <td valign="top">This method will never be invoked.</td>
+    *       <td>{@link Characteristic#WRITE_ONLY}</td>
+    *       <td>This method will never be invoked.</td>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#EXPIRATION}</td>
-    *       <td valign="top">When set this method must not return expired entries.</td>
+    *       <td>{@link Characteristic#EXPIRATION}</td>
+    *       <td>When set this method must not return expired entries.</td>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">When this is not set or segmentation is disabled in the
+    *       <td>{@link Characteristic#SEGMENTABLE}</td>
+    *       <td>When this is not set or segmentation is disabled in the
     *       {@link StoreConfiguration#segmented() configuration},
     *       the {@code segment} parameter may be ignored.</td>
     *    </tr>
@@ -281,24 +276,23 @@ public interface NonBlockingStore<K, V> {
 
    /**
     * Returns a stage that will contain whether the value can be found in the store.
-    * <p>
     * <h4>Summary of Characteristics Effects</h4>
-    * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
+    * <table border="1" ><caption>Summary of Characteristics Effects</caption>
     *    <tr>
-    *       <th bgcolor="#CCCCFF" align="left">Characteristic</th>
-    *       <th bgcolor="#CCCCFF" align="left">Effect</th>
+    *       <th>Characteristic</th>
+    *       <th>Effect</th>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#WRITE_ONLY}</td>
-    *       <td valign="top">This method will never be invoked.</td>
+    *       <td>{@link Characteristic#WRITE_ONLY}</td>
+    *       <td>This method will never be invoked.</td>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#EXPIRATION}</td>
-    *       <td valign="top">When set this method must not return true if the entry was expired.</td>
+    *       <td>{@link Characteristic#EXPIRATION}</td>
+    *       <td>When set this method must not return true if the entry was expired.</td>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">When this is not set or segmentation is disabled in the
+    *       <td>{@link Characteristic#SEGMENTABLE}</td>
+    *       <td>When this is not set or segmentation is disabled in the
     *       {@link StoreConfiguration#segmented() configuration},
     *       the {@code segment} parameter may be ignored.</td>
     *    </tr>
@@ -307,8 +301,7 @@ public interface NonBlockingStore<K, V> {
     * If a problem is encountered, it is recommended to wrap any created/caught Throwable in a
     * {@link PersistenceException} and the stage be completed exceptionally.
     * <p>
-    * @implSpec
-    * A default implementation is provided that does the following:
+        * A default implementation is provided that does the following:
     * <pre>{@code
     * return load(segment, key)
     *        .thenApply(Objects::nonNull);}
@@ -324,24 +317,23 @@ public interface NonBlockingStore<K, V> {
 
    /**
     * Writes the entry to the store for the given segment returning a stage that completes normally when it is finished.
-    * <p>
     * <h4>Summary of Characteristics Effects</h4>
-    * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
+    * <table border="1" ><caption>Summary of Characteristics Effects</caption>
     *    <tr>
-    *       <th bgcolor="#CCCCFF" align="left">Characteristic</th>
-    *       <th bgcolor="#CCCCFF" align="left">Effect</th>
+    *       <th>Characteristic</th>
+    *       <th>Effect</th>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#READ_ONLY}</td>
-    *       <td valign="top">This method will never be invoked.</td>
+    *       <td>{@link Characteristic#READ_ONLY}</td>
+    *       <td>This method will never be invoked.</td>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#EXPIRATION}</td>
-    *       <td valign="top">When set, this method must store the expiration metadata.</td>
+    *       <td>{@link Characteristic#EXPIRATION}</td>
+    *       <td>When set, this method must store the expiration metadata.</td>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">When set and segmentation is not disabled in the
+    *       <td>{@link Characteristic#SEGMENTABLE}</td>
+    *       <td>When set and segmentation is not disabled in the
     *       {@link StoreConfiguration#segmented() configuration},
     *       this method must ensure the segment is stored with the entry.</td>
     *    </tr>
@@ -358,20 +350,19 @@ public interface NonBlockingStore<K, V> {
    /**
     * Removes the entry for given key and segment from the store
     * and optionally report if the entry was actually removed or not.
-    * <p>
     * <h4>Summary of Characteristics Effects</h4>
-    * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
+    * <table border="1" ><caption>Summary of Characteristics Effects</caption>
     *    <tr>
-    *       <th bgcolor="#CCCCFF" align="left">Characteristic</th>
-    *       <th bgcolor="#CCCCFF" align="left">Effect</th>
+    *       <th>Characteristic</th>
+    *       <th>Effect</th>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#READ_ONLY}</td>
-    *       <td valign="top">This method will never be invoked.</td>
+    *       <td>{@link Characteristic#READ_ONLY}</td>
+    *       <td>This method will never be invoked.</td>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">When this is not set or segmentation is disabled in the
+    *       <td>{@link Characteristic#SEGMENTABLE}</td>
+    *       <td>When this is not set or segmentation is disabled in the
     *       {@link StoreConfiguration#segmented() configuration},
     *       the {@code segment} parameter may be ignored.</td>
     *    </tr>
@@ -391,21 +382,20 @@ public interface NonBlockingStore<K, V> {
     * Invoked when a node becomes an owner of the given segments. Some store implementations may require initializing
     * additional resources when a new segment is required. For example a store could store entries in a different file
     * per segment.
-    * <p>
     * <h4>Summary of Characteristics Effects</h4>
-    * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
+    * <table border="1" ><caption>Summary of Characteristics Effects</caption>
     *    <tr>
-    *       <th bgcolor="#CCCCFF" align="left">Characteristic</th>
-    *       <th bgcolor="#CCCCFF" align="left">Effect</th>
+    *       <th>Characteristic</th>
+    *       <th>Effect</th>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#SHAREABLE}</td>
-    *       <td valign="top">If the store has this characteristic and is configured to be {@link StoreConfiguration#shared()},
+    *       <td>{@link Characteristic#SHAREABLE}</td>
+    *       <td>If the store has this characteristic and is configured to be {@link StoreConfiguration#shared()},
     *          this method will never be invoked.</td>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">This method is invoked only if the store has this characteristic and is configured to be
+    *       <td>{@link Characteristic#SEGMENTABLE}</td>
+    *       <td>This method is invoked only if the store has this characteristic and is configured to be
     *          {@link StoreConfiguration#segmented() segmented}.</td>
     *    </tr>
     * </table>
@@ -423,21 +413,20 @@ public interface NonBlockingStore<K, V> {
     * Invoked when a node loses ownership of the given segments. A store must then remove any entries that map to the
     * given segments and can remove any resources related to the given segments. For example, a database store can
     * delete rows of the given segment or a file-based store can delete files related to the given segments.
-    * <p>
     * <h4>Summary of Characteristics Effects</h4>
-    * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
+    * <table border="1" ><caption>Summary of Characteristics Effects</caption>
     *    <tr>
-    *       <th bgcolor="#CCCCFF" align="left">Characteristic</th>
-    *       <th bgcolor="#CCCCFF" align="left">Effect</th>
+    *       <th>Characteristic</th>
+    *       <th>Effect</th>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#SHAREABLE}</td>
-    *       <td valign="top">If the store has this characteristic and is configured to be
+    *       <td>{@link Characteristic#SHAREABLE}</td>
+    *       <td>If the store has this characteristic and is configured to be
     *       {@link StoreConfiguration#shared() shared}, this method will never be invoked.</td>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">This method is invoked only if the store has this characteristic and is configured to be
+    *       <td>{@link Characteristic#SEGMENTABLE}</td>
+    *       <td>This method is invoked only if the store has this characteristic and is configured to be
     *          {@link StoreConfiguration#segmented() segmented}.</td>
     *    </tr>
     * </table>
@@ -453,16 +442,15 @@ public interface NonBlockingStore<K, V> {
 
    /**
     * Clears all entries from the store.
-    * <p>
     * <h4>Summary of Characteristics Effects</h4>
-    * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
+    * <table border="1" ><caption>Summary of Characteristics Effects</caption>
     *    <tr>
-    *       <th bgcolor="#CCCCFF" align="left">Characteristic</th>
-    *       <th bgcolor="#CCCCFF" align="left">Effect</th>
+    *       <th>Characteristic</th>
+    *       <th>Effect</th>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#READ_ONLY}</td>
-    *       <td valign="top">This method will never be invoked.</td>
+    *       <td>{@link Characteristic#READ_ONLY}</td>
+    *       <td>This method will never be invoked.</td>
     *    </tr>
     * </table>
     * <p>
@@ -485,20 +473,20 @@ public interface NonBlockingStore<K, V> {
     * <p>
     * WARNING: For performance reasons neither Publisher will emit any {@link SegmentedPublisher}s until both write
     * and remove Publishers are subscribed to. These Publishers should also be only subscribed once.
-    * <p>
+    * </p>
     * <h4>Summary of Characteristics Effects</h4>
-    * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
+    * <table border="1" ><caption>Summary of Characteristics Effects</caption>
     *    <tr>
-    *       <th bgcolor="#CCCCFF" align="left">Characteristic</th>
-    *       <th bgcolor="#CCCCFF" align="left">Effect</th>
+    *       <th>Characteristic</th>
+    *       <th>Effect</th>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#READ_ONLY}</td>
-    *       <td valign="top">This method will never be invoked.</td>
+    *       <td>{@link Characteristic#READ_ONLY}</td>
+    *       <td>This method will never be invoked.</td>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">If not set or segmentation is disabled in the
+    *       <td>{@link Characteristic#SEGMENTABLE}</td>
+    *       <td>If not set or segmentation is disabled in the
     *       {@link StoreConfiguration#segmented() configuration},
     *       the {@code publisherCount} parameter has a value of 1,
     *       which means there is only be one {@code SegmentedPublisher} to subscribe to.</td>
@@ -508,8 +496,7 @@ public interface NonBlockingStore<K, V> {
     * If a problem is encountered, it is recommended to wrap any created/caught Throwable in a
     * {@link PersistenceException} and the stage be completed exceptionally.
     * <p>
-    * @implSpec
-    * The default implementation subscribes to both Publishers but requests values from the write publisher invoking
+        * The default implementation subscribes to both Publishers but requests values from the write publisher invoking
     * {@link #write(int, MarshallableEntry)} for each of the entries in a non overlapping sequential fashion. Once all
     * of the writes are complete it does the same for the remove key Publisher but invokes {@link #delete(int, Object)}
     * for each key.
@@ -540,20 +527,19 @@ public interface NonBlockingStore<K, V> {
 
    /**
     * Returns the amount of entries that map to the given segments in the store.
-    * <p>
     * <h4>Summary of Characteristics Effects</h4>
-    * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
+    * <table border="1" ><caption>Summary of Characteristics Effects</caption>
     *    <tr>
-    *       <th bgcolor="#CCCCFF" align="left">Characteristic</th>
-    *       <th bgcolor="#CCCCFF" align="left">Effect</th>
+    *       <th>Characteristic</th>
+    *       <th>Effect</th>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#BULK_READ}</td>
-    *       <td valign="top">This method is only invoked if the store has this characteristic.</td>
+    *       <td>{@link Characteristic#BULK_READ}</td>
+    *       <td>This method is only invoked if the store has this characteristic.</td>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">When this is not set or segmentation is disabled in the
+    *       <td>{@link Characteristic#SEGMENTABLE}</td>
+    *       <td>When this is not set or segmentation is disabled in the
     *       {@link StoreConfiguration#segmented() configuration},
     *       the {@code segments} parameter may be ignored.</td>
     *    </tr>
@@ -577,20 +563,19 @@ public interface NonBlockingStore<K, V> {
     * If a size approximation cannot be returned without iterating over all the entries in the store,
     * the implementation should return {@code -1L}.
     * </p>
-    * <p>
     * <h4>Summary of Characteristics Effects</h4>
-    * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
+    * <table border="1" ><caption>Summary of Characteristics Effects</caption>
     *    <tr>
-    *       <th bgcolor="#CCCCFF" align="left">Characteristic</th>
-    *       <th bgcolor="#CCCCFF" align="left">Effect</th>
+    *       <th>Characteristic</th>
+    *       <th>Effect</th>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#BULK_READ}</td>
-    *       <td valign="top">This method is only invoked if the store has this characteristic.</td>
+    *       <td>{@link Characteristic#BULK_READ}</td>
+    *       <td>This method is only invoked if the store has this characteristic.</td>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">When the store does not have this characteristic or segmentation is disabled in the
+    *       <td>{@link Characteristic#SEGMENTABLE}</td>
+    *       <td>When the store does not have this characteristic or segmentation is disabled in the
     *       {@link StoreConfiguration#segmented() configuration},
     *       the {@code segment} parameter is always {@code IntSets.immutableRangeSet(numSegments)}.</td>
     *    </tr>
@@ -599,8 +584,7 @@ public interface NonBlockingStore<K, V> {
     * If a problem is encountered, it is recommended to wrap any created/caught Throwable in a
     * {@link PersistenceException} and the stage be completed exceptionally.
     * <p>
-    * @implSpec
-    * The default implementation always returns {@code -1}.
+        * The default implementation always returns {@code -1}.
     * @param segments the segments for which the entries are counted.
     * @return a stage that, when complete, contains the approximate count of the entries in the given segments,
     * or {@code -1L} if an approximate count cannot be provided.
@@ -621,24 +605,24 @@ public interface NonBlockingStore<K, V> {
     * is recommended to wrap your Publisher before returning with the
     * {@link org.infinispan.util.concurrent.BlockingManager#blockingPublisher(Publisher)} method and it will handle
     * subscription and observation on the blocking and non-blocking executors respectively.
-    * <p>
+    * </p>
     * <h4>Summary of Characteristics Effects</h4>
-    * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
+    * <table border="1" ><caption>Summary of Characteristics Effects</caption>
     *    <tr>
-    *       <th bgcolor="#CCCCFF" align="left">Characteristic</th>
-    *       <th bgcolor="#CCCCFF" align="left">Effect</th>
+    *       <th>Characteristic</th>
+    *       <th>Effect</th>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#BULK_READ}</td>
-    *       <td valign="top">This method is only invoked if the store has this characteristic.</td>
+    *       <td>{@link Characteristic#BULK_READ}</td>
+    *       <td>This method is only invoked if the store has this characteristic.</td>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#EXPIRATION}</td>
-    *       <td valign="top">When set the returned publisher must not return expired entries.</td>
+    *       <td>{@link Characteristic#EXPIRATION}</td>
+    *       <td>When set the returned publisher must not return expired entries.</td>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">When this is not set or segmentation is disabled in the
+    *       <td>{@link Characteristic#SEGMENTABLE}</td>
+    *       <td>When this is not set or segmentation is disabled in the
     *       {@link StoreConfiguration#segmented() configuration},
     *       the {@code segment} parameter may be ignored.</td>
     *    </tr>
@@ -663,33 +647,30 @@ public interface NonBlockingStore<K, V> {
     * is recommended to wrap your Publisher before returning with the
     * {@link org.infinispan.util.concurrent.BlockingManager#blockingPublisher(Publisher)} method and it will handle
     * subscription and observation on the blocking and non-blocking executors respectively.
-    * <p>
     * <h4>Summary of Characteristics Effects</h4>
-    * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
+    * <table border="1" ><caption>Summary of Characteristics Effects</caption>
     *    <tr>
-    *       <th bgcolor="#CCCCFF" align="left">Characteristic</th>
-    *       <th bgcolor="#CCCCFF" align="left">Effect</th>
+    *       <th>Characteristic</th>
+    *       <th>Effect</th>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#BULK_READ}</td>
-    *       <td valign="top">This method is only invoked if the store has this characteristic.</td>
+    *       <td>{@link Characteristic#BULK_READ}</td>
+    *       <td>This method is only invoked if the store has this characteristic.</td>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#EXPIRATION}</td>
-    *       <td valign="top">When set the returned publisher must not return expired keys.</td>
+    *       <td>{@link Characteristic#EXPIRATION}</td>
+    *       <td>When set the returned publisher must not return expired keys.</td>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#SEGMENTABLE}</td>
-    *       <td valign="top">When this is not set or segmentation is disabled in the
+    *       <td>{@link Characteristic#SEGMENTABLE}</td>
+    *       <td>When this is not set or segmentation is disabled in the
     *       {@link StoreConfiguration#segmented() configuration},
     *       the {@code segment} parameter may be ignored.</td>
     *    </tr>
     * </table>
     * <p>
-    * @implSpec
     * A default implementation is provided that invokes {@link #publishEntries(IntSet, Predicate, boolean)} and
     * maps the {@link MarshallableEntry} to its key.
-    * </pre>
     * @param segments a set of segments to filter keys by. This will always be non-null.
     * @param filter a filter to filter the keys by. If this is null then no additional filtering should be done after segments.
     * @return a publisher that provides the keys from the store.
@@ -711,16 +692,16 @@ public interface NonBlockingStore<K, V> {
     * is recommended to wrap your Publisher before returning with the
     * {@link org.infinispan.util.concurrent.BlockingManager#blockingPublisher(Publisher)} method and it will handle
     * subscription and observation on the blocking and non-blocking executors respectively.
-    * <p>
+    * </p>
     * <h4>Summary of Characteristics Effects</h4>
-    * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
+    * <table border="1" ><caption>Summary of Characteristics Effects</caption>
     *    <tr>
-    *       <th bgcolor="#CCCCFF" align="left">Characteristic</th>
-    *       <th bgcolor="#CCCCFF" align="left">Effect</th>
+    *       <th>Characteristic</th>
+    *       <th>Effect</th>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#EXPIRATION}</td>
-    *       <td valign="top">This method is only invoked if the store has this characteristic.</td>
+    *       <td>{@link Characteristic#EXPIRATION}</td>
+    *       <td>This method is only invoked if the store has this characteristic.</td>
     *    </tr>
     * </table>
     * <p>
@@ -744,16 +725,15 @@ public interface NonBlockingStore<K, V> {
     * <p>
     * WARNING: For performance reasons neither Publisher will emit any {@link SegmentedPublisher}s until both write
     * and remove Publishers are subscribed to. These Publishers should also be only subscribed once.
-    * <p>
     * <h4>Summary of Characteristics Effects</h4>
-    * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
+    * <table border="1" ><caption>Summary of Characteristics Effects</caption>
     *    <tr>
-    *       <th bgcolor="#CCCCFF" align="left">Characteristic</th>
-    *       <th bgcolor="#CCCCFF" align="left">Effect</th>
+    *       <th>Characteristic</th>
+    *       <th>Effect</th>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#TRANSACTIONAL}</td>
-    *       <td valign="top">This method is invoked only if the store has this characteristic.</td>
+    *       <td>{@link Characteristic#TRANSACTIONAL}</td>
+    *       <td>This method is invoked only if the store has this characteristic.</td>
     *    </tr>
     * </table>
     * <p>
@@ -773,16 +753,15 @@ public interface NonBlockingStore<K, V> {
 
    /**
     * Commit changes in the provided transaction to the underlying store.
-    * <p>
     * <h4>Summary of Characteristics Effects</h4>
-    * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
+    * <table border="1" ><caption>Summary of Characteristics Effects</caption>
     *    <tr>
-    *       <th bgcolor="#CCCCFF" align="left">Characteristic</th>
-    *       <th bgcolor="#CCCCFF" align="left">Effect</th>
+    *       <th>Characteristic</th>
+    *       <th>Effect</th>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#TRANSACTIONAL}</td>
-    *       <td valign="top">This method is invoked only if the store has this characteristic.</td>
+    *       <td>{@link Characteristic#TRANSACTIONAL}</td>
+    *       <td>This method is invoked only if the store has this characteristic.</td>
     *    </tr>
     * </table>
     * <p>
@@ -797,16 +776,15 @@ public interface NonBlockingStore<K, V> {
 
    /**
     * Roll back the changes from the provided transaction to the underlying store.
-    * <p>
     * <h4>Summary of Characteristics Effects</h4>
-    * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Characteristics Effects">
+    * <table border="1" ><caption>Summary of Characteristics Effects</caption>
     *    <tr>
-    *       <th bgcolor="#CCCCFF" align="left">Characteristic</th>
-    *       <th bgcolor="#CCCCFF" align="left">Effect</th>
+    *       <th>Characteristic</th>
+    *       <th>Effect</th>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link Characteristic#TRANSACTIONAL}</td>
-    *       <td valign="top">This method is invoked only if the store has this characteristic.</td>
+    *       <td>{@link Characteristic#TRANSACTIONAL}</td>
+    *       <td>This method is invoked only if the store has this characteristic.</td>
     *    </tr>
     * </table>
     * <p>
@@ -823,8 +801,7 @@ public interface NonBlockingStore<K, V> {
     * Some stores may not want to perform operations based on if a command has certain flags. This method is currently
     * only used for testing single write operations. This method may be removed at any time as it is experimental, it is
     * not recommended for end users to implement it.
-    * @implSpec
-    * The default implementation returns false.
+        * The default implementation returns false.
     * @param commandFlags the flags attributed to the command when performing the operation.
     * @return whether the operation should occur.
     */

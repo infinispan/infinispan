@@ -24,7 +24,6 @@ import jakarta.enterprise.inject.spi.AnnotatedType;
  * <p>
  * Utilities for working with {@link Annotated}s.
  * </p>
- * <p/>
  * <p>
  * Includes utilities to check the equality of and create unique id's for
  * <code>Annotated</code> instances.
@@ -150,7 +149,6 @@ public class Annotateds {
      * Generates a deterministic signature for an {@link AnnotatedType}. Two
      * <code>AnnotatedType</code>s that have the same annotations and underlying
      * type will generate the same signature.
-     * <p/>
      * This can be used to create a unique bean id for a passivation capable bean
      * that is added directly through the SPI.
      *

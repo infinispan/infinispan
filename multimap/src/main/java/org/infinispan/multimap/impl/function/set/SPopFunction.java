@@ -22,7 +22,7 @@ import org.infinispan.multimap.impl.SetBucket;
  * to remove elements to a Set.
  *
  * @author Vittorio Rigamonti
- * @see <a href="http://infinispan.org/documentation/">Marshalling of
+ * @see <a href="https://infinispan.org/documentation/">Marshalling of
  *      Functions</a>
  * @since 15.0
  */

@@ -36,8 +36,7 @@ import org.jboss.logging.Logger;
 
 /**
  * Builder for the creation of WHERE/HAVING clause filters targeting a single entity.
- * <p/>
- * Implemented as a stack of {@link LazyBooleanExpr}s which allows to add elements to the constructed query in a
+  * Implemented as a stack of {@link LazyBooleanExpr}s which allows to add elements to the constructed query in a
  * uniform manner while traversing through the original query parse tree.
  *
  * @author anistor@redhat.com

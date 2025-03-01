@@ -24,7 +24,7 @@ import java.util.Set;
  *
  *
  * @author Katia Aresti
- * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
+ * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
 public class SubsetFunction<K, V, T> implements SortedSetBucketBaseFunction<K, V, Collection<ScoredValue<V>>> {

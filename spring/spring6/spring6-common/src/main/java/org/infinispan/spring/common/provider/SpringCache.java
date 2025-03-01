@@ -1,13 +1,5 @@
 package org.infinispan.spring.common.provider;
 
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.api.BasicCache;
-import org.infinispan.commons.util.NullValue;
-import org.infinispan.commons.util.concurrent.CompletionStages;
-import org.springframework.cache.Cache;
-import org.springframework.cache.support.SimpleValueWrapper;
-import org.springframework.util.Assert;
-
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -19,13 +11,21 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.api.BasicCache;
+import org.infinispan.commons.util.NullValue;
+import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.springframework.cache.Cache;
+import org.springframework.cache.support.SimpleValueWrapper;
+import org.springframework.util.Assert;
+
 /**
  * <p>
- * A {@link Cache <code>Cache</code>} implementation that delegates to a
- * {@link BasicCache } instance supplied at construction time.
+ * A {@link Cache} implementation that delegates to a
+ * {@link BasicCache} instance supplied at construction time.
  * </p>
  *
- * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Olaf Bergner
  * @author <a href="mailto:marius.bogoevici@gmail.com">Marius Bogoevici</a>
  */
 public class SpringCache implements Cache {

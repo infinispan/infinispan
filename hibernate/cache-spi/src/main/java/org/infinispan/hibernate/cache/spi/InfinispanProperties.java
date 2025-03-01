@@ -49,7 +49,7 @@ public interface InfinispanProperties {
 
    /**
     * Property that controls whether Infinispan should interact with the
-    * transaction manager as a {@link javax.transaction.Synchronization} or as
+    * transaction manager as a {@link jakarta.transaction.Synchronization} or as
     * an XA resource.
     * @deprecated Infinispan Second Level Cache is designed to always register as synchronization
     *             on transactional caches, or use non-transactional caches.

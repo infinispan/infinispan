@@ -17,8 +17,8 @@ import org.infinispan.server.core.admin.AdminServerTask;
  * Administrative operation to update the index schema for a cache with the following parameters:
  * Parameters:
  * <ul>
- *    <li><strong>name</strong> specifies the cache for which its index schema will be updated.</li>
- *    <li><strong>flags</strong> unused</li>
+ *    <li><b>name</b> specifies the cache for which its index schema will be updated.</li>
+ *    <li><b>flags</b> unused</li>
  * </ul>
  *
  * @author Fabio Massimo Ercoli

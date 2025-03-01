@@ -100,7 +100,6 @@ public interface IntSet extends Set<Integer> {
     * is specified).  Exceptions thrown by the action are relayed to the
     * caller.
     *
-    * @implSpec
     * <p>The default implementation behaves as if:
     * <pre>{@code
     *     PrimitiveIterator.OfInt iterator = iterator();
@@ -127,8 +126,6 @@ public interface IntSet extends Set<Integer> {
     * <p>The {@code Spliterator.OfInt} reports {@link Spliterator#DISTINCT}.
     * Implementations should document the reporting of additional
     * characteristic values.
-    *
-    * @implSpec
     * The default implementation creates a
     * <em><a href="Spliterator.html#binding">late-binding</a></em> spliterator
     * from the set's {@code Iterator}.  The spliterator inherits the
@@ -136,8 +133,6 @@ public interface IntSet extends Set<Integer> {
     * <p>
     * The created {@code Spliterator.OfInt} additionally reports
     * {@link Spliterator#SIZED}.
-    *
-    * @implNote
     * The created {@code Spliterator.OfInt} additionally reports
     * {@link Spliterator#SUBSIZED}.
     *
@@ -149,11 +144,9 @@ public interface IntSet extends Set<Integer> {
    }
 
    /**
-    * Removes all of the ints of this set that satisfy the given
+    * Removes all the ints of this set that satisfy the given
     * predicate.  Errors or runtime exceptions thrown during iteration or by
     * the predicate are relayed to the caller.
-    *
-    * @implSpec
     * The default implementation traverses all elements of the collection using
     * its {@link #iterator}.  Each matching element is removed using
     * {@link Iterator#remove()}.  If the collection's iterator does not

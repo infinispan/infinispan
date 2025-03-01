@@ -18,7 +18,6 @@ public interface CacheRpcCommand extends ReplicableCommand {
 
    /**
     * Invoke the command asynchronously.
-    * <p>
     * <p>This method replaces {@link #invoke()} for remote execution.
     * The default implementation and {@link #invoke()} will be removed in future versions.
     * </p>

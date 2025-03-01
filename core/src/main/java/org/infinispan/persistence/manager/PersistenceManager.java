@@ -189,7 +189,7 @@ public interface PersistenceManager extends Lifecycle {
     * @param localInvocation whether this invocation is a local invocation. Some loaders may be ignored if it is not local
     * @param includeStores if a loader that is also a store can be loaded from
     * @return entry that maps to the key
-    * @implSpec default implementation invokes {@link #loadFromAllStores(Object, boolean, boolean)} ignoring the segment
+    * default implementation invokes {@link #loadFromAllStores(Object, boolean, boolean)} ignoring the segment
     */
    default <K, V> CompletionStage<MarshallableEntry<K, V>> loadFromAllStores(Object key, int segment, boolean localInvocation, boolean includeStores) {
       return loadFromAllStores(key, localInvocation, includeStores);
@@ -290,11 +290,11 @@ public interface PersistenceManager extends Lifecycle {
    /**
     * Write to all stores that are not transactional. A store is considered transactional if all of the following are true:
     *
-    * <p><ul>
+    * <ul>
     *    <li>The store implements {@link org.infinispan.persistence.spi.TransactionalCacheWriter}</li>
     *    <li>The store is configured to be transactional</li>
     *    <li>The cache's TransactionMode === TRANSACTIONAL</li>
-    * </ul></p>
+    * </ul>
     *
     * @param marshalledEntry the entry to be written to all non-tx stores.
     * @param segment         the segment the entry maps to

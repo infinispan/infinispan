@@ -42,7 +42,7 @@ import org.infinispan.lock.exception.ClusteredLockException;
  * }
  *
  * @author Katia Aresti, karesti@redhat.com
- * @see <a href="http://infinispan.org/documentation/">Infinispan documentation</a>
+ * @see <a href="https://infinispan.org/documentation/">Infinispan documentation</a>
  * @since 9.2
  */
 public interface ClusteredLock {

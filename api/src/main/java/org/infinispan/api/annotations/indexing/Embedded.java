@@ -44,10 +44,10 @@ public @interface Embedded {
     * {@code includeDepth} is the number of `@Embedded` that will be traversed
     * and for which all fields of the indexed-embedded element will be included:
     * <ul>
-    * <li>{@code includeDepth=0} means fields of the indexed-embedded element are <strong>not</strong> included,
+    * <li>{@code includeDepth=0} means fields of the indexed-embedded element are <b>not</b> included,
     * nor is any field of nested indexed-embedded elements.
-    * <li>{@code includeDepth=1} means fields of the indexed-embedded element <strong>are</strong> included,
-    * but <strong>not</strong> fields of nested indexed-embedded elements.
+    * <li>{@code includeDepth=1} means fields of the indexed-embedded element <b>are</b> included,
+    * but <b>not</b> fields of nested indexed-embedded elements.
     * <li>And so on.
     * </ul>
     * The default is 3.

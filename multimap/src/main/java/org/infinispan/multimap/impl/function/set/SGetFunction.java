@@ -18,7 +18,7 @@ import org.infinispan.multimap.impl.SetBucket;
  * to get a Set value with the given key.
  *
  * @author Vittorio Rigamonti
- * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
+ * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
 public final class SGetFunction<K, V> implements SetBucketBaseFunction<K, V, SetBucket<V>> {

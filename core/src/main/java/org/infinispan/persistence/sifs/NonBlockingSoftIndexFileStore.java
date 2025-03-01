@@ -1,8 +1,5 @@
 package org.infinispan.persistence.sifs;
 
-import static org.infinispan.persistence.PersistenceUtil.getQualifiedLocation;
-import static org.infinispan.util.logging.Log.PERSISTENCE;
-
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
@@ -56,6 +53,8 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.processors.FlowableProcessor;
 import io.reactivex.rxjava3.processors.UnicastProcessor;
+import static org.infinispan.persistence.PersistenceUtil.getQualifiedLocation;
+import static org.infinispan.util.logging.Log.PERSISTENCE;
 
 /**
  * Local file-based cache store, optimized for write-through use with strong consistency guarantees
@@ -114,17 +113,15 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
  *  key_prefix_length(2 bytes), key_prefix, num_parts(2 bytes),
  *     ( key_part_length (2 bytes), key_part, left_child_index_node_offset (8 bytes))+,
  *     right_child_index_node_offset (8 bytes)
- *
- * In memory, for every child a SoftReference<IndexNode> is held. When this reference
+ * In memory, for every child a SoftReference&lt;IndexNode&gt; is held. When this reference
  * is empty (but the offset in file is set), any reader may load the reference using
  * double-locking pattern (synchronized over the reference itself). The entry is never
  * loaded by multiple threads in parallel and even may block other threads trying to
  * read this node.
- *
  * For each node in memory a RW-lock is held. When the IndexUpdater thread updates
  * the Index (modifying some IndexNodes), it prepares a copy of these nodes (already
  * stored into index file). Then, in locks only the uppermost node for writing, overwrites
- * the references to new data and unlocks the this node. After that the changed nodes are
+ * the references to new data and unlocks the node. After that the changed nodes are
  * traversed from top down, write locked and their record in index file is released.
  * Reader threads crawl the tree from top down, locking the parent node (for reading),
  * locking child node and unlocking parent node.

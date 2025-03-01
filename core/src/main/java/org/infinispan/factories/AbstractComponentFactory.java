@@ -6,12 +6,10 @@ import org.infinispan.factories.scopes.Scopes;
 
 /**
  * Factory that creates components used internally within Infinispan, and also wires dependencies into the components.
- * <p/>
- * The {@link InternalCacheFactory} is a special subclass of this, which bootstraps the construction of other
+  * The {@link InternalCacheFactory} is a special subclass of this, which bootstraps the construction of other
  * components. When this class is loaded, it maintains a static list of known default factories for known components,
  * which it then delegates to, when actually performing the construction.
- * <p/>
- *
+  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @see Inject
  * @see ComponentRegistry

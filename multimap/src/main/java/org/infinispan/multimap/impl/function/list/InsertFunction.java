@@ -18,7 +18,7 @@ import java.util.Set;
  * to insert an element before or after the provided pivot element.
  *
  * @author Katia Aresti
- * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
+ * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
 public final class InsertFunction<K, V> implements ListBucketBaseFunction<K, V, Long> {

@@ -11,9 +11,7 @@ import net.jcip.annotations.ThreadSafe;
 
 /**
  * Central component that deals with eviction of cache entries.
- * <p />
  * This manager only controls notifications of when entries are evicted.
- * <p />
  * @author Manik Surtani
  * @since 4.0
  */

@@ -1,13 +1,13 @@
 package org.infinispan.cdi.embedded.event.cache;
 
-import jakarta.enterprise.event.Event;
-import jakarta.enterprise.util.TypeLiteral;
-
 import org.infinispan.Cache;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.TransactionRegistered;
 import org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent;
 import org.infinispan.transaction.xa.GlobalTransaction;
+
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.TypeLiteral;
 
 /**
  * Event bridge for {@link org.infinispan.notifications.cachelistener.annotation.TransactionRegistered}.
@@ -91,7 +91,7 @@ public class TransactionRegisteredAdapter<K, V> extends AbstractAdapter<Transact
    };
 
    /**
-    * Events which will be selected (including generic type information (<code><?, ?></code>).
+    * Events which will be selected (including generic type information (<code>&lt;?, ?&gt;</code>).
     */
    @SuppressWarnings("serial")
    public static final TypeLiteral<TransactionRegisteredEvent<?, ?>> WILDCARD_TYPE = new TypeLiteral<TransactionRegisteredEvent<?, ?>>() {

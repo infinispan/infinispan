@@ -30,7 +30,7 @@ public final class DependencyGraph<T> {
    /**
     * Calculates a topological sort of the graph, in linear time
     *
-    * @return List<T> elements sorted respecting dependencies
+    * @return List&lt;T&gt; elements sorted respecting dependencies
     * @throws CyclicDependencyException if cycles are present in the graph and thus no topological sort is possible
     */
    public List<T> topologicalSort() throws CyclicDependencyException {

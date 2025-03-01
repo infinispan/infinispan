@@ -1,8 +1,5 @@
 package org.infinispan.cdi.embedded.event.cache;
 
-import jakarta.enterprise.event.Event;
-import jakarta.enterprise.util.TypeLiteral;
-
 import org.infinispan.Cache;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.notifications.Listener;
@@ -10,6 +7,9 @@ import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent;
 import org.infinispan.transaction.xa.GlobalTransaction;
+
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.TypeLiteral;
 
 /**
  * @author Pete Muir
@@ -103,7 +103,7 @@ public class TopologyChangedAdapter<K, V> extends AbstractAdapter<TopologyChange
    };
 
    /**
-    * Events which will be selected (including generic type information (<code><?, ?></code>).
+    * Events which will be selected (including generic type information (<code>&lt;?, ?&gt;</code>).
     */
    @SuppressWarnings("serial")
    public static final TypeLiteral<TopologyChangedEvent<?, ?>> WILDCARD_TYPE = new TypeLiteral<TopologyChangedEvent<?, ?>>() {

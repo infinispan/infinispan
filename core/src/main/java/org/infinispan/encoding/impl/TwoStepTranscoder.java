@@ -1,7 +1,5 @@
 package org.infinispan.encoding.impl;
 
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -11,14 +9,14 @@ import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
+
 /**
- * <p>
  * Performs conversions where there is no direct transcoder, but there are two transcoders available:
  * <ul>
  *    <li>one from source media type to <b>application/x-java-object</b>
  *    <li>one from <b>application/x-java-object</b> to the destination media type
  * </ul>
- * </p>
  *
  * @since 11.0
  */

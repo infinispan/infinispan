@@ -67,7 +67,7 @@ public interface BasicComponentRegistry {
    /**
     * Looks up a running component named {@code name} in the registry, or registers it if necessary.
     *
-    * @implSpec Equivalent to {@code getComponent(componentType.getName(), componentType)}.
+    * Equivalent to {@code getComponent(componentType.getName(), componentType)}.
     */
    default <T> ComponentRef<T> getComponent(Class<T> componentType) {
       return getComponent(componentType.getName(), componentType);
@@ -93,7 +93,7 @@ public interface BasicComponentRegistry {
    /**
     * Register a component named {@code componentType.getName()}.
     *
-    * @implSpec Equivalent to {@code registerComponent(componentType.getName(), instance, manageLifecycle)}
+    * Equivalent to {@code registerComponent(componentType.getName(), instance, manageLifecycle)}
     */
    default <T> ComponentRef<T> registerComponent(Class<?> componentType, T instance, boolean manageLifecycle) {
       return registerComponent(componentType.getName(), instance, manageLifecycle);

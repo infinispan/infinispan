@@ -1,6 +1,6 @@
-<xsd:schema xmlns="http://www.infinispan.org/schemas/spring"
+<xsd:schema xmlns="https://infinispan.org/schemas/spring"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-            targetNamespace="http://www.infinispan.org/schemas/spring"
+            targetNamespace="https://infinispan.org/schemas/spring"
             elementFormDefault="qualified"
             attributeFormDefault="unqualified">
 

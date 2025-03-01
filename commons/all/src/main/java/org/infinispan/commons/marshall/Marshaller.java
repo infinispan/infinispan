@@ -10,12 +10,10 @@ import net.jcip.annotations.ThreadSafe;
 
 /**
  * A marshaller is a class that is able to marshall and unmarshall objects efficiently.
- * <p/>
- * This interface is used to marshall {@link org.infinispan.commands.ReplicableCommand}s, their parameters and their
+  * This interface is used to marshall <code>org.infinispan.commands.ReplicableCommand</code>, their parameters and their
  * response values, as well as any other arbitrary Object &harr; byte[] conversions, such as those used in client/server
  * communications.
- * <p/>
- * A single instance of any implementation is shared by multiple threads, so implementations <i>need</i> to be threadsafe,
+  * A single instance of any implementation is shared by multiple threads, so implementations <i>need</i> to be threadsafe,
  * and preferably immutable.
  *
  * @author Manik Surtani

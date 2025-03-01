@@ -23,7 +23,7 @@ import org.infinispan.multimap.impl.ListBucket;
  * {@link org.infinispan.multimap.impl.EmbeddedMultimapListCache#replace(Object, List)}
  *
  * @author Katia Aresti
- * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
+ * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
 public final class ReplaceListFunction<K, V> implements ListBucketBaseFunction<K, V, Long> {

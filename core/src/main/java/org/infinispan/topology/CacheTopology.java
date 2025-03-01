@@ -17,10 +17,8 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * The status of a cache from a distribution/state transfer point of view.
- * <p/>
- * The pending CH can be {@code null} if we don't have a state transfer in progress.
- * <p/>
- * The {@code topologyId} is incremented every time the topology changes (e.g. a member leaves, state transfer
+  * The pending CH can be {@code null} if we don't have a state transfer in progress.
+  * The {@code topologyId} is incremented every time the topology changes (e.g. a member leaves, state transfer
  * starts or ends).
  * The {@code rebalanceId} is not modified when the consistent hashes are updated without requiring state
  * transfer (e.g. when a member leaves).

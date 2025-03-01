@@ -39,7 +39,7 @@ package org.infinispan.distribution.group;
  *
  * <p>
  * You must set the
- * <code>groupsEnabled<code> property to true in your configuration in order to use groups. You can specify an order list of groupers there.
+ * <code>groupsEnabled</code> property to true in your configuration in order to use groups. You can specify an order list of groupers there.
  * </p>
  *
  * @see Group

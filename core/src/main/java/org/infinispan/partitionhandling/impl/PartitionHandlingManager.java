@@ -34,8 +34,7 @@ public interface PartitionHandlingManager {
 
    /**
     * Adds a partially aborted transaction.
-    * <p/>
-    * The transaction should be registered when it is not sure if the abort happens successfully in all the affected
+        * The transaction should be registered when it is not sure if the abort happens successfully in all the affected
     * nodes.
     *
     * @param globalTransaction the global transaction.
@@ -48,8 +47,7 @@ public interface PartitionHandlingManager {
 
    /**
     * Adds a partially committed transaction.
-    * <p/>
-    * The transaction is committed in the second phase and it is register if it is not sure that the transaction was
+        * The transaction is committed in the second phase and it is register if it is not sure that the transaction was
     * committed successfully in all the affected nodes.
     *
     * @param globalTransaction the global transaction.
@@ -63,8 +61,7 @@ public interface PartitionHandlingManager {
 
    /**
     * Adds a partially committed transaction.
-    * <p/>
-    * The transaction is committed in one phase and it is register if it is not sure that the transaction was committed
+        * The transaction is committed in one phase and it is register if it is not sure that the transaction was committed
     * successfully in all the affected nodes.
     *
     * @param globalTransaction the global transaction.
@@ -78,8 +75,7 @@ public interface PartitionHandlingManager {
 
    /**
     * It checks if the transaction resources (for example locks) can be released.
-    * <p/>
-    * The transaction resource can't be released when the transaction is partially committed.
+        * The transaction resource can't be released when the transaction is partially committed.
     *
     * @param globalTransaction the transaction.
     * @return {@code true} if the resources can be released, {@code false} otherwise.
@@ -93,8 +89,7 @@ public interface PartitionHandlingManager {
 
    /**
     * It checks if the transaction can be aborted when the originator leaves the cluster.
-    * <p/>
-    * The only case in which it is not possible to abort is when partition handling is enabled and the originator didn't
+        * The only case in which it is not possible to abort is when partition handling is enabled and the originator didn't
     * leave gracefully. The transaction will complete when the partition heals.
     *
     * @param globalTransaction the global transaction.
@@ -104,8 +99,7 @@ public interface PartitionHandlingManager {
 
    /**
     * Notifies the {@link PartitionHandlingManager} that the cache topology was update.
-    * <p/>
-    * It detects when the partition is merged and tries to complete all the partially completed transactions.
+        * It detects when the partition is merged and tries to complete all the partially completed transactions.
     *
     * @param cacheTopology the new cache topology.
     */

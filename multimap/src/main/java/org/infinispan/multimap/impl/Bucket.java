@@ -61,7 +61,7 @@ public class Bucket<V> {
    }
 
    /**
-    * @return {@code null} if the element exists and {@parameter supportsDuplicates is false} in this {@link Bucket}, otherwise, it returns a new {@link Bucket}
+    * @return {@code null} if the element exists and supportsDuplicates in this {@link Bucket}, otherwise, it returns a new {@link Bucket}
     * instance.
     */
    public Bucket<V> add(V value, boolean supportsDuplicates) {

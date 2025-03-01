@@ -25,7 +25,7 @@ import org.infinispan.util.function.SerializableFunction;
  * {@link org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache#union(Object, Collection, double, SortedSetBucket.AggregateFunction)}
  *
  * @author Katia Aresti
- * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
+ * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
 public final class SortedSetAggregateFunction<K, V> implements SerializableFunction<EntryView.ReadWriteEntryView<K, ? extends BaseSetBucket<V>>, Collection<ScoredValue<V>>> {

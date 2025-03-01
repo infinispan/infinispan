@@ -10,8 +10,7 @@ import net.jcip.annotations.ThreadSafe;
 
 /**
  * A specialization of {@link Marshaller} that supports streams.
- * <p/>
- * A single instance of any implementation is shared by multiple threads, so implementations <i>need</i> to be threadsafe,
+  * A single instance of any implementation is shared by multiple threads, so implementations <i>need</i> to be threadsafe,
  * and preferably immutable.
  *
  * @author Manik Surtani

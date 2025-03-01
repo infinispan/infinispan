@@ -25,7 +25,7 @@ import java.util.Properties;
  * each configuration setting.
  * </p>
  *
- * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Olaf Bergner
  *
  */
 public class ConfigurationPropertiesOverrides {

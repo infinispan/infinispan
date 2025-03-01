@@ -23,20 +23,16 @@ import org.infinispan.stats.CacheContainerStats;
 
 /**
  * EmbeddedCacheManager is an CacheManager that runs in the same JVM as the client.
- * <p/>
- * Constructing a <tt>EmbeddedCacheManager</tt> is done via one of its constructors, which optionally take in a {@link
+  * Constructing a <code>EmbeddedCacheManager</code> is done via one of its constructors, which optionally take in a {@link
  * org.infinispan.configuration.cache.Configuration} or a path or URL to a configuration XML file: see {@link org.infinispan.manager.DefaultCacheManager}.
- * <p/>
- * Lifecycle - <tt>EmbeddedCacheManager</tt>s have a lifecycle (it implements {@link Lifecycle}) and
+  * Lifecycle - <code>EmbeddedCacheManager</code>s have a lifecycle (it implements {@link Lifecycle}) and
  * the default constructors also call {@link #start()}.  Overloaded versions of the constructors are available, that do
- * not start the <tt>CacheManager</tt>, although it must be kept in mind that <tt>CacheManager</tt>s need to be started
- * before they can be used to readWriteMap <tt>Cache</tt> instances.
- * <p/>
- * Once constructed, <tt>EmbeddedCacheManager</tt>s should be made available to any component that requires a <tt>Cache</tt>,
+ * not start the <code>CacheManager</code>, although it must be kept in mind that <code>CacheManager</code>s need to be started
+ * before they can be used to readWriteMap <code>Cache</code> instances.
+  * Once constructed, <code>EmbeddedCacheManager</code>s should be made available to any component that requires a <code>Cache</code>,
  * via <a href="http://en.wikipedia.org/wiki/Java_Naming_and_Directory_Interface">JNDI</a> or via some other mechanism
  * such as an <a href="http://en.wikipedia.org/wiki/Dependency_injection">dependency injection</a> framework.
- * <p/>
- *
+  *
  * @see org.infinispan.manager.DefaultCacheManager
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Galder Zamarreno
@@ -49,16 +45,13 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
 
    /**
     * Register a cache configuration in the cache manager.
-    * <p/>
-    * The configuration will be automatically used when creating a cache with the same name,
+        * The configuration will be automatically used when creating a cache with the same name,
     * unless it is a template.
     * If it is a template and it contains wildcards (`*` or `?`), it will be automatically used
     * when creating caches that match the template.
-    * <p/>
-    * In order to extend an existing configuration,
+        * In order to extend an existing configuration,
     * use {@link ConfigurationBuilder#read(org.infinispan.configuration.cache.Configuration)}.
-    * <p/>
-    * The other way to define a cache configuration is declaratively, in the XML file passed in to the cache
+        * The other way to define a cache configuration is declaratively, in the XML file passed in to the cache
     * manager.
     *
     * @param cacheName     name of the cache configuration
@@ -70,16 +63,13 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
 
    /**
     * Defines a cache configuration by first reading the template configuration and then applying the override.
-    * <p/>
-    * The configuration will be automatically used when creating a cache with the same name,
+        * The configuration will be automatically used when creating a cache with the same name,
     * unless it is a template.
     * If it is a template and it contains wildcards (`*` or `?`), it will be automatically used
     * when creating caches that match the template.
-    * <p/>
-    * The other way to define a cache configuration is declaratively, in the XML file passed in to the cache
+        * The other way to define a cache configuration is declaratively, in the XML file passed in to the cache
     * manager.
-    * <p/>
-    * If templateName is null, this method works exactly like {@link #defineConfiguration(String, Configuration)}.
+        * If templateName is null, this method works exactly like {@link #defineConfiguration(String, Configuration)}.
     *
     * @param cacheName             name of cache whose configuration is being defined
     * @param templateCacheName     configuration to use as a template
@@ -91,8 +81,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
 
    /**
     * Removes a configuration from the set of defined configurations.
-    * <p/>
-    * If the named configuration does not exist, nothing happens.
+        * If the named configuration does not exist, nothing happens.
     *
     * @param configurationName     the named configuration
     * @throws IllegalStateException if the configuration is in use
@@ -153,12 +142,10 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
 
    /**
     * This method returns a collection of all cache configuration names.
-    * <p/>
-    * The configurations may have been defined via XML,
+        * The configurations may have been defined via XML,
     * programmatically via {@link org.infinispan.configuration.parsing.ConfigurationBuilderHolder},
     * or at runtime via {@link #defineConfiguration(String, Configuration)}.
-    * <p/>
-    * Internal caches defined via {@link org.infinispan.registry.InternalCacheRegistry}
+        * Internal caches defined via {@link org.infinispan.registry.InternalCacheRegistry}
     * are not included.
     *
     * @return an immutable set of configuration names registered in this cache manager.
@@ -190,15 +177,15 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    /**
     * A cache is considered to exist if it has been created and started via
     * one of the {@link #getCache()} methods and has not yet been removed via
-    * {@link org.infinispan.commons.api.CacheContainerAdmin#removeCache(String)}. </p>
-    *
+    * {@link org.infinispan.commons.api.CacheContainerAdmin#removeCache(String)}.
+    * <p>
     * In environments when caches are continuously created and removed, this
     * method offers the possibility to find out whether a cache has either,
     * not been started, or if it was started, whether it's been removed already
     * or not.
-    *
+    * </p>
     * @param cacheName cache to check
-    * @return <tt>true</tt> if the cache with the given name has not yet been
+    * @return <code>true</code> if the cache with the given name has not yet been
     *         started, or if it was started, whether it's been removed or not.
     */
    boolean cacheExists(String cacheName);
@@ -206,7 +193,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    /**
     * Returns true if a cache configuration or an alias exists for the specified name
     * @param name the name to check
-    * @return <tt>true</tt> if a configuration or an alias with the given name exists
+    * @return <code>true</code> if a configuration or an alias with the given name exists
     */
    boolean cacheConfigurationExists(String name);
 
@@ -220,12 +207,10 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
 
    /**
     * Retrieves a cache by name.
-    * <p/>
-    * If the cache has been previously created with the same name, the running
+        * If the cache has been previously created with the same name, the running
     * cache instance is returned.
     * Otherwise, this method attempts to create the cache first.
-    * <p/>
-    * When creating a new cache, this method requires a defined configuration that either has exactly the same name,
+        * When creating a new cache, this method requires a defined configuration that either has exactly the same name,
     * or is a template with wildcards and matches the cache name.
     *
     * @param cacheName name of cache to retrieve
@@ -235,8 +220,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
 
    /**
     * Creates a cache on the local node using the supplied configuration.
-    * <p/>
-    * The cache may be clustered, but this method (or the equivalent combination of
+        * The cache may be clustered, but this method (or the equivalent combination of
     * {@link #defineConfiguration(String, Configuration)} and
     * {@link #getCache(String, boolean)}) needs to be invoked on all nodes.
     *
@@ -253,9 +237,9 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
     * to not create the cache if it is not already running.
     *
     * @param cacheName name of cache to retrieve
-    * @param createIfAbsent If <tt>true</tt>, this methods works just like {@link #getCache(String)}.
-    *                       If <tt>false</tt>, return the already running cache or <tt>null</tt>.
-    * @return <tt>null</tt> if the cache does not exist and <tt>createIfAbsent == false</tt>,
+    * @param createIfAbsent If <code>true</code>, this methods works just like {@link #getCache(String)}.
+    *                       If <code>false</code>, return the already running cache or <code>null</code>.
+    * @return <code>null</code> if the cache does not exist and <code>createIfAbsent == false</code>,
     *        otherwise a cache instance identified by cacheName
     */
    <K, V> Cache<K, V> getCache(String cacheName, boolean createIfAbsent);

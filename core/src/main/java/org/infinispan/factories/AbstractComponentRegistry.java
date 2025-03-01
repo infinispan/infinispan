@@ -23,23 +23,18 @@ import org.infinispan.util.logging.Log;
 /**
  * A registry where components which have been created are stored.  Components are stored as singletons, registered
  * under a specific name.
- * <p/>
- * Components can be retrieved from the registry using {@link #getComponent(Class)}.
- * <p/>
- * Components can be registered using {@link #registerComponent(Object, Class)}, which will cause any dependencies to be
+  * Components can be retrieved from the registry using {@link #getComponent(Class)}.
+  * Components can be registered using {@link #registerComponent(Object, Class)}, which will cause any dependencies to be
  * wired in as well.  Components that need to be created as a result of wiring will be done using {@link
  * #getOrCreateComponent(Class)}, which will look up the default factory for the component type (factories annotated
  * with the appropriate {@link DefaultFactoryFor} annotation.
- * <p/>
- * Default factories are treated as components too and will need to be wired before being used.
- * <p/>
- * The registry can exist in one of several states, as defined by the {@link org.infinispan.lifecycle.ComponentStatus}
+  * Default factories are treated as components too and will need to be wired before being used.
+  * The registry can exist in one of several states, as defined by the {@link org.infinispan.lifecycle.ComponentStatus}
  * enumeration. In terms of the cache, state changes in the following manner: <ul> <li>INSTANTIATED - when first
  * constructed</li> <li>CONSTRUCTED - when created using the DefaultCacheFactory</li> <li>STARTED - when {@link
  * org.infinispan.Cache#start()} is called</li> <li>STOPPED - when {@link org.infinispan.Cache#stop()} is called</li>
  * </ul>
- * <p/>
- * Cache configuration can only be changed and will only be re-injected if the cache is not in the {@link
+  * Cache configuration can only be changed and will only be re-injected if the cache is not in the {@link
  * org.infinispan.lifecycle.ComponentStatus#RUNNING} state.
  *
  * Thread Safety: instances of {@link GlobalComponentRegistry} can be concurrently updated so all
@@ -141,17 +136,14 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
     * Retrieves a component if one exists, and if not, attempts to find a factory capable of constructing the component
     * (factories annotated with the {@link DefaultFactoryFor} annotation that is capable of creating the component
     * class).
-    * <p/>
-    * If an instance needs to be constructed, dependencies are then automatically wired into the instance, based on
+        * If an instance needs to be constructed, dependencies are then automatically wired into the instance, based on
     * methods on the component type annotated with {@link Inject}.
-    * <p/>
-    * Summing it up, component retrieval happens in the following order:<br /> 1.  Look for a component that has already
+        * Summing it up, component retrieval happens in the following order:<br /> 1.  Look for a component that has already
     * been created and registered. 2.  Look for an appropriate component that exists in the {@link Configuration} that
     * may be injected from an external system. 3.  Look for a class definition passed in to the {@link Configuration} -
     * such as an EvictionPolicy implementation 4.  Attempt to create it by looking for an appropriate factory (annotated
     * with {@link DefaultFactoryFor})
-    * <p/>
-    *
+        *
     * @param componentClass type of component to be retrieved.  Should not be null.
     * @return a fully wired component instance, or null if one cannot be found or constructed.
     * @throws CacheConfigurationException if there is a problem with constructing or wiring the instance.
@@ -207,8 +199,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
     * Rewires components.  Used to rewire components in the CR if a cache has been stopped (moved to state TERMINATED),
     * which would (almost) empty the registry of components.  Rewiring will re-inject all dependencies so that the cache
     * can be started again.
-    * <p/>
-    */
+        */
    public void rewire() {
       basicComponentRegistry.rewire();
    }
