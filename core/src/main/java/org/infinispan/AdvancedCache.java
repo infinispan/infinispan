@@ -55,11 +55,9 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     *   cache.withFlags(Flag.FORCE_WRITE_LOCK).get(key);
     * </pre>
     * will invoke a cache.get() with a write lock forced.
-    * <p/>
-    * <b>Note</b> that for the flag to take effect, the cache operation <b>must</b> be invoked on the instance returned
+        * <b>Note</b> that for the flag to take effect, the cache operation <b>must</b> be invoked on the instance returned
     * by this method.
-    * <p/>
-    * As an alternative to setting this on every invocation, users should also consider saving the decorated
+        * As an alternative to setting this on every invocation, users should also consider saving the decorated
     * cache, as this allows for more readable code.  E.g.:
     * <pre>
     *    AdvancedCache&lt;?, ?&gt; forceWriteLockCache = cache.withFlags(Flag.FORCE_WRITE_LOCK);
@@ -247,8 +245,8 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @param key      key to use
     * @param value    value to store
     * @param metadata information to store alongside the value
-    * @return the previous value associated with <tt>key</tt>, or <tt>null</tt> if there was no mapping for
-    * <tt>key</tt>.
+    * @return the previous value associated with <code>key</code>, or <code>null</code> if there was no mapping for
+    * <code>key</code>.
     * @since 5.3
     */
    V put(K key, V value, Metadata metadata);
@@ -276,7 +274,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @param key      key with which the specified value is associated
     * @param value    value to be associated with the specified key
     * @param metadata information to store alongside the new value
-    * @return the previous value associated with the specified key, or <tt>null</tt> if there was no mapping for the
+    * @return the previous value associated with the specified key, or <code>null</code> if there was no mapping for the
     * key.
     * @since 5.3
     */
@@ -290,7 +288,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @param key      key with which the specified value is associated
     * @param value    value to be associated with the specified key
     * @param metadata information to store alongside the new value
-    * @return the future that contains previous value associated with the specified key, or <tt>null</tt>
+    * @return the future that contains previous value associated with the specified key, or <code>null</code>
     *    if there was no mapping for the key.
     * @since 9.2
     */
@@ -306,7 +304,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @param value    value to be associated with the specified key
     * @param metadata information to store alongside the new value
     * @return the future that contains previous {@link CacheEntry} associated with the specified key,
-    *         or <tt>null</tt> if there was no mapping for the key.
+    *         or <code>null</code> if there was no mapping for the key.
     * @since 14.0
     * @see #replaceAsync(K, V, Metadata)
     */
@@ -321,7 +319,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @param oldValue value expected to be associated with the specified key
     * @param newValue value to be associated with the specified key
     * @param metadata information to store alongside the new value
-    * @return <tt>true</tt> if the value was replaced
+    * @return <code>true</code> if the value was replaced
     * @since 5.3
     */
    boolean replace(K key, V oldValue, V newValue, Metadata metadata);
@@ -338,7 +336,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @param key      key with which the specified value is to be associated
     * @param value    value to be associated with the specified key
     * @param metadata information to store alongside the new value
-    * @return the previous value associated with the specified key, or <tt>null</tt> if there was no mapping for the
+    * @return the previous value associated with the specified key, or <code>null</code> if there was no mapping for the
     * key.
     * @since 5.3
     */
@@ -352,7 +350,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @param key      key with which the specified value is to be associated
     * @param value    value to be associated with the specified key
     * @param metadata information to store alongside the new value
-    * @return A future containing the previous value associated with the specified key, or <tt>null</tt> if there was no mapping for the
+    * @return A future containing the previous value associated with the specified key, or <code>null</code> if there was no mapping for the
     * key.
     * @since 9.2
     */
@@ -368,7 +366,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @param value    value to be associated with the specified key
     * @param metadata information to store alongside the new value
     * @return the future that contains previous {@link CacheEntry} associated with the specified key,
-    *         or <tt>null</tt> if there was no mapping for the key.
+    *         or <code>null</code> if there was no mapping for the key.
     * @since 14.0
     * @see #putIfAbsentAsync(K, V, Metadata)
     */
@@ -393,7 +391,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @param key               key with which the specified value is associated
     * @param remappingFunction function to be applied to the specified key/value
     * @param metadata          information to store alongside the new value
-    * @return the previous value associated with the specified key, or <tt>null</tt> if remapping function is gives
+    * @return the previous value associated with the specified key, or <code>null</code> if remapping function is gives
     * null.
     * @since 9.1
     */
@@ -414,7 +412,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @param key               key with which the specified value is associated
     * @param remappingFunction function to be applied to the specified key/value
     * @param metadata          information to store alongside the new value
-    * @return the previous value associated with the specified key, or <tt>null</tt> if there was no mapping for the
+    * @return the previous value associated with the specified key, or <code>null</code> if there was no mapping for the
     * key.
     * @since 9.1
     */
@@ -475,8 +473,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * Asynchronous version of {@link AdvancedCache#put(Object, Object, Metadata)} which stores metadata alongside the value.  This
     * method does not block on remote calls, even if your cache mode is synchronous.  Has no benefit over {@link
     * #put(Object, Object, Metadata)} if used in LOCAL mode.
-    * <p/>
-    *
+        *
     * @param key      key to use
     * @param value    value to store
     * @param metadata information to store alongside the new value
@@ -504,7 +501,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @param key               key with which the specified value is associated
     * @param remappingFunction function to be applied to the specified key/value
     * @param metadata          information to store alongside the new value
-    * @return the previous value associated with the specified key, or <tt>null</tt> if remapping function is gives
+    * @return the previous value associated with the specified key, or <code>null</code> if remapping function is gives
     * null.
     * @since 9.4
     */
@@ -526,7 +523,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @param key               key with which the specified value is associated
     * @param remappingFunction function to be applied to the specified key/value
     * @param metadata          information to store alongside the new value
-    * @return the previous value associated with the specified key, or <tt>null</tt> if there was no mapping for the
+    * @return the previous value associated with the specified key, or <code>null</code> if there was no mapping for the
     * key.
     * @since 9.4
     */
@@ -675,16 +672,13 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
 
    /**
     * It fetches all the keys which belong to the group.
-    * <p/>
-    * Semantically, it iterates over all the keys in memory and persistence, and performs a read operation in the keys
+        * Semantically, it iterates over all the keys in memory and persistence, and performs a read operation in the keys
     * found. Multiple invocations inside a transaction ensures that all the keys previous read are returned and it may
     * return newly added keys to the group from other committed transactions (also known as phantom reads).
-    * <p/>
-    * The {@code map} returned is immutable and represents the group at the time of the invocation. If you want to add
+        * The {@code map} returned is immutable and represents the group at the time of the invocation. If you want to add
     * or remove keys from a group use {@link #put(Object, Object)} and {@link #remove(Object)}. To remove all the keys
     * in the group use {@link #removeGroup(String)}.
-    * <p/>
-    * To improve performance you may use the {@code flag} {@link org.infinispan.context.Flag#SKIP_CACHE_LOAD} to avoid
+        * To improve performance you may use the {@code flag} {@link org.infinispan.context.Flag#SKIP_CACHE_LOAD} to avoid
     * fetching the key/value from persistence. However, you will get an inconsistent snapshot of the group.
     *
     * @param groupName the group name.
@@ -694,10 +688,8 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
 
    /**
     * It removes all the key which belongs to a group.
-    * <p/>
-    * Semantically, it fetches the most recent group keys/values and removes them.
-    * <p/>
-    * Note that, concurrent addition perform by other transactions/threads to the group may not be removed.
+        * Semantically, it fetches the most recent group keys/values and removes them.
+        * Note that, concurrent addition perform by other transactions/threads to the group may not be removed.
     *
     * @param groupName the group name.
     */

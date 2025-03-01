@@ -42,7 +42,7 @@ public interface IntCacheStream extends IntStream, BaseCacheStream<Integer, IntS
    IntCacheStream sequentialDistribution();
 
    /**
-    * @inheritDoc
+    * {@inheritDoc}
     * @return a stream with parallel distribution enabled.
     */
    IntCacheStream parallelDistribution();

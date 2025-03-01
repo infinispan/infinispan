@@ -20,7 +20,6 @@ import io.netty.channel.ChannelHandlerContext;
 /**
  * A {@link CacheChunkedStream} that reads {@link Map.Entry} and produces a JSON output.
  * For example:
- * <p>
  * <pre>{@code
  * [
  *   {"key":1,"value":"value","timeToLiveSeconds": -1, "maxIdleTimeSeconds": -1, "created": -1, "lastUsed": -1, "expireTime": -1},

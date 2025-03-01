@@ -28,7 +28,7 @@ import static org.testng.AssertJUnit.assertTrue;
  * Test {@link InfinispanNamedEmbeddedCacheFactoryBean}.
  * </p>
  *
- * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Olaf Bergner
  *
  */
 @Test(testName = "spring.embedded.support.InfinispanNamedEmbeddedCacheFactoryBeanTest", groups = "unit")

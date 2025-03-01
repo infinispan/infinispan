@@ -1,7 +1,5 @@
 package org.infinispan.multimap.impl;
 
-import static java.util.Objects.requireNonNull;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -25,6 +23,8 @@ import org.infinispan.multimap.impl.function.hmap.HashMapPutFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapRemoveFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapReplaceFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapValuesFunction;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Multimap which holds a collection of key-values pairs.
@@ -59,7 +59,6 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
 
    /**
     * Set the given key-value pair in the multimap under the given key.
-    * </p>
     * If the key is not present, a new multimap is created.
     *
     * @param key: Cache key to store the values.

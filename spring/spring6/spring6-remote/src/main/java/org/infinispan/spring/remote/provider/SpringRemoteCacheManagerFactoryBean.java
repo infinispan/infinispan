@@ -14,7 +14,7 @@ import org.springframework.beans.factory.InitializingBean;
  * {@link SpringRemoteCacheManager
  * <code>SpringRemoteCacheManager</code>} instance.
  * </p>
- * <strong>Configuration</strong><br/>
+ * <b>Configuration</b><br/>
  * <p>
  * A <code>SpringRemoteCacheManager</code> is configured through a {@link Properties
  * <code>Properties</code>} object. For an exhaustive list of valid properties to be used see
@@ -45,7 +45,7 @@ import org.springframework.beans.factory.InitializingBean;
  * use this <code>FactoryBean</code> when creating an <code>SpringRemoteCacheManager</code>.
  * </p>
  *
- * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Olaf Bergner
  *
  * @see RemoteCacheManager
  * @see #destroy()

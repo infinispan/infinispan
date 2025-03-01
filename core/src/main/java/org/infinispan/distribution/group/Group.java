@@ -1,10 +1,10 @@
 package org.infinispan.distribution.group;
 
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * <p>
@@ -29,11 +29,10 @@ import java.lang.annotation.Target;
  *
  *    // Override the location by specifying a group, all keys in the same
  *    // group end up with the same owner
- *    @Group
+ *    &#64;Group
  *    String getOffice() {
  *       return office;
  *    }
- *
  * }
  * </pre>
  *
@@ -43,7 +42,7 @@ import java.lang.annotation.Target;
  * </p>
  *
  * <p>
- * You must set the <code>groupsEnabled<code> property to true in your configuration in order to use groups.
+ * You must set the <code>groupsEnabled</code> property to true in your configuration in order to use groups.
  * </p>
  *
  * @see Grouper

@@ -31,7 +31,7 @@ public interface FileLookup {
     *
     *
     * @param uri An absolute, hierarchical URI with a scheme equal to
-    *         <tt>"file"</tt> that represents the file to lookup
+    *         <code>"file"</code> that represents the file to lookup
     * @return an input stream to the file or null if nothing found through all lookup steps.
     * @throws FileNotFoundException if file cannot be found
     */

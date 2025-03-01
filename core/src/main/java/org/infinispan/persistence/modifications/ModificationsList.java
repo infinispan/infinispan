@@ -3,7 +3,7 @@ package org.infinispan.persistence.modifications;
 import java.util.List;
 
 /**
- * ModificationsList contains a List<Modification>
+ * ModificationsList contains a List&lt;Modification&gt;
  *
  * @author Sanne Grinovero
  * @since 4.1

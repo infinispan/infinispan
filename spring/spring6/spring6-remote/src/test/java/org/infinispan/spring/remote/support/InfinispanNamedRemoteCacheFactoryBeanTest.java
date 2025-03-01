@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
  * Test {@link InfinispanNamedRemoteCacheFactoryBean}.
  * </p>
  *
- * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Olaf Bergner
  *
  */
 @Test(testName = "spring.support.remote.InfinispanNamedRemoteCacheFactoryBeanTest", groups = "functional")

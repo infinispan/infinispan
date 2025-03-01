@@ -11,22 +11,22 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * Class-level annotation used to annotate an object as being a valid cache listener.  Used with the {@link
  * org.infinispan.Cache#addListener(Object)} and related APIs.
  *
- * <p/> Note that even if a class is annotated with this
+ *  Note that even if a class is annotated with this
  * annotation, it still needs method-level annotation (such as {@link org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted})
  * to actually receive notifications.
- * <p/> Objects annotated with this annotation - listeners - can be attached to a
+ *  Objects annotated with this annotation - listeners - can be attached to a
  * running {@link org.infinispan.Cache} so users can be notified of {@link org.infinispan.Cache} events.
- * <p/> <p/> There can be multiple methods that are annotated to receive the same event, and a method may receive
+ *   There can be multiple methods that are annotated to receive the same event, and a method may receive
  * multiple events by using a super type.
  *
- * <h4>Delivery Semantics</h4>
+ * <h2>Delivery Semantics</h2>
  * An event is delivered immediately after the respective
  * operation, sometimes before as well, but must complete before the underlying cache call returns. For this reason it
  * is important to keep listener processing
- * logic short-lived. If a long running task needs to be performed, it's recommended to invoke this in a non blocking
+ * logic short-lived. If a long-running task needs to be performed, it's recommended to invoke this in a non blocking
  * way or to use an async listener.
  *
- * <h4>Transactional Semantics</h4>
+ * <h2>Transactional Semantics</h2>
  * Since the event is delivered during the actual cache call, the transactional
  * outcome is not yet known. For this reason, <i>events are always delivered, even if the changes they represent are
  * discarded by their containing transaction</i>. For applications that must only process events that represent changes
@@ -35,23 +35,23 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * to record events and later process them once the transaction has been successfully committed. Example 4 demonstrates
  * this.
  *
- * <h4>Listener Modes</h4>
+ * <h2>Listener Modes</h2>
  * A listener can be configured to run in two different modes: sync or async.
  * <p>The first, non-blocking, is a mode where the listener is notified in the invoking thread. Operations in this mode
  * should be used when either the listener operation is expected to complete extremely fast or when the operation can be
  * performed in a non-blocking manner by returning a CompletionStage to delay
  * the operation until the stage is complete. This mode is the default mode, overrided by the {@link Listener#sync()}
- * property. A method is non blocking if it declares that it returns a {@link java.util.concurrent.CompletionStage} or
+ * property. A method is non-blocking if it declares that it returns a {@link java.util.concurrent.CompletionStage} or
  * one of its subtypes. Note that the stage may return a value, but it will be ignored. The user <b>must</b> be very
- * careful that no blocking or long running operation is done while in a sync listener as it can cause thread
- * starvation. You should instead use your own thread pool to execute the blocking or long running operation and
+ * careful that no blocking or long-running operation is done while in a sync listener as it can cause thread
+ * starvation. You should instead use your own thread pool to execute the blocking or long-running operation and
  * return a {@link java.util.concurrent.CompletionStage} signifying when it is complete.
  * <p>The second, async, is pretty much identical to sync except that the original operation can continue and complete
  * while the listener is notified in a different thread. Listeners that throw exceptions are always logged and are not
  * propagated to the user. This mode is enabled when the listener has specified <code>sync</code> as <b>false</b> and
  * the return value is always ignored.
  *
- * <h4>Locking semantics</h4>
+ * <h2>Locking semantics</h2>
  * The sync mode will guarantee that listeners are notified for mutations on the same key sequentially, since
  * the lock for the key will be held when notifying the listener. Async however can have events notified in any order
  * so they should not be used when this ordering is required. If however the notification thread pool size is limited
@@ -60,19 +60,19 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * sync listeners should be as short as possible.
  * Acquiring additional locks is not recommended, as it could lead to deadlocks.
  *
- * <h4>Threading Semantics</h4>
+ * <h2>Threading Semantics</h2>
  * A listener implementation must be capable of handling concurrent
  * invocations. Local sync notifications reuse the calling thread; remote sync notifications reuse the
  * network thread. If a listener is async, it will be invoked in the notification thread pool.
- * <h4>Notification Pool</h4>
+ * <h2>Notification Pool</h2>
  * Async events are made in a <i>separate</i> notification thread, which will not cause any blocking on the
  * caller or network thread.  The separate thread for async listeners is taken from a pool, which can be
  * configured using {@link GlobalConfiguration#listenerThreadPool()}. The
  * default values can be found in the {@link org.infinispan.factories.KnownComponentNames} class.
  *
- * <h4>Clustered Listeners</h4>
+ * <h2>Clustered Listeners</h2>
  * Listeners by default are classified as a local listener. That is that they only receive events that are generated
- * on the node to which they were registered. They also receive pre and post notification events. A clustered listener,
+ * on the node to which they were registered. They also receive pre- and post-notification events. A clustered listener,
  * configured with <code>clustered=true</code>, receives a subset of events but from any node that
  * generated the given event, not just the one they were registered on. The events that a clustered listener can receive are:
  * {@link org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent},
@@ -81,93 +81,92 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * {@link org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent}.
  * For performance reasons, a clustered listener only receives post events.
  *
- * <h4>Summary of Notification Annotations</h4>
- * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of notification annotations">
+ * <h2>Summary of Notification Annotations</h2>
+ * <table border="1">
+ *    <caption>Summary of notification annotations</caption>
  *    <tr>
- *       <th bgcolor="#CCCCFF" align="left">Annotation</th>
- *       <th bgcolor="#CCCCFF" align="left">Event</th>
- *       <th bgcolor="#CCCCFF" align="left">Description</th>
+ *       <th>Annotation</th>
+ *       <th>Event</th>
+ *       <th>Description</th>
  *    </tr>
  *    <tr>
- *       <td valign="top">{@link org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted}</td>
- *       <td valign="top">{@link org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent}</td>
- *       <td valign="top">A cache was started</td>
+ *       <td>{@link org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted}</td>
+ *       <td>{@link org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent}</td>
+ *       <td>A cache was started</td>
  *    </tr>
  *    <tr>
- *       <td valign="top">{@link org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped}</td>
- *       <td valign="top">{@link org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent}</td>
- *       <td valign="top">A cache was stopped</td>
+ *       <td>{@link org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped}</td>
+ *       <td>{@link org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent}</td>
+ *       <td>A cache was stopped</td>
  *    </tr>
  *    <tr>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryModified}</td>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent}</td>
- *       <td valign="top">A cache entry was modified</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryModified}</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent}</td>
+ *       <td>A cache entry was modified</td>
  *    </tr>
  *    <tr>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated}</td>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent}</td>
- *       <td valign="top">A cache entry was created</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated}</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent}</td>
+ *       <td>A cache entry was created</td>
  *    </tr>
  *    <tr>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved}</td>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent}</td>
- *       <td valign="top">A cache entry was removed</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved}</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent}</td>
+ *       <td>A cache entry was removed</td>
  *    </tr>
  *    <tr>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired}</td>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent}</td>
- *       <td valign="top">A cache entry was expired</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired}</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent}</td>
+ *       <td>A cache entry was expired</td>
  *    </tr>
  *    <tr>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited}</td>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent}</td>
- *       <td valign="top">A cache entry was visited</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited}</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent}</td>
+ *       <td>A cache entry was visited</td>
  *    </tr>
  *    <tr>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryLoaded}</td>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent}</td>
- *       <td valign="top">A cache entry was loaded</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryLoaded}</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent}</td>
+ *       <td>A cache entry was loaded</td>
  *    </tr>
  *    <tr>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted}</td>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent}</td>
- *       <td valign="top">A cache entries were evicted</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted}</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent}</td>
+ *       <td>A cache entries were evicted</td>
  *    </tr>
  *    <tr>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated}</td>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent}</td>
- *       <td valign="top">A cache entry was activated</td>\
+ *       <td>{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated}</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent}</td>
+ *       <td>A cache entry was activated</td>
  *    </tr>
  *    <tr>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivated}</td>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent}</td>
- *       <td valign="top">One or more cache entries were passivated</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivated}</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent}</td>
+ *       <td>One or more cache entries were passivated</td>
  *    </tr>
  *    <tr>
- *       <td valign="top">{@link org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged}</td>
- *       <td valign="top">{@link org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent}</td>
- *       <td valign="top">A view change event was detected</td>
+ *       <td>{@link org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged}</td>
+ *       <td>{@link org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent}</td>
+ *       <td>A view change event was detected</td>
  *    </tr>
  *    <tr>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.TransactionRegistered}</td>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent}</td>
- *       <td valign="top">The cache has started to participate in a transaction</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.annotation.TransactionRegistered}</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent}</td>
+ *       <td>The cache has started to participate in a transaction</td>
  *    </tr>
  *    <tr>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.TransactionCompleted}</td>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent}</td>
- *       <td valign="top">The cache has completed its participation in a transaction</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.annotation.TransactionCompleted}</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent}</td>
+ *       <td>The cache has completed its participation in a transaction</td>
  *    </tr>
  *    <tr>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryInvalidated}</td>
- *       <td valign="top">{@link org.infinispan.notifications.cachelistener.event.CacheEntryInvalidatedEvent}</td>
- *       <td valign="top">A cache entry was invalidated by a remote cache.  Only if cache mode is INVALIDATION_SYNC or INVALIDATION_ASYNC.</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryInvalidated}</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.event.CacheEntryInvalidatedEvent}</td>
+ *       <td>A cache entry was invalidated by a remote cache.  Only if cache mode is INVALIDATION_SYNC or INVALIDATION_ASYNC.</td>
  *    </tr>
- * <p/>
- * </table>
- * <p/>
- *
- * <h4>Example 1 - Method receiving a single event, sync</h4>
+  * </table>
+  *
+ * <h2>Example 1 - Method receiving a single event, sync</h2>
  * <pre>
  *    &#064;Listener
  *    public class SingleEventListener
@@ -180,9 +179,8 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  *       }
  *    }
  * </pre>
- * <p/>
- *
- * <h4>Example 2 - Method receiving multiple events - sync</h4>
+  *
+ * <h2>Example 2 - Method receiving multiple events - sync</h2>
  * <pre>
  *    &#064;Listener
  *    public class MultipleEventListener
@@ -198,9 +196,8 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  *       }
  *    }
  * </pre>
- * <p/>
- *
- * <h4>Example 3 - Multiple methods receiving the same event - async</h4>
+  *
+ * <h2>Example 3 - Multiple methods receiving the same event - async</h2>
  * <pre>
  *    &#064;Listener(sync=false)
  *    public class SingleEventListener
@@ -210,8 +207,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  *       {
  *          System.out.println(&quot;Cache started&quot;);
  *       }
- * <p/>
- *       &#064;CacheStarted
+  *       &#064;CacheStarted
  *       &#064;CacheStopped
  *       &#064;CacheBlocked
  *       &#064;CacheUnblocked
@@ -222,12 +218,9 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  *       }
  *    }
  * </pre>
- * <p/>
- * <p/>
- *
- * <h4>Example 4 - Processing only events with a committed transaction - sync/non-blocking</h4>
- * <p/>
- * <pre>
+   *
+ * <h2>Example 4 - Processing only events with a committed transaction - sync/non-blocking</h2>
+  * <pre>
  *    &#064;Listener
  *    public class EventHandler
  *    {
@@ -300,7 +293,7 @@ public @interface Listener {
    /**
     * Specifies whether callbacks on any class annotated with this annotation happens synchronously or asynchronously.
     * Please see the appropriate section on the {@link Listener} class for more details.
-    * Defaults to <tt>true</tt>.
+    * Defaults to <code>true</code>.
     *
     * @return true if the expectation is that the operation waits until the callbacks complete before continuing;
     * false if the operation can continue immediately.

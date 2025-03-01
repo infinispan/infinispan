@@ -24,7 +24,7 @@ import org.infinispan.security.actions.SecurityActions;
 
 /**
  * ClusterPermissionMapper. This class implements both a {@link MutableRolePermissionMapper} storing the mappings in a
- * persistent replicated internal cache named <tt>org.infinispan.PERMISSIONS</tt>
+ * persistent replicated internal cache named <code>org.infinispan.PERMISSIONS</code>
  *
  * @author Tristan Tarrant
  * @since 14.0

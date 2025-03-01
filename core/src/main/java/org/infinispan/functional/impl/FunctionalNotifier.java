@@ -39,7 +39,7 @@ public interface FunctionalNotifier<K, V> extends ReadWriteListeners<K, V> {
    /**
     * Notify registered {@link WriteListener} instances of the written entry.
     *
-    * @apiNote By using a {@link Supplier} the entry view can be computed lazily
+    * By using a {@link Supplier} the entry view can be computed lazily
     * only if any listeners has been registered.
     */
    void notifyOnWriteRemove(K key);

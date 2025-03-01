@@ -52,7 +52,7 @@ import io.netty.util.AttributeKey;
  * transactions safeguards.
  *
  * @author José Bolina
- * @see <a href="https://redis.io/commands/watch/>WATCH</a>
+ * @see <a href="https://redis.io/commands/watch/">WATCH</a>
  * @since 15.0
  */
 public class WATCH extends RespCommand implements Resp3Command, TransactionResp3Command {

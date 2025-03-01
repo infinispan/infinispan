@@ -55,24 +55,24 @@ public interface SegmentAwarePublisherSupplier<R> extends SegmentPublisherSuppli
     * The provided {@link DeliveryGuarantee} when creating this <i>SegmentAwarePublisherSupplier</i> will control
     * how a lost segment notification is raised {@link NotificationWithLost#isLostSegment()}.
     * <h4>Summary of Delivery Guarantee Effects</h4>
-    * <table border="1" cellpadding="1" cellspacing="1" summary="Summary of Delivery Guarantee Effects">
+    * <table border="1" ><caption>Summary of Delivery Guarantee Effects</caption>
     *    <tr>
-    *       <th bgcolor="#CCCCFF" align="left">Delivery Guarantee</th>
-    *       <th bgcolor="#CCCCFF" align="left">Effect</th>
+    *       <th>Delivery Guarantee</th>
+    *       <th>Effect</th>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link DeliveryGuarantee#AT_MOST_ONCE}</td>
-    *       <td valign="top">A segment is lost only if this node is not the read owner when starting to read it.
+    *       <td>{@link DeliveryGuarantee#AT_MOST_ONCE}</td>
+    *       <td>A segment is lost only if this node is not the read owner when starting to read it.
     *       If ths segment is no longer readable after the publisher started, no more entries are returned
     *       and the segment is completed normally.</td>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link DeliveryGuarantee#AT_LEAST_ONCE}</td>
-    *       <td valign="top">Same as {@link DeliveryGuarantee#EXACTLY_ONCE}.</td>
+    *       <td>{@link DeliveryGuarantee#AT_LEAST_ONCE}</td>
+    *       <td>Same as {@link DeliveryGuarantee#EXACTLY_ONCE}.</td>
     *    </tr>
     *    <tr>
-    *       <td valign="top">{@link DeliveryGuarantee#EXACTLY_ONCE}</td>
-    *       <td valign="top">A segment is lost if at any point while reading entries from it,
+    *       <td>{@link DeliveryGuarantee#EXACTLY_ONCE}</td>
+    *       <td>A segment is lost if at any point while reading entries from it,
     *       this node is no longer a read owner of the given segment.
     *       Therefore if the segment is complete, the publisher is guaranteed
     *       to include all values for the given segment.</td>

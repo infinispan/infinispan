@@ -15,8 +15,7 @@ import jakarta.enterprise.inject.spi.InjectionPoint;
  * Allows an {@link AnnotatedMethod} to be injected using the CDI type safe
  * resolution rules.
  * </p>
- * <p/>
- * <p>
+  * <p>
  * {@link ParameterValueRedefiner} allows the default value to be overridden by
  * the caller of
  * {@link #invoke(Object, CreationalContext, ParameterValueRedefiner)}.

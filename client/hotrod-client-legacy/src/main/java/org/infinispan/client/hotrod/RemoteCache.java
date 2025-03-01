@@ -21,36 +21,31 @@ import org.reactivestreams.Publisher;
  * Provides remote reference to a Hot Rod server/cluster. It implements {@link BasicCache}, but given its
  * nature (remote) some operations are not supported. All these unsupported operations are being overridden within this
  * interface and documented as such.
- * <p/>
- * <b>New operations</b>: besides the operations inherited from {@link BasicCache}, RemoteCache also adds new
+  * <b>New operations</b>: besides the operations inherited from {@link BasicCache}, RemoteCache also adds new
  * operations to optimize/reduce network traffic: e.g. versioned put operation.
- * <p/>
- * <b>Concurrency</b>: implementors of this interface will support multi-threaded access, similar to the way {@link
+  * <b>Concurrency</b>: implementors of this interface will support multi-threaded access, similar to the way {@link
  * BasicCache} supports it.
- * <p/>
- * <b>Return values</b>: previously existing values for certain {@link java.util.Map} operations are not returned, null
+  * <b>Return values</b>: previously existing values for certain {@link java.util.Map} operations are not returned, null
  * is returned instead. E.g. {@link java.util.Map#put(Object, Object)} returns the previous value associated to the
  * supplied key. In case of RemoteCache, this returns null.
- * <p/>
- * <b>Changing default behavior through {@link org.infinispan.client.hotrod.Flag}s</b>: it is possible to change the
+  * <b>Changing default behavior through {@link org.infinispan.client.hotrod.Flag}s</b>: it is possible to change the
  * default cache behaviour by using flags on an per invocation basis. E.g.
  * <pre>
  *      RemoteCache cache = getRemoteCache();
  *      Object oldValue = cache.withFlags(Flag.FORCE_RETURN_VALUE).put(aKey, aValue);
  * </pre>
  * In the previous example, using {@link org.infinispan.client.hotrod.Flag#FORCE_RETURN_VALUE} will make the client to
- * also return previously existing value associated with <tt>aKey</tt>. If this flag would not be present, Infinispan
- * would return (by default) <tt>null</tt>. This is in order to avoid fetching a possibly large object from the remote
+ * also return previously existing value associated with <code>aKey</code>. If this flag would not be present, Infinispan
+ * would return (by default) <code>null</code>. This is in order to avoid fetching a possibly large object from the remote
  * server, which might not be needed. The flags as set by the {@link org.infinispan.client.hotrod.RemoteCache#withFlags(Flag...)}
  * operation only apply for the very next operation executed <b>by the same thread</b> on the RemoteCache.
- * <p/>
- *
+  *
  * <b>Note on default expiration values:</b> Due to limitations on the first
  * version of the protocol, it's not possible for clients to rely on default
  * lifespan and maxIdle values set on the server. This is because the protocol
  * does not support a way to tell the server that no expiration lifespan and/or
  * maxIdle were provided and that default values should be used. This will be
- * resolved in a future revision of the protocol. In the mean time, the
+ * resolved in a future revision of the protocol. In the meantime, the
  * workaround is to explicitly provide the desired expiry lifespan/maxIdle
  * values in each remote cache operation.
  *
@@ -298,7 +293,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    CompletableFuture<MetadataValue<V>> getWithMetadataAsync(K key);
 
    /**
-    * @inheritDoc
+    * {@inheritDoc}
     * <p>
     * Due to this set being backed by the remote cache, each invocation on this set may require remote invocations
     * to retrieve or update the remote cache. The main benefit of this set being backed by the remote cache is that
@@ -330,7 +325,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    CloseableIteratorSet<K> keySet(IntSet segments);
 
    /**
-    * @inheritDoc
+    * {@inheritDoc}
     * <p>
     * Due to this collection being backed by the remote cache, each invocation on this collection may require remote
     * invocations to retrieve or update the remote cache. The main benefit of this collection being backed by the remote
@@ -362,7 +357,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    CloseableIteratorCollection<V> values(IntSet segments);
 
    /**
-    * @inheritDoc
+    * {@inheritDoc}
     * <p>
     * Due to this set being backed by the remote cache, each invocation on this set may require remote invocations
     * to retrieve or update the remote cache. The main benefit of this set being backed by the remote cache is that
@@ -461,8 +456,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    /**
     * Applies one or more {@link Flag}s to the scope of a single invocation.  See the {@link Flag} enumeration to for
     * information on available flags.
-    * <p />
-    * Sample usage:
+       * Sample usage:
     * <pre>
     *    remoteCache.withFlags(Flag.FORCE_RETURN_VALUE).put("hello", "world");
     * </pre>
@@ -498,7 +492,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * @param keys The keys to find values for
     * @return The entries that were present for the given keys
     */
-   public Map<K, V> getAll(Set<? extends K> keys);
+   Map<K, V> getAll(Set<? extends K> keys);
 
    /**
     * Returns the HotRod protocol version supported by this RemoteCache implementation

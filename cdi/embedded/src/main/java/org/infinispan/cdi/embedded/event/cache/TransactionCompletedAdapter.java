@@ -1,13 +1,13 @@
 package org.infinispan.cdi.embedded.event.cache;
 
-import jakarta.enterprise.event.Event;
-import jakarta.enterprise.util.TypeLiteral;
-
 import org.infinispan.Cache;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.TransactionCompleted;
 import org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent;
 import org.infinispan.transaction.xa.GlobalTransaction;
+
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.TypeLiteral;
 
 /**
  * Event bridge for {@link org.infinispan.notifications.cachelistener.annotation.TransactionCompleted}.
@@ -101,7 +101,7 @@ public class TransactionCompletedAdapter<K, V> extends AbstractAdapter<Transacti
    };
 
    /**
-    * Events which will be selected (including generic type information (<code><?, ?></code>).
+    * Events which will be selected (including generic type information (<code>&lt;?, ?&gt;</code>).
     */
    @SuppressWarnings("serial")
    public static final TypeLiteral<TransactionCompletedEvent<?, ?>> WILDCARD_TYPE = new TypeLiteral<TransactionCompletedEvent<?, ?>>() {

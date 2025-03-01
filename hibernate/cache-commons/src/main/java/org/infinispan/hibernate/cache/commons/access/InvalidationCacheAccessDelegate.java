@@ -47,7 +47,7 @@ public abstract class InvalidationCacheAccessDelegate implements AccessDelegate 
 	 * @param session
 	 * @param key The key of the item to be retrieved
     * @param txTimestamp a timestamp prior to the transaction start time
-    * @return the cached object or <tt>null</tt>
+    * @return the cached object or <code>null</code>
     * @throws CacheException if the cache retrieval failed
     */
 	@Override
@@ -78,7 +78,7 @@ public abstract class InvalidationCacheAccessDelegate implements AccessDelegate 
     * @param txTimestamp a timestamp prior to the transaction start time
     * @param version the item version number
     * @param minimalPutOverride Explicit minimalPut flag
-    * @return <tt>true</tt> if the object was successfully cached
+    * @return <code>true</code> if the object was successfully cached
     * @throws CacheException if storing the object failed
     */
 	@Override

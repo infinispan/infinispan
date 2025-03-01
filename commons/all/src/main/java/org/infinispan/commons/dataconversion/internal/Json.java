@@ -79,10 +79,10 @@ import org.infinispan.commons.util.TimeQuantity;
  * {@link List}s. Because those are mutable aggregate structures, there are two versions of the corresponding
  * <code>asXXX</code> methods: {@link #asMap()} which performs a deep copy of the underlying map, unwrapping every
  * nested Json entity to its Java representation and {@link #asJsonMap()} which simply return the map reference.
- * Similarly there are {@link #asList()} and {@link #asJsonList()}.
+ * Similarly, there are {@link #asList()} and {@link #asJsonList()}.
  * </p>
  *
- * <h3>Constructing and Modifying JSON Structures</h3>
+ * <h2>Constructing and Modifying JSON Structures</h2>
  *
  * <p>
  * There are several static factory methods in this class that allow you to create new
@@ -90,6 +90,7 @@ import org.infinispan.commons.util.TimeQuantity;
  * </p>
  *
  * <table>
+ * <caption>Static factory methods</caption>
  * <tr><td>{@link #read(String)}</td>
  * <td>Parse a JSON string and return the resulting <code>Json</code> instance. The syntax
  * recognized is as defined in <a href="http://www.json.org">http://www.json.org</a>.
@@ -143,7 +144,7 @@ import org.infinispan.commons.util.TimeQuantity;
  * <p>
  * If you want to add properties to an object in bulk or append a sequence of elements to array,
  * use the {@link #with(Json, Json...opts)} method. When used on an object, this method expects another
- * object as its argument and it will copy all properties of that argument into itself. Similarly,
+ * object as its argument, and it will copy all properties of that argument into itself. Similarly,
  * when called on array, the method expects another array and it will append all elements of its
  * argument to itself.
  * </p>
@@ -154,7 +155,7 @@ import org.infinispan.commons.util.TimeQuantity;
  * (i.e. duplicated) recursively.
  * </p>
  *
- * <h3>Navigating JSON Structures</h3>
+ * <h2>Navigating JSON Structures</h2>
  *
  * <p>
  * The {@link #at(int)} method returns the array element at the specified index and the
@@ -227,7 +228,7 @@ import org.infinispan.commons.util.TimeQuantity;
  * readable.
  * </p>
  *
- * <h3>Converting to String</h3>
+ * <h2>Converting to String</h2>
  *
  * <p>
  * To get a compact string representation, simply use the {@link #toString()} method. If you
@@ -235,7 +236,7 @@ import org.infinispan.commons.util.TimeQuantity;
  * method.
  * </p>
  *
- * <h3>Validating with JSON Schema</h3>
+ * <h2>Validating with JSON Schema</h2>
  *
  * <p>
  * Since version 1.3, mJson supports JSON Schema, draft 4. A schema is represented by the internal
@@ -257,14 +258,14 @@ import org.infinispan.commons.util.TimeQuantity;
  * <h2>
  * Infinispan changes on top of 1.4.2:
  * </h2>
- * <p><ul>
+ * <ul>
  * <li>Added support for pretty printing {@link Json#toPrettyString()}</li>
  * <li>Added support for {@link RawJson} as a specialized {@link StringJson}</li>
  * <li>Usage of {@link LinkedHashMap} internally for {@link ObjectJson} for predictable iteration</li>
  * <li>Support for {@link Class}, {@link Properties}, {@link Enum} for {@link DefaultFactory#make(Object)}</li>
  * <li>Support from internal Infinispan classes for {@link DefaultFactory#make(Object)}: {@link MediaType}, {@link JsonSerialization}</li>
  * <li>Support for replacing objects</li>
- *  </ul></p>
+ * </ul>
  *
  * @author Borislav Iordanov
  * @version 1.4.2
@@ -403,7 +404,6 @@ public class Json implements java.io.Serializable {
     * <li>http://spacetelescope.github.io/understanding-json-schema/ -
     * online book, tutorial (Python/Ruby based)</li>
     * </ul>
-    * </p>
     *
     * @author Borislav Iordanov
     */

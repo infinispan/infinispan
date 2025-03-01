@@ -411,7 +411,7 @@ public class MXParser implements XmlPullParser {
    }
 
    /**
-    * Unknown properties are <strong>always</strong> returned as false
+    * Unknown properties are <b>always</b> returned as false
     */
    public boolean getFeature(String name) {
       if (name == null) throw new IllegalArgumentException("feature name should not be null");

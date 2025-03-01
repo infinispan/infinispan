@@ -10,13 +10,13 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
- *  * Admin operation to create a template
- *  * Parameters:
- *  * <ul>
- *  *    <li><strong>name</strong> the name of the template to create</li>
- *  *    <li><strong>configuration</strong> the XML configuration to use</li>
- *  *    <li><strong>flags</strong> any flags, e.g. PERMANENT</li>
- *  * </ul>
+ * Admin operation to create a template
+ * Parameters:
+ * <ul>
+ *    <li><b>name</b> the name of the template to create</li>
+ *    <li><b>configuration</b> the XML configuration to use</li>
+ *    <li><b>flags</b> any flags, e.g. PERMANENT</li>
+ * </ul>
  *
  * @author Ryan Emerson
  * @since 12.0

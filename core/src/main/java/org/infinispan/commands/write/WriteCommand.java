@@ -32,7 +32,7 @@ public interface WriteCommand extends VisitableCommand, FlagAffectedCommand, Top
     * @param ctx invocation context if present, may be null
     * @param requireReplicateIfRemote if the command can replicate even if not a locally invoked command
     * @return whether the command should replicate
-    * @implSpec default just invokes {@link #isSuccessful()}
+    * default just invokes {@link #isSuccessful()}
     */
    default boolean shouldReplicate(InvocationContext ctx, boolean requireReplicateIfRemote) {
       return isSuccessful();

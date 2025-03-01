@@ -44,8 +44,7 @@ public class Reflections {
      * Perform a runtime cast. Similar to {@link Class#cast(Object)}, but useful
      * when you do not have a {@link Class} object for type you wish to cast to.
      * </p>
-     * <p/>
-     * <p>
+          * <p>
      * {@link Class#cast(Object)} should be used if possible
      * </p>
      *
@@ -89,13 +88,11 @@ public class Reflections {
      * Invoke the specified method on the provided instance, passing any additional
      * arguments included in this method as arguments to the specified method.
      * </p>
-     * <p/>
-     * <p>
+          * <p>
      * This method attempts to set the accessible flag of the method before invoking the method if the first argument
      * is true.
      * </p>
-     * <p/>
-     * <p>This method provides the same functionality and throws the same exceptions as
+          * <p>This method provides the same functionality and throws the same exceptions as
      * {@link Reflections#invokeMethod(boolean, Method, Class, Object, Object...)}, with the
      * expected return type set to {@link Object}.</p>
      *
@@ -111,14 +108,12 @@ public class Reflections {
      * Invoke the method on the instance, with any arguments specified, casting
      * the result of invoking the method to the expected return type.
      * </p>
-     * <p/>
-     * <p>
+          * <p>
      * This method wraps {@link Method#invoke(Object, Object...)}, converting the
      * checked exceptions that {@link Method#invoke(Object, Object...)} specifies
      * to runtime exceptions.
      * </p>
-     * <p/>
-     * <p>
+          * <p>
      * If instructed, this method attempts to set the accessible flag of the method before invoking the method.
      * </p>
      *

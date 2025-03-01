@@ -120,7 +120,7 @@ public class DataRehashedAdapter<K, V> extends AbstractAdapter<DataRehashedEvent
    };
 
    /**
-    * Events which will be selected (including generic type information (<code><?, ?></code>).
+    * Events which will be selected (including generic type information (<code>&lt;?, ?&gt;</code>).
     */
    @SuppressWarnings("serial")
    public static final TypeLiteral<DataRehashedEvent<?, ?>> WILDCARD_TYPE = new TypeLiteral<DataRehashedEvent<?, ?>>() {

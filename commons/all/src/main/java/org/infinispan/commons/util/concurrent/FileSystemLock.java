@@ -60,7 +60,7 @@ public class FileSystemLock {
     * </p>
     *
     * @return <code>true</code> if acquired the lock, <code>false</code>, otherwise.
-    * @throws IOException: In case of failures creating the file.
+    * @throws IOException In case of failures creating the file.
     * @see FileChannel#lock() Check the thrown exceptions.
     */
    public synchronized boolean tryLock() throws IOException {
@@ -94,7 +94,7 @@ public class FileSystemLock {
     * the lock was not released prior to shutdown.
     * </p>
     *
-    * @throws IOException: In case of I/O errors while acquiring the lock.
+    * @throws IOException In case of I/O errors while acquiring the lock.
     * @see #tryLock() Exceptions list.
     */
    public synchronized void unsafeLock() throws IOException {

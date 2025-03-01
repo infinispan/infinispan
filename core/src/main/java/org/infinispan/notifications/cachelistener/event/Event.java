@@ -28,7 +28,7 @@ public interface Event<K, V> {
    Type getType();
 
    /**
-    * @return <tt>true</tt> if the notification is before the event has occurred, <tt>false</tt> if after the event has occurred.
+    * @return <code>true</code> if the notification is before the event has occurred, <code>false</code> if after the event has occurred.
     */
    boolean isPre();
 

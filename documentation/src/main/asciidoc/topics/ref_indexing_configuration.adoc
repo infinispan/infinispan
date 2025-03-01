@@ -84,7 +84,7 @@ a warning message will be logged when the cache is startede starts
 include::xml/indexing_startup_reindex.xml[]
 ----
 
-=== Automatic strategy and shared cache stores
+== Automatic strategy and shared cache stores
 
 In case of:
 

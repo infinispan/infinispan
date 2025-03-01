@@ -166,8 +166,8 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
     * @param template the template to use
     * @return an instance of the builder
     * @deprecated since default templates have been removed, use {@link #configuration(String)} and supply the cache type
-    * using the declarative configuration, for example <tt>{"replicated-cache": { "mode": "sync"}}</tt> in place of
-    * <tt>org.infinispan.REPL_SYNC</tt>
+    * using the declarative configuration, for example <code>{"replicated-cache": { "mode": "sync"}}</code> in place of
+    * <code>org.infinispan.REPL_SYNC</code>
     */
    @Deprecated(forRemoval = true, since = "15.1")
    public RemoteCacheConfigurationBuilder templateName(DefaultTemplate template) {

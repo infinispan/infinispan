@@ -1,7 +1,5 @@
 package org.infinispan.server.resp.commands.sortedset;
 
-import static org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils.response;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -22,10 +20,11 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
+import static org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils.response;
 
 /**
  * @see <a href="https://redis.io/commands/zrange/">ZRANGE</a>
- * Returns the specified range of elements in the sorted set stored at <key>.
+ * Returns the specified range of elements in the sorted set stored at &lt;key&gt;.
  * <p>
  * ZRANGE can perform different types of range queries: by index (rank), by the score,or by lexicographical order.
  * <p>

@@ -65,7 +65,6 @@ import org.springframework.util.StringUtils;
  * Otherwise, it is equivalent to using
  * <code>DEFAULT</code>.</li>
  * </ul>
- * </p>
  * <p>
  * In addition to creating a named <code>Cache</code> this <code>FactoryBean</code> does also
  * control that <code>Cache</code>' {@link org.infinispan.commons.api.Lifecycle lifecycle} by shutting
@@ -73,7 +72,7 @@ import org.springframework.util.StringUtils;
  * <em>always</em> use this <code>FactoryBean</code> when creating a named <code>Cache</code>.
  * </p>
  *
- * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Olaf Bergner
  * @author Marius Bogoevici
  *
  */
@@ -115,7 +114,7 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
     * </ul>
     * </p>
     *
-    * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+    * @author Olaf Bergner
     *
     */
    enum ConfigurationTemplateMode {
@@ -296,7 +295,7 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
     * Sets the {@link EmbeddedCacheManager
     * <code>org.infinispan.manager.EmbeddedCacheManager</code>} to be used for creating our
     * {@link Cache <code>Cache</code>} instance. Note that this is a
-    * <strong>mandatory</strong> property.
+    * <b>mandatory</b> property.
     * </p>
     *
     * @param infinispanEmbeddedCacheManager
@@ -320,7 +319,7 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
 
    /**
     * API to introduce a customised {@link ConfigurationBuilder} that will override the default configurations
-    * which are already available on this class. This can <strong>only</strong> be used if {@link
+    * which are already available on this class. This can <b>only</b> be used if {@link
     * #setConfigurationTemplateMode(String)} has been set to <code>CUSTOM</code>.
     *
     * @param builder

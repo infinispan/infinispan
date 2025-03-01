@@ -132,8 +132,7 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
     * that are currently expired.
     * @param segments segments of entries to count
     * @return count of the number of entries in the container excluding expired entries
-    * @implSpec
-    * Default method invokes the {@link #iterator(IntSet)} method and just counts entries.
+        * Default method invokes the {@link #iterator(IntSet)} method and just counts entries.
     */
    default int size(IntSet segments) {
       int size = 0;
@@ -214,8 +213,7 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
     * implementing class, actions are performed in the order of iteration (if an iteration order is specified).
     * Exceptions thrown by the action are relayed to the caller.
     *
-    * @implSpec
-    * <p>The default implementation behaves as if:
+        * <p>The default implementation behaves as if:
     * <pre>{@code
     *   for (Iterator<InternalCacheEntry<K, V>> iter = iterator(segments) ; iter.hasNext() ; ) {
     *      InternalCacheEntry<K, V> ice = iter.next();

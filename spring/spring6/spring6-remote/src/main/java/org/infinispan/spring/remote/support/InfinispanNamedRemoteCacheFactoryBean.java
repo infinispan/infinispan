@@ -24,7 +24,7 @@ import org.springframework.util.StringUtils;
  * used instead.
  * </p>
  *
- * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Olaf Bergner
  *
  */
 public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<RemoteCache<K, V>>,
@@ -139,7 +139,7 @@ public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<
     * Sets the {@link RemoteCacheManager
     * <code>org.infinispan.client.hotrod.RemoteCacheManager</code>} to be used for creating our
     * {@link org.infinispan.Cache <code>Cache</code>} instance. Note that this is a
-    * <strong>mandatory</strong> property.
+    * <b>mandatory</b> property.
     * </p>
     *
     * @param infinispanRemoteCacheManager

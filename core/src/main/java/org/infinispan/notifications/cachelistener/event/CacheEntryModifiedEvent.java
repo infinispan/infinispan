@@ -4,12 +4,10 @@ import org.infinispan.metadata.Metadata;
 
 /**
  * This event subtype is passed in to any method annotated with {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryModified}
- * <p />
  * The {@link #getValue()} method's behavior is specific to whether the callback is triggered before or after the event
- * in question.  For example, if <tt>event.isPre()</tt> is <tt>true</tt>, then <tt>event.getValue()</tt> would return the
- * <i>old</i> value, prior to modification.  If <tt>event.isPre()</tt> is <tt>false</tt>, then <tt>event.getValue()</tt>
- * would return new <i>new</i> value.  If the event is creating and inserting a new entry, the old value would be <tt>null</tt>.
- * <p />
+ * in question.  For example, if <code>event.isPre()</code> is <code>true</code>, then <code>event.getValue()</code> would return the
+ * <i>old</i> value, prior to modification.  If <code>event.isPre()</code> is <code>false</code>, then <code>event.getValue()</code>
+ * would return new <i>new</i> value.  If the event is creating and inserting a new entry, the old value would be <code>null</code>.
  * @author Manik Surtani
  * @since 4.0
  */
@@ -17,8 +15,7 @@ public interface CacheEntryModifiedEvent<K, V> extends CacheEntryEvent<K, V> {
 
    /**
     * Retrieves the value of the entry being modified.
-    * <p />
-    * @return the previous or new value of the entry, depending on whether isPre() is true or false.
+       * @return the previous or new value of the entry, depending on whether isPre() is true or false.
     * @deprecated use {@link #getOldValue()} or {@link #getNewValue()} instead
     */
    @Deprecated(forRemoval=true, since = "13.0")
@@ -26,34 +23,32 @@ public interface CacheEntryModifiedEvent<K, V> extends CacheEntryEvent<K, V> {
 
    /**
     * Retrieves the old value of the entry being modified.
-    * <p />
-    * @return the previous value of the entry, regardless of whether isPre() is true or false.
+       * @return the previous value of the entry, regardless of whether isPre() is true or false.
     */
    V getOldValue();
 
    /**
     * Retrieves the new value of the entry being modified.
-    * <p />
-    * @return the new value of the entry, regardless of whether isPre() is true or false.
+       * @return the new value of the entry, regardless of whether isPre() is true or false.
     */
    V getNewValue();
 
    /**
-    * Regardless of whether <tt>isPre()</tt> is <tt>true</tt> or is
-    * <tt>false</tt>, this method returns the metadata of the entry being
+    * Regardless of whether <code>isPre()</code> is <code>true</code> or is
+    * <code>false</code>, this method returns the metadata of the entry being
     * deleted. This method is useful for situations where cache listeners
     * need to know what the old value being deleted is when getting
-    * <tt>isPre()</tt> is <tt>false</tt> callbacks.
+    * <code>isPre()</code> is <code>false</code> callbacks.
     *
     * @return the metadata of the entry being deleted, regardless of
-    * <tt>isPre()</tt> value
+    * <code>isPre()</code> value
     */
    Metadata getOldMetadata();
 
    /**
     * Indicates whether the cache entry modification event is the result of
     * the cache entry being created. This method helps determine if the cache
-    * entry was created when <tt>event.isPre()</tt> is <tt>false</tt>.
+    * entry was created when <code>event.isPre()</code> is <code>false</code>.
     *
     * @return true if the event is the result of the entry being created,
     * otherwise it returns false indicating that the event was the result of

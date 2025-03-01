@@ -14,8 +14,7 @@ public interface FilterConditionContext {
    /**
     * Creates a new context and connects it with the current one using boolean AND. The new context is added after the
     * current one. The two conditions are not grouped so operator precedence in the resulting condition might change.
-    * <p/>
-    * The effect is: a AND b
+        * The effect is: a AND b
     *
     * @return the new context
     */
@@ -24,8 +23,7 @@ public interface FilterConditionContext {
    /**
     * Connects a given context with the current one using boolean AND. The new context is added after the current one
     * and is grouped. Operator precedence will be unaffected due to grouping.
-    * <p/>
-    * The effect is: a AND (b)
+        * The effect is: a AND (b)
     *
     * @param rightCondition the second condition
     * @return the new context
@@ -35,8 +33,7 @@ public interface FilterConditionContext {
    /**
     * Creates a new context and connects it with the current one using boolean OR. The new context is added after the
     * current one.
-    * <p/>
-    * The effect is: a OR b
+        * The effect is: a OR b
     *
     * @return the new context
     */
@@ -45,8 +42,7 @@ public interface FilterConditionContext {
    /**
     * Connects a given context with the current one using boolean OR. The new context is added after the current one and
     * is grouped.
-    * <p/>
-    * The effect is: a OR (b)
+        * The effect is: a OR (b)
     *
     * @param rightCondition the second condition
     * @return the new context

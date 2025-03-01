@@ -28,8 +28,7 @@ import org.testng.annotations.Test;
 
 /**
  * Tests for implicit locking
- * <p/>
- * Transparent eager locking for transactions https://jira.jboss.org/jira/browse/ISPN-70
+  * Transparent eager locking for transactions https://jira.jboss.org/jira/browse/ISPN-70
  *
  * @author Vladimir Blagojevic
  */

@@ -14,8 +14,8 @@ import org.infinispan.server.core.admin.AdminServerTask;
  * Admin operation to remove a cache
  * Parameters:
  * <ul>
- *    <li><strong>name</strong> the name of the cache to remove</li>
- *    <li><strong>flags</strong> </li>
+ *    <li><b>name</b> the name of the cache to remove</li>
+ *    <li><b>flags</b> </li>
  * </ul>
  *
  * @author Tristan Tarrant

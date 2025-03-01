@@ -44,8 +44,7 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * A base class for a state transfer interceptor. It contains the base code to avoid duplicating in the two current
  * different implementations.
- * <p/>
- * Also, it has some utilities methods with the most common logic.
+  * Also, it has some utilities methods with the most common logic.
  *
  * @author Pedro Ruivo
  * @since 9.0

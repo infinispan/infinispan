@@ -23,33 +23,25 @@ import org.jboss.logging.annotations.ValidIdRanges;
 
 /**
  * Infinispan's log abstraction layer on top of JBoss Logging.
- * <p/>
- * It contains explicit methods for all INFO or above levels so that they can
+  * It contains explicit methods for all INFO or above levels so that they can
  * be internationalized. For the commons module, message ids ranging from 0901
  * to 1000 inclusively have been reserved.
- * <p/>
- * <code> Log log = LogFactory.getLog( getClass() ); </code> The above will get
- * you an instance of <tt>Log</tt>, which can be used to generate log messages
+  * <code> Log log = LogFactory.getLog( getClass() ); </code> The above will get
+ * you an instance of <code>Log</code>, which can be used to generate log messages
  * either via JBoss Logging which then can delegate to Log4J (if the libraries
  * are present) or (if not) the built-in JDK logger.
- * <p/>
- * In addition to the 6 log levels available, this framework also supports
+  * In addition to the 6 log levels available, this framework also supports
  * parameter interpolation, similar to the JDKs {@link String#format(String, Object...)}
  * method. What this means is, that the following block:
  * <code> if (log.isTraceEnabled()) { log.trace("This is a message " + message + " and some other value is " + value); }
  * </code>
- * <p/>
- * ... could be replaced with ...
- * <p/>
- * <code> if (log.isTraceEnabled()) log.tracef("This is a message %s and some other value is %s", message, value);
+  * ... could be replaced with ...
+  * <code> if (log.isTraceEnabled()) log.tracef("This is a message %s and some other value is %s", message, value);
  * </code>
- * <p/>
- * This greatly enhances code readability.
- * <p/>
- * If you are passing a <tt>Throwable</tt>, note that this should be passed in
+  * This greatly enhances code readability.
+  * If you are passing a <code>Throwable</code>, note that this should be passed in
  * <i>before</i> the vararg parameter list.
- * <p/>
- *
+  *
  * @author Manik Surtani
  * @since 4.0
  * @api.private

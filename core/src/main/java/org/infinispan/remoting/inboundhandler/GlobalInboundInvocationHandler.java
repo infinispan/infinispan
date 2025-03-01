@@ -34,12 +34,10 @@ import org.infinispan.xsite.commands.remote.XSiteRequest;
 /**
  * {@link org.infinispan.remoting.inboundhandler.InboundInvocationHandler} implementation that handles all the {@link
  * org.infinispan.commands.ReplicableCommand}.
- * <p/>
- * This component handles the {@link org.infinispan.commands.ReplicableCommand} from local and remote site. The remote
+  * This component handles the {@link org.infinispan.commands.ReplicableCommand} from local and remote site. The remote
  * site {@link org.infinispan.commands.ReplicableCommand} are sent to the {@link org.infinispan.xsite.BackupReceiver} to
  * be handled.
- * <p/>
- * Also, the non-{@link org.infinispan.commands.remote.CacheRpcCommand} are processed directly and the {@link
+  * Also, the non-{@link org.infinispan.commands.remote.CacheRpcCommand} are processed directly and the {@link
  * org.infinispan.commands.remote.CacheRpcCommand} are processed in the cache's {@link
  * org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler} implementation.
  *

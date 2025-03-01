@@ -1,7 +1,5 @@
 package org.infinispan.jmx;
 
-import static org.infinispan.util.logging.Log.CONTAINER;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,6 +22,8 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import static org.infinispan.util.logging.Log.CONTAINER;
 
 /**
  * Parent class for JMX component registration.
@@ -127,7 +127,7 @@ abstract class AbstractJmxRegistration implements ObjectNameKeys {
    }
 
    /**
-    * Subclasses must implement this hook to initialize {@link #groupName} during start.
+    * Subclasses must implement this hook to initialize the group name during start.
     */
    protected abstract String initGroup();
 

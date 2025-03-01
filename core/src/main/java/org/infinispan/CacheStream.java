@@ -1,8 +1,5 @@
 package org.infinispan;
 
-import static org.infinispan.util.Casting.toSerialSupplierCollect;
-import static org.infinispan.util.Casting.toSupplierCollect;
-
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -42,6 +39,9 @@ import org.infinispan.util.function.SerializableToDoubleFunction;
 import org.infinispan.util.function.SerializableToIntFunction;
 import org.infinispan.util.function.SerializableToLongFunction;
 
+import static org.infinispan.util.Casting.toSerialSupplierCollect;
+import static org.infinispan.util.Casting.toSupplierCollect;
+
 /**
  * A {@link Stream} that has additional operations to monitor or control behavior when used from a {@link Cache}.
  *
@@ -76,9 +76,9 @@ import org.infinispan.util.function.SerializableToLongFunction;
  * Each of these methods may have slightly different behavior, so make sure you check the method you are utilizing.</p>
  *
  * <p>An example of such an operation is using distinct intermediate operation. What will happen
- * is upon calling the terminal operation a remote retrieval operation will be ran using all of
+ * is upon calling the terminal operation a remote retrieval operation will be run using all
  * the intermediate operations up to the distinct operation remotely.  This retrieval is then used to fuel a local
- * stream where all of the remaining intermediate operations are performed and then finally the terminal operation is
+ * stream where all the remaining intermediate operations are performed and then finally the terminal operation is
  * applied as normal.  Note in this case the intermediate iterator still obeys the
  * {@link CacheStream#distributedBatchSize(int)} setting irrespective of the terminal operator.</p>
  *
@@ -93,7 +93,7 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
    CacheStream<R> sequentialDistribution();
 
    /**
-    * @inheritDoc
+    * {@inheritDoc}
     * @return a stream with parallel distribution enabled.
     */
    CacheStream<R> parallelDistribution();
@@ -138,7 +138,7 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     * {@inheritDoc}
     * <p>This operation is performed remotely on the node that is the primary owner for the key tied to the entry(s)
     * in this stream.</p>
-    * <p>NOTE: This method while being rehash aware has the lowest consistency of all of the operators.  This
+    * <p>NOTE: This method while being rehash-aware has the lowest consistency of all the operators.  This
     * operation will be performed on every entry at least once in the cluster, as long as the originator doesn't go
     * down while it is being performed.  This is due to how the distributed action is performed.  Essentially the
     * {@link CacheStream#distributedBatchSize} value controls how many elements are processed per node at a time
@@ -147,7 +147,7 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     * <p>It is possible to have the cache local to each node injected into this instance if the provided
     * Consumer also implements the {@link org.infinispan.stream.CacheAware} interface.  This method will be invoked
     * before the consumer <code>accept()</code> method is invoked.</p>
-    * <p>This method is ran distributed by default with a distributed backing cache.  However if you wish for this
+    * <p>This method is run distributed by default with a distributed backing cache. However, if you wish for this
     * operation to run locally you can use the {@code stream().iterator().forEachRemaining(action)} for a single
     * threaded variant.  If you
     * wish to have a parallel variant you can use {@link java.util.stream.StreamSupport#stream(Spliterator, boolean)}
@@ -338,7 +338,6 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *                      false)
     *              .collect(Collectors.toList());
     * </pre>
-    * </p>
     *
     * @param collector
     * @param <R1> collected type
@@ -381,7 +380,6 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *                      false)
     *              .collect(Collectors.toList());
     * </pre>
-    * </p>
     *
     * @param supplier The supplier to create the collector that is specifically serializable
     * @param <R1> The resulting type of the collector
@@ -425,7 +423,6 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *                      false)
     *              .collect(Collectors.toList());
     * </pre>
-    * </p>
     *
     * @param supplier The supplier to create the collector
     * @param <R1> The resulting type of the collector
@@ -476,7 +473,6 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *                      false)
     *              .collect(Collectors.toList());
     * </pre>
-    * </p>
     */
    @Override
    <R1> R1 collect(Supplier<R1> supplier, BiConsumer<R1, ? super R> accumulator, BiConsumer<R1, R1> combiner);

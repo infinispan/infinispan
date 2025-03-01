@@ -228,8 +228,7 @@ public final class Util {
    /**
     * Instantiates a class by invoking the constructor that matches the provided parameter types passing the given
     * arguments. If no matching constructor is found this will return null. Note that the constructor must be public.
-    * <p/>
-    * Any exceptions encountered are wrapped in a {@link CacheConfigurationException} and rethrown.
+        * Any exceptions encountered are wrapped in a {@link CacheConfigurationException} and rethrown.
     *
     * @param clazz class to instantiate
     * @param <T>   the instance type
@@ -255,10 +254,9 @@ public final class Util {
    }
 
    /**
-    * Instantiates a class by first attempting a static <i>factory method</i> named <tt>getInstance()</tt> on the class
+    * Instantiates a class by first attempting a static <i>factory method</i> named <code>getInstance()</code> on the class
     * and then falling back to an empty constructor.
-    * <p/>
-    * Any exceptions encountered are wrapped in a {@link CacheConfigurationException} and rethrown.
+        * Any exceptions encountered are wrapped in a {@link CacheConfigurationException} and rethrown.
     *
     * @param clazz class to instantiate
     * @return an instance of the class
@@ -299,10 +297,9 @@ public final class Util {
 
    /**
     * Instantiates a class based on the class name provided.  Instantiation is attempted via an appropriate, static
-    * factory method named <tt>getInstance()</tt> first, and failing the existence of an appropriate factory, falls back
+    * factory method named <code>getInstance()</code> first, and failing the existence of an appropriate factory, falls back
     * to an empty constructor.
-    * <p/>
-    * Any exceptions encountered loading and instantiating the class is wrapped in a
+        * Any exceptions encountered loading and instantiating the class is wrapped in a
     * {@link CacheConfigurationException}.
     *
     * @param classname class to instantiate
@@ -740,7 +737,7 @@ public final class Util {
    /**
     * Returns a number such that the number is a power of two that is equal to, or greater than, the number passed in as
     * an argument.  The smallest number returned will be 1. Due to having to be a power of two, the highest int this can
-    * return is 2<sup>31 since int is signed.
+    * return is 2<sup>31</sup> since int is signed.
     */
    public static int findNextHighestPowerOfTwo(int num) {
       if (num <= 1) {

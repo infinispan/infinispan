@@ -78,14 +78,12 @@ import net.jcip.annotations.GuardedBy;
 
 /**
  * A filesystem-based implementation of a {@link org.infinispan.persistence.spi.NonBlockingStore}.
- * This file store stores cache values in a single file <tt>&lt;location&gt;/&lt;cache name&gt;.dat</tt>,
+ * This file store stores cache values in a single file <code>&lt;location&gt;/&lt;cache name&gt;.dat</code>,
  * keys and file positions are kept in memory.
- * <p/>
- * Note: this CacheStore implementation keeps keys and file positions in memory!
+  * Note: this CacheStore implementation keeps keys and file positions in memory!
  * The current implementation needs about 100 bytes per cache entry, plus the
  * memory for the key objects.
- * <p/>
- * So, the space taken by this cache store is both the space in the file
+  * So, the space taken by this cache store is both the space in the file
  * itself plus the in-memory index with the keys and their file positions.
  * With this in mind and to avoid the cache store leading to
  * OutOfMemoryExceptions, you can optionally configure the maximum number
@@ -96,8 +94,7 @@ import net.jcip.annotations.GuardedBy;
  * is used as a cache where loss of data in the cache store does not lead to
  * data loss, and data can be recomputed or re-queried from the original data
  * source.
- * <p/>
- * This class is fully thread safe, yet allows for concurrent load / store
+  * This class is fully thread safe, yet allows for concurrent load / store
  * of individual cache entries.
  *
  * @author Karsten Blees
@@ -902,8 +899,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
 
    /**
     * Frees the space of the specified file entry (for reuse by allocate).
-    * <p/>
-    * Note: Caller must hold the {@code resizeLock} in shared mode.
+        * Note: Caller must hold the {@code resizeLock} in shared mode.
     */
    private void free(FileEntry fe) throws IOException {
       if (fe != null) {
@@ -1661,8 +1657,7 @@ public class SingleFileStore<K, V> implements NonBlockingStore<K, V> {
 
    /**
     * Helper class to represent an entry in the cache file.
-    * <p/>
-    * The format of a FileEntry on disk is as follows:
+        * The format of a FileEntry on disk is as follows:
     * <ul>
     * <li>4 bytes: {@link #size}</li>
     * <li>4 bytes: {@link #keyLen}, 0 if the block is unused</li>

@@ -1,6 +1,6 @@
 /**
  * Server-side remote query components.
  *
- * @api.public-api
+ * @api.public
  */
 package org.infinispan.query.remote;

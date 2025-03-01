@@ -68,11 +68,9 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  * cluster is achieved through the java HotRod client: this assures fault tolerance and smart dispatching of calls to
  * the nodes that have the highest chance of containing the given key. This cache store supports both preloading
  * and <b>fetchPersistentState</b>.
- * <p/>
- * Purging elements is not possible, as HotRod does not support the fetching of all remote keys (this would be a
+  * Purging elements is not possible, as HotRod does not support the fetching of all remote keys (this would be a
  * very costly operation as well). Purging takes place at the remote end (infinispan cluster).
- * <p/>
- *
+  *
  * @author Mircea.Markus@jboss.com
  * @see org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration
  * @see <a href="http://community.jboss.org/wiki/JavaHotRodclient">Hotrod Java Client</a>

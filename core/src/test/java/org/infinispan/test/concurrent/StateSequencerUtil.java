@@ -93,8 +93,7 @@ public class StateSequencerUtil {
 
    /**
     * Advance to the every state in the {@code states} list, in the given order, but only if {@code condition} is true.
-    * <p/>
-    * Does nothing if {@code states} is {@code null} or empty.
+        * Does nothing if {@code states} is {@code null} or empty.
     */
    public static void advanceMultiple(StateSequencer stateSequencer, boolean condition, List<String> states)
          throws TimeoutException, InterruptedException {

@@ -130,10 +130,10 @@ import org.jgroups.util.SocketFactory;
  * An encapsulation of a JGroups transport. JGroups transports can be configured using a variety of methods, usually by
  * passing in one of the following properties:
  * <ul>
- * <li><tt>configurationString</tt> - a JGroups configuration String</li>
- * <li><tt>configurationXml</tt> - JGroups configuration XML as a String</li>
- * <li><tt>configurationFile</tt> - String pointing to a JGroups XML configuration file</li>
- * <li><tt>channelLookup</tt> - Fully qualified class name of a
+ * <li><code>configurationString</code> - a JGroups configuration String</li>
+ * <li><code>configurationXml</code> - JGroups configuration XML as a String</li>
+ * <li><code>configurationFile</code> - String pointing to a JGroups XML configuration file</li>
+ * <li><code>channelLookup</code> - Fully qualified class name of a
  * {@link JGroupsChannelLookup} instance</li>
  * </ul>
  * These are normally passed in as Properties in

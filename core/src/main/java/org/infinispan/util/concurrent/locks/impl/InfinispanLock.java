@@ -33,12 +33,10 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * A special lock for Infinispan cache.
- * <p/>
- * The main different with the traditional {@link java.util.concurrent.locks.Lock} is allowing to use any object as lock
+  * The main different with the traditional {@link java.util.concurrent.locks.Lock} is allowing to use any object as lock
  * owner. It is possible to use a {@link Thread} as lock owner that makes similar to {@link
  * java.util.concurrent.locks.Lock}.
- * <p/>
- * In addition, it has an asynchronous interface. {@link #acquire(Object, long, TimeUnit)}  will not acquire the lock
+  * In addition, it has an asynchronous interface. {@link #acquire(Object, long, TimeUnit)}  will not acquire the lock
  * immediately (except if it is free) but will return a {@link ExtendedLockPromise}. This promise allow to test if the
  * lock is acquired asynchronously and cancel the lock acquisition, without any blocking.
  *
@@ -124,11 +122,9 @@ public class InfinispanLock {
 
    /**
     * It tries to acquire this lock.
-    * <p/>
-    * If it is invoked multiple times with the same owner, the same {@link ExtendedLockPromise} is returned until it has
+        * If it is invoked multiple times with the same owner, the same {@link ExtendedLockPromise} is returned until it has
     * timed-out or {@link #release(Object)}  is invoked.
-    * <p/>
-    * If the lock is free, it is immediately acquired, otherwise the lock owner is queued.
+        * If the lock is free, it is immediately acquired, otherwise the lock owner is queued.
     *
     * @param lockOwner the lock owner who needs to acquire the lock.
     * @param time      the timeout value.
@@ -173,8 +169,7 @@ public class InfinispanLock {
 
    /**
     * It tries to release the lock held by {@code lockOwner}.
-    * <p/>
-    * If the lock is not acquired (is waiting or timed out/deadlocked) by {@code lockOwner}, its {@link
+        * If the lock is not acquired (is waiting or timed out/deadlocked) by {@code lockOwner}, its {@link
     * ExtendedLockPromise} is canceled. If {@code lockOwner} is the current lock owner, the lock is released and the
     * next lock owner available will acquire the lock. If the {@code lockOwner} never tried to acquire the lock, this
     * method does nothing.
@@ -219,8 +214,7 @@ public class InfinispanLock {
 
    /**
     * It checks if the lock is acquired.
-    * <p/>
-    * A {@code false} return value does not mean the lock is free since it may have queued lock owners.
+        * A {@code false} return value does not mean the lock is free since it may have queued lock owners.
     *
     * @return {@code true} if the lock is acquired.
     */
@@ -243,8 +237,7 @@ public class InfinispanLock {
 
    /**
     * It tests if the lock has the lock owner.
-    * <p/>
-    * It return {@code true} if the lock owner is the current lock owner or it in the queue.
+        * It return {@code true} if the lock owner is the current lock owner or it in the queue.
     *
     * @param lockOwner the lock owner to test.
     * @return {@code true} if it contains the lock owner.

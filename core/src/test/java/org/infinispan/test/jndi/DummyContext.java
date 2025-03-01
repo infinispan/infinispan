@@ -30,12 +30,12 @@ public class DummyContext implements Context {
    }
 
    /**
-    * Retrieves the named object. If <tt>name</tt> is empty, returns a new instance of this context (which represents
+    * Retrieves the named object. If <code>name</code> is empty, returns a new instance of this context (which represents
     * the same naming context as this context, but its environment may be modified independently and it may be accessed
     * concurrently).
     *
     * @param name the name of the object to look up
-    * @return the object bound to <tt>name</tt>
+    * @return the object bound to <code>name</code>
     * @throws NamingException if a naming exception is encountered
     * @see #lookup(String)
     * @see #lookupLink(Name)
@@ -48,7 +48,7 @@ public class DummyContext implements Context {
     * Retrieves the named object. See {@link #lookup(Name)} for details.
     *
     * @param name the name of the object to look up
-    * @return the object bound to <tt>name</tt>
+    * @return the object bound to <code>name</code>
     * @throws NamingException if a naming exception is encountered
     */
    public Object lookup(String name) throws NamingException {
@@ -104,8 +104,7 @@ public class DummyContext implements Context {
    /**
     * Binds a name to an object, overwriting any existing binding. All intermediate contexts and the target context
     * (that named by all but terminal atomic component of the name) must already exist.
-    * <p/>
-    * <p> If the object is a <tt>DirContext</tt>, any existing attributes associated with the name are replaced with
+        * <p> If the object is a <code>DirContext</code>, any existing attributes associated with the name are replaced with
     * those of the object. Otherwise, any existing attributes associated with the name remain unchanged.
     *
     * @param name the name to bind; may not be empty
@@ -138,11 +137,9 @@ public class DummyContext implements Context {
    /**
     * Unbinds the named object. Removes the terminal atomic name in <code>name</code> from the target context--that
     * named by all but the terminal atomic part of <code>name</code>.
-    * <p/>
-    * <p> This method is idempotent. It succeeds even if the terminal atomic name is not bound in the target context,
-    * but throws <tt>NameNotFoundException</tt> if any of the intermediate contexts do not exist.
-    * <p/>
-    * <p> Any attributes associated with the name are removed. Intermediate contexts are not changed.
+        * <p> This method is idempotent. It succeeds even if the terminal atomic name is not bound in the target context,
+    * but throws <code>NameNotFoundException</code> if any of the intermediate contexts do not exist.
+        * <p> Any attributes associated with the name are removed. Intermediate contexts are not changed.
     *
     * @param name the name to unbind; may not be empty
     * @throws javax.naming.NameNotFoundException
@@ -180,7 +177,7 @@ public class DummyContext implements Context {
     * @param oldName the name of the existing binding; may not be empty
     * @param newName the name of the new binding; may not be empty
     * @throws javax.naming.NameAlreadyBoundException
-    *                         if <tt>newName</tt> is already bound
+    *                         if <code>newName</code> is already bound
     * @throws NamingException if a naming exception is encountered
     * @see #rename(String,String)
     * @see #bind(Name,Object)
@@ -196,7 +193,7 @@ public class DummyContext implements Context {
     * @param oldName the name of the existing binding; may not be empty
     * @param newName the name of the new binding; may not be empty
     * @throws javax.naming.NameAlreadyBoundException
-    *                         if <tt>newName</tt> is already bound
+    *                         if <code>newName</code> is already bound
     * @throws NamingException if a naming exception is encountered
     */
    public void rename(String oldName, String newName) throws NamingException {
@@ -205,13 +202,12 @@ public class DummyContext implements Context {
    /**
     * Enumerates the names bound in the named context, along with the class names of objects bound to them. The contents
     * of any subcontexts are not included.
-    * <p/>
-    * <p> If a binding is added to or removed from this context, its effect on an enumeration previously returned is
+        * <p> If a binding is added to or removed from this context, its effect on an enumeration previously returned is
     * undefined.
     *
     * @param name the name of the context to list
     * @return an enumeration of the names and class names of the bindings in this context.  Each element of the
-    *         enumeration is of type <tt>NameClassPair</tt>.
+    *         enumeration is of type <code>NameClassPair</code>.
     * @throws NamingException if a naming exception is encountered
     * @see #list(String)
     * @see #listBindings(Name)
@@ -227,7 +223,7 @@ public class DummyContext implements Context {
     *
     * @param name the name of the context to list
     * @return an enumeration of the names and class names of the bindings in this context.  Each element of the
-    *         enumeration is of type <tt>NameClassPair</tt>.
+    *         enumeration is of type <code>NameClassPair</code>.
     * @throws NamingException if a naming exception is encountered
     */
    public NamingEnumeration<NameClassPair> list(String name) throws NamingException {
@@ -237,13 +233,12 @@ public class DummyContext implements Context {
    /**
     * Enumerates the names bound in the named context, along with the objects bound to them. The contents of any
     * subcontexts are not included.
-    * <p/>
-    * <p> If a binding is added to or removed from this context, its effect on an enumeration previously returned is
+        * <p> If a binding is added to or removed from this context, its effect on an enumeration previously returned is
     * undefined.
     *
     * @param name the name of the context to list
     * @return an enumeration of the bindings in this context. Each element of the enumeration is of type
-    *         <tt>Binding</tt>.
+    *         <code>Binding</code>.
     * @throws NamingException if a naming exception is encountered
     * @see #listBindings(String)
     * @see #list(Name)
@@ -259,7 +254,7 @@ public class DummyContext implements Context {
     *
     * @param name the name of the context to list
     * @return an enumeration of the bindings in this context. Each element of the enumeration is of type
-    *         <tt>Binding</tt>.
+    *         <code>Binding</code>.
     * @throws NamingException if a naming exception is encountered
     */
    public NamingEnumeration<Binding> listBindings(String name) throws NamingException {
@@ -269,15 +264,13 @@ public class DummyContext implements Context {
    /**
     * Destroys the named context and removes it from the namespace. Any attributes associated with the name are also
     * removed. Intermediate contexts are not destroyed.
-    * <p/>
-    * <p> This method is idempotent. It succeeds even if the terminal atomic name is not bound in the target context,
-    * but throws <tt>NameNotFoundException</tt> if any of the intermediate contexts do not exist.
-    * <p/>
-    * <p> In a federated naming system, a context from one naming system may be bound to a name in another.  One can
+        * <p> This method is idempotent. It succeeds even if the terminal atomic name is not bound in the target context,
+    * but throws <code>NameNotFoundException</code> if any of the intermediate contexts do not exist.
+        * <p> In a federated naming system, a context from one naming system may be bound to a name in another.  One can
     * subsequently look up and perform operations on the foreign context using a composite name.  However, an attempt
-    * destroy the context using this composite name will fail with <tt>NotContextException</tt>, because the foreign
-    * context is not a "subcontext" of the context in which it is bound. Instead, use <tt>unbind()</tt> to remove the
-    * binding of the foreign context.  Destroying the foreign context requires that the <tt>destroySubcontext()</tt> be
+    * destroy the context using this composite name will fail with <code>NotContextException</code>, because the foreign
+    * context is not a "subcontext" of the context in which it is bound. Instead, use <code>unbind()</code> to remove the
+    * binding of the foreign context.  Destroying the foreign context requires that the <code>destroySubcontext()</code> be
     * performed on a context from the foreign context's "native" naming system.
     *
     * @param name the name of the context to be destroyed; may not be empty
@@ -346,10 +339,10 @@ public class DummyContext implements Context {
 
    /**
     * Retrieves the named object, following links except for the terminal atomic component of the name. If the object
-    * bound to <tt>name</tt> is not a link, returns the object itself.
+    * bound to <code>name</code> is not a link, returns the object itself.
     *
     * @param name the name of the object to look up
-    * @return the object bound to <tt>name</tt>, not following the terminal link (if any).
+    * @return the object bound to <code>name</code>, not following the terminal link (if any).
     * @throws NamingException if a naming exception is encountered
     * @see #lookupLink(String)
     */
@@ -362,7 +355,7 @@ public class DummyContext implements Context {
     * #lookupLink(Name)} for details.
     *
     * @param name the name of the object to look up
-    * @return the object bound to <tt>name</tt>, not following the terminal link (if any)
+    * @return the object bound to <code>name</code>, not following the terminal link (if any)
     * @throws NamingException if a naming exception is encountered
     */
    public Object lookupLink(String name) throws NamingException {
@@ -373,7 +366,7 @@ public class DummyContext implements Context {
     * Retrieves the parser associated with the named context. In a federation of namespaces, different naming systems
     * will parse names differently.  This method allows an application to get a parser for parsing names into their
     * atomic components using the naming convention of a particular naming system. Within any single naming system,
-    * <tt>NameParser</tt> objects returned by this method must be equal (using the <tt>equals()</tt> test).
+    * <code>NameParser</code> objects returned by this method must be equal (using the <code>equals()</code> test).
     *
     * @param name the name of the context from which to get the parser
     * @return a name parser that can parse compound names into their atomic components
@@ -402,8 +395,7 @@ public class DummyContext implements Context {
     * returns the composition of the two names using the syntax appropriate for the naming system(s) involved.  That is,
     * if <code>name</code> names an object relative to this context, the result is the name of the same object, but
     * relative to the ancestor context.  None of the names may be null.
-    * <p/>
-    * For example, if this context is named "wiz.com" relative to the initial context, then
+        * For example, if this context is named "wiz.com" relative to the initial context, then
     * <pre>
     *    composeName("east", "wiz.com")   </pre>
     * might return <code>"east.wiz.com"</code>. If instead this context is named "org/research", then
@@ -472,10 +464,9 @@ public class DummyContext implements Context {
    /**
     * Retrieves the environment in effect for this context. See class description for more details on environment
     * properties.
-    * <p/>
-    * <p> The caller should not make any changes to the object returned: their effect on the context is undefined. The
-    * environment of this context may be changed using <tt>addToEnvironment()</tt> and
-    * <tt>removeFromEnvironment()</tt>.
+        * <p> The caller should not make any changes to the object returned: their effect on the context is undefined. The
+    * environment of this context may be changed using <code>addToEnvironment()</code> and
+    * <code>removeFromEnvironment()</code>.
     *
     * @return the environment of this context; never null
     * @throws NamingException if a naming exception is encountered
@@ -489,8 +480,7 @@ public class DummyContext implements Context {
    /**
     * Closes this context. This method releases this context's resources immediately, instead of waiting for them to be
     * released automatically by the garbage collector.
-    * <p/>
-    * <p> This method is idempotent:  invoking it on a context that has already been closed has no effect.  Invoking any
+        * <p> This method is idempotent:  invoking it on a context that has already been closed has no effect.  Invoking any
     * other method on a closed context is not allowed, and results in undefined behaviour.
     *
     * @throws NamingException if a naming exception is encountered
@@ -500,12 +490,11 @@ public class DummyContext implements Context {
 
    /**
     * Retrieves the full name of this context within its own namespace.
-    * <p/>
-    * <p> Many naming services have a notion of a "full name" for objects in their respective namespaces.  For example,
+        * <p> Many naming services have a notion of a "full name" for objects in their respective namespaces.  For example,
     * an LDAP entry has a distinguished name, and a DNS record has a fully qualified name. This method allows the client
     * application to retrieve this name. The string returned by this method is not a JNDI composite name and should not
     * be passed directly to context methods. In naming systems for which the notion of full name does not make sense,
-    * <tt>OperationNotSupportedException</tt> is thrown.
+    * <code>OperationNotSupportedException</code> is thrown.
     *
     * @return this context's name in its own namespace; never null
     * @throws javax.naming.OperationNotSupportedException

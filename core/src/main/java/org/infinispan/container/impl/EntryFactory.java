@@ -4,6 +4,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.NullCacheEntry;
@@ -11,14 +12,13 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * A factory for constructing {@link org.infinispan.container.entries.MVCCEntry} instances for use in the {@link org.infinispan.context.InvocationContext}.
  * Implementations of this interface would typically wrap an internal {@link org.infinispan.container.entries.CacheEntry}
  * with an {@link org.infinispan.container.entries.MVCCEntry}.
  *
- * <h3>Expected wrapping patterns</h3>
+ * <h2>Expected wrapping patterns</h2>
  *
  * {@link EntryWrappingInterceptor} checks {@link CacheTopology#getReadConsistentHash()} and if this node is an owner
  * of the key, it loads the entry from {@link DataContainer}. On the way back through interceptor stack, the entry is
