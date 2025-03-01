@@ -8,7 +8,7 @@ import org.infinispan.commons.api.multimap.BasicMultimapCache;
  * Remote MultimapCache interface used for server mode.
  *
  * @author Katia Aresti, karesti@redhat.com
- * @see <a href="http://infinispan.org/documentation/">Infinispan documentation</a>
+ * @see <a href="https://infinispan.org/documentation/">Infinispan documentation</a>
  * @since 9.2
  */
 public interface RemoteMultimapCache<K, V> extends BasicMultimapCache<K, V> {

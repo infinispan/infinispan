@@ -33,8 +33,7 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * This class was copied from JGroups and adapted.
- * <p/>
- * The original JGroup's ResourceDMBean logic has been modified so that invoke() method checks whether the operation
+  * The original JGroup's ResourceDMBean logic has been modified so that invoke() method checks whether the operation
  * called has been exposed as a {@link ManagedOperation}, otherwise the call fails. JGroups deviated from this logic on
  * purpose because they liked the fact that you could expose all class methods by simply annotating class with {@link
  * MBean} annotation.

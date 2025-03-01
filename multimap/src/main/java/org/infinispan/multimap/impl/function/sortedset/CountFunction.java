@@ -19,7 +19,7 @@ import java.util.Set;
  * and {@link org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache#count(Object, Object, boolean, Object, boolean)} .
  *
  * @author Katia Aresti
- * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
+ * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
 public final class CountFunction<K, V, T> implements SortedSetBucketBaseFunction<K, V, Long> {

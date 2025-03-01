@@ -10,11 +10,7 @@ import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.access.SoftLock;
 
 /**
- * Defines the strategy for access to entity or collection data in a Infinispan instance.
- * <p/>
- * The intent of this class is to encapsulate common code and serve as a delegate for
- * {@link org.hibernate.cache.spi.access.EntityRegionAccessStrategy}
- * and {@link org.hibernate.cache.spi.access.CollectionRegionAccessStrategy} implementations.
+ * Defines the strategy for access to entity or collection data in an Infinispan instance.
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
@@ -29,7 +25,7 @@ public interface AccessDelegate {
 	 * @param value The item
 	 * @param txTimestamp a timestamp prior to the transaction start time
 	 * @param version the item version number
-	 * @return <tt>true</tt> if the object was successfully cached
+	 * @return <code>true</code> if the object was successfully cached
 	 */
 	boolean putFromLoad(Object session, Object key, Object value, long txTimestamp, Object version);
 
@@ -43,8 +39,8 @@ public interface AccessDelegate {
 	 * @param txTimestamp a timestamp prior to the transaction start time
 	 * @param version the item version number
 	 * @param minimalPutOverride Explicit minimalPut flag
-	 * @return <tt>true</tt> if the object was successfully cached
-	 * @throws org.hibernate.cache.CacheException Propogated from underlying {@link org.hibernate.cache.spi.Region}
+	 * @return <code>true</code> if the object was successfully cached
+	 * @throws org.hibernate.cache.CacheException Propagated from underlying {@link org.hibernate.cache.spi.Region}
 	 */
 	boolean putFromLoad(Object session, Object key, Object value, long txTimestamp, Object version, boolean minimalPutOverride)
 			throws CacheException;
@@ -132,7 +128,7 @@ public interface AccessDelegate {
 	 *
 	 * @param session
 	 * @param key The item key
-	 * @throws org.hibernate.cache.CacheException Propogated from underlying {@link org.hibernate.cache.spi.Region}
+	 * @throws org.hibernate.cache.CacheException Propagated from underlying {@link org.hibernate.cache.spi.Region}
 	 */
 	void unlockItem(Object session, Object key) throws CacheException;
 
@@ -162,7 +158,7 @@ public interface AccessDelegate {
 	 * @param value The item
 	 * @param currentVersion The item's current version value
 	 * @param previousVersion The item's previous version value
-	 * @param lock The lock previously obtained from {@link #lockItem}
+	 * @param lock The lock
 	 * @return Were the contents of the cache actual changed by this operation?
 	 * @throws CacheException Propagated from underlying {@link org.hibernate.cache.spi.Region}
 	 */

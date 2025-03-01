@@ -38,7 +38,7 @@ import org.testng.annotations.Test;
  * Test {@link SpringRemoteCacheManagerFactoryBean}.
  * </p>
  *
- * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Olaf Bergner
  *
  */
 @Test(testName = "spring.remote.provider.SpringRemoteCacheManagerFactoryBeanTest", groups = "unit")

@@ -4,7 +4,6 @@ import org.infinispan.api.common.Flags;
 
 /**
  * Defines all the flags available in the Hot Rod client that can influence the behavior of operations.
- * <p />
  * Available flags:
  * <ul>
  *    <li>{@link #FORCE_RETURN_VALUE} - By default, previously existing values for {@link java.util.Map} operations are not
@@ -19,7 +18,7 @@ import org.infinispan.api.common.Flags;
  *                                      that the default server maxIdle should be applied or as a response flag meaning that
  *                                      the return entry has a default maxIdle value</li>
  *    <li>{@link #SKIP_CACHE_LOAD}      Skips loading an entry from any configured
- *                                      {@link org.infinispan.persistence.spi.CacheLoader}s.</li>
+ *                                      <code>org.infinispan.persistence.spi.CacheLoader</code>s.</li>
  *    <li>{@link #SKIP_INDEXING}        Used by the Query module only, it will prevent the indexes to be updated as a result
  *                                      of the current operations.
  *    <li>{@link #SKIP_LISTENER_NOTIFICATION}   Used when an operation wants to skip notifications to the registered listeners
@@ -33,7 +32,6 @@ public enum Flag implements org.infinispan.api.common.Flag {
    /**
     * By default, previously existing values for {@link java.util.Map} operations are not returned. E.g. {@link RemoteCache#put(Object, Object)}
     * does <i>not</i> return the previous value associated with the key.
-    * <p />
     * By applying this flag, this default behavior is overridden for the scope of a single invocation, and the previous
     * existing value is returned.
     */
@@ -51,7 +49,7 @@ public enum Flag implements org.infinispan.api.common.Flag {
     */
    DEFAULT_MAXIDLE(0x0004),
    /**
-    * Skips loading an entry from any configured {@link org.infinispan.persistence.spi.CacheLoader}s.
+    * Skips loading an entry from any configured <code>org.infinispan.persistence.spi.CacheLoader</code>s.
     */
    SKIP_CACHE_LOAD(0x0008),
    /**

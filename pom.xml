@@ -2009,6 +2009,42 @@
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-javadoc-plugin</artifactId>
                <version>${version.maven.javadoc}</version>
+               <configuration>
+                  <excludePackageNames>*.impl.*</excludePackageNames>
+                  <sourcepath>${sourcepath}</sourcepath>
+                  <archive>
+                     <index>true</index>
+                     <manifest>
+                        <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                        <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                     </manifest>
+                     <manifestEntries>
+                        <Implementation-URL>${project.url}</Implementation-URL>
+                        <Java-Version>${java.version}</Java-Version>
+                        <Java-Vendor>${java.vendor}</Java-Vendor>
+                        <Os-Name>${os.name}</Os-Name>
+                        <Os-Arch>${os.arch}</Os-Arch>
+                        <Os-Version>${os.version}</Os-Version>
+                        <Scm-Url>${project.scm.url}</Scm-Url>
+                        <Scm-Connection>${project.scm.connection}</Scm-Connection>
+                        <Scm-Revision>${buildNumber}</Scm-Revision>
+                     </manifestEntries>
+                  </archive>
+                  <doclint>all</doclint>
+                  <!-- Declare our custom javadoc tags and provide a replacement text for them to be used just in case exclusion fails. -->
+                  <tags>
+                     <tag>
+                        <name>api.public</name>
+                        <placement>a</placement>
+                        <head>&lt;div class="deprecationBlock"&gt;&lt;b&gt;Public API&lt;/b&gt;&lt;/div&gt;</head>
+                     </tag>
+                     <tag>
+                        <name>api.private</name>
+                        <placement>a</placement>
+                        <head>&lt;div class="deprecationBlock"&gt;&lt;b&gt;THIS IS NOT PUBLIC API! This is a private implementation detail and must not be referenced by user code.&lt;/b&gt;&lt;/div&gt;</head>
+                     </tag>
+                  </tags>
+               </configuration>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -2128,7 +2164,6 @@
                   </excludes>
                   <!-- Include method parameter debug info -->
                   <parameters>true</parameters>
-                  <forceJavacCompilerUse>true</forceJavacCompilerUse>
                   <!-- Annotation processors -->
                   <annotationProcessorPaths>
                      <annotationProcessorPath>
@@ -2496,6 +2531,25 @@
             <skipTests>true</skipTests>
             <dependencies.excludeGroupIds>org.infinispan,org.jgroups,org.jboss.marshalling,org.jboss.logging,net.jcip,org.kohsuke.metainf-services</dependencies.excludeGroupIds>
          </properties>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-source-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>attach-sources</id>
+                        <phase>verify</phase>
+                        <goals>
+                           <goal>jar-no-fork</goal>
+                           <goal>test-jar-no-fork</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+                  <inherited>true</inherited>
+               </plugin>
+            </plugins>
+         </build>
       </profile>
       <profile>
          <id>java21-test</id>
@@ -2530,36 +2584,6 @@
                   <configuration>
                      <jvm>${env.JAVA_ALT_HOME}/bin/java</jvm>
                   </configuration>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-      <profile>
-         <id>extras</id>
-         <activation>
-            <activeByDefault>true</activeByDefault>
-            <!-- activeByDefault is not enough to activate the profile in children projects -->
-            <property>
-               <name>maven.home</name>
-            </property>
-         </activation>
-         <build>
-            <plugins>
-               <!-- Make sure we generate src jars too -->
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-source-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>attach-sources</id>
-                        <phase>verify</phase>
-                        <goals>
-                           <goal>jar-no-fork</goal>
-                           <goal>test-jar-no-fork</goal>
-                        </goals>
-                     </execution>
-                  </executions>
-                  <inherited>true</inherited>
                </plugin>
             </plugins>
          </build>

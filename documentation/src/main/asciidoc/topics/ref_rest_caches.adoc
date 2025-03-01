@@ -18,7 +18,7 @@ POST /rest/v2/caches/{cacheName}
 |Sets the https://en.wikipedia.org/wiki/Media_type[MediaType] for the
 {brandname} configuration payload; either `application/xml` or
 `application/json`.
-| `Flags` | OPTIONAL | Used to set https://docs.jboss.org/infinispan/10.0/apidocs/org/infinispan/commons/api/CacheContainerAdmin.AdminFlag.html[AdminFlags]
+| `Flags` | OPTIONAL | Used to set https://https://infinispan.org.org/infinispan/10.0/apidocs/org/infinispan/commons/api/CacheContainerAdmin.AdminFlag.html[AdminFlags]
 |===
 
 include::ref_infinispan_caches.adoc[leveloffset=+1]
@@ -305,7 +305,7 @@ should use `PUT` requests. See link:#rest_v2_replace_entries[Replacing Entries].
 
 |`flags`
 |OPTIONAL
-|The flags used to add the entry. See https://docs.jboss.org/infinispan/10.0/apidocs/org/infinispan/context/Flag.html[Flag] for more information.
+|The flags used to add the entry. See https://infinispan.org/docs/stable/apidocs/org/infinispan/context/Flag.html[Flag] for more information.
 
 |===
 

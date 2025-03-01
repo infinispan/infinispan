@@ -168,9 +168,7 @@ public final class Security {
     *    <li>uses a compact, single-line format</li>
     *    <li>does not use synchronization</li>
     *    <li>does not use i18n messages</li>
-    * </ul></uk>
-    * @param subject
-    * @return
+    * </ul>
     */
    public static String toString(Subject subject) {
       StringBuilder sb = new StringBuilder("Subject: [");

@@ -19,7 +19,7 @@ import java.util.Set;
  * to insert a key/value pair at the index of the multimap list value.
  *
  * @author Katia Aresti
- * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
+ * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
 public final class SetFunction<K, V> implements ListBucketBaseFunction<K, V, Boolean> {

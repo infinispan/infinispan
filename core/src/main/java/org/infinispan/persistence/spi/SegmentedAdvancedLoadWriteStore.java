@@ -31,9 +31,9 @@ public interface SegmentedAdvancedLoadWriteStore<K, V> extends AdvancedLoadWrite
     * needs to be created here, {@link InitializationContext#getMarshallableEntryFactory()} and {@link
     * InitializationContext#getByteBufferFactory()} should be used.
     * <p>
-    * The provided segment may be used for performance purposes, however it it is acceptable to ignore this argument.
+    * The provided segment may be used for performance purposes, however if it is acceptable to ignore this argument.
     * <p>
-    * This method may be invoked invoked irrespective if the store is {@link StoreConfiguration#segmented()}.
+    * This method may be invoked irrespective if the store is {@link StoreConfiguration#segmented()}.
     *
     * @param segment the segment that the key maps to
     * @param key     the key of the entry to fetch
@@ -45,9 +45,9 @@ public interface SegmentedAdvancedLoadWriteStore<K, V> extends AdvancedLoadWrite
    /**
     * Returns true if the storage contains an entry associated with the given key in the given segment
     * <p>
-    * The provided segment may be used for performance purposes, however it it is acceptable to ignore this argument.
+    * The provided segment may be used for performance purposes, however if it is acceptable to ignore this argument.
     * <p>
-    * This method may be invoked invoked irrespective if the store is {@link StoreConfiguration#segmented()}.
+    * This method may be invoked irrespective if the store is {@link StoreConfiguration#segmented()}.
     * @param segment the segment that the key maps to
     * @param key the key to see if exists
     * @return true if the key is present in this loader with a given segment
@@ -60,15 +60,15 @@ public interface SegmentedAdvancedLoadWriteStore<K, V> extends AdvancedLoadWrite
    /**
     * Persists the entry to the storage with the given segment to optimize future lookups.
     * <p>
-    * The provided segment may be used for performance purposes, however it it is acceptable to ignore this argument.
+    * The provided segment may be used for performance purposes, however if it is acceptable to ignore this argument.
     * <p>
-    * This method may be invoked invoked irrespective if the store is {@link StoreConfiguration#segmented()}.
+    * This method may be invoked irrespective if the store is {@link StoreConfiguration#segmented()}.
+    * The default implementation falls back to invoking {@link #write(MarshallableEntry)}.
     *
     * @param segment the segment to persist this entry to
     * @param entry   the entry to write to the store
     * @throws PersistenceException in case of an error, e.g. communicating with the external storage
     * @see MarshallableEntry
-    * @implSpec The default implementation falls back to invoking {@link #write(MarshallableEntry)}.
     */
    void write(int segment, MarshallableEntry<? extends K, ? extends V> entry);
 
@@ -76,9 +76,9 @@ public interface SegmentedAdvancedLoadWriteStore<K, V> extends AdvancedLoadWrite
     * Removes the entry for the provided key which is in the given segment. This method then returns whether the
     * entry was removed or not.
     * <p>
-    * The provided segment may be used for performance purposes, however it it is acceptable to ignore this argument.
+    * The provided segment may be used for performance purposes, however if it is acceptable to ignore this argument.
     * <p>
-    * This method may be invoked invoked irrespective if the store is {@link StoreConfiguration#segmented()}.
+    * This method may be invoked irrespective if the store is {@link StoreConfiguration#segmented()}.
     * @param segment the segment that this key maps to
     * @param key the key of the entry to remove
     * @return true if the entry existed in the persistent store and it was deleted.
@@ -94,7 +94,7 @@ public interface SegmentedAdvancedLoadWriteStore<K, V> extends AdvancedLoadWrite
     * The segments here <b>must</b> be adhered to and the size must not count any entries that don't belong to
     * the provided segments.
     * <p>
-    * This method is not invoked invoked when the store is not configured to be {@link StoreConfiguration#segmented()}.
+    * This method is not invoked when the store is not configured to be {@link StoreConfiguration#segmented()}.
     * @param segments the segments which should have their entries counted. Always non null.
     * @return the count of entries in the given segments
     * @throws PersistenceException in case of an error, e.g. communicating with the external storage
@@ -111,7 +111,7 @@ public interface SegmentedAdvancedLoadWriteStore<K, V> extends AdvancedLoadWrite
     * The segments here <b>must</b> be adhered to and the keys published must not include any that don't belong to
     * the provided segments.
     * <p>
-    * This method is not invoked invoked when the store is not configured to be {@link StoreConfiguration#segmented()}.
+    * This method is not invoked when the store is not configured to be {@link StoreConfiguration#segmented()}.
     * @param segments the segments that the keys must map to. Always non null.
     * @param filter a filter
     * @return a publisher that will provide the keys from the store
@@ -128,7 +128,7 @@ public interface SegmentedAdvancedLoadWriteStore<K, V> extends AdvancedLoadWrite
     * The segments here <b>must</b> be adhered to and the entries published must not include any that don't belong to
     * the provided segments.
     * <p>
-    * This method is not invoked invoked when the store is not configured to be {@link StoreConfiguration#segmented()}.
+    * This method is not invoked when the store is not configured to be {@link StoreConfiguration#segmented()}.
     * {@link StoreConfiguration#segmented()}.
     *
     * @param segments      the segments that the keys of the entries must map to. Always non null.
@@ -159,18 +159,18 @@ public interface SegmentedAdvancedLoadWriteStore<K, V> extends AdvancedLoadWrite
     * <p>
     * This method may be invoked irrespective if the configuration is {@link StoreConfiguration#segmented()} or not.
     * @param segments segments to associate with this store
-    * @implSpec This method does nothing by default
+    * This method does nothing by default
     */
    default void addSegments(IntSet segments) { }
 
    /**
     * Invoked when a node loses ownership of a segment. The provided segments are the ones this node no longer owns.
-    * Note this method is only invoked for non shared store implementations.
+    * Note this method is only invoked for non-shared store implementations.
     * <p>
     * This method may be invoked irrespective if the configuration is {@link StoreConfiguration#segmented()} or not.
     * {@link StoreConfiguration#segmented()}.
     * @param segments segments that should no longer be associated with this store
-    * @implSpec This method does nothing by default
+    * This method does nothing by default
     */
    default void removeSegments(IntSet segments) { }
 

@@ -10,10 +10,8 @@ public interface Action {
 
    /**
     * It checks this action.
-    * <p/>
-    * When {@link ActionStatus#READY} or {@link ActionStatus#CANCELED} are final states.
-    * <p/>
-    * This method should be thread safe and idempotent since it can be invoked multiple times by multiples threads.
+        * When {@link ActionStatus#READY} or {@link ActionStatus#CANCELED} are final states.
+        * This method should be thread safe and idempotent since it can be invoked multiple times by multiples threads.
     *
     * @param state the current state.
     * @return the status of this action.

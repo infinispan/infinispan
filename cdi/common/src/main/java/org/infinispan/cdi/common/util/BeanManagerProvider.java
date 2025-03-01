@@ -21,11 +21,9 @@ import jakarta.enterprise.inject.spi.Extension;
  * making it available via a singleton factory for the current application.</p>
  * <p>This is really handy if you like to access CDI functionality
  * from places where no injection is available.</p>
- * <p>If a simple but manual bean-lookup is needed, it's easier to use the {@link BeanProvider}.</p>
- * <p/>
+ * <p>If a simple but manual bean-lookup is needed, it's easier to use the {@link BeanManagerProvider}.</p>
  * <p>As soon as an application shuts down, the reference to the {@link BeanManager} will be removed.<p>
- * <p/>
- * <p>Usage:<p/>
+ * <p>Usage:</p>
  * <pre>
  * BeanManager bm = BeanManagerProvider.getInstance().getBeanManager();
  *

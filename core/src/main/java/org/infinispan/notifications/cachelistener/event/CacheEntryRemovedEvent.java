@@ -4,9 +4,8 @@ import org.infinispan.metadata.Metadata;
 
 /**
  * This event subtype is passed in to any method annotated with {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved}.
- * <p />
- * The {@link #getValue()} method would return the <i>old</i> value prior to deletion, if <tt>isPre()</tt> is <tt>true</tt>.
- * If <tt>isPre()</tt> is <tt>false</tt>, {@link #getValue()} will return <tt>null</tt>.
+ * The {@link #getValue()} method would return the <i>old</i> value prior to deletion, if <code>isPre()</code> is <code>true</code>.
+ * If <code>isPre()</code> is <code>false</code>, {@link #getValue()} will return <code>null</code>.
  *
  * @author Manik Surtani
  * @since 4.0
@@ -15,32 +14,31 @@ public interface CacheEntryRemovedEvent<K, V> extends CacheEntryEvent<K, V> {
 
    /**
     * Retrieves the value of the entry being deleted.
-    * <p />
-    * @return the value of the entry being deleted, if <tt>isPre()</tt> is <tt>true</tt>.  <tt>null</tt> otherwise.
+       * @return the value of the entry being deleted, if <code>isPre()</code> is <code>true</code>.  <code>null</code> otherwise.
     */
    V getValue();
 
    /**
-    * Regardless of whether <tt>isPre()</tt> is <tt>true</tt> or is
-    * <tt>false</tt>, this method returns the value of the entry being
+    * Regardless of whether <code>isPre()</code> is <code>true</code> or is
+    * <code>false</code>, this method returns the value of the entry being
     * deleted. This method is useful for situations where cache listeners
     * need to know what the old value being deleted is when getting
-    * <tt>isPre()</tt> is <tt>false</tt> callbacks.
+    * <code>isPre()</code> is <code>false</code> callbacks.
     *
     * @return the value of the entry being deleted, regardless of
-    * <tt>isPre()</tt> value
+    * <code>isPre()</code> value
     */
    V getOldValue();
 
    /**
-    * Regardless of whether <tt>isPre()</tt> is <tt>true</tt> or is
-    * <tt>false</tt>, this method returns the metadata of the entry being
+    * Regardless of whether <code>isPre()</code> is <code>true</code> or is
+    * <code>false</code>, this method returns the metadata of the entry being
     * deleted. This method is useful for situations where cache listeners
     * need to know what the old value being deleted is when getting
-    * <tt>isPre()</tt> is <tt>false</tt> callbacks.
+    * <code>isPre()</code> is <code>false</code> callbacks.
     *
     * @return the metadata of the entry being deleted, regardless of
-    * <tt>isPre()</tt> value
+    * <code>isPre()</code> value
     */
    Metadata getOldMetadata();
 

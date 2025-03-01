@@ -9,7 +9,6 @@ import org.infinispan.client.hotrod.test.KeyValueGenerator;
 /**
  * Small helper that wraps a view of the entries in the cache with the {@link KeyValueGenerator}.
  * This is necessary to correctly find the keys within the map for different types of keys.
- * <p/>
  * Most operations need to iterate over the entry set and check using the {@link KeyValueGenerator}
  * to check for equality.
  *
@@ -32,9 +31,5 @@ public class MapKVHelper<K, V> {
          }
       }
       return null;
-   }
-
-   public boolean contains(K key) {
-      return get(key) != null;
    }
 }

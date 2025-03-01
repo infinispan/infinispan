@@ -36,7 +36,7 @@ import org.testng.annotations.Test;
  * Test {@link SpringRemoteCacheManager}.
  * </p>
  *
- * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Olaf Bergner
  * @author Marius Bogoevici
  *
  */

@@ -9,7 +9,7 @@
 
    <name>Infinispan Common Parent</name>
    <description>Infinispan common parent POM module</description>
-   <url>http://www.infinispan.org</url>
+   <url>https://infinispan.org</url>
    <licenses>
       <license>
          <name>Apache License 2.0</name>

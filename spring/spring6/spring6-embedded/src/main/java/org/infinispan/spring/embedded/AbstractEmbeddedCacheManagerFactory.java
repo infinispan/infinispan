@@ -18,7 +18,7 @@ import org.springframework.core.io.Resource;
  * EmbeddedCacheManager.
  * </p>
  *
- * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Olaf Bergner
  * @author Marius Bogoevici
  */
 public class AbstractEmbeddedCacheManagerFactory {
@@ -84,7 +84,7 @@ public class AbstractEmbeddedCacheManagerFactory {
     * {@link EmbeddedCacheManager <code>EmbeddedCacheManager</code>} the
     * {@link org.infinispan.spring.embedded.provider.SpringEmbeddedCacheManager
     * <code>SpringEmbeddedCacheManager</code>} created by this <code>FactoryBean</code> delegates
-    * to. If no location is supplied, <tt>Infinispan</tt>'s default configuration will be used.
+    * to. If no location is supplied, <code>Infinispan</code>'s default configuration will be used.
     * </p>
     * <p>
     * Note that configuration settings defined via using explicit setters exposed by this

@@ -213,7 +213,7 @@
       <xs:element name="property" type="config:property" minOccurs="0" maxOccurs="unbounded">
         <xs:annotation>
           <xs:documentation>
-            Add key/value property pair to this factory configuration. Example properties include "maxThreads" which sets the maximum number of threads for this executor and "threadNamePrefix" which sets the thread name prefix for threads created by this executor ( default values can be found at https://docs.jboss.org/author/display/ISPN/Default+Values+For+Property+Based+Attributes ).
+            Add key/value property pair to this factory configuration. Example properties include "maxThreads" which sets the maximum number of threads for this executor and "threadNamePrefix" which sets the thread name prefix for threads created by this executor.
           </xs:documentation>
         </xs:annotation>
       </xs:element>

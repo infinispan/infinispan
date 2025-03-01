@@ -20,7 +20,7 @@ import java.util.Set;
  * {@link org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache#score(Object, Object)}.
  *
  * @author Katia Aresti
- * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
+ * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
 public final class ScoreFunction<K, V> implements SortedSetBucketBaseFunction<K, V, List<Double>> {

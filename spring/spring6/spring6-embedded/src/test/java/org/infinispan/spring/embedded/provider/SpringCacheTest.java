@@ -1,5 +1,9 @@
 package org.infinispan.spring.embedded.provider;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.NullValue;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -15,10 +19,6 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
@@ -30,12 +30,12 @@ import static org.testng.AssertJUnit.assertTrue;
  * An integration test for {@link SpringCache}.
  * </p>
  * <p>
- * <strong>CREDITS</strong> This test is a shameless copy of Costin Leau's
+ * <b>CREDITS</b> This test is a shameless copy of Costin Leau's
  * <code>org.springframework.cache.vendor.AbstractNativeCacheTest</code>. The additions made to it
  * are minor.
  * </p>
  *
- * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Olaf Bergner
  * @author Marius Bogoevici
  *
  */

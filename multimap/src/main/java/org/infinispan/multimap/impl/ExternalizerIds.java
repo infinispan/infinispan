@@ -4,7 +4,7 @@ package org.infinispan.multimap.impl;
  * Ids range: 2050 - 2099
  * Externalizer Ids that identity the functions used in {@link EmbeddedMultimapCache}
  *
- * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
+ * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @author Katia Aresti - karesti@redhat.com
  * @since 9.2
  */

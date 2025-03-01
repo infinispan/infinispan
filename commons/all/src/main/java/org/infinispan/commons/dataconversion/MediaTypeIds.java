@@ -1,5 +1,8 @@
 package org.infinispan.commons.dataconversion;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_INFINISPAN_MARSHALLING;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JBOSS_MARSHALLING;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
@@ -18,10 +21,9 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_CSV;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_HTML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
+ * Short ids for common media types
+ *
  * @since 9.2
  */
 public final class MediaTypeIds {

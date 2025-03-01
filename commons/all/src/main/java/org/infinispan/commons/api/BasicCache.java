@@ -12,33 +12,24 @@ import org.infinispan.commons.api.query.Query;
 /**
  * BasicCache provides the common building block for the two different types of caches that Infinispan provides:
  * embedded and remote.
- * <p/>
  * For convenience, BasicCache extends {@link ConcurrentMap} and implements all methods accordingly, although methods like
  * {@link ConcurrentMap#keySet()}, {@link ConcurrentMap#values()} and {@link ConcurrentMap#entrySet()} are expensive
  * (prohibitively so when using a distributed cache) and frequent use of these methods is not recommended.
- * <p />
  * Other methods such as {@link #size()} provide an approximation-only, and should not be relied on for an accurate picture
  * as to the size of the entire, distributed cache.  Remote nodes are <i>not</i> queried and in-fly transactions are not
  * taken into account, even if {@link #size()} is invoked from within such a transaction.
- * <p/>
- * Also, like many {@link ConcurrentMap} implementations, BasicCache does not support the use of <tt>null</tt> keys or
+ * Also, like many {@link ConcurrentMap} implementations, BasicCache does not support the use of <code>null</code> keys or
  * values.
- * <p/>
- * <h3>Unsupported operations</h3>
+ * <h2>Unsupported operations</h2>
  * <p>{@link #containsValue(Object)}</p>
- *
- * Please see the <a href="http://www.jboss.org/infinispan/docs">Infinispan documentation</a> and/or the <a
- * href="https://docs.jboss.org/author/display/ISPN/Getting+Started+Guide#GettingStartedGuide-5minutetutorial">5 Minute Usage Tutorial</a> for more details.
- * <p/>
+ * <p>
+ * Please see the <a href="https://infinispan.org/documentation/">Infinispan documentation</a> for more details.
  *
  * @author Mircea.Markus@jboss.com
  * @author Manik Surtani
  * @author Galder Zamarreño
  * @author Tristan Tarrant
- *
- * @see <a href="http://www.jboss.org/infinispan/docs">Infinispan documentation</a>
- * @see <a href="http://www.jboss.org/community/wiki/5minutetutorialonInfinispan">5 Minute Usage Tutorial</a>
- *
+ * @see <a href="https://infinispan.org/documentation/">Infinispan documentation</a>
  * @since 5.1
  */
 public interface BasicCache<K, V> extends AsyncCache<K, V>, ConcurrentMap<K, V>, Lifecycle {
@@ -60,7 +51,7 @@ public interface BasicCache<K, V> extends AsyncCache<K, V>, ConcurrentMap<K, V>,
     * {@inheritDoc}
     *
     * If the return value of this operation will be ignored by the application,
-    * the user is strongly encouraged to use the {@link org.infinispan.context.Flag#IGNORE_RETURN_VALUES}
+    * the user is strongly encouraged to use the <code>org.infinispan.context.Flag#IGNORE_RETURN_VALUES</code>
     * flag when invoking this method in order to make it behave as efficiently
     * as possible (i.e. avoiding needless remote or network calls).
     */
@@ -298,7 +289,7 @@ public interface BasicCache<K, V> extends AsyncCache<K, V>, ConcurrentMap<K, V>,
     * {@inheritDoc}
     *
     * If the return value of this operation will be ignored by the application,
-    * the user is strongly encouraged to use the {@link org.infinispan.context.Flag#IGNORE_RETURN_VALUES}
+    * the user is strongly encouraged to use the <code>org.infinispan.context.Flag#IGNORE_RETURN_VALUES</code>
     * flag when invoking this method in order to make it behave as efficiently
     * as possible (i.e. avoiding needless remote or network calls).
     */

@@ -115,7 +115,7 @@ public interface MarshallableEntryFactory<K,V> {
     * @return {@link MarshallableEntry} instance that lazily handles unmarshalling of keys, values and metadata via the
     * {@link MarshallableEntry#getKey()}, {@link MarshallableEntry#getValue()} and {@link
     * MarshallableEntry#getMetadata()} methods.
-    * @throws {@link NullPointerException} if the provided {@link MarshalledValue} is null.
+    * @throws NullPointerException if the provided {@link MarshalledValue} is null.
     */
    MarshallableEntry<K, V> create(Object key, MarshalledValue value);
 

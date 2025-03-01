@@ -11,15 +11,13 @@ import io.netty.channel.ChannelHandlerContext;
 /**
  * Tracker for a single command.
  * <p>
- * One instance tracks one request at a time. One instance can be reutilized indefinitely for subsequent requests within
+ * One instance tracks one request at a time. One instance can be reused indefinitely for subsequent requests within
  * the same {@link ChannelHandlerContext} but never for interleaving requests.
  * <p>
  * A request starts with a call to {@link #track(RespCommand, List)}, storing data about time, request size, and
  * affected keys. The tracker is updated when the {@link org.infinispan.server.resp.ByteBufPool} needs to allocate more
  * bytes for a response. The request stops tracking on the {@link #done(Throwable)}, generating an instance of
  * {@link AccessData}.
- * <p>
- *
  */
 public class Tracker {
    private final TimeService timeService;

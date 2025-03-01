@@ -26,7 +26,7 @@ public interface CacheCollection<E> extends CloseableIteratorCollection<E> {
     * to the original Cache used to create this CacheCollection.
     * @param segment the segment that all published elements belong to
     * @return Publisher that will publish the elements for the given segment
-    * @implSpec Default implementation just does:
+    * Default implementation just does:
     * <pre> {@code
     * return localPublisher(org.infinispan.commons.util.IntSets.immutableSet(segment));
     * }</pre>
@@ -42,7 +42,7 @@ public interface CacheCollection<E> extends CloseableIteratorCollection<E> {
     * to the original Cache used to create this CacheCollection.
     * @param segments the segments that all published elements belong to
     * @return Publisher that will publish the elements for the given segments
-    * @implSpec Default implementation falls back to stream filtering out the given segments
+    * Default implementation falls back to stream filtering out the given segments
     * <pre> {@code
     * return io.reactivex.Flowable.fromIterable(() -> stream().filterKeySegments(segments).iterator());
     * }</pre>

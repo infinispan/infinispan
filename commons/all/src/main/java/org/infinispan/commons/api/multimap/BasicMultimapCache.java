@@ -7,27 +7,26 @@ import org.infinispan.commons.util.Experimental;
 
 /**
  * {@link BasicMultimapCache} provides the common API for the two different types of multimap caches that Infinispan
- * provides: embedded and remote. <p> Please see the <a href="http://infinispan.org/documentation/">Infinispan
+ * provides: embedded and remote. <p> Please see the <a href="https://infinispan.org/documentation/">Infinispan
  * documentation</a> and/or the <a href="http://infinispan.org/docs/dev/getting_started/getting_started.html">5 Minute
  * Usage Tutorial</a> for more details on Infinispan.
- * <p/>
- * <p> MutimapCache is a type of Infinispan Cache that maps keys to values, similar to {@link
+  * <p> MutimapCache is a type of Infinispan Cache that maps keys to values, similar to {@link
  * org.infinispan.commons.api.AsyncCache} in which each key can contain multiple values.
  * <pre>
  *    foo &rarr; 1
  *    bar &rarr; 3, 4, 5
  * </pre>
- * <p> <h2>Example</h2>
+ * <h2>Example</h2>
  * <pre>
  *
  *    multimapCache.put("k", "v1").join();
  *    multimapCache.put("k", "v2").join();
  *    multimapCache.put("k", "v3").join();
  *
- *    Collection<String> results = multimapCache.get("k").join();
+ *    Collection&lt;String&gt; results = multimapCache.get("k").join();
  *
  * </pre>
- * <p> <h2>Eviction</h2> <p> Eviction works per key. This means all the values associated on a key will be evicted.
+ * <h2>Eviction</h2> <p> Eviction works per key. This means all the values associated on a key will be evicted.
  * </p>
  * <p>
  * <h2>Views</h2>
@@ -41,7 +40,7 @@ import org.infinispan.commons.util.Experimental;
  * <pre>
  *     multimapCache.put(null, "v1").join() &rarr; fails
  *     multimapCache.put("k", null).join() &rarr; fails
- *     multimapCache.put("k", "v1").join() &rarr; works and add's v1
+ *     multimapCache.put("k", "v1").join() &rarr; works and adds v1
  *     multimapCache.containsKey("k").join() &rarr; true
  *     multimapCache.remove("k", "v1").join() &rarr; works, removes v1 and as the remaining collection is empty, the key is
  * removed
@@ -50,15 +49,17 @@ import org.infinispan.commons.util.Experimental;
  * <p>
  *
  * @author Katia Aresti, karesti@redhat.com
- * @see <a href="http://infinispan.org/documentation/">Infinispan documentation</a>
+ * @see <a href="https://infinispan.org/documentation/">Infinispan documentation</a>
  * @since 9.2
+ * @param <K> the key type
+ * @param <V> the value type
  */
 @Experimental
 public interface BasicMultimapCache<K, V> {
 
    /**
     * Puts a key-value pair in this multimap cache. <ul> <li>If this multimap cache supports
-    * duplicates, the value will be always added.</li> <li>If this multimap cache does <i>not support</i> duplicates and
+    * duplicates, the value will always be added.</li> <li>If this multimap cache does <i>not support</i> duplicates and
     * the value exists on the key, nothing will be done.</li> </ul>
     *
     * @param key   the key to be put
@@ -74,7 +75,7 @@ public interface BasicMultimapCache<K, V> {
     * <b>When this method returns an empty collection, it means the key was not found.</b>
     *
     * @param key to be retrieved
-    * @return a {@link CompletableFuture} containing {@link Collection <V>} which is a view of the underlying values.
+    * @return a {@link CompletableFuture} containing {@link Collection} which is a view of the underlying values.
     * @since 9.2
     */
    CompletableFuture<Collection<V>> get(K key);

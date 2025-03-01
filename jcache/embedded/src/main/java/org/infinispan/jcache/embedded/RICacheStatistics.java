@@ -31,8 +31,7 @@ public class RICacheStatistics implements CacheStatisticsMXBean, Serializable {
 
    /**
     * {@inheritDoc}
-    * <p/>
-    * Statistics will also automatically be cleared if internal counters
+        * Statistics will also automatically be cleared if internal counters
     * overflow.
     */
    @Override
@@ -87,8 +86,7 @@ public class RICacheStatistics implements CacheStatisticsMXBean, Serializable {
    /**
     * The total number of requests to the cache. This will be equal to the sum
     * of the hits and misses.
-    * <p/>
-    * A "get" is an operation that returns the current or previous value.
+        * A "get" is an operation that returns the current or previous value.
     *
     * @return the number of hits
     */
@@ -100,8 +98,7 @@ public class RICacheStatistics implements CacheStatisticsMXBean, Serializable {
 
    /**
     * The total number of puts to the cache.
-    * <p/>
-    * A put is counted even if it is immediately evicted. A replace includes a
+        * A put is counted even if it is immediately evicted. A replace includes a
     * put and remove.
     *
     * @return the number of hits
@@ -114,8 +111,7 @@ public class RICacheStatistics implements CacheStatisticsMXBean, Serializable {
    /**
     * The total number of removals from the cache. This does not include
     * evictions, where the cache itself initiates the removal to make space.
-    * <p/>
-    *
+        *
     * @return the number of removals
     */
    @Override
@@ -134,8 +130,7 @@ public class RICacheStatistics implements CacheStatisticsMXBean, Serializable {
 
    /**
     * The mean time to execute gets.
-    * <p/>
-    * In a read-through cache the time taken to load an entry on miss is not included in get time.
+        * In a read-through cache the time taken to load an entry on miss is not included in get time.
     *
     * @return the time in µs
     */

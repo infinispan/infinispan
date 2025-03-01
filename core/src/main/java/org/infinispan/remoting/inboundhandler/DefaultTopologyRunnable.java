@@ -9,8 +9,7 @@ import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * The default {@link Runnable} for the remote commands receives.
- * <p/>
- * It checks the command topology and ensures that the topology higher or equal is installed in this node.
+  * It checks the command topology and ensures that the topology higher or equal is installed in this node.
  *
  * @author Pedro Ruivo
  * @since 8.0

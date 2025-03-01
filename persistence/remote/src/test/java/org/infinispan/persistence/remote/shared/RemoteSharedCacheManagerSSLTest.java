@@ -65,7 +65,7 @@ public class RemoteSharedCacheManagerSSLTest extends RemoteStoreFunctionalTest {
    @Override
    protected EmbeddedCacheManager createCacheManager(boolean start, GlobalConfigurationBuilder global, ConfigurationBuilder cb) {
       // We configure all the security properties to work correctly.
-      // See: https://docs.jboss.org/infinispan/15.0/apidocs/org/infinispan/client/hotrod/configuration/package-summary.html
+      // See: https://infinispan.org/docs/stable/apidocs/org/infinispan/client/hotrod/configuration/package-summary.html
       Properties properties = new Properties();
       properties.setProperty("infinispan.client.hotrod.use_ssl", "true");
       properties.setProperty("infinispan.client.hotrod.key_store_file_name", TestCertificates.certificate("client"));

@@ -33,7 +33,7 @@ public abstract class AbstractSegmentedStoreConfiguration<T extends AbstractStor
     * @param segment the segment to use
     * @param ctx the initialization context from the persistence layer
     * @return the newly created configuration
-    * @implSpec This invokes the {@link #newConfigurationFrom(int)} method and this default impl will be removed in the future
+    * This invokes the {@link #newConfigurationFrom(int)} method and this default impl will be removed in the future
     */
    public T newConfigurationFrom(int segment, InitializationContext ctx) {
       return newConfigurationFrom(segment);

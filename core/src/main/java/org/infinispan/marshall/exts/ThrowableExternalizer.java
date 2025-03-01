@@ -1,6 +1,16 @@
 package org.infinispan.marshall.exts;
 
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
+
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
@@ -11,7 +21,6 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.util.Util;
-import org.infinispan.interceptors.distribution.ConcurrentChangeException;
 import org.infinispan.interceptors.impl.ContainerFullException;
 import org.infinispan.manager.EmbeddedCacheManagerStartupException;
 import org.infinispan.marshall.core.Ids;
@@ -31,16 +40,6 @@ import org.infinispan.transaction.xa.InvalidTransactionException;
 import org.infinispan.util.UserRaisedFunctionalException;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeoutException;
-import java.util.function.BiFunction;
-
 public class ThrowableExternalizer implements AdvancedExternalizer<Throwable> {
 
    public static final ThrowableExternalizer INSTANCE = new ThrowableExternalizer();
@@ -54,7 +53,7 @@ public class ThrowableExternalizer implements AdvancedExternalizer<Throwable> {
    private static final short CACHE_LISTENER = 4;
    private static final short CACHE_UNREACHABLE = 5;
    private static final short CACHE_JOIN = 6;
-   private static final short CONCURRENT_CHANGE = 7;
+   //private static final short CONCURRENT_CHANGE = 7;
    private static final short CONTAINER_FULL = 8;
    private static final short DEADLOCK_DETECTED = 9;
    private static final short EMBEDDED_CACHEMANAGER_STARTUP = 10;
@@ -84,7 +83,6 @@ public class ThrowableExternalizer implements AdvancedExternalizer<Throwable> {
       numbers.put(CacheListenerException.class, CACHE_LISTENER);
       numbers.put(CacheUnreachableException.class, CACHE_UNREACHABLE);
       numbers.put(CacheJoinException.class, CACHE_JOIN);
-      numbers.put(ConcurrentChangeException.class, CONCURRENT_CHANGE);
       numbers.put(ContainerFullException.class, CONTAINER_FULL);
       numbers.put(DeadlockDetectedException.class, DEADLOCK_DETECTED);
       numbers.put(EmbeddedCacheManagerStartupException.class, EMBEDDED_CACHEMANAGER_STARTUP);
@@ -122,7 +120,6 @@ public class ThrowableExternalizer implements AdvancedExternalizer<Throwable> {
 
       switch (id) {
          case ALL_OWNERS_LOST:
-         case CONCURRENT_CHANGE:
             break;
          case AVAILABILITY:
          case CACHE_CONFIGURATION:
@@ -187,8 +184,6 @@ public class ThrowableExternalizer implements AdvancedExternalizer<Throwable> {
          case CACHE_UNREACHABLE:
             msg = MarshallUtil.unmarshallString(in);
             return new CacheUnreachableException(msg);
-         case CONCURRENT_CHANGE:
-            return new ConcurrentChangeException();
          case CONTAINER_FULL:
             msg = MarshallUtil.unmarshallString(in);
             return new ContainerFullException(msg);

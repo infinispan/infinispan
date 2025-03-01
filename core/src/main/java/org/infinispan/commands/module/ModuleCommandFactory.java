@@ -14,8 +14,7 @@ import org.infinispan.util.ByteString;
  * interface.
  * <p>
  * Note that this is a {@link Scopes#GLOBAL} component and as such cannot have {@link Inject} methods referring to
- * {@link Scopes#NAMED_CACHE} scoped components.  For such components, use a corresponding {@link
- * Scopes#NAMED_CACHE}-scoped {@link ModuleCommandInitializer}.
+ * {@link Scopes#NAMED_CACHE} scoped components.
  *
  * @author Manik Surtani
  * @since 5.0

@@ -5,19 +5,16 @@ package org.infinispan.commons.configuration;
  * Defines how {@link org.infinispan.commons.configuration.attributes.Attribute}s and {@link org.infinispan.commons.configuration.attributes.ConfigurationElement}s
  * are combined when overlaying a configuration (the overlay) on top of another (the template) using {@link Builder#read(Object, Combine)}.
  * </p>
- * <p>
  * The strategies for combining attributes:
- * <li>
- *    <ul><strong>MERGE</strong>: the overlay attributes overwrite those of the template only if they have been modified</ul>
- *    <ul><strong>OVERRIDE</strong>: the overlay attributes are used, regardless of their modification status.</ul>
- * </li>
- * <p>
+ * <ul>
+ *    <li><b>MERGE</b> the overlay attributes overwrite those of the template only if they have been modified</li>
+ *    <li><b>OVERRIDE</b> the overlay attributes are used, regardless of their modification status.</li>
+ * </ul>
  * The strategies for combining repeatable attributes:
- * <li>
- *    <ul><strong>MERGE</strong>: repeatable attributes will be a combination of both the template and the overlay.</ul>
- *    <ul><strong>OVERRIDE</strong>: only the overlay repeatable attributes will be used.</ul>
- * </li>
- * </p>
+ * <ul>
+ *    <li><b>MERGE</b> repeatable attributes will be a combination of both the template and the overlay.</li>
+ *    <li><b>OVERRIDE</b> only the overlay repeatable attributes will be used.</li>
+ * </ul>
  *
  * @since 15.0
  **/

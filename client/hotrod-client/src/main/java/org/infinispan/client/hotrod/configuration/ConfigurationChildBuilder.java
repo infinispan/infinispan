@@ -144,7 +144,7 @@ public interface ConfigurationChildBuilder {
    /**
     * Convenience method to supply multiple {@link SerializationContextInitializer} implementations.
     *
-    * @see #addContextInitializer(SerializationContextInitializer).
+    * @see #addContextInitializer(SerializationContextInitializer)
     */
    ConfigurationBuilder addContextInitializers(SerializationContextInitializer... contextInitializers);
 

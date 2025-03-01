@@ -1,7 +1,5 @@
 package org.infinispan.multimap.impl;
 
-import static java.util.Objects.requireNonNull;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +21,8 @@ import org.infinispan.multimap.impl.function.set.SMIsMember;
 import org.infinispan.multimap.impl.function.set.SPopFunction;
 import org.infinispan.multimap.impl.function.set.SRemoveFunction;
 import org.infinispan.multimap.impl.function.set.SSetFunction;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * SetCache with Set methods implementation
@@ -180,7 +180,7 @@ public class EmbeddedSetCache<K, V> {
     *
     * @param key,      the name of the set
     * @param elements, list of elements
-    * @return {@link CompletionStage} containing a List<Long> or null if elements
+    * @return {@link CompletionStage} containing a List&lt;Long&gt; or null if elements
     *         null or empty
     */
    public CompletionStage<List<Long>> mIsMember(K key, V... elements) {

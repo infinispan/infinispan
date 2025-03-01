@@ -21,8 +21,7 @@ import org.testng.annotations.Test;
 
 /**
  * Tests for lock API
- * <p/>
- * Introduce lock() API methods https://jira.jboss.org/jira/browse/ISPN-48
+  * Introduce lock() API methods https://jira.jboss.org/jira/browse/ISPN-48
  *
  * @author Manik Surtani
  * @author Vladimir Blagojevic

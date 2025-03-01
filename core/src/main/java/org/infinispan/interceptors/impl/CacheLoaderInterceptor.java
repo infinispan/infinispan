@@ -1,10 +1,5 @@
 package org.infinispan.interceptors.impl;
 
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.NOT_ASYNC;
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.SHARED;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -46,7 +41,9 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -79,13 +76,15 @@ import org.infinispan.persistence.manager.PersistenceStatus;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.util.EntryLoader;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.NOT_ASYNC;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.SHARED;
 
 /**
  * @since 9.0
@@ -304,7 +303,6 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
     * @param key The key for the entry to look up
     * @param cmd The command that was called that now wants to query the cache loader
     * @return null or a CompletionStage that when complete all listeners will be notified
-    * @throws Throwable
     */
    protected final CompletionStage<?> loadIfNeeded(final InvocationContext ctx, Object key, final FlagAffectedCommand cmd) {
       int segment = SegmentSpecificCommand.extractSegment(cmd, key, partitioner);
@@ -316,7 +314,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
    }
 
    /**
-    * Attemps to load the given entry for a key from the persistence store. This method optimizes concurrent loads
+    * Attempts to load the given entry for a key from the persistence store. This method optimizes concurrent loads
     * of the same key so only the first is actually loaded. The additional loads will in turn complete when the
     * first completes, which provides minimal hits to the backing store(s).
     * @param ctx context for this invocation

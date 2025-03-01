@@ -24,7 +24,7 @@ import org.infinispan.multimap.impl.SortedSetBucket;
  * {@link org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache#addMany(Object, Collection, SortedSetAddArgs)}  .
  *
  * @author Katia Aresti
- * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
+ * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
 public final class AddManyFunction<K, V> implements SortedSetBucketBaseFunction<K, V, Long> {

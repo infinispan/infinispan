@@ -126,9 +126,9 @@ public interface EventLogger extends Listenable {
 
    /**
     * Sets a throwable to include as detail for this event. Both the localized message of the
-    * Throwable as well as its stack trace will be recorded as the event's detail
+    * Throwable and its stack trace will be recorded as the event's detail
     *
-    * @param detail
+    * @param t
     *           a throwable
     * @return the event logger
     */

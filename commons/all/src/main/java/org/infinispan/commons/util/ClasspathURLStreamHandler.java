@@ -8,7 +8,7 @@ import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
 
 /**
- * A {@link URLStreamHandlerFactory} which can handle <tt>classpath:</tt> URI schemes. It will attempt to load resources
+ * A {@link URLStreamHandlerFactory} which can handle <code>classpath:</code> URI schemes. It will attempt to load resources
  * from the thread's context classloader (if it exists) and then fallback to the system classloader. The factory must be
  * registered as the URL stream handler factory using the {@link #register()} method.
  * <p>

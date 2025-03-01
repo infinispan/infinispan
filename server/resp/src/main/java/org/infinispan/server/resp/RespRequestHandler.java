@@ -58,8 +58,9 @@ public abstract class RespRequestHandler {
    }
 
    /**
-    * Acquire the {@link ResponseWriter in the current context. All responses must be written via this writer.
-    * @return A {@link ResponseWriter}.
+    * <p>Acquire the {@link ResponseWriter} in the current context. All responses must be written via this writer.</p>
+    *
+    * @return a {@link ResponseWriter}
     */
    public ResponseWriter writer() {
       assert ctx.channel().eventLoop().inEventLoop() : "Buffer allocation should occur in event loop, it was " + Thread.currentThread().getName();

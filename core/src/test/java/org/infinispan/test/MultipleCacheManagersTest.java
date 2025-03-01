@@ -76,19 +76,16 @@ import jakarta.transaction.TransactionManager;
  *       are expensive to create.
  * </pre>
  * If, however, you would like your cache managers destroyed after every <i>test method</i> instead of the </i>test
- * class</i>, you could set the <tt>cleanup</tt> field to {@link MultipleCacheManagersTest.CleanupPhase#AFTER_METHOD} in
+ * class</i>, you could set the <code>cleanup</code> field to {@link MultipleCacheManagersTest.CleanupPhase#AFTER_METHOD} in
  * your test's constructor.  E.g.:
  * <pre>
- * <p/>
- * public void MyTest extends MultipleCacheManagersTest {
+  * public void MyTest extends MultipleCacheManagersTest {
  *    public MyTest() {
  *       cleanup =  CleanupPhase.AFTER_METHOD;
  *    }
  * }
- * <p/>
- * </pre>
- * <p/>
- * Note that this will cause {@link #createCacheManagers()}  to be called before each method.
+  * </pre>
+  * Note that this will cause {@link #createCacheManagers()}  to be called before each method.
  *
  * @author Mircea.Markus@jboss.com
  */

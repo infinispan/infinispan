@@ -3,7 +3,7 @@
  *
  * <p>It is possible to configure the {@link org.infinispan.client.hotrod.RemoteCacheManager} either programmatically,
  * using a URI or by constructing a {@link org.infinispan.client.hotrod.configuration.Configuration} using a {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder}
- * or declaratively, by placing a properties file named <tt>hotrod-client.properties</tt> in the classpath.</p>
+ * or declaratively, by placing a properties file named <code>hotrod-client.properties</code> in the classpath.</p>
  *
  * <p>A Hot Rod URI follows the following format:
  *    <code>hotrod[s]://[user[:password]@]host[:port][,host2[:port]][?property=value[&amp;property2=value2]]</code>
@@ -18,7 +18,8 @@
  * <p>The following table describes the individual properties
  * and the related programmatic configuration API.</p>
  *
- * <table cellspacing="0" cellpadding="3" border="1">
+ * <table border="1">
+ *    <caption>Hot Rod Configuration Properties</caption>
  *    <thead>
  *       <tr>
  *          <th>Name</th>
@@ -199,7 +200,7 @@
  *       <tr>
  *          <td><b>infinispan.client.hotrod.marshaller</b></td>
  *          <td>String (class name)</td>
- *          <td>{@link org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller} if the infinispan-jboss-marshalling module is present on the classpath, otherwise {@link org.infinispan.commons.marshall.ProtoStreamMarshaller} is used</td>
+ *          <td><code>org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller</code> if the infinispan-jboss-marshalling module is present on the classpath, otherwise {@link org.infinispan.commons.marshall.ProtoStreamMarshaller} is used</td>
  *          <td>The {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#marshaller(String) marshaller} that serializes keys and values</td>
  *       </tr>
  *       <tr>
@@ -281,7 +282,7 @@
  *          <td><b>infinispan.client.hotrod.trust_store_type</b></td>
  *          <td>String</td>
  *          <td>JKS</td>
- *          <td>The {@link org.infinispan.client.hotrod.configuration.SslConfigurationBuilder#trustStoreType(String) type} of the trust store. Valid values are <tt>JKS</tt>, <tt>JCEKS</tt>, <tt>PKCS12</tt> and <tt>PEM</tt></td>
+ *          <td>The {@link org.infinispan.client.hotrod.configuration.SslConfigurationBuilder#trustStoreType(String) type} of the trust store. Valid values are <code>JKS</code>, <code>JCEKS</code>, <code>PKCS12</code> and <code>PEM</code></td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.trust_store_password</b></td>
@@ -362,11 +363,11 @@
  *          <td>The {@link org.infinispan.client.hotrod.configuration.AuthenticationConfigurationBuilder#password(char[]) password}</td>
  *       </tr>
  *       <tr>
- *  *          <td><b>infinispan.client.hotrod.auth_token</b></td>
- *  *          <td>String</td>
- *  *          <td>N/A</td>
- *  *          <td>The {@link org.infinispan.client.hotrod.configuration.AuthenticationConfigurationBuilder#token(String) OAuth token}</td>
- *  *       </tr>
+ *          <td><b>infinispan.client.hotrod.auth_token</b></td>
+ *          <td>String</td>
+ *          <td>N/A</td>
+ *          <td>The {@link org.infinispan.client.hotrod.configuration.AuthenticationConfigurationBuilder#token(String) OAuth token}</td>
+ *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.auth_realm</b></td>
  *          <td>String</td>

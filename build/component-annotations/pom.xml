@@ -44,6 +44,14 @@
             </executions>
             <inherited>true</inherited>
          </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>${version.maven.javadoc}</version>
+            <configuration>
+               <additionalOptions>-Xdoclint:none</additionalOptions>
+            </configuration>
+         </plugin>
       </plugins>
    </build>
 </project>

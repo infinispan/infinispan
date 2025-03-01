@@ -19,7 +19,7 @@ import java.util.Set;
  * to retrieve the index at the head or the tail of the multimap list value.
  *
  * @author Katia Aresti
- * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
+ * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
 public final class IndexOfFunction<K, V> implements ListBucketBaseFunction<K, V, Collection<Long>> {

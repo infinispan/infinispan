@@ -25,7 +25,7 @@ import org.infinispan.multimap.impl.ListBucket;
  * value.
  *
  * @author Katia Aresti
- * @see <a href="http://infinispan.org/documentation/">Marshalling of
+ * @see <a href="https://infinispan.org/documentation/">Marshalling of
  *      Functions</a>
  * @since 15.0
  */

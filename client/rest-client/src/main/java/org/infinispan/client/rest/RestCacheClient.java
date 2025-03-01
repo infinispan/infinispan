@@ -188,7 +188,7 @@ public interface RestCacheClient {
    CompletionStage<RestResponse> put(String key, RestEntity value);
 
    /**
-    * Same as {@link #put(String, RestEntity)} also allowing one or more {@link org.infinispan.context.Flag} to be passed.
+    * Same as {@link #put(String, RestEntity)} also allowing one or more <code>org.infinispan.context.Flag</code> to be passed.
     */
    CompletionStage<RestResponse> put(String key, RestEntity value, String... flags);
 

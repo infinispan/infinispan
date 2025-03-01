@@ -25,8 +25,7 @@ import org.infinispan.util.logging.events.EventLogManager;
 
 /**
  * Class to be extended to allow some control over the local topology manager when testing Infinispan.
- * <p/>
- * Note: create before/after method lazily when need.
+  * Note: create before/after method lazily when need.
  *
  * @author Pedro Ruivo
  * @since 6.0

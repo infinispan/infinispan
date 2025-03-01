@@ -83,7 +83,7 @@ public class InfinispanContainer extends GenericContainer<InfinispanContainer> {
    }
 
    /**
-    * One or more artifacts to deploy in Infinispan Server's <tt>server/lib</tt> directory.
+    * One or more artifacts to deploy in Infinispan Server's <code>server/lib</code> directory.
     * Artifacts can be specified as URLs or as Maven coordinates (e.g. org.postgresql:postgresql:42.3.1)
     *
     * @param artifacts

@@ -52,7 +52,7 @@ public enum Flag {
    SKIP_LOCKING,
    /**
     * Forces a write lock, even if the invocation is a read operation.  Useful when reading an entry to later update it
-    * within the same transaction, and is analogous in behavior and use case to a <tt>select ... for update ... </tt>
+    * within the same transaction, and is analogous in behavior and use case to a <code>select ... for update ... </code>
     * SQL statement.
     */
    FORCE_WRITE_LOCK,

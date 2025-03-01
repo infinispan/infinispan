@@ -23,7 +23,7 @@ import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
  * {@link org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache#removeAll(Object, Object, Object)}
  *
  * @author Katia Aresti
- * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
+ * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
 public final class RemoveManyFunction<K, V, T> implements SortedSetBucketBaseFunction<K, V, Long> {

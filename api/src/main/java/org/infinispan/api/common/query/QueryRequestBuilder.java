@@ -7,12 +7,12 @@ import java.util.Map;
  * Builder class to build {@link QueryRequest}
  * <p>
  * Different parameters can be specified:
- * <u>
+ * <ul>
  * <li>Ickle Query: Mandatory query string</li>
  * <li>Param: Parameters for the query/li>
  * <li>Skip: Skip this number of entries</li>
  * <li>Limit: Limit the result to this number of entries</li>
- * </u>
+ * </ul>
  *
  * @since 14.0
  */
