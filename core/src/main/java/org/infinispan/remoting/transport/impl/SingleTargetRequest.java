@@ -68,6 +68,8 @@ public class SingleTargetRequest<T> extends AbstractRequest<T> {
          if (tmp == null || members.contains(tmp.destination())) {
             return false;
          }
+         tmp.onComplete();
+         requestTracker = null;
          boolean skipSync = responseCollector instanceof SingleResponseCollector;
          if (skipSync) {
             result=addResponse(tmp.destination(), CacheNotFoundResponse.INSTANCE);
