@@ -33,7 +33,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 @ProtoTypeId(ProtoStreamTypeIds.CLUSTERED_GET_ALL_COMMAND)
 public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
-   public static final byte COMMAND_ID = 46;
    private static final Log log = LogFactory.getLog(ClusteredGetAllCommand.class);
 
    private List<?> keys;
@@ -110,11 +109,6 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
 
    public List<?> getKeys() {
       return keys;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

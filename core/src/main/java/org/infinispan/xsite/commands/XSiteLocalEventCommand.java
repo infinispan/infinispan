@@ -20,8 +20,6 @@ import org.infinispan.xsite.events.XSiteEventsManager;
 @ProtoTypeId(ProtoStreamTypeIds.XSITE_LOCAL_EVENT_COMMAND)
 public class XSiteLocalEventCommand implements GlobalRpcCommand {
 
-   public static final byte COMMAND_ID = 2;
-
    @ProtoField(1)
    List<XSiteEvent> events;
 
@@ -33,11 +31,6 @@ public class XSiteLocalEventCommand implements GlobalRpcCommand {
    @Override
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry globalComponentRegistry) throws Throwable {
       return globalComponentRegistry.getComponent(XSiteEventsManager.class).onLocalEvents(events);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

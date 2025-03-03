@@ -14,7 +14,6 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 @ProtoTypeId(ProtoStreamTypeIds.CANCEL_PUBLISHER_COMMAND)
 public class CancelPublisherCommand extends BaseRpcCommand {
-   public static final byte COMMAND_ID = 49;
 
    @ProtoField(2)
    final String requestId;
@@ -30,11 +29,6 @@ public class CancelPublisherCommand extends BaseRpcCommand {
       PublisherHandler publisherHandler = componentRegistry.getPublisherHandler().running();
       publisherHandler.closePublisher(requestId);
       return CompletableFutures.completedNull();
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

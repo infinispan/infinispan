@@ -25,7 +25,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  */
 @ProtoTypeId(ProtoStreamTypeIds.REMOVE_COMMAND)
 public class RemoveCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
-   public static final byte COMMAND_ID = 10;
    private boolean returnEntry = false;
    private transient boolean nonExistent = false;
    protected transient boolean successful = true;
@@ -107,11 +106,6 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
       // Also if the caller says we must replicte on remote, make sure we are local
       return (!nonExistent || hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP |
             FlagBitSets.SKIP_CACHE_LOAD) || (requireReplicateIfRemote && (ctx == null || !ctx.isOriginLocal())));
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

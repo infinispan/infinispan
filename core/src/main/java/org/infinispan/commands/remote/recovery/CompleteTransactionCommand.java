@@ -21,8 +21,6 @@ import org.infinispan.util.ByteString;
 @ProtoTypeId(ProtoStreamTypeIds.COMPLETE_TRANSACTION_COMMAND)
 public class CompleteTransactionCommand extends BaseRpcCommand {
 
-   public static final byte COMMAND_ID = 24;
-
    @ProtoField(2)
    final XidImpl xid;
 
@@ -45,11 +43,6 @@ public class CompleteTransactionCommand extends BaseRpcCommand {
    @Override
    public boolean isReturnValueExpected() {
       return true;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

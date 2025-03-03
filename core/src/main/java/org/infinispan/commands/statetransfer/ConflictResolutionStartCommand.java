@@ -22,15 +22,13 @@ import org.infinispan.util.ByteString;
 @ProtoTypeId(ProtoStreamTypeIds.CONFLICT_RESOLUTION_START_COMMAND)
 public class ConflictResolutionStartCommand extends AbstractStateTransferCommand {
 
-   public static final byte COMMAND_ID = 112;
-
    @ProtoFactory
    ConflictResolutionStartCommand(ByteString cacheName, int topologyId, WrappedMessage wrappedSegments) {
       this(cacheName, topologyId, WrappedMessages.<IntSet>unwrap(wrappedSegments));
    }
 
    public ConflictResolutionStartCommand(ByteString cacheName, int topologyId, IntSet segments) {
-      super(COMMAND_ID, cacheName, topologyId, segments);
+      super(cacheName, topologyId, segments);
    }
 
    @Override

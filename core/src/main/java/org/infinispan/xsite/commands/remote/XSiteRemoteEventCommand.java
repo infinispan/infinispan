@@ -33,11 +33,6 @@ public class XSiteRemoteEventCommand implements XSiteRequest<Void> {
    }
 
    @Override
-   public byte getCommandId() {
-      return Ids.SITE_EVENT;
-   }
-
-   @Override
    public String toString() {
       return "XSiteRemoteEventCommand{" +
             "events=" + events +

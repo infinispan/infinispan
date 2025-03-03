@@ -12,7 +12,6 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-import org.infinispan.query.impl.ModuleCommandIds;
 import org.infinispan.util.ByteString;
 
 /**
@@ -20,8 +19,6 @@ import org.infinispan.util.ByteString;
  */
 @ProtoTypeId(ProtoStreamTypeIds.SEGMENTS_CLUSTERED_QUERY_COMMAND)
 public class SegmentsClusteredQueryCommand extends BaseRpcCommand {
-
-   public static final byte COMMAND_ID = ModuleCommandIds.SEGMENT_CLUSTERED_QUERY;
 
    @ProtoField(2)
    ClusteredQueryOperation clusteredQueryOperation;
@@ -52,11 +49,6 @@ public class SegmentsClusteredQueryCommand extends BaseRpcCommand {
 
    public CompletionStage<QueryResponse> perform(Cache<?, ?> cache) {
       return clusteredQueryOperation.perform(cache, segments);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

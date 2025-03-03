@@ -23,8 +23,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.WRITE_ONLY_MANY_ENTRIES_COMMAND)
 public final class WriteOnlyManyEntriesCommand<K, V, T> extends AbstractWriteManyCommand<K, V> {
 
-   public static final byte COMMAND_ID = 57;
-
    private Map<?, ?> arguments;
    private BiConsumer<T, WriteEntryView<K, V>> f;
 
@@ -85,11 +83,6 @@ public final class WriteOnlyManyEntriesCommand<K, V, T> extends AbstractWriteMan
    public final WriteOnlyManyEntriesCommand<K, V, T> withArguments(Map<?, ?> entries) {
       setArguments(entries);
       return this;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

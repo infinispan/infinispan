@@ -30,8 +30,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.PUT_KEY_VALUE_COMMAND)
 public class PutKeyValueCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
 
-   public static final byte COMMAND_ID = 8;
-
    private Object value;
    private boolean putIfAbsent;
    private boolean returnEntry;
@@ -120,11 +118,6 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       } else {
          return LoadType.DONT_LOAD;
       }
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

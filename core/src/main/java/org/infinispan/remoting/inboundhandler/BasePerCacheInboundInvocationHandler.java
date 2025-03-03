@@ -13,6 +13,8 @@ import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
@@ -30,8 +32,6 @@ import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.concurrent.BlockingRunnable;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -62,29 +62,20 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    private volatile boolean stopped;
    private volatile int firstTopologyAsMember = Integer.MAX_VALUE;
 
-   private static int extractCommandTopologyId(SingleRpcCommand command) {
-      ReplicableCommand innerCmd = command.getCommand();
-      if (innerCmd instanceof TopologyAffectedCommand) {
-         return ((TopologyAffectedCommand) innerCmd).getTopologyId();
+   static int extractCommandTopologyId(CacheRpcCommand command) {
+      if (command instanceof SingleRpcCommand rpc)
+         return topology(rpc.getCommand());
+
+      if (command instanceof ClusteredGetCommand || command instanceof ClusteredGetAllCommand) {
+         // These commands are topology aware but we don't block them here - topologyId logic
+         // is handled in StateTransferInterceptor
+         return NO_TOPOLOGY_COMMAND;
       }
-      return NO_TOPOLOGY_COMMAND;
+      return topology(command);
    }
 
-   static int extractCommandTopologyId(CacheRpcCommand command) {
-      switch (command.getCommandId()) {
-         case SingleRpcCommand.COMMAND_ID:
-            return extractCommandTopologyId((SingleRpcCommand) command);
-         case ClusteredGetCommand.COMMAND_ID:
-         case ClusteredGetAllCommand.COMMAND_ID:
-            // These commands are topology aware but we don't block them here - topologyId logic
-            // is handled in StateTransferInterceptor
-            return NO_TOPOLOGY_COMMAND;
-         default:
-            if (command instanceof TopologyAffectedCommand) {
-               return ((TopologyAffectedCommand) command).getTopologyId();
-            }
-      }
-      return NO_TOPOLOGY_COMMAND;
+   private static int topology(ReplicableCommand cmd) {
+      return cmd instanceof TopologyAffectedCommand tac ? tac.getTopologyId() : NO_TOPOLOGY_COMMAND;
    }
 
    @Start

@@ -21,8 +21,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.WRITE_ONLY_KEY_VALUE_COMMAND)
 public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCommand<K, V> {
 
-   public static final byte COMMAND_ID = 55;
-
    private BiConsumer<T, WriteEntryView<K, V>> f;
    private Object argument;
 
@@ -61,11 +59,6 @@ public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCom
       super.init(componentRegistry);
       if (f instanceof InjectableComponent)
          ((InjectableComponent) f).inject(componentRegistry);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

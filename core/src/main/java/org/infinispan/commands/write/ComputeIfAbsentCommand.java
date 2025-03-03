@@ -21,8 +21,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.COMPUTE_IF_ABSENT_COMMAND)
 public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
 
-   public static final int COMMAND_ID = 69;
-
    private Function<?, ?> mappingFunction;
    private Metadata metadata;
    private PrivateMetadata internalMetadata;
@@ -113,11 +111,6 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
 
    public Function getMappingFunction() {
       return mappingFunction;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

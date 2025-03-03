@@ -9,7 +9,6 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-import org.infinispan.server.hotrod.command.Ids;
 import org.infinispan.server.hotrod.tx.operation.Util;
 import org.infinispan.util.ByteString;
 
@@ -26,11 +25,6 @@ public class ForwardCommitCommand extends AbstractForwardTxCommand {
    @ProtoFactory
    public ForwardCommitCommand(ByteString cacheName, XidImpl xid, long timeout) {
       super(cacheName, xid, timeout);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return Ids.FORWARD_COMMIT;
    }
 
    @Override

@@ -23,7 +23,6 @@ import org.infinispan.util.ByteString;
  */
 @ProtoTypeId(ProtoStreamTypeIds.VERSIONED_PREPARE_COMMAND)
 public class VersionedPrepareCommand extends PrepareCommand {
-   public static final byte COMMAND_ID = 26;
    private Map<Object, IncrementableEntryVersion> versionsSeen;
 
    public VersionedPrepareCommand(ByteString cacheName, GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhase) {
@@ -49,11 +48,6 @@ public class VersionedPrepareCommand extends PrepareCommand {
 
    public void setVersionsSeen(Map<Object, IncrementableEntryVersion> versionsSeen) {
       this.versionsSeen = versionsSeen;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

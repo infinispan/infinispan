@@ -20,8 +20,6 @@ import org.infinispan.util.ByteString;
 @ProtoTypeId(ProtoStreamTypeIds.XSITE_STATE_TRANSFER_FINISH_RECEIVE_COMMAND)
 public class XSiteStateTransferFinishReceiveCommand extends BaseRpcCommand {
 
-   public static final byte COMMAND_ID = 107;
-
    @ProtoField(2)
    final String siteName;
 
@@ -35,11 +33,6 @@ public class XSiteStateTransferFinishReceiveCommand extends BaseRpcCommand {
    public CompletionStage<?> invokeAsync(ComponentRegistry registry) {
       registry.getXSiteStateTransferManager().running().getStateConsumer().endStateTransfer(siteName);
       return CompletableFutures.completedNull();
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

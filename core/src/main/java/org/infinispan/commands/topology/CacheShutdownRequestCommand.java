@@ -17,14 +17,11 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.CACHE_SHUTDOWN_REQUEST_COMMAND)
 public class CacheShutdownRequestCommand extends AbstractCacheControlCommand {
 
-   public static final byte COMMAND_ID = 93;
-
    @ProtoField(1)
    final String cacheName;
 
    @ProtoFactory
    public CacheShutdownRequestCommand(String cacheName) {
-      super(COMMAND_ID);
       this.cacheName = cacheName;
    }
 

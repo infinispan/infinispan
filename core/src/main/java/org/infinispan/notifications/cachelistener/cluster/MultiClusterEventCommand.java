@@ -29,8 +29,6 @@ import org.infinispan.util.logging.LogFactory;
 @ProtoTypeId(ProtoStreamTypeIds.MULTI_CLUSTER_EVENT_COMMAND)
 public class MultiClusterEventCommand<K, V> extends BaseRpcCommand {
 
-   public static final int COMMAND_ID = 19;
-
    private static final Log log = LogFactory.getLog(MultiClusterEventCommand.class);
 
    private final Map<UUID, Collection<ClusterEvent<K, V>>> multiEvents;
@@ -69,11 +67,6 @@ public class MultiClusterEventCommand<K, V> extends BaseRpcCommand {
          innerComposed.dependsOn(clusterCacheNotifier.notifyClusterListeners(events, identifier));
       }
       return innerComposed.freeze();
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

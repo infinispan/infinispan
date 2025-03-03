@@ -1,7 +1,5 @@
 package org.infinispan.xsite;
 
-import static org.infinispan.xsite.commands.remote.Ids.VISITABLE_COMMAND;
-
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.VisitableCommand;
@@ -45,11 +43,6 @@ public class SingleXSiteRpcCommand extends XSiteCacheRequest<Object> {
    @Override
    protected CompletionStage<Object> invokeInLocalCache(String origin, ComponentRegistry registry) {
       return registry.getBackupReceiver().running().handleRemoteCommand(command);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return VISITABLE_COMMAND;
    }
 
    @Override
