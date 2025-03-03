@@ -48,10 +48,9 @@ public class SingleTargetRequest<T> extends AbstractRequest<T> {
          boolean skipSync = responseCollector instanceof SingleResponseCollector;
          if (skipSync) {
             result = addResponse(sender, response);
-         }
-         else {
+         } else {
             synchronized(responseCollector) {
-               result=addResponse(sender, response);
+               result = addResponse(sender, response);
             }
          }
          complete(result);
@@ -72,11 +71,10 @@ public class SingleTargetRequest<T> extends AbstractRequest<T> {
          requestTracker = null;
          boolean skipSync = responseCollector instanceof SingleResponseCollector;
          if (skipSync) {
-            result=addResponse(tmp.destination(), CacheNotFoundResponse.INSTANCE);
-         }
-         else {
+            result = addResponse(tmp.destination(), CacheNotFoundResponse.INSTANCE);
+         } else {
             synchronized(responseCollector) {
-               result=addResponse(tmp.destination(), CacheNotFoundResponse.INSTANCE);
+               result = addResponse(tmp.destination(), CacheNotFoundResponse.INSTANCE);
             }
          }
          complete(result);
@@ -86,7 +84,6 @@ public class SingleTargetRequest<T> extends AbstractRequest<T> {
       return true;
    }
 
-   @GuardedBy("responseCollector")
    private T addResponse(Address sender, Response response) {
       T result = responseCollector.addResponse(sender, response);
       if (result == null) {
