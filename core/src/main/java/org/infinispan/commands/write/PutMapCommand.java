@@ -34,7 +34,6 @@ import org.infinispan.util.concurrent.locks.RemoteLockCommand;
  */
 @ProtoTypeId(ProtoStreamTypeIds.PUT_MAP_COMMAND)
 public class PutMapCommand extends AbstractTopologyAffectedCommand implements WriteCommand, MetadataAwareCommand, RemoteLockCommand {
-   public static final byte COMMAND_ID = 9;
 
    private Map<Object, Object> map;
    private Metadata metadata;
@@ -138,11 +137,6 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    public final PutMapCommand withMap(Map<Object, Object> map) {
       setMap(map);
       return this;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

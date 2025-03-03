@@ -19,8 +19,6 @@ import org.infinispan.util.ByteString;
  */
 public class CustomCacheRpcCommand extends BaseRpcCommand implements VisitableCommand {
 
-   public static final byte COMMAND_ID = 126;
-
    final Object arg;
 
    @ProtoFactory
@@ -46,11 +44,6 @@ public class CustomCacheRpcCommand extends BaseRpcCommand implements VisitableCo
 
       // echo the arg back to the caller
       return CompletableFuture.completedFuture(arg);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

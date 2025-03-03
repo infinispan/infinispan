@@ -18,7 +18,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.HEART_BEAT_COMMAND)
 public class HeartBeatCommand implements GlobalRpcCommand {
 
-   public static final byte COMMAND_ID = 30;
    public static final HeartBeatCommand INSTANCE = new HeartBeatCommand();
 
    @ProtoFactory
@@ -29,11 +28,6 @@ public class HeartBeatCommand implements GlobalRpcCommand {
    @Override
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry globalComponentRegistry) throws Throwable {
       return CompletableFutures.completedNull();
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

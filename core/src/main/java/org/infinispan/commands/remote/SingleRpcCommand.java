@@ -28,7 +28,6 @@ import org.infinispan.util.logging.LogFactory;
 @ProtoTypeId(ProtoStreamTypeIds.SINGLE_RPC_COMMAND)
 public class SingleRpcCommand extends BaseRpcCommand {
 
-   public static final int COMMAND_ID = 1;
    private static final Log log = LogFactory.getLog(SingleRpcCommand.class);
 
    final VisitableCommand command;
@@ -47,11 +46,6 @@ public class SingleRpcCommand extends BaseRpcCommand {
    @ProtoField(number = 2, name = "command")
    WrappedMessage getWrappedCommand() {
       return WrappedMessages.orElseNull(command);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

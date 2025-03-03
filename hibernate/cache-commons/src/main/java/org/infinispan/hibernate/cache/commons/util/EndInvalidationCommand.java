@@ -59,12 +59,7 @@ public class EndInvalidationCommand extends BaseRpcCommand {
 		return CompletableFutures.completedNull();
 	}
 
-	@Override
-	public byte getCommandId() {
-		return CacheCommandIds.END_INVALIDATION;
-	}
-
-	@Override
+   @Override
 	public boolean isReturnValueExpected() {
 		return false;
 	}

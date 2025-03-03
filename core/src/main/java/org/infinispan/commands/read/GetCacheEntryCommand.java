@@ -15,8 +15,6 @@ import org.infinispan.context.InvocationContext;
  */
 public final class GetCacheEntryCommand extends AbstractDataCommand implements LocalCommand {
 
-   public static final byte COMMAND_ID = 45;
-
    public GetCacheEntryCommand(Object key, int segment, long flagsBitSet) {
       super(key, segment, flagsBitSet);
    }
@@ -29,11 +27,6 @@ public final class GetCacheEntryCommand extends AbstractDataCommand implements L
    @Override
    public LoadType loadType() {
       return LoadType.OWNER;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    public String toString() {

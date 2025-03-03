@@ -27,8 +27,6 @@ import org.infinispan.xsite.irac.IracManagerKeyInfo;
 @ProtoTypeId(ProtoStreamTypeIds.IRAC_STATE_RESPONSE_COMMAND)
 public class IracStateResponseCommand extends BaseIracCommand {
 
-   public static final byte COMMAND_ID = 120;
-
    @ProtoField(2)
    final Collection<State> stateCollection;
 
@@ -50,11 +48,6 @@ public class IracStateResponseCommand extends BaseIracCommand {
          state.apply(manager);
       }
       return CompletableFutures.completedNull();
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    public void add(IracManagerKeyInfo keyInfo, IracMetadata tombstone) {

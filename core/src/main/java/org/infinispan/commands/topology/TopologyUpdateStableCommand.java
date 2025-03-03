@@ -24,8 +24,6 @@ import org.infinispan.topology.PersistentUUID;
 @ProtoTypeId(ProtoStreamTypeIds.TOPOLOGY_UPDATE_STABLE_COMMAND)
 public class TopologyUpdateStableCommand extends AbstractCacheControlCommand {
 
-   public static final byte COMMAND_ID = 97;
-
    final List<Address> actualMembers;
 
    @ProtoField(1)
@@ -61,7 +59,6 @@ public class TopologyUpdateStableCommand extends AbstractCacheControlCommand {
    TopologyUpdateStableCommand(String cacheName, List<PersistentUUID> persistentUUIDs, int rebalanceId, int topologyId,
                                int viewId, WrappedMessage currentCH, WrappedMessage pendingCH, List<JGroupsAddress> actualMembers,
                                boolean topologyRestored) {
-      super(COMMAND_ID);
       this.currentCH = currentCH;
       this.pendingCH = pendingCH;
       this.cacheName = cacheName;
@@ -74,7 +71,7 @@ public class TopologyUpdateStableCommand extends AbstractCacheControlCommand {
    }
 
    public TopologyUpdateStableCommand(String cacheName, Address origin, CacheTopology cacheTopology, int viewId) {
-      super(COMMAND_ID, origin);
+      super(origin);
       this.cacheName = cacheName;
       this.topologyId = cacheTopology.getTopologyId();
       this.rebalanceId = cacheTopology.getRebalanceId();

@@ -20,8 +20,6 @@ import org.infinispan.util.ByteString;
 @ProtoTypeId(ProtoStreamTypeIds.GET_IN_DOUBT_TX_INFO_COMMAND)
 public class GetInDoubtTxInfoCommand extends BaseRpcCommand {
 
-   public static final int COMMAND_ID = 23;
-
    @ProtoFactory
    public GetInDoubtTxInfoCommand(ByteString cacheName) {
       super(cacheName);
@@ -36,11 +34,6 @@ public class GetInDoubtTxInfoCommand extends BaseRpcCommand {
    @Override
    public boolean isReturnValueExpected() {
       return true;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

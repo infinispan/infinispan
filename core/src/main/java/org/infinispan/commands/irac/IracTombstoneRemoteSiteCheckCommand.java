@@ -30,8 +30,6 @@ import org.infinispan.xsite.irac.IracManager;
 @ProtoTypeId(ProtoStreamTypeIds.IRAC_TOMBSTONE_REMOTE_SITE_CHECK_COMMAND)
 public class IracTombstoneRemoteSiteCheckCommand extends BaseIracCommand {
 
-   public static final byte COMMAND_ID = 38;
-
    final List<Object> keys;
 
    public IracTombstoneRemoteSiteCheckCommand(ByteString cacheName, List<Object> keys) {
@@ -65,11 +63,6 @@ public class IracTombstoneRemoteSiteCheckCommand extends BaseIracCommand {
          }
       }
       return CompletableFuture.completedFuture(toKeepIndexes);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

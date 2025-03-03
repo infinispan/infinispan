@@ -30,7 +30,6 @@ import org.infinispan.util.ByteString;
  */
 @ProtoTypeId(ProtoStreamTypeIds.REDUCTION_PUBLISHER_REQUEST_COMMAND)
 public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implements TopologyAffectedCommand {
-   public static final byte COMMAND_ID = 31;
 
    @ProtoField(2)
    final boolean parallelStream;
@@ -133,11 +132,6 @@ public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implemen
          return lpm.keyReduction(parallelStream, segments, keys, excludedKeys,
                explicitFlags, deliveryGuarantee, transformer, finalizer);
       }
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

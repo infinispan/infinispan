@@ -21,7 +21,6 @@ import org.infinispan.util.ByteString;
 @ProtoTypeId(ProtoStreamTypeIds.XSITE_STATE_PUSH_COMMAND)
 public class XSiteStatePushCommand extends BaseRpcCommand {
 
-   public static final byte COMMAND_ID = 33;
    private List<XSiteState> chunk;
 
    @ProtoFactory
@@ -40,11 +39,6 @@ public class XSiteStatePushCommand extends BaseRpcCommand {
       XSiteStateConsumer stateConsumer = componentRegistry.getXSiteStateTransferManager().running().getStateConsumer();
       stateConsumer.applyState(chunk);
       return CompletableFutures.completedNull();
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override
