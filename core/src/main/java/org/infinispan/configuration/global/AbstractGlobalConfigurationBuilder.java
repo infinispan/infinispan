@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
 
-abstract class AbstractGlobalConfigurationBuilder implements GlobalConfigurationChildBuilder {
+public abstract class AbstractGlobalConfigurationBuilder implements GlobalConfigurationChildBuilder {
 
    private final GlobalConfigurationBuilder globalConfig;
 
@@ -96,6 +96,21 @@ abstract class AbstractGlobalConfigurationBuilder implements GlobalConfiguration
    @Override
    public List<Builder<?>> modules() {
       return globalConfig.modules();
+   }
+
+   @Override
+   public <T> T module(Class<T> moduleClass) {
+      return globalConfig.module(moduleClass);
+   }
+
+   @Override
+   public GlobalConfigurationBuilder clearModules() {
+      return globalConfig.clearModules();
+   }
+
+   @Override
+   public <T extends Builder<?>> T addModule(Class<T> klass) {
+      return globalConfig.addModule(klass);
    }
 
    @Override
