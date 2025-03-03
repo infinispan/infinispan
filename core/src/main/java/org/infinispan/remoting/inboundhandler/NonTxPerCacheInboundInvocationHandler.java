@@ -15,7 +15,7 @@ public class NonTxPerCacheInboundInvocationHandler extends BasePerCacheInboundIn
    public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
       try {
          var onExecutorService = executeOnExecutorService(order, command);
-         var waitForTxData = command instanceof StateTransferCommand;
+         var waitForTxData = !(command instanceof StateTransferCommand);
          var runnable = createDefaultRunnable(command, reply, extractCommandTopologyId(command), waitForTxData, onExecutorService, order.preserveOrder());
          handleRunnable(runnable, onExecutorService);
       } catch (Throwable throwable) {
