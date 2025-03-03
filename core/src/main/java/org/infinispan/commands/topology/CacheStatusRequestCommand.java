@@ -23,14 +23,12 @@ import org.infinispan.util.logging.LogFactory;
 public class CacheStatusRequestCommand extends AbstractCacheControlCommand {
 
    private final static Log log = LogFactory.getLog(CacheStatusRequestCommand.class);
-   public static final byte COMMAND_ID = 96;
 
    @ProtoField(1)
    final int viewId;
 
    @ProtoFactory
    public CacheStatusRequestCommand(int viewId) {
-      super(COMMAND_ID);
       this.viewId = viewId;
    }
 

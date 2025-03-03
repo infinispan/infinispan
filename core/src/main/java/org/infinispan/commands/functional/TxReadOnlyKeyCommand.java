@@ -16,7 +16,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 
 @ProtoTypeId(ProtoStreamTypeIds.TX_READ_ONLY_KEY_COMMAND)
 public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
-   public static final byte COMMAND_ID = 64;
 
    private List<Mutation<K, V, ?>> mutations;
 
@@ -38,11 +37,6 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    @ProtoField(number = 9, name = "mutations")
    MarshallableList<Mutation<K, V, ?>> getWrappedMutations() {
       return MarshallableList.create(mutations);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

@@ -24,8 +24,6 @@ import org.infinispan.xsite.status.SiteState;
 @ProtoTypeId(ProtoStreamTypeIds.XSITE_AUTO_TRANSFER_STATUS_COMMAND)
 public class XSiteAutoTransferStatusCommand extends BaseRpcCommand {
 
-   public static final int COMMAND_ID = 35;
-
    @ProtoField(2)
    final String site;
 
@@ -33,11 +31,6 @@ public class XSiteAutoTransferStatusCommand extends BaseRpcCommand {
    public XSiteAutoTransferStatusCommand(ByteString cacheName, String site) {
       super(cacheName);
       this.site = site;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

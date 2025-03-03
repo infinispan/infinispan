@@ -22,8 +22,6 @@ import org.infinispan.util.ByteString;
 @ProtoTypeId(ProtoStreamTypeIds.XSITE_SET_STATE_TRANSFER_MODE_COMMAND)
 public class XSiteSetStateTransferModeCommand extends BaseRpcCommand {
 
-   public static final int COMMAND_ID = 36;
-
    @ProtoField(2)
    final String site;
 
@@ -35,11 +33,6 @@ public class XSiteSetStateTransferModeCommand extends BaseRpcCommand {
       super(cacheName);
       this.site = site;
       this.mode = mode;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

@@ -21,7 +21,6 @@ import org.infinispan.util.concurrent.CommandAckCollector;
  */
 @ProtoTypeId(ProtoStreamTypeIds.EXCEPTION_ACK_COMMAND)
 public class ExceptionAckCommand extends BaseRpcCommand {
-   public static final byte COMMAND_ID = 42;
 
    @ProtoField(2)
    final long id;
@@ -56,11 +55,6 @@ public class ExceptionAckCommand extends BaseRpcCommand {
    @Override
    public boolean isReturnValueExpected() {
       return false;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

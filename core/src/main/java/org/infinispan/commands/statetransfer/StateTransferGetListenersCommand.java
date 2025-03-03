@@ -22,9 +22,7 @@ import org.infinispan.util.ByteString;
  * @since 11.0
  */
 @ProtoTypeId(ProtoStreamTypeIds.STATE_TRANSFER_GET_LISTENERS_COMMAND)
-public class StateTransferGetListenersCommand extends BaseRpcCommand implements TopologyAffectedCommand {
-
-   public static final byte COMMAND_ID = 118;
+public class StateTransferGetListenersCommand extends BaseRpcCommand implements StateTransferCommand, TopologyAffectedCommand {
 
    @ProtoField(2)
    int topologyId;
@@ -50,11 +48,6 @@ public class StateTransferGetListenersCommand extends BaseRpcCommand implements 
    @Override
    public void setTopologyId(int topologyId) {
       this.topologyId = topologyId;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

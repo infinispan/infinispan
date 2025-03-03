@@ -19,8 +19,6 @@ import org.infinispan.util.concurrent.CommandAckCollector;
 @ProtoTypeId(ProtoStreamTypeIds.BACKUP_MULTI_KEY_ACK_COMMAND)
 public class BackupMultiKeyAckCommand extends BaseRpcCommand {
 
-   public static final byte COMMAND_ID = 41;
-
    @ProtoField(2)
    final long id;
 
@@ -45,11 +43,6 @@ public class BackupMultiKeyAckCommand extends BaseRpcCommand {
    @Override
    public final boolean isReturnValueExpected() {
       return false;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

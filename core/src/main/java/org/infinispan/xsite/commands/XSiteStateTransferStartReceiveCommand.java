@@ -22,8 +22,6 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 @ProtoTypeId(ProtoStreamTypeIds.XSITE_STATE_TRANSFER_START_RECEIVE_COMMAND)
 public class XSiteStateTransferStartReceiveCommand extends BaseRpcCommand {
 
-   public static final byte COMMAND_ID = 106;
-
    @ProtoField(2)
    final String siteName;
 
@@ -39,11 +37,6 @@ public class XSiteStateTransferStartReceiveCommand extends BaseRpcCommand {
       XSiteStateConsumer consumer = stateTransferManager.getStateConsumer();
       consumer.startStateTransfer(siteName);
       return CompletableFutures.completedNull();
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

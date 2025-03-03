@@ -15,8 +15,6 @@ import org.infinispan.context.InvocationContext;
  */
 public class GetKeyValueCommand extends AbstractDataCommand implements LocalCommand {
 
-   public static final byte COMMAND_ID = 4;
-
    public GetKeyValueCommand(Object key, int segment, long flagsBitSet) {
       super(key, segment, flagsBitSet);
    }
@@ -29,11 +27,6 @@ public class GetKeyValueCommand extends AbstractDataCommand implements LocalComm
    @Override
    public LoadType loadType() {
       return LoadType.OWNER;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    public String toString() {

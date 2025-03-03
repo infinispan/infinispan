@@ -19,7 +19,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 
 @ProtoTypeId(ProtoStreamTypeIds.READ_ONLY_MANY_COMMAND)
 public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedCommand {
-   public static final int COMMAND_ID = 63;
 
    protected Collection<?> keys;
    protected Function<ReadEntryView<K, V>, R> f;
@@ -100,11 +99,6 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
    public final ReadOnlyManyCommand<K, V, R> withKeys(Collection<?> keys) {
       setKeys(keys);
       return this;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

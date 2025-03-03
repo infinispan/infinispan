@@ -33,8 +33,4 @@ public class XSiteStateTransferControlRequest extends XSiteCacheRequest<Void> {
       return registry.getBackupReceiver().running().handleStateTransferControl(origin, startReceive);
    }
 
-   @Override
-   public byte getCommandId() {
-      return Ids.STATE_TRANSFER_CONTROL;
-   }
 }

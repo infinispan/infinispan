@@ -38,8 +38,4 @@ public class XSiteStatePushRequest extends XSiteCacheRequest<Void> {
       return registry.getBackupReceiver().running().handleStateTransferState(chunk, timeoutMillis);
    }
 
-   @Override
-   public byte getCommandId() {
-      return Ids.STATE_TRANSFER_STATE;
-   }
 }

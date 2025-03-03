@@ -35,8 +35,6 @@ import org.infinispan.xsite.spi.XSiteEntryMergePolicy;
 @ProtoTypeId(ProtoStreamTypeIds.IRAC_PUT_KEY_VALUE_COMMAND)
 public class IracPutKeyValueCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
 
-   public static final byte COMMAND_ID = 28;
-
    private Object value;
    private Metadata metadata;
    private PrivateMetadata privateMetadata;
@@ -99,11 +97,6 @@ public class IracPutKeyValueCommand extends AbstractDataWriteCommand implements 
    public void setInternalMetadata(Object key, PrivateMetadata internalMetadata) {
       assert Objects.equals(this.key, key);
       setInternalMetadata(internalMetadata);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

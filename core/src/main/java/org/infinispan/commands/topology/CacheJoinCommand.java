@@ -19,8 +19,6 @@ import org.infinispan.topology.CacheJoinInfo;
 @ProtoTypeId(ProtoStreamTypeIds.CACHE_JOIN_COMMAND)
 public class CacheJoinCommand extends AbstractCacheControlCommand {
 
-   public static final byte COMMAND_ID = 85;
-
    @ProtoField(1)
    final String cacheName;
 
@@ -36,7 +34,7 @@ public class CacheJoinCommand extends AbstractCacheControlCommand {
    }
 
    public CacheJoinCommand(String cacheName, Address origin, CacheJoinInfo joinInfo, int viewId) {
-      super(COMMAND_ID, origin);
+      super(origin);
       this.cacheName = cacheName;
       this.joinInfo = joinInfo;
       this.viewId = viewId;

@@ -27,8 +27,6 @@ public class GetInDoubtTransactionsCommand extends BaseRpcCommand {
 
    private static final Log log = LogFactory.getLog(GetInDoubtTransactionsCommand.class);
 
-   public static final int COMMAND_ID = 21;
-
    @ProtoFactory
    public GetInDoubtTransactionsCommand(ByteString cacheName) {
       super(cacheName);
@@ -45,11 +43,6 @@ public class GetInDoubtTransactionsCommand extends BaseRpcCommand {
    @Override
    public boolean isReturnValueExpected() {
       return true;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

@@ -30,7 +30,6 @@ import org.infinispan.util.ByteString;
  */
 @ProtoTypeId(ProtoStreamTypeIds.SIZE_COMMAND)
 public class SizeCommand extends BaseRpcCommand implements FlagAffectedCommand, TopologyAffectedCommand {
-   public static final byte COMMAND_ID = 61;
 
    private int topologyId = -1;
    private long flags = EnumUtil.EMPTY_BIT_SET;
@@ -68,11 +67,6 @@ public class SizeCommand extends BaseRpcCommand implements FlagAffectedCommand, 
    @Override
    public LoadType loadType() {
       return LoadType.DONT_LOAD;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

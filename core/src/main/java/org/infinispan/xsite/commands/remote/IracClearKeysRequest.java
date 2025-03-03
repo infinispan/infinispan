@@ -29,11 +29,6 @@ public class IracClearKeysRequest extends IracUpdateKeyRequest<Void> {
    }
 
    @Override
-   public byte getCommandId() {
-      return Ids.IRAC_CLEAR;
-   }
-
-   @Override
    public String toString() {
       return "IracClearKeyCommand{" +
             ", cacheName=" + cacheName +
