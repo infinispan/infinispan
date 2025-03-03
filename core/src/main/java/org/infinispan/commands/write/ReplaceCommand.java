@@ -23,7 +23,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  */
 @ProtoTypeId(ProtoStreamTypeIds.REPLACE_COMMAND)
 public class ReplaceCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
-   public static final byte COMMAND_ID = 11;
 
    private Object oldValue;
    private Object newValue;
@@ -102,11 +101,6 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    @Override
    public LoadType loadType() {
       return LoadType.PRIMARY;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

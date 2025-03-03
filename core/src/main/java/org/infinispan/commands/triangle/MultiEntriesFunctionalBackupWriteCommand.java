@@ -31,8 +31,6 @@ import org.infinispan.util.TriangleFunctionsUtil;
 @ProtoTypeId(ProtoStreamTypeIds.MULTI_ENTRIES_FUNCTIONAL_BACKUP_WRITE_COMMAND)
 public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWriteCommand {
 
-   public static final byte COMMAND_ID = 79;
-
    @ProtoField(11)
    final boolean writeOnly;
    final Map<?, ?> entries;
@@ -69,11 +67,6 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
    @ProtoField(12)
    MarshallableMap<?, ?> getWrappedEntries() {
       return MarshallableMap.create(entries);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

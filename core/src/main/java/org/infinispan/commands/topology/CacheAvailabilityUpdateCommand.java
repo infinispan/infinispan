@@ -18,8 +18,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.CACHE_AVAILABILITY_UPDATE_COMMAND)
 public class CacheAvailabilityUpdateCommand extends AbstractCacheControlCommand {
 
-   public static final byte COMMAND_ID = 98;
-
    @ProtoField(1)
    final String cacheName;
 
@@ -28,7 +26,6 @@ public class CacheAvailabilityUpdateCommand extends AbstractCacheControlCommand 
 
    @ProtoFactory
    public CacheAvailabilityUpdateCommand(String cacheName, AvailabilityMode availabilityMode) {
-      super(COMMAND_ID);
       this.cacheName = cacheName;
       this.availabilityMode = availabilityMode;
    }

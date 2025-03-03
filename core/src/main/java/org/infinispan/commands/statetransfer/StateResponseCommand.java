@@ -29,8 +29,6 @@ public class StateResponseCommand extends BaseRpcCommand implements TopologyAffe
 
    private static final Log log = LogFactory.getLog(StateResponseCommand.class);
 
-   public static final byte COMMAND_ID = 20;
-
    /**
     * The topology id of the sender at send time.
     */
@@ -89,11 +87,6 @@ public class StateResponseCommand extends BaseRpcCommand implements TopologyAffe
    @Override
    public void setTopologyId(int topologyId) {
       this.topologyId = topologyId;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    public Collection<StateChunk> getStateChunks() {

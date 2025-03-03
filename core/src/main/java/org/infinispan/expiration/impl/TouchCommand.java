@@ -16,7 +16,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  */
 @ProtoTypeId(ProtoStreamTypeIds.TOUCH_COMMAND)
 public class TouchCommand extends AbstractDataCommand {
-   public static final byte COMMAND_ID = 66;
 
    @ProtoField(number = 5, defaultValue = "false")
    boolean touchEvenIfExpired;
@@ -30,11 +29,6 @@ public class TouchCommand extends AbstractDataCommand {
    public TouchCommand(Object key, int segment, long flagBitSet, boolean touchEvenIfExpired) {
       super(key, segment, flagBitSet);
       this.touchEvenIfExpired = touchEvenIfExpired;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    public boolean isTouchEvenIfExpired() {

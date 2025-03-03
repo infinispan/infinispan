@@ -14,19 +14,17 @@ import org.infinispan.util.ByteString;
  * @author Ryan Emerson
  * @since 11.0
  */
-abstract class AbstractStateTransferCommand extends BaseRpcCommand implements TopologyAffectedCommand {
+abstract class AbstractStateTransferCommand extends BaseRpcCommand implements StateTransferCommand, TopologyAffectedCommand {
 
-   private final byte commandId;
    protected int topologyId;
    protected IntSet segments;
 
-   AbstractStateTransferCommand(byte commandId, ByteString cacheName) {
+   AbstractStateTransferCommand(ByteString cacheName) {
       super(cacheName);
-      this.commandId = commandId;
    }
 
-   AbstractStateTransferCommand(byte commandId, ByteString cacheName, int topologyId, IntSet segments) {
-      this(commandId, cacheName);
+   AbstractStateTransferCommand(ByteString cacheName, int topologyId, IntSet segments) {
+      this(cacheName);
       this.topologyId = topologyId;
       this.segments = segments;
    }
@@ -56,8 +54,4 @@ abstract class AbstractStateTransferCommand extends BaseRpcCommand implements To
       return segments;
    }
 
-   @Override
-   public byte getCommandId() {
-      return commandId;
-   }
 }

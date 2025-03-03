@@ -25,7 +25,6 @@ import org.infinispan.util.ByteString;
  */
 @ProtoTypeId(ProtoStreamTypeIds.COMMIT_COMMAND)
 public class CommitCommand extends AbstractTransactionBoundaryCommand {
-   public static final byte COMMAND_ID = 14;
 
    //IRAC versions are segment based and they are generated during prepare phase. We can save some space here.
    private Map<Integer, IracMetadata> iracMetadataMap;
@@ -64,11 +63,6 @@ public class CommitCommand extends AbstractTransactionBoundaryCommand {
          default:  // NOT_COMPLETED
             throw new IllegalStateException("Remote transaction not found: " + globalTx);
       }
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

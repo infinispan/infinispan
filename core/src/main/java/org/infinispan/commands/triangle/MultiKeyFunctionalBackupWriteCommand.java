@@ -28,8 +28,6 @@ import org.infinispan.util.ByteString;
 @ProtoTypeId(ProtoStreamTypeIds.MULTI_KEY_FUNCTIONAL_BACKUP_WRITE_COMMAND)
 public class MultiKeyFunctionalBackupWriteCommand extends FunctionalBackupWriteCommand {
 
-   public static final byte COMMAND_ID = 80;
-
    private boolean writeOnly;
    private Collection<?> keys;
 
@@ -68,11 +66,6 @@ public class MultiKeyFunctionalBackupWriteCommand extends FunctionalBackupWriteC
    @ProtoField(12)
    MarshallableCollection<?> getKeys() {
       return MarshallableCollection.create(keys);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

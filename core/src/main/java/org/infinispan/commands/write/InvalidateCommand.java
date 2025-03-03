@@ -29,7 +29,6 @@ import org.infinispan.util.concurrent.locks.RemoteLockCommand;
  */
 @ProtoTypeId(ProtoStreamTypeIds.INVALIDATE_COMMAND)
 public class InvalidateCommand extends AbstractTopologyAffectedCommand implements WriteCommand, RemoteLockCommand {
-   public static final int COMMAND_ID = 6;
    protected Object[] keys;
    protected CommandInvocationId commandInvocationId;
 
@@ -60,11 +59,6 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    @ProtoField(4)
    public CommandInvocationId getCommandInvocationId() {
       return commandInvocationId;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

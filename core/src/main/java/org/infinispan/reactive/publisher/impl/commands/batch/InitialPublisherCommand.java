@@ -24,7 +24,6 @@ import org.reactivestreams.Publisher;
 
 @ProtoTypeId(ProtoStreamTypeIds.INITIAL_PUBLISHER_COMMAND)
 public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements TopologyAffectedCommand {
-   public static final byte COMMAND_ID = 18;
 
    final String requestId;
    final DeliveryGuarantee deliveryGuarantee;
@@ -149,11 +148,6 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
    @Override
    public void setTopologyId(int topologyId) {
       this.topologyId = topologyId;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

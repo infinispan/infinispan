@@ -27,8 +27,6 @@ import org.infinispan.util.TriangleFunctionsUtil;
 @ProtoTypeId(ProtoStreamTypeIds.PUT_MAP_BACKUP_WRITE_COMMAND)
 public class PutMapBackupWriteCommand extends BackupWriteCommand {
 
-   public static final byte COMMAND_ID = 78;
-
    private Map<Object, Object> map;
    private Metadata metadata;
    private Map<Object, PrivateMetadata> internalMetadataMap;
@@ -67,11 +65,6 @@ public class PutMapBackupWriteCommand extends BackupWriteCommand {
    @ProtoField(9)
    MarshallableMap<Object, PrivateMetadata> getInternalMetadata() {
       return MarshallableMap.create(internalMetadataMap);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

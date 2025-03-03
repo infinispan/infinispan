@@ -16,8 +16,6 @@ import org.infinispan.util.ByteString;
 @ProtoTypeId(ProtoStreamTypeIds.BACKUP_NOOP_COMMAND)
 public class BackupNoopCommand extends BackupWriteCommand {
 
-   public static final byte COMMAND_ID = 81;
-
    @ProtoFactory
    BackupNoopCommand(ByteString cacheName, CommandInvocationId commandInvocationId, int topologyId,
                      long flags, long sequence, int segmentId) {
@@ -26,11 +24,6 @@ public class BackupNoopCommand extends BackupWriteCommand {
 
    public BackupNoopCommand(ByteString cacheName, WriteCommand command, long sequence, int segmentId) {
       super(cacheName, command, sequence, segmentId);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

@@ -75,11 +75,6 @@ public class IracPutManyRequest extends IracUpdateKeyRequest<IntSet> {
    }
 
    @Override
-   public byte getCommandId() {
-      return Ids.IRAC_UPDATE;
-   }
-
-   @Override
    public String toString() {
       return "IracPutManyRequest{" +
             "cacheName=" + cacheName +

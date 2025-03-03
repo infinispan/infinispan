@@ -42,8 +42,4 @@ public class IracTouchKeyRequest extends IracUpdateKeyRequest<Boolean> {
       return receiver.touchEntry(key);
    }
 
-   @Override
-   public byte getCommandId() {
-      return Ids.IRAC_TOUCH;
-   }
 }

@@ -26,7 +26,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  */
 @ProtoTypeId(ProtoStreamTypeIds.REMOVE_EXPIRED_COMMAND)
 public class RemoveExpiredCommand extends RemoveCommand {
-   public static final int COMMAND_ID = 58;
 
    @ProtoField(11)
    boolean maxIdle;
@@ -62,11 +61,6 @@ public class RemoveExpiredCommand extends RemoveCommand {
    @Override
    public boolean isConditional() {
       return true;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

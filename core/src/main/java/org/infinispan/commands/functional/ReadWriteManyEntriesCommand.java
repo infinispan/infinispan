@@ -25,8 +25,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.READ_WRITE_MANY_ENTRIES_COMMAND)
 public final class ReadWriteManyEntriesCommand<K, V, T, R> extends AbstractWriteManyCommand<K, V> {
 
-   public static final byte COMMAND_ID = 53;
-
    private Map<?, ?> arguments;
    private BiFunction<T, ReadWriteEntryView<K, V>, R> f;
 
@@ -91,11 +89,6 @@ public final class ReadWriteManyEntriesCommand<K, V, T, R> extends AbstractWrite
    public final ReadWriteManyEntriesCommand<K, V, T, R> withArguments(Map<?, ?> entries) {
       setArguments(entries);
       return this;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override
