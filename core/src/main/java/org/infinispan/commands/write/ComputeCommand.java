@@ -21,8 +21,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.COMPUTE_COMMAND)
 public class ComputeCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
 
-   public static final int COMMAND_ID = 68;
-
    private BiFunction<?, ?, ?> remappingBiFunction;
    private Metadata metadata;
    private boolean computeIfPresent;
@@ -121,11 +119,6 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
    @Override
    public final boolean isReturnValueExpected() {
       return true;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    public BiFunction getRemappingBiFunction() {

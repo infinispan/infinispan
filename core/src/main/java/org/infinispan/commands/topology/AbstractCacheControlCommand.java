@@ -14,27 +14,19 @@ import org.infinispan.remoting.transport.Address;
 @Scope(Scopes.NONE)
 public abstract class AbstractCacheControlCommand implements GlobalRpcCommand {
 
-   private final byte commandId;
-
    protected transient Address origin;
 
-   AbstractCacheControlCommand(byte commandId) {
-      this(commandId, null);
+   AbstractCacheControlCommand() {
+      this(null);
    }
 
-   AbstractCacheControlCommand(byte commandId, Address origin) {
-      this.commandId = commandId;
+   AbstractCacheControlCommand(Address origin) {
       this.origin = origin;
    }
 
    @Override
    public void setOrigin(Address origin) {
       this.origin = origin;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return commandId;
    }
 
    @Override

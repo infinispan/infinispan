@@ -53,9 +53,13 @@ public interface ReplicableCommand extends TracedCommand {
     * Used by marshallers to convert this command into an id for streaming.
     *
     * @return the method id of this command.  This is compatible with pre-2.2.0 MethodCall ids.
+    * @deprecated since 16.0 as this is no longer required by the Protostream based marshaller. Implementations of this
+    * method are always ignored.
     */
-   // TODO do we just ignore this? Not possible to use ProtoStreamTypeIDs as it's a byte
-   byte getCommandId();
+   @Deprecated(since = "16.0", forRemoval = true)
+   default byte getCommandId() {
+      return 0;
+   }
 
    /**
     * If true, a return value will be provided when performed remotely.  Otherwise, a remote {@link

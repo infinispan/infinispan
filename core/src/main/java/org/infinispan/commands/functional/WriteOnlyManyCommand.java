@@ -23,8 +23,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.WRITE_ONLY_MANY_COMMAND)
 public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K, V> {
 
-   public static final byte COMMAND_ID = 56;
-
    private Collection<?> keys;
    private Consumer<WriteEntryView<K, V>> f;
 
@@ -81,11 +79,6 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    public final WriteOnlyManyCommand<K, V> withKeys(Collection<?> keys) {
       setKeys(keys);
       return this;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

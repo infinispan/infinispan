@@ -28,7 +28,6 @@ import org.infinispan.util.ByteString;
 @ProtoTypeId(ProtoStreamTypeIds.CHECK_TRANSACTION_RPC_COMMAND)
 public class CheckTransactionRpcCommand implements CacheRpcCommand {
 
-   public static final int COMMAND_ID = 83;
    private static final ResponseCollectorImpl INSTANCE = new ResponseCollectorImpl();
 
    @ProtoField(1)
@@ -74,11 +73,6 @@ public class CheckTransactionRpcCommand implements CacheRpcCommand {
    @Override
    public void setOrigin(Address origin) {
       //we don't need to keep track who sent the message
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

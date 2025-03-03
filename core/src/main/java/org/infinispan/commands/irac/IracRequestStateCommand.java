@@ -23,8 +23,6 @@ import org.infinispan.util.ByteString;
 @ProtoTypeId(ProtoStreamTypeIds.IRAC_REQUEST_STATE_COMMAND)
 public class IracRequestStateCommand extends BaseIracCommand {
 
-   public static final byte COMMAND_ID = 121;
-
    private final IntSet segments;
    private Address origin;
 
@@ -47,11 +45,6 @@ public class IracRequestStateCommand extends BaseIracCommand {
    public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
       registry.getIracManager().wired().requestState(getOrigin(), segments);
       return CompletableFutures.completedNull();
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

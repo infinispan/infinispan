@@ -38,7 +38,6 @@ import org.infinispan.util.logging.LogFactory;
 @ProtoTypeId(ProtoStreamTypeIds.CLUSTERED_GET_COMMAND)
 public class ClusteredGetCommand extends BaseClusteredReadCommand implements SegmentSpecificCommand {
 
-   public static final byte COMMAND_ID = 16;
    private static final Log log = LogFactory.getLog(ClusteredGetCommand.class);
 
    private final Object key;
@@ -133,11 +132,6 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
                   return rv;
                }
             });
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

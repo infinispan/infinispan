@@ -69,7 +69,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
    public void handleFromCluster(Address origin, ReplicableCommand command, Reply reply, DeliverOrder order) {
       command.setOrigin(origin);
       try {
-         if (command.getCommandId() == HeartBeatCommand.COMMAND_ID) {
+         if (command instanceof HeartBeatCommand) {
             reply.reply(null);
          } else if (command instanceof CacheRpcCommand) {
             handleCacheRpcCommand(origin, (CacheRpcCommand) command, reply, order);

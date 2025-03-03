@@ -32,8 +32,6 @@ import org.infinispan.util.logging.LogFactory;
 public class TopologyUpdateCommand extends AbstractCacheControlCommand {
    private static final Log log = LogFactory.getLog(TopologyUpdateCommand.class);
 
-   public static final byte COMMAND_ID = 95;
-
    @ProtoField(1)
    final String cacheName;
 
@@ -69,7 +67,6 @@ public class TopologyUpdateCommand extends AbstractCacheControlCommand {
                          CacheTopology.Phase phase, List<JGroupsAddress> actualMembers,
                          List<PersistentUUID> persistentUUIDs, AvailabilityMode availabilityMode,
                          int rebalanceId, int topologyId, int viewId) {
-      super(COMMAND_ID);
       this.cacheName = cacheName;
       this.currentCH = currentCH;
       this.pendingCH = pendingCH;
@@ -84,7 +81,7 @@ public class TopologyUpdateCommand extends AbstractCacheControlCommand {
 
    public TopologyUpdateCommand(String cacheName, Address origin, CacheTopology cacheTopology,
                                 AvailabilityMode availabilityMode, int viewId) {
-      super(COMMAND_ID, origin);
+      super(origin);
       this.cacheName = cacheName;
       this.topologyId = cacheTopology.getTopologyId();
       this.rebalanceId = cacheTopology.getRebalanceId();

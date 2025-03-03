@@ -6,26 +6,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commands.functional.ReadWriteKeyCommand;
-import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
-import org.infinispan.commands.functional.ReadWriteManyCommand;
-import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
-import org.infinispan.commands.functional.WriteOnlyKeyCommand;
-import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
-import org.infinispan.commands.functional.WriteOnlyManyCommand;
-import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
-import org.infinispan.commands.write.ComputeCommand;
-import org.infinispan.commands.write.ComputeIfAbsentCommand;
-import org.infinispan.commands.write.DataWriteCommand;
-import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.RemoveExpiredCommand;
-import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -62,8 +46,6 @@ import org.infinispan.util.logging.LogFactory;
 public class PrepareCommand extends AbstractTransactionBoundaryCommand implements TransactionalRemoteLockCommand {
 
    private static final Log log = LogFactory.getLog(PrepareCommand.class);
-
-   public static final byte COMMAND_ID = 12;
 
    protected List<WriteCommand> modifications;
    protected boolean onePhaseCommit;
@@ -150,37 +132,12 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
       if (modifications.isEmpty()) {
          return Collections.emptyList();
       }
-      final Set<Object> set = new HashSet<>(modifications.size());
-      for (WriteCommand writeCommand : modifications) {
-         if (writeCommand.hasAnyFlag(FlagBitSets.SKIP_LOCKING)) {
-            continue;
-         }
-         switch (writeCommand.getCommandId()) {
-            case PutKeyValueCommand.COMMAND_ID:
-            case RemoveCommand.COMMAND_ID:
-            case ComputeCommand.COMMAND_ID:
-            case ComputeIfAbsentCommand.COMMAND_ID:
-            case RemoveExpiredCommand.COMMAND_ID:
-            case ReplaceCommand.COMMAND_ID:
-            case ReadWriteKeyCommand.COMMAND_ID:
-            case ReadWriteKeyValueCommand.COMMAND_ID:
-            case WriteOnlyKeyCommand.COMMAND_ID:
-            case WriteOnlyKeyValueCommand.COMMAND_ID:
-               set.add(((DataWriteCommand) writeCommand).getKey());
-               break;
-            case PutMapCommand.COMMAND_ID:
-            case InvalidateCommand.COMMAND_ID:
-            case ReadWriteManyCommand.COMMAND_ID:
-            case ReadWriteManyEntriesCommand.COMMAND_ID:
-            case WriteOnlyManyCommand.COMMAND_ID:
-            case WriteOnlyManyEntriesCommand.COMMAND_ID:
-               set.addAll(writeCommand.getAffectedKeys());
-               break;
-            default:
-               break;
-         }
-      }
-      return set;
+
+      return modifications.stream()
+            .filter(writeCommand -> !writeCommand.hasAnyFlag(FlagBitSets.SKIP_LOCKING))
+            .map(WriteCommand::getAffectedKeys)
+            .flatMap(Collection::stream)
+            .collect(Collectors.toSet());
    }
 
    @Override
@@ -211,11 +168,6 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
 
    public List<WriteCommand> getModifications() {
       return modifications;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

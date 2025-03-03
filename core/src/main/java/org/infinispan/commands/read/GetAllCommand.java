@@ -13,7 +13,6 @@ import org.infinispan.context.InvocationContext;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class GetAllCommand extends AbstractTopologyAffectedCommand implements LocalCommand {
-   public static final byte COMMAND_ID = 44;
 
    private Collection<?> keys;
    private boolean returnEntries;
@@ -32,11 +31,6 @@ public class GetAllCommand extends AbstractTopologyAffectedCommand implements Lo
    @Override
    public LoadType loadType() {
       return LoadType.PRIMARY;
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    @Override

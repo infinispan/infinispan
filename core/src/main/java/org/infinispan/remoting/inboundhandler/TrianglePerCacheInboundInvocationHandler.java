@@ -10,18 +10,8 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
-import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
-import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
-import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
-import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
-import org.infinispan.commands.statetransfer.StateTransferStartCommand;
-import org.infinispan.commands.triangle.BackupNoopCommand;
+import org.infinispan.commands.statetransfer.StateTransferCommand;
 import org.infinispan.commands.triangle.BackupWriteCommand;
-import org.infinispan.commands.triangle.MultiEntriesFunctionalBackupWriteCommand;
-import org.infinispan.commands.triangle.MultiKeyFunctionalBackupWriteCommand;
-import org.infinispan.commands.triangle.PutMapBackupWriteCommand;
-import org.infinispan.commands.triangle.SingleKeyBackupWriteCommand;
-import org.infinispan.commands.triangle.SingleKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.distribution.TriangleOrderManager;
@@ -64,33 +54,18 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
    @Override
    public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
       try {
-         switch (command.getCommandId()) {
-            case SingleRpcCommand.COMMAND_ID:
-               handleSingleRpcCommand((SingleRpcCommand) command, reply, order);
-               return;
-            case SingleKeyBackupWriteCommand.COMMAND_ID:
-            case SingleKeyFunctionalBackupWriteCommand.COMMAND_ID:
-            case BackupNoopCommand.COMMAND_ID:
-            case PutMapBackupWriteCommand.COMMAND_ID:
-            case MultiEntriesFunctionalBackupWriteCommand.COMMAND_ID:
-            case MultiKeyFunctionalBackupWriteCommand.COMMAND_ID:
-               handleBackupWriteCommand((BackupWriteCommand) command);
-               return;
-            case BackupMultiKeyAckCommand.COMMAND_ID:
-               ((BackupMultiKeyAckCommand) command).ack(commandAckCollector);
-               return;
-            case ExceptionAckCommand.COMMAND_ID:
-               ((ExceptionAckCommand) command).ack(commandAckCollector);
-               return;
-            case ConflictResolutionStartCommand.COMMAND_ID:
-            case StateTransferCancelCommand.COMMAND_ID:
-            case StateTransferGetListenersCommand.COMMAND_ID:
-            case StateTransferGetTransactionsCommand.COMMAND_ID:
-            case StateTransferStartCommand.COMMAND_ID:
-               handleStateRequestCommand(command, reply, order);
-               return;
-            default:
-               handleDefaultCommand(command, reply, order);
+         if (command instanceof SingleRpcCommand) {
+            handleSingleRpcCommand((SingleRpcCommand) command, reply, order);
+         } else if (command instanceof BackupWriteCommand bwc) {
+            handleBackupWriteCommand(bwc);
+         } else if (command instanceof BackupMultiKeyAckCommand bmkac) {
+            bmkac.ack(commandAckCollector);
+         } else if (command instanceof ExceptionAckCommand eac) {
+            eac.ack(commandAckCollector);
+         } else if (command instanceof StateTransferCommand) {
+            handleStateRequestCommand(command, reply, order);
+         } else {
+         handleDefaultCommand(command, reply, order);
          }
       } catch (Throwable throwable) {
          reply.reply(exceptionHandlingCommand(command, throwable));

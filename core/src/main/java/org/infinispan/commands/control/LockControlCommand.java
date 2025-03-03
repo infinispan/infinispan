@@ -44,8 +44,6 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
 
    private static final Log log = LogFactory.getLog(LockControlCommand.class);
 
-   public static final int COMMAND_ID = 3;
-
    private Collection<Object> keys;
    private boolean unlock = false;
    private long flags;
@@ -139,11 +137,6 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
          transaction = txTable.getOrCreateRemoteTransaction(globalTx, Collections.emptyList());
       }
       return componentRegistry.getInvocationContextFactory().running().createRemoteTxInvocationContext(transaction, getOrigin());
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    public void setUnlock(boolean unlock) {

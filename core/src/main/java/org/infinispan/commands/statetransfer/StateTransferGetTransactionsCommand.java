@@ -23,15 +23,13 @@ import org.infinispan.util.ByteString;
 @ProtoTypeId(ProtoStreamTypeIds.STATE_TRANSFER_GET_TRANSACTIONS_COMMAND)
 public class StateTransferGetTransactionsCommand extends AbstractStateTransferCommand {
 
-   public static final byte COMMAND_ID = 119;
-
    @ProtoFactory
    StateTransferGetTransactionsCommand(ByteString cacheName, int topologyId, WrappedMessage wrappedSegments) {
       this(cacheName, topologyId, WrappedMessages.<IntSet>unwrap(wrappedSegments));
    }
 
    public StateTransferGetTransactionsCommand(ByteString cacheName, int topologyId, IntSet segments) {
-      super(COMMAND_ID, cacheName, topologyId, segments);
+      super(cacheName, topologyId, segments);
    }
 
    @Override
