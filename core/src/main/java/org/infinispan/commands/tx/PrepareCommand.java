@@ -6,25 +6,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commands.functional.ReadWriteKeyCommand;
-import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
-import org.infinispan.commands.functional.ReadWriteManyCommand;
-import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
-import org.infinispan.commands.functional.WriteOnlyKeyCommand;
-import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
-import org.infinispan.commands.functional.WriteOnlyManyCommand;
-import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
-import org.infinispan.commands.write.ComputeCommand;
-import org.infinispan.commands.write.ComputeIfAbsentCommand;
-import org.infinispan.commands.write.DataWriteCommand;
-import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -147,40 +132,12 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
       if (modifications.isEmpty()) {
          return Collections.emptyList();
       }
-      final Set<Object> set = new HashSet<>(modifications.size());
-      for (WriteCommand writeCommand : modifications) {
-         if (writeCommand.hasAnyFlag(FlagBitSets.SKIP_LOCKING)) {
-            continue;
-         }
 
-         if (isSingleKeyCommand(writeCommand)) {
-            set.add(((DataWriteCommand) writeCommand).getKey());
-         } else if (isMultiKeyCommand(writeCommand)) {
-            set.addAll(writeCommand.getAffectedKeys());
-         }
-      }
-      return set;
-   }
-
-   private boolean isSingleKeyCommand(WriteCommand cmd) {
-      return cmd instanceof ComputeCommand ||
-            cmd instanceof ComputeIfAbsentCommand ||
-            cmd instanceof PutKeyValueCommand ||
-            cmd instanceof ReadWriteKeyCommand ||
-            cmd instanceof ReadWriteKeyValueCommand ||
-            cmd instanceof RemoveCommand ||
-            cmd instanceof ReplaceCommand ||
-            cmd instanceof WriteOnlyKeyCommand ||
-            cmd instanceof WriteOnlyKeyValueCommand;
-   }
-
-   private boolean isMultiKeyCommand(WriteCommand cmd) {
-      return cmd instanceof InvalidateCommand ||
-            cmd instanceof PutMapCommand ||
-            cmd instanceof ReadWriteManyCommand ||
-            cmd instanceof ReadWriteManyEntriesCommand ||
-            cmd instanceof WriteOnlyManyCommand ||
-            cmd instanceof WriteOnlyManyEntriesCommand;
+      return modifications.stream()
+            .filter(writeCommand -> !writeCommand.hasAnyFlag(FlagBitSets.SKIP_LOCKING))
+            .map(WriteCommand::getAffectedKeys)
+            .flatMap(Collection::stream)
+            .collect(Collectors.toSet());
    }
 
    @Override
