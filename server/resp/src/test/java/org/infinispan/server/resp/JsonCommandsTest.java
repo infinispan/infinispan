@@ -985,6 +985,15 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
    public void testJSONTOGGLE() {
       JsonPath jp = new JsonPath("$");
       RedisCodec<String, String> codec = StringCodec.UTF8;
+      String key = k();
+
+      // JSON.SET doc $ 'true'
+      assertThat(redis.jsonSet(key, jp, defaultJsonParser.createJsonValue("true"))).isEqualTo("OK");
+      assertThat(redis.jsonGet(key).get(0).asBoolean()).isTrue();
+      assertThat(redis.dispatch(CommandType.JSON_TOGGLE, new ValueOutput<>(codec),
+              new CommandArgs<>(codec).addKey(key).add("."))).isEqualTo("false");
+      assertThat(redis.jsonGet(key).get(0).asBoolean()).isFalse();
+
       JsonValue jv = defaultJsonParser.createJsonValue("""
                {"bool":true,
                "null_value": null,
@@ -994,7 +1003,6 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
                "foo": "bar",
                "legacy": true}
             """);
-      String key = k();
       assertThat(redis.jsonSet(key, jp, jv)).isEqualTo("OK");
 
       // Legacy
