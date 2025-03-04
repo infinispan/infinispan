@@ -1,9 +1,25 @@
 package org.infinispan.server.resp;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
+
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.infinispan.server.resp.json.JSONUtil;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.RedisCodec;
@@ -16,6 +32,7 @@ import io.lettuce.core.json.arguments.JsonGetArgs;
 import io.lettuce.core.json.arguments.JsonMsetArgs;
 import io.lettuce.core.json.arguments.JsonRangeArgs;
 import io.lettuce.core.json.arguments.JsonSetArgs;
+import io.lettuce.core.output.ArrayOutput;
 import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.output.NumberListOutput;
 import io.lettuce.core.output.StringListOutput;
@@ -23,20 +40,6 @@ import io.lettuce.core.output.ValueOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolKeyword;
-import org.infinispan.server.resp.json.JSONUtil;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
 
 @Test(groups = "functional", testName = "server.resp.JsonCommandsTest")
 public class JsonCommandsTest extends SingleNodeRespBaseTest {
@@ -1893,6 +1896,31 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       }
    }
 
+   @Test
+   void testJSONRESP() {
+      JsonValue jv1 = defaultJsonParser.createJsonValue(
+            """
+                     {"name":"Wireless earbuds","description":"Wireless Bluetooth in-ear headphones","connection":{"wireless":true,"null":null,"type":"Bluetooth"},"price":64.99,"stock":17,"colors":["black","white"], "max_level":[80, 100, 120]}
+                  """);
+      JsonPath jpRoot = new JsonPath("$");
+      String key = k();
+      redis.jsonSet(key, jpRoot, jv1, null);
+      List<Object> list = resp(key, "$");
+      String s = list.toString();
+      assertThat(s).isEqualTo(
+            "[[{, name, Wireless earbuds, description, Wireless Bluetooth in-ear headphones, connection, [{, wireless, true, null, null, type, Bluetooth], price, 64.99, stock, 17, colors, [[, black, white], max_level, [[, 80, 100, 120]]]");
+      list = resp(key, "$.price");
+      assertThat(list).containsExactly(64.99);
+      list = resp(key, "$.colors");
+      assertThat((List)list.get(0)).containsExactly("[", "black", "white");
+      list = resp(key, "$.connection.*");
+      assertThat(list).containsExactly(true, null, "Bluetooth");
+      assertThat(resp(key, "$.non-existent")).isEmpty();
+      assertThatThrownBy(() -> resp(key, ".non-existent")).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR Path '$.non-existent' does not exist");
+      assertThat(resp("non-existent", "$")).containsExactly((Object) null);
+   }
+
    private boolean compareJSONGet(List<JsonValue> results, JsonValue expected, JsonPath... paths) {
       assertThat(results).hasSize(1);
       return compareJSONGet(results.get(0), expected, paths);
@@ -1930,4 +1958,32 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThat(newRootList).hasSize(1);
       return compareJSONSet(newRootList.get(0), oldRoot, path, node);
    }
+
+   // Using dispatch to allow boolean in command output
+   private List<Object> resp(String key, String path) {
+      return redis.dispatch(new ProtocolKeyword() {
+         @Override
+         public byte[] getBytes() {
+            return "JSON.RESP".getBytes(StandardCharsets.UTF_8);
+         }
+      }, new CustomArrayOutput<>(StringCodec.UTF8), new CommandArgs<>(StringCodec.UTF8).addKey(key).addValue(path));
+   }
+
+   // Redis ArrayOutput doesn't work with boolean element. Adding a patch for testing
+   private static class CustomArrayOutput<K, V> extends ArrayOutput<K, V> {
+
+      public CustomArrayOutput(RedisCodec<K, V> codec) {
+         super(codec);
+      }
+
+      @Override
+      public void set(boolean value) {
+         if (output==null) {
+            output = new ArrayList<>();
+        }
+
+        output.add(value);
+      }
+   }
+
 }

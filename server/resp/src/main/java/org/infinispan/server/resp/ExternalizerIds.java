@@ -27,4 +27,5 @@ public interface ExternalizerIds {
     Integer JSON_CLEAR_FUNCTION = 2221;
     Integer JSON_ARRPOP_FUNCTION = 2222;
     Integer JSON_MERGE_FUNCTION = 2223;
+    Integer JSON_RESP_FUNCTION = 2224;
 }
