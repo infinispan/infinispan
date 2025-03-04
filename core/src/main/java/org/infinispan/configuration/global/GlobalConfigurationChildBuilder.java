@@ -87,6 +87,21 @@ public interface GlobalConfigurationChildBuilder {
    List<Builder<?>> modules();
 
    /**
+    * Module configuration
+    */
+   <T> T module(Class<T> moduleClass);
+
+   /**
+    * Clears all modules from the configuration
+    */
+   GlobalConfigurationBuilder clearModules();
+
+   /**
+    * Adds a module to the configuration
+    */
+   <T extends Builder<?>> T addModule(Class<T> klass);
+
+   /**
     * Sets the name of the cache that acts as the default cache and is returned by
     * {@link EmbeddedCacheManager#getCache()}. Not
     */
