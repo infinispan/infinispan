@@ -11,6 +11,7 @@ constants org.infinispan.server.hotrod.HotRodConstants;
 // methods vInt, vLong, array, byte...
 intrinsics org.infinispan.server.hotrod.Intrinsics;
 
+import io.netty.handler.codec.TooLongFrameException;
 import java.time.Instant;
 import java.time.temporal.Temporal;
 import java.util.Collections;
@@ -45,11 +46,23 @@ init {
          return header;
       }
    }
+
+   protected int bytesAvailable(ByteBuf buf) {
+      if (maxContentLength > 0) {
+         return Math.max(maxContentLength - requestBytes - buf.readerIndex() + posBefore, 0);
+      }
+      return -1;
+   }
 }
 
 exceptionally {
+   if (t instanceof TooLongFrameException tlfe) {
+      log.requestTooLarge(ctx.channel(), tlfe);
+      ctx.close();
+      return;
+   }
    log.trace("Parsing error", t);
-   cacheProcessor.writeException(getHeader(), t);
+   cacheProcessor.writeException(getHeader(), hr2x_messageId, t);
    state = 0;
 }
 
@@ -63,9 +76,10 @@ deadend {
 
 // this is the root
 root request
-   : magic { if (accessLogging) { requestStart = Instant.now(); } }
-      header { if (log.isTraceEnabled()) log.tracef("Parsed header: %s", header); }
-      parameters
+   : { posBefore = buf.readerIndex(); }
+     magic { if (accessLogging) { requestStart = Instant.now(); } }
+     header { if (log.isTraceEnabled()) log.tracef("Parsed header: %s", header); }
+     parameters
    ;
 
 header returns HotRodHeader
@@ -78,10 +92,10 @@ magic: byte;
 messageId: vLong;
 version: byte;
 operation returns HotRodOperation
-   : opCode { HotRodOperation.fromRequestOpCode(byte) }
+   : opCode { HotRodOperation.fromRequestOpCode(hr2x_byte) }
    ;
 opCode: byte;
-cacheName: string;
+cacheName: string[bytesAvailable(buf)];
 flags: vInt;
 intelligence: byte;
 topologyId: vInt;
@@ -98,14 +112,14 @@ mediaType returns MediaType
    ;
 mediaTypeDefinition: byte;
 mediaTypeId: vInt;
-mediaTypeName: string;
+mediaTypeName: string[bytesAvailable(buf)];
 mediaTypeParams returns Map<String, String>
    : mediaTypeParamsNum { mediaTypeParams = allocMap(mediaTypeParamsNum); }
       #mediaTypeParamsNum ( mediaParamName mediaParamValue { mediaTypeParams.put(mediaParamName, mediaParamValue); } )
    ;
 mediaTypeParamsNum: vInt;
-mediaParamName: string;
-mediaParamValue: string;
+mediaParamName: string[bytesAvailable(buf)];
+mediaParamValue: string[bytesAvailable(buf)];
 mediaTypeDescription returns MediaType switch mediaTypeDefinition
    : { 0 }? { MediaType.APPLICATION_UNKNOWN }
    | { 1 }? mediaTypeId mediaTypeParams { MediaTypeIds.getMediaType((short) mediaTypeId).withParameters(mediaTypeParams) }
@@ -119,15 +133,15 @@ otherParams returns Map<String, byte[]>
    ;
 
 otherParamsNum: vInt;
-otherParamName: string;
-otherParamValue: array;
+otherParamName: string[bytesAvailable(buf)];
+otherParamValue: array[bytesAvailable(buf)];
 otherParamsRev returns Map<String, byte[]>
    : otherParamsNum { otherParamsRev = allocMap(otherParamsNum); }
       #otherParamsNum ( otherParamName otherParamValue { otherParamsRev.put(otherParamName, otherParamValue); } )
    ;
 
-key: array;
-value: array;
+key: array[bytesAvailable(buf)];
+value: array[bytesAvailable(buf)];
 supportsDuplicates
    : { version >= VERSION_40 }? bool
    | { false }
@@ -160,11 +174,11 @@ timeUnits : byte;
 entryVersion: long;
 intValue: int;
 scope: vInt;
-queryBytes: array;
-authMech: string;
-authResponse: array;
+queryBytes: array[bytesAvailable(buf)];
+authMech: string[bytesAvailable(buf)];
+authResponse: array[bytesAvailable(buf)];
 
-listenerId: array;
+listenerId: array[bytesAvailable(buf)];
 includeCurrentState: bool;
 useRawEvents: bool;
 listenerParams
@@ -172,28 +186,28 @@ listenerParams
    | { version >= VERSION_21 }? filterFactory filterParams converterFactory converterParams useRawEvents
    | filterFactory filterParams converterFactory converterParams
    ;
-filterFactory: string;
+filterFactory: string[bytesAvailable(buf)];
 filterParams returns List<byte[]>
    : { !filterFactory.isEmpty() }? numParams { filterParams = allocList(numParams); }
       #numParams ( param { filterParams.add(param); })
    | { null }
    ;
-converterFactory: string;
+converterFactory: string[bytesAvailable(buf)];
 converterParams returns List<byte[]>
    : { !converterFactory.isEmpty() }? numParams { converterParams = allocList(numParams); }
       #numParams ( param { converterParams.add(param); })
    | { null; }
    ;
 numParams: byte;
-param: array;
+param: array[bytesAvailable(buf)];
 listenerInterests: vInt;
 bloomBits: vInt;
 
-bloomArray: array;
+bloomArray: array[bytesAvailable(buf)];
 
-taskName: string;
-taskParam: string;
-taskParamValue: array;
+taskName: string[bytesAvailable(buf)];
+taskParam: string[bytesAvailable(buf)];
+taskParamValue: array[bytesAvailable(buf)];
 taskParams returns Map<String, byte[]>
    : numParams { taskParams = allocMap(numParams); }
       #numParams ( taskParam taskParamValue { taskParams.put(taskParam, taskParamValue); } )
@@ -210,8 +224,8 @@ keys returns Set<byte[]>:
    numKeys { keys = allocSet(numKeys); } #numKeys ( key { keys.add(key); } )
    ;
 
-segmentMask: optionalArray;
-filterConverterFactory: optionalString;
+segmentMask: optionalArray[bytesAvailable(buf)];
+filterConverterFactory: optionalString[bytesAvailable(buf)];
 filterConverterParams returns List<byte[]>
    : { filterConverterFactory != null }? numParams { filterConverterParams = allocList(numParams); }
       #numParams ( param { filterConverterParams.add(param); })
@@ -222,7 +236,7 @@ includeMetadata
    : { version >= VERSION_24 }? bool
    | { false }
    ;
-iterationId: string;
+iterationId: string[bytesAvailable(buf)];
 
 offset: vInt;
 
@@ -253,12 +267,12 @@ xidFormat: signedVInt;
 xidLength: byte;
 // in case xidLength == 0 we would get into loop as we couldn't progress reading 0 bytes from buffer
 transactionId returns byte[]
-   :  { xidLength > 0 }? fixedArray[xidLength]
+   :  { xidLength > 0 }? fixedArray[xidLength, bytesAvailable(buf)]
    |  { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
    ;
 branchLength: byte;
 branchId returns byte[]
-   :  { branchLength > 0 }? fixedArray[branchLength]
+   :  { branchLength > 0 }? fixedArray[branchLength, bytesAvailable(buf)]
    |  { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
    ;
 
@@ -286,7 +300,7 @@ modificationData
    | { }
    ;
 
-counterName: string;
+counterName: string[bytesAvailable(buf)];
 counterFlags: byte;
 counterConfiguration returns CounterConfiguration.Builder
    : counterFlags { counterConfiguration = CounterConfiguration.builder(CounterEncodeUtil.decodeType(counterFlags)).storage(CounterEncodeUtil.decodeStorage(counterFlags)) }

@@ -462,6 +462,11 @@
                   <xs:documentation>Sets an external address for this node to accept client connections. Defaults to the server socket binding address.</xs:documentation>
                </xs:annotation>
             </xs:attribute>
+            <xs:attribute name="max-content-length" type="xs:string" default="${ProtocolServer.max-content-length}">
+               <xs:annotation>
+                  <xs:documentation>Sets the maximum size a request from a remote client can be. Exceeding this size will forcibly disconnect the socket.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
             <xs:attribute name="external-port" type="xs:int">
                <xs:annotation>
                   <xs:documentation>Sets an external port for this node. Defaults to the server socket binding port.</xs:documentation>
@@ -503,6 +508,11 @@
                   <xs:documentation>
                      Sets client encoding for values. Applies to memcached text protocol only.
                   </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="max-content-length" type="xs:string" default="${ProtocolServer.max-content-length}">
+               <xs:annotation>
+                  <xs:documentation>Sets the maximum size a request from a remote client can be. Exceeding this size will forcibly disconnect the socket.</xs:documentation>
                </xs:annotation>
             </xs:attribute>
             <xs:attribute name="protocol" type="tns:memcached-protocol" default="AUTO">
@@ -595,6 +605,11 @@
                <xs:annotation>
                   <xs:documentation>Names the cache that the RESP connector exposes. The default cache name is respCache.
                   </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="max-content-length" type="xs:string" default="${ProtocolServer.max-content-length}">
+               <xs:annotation>
+                  <xs:documentation>Sets the maximum size a request from a remote client can be. Exceeding this size will forcibly disconnect the socket.</xs:documentation>
                </xs:annotation>
             </xs:attribute>
             <xs:attribute name="security-realm" type="xs:string">
