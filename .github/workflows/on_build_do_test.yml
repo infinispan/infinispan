@@ -10,6 +10,7 @@ permissions:
   packages: read
   # Needed to write commit status
   statuses: write
+  pull-requests: write
 
 concurrency:
   # Cancel jobs same head_branch same repo, works
@@ -99,7 +100,8 @@ jobs:
         run: >
             cd test_dir/infinispan &&
             ./mvnw verify -V -B -e -DrerunFailingTestsCount=2
-            -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative $HIBERNATE_MATRIX
+            -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative,coverage $HIBERNATE_MATRIX
+            -Dorg.infinispan.test.server.extension.libs=org.jacoco:org.jacoco.agent:0.8.12:runtime
 
       - name: set-commit-status-conclusion
         if: success()
@@ -136,6 +138,7 @@ jobs:
             !test_dir/infinispan/**/*-reports*/TEST-*RocksDB*.xml
             test_dir/infinispan/**/*.dump*
             test_dir/infinispan/**/hs_err_*
+            test_dir/infinispan/jacoco/
             github-sha.txt
 
 # Create artifact with branch name and surefile flaky test report
@@ -237,7 +240,9 @@ jobs:
             -Dansi.strip=true \
             -DdefaultTestGroup=database \
             -Dorg.infinispan.test.database.types=${{ matrix.dbs }} \
-            -Dorg.infinispan.test.server.dir=/tmp/infinispan-server-${{ steps.dis.outputs.server-version }}
+            -Dorg.infinispan.test.server.dir=/tmp/infinispan-server-${{ steps.dis.outputs.server-version }} \
+            -P coverage \
+            -Dorg.infinispan.test.server.extension.libs=org.jacoco:org.jacoco.agent:0.8.12:runtime
 
       - name: Archive commit sha PR
         if: >
@@ -256,6 +261,7 @@ jobs:
             test_dir/infinispan/**/*.dump*
             test_dir/infinispan/**/hs_err_*
             test_dir/infinispan/**/failsafe-summary.xml
+            test_dir/infinispan/jacoco/
             github-sha.txt
       - name: set-commit-status-conclusion
         if: success()
@@ -275,3 +281,68 @@ jobs:
             sha: ${{ needs.get-info.outputs.source-head-sha }}
             targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
+  coverage:
+    needs: [ci-build-test-pr, db]
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    name: Publish Coverage Report
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: ./.github/actions/setup-java
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: surefire-test-report*
+
+      - name: Extract Maven Artifacts
+        uses: ./.github/actions/extract-maven-artifacts
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Download Infinispan Server
+        id: dis
+        uses: ./.github/actions/download-infinispan
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Extract Infinispan Source
+        run: |
+          mkdir test_dir && cd test_dir
+          unzip ${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip
+          mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
+
+      - name: Copy jacoco directories to Infinispan
+        working-directory: test_dir/infinispan
+        run: |
+          mkdir jacoco
+          .github/scripts/merge-jacoco-files.sh "$GITHUB_WORKSPACE/test_dir/infinispan/jacoco/" "${GITHUB_WORKSPACE}/surefire-test-report*/"
+
+      - name: Coverage merge and report generation
+        id: coverage_merge
+        shell: bash
+        working-directory: test_dir/infinispan
+        run: >
+          ./mvnw validate -pl ./ -P jacocoReport
+
+      - name: Add coverage to PR
+        id: jacoco
+        uses: madrapps/jacoco-report@v1.7.2-beta
+        with:
+          paths: |
+            ${{ github.workspace }}/test_dir/infinispan/jacoco/report/jacoco.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 70
+          min-coverage-changed-files: 70
+
+      - name: Archive jacoco report
+        if: (success() || failure())
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacocoReport
+          path: |
+            test_dir/infinispan/jacoco/report/
