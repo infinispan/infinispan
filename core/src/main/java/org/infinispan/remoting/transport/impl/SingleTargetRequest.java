@@ -2,7 +2,9 @@ package org.infinispan.remoting.transport.impl;
 
 import static org.infinispan.util.logging.Log.CLUSTER;
 
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
@@ -14,8 +16,6 @@ import org.infinispan.remoting.transport.jgroups.RequestTracker;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import net.jcip.annotations.GuardedBy;
-
 /**
  * Request implementation that waits for a response from a single target node.
  *
@@ -26,26 +26,24 @@ public class SingleTargetRequest<T> extends AbstractRequest<T> {
    private static final Log log = LogFactory.getLog(SingleTargetRequest.class);
 
    // Only changes from non-null to null
-   @GuardedBy("responseCollector")
-   private RequestTracker requestTracker;
+   private final AtomicReference<RequestTracker> requestTracker;
 
    public SingleTargetRequest(ResponseCollector<T> wrapper, long requestId, RequestRepository repository, RequestTracker requestTracker) {
       super(requestId, wrapper, repository);
-      this.requestTracker = requestTracker;
+      this.requestTracker = new AtomicReference<>(Objects.requireNonNull(requestTracker));
    }
 
    @Override
    public void onResponse(Address sender, Response response) {
+      RequestTracker tracker = requestTracker.getAndSet(null);
       try {
-         T result;
-         synchronized (responseCollector) {
-            if (requestTracker != null && !requestTracker.destination().equals(sender)) {
-               log.tracef("Received unexpected response to request %d from %s, target is %s", requestId, sender, requestTracker.destination());
+         if (tracker != null) {
+            if (!tracker.destination().equals(sender)) {
+               log.tracef("Received unexpected response to request %d from %s, target is %s", requestId, sender, tracker.destination());
             }
-
-            result = addResponse(sender, response);
+            T result = addResponse(sender, tracker, response);
+            complete(result);
          }
-         complete(result);
       } catch (Exception e) {
          completeExceptionally(e);
       }
@@ -53,14 +51,12 @@ public class SingleTargetRequest<T> extends AbstractRequest<T> {
 
    @Override
    public boolean onNewView(Set<Address> members) {
+      RequestTracker tracker = requestTracker.get();
       try {
-         T result;
-         synchronized (responseCollector) {
-            if (requestTracker == null || members.contains(requestTracker.destination())) {
-               return false;
-            }
-            result = addResponse(requestTracker.destination(), CacheNotFoundResponse.INSTANCE);
+         if (tracker == null || members.contains(tracker.destination()) || requestTracker.getAndSet(null) != tracker) {
+            return false;
          }
+         T result = addResponse(tracker.destination(), tracker, CacheNotFoundResponse.INSTANCE);
          complete(result);
       } catch (Exception e) {
          completeExceptionally(e);
@@ -68,10 +64,8 @@ public class SingleTargetRequest<T> extends AbstractRequest<T> {
       return true;
    }
 
-   @GuardedBy("responseCollector")
-   private T addResponse(Address sender, Response response) {
-      requestTracker.onComplete();
-      requestTracker = null;
+   private T addResponse(Address sender, RequestTracker tracker, Response response) {
+      tracker.onComplete();
       T result = responseCollector.addResponse(sender, response);
       if (result == null) {
          result = responseCollector.finish();
@@ -81,15 +75,11 @@ public class SingleTargetRequest<T> extends AbstractRequest<T> {
 
    @Override
    protected void onTimeout() {
-      // The target might be null
-      String targetString = null;
-      synchronized (responseCollector) {
-         if (requestTracker != null) {
-            requestTracker.onTimeout();
-            targetString = requestTracker.destination().toString();
-         }
-
+      RequestTracker tracker = requestTracker.getAndSet(null);
+      if (tracker != null) {
+         tracker.onTimeout();
+         String targetString = tracker.destination().toString();
+         completeExceptionally(CLUSTER.requestTimedOut(requestId, targetString, Util.prettyPrintTime(getTimeoutMs())));
       }
-      completeExceptionally(CLUSTER.requestTimedOut(requestId, targetString, Util.prettyPrintTime(getTimeoutMs())));
    }
 }
