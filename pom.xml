@@ -121,8 +121,8 @@
       <org.infinispan.tests.threads.virtual>false</org.infinispan.tests.threads.virtual>
       <dir.ispn>../</dir.ispn>
       <dir.jacoco>${maven.multiModuleProjectDirectory}/jacoco/</dir.jacoco>
-      <dir.jacoco.merged>../jacoco/merged/</dir.jacoco.merged>
-      <dir.jacoco.report>../jacoco/report/</dir.jacoco.report>
+      <dir.jacoco.merged>${dir.jacoco}/merged/</dir.jacoco.merged>
+      <dir.jacoco.report>${dir.jacoco}/report/</dir.jacoco.report>
       <rerunFailingTestsCount>0</rerunFailingTestsCount>
       <testjvm.commonArgs>-XX:+UseG1GC -XX:-TieredCompilation -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir} -Dio.netty.leakDetection.level=paranoid</testjvm.commonArgs>
       <!--
@@ -2731,7 +2731,6 @@
             <plugins>
                <plugin>
                   <artifactId>maven-failsafe-plugin</artifactId>
-                  <version>${version.maven.surefire}</version>
                   <configuration>
                      <systemPropertyVariables>
                         <coverage.enabled>true</coverage.enabled>
@@ -2826,11 +2825,13 @@
                         </goals>
                         <configuration>
                            <target>
-                                 <available file="${project.build.directory}/classes" type="dir" property="hasClasses"/>
-                                 <echo level="info" message="Copying test classes to jacoco folder" if:set="hasClasses" xmlns:if="ant:if"/>
-                                 <copydir dest="${jacoco.reportPath}/classes"
-                                          src="${project.build.directory}/classes"
-                                          if:set="hasClasses" xmlns:if="ant:if"/>
+                              <available file="${project.build.directory}/classes" type="dir" property="hasClasses"/>
+                              <echo level="info" message="Copying test classes to jacoco folder" if:set="hasClasses" xmlns:if="ant:if"/>
+                              <copydir dest="${jacoco.reportPath}/classes"
+                                       src="${project.build.directory}/classes"
+                                       if:set="hasClasses" xmlns:if="ant:if"/>
+                              <available file="${jacoco.reportPath}" type="dir" property="jacocoDirCreated"/>
+                              <mkdir dir="${jacoco.reportPath}" unless:set="jacocoDirCreated" xmlns:unless="ant:unless"/>
                            </target>
                         </configuration>
                      </execution>
@@ -2850,6 +2851,7 @@
                   <version>1.2.1</version>
                   <executions>
                      <execution>
+                        <phase>validate</phase>
                         <goals>
                            <goal>set-system-properties</goal>
                         </goals>
@@ -2871,7 +2873,7 @@
                   <executions>
                      <execution>
                         <id>delete-existing-jacoco-report</id>
-                        <phase>initialize</phase>
+                        <phase>validate</phase>
                         <goals>
                            <goal>run</goal>
                         </goals>
@@ -2897,69 +2899,69 @@
                   <executions>
                      <execution>
                         <id>add-source</id>
-                        <phase>generate-sources</phase>
+                        <phase>validate</phase>
                         <goals>
                            <goal>add-source</goal>
                         </goals>
                         <configuration>
                            <sources>
-                              <source>${dir.ispn}/anchored-keys/src/main/java</source>
-                              <source>${dir.ispn}/api/src/main/java</source>
-                              <source>${dir.ispn}/cdi/common/src/main/java</source>
-                              <source>${dir.ispn}/cdi/embedded/src/main/java</source>
-                              <source>${dir.ispn}/cdi/remote/src/main/java</source>
-                              <source>${dir.ispn}/cli/src/main/java</source>
-                              <source>${dir.ispn}/client/hotrod/src/main/java</source>
-                              <source>${dir.ispn}/client/hotrod-client/src/main/java</source>
-                              <source>${dir.ispn}/client/rest-client/src/main/java</source>
-                              <source>${dir.ispn}/commons/all/src/main/java</source>
-                              <source>${dir.ispn}/commons/jdk21/src/main/java</source>
-                              <source>${dir.ispn}/commons/spi/src/main/java</source>
-                              <source>${dir.ispn}/core/src/main/java</source>
-                              <source>${dir.ispn}/counter/src/main/java</source>
-                              <source>${dir.ispn}/counter-api/src/main/java</source>
-                              <source>${dir.ispn}/graalvm/client-hotrod/src/main/java</source>
-                              <source>${dir.ispn}/graalvm/commons/src/main/java</source>
-                              <source>${dir.ispn}/graalvm/core/src/main/java</source>
-                              <source>${dir.ispn}/gridfs/src/main/java</source>
-                              <source>${dir.ispn}/hibernate/cache-commons/src/main/java</source>
-                              <source>${dir.ispn}/hibernate/cache-spi/src/main/java</source>
-                              <source>${dir.ispn}/hibernate/cache-v62/src/main/java</source>
-                              <source>${dir.ispn}/jboss-marshalling/src/main/java</source>
-                              <source>${dir.ispn}/jcache/commons/src/main/java</source>
-                              <source>${dir.ispn}/jcache/embedded/src/main/java</source>
-                              <source>${dir.ispn}/jcache/remote/src/main/java</source>
-                              <source>${dir.ispn}/lock/src/main/java</source>
-                              <source>${dir.ispn}/multimap/src/main/java</source>
-                              <source>${dir.ispn}/object-filter/src/main/java</source>
-                              <source>${dir.ispn}/persistence/jdbc/src/main/java</source>
-                              <source>${dir.ispn}/persistence/jdbc-common/src/main/java</source>
-                              <source>${dir.ispn}/persistence/remote/src/main/java</source>
-                              <source>${dir.ispn}/persistence/rocksdb/src/main/java</source>
-                              <source>${dir.ispn}/persistence/sql/src/main/java</source>
-                              <source>${dir.ispn}/quarkus/cli/src/main/java</source>
-                              <source>${dir.ispn}/query-core/src/main/java</source>
-                              <source>${dir.ispn}/query/src/main/java</source>
-                              <source>${dir.ispn}/query-dsl/src/main/java</source>
-                              <source>${dir.ispn}/remote-query/remote-query-client/src/main/java</source>
-                              <source>${dir.ispn}/remote-query/remote-query-server/src/main/java</source>
-                              <source>${dir.ispn}/server/core/src/main/java</source>
-                              <source>${dir.ispn}/server/hotrod/src/main/java</source>
-                              <source>${dir.ispn}/server/insights/src/main/java</source>
-                              <source>${dir.ispn}/server/memcached/src/main/java</source>
-                              <source>${dir.ispn}/server/resp/src/main/java</source>
-                              <source>${dir.ispn}/server/rest/src/main/java</source>
-                              <source>${dir.ispn}/server/router/src/main/java</source>
-                              <source>${dir.ispn}/server/runtime/src/main/java</source>
-                              <source>${dir.ispn}/spring/spring6/spring6-common/src/main/java</source>
-                              <source>${dir.ispn}/spring/spring6/spring6-embedded/src/main/java</source>
-                              <source>${dir.ispn}/spring/spring6/spring6-remote/src/main/java</source>
-                              <source>${dir.ispn}/spring/spring-boot-3/embedded/src/main/java</source>
-                              <source>${dir.ispn}/spring/spring-boot-3/remote/src/main/java</source>
-                              <source>${dir.ispn}/tasks/api/src/main/java</source>
-                              <source>${dir.ispn}/tasks/manager/src/main/java</source>
-                              <source>${dir.ispn}/tasks/scripting/src/main/java</source>
-                              <source>${dir.ispn}/tools/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/anchored-keys/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/api/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/cdi/common/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/cdi/embedded/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/cdi/remote/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/cli/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/client/hotrod/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/client/hotrod-client/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/client/rest-client/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/commons/all/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/commons/jdk21/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/commons/spi/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/core/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/counter/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/counter-api/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/graalvm/client-hotrod/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/graalvm/commons/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/graalvm/core/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/gridfs/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/hibernate/cache-commons/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/hibernate/cache-spi/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/hibernate/cache-v62/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/jboss-marshalling/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/jcache/commons/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/jcache/embedded/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/jcache/remote/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/lock/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/multimap/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/object-filter/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/persistence/jdbc/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/persistence/jdbc-common/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/persistence/remote/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/persistence/rocksdb/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/persistence/sql/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/quarkus/cli/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/query-core/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/query/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/query-dsl/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/remote-query/remote-query-client/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/remote-query/remote-query-server/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/server/core/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/server/hotrod/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/server/insights/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/server/memcached/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/server/resp/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/server/rest/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/server/router/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/server/runtime/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/spring/spring6/spring6-common/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/spring/spring6/spring6-embedded/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/spring/spring6/spring6-remote/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/spring/spring-boot-3/embedded/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/spring/spring-boot-3/remote/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/tasks/api/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/tasks/manager/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/tasks/scripting/src/main/java</source>
+                              <source>${maven.multiModuleProjectDirectory}/tools/src/main/java</source>
                            </sources>
                         </configuration>
                      </execution>
@@ -2972,17 +2974,11 @@
                   <version>${version.jacoco}</version>
                   <executions>
                      <execution>
-                        <id>default-report</id>
-                        <goals>
-                           <goal>report</goal>
-                        </goals>
-                        <phase>install</phase>
-                     </execution>
-                     <execution>
                         <id>default-merge</id>
                         <goals>
                            <goal>merge</goal>
                         </goals>
+                        <phase>validate</phase>
                         <configuration>
                            <fileSets>
                               <fileSet>
@@ -2994,6 +2990,13 @@
                            </fileSets>
                            <destFile>${dir.jacoco.merged}/jacoco.exec</destFile>
                         </configuration>
+                     </execution>
+                     <execution>
+                        <id>default-report</id>
+                        <goals>
+                           <goal>report</goal>
+                        </goals>
+                        <phase>validate</phase>
                      </execution>
                   </executions>
                   <configuration>
