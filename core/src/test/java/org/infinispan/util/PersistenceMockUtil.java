@@ -64,15 +64,16 @@ public class PersistenceMockUtil {
          this.configuration = configuration;
          this.persistenceMarshaller = persistenceMarshaller;
 
-         blockingManager = new BlockingManagerImpl();
-         TestingUtil.inject(blockingManager,
-               new TestComponentAccessors.NamedComponent(KnownComponentNames.BLOCKING_EXECUTOR, BlockHoundHelper.allowBlockingExecutor()),
-               new TestComponentAccessors.NamedComponent(KnownComponentNames.NON_BLOCKING_EXECUTOR, BlockHoundHelper.ensureNonBlockingExecutor()));
-         TestingUtil.startComponent(blockingManager);
          nonBlockingManager = new NonBlockingManagerImpl();
          TestingUtil.inject(nonBlockingManager,
                new TestComponentAccessors.NamedComponent(KnownComponentNames.NON_BLOCKING_EXECUTOR, BlockHoundHelper.ensureNonBlockingExecutor()));
          TestingUtil.startComponent(nonBlockingManager);
+         blockingManager = new BlockingManagerImpl();
+         TestingUtil.inject(blockingManager,
+               new TestComponentAccessors.NamedComponent(KnownComponentNames.BLOCKING_EXECUTOR, BlockHoundHelper.allowBlockingExecutor()),
+               new TestComponentAccessors.NamedComponent(KnownComponentNames.NON_BLOCKING_EXECUTOR, BlockHoundHelper.ensureNonBlockingExecutor()),
+               new TestComponentAccessors.NamedComponent(NonBlockingManager.class.getName(), nonBlockingManager));
+         TestingUtil.startComponent(blockingManager);
          timeoutScheduledExecutor = Mockito.mock(ScheduledExecutorService.class);
       }
 

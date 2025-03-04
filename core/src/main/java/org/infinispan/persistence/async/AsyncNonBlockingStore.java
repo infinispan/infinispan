@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -21,6 +20,7 @@ import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
@@ -32,7 +32,7 @@ import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.support.DelegatingNonBlockingStore;
 import org.infinispan.persistence.support.SegmentPublisherWrapper;
 import org.infinispan.security.actions.SecurityActions;
-import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -67,7 +67,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private final NonBlockingStore<K, V> actual;
 
-   private Executor nonBlockingExecutor;
+   private NonBlockingManager nonBlockingManager;
    private int segmentCount;
    private int modificationQueueSize;
    private PersistenceConfiguration persistenceConfiguration;
@@ -127,7 +127,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
       segmentCount = storeConfiguration.segmented() ? cacheConfiguration.clustering().hash().numSegments() : 1;
       asyncConfiguration = storeConfiguration.async();
       modificationQueueSize = asyncConfiguration.modificationQueueSize();
-      nonBlockingExecutor = ctx.getNonBlockingExecutor();
+      nonBlockingManager = ctx.getNonBlockingManager();
       stopped = false;
       return actual.start(ctx);
    }
@@ -508,7 +508,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
          submitTask();
       }
       return submitStage == null ? CompletableFutures.completedNull() :
-             submitStage.thenApplyAsync(CompletableFutures.toNullFunction(), nonBlockingExecutor);
+             submitStage.thenApplyAsync(CompletableFutures.toNullFunction(), nonBlockingManager.localExecutor());
    }
 
    @Override

@@ -25,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -56,6 +57,7 @@ import org.infinispan.commons.util.logging.TraceException;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
+import org.infinispan.executors.LocalExecutorThreadLocal;
 import org.infinispan.external.JGroupsProtocolComponent;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -977,6 +979,15 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
             .orElse(false);
    }
 
+   private static <T> CompletionStage<T> localContinuation(CompletionStage<T> stage, DeliverOrder order) {
+      if (!order.preserveOrder()) {
+         Executor localExecutor = LocalExecutorThreadLocal.localExecutor();
+         return localExecutor == null ? stage :
+               stage.thenApplyAsync(Function.identity(), localExecutor);
+      }
+      return stage;
+   }
+
    @Override
    public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
                                                ResponseCollector<T> collector, DeliverOrder deliverOrder,
@@ -995,7 +1006,7 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
       if (timeout > 0) {
          request.setTimeout(timeoutExecutor, timeout, unit);
       }
-      return request;
+      return localContinuation(request, deliverOrder);
    }
 
    @Override
@@ -1026,7 +1037,7 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
       if (timeout > 0) {
          request.setTimeout(timeoutExecutor, timeout, unit);
       }
-      return request;
+      return localContinuation(request, deliverOrder);
    }
 
    @Override
@@ -1053,7 +1064,7 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
       if (timeout > 0) {
          request.setTimeout(timeoutExecutor, timeout, unit);
       }
-      return request;
+      return localContinuation(request, deliverOrder);
    }
 
    @Override
@@ -1081,7 +1092,7 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
       if (timeout > 0) {
          request.setTimeout(timeoutExecutor, timeout, unit);
       }
-      return request;
+      return localContinuation(request, deliverOrder);
    }
 
    @Override
@@ -1102,7 +1113,7 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
          request.cancel(true);
          throw t;
       }
-      return request;
+      return localContinuation(request, deliverOrder);
    }
 
    @Override
@@ -1139,7 +1150,7 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
       if (timeout > 0) {
          request.setTimeout(timeoutExecutor, timeout, timeUnit);
       }
-      return request;
+      return localContinuation(request, deliverOrder);
    }
 
    @Override
@@ -1311,7 +1322,7 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
             }
          }
       }
-      return request.toCompletableFuture();
+      return localContinuation(request, deliverOrder).toCompletableFuture();
    }
 
    public void sendToAll(ReplicableCommand command, DeliverOrder deliverOrder) {

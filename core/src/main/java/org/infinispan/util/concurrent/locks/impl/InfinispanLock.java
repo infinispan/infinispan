@@ -9,7 +9,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Consumer;
@@ -22,6 +21,7 @@ import org.infinispan.commons.util.ByRef;
 import org.infinispan.interceptors.ExceptionSyncInvocationStage;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
+import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.concurrent.locks.DeadlockChecker;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 import org.infinispan.util.concurrent.locks.ExtendedLockPromise;
@@ -57,7 +57,7 @@ public class InfinispanLock {
    private volatile Queue<LockRequest> pendingRequest;
    private final ConcurrentMap<Object, LockRequest> lockOwners;
    private final Runnable releaseRunnable;
-   private final Executor nonBlockingExecutor;
+   private final NonBlockingManager nonBlockingManager;
    private TimeService timeService;
    @SuppressWarnings("CanBeFinal")
    private volatile LockRequest current;
@@ -65,22 +65,22 @@ public class InfinispanLock {
    /**
     * Creates a new instance.
     *
-    * @param nonBlockingExecutor executor that is resumed upon after a lock has been acquired or times out if waiting
+    * @param nonBlockingManager manager tha handles resuming after a lock has been acquired or times out if waiting
     * @param timeService         the {@link TimeService} to check for timeouts.
     */
-   public InfinispanLock(Executor nonBlockingExecutor, TimeService timeService) {
-      this(nonBlockingExecutor, timeService, null);
+   public InfinispanLock(NonBlockingManager nonBlockingManager, TimeService timeService) {
+      this(nonBlockingManager, timeService, null);
    }
 
    /**
     * Creates a new instance.
     *
-    * @param nonBlockingExecutor executor that is resumed upon after a lock has been acquired or times out if waiting
+    * @param nonBlockingManager manager tha handles resuming after a lock has been acquired or times out if waiting
     * @param timeService         the {@link TimeService} to check for timeouts.
     * @param releaseRunnable     a {@link Runnable} that is invoked every time this lock is released.
     */
-   public InfinispanLock(Executor nonBlockingExecutor, TimeService timeService, Runnable releaseRunnable) {
-      this.nonBlockingExecutor = nonBlockingExecutor;
+   public InfinispanLock(NonBlockingManager nonBlockingManager, TimeService timeService, Runnable releaseRunnable) {
+      this.nonBlockingManager = nonBlockingManager;
       this.timeService = timeService;
       lockOwners = new ConcurrentHashMap<>();
       current = null;
@@ -93,14 +93,14 @@ public class InfinispanLock {
     * The {@code lockPromise} stores the reference to the {@link ExtendedLockPromise}.
     * The method {@link #acquire(Object, long, TimeUnit)} is no longer necessary to be invoked by this lock {@code owner}.
     *
-    * @param nonBlockingExecutor executor that is resumed upon after a lock has been acquired or times out if waiting
+    * @param nonBlockingManager manager tha handles resuming after a lock has been acquired or times out if waiting
     * @param timeService         the {@link TimeService} to check for timeouts.
     * @param releaseRunnable     a {@link Runnable} that is invoked every time this lock is released.
     * @param owner               the lock owner.
     * @param lockPromise         the {@link ByRef} to store the {@link ExtendedLockPromise}.
     */
-   public InfinispanLock(Executor nonBlockingExecutor, TimeService timeService, Runnable releaseRunnable, Object owner, ByRef<ExtendedLockPromise> lockPromise) {
-      this.nonBlockingExecutor = nonBlockingExecutor;
+   public InfinispanLock(NonBlockingManager nonBlockingManager, TimeService timeService, Runnable releaseRunnable, Object owner, ByRef<ExtendedLockPromise> lockPromise) {
+      this.nonBlockingManager = nonBlockingManager;
       this.timeService = timeService;
       lockOwners = new ConcurrentHashMap<>();
       this.releaseRunnable = releaseRunnable;
@@ -486,7 +486,7 @@ public class InfinispanLock {
                throw (RuntimeException) rv;
             }
             return null;
-         }, nonBlockingExecutor));
+         }, nonBlockingManager.localExecutor()));
       }
 
       @Override

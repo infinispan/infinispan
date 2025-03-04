@@ -5,6 +5,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.executors.LocalExecutorThreadLocal;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -34,6 +35,9 @@ public class NonRecursiveEventLoopGroup extends DelegatingEventLoopGroup {
          throw new IllegalArgumentException("Provided multi threaded event loop group must have at least 2 executors, only has " + executors);
       }
       this.eventLoopGroup = eventLoopGroup;
+
+      // Set each of the event loop as the local executor
+      eventLoopGroup.forEach(ee -> ee.submit(() -> LocalExecutorThreadLocal.setLocalExecutor(ee)));
    }
 
    @Override
