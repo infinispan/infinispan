@@ -351,8 +351,8 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       }
       String isCoverageEnabled = System.getProperty(COVERAGE_ENABLED);
       if (Boolean.parseBoolean(isCoverageEnabled)) {
-         javaOpts = javaOpts == null ? "-javaagent:/opt/infinispan/server/lib/org.jacoco.agent-0.8.12-runtime.jar=output=file,destfile=" + JACOCO_COVERAGE_CONTAINER_PATH
-                 : javaOpts + " " + "-javaagent:/opt/infinispan/server/lib/org.jacoco.agent-0.8.12-runtime.jar=output=file,destfile=" + JACOCO_COVERAGE_CONTAINER_PATH;
+         javaOpts = javaOpts == null ? "-javaagent:/opt/infinispan/server/lib/org.jacoco.agent-0.8.12-runtime.jar=output=file,destfile=" + JACOCO_COVERAGE_CONTAINER_PATH + ",append=true"
+                 : javaOpts + " " + "-javaagent:/opt/infinispan/server/lib/org.jacoco.agent-0.8.12-runtime.jar=output=file,destfile=" + JACOCO_COVERAGE_CONTAINER_PATH + ",append=true";
       }
 
       if (javaOpts != null) {
@@ -444,7 +444,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          container.withLogConsumer(latch);
          container.stop();
          String isCoverageEnabled = System.getProperty(COVERAGE_ENABLED);
-         if (Boolean.parseBoolean(isCoverageEnabled)) {
+         if (Boolean.parseBoolean(isCoverageEnabled) && !container.isKilled()) {
             //Getting Jacoco Coverage Report after stopping the container
             container.uploadCoverageInfoToHost(JACOCO_COVERAGE_CONTAINER_PATH, System.getProperty(JACOCO_REPORTS_DIR) + this.name + "-" + server + ".exec");
          }
@@ -461,6 +461,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          container.kill();
          eventually("Container wasn't killed.", () -> !isRunning(server));
          System.out.printf("[%d] KILL %n", server);
+         container.setKilled(true);
       }
    }
 
