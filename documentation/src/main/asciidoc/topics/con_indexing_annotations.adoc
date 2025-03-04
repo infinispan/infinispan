@@ -22,7 +22,9 @@ Keyword fields are not analyzed or tokenized during indexing.
 
 @Text:: Use this annotation for fields that contain textual data and are intended for full-text search capabilities. You can use the analyzer to process the text and to generate individual tokens.
 
+ifdef::community[]
 @Vector:: Use this annotation to mark vector fields representing embeddings, on which can be defined kNN-predicates.
+endif::[]
 
 @Embedded:: Use this annotation to mark a field as an embedded object within the parent entity.
 The `NESTED` structure preserves the original object relationship structure while the `FLATTENED` structure makes the leaf fields multivalued of the parent entity.
@@ -47,8 +49,10 @@ Each of the annotations supports a set of attributes that you can use to further
 | @Text
 | searchable, projectable, norms, analyzer, searchAnalyzer, termVector
 
+ifdef::community[]
 | @Vector
 | searchable, projectable, dimension, similarity, beamWidth, maxConnections
+endif::[]
 
 |===
 
