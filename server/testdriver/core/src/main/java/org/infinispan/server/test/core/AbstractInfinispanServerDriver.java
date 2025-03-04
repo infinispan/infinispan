@@ -281,7 +281,22 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    protected void copyArtifactsToUserLibDir(File libDir) {
       // Maven artifacts
       String propertyArtifacts = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_EXTRA_LIBS);
-      String[] artifacts = propertyArtifacts != null ? propertyArtifacts.replaceAll("\\s+", "").split(",") : configuration.mavenArtifacts();
+      if (propertyArtifacts != null) {
+         addArtifactsToLibDir(propertyArtifacts.replaceAll("\\s+", "").split(","), libDir);
+      }
+      addArtifactsToLibDir(configuration.mavenArtifacts(), libDir);
+
+      // Supplied artifacts
+      if (configuration.archives() != null) {
+         for (JavaArchive artifact : configuration.archives()) {
+            File jar = libDir.toPath().resolve(artifact.getName()).toFile();
+            jar.setWritable(true, false);
+            artifact.as(ZipExporter.class).exportTo(jar, true);
+         }
+      }
+   }
+
+   private void addArtifactsToLibDir(String[] artifacts, File libDir) {
       if (artifacts != null && artifacts.length > 0) {
          try {
             MavenSettings.init();
@@ -291,14 +306,6 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
             }
          } catch (IOException e) {
             throw new RuntimeException(e);
-         }
-      }
-      // Supplied artifacts
-      if (configuration.archives() != null) {
-         for (JavaArchive artifact : configuration.archives()) {
-            File jar = libDir.toPath().resolve(artifact.getName()).toFile();
-            jar.setWritable(true, false);
-            artifact.as(ZipExporter.class).exportTo(jar, true);
          }
       }
    }

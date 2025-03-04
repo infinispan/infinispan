@@ -123,8 +123,8 @@
       <org.infinispan.tests.threads.virtual>false</org.infinispan.tests.threads.virtual>
       <dir.ispn>../</dir.ispn>
       <dir.jacoco>${maven.multiModuleProjectDirectory}/jacoco/</dir.jacoco>
-      <dir.jacoco.merged>../jacoco/merged/</dir.jacoco.merged>
-      <dir.jacoco.report>../jacoco/report/</dir.jacoco.report>
+      <dir.jacoco.merged>${dir.jacoco}/merged/</dir.jacoco.merged>
+      <dir.jacoco.report>${dir.jacoco}/report/</dir.jacoco.report>
       <rerunFailingTestsCount>0</rerunFailingTestsCount>
       <testjvm.commonArgs>-XX:+UseG1GC -XX:-TieredCompilation -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir} -Dio.netty.leakDetection.level=paranoid</testjvm.commonArgs>
       <!--
@@ -2717,7 +2717,6 @@
             <plugins>
                <plugin>
                   <artifactId>maven-failsafe-plugin</artifactId>
-                  <version>${version.maven.surefire}</version>
                   <configuration>
                      <systemPropertyVariables>
                         <coverage.enabled>true</coverage.enabled>
@@ -2836,6 +2835,7 @@
                   <version>1.2.1</version>
                   <executions>
                      <execution>
+                        <phase>validate</phase>
                         <goals>
                            <goal>set-system-properties</goal>
                         </goals>
@@ -2857,7 +2857,7 @@
                   <executions>
                      <execution>
                         <id>delete-existing-jacoco-report</id>
-                        <phase>initialize</phase>
+                        <phase>validate</phase>
                         <goals>
                            <goal>run</goal>
                         </goals>
@@ -2883,7 +2883,7 @@
                   <executions>
                      <execution>
                         <id>add-source</id>
-                        <phase>generate-sources</phase>
+                        <phase>validate</phase>
                         <goals>
                            <goal>add-source</goal>
                         </goals>
@@ -2958,17 +2958,11 @@
                   <version>${version.jacoco}</version>
                   <executions>
                      <execution>
-                        <id>default-report</id>
-                        <goals>
-                           <goal>report</goal>
-                        </goals>
-                        <phase>install</phase>
-                     </execution>
-                     <execution>
                         <id>default-merge</id>
                         <goals>
                            <goal>merge</goal>
                         </goals>
+                        <phase>validate</phase>
                         <configuration>
                            <fileSets>
                               <fileSet>
@@ -2980,6 +2974,13 @@
                            </fileSets>
                            <destFile>${dir.jacoco.merged}/jacoco.exec</destFile>
                         </configuration>
+                     </execution>
+                     <execution>
+                        <id>default-report</id>
+                        <goals>
+                           <goal>report</goal>
+                        </goals>
+                        <phase>validate</phase>
                      </execution>
                   </executions>
                   <configuration>
