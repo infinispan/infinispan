@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.transport.AbstractRequest;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.jgroups.JGroupsMetricsManager;
@@ -19,25 +18,20 @@ import org.infinispan.remoting.transport.jgroups.RequestTracker;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import net.jcip.annotations.GuardedBy;
-
 /**
  * Request implementation that waits for responses from multiple target nodes.
- *
  * @author Dan Berindei
  * @since 9.1
  */
-public class MultiTargetRequest<T> extends AbstractRequest<T> {
+public class MultiTargetRequest<T> extends ExclusiveTargetRequest<T> {
    private static final Log log = LogFactory.getLog(MultiTargetRequest.class);
 
-   @GuardedBy("responseCollector")
    private final RequestTracker[] trackers;
-   @GuardedBy("responseCollector")
    private int missingResponses;
 
    public MultiTargetRequest(ResponseCollector<T> responseCollector, long requestId, RequestRepository repository,
                              Collection<Address> targets, Address excluded, JGroupsMetricsManager metricsCollector) {
-      super(requestId, responseCollector, repository);
+      super(responseCollector, requestId, repository);
       trackers = new RequestTracker[targets.size()];
       int i = 0;
       for (Address target : targets) {
@@ -50,7 +44,6 @@ public class MultiTargetRequest<T> extends AbstractRequest<T> {
          complete(responseCollector.finish());
    }
 
-   @GuardedBy("responseCollector")
    protected int getTargetsSize() {
       return trackers.length;
    }
@@ -58,55 +51,50 @@ public class MultiTargetRequest<T> extends AbstractRequest<T> {
    /**
     * @return target {@code i}, or {@code null} if a response was already added for target {@code i}.
     */
-   @GuardedBy("responseCollector")
    protected RequestTracker getTarget(int i) {
       return trackers[i];
    }
 
    @Override
-   public void onResponse(Address sender, Response response) {
+   protected void actualOnResponse(Address sender, Response response) {
       try {
          boolean isDone = false;
-         T result;
 
-         synchronized (responseCollector) {
-            if (missingResponses <= 0) {
-               // The request is completed, nothing to do
-               return;
-            }
+         if (missingResponses <= 0) {
+            // The request is completed, nothing to do
+            return;
+         }
 
-            boolean invalidSender = true;
-            for (int i = 0; i < trackers.length; i++) {
-               RequestTracker target = trackers[i];
-               if (target != null && target.destination().equals(sender)) {
-                  target.onComplete();
-                  invalidSender = false;
-                  trackers[i] = null;
-                  missingResponses--;
-                  break;
-               }
-            }
-
-            if (invalidSender) {
-               // A broadcast may be sent to nodes added to the cluster view after the request was created,
-               // so we should just ignore responses from unexpected senders.
-               if (log.isTraceEnabled())
-                  log.tracef("Ignoring unexpected response to request %d from %s: %s", requestId, sender, response);
-               return;
-            }
-
-            result = responseCollector.addResponse(sender, response);
-            if (result != null) {
-               isDone = true;
-               // Make sure to ignore any other responses
-               missingResponses = 0;
-            } else if (missingResponses <= 0) {
-               isDone = true;
-               result = responseCollector.finish();
+         boolean invalidSender = true;
+         for (int i = 0; i < trackers.length; i++) {
+            RequestTracker target = trackers[i];
+            if (target != null && target.destination().equals(sender)) {
+               target.onComplete();
+               invalidSender = false;
+               trackers[i] = null;
+               missingResponses--;
+               break;
             }
          }
 
-         // Complete the request outside the lock, in case it has to run blocking callbacks
+         if (invalidSender) {
+            // A broadcast may be sent to nodes added to the cluster view after the request was created,
+            // so we should just ignore responses from unexpected senders.
+            if (log.isTraceEnabled())
+               log.tracef("Ignoring unexpected response to request %d from %s: %s", requestId, sender, response);
+            return;
+         }
+
+         T result = responseCollector.addResponse(sender, response);
+         if (result != null) {
+            isDone = true;
+            // Make sure to ignore any other responses
+            missingResponses = 0;
+         } else if (missingResponses <= 0) {
+            isDone = true;
+            result = responseCollector.finish();
+         }
+
          if (isDone) {
             complete(result);
          }
@@ -116,37 +104,36 @@ public class MultiTargetRequest<T> extends AbstractRequest<T> {
    }
 
    @Override
-   public boolean onNewView(Set<Address> members) {
+   protected boolean actualOnView(Set<Address> members) {
+
       boolean targetRemoved = false;
       try {
          boolean isDone = false;
          T result = null;
-         synchronized (responseCollector) {
-            if (missingResponses <= 0) {
-               // The request is completed, must not modify ResponseObject.
-               return false;
-            }
-            for (int i = 0; i < trackers.length; i++) {
-               RequestTracker target = trackers[i];
-               if (target != null && !members.contains(target.destination())) {
-                  trackers[i] = null;
-                  missingResponses--;
-                  targetRemoved = true;
-                  if (log.isTraceEnabled())
-                     log.tracef("Target %s of request %d left the cluster view", target, requestId);
-                  result = responseCollector.addResponse(target.destination(), CacheNotFoundResponse.INSTANCE);
-                  if (result != null) {
-                     isDone = true;
-                     break;
-                  }
+         if (missingResponses <= 0) {
+            // The request is completed, must not modify ResponseObject.
+            return false;
+         }
+         for (int i = 0; i < trackers.length; i++) {
+            RequestTracker target = trackers[i];
+            if (target != null && !members.contains(target.destination())) {
+               trackers[i] = null;
+               missingResponses--;
+               targetRemoved = true;
+               if (log.isTraceEnabled())
+                  log.tracef("Target %s of request %d left the cluster view", target, requestId);
+               result = responseCollector.addResponse(target.destination(), CacheNotFoundResponse.INSTANCE);
+               if (result != null) {
+                  isDone = true;
+                  break;
                }
             }
+         }
 
-            // No more targets remaining
-            if (!isDone && missingResponses <= 0) {
-               result = responseCollector.finish();
-               isDone = true;
-            }
+         // No more targets remaining
+         if (!isDone && missingResponses <= 0) {
+            result = responseCollector.finish();
+            isDone = true;
          }
 
          // Complete the request outside the lock, in case it has to run blocking callbacks
@@ -160,22 +147,20 @@ public class MultiTargetRequest<T> extends AbstractRequest<T> {
    }
 
    @Override
-   protected void onTimeout() {
+   protected void actualOnTimeout() {
       String targetsWithoutResponses;
-      synchronized (responseCollector) {
-         if (missingResponses <= 0) {
-            // The request is already completed.
-            return;
-         }
-         // Don't add more responses to the collector after this
-         missingResponses = 0;
-         targetsWithoutResponses = Arrays.stream(trackers)
-               .filter(Objects::nonNull)
-               .peek(RequestTracker::onTimeout)
-               .map(RequestTracker::destination)
-               .map(Object::toString)
-               .collect(Collectors.joining(","));
+      if (missingResponses <= 0) {
+         // The request is already completed.
+         return;
       }
+      // Don't add more responses to the collector after this
+      missingResponses = 0;
+      targetsWithoutResponses = Arrays.stream(trackers)
+            .filter(Objects::nonNull)
+            .peek(RequestTracker::onTimeout)
+            .map(RequestTracker::destination)
+            .map(Object::toString)
+            .collect(Collectors.joining(","));
       completeExceptionally(CLUSTER.requestTimedOut(requestId, targetsWithoutResponses, Util.prettyPrintTime(getTimeoutMs())));
    }
 }

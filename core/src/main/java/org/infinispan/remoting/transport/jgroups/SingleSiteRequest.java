@@ -3,6 +3,7 @@ package org.infinispan.remoting.transport.jgroups;
 import static org.infinispan.util.logging.Log.CLUSTER;
 
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
@@ -21,6 +22,7 @@ import org.infinispan.remoting.transport.impl.RequestRepository;
  */
 public class SingleSiteRequest<T> extends AbstractRequest<T> {
    private final String site;
+   private final AtomicBoolean completed = new AtomicBoolean();
 
    SingleSiteRequest(ResponseCollector<T> wrapper, long requestId, RequestRepository repository, String site) {
       super(requestId, wrapper, repository);
@@ -40,17 +42,12 @@ public class SingleSiteRequest<T> extends AbstractRequest<T> {
 
    private void receiveResponse(Address sender, Response response) {
       try {
-         // Ignore the return value, we won't receive another response
-         T result;
-         synchronized (responseCollector) {
-            if (isDone()) {
-               // CompletableFuture already completed. We can return immediately.
-               return;
-            }
-            result = responseCollector.addResponse(sender, response);
-            if (result == null) {
-               result = responseCollector.finish();
-            }
+         if (completed.getAndSet(true)) {
+            return;
+         }
+         T result = responseCollector.addResponse(sender, response);
+         if (result == null) {
+            result = responseCollector.finish();
          }
          complete(result);
       } catch (Exception e) {
@@ -60,7 +57,9 @@ public class SingleSiteRequest<T> extends AbstractRequest<T> {
 
    @Override
    protected void onTimeout() {
-      completeExceptionally(CLUSTER.requestTimedOut(requestId, site, Util.prettyPrintTime(getTimeoutMs())));
+      if (!completed.getAndSet(true)) {
+         completeExceptionally(CLUSTER.requestTimedOut(requestId, site, Util.prettyPrintTime(getTimeoutMs())));
+      }
    }
 
    public void sitesUnreachable(String unreachableSite) {

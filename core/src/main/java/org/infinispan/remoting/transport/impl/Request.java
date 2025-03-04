@@ -28,7 +28,8 @@ public interface Request<T> extends CompletionStage<T> {
    /**
     * Called when the node received a new cluster view.
     *
-    * @return {@code true} if any of the request targets is not in the view.
+    * @return {@code true} if any of the request targets is not in the view. This value should only be used
+    * before the request was actually submitted.
     */
    boolean onNewView(Set<Address> members);
 
