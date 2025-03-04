@@ -18,7 +18,6 @@ import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.response.ScoredValueSerializer;
 import org.infinispan.server.resp.serialization.JavaObjectSerializer;
-import org.infinispan.server.resp.serialization.RespConstants;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.jgroups.util.CompletableFutures;
 
@@ -140,9 +139,13 @@ public class ZMPOP extends RespCommand implements Resp3Command {
       @Override
       public void accept(PopResult res, ResponseWriter writer) {
          // Response written as an array of two elements.
-         writer.writeNumericPrefix(RespConstants.ARRAY, 2);
-         writer.string(name);
-         writer.array(values, ScoredValueSerializer.INSTANCE);
+         writer.array(List.of(name, values), (o, w) -> {
+            if (o instanceof Collection<?>) {
+               w.array((Collection<ScoredValue<byte[]>>) o, ScoredValueSerializer.WITH_SCORE);
+            } else {
+               w.string((byte[]) o);
+            }
+         });
       }
    }
 }

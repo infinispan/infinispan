@@ -1,6 +1,7 @@
 package org.infinispan.server.resp.commands.iteration;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -17,7 +18,6 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.serialization.Resp3Type;
-import org.infinispan.server.resp.serialization.RespConstants;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.infinispan.util.concurrent.BlockingManager;
 
@@ -93,9 +93,13 @@ public abstract class BaseIterationCommand extends RespCommand implements Resp3C
          }
          // Array mixes bulk string and arrays.
          ResponseWriter writer = handler.writer();
-         writer.writeNumericPrefix(RespConstants.ARRAY, 2);
-         writer.string(replyCursor);
-         writer.array(writeResponse(result.getEntries()), Resp3Type.BULK_STRING);
+         writer.array(List.of(replyCursor, writeResponse(result.getEntries())), (o, w) -> {
+            if (o instanceof Collection<?>) {
+               w.array((Collection<?>) o, Resp3Type.BULK_STRING);
+            } else {
+               w.string((CharSequence) o);
+            }
+         });
       }
    }
 
@@ -106,9 +110,13 @@ public abstract class BaseIterationCommand extends RespCommand implements Resp3C
    private void emptyIterationResponse(Resp3Handler handler) {
       // Array mixes a bulk string at first position and an array.
       ResponseWriter writer = handler.writer();
-      writer.writeNumericPrefix(RespConstants.ARRAY, 2);
-      writer.string(INITIAL_CURSOR);
-      writer.arrayEmpty();
+      writer.array(List.of(INITIAL_CURSOR, Collections.emptyList()), (o, w) -> {
+         if (o instanceof String) {
+            w.string(INITIAL_CURSOR);
+         } else {
+            w.arrayEmpty();
+         }
+      });
    }
 
    protected boolean writeCursor() {

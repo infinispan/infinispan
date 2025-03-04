@@ -10,7 +10,7 @@ The {brandname} RESP endpoint implements the following Redis commands:
 
 * link:https://redis.io/commands/blpop[BLPOP]
 
-* https://redis.io/docs/latest/commands/blmpop[BLMPOP]
+* link:https://redis.io/docs/latest/commands/blmpop[BLMPOP]
 
 * link:https://redis.io/commands/brpop[BRPOP]
 
@@ -29,7 +29,8 @@ The {brandname} RESP endpoint implements the following Redis commands:
 * link:https://redis.io/commands/command[COMMAND]
 
 * link:https://redis.io/commands/config[CONFIG]
-* https://redis.io/docs/latest/commands/cluster-keyslot/[CLUSTER KEYSLOT]
+
+* link:https://redis.io/docs/latest/commands/cluster-keyslot/[CLUSTER KEYSLOT]
 
 * link:https://redis.io/commands/cluster-nodes/[CLUSTER NODES]
 +
@@ -50,6 +51,18 @@ NOTE: This commands includes all required fields, but some fields are set to `0`
 * link:https://redis.io/commands/discard[DISCARD]
 
 * link:https://redis.io/commands/echo[ECHO]
+
+* link:https://redis.io/commands/eval[EVAL]
++
+NOTE: unlike Redis, which maintains a bounded cache of ephemeral scripts, {brandname} discards the script immediately after execution.
+
+* link:https://redis.io/commands/eval_ro[EVAL_RO]
++
+NOTE: unlike Redis, which maintains a bounded cache of ephemeral scripts, {brandname} discards the script immediately after execution.
+
+* link:https://redis.io/commands/evalsha[EVALSHA]
+
+* link:https://redis.io/commands/evalsha_ro[EVALSHA_RO]
 
 * link:https://redis.io/commands/exec[EXEC]
 +
@@ -84,12 +97,14 @@ NOTE: This command is deprecated. Use the `SET` command with the appropriate fla
 * link:https://redis.io/commands/hdel[HDEL]
 
 * link:https://redis.io/commands/hello[HELLO]
++
+NOTE: Only protocol version 3 (RESP3) is supported.
 
 * link:https://redis.io/commands/hexists[HEXISTS]
 
 * link:https://redis.io/commands/hget[HGET]
 
-* https://redis.io/docs/latest/commands/hgetall[HGETALL]
+* link:https://redis.io/docs/latest/commands/hgetall[HGETALL]
 
 * link:https://redis.io/commands/hincrby[HINCRBY]
 
@@ -208,7 +223,6 @@ NOTE: The current implementation is atomic for rotation when the source and dest
 +
 NOTE: This command will return the memory used by the key and the value. It doesn't include the memory used by additional metadata associated with the entry.
 
-
 * link:https://redis.io/commands/memory-stats[MEMORY STATS]
 +
 NOTE: This command will return the same fields as a real Redis server, but all values will be set to `0`.
@@ -267,13 +281,13 @@ NOTE: This command is deprecated. Use the `SET` command with the appropriate fla
 
 * link:https://redis.io/commands/rpushx[RPUSHX]
 
-* https://redis.io/commands/readonly[READONLY]
+* link:https://redis.io/commands/readonly[READONLY]
 
-* https://redis.io/commands/readwrite[READWRITE]
+* link:https://redis.io/commands/readwrite[READWRITE]
 
-* https://redis.io/commands/rename[RENAME]
+* link:https://redis.io/commands/rename[RENAME]
 
-* https://redis.io/commands/renamenx[RENAMENX]
+* link:https://redis.io/commands/renamenx[RENAMENX]
 
 * link:https://redis.io/commands/reset[RESET]
 
@@ -284,6 +298,12 @@ NOTE: This command is deprecated. Use the `SET` command with the appropriate fla
 * link:https://redis.io/commands/scan[SCAN]
 +
 NOTE: Cursors are reaped in case they have not been used within a timeout. The timeout is 5 minutes.
+
+* link:https://redis.io/commands/script-exists[SCRIPT EXISTS]
+
+* link:https://redis.io/commands/script-flush[SCRIPT FLUSH]
+
+* link:https://redis.io/commands/script-load[SCRIPT LOAD]
 
 * link:https://redis.io/commands/sdiff[SDIFF]
 
@@ -384,7 +404,7 @@ NOTE: This command is deprecated. Use the `GETRANGE` command instead.
 
 * link:https://redis.io/commands/zmpop[ZMPOP]
 
-* https://redis.io/docs/latest/commands/zmscore[ZMSCORE]
+* link:https://redis.io/docs/latest/commands/zmscore[ZMSCORE]
 
 * link:https://redis.io/commands/zpopmax[ZPOPMAX]
 
@@ -420,7 +440,7 @@ NOTE: This command is deprecated. Use the `GETRANGE` command instead.
 
 * link:https://redis.io/commands/zremrangebyscore[ZREMRANGEBYSCORE]
 
-* https://redis.io/docs/latest/commands/zrevrank[ZREVRANK]
+* link:https://redis.io/docs/latest/commands/zrevrank[ZREVRANK]
 
 * link:https://redis.io/commands/zscore[ZSCAN]
 
