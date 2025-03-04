@@ -7,8 +7,9 @@ import org.infinispan.remoting.responses.Response;
  * A representation of a request's responses.
  *
  * <p>Thread-safety: The request will invoke {@link #addResponse(Address, Response)} and
- * {@link #finish()} while holding the collector's monitor, so
- * implementations don't normally need explicit synchronization.</p>
+ * {@link #finish()} in a mutually exclusive way. If {@link #addResponse(Address, Response)} is invoked
+ * more than once it may be on different threads, but never concurrently and only with a happens-before operation
+ * ensuring proper visibility, allowing implementations to use non concurrent structures.</p>
  *
  * @author Dan Berindei
  * @since 9.1
