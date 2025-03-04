@@ -312,4 +312,17 @@ public class EmbeddedJsonCache {
    public CompletionStage<List<byte[]>> arrpop(byte[] key, byte[] jsonPath, int index) {
       return readWriteMap.eval(key, new JsonArrpopFunction(jsonPath, index));
    }
+
+   /**
+    * Returns a RESP representation of the json objects matching the jsonPath
+    *
+    * @param key
+    *           The key of the document.
+    * @param jsonPath
+    *           The JSON path.
+    * @return A {@link CompletionStage} that will complete with the RESP representation
+    */
+   public CompletionStage<List<Object>> resp(byte[] key, byte[] jsonPath) {
+      return readWriteMap.eval(key, new JsonRespFunction(jsonPath));
+   }
 }

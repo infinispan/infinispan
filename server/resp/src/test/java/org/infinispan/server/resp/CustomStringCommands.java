@@ -1,5 +1,7 @@
 package org.infinispan.server.resp;
 
+import java.util.List;
+
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.dynamic.Commands;
 import io.lettuce.core.dynamic.RedisCommandFactory;
@@ -61,6 +63,9 @@ public interface CustomStringCommands extends Commands {
 
    @Command("JSON.ARRINSERT :key :path :index :v1 :v2 :v3")
    Long jsonArrinsert(@Param("key") String key, @Param("path") String path, @Param("index") int index, @Param("v1") String v1, @Param("v2") String v2, @Param("v2") String v3);
+
+   @Command("JSON.RESP :key :path")
+   List<Object> jsonResp(@Param("key") String key, @Param("path") String path);
 
    static CustomStringCommands instance(StatefulConnection<String, String> conn) {
       RedisCommandFactory factory = new RedisCommandFactory(conn);
