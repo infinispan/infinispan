@@ -1,16 +1,18 @@
 package org.infinispan.reactive.publisher.impl;
 
-import java.util.function.IntConsumer;
-
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 
 /**
- * A {@link Publisher} that also notifies in a thread safe manner when a segment has sent all values upstream. To more
- * specifically detail the guarantee, the {@code accept} method of the provided {@link IntConsumer} will be invoked
- * serially inline with {@code onNext}, {@code onError}, {@code onComplete} and will only be invoked after all values
- * from the given segment have already been notified via {@code onNext}. Note that there is no guarantee that the previous
- * values was from the given segment, only that all have been notified prior.
+ * A {@link Publisher} that also allows receiving segment completion information if desired. If segment information
+ * is needed use {@link #publisherWithSegments()} which publishes the {@link Notification} instances that can either
+ * contain a value or a segment completion notification. In that latter case the notification the notification should be
+ * checked if it is for a value {@link Notification#isValue()} or a segment completion {@link Notification#isSegmentComplete()}.
+ * <p>
+ * After a segment complete notification has been published no other values from that segment will be published again before
+ * the publisher completes.
+ * Also note that it is possible for a segment to have no values, so there is no guarantee a prior value mapped to a
+ * given segment.
  * <p>
  * If segment completion is not needed, use the {@link Publisher#subscribe(Subscriber)}. This allows
  * implementors to optimize for the case when segment completion is not needed as this may require additional overhead.

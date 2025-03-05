@@ -3,11 +3,11 @@ package org.infinispan.multimap.impl;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.CompletableFuture.runAsync;
-import static java.util.concurrent.CompletableFuture.supplyAsync;
 
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
 
 import org.infinispan.AdvancedCache;
@@ -24,7 +24,14 @@ import org.infinispan.multimap.impl.function.multimap.ContainsFunction;
 import org.infinispan.multimap.impl.function.multimap.GetFunction;
 import org.infinispan.multimap.impl.function.multimap.PutFunction;
 import org.infinispan.multimap.impl.function.multimap.RemoveFunction;
+import org.infinispan.reactive.publisher.PublisherReducers;
+import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
+import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
+import org.infinispan.util.function.SerializableBiFunction;
+import org.infinispan.util.function.SerializablePredicate;
 
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import jakarta.transaction.SystemException;
 import jakarta.transaction.TransactionManager;
 
@@ -119,14 +126,7 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
    @Override
    public CompletableFuture<Void> remove(Predicate<? super V> p) {
       requireNonNull(p, "predicate can't be null");
-      try {
-         // block on explicit tx
-         return isExplicitTxContext() ?
-              completedFuture(this.removeInternal(p)) :
-              runAsync(() -> this.removeInternal(p));
-      } catch (SystemException e) {
-         throw CompletableFutures.asCompletionException(e);
-      }
+      return this.removeInternal(p).toCompletableFuture();
    }
 
    @Override
@@ -138,14 +138,7 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
    @Override
    public CompletableFuture<Boolean> containsValue(V value) {
       requireNonNull(value, "value can't be null");
-      try {
-         // block on explicit tx
-         return isExplicitTxContext() ?
-              completedFuture(containsEntryInternal(value)) :
-              supplyAsync(() -> containsEntryInternal(value));
-      } catch (SystemException e) {
-         throw CompletableFutures.asCompletionException(e);
-      }
+      return containsEntryInternal(value).toCompletableFuture();
    }
 
    @Override
@@ -157,39 +150,57 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
 
    @Override
    public CompletableFuture<Long> size() {
-      try {
-         // block on explicit tx
-         return isExplicitTxContext() ?
-              completedFuture(sizeInternal()) :
-              supplyAsync(this::sizeInternal);
-      } catch (SystemException e) {
-         throw CompletableFutures.asCompletionException(e);
-      }
+      return sizeInternal().toCompletableFuture();
    }
 
-   private boolean isExplicitTxContext() throws SystemException {
-      TransactionManager transactionManager = cache.getAdvancedCache().getTransactionManager();
-      return transactionManager != null && transactionManager.getTransaction() != null;
-   }
+   private CompletionStage<Void> removeInternal(Predicate<? super V> p) {
 
-   private Void removeInternal(Predicate<? super V> p) {
+      return cache.cachePublisher().performRemotely(
+            publisher -> Flowable.fromPublisher(publisher)
+                  .filter(ce -> {
+                     for (V v : ce.getValue().values) {
+                        if (p.test(v)) {
+                           return true;
+                        }
+                     }
+                     return false;
+                  }).map(CacheEntry::getKey),
+            (cache, key) ->
+                  cache.computeIfPresentAsync(key, (k, bucket) -> {
+                     Bucket<V> newBucket = bucket.removeIf(p);
+                     if (newBucket == null) {
+                        return bucket;
+                     }
+                     return newBucket.isEmpty() ? null : newBucket;
+                  }));
+
+      // The below code retrieves EVERY key into the local node then invokes computeIfPresent for each and every
+      // key in the cache remotely!!
+
       // Iterate over keys on the caller thread so that compute operations join the running transaction (if any)
-      cache.keySet().forEach(key -> cache.computeIfPresent(key, (k, bucket) -> {
-         Bucket<V> newBucket = bucket.removeIf(p);
-         if (newBucket == null) {
-            return bucket;
-         }
-         return newBucket.isEmpty() ? null : newBucket;
-      }));
-      return null;
+//      cache.keySet().forEach(key -> cache.computeIfPresent(key, (k, bucket) -> {
+//         Bucket<V> newBucket = bucket.removeIf(p);
+//         if (newBucket == null) {
+//            return bucket;
+//         }
+//         return newBucket.isEmpty() ? null : newBucket;
+//      }));
+//      return null;
    }
 
-   private Boolean containsEntryInternal(V value) {
-      return cache.values().stream().anyMatch(bucket -> bucket.contains(value));
+   private CompletionStage<Boolean> containsEntryInternal(V value) {
+      SerializablePredicate<CacheEntry<K, Bucket<V>>> func = entry -> entry.getValue().contains(value);
+      return cache.cachePublisher()
+            // We can relax guarantee since we don't care if the value was found more than once or not
+            .deliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
+            .entryReduction(PublisherReducers.anyMatch(func), PublisherReducers.or());
    }
 
-   private Long sizeInternal() {
-      return cache.values().stream().mapToLong(Bucket::size).sum();
+   private CompletionStage<Long> sizeInternal() {
+      SerializableBiFunction<Long, CacheEntry<K, Bucket<V>>, Long> func =
+            (sum, entry) -> sum + entry.getValue().size();
+      return cache.cachePublisher()
+            .entryReduction(PublisherReducers.reduce((long) 0, func), PublisherReducers.add());
    }
 
    @Override
