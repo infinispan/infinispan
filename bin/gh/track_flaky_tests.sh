@@ -5,7 +5,7 @@ set -e
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source "${SCRIPT_DIR}/common.sh"
 
-requiredEnv GH_JOB_URL FLAKY_TEST_GLOB TARGET_BRANCH
+requiredEnv GH_JOB_URL FLAKY_TEST_GLOB TARGET_BRANCH GITHUB_REPOSITORY
 
 shopt -s nullglob globstar
 TESTS=(${FLAKY_TEST_GLOB})
@@ -34,13 +34,13 @@ for TEST in "${TESTS[@]}"; do
     # Search issues for existing github issue
     # Wait some time for subsequent request to respect API rate limit
     sleep $API_LIMIT_TIME
-    ISSUES="$(gh search issues \"${SUMMARY}\" in:title --json number || true)"
+    ISSUES="$(gh search issues \"${SUMMARY}\" in:title --json number --repo $GITHUB_REPOSITORY || true)"
     API_LIMIT_TIME=120
     if [[ "${ISSUES}" == "" ]]; then
       echo Error with gh search. Maybe rate limits reached? Wait 120 sec and retry...
       gh api rate_limit
       sleep $API_LIMIT_TIME
-      ISSUES="$(gh search issues \"${SUMMARY}\" in:title --json number || true)"
+      ISSUES="$(gh search issues \"${SUMMARY}\" in:title --json number --repo $GITHUB_REPOSITORY|| true)"
       continue
     fi
     TOTAL_ISSUES=$(echo "${ISSUES}" | jq length)
