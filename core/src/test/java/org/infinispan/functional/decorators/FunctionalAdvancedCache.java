@@ -24,6 +24,7 @@ import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
+import org.infinispan.CachePublisher;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
@@ -949,5 +950,11 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V>,
       public CacheStream<E> parallelStream() {
          return null;
       }
+
+   }
+
+   @Override
+   public CachePublisher<K, V> cachePublisher() {
+      return null;
    }
 }

@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.container.entries.CacheEntry;
@@ -23,7 +24,7 @@ import org.infinispan.metadata.Metadata;
  * the requested format.
  */
 @Scope(Scopes.NAMED_CACHE)
-public class EncoderEntryMapper<K, V, T extends Map.Entry<K, V>> implements EncodingFunction<T> {
+public class EncoderEntryMapper<K, V, T extends Map.Entry<K, V>> implements EncodingFunction<T>, InjectableComponent {
    @Inject
    transient InternalEntryFactory entryFactory;
 
@@ -53,6 +54,12 @@ public class EncoderEntryMapper<K, V, T extends Map.Entry<K, V>> implements Enco
    public void injectDependencies(ComponentRegistry registry) {
       registry.wireDependencies(keyDataConversion);
       registry.wireDependencies(valueDataConversion);
+   }
+
+   @Override
+   public void inject(ComponentRegistry registry) {
+      injectDependencies(registry);
+      entryFactory = registry.getInternalEntryFactory().running();
    }
 
    @Override
