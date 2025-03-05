@@ -16,6 +16,7 @@ import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
+import org.infinispan.CachePublisher;
 import org.infinispan.CacheSet;
 import org.infinispan.LockedStream;
 import org.infinispan.commons.dataconversion.Encoder;
@@ -744,6 +745,11 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    @Override
    public CompletableFuture<CacheEntry<K, V>> getCacheEntryAsync(Object key) {
       return cacheImplementation.getCacheEntryAsync(key, flags, readContext(1));
+   }
+
+   @Override
+   public CachePublisher<K, V> cachePublisher() {
+      return cacheImplementation.cachePublisher();
    }
 
    protected InvocationContext readContext(int size) {
