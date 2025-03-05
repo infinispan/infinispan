@@ -25,6 +25,7 @@ public class JSONUtil {
          .options(Option.DEFAULT_PATH_LEAF_TO_NULL)
          .jsonProvider(new com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider())
          .mappingProvider(new com.jayway.jsonpath.spi.mapper.JacksonMappingProvider()).build();
+   public static ParseContext parserForDefiniteSet = JsonPath.using(configForDefiniteSet);
 
    public static final Configuration configForSet = Configuration.builder().options(Option.SUPPRESS_EXCEPTIONS)
          .jsonProvider(new com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider())
@@ -43,6 +44,13 @@ public class JSONUtil {
          .jsonProvider(new com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider())
          .mappingProvider(new com.jayway.jsonpath.spi.mapper.JacksonMappingProvider()).build();
    public static ParseContext parserForMod = JsonPath.using(configForMod);
+
+   // Modifier operations need ALWAYS_RETURN_LIST and AS_PATH_LIST
+   public static final Configuration configForDefiniteMod = Configuration.builder().options(Option.AS_PATH_LIST)
+         .options(Option.SUPPRESS_EXCEPTIONS).options(Option.DEFAULT_PATH_LEAF_TO_NULL)
+         .jsonProvider(new com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider())
+         .mappingProvider(new com.jayway.jsonpath.spi.mapper.JacksonMappingProvider()).build();
+   public static ParseContext parserForDefiniteMod = JsonPath.using(configForMod);
 
    public static final ObjectMapper objectMapper = new ObjectMapper();
    public static void writeBytes(ObjectOutput output, byte[] b) throws IOException {
@@ -104,4 +112,47 @@ public class JSONUtil {
    public static boolean isJsonPath(String path) {
       return path == null ? false : isJsonPath(path.getBytes(StandardCharsets.UTF_8));
    }
+
+   // Invalid values for Redis. Expecially '\0xa' breaks RESP, seen as end of data
+   public static boolean isValueInvalid(byte[] value) {
+      if (value.length == 0) return true;
+      if (value.length == 1) {
+          return isSingleCharInvalid(value[0]);
+      }
+      if (value.length == 2) {
+          return isDoubleCharInvalid(value);
+      }
+      return false;
+  }
+
+  private static boolean isSingleCharInvalid(byte value) {
+      switch (value) {
+          case ' ':
+          case '{':
+          case '}':
+          case '[':
+          case ']':
+          case '\\':
+          case '\'':
+          case 0:
+          case 0x0a:
+          case 0x0c:
+              return true;
+          default:
+              return false;
+      }
+  }
+
+  private static boolean isDoubleCharInvalid(byte[] value) {
+      if (value[0] == '\\' && (value[1] == '\\' || value[1] == '"' || value[1] == '[')) {
+          return true;
+      }
+      if (value[0] == '{' && value[1] == ']') {
+          return true;
+      }
+      if (value[0] == '[' && value[1] == '}') {
+          return true;
+      }
+      return false;
+  }
 }

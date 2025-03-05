@@ -312,4 +312,19 @@ public class EmbeddedJsonCache {
    public CompletionStage<List<byte[]>> arrpop(byte[] key, byte[] jsonPath, int index) {
       return readWriteMap.eval(key, new JsonArrpopFunction(jsonPath, index));
    }
+   /**
+    * Merges the given JSON value into the JSON document at the given JSON path in the map entry
+    * with the given key. Merge is performed recursively (deep merge).
+    *
+    * @param key
+    *           the key of the map entry
+    * @param jsonPath
+    *           the JSON path of the field to merge the value into
+    * @param value
+    *           the value to merge into the JSON document
+    * @return a CompletionStage that completes with OK if the merge is successful
+    */
+   public CompletionStage<String> merge(byte[] key, byte[] jsonPath, byte[] value) {
+      return readWriteMap.eval(key, new JsonMergeFunction(jsonPath, value));
+   }
 }
