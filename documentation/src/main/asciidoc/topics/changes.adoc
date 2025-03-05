@@ -4,9 +4,29 @@
 
 In order to support zero-downtime upgrades, the Infinispan internal marshaller has been completely rewritten to be based
 upon Protostream. As a consequence it's no longer possible to define `AdvancedExternalizer` instances as part of the global
-configuration or `@SerializeWith` annotations on classes. Users of the jboss-marshalling library which depended on
-`AdvancedExternalizer` should either 1) migrate to using Protostream based marshalling (recommended), or 2) replace
-`AdvancedExternalizer` with `org.jboss.marshalling.Externalize` implementations.
+configuration or add `@SerializeWith` annotations to your classes.
+
+==== User Key/Values
+
+Users of the jboss-marshalling library which depended on `AdvancedExternalizer` to marshall classes stored in their caches
+should either 1) migrate to using Protostream based marshalling (recommended), or 2) replace `AdvancedExternalizer`
+with `org.jboss.marshalling.Externalizer` implementations and add the `org.jboss.marshalling.Externalize` annotation to their
+classes in order to configure this.
+
+All `AdvancedExternalizer` defined declaratively for an older schema version are ignored.
+
+==== Custom Commands
+
+All commands, user and Infinispan internal, are now marshalled using Protostream. Consequently, the
+`ModuleCommandFactory` and `ModuleCommandExtensions` interfaces are redundant and have been removed. All custom commands
+should be marshalled using Protostream. Custom commands can be registered by providing a
+`org.infinispan.protostream.SerializationContextInitializer` in the Global `SerializationConfiguration`.
+
+==== Legacy Stores
+
+The tools module now contains the `Externalizer` and `AdvancedExternalizer` interfaces removed from infinispan-commons,
+to facilitate migrating legacy stores to 16.0. In order to use the the StoreMigrator all existing `Externalizer`
+implementations need to be updated to reference the new package `org.infinispan.tools.store.migrator.marshaller.common`.
 
 == Upgrading from 15.1 to 15.2
 
