@@ -13,6 +13,7 @@ import javax.security.auth.Subject;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.CachePublisher;
 import org.infinispan.CacheSet;
 import org.infinispan.LockedStream;
 import org.infinispan.batch.BatchContainer;
@@ -600,5 +601,10 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    @Override
    public CompletableFuture<CacheEntry<K, V>> removeAsyncEntry(Object key) {
       return cache.removeAsyncEntry(key);
+   }
+
+   @Override
+   public CachePublisher<K, V> cachePublisher() {
+      return cache.cachePublisher();
    }
 }

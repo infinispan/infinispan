@@ -45,7 +45,6 @@ public class PublisherReducers {
       return new AllMatchReducer<>(predicate);
    }
 
-
    public static <E> Function<Publisher<E>, CompletionStage<Boolean>> anyMatch(Predicate<? super E> predicate) {
       return new AnyMatchReducer<>(predicate);
    }

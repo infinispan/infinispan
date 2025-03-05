@@ -16,6 +16,7 @@ import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
+import org.infinispan.CachePublisher;
 import org.infinispan.CacheSet;
 import org.infinispan.LockedStream;
 import org.infinispan.batch.BatchContainer;
@@ -1130,5 +1131,11 @@ public final class SecureCacheImpl<K, V> extends AbstractDelegatingAdvancedCache
    public CompletionStage<Boolean> touch(Object key, boolean touchEvenIfExpired) {
       authzManager.checkPermission(subject, writePermission);
       return delegate.touch(key, touchEvenIfExpired);
+   }
+
+   @Override
+   public CachePublisher<K, V> cachePublisher() {
+      authzManager.checkPermission(subject, AuthorizationPermission.BULK_READ);
+      return delegate.cachePublisher();
    }
 }
