@@ -32,6 +32,7 @@ import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
+import org.infinispan.CachePublisher;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
@@ -2018,6 +2019,12 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache
          return new LocalCacheStream<>(new KeyStreamSupplier<>(SimpleCacheImpl.this, null, super::stream), true,
                componentRegistry);
       }
+   }
+
+   @Override
+   public CachePublisher<K, V> cachePublisher() {
+      // TODO: need to implement
+      return null;
    }
 
    @Override
