@@ -98,8 +98,16 @@ jobs:
         shell: bash
         run: >
             cd test_dir/infinispan &&
-            ./mvnw verify -V -B -e -DrerunFailingTestsCount=2
-            -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative $HIBERNATE_MATRIX
+            ./mvnw verify -V -B -e -DrerunFailingTestsCount=2 -pl core
+            -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative,coverage $HIBERNATE_MATRIX
+            -Dorg.infinispan.test.server.extension.libs=org.jacoco:org.jacoco.agent:0.8.12:runtime
+
+      - name: Coverage merge and report generation
+        id: coverage_merge
+        shell: bash
+        run: >
+          cd test_dir/infinispan &&
+          ./mvnw validate -pl ./ -P jacocoReport
 
       - name: set-commit-status-conclusion
         if: success()
@@ -136,6 +144,7 @@ jobs:
             !test_dir/infinispan/**/*-reports*/TEST-*RocksDB*.xml
             test_dir/infinispan/**/*.dump*
             test_dir/infinispan/**/hs_err_*
+            test_dir/infinispan/jacoco/report/jacoco.xml
             github-sha.txt
 
 # Create artifact with branch name and surefile flaky test report
@@ -237,7 +246,16 @@ jobs:
             -Dansi.strip=true \
             -DdefaultTestGroup=database \
             -Dorg.infinispan.test.database.types=${{ matrix.dbs }} \
-            -Dorg.infinispan.test.server.dir=/tmp/infinispan-server-${{ steps.dis.outputs.server-version }}
+            -Dorg.infinispan.test.server.dir=/tmp/infinispan-server-${{ steps.dis.outputs.server-version }} \
+            -P coverage \
+            -Dorg.infinispan.test.server.extension.libs=org.jacoco:org.jacoco.agent:0.8.12:runtime
+
+      - name: Coverage merge and report generation
+        id: coverage_merge
+        shell: bash
+        run: >
+          cd test_dir/infinispan &&
+          ./mvnw validate -pl ./ -P jacocoReport
 
       - name: Archive commit sha PR
         if: >
@@ -256,6 +274,7 @@ jobs:
             test_dir/infinispan/**/*.dump*
             test_dir/infinispan/**/hs_err_*
             test_dir/infinispan/**/failsafe-summary.xml
+            test_dir/infinispan/jacoco/report/jacoco.xml
             github-sha.txt
       - name: set-commit-status-conclusion
         if: success()
@@ -275,3 +294,24 @@ jobs:
             sha: ${{ needs.get-info.outputs.source-head-sha }}
             targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
+  coverage:
+    needs: [ci-build-test-pr, db]
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    name: Publish Coverage Report
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: surefire-test-report-*
+
+      - name: Add coverage to PR
+        id: jacoco
+        uses: madrapps/jacoco-report@v1.7.1
+        with:
+          paths: |
+            ${{ github.workspace }}/surefire-test-report-*/jacoco/report/jacoco.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 70
+          min-coverage-changed-files: 70
