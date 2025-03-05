@@ -11,8 +11,7 @@ package org.infinispan.notifications.cachelistener.event;
 public interface CacheEntryPassivatedEvent<K, V> extends CacheEntryEvent<K, V> {
    /**
     * Retrieves the value of the entry being passivated.
-    * <p />
-    * @return the value of the entry being passivated, if <tt>isPre()</tt> is <tt>true</tt>.  <tt>null</tt> otherwise.
+       * @return the value of the entry being passivated, if <code>isPre()</code> is <code>true</code>.  <code>null</code> otherwise.
     */
    V getValue();
 }

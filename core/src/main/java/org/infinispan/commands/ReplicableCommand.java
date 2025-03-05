@@ -76,8 +76,7 @@ public interface ReplicableCommand extends TracedCommand {
    /**
     * If true, the command is processed asynchronously in a thread provided by an Infinispan thread pool. Otherwise,
     * the command is processed directly in the JGroups thread.
-    * <p/>
-    * This feature allows to avoid keep a JGroups thread busy that can originate discard of messages and
+        * This feature allows to avoid keep a JGroups thread busy that can originate discard of messages and
     * retransmissions. So, the commands that can block (waiting for some state, acquiring locks, etc.) should return
     * true.
     *

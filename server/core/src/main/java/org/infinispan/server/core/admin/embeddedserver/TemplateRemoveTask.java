@@ -11,12 +11,12 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.admin.AdminServerTask;
 
 /**
- *  * Admin operation to remove a template
- *  * Parameters:
- *  * <ul>
- *  *    <li><strong>name</strong> the name of the template to remove</li>
- *  *    <li><strong>flags</strong> any flags, e.g. PERMANENT</li>
- *  * </ul>
+ * Admin operation to remove a template
+ * Parameters:
+ * <ul>
+ *    <li><b>name</b> the name of the template to remove</li>
+ *    <li><b>flags</b> any flags, e.g. PERMANENT</li>
+ * </ul>
  *
  * @author Ryan Emerson
  * @since 12.0
@@ -42,7 +42,7 @@ public class TemplateRemoveTask extends AdminServerTask<Void> {
    @Override
    protected Void execute(EmbeddedCacheManager cacheManager, Map<String, List<String>> parameters,
                           EnumSet<CacheContainerAdmin.AdminFlag> flags) {
-      String name = requireParameter(parameters,"name");
+      String name = requireParameter(parameters, "name");
       cacheManager.administration().withFlags(flags).removeTemplate(name);
       return null;
    }

@@ -14,9 +14,9 @@ import org.infinispan.metadata.Metadata;
  * type of entry views are supported:
  *
  * <ul>
- *    <il>{@link ReadEntryView}: read-only entry view</il>
- *    <il>{@link WriteEntryView}: write-only entry view</il>
- *    <il>{@link ReadWriteEntryView}: read-write entry view</il>
+ *    <li>{@link ReadEntryView} read-only entry view</li>
+ *    <li>{@link WriteEntryView} write-only entry view</li>
+ *    <li>{@link ReadWriteEntryView} read-write entry view</li>
  * </ul>
  *
  * @since 8.0

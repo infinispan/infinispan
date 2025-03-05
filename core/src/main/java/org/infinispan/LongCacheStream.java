@@ -42,7 +42,7 @@ public interface LongCacheStream extends LongStream, BaseCacheStream<Long, LongS
    LongCacheStream sequentialDistribution();
 
    /**
-    * @inheritDoc
+    * {@inheritDoc}
     * @return a stream with parallel distribution enabled.
     */
    LongCacheStream parallelDistribution();

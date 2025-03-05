@@ -37,6 +37,7 @@ public interface LocalPublisherManager<K, V> {
     * <p>
     * The effects of the provided <b>deliveryGuarantee</b> are as follows:
     * <table>
+    *    <caption>Delivery Guarantees</caption>
     *    <tr>
     *       <th>Guarantee</th><th>Parallel</th><th>Behavior></th>
     *    </tr>
@@ -93,14 +94,17 @@ public interface LocalPublisherManager<K, V> {
     * <p>
     * The effects of the provided <b>deliveryGuarantee</b> are as follows:
     * <table>
+    *    <caption>Delivery Guarantees</caption>
     *    <tr>
     *       <th>Guarantee</th><th>Behavior></th>
     *    </tr>
     *    <tr>
     *       <td>AT_MOST_ONCE</td> <td>For each segment a publisher passed to the transformer sequentially. All segments are always complete, ignoring loss of data</td>
     *    </tr>
+    *    <tr>
     *       <td>AT_LEAST_ONCE</td> <td>Same as AT_MOST_ONCE, but if a segment is lost in the middle it is returned as a suspected segment possibly dropping values in that segment.</td>
     *    </tr>
+    *    <tr>
     *       <td>EXACTLY_ONCE</td> <td>Same as AT_LEAST_ONCE except whenever as segment is lost the value(s) collected in the same response for that segment are always dropped.</td>
     *    </tr>
     * </table>

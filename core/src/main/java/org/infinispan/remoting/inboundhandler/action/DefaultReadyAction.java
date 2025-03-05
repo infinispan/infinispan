@@ -8,8 +8,7 @@ import org.infinispan.commons.util.InfinispanCollections;
 
 /**
  * A list of {@link Action} to be executed to check when it is ready.
- * <p/>
- * If an {@link Action} is canceled, then the remaining {@link Action} are not invoked.
+  * If an {@link Action} is canceled, then the remaining {@link Action} are not invoked.
  *
  * @author Pedro Ruivo
  * @since 8.0

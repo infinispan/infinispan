@@ -18,8 +18,7 @@ import org.infinispan.commons.logging.LogFactory;
 
 /**
  * A HashMap that is optimized for fast shallow copies.
- * <p/>
- * Null keys are <i>not</i> supported.
+  * Null keys are <i>not</i> supported.
  *
  * @author Jason T. Greene
  * @since 4.0
@@ -180,10 +179,10 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
    /**
     * Returns a string representation of this map.  The string representation
     * consists of a list of key-value mappings in the order returned by the
-    * map's <tt>entrySet</tt> view's iterator, enclosed in braces
-    * (<tt>"{}"</tt>).  Adjacent mappings are separated by the characters
-    * <tt>", "</tt> (comma and space).  Each key-value mapping is rendered as
-    * the key followed by an equals sign (<tt>"="</tt>) followed by the
+    * map's <code>entrySet</code> view's iterator, enclosed in braces
+    * (<code>"{}"</code>).  Adjacent mappings are separated by the characters
+    * <code>", "</code> (comma and space).  Each key-value mapping is rendered as
+    * the key followed by an equals sign (<code>"="</code>) followed by the
     * associated value.  Keys and values are converted to strings as by
     * {@link String#valueOf(Object)}.
     *

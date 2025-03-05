@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
  * It calls each method defined in the class and verifies that book instances are indeed cached and removed from the
  * cache as specified.
  *
- * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Olaf Bergner
  * @author Marius Bogoevici
  * @author Matej Cimbora (mcimbora@redhat.com)
  */

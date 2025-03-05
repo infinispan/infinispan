@@ -1,7 +1,5 @@
 package org.infinispan.rest.distribution;
 
-import static org.infinispan.commons.marshall.ProtoStreamTypeIds.CLUSTER_DISTRIBUTION_INFO;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,16 +14,16 @@ import org.infinispan.stats.ClusterContainerStats;
 import org.infinispan.stats.ContainerStats;
 
 import net.jcip.annotations.Immutable;
+import static org.infinispan.commons.marshall.ProtoStreamTypeIds.CLUSTER_DISTRIBUTION_INFO;
 
 /**
  * Collect node's information and statistics of the local JVM.
- * <p/>
- * Contains information about the node name and address; the JVM statistics are memory used and available,
+  * Contains information about the node name and address; the JVM statistics are memory used and available,
  * all in bytes. We rely on {@link ClusterContainerStats} to retrieve the JVM values, so if the collector is
  * disabled, we return -1.
  *
  * @author José Bolina
- * @see 14.0
+ * @since 14.0
  */
 @Immutable
 @ProtoTypeId(CLUSTER_DISTRIBUTION_INFO)

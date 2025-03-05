@@ -1,18 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.TransactionConfiguration.AUTO_COMMIT;
-import static org.infinispan.configuration.cache.TransactionConfiguration.CACHE_STOP_TIMEOUT;
-import static org.infinispan.configuration.cache.TransactionConfiguration.COMPLETED_TX_TIMEOUT;
-import static org.infinispan.configuration.cache.TransactionConfiguration.LOCKING_MODE;
-import static org.infinispan.configuration.cache.TransactionConfiguration.NOTIFICATIONS;
-import static org.infinispan.configuration.cache.TransactionConfiguration.REAPER_WAKE_UP_INTERVAL;
-import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_MANAGER_LOOKUP;
-import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_MODE;
-import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP;
-import static org.infinispan.configuration.cache.TransactionConfiguration.USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS;
-import static org.infinispan.configuration.cache.TransactionConfiguration.USE_SYNCHRONIZATION;
-import static org.infinispan.util.logging.Log.CONFIG;
-
 import java.util.concurrent.TimeUnit;
 
 import javax.transaction.xa.XAResource;
@@ -30,6 +17,18 @@ import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLooku
 
 import jakarta.transaction.Synchronization;
 import jakarta.transaction.TransactionManager;
+import static org.infinispan.configuration.cache.TransactionConfiguration.AUTO_COMMIT;
+import static org.infinispan.configuration.cache.TransactionConfiguration.CACHE_STOP_TIMEOUT;
+import static org.infinispan.configuration.cache.TransactionConfiguration.COMPLETED_TX_TIMEOUT;
+import static org.infinispan.configuration.cache.TransactionConfiguration.LOCKING_MODE;
+import static org.infinispan.configuration.cache.TransactionConfiguration.NOTIFICATIONS;
+import static org.infinispan.configuration.cache.TransactionConfiguration.REAPER_WAKE_UP_INTERVAL;
+import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_MANAGER_LOOKUP;
+import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_MODE;
+import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP;
+import static org.infinispan.configuration.cache.TransactionConfiguration.USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS;
+import static org.infinispan.configuration.cache.TransactionConfiguration.USE_SYNCHRONIZATION;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 /**
  * Defines transactional (JTA) characteristics of the cache.
@@ -64,8 +63,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * cache stop timeout. It is recommended that this value does not exceed the transaction timeout
     * because even if a new transaction was started just before the cache was stopped, this could
     * only last as long as the transaction timeout allows it.
-    * <p/>
-    * This configuration property may be adjusted at runtime
+        * This configuration property may be adjusted at runtime
     */
    public TransactionConfigurationBuilder cacheStopTimeout(long l) {
       attributes.attribute(CACHE_STOP_TIMEOUT).set(TimeQuantity.valueOf(l));
@@ -86,8 +84,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * cache stop timeout. It is recommended that this value does not exceed the transaction timeout
     * because even if a new transaction was started just before the cache was stopped, this could
     * only last as long as the transaction timeout allows it.
-    * <p/>
-    * This configuration property may be adjusted at runtime
+        * This configuration property may be adjusted at runtime
     */
    public TransactionConfigurationBuilder cacheStopTimeout(long l, TimeUnit unit) {
       return cacheStopTimeout(unit.toMillis(l));
@@ -177,7 +174,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * offers less consistency guarantees. From Infinispan 5.1 onwards, mixed
     * access is no longer supported, so if you wanna speed up transactional
     * caches and you're ready to trade some consistency guarantees, you can
-    * enable use1PcForAutoCommitTransactions. <p/>
+    * enable use1PcForAutoCommitTransactions.
     *
     * What this configuration option does is force an induced transaction,
     * that has been started by Infinispan as a result of enabling autoCommit,

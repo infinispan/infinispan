@@ -24,8 +24,7 @@ public interface ClassLoaderAwareFilteringListenable<K, V> extends FilteringList
     * org.infinispan.notifications.cachelistener.filter.CacheEventFilter,
     * org.infinispan.notifications.cachelistener.filter.CacheEventConverter)}
     * for more details.
-    * <p/>
-    * @param listener must not be null.  The listener to callback on when an event is raised
+        * @param listener must not be null.  The listener to callback on when an event is raised
     * @param filter The filter to apply for the entry to see if the event should be raised
     * @param converter The converter to convert the filtered entry to a new value
     * @param classLoader The class loader to use when the event is fired

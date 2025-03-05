@@ -17,7 +17,7 @@ import io.reactivex.rxjava3.processors.FlowableProcessor;
 import io.reactivex.rxjava3.processors.UnicastProcessor;
 
 /**
- * Abstract handler that handles request and cancellation of a given non blocking resource.
+ * Abstract handler that handles request and cancellation of a given non-blocking resource.
  * When additional entries are requested via {@link org.reactivestreams.Subscription#request(long)} the handler will keep
  * track of the outstanding count and invoke either {@link #sendInitialCommand(Object, int)} or
  * {@link #sendNextCommand(Object, int)} depending upon if it is the first request or subsequent.
@@ -38,9 +38,8 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
  * next target to send to. This will repeat until the <b>supplier</b> returns <b>null</b> which is the signal to this
  * class that there are no more entries left to retrieve.
  * <p>
- * A command may also encounter a Throwable and it is possible to customize what happens by implementing the
- * {@link #handleThrowableInResponse(Throwable, Object)} method. For example you may want to skip the given
- * <p>
+ * A command may also encounter a Throwable, and it is possible to customize what happens by implementing the
+ * {@link #handleThrowableInResponse(Throwable, Object)} method. For example, you may want to skip the given
  * <p>The user is required to supply a <b>maxBatchSize</b> argument to the constructor. This setting will ensure that
  * this handler will never have more than this amount of entries enqueued at once. However, we may request less than
  * this batch size from the underlying target(s).
@@ -49,7 +48,7 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
  * requested amount, and any additional are enqueued.
  * <p>
  * This handler also supports {@link Subscription#cancel()} by extending the {@link #sendCancel(Object)} command and
- * the underlying service must be cancelled in an asynchronous and non blocking fashion. Once cancelled this Publisher
+ * the underlying service must be cancelled in an asynchronous and non-blocking fashion. Once cancelled this Publisher
  * will not publish additional values or requests.
  * <p>
  * Note this handler only supports a single Subscriber for the returned Publisher from {@link #startPublisher()}. Failure

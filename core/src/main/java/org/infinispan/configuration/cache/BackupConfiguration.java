@@ -93,7 +93,7 @@ public class BackupConfiguration extends ConfigurationElement<BackupConfiguratio
    }
 
    /**
-    * @see BackupConfigurationBuilder#enabled(boolean).
+    * @see BackupConfigurationBuilder#enabled(boolean)
     * @deprecated Since 14.0. To be removed without replacement.
     */
    @Deprecated(forRemoval=true, since = "14.0")

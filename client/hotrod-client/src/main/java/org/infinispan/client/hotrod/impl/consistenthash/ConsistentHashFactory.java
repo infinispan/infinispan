@@ -12,8 +12,7 @@ import org.infinispan.commons.util.Util;
  * <code>infinispan.client.hotrod.hash_function_impl.3=org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash</code>
  * or if using the {@link Configuration} API,
  * <code>configuration.consistentHashImpl(3, org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash.class);</code>
- * <p/>
- *
+  *
  * <p>The defaults are:</p>
  * <ol>
  *    <li>N/A (No longer used.)</li>

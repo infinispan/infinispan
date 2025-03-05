@@ -18,11 +18,11 @@ public class ProcessorInfo {
     * to make the determination. Since the CPU affinity of a process can be change at any time, this method does
     * not cache the result. Calls should be limited accordingly.
     * <br>
-    * The number of available processors can be overridden via the system property <tt>infinispan.activeprocessorcount</tt>,
-    * e.g. <tt>java -Dinfinispan.activeprocessorcount=4 ...</tt>. Note that this value cannot exceed the actual number
+    * The number of available processors can be overridden via the system property <code>infinispan.activeprocessorcount</code>,
+    * e.g. <code>java -Dinfinispan.activeprocessorcount=4 ...</code>. Note that this value cannot exceed the actual number
     * of available processors.
     * <br>
-    * Since Java 10, this can also be achieved via the VM flag <tt>-XX:ActiveProcessorCount=xx</tt>.
+    * Since Java 10, this can also be achieved via the VM flag <code>-XX:ActiveProcessorCount=xx</code>.
     * <br>
     * Note that on Linux, both SMT units (Hyper-Threading) and CPU cores are counted as a processor.
     *

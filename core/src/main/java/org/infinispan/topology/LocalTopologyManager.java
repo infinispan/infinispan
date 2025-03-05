@@ -138,8 +138,8 @@ public interface LocalTopologyManager {
    /**
     * Asserts the cache with the given name has a stable topology installed.
     *
-    * @param cacheName: The cache name to search.
-    * @throws MissingMembersException: Thrown when the cache does not have a stable topology.
+    * @param cacheName The cache name to search.
+    * @throws MissingMembersException Thrown when the cache does not have a stable topology.
     */
    default void assertTopologyStable(String cacheName) { }
 

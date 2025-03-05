@@ -5,8 +5,6 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.commons.api.multimap.BasicMultimapCache;
 
 /**
- * {@inheritDoc}
- * <p>
  * Remote MultimapCache interface used for server mode.
  *
  * @author Katia Aresti, karesti@redhat.com

@@ -70,10 +70,10 @@ public final class WeakValueHashMap<K, V> extends java.util.AbstractMap<K, V> {
 
    /**
     * Constructs a new <code>WeakValueHashMap</code> with the same mappings as
-    * the specified <tt>Map</tt>.  The <code>WeakValueHashMap</code> is created
+    * the specified <code>Map</code>.  The <code>WeakValueHashMap</code> is created
     * with an initial capacity of twice the number of mappings in the specified
     * map or 11 (whichever is greater), and a default load factor, which is
-    * <tt>0.75</tt>.
+    * <code>0.75</code>.
     *
     * @param t the map whose mappings are to be placed in this map.
     * @since 1.3

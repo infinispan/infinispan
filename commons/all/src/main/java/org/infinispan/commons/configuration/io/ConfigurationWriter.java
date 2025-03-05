@@ -82,14 +82,14 @@ public interface ConfigurationWriter extends AutoCloseable {
    /**
     * Writes an array element. This will be treated as follows by the various implementations:
     * <ul>
-    *    <li><strong>XML</strong> &lt;outer&gt;&lt;/outer&gt;</li>
-    *    <li><strong>YAML</strong> <pre>
+    *    <li><b>XML</b> &lt;outer&gt;&lt;/outer&gt;</li>
+    *    <li><b>YAML</b> <pre>
     *       name:<br>
     *       - item1
     *       - item2
     *    </pre>
     *    </li>
-    *    <li><strong>JSON</strong> name: [ item1, item2 ]</li>
+    *    <li><b>JSON</b> name: [ item1, item2 ]</li>
     * </ul>
     *
     * @param name
@@ -126,9 +126,9 @@ public interface ConfigurationWriter extends AutoCloseable {
    /**
     * Writes a simple map entry.
     * <ul>
-    *    <li><strong>XML</strong>: <tt>&lt;element name="key"&gt;value&lt;element&gt;</tt></li>
-    *    <li><strong>JSON</strong>: <tt>{ key: value }</tt></li>
-    *    <li><strong>YAML</strong>: <tt>key: value</tt></li>
+    *    <li><b>XML</b>: <code>&lt;element name="key"&gt;value&lt;element&gt;</code></li>
+    *    <li><b>JSON</b>: <code>{ key: value }</code></li>
+    *    <li><b>YAML</b>: <code>key: value</code></li>
     * </ul>
     * <p>
     * The key name is not translated by the underlying serialization implementation and is used as is
@@ -148,9 +148,9 @@ public interface ConfigurationWriter extends AutoCloseable {
    /**
     * Writes a complex map entry.
     * <ul>
-    *    <li><strong>XML</strong>: <tt>&lt;element name="key"&gt;...&lt;element&gt;</tt></li>
-    *    <li><strong>JSON</strong>: <tt>{ key: { ... } }</tt></li>
-    *    <li><strong>YAML</strong>: <tt>key:</tt></li>
+    *    <li><b>XML</b>: <code>&lt;element name="key"&gt;...&lt;element&gt;</code></li>
+    *    <li><b>JSON</b>: <code>{ key: { ... } }</code></li>
+    *    <li><b>YAML</b>: <code>key:</code></li>
     * </ul>
     * <p>
     * The key name is not translated by the underlying serialization implementation and is used as is

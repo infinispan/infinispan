@@ -78,8 +78,7 @@ public interface XSiteStateTransferManager {
 
    /**
     * Sets the cluster to normal state.
-    * <p/>
-    * The main use for this method is when the link between the sites is broken and the receiver site keeps it state
+        * The main use for this method is when the link between the sites is broken and the receiver site keeps it state
     * transfer state forever.
     *
     * @param siteName the site name which is sending the state.
@@ -89,8 +88,7 @@ public interface XSiteStateTransferManager {
 
    /**
     * Makes this node the coordinator for the state transfer to the site name.
-    * <p/>
-    * This method is invoked when the coordinator dies and this node receives a late start state transfer request.
+        * This method is invoked when the coordinator dies and this node receives a late start state transfer request.
     *
     * @param siteName the site name.
     */

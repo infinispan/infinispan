@@ -7,8 +7,7 @@ import org.springframework.util.Assert;
 
 /**
  * {@link FactoryBean} for creating a {@link CacheManager} for a pre-defined {@link org.infinispan.manager.CacheContainer}.
- * <p/>
- * Useful when the cache container is defined outside the application (e.g. provided by the application server)
+  * Useful when the cache container is defined outside the application (e.g. provided by the application server)
  *
  * @author Marius Bogoevici
  */

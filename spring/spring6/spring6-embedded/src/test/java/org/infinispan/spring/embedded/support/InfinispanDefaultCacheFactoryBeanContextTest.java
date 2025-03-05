@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
  * Test {@link org.infinispan.spring.embedded.InfinispanDefaultCacheFactoryBean} deployed in a Spring application context.
  * </p>
  *
- * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Olaf Bergner
  *
  */
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)

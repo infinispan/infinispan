@@ -16,7 +16,7 @@ import java.util.function.Function;
  * Note that these methods only really make sense if you are using a clustered cache.  I.e., when used in LOCAL mode,
  * these "async" operations offer no benefit whatsoever.  These methods, such as {@link #putAsync(Object, Object)}
  * offer the best of both worlds between a fully synchronous and a fully asynchronous cache in that a
- * {@link CompletableFuture} is returned.  The <tt>CompletableFuture</tt> can then be ignored or thrown away for typical
+ * {@link CompletableFuture} is returned.  The <code>CompletableFuture</code> can then be ignored or thrown away for typical
  * asynchronous behaviour, or queried for synchronous behaviour, which would block until any remote calls complete.
  * Note that all remote calls are, as far as the transport is concerned, synchronous.  This allows you the guarantees
  * that remote calls succeed, while not blocking your application thread unnecessarily.  For example, usage such as
@@ -33,14 +33,12 @@ import java.util.function.Function;
  * completed successfully, but you have the added benefit that the three calls could happen in parallel.  This is
  * especially advantageous if the cache uses distribution and the three keys map to different cache instances in the
  * cluster.
- * <p/>
- * Also, the use of async operations when within a transaction return your local value only, as expected.  A
+  * Also, the use of async operations when within a transaction return your local value only, as expected.  A
  * {@link CompletableFuture} is still returned though for API consistency.
  *
  * These methods can have benefit over their sync versions even in LOCAL mode.
  *
- * <p/>
- *
+  *
  * @author Mircea Markus
  * @author Manik Surtani
  * @author Galder Zamarreño

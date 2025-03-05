@@ -9,6 +9,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.infinispan.cdi.common.util.Reflections;
+import org.infinispan.cdi.common.util.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
+
 import jakarta.enterprise.inject.spi.Annotated;
 import jakarta.enterprise.inject.spi.AnnotatedConstructor;
 import jakarta.enterprise.inject.spi.AnnotatedField;
@@ -16,14 +20,10 @@ import jakarta.enterprise.inject.spi.AnnotatedMethod;
 import jakarta.enterprise.inject.spi.AnnotatedParameter;
 import jakarta.enterprise.inject.spi.AnnotatedType;
 
-import org.infinispan.cdi.common.util.Reflections;
-import org.infinispan.cdi.common.util.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-
 /**
  * <p> Class for constructing a new AnnotatedType. A new instance of builder
- * should be used for each annotated type. </p> <p/> <p> {@link
- * AnnotatedTypeBuilder} is not thread-safe. </p>
+ * should be used for each annotated type. </p>
+ * <p> {@link AnnotatedTypeBuilder} is not thread-safe. </p>
  *
  * @author Stuart Douglas
  * @author Pete Muir

@@ -58,7 +58,6 @@ import org.infinispan.util.logging.LogFactory;
  *    <li>Pessimistic caches acquire locks with an explicit lock command and release during the one-phase PrepareCommand.</li>
  *    <li>Optimistic caches acquire locks during the 2-phase prepare command and release locks with a TxCompletionNotificationCommand.</li>
  * </ul>
- * </p>
  *
  * @author Manik Surtani
  * @author Galder Zamarreño

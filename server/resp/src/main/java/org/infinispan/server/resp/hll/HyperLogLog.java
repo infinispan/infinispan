@@ -27,14 +27,14 @@ import net.jcip.annotations.ThreadSafe;
  * paper [3], which makes a practical implementation, and the work on [4], with optimizations to the estimation accuracy.
  * </p>
  *
- * <p><h2>How it works</h2></p>
+ * <h2>How it works</h2>
  *
  * From a bird's eye view, the algorithm uses a hash function that returns a value with (P + Q) bits. The P bits identify
  * one bucket to place the count, and the Q we extract the number of consecutive trailing zeroes. Since the higher the
  * number of zeroes, the lower the probability (N + 1 zeroes is half the N), the algorithm then collects the values from
  * all the buckets to guess the cardinality.
  *
- * <p><h2>The implementation</h2></p>
+ * <h2>The implementation</h2>
  *
  * We use the {@link org.infinispan.commons.hash.MurmurHash3} with 64 bits. Therefore, we have <code>P=14</code> for the
  * number of buckets and <code>Q=64-P</code> to count the number of trailing zeroes. In theory, this allows us to

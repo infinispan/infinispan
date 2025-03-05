@@ -14,9 +14,7 @@ import jakarta.inject.Qualifier;
  * A synthetic qualifier that can be used to replace other user-supplied
  * configuration at deployment.
  * </p>
- * <p/>
- * <p/>
- *
+   *
  * @author Stuart Douglas &lt;stuart@baileyroberts.com.au&gt;
  * @author Pete Muir
  */
@@ -53,8 +51,7 @@ public @interface Synthetic {
      * <p>
      * Provides a unique Synthetic qualifier for the specified namespace
      * </p>
-     * <p/>
-     * <p>
+          * <p>
      * {@link Provider} is thread safe.
      * </p>
      *

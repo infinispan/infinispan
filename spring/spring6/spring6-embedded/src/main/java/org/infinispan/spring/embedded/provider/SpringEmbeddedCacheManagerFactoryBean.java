@@ -39,7 +39,7 @@ import org.springframework.beans.factory.InitializingBean;
  * <code>FactoryBean</code> when creating an <code>SpringEmbeddedCacheManager</code>.
  * </p>
  *
- * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Olaf Bergner
  *
  * @see #setConfigurationFileLocation(org.springframework.core.io.Resource)
  * @see #destroy()

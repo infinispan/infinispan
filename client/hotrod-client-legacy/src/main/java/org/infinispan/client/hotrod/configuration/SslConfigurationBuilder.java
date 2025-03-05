@@ -1,7 +1,5 @@
 package org.infinispan.client.hotrod.configuration;
 
-import static org.infinispan.client.hotrod.logging.Log.HOTROD;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -15,6 +13,8 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
+
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 /**
  *
@@ -134,7 +134,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
     * with all the certificates found undert that path. This is mutually exclusive with {@link #trustStoreFileName}
     * Setting this property also implicitly enables SSL/TLS (see {@link #enable()}
     *
-    * @deprecated since 12.0 to be removed in 15.0. Use {@link #trustStoreFileName(String)} and pass <tt>pem</tt> to {@link #trustStoreType(String)}.
+    * @deprecated since 12.0 to be removed in 15.0. Use {@link #trustStoreFileName(String)} and pass <code>pem</code> to {@link #trustStoreType(String)}.
     */
    @Deprecated(forRemoval=true, since = "12.0")
    public SslConfigurationBuilder trustStorePath(String trustStorePath) {
@@ -164,9 +164,9 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
 
    /**
     * Specifies the TLS SNI hostname for the connection
-    * @see javax.net.ssl.SSLParameters#setServerNames(List).
+    * @see javax.net.ssl.SSLParameters#setServerNames(List)
     * Setting this property also implicitly enables SSL/TLS (see {@link #enable()}
-     */
+    */
    public SslConfigurationBuilder sniHostName(String sniHostName) {
       this.sniHostName = sniHostName;
       return enable();

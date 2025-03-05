@@ -1,8 +1,5 @@
 package org.infinispan.interceptors.impl;
 
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
-
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.FlagAffectedCommand;
@@ -21,9 +18,11 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
+
 /**
  * Cache store interceptor specific for the distribution and replication cache modes.
- * <p>
  * <p>If the cache store is shared, only the primary owner of the key writes to the cache store.</p>
  * <p>If the cache store is not shared, every owner of a key writes to the cache store.</p>
  * <p>In non-tx caches, if the originator is an owner, the command is executed there twice. The first time,

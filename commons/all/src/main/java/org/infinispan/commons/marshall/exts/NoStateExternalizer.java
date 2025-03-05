@@ -10,6 +10,7 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
  *
  * @author Galder Zamarreño
  * @since 5.0
+ * @param <T> the type
  */
 public abstract class NoStateExternalizer<T> extends AbstractExternalizer<T> {
 

@@ -28,7 +28,7 @@ public final class GlobMatcher {
     * @param pattern: Glob pattern to check against.
     * @param string: String to check for matching.
     * @return <code>true</code> if a match is found, <code>false</code>, otherwise.
-    * @throws AssertionError: If the {@param string} is a multi-byte string.
+    * @throws AssertionError If the {@param string} is a multi-byte string.
     */
    public static boolean match(String pattern, String string) {
       assertSingleByte(string);

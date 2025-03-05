@@ -12,7 +12,7 @@ import org.springframework.beans.factory.InitializingBean;
 /**
  * Starts test HotRod server instance with pre-defined set of caches.
  *
- * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
+ * @author Olaf Bergner
  * @author Matej Cimbora (mcimbora@redhat.com)
  */
 public class SampleHotrodServerLifecycleBean implements InitializingBean, DisposableBean {

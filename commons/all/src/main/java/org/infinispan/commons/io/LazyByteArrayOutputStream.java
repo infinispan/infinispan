@@ -15,7 +15,7 @@ import net.jcip.annotations.NotThreadSafe;
  * configurable max size (default is 4MB), after which it begins growing the buffer in 25% increments.
  * This is intended to help prevent an OutOfMemoryError during a resize of a large buffer. </p>
  * <p> A version of this class was originally created by Bela Ban as part of the JGroups library. </p>
- * <p>This class is not threadsafe as it will not support concurrent readers and writers. <p/>
+ * <p>This class is not threadsafe as it will not support concurrent readers and writers.</p>
  *
  * @author <a href="mailto://brian.stansberry@jboss.com">Brian Stansberry</a>
  * @author Dan Berindei

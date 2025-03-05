@@ -18,11 +18,6 @@
 
 package org.infinispan.commons.maven;
 
-import static org.infinispan.commons.configuration.io.xml.XmlPullParser.END_DOCUMENT;
-import static org.infinispan.commons.configuration.io.xml.XmlPullParser.END_TAG;
-import static org.infinispan.commons.configuration.io.xml.XmlPullParser.FEATURE_PROCESS_NAMESPACES;
-import static org.infinispan.commons.configuration.io.xml.XmlPullParser.START_TAG;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,7 +44,14 @@ import org.infinispan.commons.configuration.io.xml.MXParser;
 import org.infinispan.commons.configuration.io.xml.XmlPullParser;
 import org.infinispan.commons.configuration.io.xml.XmlPullParserException;
 
+import static org.infinispan.commons.configuration.io.xml.XmlPullParser.END_DOCUMENT;
+import static org.infinispan.commons.configuration.io.xml.XmlPullParser.END_TAG;
+import static org.infinispan.commons.configuration.io.xml.XmlPullParser.FEATURE_PROCESS_NAMESPACES;
+import static org.infinispan.commons.configuration.io.xml.XmlPullParser.START_TAG;
+
 /**
+ * Class to load Maven settings.xml files
+ *
  * @author Tomaz Cerar (c) 2014 Red Hat Inc.
  */
 public final class MavenSettings {

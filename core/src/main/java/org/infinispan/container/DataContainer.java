@@ -46,8 +46,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * Retrieves a cache entry in the same way as {@link #get(Object)}} except that it does not update or reorder any of
     * the internal constructs. I.e., expiration does not happen, and in the case of the LRU container, the entry is not
     * moved to the end of the chain.
-    * <p/>
-    * This method should be used instead of {@link #get(Object)}} when called while iterating through the data container
+        * This method should be used instead of {@link #get(Object)}} when called while iterating through the data container
     * using methods like {@link #iterator()} to avoid changing the underlying collection's order.
     *
     * @param k key under which entry is stored
@@ -83,8 +82,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
 
    /**
     * @return count of the number of entries in the container excluding expired entries
-    * @implSpec
-    * Default method invokes the {@link #iterator()} method and just counts entries.
+        * Default method invokes the {@link #iterator()} method and just counts entries.
     */
    default int size() {
       int size = 0;
@@ -109,8 +107,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
 
    /**
     * Atomically, it removes the key from {@code DataContainer} and passivates it to persistence.
-    * <p/>
-    * The passivation must be done by invoking the method {@link PassivationManager#passivateAsync(InternalCacheEntry)}.
+        * The passivation must be done by invoking the method {@link PassivationManager#passivateAsync(InternalCacheEntry)}.
     *
     * @param key The key to evict.
     */
@@ -118,8 +115,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
 
    /**
     * Computes the new value for the key.
-    * <p/>
-    * See {@link org.infinispan.container.DataContainer.ComputeAction#compute(Object,
+        * See {@link org.infinispan.container.DataContainer.ComputeAction#compute(Object,
     * org.infinispan.container.entries.InternalCacheEntry, InternalEntryFactory)}.
     * <p>
     * Note the entry provided to {@link org.infinispan.container.DataContainer.ComputeAction} may be expired as these

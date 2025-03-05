@@ -196,8 +196,8 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    /**
     * <p>Similar to {@link RemoteCacheManager#RemoteCacheManager(Configuration, boolean)}, but it will try to lookup
-    * the config properties in the classpath, in a file named <tt>hotrod-client.properties</tt>. If no properties can be
-    * found in the classpath, defaults will be used, attempting to connect to <tt>127.0.0.1:11222</tt></p>
+    * the config properties in the classpath, in a file named <code>hotrod-client.properties</code>. If no properties can be
+    * found in the classpath, defaults will be used, attempting to connect to <code>127.0.0.1:11222</code></p>
     *
     * <p>Refer to
     * {@link ConfigurationBuilder} for a detailed list of available properties.</p>

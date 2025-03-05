@@ -1,7 +1,5 @@
 package org.infinispan.server.core.admin.embeddedserver;
 
-import static org.infinispan.commons.util.concurrent.CompletionStages.join;
-
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -14,12 +12,14 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.server.core.admin.AdminServerTask;
 
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
+
 /**
  * Admin operation to reindex a cache
  * Parameters:
  * <ul>
- *    <li><strong>name</strong> the name of the cache to reindex</li>
- *    <li><strong>flags</strong> unused</li>
+ *    <li><b>name</b> the name of the cache to reindex</li>
+ *    <li><b>flags</b> unused</li>
  * </ul>
  *
  * @author Tristan Tarrant

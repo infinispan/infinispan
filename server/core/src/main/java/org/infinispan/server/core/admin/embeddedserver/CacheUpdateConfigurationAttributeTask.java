@@ -13,10 +13,10 @@ import org.infinispan.server.core.admin.AdminServerTask;
  * Administrative operation to update a specific configuration attribute for a given cache with the following parameters:
  * Parameters:
  * <ul>
- *    <li><strong>name</strong> specifies the cache for which its configuration attribute will be updated.</li>
- *    <li><strong>attribute</strong> the path of the attribute we want to change, e.g. `indexing.indexed-entities`.</li>
- *    <li><strong>value</strong> the new value to apply to the attribute, e.g. `org.infinispan.Developer org.infinispan.Engineer`</li>
- *    <li><strong>flags</strong> any flags, e.g. PERMANENT</li>
+ *    <li><b>name</b> specifies the cache for which its configuration attribute will be updated.</li>
+ *    <li><b>attribute</b> the path of the attribute we want to change, e.g. `indexing.indexed-entities`.</li>
+ *    <li><b>value</b> the new value to apply to the attribute, e.g. `org.infinispan.Developer org.infinispan.Engineer`</li>
+ *    <li><b>flags</b> any flags, e.g. PERMANENT</li>
  * </ul>
  * <p>
  * Note: the attribute is supposed to be mutable in order to be mutated by this operation.

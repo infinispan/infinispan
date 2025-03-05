@@ -42,7 +42,7 @@ public interface DoubleCacheStream extends DoubleStream, BaseCacheStream<Double,
    DoubleCacheStream sequentialDistribution();
 
    /**
-    * @inheritDoc
+    * {@inheritDoc}
     * @return a stream with parallel distribution enabled.
     */
    DoubleCacheStream parallelDistribution();

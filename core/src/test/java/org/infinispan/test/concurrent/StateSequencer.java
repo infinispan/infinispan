@@ -24,8 +24,7 @@ import net.jcip.annotations.GuardedBy;
 
 /**
  * Defines a set of logical threads, each with a list of states, and a partial ordering between states.
- * <p/>
- * <p>Logical threads are defined with {@link #logicalThread(String, String, String...)}. States in a logical thread are implicitly
+  * <p>Logical threads are defined with {@link #logicalThread(String, String, String...)}. States in a logical thread are implicitly
  * ordered - they must be entered in the order in which they were defined.</p>
  * <p>The ordering between states in different logical threads can be defined with {@link #order(String, String, String...)}</p>
  * <p>A state can also have an associated action, defined with {@link #action(String, java.util.concurrent.Callable)}.
@@ -56,8 +55,7 @@ public class StateSequencer {
 
    /**
     * Define a logical thread.
-    * <p/>
-    * States in a logical thread are implicitly ordered - they must be entered in the order in which they were defined.
+        * States in a logical thread are implicitly ordered - they must be entered in the order in which they were defined.
     */
    public StateSequencer logicalThread(String threadName, String initialState, String... additionalStates) {
       lock.lock();
@@ -191,8 +189,7 @@ public class StateSequencer {
 
    /**
     * Define an action for a state.
-    * <p/>
-    * States that depend on another state with an associated action can only be entered after the action has finished.
+        * States that depend on another state with an associated action can only be entered after the action has finished.
     */
    public StateSequencer action(String stateName, Callable<Object> action) {
       lock.lock();

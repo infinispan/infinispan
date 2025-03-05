@@ -1,9 +1,5 @@
 package org.infinispan.server.core.telemetry.jfr;
 
-import static org.infinispan.telemetry.InfinispanSpanAttributes.CACHE_NAME;
-import static org.infinispan.telemetry.InfinispanSpanAttributes.CATEGORY;
-import static org.infinispan.telemetry.InfinispanSpanAttributes.SERVER_ADDRESS;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -27,6 +23,9 @@ import jdk.jfr.Description;
 import jdk.jfr.Event;
 import jdk.jfr.Label;
 import jdk.jfr.StackTrace;
+import static org.infinispan.telemetry.InfinispanSpanAttributes.CACHE_NAME;
+import static org.infinispan.telemetry.InfinispanSpanAttributes.CATEGORY;
+import static org.infinispan.telemetry.InfinispanSpanAttributes.SERVER_ADDRESS;
 
 /**
  * Hook to generate {@link Event}s based on {@link io.opentelemetry.api.trace.Span}.
@@ -38,7 +37,7 @@ import jdk.jfr.StackTrace;
  * <p>
  * Although the exporter is active, the JVM must be properly configured to record events with JFR. Otherwise, no event
  * is recorded. The application starts with the `<code>-XX:StartFlightRecording=...</code>` option or during runtime with
- * the `<code>jcmd <PID> JFR.start ...</code>` command line tool.
+ * the `<code>jcmd &lt;PID&gt; JFR.start ...</code>` command line tool.
  * </p>
  *
  * This implementation is an adaptation of

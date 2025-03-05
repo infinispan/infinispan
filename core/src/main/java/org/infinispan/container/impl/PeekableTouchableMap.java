@@ -33,7 +33,7 @@ public interface PeekableTouchableMap<K, V> extends ConcurrentMap<K, InternalCac
     * Same as {@link #put(Object, Object)} except that the map is not required to return a value. This can be useful
     * when retrieving a previous value may incur additional costs.
     * <p>
-    * @implSpec The default implementation is equivalent to, for this
+    * The default implementation is equivalent to, for this
     * {@code map}:
     * <pre> {@code
     * map.put(key, value);

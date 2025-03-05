@@ -246,12 +246,14 @@
                         <artifactId>infinispan-doclets-java11</artifactId>
                         <version>${version.infinispan.doclets}</version>
                      </docletArtifact>
+                     <doclint>all</doclint>
                      <docfilessubdirs>true</docfilessubdirs>
                      <detectLinks>false</detectLinks>
                      <header>${infinispan.brand.name} ${infinispan.brand.version}</header>
                      <bottom><![CDATA[
                         Copyright © {inceptionYear}–{currentYear} <a href="https://infinispan.org">infinispan.org</a>. All rights reserved.
                      ]]></bottom>
+                     <sourcepath>${sourcepath}</sourcepath>
                      <groups>
                         <group>
                            <title>Core API</title>
@@ -291,7 +293,6 @@
                         </group>
                      </groups>
                      <includeDependencySources>true</includeDependencySources>
-                     <includeTransitiveDependencySources>false</includeTransitiveDependencySources>
                      <dependencySourceIncludes>
                         <dependencySourceInclude>org.infinispan:*</dependencySourceInclude>
                      </dependencySourceIncludes>
