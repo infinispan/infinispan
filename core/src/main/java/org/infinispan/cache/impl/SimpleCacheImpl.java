@@ -32,6 +32,7 @@ import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
+import org.infinispan.CachePublisher;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
@@ -46,6 +47,7 @@ import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.SpliteratorMapper;
 import org.infinispan.commons.util.Util;
@@ -61,6 +63,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -90,6 +93,10 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.partitionhandling.AvailabilityMode;
+import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
+import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
+import org.infinispan.reactive.publisher.impl.Notifications;
+import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
@@ -100,7 +107,9 @@ import org.infinispan.util.DataContainerRemoveIterator;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
 
+import io.reactivex.rxjava3.core.Flowable;
 import jakarta.transaction.TransactionManager;
 
 /**
@@ -2017,6 +2026,82 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache
       public CacheStream<K> parallelStream() {
          return new LocalCacheStream<>(new KeyStreamSupplier<>(SimpleCacheImpl.this, null, super::stream), true,
                componentRegistry);
+      }
+   }
+
+   @Override
+   public CachePublisher<K, V> cachePublisher() {
+      return new CachePublisherImpl<>(new SimpleClusterPublisherManager());
+   }
+
+   // We ignore segments, parallel, invocationContext, explicitFlags and deliveryGuarantee for all methods
+   class SimpleClusterPublisherManager implements ClusterPublisherManager<K, V> {
+      Flowable<CacheEntry<K, V>> filteredFlowable(Set<K> keysToInclude) {
+         Flowable<CacheEntry<K, V>> flowable = Flowable.<CacheEntry<K, V>>fromIterable(() -> (Iterator) dataContainer.iterator());
+         if (keysToInclude != null) {
+            flowable = flowable.filter(k -> keysToInclude.contains(k.getKey()));
+         }
+         return flowable;
+      }
+
+      @Override
+      public <R> CompletionStage<R> keyReduction(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
+            InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee,
+            Function<? super Publisher<K>, ? extends CompletionStage<R>> transformer,
+            Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+         CompletionStage<R> stage = transformer.apply(filteredFlowable(keysToInclude)
+            .map(CacheEntry::getKey));
+         return finalizer.apply(Flowable.fromCompletionStage(stage));
+      }
+
+      @Override
+      public <R> CompletionStage<R> entryReduction(boolean parallelPublisher, IntSet segments, Set<K> keysToInclude,
+            InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee, Function<? super Publisher<CacheEntry<K, V>>, ? extends CompletionStage<R>> transformer, Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+         CompletionStage<R> stage = transformer.apply(filteredFlowable(keysToInclude));
+         return finalizer.apply(Flowable.fromCompletionStage(stage));
+      }
+
+      @Override
+      public <R> SegmentPublisherSupplier<R> keyPublisher(IntSet segments, Set<K> keysToInclude, InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee, int batchSize, Function<? super Publisher<K>, ? extends Publisher<R>> transformer) {
+         return new SegmentPublisherSupplier<>() {
+            @Override
+            public Publisher<R> publisherWithoutSegments() {
+               return transformer.apply(filteredFlowable(keysToInclude).map(CacheEntry::getKey));
+            }
+
+            @Override
+            public Publisher<Notification<R>> publisherWithSegments() {
+               return Flowable.concat(
+                     Flowable.fromPublisher(publisherWithoutSegments())
+                           .map(r -> Notifications.value(r, 0)),
+                     Flowable.just(Notifications.segmentComplete(0))
+               );
+            }
+         };
+      }
+
+      @Override
+      public <R> SegmentPublisherSupplier<R> entryPublisher(IntSet segments, Set<K> keysToInclude, InvocationContext invocationContext, long explicitFlags, DeliveryGuarantee deliveryGuarantee, int batchSize, Function<? super Publisher<CacheEntry<K, V>>, ? extends Publisher<R>> transformer) {
+         return new SegmentPublisherSupplier<>() {
+            @Override
+            public Publisher<R> publisherWithoutSegments() {
+               return transformer.apply(filteredFlowable(keysToInclude));
+            }
+
+            @Override
+            public Publisher<Notification<R>> publisherWithSegments() {
+               return Flowable.concat(
+                     Flowable.fromPublisher(publisherWithoutSegments())
+                           .map(r -> Notifications.value(r, 0)),
+                     Flowable.just(Notifications.segmentComplete(0))
+               );
+            }
+         };
+      }
+
+      @Override
+      public CompletionStage<Long> sizePublisher(IntSet segments, InvocationContext ctx, long flags) {
+         return CompletableFuture.completedFuture((long) dataContainer.size());
       }
    }
 

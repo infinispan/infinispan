@@ -13,7 +13,7 @@ public enum DeliveryGuarantee {
     */
    AT_MOST_ONCE,
    /**
-    * The in between guarantee that provides a view of all data, but may return duplicates during a toplogy change. This
+    * The in between guarantee that provides a view of all data, but may return duplicates during a topology change. This
     * guarantee does not send identity values, but instead will retry an operation, most likely returning duplicates.
     * However, under a stable topology this will return the same results as {@link #EXACTLY_ONCE}.
     */

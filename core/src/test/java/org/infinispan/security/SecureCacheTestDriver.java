@@ -11,6 +11,7 @@ import java.util.function.Function;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.conflict.ConflictManagerFactory;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
@@ -21,7 +22,6 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.partitionhandling.AvailabilityMode;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 import jakarta.transaction.NotSupportedException;
 import jakarta.transaction.SystemException;
@@ -942,5 +942,10 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.WRITE)
    public void testComputeAsync_Object_SerializableBiFunction_Metadata(SecureCache<String, String> cache) throws ExecutionException, InterruptedException {
       cache.computeAsync("a", (k, v) -> "yes", metadata).get();
+   }
+
+   @TestCachePermission(AuthorizationPermission.BULK_READ)
+   public void testCachePublisher(SecureCache<String, String> cache) {
+      cache.cachePublisher();
    }
 }

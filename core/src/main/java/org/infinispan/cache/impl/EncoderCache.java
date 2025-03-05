@@ -23,11 +23,14 @@ import java.util.stream.Collectors;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
+import org.infinispan.CachePublisher;
 import org.infinispan.CacheSet;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.InjectiveFunction;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ForwardingCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -41,11 +44,12 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.ListenerHolder;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
+import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.util.WriteableCacheCollectionMapper;
 import org.infinispan.util.WriteableCacheSetMapper;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.function.SerializableBiFunction;
 import org.infinispan.util.function.SerializableFunction;
+import org.reactivestreams.Publisher;
 
 /**
  * Cache decoration that makes use of the {@link Encoder} and {@link Wrapper} to convert between storage value and
@@ -1018,6 +1022,150 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       }
    }
 
+   class CachePublisherWrapper<A, B> implements CachePublisher<A, B> {
+      private final CachePublisher<A, B> delegate;
+
+      private CachePublisherWrapper(CachePublisher<A, B> delegate) {
+         this.delegate = delegate;
+      }
+
+      @Override
+      public CachePublisher<A, B> parallelReduction() {
+         CachePublisher<A, B> p = delegate.parallelReduction();
+         if (p != delegate) {
+            return new CachePublisherWrapper<>(p);
+         }
+         return this;
+      }
+
+      @Override
+      public CachePublisher<A, B> sequentialReduction() {
+         CachePublisher<A, B> p = delegate.sequentialReduction();
+         if (p != delegate) {
+            return new CachePublisherWrapper<>(p);
+         }
+         return this;
+      }
+
+      @Override
+      public CachePublisher<A, B> batchSize(int batchSize) {
+         CachePublisher<A, B> p = delegate.batchSize(batchSize);
+         if (p != delegate) {
+            return new CachePublisherWrapper<>(p);
+         }
+         return this;
+      }
+
+      @Override
+      public CachePublisher<A, B> withKeys(Set<? extends A> keys) {
+         CachePublisher<A, B> p = delegate.withKeys(keys);
+         if (p != delegate) {
+            return new CachePublisherWrapper<>(p);
+         }
+         return this;
+      }
+
+      @Override
+      public CachePublisher<A, B> withAllKeys() {
+         CachePublisher<A, B> p = delegate.withAllKeys();
+         if (p != delegate) {
+            return new CachePublisherWrapper<>(p);
+         }
+         return this;
+      }
+
+      @Override
+      public CachePublisher<A, B> withSegments(IntSet segments) {
+         CachePublisher<A, B> p = delegate.withSegments(segments);
+         if (p != delegate) {
+            return new CachePublisherWrapper<>(p);
+         }
+         return this;
+      }
+
+      @Override
+      public CachePublisher<A, B> withAllSegments() {
+         CachePublisher<A, B> p = delegate.withAllSegments();
+         if (p != delegate) {
+            return new CachePublisherWrapper<>(p);
+         }
+         return this;
+      }
+
+      @Override
+      public CachePublisher<A, B> atMostOnce() {
+         CachePublisher<A, B> p = delegate.atMostOnce();
+         if (p != delegate) {
+            return new CachePublisherWrapper<>(p);
+         }
+         return this;
+      }
+
+      @Override
+      public CachePublisher<A, B> atLeastOnce() {
+         CachePublisher<A, B> p = delegate.atLeastOnce();
+         if (p != delegate) {
+            return new CachePublisherWrapper<>(p);
+         }
+         return this;
+      }
+
+      @Override
+      public CachePublisher<A, B> exactlyOnce() {
+         CachePublisher<A, B> p = delegate.exactlyOnce();
+         if (p != delegate) {
+            return new CachePublisherWrapper<>(p);
+         }
+         return this;
+      }
+
+      @Override
+      public <R> CompletionStage<R> keyReduction(Function<? super Publisher<A>, ? extends CompletionStage<R>> transformer, Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+         Function<Publisher<A>, CompletionStage<R>> castFunc = (Function<Publisher<A>, CompletionStage<R>>) transformer;
+         return delegate.keyReduction(new KeyFunctionEncoder<>(castFunc, keyDataConversion), finalizer);
+      }
+
+      @Override
+      public <R> CompletionStage<R> keyReduction(SerializableFunction<? super Publisher<A>, ? extends CompletionStage<R>> transformer, SerializableFunction<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+         return keyReduction((Function<? super Publisher<A>, ? extends CompletionStage<R>>) transformer, finalizer);
+      }
+
+      @Override
+      public <R> CompletionStage<R> entryReduction(Function<? super Publisher<CacheEntry<A, B>>, ? extends CompletionStage<R>> transformer, Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+         Function<Publisher<CacheEntry<A, B>>, CompletionStage<R>> castFunc = (Function<Publisher<CacheEntry<A, B>>, CompletionStage<R>>) transformer;
+         return delegate.entryReduction(new EntryFunctionEncoder<>(castFunc,
+               EncoderEntryMapper.newCacheEntryMapper(keyDataConversion, valueDataConversion, entryFactory)), finalizer);
+      }
+
+      @Override
+      public <R> CompletionStage<R> entryReduction(SerializableFunction<? super Publisher<CacheEntry<A, B>>, ? extends CompletionStage<R>> transformer, SerializableFunction<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+         return entryReduction((Function<? super Publisher<CacheEntry<A,B>>, ? extends CompletionStage<R>>) transformer, finalizer);
+      }
+
+      @Override
+      public <R> SegmentPublisherSupplier<R> keyPublisher(Function<? super Publisher<A>, ? extends Publisher<R>> transformer) {
+         Function<Publisher<A>, Publisher<R>> castFunc = (Function<Publisher<A>, Publisher<R>>) transformer;
+         return delegate.keyPublisher(new KeyFunctionEncoder<>(castFunc, keyDataConversion));
+      }
+
+      @Override
+      public <R> SegmentPublisherSupplier<R> keyPublisher(SerializableFunction<? super Publisher<A>, ? extends Publisher<R>> transformer) {
+         return keyPublisher((Function<? super Publisher<A>, ? extends Publisher<R>>) transformer);
+      }
+
+      @Override
+      public <R> SegmentPublisherSupplier<R> entryPublisher(Function<? super Publisher<CacheEntry<A, B>>, ? extends Publisher<R>> transformer) {
+         Function<Publisher<CacheEntry<A, B>>, Publisher<R>> castFunc = (Function<Publisher<CacheEntry<A, B>>, Publisher<R>>) transformer;
+         return delegate.entryPublisher(new EntryFunctionEncoder<>(castFunc,
+               EncoderEntryMapper.newCacheEntryMapper(keyDataConversion, valueDataConversion, entryFactory)));
+      }
+
+      @Override
+      public <R> SegmentPublisherSupplier<R> entryPublisher(SerializableFunction<? super Publisher<CacheEntry<A, B>>, ? extends Publisher<R>> transformer) {
+         return entryPublisher((Function<? super Publisher<CacheEntry<A,B>>, ? extends Publisher<R>>) transformer);
+      }
+   }
+
    @Override
    public CompletableFuture<V> getAsync(K key) {
       CompletableFuture<V> future = cache.getAsync(keyToStorage(key));
@@ -1121,5 +1269,10 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    public CompletableFuture<CacheEntry<K, V>> removeAsyncEntry(Object key) {
       K keyToStorage = keyToStorage(key);
       return cache.removeAsyncEntry(keyToStorage).thenApply(e -> unwrapCacheEntry(key, keyToStorage, e));
+   }
+
+   @Override
+   public CachePublisher<K, V> cachePublisher() {
+      return new CachePublisherWrapper<>(cache.cachePublisher());
    }
 }
