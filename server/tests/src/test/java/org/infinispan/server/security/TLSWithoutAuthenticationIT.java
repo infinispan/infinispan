@@ -5,7 +5,6 @@ import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import java.nio.channels.ClosedChannelException;
 import java.util.concurrent.CompletionStage;
@@ -99,17 +98,14 @@ public class TLSWithoutAuthenticationIT {
       SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
       builder.security().ssl().sniHostName("infinispan.test");
 
-      try (RestClient restClient = SERVERS.rest().withClientConfiguration(builder)
-            .withCacheMode(CacheMode.DIST_SYNC).create()) {
-         CompletionStage<RestResponse> response = restClient.server().overviewReport();
-         ResponseAssertion.assertThat(response).isOk();
-         Json report = Json.read(join(response).body());
-         Json security = report.at("security");
-         assertThat(security.at("security-realms").at("default").at("tls").asString()).isEqualTo("SERVER");
-         assertThat(security.at("tls-endpoints").asJsonList()).extracting(Json::asString)
-               .containsExactly("endpoint-default-default");
-      } catch (Exception e) {
-         fail(e);
-      }
+      RestClient restClient = SERVERS.rest().withClientConfiguration(builder)
+         .withCacheMode(CacheMode.DIST_SYNC).create();
+      CompletionStage<RestResponse> response = restClient.server().overviewReport();
+      ResponseAssertion.assertThat(response).isOk();
+      Json report = Json.read(join(response).body());
+      Json security = report.at("security");
+      assertThat(security.at("security-realms").at("default").at("tls").asString()).isEqualTo("SERVER");
+      assertThat(security.at("tls-endpoints").asJsonList()).extracting(Json::asString)
+            .containsExactly("endpoint-default-default");
    }
 }

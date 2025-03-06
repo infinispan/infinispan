@@ -201,76 +201,73 @@ public class RestMetricsResourceIT {
 
    @Test
    public void testDetailedKeyMetrics() throws Exception {
-      try (var client = SERVERS.rest().create()) {
-         // put some entries then check that the stats were updated
-         var cache = client.cache(SERVERS.getMethodName());
+      var client = SERVERS.rest().create();
+      // put some entries then check that the stats were updated
+      var cache = client.cache(SERVERS.getMethodName());
 
-         // store + read hit
-         assertStatus(NO_CONTENT, cache.post("hit", "value"));
-         assertStatus(OK, cache.get("hit"));
+      // store + read hit
+      assertStatus(NO_CONTENT, cache.post("hit", "value"));
+      assertStatus(OK, cache.get("hit"));
 
-         var metrics = getMetrics(client.metrics());
+      var metrics = getMetrics(client.metrics());
 
-         var reads = new int[OWNERSHIP.length];
-         var writes = new int[OWNERSHIP.length];
+      var reads = new int[OWNERSHIP.length];
+      var writes = new int[OWNERSHIP.length];
 
-         log.debugf("Test hit:%n%s", metrics.stream().map(Metric::toString).collect(Collectors.joining("\n")));
+      log.debugf("Test hit:%n%s", metrics.stream().map(Metric::toString).collect(Collectors.joining("\n")));
 
-         // unable to test remove hit since the return value is always ignored.
-         for (var i = 0; i < OWNERSHIP.length; ++i) {
-            reads[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_hit_%s_total", cache.name(), OWNERSHIP[i])).value;
-            writes[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_store_%s_total", cache.name(), OWNERSHIP[i])).value;
-         }
-
-         // only 1 operation was performed
-         assertEquals(1, Arrays.stream(reads).sum());
-
-         // all arrays must have the same position set
-         assertArrayEquals(reads, writes);
+      // unable to test remove hit since the return value is always ignored.
+      for (var i = 0; i < OWNERSHIP.length; ++i) {
+         reads[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_hit_%s_total", cache.name(), OWNERSHIP[i])).value;
+         writes[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_store_%s_total", cache.name(), OWNERSHIP[i])).value;
       }
+
+      // only 1 operation was performed
+      assertEquals(1, Arrays.stream(reads).sum());
+
+      // all arrays must have the same position set
+      assertArrayEquals(reads, writes);
    }
 
    @Test
    public void testDetailedKeyMetrics2() throws Exception {
-      try (var client = SERVERS.rest().create()) {
-         // put some entries then check that the stats were updated
-         var cache = client.cache(SERVERS.getMethodName());
+      var client = SERVERS.rest().create();
+      // put some entries then check that the stats were updated
+      var cache = client.cache(SERVERS.getMethodName());
 
+      assertStatus(NO_CONTENT, cache.post("hit", "value"));
+      assertStatus(NOT_FOUND, cache.get("miss"));
+      assertStatus(NO_CONTENT, cache.remove("hit"));
 
-         assertStatus(NO_CONTENT, cache.post("hit", "value"));
-         assertStatus(NOT_FOUND, cache.get("miss"));
-         assertStatus(NO_CONTENT, cache.remove("hit"));
+      var metrics = getMetrics(client.metrics());
 
-         var metrics = getMetrics(client.metrics());
+      var reads = new int[OWNERSHIP.length];
+      var writes = new int[OWNERSHIP.length];
+      var rm_misses = new int[OWNERSHIP.length];
+      var rm_hits = new int[OWNERSHIP.length];
 
-         var reads = new int[OWNERSHIP.length];
-         var writes = new int[OWNERSHIP.length];
-         var rm_misses = new int[OWNERSHIP.length];
-         var rm_hits = new int[OWNERSHIP.length];
+      log.debugf("Test miss:%n%s", metrics.stream().map(Metric::toString).collect(Collectors.joining("\n")));
 
-         log.debugf("Test miss:%n%s", metrics.stream().map(Metric::toString).collect(Collectors.joining("\n")));
+      for (var i = 0; i < OWNERSHIP.length; ++i) {
+         reads[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_miss_%s_total", cache.name(), OWNERSHIP[i])).value;
+         writes[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_store_%s_total", cache.name(), OWNERSHIP[i])).value;
+         rm_misses[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_remove_miss_%s_total", cache.name(), OWNERSHIP[i])).value;
+         rm_hits[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_remove_hit_%s_total", cache.name(), OWNERSHIP[i])).value;
+      }
 
-         for (var i = 0; i < OWNERSHIP.length; ++i) {
-            reads[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_miss_%s_total", cache.name(), OWNERSHIP[i])).value;
-            writes[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_store_%s_total", cache.name(), OWNERSHIP[i])).value;
-            rm_misses[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_remove_miss_%s_total", cache.name(), OWNERSHIP[i])).value;
-            rm_hits[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_remove_hit_%s_total", cache.name(), OWNERSHIP[i])).value;
-         }
+      // 1 miss + 1 hit (remove performs a read before removing)
+      assertEquals(2, Arrays.stream(reads).sum());
 
-         // 1 miss + 1 hit (remove performs a read before removing)
-         assertEquals(2, Arrays.stream(reads).sum());
+      // 1 write
+      assertEquals(1, Arrays.stream(writes).sum());
 
-         // 1 write
-         assertEquals(1, Arrays.stream(writes).sum());
-
-         // The arrays must have the same position set
-         // If the request is sent to the primary owner, it is recorded as a hit.
-         // Because "IGNORE_RETURN_VALUES" flag is set, the back owner records it as a miss.
-         if (writes[0] == 1) {
-            assertArrayEquals(writes, rm_hits);
-         } else {
-            assertArrayEquals(writes, rm_misses);
-         }
+      // The arrays must have the same position set
+      // If the request is sent to the primary owner, it is recorded as a hit.
+      // Because "IGNORE_RETURN_VALUES" flag is set, the back owner records it as a miss.
+      if (writes[0] == 1) {
+         assertArrayEquals(writes, rm_hits);
+      } else {
+         assertArrayEquals(writes, rm_misses);
       }
    }
 
