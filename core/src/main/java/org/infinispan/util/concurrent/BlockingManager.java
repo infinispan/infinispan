@@ -11,6 +11,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
+import org.infinispan.factories.KnownComponentNames;
 import org.reactivestreams.Publisher;
 
 /**
@@ -210,7 +211,9 @@ public interface BlockingManager {
     * Returns the non blocking executor that this BlockingManager uses to resume tasks on when the task is not ran
     * inline with the invoking blocking thread.
     * @return an executor use for non blocking tasks
+    * @deprecated please use {@link NonBlockingManager#localExecutor()} or component {@link KnownComponentNames#NON_BLOCKING_EXECUTOR}
     */
+   @Deprecated
    Executor nonBlockingExecutor();
 
    /**
