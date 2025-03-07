@@ -6,6 +6,7 @@ import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.configuration.global.AbstractGlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -17,12 +18,12 @@ import io.micrometer.core.instrument.MeterRegistry;
  *
  * @since 15.0
  */
-public class MicrometerMeterRegisterConfigurationBuilder implements Builder<MicrometerMeterRegistryConfiguration> {
+public class MicrometerMeterRegisterConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<MicrometerMeterRegistryConfiguration> {
 
    private MeterRegistry meterRegistry;
 
    public MicrometerMeterRegisterConfigurationBuilder(GlobalConfigurationBuilder builder) {
-      //required because GlobalConfigurationBuilder#addModule uses reflection
+      super(builder);
    }
 
    @Override

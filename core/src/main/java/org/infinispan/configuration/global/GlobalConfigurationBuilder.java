@@ -172,6 +172,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return List.copyOf(modules.values());
    }
 
+   @Override
    public <T> T module(Class<T> moduleClass) {
       return (T) modules.get(moduleClass);
    }
@@ -191,6 +192,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return this;
    }
 
+   @Override
    public GlobalConfigurationBuilder clearModules() {
       modules.clear();
       return this;
@@ -201,6 +203,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return site;
    }
 
+   @Override
    public <T extends Builder<?>> T addModule(Class<T> klass) {
       try {
          Constructor<T> constructor = klass.getDeclaredConstructor(GlobalConfigurationBuilder.class);
