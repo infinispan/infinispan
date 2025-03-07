@@ -2,11 +2,15 @@ package org.infinispan.cache.impl;
 
 import static org.infinispan.util.logging.Log.CONTAINER;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.lang.annotation.Annotation;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -23,16 +27,23 @@ import java.util.stream.Collectors;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
+import org.infinispan.CachePublisher;
 import org.infinispan.CacheSet;
+import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.util.InjectiveFunction;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ForwardingCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
@@ -41,11 +52,15 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.ListenerHolder;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
+import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
+import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.util.WriteableCacheCollectionMapper;
 import org.infinispan.util.WriteableCacheSetMapper;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.function.SerializableBiFunction;
 import org.infinispan.util.function.SerializableFunction;
+import org.reactivestreams.Publisher;
+
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Cache decoration that makes use of the {@link Encoder} and {@link Wrapper} to convert between storage value and
@@ -1018,6 +1033,201 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       }
    }
 
+   private static class KeyFunctionEncoder<I, O> implements Function<Publisher<I>, O>, InjectableComponent {
+      private final Function<Publisher<I>, O> innerFunction;
+
+      private final DataConversion keyDataConversion;
+
+      private KeyFunctionEncoder(Function<Publisher<I>, O> innerFunction, DataConversion keyDataConversion) {
+         this.innerFunction = innerFunction;
+         this.keyDataConversion = keyDataConversion;
+      }
+
+      @Override
+      public O apply(Publisher<I> iPublisher) {
+         return innerFunction.apply(
+               Flowable.fromPublisher(iPublisher)
+                     .map(k -> (I) keyDataConversion.fromStorage(k)));
+      }
+
+      @Override
+      public void inject(ComponentRegistry registry) {
+         registry.wireDependencies(keyDataConversion);
+      }
+   }
+
+   private static class EntryFunctionEncoder<K, V, O> implements Function<Publisher<CacheEntry<K, V>>, O>, InjectableComponent {
+      private final Function<Publisher<CacheEntry<K, V>>, O> innerFunction;
+
+      private final EncoderEntryMapper<K, V, CacheEntry<K, V>> mapper;
+
+      private EntryFunctionEncoder(Function<Publisher<CacheEntry<K, V>>, O> innerFunction, EncoderEntryMapper<K, V, CacheEntry<K, V>> mapper) {
+         this.innerFunction = innerFunction;
+         this.mapper = mapper;
+      }
+
+      @Override
+      public O apply(Publisher<CacheEntry<K, V>> iPublisher) {
+         return innerFunction.apply(
+               Flowable.fromPublisher(iPublisher)
+                     .map(mapper::apply));
+      }
+
+      @Override
+      public void inject(ComponentRegistry registry) {
+         mapper.inject(registry);
+      }
+   }
+
+   public static class KeyFunctionExternalizer implements AdvancedExternalizer<KeyFunctionEncoder> {
+
+      @Override
+      public Set<Class<? extends KeyFunctionEncoder>> getTypeClasses() {
+         return Collections.singleton(KeyFunctionEncoder.class);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.ENCODER_KEY_FUNCTION;
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, KeyFunctionEncoder object) throws IOException {
+         output.writeObject(object.innerFunction);
+         DataConversion.writeTo(output, object.keyDataConversion);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public KeyFunctionEncoder readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return new KeyFunctionEncoder((Function) input.readObject(), DataConversion.readFrom(input));
+      }
+   }
+
+   public static class EntryFunctionExternalizer implements AdvancedExternalizer<EntryFunctionEncoder> {
+
+      @Override
+      public Set<Class<? extends EntryFunctionEncoder>> getTypeClasses() {
+         return Collections.singleton(EntryFunctionEncoder.class);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.ENCODER_ENTRY_FUNCTION;
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, EntryFunctionEncoder object) throws IOException {
+         output.writeObject(object.innerFunction);
+         output.writeObject(object.mapper);
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public EntryFunctionEncoder readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return new EntryFunctionEncoder((Function) input.readObject(), (EncoderEntryMapper) input.readObject());
+      }
+   }
+
+   class CachePublisherWrapper<A, B> implements CachePublisher<A, B> {
+      private final CachePublisher<A, B> delegate;
+
+      private CachePublisherWrapper(CachePublisher<A, B> delegate) {
+         this.delegate = delegate;
+      }
+
+      @Override
+      public CachePublisher<A, B> parallelReduction(boolean parallel) {
+         CachePublisher<A, B> p = delegate.parallelReduction(parallel);
+         if (p != delegate) {
+            return new CachePublisherWrapper<>(p);
+         }
+         return this;
+      }
+
+      @Override
+      public CachePublisher<A, B> batchSize(int batchSize) {
+         CachePublisher<A, B> p = delegate.batchSize(batchSize);
+         if (p != delegate) {
+            return new CachePublisherWrapper<>(p);
+         }
+         return this;
+      }
+
+      @Override
+      public CachePublisher<A, B> filterKeys(Set<? extends A> keys) {
+         CachePublisher<A, B> p = delegate.filterKeys(keys);
+         if (p != delegate) {
+            return new CachePublisherWrapper<>(p);
+         }
+         return this;
+      }
+
+      @Override
+      public CachePublisher<A, B> filterSegments(IntSet segments) {
+         CachePublisher<A, B> p = delegate.filterSegments(segments);
+         if (p != delegate) {
+            return new CachePublisherWrapper<>(p);
+         }
+         return this;
+      }
+
+      @Override
+      public CachePublisher<A, B> deliveryGuarantee(DeliveryGuarantee guarantee) {
+         CachePublisher<A, B> p = delegate.deliveryGuarantee(guarantee);
+         if (p != delegate) {
+            return new CachePublisherWrapper<>(p);
+         }
+         return this;
+      }
+
+      @Override
+      public <R> CompletionStage<R> keyReduction(Function<? super Publisher<A>, ? extends CompletionStage<R>> transformer, Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+         Function<Publisher<A>, CompletionStage<R>> castFunc = (Function<Publisher<A>, CompletionStage<R>>) transformer;
+         return delegate.keyReduction(new KeyFunctionEncoder<>(castFunc, keyDataConversion), finalizer);
+      }
+
+      @Override
+      public <R> CompletionStage<R> keyReduction(SerializableFunction<? super Publisher<A>, ? extends CompletionStage<R>> transformer, SerializableFunction<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+         return keyReduction((Function<? super Publisher<A>, ? extends CompletionStage<R>>) transformer, finalizer);
+      }
+
+      @Override
+      public <R> CompletionStage<R> entryReduction(Function<? super Publisher<CacheEntry<A, B>>, ? extends CompletionStage<R>> transformer, Function<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+         Function<Publisher<CacheEntry<A, B>>, CompletionStage<R>> castFunc = (Function<Publisher<CacheEntry<A, B>>, CompletionStage<R>>) transformer;
+         return delegate.entryReduction(new EntryFunctionEncoder<>(castFunc,
+               EncoderEntryMapper.newCacheEntryMapper(keyDataConversion, valueDataConversion, entryFactory)), finalizer);
+      }
+
+      @Override
+      public <R> CompletionStage<R> entryReduction(SerializableFunction<? super Publisher<CacheEntry<A, B>>, ? extends CompletionStage<R>> transformer, SerializableFunction<? super Publisher<R>, ? extends CompletionStage<R>> finalizer) {
+         return entryReduction((Function<? super Publisher<CacheEntry<A,B>>, ? extends CompletionStage<R>>) transformer, finalizer);
+      }
+
+      @Override
+      public <R> SegmentPublisherSupplier<R> keyPublisher(Function<? super Publisher<A>, ? extends Publisher<R>> transformer) {
+         Function<Publisher<A>, Publisher<R>> castFunc = (Function<Publisher<A>, Publisher<R>>) transformer;
+         return delegate.keyPublisher(new KeyFunctionEncoder<>(castFunc, keyDataConversion));
+      }
+
+      @Override
+      public <R> SegmentPublisherSupplier<R> keyPublisher(SerializableFunction<? super Publisher<A>, ? extends Publisher<R>> transformer) {
+         return keyPublisher((Function<? super Publisher<A>, ? extends Publisher<R>>) transformer);
+      }
+
+      @Override
+      public <R> SegmentPublisherSupplier<R> entryPublisher(Function<? super Publisher<CacheEntry<A, B>>, ? extends Publisher<R>> transformer) {
+         Function<Publisher<CacheEntry<A, B>>, Publisher<R>> castFunc = (Function<Publisher<CacheEntry<A, B>>, Publisher<R>>) transformer;
+         return delegate.entryPublisher(new EntryFunctionEncoder<>(castFunc,
+               EncoderEntryMapper.newCacheEntryMapper(keyDataConversion, valueDataConversion, entryFactory)));
+      }
+
+      @Override
+      public <R> SegmentPublisherSupplier<R> entryPublisher(SerializableFunction<? super Publisher<CacheEntry<A, B>>, ? extends Publisher<R>> transformer) {
+         return entryPublisher((Function<? super Publisher<CacheEntry<A,B>>, ? extends Publisher<R>>) transformer);
+      }
+   }
+
    @Override
    public CompletableFuture<V> getAsync(K key) {
       CompletableFuture<V> future = cache.getAsync(keyToStorage(key));
@@ -1121,5 +1331,10 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    public CompletableFuture<CacheEntry<K, V>> removeAsyncEntry(Object key) {
       K keyToStorage = keyToStorage(key);
       return cache.removeAsyncEntry(keyToStorage).thenApply(e -> unwrapCacheEntry(key, keyToStorage, e));
+   }
+
+   @Override
+   public CachePublisher<K, V> cachePublisher() {
+      return new CachePublisherWrapper<>(cache.cachePublisher());
    }
 }

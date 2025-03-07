@@ -3,6 +3,7 @@ package org.infinispan.marshall.core;
 import java.util.Set;
 
 import org.infinispan.cache.impl.BiFunctionMapper;
+import org.infinispan.cache.impl.EncoderCache;
 import org.infinispan.cache.impl.EncoderEntryMapper;
 import org.infinispan.cache.impl.EncoderKeyMapper;
 import org.infinispan.cache.impl.EncoderValueMapper;
@@ -230,6 +231,8 @@ final class InternalExternalizers {
       addInternalExternalizer(new EncoderKeyMapper.Externalizer(), exts);
       addInternalExternalizer(new EncoderValueMapper.Externalizer(), exts);
       addInternalExternalizer(new EncoderEntryMapper.Externalizer(), exts);
+      addInternalExternalizer(new EncoderCache.KeyFunctionExternalizer(), exts);
+      addInternalExternalizer(new EncoderCache.EntryFunctionExternalizer(), exts);
       addInternalExternalizer(new IntSetExternalizer(), exts);
       addInternalExternalizer(new DataConversion.Externalizer(), exts);
       addInternalExternalizer(new ScopedState.Externalizer(), exts);
