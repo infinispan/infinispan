@@ -289,6 +289,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Error while reloading certificate", id = 970)
    RuntimeException certificateReloadError(@Cause Exception ex);
 
+   @Message(value = "Invalid value %s for attribute %s: must be a number less than " + Integer.MAX_VALUE, id = 971)
+   CacheConfigurationException attributeMustBeAnInteger(Number value, Enum<?> attribute);
+
    @Message(value = "Cannot instantiate class '%s'", id = 29523)
    CacheConfigurationException cannotInstantiateClass(String classname, @Suppressed Throwable t);
 }

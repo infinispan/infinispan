@@ -10,6 +10,7 @@ constants org.infinispan.server.memcached.binary.BinaryConstants;
 // methods vInt, vLong, array, byte...
 intrinsics org.infinispan.server.memcached.binary.BinaryIntrinsics;
 
+import io.netty.handler.codec.TooLongFrameException;
 import java.time.Instant;
 import java.time.temporal.Temporal;
 import org.infinispan.server.memcached.MemcachedServer;
@@ -23,8 +24,13 @@ init {
 }
 
 exceptionally {
-   log.trace("Parsing error", t);
    state = 0;
+   if (t instanceof TooLongFrameException tlfe) {
+      log.requestTooLarge(ctx.channel(), tlfe);
+      ctx.close();
+      return;
+   }
+   log.trace("Parsing error", t);
 }
 
 deadend {
@@ -37,7 +43,8 @@ deadend {
 
 // this is the root
 root request
-   : magic { requestStart = Instant.now(); }
+   : { posBefore = buf.readerIndex(); }
+     magic { requestStart = Instant.now(); }
      header { if (log.isTraceEnabled()) log.tracef("Parsed header: %s", header); }
      parameters
    ;
@@ -65,12 +72,12 @@ valueLength returns int
    : { totalBodyLength - keyLength - extrasLength };
 
 key returns byte[]
-   :  { keyLength > 0 }? fixedArray[keyLength]
+   :  { keyLength > 0 }? fixedArray[keyLength, bytesAvailable(buf, requestBytes)]
    |  { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
    ;
 
 value returns byte[]
-   : { valueLength > 0 }? fixedArray[valueLength]
+   : { valueLength > 0 }? fixedArray[valueLength, bytesAvailable(buf, requestBytes)]
    |  { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
    ;
 

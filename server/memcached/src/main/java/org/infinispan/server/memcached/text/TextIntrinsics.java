@@ -10,6 +10,7 @@ import java.util.List;
 import org.infinispan.server.core.transport.ExtendedByteBufJava;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.TooLongFrameException;
 import io.netty.util.Signal;
 
 public class TextIntrinsics {
@@ -26,7 +27,10 @@ public class TextIntrinsics {
       } else return 0;
    }
 
-   public static byte[] fixedArray(ByteBuf b, int length) {
+   public static byte[] fixedArray(ByteBuf b, int length, int maxArrayLength) {
+      if (maxArrayLength > 0 && length > maxArrayLength) {
+         throw new TooLongFrameException("Array length " + length + " exceeded " + maxArrayLength);
+      }
       b.markReaderIndex();
       return ExtendedByteBufJava.readMaybeRangedBytes(b, length);
    }
@@ -66,9 +70,9 @@ public class TextIntrinsics {
       }
    }
 
-   public static long long_number(ByteBuf buf, TokenReader reader) {
+   public static long long_number(ByteBuf buf, TokenReader reader, int bytesAvailable) {
       int index = buf.readerIndex();
-      ByteBuf s = token(buf, reader.forToken(NUMBERS));
+      ByteBuf s = token(buf, reader.forToken(NUMBERS, bytesAvailable));
       if (s == null) {
          return 0;
       } else if (s.isReadable()) {
@@ -82,9 +86,9 @@ public class TextIntrinsics {
       }
    }
 
-   public static int int_number(ByteBuf buf, TokenReader reader) {
+   public static int int_number(ByteBuf buf, TokenReader reader, int bytesAvailable) {
       int index = buf.readerIndex();
-      ByteBuf s = token(buf, reader.forToken(NUMBERS));
+      ByteBuf s = token(buf, reader.forToken(NUMBERS, bytesAvailable));
       if (s == null) {
          return 0;
       } else if (s.isReadable()) {
@@ -99,9 +103,9 @@ public class TextIntrinsics {
       }
    }
 
-   public static TextCommand command(ByteBuf buf, TokenReader reader) {
+   public static TextCommand command(ByteBuf buf, TokenReader reader, int bytesAvailable) {
       int index = buf.readerIndex();
-      ByteBuf id = token(buf, reader.forToken(LETTERS));
+      ByteBuf id = token(buf, reader.forToken(LETTERS, bytesAvailable));
       try {
          return id == null ? null : TextCommand.valueOf(id);
       } catch (IllegalArgumentException e) {
@@ -113,8 +117,8 @@ public class TextIntrinsics {
       }
    }
 
-   public static byte[] text(ByteBuf buf, TokenReader reader) {
-      ByteBuf s = token(buf, reader.forToken(TEXT));
+   public static byte[] text(ByteBuf buf, TokenReader reader, int bytesAvailable) {
+      ByteBuf s = token(buf, reader.forToken(TEXT, bytesAvailable));
       if (s == null || !s.isReadable()) {
          return null;
       } else {
@@ -124,9 +128,9 @@ public class TextIntrinsics {
       }
    }
 
-   public static byte[] text_key(ByteBuf buf, TokenReader reader) {
+   public static byte[] text_key(ByteBuf buf, TokenReader reader, int bytesAvailable) {
       int index = buf.readerIndex();
-      ByteBuf s = token(buf, reader.forToken(TEXT));
+      ByteBuf s = token(buf, reader.forToken(TEXT, bytesAvailable));
       if (s == null || !s.isReadable()) {
          return null;
       } else if (s.readableBytes() > 250) {
@@ -142,20 +146,20 @@ public class TextIntrinsics {
       }
    }
 
-   public static List<byte[]> text_list(ByteBuf buf, TokenReader reader) {
-      return readByteList(buf, reader);
+   public static List<byte[]> text_list(ByteBuf buf, TokenReader reader, int bytesAvailable) {
+      return readByteList(buf, reader, bytesAvailable);
    }
 
-   public static List<byte[]> text_key_list(ByteBuf buf, TokenReader reader) {
-      return readByteList(buf, reader);
+   public static List<byte[]> text_key_list(ByteBuf buf, TokenReader reader, int bytesAvailable) {
+      return readByteList(buf, reader, bytesAvailable);
    }
 
-   private static List<byte[]> readByteList(ByteBuf buf, TokenReader reader) {
+   private static List<byte[]> readByteList(ByteBuf buf, TokenReader reader, int bytesAvailable) {
       buf.markReaderIndex();
       List<byte[]> list = new ArrayList<>();
       while (true) {
          int r = buf.readerIndex();
-         byte[] b = text_key(buf, reader);
+         byte[] b = text_key(buf, reader, bytesAvailable);
          if (b == null) {
             // If element is null and still same index on reader, the buffer is not complete to read the next element.
             if (buf.readerIndex() == r) {

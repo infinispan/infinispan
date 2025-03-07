@@ -25,6 +25,7 @@ import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.ValidIdRange;
 
 import io.netty.channel.Channel;
+import io.netty.handler.codec.TooLongFrameException;
 import io.netty.handler.ipfilter.IpFilterRule;
 
 /**
@@ -223,4 +224,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Unable to read backup '%s'", id = 5063)
    CacheException unableToReadBackup(Path backup, @Cause IOException e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Request was too long, closing socket to '%s'", id = 5064)
+   void requestTooLarge(Channel channel, @Cause TooLongFrameException e);
 }

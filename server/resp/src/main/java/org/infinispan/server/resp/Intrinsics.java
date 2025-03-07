@@ -3,6 +3,7 @@ package org.infinispan.server.resp;
 import java.nio.charset.StandardCharsets;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.TooLongFrameException;
 import io.netty.util.ByteProcessor;
 
 public class Intrinsics {
@@ -14,10 +15,11 @@ public class Intrinsics {
       } else return 0;
    }
 
-   public static String simpleString(ByteBuf buf) {
+   public static String simpleString(ByteBuf buf, int lengthMaximum) {
       // Find the end LF (would be nice to do this without iterating twice)
       int offset = buf.forEachByte(ByteProcessor.FIND_LF);
       if (offset <= 0) {
+         assertArrayLength(buf.readableBytes(), lengthMaximum);
          return null;
       }
       if (buf.getByte(offset - 1) != '\r') {
@@ -29,10 +31,11 @@ public class Intrinsics {
       return simpleString;
    }
 
-   public static RespCommand simpleCommand(ByteBuf buf) {
+   public static RespCommand simpleCommand(ByteBuf buf, int maxArraySize) {
       // Find the end LF (would be nice to do this without iterating twice)
       int offset = buf.forEachByte(ByteProcessor.FIND_LF);
       if (offset <= 0) {
+         assertArrayLength(buf.readableBytes(), maxArraySize);
          return null;
       }
       if (buf.getByte(offset - 1) != '\r') {
@@ -50,10 +53,11 @@ public class Intrinsics {
       return value;
    }
 
-   public static byte[] readTerminatedBytes(ByteBuf buf) {
+   public static byte[] readTerminatedBytes(ByteBuf buf, int maxArraySize) {
       // Find the end LF (would be nice to do this without iterating twice)
       int offset = buf.forEachByte(ByteProcessor.FIND_LF);
       if (offset <= 0) {
+         assertArrayLength(buf.readableBytes(), maxArraySize);
          return null;
       }
       if (buf.getByte(offset - 1) != '\r') {
@@ -91,29 +95,38 @@ public class Intrinsics {
       return size;
    }
 
-   public static String bulkString(ByteBuf buf, Resp2LongProcessor longProcessor) {
+   private static void assertArrayLength(int length, int lengthMaximum) {
+      if (lengthMaximum >= 0 && length > lengthMaximum) {
+         throw new TooLongFrameException("Array length " + length + " exceeded " + lengthMaximum);
+      }
+   }
+
+   public static String bulkString(ByteBuf buf, Resp2LongProcessor longProcessor, int maxArraySize) {
       int size = readSizeAndCheckRemainder(buf, longProcessor);
       if (size == -1) {
          return null;
       }
+      assertArrayLength(size, maxArraySize);
       String stringValue = buf.toString(buf.readerIndex(), size, StandardCharsets.US_ASCII);
       buf.skipBytes(size + TERMINATOR_LENGTH);
       return stringValue;
    }
 
-   public static RespCommand bulkCommand(ByteBuf buf, Resp2LongProcessor longProcessor) {
+   public static RespCommand bulkCommand(ByteBuf buf, Resp2LongProcessor longProcessor, int maxArraySize) {
       int size = readSizeAndCheckRemainder(buf, longProcessor);
       if (size == -1) {
          return null;
       }
+      assertArrayLength(size, maxArraySize);
       return RespCommand.fromByteBuf(buf, size);
    }
 
-   public static byte[] bulkArray(ByteBuf buf, Resp2LongProcessor longProcessor) {
+   public static byte[] bulkArray(ByteBuf buf, Resp2LongProcessor longProcessor, int maxArraySize) {
       int size = readSizeAndCheckRemainder(buf, longProcessor);
       if (size == -1) {
          return null;
       }
+      assertArrayLength(size, maxArraySize);
       byte[] array = new byte[size];
       buf.readBytes(array);
       buf.skipBytes(TERMINATOR_LENGTH);
@@ -155,7 +168,9 @@ public class Intrinsics {
             return false;
          }
 
-         bytesRead++;
+         if (++bytesRead > 8) {
+            throw new TooLongFrameException("Long value exceeded 8 bytes");
+         }
 
          if (first) {
             first = false;

@@ -1718,6 +1718,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
                CONFIG.ignoredAttribute(attribute.toString(), "14.0", attribute.name(), reader.getLocation().getLineNumber());
                break;
             }
+            case MAX_CONTENT_LENGTH: {
+               builder.maxContentLength(value);
+               break;
+            }
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }

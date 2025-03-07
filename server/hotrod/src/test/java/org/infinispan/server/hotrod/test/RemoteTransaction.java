@@ -103,7 +103,7 @@ public class RemoteTransaction {
 
    public void prepareAndAssert(int expectedXaCode) {
       final String message = format("[XID=%s] Wrong XA return code for prepare", xid);
-      assertEquals(message, expectedXaCode, prepare().xaCode);
+      assertEquals(message, expectedXaCode, ((TxResponse) prepare()).xaCode);
    }
 
    public void prepareAndAssert(HotRodClient another, int expectedXaCode) {
@@ -114,7 +114,7 @@ public class RemoteTransaction {
 
    public void commitAndAssert(int expectedXaCode) {
       final String message = format("[XID=%s] Wrong XA return code for commit", xid);
-      assertEquals(message, expectedXaCode, commit().xaCode);
+      assertEquals(message, expectedXaCode, ((TxResponse) commit()).xaCode);
    }
 
    public void commitAndAssert(HotRodClient another, int expectedXaCode) {
@@ -162,14 +162,14 @@ public class RemoteTransaction {
       return performGet(key).value;
    }
 
-   private TxResponse prepare() {
+   public TestResponse prepare() {
       log.debugf("PREPARE[%s]", xid);
-      return (TxResponse) client.prepareTx(xid, false, modifications());
+      return client.prepareTx(xid, false, modifications());
    }
 
-   private TxResponse commit() {
+   public TestResponse commit() {
       log.debugf("COMMIT[%s]", xid);
-      return (TxResponse) client.commitTx(xid);
+      return client.commitTx(xid);
    }
 
    private List<TxWrite> modifications() {
