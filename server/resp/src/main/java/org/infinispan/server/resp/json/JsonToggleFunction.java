@@ -55,8 +55,13 @@ public class JsonToggleFunction
             ArrayNode node = getForContext.read(pathAsText);
             if (node.get(0).isBoolean()) {
                boolean currentBolValue = node.get(0).asBoolean();
-               modifiableCtx.set(pathAsText, currentBolValue? BooleanNode.FALSE : BooleanNode.TRUE);
                resList.add(currentBolValue? 0 : 1);
+               if (JSONUtil.isRoot(pathAsText.getBytes(StandardCharsets.UTF_8))) {
+                  entryView.set(new JsonBucket(Boolean.toString(currentBolValue ? false : true).getBytes(StandardCharsets.UTF_8)));
+                  // changed root, returning
+                  return resList;
+               }
+               modifiableCtx.set(pathAsText, currentBolValue? BooleanNode.FALSE : BooleanNode.TRUE);
                changed = true;
             } else {
                resList.add(null);
