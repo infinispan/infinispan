@@ -7,7 +7,6 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.RespUtil;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.json.EmbeddedJsonCache;
-import org.infinispan.server.resp.json.LenType;
 import org.infinispan.server.resp.serialization.Resp3Type;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
@@ -22,7 +21,6 @@ import java.util.function.BiConsumer;
  */
 public abstract class JSONLEN extends RespCommand implements Resp3Command {
 
-    private LenType lenType;
     private boolean includePathOnError;
 
     public JSONLEN(String commandName) {
@@ -31,7 +29,6 @@ public abstract class JSONLEN extends RespCommand implements Resp3Command {
 
     public JSONLEN(String commandName, boolean includePathOnError) {
         super(commandName, -2, 1, 1, 1);
-        this.lenType = LenType.fromCommand(commandName);
         this.includePathOnError = includePathOnError;
     }
 
@@ -45,18 +42,20 @@ public abstract class JSONLEN extends RespCommand implements Resp3Command {
                                                        List<byte[]> arguments) {
         JSONCommandArgumentReader.CommandArgs commandArgs = JSONCommandArgumentReader.readCommandArgs(arguments);
         EmbeddedJsonCache ejc = handler.getJsonCache();
-        CompletionStage<List<Long>> lengths = ejc.len(commandArgs.key(), commandArgs.jsonPath(), lenType);
+        CompletionStage<List<Long>> lengths = len(ejc, commandArgs.key(), commandArgs.jsonPath());
         if (commandArgs.isLegacy()) {
-            return handler.stageToReturn(lengths, ctx, JSONLEN::integerOrNullWriter);
+            return handler.stageToReturn(lengths, ctx, legacyOutput(commandArgs.path()));
         }
-        return handler.stageToReturn(lengths, ctx, newArrayOrErrorWriter(commandArgs.jsonPath()));
+        return handler.stageToReturn(lengths, ctx, newArrayOrErrorWriter(commandArgs.path()));
     }
+
+    protected abstract CompletionStage<List<Long>> len(EmbeddedJsonCache ejc, byte[] key, byte[] path);
 
     BiConsumer<List<Long>, ResponseWriter> newArrayOrErrorWriter(byte[] path) {
         return (c, writer) -> {
-            if (c == null || c.size() == 0) {
+            if (c == null) {
                 if (includePathOnError) {
-                    throw new RuntimeException("Path '" + RespUtil.ascii(path) + "' does not exist or not an object");
+                    raiseTypeError(path);
                 }
                 throw new RuntimeException("could not perform this operation on a key that doesn't exist");
             }
@@ -64,11 +63,19 @@ public abstract class JSONLEN extends RespCommand implements Resp3Command {
         };
     }
 
-    static void integerOrNullWriter(List<Long> c, ResponseWriter w) {
-        if (c == null || c.size() == 0) {
-            w.nulls();
-        } else {
-            w.integers(c.get(0));
-        }
+    protected abstract void raiseTypeError(byte[] path);
+
+    BiConsumer<List<Long>, ResponseWriter> legacyOutput(byte[] path) {
+        return (c, writer) -> {
+            if (c == null) {
+                writer.nulls();
+            } else if (c.isEmpty()) {
+                throw new RuntimeException("Path '" + RespUtil.ascii(path) + "' does not exist");
+            } else if (c.get(0) == null) {
+                raiseTypeError(path);
+            } else {
+                writer.integers(c.get(0));
+            }
+        };
     }
 }

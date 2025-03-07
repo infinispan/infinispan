@@ -109,7 +109,7 @@ public class JsonArrindexFunction
         }
 
         @Override
-        public JsonArrindexFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+        public JsonArrindexFunction readObject(ObjectInput input) throws IOException {
             byte[] jsonPath = JSONUtil.readBytes(input);
             byte[] value = JSONUtil.readBytes(input);
             int start = input.readInt();
