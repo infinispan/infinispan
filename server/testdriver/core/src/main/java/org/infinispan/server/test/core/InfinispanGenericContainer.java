@@ -19,6 +19,7 @@ public class InfinispanGenericContainer {
 
    private final GenericContainer genericContainer;
    private final String containerId;
+   private boolean isKilled = false;
 
    public InfinispanGenericContainer(GenericContainer genericContainer) {
       this.containerId = genericContainer.getContainerId();
@@ -57,6 +58,14 @@ public class InfinispanGenericContainer {
    public boolean isPaused() {
       InspectContainerResponse containerInfo = containerInfo();
       return containerInfo != null ? containerInfo.getState().getPaused() : false;
+   }
+
+   public boolean isKilled() {
+      return isKilled;
+   }
+
+   public void setKilled(boolean isKilled) {
+      this.isKilled = isKilled;
    }
 
    public ContainerNetwork getContainerNetwork() {
