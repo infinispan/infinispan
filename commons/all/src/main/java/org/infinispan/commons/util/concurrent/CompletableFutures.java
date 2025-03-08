@@ -23,8 +23,6 @@ import org.infinispan.commons.CacheException;
  * @since 8.0
  */
 public final class CompletableFutures {
-   public static final CompletableFuture[] EMPTY_ARRAY = new CompletableFuture[0];
-
    private static final CompletableFuture<Boolean> completedTrueFuture = CompletableFuture.completedFuture(Boolean.TRUE);
    private static final CompletableFuture<Boolean> completedFalseFuture = CompletableFuture.completedFuture(Boolean.FALSE);
    private static final CompletableFuture<?> completedEmptyMapFuture = CompletableFuture.completedFuture(Collections.emptyMap());
@@ -67,7 +65,7 @@ public final class CompletableFutures {
    /**
     * It waits until the {@link CompletableFuture} is completed.
     * <p>
-    * It ignore if the {@link CompletableFuture} is completed normally or exceptionally.
+    * It ignores if the {@link CompletableFuture} is completed normally or exceptionally.
     *
     * @param future the {@link CompletableFuture} to test.
     * @param time   the timeout.

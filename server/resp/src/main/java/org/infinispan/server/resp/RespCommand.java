@@ -1,8 +1,5 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.commands.Commands.ALL_COMMANDS;
-import static org.infinispan.server.resp.serialization.RespConstants.CRLF;
-
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +8,7 @@ import java.util.function.Consumer;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.server.resp.commands.BaseResp3Command;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.infinispan.server.resp.serialization.bytebuf.ByteBufferUtils;
@@ -18,8 +16,10 @@ import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import static org.infinispan.server.resp.commands.Commands.ALL_COMMANDS;
+import static org.infinispan.server.resp.serialization.RespConstants.CRLF;
 
-public abstract class RespCommand {
+public abstract class RespCommand implements BaseResp3Command {
    protected final static Log log = LogFactory.getLog(RespCommand.class, Log.class);
    private final String name;
    private final int arity;
@@ -33,13 +33,9 @@ public abstract class RespCommand {
       // A positive integer means a fixed number of arguments.
       // A negative integer means a minimal number of arguments.
       int numberOfArgs = Math.abs(arity) - 1;
-      if ((arity > 0 && arguments.size() != numberOfArgs)
-            || (arity < 0 && arguments.size() < numberOfArgs)) {
-         // ERROR
-         return false;
-      }
-
-      return true;
+      // ERROR
+      return (arity <= 0 || arguments.size() == numberOfArgs)
+            && (arity >= 0 || arguments.size() >= numberOfArgs);
    }
 
    public CompletionStage<RespRequestHandler> handleException(RespRequestHandler handler, Throwable t) {
@@ -120,6 +116,24 @@ public abstract class RespCommand {
       return null;
    }
 
+   public static RespCommand fromString(String s) {
+      char c0 = s.charAt(0);
+      byte ignoreCase = c0 >= 97 ? (byte) (c0 - 97) : (byte) (c0 - 65);
+      if (ignoreCase < 0 || ignoreCase > 25) {
+         return null;
+      }
+      RespCommand[] target = ALL_COMMANDS[ignoreCase];
+      if (target == null) {
+         return null;
+      }
+      for (RespCommand possible : target) {
+         if (RespUtil.isAsciiBytesEquals(possible.bytes, s)) {
+            return possible;
+         }
+      }
+      return null;
+   }
+
    public final boolean match(byte[] other) {
       return match(Unpooled.wrappedBuffer(other), other.length, 0);
    }
@@ -192,8 +206,6 @@ public abstract class RespCommand {
       }
       return keys.toArray(Util.EMPTY_BYTE_ARRAY_ARRAY);
    }
-
-   public abstract long aclMask();
 
    @Override
    public String toString() {

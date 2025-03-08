@@ -28,7 +28,6 @@ import org.infinispan.server.resp.RespServer;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.serialization.JavaObjectSerializer;
 import org.infinispan.server.resp.serialization.Resp3Type;
-import org.infinispan.server.resp.serialization.RespConstants;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.infinispan.topology.CacheTopology;
 
@@ -51,10 +50,12 @@ import net.jcip.annotations.GuardedBy;
 public class SLOTS extends RespCommand implements Resp3Command {
 
    private static final BiConsumer<List<SlotInformation>, ResponseWriter> SERIALIZER = (res, writer) -> {
-      writer.writeNumericPrefix(RespConstants.ARRAY, res.size());
+      writer.arrayStart(res.size());
       for (SlotInformation si : res) {
+         writer.arrayNext();
          writer.write(si, si);
       }
+      writer.arrayEnd();
    };
 
    @GuardedBy("this")
@@ -181,24 +182,32 @@ public class SLOTS extends RespCommand implements Resp3Command {
       @Override
       public void accept(SlotInformation si, ResponseWriter writer) {
          int size = 2 + si.info.size();
-         writer.writeNumericPrefix(RespConstants.ARRAY, size);
-
+         writer.arrayStart(size);
+         writer.arrayNext();
          writer.integers(si.start());
+         writer.arrayNext();
          writer.integers(si.end());
          for (NodeInformation ni : si.info) {
+            writer.arrayNext();
             writer.write(ni, ni);
          }
+         writer.arrayEnd();
       }
    }
 
    private record NodeInformation(String host, Integer port, String name, List<String> metadata) implements JavaObjectSerializer<NodeInformation> {
       @Override
       public void accept(NodeInformation ignore, ResponseWriter writer) {
-         writer.writeNumericPrefix(RespConstants.ARRAY, 4);
+         writer.arrayStart(4);
+         writer.arrayNext();
          writer.string(host);
+         writer.arrayNext();
          writer.integers(port);
+         writer.arrayNext();
          writer.string(name);
+         writer.arrayNext();
          writer.array(metadata, Resp3Type.BULK_STRING);
+         writer.arrayEnd();
       }
 
       private static NodeInformation create(List<Object> values) {

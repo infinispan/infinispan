@@ -10,7 +10,6 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Commands;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.serialization.JavaObjectSerializer;
-import org.infinispan.server.resp.serialization.RespConstants;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -25,10 +24,12 @@ public class COMMAND extends RespCommand implements Resp3Command {
    public static final String NAME = "COMMAND";
    private static final JavaObjectSerializer<Object> SERIALIZER = (ignore, writer) -> {
       List<RespCommand> commands = Commands.all();
-      writer.writeNumericPrefix(RespConstants.ARRAY, commands.size());
+      writer.arrayStart(commands.size());
       for (RespCommand command : commands) {
+         writer.arrayNext();
          describeCommand(command, writer);
       }
+      writer.arrayEnd();
    };
 
    public COMMAND() {
@@ -55,28 +56,49 @@ public class COMMAND extends RespCommand implements Resp3Command {
 
    private static void describeCommand(RespCommand command, ResponseWriter writer) {
       // Each command has 10 subsections.
-      writer.writeNumericPrefix(RespConstants.ARRAY, 10);
+      writer.arrayStart(10);
+
       // Name
+      writer.arrayNext();
       writer.simpleString(command.getName());
+
       // Arity
+      writer.arrayNext();
       writer.integers(command.getArity());
+
       // Flags, a set
+      writer.arrayNext();
       writer.emptySet();
+
       // First key
+      writer.arrayNext();
       writer.integers(command.getFirstKeyPos());
+
       // Last key
+      writer.arrayNext();
       writer.integers(command.getLastKeyPos());
+
       // Step
+      writer.arrayNext();
       writer.integers(command.getSteps());
 
       // Additional command metadata
       // ACL categories
+      writer.arrayNext();
       writer.emptySet();
+
       // Tips
+      writer.arrayNext();
       writer.emptySet();
+
       // Key specifications
+      writer.arrayNext();
       writer.emptySet();
+
       // Subcommands
+      writer.arrayNext();
       writer.emptySet();
+
+      writer.arrayEnd();
    }
 }

@@ -2,6 +2,8 @@ package org.infinispan.server.resp;
 
 import static org.infinispan.commons.logging.Log.CONFIG;
 
+import java.util.Random;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.Log;
@@ -12,6 +14,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
@@ -24,6 +27,8 @@ import org.infinispan.server.resp.filter.ComposedFilterConverterFactory;
 import org.infinispan.server.resp.filter.GlobMatchFilterConverterFactory;
 import org.infinispan.server.resp.filter.RespTypeFilterConverterFactory;
 import org.infinispan.server.resp.meta.MetadataRepository;
+import org.infinispan.server.resp.scripting.LuaTaskEngine;
+import org.infinispan.tasks.TaskManager;
 import org.infinispan.transaction.LockingMode;
 
 import io.netty.channel.Channel;
@@ -48,6 +53,8 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    private ExternalSourceIterationManager dataStructureIterationManager;
    private TimeService timeService;
    private SegmentSlotRelation segmentSlots;
+   private LuaTaskEngine luaTaskEngine;
+   private final Random random = new Random(); // TODO: we should be able to set a cluster-wide seed
 
    public RespServer() {
       super("Resp");
@@ -115,7 +122,17 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
          }
          segmentSlots = new SegmentSlotRelation(explicitConfiguration.clustering().hash().numSegments());
       }
+      initializeLuaTaskEngine(gcr);
       super.startInternal();
+   }
+
+   // To be replaced for svm
+   private void initializeLuaTaskEngine(GlobalComponentRegistry gcr) {
+      // Register the task engine with the task manager
+      ScriptingManager scriptingManager = gcr.getComponent(ScriptingManager.class);
+      luaTaskEngine = new LuaTaskEngine(scriptingManager);
+      TaskManager taskManager = gcr.getComponent(TaskManager.class);
+      taskManager.registerTaskEngine(luaTaskEngine);
    }
 
    @Override
@@ -139,9 +156,16 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
       return channel -> channel.pipeline().get(RespDecoder.class) != null;
    }
 
+   public LuaTaskEngine luaEngine() {
+      return luaTaskEngine;
+   }
+
    @Override
    public void stop() {
       super.stop();
+      if (luaTaskEngine != null) {
+         luaTaskEngine.shutdown();
+      }
    }
 
    /**
@@ -178,5 +202,9 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
 
    public MetadataRepository metadataRepository() {
       return metadataRepository;
+   }
+
+   public Random random() {
+      return random;
    }
 }

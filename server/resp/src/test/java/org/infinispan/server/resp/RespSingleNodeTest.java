@@ -83,7 +83,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
 
    @Override
    public Object[] factory() {
-      return new Object[] {
+      return new Object[]{
             new RespSingleNodeTest(),
             new RespSingleNodeTest().withAuthorization(),
             new RespSingleNodeTest().simpleCache(),
@@ -268,22 +268,22 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    public void testDelNonStrings() {
       RedisCommands<String, String> redis = redisConnection.sync();
       // DEL non string
-      redis.rpush("list1", "v1","v2","v3");
+      redis.rpush("list1", "v1", "v2", "v3");
       long c = redis.del("list1");
       assertThat(c).isEqualTo(1);
       // DEL non string and string
       redis.sadd("set1", "v1", "v2", "v3");
       redis.set("string1", "v1");
-      c = redis.del("set1","string1");
+      c = redis.del("set1", "string1");
       assertThat(c).isEqualTo(2);
       // DEL non string and non string
-      redis.rpush("list1", "v1","v2","v3");
+      redis.rpush("list1", "v1", "v2", "v3");
       redis.sadd("set1", "v1", "v2", "v3");
-      c = redis.del("list1","set1");
+      c = redis.del("list1", "set1");
       assertThat(c).isEqualTo(2);
       // DEL non string and non existent
       redis.sadd("set1", "v1", "v2", "v3");
-      c = redis.del("set1","non-existent");
+      c = redis.del("set1", "non-existent");
       assertThat(c).isEqualTo(1);
    }
 
@@ -307,11 +307,11 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
 
    @Test
    public void testPingArg() {
-      RedisCodec<String,String> codec = StringCodec.UTF8;
+      RedisCodec<String, String> codec = StringCodec.UTF8;
       RedisCommands<String, String> redis = redisConnection.sync();
       assertThat(redis.dispatch(CommandType.PING,
-                                 new StatusOutput<>(codec),
-                                 new CommandArgs<>(codec).add("Hey"))).isEqualTo("Hey");
+            new StatusOutput<>(codec),
+            new CommandArgs<>(codec).add("Hey"))).isEqualTo("Hey");
    }
 
    public void testEcho() {
@@ -492,7 +492,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
          all.add(k);
       }
       Set<String> keys = new HashSet<>();
-      for (KeyScanCursor<String> cursor = redis.scan();; cursor = redis.scan(cursor)) {
+      for (KeyScanCursor<String> cursor = redis.scan(); ; cursor = redis.scan(cursor)) {
          keys.addAll(cursor.getKeys());
          if (cursor.isFinished())
             break;
@@ -519,7 +519,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       RedisCommands<String, String> redis = redisConnection.sync();
       Set<String> keys = new HashSet<>();
       ScanArgs args = ScanArgs.Builder.limit(count);
-      for (KeyScanCursor<String> cursor = redis.scan(args);; cursor = redis.scan(cursor, args)) {
+      for (KeyScanCursor<String> cursor = redis.scan(args); ; cursor = redis.scan(cursor, args)) {
          if (!cursor.isFinished()) {
             assertThat(cursor.getKeys()).hasSize(count);
          }
@@ -544,7 +544,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       }
       Set<String> keys = new HashSet<>();
       ScanArgs args = ScanArgs.Builder.matches("k1*");
-      for (KeyScanCursor<String> cursor = redis.scan(args);; cursor = redis.scan(cursor, args)) {
+      for (KeyScanCursor<String> cursor = redis.scan(args); ; cursor = redis.scan(cursor, args)) {
          for (String key : cursor.getKeys()) {
             assertThat(key).startsWith("k1");
             keys.add(key);
@@ -709,21 +709,21 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
 
    @DataProvider
    public Object[][] lcsCases() {
-      return new Object[][] {
-            { "GAC", "AGCAT", "AC", new int[][] { { 2, 2, 2, 2 }, { 1, 1, 0, 0 }, { 2 } } },
-            { "XMJYAUZ", "MZJAWXU", "MJAU",
-                  new int[][] { { 5, 5, 6, 6 }, { 4, 4, 3, 3 }, { 2, 2, 2, 2 }, { 1, 1, 0, 0 }, { 4 } } },
-            { "ohmytext", "mynewtext", "mytext", new int[][] { { 4, 7, 5, 8 }, { 2, 3, 0, 1 }, { 6 } } },
-            { "ABCBDAB", "BDCABA", "BDAB", new int[][] { { 5, 6, 3, 4 }, { 3, 4, 0, 1 }, { 4 } } },
-            { "ABCEZ12 21AAZ", "12ABZ 21AZAZ", "ABZ 21AAZ",
-                  new int[][] { { 11, 12, 10, 11 }, { 7, 10, 5, 8 }, { 4, 4, 4, 4 }, { 0, 1, 2, 3 }, { 9 } } }
+      return new Object[][]{
+            {"GAC", "AGCAT", "AC", new int[][]{{2, 2, 2, 2}, {1, 1, 0, 0}, {2}}},
+            {"XMJYAUZ", "MZJAWXU", "MJAU",
+                  new int[][]{{5, 5, 6, 6}, {4, 4, 3, 3}, {2, 2, 2, 2}, {1, 1, 0, 0}, {4}}},
+            {"ohmytext", "mynewtext", "mytext", new int[][]{{4, 7, 5, 8}, {2, 3, 0, 1}, {6}}},
+            {"ABCBDAB", "BDCABA", "BDAB", new int[][]{{5, 6, 3, 4}, {3, 4, 0, 1}, {4}}},
+            {"ABCEZ12 21AAZ", "12ABZ 21AZAZ", "ABZ 21AAZ",
+                  new int[][]{{11, 12, 10, 11}, {7, 10, 5, 8}, {4, 4, 4, 4}, {0, 1, 2, 3}, {9}}}
       };
    }
 
    @DataProvider
    public Object[][] lcsCasesWithMinLen() {
       List<Object[]> testCases = new ArrayList<>();
-      var minLengths = new Object[][] { { 1 }, { 2 }, { 4 }, { 10 } };
+      var minLengths = new Object[][]{{1}, {2}, {4}, {10}};
       var lcsCases = this.lcsCases();
       for (Object[] len : minLengths) {
          for (Object[] lcsCase : lcsCases) {
@@ -776,10 +776,10 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    @Test
    public void testPTTLTypes() {
       RedisCommands<String, String> redis = redisConnection.sync();
-      redis.hset(k(), v(),v());
+      redis.hset(k(), v(), v());
       assertThat(redis.pttl(k())).isEqualTo(-1);
       assertThat(redis.pttl(k(1))).isEqualTo(-2);
-      redis.hset(k(2), v(2),v(2));
+      redis.hset(k(2), v(2), v(2));
       redis.expire(k(2), 10);
       assertThat(redis.pttl(k(2))).isEqualTo(10_000L);
 
@@ -900,18 +900,18 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
 
    @Test
    public void testType() {
-   RedisCommands<String, String> redis = redisConnection.sync();
-   redis.set(k(), "1");
-   assertThat(redis.type(k())).isEqualTo("string");
-   redis.hset(k(1), "k", "v");
-   assertThat(redis.type(k(1))).isEqualTo("hash");
-   redis.lpush(k(2), "a");
-   assertThat(redis.type(k(2))).isEqualTo("list");
-   redis.sadd(k(3), "a");
-   assertThat(redis.type(k(3))).isEqualTo("set");
-   redis.zadd(k(4), 1.0, "a");
-   assertThat(redis.type(k(4))).isEqualTo("zset");
-   assertThat(redis.type(k(100))).isEqualTo("none");
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), "1");
+      assertThat(redis.type(k())).isEqualTo("string");
+      redis.hset(k(1), "k", "v");
+      assertThat(redis.type(k(1))).isEqualTo("hash");
+      redis.lpush(k(2), "a");
+      assertThat(redis.type(k(2))).isEqualTo("list");
+      redis.sadd(k(3), "a");
+      assertThat(redis.type(k(3))).isEqualTo("set");
+      redis.zadd(k(4), 1.0, "a");
+      assertThat(redis.type(k(4))).isEqualTo("zset");
+      assertThat(redis.type(k(100))).isEqualTo("none");
    }
 
    @Test
@@ -1061,24 +1061,24 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
             .containsExactly("1", "3", "4", "8", "1", "0", "-1", "19", "-22", "3");
       // SORT numbers BY nosort LIMIT 0 1
       assertThat(redis.sort("numbers", SortArgs.Builder.by("nosort").limit(0, 1)))
-            .containsExactly( "1");
+            .containsExactly("1");
       // SORT numbers DESC BY nosort
       assertThat(redis.sort("numbers", SortArgs.Builder.by("nosort").desc()))
-            .containsExactly( "3", "-22", "19", "-1", "0", "1", "8", "4", "3", "1");
+            .containsExactly("3", "-22", "19", "-1", "0", "1", "8", "4", "3", "1");
       // SORT numbers DESC BY nosort LIMIT 0 1
       assertThat(redis.sort("numbers", SortArgs.Builder.by("nosort").limit(0, 1).desc()))
-            .containsExactly( "3");
+            .containsExactly("3");
       // SORT numbers BY something
       assertThat(redis.sort("numbers", SortArgs.Builder.by("something")))
-            .containsExactly( "1", "3", "4", "8", "1", "0", "-1", "19", "-22", "3");
+            .containsExactly("1", "3", "4", "8", "1", "0", "-1", "19", "-22", "3");
       // SORT numbers BY w_*
       assertThat(redis.sort("numbers", SortArgs.Builder.by("w_*")))
-            .containsExactly( "-1", "-22", "0", "1", "1", "19", "3", "3", "4", "8");
+            .containsExactly("-1", "-22", "0", "1", "1", "19", "3", "3", "4", "8");
       // RPUSH people ryan tristan pedro
       redis.rpush("people", "ryan", "tristan", "pedro", "michael");
       // SORT people BY w_*
       assertThat(redis.sort("people", SortArgs.Builder.by("w_*")))
-            .containsExactly( "michael", "pedro", "ryan", "tristan");
+            .containsExactly("michael", "pedro", "ryan", "tristan");
 
       // Insert objects for hash retrieval in sort.
       redis.hset("h_ryan", Map.of("component", "persistence", "weight", "1"));
@@ -1097,11 +1097,11 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
 
       // SORT people BY w_*
       assertThat(redis.sort("people", SortArgs.Builder.by("w_*")))
-            .containsExactly( "ryan", "pedro", "tristan", "michael");
+            .containsExactly("ryan", "pedro", "tristan", "michael");
 
       // SORT people BY h_*->weight
       assertThat(redis.sort("people", SortArgs.Builder.by("h_*->weight")))
-            .containsExactly( "ryan", "pedro", "tristan", "michael");
+            .containsExactly("ryan", "pedro", "tristan", "michael");
 
       // SET o_ryan 1
       redis.set("o_ryan", "persistence");
@@ -1111,23 +1111,23 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       redis.set("o_tristan", "security");
       // SORT people BY w_* GET o_*
       assertThat(redis.sort("people", SortArgs.Builder.by("w_*").get("o_*")))
-            .containsExactly( "persistence", "cross-site", "security", null);
+            .containsExactly("persistence", "cross-site", "security", null);
 
       // SORT people BY w_* GET h_*->component
       assertThat(redis.sort("people", SortArgs.Builder.by("w_*").get("h_*->component")))
-            .containsExactly( "persistence", "cross-site", "security", null);
+            .containsExactly("persistence", "cross-site", "security", null);
 
       // SORT people BY w_* GET o_* GET #
       assertThat(redis.sort("people", SortArgs.Builder.by("w_*").get("o_*").get("#")))
-            .containsExactly( "persistence", "ryan", "cross-site", "pedro",
+            .containsExactly("persistence", "ryan", "cross-site", "pedro",
                   "security", "tristan", null, "michael");
       // SORT people BY w_* GET h_*->component GET #
       assertThat(redis.sort("people", SortArgs.Builder.by("w_*").get("h_*->component").get("#")))
-            .containsExactly( "persistence", "ryan", "cross-site", "pedro",
+            .containsExactly("persistence", "ryan", "cross-site", "pedro",
                   "security", "tristan", null, "michael");
       // SORT people BY w_* GET o GET #
       assertThat(redis.sort("people", SortArgs.Builder.by("w_*").get("o").get("#")))
-            .containsExactly( null, "ryan", null, "pedro",
+            .containsExactly(null, "ryan", null, "pedro",
                   null, "tristan", null, "michael");
 
       // FIXME: Operation against hash keys is a wrong type, should return null.
@@ -1191,7 +1191,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       assertThat(redis.lrange("result_zset", 0, -1))
             .containsExactly("9", "8", "7", "6", "2", "15", "1", "-4", "-3");
 
-      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.sort("another"));
+      assertWrongType(() -> redis.set("another", "tristan"), () -> redis.sort("another"));
    }
 
    @Test
@@ -1216,7 +1216,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       var val = v();
       redis.rpush(srcKey, val);
       redis.rename(srcKey, dstKey);
-      assertThat(redis.lrange(dstKey,0,-1)).containsExactly(val);
+      assertThat(redis.lrange(dstKey, 0, -1)).containsExactly(val);
    }
 
 
@@ -1229,12 +1229,12 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       var setArg = new SetArgs();
       setArg.ex(60);
       redis.set(srcKey, val, setArg);
-      ((ControlledTimeService)timeService).advance(30, TimeUnit.SECONDS);
+      ((ControlledTimeService) timeService).advance(30, TimeUnit.SECONDS);
       redis.rename(srcKey, dstKey);
       assertThat(redis.get(dstKey)).isEqualTo(val);
       var nowTs = timeService.wallClockTime();
-      assertThat(redis.expiretime(dstKey)-nowTs/1000).isLessThanOrEqualTo(30);
-      ((ControlledTimeService)timeService).advance(35, TimeUnit.SECONDS);
+      assertThat(redis.expiretime(dstKey) - nowTs / 1000).isLessThanOrEqualTo(30);
+      ((ControlledTimeService) timeService).advance(35, TimeUnit.SECONDS);
       assertThat(redis.get(dstKey)).isNull();
    }
 
@@ -1264,7 +1264,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       var val = v();
       redis.rpush(srcKey, val);
       redis.rename(srcKey, dstKey);
-      assertThat(redis.lrange(dstKey,0,-1)).containsExactly(val);
+      assertThat(redis.lrange(dstKey, 0, -1)).containsExactly(val);
    }
 
    @Test

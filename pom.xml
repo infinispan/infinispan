@@ -282,6 +282,11 @@
             <version>${version.bouncycastle}</version>
          </dependency>
          <dependency>
+            <groupId>com.badlogicgames.gdx</groupId>
+            <artifactId>gdx-jnigen-loader</artifactId>
+            <version>${version.gdx-jnigen-loader}</version>
+         </dependency>
+         <dependency>
             <groupId>com.clearspring.analytics</groupId>
             <artifactId>stream</artifactId>
             <version>${versionx.com.clearspring.analytics.stream}</version>
@@ -1189,6 +1194,22 @@
             <version>${version.protostream}</version>
             <!-- compile-only dependency -->
             <scope>provided</scope>
+         </dependency>
+         <dependency>
+            <groupId>party.iroiro.luajava</groupId>
+            <artifactId>lua51</artifactId>
+            <version>${version.party.iroiro.luajava}</version>
+         </dependency>
+         <dependency>
+            <groupId>party.iroiro.luajava</groupId>
+            <artifactId>lua51-platform</artifactId>
+            <classifier>natives-desktop</classifier>
+            <version>${version.party.iroiro.luajava}</version>
+         </dependency>
+         <dependency>
+            <groupId>party.iroiro.luajava</groupId>
+            <artifactId>jsr223</artifactId>
+            <version>${version.party.iroiro.luajava}</version>
          </dependency>
          <dependency>
             <groupId>org.jacoco</groupId>

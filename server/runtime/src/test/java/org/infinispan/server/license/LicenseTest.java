@@ -93,7 +93,8 @@ public class LicenseTest {
             .replace("epoll-linux-x86_64", "epoll")
             .replace("epoll-linux-aarch_64", "epoll")
             .replace("io_uring-linux-x86_64", "io_uring")
-            .replace("io_uring-linux-aarch_64", "io_uring");
+            .replace("io_uring-linux-aarch_64", "io_uring")
+            .replace("-natives-desktop", "");
    }
 
    private Path getLibDir() {

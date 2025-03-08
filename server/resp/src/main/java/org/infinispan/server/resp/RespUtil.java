@@ -23,9 +23,30 @@ public class RespUtil {
 
       for (int i = 0; i < expected.length; i++) {
          assert isAsciiUppercase(expected[i]) : "Expected byte is not uppercase ASCII";
-         assert isAsciiChar(target[i]) : "Target byte is not ASCII";
-
          byte l = target[i];
+         assert isAsciiChar(l) : "Target byte is not ASCII";
+         byte r = expected[i];
+         if (l != r && l != (r + 32)) return false;
+      }
+      return true;
+   }
+
+   /**
+    * Similar to {@link #isAsciiBytesEquals(byte[], byte[])}, but compares against a string, avoiding allocations
+    *
+    * @param expected: Upper case ASCII characters.
+    * @param target: String to verify
+    * @return true if target is equal to expected, false otherwise.
+    */
+   public static boolean isAsciiBytesEquals(byte[] expected, String target) {
+      if (expected.length != target.length()) return false;
+
+      for (int i = 0; i < expected.length; i++) {
+         assert isAsciiUppercase(expected[i]) : "Expected byte is not uppercase ASCII";
+         char c = target.charAt(i);
+         assert c < 256;
+         byte l = (byte) c;
+         assert isAsciiChar(l) : "Target byte is not ASCII";
          byte r = expected[i];
          if (l != r && l != (r + 32)) return false;
       }

@@ -3,7 +3,6 @@ package org.infinispan.server.resp.commands.tx;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -14,7 +13,7 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.commands.TransactionResp3Command;
-import org.infinispan.server.resp.serialization.RespConstants;
+import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.infinispan.server.resp.tx.RespTransactionHandler;
 import org.infinispan.server.resp.tx.TransactionCommand;
 import org.infinispan.server.resp.tx.TransactionContext;
@@ -96,19 +95,25 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
          TransactionContext.startTransactionContext(ctx);
 
          // Unfortunately, we need to manually write the prefix before proceeding with each operation.
-         curr.writer().writeNumericPrefix(RespConstants.ARRAY, commands.size());
-         return CompletionStages.handleAndCompose(orderlyExecution(next, ctx, commands), (ignore, t) -> {
+         curr.writer().arrayStart(commands.size());
+         return CompletionStages.handleAndCompose(orderlyExecution(next, ctx, commands, curr.writer()), (ignore, t) -> {
             TransactionContext.endTransactionContext(ctx);
             return transactional
                   ? TransactionDecorator.completeTransaction(resume, t == null)
                   : CompletableFutures.completedNull();
          });
-      }, ctx.executor()).thenCompose(Function.identity());
+      }, ctx.executor()).thenCompose(o -> {
+         curr.writer().arrayEnd();
+         return o;
+      });
    }
 
    private CompletionStage<Void> orderlyExecution(Resp3Handler handler, ChannelHandlerContext ctx,
-                                               List<TransactionCommand> commands) {
+                                                  List<TransactionCommand> commands, ResponseWriter writer) {
       return CompletionStages.performSequentially(commands.iterator(),
-            cmd -> cmd.perform(handler, ctx).thenApply(CompletableFutures.toNullFunction()));
+            cmd -> {
+               writer.arrayNext();
+               return cmd.perform(handler, ctx).thenApply(CompletableFutures.toNullFunction());
+            });
    }
 }

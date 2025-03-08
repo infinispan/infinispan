@@ -1,11 +1,16 @@
 package org.infinispan.server.resp.response;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 
 import org.infinispan.server.resp.serialization.JavaObjectSerializer;
-import org.infinispan.server.resp.serialization.RespConstants;
+import org.infinispan.server.resp.serialization.Resp3Type;
 import org.infinispan.server.resp.serialization.ResponseWriter;
+import org.infinispan.server.resp.serialization.SerializationHint;
 
 public class LCSResponse {
    public static final BiConsumer<LCSResponse, ResponseWriter> SERIALIZER = (res, writer) ->
@@ -19,7 +24,7 @@ public class LCSResponse {
    private static final class LcsResponseSerializer implements JavaObjectSerializer<LCSResponse> {
       private static final LcsResponseSerializer INSTANCE = new LcsResponseSerializer();
       private static final byte[] MATCHES = {'m', 'a', 't', 'c', 'h', 'e', 's'};
-      private static final byte[] LEN = { 'l', 'e', 'n' };
+      private static final byte[] LEN = {'l', 'e', 'n'};
 
       @Override
       public void accept(LCSResponse res, ResponseWriter writer) {
@@ -35,31 +40,38 @@ public class LCSResponse {
             return;
          }
 
-         // LCS client library for tests assume the keys in this order.
-         writer.writeNumericPrefix(RespConstants.MAP, 2);
+         // We need to keep insertion order, since the position of the elements changes their meaning
+         Map<byte[], Object> map = new LinkedHashMap<>(2);
+         map.put(MATCHES, res.idx);
+         map.put(LEN, res.len);
 
-         writer.string(MATCHES);
-         writer.writeNumericPrefix(RespConstants.ARRAY, res.idx.size());
-         for (long[] match : res.idx) {
-            int size = match.length > 4 ? 3 : 2;
-
-            writer.writeNumericPrefix(RespConstants.ARRAY, size);
-
-            writer.writeNumericPrefix(RespConstants.ARRAY, 2);
-            writer.integers(match[0]);
-            writer.integers(match[1]);
-
-            writer.writeNumericPrefix(RespConstants.ARRAY, 2);
-            writer.integers(match[2]);
-            writer.integers(match[3]);
-
-            if (match.length > 4) {
-               writer.integers(match[4]);
+         writer.map(map, new SerializationHint.KeyValueHint(Resp3Type.BULK_STRING, (o, w) -> {
+            if (o instanceof List<?>) {
+               // The matches
+               w.array((List<long[]>) o, (l, w1) -> {
+                  if (l.length == 5) {
+                     w1.array(
+                           List.of(List.of(l[0], l[1]), List.of(l[2], l[3]), l[4]), (ll, w2) -> {
+                              if (ll instanceof Collection<?>) {
+                                 w2.array((Collection<?>) ll, Resp3Type.INTEGER);
+                              } else {
+                                 w2.integers((Number) ll);
+                              }
+                           }
+                     );
+                  } else {
+                     w1.array(
+                           List.of(List.of(l[0], l[1]), List.of(l[2], l[3])), (ll, w2) -> {
+                              w2.array(ll, Resp3Type.INTEGER);
+                           }
+                     );
+                  }
+               });
+            } else {
+               // The length
+               w.integers((Number) o);
             }
-         }
-
-         writer.string(LEN);
-         writer.integers(res.len);
+         }));
       }
    }
 }
