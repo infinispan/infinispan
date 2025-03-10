@@ -6,7 +6,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
@@ -14,7 +13,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
 import org.infinispan.registry.InternalCacheRegistry;
-import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.LogFactory;
 
 import net.jcip.annotations.ThreadSafe;
@@ -95,7 +93,8 @@ public final class QueryCache {
          synchronized (this) {
             if (lazyCache == null) {
                // define the query cache configuration if it does not already exist (from a previous call or manually defined by the user)
-               internalCacheRegistry.registerInternalCache(QUERY_CACHE_NAME, getQueryCacheConfig().build(), EnumSet.noneOf(InternalCacheRegistry.Flag.class));
+               internalCacheRegistry.registerInternalCache(QUERY_CACHE_NAME, getQueryCacheConfig().build(),
+                     EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE));
                lazyCache = cacheManager.getCache(QUERY_CACHE_NAME);
             }
             cache = lazyCache;
@@ -110,8 +109,7 @@ public final class QueryCache {
    private ConfigurationBuilder getQueryCacheConfig() {
       ConfigurationBuilder cfgBuilder = new ConfigurationBuilder();
       cfgBuilder
-            .clustering().cacheMode(CacheMode.LOCAL)
-            .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
+            .simpleCache(true)
             .expiration().maxIdle(ENTRY_LIFESPAN, TimeUnit.SECONDS)
             .memory().maxCount(MAX_ENTRIES);
       return cfgBuilder;
