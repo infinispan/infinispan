@@ -13,7 +13,7 @@ With `AUTO`, for instance, a purge is automatically triggered if the cache is no
 For complete detail see link:{query_docs}#indexing-configuration_startup-mode[Index startup mode].
 
 === Server Endpoints
-Each server endpoint (HotRod, RESP, Memcached & REST) all now support a default `max-content-length` of 10 MB for each
+All server endpoints (HotRod, RESP, Memcached & REST) now support a default `max-content-length` of 10 MB for each
 request by default. That means if a request is larger than this size it will be rejected by the server. If you
 need to increase this limit please set the value explicitly in the server configuration.
 
