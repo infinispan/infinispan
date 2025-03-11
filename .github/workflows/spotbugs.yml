@@ -1,0 +1,136 @@
+name: SpotBugs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  spotbugs:
+    name: Analyze with SpotBugs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: ./.github/actions/setup-java
+
+      - name: Build the project (without tests)
+        run: ./mvnw install -Pdistribution -DskipTests
+
+      - name: Resolve dependencies
+        run: ./mvnw dependency:resolve -V -e -DskipTests -DexcludeGroupIds=org.infinispan -Dsilent=true
+
+      - name: Get changed Java files
+        id: changed-files
+        run: |
+            echo "CHANGED_FILES=$(git diff --name-only origin/main...HEAD -- '*.java' | tr '\n' ' ')" >> $GITHUB_ENV
+
+      - name: Run SpotBugs on changed files
+        if: env.CHANGED_FILES != ''
+        run: |
+            ./mvnw spotbugs:spotbugs -Dspotbugs.include="${{ env.CHANGED_FILES }}"
+
+
+      - name: Check for SpotBugs errors
+        id: check-spotbugs
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        run: |
+          SPOTBUGS_ERRORS=$(find infinispan/tools/target/spotbugsXml.xml -type f -exec grep -l "<BugInstance" {} \; | wc -l)
+          HIGH_PRIORITY=$(find infinispan/tools/target/spotbugsXml.xml -type f -exec grep -c "<BugInstance.*priority=\"1\"" {} \; || echo "0")
+
+          echo "Total issues found: $SPOTBUGS_ERRORS"
+          echo "High priority issues found: $HIGH_PRIORITY"
+
+          if [ "$HIGH_PRIORITY" -gt 0 ]; then
+            echo "::error::Found $HIGH_PRIORITY high priority issues"
+            echo "has_high_priority=true" >> $GITHUB_OUTPUT
+            exit 1
+          elif [ "$SPOTBUGS_ERRORS" -gt 0 ]; then
+            echo "::warning::Found $SPOTBUGS_ERRORS issues (no high priority)"
+            echo "has_issues=true" >> $GITHUB_OUTPUT
+          else
+            echo "No SpotBugs issues found"
+            echo "has_issues=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment PR with SpotBugs Summary
+        if: github.event_name == 'pull_request' && (steps.check-spotbugs.outputs.has_issues == 'true' || steps.check-spotbugs.outputs.has_high_priority == 'true')
+        uses: actions/github-script@v6
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          script: |
+            const fs = require('fs');
+            const xml2js = require('xml2js');
+
+            try {
+              const xmlData = fs.readFileSync('infinispan/tools/target/spotbugsXml.xml', 'utf8');
+              const parser = new xml2js.Parser();
+
+              parser.parseString(xmlData, (err, result) => {
+                if (err) {
+                  console.error("Error parsing SpotBugs XML:", err);
+                  return;
+                }
+
+                const bugCount = result.BugCollection.BugInstance ? result.BugCollection.BugInstance.length : 0;
+                const highPriorityCount = result.BugCollection.BugInstance ?
+                  result.BugCollection.BugInstance.filter(bug => bug.$.priority === '1').length : 0;
+
+                let comment = ## SpotBugs Analysis Results\n\n;
+
+                if (bugCount === 0) {
+                  comment += ✅ No issues found!\n;
+                } else {
+                  if (highPriorityCount > 0) {
+                    comment += ❌ **${highPriorityCount} high priority issues found**\n\n;
+                  }
+
+                  comment += ⚠️ **${bugCount} total issues detected**\n\n;
+                  comment += Please check the uploaded artifacts for detailed reports. Here's a summary of the top issues:\n\n;
+
+                  const topIssues = Math.min(5, bugCount);
+                  comment += | Priority | Type | Class | Method | Line |\n;
+                  comment += |----------|------|-------|--------|------|\n;
+
+                  for (let i = 0; i < topIssues; i++) {
+                    const bug = result.BugCollection.BugInstance[i];
+                    const priority = bug.$.priority === '1' ? 'High' : bug.$.priority === '2' ? 'Medium' : 'Low';
+                    const type = bug.$.type;
+                    const className = bug.Class[0].$.classname.split('.').pop();
+                    const method = bug.Method ? bug.Method[0].$.name : 'N/A';
+                    const line = bug.SourceLine && bug.SourceLine[0].$.start ? bug.SourceLine[0].$.start : 'N/A';
+
+                    comment += | ${priority} | ${type} | ${className} | ${method} | ${line} |\n;
+                  }
+
+                  if (bugCount > topIssues) {
+                    comment += \n... and ${bugCount - topIssues} more issues.\n;
+                  }
+
+                  comment += \nPlease address these issues before merging this PR.;
+                }
+
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: comment
+                });
+              });
+            } catch (error) {
+              console.error("Error processing SpotBugs results:", error);
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: "⚠️ **SpotBugs Analysis**\n\nFailed to process detailed results, but issues were found. Please check the workflow logs and artifacts for more information."
+              });
+            }
