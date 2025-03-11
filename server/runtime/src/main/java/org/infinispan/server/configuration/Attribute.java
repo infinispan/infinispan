@@ -65,6 +65,7 @@ public enum Attribute {
    LEAK_DETECTION,
    LEVELS,
    MASKED,
+   MAX_CONTENT_LENGTH,
    MAX_SIZE,
    MECHANISM_NAMES,
    MECHANISM_OIDS,

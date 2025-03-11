@@ -15,6 +15,7 @@ public enum Attribute {
    IDLE_TIMEOUT,
    IGNORED_CACHES,
    IO_THREADS,
+   MAX_CONTENT_LENGTH,
    MECHANISMS,
    NAME,
    POLICY,
@@ -32,8 +33,10 @@ public enum Attribute {
    TCP_KEEPALIVE,
    TCP_NODELAY,
    VALUE,
-   ZERO_CAPACITY_NODE
+   ZERO_CAPACITY_NODE,
    ;
+
+   public static final String DEFAULT_MAX_CONTENT_LENGTH = "10MB";
 
    private static final Map<String, Attribute> ATTRIBUTES;
 

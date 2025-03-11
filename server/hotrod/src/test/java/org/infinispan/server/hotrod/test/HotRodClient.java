@@ -146,6 +146,10 @@ public class HotRodClient implements Closeable {
       return defaultCacheName;
    }
 
+   public Channel getChannel() {
+      return ch;
+   }
+
    private Channel initializeChannel() {
       Bootstrap bootstrap = new Bootstrap();
       bootstrap.group(eventLoopGroup);
@@ -333,6 +337,17 @@ public class HotRodClient implements Closeable {
          future.syncUninterruptibly();
       }
       return future.isSuccess();
+   }
+
+   public ChannelFuture writeOps(Op... ops) {
+      log.tracef("Sending request %s", Arrays.toString(ops));
+      ChannelFuture future = null;
+      for (Op op : ops) {
+         idToOp.put(op.id, op);
+         future = ch.write(op);
+      }
+      ch.flush();
+      return future;
    }
 
    public TestGetResponse get(byte[] k, int flags) {
@@ -1123,6 +1138,7 @@ class Decoder extends ReplayingDecoder<Void> {
 
 class ClientHandler extends ChannelInboundHandlerAdapter {
    private static final Log log = LogFactory.getLog(ClientHandler.class, Log.class);
+   private volatile boolean closed;
    final int rspTimeoutSeconds;
 
    ClientHandler(int rspTimeoutSeconds) {
@@ -1191,11 +1207,16 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
 
    @Override
    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+      closed = true;
       super.channelInactive(ctx);
       responses.forEach((messageId, responseFuture) -> responseFuture.completeExceptionally(new ClosedChannelException()));
    }
 
    CompletionStage<TestResponse> waitForResponse(long expectedResponseMessageId) {
+      if (closed) {
+         // The channel was inactive before even sending the request
+         return CompletableFuture.failedFuture(new CompletionException(new ClosedChannelException()));
+      }
       CompletableFuture<TestResponse> cf = new CompletableFuture<>();
       responses.put(expectedResponseMessageId, cf);
       return cf;

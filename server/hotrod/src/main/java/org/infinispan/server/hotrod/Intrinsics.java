@@ -1,9 +1,12 @@
 package org.infinispan.server.hotrod;
 
+import java.nio.charset.StandardCharsets;
+
 import org.infinispan.commons.io.SignedNumeric;
 import org.infinispan.server.core.transport.ExtendedByteBufJava;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.TooLongFrameException;
 import io.netty.util.CharsetUtil;
 
 public class Intrinsics {
@@ -48,22 +51,48 @@ public class Intrinsics {
       return false;
    }
 
-   public static byte[] array(ByteBuf buf) {
-      buf.markReaderIndex();
-      return ExtendedByteBufJava.readMaybeRangedBytes(buf);
+   private static void assertArrayLength(int length, int lengthMaximum) {
+      if (lengthMaximum >= 0 && length > lengthMaximum) {
+         throw new TooLongFrameException("Array length " + length + " exceeded " + lengthMaximum);
+      }
    }
 
-   public static byte[] fixedArray(ByteBuf buf, int length) {
+   public static byte[] array(ByteBuf buf, int lengthMaximum) {
+      buf.markReaderIndex();
+      int length = ExtendedByteBufJava.readMaybeVInt(buf);
+      if (length == Integer.MIN_VALUE) {
+         return null;
+      }
+      assertArrayLength(length, lengthMaximum);
+      return ExtendedByteBufJava.readMaybeRangedBytes(buf, length);
+   }
+
+   public static byte[] fixedArray(ByteBuf buf, int length, int lengthMaximum) {
+      assertArrayLength(length, lengthMaximum);
       buf.markReaderIndex();
       return ExtendedByteBufJava.readMaybeRangedBytes(buf, length);
    }
 
-   public static String string(ByteBuf buf) {
+   public static String string(ByteBuf buf, int lengthMaximum) {
       buf.markReaderIndex();
-      return ExtendedByteBufJava.readString(buf);
+      int length = ExtendedByteBufJava.readMaybeVInt(buf);
+      if (length == Integer.MIN_VALUE) {
+         return null;
+      } else if (length == 0) {
+         return "";
+      }
+      assertArrayLength(length, lengthMaximum);
+      if (!buf.isReadable(length)) {
+         buf.resetReaderIndex();
+         return null;
+      }
+
+      int startIndex = buf.readerIndex();
+      buf.skipBytes(length);
+      return buf.toString(startIndex, length, StandardCharsets.UTF_8);
    }
 
-   public static byte[] optionalArray(ByteBuf buf) {
+   public static byte[] optionalArray(ByteBuf buf, int lengthMaximum) {
       buf.markReaderIndex();
       int pos = buf.readerIndex();
       int length = ExtendedByteBufJava.readMaybeVInt(buf);
@@ -74,11 +103,12 @@ public class Intrinsics {
       if (length < 0) {
          return null;
       }
+      assertArrayLength(length, lengthMaximum);
       return ExtendedByteBufJava.readMaybeRangedBytes(buf, length);
    }
 
-   public static String optionalString(ByteBuf buf) {
-      byte[] bytes = optionalArray(buf);
+   public static String optionalString(ByteBuf buf, int lengthMaximum) {
+      byte[] bytes = optionalArray(buf, lengthMaximum);
       if (bytes == null) {
          return null;
       } else if (bytes.length == 0) {

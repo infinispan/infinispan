@@ -126,7 +126,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       InfinispanTelemetry telemetryService = SecurityActions.getGlobalComponentRegistry(cacheManager)
             .getComponent(InfinispanTelemetry.class);
 
-      this.maxContentLength = configuration.maxContentLength() + MAX_INITIAL_LINE_SIZE + MAX_HEADER_SIZE;
+      this.maxContentLength = configuration.maxContentLengthBytes() + MAX_INITIAL_LINE_SIZE + MAX_HEADER_SIZE;
       RestAuthenticationConfiguration auth = configuration.authentication();
       if (auth.enabled()) {
          auth.authenticator().init(this);

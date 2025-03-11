@@ -25,6 +25,8 @@ public class HugeProtobufMessageTest extends SingleHotRodServerTest {
       String host = HotRodTestingUtil.host();
       int port = ServerTestingUtil.findFreePort();
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
+      // Needs to be at least larger than 64MB above
+      builder.maxContentLength("100MB");
       return HotRodTestingUtil.startHotRodServer(cacheManager, host, port, builder, false);
    }
 

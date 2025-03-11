@@ -1,0 +1,7 @@
+<endpoints>
+  <endpoint socket-binding="default" security-realm="default">
+    <rest-connector name="rest" max-content-length="5MB">
+      ...
+    </rest-connector>
+  </endpoint>
+</endpoints>

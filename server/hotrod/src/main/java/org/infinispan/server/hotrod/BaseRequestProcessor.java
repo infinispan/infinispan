@@ -43,6 +43,14 @@ public class BaseRequestProcessor {
    }
 
    void writeException(HotRodHeader header, Throwable cause) {
+      if (header == null) {
+         writeException(null, 0, cause);
+      } else {
+         writeException(header, header.messageId, cause);
+      }
+   }
+
+   void writeException(HotRodHeader header, long requestId, Throwable cause) {
       if (cause instanceof CompletionException && cause.getCause() != null) {
          cause = cause.getCause();
       }
@@ -98,7 +106,7 @@ public class BaseRequestProcessor {
          status = OperationStatus.ServerError;
       }
       if (header == null) {
-         header = new HotRodHeader(HotRodOperation.ERROR, (byte) 0, 0, "", 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL, null);
+         header = new HotRodHeader(HotRodOperation.ERROR, (byte) 0, requestId, "", 0, (short) 1, 0, MediaType.MATCH_ALL, MediaType.MATCH_ALL, null);
       } else {
          header.op = HotRodOperation.ERROR;
       }
