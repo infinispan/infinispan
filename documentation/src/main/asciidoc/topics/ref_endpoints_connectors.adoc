@@ -33,15 +33,12 @@ include::xml/server_endpoints_default.xml[]
 
 == Endpoint request limits
 
-Each of the endpoints support a configuration option to limit request sizes. If the client sends a request
-larger than this configured size the request may be met with an exception or even forcibly closing the client
-connection.
+Endpoints, by default, impose a `10MB` limit on request sizes. 
+If the client sends a request larger than the limit, the request may be met with an exception or the connection may be forcibly closed.
+The limit is configured via the `max-content-length` attributed. This is expressed in bytes and allows for a string
+value with a size suffix (e.g. 128KB, 10MB, 1.5GB). Note that this is the size of the entire request and is not limited to a single key or value.
 
-These are all configured via the element `max-content-length`. This is configured in bytes and allows for a String
-value with a size prefix (e.g. 128KB, 10MB, 1.5GB). Note this size is the entire request size and is not limited
-to a single key or value.
-
-.HotRod, RESP & Memcached endpoints
+.Hot Rod, RESP & Memcached endpoints
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
