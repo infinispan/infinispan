@@ -21,7 +21,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @author Ryan Emerson
  * @since 10.0
  */
-public class AllowListConfigurationBuilder implements Builder<AllowListConfiguration> {
+public class AllowListConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<AllowListConfiguration> {
 
    private final AttributeSet attributes;
    private final Set<String> classes = new HashSet<>();
@@ -29,6 +29,7 @@ public class AllowListConfigurationBuilder implements Builder<AllowListConfigura
    private final GlobalConfigurationBuilder globalBuilder;
 
    AllowListConfigurationBuilder(GlobalConfigurationBuilder globalBuilder) {
+      super(globalBuilder);
       this.globalBuilder = globalBuilder;
       attributes = AllowListConfiguration.attributeDefinitionSet();
    }
