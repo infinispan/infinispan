@@ -164,6 +164,8 @@ NOTE: This implementation attempts to return all attributes that a real Redis se
 +
 NOTE: This command is non atomic
 
+* link:https://redis.io/commands/json.mget[JSON.MGET]
+
 * link:https://redis.io/commands/json.numincrby[JSON.NUMINCRBY]
 
 * link:https://redis.io/commands/json.nummultby[JSON.NUMMULTBY]
