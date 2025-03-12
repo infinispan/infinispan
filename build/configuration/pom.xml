@@ -120,7 +120,7 @@
       <version.infinispan.maven-plugins>1.0.8.Final</version.infinispan.maven-plugins>
       <version.insights>2.0.4</version.insights>
       <version.io.agroal>2.4</version.io.agroal>
-      <version.io.lettuce>6.5.4.RELEASE</version.io.lettuce>
+      <version.io.lettuce>6.5.5.RELEASE</version.io.lettuce>
       <version.vertx>4.5.13</version.vertx>
       <version.io.mashona>1.1.0</version.io.mashona>
       <version.jackson>2.16.2</version.jackson>
