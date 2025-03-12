@@ -2,7 +2,6 @@ package org.infinispan.remoting.transport.jgroups;
 
 import javax.sql.DataSource;
 
-import org.jgroups.ChannelListener;
 import org.jgroups.JChannel;
 import org.jgroups.conf.ProtocolStackConfigurator;
 import org.jgroups.util.SocketFactory;
@@ -19,6 +18,4 @@ public interface JGroupsChannelConfigurator extends ProtocolStackConfigurator {
    void setSocketFactory(SocketFactory socketFactory);
 
    void setDataSource(DataSource dataSource);
-
-   void addChannelListener(ChannelListener listener);
 }
