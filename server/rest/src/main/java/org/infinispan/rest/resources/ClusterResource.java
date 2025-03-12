@@ -7,6 +7,7 @@ import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.framework.Method.PUT;
+import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.isPretty;
@@ -43,7 +44,13 @@ import org.infinispan.server.core.BackupManager;
  */
 public class ClusterResource implements ResourceHandler {
 
-   private static final String MEMBER_PARAMETER = "member";
+   protected static final String MEMBER_PARAMETER = "member";
+   protected static final String VERSION = "version";
+   protected static final String NODE_ADDRESS = "node_address";
+   protected static final String PHYSICAL_ADDRESSES = "physical_addresses";
+   protected static final String CACHE_MANAGER_STATUS = "cache_manager_status";
+   protected static final String MEMBERS = "members";
+   protected static final String ROLLING_UPGRADE = "rolling_upgrade";
 
    private final InvocationHelper invocationHelper;
    private final BackupManager backupManager;
@@ -84,6 +91,9 @@ public class ClusterResource implements ResourceHandler {
             .invocation().methods(DELETE).path("/v2/cluster/raft/{member}")
                .permission(AuthorizationPermission.ADMIN).name("RAFT REMOVE MEMBER").auditContext(AuditContext.SERVER)
                .handleWith(this::handleRemoveRaftMember)
+            .invocation().methods(GET).path("/v2/cluster/members")
+              .permission(AuthorizationPermission.ADMIN).name("MEMBERS").auditContext(AuditContext.SERVER)
+              .handleWith(this::handleClusterMembers)
             .create();
    }
 
@@ -182,5 +192,44 @@ public class ClusterResource implements ResourceHandler {
 
    private RaftManager raftManager() {
       return SecurityActions.getRaftManager(invocationHelper.getRestCacheManager().getInstance());
+   }
+
+   CompletionStage<RestResponse> handleClusterMembers(RestRequest request) {
+      EmbeddedCacheManager cacheManager = invocationHelper.getProtocolServer().getCacheManager();
+      boolean pretty = isPretty(request);
+      Map<String, Json> clusterInfos = new ConcurrentHashMap<>();
+      return SecurityActions.getClusterExecutor(cacheManager)
+              .submitConsumer(ecm -> ecm.getCacheManagerInfo().toJson().asMap(), (addr, info, t) -> {
+                 if (t != null) {
+                    throw CompletableFutures.asCompletionException(t);
+                 }
+                 Json infoToPass = Json.object();
+                 infoToPass.set(VERSION, info.get(VERSION));
+                 infoToPass.set(NODE_ADDRESS, info.get(NODE_ADDRESS));
+                 infoToPass.set(PHYSICAL_ADDRESSES, info.get(PHYSICAL_ADDRESSES));
+                 infoToPass.set(CACHE_MANAGER_STATUS, info.get(CACHE_MANAGER_STATUS));
+                 clusterInfos.put(addr.toString(), infoToPass);
+              })
+              .thenApply(ignore -> {
+                 Json members = Json.make(clusterInfos.values());
+                 Json membershipJson = Json.object(
+                         MEMBERS, members,
+                         ROLLING_UPGRADE, ClusterResource.isRollingUpgrade(clusterInfos));
+                 return addEntityAsJson(membershipJson, invocationHelper.newResponse(request), pretty).build();
+              });
+   }
+
+   public static boolean isRollingUpgrade(Map<String, Json> clusterInfos) {
+      if (clusterInfos == null || clusterInfos.isEmpty()) return false;
+      String firstVersion = null;
+      for (Json info : clusterInfos.values()) {
+         String currentVersion = info.at(VERSION).asString();
+         if (firstVersion == null) {
+            firstVersion = currentVersion;
+         } else if (!firstVersion.equals(currentVersion)) {
+            return true;
+         }
+      }
+      return false;
    }
 }
