@@ -10,7 +10,6 @@ import java.util.Map;
 
 import org.infinispan.configuration.global.JGroupsConfiguration;
 import org.infinispan.xsite.XSiteNamedCache;
-import org.jgroups.ChannelListener;
 import org.jgroups.JChannel;
 import org.jgroups.conf.ProtocolConfiguration;
 import org.jgroups.conf.ProtocolStackConfigurator;
@@ -124,9 +123,6 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
             socketFactory = new NamedSocketFactory((NamedSocketFactory) socketFactory, remoteCluster);
          }
          configurator.setSocketFactory(socketFactory);
-         for(ChannelListener listener : channelListeners) {
-            configurator.addChannelListener(listener);
-         }
          RelayConfig.SiteConfig siteConfig = new RelayConfig.SiteConfig(remoteSite.getKey());
          siteConfig.addBridge(new RelayConfig.BridgeConfig(remoteCluster) {
             @Override

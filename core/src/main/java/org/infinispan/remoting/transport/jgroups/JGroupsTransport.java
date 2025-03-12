@@ -44,7 +44,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
@@ -146,7 +146,7 @@ import org.jgroups.util.SocketFactory;
  */
 @Scope(Scopes.GLOBAL)
 @JGroupsProtocolComponent("JGroupsMetricsMetadata")
-public class JGroupsTransport implements Transport, ChannelListener, AddressGenerator {
+public class JGroupsTransport implements Transport {
    public static final String CONFIGURATION_STRING = "configurationString";
    public static final String CONFIGURATION_XML = "configurationXml";
    public static final String CONFIGURATION_FILE = "configurationFile";
@@ -174,7 +174,7 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
 
    @Inject protected GlobalConfiguration configuration;
    @Inject @ComponentName(KnownComponentNames.INTERNAL_MARSHALLER)
-   protected StreamingMarshaller marshaller;
+   protected Marshaller marshaller;
    @Inject protected CacheManagerNotifier notifier;
    @Inject protected TimeService timeService;
    @Inject protected InboundInvocationHandler invocationHandler;
@@ -474,6 +474,8 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
          }
       }
 
+      channel.addChannelListener(channelCallbacks);
+
       // Channel.LOCAL *must* be set to false so we don't see our own messages - otherwise
       // invalidations targeted at remote instances will be received by self.
       // NOTE: total order needs to deliver own messages. the invokeRemotely method has a total order boolean
@@ -484,21 +486,24 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
       if (transportCfg.hasTopologyInfo()) {
          // We can do this only if the channel hasn't been started already
          if (connectChannel) {
-            channel.addAddressGenerator(this);
+            channel.addAddressGenerator(channelCallbacks);
          } else {
-            org.jgroups.Address jgroupsAddress = channel.getAddress();
-            if (jgroupsAddress instanceof ExtendedUUID) {
-               JGroupsTopologyAwareAddress address = new JGroupsTopologyAwareAddress((ExtendedUUID) jgroupsAddress);
-               if (!address.matches(transportCfg.siteId(), transportCfg.rackId(), transportCfg.machineId())) {
-                  throw new CacheException(
-                        "Topology information does not match the one set by the provided JGroups channel");
-               }
-            } else {
-               throw new CacheException("JGroups address does not contain topology coordinates");
-            }
+             verifyChannelTopology(channel.address(), transportCfg);
          }
       }
       initRaftManager();
+   }
+
+   private static void verifyChannelTopology(org.jgroups.Address jgroupsAddress, TransportConfiguration transportCfg) {
+       if (jgroupsAddress instanceof ExtendedUUID) {
+          JGroupsTopologyAwareAddress address = new JGroupsTopologyAwareAddress((ExtendedUUID) jgroupsAddress);
+          if (!address.matches(transportCfg.siteId(), transportCfg.rackId(), transportCfg.machineId())) {
+             throw new CacheException(
+                   "Topology information does not match the one set by the provided JGroups channel");
+          }
+       } else {
+          throw new CacheException("JGroups address does not contain topology coordinates");
+       }
    }
 
    private void initRaftManager() {
@@ -651,21 +656,7 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
       String cfg;
       if (props != null) {
          if (props.containsKey(CHANNEL_LOOKUP)) {
-            String channelLookupClassName = props.getProperty(CHANNEL_LOOKUP);
-
-            try {
-               JGroupsChannelLookup lookup = Util.getInstance(channelLookupClassName, configuration.classLoader());
-               channel = lookup.getJGroupsChannel(props);
-               connectChannel = lookup.shouldConnect();
-               disconnectChannel = lookup.shouldDisconnect();
-               closeChannel = lookup.shouldClose();
-            } catch (ClassCastException e) {
-               CLUSTER.wrongTypeForJGroupsChannelLookup(channelLookupClassName, e);
-               throw new CacheException(e);
-            } catch (Exception e) {
-               CLUSTER.errorInstantiatingJGroupsChannelLookup(channelLookupClassName, e);
-               throw new CacheException(e);
-            }
+            channelFromLookup(props.getProperty(CHANNEL_LOOKUP));
          }
 
          if (channel == null && props.containsKey(CHANNEL_CONFIGURATOR)) {
@@ -730,6 +721,23 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
       }
    }
 
+   @SuppressWarnings("removal")
+   private void channelFromLookup(String channelLookupClassName) {
+      try {
+         JGroupsChannelLookup lookup = Util.getInstance(channelLookupClassName, configuration.classLoader());
+         channel = lookup.getJGroupsChannel(props);
+         connectChannel = lookup.shouldConnect();
+         disconnectChannel = lookup.shouldDisconnect();
+         closeChannel = lookup.shouldClose();
+      } catch (ClassCastException e) {
+         CLUSTER.wrongTypeForJGroupsChannelLookup(channelLookupClassName, e);
+         throw new CacheException(e);
+      } catch (Exception e) {
+         CLUSTER.errorInstantiatingJGroupsChannelLookup(channelLookupClassName, e);
+         throw new CacheException(e);
+      }
+   }
+
    private void channelFromConfigurator(JGroupsChannelConfigurator configurator) {
       if (props.containsKey(SOCKET_FACTORY)) {
          SocketFactory socketFactory = (SocketFactory) props.get(SOCKET_FACTORY);
@@ -739,10 +747,9 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
          configurator.setSocketFactory(socketFactory);
       }
       if (props.containsKey(DATA_SOURCE)) {
-         Supplier<DataSource> dataSourceSupplier = (Supplier<DataSource>) props.get(DATA_SOURCE);
+         @SuppressWarnings("unchecked") Supplier<DataSource> dataSourceSupplier = (Supplier<DataSource>) props.get(DATA_SOURCE);
          configurator.setDataSource(dataSourceSupplier.get());
       }
-      configurator.addChannelListener(this);
       try {
          channel = configurator.createChannel(configuration.transport().clusterName());
       } catch (Exception e) {
@@ -1568,40 +1575,14 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
       return Optional.ofNullable(channel.getProtocolStack().findProtocol(RELAY2.class));
    }
 
-   @Override
-   public void channelConnected(JChannel channel) {
-      metricsManager.onChannelConnected(channel, channel == this.channel);
-   }
-
-   @Override
-   public void channelDisconnected(JChannel channel) {
-      metricsManager.onChannelDisconnected(channel);
-   }
-
-   @Override
-   public void channelClosed(JChannel channel) {
-      // NO-OP
-   }
-
    private Optional<org.jgroups.Address> findPhysicalAddress(org.jgroups.Address member) {
       return  Optional.ofNullable((org.jgroups.Address) channel.down(new Event(Event.GET_PHYSICAL_ADDRESS, member)));
    }
 
-   @Override
-   public org.jgroups.Address generateAddress() {
-      var transportCfg = configuration.transport();
-      return JGroupsTopologyAwareAddress.randomUUID(channel.getName(), transportCfg.siteId(), transportCfg.rackId(),
-                  transportCfg.machineId());
-   }
+   private class ChannelCallbacks implements RouteStatusListener, UpHandler, ChannelListener, AddressGenerator {
 
-   @Override
-   public org.jgroups.Address generateAddress(String name) {
-      var transportCfg = configuration.transport();
-      return JGroupsTopologyAwareAddress.randomUUID(name, transportCfg.siteId(), transportCfg.rackId(),
-            transportCfg.machineId());
-   }
+      // RouteStatusListener
 
-   private class ChannelCallbacks implements RouteStatusListener, UpHandler {
       @Override
       public void sitesUp(String... sites) {
          for (String upSite : sites) {
@@ -1622,6 +1603,8 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
          requestsToCancel.forEach(JGroupsTransport.this::cancelRequestsFromSite);
          updateSitesView(Collections.emptyList(), Arrays.asList(sites));
       }
+
+      // UpHandler
 
       @Override
       public UpHandler setLocalAddress(org.jgroups.Address a) {
@@ -1662,6 +1645,39 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
             // but we check for every message to be on the safe side.
             processMessage(message);
          });
+      }
+
+      // ChannelListener
+
+      @Override
+      public void channelConnected(JChannel channel) {
+         metricsManager.onChannelConnected(channel, channel == JGroupsTransport.this.channel);
+      }
+
+      @Override
+      public void channelDisconnected(JChannel channel) {
+         metricsManager.onChannelDisconnected(channel);
+      }
+
+      @Override
+      public void channelClosed(JChannel channel) {
+         // NO-OP
+      }
+
+      // AddressGenerator
+
+      @Override
+      public org.jgroups.Address generateAddress() {
+         var transportCfg = configuration.transport();
+         return JGroupsTopologyAwareAddress.randomUUID(channel.getName(), transportCfg.siteId(), transportCfg.rackId(),
+                     transportCfg.machineId());
+      }
+
+      @Override
+      public org.jgroups.Address generateAddress(String name) {
+         var transportCfg = configuration.transport();
+         return JGroupsTopologyAwareAddress.randomUUID(name, transportCfg.siteId(), transportCfg.rackId(),
+               transportCfg.machineId());
       }
    }
 
