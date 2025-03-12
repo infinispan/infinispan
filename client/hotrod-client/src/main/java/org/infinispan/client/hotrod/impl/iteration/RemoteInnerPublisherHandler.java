@@ -120,7 +120,8 @@ class RemoteInnerPublisherHandler<K, E> extends AbstractAsyncPublisherHandler<Ma
 
    @Override
    protected void handleThrowableInResponse(Throwable t, Map.Entry<SocketAddress, IntSet> target) {
-      if (t instanceof TransportException || t instanceof RemoteIllegalLifecycleStateException || t instanceof ConnectException) {
+      if ((t instanceof TransportException || t instanceof RemoteIllegalLifecycleStateException || t instanceof ConnectException)
+            && target.getKey() != null) {
          log.throwableDuringPublisher(t);
          if (log.isTraceEnabled()) {
             IntSet targetSegments = target.getValue();
