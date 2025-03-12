@@ -40,4 +40,9 @@ public class RestClusterClientJDK implements RestClusterClient {
    public CompletionStage<RestResponse> distribution() {
       return client.get(path + "?action=distribution");
    }
+
+   @Override
+   public CompletionStage<RestResponse> clusterMembers() {
+      return client.get(path + "/members");
+   }
 }

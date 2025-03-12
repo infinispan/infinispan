@@ -22,4 +22,9 @@ public interface RestClusterClient {
     * @return The cluster distribution information.
     */
    CompletionStage<RestResponse> distribution();
+
+   /**
+    * @return The cluster members information.
+    */
+   CompletionStage<RestResponse> clusterMembers();
 }
