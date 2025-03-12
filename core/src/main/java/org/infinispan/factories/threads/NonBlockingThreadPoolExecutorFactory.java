@@ -11,6 +11,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.executors.NonBlockingResource;
+import org.infinispan.commons.jdkspecific.ThreadCreator;
 import org.infinispan.commons.util.concurrent.NonBlockingRejectedExecutionHandler;
 
 /**
@@ -31,6 +32,10 @@ public class NonBlockingThreadPoolExecutorFactory extends AbstractThreadPoolExec
 
    @Override
    public ExecutorService createExecutor(ThreadFactory threadFactory) {
+      var maybeVt = ThreadCreator.createBlockingExecutorService();
+      if (maybeVt.isPresent()) {
+         return maybeVt.get();
+      }
       BlockingQueue<Runnable> queue = queueLength == 0 ? new SynchronousQueue<>() : new LinkedBlockingQueue<>(queueLength);
 
       if (!(threadFactory instanceof NonBlockingResource)) {
