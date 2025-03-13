@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+        xmlns="urn:infinispan:config:${infinispan.core.schema.version}"
+        xmlns:cdc="urn:infinispan:config:cdc:${infinispan.core.schema.version}"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version}
+            https://infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd">
+
+    <cache-container default-cache="default">
+        <transport/>
+        <replicated-cache name="default" >
+            <change-data-capture expand-foreign-keys="*" xmlns="urn:infinispan:config:cdc:${infinispan.core.schema.version}">
+                <connection-pool properties-file="configuration/pooled-file-cdc.xml" />
+                <table name="student">
+                    <primary-key name="sid" />
+                    <column name="fullname"/>
+                    <column name="email"/>
+                </table>
+
+                <connector-properties>
+                    <max.batch.size>1024</max.batch.size>
+                    <some.empty.property>""</some.empty.property>
+                </connector-properties>
+            </change-data-capture>
+        </replicated-cache>
+    </cache-container>
+
+</infinispan>
