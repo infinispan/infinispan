@@ -60,7 +60,7 @@ public final class MetricsComponentFactory implements ComponentFactory, AutoInst
             // if no registry available in the classpath, do not try to register/collect metrics in there.
             return NoOpJGroupsMetricManager.INSTANCE;
          } else {
-            return new JGroupsMetricsManagerImpl(globalConfig.metrics().histograms());
+            return new JGroupsMetricsManagerImpl(globalConfig.metrics().histograms(), globalConfig.metrics().prefix());
          }
       }
       throw CONTAINER.factoryCannotConstructComponent(componentName);

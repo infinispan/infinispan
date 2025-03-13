@@ -58,13 +58,15 @@ public class JGroupsMetricsManagerImpl implements JGroupsMetricsManager {
    private final Map<Address, DestinationMetrics> perDestinationMetrics;
    private final List<ClusterMetrics> otherChannels;
    private final boolean histogramEnabled;
+   private final String globalPrefix;
    private volatile MainChannelRegistry mainChannelRegistry;
    private volatile boolean stopped = true;
 
-   public JGroupsMetricsManagerImpl(boolean histogramEnabled) {
+   public JGroupsMetricsManagerImpl(boolean histogramEnabled, String globalPrefix) {
       this.histogramEnabled = histogramEnabled;
       perDestinationMetrics = new ConcurrentHashMap<>(16);
       otherChannels = new CopyOnWriteArrayList<>();
+      this.globalPrefix = globalPrefix;
    }
 
    @Start
@@ -210,6 +212,18 @@ public class JGroupsMetricsManagerImpl implements JGroupsMetricsManager {
                DestinationMetricsBuilder::setBytesSentCounter, tags));
       }
       return attrs;
+   }
+
+   private String metricPrefix(String clusterName, String componentName) {
+      var builder = new StringBuilder();
+      if (globalPrefix != null && !globalPrefix.isEmpty()) {
+         builder.append(globalPrefix).append("_");
+      }
+      builder.append(JGROUPS_PREFIX);
+      if (!registry.namesAsTags()) {
+         builder.append(clusterName).append("_");
+      }
+      return builder.append(componentName).append("_").toString();
    }
 
    private static class DestinationMetricsBuilder {
@@ -385,10 +399,7 @@ public class JGroupsMetricsManagerImpl implements JGroupsMetricsManager {
       }
 
       Set<Object> registerComponent(Object instance, String component, String clusterName, Collection<MetricInfo> attributes) {
-         String prefix = registry.namesAsTags() ?
-               JGROUPS_PREFIX + component.toLowerCase() + "_" :
-               JGROUPS_PREFIX + clusterName + "_" + component.toLowerCase() + "_";
-         return registry.registerMetrics(instance, attributes, prefix, Map.of(NODE_TAG_NAME, nodeName, JGROUPS_CLUSTER_TAG_NAME, clusterName));
+         return registry.registerMetrics(instance, attributes, metricPrefix(clusterName, component.toLowerCase()), Map.of(NODE_TAG_NAME, nodeName, JGROUPS_CLUSTER_TAG_NAME, clusterName));
       }
    }
 
