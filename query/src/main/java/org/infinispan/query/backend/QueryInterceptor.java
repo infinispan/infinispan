@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
@@ -50,7 +51,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.interceptors.InvocationSuccessAction;
+import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager.StoreChangeListener;
 import org.infinispan.query.core.impl.Log;
@@ -105,7 +106,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    private final DataConversion keyDataConversion;
    private volatile boolean isPersistenceEnabled;
 
-   private final InvocationSuccessAction<ClearCommand> processClearCommand = this::processClearCommand;
+   private final InvocationSuccessFunction<ClearCommand> processClearCommand = this::processClearCommand;
    private final boolean isManualIndexing;
    private final AdvancedCache<?, ?> cache;
    private final Map<String, Class<?>> indexedClasses;
@@ -296,7 +297,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) {
-      return invokeNextThenAccept(ctx, command, processClearCommand);
+      return invokeNextThenApply(ctx, command, processClearCommand);
    }
 
    @Override
@@ -342,13 +343,12 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    /**
     * Remove all entries from all known indexes
     */
-   public void purgeAllIndexes() {
-      if (searchMapping == null) {
-         return;
+   public Object purgeAllIndexes(InvocationContext ctx, VisitableCommand command, Object rv) {
+      Optional<SearchWorkspace> op;
+      if (searchMapping != null && (op = searchMapping.findScopeAll().map(SearchScope::workspace)).isPresent()) {
+         return asyncInvokeNext(ctx, command, op.get().purgeAsync());
       }
-
-      // avoid starting if not created yet
-      searchMapping.findScopeAll().map(SearchScope::workspace).ifPresent(SearchWorkspace::purge);
+      return rv;
    }
 
    public void purgeIndex(Class<?> entityType) {
@@ -468,10 +468,11 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       return value != null && previousValue != null && value.getClass() != previousValue.getClass();
    }
 
-   private void processClearCommand(InvocationContext ctx, ClearCommand command, Object rv) {
+   private Object processClearCommand(InvocationContext ctx, ClearCommand command, Object rv) {
       if (shouldModifyIndexes(command, ctx, null)) {
-         purgeAllIndexes();
+         return purgeAllIndexes(ctx, command, rv);
       }
+      return rv;
    }
 
    public boolean isStopping() {
