@@ -2,6 +2,7 @@ package org.infinispan.query.core.impl;
 
 import static org.infinispan.marshall.protostream.impl.SerializationContextRegistry.MarshallerType.PERSISTENCE;
 
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -118,6 +119,9 @@ public class LifecycleManager implements ModuleLifecycle {
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
+      InternalCacheRegistry internalCacheRegistry = gcr.getComponent(InternalCacheRegistry.class);
+      internalCacheRegistry.registerInternalCache(QueryCache.QUERY_CACHE_NAME, QueryCache.getQueryCacheConfig().build(),
+            EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE));
       gcr.registerComponent(new QueryCache(), QueryCache.class);
 
       Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
