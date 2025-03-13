@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:infinispan="https://infinispan.org/schemas/spring"
+       xmlns:infinispan="http://www.infinispan.org/schemas/spring"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-       https://infinispan.org/schemas/spring https://infinispan.org/schemas/infinispan-spring.xsd">
+       http://www.infinispan.org/schemas/spring https://infinispan.org/schemas/infinispan-spring.xsd">
 
     <infinispan:embedded-cache-manager />
 
