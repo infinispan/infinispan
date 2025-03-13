@@ -1,8 +1,6 @@
 package org.infinispan.query.core.impl;
 
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
@@ -12,7 +10,6 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
-import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.util.logging.LogFactory;
 
 import net.jcip.annotations.ThreadSafe;
@@ -59,11 +56,6 @@ public final class QueryCache {
    @Inject
    EmbeddedCacheManager cacheManager;
 
-   @Inject
-   InternalCacheRegistry internalCacheRegistry;
-
-   private volatile Cache<QueryCacheKey, Object> lazyCache;
-
    /**
     * Gets the cached query object. The key used for lookup is an object pair containing the query string and a
     * discriminator value which is usually the Class of the cached query object and an optional {@link List} of {@link
@@ -71,42 +63,27 @@ public final class QueryCache {
     */
    public <T> T get(String cacheName, String queryString, List<FieldAccumulator> accumulators, Object queryTypeDiscriminator, QueryCreator<T> queryCreator) {
       QueryCacheKey key = new QueryCacheKey(cacheName, queryString, accumulators, queryTypeDiscriminator);
-      return (T) getOptionalCache(true).map(c -> c.computeIfAbsent(key, (k) -> queryCreator.create(k.queryString, k.accumulators))).orElse(null);
+      return (T) getCache().computeIfAbsent(key, (k) -> queryCreator.create(k.queryString, k.accumulators));
    }
 
    public void clear() {
       log.debug("Clearing query cache for all caches");
-      getOptionalCache(false).ifPresent(Cache::clear);
+      getCache().clear();
    }
 
    public void clear(String cacheName) {
       log.debugf("Clearing query cache for cache %s", cacheName);
-      getOptionalCache(false).ifPresent(c -> c.keySet().removeIf(k -> k.cacheName.equals(cacheName)));
+      getCache().keySet().removeIf(k -> k.cacheName.equals(cacheName));
    }
 
-   /**
-    * Obtain and return the cache, starting it lazily if needed.
-    */
-   private Optional<Cache<QueryCacheKey, Object>> getOptionalCache(boolean createIfAbsent) {
-      Cache<QueryCacheKey, Object> cache = lazyCache;
-      if (createIfAbsent && cache == null) {
-         synchronized (this) {
-            if (lazyCache == null) {
-               // define the query cache configuration if it does not already exist (from a previous call or manually defined by the user)
-               internalCacheRegistry.registerInternalCache(QUERY_CACHE_NAME, getQueryCacheConfig().build(),
-                     EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE));
-               lazyCache = cacheManager.getCache(QUERY_CACHE_NAME);
-            }
-            cache = lazyCache;
-         }
-      }
-      return Optional.ofNullable(cache);
+   private Cache<QueryCacheKey, Object> getCache() {
+      return cacheManager.getCache(QUERY_CACHE_NAME);
    }
 
    /**
     * Create the configuration of the internal query cache.
     */
-   private ConfigurationBuilder getQueryCacheConfig() {
+   public static ConfigurationBuilder getQueryCacheConfig() {
       ConfigurationBuilder cfgBuilder = new ConfigurationBuilder();
       cfgBuilder
             .simpleCache(true)
@@ -119,51 +96,7 @@ public final class QueryCache {
     * The key of the query cache: a tuple with 3 components. Serialization of this object is not expected as the cache
     * is local and there is no store configured.
     */
-   private static final class QueryCacheKey {
-
-      final String cacheName;
-
-      final String queryString;
-
-      final List<FieldAccumulator> accumulators;
-
-      final Object queryTypeDiscriminator;
-
-      QueryCacheKey(String cacheName, String queryString, List<FieldAccumulator> accumulators, Object queryTypeDiscriminator) {
-         this.cacheName = cacheName;
-         this.queryString = queryString;
-         this.accumulators = accumulators;
-         this.queryTypeDiscriminator = queryTypeDiscriminator;
-      }
-
-      @Override
-      public boolean equals(Object obj) {
-         if (this == obj) return true;
-         if (!(obj instanceof QueryCacheKey)) return false;
-         QueryCacheKey other = (QueryCacheKey) obj;
-         return cacheName.equals(other.cacheName)
-               && queryString.equals(other.queryString)
-               && (accumulators != null ? accumulators.equals(other.accumulators) : other.accumulators == null)
-               && queryTypeDiscriminator.equals(other.queryTypeDiscriminator);
-      }
-
-      @Override
-      public int hashCode() {
-         int result = cacheName.hashCode();
-         result = 31 * result + queryString.hashCode();
-         result = 31 * result + (accumulators != null ? accumulators.hashCode() : 0);
-         result = 31 * result + queryTypeDiscriminator.hashCode();
-         return result;
-      }
-
-      @Override
-      public String toString() {
-         return "QueryCacheKey{" +
-               "cacheName='" + cacheName + '\'' +
-               ", queryString='" + queryString + '\'' +
-               ", accumulators=" + accumulators +
-               ", queryTypeDiscriminator=" + queryTypeDiscriminator +
-               '}';
-      }
+   private record QueryCacheKey(String cacheName, String queryString, List<FieldAccumulator> accumulators,
+                                Object queryTypeDiscriminator) {
    }
 }
