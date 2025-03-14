@@ -243,3 +243,30 @@ disabled, information about memory usage values is -1. The properties are:
 * `node_addresses` is a list with all the node's physical addresses.
 * `memory_available` the node available memory in bytes.
 * `memory_used` the node used memory in bytes.
+
+
+[id='rest_v2_cluster_members']
+= Getting Cluster Members Information
+Retrieving information about each cache manager member in the cluster with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/cluster/members
+----
+
+{brandname} responds with information in JSON format, as in the following example:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/rest_cluster_members_response.json[]
+----
+
+* `rolling_upgrade` contains a flag indicate a rolling upgrade going on
+
+For each container x
+
+* `version` contains the {brandname} version
+* `physical_addresses` contains the physical network addresses associated with the Cache Manager
+* `cache_manager_status` the lifecycle status of the Cache Manager.
+For possible values, check the https://infinispan.org/docs/stable/apidocs/org/infinispan/lifecycle/ComponentStatus.html[`org.infinispan.lifecycle.ComponentStatus`] documentation
+* `node_address` contains the logical address of the Cache Manager
