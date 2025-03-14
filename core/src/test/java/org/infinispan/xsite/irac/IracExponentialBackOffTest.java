@@ -66,6 +66,13 @@ public class IracExponentialBackOffTest extends SingleCacheManagerTest {
       backOff.assertNoEvents();
    }
 
+   @Override
+   protected void teardown() {
+      super.teardown();
+      iracManager = null;
+      transport = null;
+   }
+
    private static ConfigurationBuilder createCacheConfiguration() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);

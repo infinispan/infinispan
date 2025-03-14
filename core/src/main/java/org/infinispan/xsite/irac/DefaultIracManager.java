@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
@@ -28,6 +29,8 @@ import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
@@ -58,8 +61,6 @@ import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.ExponentialBackOff;
 import org.infinispan.util.ExponentialBackOffImpl;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
@@ -550,7 +551,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    }
 
    private void removeStateFromLocal(IracManagerKeyInfo state) {
-      updatedKeys.computeIfPresent(state.getKey(), (ignored, existingState) -> {
+      updatedKeys.computeIfPresent(state.key(), (ignored, existingState) -> {
          // remove if the same state
          if (existingState.getKeyInfo().equals(state)) {
             if (log.isTraceEnabled()) {
@@ -710,16 +711,30 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       return updatedKeys.containsKey(key);
    }
 
-   private static final class IracStateData {
-      final IracManagerKeyState state;
-      final InternalCacheEntry<Object, Object> entry;
-      final IracMetadata tombstone;
-
-      private IracStateData(IracManagerKeyState state, InternalCacheEntry<Object, Object> entry, IracMetadata tombstone) {
-         this.state = Objects.requireNonNull(state);
-         this.entry = entry;
-         this.tombstone = tombstone;
-      }
+   @Override
+   public Stream<IracManagerKeyInfo> pendingKeys() {
+      return updatedKeys.values().stream()
+            .map(IracManagerKeyState::getKeyInfo);
    }
 
+   @Override
+   public void checkStaleKeys(Address origin, Collection<IracManagerKeyInfo> keys) {
+      var topology = clusteringDependentLogic.getCacheTopology();
+      var toCleanup = keys.stream()
+            .filter(info -> topology.getSegmentDistribution(info.segment()).isPrimary())
+            .filter(info -> !updatedKeys.containsKey(info.key()))
+            .toList();
+      if (toCleanup.isEmpty()) {
+         return;
+      }
+      IracCleanupKeysCommand cmd = commandsFactory.buildIracCleanupKeyCommand(toCleanup);
+      rpcManager.sendTo(origin, cmd, DeliverOrder.NONE);
+   }
+
+   private record IracStateData(IracManagerKeyState state, InternalCacheEntry<Object, Object> entry,
+                                IracMetadata tombstone) {
+      public IracStateData {
+         Objects.requireNonNull(state);
+      }
+   }
 }
