@@ -19,7 +19,6 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryParsingResult;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
@@ -62,7 +61,7 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
       queryCache.clear();
 
       // obtain a reference to the internal query cache via reflection
-      Cache<?, ?> internalCache = TestingUtil.extractField(QueryCache.class, queryCache, "lazyCache");
+      Cache<?, ?> internalCache = cacheManager.getCache(QueryCache.QUERY_CACHE_NAME);
 
       String queryString = "from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS u where u.name = 'John'";
 
