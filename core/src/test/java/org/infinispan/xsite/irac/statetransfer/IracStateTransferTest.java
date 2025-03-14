@@ -8,6 +8,7 @@ import static org.testng.AssertJUnit.assertNull;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
@@ -18,6 +19,7 @@ import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.infinispan.xsite.XSiteAdminOperations;
 import org.infinispan.xsite.irac.ManualIracManager;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -63,6 +65,13 @@ public class IracStateTransferTest extends AbstractMultipleSitesTest {
       for (IracManagerHolder holder : iracManagers) {
          holder.iracManagers.forEach(m -> m.disable(ManualIracManager.DisableMode.DROP));
       }
+   }
+
+   @AfterClass(alwaysRun = true)
+   @Override
+   protected void destroy() {
+      super.destroy();
+      Arrays.fill(iracManagers, null);
    }
 
    public void testStateTransfer(Method method) {

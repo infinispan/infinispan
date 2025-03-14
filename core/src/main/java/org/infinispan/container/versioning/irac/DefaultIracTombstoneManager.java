@@ -22,21 +22,15 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import io.reactivex.rxjava3.annotations.NonNull;
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.CompletableObserver;
-import io.reactivex.rxjava3.core.CompletableSource;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.functions.Predicate;
-import net.jcip.annotations.GuardedBy;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
@@ -57,16 +51,24 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.irac.IracExecutor;
 import org.infinispan.xsite.irac.IracManager;
+import org.infinispan.xsite.irac.IracManagerKeyInfo;
 import org.infinispan.xsite.irac.IracXSiteBackup;
 import org.infinispan.xsite.status.SiteState;
 import org.infinispan.xsite.status.TakeOfflineManager;
+
+import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.CompletableObserver;
+import io.reactivex.rxjava3.core.CompletableSource;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.functions.Predicate;
+import net.jcip.annotations.GuardedBy;
 
 /**
  * A default implementation for {@link IracTombstoneManager}.
@@ -277,36 +279,56 @@ public class DefaultIracTombstoneManager implements IracTombstoneManager {
       if (stopped) {
          return CompletableFutures.completedNull();
       }
-      boolean trace = log.isTraceEnabled();
-
-      if (trace) {
+      if (log.isTraceEnabled()) {
          log.trace("[IRAC] Starting tombstone cleanup round.");
       }
-
       scheduler.onTaskStarted(tombstoneMap.size());
+      return CompletionStages.allOf(checkStaleKeys(), checkStaleTombstones())
+            .whenComplete(scheduler);
+   }
 
-      CompletionStage<Void> stage = Flowable.fromIterable(tombstoneMap.values())
+   public CompletionStage<Void> checkStaleTombstones() {
+      var stage = Flowable.fromIterable(tombstoneMap.values())
             .groupBy(this::classifyTombstone)
             // We are using flatMap to allow for actions to be done in parallel, but the requests in each action
             // must be performed sequentially
-            .flatMap(group -> {
-               switch (group.getKey()) {
-                  case REMOVE_TOMBSTONE:
-                     return removeAllTombstones(group);
-                  case NOTIFY_PRIMARY_OWNER:
-                     return notifyPrimaryOwner(group);
-                  case CHECK_REMOTE_SITE:
-                     return checkRemoteSite(group);
-                  case KEEP_TOMBSTONE:
-                  default:
-                     return Flowable.empty();
-               }
+            .flatMap(group -> switch (group.getKey()) {
+               case REMOVE_TOMBSTONE -> removeAllTombstones(group);
+               case NOTIFY_PRIMARY_OWNER -> notifyPrimaryOwner(group);
+               case CHECK_REMOTE_SITE -> checkRemoteSite(group);
+               default -> Flowable.fromCompletable(group.ignoreElements());
             }, true, ACTION_COUNT, ACTION_COUNT)
             .lastStage(null);
-      if (trace) {
-         stage = stage.whenComplete(TRACE_ROUND_COMPLETED);
+      return log.isTraceEnabled() ? stage.whenComplete(TRACE_ROUND_COMPLETED) : stage;
+   }
+
+   public CompletionStage<Void> checkStaleKeys() {
+      return Flowable.fromStream(iracManager.running().pendingKeys())
+            .groupBy(IracManagerKeyInfo::segment)
+            .flatMap(group -> {
+               if (isPrimaryOfSegment(group.getKey())) {
+                  return Flowable.fromCompletable(group.ignoreElements());
+               }
+               return group
+                     .buffer(batchSize)
+                     .concatMapDelayError(this::checkKeysExistsInPrimary);
+            }, true, segmentCount, segmentCount)
+            .lastStage(null);
+   }
+
+   private Flowable<Void> checkKeysExistsInPrimary(List<IracManagerKeyInfo> infos) {
+      if (infos.isEmpty()) {
+         return Flowable.empty();
       }
-      return stage.whenComplete(scheduler);
+      var primary = getSegmentDistribution(infos.get(0).segment()).primary();
+      var rpcOptions = rpcManager.getSyncRpcOptions();
+      var cmd = commandsFactory.buildIracPrimaryPendingKeyCheckCommand(infos);
+      var stage = rpcManager.invokeCommand(primary, cmd, ignoreLeavers(), rpcOptions);
+      return RxJavaInterop.voidCompletionStageToFlowable(stage);
+   }
+
+   private boolean isPrimaryOfSegment(int segment) {
+      return getSegmentDistribution(segment).isPrimary();
    }
 
    private DistributionInfo getSegmentDistribution(int segment) {
@@ -522,15 +544,7 @@ public class DefaultIracTombstoneManager implements IracTombstoneManager {
             currentDelayMillis = 1;
          } else {
             // Estimate how long it would take for the tombstones map to reach the target size
-            double tombstoneCreationRate = (preCleanupSize - previousPostCleanupSize) * 1.0 / currentDelayMillis;
-            double estimationMillis;
-            if (tombstoneCreationRate <= 0) {
-               // The tombstone map will never reach the target size, use the maximum delay
-               estimationMillis = maxDelayMillis;
-            } else {
-               // Ensure that 1 <= estimation <= maxDelayMillis
-               estimationMillis = Math.min((targetSize - postCleanupSize) / tombstoneCreationRate + 1, maxDelayMillis);
-            }
+            double estimationMillis = computeEstimationMillis(postCleanupSize);
             // Use a geometric average between the current estimation and the previous one
             // to dampen the changes as the rate changes from one interval to the next
             // (especially when the interval duration is very short)
@@ -538,6 +552,19 @@ public class DefaultIracTombstoneManager implements IracTombstoneManager {
          }
          previousPostCleanupSize = postCleanupSize;
          scheduleWithCurrentDelay();
+      }
+
+      private double computeEstimationMillis(int postCleanupSize) {
+         double tombstoneCreationRate = (preCleanupSize - previousPostCleanupSize) * 1.0 / currentDelayMillis;
+         double estimationMillis;
+         if (tombstoneCreationRate <= 0) {
+            // The tombstone map will never reach the target size, use the maximum delay
+            estimationMillis = maxDelayMillis;
+         } else {
+            // Ensure that 1 <= estimation <= maxDelayMillis
+            estimationMillis = Math.min((targetSize - postCleanupSize) / tombstoneCreationRate + 1, maxDelayMillis);
+         }
+         return estimationMillis;
       }
 
       synchronized void scheduleWithCurrentDelay() {
