@@ -1,6 +1,5 @@
 package org.infinispan.commands.irac;
 
-import static java.util.Objects.requireNonNull;
 import static org.infinispan.commons.marshall.MarshallUtil.marshallCollection;
 import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
 
@@ -9,6 +8,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -113,25 +113,13 @@ public class IracStateResponseCommand implements CacheRpcCommand {
       return new State(IracManagerKeyInfo.readFrom(input), IracMetadata.readFrom(input));
    }
 
-   private static class State {
-      final IracManagerKeyInfo keyInfo;
-      final IracMetadata tombstone;
-
-      State(IracManagerKeyInfo keyInfo, IracMetadata tombstone) {
-         this.keyInfo = requireNonNull(keyInfo);
-         this.tombstone = tombstone;
+   private record State(IracManagerKeyInfo keyInfo, IracMetadata tombstone) {
+      private State {
+         Objects.requireNonNull(keyInfo);
       }
 
       void apply(IracManager manager) {
-         manager.receiveState(keyInfo.getSegment(), keyInfo.getKey(), keyInfo.getOwner(), tombstone);
-      }
-
-      @Override
-      public String toString() {
-         return "State{" +
-               "keyInfo=" + keyInfo +
-               ", tombstone=" + tombstone +
-               '}';
+         manager.receiveState(keyInfo.segment(), keyInfo.key(), keyInfo.owner(), tombstone);
       }
    }
 }
