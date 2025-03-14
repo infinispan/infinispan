@@ -33,6 +33,7 @@ import io.lettuce.core.json.arguments.JsonMsetArgs;
 import io.lettuce.core.json.arguments.JsonRangeArgs;
 import io.lettuce.core.json.arguments.JsonSetArgs;
 import io.lettuce.core.output.ArrayOutput;
+import io.lettuce.core.output.IntegerListOutput;
 import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.output.NumberListOutput;
 import io.lettuce.core.output.StringListOutput;
@@ -1217,7 +1218,8 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
    }
 
    enum TestCommandType implements ProtocolKeyword {
-      JSON_NUMMULTBY("JSON.NUMMULTBY"),;
+      JSON_NUMMULTBY("JSON.NUMMULTBY"),
+      JSON_DEBUG("JSON.DEBUG");
 
       public final byte[] bytes;
       private final String command;
@@ -1609,7 +1611,6 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.jsonSet(key, jpRoot, jv)).isEqualTo("OK");
       assertThat(redis.jsonMerge(key, new JsonPath("$.nonexist1.nonexist2"), jvUpdate)).isNull();
 
-
       jv = defaultJsonParser.createJsonValue("""
             {"o11":{"o21":{"o31":"field31", "sameKey": null}, "sameKey": "value", "o22": {"o32": 42}}, "sameKey": {"o22":true }}
                """);
@@ -1623,7 +1624,6 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
 
       // Test create field on non leaf
       assertThat(redis.jsonSet(key, jpRoot, jv)).isEqualTo("OK");
-      var updateFinal = update;
       var jvUpdateFinal = jvUpdate;
       assertThatThrownBy(() -> redis.jsonMerge(key, new JsonPath("$..nonexist1"), jvUpdateFinal)).isInstanceOf(RedisCommandExecutionException.class)
       .hasMessage("ERR Err wrong static path");
@@ -1638,7 +1638,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
 
       // Append to root
       redis.jsonSet(key, jp, jv);
-      Long res = (Long) command.jsonArrinsert(key, "$", 2, "\"aString\"", "1", "{\"aObj\": null }");
+      Long res = command.jsonArrinsert(key, "$", 2, "\"aString\"", "1", "{\"aObj\": null }");
       assertThat(res).isEqualTo(6);
       List<JsonValue> jsonGet = redis.jsonGet(key, jp);
       assertThat(jsonGet.get(0).toString()).isEqualTo("[[1,\"a\",\"aString\",1,{\"aObj\":null},{\"o\":\"v\"}]]");
@@ -1700,7 +1700,7 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       jv = defaultJsonParser.createJsonValue("[1, \"a\", {\"o\":\"v\"}]");
       // Append to root
       redis.jsonSet(key, jp, jv);
-      res = (Long) command.jsonArrinsert(key, ".", 2, "\"aString\"", "1", "{\"aObj\": null }");
+      res = command.jsonArrinsert(key, ".", 2, "\"aString\"", "1", "{\"aObj\": null }");
       assertThat(res).isEqualTo(6);
       jsonGet = redis.jsonGet(key, jp);
       assertThat(jsonGet.get(0).toString()).isEqualTo("[[1,\"a\",\"aString\",1,{\"aObj\":null},{\"o\":\"v\"}]]");
@@ -1776,10 +1776,10 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
             """);
       JsonValue jv2 = defaultJsonParser.createJsonValue("\"string\"");
       JsonValue jv3 = defaultJsonParser.createJsonValue("3");
-      List<JsonMsetArgs<String, String>> msetArgs = new ArrayList<>();
-      msetArgs.add(new JsonMsetArgs<String, String>(key1, jpRoot, jv1));
-      msetArgs.add(new JsonMsetArgs<String, String>(key2, jpRoot, jv2));
-      msetArgs.add(new JsonMsetArgs<String, String>(key3, jpRoot, jv3));
+      List<JsonMsetArgs<String,String>> msetArgs = new ArrayList<>();
+      msetArgs.add(new JsonMsetArgs<>(key1, jpRoot, jv1));
+      msetArgs.add(new JsonMsetArgs<>(key2, jpRoot, jv2));
+      msetArgs.add(new JsonMsetArgs<>(key3, jpRoot, jv3));
       assertThat(redis.jsonMSet(msetArgs)).isEqualTo("OK");
       List<JsonValue> jsonGet = redis.jsonGet(key1, jpRootLegacy);
       assertThat(jsonGet).hasSize(1);
@@ -1794,11 +1794,11 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       JsonPath jp = new JsonPath("$.added");
       msetArgs = new ArrayList<>();
       // Adding a leaf to an existing object
-      msetArgs.add(new JsonMsetArgs<String, String>(key1, jp, jv4));
+      msetArgs.add(new JsonMsetArgs<>(key1, jp, jv4));
       // Replacing a root object
-      msetArgs.add(new JsonMsetArgs<String, String>(key2, jpRoot, jv4));
+      msetArgs.add(new JsonMsetArgs<>(key2, jpRoot, jv4));
       // Trying to add a leaf to a non object
-      msetArgs.add(new JsonMsetArgs<String, String>(key3, jp, jv4));
+      msetArgs.add(new JsonMsetArgs<>(key3, jp, jv4));
       assertThat(redis.jsonMSet(msetArgs)).isEqualTo("OK");
       jsonGet = redis.jsonGet(key1, jpRootLegacy);
       assertThat(jsonGet).hasSize(1);
@@ -1919,6 +1919,41 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       assertThatThrownBy(() -> resp(key, ".non-existent")).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessage("ERR Path '$.non-existent' does not exist");
       assertThat(resp("non-existent", "$")).containsExactly((Object) null);
+   }
+
+   @Test
+   void testJSONDEBUG() {
+      JsonPath jpRoot = new JsonPath("$");
+      String key = "doc";
+      // JSON.DEBUG MEMORY doc .
+      assertThat(jsonDebugLegacy("MEMORY", key, ".")).isZero();
+      assertThat(jsonDebug("MEMORY", key, "$")).containsExactly(0L);
+      // JSON.SET doc $ '"a"'
+      JsonValue jv = defaultJsonParser.createJsonValue("\"a\"");
+      assertThat(redis.jsonSet(key, jpRoot, jv)).isEqualTo("OK");
+      // JSON.DEBUG MEMORY doc .
+      assertThat(jsonDebugLegacy("MEMORY", key, ".")).isEqualTo(88L);
+      assertThat(jsonDebug("MEMORY", key, "$")).containsExactly(88L);
+      // JSON.SET doc $ '{"a":"b", "b": [{"a":2}, {"a":"c"}, {"a":5.4}, {"a":true},{"h":1}, {"a":["hello"]}]}'
+      jv = defaultJsonParser.createJsonValue("""
+              {"a":"b", "b": [{"a":2}, {"a":"c"}, {"a":5.4}, {"a":true}, {"a":["hello"]}]}
+            """);
+      assertThat(redis.jsonSet(key, jpRoot, jv)).isEqualTo("OK");
+      // JSON.DEBUG MEMORY doc .
+      assertThat(jsonDebugLegacy("MEMORY", key, ".")).isEqualTo(152L);
+      assertThat(jsonDebug("MEMORY", key, "$")).containsExactly(152L);
+   }
+
+   private Long jsonDebugLegacy(String subCommand, String key, String path) {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      return redis.dispatch(TestCommandType.JSON_DEBUG, new IntegerOutput<>(codec),
+              new CommandArgs<>(codec).add(subCommand).addKey(key).add(path));
+   }
+
+   private List<Long> jsonDebug(String subCommand, String key, String path) {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      return redis.dispatch(TestCommandType.JSON_DEBUG, new IntegerListOutput<>(codec),
+              new CommandArgs<>(codec).add(subCommand).addKey(key).add(path));
    }
 
    private boolean compareJSONGet(List<JsonValue> results, JsonValue expected, JsonPath... paths) {
