@@ -1108,6 +1108,14 @@ public class Parser extends CacheParser {
                builder.metrics().accurateSize(ParseUtils.parseBoolean(reader, i, value));
                break;
             }
+            case JVM: {
+               builder.metrics().jvm(ParseUtils.parseBoolean(reader, i, value));
+               break;
+            }
+            case LEGACY: {
+               builder.metrics().legacy(ParseUtils.parseBoolean(reader, i, value));
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }
