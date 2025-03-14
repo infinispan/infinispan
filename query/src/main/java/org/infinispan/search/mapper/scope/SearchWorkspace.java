@@ -1,6 +1,7 @@
 package org.infinispan.search.mapper.scope;
 
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 
 /**
  * The entry point for explicit index operations.
@@ -29,6 +30,12 @@ public interface SearchWorkspace {
     * If empty, documents will be deleted regardless of their routing key.
     */
    void purge(Set<String> routingKeys);
+
+   /**
+    * Asynchronous version of {@link #purge()}
+    * @return stage that when complete the purge will be complete
+    */
+   CompletionStage<?> purgeAsync();
 
    /**
     * Flush to disk the changes to indexes that were not committed yet. In the case of backends with a transaction log

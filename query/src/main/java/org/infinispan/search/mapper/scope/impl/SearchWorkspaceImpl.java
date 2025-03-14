@@ -2,6 +2,7 @@ package org.infinispan.search.mapper.scope.impl;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 
 import org.hibernate.search.mapper.pojo.work.spi.PojoScopeWorkspace;
 import org.hibernate.search.util.common.impl.Futures;
@@ -16,7 +17,12 @@ class SearchWorkspaceImpl implements SearchWorkspace {
 
    @Override
    public void purge() {
-      Futures.unwrappedExceptionJoin(delegate.purge(Collections.emptySet()));
+      Futures.unwrappedExceptionJoin(purgeAsync().toCompletableFuture());
+   }
+
+   @Override
+   public CompletionStage<?> purgeAsync() {
+      return delegate.purge(Collections.emptySet());
    }
 
    @Override
