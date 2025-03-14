@@ -1,16 +1,18 @@
 package org.infinispan.reactive.publisher.impl;
 
-import java.util.function.IntConsumer;
-
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 
 /**
- * A {@link Publisher} that also notifies in a thread safe manner when a segment has sent all values upstream. To more
- * specifically detail the guarantee, the {@code accept} method of the provided {@link IntConsumer} will be invoked
- * serially inline with {@code onNext}, {@code onError}, {@code onComplete} and will only be invoked after all values
- * from the given segment have already been notified via {@code onNext}. Note that there is no guarantee that the previous
- * values was from the given segment, only that all have been notified prior.
+ * A {@link Publisher} that also allows receiving segment completion information if desired. If segment information
+ * is needed use {@link #publisherWithSegments()} which publishes the {@link Notification} instances that can either
+ * contain a value or a segment completion notification. In that latter case the notification should be
+ * checked if it is for a value {@link Notification#isValue()} or a segment completion {@link Notification#isSegmentComplete()}.
+ * <p>
+ * After a segment complete notification has been published no other values from that segment will be published again before
+ * the publisher completes.
+ * Also note that it is possible for a segment to have no values, so there is no guarantee a prior value mapped to a
+ * given segment.
  * <p>
  * If segment completion is not needed, use the {@link Publisher#subscribe(Subscriber)}. This allows
  * implementors to optimize for the case when segment completion is not needed as this may require additional overhead.
@@ -69,7 +71,26 @@ public interface SegmentPublisherSupplier<R> {
       }
    }
 
+   /**
+    * Returns a publisher that can be used to subscribe to the values available.
+    * @return a Publisher that publishes the resulting values without corresponding segment information
+    */
    Publisher<R> publisherWithoutSegments();
 
+   /**
+    * A {@link Publisher} that will publish entries as originally configured from possibly remote sources. The published
+    * items will be wrapped in a {@link Notification} which can be either an item or segment completion notification.
+    * The type can be verified by first invoking {@link Notification#isValue()} or {@link Notification#isSegmentComplete()}
+    * after which the value or segment information should be retrieved. Note that each value will also have a segment
+    * attributed to it which can be access by invoking {@link Notification#valueSegment()}.
+    * <p>
+    * Note that segment completion can be interwoven with values and some segments may have no items present.
+    * However, once a segment complete notification is encountered for a given segment no additional values will be
+    * published to the same subscriber for the given segment.
+    * <p>
+    * If segment information is not required, please use {@link #publisherWithoutSegments()} as implementations
+    * may have additional optimizations in place for when this information is not required.
+    * @return a Publisher that publishes the resulting values with segment information
+    */
    Publisher<Notification<R>> publisherWithSegments();
 }

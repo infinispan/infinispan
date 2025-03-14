@@ -20,6 +20,7 @@ import org.infinispan.commons.api.TransactionalCache;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
+import org.infinispan.commons.util.Experimental;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.container.DataContainer;
@@ -906,4 +907,15 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @see #remove(Object)
     */
    CompletableFuture<CacheEntry<K, V>> removeAsyncEntry(Object key);
+
+   /**
+    * Provides a {@link org.reactivestreams.Publisher} type instance that can be used to publish values
+    * from this Cache. This allows for publishing of keys or entries from the cache or even reduction of those
+    * in an efficient manner. This is very similar to a {@link CacheStream} but non-blocking.
+    * <p>
+    * This API is currently Experimental and may be changed or even removed later, use at your own risk.
+    * @return a publisher that uses the same transactional context (if applicable) and flags of this cache
+    */
+   @Experimental
+   CachePublisher<K, V> cachePublisher();
 }
