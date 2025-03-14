@@ -10,7 +10,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 
-public class BaseMemoryAdditionalMetrics implements MeterBinder {
+@Deprecated(forRemoval = true, since = "15.2")
+class BaseMemoryAdditionalMetrics implements MeterBinder {
 
    @Override
    public void bindTo(MeterRegistry registry) {

@@ -9,14 +9,12 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 
-@NonNullApi
-@NonNullFields
-class VendorAdditionalMetrics implements MeterBinder {
+@Deprecated(forRemoval = true, since = "15.2")
+class BaseMemoryPoolAdditionalMetrics implements MeterBinder {
 
-   static final String PREFIX = "vendor.";
+   // These metrics are really base metrics but prefix is vendor due to backwards compatibility
+   private static final String PREFIX = "vendor.";
 
    @Override
    public void bindTo(MeterRegistry registry) {

@@ -7,13 +7,14 @@ import org.testng.asserts.SoftAssert;
 /**
  * @author Alexander Schwartz
  */
-@Test(groups = "functional", testName = "metrics.VendorAdditionalMetricsTest")
-public class VendorAdditionalMetricsTest {
+@Deprecated(forRemoval=true, since = "15.2")
+@Test(groups = "functional", testName = "metrics.BaseMemoryPoolAdditionalMetricsTest")
+public class BaseMemoryPoolAdditionalMetricsTest {
 
     @Test
     public void testMetricNamesContainOnlyValidCharacters() {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
-        new VendorAdditionalMetrics().bindTo(registry);
+        new BaseMemoryPoolAdditionalMetrics().bindTo(registry);
         SoftAssert asserts = new SoftAssert();
         registry.getMeters().forEach(meter -> {
             asserts.assertTrue(meter.getId().getName().matches("[.\\w]+"), "metric name contains invalid characters: " + meter.getId().getName());
