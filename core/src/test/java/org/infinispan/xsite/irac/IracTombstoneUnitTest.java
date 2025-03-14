@@ -14,6 +14,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
@@ -115,6 +116,7 @@ public class IracTombstoneUnitTest extends AbstractInfinispanTest {
    private static IracManager createIracManager(AtomicBoolean keep) {
       IracManager im = Mockito.mock(IracManager.class);
       Mockito.when(im.containsKey(ArgumentMatchers.any())).thenAnswer(invocationOnMock -> keep.get());
+      Mockito.when(im.pendingKeys()).thenAnswer(invocationOnMock -> Stream.empty());
       return im;
    }
 

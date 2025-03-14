@@ -2,6 +2,7 @@ package org.infinispan.xsite.irac;
 
 import java.util.Collection;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Stream;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.factories.scopes.Scope;
@@ -135,4 +136,26 @@ public interface IracManager {
     * @return {@code true} if the key is present.
     */
    boolean containsKey(Object key);
+
+   /**
+    * Returns a {@link Stream} containing all keys that have not been acknowledged by other sites.
+    * <p>
+    * This stream represents keys for which a corresponding acknowledgment has not been received from all participating
+    * sites. This can be used to identify pending operations or potential data inconsistencies.
+    *
+    * @return A {@link Stream} of unacknowledged keys.
+    */
+   Stream<IracManagerKeyInfo> pendingKeys();
+
+   /**
+    * Checks a remote node's list of {@link IracManagerKeyInfo} for stale or outdated entries.
+    * <p>
+    * This method iterates through the provided list of key information and identifies entries that are considered
+    * stale. For each stale entry found, a cleanup command is invoked to remove the corresponding key on the remote
+    * node.
+    *
+    * @param origin The node that initiated the check.
+    * @param keys   The list of key information to be inspected for stale entries.
+    */
+   void checkStaleKeys(Address origin, Collection<IracManagerKeyInfo> keys);
 }

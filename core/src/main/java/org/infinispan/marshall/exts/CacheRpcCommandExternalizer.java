@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
+import org.infinispan.commands.irac.IracPrimaryPendingKeyCheckCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
@@ -134,7 +135,8 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             IracTombstoneCleanupCommand.class,
             IracTombstoneStateResponseCommand.class,
             IracTombstonePrimaryCheckCommand.class,
-            IracTombstoneRemoteSiteCheckCommand.class));
+            IracTombstoneRemoteSiteCheckCommand.class,
+            IracPrimaryPendingKeyCheckCommand.class));
       return collect;
    }
 

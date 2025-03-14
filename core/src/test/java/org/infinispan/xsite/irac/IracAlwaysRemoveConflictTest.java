@@ -18,6 +18,7 @@ import org.infinispan.util.TestOperation;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.infinispan.xsite.spi.AlwaysRemoveXSiteEntryMergePolicy;
 import org.infinispan.xsite.spi.XSiteMergePolicy;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -32,6 +33,13 @@ public class IracAlwaysRemoveConflictTest extends AbstractMultipleSitesTest {
    private static final int N_SITES = 2;
    private static final int CLUSTER_SIZE = 3;
    private final List<ManualIracManager> iracManagerList;
+
+   @AfterClass(alwaysRun = true)
+   @Override
+   protected void destroy() {
+      super.destroy();
+      iracManagerList.clear();
+   }
 
    protected IracAlwaysRemoveConflictTest() {
       this.iracManagerList = new ArrayList<>(N_SITES * CLUSTER_SIZE);
