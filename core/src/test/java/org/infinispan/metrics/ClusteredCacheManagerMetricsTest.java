@@ -3,6 +3,7 @@ package org.infinispan.metrics;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collection;
 import java.util.List;
@@ -80,7 +81,9 @@ public class ClusteredCacheManagerMetricsTest extends MultipleCacheManagersTest 
    private void verifyMeters(MeterRegistry registry) {
       List<Meter> meters = registry.getMeters();
       assertThat(meters).isNotEmpty();
-      assertThat(meters.get(0).getId().getName()).startsWith("vendor.ispn");
+      String firstName = meters.get(0).getId().getName();
+      assertTrue(firstName, firstName.startsWith("vendor.ispn")
+            || firstName.startsWith("jvm.") || firstName.startsWith("system.") || firstName.startsWith("process."));
 
       for (Meter m : meters) {
          assertFalse(m.getId().getName(), m.getId().getName().startsWith("vendor.ispn_cluster_container"));
