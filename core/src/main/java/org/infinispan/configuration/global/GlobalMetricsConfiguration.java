@@ -16,9 +16,11 @@ public class GlobalMetricsConfiguration {
    public static final AttributeDefinition<String> PREFIX = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PREFIX, "").immutable().build();
    public static final AttributeDefinition<Boolean> NAMES_AS_TAGS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.NAMES_AS_TAGS, false).immutable().build();
    public static final AttributeDefinition<Boolean> ACCURATE_SIZE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ACCURATE_SIZE, false).build();
+   public static final AttributeDefinition<Boolean> JVM = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.JVM, true).build();
+   public static final AttributeDefinition<Boolean> LEGACY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.LEGACY, true).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(GlobalMetricsConfiguration.class, GAUGES, HISTOGRAMS, PREFIX, NAMES_AS_TAGS, ACCURATE_SIZE);
+      return new AttributeSet(GlobalMetricsConfiguration.class, GAUGES, HISTOGRAMS, PREFIX, NAMES_AS_TAGS, ACCURATE_SIZE, JVM, LEGACY);
    }
 
    private final AttributeSet attributes;
@@ -27,6 +29,8 @@ public class GlobalMetricsConfiguration {
    private final Attribute<String> prefix;
    private final Attribute<Boolean> namesAsTags;
    private final Attribute<Boolean> accurateSize;
+   private final Attribute<Boolean> jvm;
+   private final Attribute<Boolean> legacy;
 
    GlobalMetricsConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
@@ -35,6 +39,8 @@ public class GlobalMetricsConfiguration {
       this.prefix = attributes.attribute(PREFIX);
       this.namesAsTags = attributes.attribute(NAMES_AS_TAGS);
       this.accurateSize = attributes.attribute(ACCURATE_SIZE);
+      this.jvm = attributes.attribute(JVM);
+      this.legacy = attributes.attribute(LEGACY);
    }
 
    public AttributeSet attributes() {
@@ -82,6 +88,22 @@ public class GlobalMetricsConfiguration {
     */
    public boolean accurateSize() {
       return accurateSize.get();
+   }
+
+   /**
+    * Whether JVM metrics should be reported.
+    * @return
+    */
+   public boolean jvm() {
+      return jvm.get();
+   }
+
+   /**
+    * Whether legacy metrics should be reported.
+    * @return
+    */
+   public boolean legacy() {
+      return legacy.get();
    }
 
    @Override

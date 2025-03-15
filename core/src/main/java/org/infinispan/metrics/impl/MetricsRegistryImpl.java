@@ -57,20 +57,26 @@ public class MetricsRegistryImpl implements MetricsRegistry {
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
+   private static final String PREFIX = "vendor.";
+
    @Inject GlobalConfiguration globalConfiguration;
    private ScrapeRegistry registry;
+   private JvmMetrics jvmMetrics = new JvmMetrics();
 
    @Start
    public void start() {
+      stop();
+
       boolean registerListeners = registry == null || !registry.isExternalManaged();
-      if (registry != null && !registry.isExternalManaged()) {
-         registry.registry().close();
-      }
       registry = createMeterRegistry(globalConfiguration);
 
       if (registerListeners) {
-         new BaseAdditionalMetrics().bindTo(registry.registry());
-         new VendorAdditionalMetrics().bindTo(registry.registry());
+         if (globalConfiguration.metrics().jvm()) {
+            jvmMetrics.bindTo(registry.registry());
+            if (globalConfiguration.metrics().legacy()) {
+               new BaseAdditionalMetrics().bindTo(registry.registry());
+            }
+         }
          registry.registry().config().onMeterAdded(MetricsRegistryImpl::onMeterAdded);
          registry.registry().config().onMeterRemoved(MetricsRegistryImpl::onMeterRemoved);
          registry.registry().config().onMeterRegistrationFailed(MetricsRegistryImpl::onMeterRegistrationFailed);
@@ -79,10 +85,10 @@ public class MetricsRegistryImpl implements MetricsRegistry {
 
    @Stop
    public void stop() {
-      if (registry == null || registry.isExternalManaged()) {
-         return;
+      if (registry != null && !registry.isExternalManaged()) {
+         registry.registry().close();
       }
-      registry.registry().close();
+      jvmMetrics.close();
    }
 
    private static ScrapeRegistry createMeterRegistry(GlobalConfiguration globalConfiguration) {
@@ -256,7 +262,7 @@ public class MetricsRegistryImpl implements MetricsRegistry {
    }
 
    private static String metricName(String prefix, MetricInfo info) {
-      return VendorAdditionalMetrics.PREFIX + prefix + NameUtils.decamelize(info.getName());
+      return PREFIX + prefix + NameUtils.decamelize(info.getName());
    }
 
    private Meter.Id createTimeGauge(Object instance, String prefix, TimeGaugeMetricInfo<Object> info, Map<String, String> tags) {

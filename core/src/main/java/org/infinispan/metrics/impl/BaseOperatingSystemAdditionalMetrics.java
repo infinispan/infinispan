@@ -15,17 +15,14 @@ import org.infinispan.util.logging.LogFactory;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 
-@NonNullApi
-@NonNullFields
 /**
  * Provides process metrics.
  * <p>
  * Inspired by io.micrometer.core.instrument.binder.system.ProcessorMetrics
  */
-public class BaseOperatingSystemAdditionalMetrics implements MeterBinder {
+@Deprecated(forRemoval = true, since = "15.2")
+class BaseOperatingSystemAdditionalMetrics implements MeterBinder {
 
    private static final Log log = LogFactory.getLog(BaseOperatingSystemAdditionalMetrics.class);
 
@@ -91,7 +88,7 @@ public class BaseOperatingSystemAdditionalMetrics implements MeterBinder {
       }
    }
 
-   private double invoke(OperatingSystemMXBean operatingSystemBean, Method method) {
+   private static double invoke(OperatingSystemMXBean operatingSystemBean, Method method) {
       try {
          Object returnedValue = method.invoke(operatingSystemBean);
          if (returnedValue instanceof Long) {

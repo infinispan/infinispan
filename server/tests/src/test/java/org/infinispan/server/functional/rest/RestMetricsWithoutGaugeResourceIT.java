@@ -22,10 +22,10 @@ public class RestMetricsWithoutGaugeResourceIT {
                .build();
 
    @Test
-   public void testBaseAndVendorMetrics() {
+   public void testJvmMetrics() {
       var metrics = getMetrics(SERVERS.rest().create().metrics());
-      findMetric(metrics, "base_classloader_loadedClasses_count").value().isPositive();
-      findMetric(metrics, "vendor_memoryPool_Metaspace_usage_bytes").value().isPositive();
+      findMetric(metrics, "jvm_classes_loaded_classes").value().isPositive();
+      findMetric(metrics, "jvm_memory_used_bytes").value().isPositive();
    }
 
    @Test

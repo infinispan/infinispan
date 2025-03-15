@@ -3,6 +3,8 @@ package org.infinispan.configuration.global;
 import static org.infinispan.configuration.global.GlobalMetricsConfiguration.ACCURATE_SIZE;
 import static org.infinispan.configuration.global.GlobalMetricsConfiguration.GAUGES;
 import static org.infinispan.configuration.global.GlobalMetricsConfiguration.HISTOGRAMS;
+import static org.infinispan.configuration.global.GlobalMetricsConfiguration.JVM;
+import static org.infinispan.configuration.global.GlobalMetricsConfiguration.LEGACY;
 import static org.infinispan.configuration.global.GlobalMetricsConfiguration.NAMES_AS_TAGS;
 import static org.infinispan.configuration.global.GlobalMetricsConfiguration.PREFIX;
 
@@ -105,6 +107,36 @@ public class GlobalMetricsConfigurationBuilder extends AbstractGlobalConfigurati
     */
    public GlobalMetricsConfigurationBuilder accurateSize(boolean accurateSize) {
       attributes.attribute(ACCURATE_SIZE).set(accurateSize);
+      return this;
+   }
+
+   /**
+    * Whether JVM metrics should be reported.
+    */
+   public boolean jvm() {
+      return attributes.attribute(JVM).get();
+   }
+
+   /**
+    * Whether JVM metrics should be reported.
+    */
+   public GlobalMetricsConfigurationBuilder jvm(boolean jvm) {
+      attributes.attribute(JVM).set(jvm);
+      return this;
+   }
+
+   /**
+    * Whether legacy metrics should be reported.
+    */
+   public boolean legacy() {
+      return attributes.attribute(LEGACY).get();
+   }
+
+   /**
+    * Whether legacy metrics should be reported.
+    */
+   public GlobalMetricsConfigurationBuilder legacy(boolean legacy) {
+      attributes.attribute(LEGACY).set(legacy);
       return this;
    }
 

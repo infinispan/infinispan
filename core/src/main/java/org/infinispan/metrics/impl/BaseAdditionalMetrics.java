@@ -11,11 +11,8 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterBinder;
-import io.micrometer.core.lang.NonNullApi;
-import io.micrometer.core.lang.NonNullFields;
 
-@NonNullApi
-@NonNullFields
+@Deprecated(forRemoval = true, since = "15.2")
 class BaseAdditionalMetrics implements MeterBinder {
 
    static final String PREFIX = "base.";
@@ -27,10 +24,11 @@ class BaseAdditionalMetrics implements MeterBinder {
       bindGarbageCollectionMetrics(registry);
       bindRuntimeMetrics(registry);
       new BaseMemoryAdditionalMetrics().bindTo(registry);
+      new BaseMemoryPoolAdditionalMetrics().bindTo(registry);
       bindThreadingMetrics(registry);
    }
 
-   private void bindClassLoaderMetrics(MeterRegistry registry) {
+   private static void bindClassLoaderMetrics(MeterRegistry registry) {
       ClassLoadingMXBean classLoadingBean = ManagementFactory.getClassLoadingMXBean();
 
       Gauge.builder(PREFIX + "classloader.loadedClasses.count", classLoadingBean, ClassLoadingMXBean::getLoadedClassCount)
@@ -46,7 +44,7 @@ class BaseAdditionalMetrics implements MeterBinder {
             .register(registry);
    }
 
-   private void bindGarbageCollectionMetrics(MeterRegistry registry) {
+   private static void bindGarbageCollectionMetrics(MeterRegistry registry) {
       for (GarbageCollectorMXBean garbageCollectorBean : ManagementFactory.getGarbageCollectorMXBeans()) {
          FunctionCounter.builder(PREFIX + "gc.total", garbageCollectorBean, GarbageCollectorMXBean::getCollectionCount)
                .tags(Tags.of("name", garbageCollectorBean.getName()))
@@ -60,7 +58,7 @@ class BaseAdditionalMetrics implements MeterBinder {
       }
    }
 
-   private void bindRuntimeMetrics(MeterRegistry registry) {
+   private static void bindRuntimeMetrics(MeterRegistry registry) {
       RuntimeMXBean runtimeBean = ManagementFactory.getRuntimeMXBean();
 
       Gauge.builder(PREFIX + "jvm.uptime", runtimeBean, RuntimeMXBean::getUptime)
@@ -68,7 +66,7 @@ class BaseAdditionalMetrics implements MeterBinder {
             .register(registry);
    }
 
-   private void bindThreadingMetrics(MeterRegistry registry) {
+   private static void bindThreadingMetrics(MeterRegistry registry) {
       ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
 
       Gauge.builder(PREFIX + "thread.count", threadBean, ThreadMXBean::getThreadCount)

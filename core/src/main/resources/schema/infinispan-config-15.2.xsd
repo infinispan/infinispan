@@ -853,6 +853,20 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="jvm" type="xs:boolean" default="${GlobalMetrics.jvm}">
+      <xs:annotation>
+        <xs:documentation>
+          Whether JVM metrics should be reported.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="legacy" type="xs:boolean" default="${GlobalMetrics.legacy}">
+      <xs:annotation>
+        <xs:documentation>
+          Whether legacy metrics should be reported.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="tracing">
