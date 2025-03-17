@@ -16,6 +16,8 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.ThreadGroups;
 import org.infinispan.commons.executors.ExecutorFactory;
 
+import io.netty.util.concurrent.DefaultThreadFactory;
+
 /**
  * Default implementation for {@link org.infinispan.commons.executors.ExecutorFactory} based on an {@link
  * ThreadPoolExecutor}.
@@ -28,21 +30,14 @@ public class DefaultAsyncExecutorFactory implements ExecutorFactory {
    private static final Log log = LogFactory.getLog(DefaultAsyncExecutorFactory.class);
 
    private static final AtomicInteger factoryCounter = new AtomicInteger(0);
-   private final AtomicInteger threadCounter = new AtomicInteger(0);
 
    @Override
    public ThreadPoolExecutor getExecutor(Properties p) {
       ConfigurationProperties cp = new ConfigurationProperties(p);
       int factoryIndex = DefaultAsyncExecutorFactory.factoryCounter.incrementAndGet();
       String threadNamePrefix = cp.getDefaultExecutorFactoryThreadNamePrefix();
-      String threadNameSuffix = cp.getDefaultExecutorFactoryThreadNameSuffix();
       ThreadGroups.ISPNNonBlockingThreadGroup nonBlockingThreadGroup = ThreadGroups.NON_BLOCKING_GROUP;
-      ThreadFactory tf = r -> {
-         int threadIndex = threadCounter.incrementAndGet();
-         Thread th = new Thread(nonBlockingThreadGroup, r, threadNamePrefix + "-" + factoryIndex + "-" + threadIndex + threadNameSuffix);
-         th.setDaemon(true);
-         return th;
-      };
+      ThreadFactory tf = new DefaultThreadFactory(threadNamePrefix, true, Thread.NORM_PRIORITY, nonBlockingThreadGroup);
 
       log.debugf("Creating executor %s-%d", threadNamePrefix,  factoryIndex);
       return new ThreadPoolExecutor(cp.getDefaultExecutorFactoryPoolSize(), cp.getDefaultExecutorFactoryPoolSize(),
