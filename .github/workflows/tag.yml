@@ -13,10 +13,6 @@ on:
       nextVersion:
         description: "Next version"
         required: true
-      dryRun:
-        description: "Dry run (doesn't push to Central)"
-        type: boolean
-        default: false
 
 jobs:
   release:
@@ -56,15 +52,13 @@ jobs:
           git commit --no-verify -a -m "Releasing ${{ github.event.inputs.version }}"
 
       - name: Publish to Central
-        if: ${{ ! github.event.inputs.dryRun }}
-        run: mvn -B -Drelease-mode=upstream -Pdistribution -DskipTests clean deploy -Dinfinispan.brand.version=${{ github.event.inputs.version }}
+        run: mvn -B -Drelease-mode=upstream -Pdistribution -Pcommunity-release -DskipTests clean deploy -Dinfinispan.brand.version=${{ github.event.inputs.version }}
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}
 
       - name: Tag Release
-        if: ${{ ! github.event.inputs.dryRun }}
         run: |
           git tag -a ${{ github.event.inputs.version }} -m ${{ github.event.inputs.version }} 
 
@@ -75,7 +69,6 @@ jobs:
           git commit --no-verify -a -m "Next version ${{ github.event.inputs.nextVersion }}"
 
       - name: Push changes
-        if: ${{ ! github.event.inputs.dryRun }}
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
