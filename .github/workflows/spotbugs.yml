@@ -27,10 +27,23 @@ jobs:
       - name: Resolve dependencies
         run: ./mvnw dependency:resolve -V -e -DskipTests -DexcludeGroupIds=org.infinispan -Dsilent=true
 
-      - name: Get changed Java files
-        id: changed-files
+      - name: Fetch all branches
+        run: git fetch --prune --unshallow
+
+      - name: Determine base branch
         run: |
-            echo "CHANGED_FILES=$(git diff --name-only origin/main...HEAD -- '*.java' | tr '\n' ' ')" >> $GITHUB_ENV
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+          else
+            BASE_BRANCH=$(git remote show origin | awk '/HEAD branch/ {print $NF}')
+          fi
+          echo "BASE_BRANCH=$BASE_BRANCH" >> $GITHUB_ENV
+
+      - name: Get changed Java files
+        run: |
+          CHANGED_FILES=$(git diff --name-only origin/$BASE_BRANCH...HEAD -- '*.java' | tr '\n' ' ')
+          echo "CHANGED_FILES=$CHANGED_FILES" >> $GITHUB_ENV
+          echo "Changed Java files: $CHANGED_FILES"
 
       - name: Run SpotBugs on changed files
         if: env.CHANGED_FILES != ''
