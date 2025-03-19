@@ -146,7 +146,7 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
          long elapsedTime = m_allTests.values().stream().mapToLong(PolarionJUnitTest::elapsedTime).sum();
          long testCount = m_allTests.values().size();
 
-         String outputDir = String.format("%s/surefire-reports", System.getProperty("build.directory"));
+         String outputDir = String.format("%s/polarion", System.getProperty("build.directory"));
          Map<String, List<PolarionJUnitTest>> testsByClass = m_allTests.values().stream().collect(Collectors.groupingBy(p -> p.clazz));
          for (Map.Entry<String, List<PolarionJUnitTest>> entry : testsByClass.entrySet()) {
             File outputFile = new File(outputDir, String.format("TEST-%s.xml", entry.getKey()));

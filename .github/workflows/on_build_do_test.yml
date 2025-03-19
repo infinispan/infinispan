@@ -158,7 +158,6 @@ jobs:
           path: |
             test_dir/infinispan/**/target/*-reports*/**/TEST-*.xml
             !test_dir/infinispan/**/*-reports*/**/TEST-*FLAKY.xml
-            !test_dir/infinispan/**/*-reports*/TEST-*RocksDB*.xml
             test_dir/infinispan/**/*.dump*
             test_dir/infinispan/**/hs_err_*
             test_dir/infinispan/jacoco/
