@@ -149,7 +149,7 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
          String outputDir = String.format("%s/surefire-reports", System.getProperty("build.directory"));
          Map<String, List<PolarionJUnitTest>> testsByClass = m_allTests.values().stream().collect(Collectors.groupingBy(p -> p.clazz));
          for (Map.Entry<String, List<PolarionJUnitTest>> entry : testsByClass.entrySet()) {
-            File outputFile = new File(outputDir, String.format("TEST-%s.xml", entry.getKey()));
+            File outputFile = new File(outputDir, String.format("TEST-%s-pol.xml", entry.getKey()));
             try (PolarionJUnitXMLWriter writer = new PolarionJUnitXMLWriter(outputFile)){
                writer.start(entry.getKey(), testCount, m_numSkipped.get(), m_numFailed.get(), elapsedTime, true);
                for (PolarionJUnitTest testCase : entry.getValue())
