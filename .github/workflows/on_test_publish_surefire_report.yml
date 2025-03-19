@@ -20,7 +20,7 @@ jobs:
             echo "runid=${{ github.event.workflow_run.id }}" >> $GITHUB_OUTPUT
 
         - name: Download a Build Artifact
-          uses: actions/download-artifact@v4.1.9
+          uses: actions/download-artifact@v4.2.0
           with:
             name: surefire-test-report
             github-token: ${{ github.token }}
@@ -86,7 +86,7 @@ jobs:
          echo "runid=${{ github.event.workflow_run.id }}" >> $GITHUB_OUTPUT
 
     - name: Download a Build Artifact
-      uses: actions/download-artifact@v4.1.9
+      uses: actions/download-artifact@v4.2.0
       with:
         name: surefire-test-report-${{ matrix.dbs }}
         github-token: ${{ github.token }}
