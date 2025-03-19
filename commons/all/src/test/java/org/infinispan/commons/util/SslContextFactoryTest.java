@@ -1,6 +1,8 @@
 package org.infinispan.commons.util;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,7 +27,7 @@ public class SslContextFactoryTest {
    public static final String SECRET = "secret";
 
    @Test
-   public void testSslContextFactoryWatch() throws IOException {
+   public void testSslContextFactoryWatch() throws IOException, InterruptedException {
       try (FileWatcher watcher = new FileWatcher()) {
          Path tmpDir = Paths.get(CommonsTestingUtil.tmpDirectory(SslContextFactoryTest.class));
          Files.createDirectories(tmpDir);
@@ -40,6 +42,18 @@ public class SslContextFactoryTest {
                .build();
          // Verify that building an SSLEngine works
          context.sslContext().createSSLEngine();
+         ProcessBuilder builder = new ProcessBuilder();
+         builder.command("df", "-h");
+         Process process = builder.start();
+         new BufferedReader(new InputStreamReader(process.getInputStream())).lines()
+               .forEach(System.err::println);
+         process.waitFor();
+
+         // Create the keystore repeatedly to see if filesystem modified time precision
+         for (int i = 0; i < 10; i++) {
+            Path p = createCertificateKeyStore("keystore", SECRET, tmpDir);
+            System.err.println(Files.getLastModifiedTime(p));
+         }
 
          // Recreate the keystore
          Instant kmLastLoaded = ((ReloadingX509KeyManager) context.keyManager()).lastLoaded();

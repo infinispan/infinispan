@@ -100,6 +100,7 @@ jobs:
             cd test_dir/infinispan &&
             ./mvnw verify -V -B -e -DrerunFailingTestsCount=2
             -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative $HIBERNATE_MATRIX
+            -pl commons/all -Dtest=SslContextFactoryTest
 
       - name: set-commit-status-conclusion
         if: success()
