@@ -2116,9 +2116,6 @@
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-surefire-plugin</artifactId>
                <version>${version.maven.surefire}</version>
-               <configuration>
-                  <disableXmlReport>true</disableXmlReport>
-               </configuration>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -2467,7 +2464,6 @@
                <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>
                <!-- Disable modular classpath -->
                <useModulePath>false</useModulePath>
-               <disableXmlReport>true</disableXmlReport>
             </configuration>
          </plugin>
          <!-- Maven plugin that scans the test output of Surefire for flaky tests and writes test output files for just the flaky tests.
@@ -2619,7 +2615,6 @@
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
-                     <disableXmlReport>true</disableXmlReport>
                      <systemPropertyVariables>
                         <log4j.configurationFile>${infinispan.root}/etc/log4j2-trace.xml</log4j.configurationFile>
                      </systemPropertyVariables>
@@ -2768,7 +2763,6 @@
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
-                     <disableXmlReport>true</disableXmlReport>
                      <argLine combine.self="override">${forkJvmArgs} ${jacoco.agent.argLine}</argLine>
                   </configuration>
                </plugin>
