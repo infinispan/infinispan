@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 set -e
 # A script to track flaky tests in Github
 # Requires xmlstarlet and jq to be installed
@@ -13,7 +13,7 @@ API_LIMIT_TIME=0
 for TEST_FILE in "${TESTS[@]}"; do
   # Sometimes flaky plugin writes two root elements in the same file
   # producing invalid xml. We need to split them into separate files
-  cat ${TEST} | grep -v '^<?xml ' | csplit -f ${TEST} -z -f csplit-flaky-xml- - '/^<testsuite /' '{*}'
+  cat ${TEST_FILE} | grep -v '^<?xml ' | csplit -z -f csplit-flaky-xml- - '/^<testsuite /' '{*}'
   for TEST in csplit-flaky-xml-*; do
     TEST_CLASS_NAMES=$(xmlstarlet sel -t --value-of '/testsuite/testcase/@classname'  ${TEST})
     declare -i i
@@ -56,14 +56,14 @@ for TEST_FILE in "${TESTS[@]}"; do
         BODY=$(printf "### Target Branch: %s\n### Github Job:%s\n%s" "${TARGET_BRANCH}" "${GH_JOB_URL}" "${STACK_TRACE}")
       if [ ${TOTAL_ISSUES} == 0 ]; then
         echo "Existing issue not found, creating a new one"
-        gh issue create --title "${SUMMARY}" --body "${BODY}" --label "kind/flaky test"
+        gh issue create --title "${SUMMARY}" --body "${BODY}" --label "kind/flaky test" --repo $GITHUB_REPOSITORY
       else
         export ISSUE_KEY=$(echo "${ISSUES}" | jq  '.[0].number')
         # Re-open the issue if it was previously resolved
         if [ "$(gh issue view ${ISSUE_KEY} --json state | jq .state)" == '"CLOSED"' ]; then
-          gh issue reopen ${ISSUE_KEY}
+          echo gh issue reopen ${ISSUE_KEY}  --repo $GITHUB_REPOSITORY
         fi
-        gh issue comment ${ISSUE_KEY} --body "${BODY}"
+        echo gh issue comment ${ISSUE_KEY} --body "${BODY}" --repo $GITHUB_REPOSITORY
       fi
     done
   done
