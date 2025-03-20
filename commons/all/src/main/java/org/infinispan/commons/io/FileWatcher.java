@@ -19,10 +19,10 @@ import org.infinispan.commons.logging.LogFactory;
  */
 public class FileWatcher implements Runnable, AutoCloseable {
    private static final Log log = LogFactory.getLog(FileWatcher.class);
-   public static final int SLEEP = 2_000;
+   public static final int SLEEP = Integer.getInteger("infinispan.filewatcher.interval", 2_000);
    private final Thread thread;
    private final ConcurrentHashMap<Path, Watched> watched;
-   private boolean running = true;
+   private volatile boolean running = true;
 
    public FileWatcher() {
       watched = new ConcurrentHashMap<>();
@@ -76,10 +76,10 @@ public class FileWatcher implements Runnable, AutoCloseable {
                      c.accept(e.getKey());
                   }
                }
-            } catch (FileNotFoundException | NoSuchFileException ex) {
+            } catch (Throwable t) {
+               // Something wrong happened. Reset the lastModified, and it will be tried again during the next loop
                w.lastModified = -1;
-            } catch (IOException ex) {
-               throw new RuntimeException(ex);
+               log.debugf(t, "Error occurred while watching %s", e.getKey());
             }
          }
       }
