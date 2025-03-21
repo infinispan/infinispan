@@ -32,7 +32,7 @@ public class RestMetricsWithoutGaugeResourceIT {
    public void testGaugeMissing() {
       var metrics = getMetrics(SERVERS.rest().create().metrics());
       assertTrue(metrics.stream()
-            .noneMatch(metric -> metric.matches("vendor_jgroups_stats_async_requests_total")));
+            .noneMatch(metric -> metric.matches("jgroups_stats_async_requests_total")));
    }
 
 }

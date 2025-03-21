@@ -6,9 +6,9 @@
       xmlns="urn:infinispan:config:15.2"
       xmlns:server="urn:infinispan:server:15.2">
 
-   <xi:include href="jgroups/xsite-stacks-single-site-master.xml"/>
+   <xi:include href="jgroups/xsite-stacks.xml"/>
 
-   <xi:include href="cache-container/clustered.xml"/>
+   <xi:include href="cache-container/legacy-metrics-clustered-names-as-tags.xml"/>
 
    <server xmlns="urn:infinispan:server:15.2">
 
