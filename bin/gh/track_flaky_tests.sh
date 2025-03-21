@@ -29,6 +29,8 @@ for TEST_FILE in "${TESTS[@]}"; do
       TEST_NAME_NO_PARAMS=${TEST_NAME_NO_PARAMS%%[*}
       # Some tests end with \(. Removing
       TEST_NAME_NO_PARAMS=${TEST_NAME_NO_PARAMS%%\\\(*}
+      # Some tests end with (. Removing
+      TEST_NAME_NO_PARAMS=${TEST_NAME_NO_PARAMS%%(*}
       STACK_TRACE=$(xmlstarlet sel --template --value-of '/testsuite/testcase/failure['$i']' ${TEST})
 
       # Create Issue for Test Class+TestName
