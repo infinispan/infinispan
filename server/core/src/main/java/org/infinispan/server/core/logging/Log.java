@@ -228,4 +228,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Request was too long, closing socket to '%s'", id = 5064)
    void requestTooLarge(Channel channel, @Cause TooLongFrameException e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "For better performance, it is recommended to use Netty's default thread factory. Current: %s", id = 5065)
+   void useNettyThreadFactory(Class<?> clazz);
 }
