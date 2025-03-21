@@ -53,7 +53,10 @@ public class InvocationHelper {
       String baseAuthUrl;
       if (url != null) {
          URI uri = URI.create(url);
-         baseAuthUrl = uri.getScheme() + "://" + uri.getHost() + ":" + uri.getPort();
+         baseAuthUrl = uri.getScheme() + "://" + uri.getHost();
+         if (uri.getPort() > 0) {
+            baseAuthUrl += ":" + uri.getPort();
+         }
       } else {
          baseAuthUrl = "";
       }
