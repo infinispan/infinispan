@@ -29,6 +29,7 @@ import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
+import org.infinispan.CachePublisher;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
@@ -1951,5 +1952,10 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V>
     */
    public ContextBuilder defaultContextBuilderForWrite() {
       return defaultBuilder;
+   }
+
+   @Override
+   public CachePublisher<K, V> cachePublisher() {
+      return new CachePublisherImpl<>(this, EnumUtil.EMPTY_BIT_SET);
    }
 }

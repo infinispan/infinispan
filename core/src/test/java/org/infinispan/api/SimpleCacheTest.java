@@ -262,4 +262,8 @@ public class SimpleCacheTest extends APINonTxTest {
       assertEquals(expected.lifespan(), actual.lifespan());
       assertEquals(expected.maxIdle(), actual.maxIdle());
    }
+
+   public void testCachePublisher() {
+
+   }
 }

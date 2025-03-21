@@ -6,7 +6,9 @@ import org.infinispan.cache.impl.BiFunctionMapper;
 import org.infinispan.cache.impl.EncoderEntryMapper;
 import org.infinispan.cache.impl.EncoderKeyMapper;
 import org.infinispan.cache.impl.EncoderValueMapper;
+import org.infinispan.cache.impl.EntryFunctionEncoder;
 import org.infinispan.cache.impl.FunctionMapper;
+import org.infinispan.cache.impl.KeyFunctionEncoder;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.functional.functions.MergeFunction;
@@ -230,6 +232,8 @@ final class InternalExternalizers {
       addInternalExternalizer(new EncoderKeyMapper.Externalizer(), exts);
       addInternalExternalizer(new EncoderValueMapper.Externalizer(), exts);
       addInternalExternalizer(new EncoderEntryMapper.Externalizer(), exts);
+      addInternalExternalizer(new KeyFunctionEncoder.KeyFunctionExternalizer(), exts);
+      addInternalExternalizer(new EntryFunctionEncoder.EntryFunctionExternalizer(), exts);
       addInternalExternalizer(new IntSetExternalizer(), exts);
       addInternalExternalizer(new DataConversion.Externalizer(), exts);
       addInternalExternalizer(new ScopedState.Externalizer(), exts);
