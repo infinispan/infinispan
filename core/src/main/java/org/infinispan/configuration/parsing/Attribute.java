@@ -131,6 +131,7 @@ public enum Attribute {
     MODULE,
     NAME,
     NAMES,
+    @Deprecated(forRemoval = true, since = "15.2")
     NAMES_AS_TAGS,
     NON_BLOCKING_EXECUTOR,
     NOTIFICATIONS,
@@ -143,6 +144,7 @@ public enum Attribute {
     @Deprecated(forRemoval=true, since = "11.0")
     PERSISTENCE_EXECUTOR,
     POSITION,
+    @Deprecated(forRemoval = true, since = "15.2")
     PREFIX,
     PRELOAD,
     PRIORITY,

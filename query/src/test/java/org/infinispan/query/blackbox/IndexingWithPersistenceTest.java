@@ -7,11 +7,9 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import org.infinispan.Cache;
@@ -37,7 +35,7 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
    private static final Person RADIM = new Person("Radim", "Tough guy!", 29);
    private static final Person DAN = new Person("Dan", "Not that tough.", 39);
    private static final AnotherGrassEater FLUFFY = new AnotherGrassEater("Fluffy", "Very cute.");
-   private DummyInMemoryStore store;
+   private DummyInMemoryStore<?, ?> store;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -100,7 +98,7 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
 
       // it should be indexed
       List<Person> found = queryAll(cache, Person.class);
-      assertEquals(Arrays.asList(RADIM, DAN), sortByAge(found));
+      assertEquals(Set.of(RADIM, DAN), Set.copyOf(found));
 
       // evict
       cache.evict(KEY);
@@ -131,11 +129,6 @@ public class IndexingWithPersistenceTest extends SingleCacheManagerTest {
          assertNotNull(inStore);
          assertTrue("In store: " + inStore, inStore.getValue() instanceof AnotherGrassEater);
       }
-   }
-
-   private List<Person> sortByAge(List<Person> people) {
-      new ArrayList<>(people).sort(Comparator.comparingInt(Person::getAge));
-      return people;
    }
 
    private void assertFluffyIndexed(Cache<?, ?> cache) {
