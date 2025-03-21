@@ -17,6 +17,7 @@ import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
+import org.infinispan.commands.irac.IracPrimaryPendingKeyCheckCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
@@ -462,6 +463,9 @@ public class RemoteCommandsFactory {
                break;
             case SizeCommand.COMMAND_ID:
                command = new SizeCommand(cacheName);
+               break;
+            case IracPrimaryPendingKeyCheckCommand.COMMAND_ID:
+               command = new IracPrimaryPendingKeyCheckCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

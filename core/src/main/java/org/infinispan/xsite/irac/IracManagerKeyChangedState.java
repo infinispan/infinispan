@@ -5,6 +5,7 @@ import static org.infinispan.commons.util.Util.toStr;
 
 import java.lang.invoke.MethodHandles;
 import java.util.BitSet;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.infinispan.util.logging.Log;
@@ -47,17 +48,17 @@ class IracManagerKeyChangedState implements IracManagerKeyState {
 
    @Override
    public Object getKey() {
-      return keyInfo.key;
+      return keyInfo.key();
    }
 
    @Override
    public Object getOwner() {
-      return keyInfo.owner;
+      return keyInfo.owner();
    }
 
    @Override
    public int getSegment() {
-      return keyInfo.segment;
+      return keyInfo.segment();
    }
 
    @Override
@@ -122,9 +123,9 @@ class IracManagerKeyChangedState implements IracManagerKeyState {
    @Override
    public String toString() {
       return getClass().getSimpleName() + "{" +
-            "segment=" + keyInfo.segment +
-            ", key=" + toStr(keyInfo.key) +
-            ", owner=" + keyInfo.owner +
+            "segment=" + keyInfo.segment() +
+            ", key=" + toStr(keyInfo.key()) +
+            ", owner=" + keyInfo.owner() +
             ", expiration=" + expiration +
             ", isStateTransfer=" + isStateTransfer() +
             ", status=" + status +
@@ -134,11 +135,11 @@ class IracManagerKeyChangedState implements IracManagerKeyState {
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
+      if (!(o instanceof IracManagerKeyChangedState that)) return false;
 
-      IracManagerKeyChangedState that = (IracManagerKeyChangedState) o;
-      if (getSegment() != that.getSegment()) return false;
-      if (!getKey().equals(that.getKey())) return false;
-      return getOwner().equals(that.getOwner());
+      return getSegment() == that.getSegment() &&
+            Objects.equals(getKey(), that.getKey()) &&
+            Objects.equals(getOwner(), that.getOwner());
    }
 
    @Override

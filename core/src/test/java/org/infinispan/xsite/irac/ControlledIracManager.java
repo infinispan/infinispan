@@ -3,6 +3,7 @@ package org.infinispan.xsite.irac;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Stream;
 
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.factories.scopes.Scope;
@@ -95,6 +96,16 @@ public class ControlledIracManager implements IracManager {
    @Override
    public boolean containsKey(Object key) {
       return actual.containsKey(key);
+   }
+
+   @Override
+   public Stream<IracManagerKeyInfo> pendingKeys() {
+      return actual.pendingKeys();
+   }
+
+   @Override
+   public void checkStaleKeys(Address origin, Collection<IracManagerKeyInfo> keys) {
+      actual.checkStaleKeys(origin, keys);
    }
 
    protected Optional<DefaultIracManager> asDefaultIracManager() {

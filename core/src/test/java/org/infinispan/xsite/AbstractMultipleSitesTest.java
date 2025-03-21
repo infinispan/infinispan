@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -139,19 +140,28 @@ public abstract class AbstractMultipleSitesTest extends AbstractXSiteTest {
    }
 
    protected void assertNoDataLeak(String cacheName) {
-      // First, make sure the IRAC map is empty in all nodes before triggering a tombstone cleanup round
+      // Trigger cleanup of stalled keys in IracManager. The cleanup happens asynchronously and not when the future is completed.
+      for (TestSite site : sites) {
+         for (Cache<?, ?> cache : site.getCaches(cacheName)) {
+            CompletionStages.join(iracTombstoneManager(cache).checkStaleKeys());
+         }
+      }
+
+      // Ensure the IRAC map is empty.
       for (TestSite site : sites) {
          for (Cache<?, ?> cache : site.getCaches(cacheName)) {
             eventually("Updated keys map is not empty!", () -> isIracManagerEmpty(cache));
          }
       }
-      // Second, trigger a tombstone cleanup round, it happens asynchronously in the background
+
+      // Trigger cleanup of stalled tombstones. The cleanup happens asynchronously and not when the future is completed.
       for (TestSite site : sites) {
          for (Cache<?, ?> cache : site.getCaches(cacheName)) {
-            iracTombstoneManager(cache).startCleanupTombstone();
+            CompletionStages.join(iracTombstoneManager(cache).checkStaleTombstones());
          }
       }
-      // Third, check if the tombstones are removed.
+
+      // Check if the tombstones are removed.
       for (TestSite site : sites) {
          for (Cache<?, ?> cache : site.getCaches(cacheName)) {
             eventually("Tombstone map is not empty!", iracTombstoneManager(cache)::isEmpty);

@@ -2,14 +2,15 @@ package org.infinispan.xsite.irac;
 
 import java.util.Collection;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Stream;
 
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.statetransfer.XSiteState;
 
 /**
@@ -91,4 +92,16 @@ public enum NoOpIracManager implements IracManager {
    public boolean containsKey(Object key) {
       return false;
    }
+
+   @Override
+   public Stream<IracManagerKeyInfo> pendingKeys() {
+      return Stream.empty();
+   }
+
+   @Override
+   public void checkStaleKeys(Address origin, Collection<IracManagerKeyInfo> keys) {
+      //no-op
+   }
+
+
 }
