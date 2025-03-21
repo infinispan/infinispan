@@ -26,13 +26,20 @@ runs:
           TESTS=(${FLAKY_TEST_GLOB})
           for TEST in "${TESTS[@]}"
           do
-            FULL_TEST_NAME=$(xmlstarlet sel -T -t -m "/testsuite/testcase" -o '   - '\
-             -v "concat(@classname,'#',@name)" -n ${TEST} \
-             | sed 's/(Flaky Test)//' | sed 's/\[[0-9]\]//')
-            FLAKES_PR_COMMENT="$FLAKES_PR_COMMENT$FULL_TEST_NAME\n"
+            # Sometimes flaky plugin writes two root elements in the same file
+            # producing invalid xml. We need to split them into separate files
+            cat $TEST | grep -v '^<?xml ' | csplit -z -f csplit-flaky-xml- - '/^<testsuite /' '{*}'
+            for FILE in csplit-flaky-xml-*
+            do
+              FULL_TEST_NAME=$(xmlstarlet sel -T -t -m "/testsuite/testcase" -o '   - '\
+              -v "concat(@classname,'#',@name)" -n ${FILE} \
+              | sed 's/(Flaky Test)//')
+              FLAKES_PR_COMMENT="$FLAKES_PR_COMMENT$FULL_TEST_NAME\n"
+            done
+            rm csplit-flaky-xml-*
           done
           if [ "$FLAKES_PR_COMMENT" != "" ]; then
             pr_url=https://github.com/${{ github.repository }}/pull/$PR
-            printf "__FLAKY TESTS__\n%b" "$FLAKES_PR_COMMENT" | gh pr comment $pr_url -F -
+            printf "__FLAKY TESTS__\n%b" "$FLAKES_PR_COMMENT" | gh pr comment --repo $GITHUB_REPOSITORY $pr_url -F -
           fi
         fi
