@@ -7,6 +7,7 @@ import static org.infinispan.server.core.transport.NettyTransport.buildEventLoop
 
 import java.util.concurrent.ThreadFactory;
 
+import org.infinispan.commons.ThreadGroups;
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.factories.AbstractComponentFactory;
 import org.infinispan.factories.AutoInstantiableFactory;
@@ -42,7 +43,31 @@ public class NettyEventLoopFactory extends AbstractComponentFactory implements A
       // Unfortunately, netty doesn't allow us to specify a max number of queued tasks and rejection policy at the same
       // time and the former has actually been deprecated, so we do not honor these settings when running in the server
       // which means the non blocking executor may have an unbounded queue, depending upon netty implementation
-      return new NonRecursiveEventLoopGroup(buildEventLoop(threadAmount, threadFactory,
+      return new NonRecursiveEventLoopGroup(buildEventLoop(threadAmount, wrapToNettyThreadFactory(threadFactory),
             "non-blocking-thread-netty"));
+   }
+
+   private static ThreadFactory wrapToNettyThreadFactory(ThreadFactory delegate) {
+      if (delegate instanceof io.netty.util.concurrent.DefaultThreadFactory)
+         return delegate;
+
+      // The name is not important as we override the thread names.
+      // The important argument is the thread group should point to the non-blocking group.
+      ThreadGroup tg = ThreadGroups.NON_BLOCKING_GROUP;
+      io.netty.util.concurrent.DefaultThreadFactory netty = new io.netty.util.concurrent.DefaultThreadFactory(
+            "netty-wrapper-" + tg.getName(),
+            true,
+            getDefaultThreadPrio(KnownComponentNames.NON_BLOCKING_EXECUTOR),
+            tg
+      );
+      // Wraps the threads created by the base factory in the Netty threads.
+      // This will ensure the event loop utilize FastLocalThreads and take advantage of internal optimizations in Netty.
+      return r -> {
+         Thread originalThread = delegate.newThread(r);
+         Thread nettyThread = netty.newThread(originalThread);
+         nettyThread.setName(originalThread.getName());
+         nettyThread.setContextClassLoader(originalThread.getContextClassLoader());
+         return nettyThread;
+      };
    }
 }
