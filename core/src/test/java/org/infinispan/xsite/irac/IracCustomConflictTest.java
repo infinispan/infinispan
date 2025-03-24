@@ -26,6 +26,7 @@ import org.infinispan.util.TestOperation;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.infinispan.xsite.spi.SiteEntry;
 import org.infinispan.xsite.spi.XSiteEntryMergePolicy;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -60,6 +61,13 @@ public class IracCustomConflictTest extends AbstractMultipleSitesTest {
          }
       }
       return tests;
+   }
+
+   @AfterClass(alwaysRun = true)
+   @Override
+   protected void destroy() {
+      super.destroy();
+      iracManagerList.clear();
    }
 
    public void testPutIfAbsent(Method method) {

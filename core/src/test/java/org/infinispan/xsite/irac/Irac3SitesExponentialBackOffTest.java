@@ -20,6 +20,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.jgroups.UnreachableException;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -92,6 +93,13 @@ public class Irac3SitesExponentialBackOffTest extends AbstractMultipleSitesTest 
       eventually(iracManager::isEmpty);
       backOffMap.values().forEach(ControlledExponentialBackOff::cleanupEvents);
       backOffMap.values().forEach(ControlledExponentialBackOff::assertNoEvents);
+   }
+
+   @AfterClass(alwaysRun = true)
+   @Override
+   protected void destroy() {
+      super.destroy();
+      transport = null;
    }
 
    public void testSimulatedTimeout(Method method) {
