@@ -47,6 +47,7 @@ public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
    ScheduledExecutorService scheduledExecutor;
 
    private int threshold;
+   private float thresholdRatio;
    private long l1Lifespan;
    // TODO replace this with a custom, expirable collection
    private final ConcurrentMap<Object, ConcurrentMap<Address, Long>> requestors;
@@ -61,6 +62,7 @@ public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
    @Start
    public void start() {
       this.threshold = configuration.clustering().l1().invalidationThreshold();
+      this.thresholdRatio = configuration.clustering().l1().invalidationThresholdRatio();
       this.l1Lifespan = configuration.clustering().l1().lifespan();
       if (configuration.clustering().l1().cleanupTaskFrequency() > 0) {
          scheduledRequestorsCleanupTask =
@@ -124,7 +126,7 @@ public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
          InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(origin, EnumUtil.EMPTY_BIT_SET, keys);
 
          // No need to invalidate at all if there is no one to invalidate!
-         boolean multicast = isUseMulticast(nodes);
+         boolean multicast = isUseMulticast(nodes, rpcManager.getMembers().size());
          if (log.isTraceEnabled()) log.tracef("Invalidating keys %s on nodes %s. Use multicast? %s", keys, invalidationAddresses, multicast);
 
          // L1 invalidations can ignore a member leaving while sending invalidation
@@ -163,15 +165,13 @@ public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
       return addresses;
    }
 
-   private boolean isUseMulticast(int nodes) {
+   private boolean isUseMulticast(int invalidationNodes, int clusterSize) {
       // User has requested unicast only
-      if (threshold == -1) return false;
-      // Underlying transport is not multicast capable
-      if (!rpcManager.getTransport().isMulticastCapable()) return false;
-      // User has requested multicast only
-      if (threshold == 0) return true;
+      if (threshold < 0 || thresholdRatio < 0) return false;
       // we decide:
-      return nodes > threshold;
+      if (invalidationNodes >= threshold) return true;
+      if (invalidationNodes >= thresholdRatio * clusterSize) return true;
+      return false;
    }
 
    @Override
