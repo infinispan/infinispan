@@ -47,6 +47,7 @@ import org.infinispan.xsite.spi.DefaultXSiteEntryMergePolicy;
 import org.infinispan.xsite.spi.XSiteEntryMergePolicy;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 import org.testng.AssertJUnit;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -72,6 +73,15 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
       iracManagerList = new ArrayList<>(N_SITES * CLUSTER_SIZE);
       rpcManagerList = new ArrayList<>(N_SITES * CLUSTER_SIZE);
       blockingInterceptorList = new ArrayList<>(N_SITES * CLUSTER_SIZE);
+   }
+
+   @AfterClass(alwaysRun = true)
+   @Override
+   protected void destroy() {
+      super.destroy();
+      iracManagerList.clear();
+      rpcManagerList.clear();
+      blockingInterceptorList.clear();
    }
 
    private static void assertSameAttributeAndOperation(MBeanServer mBeanServer, ObjectName objectName,

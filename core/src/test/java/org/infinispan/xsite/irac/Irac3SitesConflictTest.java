@@ -21,6 +21,7 @@ import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.testng.AssertJUnit;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -69,6 +70,13 @@ public class Irac3SitesConflictTest extends AbstractMultipleSitesTest {
    @Override
    protected Object[] parameterValues() {
       return new Object[]{configMode};
+   }
+
+   @AfterClass(alwaysRun = true)
+   @Override
+   protected void destroy() {
+      super.destroy();
+      iracManagerList.clear();
    }
 
    protected Irac3SitesConflictTest() {

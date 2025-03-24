@@ -89,6 +89,13 @@ public abstract class BaseIracPersistenceTest<V> extends SingleCacheManagerTest 
       return cm;
    }
 
+   @Override
+   protected void teardown() {
+      super.teardown();
+      cacheStore = null;
+      entryFactory = null;
+   }
+
    protected abstract void configure(ConfigurationBuilder builder);
 
    public void testWriteAndLoad(Method method) {
