@@ -25,7 +25,8 @@ public class L1ConfigurationBuilderTest {
 
       assertTrue(l1Config.enabled());
       assertEquals(l1Config.cleanupTaskFrequency(), TimeUnit.MINUTES.toMillis(1));
-      assertEquals(l1Config.invalidationThreshold(), 0);
+      assertEquals(l1Config.invalidationThreshold(), Integer.MAX_VALUE);
+      assertEquals(l1Config.invalidationThresholdRatio(), 0.5f, 0.000001f);
       assertEquals(l1Config.lifespan(), TimeUnit.MINUTES.toMillis(10));
    }
 
