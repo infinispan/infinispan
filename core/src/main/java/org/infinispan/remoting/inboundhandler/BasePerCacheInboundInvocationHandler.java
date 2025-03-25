@@ -11,7 +11,6 @@ import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
@@ -63,9 +62,6 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    private volatile int firstTopologyAsMember = Integer.MAX_VALUE;
 
    static int extractCommandTopologyId(CacheRpcCommand command) {
-      if (command instanceof SingleRpcCommand rpc)
-         return topology(rpc.getCommand());
-
       if (command instanceof ClusteredGetCommand || command instanceof ClusteredGetAllCommand) {
          // These commands are topology aware but we don't block them here - topologyId logic
          // is handled in StateTransferInterceptor

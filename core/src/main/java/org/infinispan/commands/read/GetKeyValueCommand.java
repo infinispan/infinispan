@@ -5,6 +5,7 @@ import static org.infinispan.commons.util.Util.toStr;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
 
 /**
  * Implements functionality defined by {@link org.infinispan.Cache#get(Object)} and
@@ -15,8 +16,8 @@ import org.infinispan.context.InvocationContext;
  */
 public class GetKeyValueCommand extends AbstractDataCommand implements LocalCommand {
 
-   public GetKeyValueCommand(Object key, int segment, long flagsBitSet) {
-      super(key, segment, flagsBitSet);
+   public GetKeyValueCommand(ByteString cacheName, Object key, int segment, long flagsBitSet) {
+      super(cacheName, key, segment, flagsBitSet);
    }
 
    @Override

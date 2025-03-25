@@ -16,6 +16,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 
 
 /**
@@ -27,27 +28,27 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.REMOVE_EXPIRED_COMMAND)
 public class RemoveExpiredCommand extends RemoveCommand {
 
-   @ProtoField(11)
+   @ProtoField(12)
    boolean maxIdle;
 
-   @ProtoField(12)
+   @ProtoField(13)
    Long lifespan;
 
    @ProtoFactory
-   RemoveExpiredCommand(MarshallableObject<?> wrappedKey, int segment, int topologyId, long flagsWithoutRemote,
+   RemoveExpiredCommand(ByteString cacheName, MarshallableObject<?> wrappedKey, int segment, int topologyId, long flagsWithoutRemote,
                         CommandInvocationId commandInvocationId, MarshallableObject<?> wrappedValue,
                         MarshallableObject<Metadata> wrappedMetadata, ValueMatcher valueMatcher,
                         PrivateMetadata internalMetadata, boolean returnEntryNecessary, boolean maxIdle, Long lifespan) {
-      super(wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId, wrappedValue, null,
+      super(cacheName, wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId, wrappedValue, null,
             valueMatcher, internalMetadata, returnEntryNecessary);
       this.maxIdle = maxIdle;
       this.lifespan = lifespan;
    }
 
-   public RemoveExpiredCommand(Object key, Object value, Long lifespan, boolean maxIdle, int segment,
+   public RemoveExpiredCommand(ByteString cacheName, Object key, Object value, Long lifespan, boolean maxIdle, int segment,
                                long flagBitSet, CommandInvocationId commandInvocationId) {
       //valueEquivalence can be null because this command never compares values.
-      super(key, value, false, segment, flagBitSet, commandInvocationId);
+      super(cacheName, key, value, false, segment, flagBitSet, commandInvocationId);
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;
       this.valueMatcher = ValueMatcher.MATCH_EXPECTED_OR_NULL;

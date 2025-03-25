@@ -45,7 +45,6 @@ import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
@@ -179,59 +178,59 @@ public class CommandsFactoryImpl implements CommandsFactory {
    public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, int segment, Metadata metadata,
                                                      long flagsBitSet, boolean returnEntry) {
       boolean reallyTransactional = transactional && !EnumUtil.containsAny(flagsBitSet, FlagBitSets.PUT_FOR_EXTERNAL_READ);
-      return new PutKeyValueCommand(key, value, false, returnEntry, metadata, segment, flagsBitSet, generateUUID(reallyTransactional));
+      return new PutKeyValueCommand(cacheName, key, value, false, returnEntry, metadata, segment, flagsBitSet, generateUUID(reallyTransactional));
    }
 
    @Override
    public RemoveCommand buildRemoveCommand(Object key, Object value, int segment, long flagsBitSet, boolean returnEntry) {
-      return new RemoveCommand(key, value, returnEntry, segment, flagsBitSet, generateUUID(transactional));
+      return new RemoveCommand(cacheName, key, value, returnEntry, segment, flagsBitSet, generateUUID(transactional));
    }
 
    @Override
    public InvalidateCommand buildInvalidateCommand(long flagsBitSet, Object... keys) {
       // StateConsumerImpl always uses non-tx invalidation
-      return new InvalidateCommand(flagsBitSet, generateUUID(false), keys);
+      return new InvalidateCommand(cacheName, flagsBitSet, generateUUID(false), keys);
    }
 
    @Override
    public InvalidateCommand buildInvalidateFromL1Command(long flagsBitSet, Collection<Object> keys) {
       // StateConsumerImpl always uses non-tx invalidation
-      return new InvalidateL1Command(flagsBitSet, keys, generateUUID(transactional));
+      return new InvalidateL1Command(cacheName, null, flagsBitSet, keys, generateUUID(transactional));
    }
 
    @Override
    public InvalidateCommand buildInvalidateFromL1Command(Address origin, long flagsBitSet, Collection<Object> keys) {
       // L1 invalidation is always non-transactional
-      return new InvalidateL1Command(origin, flagsBitSet, keys, generateUUID(false));
+      return new InvalidateL1Command(cacheName, origin, flagsBitSet, keys, generateUUID(false));
    }
 
    @Override
    public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, Long lifespan,
          long flagsBitSet) {
-      return new RemoveExpiredCommand(key, value, lifespan, false, segment, flagsBitSet,
+      return new RemoveExpiredCommand(cacheName, key, value, lifespan, false, segment, flagsBitSet,
             generateUUID(false));
    }
 
    @Override
    public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, int segment, long flagsBitSet) {
-      return new RemoveExpiredCommand(key, value, null, true, segment, flagsBitSet,
+      return new RemoveExpiredCommand(cacheName, key, value, null, true, segment, flagsBitSet,
             generateUUID(false));
    }
 
    @Override
    public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, int segment,
                                              Metadata metadata, long flagsBitSet, boolean returnEntry) {
-      return new ReplaceCommand(key, oldValue, newValue, returnEntry, metadata, segment, flagsBitSet, generateUUID(transactional));
+      return new ReplaceCommand(cacheName, key, oldValue, newValue, returnEntry, metadata, segment, flagsBitSet, generateUUID(transactional));
    }
 
    @Override
    public ComputeCommand buildComputeCommand(Object key, BiFunction mappingFunction, boolean computeIfPresent, int segment, Metadata metadata, long flagsBitSet) {
-      return init(new ComputeCommand(key, mappingFunction, computeIfPresent, segment, flagsBitSet, generateUUID(transactional), metadata));
+      return init(new ComputeCommand(cacheName, key, mappingFunction, computeIfPresent, segment, flagsBitSet, generateUUID(transactional), metadata));
    }
 
    @Override
    public ComputeIfAbsentCommand buildComputeIfAbsentCommand(Object key, Function mappingFunction, int segment, Metadata metadata, long flagsBitSet) {
-      return init(new ComputeIfAbsentCommand(key, mappingFunction, segment, flagsBitSet, generateUUID(transactional), metadata));
+      return init(new ComputeIfAbsentCommand(cacheName, key, mappingFunction, segment, flagsBitSet, generateUUID(transactional), metadata));
    }
 
    @Override
@@ -251,22 +250,22 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public GetKeyValueCommand buildGetKeyValueCommand(Object key, int segment, long flagsBitSet) {
-      return new GetKeyValueCommand(key, segment, flagsBitSet);
+      return new GetKeyValueCommand(cacheName, key, segment, flagsBitSet);
    }
 
    @Override
    public GetAllCommand buildGetAllCommand(Collection<?> keys, long flagsBitSet, boolean returnEntries) {
-      return new GetAllCommand(keys, flagsBitSet, returnEntries);
+      return new GetAllCommand(cacheName, keys, flagsBitSet, returnEntries);
    }
 
    @Override
    public PutMapCommand buildPutMapCommand(Map<?, ?> map, Metadata metadata, long flagsBitSet) {
-      return new PutMapCommand(map, metadata, flagsBitSet, generateUUID(transactional));
+      return new PutMapCommand(cacheName, map, metadata, flagsBitSet, generateUUID(transactional));
    }
 
    @Override
    public ClearCommand buildClearCommand(long flagsBitSet) {
-      return new ClearCommand(flagsBitSet);
+      return new ClearCommand(cacheName, flagsBitSet, -1);
    }
 
    @Override
@@ -297,11 +296,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public RollbackCommand buildRollbackCommand(GlobalTransaction gtx) {
       return new RollbackCommand(cacheName, gtx);
-   }
-
-   @Override
-   public SingleRpcCommand buildSingleRpcCommand(VisitableCommand call) {
-      return new SingleRpcCommand(cacheName, call);
    }
 
    @Override
@@ -463,7 +457,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public GetCacheEntryCommand buildGetCacheEntryCommand(Object key, int segment, long flagsBitSet) {
-      return new GetCacheEntryCommand(key, segment, flagsBitSet);
+      return new GetCacheEntryCommand(cacheName, key, segment, flagsBitSet);
    }
 
    @Override
@@ -482,18 +476,18 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(Object key, Function<ReadEntryView<K, V>, R> f,
          int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return init(new ReadOnlyKeyCommand<>(key, f, segment, params, keyDataConversion, valueDataConversion));
+      return init(new ReadOnlyKeyCommand<>(cacheName, key, f, segment, params, keyDataConversion, valueDataConversion));
    }
 
    @Override
    public <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Collection<?> keys, Function<ReadEntryView<K, V>, R> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return init(new ReadOnlyManyCommand<>(keys, f, params, keyDataConversion, valueDataConversion));
+      return init(new ReadOnlyManyCommand<>(cacheName, keys, f, params, keyDataConversion, valueDataConversion));
    }
 
    @Override
    public <K, V, T, R> ReadWriteKeyValueCommand<K, V, T, R> buildReadWriteKeyValueCommand(Object key, Object argument,
          BiFunction<T, ReadWriteEntryView<K, V>, R> f, int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return init(new ReadWriteKeyValueCommand<>(key, argument, f, segment, generateUUID(transactional), ValueMatcher.MATCH_ALWAYS,
+      return init(new ReadWriteKeyValueCommand<>(cacheName, key, argument, f, segment, generateUUID(transactional), ValueMatcher.MATCH_ALWAYS,
             params, keyDataConversion, valueDataConversion));
    }
 
@@ -501,52 +495,52 @@ public class CommandsFactoryImpl implements CommandsFactory {
    public <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(Object key,
          Function<ReadWriteEntryView<K, V>, R> f, int segment, Params params, DataConversion keyDataConversion,
          DataConversion valueDataConversion) {
-      return init(new ReadWriteKeyCommand<>(key, f, segment, generateUUID(transactional), ValueMatcher.MATCH_ALWAYS, params, keyDataConversion, valueDataConversion));
+      return init(new ReadWriteKeyCommand<>(cacheName, key, f, segment, generateUUID(transactional), ValueMatcher.MATCH_ALWAYS, params, keyDataConversion, valueDataConversion));
    }
 
    @Override
    public <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Collection<?> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return init(new ReadWriteManyCommand<>(keys, f, params, generateUUID(transactional), keyDataConversion, valueDataConversion));
+      return init(new ReadWriteManyCommand<>(cacheName, keys, f, params, generateUUID(transactional), keyDataConversion, valueDataConversion));
    }
 
    @Override
    public <K, V, T, R> ReadWriteManyEntriesCommand<K, V, T, R> buildReadWriteManyEntriesCommand(Map<?, ?> entries, BiFunction<T, ReadWriteEntryView<K, V>, R> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return init(new ReadWriteManyEntriesCommand<>(entries, f, params, generateUUID(transactional), keyDataConversion, valueDataConversion));
+      return init(new ReadWriteManyEntriesCommand<>(cacheName, entries, f, params, generateUUID(transactional), keyDataConversion, valueDataConversion));
    }
 
    @Override
    public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(
          Object key, Consumer<WriteEntryView<K, V>> f, int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return init(new WriteOnlyKeyCommand<>(key, f, segment, generateUUID(transactional), ValueMatcher.MATCH_ALWAYS, params, keyDataConversion, valueDataConversion));
+      return init(new WriteOnlyKeyCommand<>(cacheName, key, f, segment, generateUUID(transactional), ValueMatcher.MATCH_ALWAYS, params, keyDataConversion, valueDataConversion));
    }
 
    @Override
    public <K, V, T> WriteOnlyKeyValueCommand<K, V, T> buildWriteOnlyKeyValueCommand(Object key, Object argument, BiConsumer<T, WriteEntryView<K, V>> f,
          int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return init(new WriteOnlyKeyValueCommand<>(key, argument, f, segment, generateUUID(transactional), ValueMatcher.MATCH_ALWAYS, params, keyDataConversion, valueDataConversion));
+      return init(new WriteOnlyKeyValueCommand<>(cacheName, key, argument, f, segment, generateUUID(transactional), ValueMatcher.MATCH_ALWAYS, params, keyDataConversion, valueDataConversion));
    }
 
    @Override
    public <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Collection<?> keys, Consumer<WriteEntryView<K, V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return init(new WriteOnlyManyCommand<>(keys, f, params, generateUUID(transactional), keyDataConversion, valueDataConversion));
+      return init(new WriteOnlyManyCommand<>(cacheName, keys, f, params, generateUUID(transactional), keyDataConversion, valueDataConversion));
    }
 
    @Override
    public <K, V, T> WriteOnlyManyEntriesCommand<K, V, T> buildWriteOnlyManyEntriesCommand(
          Map<?, ?> arguments, BiConsumer<T, WriteEntryView<K, V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return init(new WriteOnlyManyEntriesCommand<>(arguments, f, params, generateUUID(transactional), keyDataConversion, valueDataConversion));
+      return init(new WriteOnlyManyEntriesCommand<>(cacheName, arguments, f, params, generateUUID(transactional), keyDataConversion, valueDataConversion));
    }
 
    @Override
    public <K, V, R> TxReadOnlyKeyCommand<K, V, R> buildTxReadOnlyKeyCommand(Object key, Function<ReadEntryView<K, V>, R> f, List<Mutation<K, V, ?>> mutations, int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return init(new TxReadOnlyKeyCommand<>(key, f, mutations, segment, params, keyDataConversion, valueDataConversion));
+      return init(new TxReadOnlyKeyCommand<>(cacheName, key, f, mutations, segment, params, keyDataConversion, valueDataConversion));
    }
 
    @Override
    public <K, V, R> TxReadOnlyManyCommand<K, V, R> buildTxReadOnlyManyCommand(Collection<?> keys, List<List<Mutation<K, V, ?>>> mutations,
                                                                               Params params, DataConversion keyDataConversion,
                                                                               DataConversion valueDataConversion) {
-      return init(new TxReadOnlyManyCommand<K, V, R>(keys, mutations, params, keyDataConversion, valueDataConversion));
+      return init(new TxReadOnlyManyCommand<K, V, R>(cacheName, keys, mutations, params, keyDataConversion, valueDataConversion));
    }
 
    @Override
@@ -687,7 +681,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public TouchCommand buildTouchCommand(Object key, int segment, boolean touchEvenIfExpired, long flagBitSet) {
-      return new TouchCommand(key, segment, flagBitSet, touchEvenIfExpired);
+      return new TouchCommand(cacheName, key, segment, flagBitSet, touchEvenIfExpired);
    }
 
    @Override
@@ -723,7 +717,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public IracPutKeyValueCommand buildIracPutKeyValueCommand(Object key, int segment, Object value, Metadata metadata,
          PrivateMetadata privateMetadata) {
-      return new IracPutKeyValueCommand(key, segment, generateUUID(false), value, metadata, privateMetadata);
+      return new IracPutKeyValueCommand(cacheName, key, segment, generateUUID(false), value, metadata, privateMetadata);
    }
 
    @Override

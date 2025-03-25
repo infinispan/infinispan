@@ -29,6 +29,7 @@ import java.util.function.Supplier;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.read.SizeCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.util.EnumUtil;
@@ -291,7 +292,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             TopologyAffectedCommand command = composedType.remoteInvocation(parallelPublisher, null, remoteKeys,
                   null, explicitFlags, deliveryGuarantee, transformer, finalizer);
             command.setTopologyId(topology.getTopologyId());
-            CompletionStage<PublisherResult<R>> stage = rpcManager.invokeCommand(remoteAddress, command,
+            CompletionStage<PublisherResult<R>> stage = rpcManager.invokeCommand(remoteAddress, (CacheRpcCommand) command,
                   new KeyPublisherResultCollector<>(remoteKeys), rpcManager.getSyncRpcOptions());
             stage.whenComplete(biConsumer);
          }
@@ -368,7 +369,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             TopologyAffectedCommand command = composedType.remoteInvocation(parallelPublisher, remoteSegments, null,
                   keysToExcludeByAddress.get(remoteAddress), explicitFlags, deliveryGuarantee, transformer, finalizer);
             command.setTopologyId(topology.getTopologyId());
-            CompletionStage<PublisherResult<R>> stage = rpcManager.invokeCommand(remoteAddress, command,
+            CompletionStage<PublisherResult<R>> stage = rpcManager.invokeCommand(remoteAddress, (CacheRpcCommand) command,
                   new SegmentPublisherResultCollector<>(remoteSegments), rpcManager.getSyncRpcOptions());
             stage.whenComplete(biConsumer);
          }

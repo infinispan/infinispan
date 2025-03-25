@@ -21,8 +21,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -40,7 +41,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -156,7 +156,7 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
       caches().forEach(
             c -> TestingUtil.wrapComponent(c, RpcManager.class, original -> new AbstractDelegatingRpcManager(original) {
                @Override
-               protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
+               protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command,
                                                                ResponseCollector<T> collector,
                                                                Function<ResponseCollector<T>, CompletionStage<T>> invoker,
                                                                RpcOptions rpcOptions) {

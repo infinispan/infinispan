@@ -101,10 +101,14 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
    }
 
    private void handleCacheRpcCommand(Address origin, CacheRpcCommand command, Reply reply, DeliverOrder mode) {
+      ByteString cacheName = command.getCacheName();
+      if (cacheName == null) {
+         handleReplicableCommand(origin, command, reply, mode);
+         return;
+      }
       if (log.isTraceEnabled()) {
          log.tracef("Attempting to execute CacheRpcCommand: %s [sender=%s]", command, origin);
       }
-      ByteString cacheName = command.getCacheName();
       ComponentRegistry cr = globalComponentRegistry.getNamedComponentRegistry(cacheName);
 
       if (cr == null) {

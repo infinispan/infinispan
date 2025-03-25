@@ -8,8 +8,8 @@ import java.util.function.Function;
 
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -20,6 +20,7 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.RemoteMetadata;
 import org.infinispan.context.InvocationContext;
@@ -34,7 +35,6 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.CacheTopologyUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -148,7 +148,7 @@ public class AnchoredDistributionInterceptor extends NonTxDistributionIntercepto
     * <p>Does not replace the value if the target is the anchor location.</p>
     * <p>Assumes the value matcher is already set to MATCH_ALWAYS.</p>
     */
-   class CommandCopier extends AbstractVisitor implements Function<Address, ReplicableCommand> {
+   class CommandCopier extends AbstractVisitor implements Function<Address, CacheRpcCommand> {
       private final InvocationContext ctx;
       private final VisitableCommand command;
 
@@ -160,11 +160,11 @@ public class AnchoredDistributionInterceptor extends NonTxDistributionIntercepto
       }
 
       @Override
-      public ReplicableCommand apply(Address address) {
+      public CacheRpcCommand apply(Address address) {
          this.target = address;
 
          try {
-            return (ReplicableCommand) command.acceptVisitor(ctx, this);
+            return (CacheRpcCommand) command.acceptVisitor(ctx, this);
          } catch (Throwable throwable) {
             throw new CacheException(throwable);
          }
@@ -195,9 +195,10 @@ public class AnchoredDistributionInterceptor extends NonTxDistributionIntercepto
          }
 
          Metadata metadata = new RemoteMetadata(keyWriter, null);
-         PutKeyValueCommand copy = new PutKeyValueCommand(key, null, false, false, metadata,
-                                                          command.getSegment(), command.getFlagsBitSet(),
-                                                          command.getCommandInvocationId());
+         PutKeyValueCommand copy = new PutKeyValueCommand(command.getCacheName(), key, null,
+               false, false, metadata,
+               command.getSegment(), command.getFlagsBitSet(),
+               command.getCommandInvocationId());
          copy.setValueMatcher(command.getValueMatcher());
          copy.setTopologyId(command.getTopologyId());
          return copy;
