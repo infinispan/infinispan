@@ -50,14 +50,24 @@ public class InvocationHelper {
       this.protobufMetadataManager = globalComponentRegistry.getComponent(ProtobufMetadataManager.class);
 
       String url = server.getLoginConfiguration(protocolServer).get(ServerManagement.URL);
-      String baseAuthUrl;
+      String baseAuthUrl = createURLForCSPHeader(url);
+      cspHeader = String.format("default-src 'self' %s data:; style-src 'self' 'unsafe-inline'; base-uri 'self'; form-action 'self'; frame-src 'self' %s; frame-ancestors 'self'; object-src 'none'; report-uri 'self';", baseAuthUrl, baseAuthUrl);
+   }
+
+   static String createURLForCSPHeader(String url) {
+      String baseAuthUrl = "";
       if (url != null) {
          URI uri = URI.create(url);
-         baseAuthUrl = uri.getScheme() + "://" + uri.getHost() + ":" + uri.getPort();
-      } else {
-         baseAuthUrl = "";
+         if (uri.getScheme() == null) {
+            return baseAuthUrl;
+         }
+
+         baseAuthUrl = uri.getScheme() + "://" + uri.getHost();
+         if (uri.getPort() > 0) {
+            baseAuthUrl += ":" + uri.getPort();
+         }
       }
-      cspHeader = String.format("default-src 'self' %s data:; style-src 'self' 'unsafe-inline'; base-uri 'self'; form-action 'self'; frame-src 'self' %s; frame-ancestors 'self'; object-src 'none'; report-uri 'self';", baseAuthUrl, baseAuthUrl);
+      return baseAuthUrl;
    }
 
    public ParserRegistry getParserRegistry() {
