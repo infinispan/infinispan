@@ -13,7 +13,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.EnumUtil;
@@ -123,7 +122,6 @@ public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
 
       if (nodes > 0) {
          InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(origin, EnumUtil.EMPTY_BIT_SET, keys);
-         final SingleRpcCommand rpcCommand = commandsFactory.buildSingleRpcCommand(ic);
 
          // No need to invalidate at all if there is no one to invalidate!
          boolean multicast = isUseMulticast(nodes);
@@ -133,9 +131,9 @@ public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
          MapResponseCollector collector = MapResponseCollector.ignoreLeavers();
          CompletionStage<Map<Address, Response>> request;
          if (multicast) {
-            request = rpcManager.invokeCommandOnAll(rpcCommand, collector, rpcManager.getSyncRpcOptions());
+            request = rpcManager.invokeCommandOnAll(ic, collector, rpcManager.getSyncRpcOptions());
          } else {
-            request = rpcManager.invokeCommand(invalidationAddresses, rpcCommand, collector,
+            request = rpcManager.invokeCommand(invalidationAddresses, ic, collector,
                                                rpcManager.getSyncRpcOptions());
          }
          return request.toCompletableFuture();

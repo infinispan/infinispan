@@ -19,6 +19,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 
 // TODO: the command does not carry previous values to backup, so it can cause
 // the values on primary and backup owners to diverge in case of topology change
@@ -43,21 +44,21 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    }
 
    @ProtoFactory
-   ReadWriteManyCommand(CommandInvocationId commandInvocationId, boolean forwarded, int topologyId, Params params,
+   ReadWriteManyCommand(ByteString cacheName, CommandInvocationId commandInvocationId, boolean forwarded, int topologyId, Params params,
                         long flags, DataConversion keyDataConversion, DataConversion valueDataConversion,
                         MarshallableMap<Object, PrivateMetadata> internalMetadata, MarshallableCollection<?> keys,
                         MarshallableObject<Function<ReadWriteEntryView<K, V>, R>> wrappedFunction) {
-      super(commandInvocationId, forwarded, topologyId, params, flags, keyDataConversion, valueDataConversion, internalMetadata);
+      super(cacheName, commandInvocationId, forwarded, topologyId, params, flags, keyDataConversion, valueDataConversion, internalMetadata);
       this.keys = MarshallableCollection.unwrap(keys);
       this.f = MarshallableObject.unwrap(wrappedFunction);
    }
 
-   @ProtoField(9)
+   @ProtoField(10)
    MarshallableCollection<?> getKeys() {
       return MarshallableCollection.create(keys);
    }
 
-   @ProtoField(number = 10, name = "function")
+   @ProtoField(number = 11, name = "function")
    MarshallableObject<Function<ReadWriteEntryView<K, V>, R>> getWrappedFunction() {
       return MarshallableObject.create(f);
    }

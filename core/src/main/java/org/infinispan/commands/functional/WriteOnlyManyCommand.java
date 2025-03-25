@@ -19,6 +19,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 
 @ProtoTypeId(ProtoStreamTypeIds.WRITE_ONLY_MANY_COMMAND)
 public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K, V> {
@@ -41,21 +42,21 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    }
 
    @ProtoFactory
-   WriteOnlyManyCommand(CommandInvocationId commandInvocationId, boolean forwarded, int topologyId, Params params,
-                        long flags, DataConversion keyDataConversion, DataConversion valueDataConversion,
+   WriteOnlyManyCommand(ByteString cacheName, CommandInvocationId commandInvocationId, boolean forwarded, int topologyId,
+                        Params params, long flags, DataConversion keyDataConversion, DataConversion valueDataConversion,
                         MarshallableMap<Object, PrivateMetadata> internalMetadata, MarshallableCollection<?> keys,
                         MarshallableObject<Consumer<WriteEntryView<K, V>>> wrappedConsumer) {
-      super(commandInvocationId, forwarded, topologyId, params, flags, keyDataConversion, valueDataConversion, internalMetadata);
+      super(cacheName, commandInvocationId, forwarded, topologyId, params, flags, keyDataConversion, valueDataConversion, internalMetadata);
       this.keys = MarshallableCollection.unwrap(keys);
       this.f = MarshallableObject.unwrap(wrappedConsumer);
    }
 
-   @ProtoField(9)
+   @ProtoField(10)
    MarshallableCollection<?> getKeys() {
       return MarshallableCollection.create(keys);
    }
 
-   @ProtoField(number = 10, name = "consumer")
+   @ProtoField(number = 11, name = "consumer")
    MarshallableObject<Consumer<WriteEntryView<K, V>>> getWrappedConsumer() {
       return MarshallableObject.create(f);
    }

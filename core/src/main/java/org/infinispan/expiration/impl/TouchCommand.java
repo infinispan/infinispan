@@ -8,6 +8,7 @@ import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 
 /**
  * This command updates a cache entry's last access timestamp. If eviction is enabled, it will also update the recency information
@@ -17,12 +18,12 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.TOUCH_COMMAND)
 public class TouchCommand extends AbstractDataCommand {
 
-   @ProtoField(number = 5, defaultValue = "false")
+   @ProtoField(6)
    boolean touchEvenIfExpired;
 
    @ProtoFactory
-   TouchCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment, boolean touchEvenIfExpired) {
-      super(wrappedKey, flagsWithoutRemote, topologyId, segment);
+   TouchCommand(ByteString cacheName, MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment, boolean touchEvenIfExpired) {
+      super(cacheName, wrappedKey, flagsWithoutRemote, topologyId, segment);
       this.touchEvenIfExpired = touchEvenIfExpired;
    }
 

@@ -13,6 +13,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.infinispan.util.ByteString;
 
 /**
  * Invalidates an entry in a L1 cache (used with DIST mode)
@@ -24,13 +25,13 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 @ProtoTypeId(ProtoStreamTypeIds.INVALIDATE_L1_COMMAND)
 public class InvalidateL1Command extends InvalidateCommand {
 
-   @ProtoField(number = 5, javaType = JGroupsAddress.class)
+   @ProtoField(number = 6, javaType = JGroupsAddress.class)
    final Address writeOrigin;
 
    @ProtoFactory
-   InvalidateL1Command(long flagsWithoutRemote, int topologyId, CommandInvocationId commandInvocationId,
+   InvalidateL1Command(ByteString cacheName, long flagsWithoutRemote, int topologyId, CommandInvocationId commandInvocationId,
                        MarshallableArray<Object> wrappedKeys, JGroupsAddress writeOrigin) {
-      super(flagsWithoutRemote, topologyId, commandInvocationId, wrappedKeys);
+      super(cacheName, flagsWithoutRemote, topologyId, commandInvocationId, wrappedKeys);
       this.writeOrigin = writeOrigin;
    }
 

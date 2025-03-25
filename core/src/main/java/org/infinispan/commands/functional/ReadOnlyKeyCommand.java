@@ -17,6 +17,7 @@ import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 
 @ProtoTypeId(ProtoStreamTypeIds.READ_ONLY_KEY_COMMAND)
 public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
@@ -36,32 +37,32 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
    }
 
    @ProtoFactory
-   ReadOnlyKeyCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
+   ReadOnlyKeyCommand(ByteString cacheName, MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
                       MarshallableObject<Function<ReadEntryView<K, V>, R>> wrappedFunction, Params params,
                       DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      super(wrappedKey, flagsWithoutRemote, topologyId, segment);
+      super(cacheName, wrappedKey, flagsWithoutRemote, topologyId, segment);
       this.f = MarshallableObject.unwrap(wrappedFunction);
       this.params = params;
       this.keyDataConversion = keyDataConversion;
       this.valueDataConversion = valueDataConversion;
    }
 
-   @ProtoField(5)
+   @ProtoField(6)
    MarshallableObject<Function<ReadEntryView<K, V>, R>> getWrappedFunction() {
       return MarshallableObject.create(f);
    }
 
-   @ProtoField(6)
+   @ProtoField(7)
    public Params getParams() {
       return params;
    }
 
-   @ProtoField(7)
+   @ProtoField(8)
    public DataConversion getKeyDataConversion() {
       return keyDataConversion;
    }
 
-   @ProtoField(8)
+   @ProtoField(9)
    public DataConversion getValueDataConversion() {
       return valueDataConversion;
    }
