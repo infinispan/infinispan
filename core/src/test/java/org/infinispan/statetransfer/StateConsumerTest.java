@@ -146,7 +146,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
             .thenAnswer(invocation -> new StateTransferCancelCommand(CACHE_NAME, invocation.getArgument(0),
                   invocation.getArgument(1)));
       when(mock.buildPutKeyValueCommand(any(), any(), anyInt(), any(Metadata.class), anyLong()))
-            .thenAnswer(invocation -> new PutKeyValueCommand(invocation.getArgument(0), invocation.getArgument(1),
+            .thenAnswer(invocation -> new PutKeyValueCommand(CACHE_NAME, invocation.getArgument(0), invocation.getArgument(1),
                   false, false, invocation.getArgument(3), invocation.getArgument(2),
                   invocation.getArgument(4), CommandInvocationId.DUMMY_INVOCATION_ID));
       return mock;

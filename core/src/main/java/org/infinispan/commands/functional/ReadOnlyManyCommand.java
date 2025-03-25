@@ -16,6 +16,7 @@ import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 
 @ProtoTypeId(ProtoStreamTypeIds.READ_ONLY_MANY_COMMAND)
 public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedCommand {
@@ -26,12 +27,13 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
    protected DataConversion keyDataConversion;
    protected DataConversion valueDataConversion;
 
-   public ReadOnlyManyCommand(Collection<?> keys,
+   public ReadOnlyManyCommand(ByteString cacheName,
+                              Collection<?> keys,
                               Function<ReadEntryView<K, V>, R> f,
                               Params params,
                               DataConversion keyDataConversion,
                               DataConversion valueDataConversion) {
-      super(params.toFlagsBitSet(), -1);
+      super(cacheName, params.toFlagsBitSet(), -1);
       this.keys = keys;
       this.f = f;
       this.params = params;
@@ -40,16 +42,16 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
    }
 
    public ReadOnlyManyCommand(ReadOnlyManyCommand<K, V, R> c) {
-      this(c.keys, c.f, c.params, c.keyDataConversion, c.valueDataConversion);
+      this(c.cacheName, c.keys, c.f, c.params, c.keyDataConversion, c.valueDataConversion);
       this.setFlagsBitSet(c.getFlagsBitSet());
       this.topologyId = c.topologyId;
    }
 
    @ProtoFactory
-   ReadOnlyManyCommand(long flagsWithoutRemote, int topologyId, MarshallableCollection<?> wrappedKeys,
+   ReadOnlyManyCommand(ByteString cacheName, long flagsWithoutRemote, int topologyId, MarshallableCollection<?> wrappedKeys,
                        MarshallableObject<Function<ReadEntryView<K, V>, R>> wrappedFunction, Params params,
                        DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      super(flagsWithoutRemote, topologyId);
+      super(cacheName, flagsWithoutRemote, topologyId);
       this.keys = MarshallableCollection.unwrap(wrappedKeys);
       this.f = MarshallableObject.unwrap(wrappedFunction);
       this.params = params;
@@ -57,27 +59,27 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
       this.valueDataConversion = valueDataConversion;
    }
 
-   @ProtoField(number = 3, name = "keys")
+   @ProtoField(number = 4, name = "keys")
    MarshallableCollection<?> getWrappedKeys() {
       return MarshallableCollection.create(keys);
    }
 
-   @ProtoField(number = 4,  name = "function")
+   @ProtoField(number = 5,  name = "function")
    MarshallableObject<Function<ReadEntryView<K, V>, R>> getWrappedFunction() {
       return MarshallableObject.create(f);
    }
 
-   @ProtoField(5)
+   @ProtoField(6)
    public Params getParams() {
       return params;
    }
 
-   @ProtoField(6)
+   @ProtoField(7)
    public DataConversion getKeyDataConversion() {
       return keyDataConversion;
    }
 
-   @ProtoField(7)
+   @ProtoField(8)
    public DataConversion getValueDataConversion() {
       return valueDataConversion;
    }

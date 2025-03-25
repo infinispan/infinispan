@@ -1,7 +1,15 @@
 package org.infinispan.commands;
 
+import java.lang.invoke.MethodHandles;
+import java.util.concurrent.CompletionStage;
+
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.util.concurrent.locks.RemoteLockCommand;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 
 /**
@@ -10,10 +18,24 @@ import org.infinispan.factories.ComponentRegistry;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
-public interface VisitableCommand extends ReplicableCommand {
+public interface VisitableCommand extends CacheRpcCommand {
+
+   static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    default void init(ComponentRegistry registry) {
       // no-op
+   }
+
+   default CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
+      this.init(registry);
+      InvocationContextFactory icf = registry.getInvocationContextFactory().running();
+      InvocationContext ctx = icf.createRemoteInvocationContextForCommand(this, getOrigin());
+      if (this instanceof RemoteLockCommand remoteLockCmd) {
+         ctx.setLockOwner(remoteLockCmd.getKeyLockOwner());
+      }
+      if (log.isTraceEnabled())
+         log.tracef("Invoking command %s, with originLocal flag set to %b", this, ctx.isOriginLocal());
+      return registry.getInterceptorChain().running().invokeAsync(ctx, this);
    }
 
    /**

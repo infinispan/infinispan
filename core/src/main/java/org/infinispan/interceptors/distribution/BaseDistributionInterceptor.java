@@ -24,6 +24,7 @@ import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.BaseClusteredReadCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -777,7 +778,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
    }
 
-   private class ClusteredReadCommandGenerator implements Function<Address, ReplicableCommand> {
+   private class ClusteredReadCommandGenerator implements Function<Address, CacheRpcCommand> {
       private final Map<Address, List<Object>> requestedKeys;
       private final long flags;
       private final int topologyId;
@@ -792,7 +793,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
 
       @Override
-      public ReplicableCommand apply(Address target) {
+      public CacheRpcCommand apply(Address target) {
          List<Object> targetKeys = requestedKeys.get(target);
          assert !targetKeys.isEmpty();
          BaseClusteredReadCommand getCommand = cf.buildClusteredGetAllCommand(targetKeys, flags, gtx);

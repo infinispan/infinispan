@@ -8,6 +8,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
@@ -34,7 +35,7 @@ public interface RpcManager {
     *
     * @since 9.2
     */
-   <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
+   <T> CompletionStage<T> invokeCommand(Address target, CacheRpcCommand command,
                                         ResponseCollector<T> collector, RpcOptions rpcOptions);
 
    /**
@@ -44,7 +45,7 @@ public interface RpcManager {
     *
     * @since 9.2
     */
-   <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
+   <T> CompletionStage<T> invokeCommand(Collection<Address> targets, CacheRpcCommand command,
                                         ResponseCollector<T> collector, RpcOptions rpcOptions);
 
    /**
@@ -54,7 +55,7 @@ public interface RpcManager {
     *
     * @since 9.2
     */
-   <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
+   <T> CompletionStage<T> invokeCommandOnAll(CacheRpcCommand command, ResponseCollector<T> collector,
                                              RpcOptions rpcOptions);
 
    /**
@@ -69,7 +70,7 @@ public interface RpcManager {
     *
     * @since 9.2
     */
-   <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
+   <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, CacheRpcCommand command,
                                                  ResponseCollector<T> collector, RpcOptions rpcOptions);
 
    /**
@@ -80,7 +81,7 @@ public interface RpcManager {
     * @since 9.2
     */
    <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
-                                         Function<Address, ReplicableCommand> commandGenerator,
+                                         Function<Address, CacheRpcCommand> commandGenerator,
                                          ResponseCollector<T> collector, RpcOptions rpcOptions);
 
    /**
@@ -94,19 +95,19 @@ public interface RpcManager {
     * Invokes a command on remote nodes.
     *
     * @param recipients A list of nodes, or {@code null} to invoke the command on all the members of the cluster
-    * @param rpc The command to invoke
+    * @param command The command to invoke
     * @param options The invocation options
     * @return A future that, when completed, returns the responses from the remote nodes.
-    * @deprecated since 11.0, use {@link #sendToMany(Collection, ReplicableCommand, DeliverOrder)} or
-    * {@link #invokeCommand(Collection, ReplicableCommand, ResponseCollector, RpcOptions)} instead.
+    * @deprecated since 11.0, use {@link #sendToMany(Collection, CacheRpcCommand, DeliverOrder)} or
+    * {@link #invokeCommand(Collection, CacheRpcCommand, ResponseCollector, RpcOptions)} instead.
     */
    @Deprecated(forRemoval=true, since = "11.0")
    default CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
-                                                                 ReplicableCommand rpc, RpcOptions options) {
+                                                                         CacheRpcCommand command, RpcOptions options) {
       // Always perform with ResponseMode.SYNCHRONOUS as RpcOptions no longer allows ResponseMode to be passed
       Collection<Address> targets = recipients != null ? recipients : getTransport().getMembers();
       MapResponseCollector collector = MapResponseCollector.ignoreLeavers(false, targets.size());
-      return invokeCommand(recipients, rpc, collector, options).toCompletableFuture();
+      return invokeCommand(recipients, command, collector, options).toCompletableFuture();
    }
 
    /**
@@ -116,7 +117,7 @@ public interface RpcManager {
     * @param command      the {@link ReplicableCommand} to send.
     * @param deliverOrder the {@link DeliverOrder} to use.
     */
-   void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder);
+   void sendTo(Address destination, CacheRpcCommand command, DeliverOrder deliverOrder);
 
    /**
     * Asynchronously sends the {@link ReplicableCommand} to the set of destination using the specified {@link
@@ -127,14 +128,14 @@ public interface RpcManager {
     * @param command      the {@link ReplicableCommand} to send.
     * @param deliverOrder the {@link DeliverOrder} to use.
     */
-   void sendToMany(Collection<Address> destinations, ReplicableCommand command, DeliverOrder deliverOrder);
+   void sendToMany(Collection<Address> destinations, CacheRpcCommand command, DeliverOrder deliverOrder);
 
    /**
     * Asynchronously sends the {@link ReplicableCommand} to the entire cluster.
     *
     * @since 9.2
     */
-   void sendToAll(ReplicableCommand command, DeliverOrder deliverOrder);
+   void sendToAll(CacheRpcCommand command, DeliverOrder deliverOrder);
 
    /**
     * Sends the {@link XSiteCacheRequest} to a remote site.

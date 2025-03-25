@@ -9,14 +9,10 @@ public interface TracedCommand {
    }
 
    default String getOperationName() {
-      if (getSpanAttributes() != null) {
-         throw new IllegalStateException("getOperationName() must be implemented when getSpanAttributes() is.");
-      }
-      return null;
+      return getClass().getSimpleName();
    }
 
    default void setSpanAttributes(InfinispanSpanAttributes attributes) {
       //no-op
    }
-
 }

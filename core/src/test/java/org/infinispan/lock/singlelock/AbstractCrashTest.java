@@ -9,12 +9,13 @@ import java.util.concurrent.Future;
 import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -28,7 +29,6 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.util.AbstractDelegatingRpcManager;
-import org.infinispan.configuration.cache.IsolationLevel;
 
 /**
  * @author Mircea Markus
@@ -119,7 +119,7 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
    protected void skipTxCompletion(final AdvancedCache<Object, Object> cache, final CountDownLatch releaseLocksLatch) {
       RpcManager rpcManager = new AbstractDelegatingRpcManager(cache.getRpcManager()) {
          @Override
-         protected <T> void performSend(Collection<Address> targets, ReplicableCommand command,
+         protected <T> void performSend(Collection<Address> targets, CacheRpcCommand command,
                                         Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
             if (command instanceof TxCompletionNotificationCommand) {
                releaseLocksLatch.countDown();

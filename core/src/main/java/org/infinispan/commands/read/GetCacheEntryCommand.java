@@ -5,6 +5,7 @@ import static org.infinispan.commons.util.Util.toStr;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
 
 /**
  * Used to fetch a full CacheEntry rather than just the value.
@@ -15,8 +16,8 @@ import org.infinispan.context.InvocationContext;
  */
 public final class GetCacheEntryCommand extends AbstractDataCommand implements LocalCommand {
 
-   public GetCacheEntryCommand(Object key, int segment, long flagsBitSet) {
-      super(key, segment, flagsBitSet);
+   public GetCacheEntryCommand(ByteString cacheName, Object key, int segment, long flagsBitSet) {
+      super(cacheName, key, segment, flagsBitSet);
    }
 
    @Override

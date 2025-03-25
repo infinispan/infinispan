@@ -13,7 +13,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.remote.SingleRpcCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.distribution.MagicKey;
@@ -101,13 +101,13 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
 
          CompletableFuture<Object> put1 = cache1.putAsync(new MagicKey("a1", cache1), "b1");
          timeService.advance(50);
-         transport.expectCommand(SingleRpcCommand.class)
+         transport.expectCommand(PutKeyValueCommand.class)
                   .singleResponse(address(2), SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
          put1.get(10, TimeUnit.SECONDS);
 
          CompletableFuture<Object> put2 = cache1.putAsync(new MagicKey("a2", cache2), "b2");
          timeService.advance(10);
-         transport.expectCommand(SingleRpcCommand.class)
+         transport.expectCommand(PutKeyValueCommand.class)
                   .singleResponse(address(2), SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
          put2.get(10, TimeUnit.SECONDS);
 
@@ -118,12 +118,12 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
 
          // If cache1 is the primary owner it will be a broadcast, otherwise a unicast
          CompletableFuture<Object> put3 = cache1.putAsync(new MagicKey("a3", cache1), "b3");
-         transport.expectCommand(SingleRpcCommand.class)
+         transport.expectCommand(PutKeyValueCommand.class)
                   .throwException(new RuntimeException());
          Exceptions.expectCompletionException(CacheException.class, put3);
 
          CompletableFuture<Object> put4 = cache1.putAsync(new MagicKey("a4", cache2), "b4");
-         transport.expectCommand(SingleRpcCommand.class)
+         transport.expectCommand(PutKeyValueCommand.class)
                   .throwException(new RuntimeException());
          Exceptions.expectCompletionException(CacheException.class, put4);
 

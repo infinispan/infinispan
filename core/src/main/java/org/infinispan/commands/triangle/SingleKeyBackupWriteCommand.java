@@ -143,32 +143,32 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
       DataWriteCommand command;
       switch (operation) {
          case REMOVE:
-            command = new RemoveCommand(key, null, false, segmentId, getFlags(), getCommandInvocationId());
+            command = new RemoveCommand(cacheName, key, null, false, segmentId, getFlags(), getCommandInvocationId());
             break;
          case WRITE:
             command = EnumUtil.containsAny(getFlags(), FlagBitSets.IRAC_UPDATE) ?
-                  new IracPutKeyValueCommand(key, segmentId, getCommandInvocationId(), valueOrFunction, metadata, internalMetadata) :
-                  new PutKeyValueCommand(key, valueOrFunction, false, false, metadata, segmentId, getFlags(), getCommandInvocationId());
+                  new IracPutKeyValueCommand(cacheName, key, segmentId, getCommandInvocationId(), valueOrFunction, metadata, internalMetadata) :
+                  new PutKeyValueCommand(cacheName, key, valueOrFunction, false, false, metadata, segmentId, getFlags(), getCommandInvocationId());
             break;
          case COMPUTE:
-            command = new ComputeCommand(key, (BiFunction<?, ?, ?>) valueOrFunction, false, segmentId, getFlags(),
+            command = new ComputeCommand(cacheName, key, (BiFunction<?, ?, ?>) valueOrFunction, false, segmentId, getFlags(),
                   getCommandInvocationId(), metadata);
             break;
          case REPLACE:
-            command = new ReplaceCommand(key, null, valueOrFunction, false, metadata, segmentId, getFlags(),
+            command = new ReplaceCommand(cacheName, key, null, valueOrFunction, false, metadata, segmentId, getFlags(),
                   getCommandInvocationId());
             break;
          case REMOVE_EXPIRED:
             // Doesn't matter if it is max idle or not - important thing is that it raises expired event
-            command = new RemoveExpiredCommand(key, valueOrFunction, null, false, segmentId, getFlags(),
+            command = new RemoveExpiredCommand(cacheName, key, valueOrFunction, null, false, segmentId, getFlags(),
                   getCommandInvocationId());
             break;
          case COMPUTE_IF_PRESENT:
-            command = new ComputeCommand(key, (BiFunction<?, ?, ?>) valueOrFunction, true, segmentId, getFlags(),
+            command = new ComputeCommand(cacheName, key, (BiFunction<?, ?, ?>) valueOrFunction, true, segmentId, getFlags(),
                   getCommandInvocationId(), metadata);
             break;
          case COMPUTE_IF_ABSENT:
-            command = new ComputeIfAbsentCommand(key, (Function<?, ?>) valueOrFunction, segmentId, getFlags(),
+            command = new ComputeIfAbsentCommand(cacheName, key, (Function<?, ?>) valueOrFunction, segmentId, getFlags(),
                   getCommandInvocationId(), metadata);
             break;
          default:
