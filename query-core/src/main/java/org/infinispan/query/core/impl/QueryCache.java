@@ -56,6 +56,8 @@ public final class QueryCache {
    @Inject
    EmbeddedCacheManager cacheManager;
 
+   private volatile Cache<QueryCacheKey, Object> cache;
+
    /**
     * Gets the cached query object. The key used for lookup is an object pair containing the query string and a
     * discriminator value which is usually the Class of the cached query object and an optional {@link List} of {@link
@@ -68,16 +70,23 @@ public final class QueryCache {
 
    public void clear() {
       log.debug("Clearing query cache for all caches");
-      getCache().clear();
+      if (cache != null) {
+         cache.clear();
+      }
    }
 
    public void clear(String cacheName) {
       log.debugf("Clearing query cache for cache %s", cacheName);
-      getCache().keySet().removeIf(k -> k.cacheName.equals(cacheName));
+      if (cache != null) {
+         cache.keySet().removeIf(k -> k.cacheName.equals(cacheName));
+      }
    }
 
    private Cache<QueryCacheKey, Object> getCache() {
-      return cacheManager.getCache(QUERY_CACHE_NAME);
+      if (cache == null) {
+         cache = cacheManager.getCache(QUERY_CACHE_NAME);
+      }
+      return cache;
    }
 
    /**
