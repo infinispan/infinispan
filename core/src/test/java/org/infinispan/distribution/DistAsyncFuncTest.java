@@ -15,7 +15,6 @@ import java.util.function.Predicate;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -67,9 +66,6 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
                                                             ResponseCollector<T> collector,
                                                             Function<ResponseCollector<T>, CompletionStage<T>> invoker,
                                                             RpcOptions rpcOptions) {
-               if (command instanceof SingleRpcCommand) {
-                  command = ((SingleRpcCommand) command).getCommand();
-               }
                if (command instanceof InvalidateL1Command) {
                   InvalidateL1Command invalidateL1Command = (InvalidateL1Command) command;
                   log.tracef("Sending invalidation %s to %s", command, targets);

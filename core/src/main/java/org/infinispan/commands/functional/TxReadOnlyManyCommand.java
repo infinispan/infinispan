@@ -17,6 +17,7 @@ import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 
 @ProtoTypeId(ProtoStreamTypeIds.TX_READ_ONLY_MANY_COMMAND)
 public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R> {
@@ -38,15 +39,15 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
    }
 
    @ProtoFactory
-   TxReadOnlyManyCommand(long flagsWithoutRemote, int topologyId, MarshallableCollection<?> wrappedKeys,
+   TxReadOnlyManyCommand(ByteString cacheName, long flagsWithoutRemote, int topologyId, MarshallableCollection<?> wrappedKeys,
                          MarshallableObject<Function<EntryView.ReadEntryView<K, V>, R>> wrappedFunction,
                          Params params, DataConversion keyDataConversion, DataConversion valueDataConversion,
                          Stream<MarshallableList<Mutation<K, V, ?>>> wrappedMutations) {
-      super(flagsWithoutRemote, topologyId, wrappedKeys, wrappedFunction, params, keyDataConversion, valueDataConversion);
+      super(cacheName, flagsWithoutRemote, topologyId, wrappedKeys, wrappedFunction, params, keyDataConversion, valueDataConversion);
       this.mutations = wrappedMutations == null ? null : wrappedMutations.map(MarshallableList::unwrap).collect(Collectors.toList());
    }
 
-   @ProtoField(number = 8, name = "mutations")
+   @ProtoField(number = 9, name = "mutations")
    Stream<MarshallableList<Mutation<K, V, ?>>> getWrappedMutations() {
       return mutations == null ? null : mutations.stream().map(MarshallableList::create);
    }

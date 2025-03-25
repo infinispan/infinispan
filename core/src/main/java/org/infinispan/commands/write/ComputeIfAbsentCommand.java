@@ -17,6 +17,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 
 @ProtoTypeId(ProtoStreamTypeIds.COMPUTE_IF_ABSENT_COMMAND)
 public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
@@ -34,27 +35,27 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
    }
 
    @ProtoFactory
-   ComputeIfAbsentCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
+   ComputeIfAbsentCommand(ByteString cacheName, MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
                           CommandInvocationId commandInvocationId, MarshallableObject<Function<?, ?>> wrappedMappingFunction,
                           MarshallableObject<Metadata> wrappedMetadata, PrivateMetadata internalMetadata) {
-      super(wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId);
+      super(cacheName, wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId);
       this.mappingFunction = MarshallableObject.unwrap(wrappedMappingFunction);
       this.metadata = MarshallableObject.unwrap(wrappedMetadata);
       this.internalMetadata = internalMetadata;
    }
 
-   @ProtoField(number = 6, name = "mappingFunction")
+   @ProtoField(number = 7, name = "mappingFunction")
    MarshallableObject<Function<?, ?>> getWrappedMappingFunction() {
       return MarshallableObject.create(mappingFunction);
    }
 
-   @ProtoField(number = 7, name = "metadata")
+   @ProtoField(number = 8, name = "metadata")
    MarshallableObject<Metadata> getWrappedMetadata() {
       return MarshallableObject.create(metadata);
    }
 
    @Override
-   @ProtoField(8)
+   @ProtoField(9)
    public PrivateMetadata getInternalMetadata() {
       return internalMetadata;
    }

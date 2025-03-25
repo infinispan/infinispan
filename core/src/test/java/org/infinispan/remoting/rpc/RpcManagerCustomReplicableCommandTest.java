@@ -16,6 +16,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.util.ByteString;
 import org.testng.annotations.Test;
 
 /**
@@ -37,7 +38,7 @@ public class RpcManagerCustomReplicableCommandTest extends MultipleCacheManagers
    }
 
    protected ReplicableCommand createReplicableCommandForTest(Object arg) {
-      return new CustomReplicableCommand(arg);
+      return new CustomReplicableCommand(ByteString.fromString(TEST_CACHE), arg);
    }
 
    /**

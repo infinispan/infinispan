@@ -36,7 +36,6 @@ import java.util.stream.Collectors;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.time.TimeService;
@@ -356,10 +355,6 @@ public class ControlledTransport extends AbstractDelegatingTransport {
          return invoker.apply(collector);
       }
       log.debugf("Intercepted command to %s: %s", targets, command);
-      // Ignore the SingleRpcCommand wrapper
-      if (command instanceof SingleRpcCommand) {
-         command = ((SingleRpcCommand) command).getCommand();
-      }
       Address excluded = actual.getAddress();
       ControlledRequest<T> controlledRequest =
          new ControlledRequest<>(command, targets, collector, invoker, nonBlockingExecutor, excluded);

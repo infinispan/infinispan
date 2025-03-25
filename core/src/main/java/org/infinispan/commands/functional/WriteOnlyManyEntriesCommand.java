@@ -19,6 +19,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 
 @ProtoTypeId(ProtoStreamTypeIds.WRITE_ONLY_MANY_ENTRIES_COMMAND)
 public final class WriteOnlyManyEntriesCommand<K, V, T> extends AbstractWriteManyCommand<K, V> {
@@ -41,21 +42,21 @@ public final class WriteOnlyManyEntriesCommand<K, V, T> extends AbstractWriteMan
    }
 
    @ProtoFactory
-   WriteOnlyManyEntriesCommand(CommandInvocationId commandInvocationId, boolean forwarded, int topologyId,
+   WriteOnlyManyEntriesCommand(ByteString cacheName, CommandInvocationId commandInvocationId, boolean forwarded, int topologyId,
                                Params params, long flags, DataConversion keyDataConversion, DataConversion valueDataConversion,
                                MarshallableMap<Object, PrivateMetadata> internalMetadata, MarshallableMap<?, ?> wrappedArguments,
                                MarshallableObject<BiConsumer<T, WriteEntryView<K, V>>> wrappedBiConsumer) {
-      super(commandInvocationId, forwarded, topologyId, params, flags, keyDataConversion, valueDataConversion, internalMetadata);
+      super(cacheName, commandInvocationId, forwarded, topologyId, params, flags, keyDataConversion, valueDataConversion, internalMetadata);
       this.arguments = MarshallableMap.unwrap(wrappedArguments);
       this.f = MarshallableObject.unwrap(wrappedBiConsumer);
    }
 
-   @ProtoField(number = 9, name = "arguments")
+   @ProtoField(number = 10, name = "arguments")
    MarshallableMap<?, ?> getWrappedArguments() {
       return MarshallableMap.create(arguments);
    }
 
-   @ProtoField(number = 10, name = "biconsumer")
+   @ProtoField(number = 11, name = "biconsumer")
    MarshallableObject<BiConsumer<T, WriteEntryView<K, V>>> getWrappedBiConsumer() {
       return MarshallableObject.create(f);
    }

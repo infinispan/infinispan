@@ -1,31 +1,33 @@
 package org.infinispan.remoting.rpc;
 
-import java.io.Serializable;
-
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.ByteString;
 
 /**
  * @author anistor@redhat.com
  * @since 5.3
  */
-public class CustomReplicableCommand implements VisitableCommand, Serializable {
+public class CustomReplicableCommand implements CacheRpcCommand, VisitableCommand {
 
-   private static final long serialVersionUID = -1L;
-
+   final ByteString cacheName;
    final Object arg;
+   Address origin;
 
-   public CustomReplicableCommand(Object arg) {
+   public CustomReplicableCommand(ByteString cacheName, Object arg) {
+      this.cacheName = cacheName;
       this.arg = arg;
    }
 
    @ProtoFactory
-   CustomReplicableCommand(MarshallableObject<?> arg) {
-      this.arg = MarshallableObject.unwrap(arg);
+   CustomReplicableCommand(ByteString cacheName, MarshallableObject<?> arg) {
+      this(cacheName, MarshallableObject.unwrap(arg));
    }
 
    @Override
@@ -38,7 +40,23 @@ public class CustomReplicableCommand implements VisitableCommand, Serializable {
       return arg;
    }
 
+   @Override
    @ProtoField(1)
+   public ByteString getCacheName() {
+      return cacheName;
+   }
+
+   @Override
+   public void setOrigin(Address origin) {
+      this.origin = origin;
+   }
+
+   @Override
+   public Address getOrigin() {
+      return origin;
+   }
+
+   @ProtoField(2)
    MarshallableObject<?> getArg() {
       return MarshallableObject.create(arg);
    }

@@ -18,6 +18,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
 
@@ -43,20 +44,20 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    }
 
    @ProtoFactory
-   protected InvalidateCommand(long flagsWithoutRemote, int topologyId, CommandInvocationId commandInvocationId,
-                     MarshallableArray<Object> wrappedKeys) {
-      super(flagsWithoutRemote, topologyId);
+   protected InvalidateCommand(ByteString cacheName, long flagsWithoutRemote, int topologyId, CommandInvocationId commandInvocationId,
+                               MarshallableArray<Object> wrappedKeys) {
+      super(cacheName, flagsWithoutRemote, topologyId);
       this.keys = MarshallableArray.unwrap(wrappedKeys);
       this.commandInvocationId = commandInvocationId;
    }
 
-   @ProtoField(number = 3, name = "keys")
+   @ProtoField(number = 4, name = "keys")
    public MarshallableArray<Object> getWrappedKeys() {
       return MarshallableArray.create(keys);
    }
 
    @Override
-   @ProtoField(4)
+   @ProtoField(5)
    public CommandInvocationId getCommandInvocationId() {
       return commandInvocationId;
    }

@@ -13,6 +13,7 @@ import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 
 @ProtoTypeId(ProtoStreamTypeIds.TX_READ_ONLY_KEY_COMMAND)
 public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
@@ -26,15 +27,15 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    }
 
    @ProtoFactory
-   TxReadOnlyKeyCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
+   TxReadOnlyKeyCommand(ByteString cacheName, MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
                         MarshallableObject<Function<EntryView.ReadEntryView<K, V>, R>> wrappedFunction, Params params,
                         DataConversion keyDataConversion, DataConversion valueDataConversion,
                         MarshallableList<Mutation<K, V, ?>> wrappedMutations) {
-      super(wrappedKey, flagsWithoutRemote, topologyId, segment, wrappedFunction, params, keyDataConversion, valueDataConversion);
+      super(cacheName, wrappedKey, flagsWithoutRemote, topologyId, segment, wrappedFunction, params, keyDataConversion, valueDataConversion);
       this.mutations = MarshallableList.unwrap(wrappedMutations);
    }
 
-   @ProtoField(number = 9, name = "mutations")
+   @ProtoField(number = 10, name = "mutations")
    MarshallableList<Mutation<K, V, ?>> getWrappedMutations() {
       return MarshallableList.create(mutations);
    }

@@ -19,6 +19,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 
 // TODO: the command does not carry previous values to backup, so it can cause
 // the values on primary and backup owners to diverge in case of topology change
@@ -46,22 +47,22 @@ public final class ReadWriteManyEntriesCommand<K, V, T, R> extends AbstractWrite
    }
 
    @ProtoFactory
-   ReadWriteManyEntriesCommand(CommandInvocationId commandInvocationId, boolean forwarded, int topologyId,
-                               Params params, long flags, DataConversion keyDataConversion,
+   ReadWriteManyEntriesCommand(ByteString cacheName, CommandInvocationId commandInvocationId, boolean forwarded,
+                               int topologyId, Params params, long flags, DataConversion keyDataConversion,
                                DataConversion valueDataConversion, MarshallableMap<?, ?> wrappedArguments,
                                MarshallableObject<BiFunction<T, ReadWriteEntryView<K, V>, R>> wrappedBiFunction,
                                MarshallableMap<Object, PrivateMetadata> internalMetadata) {
-      super(commandInvocationId, forwarded, topologyId, params, flags, keyDataConversion, valueDataConversion, internalMetadata);
+      super(cacheName, commandInvocationId, forwarded, topologyId, params, flags, keyDataConversion, valueDataConversion, internalMetadata);
       this.arguments = MarshallableMap.unwrap(wrappedArguments);
       this.f = MarshallableObject.unwrap(wrappedBiFunction);
    }
 
-   @ProtoField(number = 9, name = "arguments")
+   @ProtoField(number = 10, name = "arguments")
    MarshallableMap<?, ?> getWrappedArguments() {
       return MarshallableMap.create(arguments);
    }
 
-   @ProtoField(number = 10, name = "bifunction")
+   @ProtoField(number = 11, name = "bifunction")
    MarshallableObject<BiFunction<T, ReadWriteEntryView<K, V>, R>> getWrappedBiFunction() {
       return MarshallableObject.create(f);
    }
