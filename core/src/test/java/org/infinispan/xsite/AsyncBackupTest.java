@@ -7,9 +7,9 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -27,6 +27,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.InvocationContext;
@@ -38,7 +39,6 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -142,7 +142,8 @@ public class AsyncBackupTest extends AbstractTwoSitesTest {
       assertEquals("v", cache(LON, 1).get("k"));
       assertNull(backup(LON).get("k"));
       resumeRemoteSite();
-      eventuallyEquals("v", () -> backup(LON).get("k"));
+      eventuallyEquals("v", () -> backup(LON, 0).get("k"));
+      eventuallyEquals("v", () -> backup(LON, 1).get("k"));
       assertDataContainerState("v");
       assertNoDataLeak();
    }
@@ -156,7 +157,8 @@ public class AsyncBackupTest extends AbstractTwoSitesTest {
       assertNull(cache(LON, 1).get("k"));
       assertEquals("v", backup(LON).get("k"));
       resumeRemoteSite();
-      eventuallyEquals(null, () -> backup(LON).get("k"));
+      eventuallyEquals(null, () -> backup(LON, 0).get("k"));
+      eventuallyEquals(null, () -> backup(LON, 1).get("k"));
       assertNoDataLeak();
    }
 
@@ -169,7 +171,8 @@ public class AsyncBackupTest extends AbstractTwoSitesTest {
       assertNull(cache(LON, 1).get("k"));
       assertEquals("v", backup(LON).get("k"));
       resumeRemoteSite();
-      eventuallyEquals(null, () -> backup(LON).get("k"));
+      eventuallyEquals(null, () -> backup(LON, 0).get("k"));
+      eventuallyEquals(null, () -> backup(LON, 1).get("k"));
       assertNoDataLeak();
    }
 
@@ -182,19 +185,22 @@ public class AsyncBackupTest extends AbstractTwoSitesTest {
       assertEquals("v2", cache(LON, 1).get("k"));
       assertEquals("v", backup(LON).get("k"));
       resumeRemoteSite();
-      eventuallyEquals("v2", () -> backup(LON).get("k"));
+      eventuallyEquals("v2", () -> backup(LON, 0).get("k"));
+      eventuallyEquals("v2", () -> backup(LON, 1).get("k"));
       assertDataContainerState("v2");
       assertNoDataLeak();
    }
 
    public void testPutAll() throws Exception {
-      cache(LON, 0).putAll(Collections.singletonMap("k", "v"));
+      //noinspection RedundantCollectionOperation
+      cache(LON, 0).putAll(Map.of("k", "v"));
       assertReachedRemoteSite();
       assertEquals("v", cache(LON, 0).get("k"));
       assertEquals("v", cache(LON, 1).get("k"));
       assertNull(backup(LON).get("k"));
       resumeRemoteSite();
-      eventuallyEquals("v", () -> backup(LON).get("k"));
+      eventuallyEquals("v", () -> backup(LON, 0).get("k"));
+      eventuallyEquals("v", () -> backup(LON, 1).get("k"));
       assertDataContainerState("v");
       assertNoDataLeak();
    }
@@ -207,7 +213,8 @@ public class AsyncBackupTest extends AbstractTwoSitesTest {
       eventuallyEquals("v", () -> cache(LON, 1).get("k"));
       assertNull(backup(LON).get("k"));
       resumeRemoteSite();
-      eventuallyEquals("v", () -> backup(LON).get("k"));
+      eventuallyEquals("v", () -> backup(LON, 0).get("k"));
+      eventuallyEquals("v", () -> backup(LON, 1).get("k"));
       assertDataContainerState("v");
       assertNoDataLeak();
    }
@@ -307,6 +314,7 @@ public class AsyncBackupTest extends AbstractTwoSitesTest {
       }
    }
 
+   @SuppressWarnings("rawtypes")
    public static class BlockingInterceptor extends DDAsyncInterceptor {
 
       public volatile CountDownLatch invocationReceivedLatch = new CountDownLatch(1);
