@@ -171,11 +171,10 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
       stage.whenComplete((handler, t) -> {
          assert ctx.channel().eventLoop().inEventLoop() : "Command should complete only in event loop thread, it was " + Thread.currentThread().getName();
          if (t != null) {
-            exceptionCaught(ctx, t);
-            return;
+            requestHandler.writer.error(t);
+         } else {
+            requestHandler = handler; // Instate the new handler if there was no exception
          }
-         // Instate the new handler if there was no exception
-         requestHandler = handler;
          flushBufferIfNeeded(ctx, false, stage);
          log.tracef("Re-enabling auto read for channel %s as previous command is complete", ctx.channel());
          resumeAutoRead(ctx);

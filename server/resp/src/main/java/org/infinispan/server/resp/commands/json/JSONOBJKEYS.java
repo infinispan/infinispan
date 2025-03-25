@@ -51,6 +51,7 @@ public class JSONOBJKEYS extends RespCommand implements Resp3Command {
       return (c, writer) -> {
          if (c == null || c.size() == 0) {
             writer.nulls();
+            return;
          }
          if (c.get(0) == null) {
             throw new CacheException("Path '" + RespUtil.ascii(path) + "' does not exist or not an object");

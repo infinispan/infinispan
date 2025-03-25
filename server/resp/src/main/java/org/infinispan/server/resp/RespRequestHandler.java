@@ -185,15 +185,10 @@ public abstract class RespRequestHandler {
             "triConsumer was: " + biConsumer + " and handlerWhenComplete was: " + handlerWhenComplete;
       if (CompletionStages.isCompletedSuccessfully(stage)) {
          E result = CompletionStages.join(stage);
-         try {
-            if (handlerWhenComplete != null) {
-               return CompletableFuture.completedFuture(handlerWhenComplete.apply(result));
-            }
-            biConsumer.accept(result, writer);
-         } catch (Throwable t) {
-            writer.error(t);
-            return myStage();
+         if (handlerWhenComplete != null) {
+            return CompletableFuture.completedFuture(handlerWhenComplete.apply(result));
          }
+         biConsumer.accept(result, writer);
          return myStage;
       }
       if (biConsumer != null) {
@@ -203,11 +198,7 @@ public abstract class RespRequestHandler {
             if (t != null) {
                writer.error(t);
             } else {
-               try {
-                  biConsumer.accept(e, writer);
-               } catch (Throwable innerT) {
-                  return CompletableFuture.failedFuture(innerT);
-               }
+               biConsumer.accept(e, writer);
             }
             return myStage;
          }, ctx.channel().eventLoop());
