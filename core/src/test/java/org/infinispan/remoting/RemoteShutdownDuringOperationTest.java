@@ -12,7 +12,6 @@ import org.assertj.core.api.SoftAssertions;
 import org.infinispan.cache.impl.EncoderCache;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
@@ -115,10 +114,7 @@ public class RemoteShutdownDuringOperationTest extends MultipleCacheManagersTest
 
          @Override
          public boolean verifyCommand(CacheRpcCommand cmd) {
-            if (cmd instanceof SingleRpcCommand) {
-               return ((SingleRpcCommand) cmd).getCommand() instanceof TouchCommand;
-            }
-            return false;
+            return cmd instanceof TouchCommand;
          }
       },
       GET {

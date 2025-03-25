@@ -5,9 +5,11 @@ import java.util.Collections;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.read.AbstractDataCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
 /**
@@ -16,18 +18,18 @@ import org.infinispan.util.concurrent.locks.RemoteLockCommand;
  * @author Manik Surtani
  * @since 4.0
  */
-public abstract class AbstractDataWriteCommand extends AbstractDataCommand implements DataWriteCommand, RemoteLockCommand {
+public abstract class AbstractDataWriteCommand extends AbstractDataCommand implements CacheRpcCommand, DataWriteCommand, RemoteLockCommand {
 
    protected CommandInvocationId commandInvocationId;
 
-   protected AbstractDataWriteCommand(MarshallableObject<?> wrappedKey, long flags, int topologyId, int segment,
+   protected AbstractDataWriteCommand(ByteString cacheName, MarshallableObject<?> wrappedKey, long flags, int topologyId, int segment,
                                       CommandInvocationId commandInvocationId) {
-      super(wrappedKey, flags, topologyId, segment);
+      super(cacheName, wrappedKey, flags, topologyId, segment);
       this.commandInvocationId = commandInvocationId;
    }
 
-   protected AbstractDataWriteCommand(Object key, int segment, long flagsBitSet, CommandInvocationId commandInvocationId) {
-      super(key, segment, flagsBitSet);
+   protected AbstractDataWriteCommand(ByteString cacheName, Object key, int segment, long flagsBitSet, CommandInvocationId commandInvocationId) {
+      super(cacheName, key, segment, flagsBitSet);
       this.commandInvocationId = commandInvocationId;
    }
 
@@ -62,7 +64,7 @@ public abstract class AbstractDataWriteCommand extends AbstractDataCommand imple
    }
 
    @Override
-   @ProtoField(5)
+   @ProtoField(6)
    public CommandInvocationId getCommandInvocationId() {
       return commandInvocationId;
    }

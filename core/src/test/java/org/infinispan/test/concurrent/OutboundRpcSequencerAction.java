@@ -6,7 +6,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
@@ -76,7 +76,7 @@ public class OutboundRpcSequencerAction {
       }
 
       @Override
-      protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
+      protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command,
                                                       ResponseCollector<T> collector,
                                                       Function<ResponseCollector<T>, CompletionStage<T>>
                                                          invoker, RpcOptions rpcOptions) {

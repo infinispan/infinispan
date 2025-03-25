@@ -11,6 +11,7 @@ import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -19,18 +20,18 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 public class BeginInvalidationCommand extends InvalidateCommand {
 	private Object lockOwner;
 
-	public BeginInvalidationCommand(long flagsBitSet, CommandInvocationId commandInvocationId, Object[] keys, Object lockOwner) {
-		super(flagsBitSet, commandInvocationId, keys);
+	public BeginInvalidationCommand(ByteString cacheName, long flagsBitSet, CommandInvocationId commandInvocationId, Object[] keys, Object lockOwner) {
+		super(cacheName, flagsBitSet, commandInvocationId, keys);
 		this.lockOwner = lockOwner;
 	}
 	@ProtoFactory
-	BeginInvalidationCommand(long flagsWithoutRemote, int topologyId, CommandInvocationId commandInvocationId,
-							MarshallableArray<Object> wrappedKeys, MarshallableObject<Object> wrappedLockOwner) {
-		super(flagsWithoutRemote, topologyId, commandInvocationId, wrappedKeys);
+	BeginInvalidationCommand(ByteString cacheName, long flagsWithoutRemote, int topologyId, CommandInvocationId commandInvocationId,
+									 MarshallableArray<Object> wrappedKeys, MarshallableObject<Object> wrappedLockOwner) {
+		super(cacheName, flagsWithoutRemote, topologyId, commandInvocationId, wrappedKeys);
 		this.lockOwner = MarshallableObject.unwrap(wrappedLockOwner);
 	}
 
-	@ProtoField(number = 5, name = "lock_owner")
+	@ProtoField(number = 6, name = "lock_owner")
 	MarshallableObject<Object> getWrappedLockOwner() {
 		return MarshallableObject.create(lockOwner);
 	}

@@ -96,7 +96,7 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
 		if (!isLocalModeForced(command)) {
 			if (isTransactional) {
 				Address address = transport != null ? transport.getAddress() : LocalModeAddress.INSTANCE;
-				invalidateCommand = new BeginInvalidationCommand(EnumUtil.EMPTY_BIT_SET, CommandInvocationId.generateId(address), new Object[] {key}, keyLockOwner);
+				invalidateCommand = new BeginInvalidationCommand(cacheName, EnumUtil.EMPTY_BIT_SET, CommandInvocationId.generateId(address), new Object[] {key}, keyLockOwner);
 			}
 			else {
             invalidateCommand = commandsFactory.buildInvalidateCommand(EnumUtil.EMPTY_BIT_SET, new Object[] {key });

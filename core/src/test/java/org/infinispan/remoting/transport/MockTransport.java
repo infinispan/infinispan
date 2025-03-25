@@ -19,8 +19,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.annotations.Start;
@@ -105,15 +103,6 @@ public class MockTransport implements Transport {
    public BlockedRequest expectHeartBeatCommand() throws InterruptedException {
       return expectCommand(HeartBeatCommand.class);
    }
-
-   /**
-    * Expect a non-{@link CacheRpcCommand} wrapped in a {@link SingleRpcCommand}.
-    */
-   public BlockedRequest expectSingleRpcCommand(Class<? extends ReplicableCommand> wrappedCommand) throws InterruptedException {
-      assertFalse(CacheRpcCommand.class.isAssignableFrom(wrappedCommand));
-      return expectCommand(SingleRpcCommand.class, c -> assertTrue(wrappedCommand.isInstance(c.getCommand())));
-   }
-
 
    /**
     * Assert that all the commands already invoked remotely have been verified and there were no errors.

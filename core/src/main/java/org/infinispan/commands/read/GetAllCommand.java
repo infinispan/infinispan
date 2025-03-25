@@ -6,6 +6,7 @@ import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
 
 /**
  * Retrieves multiple entries at once.
@@ -17,8 +18,8 @@ public class GetAllCommand extends AbstractTopologyAffectedCommand implements Lo
    private Collection<?> keys;
    private boolean returnEntries;
 
-   public GetAllCommand(Collection<?> keys, long flagsBitSet, boolean returnEntries) {
-      super(flagsBitSet, -1);
+   public GetAllCommand(ByteString cacheName, Collection<?> keys, long flagsBitSet, boolean returnEntries) {
+      super(cacheName, flagsBitSet, -1);
       this.keys = keys;
       this.returnEntries = returnEntries;
    }

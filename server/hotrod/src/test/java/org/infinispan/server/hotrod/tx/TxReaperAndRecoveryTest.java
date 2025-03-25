@@ -21,7 +21,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
-import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commons.time.ControlledTimeService;
@@ -471,7 +471,7 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
       }
 
       @Override
-      protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
+      protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command,
                                                       ResponseCollector<T> collector,
                                                       Function<ResponseCollector<T>, CompletionStage<T>> invoker,
                                                       RpcOptions rpcOptions) {

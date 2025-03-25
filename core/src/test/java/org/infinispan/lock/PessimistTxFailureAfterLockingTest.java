@@ -7,8 +7,8 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.TimeoutException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -101,7 +101,7 @@ public class PessimistTxFailureAfterLockingTest extends MultipleCacheManagersTes
       }
 
       @Override
-      protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
+      protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command,
                                                       ResponseCollector<T> collector,
                                                       Function<ResponseCollector<T>, CompletionStage<T>> invoker,
                                                       RpcOptions rpcOptions) {

@@ -11,7 +11,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.stat.MetricInfo;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -279,7 +278,7 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
       if (stateTransferManager.stateTransferMode(site) == XSiteStateTransferMode.MANUAL) {
          return CompletableFuture.completedFuture(XSiteStateTransferMode.MANUAL.toString());
       }
-      ReplicableCommand cmd = commandsFactory.buildXSiteAutoTransferStatusCommand(site);
+      CacheRpcCommand cmd = commandsFactory.buildXSiteAutoTransferStatusCommand(site);
       AutoStateTransferResponseCollector collector = new AutoStateTransferResponseCollector(true, XSiteStateTransferMode.AUTO, false);
       return rpcManager.invokeCommandOnAll(cmd, collector, rpcManager.getSyncRpcOptions())
             .thenApply(AutoStateTransferResponse::stateTransferMode)
@@ -303,7 +302,7 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
          return CompletableFutures.completedFalse();
       }
 
-      ReplicableCommand cmd = commandsFactory.buildXSiteSetStateTransferModeCommand(site, stateTransferMode);
+      CacheRpcCommand cmd = commandsFactory.buildXSiteSetStateTransferModeCommand(site, stateTransferMode);
       return rpcManager.invokeCommandOnAll(cmd, org.infinispan.remoting.transport.impl.VoidResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions())
             .thenApply(o -> Boolean.TRUE);
    }

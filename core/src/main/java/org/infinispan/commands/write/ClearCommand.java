@@ -11,6 +11,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -20,12 +21,8 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 public class ClearCommand extends AbstractTopologyAffectedCommand implements WriteCommand {
 
    @ProtoFactory
-   ClearCommand(long flagsWithoutRemote, int topologyId) {
-      super(flagsWithoutRemote, topologyId);
-   }
-
-   public ClearCommand(long flagsBitSet) {
-      super(flagsBitSet, -1);
+   public ClearCommand(ByteString cacheName, long flagsWithoutRemote, int topologyId) {
+      super(cacheName, flagsWithoutRemote, topologyId);
    }
 
    @Override

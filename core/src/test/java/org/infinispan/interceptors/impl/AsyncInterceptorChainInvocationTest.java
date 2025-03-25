@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.SingleKeyNonTxInvocationContext;
 import org.infinispan.interceptors.AsyncInterceptor;
@@ -23,7 +24,7 @@ import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestException;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.util.ByteString;
 import org.testng.annotations.Test;
 
 /**
@@ -32,7 +33,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "unit", testName = "interceptors.AsyncInterceptorChainInvocationTest")
 public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest {
-   private final VisitableCommand testCommand = new GetKeyValueCommand("k", 0, 0);
+   private final VisitableCommand testCommand = new GetKeyValueCommand(ByteString.fromString("test-cache"), "k", 0, 0);
    private final VisitableCommand testSubCommand = new LockControlCommand("k", null, 0, null);
 
    private final AtomicReference<String> sideEffects = new AtomicReference<>("");
