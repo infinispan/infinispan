@@ -103,7 +103,7 @@ public class XSiteRestMetricsOperations2 {
 
    private static void assertCrossSiteViewStatus(RestMetricsClient client, Map<String, Double> expectedSites) {
       var metrics = getMetrics(client).stream()
-            .filter(metric -> metric.matches("vendor_jgroups_site_view_status"))
+            .filter(metric -> metric.matches("jgroups_site_view_status"))
             .toList();
       assertEquals(expectedSites.size(), metrics.size(), "Wrong metrics: " + metrics);
       expectedSites.forEach((site, expected) -> {
