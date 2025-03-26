@@ -8,5 +8,5 @@
          <regex>.*</regex>
       </allow-list>
    </serialization>
-   <metrics gauges="true" histograms="true" accurate-size="true" names-as-tags="true"/>
+   <metrics gauges="true" histograms="true" accurate-size="true" legacy="true" />
 </cache-container>

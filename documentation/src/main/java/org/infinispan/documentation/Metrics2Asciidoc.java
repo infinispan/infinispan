@@ -98,8 +98,7 @@ public class Metrics2Asciidoc {
                         out.printf("_%s_%n", attr.getDescription());
                         tableHeader(out, "Environment", "Location", "Type");
                         attr.toMetricInfo().ifPresent(m -> {
-                           out.printf("| OpenMetrics | `vendor_cache_manager_${cache_manager}%s%s_%s` | %s%n", mBeanMetadata.scope() == Scopes.GLOBAL ? "_" : "_cache_${cache}_", cName, NamingStrategy.SNAKE_CASE.convert(m.getName()), m.getType());
-                           out.printf("| OpenMetrics (tags)| `vendor_%s{%scache_manager=\"${cache_manager}\",node=\"${node}\"}` | %s%n", NamingStrategy.SNAKE_CASE.convert(m.getName()), mBeanMetadata.scope() == Scopes.GLOBAL ? "" : "cache=\"${cache}\",", m.getType());
+                           out.printf("| OpenMetrics | `infinispan_%s{%scache_manager=\"${cache_manager}\",node=\"${node}\"}` | %s%n", NamingStrategy.SNAKE_CASE.convert(m.getName()), mBeanMetadata.scope() == Scopes.GLOBAL ? "" : "cache=\"${cache}\",", m.getType());
                         });
                         out.printf("| JMX | ObjectName: `org.infinispan:type=%s,name=\"%s\",component=%s` +%n Attribute: `%s`| %s%n",
                               mBeanMetadata.scope() == Scopes.GLOBAL ? "CacheManager" : "Cache",
@@ -169,8 +168,7 @@ public class Metrics2Asciidoc {
             tableHeader(out, "Environment", "Location", "Type");
             MetricInfo m = metrics.get(name);
             if (m != null) {
-               out.printf("| OpenMetrics | `vendor_jgroups_${cluster}_%s_%s` | %s %n", protocol.getSimpleName().toLowerCase(), NamingStrategy.SNAKE_CASE.convert(m.getName()), m.getType());
-               out.printf("| OpenMetrics (tags)| `vendor_jgroups_%s{cache_manager=\"${cache_manager}\",cluster=\"${cluster}\",node=\"${node}\"}` | %s%n", NamingStrategy.SNAKE_CASE.convert(m.getName()), m.getType());
+               out.printf("| OpenMetrics | `jgroups_%s{cache_manager=\"${cache_manager}\",cluster=\"${cluster}\",node=\"${node}\"}` | %s%n", NamingStrategy.SNAKE_CASE.convert(m.getName()), m.getType());
             }
             out.printf("| JMX | ObjectName: `org.infinispan:manager=\"${cache_manager}\",type=protocol,cluster=\"${cluster}\",protocol=%s` +%nAttributeName: `%s` | %s%n",
                   protocol.getSimpleName(), NamingStrategy.SNAKE_CASE.convert(item.getKey()), simpleType(type));

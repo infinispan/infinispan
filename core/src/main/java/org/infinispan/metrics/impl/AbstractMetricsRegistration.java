@@ -18,6 +18,7 @@ import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.metrics.Constants;
 
 /**
  * Parent class for metrics registration. Gathers all components in component registry and registers
@@ -27,7 +28,7 @@ import org.infinispan.factories.scopes.Scopes;
  * @since 10.1.3
  */
 @Scope(Scopes.NONE)
-abstract class AbstractMetricsRegistration {
+abstract class AbstractMetricsRegistration implements Constants {
 
    @Inject
    GlobalConfiguration globalConfig;
@@ -38,14 +39,15 @@ abstract class AbstractMetricsRegistration {
    @Inject
    MetricsCollector metricsCollector;
 
-   private String namePrefix;
+   @Deprecated(forRemoval = true, since = "16.0")
+   private String legacyNamePrefix;
 
    private Set<Object> metricIds;
 
    @Start
    protected void start() {
       if (metricsEnabled()) {
-         namePrefix = initNamePrefix();
+         legacyNamePrefix = initLegacyNamePrefix();
          metricIds = Collections.synchronizedSet(new HashSet<>());
          try {
             processComponents();
@@ -69,7 +71,8 @@ abstract class AbstractMetricsRegistration {
     * Subclasses should override this and return the metric prefix to be used for registration. This is invoked only if
     * metrics are enabled.
     */
-   protected String initNamePrefix() {
+   @Deprecated(forRemoval = true, since = "16.0")
+   protected String initLegacyNamePrefix() {
       String prefix = globalConfig.metrics().namesAsTags() ?
             "" : "cache_manager_" + NameUtils.filterIllegalChars(globalConfig.cacheManagerName()) + '_';
       String globalPrefix = globalConfig.metrics().prefix();
@@ -103,14 +106,14 @@ abstract class AbstractMetricsRegistration {
       return registerMetrics(instance, jmxObjectName, metrics, type, componentName, prefix);
    }
 
-   private Set<Object> registerMetrics(Object instance, String jmxObjectName, Collection<MetricInfo> metrics,  String type, String componentName, String prefix) {
+   private Set<Object> registerMetrics(Object instance, String jmxObjectName, Collection<MetricInfo> metrics, String type, String componentName, String prefix) {
       if (jmxObjectName == null) {
          jmxObjectName = componentName;
       }
       if (jmxObjectName == null) {
          throw new IllegalArgumentException("No MBean name and no component name was specified.");
       }
-      String metricPrefix = namePrefix;
+      String metricPrefix = "";
       if (!jmxObjectName.equals("Cache") && !jmxObjectName.equals("CacheManager")) {
          if (prefix != null) {
             metricPrefix += NameUtils.decamelize(prefix) + '_';
@@ -120,7 +123,11 @@ abstract class AbstractMetricsRegistration {
          }
          metricPrefix += NameUtils.decamelize(jmxObjectName) + '_';
       }
-      return internalRegisterMetrics(instance, metrics, metricPrefix);
+      if (globalConfig.metrics().legacy()) {
+         return internalRegisterMetrics(instance, metrics, VENDOR_PREFIX + legacyNamePrefix + metricPrefix);
+      } else {
+         return internalRegisterMetrics(instance, metrics, INFINISPAN_PREFIX + metricPrefix);
+      }
    }
 
    protected abstract Set<Object> internalRegisterMetrics(Object instance, Collection<MetricInfo> metrics, String metricPrefix);

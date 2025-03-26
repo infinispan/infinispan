@@ -1,5 +1,5 @@
 <infinispan>
   <cache-container statistics="true">
-    <metrics names_as_tags="true" />
+    <metrics legacy="false" />
   </cache-container>
 </infinispan>
