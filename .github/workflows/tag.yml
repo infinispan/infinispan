@@ -22,7 +22,7 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          java-version: '23'
+          java-version: '24'
           distribution: 'temurin'
           server-id: ossrh
           server-username: MAVEN_USERNAME
@@ -34,6 +34,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.branch }}
+          token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
 
       - name: Configure Git User
         run: |
@@ -69,16 +70,12 @@ jobs:
           git commit --no-verify -a -m "Next version ${{ github.event.inputs.nextVersion }}"
 
       - name: Push changes
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.API_TOKEN_GITHUB }}
-          branch: ${{ github.event.inputs.branch }}
-          tags: true
-          ssh: true
+        run: |
+          git push --tags
 
       - name: Create Release
         run: |
           gh release create ${{ github.event.inputs.version }} --generate-notes
           gh release upload ${{ github.event.inputs.version }} distribution/target/distribution/infinispan-server-${{ github.event.inputs.version }}.zip
         env:
-          GITHUB_TOKEN: ${{ secrets.API_TOKEN_GITHUB }}
+          GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
