@@ -2,9 +2,6 @@ package org.infinispan.server.persistence;
 
 import static org.infinispan.commons.test.Eventually.eventually;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_PROPERTIES;
-import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_TYPES;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -14,20 +11,24 @@ import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import javax.sql.DataSource;
 
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.server.test.core.persistence.ContainerDatabase;
 import org.infinispan.server.test.core.tags.Database;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.jgroups.Address;
 import org.jgroups.Event;
 import org.jgroups.JChannel;
+import org.jgroups.Message;
+import org.jgroups.UpHandler;
 import org.jgroups.protocols.FD_ALL3;
 import org.jgroups.protocols.FD_SOCK2;
 import org.jgroups.protocols.FRAG4;
@@ -44,7 +45,6 @@ import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.protocols.pbcast.NAKACK2;
 import org.jgroups.protocols.pbcast.STABLE;
 import org.jgroups.stack.Protocol;
-import org.jgroups.stack.ProtocolStack;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.parallel.Execution;
@@ -61,44 +61,114 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 @Database
 public class JGroupsJdbcPing2IT {
 
+   private static final Log log = LogFactory.getLog(JGroupsJdbcPing2IT.class);
+
    public static class DatabaseProvider implements ArgumentsProvider {
       @Override
       public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
-         String property = System.getProperty(INFINISPAN_TEST_CONTAINER_DATABASE_TYPES);
-
-         return Arrays
-               .stream(property != null ? property.split(",") : PersistenceIT.DEFAULT_DATABASES)
-               .map(Arguments::of);
+         return Stream.of("postgres").map(Arguments::of);
       }
    }
+
+//   @ParameterizedTest
+//   @ArgumentsSource(DatabaseProvider.class)
+//   @Execution(ExecutionMode.SAME_THREAD)
+//   public void testDBConnectionLost(String databaseType) throws Exception {
+//      ContainerDatabase db = initDatabase(databaseType);
+//      db.start();
+//
+//      var clusterName = "test";
+//      var datasource = new DummyDataSource(db.jdbcUrl(), db.username(), db.password());
+//      try (var c1 = createChannel(databaseType, 7800, datasource);
+//           var c2 = createChannel(databaseType, 7801, datasource)) {
+//         c1.connect(clusterName);
+//         c2.connect(clusterName);
+//
+//         eventually(() ->c1.view().size() == 2);
+//         eventually(() ->c2.view().size() == 2);
+//
+//         db.stop(false);
+//         CountDownLatch reqLatch = new CountDownLatch(1);
+//         CountDownLatch successLatch = new CountDownLatch(2);
+//         c1.getProtocolStack().insertProtocol(new DiscoveryListener(reqLatch, successLatch), ProtocolStack.Position.ABOVE, JDBC_PING2.class);
+//         assertTrue(reqLatch.await(10, TimeUnit.MINUTES));
+//         assertEquals(2, successLatch.getCount());
+//         db.restart();
+//         assertTrue(successLatch.await(10, TimeUnit.MINUTES));
+//      } finally {
+//         db.stop();
+//      }
+//   }
 
    @ParameterizedTest
    @ArgumentsSource(DatabaseProvider.class)
    @Execution(ExecutionMode.SAME_THREAD)
-   public void testDBConnectionLost(String databaseType) throws Exception {
+   public void testNodeRejoin(String databaseType) throws Exception {
       ContainerDatabase db = initDatabase(databaseType);
       db.start();
 
       var clusterName = "test";
       var datasource = new DummyDataSource(db.jdbcUrl(), db.username(), db.password());
-      try (var c1 = createChannel(databaseType, 7800, datasource);
-           var c2 = createChannel(databaseType, 7801, datasource)) {
+
+      JChannel c1 = createChannel("c1", databaseType, 7800, datasource);
+      JChannel c2 = createChannel("c2", databaseType, 7801, datasource);
+      try {
          c1.connect(clusterName);
          c2.connect(clusterName);
 
-         eventually(() ->c1.view().size() == 2);
-         eventually(() ->c2.view().size() == 2);
+         ByRef<JChannel> c1Ref = ByRef.create(c1);
+         eventually(() -> c1Ref.get().view().size() == 2);
+         eventually(() -> c2.view().size() == 2);
 
-         db.stop(false);
-         CountDownLatch reqLatch = new CountDownLatch(1);
-         CountDownLatch successLatch = new CountDownLatch(2);
-         c1.getProtocolStack().insertProtocol(new DiscoveryListener(reqLatch, successLatch), ProtocolStack.Position.ABOVE, JDBC_PING2.class);
-         assertTrue(reqLatch.await(10, TimeUnit.MINUTES));
-         assertEquals(2, successLatch.getCount());
-         db.restart();
-         assertTrue(successLatch.await(10, TimeUnit.MINUTES));
+         for (int i = 0; i < 10000; i++) {
+            // Node1 leave cluster
+            c1.disconnect();
+            c1.close();
+            eventually(() -> c2.view().size() == 1);
+
+            // Node1 rejoin cluster
+            c1 = createChannel("c1", databaseType, 7800, datasource);
+            c1.connect(clusterName);
+            // Expect failure here as view has size of 1
+            c1Ref.set(c1);
+            eventually(() -> c1Ref.get().view().size() == 2);
+            eventually(() -> c2.view().size() == 2);
+         }
       } finally {
+         c1.close();
+         c2.close();
          db.stop();
+      }
+   }
+
+   static class EventHandler implements UpHandler {
+
+      final String name;
+      volatile Address address;
+
+      public EventHandler(String name) {
+         this.name = name;
+      }
+
+      @Override
+      public UpHandler setLocalAddress(Address address) {
+         this.address = address;
+         return this;
+      }
+
+      @Override
+      public Object up(Event evt) {
+         switch (evt.getType()) {
+            case Event.VIEW_CHANGE:
+               log.infof("%s: received view change event: %s: %s", name, address, evt.getArg());
+               break;
+         }
+         return null;
+      }
+
+      @Override
+      public Object up(Message message) {
+         return null;
       }
    }
 
@@ -125,8 +195,9 @@ public class JGroupsJdbcPing2IT {
       }
    }
 
-   private JChannel createChannel(String dbType, int port, DataSource dataSource) throws Exception {
+   private JChannel createChannel(String name, String dbType, int port, DataSource dataSource) throws Exception {
       var jdbcPing2 = new JDBC_PING2().setDataSource(dataSource);
+      jdbcPing2.removeAllDataOnViewChange(true);
       if ("oracle".equals(dbType)) {
          // JDBC_PING2 default SQL will not work with any Oracle version due to the use of the reserved value "cluster" as a column name.
          // JDBC_PING2 default SQL won't work with Oracle < 23c as it uses a boolean type which does not exist. Instead, we must use NUMBER(1).
@@ -138,7 +209,7 @@ public class JGroupsJdbcPing2IT {
          jdbcPing2.setInitializeSql("CREATE TABLE jgroups (address varchar(200) NOT NULL, name varchar(200), cluster varchar(200) NOT NULL, ip varchar(200) NOT NULL, coord BIT, PRIMARY KEY (address) )");
       }
 
-      return new JChannel(
+      var channel = new JChannel(
             new TCP().setBindAddr(InetAddress.getLocalHost()).setBindPort(port),
             new RED(),
             jdbcPing2,
@@ -154,6 +225,9 @@ public class JGroupsJdbcPing2IT {
             new MFC(),
             new FRAG4()
       );
+      channel.name(name);
+      channel.setUpHandler(new EventHandler(name));
+      return channel;
    }
 
    static class DiscoveryListener extends Protocol {

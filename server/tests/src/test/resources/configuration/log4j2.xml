@@ -58,10 +58,10 @@
 
   <Loggers>
     <Root level="INFO">
-      <AppenderRef ref="STDOUT" level="TRACE"/>
+      <AppenderRef ref="STDOUT"/>
 
       <!-- Uncomment just one of the two lines bellow to use alternatively JSON logging or plain-text logging to file-->
-      <AppenderRef ref="FILE"/>
+      <AppenderRef ref="FILE" level="TRACE"/>
 <!--      <AppenderRef ref="JSON-FILE"/>-->
     </Root>
 
@@ -69,7 +69,8 @@
     <!-- You can also assign different appenders for each category, but you don't have to -->
     <Logger name="com.arjuna" level="WARN"/>
 
-    <Logger name="org.jgroups" level="INFO"/>
+    <Logger name="org.jgroups.protocols" level="TRACE"/>
+    <Logger name="org.infinispan.server.persistence.JGroupsJdbcPing2IT" level="TRACE"/>
     <Logger name="org.infinispan.server.insights" level="DEBUG"/>
 
     <Logger name="tc" level="INFO"/>
