@@ -5,6 +5,8 @@ import static org.infinispan.server.resp.RespUtil.ascii;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.security.Security;
+import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -36,7 +38,11 @@ public class LOAD extends RespCommand implements Resp3Command {
       try {
          LuaTaskEngine engine = handler.respServer().luaEngine();
          return handler.getBlockingManager()
-               .supplyBlocking(() -> engine.scriptLoad(script, true).sha(), "script load")
+               .supplyBlocking(() ->
+                     Security.doAs(
+                           ConnectionMetadata.getInstance(ctx.channel()).subject(),
+                           () -> engine.scriptLoad(script, true)
+                     ).sha(), "script load")
                .thenApplyAsync(sha -> {
                   handler.writer().string(sha);
                   return handler;
