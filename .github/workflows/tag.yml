@@ -71,7 +71,7 @@ jobs:
 
       - name: Push changes
         run: |
-          git push 
+          git push --tags
 
       - name: Create Release
         run: |
