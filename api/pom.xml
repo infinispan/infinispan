@@ -5,7 +5,7 @@
     <parent>
         <artifactId>infinispan-parent</artifactId>
         <groupId>org.infinispan</groupId>
-        <version>0.0.0.Test</version>
+        <version>0.0.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>infinispan-api</artifactId>
