@@ -55,7 +55,7 @@ jobs:
             MIN_TEST_NUM: 35000
             GH_TOKEN: ${{ github.token }}
           run: |
-            COUNT=$(find . -name "TEST-*.xml" | while read f; do xmlstarlet sel -t -c  "count(//testcase)" -n "$f"; done | awk '{s+=$1} END {print s}')
+            COUNT=$(find . -name "TEST-*.xml" | grep -v polarion | while read f; do xmlstarlet sel -t -c  "count(//testcase)" -n "$f"; done | awk '{s+=$1} END {print s}')
             echo "test_count=$COUNT" >> $GITHUB_OUTPUT
             echo "test_min=$MIN_TEST_NUM" >> $GITHUB_OUTPUT
 
