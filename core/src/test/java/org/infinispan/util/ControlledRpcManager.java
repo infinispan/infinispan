@@ -36,6 +36,7 @@ import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.factories.annotations.ComponentName;
@@ -194,7 +195,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
    }
 
    @Override
-   protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
+   protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command,
                                                    ResponseCollector<T> collector,
                                                    Function<ResponseCollector<T>, CompletionStage<T>> invoker,
                                                    RpcOptions rpcOptions) {
@@ -242,7 +243,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
    }
 
    @Override
-   protected <T> void performSend(Collection<Address> targets, ReplicableCommand command,
+   protected <T> void performSend(Collection<Address> targets, CacheRpcCommand command,
                                   Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
       performRequest(targets, command, null, invoker, null);
    }

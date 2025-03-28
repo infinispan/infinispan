@@ -6,8 +6,8 @@ import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.impl.BasicComponentRegistry;
@@ -49,7 +49,7 @@ public class CountingRpcManager extends AbstractDelegatingRpcManager {
    }
 
    @Override
-   protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
+   protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command,
                                                    ResponseCollector<T> collector,
                                                    Function<ResponseCollector<T>, CompletionStage<T>> invoker,
                                                    RpcOptions rpcOptions) {
