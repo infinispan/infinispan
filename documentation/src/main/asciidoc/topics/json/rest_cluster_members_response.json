@@ -1,0 +1,15 @@
+
+{
+    "rolling_upgrade" : true,
+    "members" : [ {
+        "node_address" : "NodeA",
+        "cache_manager_status" : "RUNNING",
+        "version" : "16.0.1.Final",
+        "physical_addresses" : "[127.0.0.1:64217]"
+    },{
+        "node_address" : "NodeB",
+        "cache_manager_status" : "RUNNING",
+        "version" : "16.0.8.Final",
+        "physical_addresses" : "[127.0.0.1:64218]"
+    } ]
+}
