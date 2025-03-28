@@ -30,12 +30,11 @@ public class NettyEventLoopFactory extends AbstractComponentFactory implements A
    public Object construct(String componentName) {
       ThreadFactory threadFactory = globalConfiguration.nonBlockingThreadPool().threadFactory();
       if (threadFactory == null) {
-         ThreadGroup tg = ThreadGroups.NON_BLOCKING_GROUP;
          threadFactory = new io.netty.util.concurrent.DefaultThreadFactory(
-               shortened(KnownComponentNames.NON_BLOCKING_EXECUTOR) + "-" + tg.getName(),
+               shortened(KnownComponentNames.NON_BLOCKING_EXECUTOR) + "-" + globalConfiguration.transport().nodeName(),
                true,
                getDefaultThreadPrio(KnownComponentNames.NON_BLOCKING_EXECUTOR),
-               tg
+               ThreadGroups.NON_BLOCKING_GROUP
          );
       } else if (!isNettyThreadFactory(threadFactory)) {
          log.useNettyThreadFactory(threadFactory.getClass());
