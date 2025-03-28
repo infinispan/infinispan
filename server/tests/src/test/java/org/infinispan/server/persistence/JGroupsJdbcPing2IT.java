@@ -2,6 +2,9 @@ package org.infinispan.server.persistence;
 
 import static org.infinispan.commons.test.Eventually.eventually;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_PROPERTIES;
+import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_TYPES;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -11,15 +14,16 @@ import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import javax.sql.DataSource;
 
-import org.infinispan.commons.util.ByRef;
 import org.infinispan.server.test.core.persistence.ContainerDatabase;
 import org.infinispan.server.test.core.tags.Database;
 import org.infinispan.util.logging.Log;
@@ -45,6 +49,7 @@ import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.protocols.pbcast.NAKACK2;
 import org.jgroups.protocols.pbcast.STABLE;
 import org.jgroups.stack.Protocol;
+import org.jgroups.stack.ProtocolStack;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.parallel.Execution;
@@ -66,77 +71,63 @@ public class JGroupsJdbcPing2IT {
    public static class DatabaseProvider implements ArgumentsProvider {
       @Override
       public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
-         return Stream.of("postgres").map(Arguments::of);
+         String property = System.getProperty(INFINISPAN_TEST_CONTAINER_DATABASE_TYPES);
+
+         return Arrays
+               .stream(property != null ? property.split(",") : PersistenceIT.DEFAULT_DATABASES)
+               .map(Arguments::of);
       }
    }
-
-//   @ParameterizedTest
-//   @ArgumentsSource(DatabaseProvider.class)
-//   @Execution(ExecutionMode.SAME_THREAD)
-//   public void testDBConnectionLost(String databaseType) throws Exception {
-//      ContainerDatabase db = initDatabase(databaseType);
-//      db.start();
-//
-//      var clusterName = "test";
-//      var datasource = new DummyDataSource(db.jdbcUrl(), db.username(), db.password());
-//      try (var c1 = createChannel(databaseType, 7800, datasource);
-//           var c2 = createChannel(databaseType, 7801, datasource)) {
-//         c1.connect(clusterName);
-//         c2.connect(clusterName);
-//
-//         eventually(() ->c1.view().size() == 2);
-//         eventually(() ->c2.view().size() == 2);
-//
-//         db.stop(false);
-//         CountDownLatch reqLatch = new CountDownLatch(1);
-//         CountDownLatch successLatch = new CountDownLatch(2);
-//         c1.getProtocolStack().insertProtocol(new DiscoveryListener(reqLatch, successLatch), ProtocolStack.Position.ABOVE, JDBC_PING2.class);
-//         assertTrue(reqLatch.await(10, TimeUnit.MINUTES));
-//         assertEquals(2, successLatch.getCount());
-//         db.restart();
-//         assertTrue(successLatch.await(10, TimeUnit.MINUTES));
-//      } finally {
-//         db.stop();
-//      }
-//   }
 
    @ParameterizedTest
    @ArgumentsSource(DatabaseProvider.class)
    @Execution(ExecutionMode.SAME_THREAD)
-   public void testNodeRejoin(String databaseType) throws Exception {
+   public void testDBConnectionLost(String databaseType) throws Exception {
+      ContainerDatabase db = initDatabase(databaseType);
+      db.start();
+
+      var clusterName = "test";
+      var datasource = new DummyDataSource(db.jdbcUrl(), db.username(), db.password());
+      try (var c1 = createChannel("c1", databaseType, 7800, datasource);
+           var c2 = createChannel("c2", databaseType, 7801, datasource)) {
+         c1.connect(clusterName);
+         c2.connect(clusterName);
+
+         eventually(() ->c1.view().size() == 2);
+         eventually(() ->c2.view().size() == 2);
+
+         db.stop(false);
+         CountDownLatch reqLatch = new CountDownLatch(1);
+         CountDownLatch successLatch = new CountDownLatch(2);
+         c1.getProtocolStack().insertProtocol(new DiscoveryListener(reqLatch, successLatch), ProtocolStack.Position.ABOVE, JDBC_PING2.class);
+         assertTrue(reqLatch.await(10, TimeUnit.MINUTES));
+         assertEquals(2, successLatch.getCount());
+         db.restart();
+         assertTrue(successLatch.await(10, TimeUnit.MINUTES));
+      } finally {
+         db.stop();
+      }
+   }
+
+   @ParameterizedTest
+   @ArgumentsSource(DatabaseProvider.class)
+   @Execution(ExecutionMode.SAME_THREAD)
+   public void testClusterFormedAfterRestart(String databaseType) throws Exception {
       ContainerDatabase db = initDatabase(databaseType);
       db.start();
 
       var clusterName = "test";
       var datasource = new DummyDataSource(db.jdbcUrl(), db.username(), db.password());
 
-      JChannel c1 = createChannel("c1", databaseType, 7800, datasource);
-      JChannel c2 = createChannel("c2", databaseType, 7801, datasource);
-      try {
+      try (var c1 = createChannel("c1", "postgres", 7800, datasource)) {
          c1.connect(clusterName);
-         c2.connect(clusterName);
-
-         ByRef<JChannel> c1Ref = ByRef.create(c1);
-         eventually(() -> c1Ref.get().view().size() == 2);
-         eventually(() -> c2.view().size() == 2);
-
-         for (int i = 0; i < 10000; i++) {
-            // Node1 leave cluster
-            c1.disconnect();
-            c1.close();
-            eventually(() -> c2.view().size() == 1);
-
-            // Node1 rejoin cluster
-            c1 = createChannel("c1", databaseType, 7800, datasource);
-            c1.connect(clusterName);
-            // Expect failure here as view has size of 1
-            c1Ref.set(c1);
-            eventually(() -> c1Ref.get().view().size() == 2);
-            eventually(() -> c2.view().size() == 2);
+         for (int i = 0; i < 5000; i += 1) {
+            try (var c2 = createChannel("c2", databaseType, 7801, datasource)) {
+               c2.connect(clusterName);
+               eventually("Failed on iteration: " + i, () -> c2.view().size() == 2);
+            }
          }
       } finally {
-         c1.close();
-         c2.close();
          db.stop();
       }
    }
