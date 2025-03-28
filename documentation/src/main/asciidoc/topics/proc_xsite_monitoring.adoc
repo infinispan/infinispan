@@ -61,7 +61,7 @@ TIP: Monitoring cross-site latency metrics can help you to discover potential is
 . Configure alerting rules using the Prometheus metrics format.
 * For the site status, use `1` for `online` and `0` for `offline`.
 * For the `expr` filed, use the following format: +
-`vendor_cache_manager_default_cache_<cache name>_x_site_admin_<site name>_status`.
+`infinispan_x_site_admin_status{cache=\"<cache name>\",site=\"<site name>\"}`.
 +
 In the following example, Prometheus alerts you when the *NYC* site gets `offline` for cache named `work` or `sessions`.
 +
