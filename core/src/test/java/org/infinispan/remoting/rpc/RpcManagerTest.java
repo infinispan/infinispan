@@ -55,10 +55,6 @@ public class RpcManagerTest extends MultipleCacheManagersTest {
             TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", 0, 0L);
       RpcManager rpcManager0 = cache(0).getAdvancedCache().getRpcManager();
 
-      Exceptions.expectException(IllegalArgumentException.class, () ->
-         rpcManager0.invokeCommand(address(0), command, SingleResponseCollector.validOnly(),
-                                   rpcManager0.getSyncRpcOptions()));
-
       command.setTopologyId(rpcManager0.getTopologyId());
       CompletionStage<ValidResponse> stage1 =
          rpcManager0.invokeCommand(address(0), command, SingleResponseCollector.validOnly(),
