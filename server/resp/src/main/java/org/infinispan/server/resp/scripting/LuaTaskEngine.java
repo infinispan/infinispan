@@ -1,5 +1,7 @@
 package org.infinispan.server.resp.scripting;
 
+import static org.infinispan.server.resp.scripting.LuaContext.sha1hex;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +25,6 @@ import org.infinispan.tasks.spi.TaskEngine;
 import org.infinispan.util.concurrent.BlockingManager;
 
 import io.netty.channel.ChannelHandlerContext;
-import static org.infinispan.server.resp.scripting.LuaContext.sha1hex;
 import party.iroiro.luajava.Lua;
 import party.iroiro.luajava.lua51.Lua51Consts;
 
