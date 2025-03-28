@@ -9,8 +9,8 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -37,28 +37,28 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
    }
 
    @Override
-   public final <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
+   public final <T> CompletionStage<T> invokeCommand(Address target, CacheRpcCommand command,
                                                      ResponseCollector<T> collector, RpcOptions rpcOptions) {
       return performRequest(Collections.singleton(target), command, collector,
                             c -> realOne.invokeCommand(target, command, c, rpcOptions), rpcOptions);
    }
 
    @Override
-   public final <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
+   public final <T> CompletionStage<T> invokeCommand(Collection<Address> targets, CacheRpcCommand command,
                                                      ResponseCollector<T> collector, RpcOptions rpcOptions) {
       return performRequest(targets, command, collector,
                             c -> realOne.invokeCommand(targets, command, c, rpcOptions), rpcOptions);
    }
 
    @Override
-   public final <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
+   public final <T> CompletionStage<T> invokeCommandOnAll(CacheRpcCommand command, ResponseCollector<T> collector,
                                                           RpcOptions rpcOptions) {
       return performRequest(getTransport().getMembers(), command, collector,
                             c -> realOne.invokeCommandOnAll(command, c, rpcOptions), rpcOptions);
    }
 
    @Override
-   public final <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
+   public final <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, CacheRpcCommand command,
                                                               ResponseCollector<T> collector, RpcOptions rpcOptions) {
       return performRequest(targets, command, collector,
                             c -> realOne.invokeCommandStaggered(targets, command, c, rpcOptions), rpcOptions);
@@ -66,7 +66,7 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
 
    @Override
    public final <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
-                                                      Function<Address, ReplicableCommand> commandGenerator,
+                                                      Function<Address, CacheRpcCommand> commandGenerator,
                                                       ResponseCollector<T> collector, RpcOptions rpcOptions) {
       // Split the invocation into multiple unicast requests
       CommandsRequest<T> action = new CommandsRequest<>(targets, collector);
@@ -86,14 +86,14 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
       return realOne.blocking(request);
    }
 
-   private void setTopologyId(ReplicableCommand command) {
+   private void setTopologyId(CacheRpcCommand command) {
       if (command instanceof TopologyAffectedCommand && ((TopologyAffectedCommand) command).getTopologyId() < 0) {
          ((TopologyAffectedCommand) command).setTopologyId(getTopologyId());
       }
    }
 
    @Override
-   public final void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder) {
+   public final void sendTo(Address destination, CacheRpcCommand command, DeliverOrder deliverOrder) {
       setTopologyId(command);
       performSend(Collections.singleton(destination), command,
                   c -> {
@@ -103,7 +103,7 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
    }
 
    @Override
-   public final void sendToMany(Collection<Address> destinations, ReplicableCommand command,
+   public final void sendToMany(Collection<Address> destinations, CacheRpcCommand command,
                                 DeliverOrder deliverOrder) {
       setTopologyId(command);
       Collection<Address> targets = destinations != null ? destinations : getTransport().getMembers();
@@ -115,7 +115,7 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
    }
 
    @Override
-   public final void sendToAll(ReplicableCommand command, DeliverOrder deliverOrder) {
+   public final void sendToAll(CacheRpcCommand command, DeliverOrder deliverOrder) {
       setTopologyId(command);
       performSend(getTransport().getMembers(), command,
                   c -> {
@@ -162,7 +162,7 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
    /**
     * Wrap the remote invocation.
     */
-   protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
+   protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command,
                                                    ResponseCollector<T> collector,
                                                    Function<ResponseCollector<T>, CompletionStage<T>> invoker,
                                                    RpcOptions rpcOptions) {
@@ -173,7 +173,7 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
    /**
     * Wrap the remote invocation.
     */
-   protected <T> void performSend(Collection<Address> targets, ReplicableCommand command,
+   protected <T> void performSend(Collection<Address> targets, CacheRpcCommand command,
                                   Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
       invoker.apply(null);
    }

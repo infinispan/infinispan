@@ -13,8 +13,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -62,7 +62,7 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
       for (Cache c : caches) {
          TestingUtil.wrapComponent(c, RpcManager.class, original -> new AbstractDelegatingRpcManager(original) {
             @Override
-            protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
+            protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command,
                                                             ResponseCollector<T> collector,
                                                             Function<ResponseCollector<T>, CompletionStage<T>> invoker,
                                                             RpcOptions rpcOptions) {

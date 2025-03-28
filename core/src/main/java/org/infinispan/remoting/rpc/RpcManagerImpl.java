@@ -19,7 +19,6 @@ import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.TracedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -96,7 +95,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    @Inject TimeService timeService;
    @Inject XSiteMetricsCollector xSiteMetricsCollector;
 
-   private final Function<ReplicableCommand, ReplicableCommand> toCacheRpcCommand = this::initCacheRpcCommand;
+   private final Function<CacheRpcCommand, CacheRpcCommand> initCacheRpcCommand = this::initCacheRpcCommand;
    private final AttributeListener<TimeQuantity> updateRpcOptions = this::updateRpcOptions;
    private final XSiteResponse.XSiteResponseCompleted xSiteResponseCompleted = this::registerXSiteTime;
 
@@ -236,7 +235,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    }
 
    @Override
-   public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
+   public <T> CompletionStage<T> invokeCommand(Address target, CacheRpcCommand command,
                                                ResponseCollector<T> collector, RpcOptions rpcOptions) {
       CacheRpcCommand cacheRpc = initCacheRpcCommand(command);
 
@@ -256,7 +255,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
       return invocation.handle((response, throwable) -> updateStatistics(startTimeNanos, response, throwable));
    }
 
-   private void checkTopologyId(ReplicableCommand command) {
+   private void checkTopologyId(CacheRpcCommand command) {
       // TODO how to handle? SingleRpcCommand was never impacted by this as it does not implement TopologyAffectedCommand
       if (command instanceof TopologyAffectedCommand && ((TopologyAffectedCommand) command).getTopologyId() < 0) {
          throw new IllegalArgumentException("Command does not have a topology id");
@@ -264,7 +263,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    }
 
    @Override
-   public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
+   public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, CacheRpcCommand command,
                                                ResponseCollector<T> collector, RpcOptions rpcOptions) {
       CacheRpcCommand cacheRpc = initCacheRpcCommand(command);
 
@@ -302,7 +301,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    }
 
    @Override
-   public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
+   public <T> CompletionStage<T> invokeCommandOnAll(CacheRpcCommand command, ResponseCollector<T> collector,
                                                     RpcOptions rpcOptions) {
       CacheRpcCommand cacheRpc = initCacheRpcCommand(command);
       List<Address> cacheMembers = distributionManager.getCacheTopology().getMembers();
@@ -324,7 +323,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    }
 
    @Override
-   public <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
+   public <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, CacheRpcCommand command,
                                                         ResponseCollector<T> collector, RpcOptions rpcOptions) {
       CacheRpcCommand cacheRpc = initCacheRpcCommand(command);
 
@@ -346,17 +345,17 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
 
    @Override
    public <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
-                                                Function<Address, ReplicableCommand> commandGenerator,
+                                                Function<Address, CacheRpcCommand> commandGenerator,
                                                 ResponseCollector<T> collector, RpcOptions rpcOptions) {
       if (!statisticsEnabled) {
-         return t.invokeCommands(targets, commandGenerator.andThen(toCacheRpcCommand), collector,
+         return t.invokeCommands(targets, commandGenerator.andThen(initCacheRpcCommand), collector,
                                  rpcOptions.deliverOrder(), rpcOptions.timeout(), rpcOptions.timeUnit());
       }
 
       long startTimeNanos = timeService.time();
       CompletionStage<T> invocation;
       try {
-         invocation = t.invokeCommands(targets, commandGenerator.andThen(toCacheRpcCommand), collector,
+         invocation = t.invokeCommands(targets, commandGenerator.andThen(initCacheRpcCommand), collector,
                                        rpcOptions.deliverOrder(), rpcOptions.timeout(), rpcOptions.timeUnit());
       } catch (Exception e) {
          return errorReplicating(e);
@@ -384,7 +383,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
 
    @Override
    public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
-                                                                        ReplicableCommand rpc,
+                                                                        CacheRpcCommand rpc,
                                                                         RpcOptions options) {
       // Set the topology id of the command, in case we don't have it yet
       setTopologyId(rpc);
@@ -426,17 +425,14 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
       }
    }
 
-   private CacheRpcCommand initCacheRpcCommand(ReplicableCommand command) {
-      if (command instanceof CacheRpcCommand cmd) {
-         cmd.setCacheName(cacheName);
-         setClusterTraceSpanAttributes(cmd);
-         return cmd;
-      }
-      throw new IllegalStateException("Command must be an instanceof CacheRpcCommand: " + command);
+   private CacheRpcCommand initCacheRpcCommand(CacheRpcCommand cmd) {
+      cmd.setCacheName(cacheName);
+      setClusterTraceSpanAttributes(cmd);
+      return cmd;
    }
 
    @Override
-   public void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder) {
+   public void sendTo(Address destination, CacheRpcCommand command, DeliverOrder deliverOrder) {
       // Set the topology id of the command, in case we don't have it yet
       setTopologyId(command);
       CacheRpcCommand cacheRpc = initCacheRpcCommand(command);
@@ -449,7 +445,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    }
 
    @Override
-   public void sendToMany(Collection<Address> destinations, ReplicableCommand command, DeliverOrder deliverOrder) {
+   public void sendToMany(Collection<Address> destinations, CacheRpcCommand command, DeliverOrder deliverOrder) {
       // Set the topology id of the command, in case we don't have it yet
       setTopologyId(command);
       CacheRpcCommand cacheRpc = initCacheRpcCommand(command);
@@ -462,7 +458,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    }
 
    @Override
-   public void sendToAll(ReplicableCommand command, DeliverOrder deliverOrder) {
+   public void sendToAll(CacheRpcCommand command, DeliverOrder deliverOrder) {
       // Set the topology id of the command, in case we don't have it yet
       setTopologyId(command);
       CacheRpcCommand cacheRpc = initCacheRpcCommand(command);
@@ -506,7 +502,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
       return t;
    }
 
-   private void setTopologyId(ReplicableCommand command) {
+   private void setTopologyId(CacheRpcCommand command) {
       if (command instanceof TopologyAffectedCommand) {
          TopologyAffectedCommand topologyAffectedCommand = (TopologyAffectedCommand) command;
          if (topologyAffectedCommand.getTopologyId() == -1) {
