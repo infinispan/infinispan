@@ -124,8 +124,12 @@ jobs:
       - name: Archive commit sha PR
         if: >
           (success() || failure())
+        env:
+          PR_NUMBER: ${{ needs.get-info.outputs.pull-request-number }}
+          GITHUB_SHA: ${{ needs.get-info.outputs.source-head-sha }}
         run: |
-           echo -n ${{ needs.get-info.outputs.source-head-sha }} > github-sha.txt
+           echo -n $GITHUB_SHA > github-sha.txt
+           echo -n $PR_NUMBER > pr-number.txt
 
       - name: Archive surefire test report
         if: (success() || failure())
@@ -140,6 +144,7 @@ jobs:
             test_dir/infinispan/**/hs_err_*
             test_dir/infinispan/jacoco/
             github-sha.txt
+            pr-number.txt
 
 # Create artifact with branch name and surefile flaky test report
       - name: Check flaky report existence
@@ -154,13 +159,11 @@ jobs:
         env:
           TARGET_BRANCH: ${{ needs.get-info.outputs.source-head-sha }}
           EVENT_NAME: ${{ needs.get-info.outputs.source-event }}
-          PR_NUMBER: ${{ needs.get-info.outputs.pull-request-number }}
           EVENT_NUMBER: ${{ github.event.workflow_run.id }}
         run: |
           echo -n $TARGET_BRANCH > target-branch.txt
           echo -n $EVENT_NAME > event-name.txt
           echo -n $EVENT_NUMBER > event-number.txt
-          echo -n $PR_NUMBER > pr-number.txt
 
       - name: Archive flaky test report
         if: (success() || failure()) && steps.check_flaky_report.outputs.files_exists == 'true'
@@ -318,9 +321,14 @@ jobs:
 
       - name: Copy jacoco directories to Infinispan
         working-directory: test_dir/infinispan
+        shell: bash
+        # language=bash
         run: |
           mkdir jacoco
           .github/scripts/merge-jacoco-files.sh "$GITHUB_WORKSPACE/test_dir/infinispan/jacoco/" "${GITHUB_WORKSPACE}/surefire-test-report*/"
+          #Read and store value of PR from the File
+          PR_NUMBER=$(cat "$GITHUB_WORKSPACE/surefire-test-report/pr-number.txt")
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
 
       - name: Coverage merge and report generation
         id: coverage_merge
@@ -338,6 +346,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: 70
           min-coverage-changed-files: 70
+          pr-number: ${{ env.PR_NUMBER }}
+          debug-mode: true
 
       - name: Archive jacoco report
         if: (success() || failure())
