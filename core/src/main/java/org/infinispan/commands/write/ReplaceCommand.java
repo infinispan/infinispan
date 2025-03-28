@@ -15,6 +15,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -43,11 +44,11 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    @ProtoFactory
-   ReplaceCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
+   ReplaceCommand(ByteString cacheName, MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
                   CommandInvocationId commandInvocationId, MarshallableObject<?> wrappedOldValue,
                   MarshallableObject<?> wrappedNewValue, MarshallableObject<Metadata> wrappedMetadata, ValueMatcher valueMatcher,
                   PrivateMetadata internalMetadata, boolean returnEntry) {
-      super(wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId);
+      super(cacheName, wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId);
       this.oldValue = MarshallableObject.unwrap(wrappedOldValue);
       this.newValue = MarshallableObject.unwrap(wrappedNewValue);
       this.metadata = MarshallableObject.unwrap(wrappedMetadata);
@@ -56,29 +57,29 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       this.returnEntry = returnEntry;
    }
 
-   @ProtoField(number = 6, name = "oldValue")
+   @ProtoField(number = 7, name = "oldValue")
    MarshallableObject<?> getWrappedOldValue() {
       return MarshallableObject.create(oldValue);
    }
 
-   @ProtoField(number = 7, name = "newValue")
+   @ProtoField(number = 8, name = "newValue")
    MarshallableObject<?> getWrappedNewValue() {
       return MarshallableObject.create(newValue);
    }
 
-   @ProtoField(number = 8, name = "metadata")
+   @ProtoField(number = 9, name = "metadata")
    MarshallableObject<Metadata> getWrappedMetadata() {
       return MarshallableObject.create(metadata);
    }
 
    @Override
-   @ProtoField(9)
+   @ProtoField(10)
    public ValueMatcher getValueMatcher() {
       return valueMatcher;
    }
 
    @Override
-   @ProtoField(10)
+   @ProtoField(11)
    public PrivateMetadata getInternalMetadata() {
       return internalMetadata;
    }
@@ -88,7 +89,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       this.internalMetadata = internalMetadata;
    }
 
-   @ProtoField(11)
+   @ProtoField(12)
    public final boolean isReturnEntry() {
       return returnEntry;
    }

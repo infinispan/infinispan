@@ -44,7 +44,6 @@ import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
@@ -410,24 +409,6 @@ public interface CommandsFactory {
     */
    @Deprecated(forRemoval=true, since = "11.0")
    void initializeReplicableCommand(ReplicableCommand command, boolean isRemote);
-
-   /**
-    * Builds a SingleRpcCommand "envelope" containing a single ReplicableCommand
-    * @param call ReplicableCommand to include in the envelope
-    * @return a SingleRpcCommand
-    * @deprecated since 11.0 use {@link #buildSingleRpcCommand(VisitableCommand)} instead.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   default SingleRpcCommand buildSingleRpcCommand(ReplicableCommand call) {
-      return buildSingleRpcCommand((VisitableCommand) call);
-   }
-
-   /**
-    * Builds a SingleRpcCommand "envelope" containing a single ReplicableCommand
-    * @param command VisitableCommand to include in the envelope
-    * @return a SingleRpcCommand
-    */
-   SingleRpcCommand buildSingleRpcCommand(VisitableCommand command);
 
    /**
     * Builds a ClusteredGetCommand, which is a remote lookup command

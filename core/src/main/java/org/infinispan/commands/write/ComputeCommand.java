@@ -17,6 +17,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 
 @ProtoTypeId(ProtoStreamTypeIds.COMPUTE_COMMAND)
 public class ComputeCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
@@ -36,33 +37,33 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    @ProtoFactory
-   ComputeCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
+   ComputeCommand(ByteString cacheName, MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
                   CommandInvocationId commandInvocationId, MarshallableObject<BiFunction<?, ?, ?>> wrappedRemappingBiFunction,
                   MarshallableObject<Metadata> wrappedMetadata, boolean computeIfPresent, PrivateMetadata internalMetadata) {
-      super(wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId);
+      super(cacheName, wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId);
       this.remappingBiFunction = MarshallableObject.unwrap(wrappedRemappingBiFunction);
       this.metadata = MarshallableObject.unwrap(wrappedMetadata);
       this.computeIfPresent = computeIfPresent;
       this.internalMetadata = internalMetadata;
    }
 
-   @ProtoField(number = 6, name = "remappingBiFunction")
+   @ProtoField(number = 7, name = "remappingBiFunction")
    MarshallableObject<BiFunction<?, ?, ?>> getWrappedRemappingBiFunction() {
       return MarshallableObject.create(remappingBiFunction);
    }
 
-   @ProtoField(number = 7, name = "metadata")
+   @ProtoField(number = 8, name = "metadata")
    MarshallableObject<Metadata> getWrappedMetadata() {
       return MarshallableObject.create(metadata);
    }
 
-   @ProtoField(8)
+   @ProtoField(9)
    public boolean isComputeIfPresent() {
       return computeIfPresent;
    }
 
    @Override
-   @ProtoField(9)
+   @ProtoField(10)
    public PrivateMetadata getInternalMetadata() {
       return internalMetadata;
    }

@@ -16,6 +16,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 
 
 /**
@@ -27,18 +28,18 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.REMOVE_EXPIRED_COMMAND)
 public class RemoveExpiredCommand extends RemoveCommand {
 
-   @ProtoField(11)
+   @ProtoField(12)
    boolean maxIdle;
 
-   @ProtoField(12)
+   @ProtoField(13)
    Long lifespan;
 
    @ProtoFactory
-   RemoveExpiredCommand(MarshallableObject<?> wrappedKey, int segment, int topologyId, long flagsWithoutRemote,
+   RemoveExpiredCommand(ByteString cacheName, MarshallableObject<?> wrappedKey, int segment, int topologyId, long flagsWithoutRemote,
                         CommandInvocationId commandInvocationId, MarshallableObject<?> wrappedValue,
                         MarshallableObject<Metadata> wrappedMetadata, ValueMatcher valueMatcher,
                         PrivateMetadata internalMetadata, boolean returnEntryNecessary, boolean maxIdle, Long lifespan) {
-      super(wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId, wrappedValue, null,
+      super(cacheName, wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId, wrappedValue, null,
             valueMatcher, internalMetadata, returnEntryNecessary);
       this.maxIdle = maxIdle;
       this.lifespan = lifespan;

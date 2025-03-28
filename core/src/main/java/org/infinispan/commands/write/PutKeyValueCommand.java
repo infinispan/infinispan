@@ -16,6 +16,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 
 /**
  * Implements functionality defined by {@link org.infinispan.Cache#put(Object, Object)}
@@ -50,11 +51,11 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    }
 
    @ProtoFactory
-   PutKeyValueCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
+   PutKeyValueCommand(ByteString cacheName, MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
                       CommandInvocationId commandInvocationId, MarshallableObject<?> wrappedValue,
                       MarshallableObject<Metadata> wrappedMetadata, ValueMatcher valueMatcher, boolean putIfAbsent,
                       PrivateMetadata internalMetadata, boolean returnEntryNecessary) {
-      super(wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId);
+      super(cacheName, wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId);
       this.value = MarshallableObject.unwrap(wrappedValue);
       this.metadata = MarshallableObject.unwrap(wrappedMetadata);
       this.valueMatcher = valueMatcher;
@@ -63,33 +64,33 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       this.returnEntry = returnEntryNecessary;
    }
 
-   @ProtoField(number = 6, name = "value")
+   @ProtoField(number = 7, name = "value")
    MarshallableObject<?> getWrappedValue() {
       return MarshallableObject.create(value);
    }
 
-   @ProtoField(number = 7, name = "metadata")
+   @ProtoField(number = 8, name = "metadata")
    MarshallableObject<Metadata> getWrappedMetadata() {
       return MarshallableObject.create(metadata);
    }
 
    @Override
-   @ProtoField(8)
+   @ProtoField(9)
    public ValueMatcher getValueMatcher() {
       return valueMatcher;
    }
 
-   @ProtoField(9)
+   @ProtoField(10)
    public boolean isPutIfAbsent() {
       return putIfAbsent;
    }
 
-   @ProtoField(10)
+   @ProtoField(11)
    public PrivateMetadata getInternalMetadata() {
       return internalMetadata;
    }
 
-   @ProtoField(number = 11, name = "returnEntry")
+   @ProtoField(number = 12, name = "returnEntry")
    public boolean isReturnEntryNecessary() {
       return returnEntry;
    }

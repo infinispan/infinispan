@@ -20,7 +20,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -357,7 +356,7 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command, ResponseCollector<T> collector, Function<ResponseCollector<T>, CompletionStage<T>> invoker, RpcOptions rpcOptions) {
+      protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command, ResponseCollector<T> collector, Function<ResponseCollector<T>, CompletionStage<T>> invoker, RpcOptions rpcOptions) {
          if (recording && command instanceof CacheRpcCommand) {
             synchronized (this) {
                commandList.add((CacheRpcCommand) command);
@@ -367,7 +366,7 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      protected <T> void performSend(Collection<Address> targets, ReplicableCommand command, Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
+      protected <T> void performSend(Collection<Address> targets, CacheRpcCommand command, Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
          if (recording && command instanceof CacheRpcCommand) {
             synchronized (this) {
                commandList.add((CacheRpcCommand) command);

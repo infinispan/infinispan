@@ -50,7 +50,6 @@ import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
@@ -314,11 +313,6 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public RollbackCommand buildRollbackCommand(GlobalTransaction gtx) {
       return actual.buildRollbackCommand(gtx);
-   }
-
-   @Override
-   public SingleRpcCommand buildSingleRpcCommand(VisitableCommand call) {
-      return actual.buildSingleRpcCommand(call);
    }
 
    @Override

@@ -13,6 +13,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -309,7 +310,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
       incrementInvalidations();
       final InvalidateCommand invalidateCommand = commandsFactory.buildInvalidateCommand(EnumUtil.EMPTY_BIT_SET, keys);
 
-      TopologyAffectedCommand command = invalidateCommand;
+      CacheRpcCommand command = invalidateCommand;
       if (ctx.isInTxScope()) {
          TxInvocationContext txCtx = (TxInvocationContext) ctx;
          // A Prepare command containing the invalidation command in its 'modifications' list is sent to the remote nodes
@@ -317,7 +318,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
          command = commandsFactory.buildPrepareCommand(txCtx.getGlobalTransaction(),
                                                        Collections.singletonList(invalidateCommand), onePhaseCommit);
       }
-      command.setTopologyId(topologyId);
+      ((TopologyAffectedCommand) command).setTopologyId(topologyId);
       if (synchronous) {
          return rpcManager.invokeCommandOnAll(command, VoidResponseCollector.ignoreLeavers(), rpcManager.getSyncRpcOptions());
       } else {

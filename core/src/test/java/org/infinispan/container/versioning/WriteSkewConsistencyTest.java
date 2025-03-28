@@ -21,7 +21,6 @@ import java.util.concurrent.Future;
 import java.util.function.Function;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -229,7 +228,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
 
       @SuppressWarnings("unchecked")
       @Override
-      protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
+      protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command,
                                                       ResponseCollector<T> collector,
                                                       Function<ResponseCollector<T>, CompletionStage<T>> invoker,
                                                       RpcOptions rpcOptions) {

@@ -24,6 +24,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
 /**
@@ -58,10 +59,10 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    }
 
    @ProtoFactory
-   PutMapCommand(long flagsWithoutRemote, int topologyId, MarshallableMap<Object, Object> wrappedMap,
+   PutMapCommand(ByteString cacheName, long flagsWithoutRemote, int topologyId, MarshallableMap<Object, Object> wrappedMap,
                  MarshallableObject<Metadata> wrappedMetadata, boolean forwarded, CommandInvocationId commandInvocationId,
                  MarshallableMap<Object, PrivateMetadata> internalMetadata) {
-      super(flagsWithoutRemote, topologyId);
+      super(cacheName, flagsWithoutRemote, topologyId);
       this.map = MarshallableMap.unwrap(wrappedMap);
       this.metadata = MarshallableObject.unwrap(wrappedMetadata);
       this.isForwarded = forwarded;
@@ -69,17 +70,17 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
       this.internalMetadataMap = MarshallableMap.unwrap(internalMetadata);
    }
 
-   @ProtoField(number = 3, name = "map")
+   @ProtoField(number = 4, name = "map")
    MarshallableMap<Object, Object> getWrappedMap() {
       return MarshallableMap.create(map);
    }
 
-   @ProtoField(number = 4, name = "metadata")
+   @ProtoField(number = 5, name = "metadata")
    MarshallableObject<Metadata> getWrappedMetadata() {
       return MarshallableObject.create(metadata);
    }
 
-   @ProtoField(5)
+   @ProtoField(6)
    public CommandInvocationId getCommandInvocationId() {
       return commandInvocationId;
    }
@@ -90,12 +91,12 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
     * the main owner (B) - B tries to acquire lock on the keys it owns, then forwards the commands to the other owners
     * as well - at this last stage, the command has the "isForwarded" flag set to true.
     */
-   @ProtoField(6)
+   @ProtoField(7)
    public boolean isForwarded() {
       return isForwarded;
    }
 
-   @ProtoField(7)
+   @ProtoField(8)
    MarshallableMap<Object, PrivateMetadata> getInternalMetadata() {
       return MarshallableMap.create(internalMetadataMap);
    }

@@ -17,6 +17,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 
 @ProtoTypeId(ProtoStreamTypeIds.WRITE_ONLY_KEY_VALUE_COMMAND)
 public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCommand<K, V> {
@@ -33,23 +34,23 @@ public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCom
    }
 
    @ProtoFactory
-   WriteOnlyKeyValueCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
-                            CommandInvocationId commandInvocationId, Params params, ValueMatcher valueMatcher,
+   WriteOnlyKeyValueCommand(ByteString cacheName, MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId,
+                            int segment, CommandInvocationId commandInvocationId, Params params, ValueMatcher valueMatcher,
                             DataConversion keyDataConversion, DataConversion valueDataConversion, PrivateMetadata internalMetadata,
                             MarshallableObject<BiConsumer<T, WriteEntryView<K, V>>> wrappedBiConsumer,
                             MarshallableObject<?> wrappedArgument) {
-      super(wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId, params, valueMatcher,
+      super(cacheName, wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId, params, valueMatcher,
             keyDataConversion, valueDataConversion, internalMetadata);
       this.f = MarshallableObject.unwrap(wrappedBiConsumer);
       this.argument = MarshallableObject.unwrap(wrappedArgument);
    }
 
-   @ProtoField(number = 11, name = "biconsumer")
+   @ProtoField(number = 12, name = "biconsumer")
    MarshallableObject<BiConsumer<T, WriteEntryView<K, V>>> getWrappedBiConsumer() {
       return MarshallableObject.create(f);
    }
 
-   @ProtoField(number = 12, name = "argument")
+   @ProtoField(number = 13, name = "argument")
    MarshallableObject<?> getWrappedArgument() {
       return  MarshallableObject.create(argument);
    }

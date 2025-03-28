@@ -16,6 +16,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 import org.infinispan.xsite.spi.SiteEntry;
 import org.infinispan.xsite.spi.XSiteEntryMergePolicy;
 
@@ -51,33 +52,33 @@ public class IracPutKeyValueCommand extends AbstractDataWriteCommand implements 
    }
 
    @ProtoFactory
-   IracPutKeyValueCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
+   IracPutKeyValueCommand(ByteString cacheName, MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
                           CommandInvocationId commandInvocationId, MarshallableObject<Object> wrappedValue,
                           MarshallableObject<Metadata> wrappedMetadata, boolean expiration, PrivateMetadata internalMetadata) {
-      super(wrappedKey, FlagBitSets.IRAC_UPDATE, topologyId, segment, commandInvocationId);
+      super(cacheName, wrappedKey, FlagBitSets.IRAC_UPDATE, topologyId, segment, commandInvocationId);
       this.value = MarshallableObject.unwrap(wrappedValue);
       this.metadata = MarshallableObject.unwrap(wrappedMetadata);
       this.expiration = expiration;
       this.privateMetadata = internalMetadata;
    }
 
-   @ProtoField(6)
+   @ProtoField(7)
    MarshallableObject<Object> getWrappedValue() {
       return MarshallableObject.create(value);
    }
 
-   @ProtoField(7)
+   @ProtoField(8)
    MarshallableObject<Metadata> getWrappedMetadata() {
       return MarshallableObject.create(metadata);
    }
 
-   @ProtoField(8)
+   @ProtoField(9)
    boolean getExpiration() {
       return expiration;
    }
 
    @Override
-   @ProtoField(9)
+   @ProtoField(10)
    public PrivateMetadata getInternalMetadata() {
       return privateMetadata;
    }

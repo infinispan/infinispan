@@ -59,7 +59,6 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.commands.remote.CheckTransactionRpcCommand.class,
             org.infinispan.commands.remote.ClusteredGetAllCommand.class,
             org.infinispan.commands.remote.ClusteredGetCommand.class,
-            org.infinispan.commands.remote.SingleRpcCommand.class,
             org.infinispan.commands.remote.recovery.CompleteTransactionCommand.class,
             org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand.class,
             org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand.class,

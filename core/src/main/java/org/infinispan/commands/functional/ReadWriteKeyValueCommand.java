@@ -20,6 +20,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 
 @ProtoTypeId(ProtoStreamTypeIds.READ_WRITE_KEY_VALUE_COMMAND)
 public final class ReadWriteKeyValueCommand<K, V, T, R> extends AbstractWriteKeyCommand<K, V> {
@@ -38,14 +39,14 @@ public final class ReadWriteKeyValueCommand<K, V, T, R> extends AbstractWriteKey
    }
 
    @ProtoFactory
-   ReadWriteKeyValueCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
+   ReadWriteKeyValueCommand(ByteString cacheName, MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
                             CommandInvocationId commandInvocationId, Params params, ValueMatcher valueMatcher,
                             DataConversion keyDataConversion, DataConversion valueDataConversion,
                             MarshallableObject<?> wrappedArgument,
                             MarshallableObject<BiFunction<T, ReadWriteEntryView<K, V>, R>> wrappedFunction,
                             MarshallableObject<?> wrappedPrevValue, MarshallableObject<Metadata> wrappedPrevMetadata,
                             PrivateMetadata internalMetadata) {
-      super(wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId, params, valueMatcher,
+      super(cacheName, wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId, params, valueMatcher,
             keyDataConversion, valueDataConversion, internalMetadata);
       this.argument = MarshallableObject.unwrap(wrappedArgument);
       this.f = MarshallableObject.unwrap(wrappedFunction);
@@ -53,22 +54,22 @@ public final class ReadWriteKeyValueCommand<K, V, T, R> extends AbstractWriteKey
       this.prevMetadata = MarshallableObject.unwrap(wrappedPrevMetadata);
    }
 
-   @ProtoField(number = 11, name = "argument")
+   @ProtoField(number = 12, name = "argument")
    MarshallableObject<?> getWrappedArgument() {
       return MarshallableObject.create(argument);
    }
 
-   @ProtoField(number = 12, name = "function")
+   @ProtoField(number = 13, name = "function")
    MarshallableObject<BiFunction<T, ReadWriteEntryView<K, V>, R>> getWrappedFunction() {
       return MarshallableObject.create(f);
    }
 
-   @ProtoField(13)
+   @ProtoField(14)
    MarshallableObject<?> getWrappedPrevValue() {
       return MarshallableObject.create(prevValue);
    }
 
-   @ProtoField(14)
+   @ProtoField(15)
    MarshallableObject<Metadata> getWrappedPrevMetadata() {
       return MarshallableObject.create(prevMetadata);
    }

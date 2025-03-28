@@ -11,6 +11,7 @@ import org.infinispan.functional.impl.Params;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.util.ByteString;
 
 public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCommand implements FunctionalCommand<K, V> {
 
@@ -22,10 +23,10 @@ public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCom
    PrivateMetadata internalMetadata;
 
    // For child ProtoFactory constructors
-   protected AbstractWriteKeyCommand(MarshallableObject<?> wrappedKey, long flags, int topologyId, int segment,
+   protected AbstractWriteKeyCommand(ByteString cacheName, MarshallableObject<?> wrappedKey, long flags, int topologyId, int segment,
                                      CommandInvocationId commandInvocationId, Params params, ValueMatcher valueMatcher,
                                      DataConversion keyDataConversion, DataConversion valueDataConversion, PrivateMetadata internalMetadata) {
-      super(wrappedKey, flags, topologyId, segment, commandInvocationId);
+      super(cacheName, wrappedKey, flags, topologyId, segment, commandInvocationId);
       this.params = params;
       this.valueMatcher = valueMatcher;
       this.keyDataConversion = keyDataConversion;
@@ -51,31 +52,31 @@ public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCom
    }
 
    @Override
-   @ProtoField(6)
+   @ProtoField(7)
    public Params getParams() {
       return params;
    }
 
    @Override
-   @ProtoField(7)
+   @ProtoField(8)
    public ValueMatcher getValueMatcher() {
       return valueMatcher;
    }
 
    @Override
-   @ProtoField(8)
+   @ProtoField(9)
    public DataConversion getKeyDataConversion() {
       return keyDataConversion;
    }
 
    @Override
-   @ProtoField(9)
+   @ProtoField(10)
    public DataConversion getValueDataConversion() {
       return valueDataConversion;
    }
 
    @Override
-   @ProtoField(10)
+   @ProtoField(11)
    public PrivateMetadata getInternalMetadata() {
       return internalMetadata;
    }
