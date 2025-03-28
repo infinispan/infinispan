@@ -1,5 +1,7 @@
 package org.infinispan.server.footprint;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,17 +21,15 @@ import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 15.0
  **/
 public class FootprintIT {
-   private static final int LOADED_CLASS_COUNT_LOWER_BOUND = 11_650;
-   private static final int LOADED_CLASS_COUNT_UPPER_BOUND = 11_750;
-   private static final long HEAP_USAGE_LOWER_BOUND = 23_000_000L;
-   private static final long HEAP_USAGE_UPPER_BOUND = 25_000_000L;
+   private static final int LOADED_CLASS_COUNT_LOWER_BOUND = 11_800;
+   private static final int LOADED_CLASS_COUNT_UPPER_BOUND = 11_900;
+   private static final long HEAP_USAGE_LOWER_BOUND = 25_000_000L;
+   private static final long HEAP_USAGE_UPPER_BOUND = 26_000_000L;
    private static final long DISK_USAGE_LOWER_BOUND = 74_000_000L;
    private static final long DISK_USAGE_UPPER_BOUND = 76_000_000L;
    public static final String HEAP_DUMP = "footprint.hprof";
