@@ -84,6 +84,7 @@ public class HotRodSingleClusteredTest extends MultipleCacheManagersTest {
                                                   hotRodCacheConfiguration().build(),
                                                   EnumSet.of(InternalCacheRegistry.Flag.USER,
                                                              InternalCacheRegistry.Flag.PROTECTED));
+      assertStatus(hotRodClient.ping("MyInternalCache"), Success);
       TestResponse resp = hotRodClient.execute(0xA0, (byte) 0x01, "MyInternalCache", k(m), 0, 0, v(m), 0, (byte) 1, 0);
       assertEquals(Success, resp.status);
    }
