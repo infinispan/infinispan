@@ -27,10 +27,10 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    private Collection<?> keys;
    private Consumer<WriteEntryView<K, V>> f;
 
-   public WriteOnlyManyCommand(Collection<?> keys, Consumer<WriteEntryView<K, V>> f, Params params,
+   public WriteOnlyManyCommand(ByteString cacheName, Collection<?> keys, Consumer<WriteEntryView<K, V>> f, Params params,
                                CommandInvocationId commandInvocationId, DataConversion keyDataConversion,
                                DataConversion valueDataConversion) {
-      super(commandInvocationId, params, keyDataConversion, valueDataConversion);
+      super(cacheName, commandInvocationId, params, keyDataConversion, valueDataConversion);
       this.keys = keys;
       this.f = f;
    }

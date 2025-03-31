@@ -34,11 +34,11 @@ public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCom
       this.internalMetadata = internalMetadata;
    }
 
-   protected AbstractWriteKeyCommand(Object key, ValueMatcher valueMatcher, int segment,
+   protected AbstractWriteKeyCommand(ByteString cacheName, Object key, ValueMatcher valueMatcher, int segment,
                                      CommandInvocationId id, Params params,
                                      DataConversion keyDataConversion,
                                      DataConversion valueDataConversion) {
-      super(key, segment, params.toFlagsBitSet(), id);
+      super(cacheName, key, segment, params.toFlagsBitSet(), id);
       this.valueMatcher = valueMatcher;
       this.params = params;
       this.keyDataConversion = keyDataConversion;

@@ -44,8 +44,8 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
 
 
    @SuppressWarnings("unchecked")
-   public PutMapCommand(Map<?, ?> map, Metadata metadata, long flagsBitSet, CommandInvocationId commandInvocationId) {
-      super(flagsBitSet, -1);
+   public PutMapCommand(ByteString cacheName, Map<?, ?> map, Metadata metadata, long flagsBitSet, CommandInvocationId commandInvocationId) {
+      super(cacheName, flagsBitSet, -1);
       this.map = (Map<Object, Object>) map;
       this.metadata = metadata;
       this.commandInvocationId = commandInvocationId;
@@ -53,7 +53,7 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    }
 
    public PutMapCommand(PutMapCommand c) {
-      this(c.map, c.metadata, c.flags, c.commandInvocationId);
+      this(c.cacheName, c.map, c.metadata, c.flags, c.commandInvocationId);
       this.isForwarded = c.isForwarded;
       this.internalMetadataMap = new HashMap<>(c.internalMetadataMap);
    }

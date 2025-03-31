@@ -27,10 +27,10 @@ public final class WriteOnlyManyEntriesCommand<K, V, T> extends AbstractWriteMan
    private Map<?, ?> arguments;
    private BiConsumer<T, WriteEntryView<K, V>> f;
 
-   public WriteOnlyManyEntriesCommand(Map<?, ?> arguments, BiConsumer<T, WriteEntryView<K, V>> f, Params params,
+   public WriteOnlyManyEntriesCommand(ByteString cacheName, Map<?, ?> arguments, BiConsumer<T, WriteEntryView<K, V>> f, Params params,
                                       CommandInvocationId commandInvocationId, DataConversion keyDataConversion,
                                       DataConversion valueDataConversion) {
-      super(commandInvocationId, params, keyDataConversion, valueDataConversion);
+      super(cacheName, commandInvocationId, params, keyDataConversion, valueDataConversion);
       this.arguments = arguments;
       this.f = f;
    }

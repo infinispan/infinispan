@@ -26,8 +26,8 @@ import org.infinispan.util.ByteString;
 public class BeginInvalidationCommand extends InvalidateCommand {
 	private Object lockOwner;
 
-	public BeginInvalidationCommand(long flagsBitSet, CommandInvocationId commandInvocationId, Object[] keys, Object lockOwner) {
-		super(flagsBitSet, commandInvocationId, keys);
+	public BeginInvalidationCommand(ByteString cacheName, long flagsBitSet, CommandInvocationId commandInvocationId, Object[] keys, Object lockOwner) {
+		super(cacheName, flagsBitSet, commandInvocationId, keys);
 		this.lockOwner = lockOwner;
 	}
 	@ProtoFactory

@@ -74,7 +74,7 @@ public class PutMapBackupWriteCommand extends BackupWriteCommand {
 
    @Override
    WriteCommand createWriteCommand() {
-      PutMapCommand cmd = new PutMapCommand(map, metadata, getFlags(), getCommandInvocationId());
+      PutMapCommand cmd = new PutMapCommand(cacheName, map, metadata, getFlags(), getCommandInvocationId());
       cmd.setForwarded(true);
       internalMetadataMap.forEach(cmd::setInternalMetadata);
       return cmd;

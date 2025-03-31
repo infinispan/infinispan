@@ -29,10 +29,10 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    private Collection<?> keys;
    private Function<ReadWriteEntryView<K, V>, R> f;
 
-   public ReadWriteManyCommand(Collection<?> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params,
+   public ReadWriteManyCommand(ByteString cacheName, Collection<?> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params,
                                CommandInvocationId commandInvocationId, DataConversion keyDataConversion,
                                DataConversion valueDataConversion) {
-      super(commandInvocationId, params, keyDataConversion, valueDataConversion);
+      super(cacheName, commandInvocationId, params, keyDataConversion, valueDataConversion);
       this.keys = keys;
       this.f = f;
    }

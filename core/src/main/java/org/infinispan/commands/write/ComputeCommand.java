@@ -28,9 +28,9 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
    private PrivateMetadata internalMetadata;
    private transient boolean successful = true;
 
-   public ComputeCommand(Object key, BiFunction<?, ?, ?> remappingBiFunction, boolean computeIfPresent, int segment,
+   public ComputeCommand(ByteString cacheName, Object key, BiFunction<?, ?, ?> remappingBiFunction, boolean computeIfPresent, int segment,
                          long flagsBitSet, CommandInvocationId commandInvocationId, Metadata metadata) {
-      super(key, segment, flagsBitSet, commandInvocationId);
+      super(cacheName, key, segment, flagsBitSet, commandInvocationId);
       this.remappingBiFunction = remappingBiFunction;
       this.computeIfPresent = computeIfPresent;
       this.metadata = metadata;

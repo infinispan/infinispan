@@ -16,7 +16,7 @@ import org.infinispan.context.InvocationContext;
 public final class GetCacheEntryCommand extends AbstractDataCommand implements LocalCommand {
 
    public GetCacheEntryCommand(Object key, int segment, long flagsBitSet) {
-      super(key, segment, flagsBitSet);
+      super(null, key, segment, flagsBitSet);
    }
 
    @Override

@@ -27,8 +27,8 @@ public class TouchCommand extends AbstractDataCommand {
       this.touchEvenIfExpired = touchEvenIfExpired;
    }
 
-   public TouchCommand(Object key, int segment, long flagBitSet, boolean touchEvenIfExpired) {
-      super(key, segment, flagBitSet);
+   public TouchCommand(ByteString cacheName, Object key, int segment, long flagBitSet, boolean touchEvenIfExpired) {
+      super(cacheName, key, segment, flagBitSet);
       this.touchEvenIfExpired = touchEvenIfExpired;
    }
 

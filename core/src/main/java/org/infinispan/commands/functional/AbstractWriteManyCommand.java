@@ -53,9 +53,18 @@ public abstract class AbstractWriteManyCommand<K, V> implements CacheRpcCommand,
    Map<Object, PrivateMetadata> internalMetadataMap;
    Address origin;
 
-   private AbstractWriteManyCommand(CommandInvocationId commandInvocationId, boolean forwarded, int topologyId,
+   // ProtoFactory constructor
+   protected AbstractWriteManyCommand(ByteString cacheName, CommandInvocationId commandInvocationId, boolean forwarded, int topologyId,
                                       Params params, long flags, DataConversion keyDataConversion,
+                                      DataConversion valueDataConversion, MarshallableMap<Object, PrivateMetadata> internalMetadataMap) {
+      this(cacheName, commandInvocationId, forwarded, topologyId, params, flags, keyDataConversion, valueDataConversion,
+            MarshallableMap.unwrap(internalMetadataMap));
+   }
+
+   private AbstractWriteManyCommand(ByteString cacheName, CommandInvocationId commandInvocationId, boolean forwarded,
+                                      int topologyId, Params params, long flags, DataConversion keyDataConversion,
                                       DataConversion valueDataConversion, Map<Object, PrivateMetadata> internalMetadataMap) {
+      this.cacheName = cacheName;
       this.commandInvocationId = commandInvocationId;
       this.forwarded = forwarded;
       this.topologyId = topologyId;
@@ -66,26 +75,17 @@ public abstract class AbstractWriteManyCommand<K, V> implements CacheRpcCommand,
       this.internalMetadataMap = internalMetadataMap;
    }
 
-   // ProtoFactory constructor
-   protected AbstractWriteManyCommand(ByteString cacheName, CommandInvocationId commandInvocationId, boolean forwarded, int topologyId,
-                                      Params params, long flags, DataConversion keyDataConversion,
-                                      DataConversion valueDataConversion, MarshallableMap<Object, PrivateMetadata> internalMetadataMap) {
-      this(commandInvocationId, forwarded, topologyId, params, flags, keyDataConversion, valueDataConversion,
-            MarshallableMap.unwrap(internalMetadataMap));
-      this.cacheName = cacheName;
-   }
-
-   protected AbstractWriteManyCommand(CommandInvocationId commandInvocationId,
+   protected AbstractWriteManyCommand(ByteString cacheName, CommandInvocationId commandInvocationId,
                                       Params params,
                                       DataConversion keyDataConversion,
                                       DataConversion valueDataConversion) {
-      this(commandInvocationId, false, -1, params, params.toFlagsBitSet(), keyDataConversion ,
+      this(cacheName, commandInvocationId, false, -1, params, params.toFlagsBitSet(), keyDataConversion ,
             valueDataConversion, new ConcurrentHashMap<>());
    }
 
    protected AbstractWriteManyCommand(AbstractWriteManyCommand<K, V> c) {
-      this(c.commandInvocationId, false, c.topologyId, c.params, c.flags, c.keyDataConversion, c.valueDataConversion,
-            new ConcurrentHashMap<>(c.internalMetadataMap));
+      this(c.cacheName, c.commandInvocationId, false, c.topologyId, c.params, c.flags, c.keyDataConversion,
+            c.valueDataConversion, new ConcurrentHashMap<>(c.internalMetadataMap));
    }
 
    @Override
@@ -97,11 +97,6 @@ public abstract class AbstractWriteManyCommand<K, V> implements CacheRpcCommand,
    @Override
    public ByteString getCacheName() {
       return cacheName;
-   }
-
-   @Override
-   public void setCacheName(ByteString cacheName) {
-      this.cacheName = cacheName;
    }
 
    @Override

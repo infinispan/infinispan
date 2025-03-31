@@ -40,9 +40,9 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
    private transient boolean successful = true;
 
-   public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent, boolean returnEntry, Metadata metadata,
+   public PutKeyValueCommand(ByteString cacheName, Object key, Object value, boolean putIfAbsent, boolean returnEntry, Metadata metadata,
                              int segment, long flagsBitSet, CommandInvocationId commandInvocationId) {
-      super(key, segment, flagsBitSet, commandInvocationId);
+      super(cacheName, key, segment, flagsBitSet, commandInvocationId);
       this.value = value;
       this.putIfAbsent = putIfAbsent;
       this.returnEntry = returnEntry;

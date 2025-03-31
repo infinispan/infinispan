@@ -29,13 +29,13 @@ public final class ReadWriteManyEntriesCommand<K, V, T, R> extends AbstractWrite
    private Map<?, ?> arguments;
    private BiFunction<T, ReadWriteEntryView<K, V>, R> f;
 
-   public ReadWriteManyEntriesCommand(Map<?, ?> arguments,
+   public ReadWriteManyEntriesCommand(ByteString cacheName, Map<?, ?> arguments,
                                       BiFunction<T, ReadWriteEntryView<K, V>, R> f,
                                       Params params,
                                       CommandInvocationId commandInvocationId,
                                       DataConversion keyDataConversion,
                                       DataConversion valueDataConversion) {
-      super(commandInvocationId, params, keyDataConversion, valueDataConversion);
+      super(cacheName, commandInvocationId, params, keyDataConversion, valueDataConversion);
       this.arguments = arguments;
       this.f = f;
    }

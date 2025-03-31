@@ -33,14 +33,14 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    protected Object[] keys;
    protected CommandInvocationId commandInvocationId;
 
-   public InvalidateCommand(long flagsBitSet, CommandInvocationId commandInvocationId, Object... keys) {
-      super(flagsBitSet, -1);
+   public InvalidateCommand(ByteString cacheName, long flagsBitSet, CommandInvocationId commandInvocationId, Object... keys) {
+      super(cacheName, flagsBitSet, -1);
       this.keys = keys;
       this.commandInvocationId = commandInvocationId;
    }
 
-   public InvalidateCommand(long flagsBitSet, Collection<Object> keys, CommandInvocationId commandInvocationId) {
-      this(flagsBitSet, commandInvocationId, keys == null || keys.isEmpty() ? Util.EMPTY_OBJECT_ARRAY : keys.toArray());
+   public InvalidateCommand(ByteString cacheName, long flagsBitSet, Collection<Object> keys, CommandInvocationId commandInvocationId) {
+      this(cacheName, flagsBitSet, commandInvocationId, keys == null || keys.isEmpty() ? Util.EMPTY_OBJECT_ARRAY : keys.toArray());
    }
 
    @ProtoFactory

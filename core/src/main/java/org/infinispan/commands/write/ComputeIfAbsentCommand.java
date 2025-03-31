@@ -27,9 +27,9 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
    private PrivateMetadata internalMetadata;
    private transient boolean successful = true;
 
-   public ComputeIfAbsentCommand(Object key, Function<?, ?> mappingFunction, int segment, long flagsBitSet,
+   public ComputeIfAbsentCommand(ByteString cacheName, Object key, Function<?, ?> mappingFunction, int segment, long flagsBitSet,
                                  CommandInvocationId commandInvocationId, Metadata metadata) {
-      super(key, segment, flagsBitSet, commandInvocationId);
+      super(cacheName, key, segment, flagsBitSet, commandInvocationId);
       this.mappingFunction = mappingFunction;
       this.setMetadata(metadata);
    }

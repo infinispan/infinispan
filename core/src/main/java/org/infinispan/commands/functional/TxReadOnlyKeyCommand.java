@@ -20,9 +20,9 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
 
    private List<Mutation<K, V, ?>> mutations;
 
-   public TxReadOnlyKeyCommand(Object key, Function<EntryView.ReadEntryView<K, V>, R> f, List<Mutation<K, V, ?>> mutations,
+   public TxReadOnlyKeyCommand(ByteString cacheName, Object key, Function<EntryView.ReadEntryView<K, V>, R> f, List<Mutation<K, V, ?>> mutations,
                                int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      super(key, f, segment, params, keyDataConversion, valueDataConversion);
+      super(cacheName, key, f, segment, params, keyDataConversion, valueDataConversion);
       this.mutations = mutations;
    }
 

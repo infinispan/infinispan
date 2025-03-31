@@ -27,9 +27,9 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
    protected DataConversion keyDataConversion;
    protected DataConversion valueDataConversion;
 
-   public ReadOnlyKeyCommand(Object key, Function<ReadEntryView<K, V>, R> f, int segment, Params params,
+   public ReadOnlyKeyCommand(ByteString cacheName, Object key, Function<ReadEntryView<K, V>, R> f, int segment, Params params,
                              DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      super(key, segment, params.toFlagsBitSet());
+      super(cacheName, key, segment, params.toFlagsBitSet());
       this.f = f;
       this.params = params;
       this.keyDataConversion = keyDataConversion;

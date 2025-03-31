@@ -26,6 +26,7 @@ import org.infinispan.container.entries.RemoteMetadata;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
 import org.infinispan.interceptors.distribution.WriteManyCommandHelper;
@@ -57,6 +58,7 @@ public class AnchoredDistributionInterceptor extends NonTxDistributionIntercepto
 
    private static final Log log = LogFactory.getLog(AnchoredDistributionInterceptor.class);
 
+   @Inject ComponentRegistry componentRegistry;
    @Inject CommandsFactory commandsFactory;
    @Inject AnchorManager anchorManager;
 
@@ -195,9 +197,10 @@ public class AnchoredDistributionInterceptor extends NonTxDistributionIntercepto
          }
 
          Metadata metadata = new RemoteMetadata(keyWriter, null);
-         PutKeyValueCommand copy = new PutKeyValueCommand(key, null, false, false, metadata,
-                                                          command.getSegment(), command.getFlagsBitSet(),
-                                                          command.getCommandInvocationId());
+         PutKeyValueCommand copy = new PutKeyValueCommand(componentRegistry.getCacheByteString(), key, null,
+               false, false, metadata,
+               command.getSegment(), command.getFlagsBitSet(),
+               command.getCommandInvocationId());
          copy.setValueMatcher(command.getValueMatcher());
          copy.setTopologyId(command.getTopologyId());
          return copy;

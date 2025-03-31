@@ -45,10 +45,10 @@ public class RemoveExpiredCommand extends RemoveCommand {
       this.lifespan = lifespan;
    }
 
-   public RemoveExpiredCommand(Object key, Object value, Long lifespan, boolean maxIdle, int segment,
+   public RemoveExpiredCommand(ByteString cacheName, Object key, Object value, Long lifespan, boolean maxIdle, int segment,
                                long flagBitSet, CommandInvocationId commandInvocationId) {
       //valueEquivalence can be null because this command never compares values.
-      super(key, value, false, segment, flagBitSet, commandInvocationId);
+      super(cacheName, key, value, false, segment, flagBitSet, commandInvocationId);
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;
       this.valueMatcher = ValueMatcher.MATCH_EXPECTED_OR_NULL;

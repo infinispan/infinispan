@@ -25,10 +25,10 @@ public final class WriteOnlyKeyValueCommand<K, V, T> extends AbstractWriteKeyCom
    private BiConsumer<T, WriteEntryView<K, V>> f;
    private Object argument;
 
-   public WriteOnlyKeyValueCommand(Object key, Object argument, BiConsumer<T, WriteEntryView<K, V>> f, int segment,
+   public WriteOnlyKeyValueCommand(ByteString cacheName, Object key, Object argument, BiConsumer<T, WriteEntryView<K, V>> f, int segment,
                                    CommandInvocationId id, ValueMatcher valueMatcher, Params params,
                                    DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      super(key, valueMatcher, segment, id, params, keyDataConversion, valueDataConversion);
+      super(cacheName, key, valueMatcher, segment, id, params, keyDataConversion, valueDataConversion);
       this.f = f;
       this.argument = argument;
    }

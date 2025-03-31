@@ -18,11 +18,6 @@ public abstract class AbstractTopologyAffectedCommand extends AbstractFlagAffect
       this.topologyId = topologyId;
    }
 
-   protected AbstractTopologyAffectedCommand(long flags, int topologyId) {
-      super(flags);
-      this.topologyId = topologyId;
-   }
-
    @Override
    @ProtoField(3)
    public int getTopologyId() {

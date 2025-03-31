@@ -28,11 +28,11 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
 
    private Function<ReadWriteEntryView<K, V>, R> f;
 
-   public ReadWriteKeyCommand(Object key, Function<ReadWriteEntryView<K, V>, R> f, int segment,
+   public ReadWriteKeyCommand(ByteString cacheName, Object key, Function<ReadWriteEntryView<K, V>, R> f, int segment,
                               CommandInvocationId id, ValueMatcher valueMatcher, Params params,
                               DataConversion keyDataConversion,
                               DataConversion valueDataConversion) {
-      super(key, valueMatcher, segment, id, params, keyDataConversion, valueDataConversion);
+      super(cacheName, key, valueMatcher, segment, id, params, keyDataConversion, valueDataConversion);
       this.f = f;
    }
 

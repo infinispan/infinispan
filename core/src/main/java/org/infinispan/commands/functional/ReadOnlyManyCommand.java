@@ -27,12 +27,13 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
    protected DataConversion keyDataConversion;
    protected DataConversion valueDataConversion;
 
-   public ReadOnlyManyCommand(Collection<?> keys,
+   public ReadOnlyManyCommand(ByteString cacheName,
+                              Collection<?> keys,
                               Function<ReadEntryView<K, V>, R> f,
                               Params params,
                               DataConversion keyDataConversion,
                               DataConversion valueDataConversion) {
-      super(params.toFlagsBitSet(), -1);
+      super(cacheName, params.toFlagsBitSet(), -1);
       this.keys = keys;
       this.f = f;
       this.params = params;
@@ -41,7 +42,7 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
    }
 
    public ReadOnlyManyCommand(ReadOnlyManyCommand<K, V, R> c) {
-      this(c.keys, c.f, c.params, c.keyDataConversion, c.valueDataConversion);
+      this(c.cacheName, c.keys, c.f, c.params, c.keyDataConversion, c.valueDataConversion);
       this.setFlagsBitSet(c.getFlagsBitSet());
       this.topologyId = c.topologyId;
    }

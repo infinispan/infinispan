@@ -18,7 +18,7 @@ public class GetAllCommand extends AbstractTopologyAffectedCommand implements Lo
    private boolean returnEntries;
 
    public GetAllCommand(Collection<?> keys, long flagsBitSet, boolean returnEntries) {
-      super(flagsBitSet, -1);
+      super(null, flagsBitSet, -1);
       this.keys = keys;
       this.returnEntries = returnEntries;
    }

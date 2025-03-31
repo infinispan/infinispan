@@ -24,10 +24,10 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
 
    private Consumer<WriteEntryView<K, V>> f;
 
-   public WriteOnlyKeyCommand(Object key, Consumer<WriteEntryView<K, V>> f, int segment, CommandInvocationId id,
+   public WriteOnlyKeyCommand(ByteString cacheName, Object key, Consumer<WriteEntryView<K, V>> f, int segment, CommandInvocationId id,
                               ValueMatcher valueMatcher, Params params, DataConversion keyDataConversion,
                               DataConversion valueDataConversion) {
-      super(key, valueMatcher, segment, id, params, keyDataConversion, valueDataConversion);
+      super(cacheName, key, valueMatcher, segment, id, params, keyDataConversion, valueDataConversion);
       this.f = f;
    }
 

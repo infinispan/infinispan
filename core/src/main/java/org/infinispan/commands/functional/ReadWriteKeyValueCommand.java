@@ -30,10 +30,10 @@ public final class ReadWriteKeyValueCommand<K, V, T, R> extends AbstractWriteKey
    private Object prevValue;
    private Metadata prevMetadata;
 
-   public ReadWriteKeyValueCommand(Object key, Object argument, BiFunction<T, ReadWriteEntryView<K, V>, R> f,
+   public ReadWriteKeyValueCommand(ByteString cacheName, Object key, Object argument, BiFunction<T, ReadWriteEntryView<K, V>, R> f,
                                    int segment, CommandInvocationId id, ValueMatcher valueMatcher, Params params,
                                    DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      super(key, valueMatcher, segment, id, params, keyDataConversion, valueDataConversion);
+      super(cacheName, key, valueMatcher, segment, id, params, keyDataConversion, valueDataConversion);
       this.argument = argument;
       this.f = f;
    }

@@ -26,10 +26,10 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
    // are set only when replicating the command to other nodes where we have already narrowed the key set
    private List<List<Mutation<K, V, ?>>> mutations;
 
-   public TxReadOnlyManyCommand(Collection<?> keys, List<List<Mutation<K, V, ?>>> mutations,
+   public TxReadOnlyManyCommand(ByteString cacheName, Collection<?> keys, List<List<Mutation<K, V, ?>>> mutations,
                                 Params params, DataConversion keyDataConversion,
                                 DataConversion valueDataConversion) {
-      super(keys, null, params, keyDataConversion, valueDataConversion);
+      super(cacheName, keys, null, params, keyDataConversion, valueDataConversion);
       this.mutations = mutations;
    }
 

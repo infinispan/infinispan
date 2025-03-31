@@ -34,11 +34,6 @@ public interface CacheRpcCommand extends ReplicableCommand {
     */
    ByteString getCacheName();
 
-   default void setCacheName(ByteString cacheName) {
-      if (!getCacheName().equals(cacheName))
-         throw new IllegalStateException("setCacheName must be overridden if cacheName is mutable");
-   }
-
    /**
     * Set the origin of the command
     */

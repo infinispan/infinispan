@@ -35,13 +35,9 @@ public class InvalidateL1Command extends InvalidateCommand {
       this.writeOrigin = writeOrigin;
    }
 
-   public InvalidateL1Command(long flagsBitSet, Collection<Object> keys, CommandInvocationId commandInvocationId) {
-      this(null, flagsBitSet, keys, commandInvocationId);
-   }
-
-   public InvalidateL1Command(Address writeOrigin, long flagsBitSet, Collection<Object> keys,
+   public InvalidateL1Command(ByteString cacheName, Address writeOrigin, long flagsBitSet, Collection<Object> keys,
          CommandInvocationId commandInvocationId) {
-      super(flagsBitSet, keys, commandInvocationId);
+      super(cacheName, flagsBitSet, keys, commandInvocationId);
       this.writeOrigin = writeOrigin;
    }
 

@@ -62,11 +62,6 @@ public abstract class AbstractFlagAffectedCommand implements CacheRpcCommand, Fl
    }
 
    @Override
-   public void setCacheName(ByteString cacheName) {
-      this.cacheName = cacheName;
-   }
-
-   @Override
    public Address getOrigin() {
       return origin;
    }

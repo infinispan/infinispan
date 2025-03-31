@@ -21,12 +21,8 @@ import org.infinispan.util.ByteString;
 public class ClearCommand extends AbstractTopologyAffectedCommand implements WriteCommand {
 
    @ProtoFactory
-   ClearCommand(ByteString cacheName, long flagsWithoutRemote, int topologyId) {
+   public ClearCommand(ByteString cacheName, long flagsWithoutRemote, int topologyId) {
       super(cacheName, flagsWithoutRemote, topologyId);
-   }
-
-   public ClearCommand(long flagsBitSet) {
-      super(flagsBitSet, -1);
    }
 
    @Override

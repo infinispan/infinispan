@@ -40,9 +40,9 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
     */
    protected Object value;
 
-   public RemoveCommand(Object key, Object value, boolean returnEntry, int segment, long flagsBitSet,
+   public RemoveCommand(ByteString cacheName, Object key, Object value, boolean returnEntry, int segment, long flagsBitSet,
                         CommandInvocationId commandInvocationId) {
-      super(key, segment, flagsBitSet, commandInvocationId);
+      super(cacheName, key, segment, flagsBitSet, commandInvocationId);
       setValue(value);
       this.valueMatcher = value != null ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_ALWAYS;
       this.returnEntry = returnEntry;

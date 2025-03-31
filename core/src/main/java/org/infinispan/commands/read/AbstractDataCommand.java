@@ -23,7 +23,7 @@ import org.infinispan.util.ByteString;
  */
 public abstract class AbstractDataCommand implements CacheRpcCommand, DataCommand, SegmentSpecificCommand {
 
-   protected ByteString cacheName;
+   protected final ByteString cacheName;
    protected Address origin;
    protected Object key;
    private long flags;
@@ -35,12 +35,12 @@ public abstract class AbstractDataCommand implements CacheRpcCommand, DataComman
 
    // For ProtoFactory implementations
    protected AbstractDataCommand(ByteString cacheName, MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment) {
-      this(MarshallableObject.unwrap(wrappedKey), segment, flagsWithoutRemote);
-      this.cacheName = cacheName;
+      this(cacheName, MarshallableObject.unwrap(wrappedKey), segment, flagsWithoutRemote);
       this.topologyId = topologyId;
    }
 
-   protected AbstractDataCommand(Object key, int segment, long flagsBitSet) {
+   protected AbstractDataCommand(ByteString cacheName, Object key, int segment, long flagsBitSet) {
+      this.cacheName = cacheName;
       this.key = key;
       if (segment < 0) {
          throw new IllegalArgumentException("Segment must be 0 or greater");
@@ -100,11 +100,6 @@ public abstract class AbstractDataCommand implements CacheRpcCommand, DataComman
    @Override
    public void setOrigin(Address origin) {
       this.origin = origin;
-   }
-
-   @Override
-   public void setCacheName(ByteString cacheName) {
-      this.cacheName = cacheName;
    }
 
    @Override

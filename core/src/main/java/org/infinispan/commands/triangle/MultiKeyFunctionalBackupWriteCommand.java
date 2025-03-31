@@ -72,9 +72,9 @@ public class MultiKeyFunctionalBackupWriteCommand extends FunctionalBackupWriteC
    WriteCommand createWriteCommand() {
       //noinspection unchecked
       AbstractWriteManyCommand cmd = writeOnly ?
-            new WriteOnlyManyCommand(keys, (Consumer) function, params, getCommandInvocationId(),
+            new WriteOnlyManyCommand(cacheName, keys, (Consumer) function, params, getCommandInvocationId(),
                   keyDataConversion, valueDataConversion) :
-            new ReadWriteManyCommand(keys, (Function) function, params, getCommandInvocationId(),
+            new ReadWriteManyCommand(cacheName, keys, (Function) function, params, getCommandInvocationId(),
                   keyDataConversion, valueDataConversion);
       cmd.setForwarded(true);
       return cmd;

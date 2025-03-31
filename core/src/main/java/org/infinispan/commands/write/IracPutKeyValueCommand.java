@@ -42,9 +42,9 @@ public class IracPutKeyValueCommand extends AbstractDataWriteCommand implements 
    private transient boolean successful = true;
    private boolean expiration;
 
-   public IracPutKeyValueCommand(Object key, int segment, CommandInvocationId commandInvocationId, Object value,
+   public IracPutKeyValueCommand(ByteString cacheName, Object key, int segment, CommandInvocationId commandInvocationId, Object value,
          Metadata metadata, PrivateMetadata privateMetadata) {
-      super(key, segment, FlagBitSets.IRAC_UPDATE, commandInvocationId);
+      super(cacheName, key, segment, FlagBitSets.IRAC_UPDATE, commandInvocationId);
       assert privateMetadata != null;
       this.value = value;
       this.metadata = metadata;

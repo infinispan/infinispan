@@ -33,9 +33,9 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    private PrivateMetadata internalMetadata;
    private transient boolean successful = true;
 
-   public ReplaceCommand(Object key, Object oldValue, Object newValue,  boolean returnEntry, Metadata metadata, int segment, long flagsBitSet,
+   public ReplaceCommand(ByteString cacheName, Object key, Object oldValue, Object newValue,  boolean returnEntry, Metadata metadata, int segment, long flagsBitSet,
                          CommandInvocationId commandInvocationId) {
-      super(key, segment, flagsBitSet, commandInvocationId);
+      super(cacheName, key, segment, flagsBitSet, commandInvocationId);
       this.oldValue = oldValue;
       this.newValue = newValue;
       this.returnEntry = returnEntry;

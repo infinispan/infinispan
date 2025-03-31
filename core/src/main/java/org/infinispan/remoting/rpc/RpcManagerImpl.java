@@ -95,7 +95,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    @Inject TimeService timeService;
    @Inject XSiteMetricsCollector xSiteMetricsCollector;
 
-   private final Function<CacheRpcCommand, CacheRpcCommand> initCacheRpcCommand = this::initCacheRpcCommand;
+   private final Function<CacheRpcCommand, CacheRpcCommand> setClusterTraceSpanAttributes = this::setClusterTraceSpanAttributes;
    private final AttributeListener<TimeQuantity> updateRpcOptions = this::updateRpcOptions;
    private final XSiteResponse.XSiteResponseCompleted xSiteResponseCompleted = this::registerXSiteTime;
 
@@ -237,7 +237,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    @Override
    public <T> CompletionStage<T> invokeCommand(Address target, CacheRpcCommand command,
                                                ResponseCollector<T> collector, RpcOptions rpcOptions) {
-      CacheRpcCommand cacheRpc = initCacheRpcCommand(command);
+      CacheRpcCommand cacheRpc = setClusterTraceSpanAttributes(command);
 
       if (!statisticsEnabled) {
          return t.invokeCommand(target, cacheRpc, collector, rpcOptions.deliverOrder(),
@@ -265,7 +265,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    @Override
    public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, CacheRpcCommand command,
                                                ResponseCollector<T> collector, RpcOptions rpcOptions) {
-      CacheRpcCommand cacheRpc = initCacheRpcCommand(command);
+      CacheRpcCommand cacheRpc = setClusterTraceSpanAttributes(command);
 
       if (!statisticsEnabled) {
          return t.invokeCommand(targets, cacheRpc, collector, rpcOptions.deliverOrder(),
@@ -303,7 +303,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    @Override
    public <T> CompletionStage<T> invokeCommandOnAll(CacheRpcCommand command, ResponseCollector<T> collector,
                                                     RpcOptions rpcOptions) {
-      CacheRpcCommand cacheRpc = initCacheRpcCommand(command);
+      CacheRpcCommand cacheRpc = setClusterTraceSpanAttributes(command);
       List<Address> cacheMembers = distributionManager.getCacheTopology().getMembers();
 
       if (!statisticsEnabled) {
@@ -325,7 +325,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    @Override
    public <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, CacheRpcCommand command,
                                                         ResponseCollector<T> collector, RpcOptions rpcOptions) {
-      CacheRpcCommand cacheRpc = initCacheRpcCommand(command);
+      CacheRpcCommand cacheRpc = setClusterTraceSpanAttributes(command);
 
       if (!statisticsEnabled) {
          return t.invokeCommandStaggered(targets, cacheRpc, collector, rpcOptions.deliverOrder(), rpcOptions.timeout(),
@@ -348,14 +348,14 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
                                                 Function<Address, CacheRpcCommand> commandGenerator,
                                                 ResponseCollector<T> collector, RpcOptions rpcOptions) {
       if (!statisticsEnabled) {
-         return t.invokeCommands(targets, commandGenerator.andThen(initCacheRpcCommand), collector,
+         return t.invokeCommands(targets, commandGenerator.andThen(setClusterTraceSpanAttributes), collector,
                                  rpcOptions.deliverOrder(), rpcOptions.timeout(), rpcOptions.timeUnit());
       }
 
       long startTimeNanos = timeService.time();
       CompletionStage<T> invocation;
       try {
-         invocation = t.invokeCommands(targets, commandGenerator.andThen(initCacheRpcCommand), collector,
+         invocation = t.invokeCommands(targets, commandGenerator.andThen(setClusterTraceSpanAttributes), collector,
                                        rpcOptions.deliverOrder(), rpcOptions.timeout(), rpcOptions.timeUnit());
       } catch (Exception e) {
          return errorReplicating(e);
@@ -387,7 +387,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
                                                                         RpcOptions options) {
       // Set the topology id of the command, in case we don't have it yet
       setTopologyId(rpc);
-      CacheRpcCommand cacheRpc = initCacheRpcCommand(rpc);
+      CacheRpcCommand cacheRpc = setClusterTraceSpanAttributes(rpc);
 
       long startTimeNanos = statisticsEnabled ? timeService.time() : 0;
       CompletableFuture<Map<Address, Response>> invocation;
@@ -425,17 +425,11 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
       }
    }
 
-   private CacheRpcCommand initCacheRpcCommand(CacheRpcCommand cmd) {
-      cmd.setCacheName(cacheName);
-      setClusterTraceSpanAttributes(cmd);
-      return cmd;
-   }
-
    @Override
    public void sendTo(Address destination, CacheRpcCommand command, DeliverOrder deliverOrder) {
       // Set the topology id of the command, in case we don't have it yet
       setTopologyId(command);
-      CacheRpcCommand cacheRpc = initCacheRpcCommand(command);
+      CacheRpcCommand cacheRpc = setClusterTraceSpanAttributes(command);
 
       try {
          t.sendTo(destination, cacheRpc, deliverOrder);
@@ -448,7 +442,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    public void sendToMany(Collection<Address> destinations, CacheRpcCommand command, DeliverOrder deliverOrder) {
       // Set the topology id of the command, in case we don't have it yet
       setTopologyId(command);
-      CacheRpcCommand cacheRpc = initCacheRpcCommand(command);
+      CacheRpcCommand cacheRpc = setClusterTraceSpanAttributes(command);
 
       try {
          t.sendToMany(destinations, cacheRpc, deliverOrder);
@@ -461,7 +455,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    public void sendToAll(CacheRpcCommand command, DeliverOrder deliverOrder) {
       // Set the topology id of the command, in case we don't have it yet
       setTopologyId(command);
-      CacheRpcCommand cacheRpc = initCacheRpcCommand(command);
+      CacheRpcCommand cacheRpc = setClusterTraceSpanAttributes(command);
 
       try {
          t.sendToAll(cacheRpc, deliverOrder);
@@ -698,8 +692,9 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
       return distributionManager.getCacheTopology().getMembers();
    }
 
-   private void setClusterTraceSpanAttributes(TracedCommand command) {
+   private CacheRpcCommand setClusterTraceSpanAttributes(CacheRpcCommand command) {
       command.setSpanAttributes(clusterSpanAttributes);
+      return command;
    }
 
    private void setXSiteTraceSpanAttributes(TracedCommand command) {
