@@ -12,6 +12,7 @@ import java.lang.reflect.Method;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.TestResponse;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -32,8 +33,12 @@ public class HotRodAsymmetricClusterTest extends HotRodMultiNodeTest {
            getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
   }
 
+   @Override
+   protected boolean pingOnConnect() {
+      return false;
+   }
 
-  @Override
+   @Override
   protected void createCacheManagers() {
      for (int i = 0; i < 2; i++) {
         EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration());
@@ -45,7 +50,9 @@ public class HotRodAsymmetricClusterTest extends HotRodMultiNodeTest {
   }
 
    public void testPutInCacheDefinedNode(Method m) {
-      TestResponse resp = clients().get(0).put(k(m) , 0, 0, v(m));
+      HotRodClient client0 = clients().get(0);
+      assertStatus(client0.ping(), Success);
+      TestResponse resp = client0.put(k(m) , 0, 0, v(m));
       assertStatus(resp, Success);
    }
 

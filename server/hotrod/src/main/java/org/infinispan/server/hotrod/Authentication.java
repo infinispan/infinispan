@@ -51,7 +51,21 @@ public class Authentication extends BaseRequestProcessor {
    }
 
    public void authMechList(HotRodHeader header) {
-      writeResponse(header, header.encoder().authMechListResponse(header, server, channel, authenticationConfig.sasl().mechanisms()));
+      // We have to make sure the default cache is initialized if we have one during an auth mech call
+      if (server.hasDefaultCache()) {
+         server.ensureCacheInitialized(header)
+               .whenComplete((__, t) -> {
+                  if (t != null) {
+                     writeException(header, t);
+                  } else {
+                     writeResponse(header, header.encoder().authMechListResponse(header, server, channel,
+                           authenticationConfig.sasl().mechanisms()));
+                  }
+               });
+      } else {
+         writeResponse(header, header.encoder().authMechListResponse(header, server, channel,
+               authenticationConfig.sasl().mechanisms()));
+      }
    }
 
    public void auth(HotRodHeader header, String mech, byte[] response) {

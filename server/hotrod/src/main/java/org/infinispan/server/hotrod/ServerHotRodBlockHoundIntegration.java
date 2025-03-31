@@ -18,7 +18,6 @@ public class ServerHotRodBlockHoundIntegration implements BlockHoundIntegration 
    }
 
    private static void questionableBlockingMethod(BlockHound.Builder builder) {
-      builder.allowBlockingCallsInside(HotRodServer.class.getName(), "obtainAnonymizedCache");
       builder.allowBlockingCallsInside(Encoder2x.class.getName(), "getCounterCacheTopology");
 
       // Stream method is blocking

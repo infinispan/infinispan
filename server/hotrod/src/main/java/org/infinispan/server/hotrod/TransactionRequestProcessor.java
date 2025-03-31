@@ -62,11 +62,20 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
     */
    void prepareTransaction(HotRodHeader header, Subject subject, XidImpl xid, boolean onePhaseCommit,
                            List<TransactionWrite> writes, boolean recoverable, long timeout) {
-      HotRodServer.ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
-      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      validateConfiguration(cache);
-      executor.execute(() -> prepareTransactionInternal(header, cache, cacheInfo.versionGenerator, xid, onePhaseCommit,
-            writes, recoverable, timeout));
+      executor.execute(() -> {
+         try {
+            HotRodServer.ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
+            // Note that it is possible to call `RemoteCacheManager.isTransactional` before calling
+            // RemoteCacheManager.getCache which would have started the cache. So this call is also
+            // in the executor to ensure it never blocks the netty thread
+            AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
+            validateConfiguration(cache);
+            prepareTransactionInternal(header, cache, cacheInfo.versionGenerator, xid, onePhaseCommit,
+                  writes, recoverable, timeout);
+         } catch (Throwable t) {
+            writeException(header, t);
+         }
+      });
    }
 
    void forgetTransaction(HotRodHeader header, Subject subject, XidImpl xid) {

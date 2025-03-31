@@ -169,7 +169,7 @@ public class HotRodSniFunctionalTest extends HotRodSingleNodeTest {
 
       public HotRodClient build() {
          return new HotRodClient(hotRodServer.getHost(), hotRodServer.getPort(), cacheName,
-                                 HotRodClient.DEFAULT_TIMEOUT_SECONDS, (byte) 20, sslEngine);
+                                 HotRodClient.DEFAULT_TIMEOUT_SECONDS, (byte) 20, sslEngine, false);
       }
    }
 

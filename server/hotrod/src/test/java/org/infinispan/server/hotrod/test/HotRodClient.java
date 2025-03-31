@@ -119,11 +119,20 @@ public class HotRodClient implements Closeable {
          new NioEventLoopGroup(1, new DefaultThreadFactory(TestResourceTracker.getCurrentTestShortName() + "-Client"));
 
    public HotRodClient(String host, int port, String defaultCacheName, byte protocolVersion) {
-      this(host, port, defaultCacheName, DEFAULT_TIMEOUT_SECONDS, protocolVersion, null);
+      this(host, port, defaultCacheName, DEFAULT_TIMEOUT_SECONDS, protocolVersion, null, true);
+   }
+
+   public HotRodClient(String host, int port, String defaultCacheName, byte protocolVersion, boolean pingOnStartup) {
+      this(host, port, defaultCacheName, DEFAULT_TIMEOUT_SECONDS, protocolVersion, null, pingOnStartup);
    }
 
    public HotRodClient(String host, int port, String defaultCacheName, int rspTimeoutSeconds, byte protocolVersion,
                        SSLEngine sslEngine) {
+      this(host, port, defaultCacheName, rspTimeoutSeconds, protocolVersion, sslEngine, true);
+   }
+
+   public HotRodClient(String host, int port, String defaultCacheName, int rspTimeoutSeconds, byte protocolVersion,
+                       SSLEngine sslEngine, boolean pingOnStartUp) {
       this.host = host;
       this.port = port;
       this.defaultCacheName = defaultCacheName;
@@ -132,10 +141,14 @@ public class HotRodClient implements Closeable {
       this.sslEngine = sslEngine;
 
       ch = initializeChannel();
+      if (pingOnStartUp) {
+         // Send an initial ping like a real client should
+         assertStatus(ping(), Success);
+      }
    }
 
    public HotRodClient(HotRodClient other, byte protocolVersion) {
-      this(other.host, other.port, other.defaultCacheName, other.rspTimeoutSeconds, protocolVersion, other.sslEngine);
+      this(other.host, other.port, other.defaultCacheName, other.rspTimeoutSeconds, protocolVersion, other.sslEngine, true);
    }
 
    public byte protocolVersion() {
@@ -282,11 +295,16 @@ public class HotRodClient implements Closeable {
       return execute(0xA0, (byte) 0x0D, defaultCacheName, k, 0, 0, Util.EMPTY_BYTE_ARRAY, dataVersion, flags);
    }
 
-   public TestResponse execute(int magic, byte code, String name, byte[] k, int lifespan, int maxIdle,
-                               byte[] v, long dataVersion, byte clientIntelligence, int topologyId) {
+   private TestResponse execute(int magic, byte code, String name, byte[] k, int lifespan, int maxIdle,
+                                byte[] v, long dataVersion, byte clientIntelligence, int topologyId, byte protocolVersion) {
       Op op = new Op(magic, protocolVersion, code, name, k, lifespan, maxIdle, v, 0, dataVersion,
             clientIntelligence, topologyId);
       return execute(op);
+   }
+
+   public TestResponse execute(int magic, byte code, String name, byte[] k, int lifespan, int maxIdle,
+                               byte[] v, long dataVersion, byte clientIntelligence, int topologyId) {
+      return execute(magic, code, name, k, lifespan, maxIdle, v, dataVersion, clientIntelligence, topologyId, protocolVersion);
    }
 
    public TestErrorResponse executeExpectBadMagic(int magic, byte code, String name, byte[] k, int lifespan, int maxIdle,
@@ -396,11 +414,16 @@ public class HotRodClient implements Closeable {
    }
 
    public TestResponse ping() {
-      return execute(0xA0, (byte) 0x17, defaultCacheName, null, 0, 0, null, 0, (byte) 1, 0);
+      return ping(defaultCacheName);
+   }
+
+   public TestResponse ping(String cacheName) {
+      return execute(0xA0, (byte) 0x17, cacheName, null, 0, 0, null, 0, (byte) 1, 0, (byte) 21);
    }
 
    public TestResponse ping(byte clientIntelligence, int topologyId) {
-      return execute(0xA0, (byte) 0x17, defaultCacheName, null, 0, 0, null, 0, clientIntelligence, topologyId);
+      return execute(0xA0, (byte) 0x17, defaultCacheName, null, 0, 0, null, 0,
+            clientIntelligence, topologyId, (byte) 21);
    }
 
    public TestBulkGetResponse bulkGet() {
