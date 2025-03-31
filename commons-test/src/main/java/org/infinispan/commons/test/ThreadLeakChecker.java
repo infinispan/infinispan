@@ -3,6 +3,7 @@ package org.infinispan.commons.test;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -168,8 +169,8 @@ public class ThreadLeakChecker {
          getEntryMethod.setAccessible(true);
          valueField = Class.forName("java.lang.ThreadLocal$ThreadLocalMap$Entry").getDeclaredField("value");
          valueField.setAccessible(true);
-      } catch (NoSuchFieldException | NoSuchMethodException | ClassNotFoundException e) {
-         log.error("Error obtaining thread local accessors, ignoring thread leaks");
+      } catch (NoSuchFieldException | NoSuchMethodException | ClassNotFoundException | InaccessibleObjectException e) {
+         log.error("Error obtaining thread local accessors, ignoring thread leaks", e);
          return;
       }
 
