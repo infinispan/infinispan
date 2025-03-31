@@ -67,7 +67,10 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
    }
 
    public void testPutOnDefaultCache(Method m) {
-      TestResponse resp = client().execute(0xA0, (byte) 0x01, "", k(m), 0, 0, v(m), 0, (byte) 1, 0);
+      String defaultName = "";
+      // Need to ping the cache first like a normal client, which ensures it is started
+      assertStatus(client().ping(defaultName), Success);
+      TestResponse resp = client().execute(0xA0, (byte) 0x01, defaultName, k(m), 0, 0, v(m), 0, (byte) 1, 0);
       assertStatus(resp, Success);
       assertHotRodEquals(cacheManager, k(m), v(m));
    }

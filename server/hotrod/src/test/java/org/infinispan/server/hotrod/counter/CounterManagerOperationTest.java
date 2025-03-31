@@ -43,6 +43,11 @@ public class CounterManagerOperationTest extends HotRodMultiNodeTest implements 
       strategy = new CounterManagerImplTestStrategy(this::allTestCounterManagers, this::log, this::cacheManager);
    }
 
+   @Override
+   protected boolean pingOnConnect() {
+      return false;
+   }
+
    @BeforeClass(alwaysRun = true)
    @Override
    public void createBeforeClass() throws Throwable {
