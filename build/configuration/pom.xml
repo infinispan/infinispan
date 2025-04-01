@@ -92,7 +92,7 @@
       <version.commons.compress>1.27.1</version.commons.compress>
       <version.console>15.2.1.Final</version.console>
       <version.ehcache.sizeof>0.3.0</version.ehcache.sizeof>
-      <version.fabric8.kubernetes-client>6.13.5</version.fabric8.kubernetes-client>
+      <version.fabric8.kubernetes-client>7.1.0</version.fabric8.kubernetes-client>
       <version.gdx-jnigen-loader>2.5.2</version.gdx-jnigen-loader>
       <version.glassfish.jaxb>4.0.5</version.glassfish.jaxb>
       <version.graalvm>24.0.0</version.graalvm>
@@ -164,7 +164,7 @@
       <version.hdrhistogram>2.2.2</version.hdrhistogram>
       <version.latencyutils>2.0.3</version.latencyutils>
 
-      <version.quarkus>3.15.3</version.quarkus>
+      <version.quarkus>3.20.1</version.quarkus>
       <version.graalvm>24.2.1</version.graalvm>
       <version.jandex>3.3.1</version.jandex>
 
