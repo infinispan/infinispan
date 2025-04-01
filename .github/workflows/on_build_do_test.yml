@@ -285,8 +285,8 @@ jobs:
             targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
   coverage:
-    needs: [ci-build-test-pr, db]
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    needs: [get-info, ci-build-test-pr, db]
+    if: ${{ github.event.workflow_run.conclusion == 'success' && needs.get-info.outputs.source-event == 'pull_request' }}
     name: Publish Coverage Report
     runs-on: ubuntu-latest
     env:
@@ -314,17 +314,18 @@ jobs:
           github-token: ${{ github.token }}
 
       - name: Extract Infinispan Source
+        shell: bash
+        # language=bash
         run: |
           mkdir test_dir && cd test_dir
           unzip ${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip
           mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
 
       - name: Copy jacoco directories to Infinispan
-        working-directory: test_dir/infinispan
         shell: bash
         # language=bash
         run: |
-          mkdir jacoco
+          mkdir test_dir/infinispan/jacoco
           .github/scripts/merge-jacoco-files.sh "$GITHUB_WORKSPACE/test_dir/infinispan/jacoco/" "${GITHUB_WORKSPACE}/surefire-test-report*/"
           #Read and store value of PR from the File
           PR_NUMBER=$(cat "$GITHUB_WORKSPACE/surefire-test-report/pr-number.txt")
