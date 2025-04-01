@@ -25,6 +25,7 @@ import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.util.ByteString;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -32,6 +33,7 @@ import org.testng.annotations.Test;
 public class CacheMgmtInterceptorTest extends AbstractInfinispanTest {
    public static final String KEY = "key";
    public static final String VALUE = "value";
+   public static final ByteString CACHE_NAME = ByteString.fromString("test-cache");
 
    private CacheMgmtInterceptor interceptor;
    private ControlledNextInterceptor nextInterceptor;
@@ -124,7 +126,7 @@ public class CacheMgmtInterceptorTest extends AbstractInfinispanTest {
    }
 
    public void testVisitPutMapCommand() throws Throwable {
-      PutMapCommand command = new PutMapCommand(Collections.singletonMap(KEY, VALUE), null, 0, null);
+      PutMapCommand command = new PutMapCommand(CACHE_NAME, Collections.singletonMap(KEY, VALUE), null, 0, null);
       InvocationStage stage = makeStage(interceptor.visitPutMapCommand(ctx, command));
       assertFalse(stage.isDone());
 
@@ -136,7 +138,7 @@ public class CacheMgmtInterceptorTest extends AbstractInfinispanTest {
    }
 
    public void testVisitPutMapCommandException() throws Throwable {
-      PutMapCommand command = new PutMapCommand(Collections.singletonMap(KEY, VALUE), null, 0, null);
+      PutMapCommand command = new PutMapCommand(CACHE_NAME, Collections.singletonMap(KEY, VALUE), null, 0, null);
       InvocationStage stage = makeStage(interceptor.visitPutMapCommand(ctx, command));
       assertFalse(stage.isDone());
 
@@ -148,7 +150,7 @@ public class CacheMgmtInterceptorTest extends AbstractInfinispanTest {
    }
 
    public void testVisitPutKeyValueCommand() throws Throwable {
-      PutKeyValueCommand command = new PutKeyValueCommand(KEY, VALUE, false, false, null, 0, 0, null);
+      PutKeyValueCommand command = new PutKeyValueCommand(CACHE_NAME, KEY, VALUE, false, false, null, 0, 0, null);
       InvocationStage stage = makeStage(interceptor.visitPutKeyValueCommand(ctx, command));
       assertFalse(stage.isDone());
 
@@ -160,7 +162,7 @@ public class CacheMgmtInterceptorTest extends AbstractInfinispanTest {
    }
 
    public void testVisitPutKeyValueCommandException() throws Throwable {
-      PutKeyValueCommand command = new PutKeyValueCommand(KEY, VALUE, false, false, null, 0, 0, null);
+      PutKeyValueCommand command = new PutKeyValueCommand(CACHE_NAME, KEY, VALUE, false, false, null, 0, 0, null);
       InvocationStage stage = makeStage(interceptor.visitPutKeyValueCommand(ctx, command));
       assertFalse(stage.isDone());
 
@@ -172,7 +174,7 @@ public class CacheMgmtInterceptorTest extends AbstractInfinispanTest {
    }
 
    public void testVisitReplaceCommand() throws Throwable {
-      ReplaceCommand command = new ReplaceCommand(KEY, VALUE, false, false, null, 0, 0, null);
+      ReplaceCommand command = new ReplaceCommand(CACHE_NAME, KEY, VALUE, false, false, null, 0, 0, null);
       InvocationStage stage = makeStage(interceptor.visitReplaceCommand(ctx, command));
       assertFalse(stage.isDone());
 
@@ -184,7 +186,7 @@ public class CacheMgmtInterceptorTest extends AbstractInfinispanTest {
    }
 
    public void testVisitReplaceCommandException() throws Throwable {
-      ReplaceCommand command = new ReplaceCommand(KEY, VALUE, false, false, null, 0, 0, null);
+      ReplaceCommand command = new ReplaceCommand(CACHE_NAME, KEY, VALUE, false, false, null, 0, 0, null);
       InvocationStage stage = makeStage(interceptor.visitReplaceCommand(ctx, command));
       assertFalse(stage.isDone());
 
@@ -196,7 +198,7 @@ public class CacheMgmtInterceptorTest extends AbstractInfinispanTest {
    }
 
    public void testVisitRemoveCommand() throws Throwable {
-      RemoveCommand command = new RemoveCommand(KEY, null, false, 0, 0, null);
+      RemoveCommand command = new RemoveCommand(CACHE_NAME, KEY, null, false, 0, 0, null);
       InvocationStage stage = makeStage(interceptor.visitRemoveCommand(ctx, command));
       assertFalse(stage.isDone());
 
@@ -208,7 +210,7 @@ public class CacheMgmtInterceptorTest extends AbstractInfinispanTest {
    }
 
    public void testVisitRemoveCommandException() throws Throwable {
-      RemoveCommand command = new RemoveCommand(KEY, null, false, 0, 0, null);
+      RemoveCommand command = new RemoveCommand(CACHE_NAME, KEY, null, false, 0, 0, null);
       InvocationStage stage = makeStage(interceptor.visitRemoveCommand(ctx, command));
       assertFalse(stage.isDone());
 

@@ -73,9 +73,9 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
    WriteCommand createWriteCommand() {
       //noinspection unchecked
       AbstractWriteManyCommand cmd = writeOnly ?
-            new WriteOnlyManyEntriesCommand(entries, (BiConsumer) function, params, getCommandInvocationId(),
+            new WriteOnlyManyEntriesCommand(cacheName, entries, (BiConsumer) function, params, getCommandInvocationId(),
                   keyDataConversion, valueDataConversion) :
-            new ReadWriteManyEntriesCommand(entries, (BiFunction) function, params, getCommandInvocationId(),
+            new ReadWriteManyEntriesCommand(cacheName, entries, (BiFunction) function, params, getCommandInvocationId(),
                   keyDataConversion, valueDataConversion);
       cmd.setForwarded(true);
       return cmd;

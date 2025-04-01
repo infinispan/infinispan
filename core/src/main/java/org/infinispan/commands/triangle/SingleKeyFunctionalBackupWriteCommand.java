@@ -122,21 +122,21 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
       switch (operation) {
          case READ_WRITE:
             //noinspection unchecked
-            return new ReadWriteKeyCommand(key, (Function) function, segmentId, getCommandInvocationId(), MATCH_ALWAYS,
+            return new ReadWriteKeyCommand(cacheName, key, (Function) function, segmentId, getCommandInvocationId(), MATCH_ALWAYS,
                   params, keyDataConversion, valueDataConversion);
          case READ_WRITE_KEY_VALUE:
             //noinspection unchecked
-            ReadWriteKeyValueCommand cmd = new ReadWriteKeyValueCommand(key, value, (BiFunction) function, segmentId,
+            ReadWriteKeyValueCommand cmd = new ReadWriteKeyValueCommand(cacheName, key, value, (BiFunction) function, segmentId,
                   getCommandInvocationId(), MATCH_ALWAYS, params, keyDataConversion, valueDataConversion);
             cmd.setPrevValueAndMetadata(prevValue, prevMetadata);
             return cmd;
          case WRITE_ONLY:
             //noinspection unchecked
-            return new WriteOnlyKeyCommand(key, (Consumer) function, segmentId, getCommandInvocationId(), MATCH_ALWAYS,
+            return new WriteOnlyKeyCommand(cacheName, key, (Consumer) function, segmentId, getCommandInvocationId(), MATCH_ALWAYS,
                   params, keyDataConversion, valueDataConversion);
          case WRITE_ONLY_KEY_VALUE:
             //noinspection unchecked
-            return new WriteOnlyKeyValueCommand(key, value, (BiConsumer) function, segmentId, getCommandInvocationId(),
+            return new WriteOnlyKeyValueCommand(cacheName, key, value, (BiConsumer) function, segmentId, getCommandInvocationId(),
                   MATCH_ALWAYS, params, keyDataConversion, valueDataConversion);
          default:
             throw new IllegalStateException("Unknown operation " + operation);

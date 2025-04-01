@@ -16,10 +16,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.GlobalRpcCommand;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.module.TestGlobalConfigurationBuilder;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commands.remote.SingleRpcCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -37,7 +36,6 @@ import org.infinispan.test.TestException;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -81,12 +79,6 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       when(mock.canBlock()).thenReturn(blocking);
       when(mock.invokeAsync()).thenReturn(CompletableFutures.completedNull());
       return mock;
-   }
-
-   private static SingleRpcCommand mockSingleRpcCommand(boolean blocking) {
-      VisitableCommand mock = mock(VisitableCommand.class);
-      when(mock.canBlock()).thenReturn(blocking);
-      return new SingleRpcCommand(CACHE_NAME_BYTES, mock);
    }
 
    @BeforeClass
@@ -150,14 +142,6 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
 
       ReplicableCommand nonBlockingReplicableCommand = mockReplicableCommand(false);
       assertDispatchForCommand(nonBlockingReplicableCommand, false);
-   }
-
-   public void testSingleRpcCommand() throws Throwable {
-      SingleRpcCommand blockingSingleRpcCommand = mockSingleRpcCommand(true);
-      assertDispatchForCommand(blockingSingleRpcCommand, true);
-
-      SingleRpcCommand nonBlockingSingleRpcCommand = mockSingleRpcCommand(false);
-      assertDispatchForCommand(nonBlockingSingleRpcCommand, false);
    }
 
    private void assertDispatchForCommand(ReplicableCommand command, boolean isBlocking) throws Exception {

@@ -17,31 +17,32 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 
 @ProtoTypeId(ProtoStreamTypeIds.WRITE_ONLY_KEY_COMMAND)
 public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, V> {
 
    private Consumer<WriteEntryView<K, V>> f;
 
-   public WriteOnlyKeyCommand(Object key, Consumer<WriteEntryView<K, V>> f, int segment, CommandInvocationId id,
+   public WriteOnlyKeyCommand(ByteString cacheName, Object key, Consumer<WriteEntryView<K, V>> f, int segment, CommandInvocationId id,
                               ValueMatcher valueMatcher, Params params, DataConversion keyDataConversion,
                               DataConversion valueDataConversion) {
-      super(key, valueMatcher, segment, id, params, keyDataConversion, valueDataConversion);
+      super(cacheName, key, valueMatcher, segment, id, params, keyDataConversion, valueDataConversion);
       this.f = f;
    }
 
    @ProtoFactory
-   WriteOnlyKeyCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
-                       CommandInvocationId commandInvocationId, Params params, ValueMatcher valueMatcher,
+   WriteOnlyKeyCommand(ByteString cacheName, MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId,
+                       int segment, CommandInvocationId commandInvocationId, Params params, ValueMatcher valueMatcher,
                        DataConversion keyDataConversion, DataConversion valueDataConversion,
                        MarshallableObject<Consumer<WriteEntryView<K, V>>> wrappedConsumer,
                        PrivateMetadata internalMetadata) {
-      super(wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId, params, valueMatcher,
+      super(cacheName, wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId, params, valueMatcher,
             keyDataConversion, valueDataConversion, internalMetadata);
       this.f = MarshallableObject.unwrap(wrappedConsumer);
    }
 
-   @ProtoField(number = 11, name = "consumer")
+   @ProtoField(number = 12, name = "consumer")
    MarshallableObject<Consumer<WriteEntryView<K, V>>> getWrappedConsumer() {
       return MarshallableObject.create(f);
    }

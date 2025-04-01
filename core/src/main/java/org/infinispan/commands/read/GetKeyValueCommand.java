@@ -16,7 +16,7 @@ import org.infinispan.context.InvocationContext;
 public class GetKeyValueCommand extends AbstractDataCommand implements LocalCommand {
 
    public GetKeyValueCommand(Object key, int segment, long flagsBitSet) {
-      super(key, segment, flagsBitSet);
+      super(null, key, segment, flagsBitSet);
    }
 
    @Override
