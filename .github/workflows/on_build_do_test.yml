@@ -126,12 +126,12 @@ jobs:
           (success() || failure())
         env:
           PR_NUMBER: ${{ needs.get-info.outputs.pull-request-number }}
-          GITHUB_SHA: ${{ needs.get-info.outputs.source-head-sha }}
+          COMMIT_SHA: ${{ needs.get-info.outputs.source-head-sha }}
         run: |
-           echo -n $GITHUB_SHA > github-sha.txt
+           echo -n $COMMIT_SHA > github-sha.txt
            echo -n $PR_NUMBER > pr-number.txt
 
-      - name: Archive surefire test report
+      - name: Upload surefire test report
         if: (success() || failure())
         uses: actions/upload-artifact@v4
         with:
@@ -165,7 +165,7 @@ jobs:
           echo -n $EVENT_NAME > event-name.txt
           echo -n $EVENT_NUMBER > event-number.txt
 
-      - name: Archive flaky test report
+      - name: Upload flaky test report
         if: (success() || failure()) && steps.check_flaky_report.outputs.files_exists == 'true'
         uses: actions/upload-artifact@v4
         with:
@@ -177,7 +177,7 @@ jobs:
             event-number.txt
             pr-number.txt
 
-      - name: Archive log files
+      - name: Upload log files
         if: (success() || failure())
         uses: actions/upload-artifact@v4
         with:
@@ -253,7 +253,7 @@ jobs:
         run: |
            echo -n ${{ needs.get-info.outputs.source-head-sha }} > github-sha.txt
 
-      - name: Archive surefire test report
+      - name: Upload surefire test report
         if: (success() || failure())
         uses: actions/upload-artifact@v4
         with:
@@ -349,7 +349,7 @@ jobs:
           pr-number: ${{ env.PR_NUMBER }}
           debug-mode: true
 
-      - name: Archive jacoco report
+      - name: Upload jacoco report
         if: (success() || failure())
         uses: actions/upload-artifact@v4
         with:
