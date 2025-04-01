@@ -17,42 +17,33 @@ updates:
       interval: daily
     open-pull-requests-limit: 10
 
-  # 15.1.x
+  # 15.2.x Security Updates Only
   - package-ecosystem: maven
     directory: "/"
     schedule:
       interval: daily
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0
     rebase-strategy: disabled
-    ignore:
-      - dependency-name: "io.opentelemetry:*"
-      - dependency-name: "*"
-        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
-    target-branch: "15.1.x"
+    target-branch: "15.2.x"
     commit-message:
-      prefix: "[15.1] "
+      prefix: "[15.2] "
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: daily
     open-pull-requests-limit: 10
     rebase-strategy: disabled
-    target-branch: "15.1.x"
+    target-branch: "15.2.x"
     commit-message:
-      prefix: "[15.1] "
+      prefix: "[15.2] "
 
-
-  # 15.0.x
+  # 15.0.x Security Updates Only
   - package-ecosystem: maven
     directory: "/"
     schedule:
       interval: daily
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0
     rebase-strategy: disabled
-    ignore:
-      - dependency-name: "io.opentelemetry:*"
-      - dependency-name: "*"
-        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
     target-branch: "15.0.x"
     commit-message:
       prefix: "[15.0] "
