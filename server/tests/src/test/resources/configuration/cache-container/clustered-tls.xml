@@ -1,8 +1,8 @@
 <cache-container xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                 xsi:schemaLocation="urn:infinispan:config:15.2 https://infinispan.org/schemas/infinispan-config-fragment-15.2.xsd urn:infinispan:server:15.2 https://infinispan.org/schemas/infinispan-server-15.2.xsd"
-                 xmlns="urn:infinispan:config:15.2"
+                 xsi:schemaLocation="urn:infinispan:config:16.0 https://infinispan.org/schemas/infinispan-config-fragment-16.0.xsd urn:infinispan:server:16.0 https://infinispan.org/schemas/infinispan-server-16.0.xsd"
+                 xmlns="urn:infinispan:config:16.0"
                  name="default" statistics="true"
-                 xmlns:server="urn:infinispan:server:15.2">
+                 xmlns:server="urn:infinispan:server:16.0">
    <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack}" server:security-realm="cluster-transport"/>
    <serialization>
       <allow-list>
