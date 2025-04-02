@@ -12,7 +12,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.MeterBinder;
 
-@Deprecated(forRemoval = true, since = "15.2")
+@Deprecated(forRemoval = true, since = "16.0")
 class BaseAdditionalMetrics implements MeterBinder {
 
    static final String PREFIX = "base.";

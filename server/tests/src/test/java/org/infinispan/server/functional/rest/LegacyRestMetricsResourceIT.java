@@ -51,7 +51,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  * @author anistor@redhat.com
  * @since 10.0
  */
-public class RestMetricsResourceIT {
+public class LegacyRestMetricsResourceIT {
 
    // copied from regex101.com
    private static final Pattern PROMETHEUS_PATTERN = Pattern.compile("^(?<metric>[a-zA-Z_:][a-zA-Z0-9_:]*]*)(?<tags>\\{.*})?[\\t ]*(?<value>-?[0-9E.\\-]*)[\\t ]*(?<timestamp>[0-9]+)?$");
@@ -71,7 +71,7 @@ public class RestMetricsResourceIT {
 
    @RegisterExtension
    public static final InfinispanServerExtension SERVERS =
-         InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
+         InfinispanServerExtensionBuilder.config("configuration/LegacyMetricsClusteredServerTest.xml")
                .numServers(NUM_SERVERS)
                .runMode(ServerRunMode.CONTAINER)
                .build();
@@ -80,22 +80,22 @@ public class RestMetricsResourceIT {
    public void testOpenMetrics() {
       RestMetricsClient metricsClient = SERVERS.rest().create().metrics();
 
-      String metricName = "infinispan_statistics_stores";
+      String metricName = "cache_manager_default_cache_" + SERVERS.getMethodName() + "_statistics_stores";
 
       try (RestResponse response = sync(metricsClient.metrics(true))) {
          assertEquals(200, response.status());
          checkIsOpenmetrics(response.contentType());
          String metricsText = response.body();
-         assertTrue(metricsText.contains("# TYPE " + metricName + " gauge\n"));
-         assertTrue(metricsText.contains(metricName + "{cache=\"" + SERVERS.getMethodName()));
+         assertTrue(metricsText.contains("# TYPE vendor_" + metricName + " gauge\n"));
+         assertTrue(metricsText.contains("vendor_" + metricName + "{cache=\"" + SERVERS.getMethodName()));
       }
    }
 
    @Test
    public void testJvmMetrics() {
       var metrics = getMetrics(SERVERS.rest().create().metrics());
-      findMetric(metrics, "jvm_classes_loaded_classes").value().isPositive();
-      findMetric(metrics, "jvm_memory_used_bytes").value().isPositive();
+      findMetric(metrics, "base_classloader_loadedClasses_count").value().isPositive();
+      findMetric(metrics, "vendor_memoryPool_Metaspace_usage_bytes").value().isPositive();
    }
 
    @Test
@@ -104,10 +104,10 @@ public class RestMetricsResourceIT {
       RestMetricsClient metricsClient = client.metrics();
 
       String cacheName = SERVERS.getMethodName();
-      String metricName = "infinispan_statistics_stores";
+      String metricName = String.format("vendor_cache_manager_default_cache_%s_statistics_stores", cacheName);
       int numPuts = 10;
 
-      var metric = findMetric(getMetrics(metricsClient), metricName, "cache", cacheName);
+      var metric = findMetric(getMetrics(metricsClient), metricName);
       metric.value().isZero();
       metric.assertTagPresent("cache", cacheName);
 
@@ -118,14 +118,15 @@ public class RestMetricsResourceIT {
          assertStatus(NO_CONTENT, cache.put("k" + i, "v" + i));
       }
 
-      findMetric(getMetrics(metricsClient), metricName, "cache", cacheName).value().isEqualTo(10.0);
+      findMetric(getMetrics(metricsClient), metricName).value().isEqualTo(10.0);
 
       // delete cache and check that the metric is gone
       assertStatus(OK, client.cache(SERVERS.getMethodName()).delete());
 
       var metrics = getMetrics(metricsClient);
-      assertTrue(metrics.stream().noneMatch(m -> m.matches(metricName) && m.containsTag("cache", cacheName)));
-      assertTrue(metrics.stream().anyMatch(m -> m.name.startsWith("infinispan_")));
+      assertTrue(metrics.stream().noneMatch(m -> m.matches(metricName)));
+      assertTrue(metrics.stream().anyMatch(m -> m.name.startsWith("base_")));
+      assertTrue(metrics.stream().anyMatch(m -> m.name.startsWith("vendor_")));
    }
 
    @Test
@@ -134,16 +135,15 @@ public class RestMetricsResourceIT {
       RestMetricsClient metricsClient = client.metrics();
 
       // this is a histogram of write times
-      String cacheName = SERVERS.getMethodName();
-      String metricName = "infinispan_statistics_store_times_seconds_max";
-      int numPuts = 10;
+      String metricName = "vendor_cache_manager_default_cache_" + SERVERS.getMethodName() + "_statistics_store_times_seconds_max";
+      int NUM_PUTS = 10;
 
-      findMetric(getMetrics(metricsClient), metricName, "cache", cacheName).value().isZero();
+      findMetric(getMetrics(metricsClient), metricName).value().isZero();
 
       // put some entries then check that the stats were updated
       RestCacheClient cache = client.cache(SERVERS.getMethodName());
 
-      for (int i = 0; i < numPuts; i++) {
+      for (int i = 0; i < NUM_PUTS; i++) {
          assertStatus(NO_CONTENT, cache.put("k" + i, "v" + i));
       }
 
@@ -156,18 +156,16 @@ public class RestMetricsResourceIT {
       RestMetricsClient metricsClient = client.metrics();
 
       String cacheName = SERVERS.getMethodName();
-      String metricName = "infinispan_statistics_stores";
+      String metricName = String.format("vendor_cache_manager_default_cache_%s_statistics_stores", cacheName);
 
-      var metric = findMetric(getMetrics(metricsClient), metricName, "cache", cacheName);
+      var metric = findMetric(getMetrics(metricsClient), metricName);
       metric.value().isZero();
       metric.assertTagPresent("cache", cacheName);
 
       // delete cache and check that the metric is gone
       assertStatus(OK, client.cache(SERVERS.getMethodName()).delete());
 
-      var metrics = getMetrics(metricsClient);
-      assertTrue(metrics.stream().noneMatch(m -> m.matches(metricName) && m.containsTag("cache", cacheName)));
-      assertTrue(metrics.stream().anyMatch(m -> m.name.startsWith("infinispan_")));
+      assertTrue(getMetrics(metricsClient).stream().noneMatch(m -> m.matches(metricName)));
    }
 
    @Test
@@ -189,17 +187,17 @@ public class RestMetricsResourceIT {
       List<Metric> metrics = getMetrics(metricsClient);
 
       // async requests counter
-      assertDetailedMetrics(metrics, "jgroups_stats_async_requests_total", IS_POSITIVE);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_LegacyRestMetricsResourceIT_stats_async_requests_total", IS_POSITIVE);
       // timed out request counter (no timeouts expected during testing)
-      assertDetailedMetrics(metrics, "jgroups_stats_timed_out_requests_total", IS_ZERO);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_LegacyRestMetricsResourceIT_stats_timed_out_requests_total", IS_ZERO);
       // sync requests histogram
-      assertDetailedMetrics(metrics, "jgroups_stats_sync_requests_seconds_count", IS_POSITIVE);
-      assertDetailedMetrics(metrics, "jgroups_stats_sync_requests_seconds_sum", LESS_THAN_ONE);
-      assertDetailedMetrics(metrics, "jgroups_stats_sync_requests_seconds_max", LESS_THAN_ONE);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_LegacyRestMetricsResourceIT_stats_sync_requests_seconds_count", IS_POSITIVE);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_LegacyRestMetricsResourceIT_stats_sync_requests_seconds_sum", LESS_THAN_ONE);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_LegacyRestMetricsResourceIT_stats_sync_requests_seconds_max", LESS_THAN_ONE);
       // bytes sent distribution summary
-      assertDetailedMetrics(metrics, "jgroups_stats_bytes_sent_count", IS_POSITIVE);
-      assertDetailedMetrics(metrics, "jgroups_stats_bytes_sent_sum", IS_POSITIVE);
-      assertDetailedMetrics(metrics, "jgroups_stats_bytes_sent_max", IS_POSITIVE);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_LegacyRestMetricsResourceIT_stats_bytes_sent_count", IS_POSITIVE);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_LegacyRestMetricsResourceIT_stats_bytes_sent_sum", IS_POSITIVE);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_LegacyRestMetricsResourceIT_stats_bytes_sent_max", IS_POSITIVE);
    }
 
    @Test
@@ -219,12 +217,10 @@ public class RestMetricsResourceIT {
 
       log.debugf("Test hit:%n%s", metrics.stream().map(Metric::toString).collect(Collectors.joining("\n")));
 
-      String cacheName = SERVERS.getMethodName();
-
       // unable to test remove hit since the return value is always ignored.
       for (var i = 0; i < OWNERSHIP.length; ++i) {
-         reads[i] = (int) findMetric(metrics, String.format("infinispan_statistics_hit_%s_total", OWNERSHIP[i]), "cache", cacheName).value;
-         writes[i] = (int) findMetric(metrics, String.format("infinispan_statistics_store_%s_total", OWNERSHIP[i]), "cache", cacheName).value;
+         reads[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_hit_%s_total", cache.name(), OWNERSHIP[i])).value;
+         writes[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_store_%s_total", cache.name(), OWNERSHIP[i])).value;
       }
 
       // only 1 operation was performed
@@ -254,10 +250,10 @@ public class RestMetricsResourceIT {
       log.debugf("Test miss:%n%s", metrics.stream().map(Metric::toString).collect(Collectors.joining("\n")));
 
       for (var i = 0; i < OWNERSHIP.length; ++i) {
-         reads[i] = (int) findMetric(metrics, String.format("infinispan_statistics_miss_%s_total", OWNERSHIP[i]), "cache", cache.name()).value;
-         writes[i] = (int) findMetric(metrics, String.format("infinispan_statistics_store_%s_total", OWNERSHIP[i]), "cache", cache.name()).value;
-         rm_misses[i] = (int) findMetric(metrics, String.format("infinispan_statistics_remove_miss_%s_total", OWNERSHIP[i]), "cache", cache.name()).value;
-         rm_hits[i] = (int) findMetric(metrics, String.format("infinispan_statistics_remove_hit_%s_total", OWNERSHIP[i]), "cache", cache.name()).value;
+         reads[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_miss_%s_total", cache.name(), OWNERSHIP[i])).value;
+         writes[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_store_%s_total", cache.name(), OWNERSHIP[i])).value;
+         rm_misses[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_remove_miss_%s_total", cache.name(), OWNERSHIP[i])).value;
+         rm_hits[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_remove_hit_%s_total", cache.name(), OWNERSHIP[i])).value;
       }
 
       // 1 miss + 1 hit (remove performs a read before removing)
@@ -318,19 +314,13 @@ public class RestMetricsResourceIT {
       return prometheusScrape.lines()
             .map(PROMETHEUS_PATTERN::matcher)
             .filter(Matcher::matches)
-            .map(RestMetricsResourceIT::matcherToMetric)
+            .map(LegacyRestMetricsResourceIT::matcherToMetric)
             .peek(log::debug)
             .toList();
    }
 
    public static Metric findMetric(List<Metric> metrics, String metricName) {
       var metricOpt = metrics.stream().filter(m -> m.matches(metricName)).findFirst();
-      assertTrue(metricOpt.isPresent());
-      return metricOpt.get();
-   }
-
-   public static Metric findMetric(List<Metric> metrics, String metricName, String tagKey, String tagValue) {
-      var metricOpt = metrics.stream().filter(m -> m.matches(metricName)).filter(m -> m.containsTag(tagKey, tagValue)).findFirst();
       assertTrue(metricOpt.isPresent());
       return metricOpt.get();
    }
