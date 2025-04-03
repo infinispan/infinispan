@@ -372,7 +372,7 @@ public class EmbeddedJsonCache {
     *           The JSON path.
     * @return A {@link CompletionStage} that will complete with a list of sizes
     */
-   public CompletionStage<List<Integer>> debug(byte[] key, byte[] jsonPath) {
+   public CompletionStage<List<Long>> debug(byte[] key, byte[] jsonPath) {
       return readWriteMap.eval(key, new JsonDebugMemoryFunction(jsonPath));
    }
 }

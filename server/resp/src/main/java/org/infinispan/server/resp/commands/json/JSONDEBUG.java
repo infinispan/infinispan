@@ -4,13 +4,10 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.commands.connection.MemoryEntrySizeUtils;
 import org.infinispan.server.resp.json.EmbeddedJsonCache;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
@@ -54,21 +51,9 @@ public class JSONDEBUG extends RespCommand implements Resp3Command {
          byte[] key = arguments.get(1);
          JSONCommandArgumentReader.CommandArgs commandArgs = JSONCommandArgumentReader.readCommandArgs(arguments, key, 2);
          EmbeddedJsonCache ejc = handler.getJsonCache();
-         if (commandArgs.isRoot()) {
-            CompletionStage<CacheEntry<byte[], Object>> cs = handler.typedCache(null).getCacheEntryAsync(key);
-            CompletionStage<Long> cs1 = cs
-                    .thenApply(e -> e == null ? 0L : MemoryEntrySizeUtils.calculateSize(key, (InternalCacheEntry<byte[], Object>) e));
-
-            if (commandArgs.isLegacy()) {
-               return  handler.stageToReturn(cs1, ctx, ResponseWriter.INTEGER);
-            }
-
-            return  handler.stageToReturn(cs1.thenApply(size -> List.of(size)), ctx, ResponseWriter.ARRAY_INTEGER);
-         }
-
-         CompletionStage<List<Integer>> debug = ejc.debug(key, commandArgs.jsonPath());
+         CompletionStage<List<Long>> debug = ejc.debug(key, commandArgs.jsonPath());
          if (commandArgs.isLegacy()) {
-            CompletionStage<Integer> cs = debug.thenApply(result -> result.isEmpty() ? 0 : result.get(0));
+            CompletionStage<Long> cs = debug.thenApply(result -> result.get(0));
             return  handler.stageToReturn(cs, ctx, ResponseWriter.INTEGER);
          }
          return  handler.stageToReturn(debug, ctx, ResponseWriter.ARRAY_INTEGER);

@@ -1,5 +1,9 @@
 package org.infinispan.server.resp;
 
+import static org.infinispan.server.core.ExternalizerIds.ITERATION_FILTER;
+
+import java.util.Map;
+
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -18,24 +22,21 @@ import org.infinispan.server.resp.json.JsonArrpopFunction;
 import org.infinispan.server.resp.json.JsonArrtrimFunction;
 import org.infinispan.server.resp.json.JsonBucket;
 import org.infinispan.server.resp.json.JsonClearFunction;
+import org.infinispan.server.resp.json.JsonDebugMemoryFunction;
 import org.infinispan.server.resp.json.JsonDelFunction;
 import org.infinispan.server.resp.json.JsonGetFunction;
 import org.infinispan.server.resp.json.JsonLenArrayFunction;
 import org.infinispan.server.resp.json.JsonLenObjFunction;
 import org.infinispan.server.resp.json.JsonLenStrFunction;
+import org.infinispan.server.resp.json.JsonMergeFunction;
 import org.infinispan.server.resp.json.JsonNumIncrOpFunction;
 import org.infinispan.server.resp.json.JsonNumMultOpFunction;
-import org.infinispan.server.resp.json.JsonMergeFunction;
 import org.infinispan.server.resp.json.JsonObjkeysFunction;
 import org.infinispan.server.resp.json.JsonRespFunction;
 import org.infinispan.server.resp.json.JsonSetFunction;
 import org.infinispan.server.resp.json.JsonStringAppendFunction;
 import org.infinispan.server.resp.json.JsonToggleFunction;
 import org.infinispan.server.resp.json.JsonTypeFunction;
-
-import java.util.Map;
-
-import static org.infinispan.server.core.ExternalizerIds.ITERATION_FILTER;
 
 @InfinispanModule(name = "resp", requiredModules = "core")
 public class RespModuleLifecycle implements ModuleLifecycle {
@@ -70,6 +71,7 @@ public class RespModuleLifecycle implements ModuleLifecycle {
       externalizerMap.put(JsonArrpopFunction.EXTERNALIZER.getId(), JsonArrpopFunction.EXTERNALIZER);
       externalizerMap.put(JsonMergeFunction.EXTERNALIZER.getId(), JsonMergeFunction.EXTERNALIZER);
       externalizerMap.put(JsonRespFunction.EXTERNALIZER.getId(), JsonRespFunction.EXTERNALIZER);
+      externalizerMap.put(JsonDebugMemoryFunction.EXTERNALIZER.getId(), JsonDebugMemoryFunction.EXTERNALIZER);
 
       // Externalizer that could be loaded by other modules.
       externalizerMap.put(ITERATION_FILTER, new IterationFilter.IterationFilterExternalizer());

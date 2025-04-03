@@ -1932,16 +1932,16 @@ public class JsonCommandsTest extends SingleNodeRespBaseTest {
       JsonValue jv = defaultJsonParser.createJsonValue("\"a\"");
       assertThat(redis.jsonSet(key, jpRoot, jv)).isEqualTo("OK");
       // JSON.DEBUG MEMORY doc .
-      assertThat(jsonDebugLegacy("MEMORY", key, ".")).isEqualTo(88L);
-      assertThat(jsonDebug("MEMORY", key, "$")).containsExactly(88L);
+      assertThat(jsonDebugLegacy("MEMORY", key, ".")).isEqualTo(24L);
+      assertThat(jsonDebug("MEMORY", key, "$")).containsExactly(24L);
       // JSON.SET doc $ '{"a":"b", "b": [{"a":2}, {"a":"c"}, {"a":5.4}, {"a":true},{"h":1}, {"a":["hello"]}]}'
       jv = defaultJsonParser.createJsonValue("""
               {"a":"b", "b": [{"a":2}, {"a":"c"}, {"a":5.4}, {"a":true}, {"a":["hello"]}]}
             """);
       assertThat(redis.jsonSet(key, jpRoot, jv)).isEqualTo("OK");
       // JSON.DEBUG MEMORY doc .
-      assertThat(jsonDebugLegacy("MEMORY", key, ".")).isEqualTo(152L);
-      assertThat(jsonDebug("MEMORY", key, "$")).containsExactly(152L);
+      assertThat(jsonDebugLegacy("MEMORY", key, ".")).isEqualTo(88L);
+      assertThat(jsonDebug("MEMORY", key, "$")).containsExactly(88L);
    }
 
    private Long jsonDebugLegacy(String subCommand, String key, String path) {

@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import org.ehcache.sizeof.SizeOf;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
@@ -22,9 +23,10 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.jayway.jsonpath.JsonPath;
 
 public class JsonDebugMemoryFunction
-      implements SerializableFunction<ReadWriteEntryView<byte[], JsonBucket>, List<Integer>> {
+      implements SerializableFunction<ReadWriteEntryView<byte[], JsonBucket>, List<Long>> {
    public static final String ERR_PATH_CAN_T_BE_NULL = "path can't be null";
    public static final AdvancedExternalizer<JsonDebugMemoryFunction> EXTERNALIZER = new JsonDebugMemoryFunction.Externalizer();
+   private static SizeOf sizeof = SizeOf.newInstance();
 
    byte[] path;
 
@@ -34,21 +36,24 @@ public class JsonDebugMemoryFunction
    }
 
    @Override
-   public List<Integer> apply(ReadWriteEntryView<byte[], JsonBucket> entryView) {
+   public List<Long> apply(ReadWriteEntryView<byte[], JsonBucket> entryView) {
       var doc = entryView.find().orElse(null);
       if (doc == null) {
-        return new ArrayList<>(0);
+        return List.of(0L);
       }
 
       var pathStr = new String(path, StandardCharsets.UTF_8);
       try {
+         if (JSONUtil.isRoot(path)) {
+            return List.of(sizeof.deepSizeOf(doc.value()));
+         }
          var rootNode = JSONUtil.objectMapper.readTree(doc.value());
          var jpCtx = JSONUtil.parserForGet.parse(rootNode);
          JsonPath jpath = JsonPath.compile(pathStr);
          ArrayNode nodeList = jpCtx.read(jpath);
-         List<Integer> resList = new ArrayList<>(nodeList.size());
+         List<Long> resList = new ArrayList<>(nodeList.size());
          for (JsonNode jsonNode : nodeList) {
-            resList.add((2 * jsonNode.toString().getBytes().length) + 38);
+            resList.add(Long.valueOf(jsonNode.toString().getBytes(StandardCharsets.UTF_8).length));
          }
          return resList;
       } catch (CacheException e) {
