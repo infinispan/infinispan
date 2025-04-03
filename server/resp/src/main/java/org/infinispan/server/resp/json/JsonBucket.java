@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.server.resp.ExternalizerIds;
+import org.infinispan.server.resp.commands.connection.MemoryEntrySizeUtils;
 
 /**
  * Bucket used to store Set data type.
@@ -16,6 +17,9 @@ import org.infinispan.server.resp.ExternalizerIds;
  * @since 15.0
  */
 public record JsonBucket(byte[] value) {
+   public static long memoryHeaderSize() {
+       return MemoryHeader.headerSize;
+   }
 
    public static final AdvancedExternalizer<JsonBucket> EXTERNALIZER = new JsonBucket.Externalizer();
 
@@ -44,5 +48,11 @@ public record JsonBucket(byte[] value) {
       public Integer getId() {
          return ExternalizerIds.JSON_BUCKET;
       }
+   }
+   // Only used to get the overhead without hardcoding
+   private static class MemoryHeader {
+      @SuppressWarnings("unused")
+      byte[] value;
+      static long headerSize = MemoryEntrySizeUtils.calculateSize(new MemoryHeader());
    }
 }
