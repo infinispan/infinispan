@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.test.core.persistence.Database;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 @org.infinispan.server.test.core.tags.Database
@@ -19,6 +20,8 @@ public class CDCCacheTestIT {
 
    @DatabaseTest
    public void testCacheWithCDCEnabled(Database database) {
+      Assumptions.assumeTrue(ChangeDataCaptureIT.isDatabaseVendorSupported(database), "Vendor not supported: " + database.getType());
+
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(CacheMode.DIST_SYNC);
       ChangeDataCaptureConfigurationBuilder builder = cb.addModule(ChangeDataCaptureConfigurationBuilder.class);

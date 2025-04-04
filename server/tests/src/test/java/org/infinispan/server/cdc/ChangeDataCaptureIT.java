@@ -7,8 +7,10 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.stream.Stream;
 
+import org.infinispan.cdc.internal.configuration.vendor.DatabaseVendor;
 import org.infinispan.server.persistence.PersistenceIT;
 import org.infinispan.server.test.core.ServerRunMode;
+import org.infinispan.server.test.core.persistence.Database;
 import org.infinispan.server.test.core.persistence.DatabaseServerListener;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
@@ -58,6 +60,15 @@ public class ChangeDataCaptureIT extends InfinispanSuite {
          return Arrays.stream(DATABASE_LISTENER.getDatabaseTypes())
                .map(DATABASE_LISTENER::getDatabase)
                .map(Arguments::of);
+      }
+   }
+
+   public static boolean isDatabaseVendorSupported(Database database) {
+      try {
+         DatabaseVendor vendor = DatabaseVendor.valueOf(database.getType().toUpperCase());
+         return vendor != DatabaseVendor.ORACLE && vendor != DatabaseVendor.DB2;
+      } catch (IllegalArgumentException ignore) {
+         return false;
       }
    }
 }

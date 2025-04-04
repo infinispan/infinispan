@@ -13,7 +13,7 @@
                 <xs:element name="connection-pool" type="jdbc-common:connection-pool" />
                 <xs:element name="simple-connection" type="jdbc-common:simple-connection" />
                 <xs:element name="cdi-data-source" type="jdbc-common:cdi-data-source" />
-                <xs:element name="simple-connection" type="jdbc-common:simple-connection" />
+                <xs:element name="data-source" type="jdbc-common:data-source" />
             </xs:choice>
 
             <xs:element name="table" type="tns:table" minOccurs="0" maxOccurs="1">
