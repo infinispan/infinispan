@@ -300,6 +300,12 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       Configuration configuration = builder.withProperties(p).build();
       validateConfiguration(configuration);
 
+      ConfigurationBuilder builderWithOtherTypes = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
+      p.replace(SO_TIMEOUT, 100); // adding an integer
+      p.replace(CONNECTION_POOL_MAX_ACTIVE, Short.valueOf("100")); //adding a short
+      configuration = builderWithOtherTypes.withProperties(p).build();
+      validateConfiguration(configuration);
+
       ConfigurationBuilder newBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       newBuilder.read(configuration, Combine.DEFAULT);
       Configuration newConfiguration = newBuilder.build();

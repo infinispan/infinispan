@@ -48,14 +48,29 @@ public class TypedProperties extends Properties {
       return new TypedProperties(p);
    }
 
+   /**
+    * Retrieves an integer property value. Returns the default if not found or invalid.
+    *
+    * @param key          the property key.
+    * @param defaultValue the value to return if the key is missing or invalid.
+    * @return the integer value of the property or the default value.
+    */
    public int getIntProperty(String key, int defaultValue) {
       return getIntProperty(key, defaultValue, false);
    }
 
+   /**
+    * Retrieves an integer property value. Returns the default if not found or invalid.
+    *
+    * @param key          the property key.
+    * @param defaultValue the value to return if the key is missing or invalid.
+    * @param doStringReplace  whether to apply string property replacement.
+    * @return the integer value of the property or the default value.
+    */
    public int getIntProperty(String key, int defaultValue, boolean doStringReplace) {
       Object value = this.get(key);
-      if (value instanceof Integer) {
-         return (int) value;
+      if (value instanceof Number) {
+         return ((Number) value).intValue();
       } else {
          return getPropertyFn(value, defaultValue, doStringReplace, valueStr -> {
             try {
@@ -68,14 +83,29 @@ public class TypedProperties extends Properties {
       }
    }
 
+   /**
+    * Retrieves a long property value. Returns the default if not found or invalid.
+    *
+    * @param key          the property key.
+    * @param defaultValue the value to return if the key is missing or invalid.
+    * @return the long value of the property or the default value.
+    */
    public long getLongProperty(String key, long defaultValue) {
       return getLongProperty(key, defaultValue, false);
    }
 
+   /**
+    * Retrieves a long property value. Returns the default if not found or invalid.
+    *
+    * @param key              the property key.
+    * @param defaultValue     the value to return if the key is missing or invalid.
+    * @param doStringReplace  whether to apply string property replacement.
+    * @return the long value of the property or the default value.
+    */
    public long getLongProperty(String key, long defaultValue, boolean doStringReplace) {
       Object value = this.get(key);
-      if (value instanceof Long) {
-         return (long) value;
+      if (value instanceof Number) {
+         return ((Number) value).longValue();
       } else {
          return getPropertyFn(value, defaultValue, doStringReplace, valueStr -> {
             try {
@@ -88,14 +118,30 @@ public class TypedProperties extends Properties {
       }
    }
 
+   /**
+    * Retrieves a duration property value in long.
+    * Returns the default if not found or invalid.
+    *
+    * @param key          the property key.
+    * @param defaultValue the value to return if the key is missing or invalid.
+    * @return the long value of the duration property or the default value.
+    */
    public long getDurationProperty(String key, long defaultValue) {
       return getDurationProperty(key, defaultValue, false);
    }
 
+   /**
+    * Retrieves a duration property value in long. Returns the default if not found or invalid.
+    *
+    * @param key          the property key.
+    * @param defaultValue the value to return if the key is missing or invalid.
+    * @param doStringReplace  whether to apply string property replacement.
+    * @return the long value of the duration property or the default value.
+    */
    public long getDurationProperty(String key, long defaultValue, boolean doStringReplace) {
       Object value = this.get(key);
-      if (value instanceof Long) {
-         return (long) value;
+      if (value instanceof Number) {
+         return ((Number) value).longValue();
       } else {
          return getPropertyFn(value, defaultValue, doStringReplace, valueStr -> {
             try {
@@ -108,10 +154,25 @@ public class TypedProperties extends Properties {
       }
    }
 
+   /**
+    * Retrieves a boolean property value. Returns the default if not found or invalid.
+    *
+    * @param key          the property key.
+    * @param defaultValue the value to return if the key is missing or invalid.
+    * @return the boolean value of the property or the default value.
+    */
    public boolean getBooleanProperty(String key, boolean defaultValue) {
       return getBooleanProperty(key, defaultValue, false);
    }
 
+   /**
+    * Retrieves a boolean property value. Returns the default if not found or invalid.
+    *
+    * @param key          the property key.
+    * @param defaultValue the value to return if the key is missing or invalid.
+    * @param doStringReplace  whether to apply string property replacement.
+    * @return the boolean value of the property or the default value.
+    */
    public boolean getBooleanProperty(String key, boolean defaultValue, boolean doStringReplace) {
       Object value = this.get(key);
       if (value instanceof Boolean) {
@@ -128,10 +189,25 @@ public class TypedProperties extends Properties {
       }
    }
 
+   /**
+    * Retrieves an enum property value. Returns the default if not found or invalid.
+    *
+    * @param key          the property key.
+    * @param defaultValue the value to return if the key is missing or invalid.
+    * @return the enum value of the property or the default value.
+    */
    public <T extends Enum<T>> T getEnumProperty(String key, Class<T> enumClass, T defaultValue) {
       return getEnumProperty(key, enumClass, defaultValue, false);
    }
 
+   /**
+    * Retrieves an enum property value. Returns the default if not found or invalid.
+    *
+    * @param key          the property key.
+    * @param defaultValue the value to return if the key is missing or invalid.
+    * @param doStringReplace  whether to apply string property replacement.
+    * @return the enum value of the property or the default value.
+    */
    public <T extends Enum<T>> T getEnumProperty(String key, Class<T> enumClass, T defaultValue, boolean doStringReplace) {
       Object value = this.get(key);
       if (value instanceof Enum && enumClass.isInstance(value)) {
@@ -184,7 +260,6 @@ public class TypedProperties extends Properties {
     * @param key new key
     * @param value new value
     * @return this TypedProperties instance for method chaining
-    *
     */
    public synchronized TypedProperties putIfAbsent(String key, String value) {
       if (getProperty(key) == null) {
@@ -199,16 +274,37 @@ public class TypedProperties extends Properties {
       return this;
    }
 
+   /**
+    * Sets an integer property value.
+    *
+    * @param key    the property key.
+    * @param value  the integer value to set.
+    * @return this {@code TypedProperties} instance for chaining.
+    */
    public synchronized TypedProperties setProperty(String key, int value) {
       super.setProperty(key, Integer.toString(value));
       return this;
    }
 
+   /**
+    * Sets a long property value.
+    *
+    * @param key    the property key.
+    * @param value  the long value to set.
+    * @return this {@code TypedProperties} instance for chaining.
+    */
    public synchronized TypedProperties setProperty(String key, long value) {
       super.setProperty(key, Long.toString(value));
       return this;
    }
 
+   /**
+    * Sets a boolean property value.
+    *
+    * @param key    the property key.
+    * @param value  the boolean value to set.
+    * @return this {@code TypedProperties} instance for chaining.
+    */
    public synchronized TypedProperties setProperty(String key, boolean value) {
       super.setProperty(key, Boolean.toString(value));
       return this;
