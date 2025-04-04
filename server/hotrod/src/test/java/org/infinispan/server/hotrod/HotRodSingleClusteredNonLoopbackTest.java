@@ -2,6 +2,7 @@ package org.infinispan.server.hotrod;
 
 import static org.infinispan.server.core.test.ServerTestingUtil.killServer;
 import static org.infinispan.server.hotrod.OperationStatus.Success;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertStatus;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.findNetworkInterfaces;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.getDefaultHotRodConfiguration;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
@@ -76,6 +77,7 @@ public class HotRodSingleClusteredNonLoopbackTest extends MultipleCacheManagersT
                                                   hotRodCacheConfiguration().build(),
                                                   EnumSet.of(InternalCacheRegistry.Flag.USER,
                                                              InternalCacheRegistry.Flag.PROTECTED));
+      assertStatus(hotRodClient.ping("MyInternalCache"), Success);
       TestResponse resp = hotRodClient
             .execute(0xA0, (byte) 0x01, "MyInternalCache", k(m), 0, 0, v(m), 0, (byte) 1, 0);
       assertEquals(resp.status, Success, "Status should have been 'Success' but instead was: " + resp.status);

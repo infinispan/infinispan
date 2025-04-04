@@ -59,10 +59,22 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void ping(HotRodHeader header, Subject subject) {
       // we need to throw an exception when the cache is inaccessible
-      // but ignore the default cache, because the client always pings the default cache first
-      if (!header.cacheName.isEmpty()) {
-         server.cache(server.getCacheInfo(header), header, subject);
+      // we ignore the default cache (empty) only when it doesn't have a default cache defined
+      if (!header.cacheName.isEmpty() || server.hasDefaultCache()) {
+         server.ensureCacheInitialized(header)
+               .whenComplete((__, t) -> {
+                  if (t != null) {
+                     writeException(header, t);
+                  } else {
+                     pingResults(header);
+                  }
+               });
+      } else {
+         pingResults(header);
       }
+   }
+
+   void pingResults(HotRodHeader header) {
       ConnectionMetadata metadata = ConnectionMetadata.getInstance(channel);
       metadata.protocolVersion(HotRodVersion.forVersion(header.version).toString());
       writeResponse(header, header.encoder().pingResponse(header, server, channel, OperationStatus.Success));

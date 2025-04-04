@@ -62,7 +62,7 @@ public abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
          nextServerPort += 50;
       }
 
-      hotRodClients = createClients(cacheName());
+      hotRodClients = createClients(cacheName(), pingOnConnect());
    }
 
    protected OptionalInt findHighestPort() {
@@ -75,8 +75,18 @@ public abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
                           .collect(Collectors.toList());
    }
 
+   List<HotRodClient> createClients(String cacheName, boolean pingOnConnect) {
+      return hotRodServers.stream()
+            .map(s -> createClient(s, cacheName, pingOnConnect))
+            .collect(Collectors.toList());
+   }
+
    protected HotRodClient createClient(HotRodServer server, String cacheName) {
       return createClient(server, cacheName, "127.0.0.1");
+   }
+
+   protected HotRodClient createClient(HotRodServer server, String cacheName, boolean pingOnConnect) {
+      return new HotRodClient("127.0.0.1", server.getPort(), cacheName, protocolVersion(), pingOnConnect);
    }
 
    protected HotRodClient createClient(HotRodServer server, String cacheName, String address) {
@@ -142,6 +152,10 @@ public abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
 
    protected List<HotRodClient> clients() {
       return hotRodClients;
+   }
+
+   protected boolean pingOnConnect() {
+      return true;
    }
 
    protected abstract String cacheName();

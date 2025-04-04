@@ -150,4 +150,18 @@ public class CacheInfo {
    public void updateClientTopologyRef() {
       clientTopologyRef.set(clientTopology);
    }
+
+   @Override
+   public String toString() {
+      return "CacheInfo{" +
+            "cacheName='" + cacheName + '\'' +
+            ", balancer=" + balancer +
+            ", numSegments=" + numSegments +
+            ", servers=" + servers +
+            ", primarySegments=" + primarySegments +
+            ", consistentHash=" + consistentHash +
+            ", clientTopologyRef=" + clientTopologyRef +
+            ", clientTopology=" + clientTopology +
+            '}';
+   }
 }

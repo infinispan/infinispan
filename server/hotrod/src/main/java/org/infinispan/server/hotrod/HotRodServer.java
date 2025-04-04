@@ -8,7 +8,6 @@ import static org.infinispan.counter.EmbeddedCounterManagerFactory.asCounterMana
 import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 
-import javax.security.auth.Subject;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -17,6 +16,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,10 +26,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import javax.security.auth.Subject;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.executors.NonBlockingResource;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.Marshaller;
@@ -37,6 +41,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.CacheMode;
@@ -91,6 +96,7 @@ import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
 import org.infinispan.server.iteration.DefaultIterationManager;
 import org.infinispan.server.iteration.IterationManager;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.concurrent.BlockingManager;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -132,6 +138,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private TimeService timeService;
    private InternalCacheRegistry internalCacheRegistry;
    private ConfigurationManager configurationManager;
+   private BlockingManager blockingManager;
 
    public HotRodServer() {
       super("HotRod");
@@ -242,6 +249,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cacheManager);
       internalCacheRegistry = gcr.getComponent(InternalCacheRegistry.class);
       configurationManager = gcr.getComponent(ConfigurationManager.class);
+      blockingManager = gcr.getComponent(BlockingManager.class);
       this.iterationManager = new DefaultIterationManager(gcr.getTimeService());
       this.streamingManager = new StreamingManager(gcr.getTimeService());
       this.hasDefaultCache = configuration.defaultCacheName() != null || cacheManager.getCacheManagerConfiguration().defaultCacheName().isPresent();
@@ -403,6 +411,24 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return new EmbeddedMultimapCache(cache, supportsDuplicates);
    }
 
+   public CompletionStage<Void> ensureCacheInitialized(HotRodHeader header) {
+      String cacheName = header.cacheName;
+      if (isCacheIgnored(cacheName)) {
+         return CompletableFuture.failedFuture(new CacheUnavailableException());
+      }
+      if (knownCaches.get(cacheName) != null) {
+         return CompletableFutures.completedNull();
+      }
+      boolean keep = checkCacheIsAvailable(cacheName, header.version, header.messageId);
+      String validCacheName = validCacheName(cacheName);
+      if (cacheManager.isRunning(validCacheName)) {
+         actualCacheRetrieval(cacheName, keep, true);
+         return CompletableFutures.completedNull();
+      }
+      // Creating a cache is inherently blocking
+      return blockingManager.runBlocking(() -> actualCacheRetrieval(cacheName, keep, false), "cache-initialization");
+   }
+
    public ExtendedCacheInfo getCacheInfo(HotRodHeader header) {
       return getCacheInfo(header.cacheName, header.version, header.messageId, true);
    }
@@ -412,16 +438,21 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          throw new CacheUnavailableException();
       }
       ExtendedCacheInfo info = knownCaches.get(cacheName);
-      if (info == null) {
-         boolean keep = checkCacheIsAvailable(cacheName, hotRodVersion, messageId);
+      if (info != null) {
+         return info;
+      }
+      boolean keep = checkCacheIsAvailable(cacheName, hotRodVersion, messageId);
 
-         AdvancedCache<byte[], byte[]> cache = obtainAnonymizedCache(cacheName);
-         Configuration cacheCfg = SecurityActions.getCacheConfiguration(cache);
-         info = new ExtendedCacheInfo(cache, cacheCfg);
-         updateCacheInfo(info);
-         if (keep) {
-            knownCaches.put(cacheName, info);
-         }
+      return actualCacheRetrieval(cacheName, keep, true);
+   }
+
+   private ExtendedCacheInfo actualCacheRetrieval(String cacheName, boolean keep, boolean assertRunning) {
+      AdvancedCache<byte[], byte[]> cache = obtainAnonymizedCache(cacheName, assertRunning);
+      Configuration cacheCfg = SecurityActions.getCacheConfiguration(cache);
+      ExtendedCacheInfo info = new ExtendedCacheInfo(cache, cacheCfg);
+      updateCacheInfo(info);
+      if (keep) {
+         knownCaches.put(cacheName, info);
       }
       return info;
    }
@@ -455,8 +486,16 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       info.update(hasIndexing);
    }
 
-   private AdvancedCache<byte[], byte[]> obtainAnonymizedCache(String cacheName) {
-      String validCacheName = cacheName.isEmpty() ? defaultCacheName() : cacheName;
+   private String validCacheName(String cacheName) {
+      return cacheName.isEmpty() ? defaultCacheName() : cacheName;
+   }
+
+   private AdvancedCache<byte[], byte[]> obtainAnonymizedCache(String cacheName, boolean assertRunning) {
+      String validCacheName = validCacheName(cacheName);
+      boolean isRunning = cacheManager.isRunning(validCacheName);
+      if (assertRunning && !isRunning && Thread.currentThread() instanceof NonBlockingResource) {
+         throw new IllegalLifecycleStateException("Cache " + cacheName + " is not running and was attempted to be retrieved on a non blocking thread");
+      }
       Cache<byte[], byte[]> cache = SecurityActions.getCache(cacheManager, validCacheName);
       return cache.getAdvancedCache();
    }
