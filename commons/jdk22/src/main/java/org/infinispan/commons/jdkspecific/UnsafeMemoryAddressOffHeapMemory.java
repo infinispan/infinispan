@@ -1,15 +1,16 @@
-package org.infinispan.commons.jdk22;
+package org.infinispan.commons.jdkspecific;
 
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import org.infinispan.commons.jdk22.logging.Jdk22Log;
-import org.infinispan.commons.jdk22.logging.Jdk22LogFactory;
 import org.infinispan.commons.spi.OffHeapMemory;
 
 /**
@@ -18,9 +19,9 @@ import org.infinispan.commons.spi.OffHeapMemory;
  * @author wburns
  * @since 15.1
  */
-public class UnsafeMemoryAddressOffHeapMemory implements OffHeapMemory {
-   private static final Jdk22Log log = Jdk22LogFactory.getLog(UnsafeMemoryAddressOffHeapMemory.class);
-   private final ConcurrentMap<Long, Long> allocatedBlocks = log.isTraceEnabled() ? new ConcurrentHashMap<>() : null;
+class UnsafeMemoryAddressOffHeapMemory implements OffHeapMemory {
+   private static final Logger log = Logger.getLogger(MethodHandles.lookup().lookupClass().getName());
+   private final ConcurrentMap<Long, Long> allocatedBlocks = isFinerEnabled() ? new ConcurrentHashMap<>() : null;
 
    static final UnsafeMemoryAddressOffHeapMemory INSTANCE = new UnsafeMemoryAddressOffHeapMemory();
 
@@ -61,19 +62,23 @@ public class UnsafeMemoryAddressOffHeapMemory implements OffHeapMemory {
 
    private UnsafeMemoryAddressOffHeapMemory() { }
 
+   private static boolean isFinerEnabled() {
+      return log.isLoggable(Level.FINER);
+   }
+
    public byte getByte(long srcAddress, long offset) {
       checkAddress(srcAddress, offset + 1);
       byte value = memorySegment.get(ValueLayout.JAVA_BYTE, srcAddress + offset);
-      if (log.isTraceEnabled()) {
-         log.tracef("Read byte value 0x%02x from address 0x%016x+%d", value, srcAddress, offset);
+      if (isFinerEnabled()) {
+         log.finer("Read byte value 0x%02x from address 0x%016x+%d".formatted(value, srcAddress, offset));
       }
       return value;
    }
 
    public void putByte(long destAddress, long offset, byte value) {
       checkAddress(destAddress, offset + 1);
-      if (log.isTraceEnabled()) {
-         log.tracef("Wrote byte value 0x%02x to address 0x%016x+%d", value, destAddress, offset);
+      if (isFinerEnabled()) {
+         log.finer("Wrote byte value 0x%02x to address 0x%016x+%d".formatted(value, destAddress, offset));
       }
       memorySegment.set(ValueLayout.JAVA_BYTE, destAddress + offset, value);
    }
@@ -81,16 +86,16 @@ public class UnsafeMemoryAddressOffHeapMemory implements OffHeapMemory {
    public int getInt(long srcAddress, long offset) {
       checkAddress(srcAddress, offset + 4);
       int value = memorySegment.get(ValueLayout.JAVA_INT_UNALIGNED,srcAddress + offset);
-      if (log.isTraceEnabled()) {
-         log.tracef("Read int value 0x%08x from address 0x%016x+%d", value, srcAddress, offset);
+      if (isFinerEnabled()) {
+         log.finer("Read int value 0x%08x from address 0x%016x+%d".formatted(value, srcAddress, offset));
       }
       return value;
    }
 
    public void putInt(long destAddress, long offset, int value) {
       checkAddress(destAddress, offset + 4);
-      if (log.isTraceEnabled()) {
-         log.tracef("Wrote int value 0x%08x to address 0x%016x+%d", value, destAddress, offset);
+      if (isFinerEnabled()) {
+         log.finer("Wrote int value 0x%08x to address 0x%016x+%d".formatted(value, destAddress, offset));
       }
       memorySegment.set(ValueLayout.JAVA_INT_UNALIGNED, destAddress + offset, value);
    }
@@ -101,8 +106,8 @@ public class UnsafeMemoryAddressOffHeapMemory implements OffHeapMemory {
 
    public long getAndSetLong(long destAddress, long offset, long value) {
       checkAddress(destAddress, offset + 8);
-      if (log.isTraceEnabled()) {
-         log.tracef("Get and setting long value 0x%016x to address 0x%016x+%d", value, destAddress, offset);
+      if (isFinerEnabled()) {
+         log.finer("Get and setting long value 0x%016x to address 0x%016x+%d".formatted(value, destAddress, offset));
       }
       // Note this method can only be invoked with an address that is divisible by 8
       return (long) ValueLayout.JAVA_LONG.varHandle().getAndSet(memorySegment, destAddress + offset, value);
@@ -113,8 +118,8 @@ public class UnsafeMemoryAddressOffHeapMemory implements OffHeapMemory {
       // Note this method can only be invoked with an address that is divisible by 8
       long previous = (long) ValueLayout.JAVA_LONG.varHandle().getAndSet(memorySegment, destAddress + offset, value);
       if (previous != 0) {
-         if (log.isTraceEnabled()) {
-            log.tracef("Get and set long value 0x%016x to address 0x%016x+%d was 0x%016x", value, destAddress, offset, previous);
+         if (isFinerEnabled()) {
+            log.finer("Get and set long value 0x%016x to address 0x%016x+%d was 0x%016x".formatted(value, destAddress, offset, previous));
          }
       }
       return previous;
@@ -127,32 +132,32 @@ public class UnsafeMemoryAddressOffHeapMemory implements OffHeapMemory {
    private long getLong(long srcAddress, long offset, boolean alwaysTrace) {
       checkAddress(srcAddress, offset + 8);
       long value = memorySegment.get(ValueLayout.JAVA_LONG_UNALIGNED, srcAddress + offset);
-      if (log.isTraceEnabled() && (alwaysTrace || value != 0)) {
-         log.tracef("Read long value 0x%016x from address 0x%016x+%d", value, srcAddress, offset);
+      if (isFinerEnabled() && (alwaysTrace || value != 0)) {
+         log.finer("Read long value 0x%016x from address 0x%016x+%d".formatted(value, srcAddress, offset));
       }
       return value;
    }
 
    public void putLong(long destAddress, long offset, long value) {
       checkAddress(destAddress, offset + 8);
-      if (log.isTraceEnabled()) {
-         log.tracef("Wrote long value 0x%016x to address 0x%016x+%d", value, destAddress, offset);
+      if (isFinerEnabled()) {
+         log.finer("Wrote long value 0x%016x to address 0x%016x+%d".formatted(value, destAddress, offset));
       }
       memorySegment.set(ValueLayout.JAVA_LONG_UNALIGNED, destAddress + offset, value);
    }
 
    public void getBytes(long srcAddress, long srcOffset, byte[] destArray, long destOffset, long length) {
       checkAddress(srcAddress, srcOffset + length);
-      if (log.isTraceEnabled()) {
-         log.tracef("Read %d bytes from address 0x%016x+%d into array %s+%d", length, srcAddress, srcOffset, destArray, destOffset);
+      if (isFinerEnabled()) {
+         log.finer("Read %d bytes from address 0x%016x+%d into array %s+%d".formatted(length, srcAddress, srcOffset, destArray, destOffset));
       }
       MemorySegment.copy(memorySegment, srcAddress + srcOffset, MemorySegment.ofArray(destArray), destOffset, length);
    }
 
    public void putBytes(byte[] srcArray, long srcOffset, long destAddress, long destOffset, long length) {
       checkAddress(destAddress, destOffset + length);
-      if (log.isTraceEnabled()) {
-         log.tracef("Wrote %d bytes from array %s+%d to address 0x%016x+%d", length, srcArray, srcOffset, destAddress, destOffset);
+      if (isFinerEnabled()) {
+         log.finer("Wrote %d bytes from array %s+%d to address 0x%016x+%d".formatted(length, srcArray, srcOffset, destAddress, destOffset));
       }
       MemorySegment.copy(MemorySegment.ofArray(srcArray), srcOffset, memorySegment, destAddress + destOffset, length);
    }
@@ -161,14 +166,14 @@ public class UnsafeMemoryAddressOffHeapMemory implements OffHeapMemory {
       checkAddress(srcAddress, srcOffset + length);
       checkAddress(destAddress, destOffset + length);
 
-      if (log.isTraceEnabled()) {
-         log.tracef("Copying %d bytes from address 0x%016x+%d to address 0x%016x+%d", length, srcAddress, srcOffset, destAddress, destOffset);
+      if (isFinerEnabled()) {
+         log.finer("Copying %d bytes from address 0x%016x+%d to address 0x%016x+%d".formatted(length, srcAddress, srcOffset, destAddress, destOffset));
       }
       MemorySegment.copy(memorySegment, srcAddress + srcOffset, memorySegment, destAddress + destOffset, length);
    }
 
    private void checkAddress(long address, long offset) {
-      if (!log.isTraceEnabled())
+      if (!isFinerEnabled())
          return;
 
       Long blockSize = allocatedBlocks.get(address);
@@ -185,7 +190,7 @@ public class UnsafeMemoryAddressOffHeapMemory implements OffHeapMemory {
       } catch (Throwable e) {
          throw new RuntimeException(e);
       }
-      if (log.isTraceEnabled()) {
+      if (isFinerEnabled()) {
          Long prev = allocatedBlocks.put(address, size);
          if (prev != null) {
             throw new IllegalArgumentException();
@@ -195,7 +200,7 @@ public class UnsafeMemoryAddressOffHeapMemory implements OffHeapMemory {
    }
 
    public void free(long address) {
-      if (log.isTraceEnabled()) {
+      if (isFinerEnabled()) {
          Long prev = allocatedBlocks.remove(address);
          if (prev == null) {
             throw new IllegalArgumentException();
@@ -211,7 +216,7 @@ public class UnsafeMemoryAddressOffHeapMemory implements OffHeapMemory {
    @Override
    public void setMemory(long address, long bytes, byte value) {
       MemorySegment.ofAddress(address)
-                  .reinterpret(bytes)
-                        .fill(value);
+            .reinterpret(bytes)
+            .fill(value);
    }
 }
