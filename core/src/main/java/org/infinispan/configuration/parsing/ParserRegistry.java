@@ -254,11 +254,11 @@ public class ParserRegistry implements NamespaceMappingParser {
 
    private boolean isSupportedNamespaceVersion(Namespace namespace, String version) {
       short reqVersion = Version.getVersionShort(version);
-      if (reqVersion < Version.getVersionShort(namespace.since())) {
+      if (Short.compareUnsigned(reqVersion, Version.getVersionShort(namespace.since())) < 0) {
          return false;
       }
       short untilVersion = !namespace.until().isEmpty() ? Version.getVersionShort(namespace.until()) : Version.getVersionShort();
-      return reqVersion <= untilVersion;
+      return Short.compareUnsigned(reqVersion, untilVersion) <= 0;
    }
 
    /**
