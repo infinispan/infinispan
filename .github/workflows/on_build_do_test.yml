@@ -64,14 +64,15 @@ jobs:
           sparse-checkout: ".github"
           fetch-depth: 1
 
-      - name: Setup Java
-        uses: ./.github/actions/setup-java
-
       - uses: graalvm/setup-graalvm@v1
         with:
           java-version: 21
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          set-java-home: 'false'
+
+      - name: Setup Java
+        uses: ./.github/actions/setup-java
 
       - name: Extract Maven Artifacts
         uses: ./.github/actions/extract-maven-artifacts
