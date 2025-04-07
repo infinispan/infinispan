@@ -2390,4 +2390,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "%s marshaller implementation not overridden in SerializationContext", id = 704)
    IllegalStateException marshallerNotOverridden(String className);
+
+   @Message(value = "Max idle value must be less than lifespan when configured. Max idle value is %s and lifespan is %s", id = 705)
+   CacheConfigurationException maxIdleGreaterThanOrEqualLifespan(String maxIdle, String lifespan);
 }

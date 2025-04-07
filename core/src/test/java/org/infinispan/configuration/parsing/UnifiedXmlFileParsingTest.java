@@ -553,7 +553,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(20000, c.memory().size());
             assertEquals(10000, c.expiration().wakeUpInterval());
             assertEquals(10, c.expiration().lifespan());
-            assertEquals(10, c.expiration().maxIdle());
+            assertEquals(5, c.expiration().maxIdle());
             assertFalse(c.persistence().passivation());
             StoreConfiguration fileStore = getStoreConfiguration(c, getFileStoreClass(schemaMajor));
             assertFalse(fileStore.purgeOnStartup());
@@ -578,7 +578,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(20500, c.memory().size());
             assertEquals(10500, c.expiration().wakeUpInterval());
             assertEquals(11, c.expiration().lifespan());
-            assertEquals(11, c.expiration().maxIdle());
+            assertEquals(6, c.expiration().maxIdle());
             assertFalse(c.indexing().enabled());
 
             c = getConfiguration(holder, "repl");
@@ -597,7 +597,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(21000, c.memory().size());
             assertEquals(11000, c.expiration().wakeUpInterval());
             assertEquals(12, c.expiration().lifespan());
-            assertEquals(12, c.expiration().maxIdle());
+            assertEquals(7, c.expiration().maxIdle());
             assertFalse(c.clustering().stateTransfer().fetchInMemoryState());
             assertEquals(60000, c.clustering().stateTransfer().timeout());
             assertEquals(10000, c.clustering().stateTransfer().chunkSize());
@@ -627,7 +627,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(21500, c.memory().size());
             assertEquals(11500, c.expiration().wakeUpInterval());
             assertEquals(13, c.expiration().lifespan());
-            assertEquals(13, c.expiration().maxIdle());
+            assertEquals(8, c.expiration().maxIdle());
             assertTrue(c.clustering().stateTransfer().fetchInMemoryState());
             assertEquals(60500, c.clustering().stateTransfer().timeout());
             assertEquals(10500, c.clustering().stateTransfer().chunkSize());

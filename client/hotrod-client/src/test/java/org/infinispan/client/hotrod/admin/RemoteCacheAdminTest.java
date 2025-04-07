@@ -169,7 +169,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       String xml = String.format(
             "<infinispan><cache-container><distributed-cache name=\"%s\"><encoding><key " +
             "media-type=\"text/plain\"/><value media-type=\"application/json\"/></encoding><expiration " +
-            "interval=\"10000\" lifespan=\"10\" max-idle=\"10\"/></distributed-cache></cache-container></infinispan>",
+            "interval=\"10000\" lifespan=\"10\" max-idle=\"5\"/></distributed-cache></cache-container></infinispan>",
             cacheName);
       cacheCreateWithStringConfiguration(cacheName, xml);
    }
@@ -179,7 +179,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       String xml = String.format(
             "<distributed-cache name=\"%s\"><encoding><key media-type=\"text/plain\"/><value " +
             "media-type=\"application/json\"/></encoding><expiration interval=\"10000\" lifespan=\"10\" " +
-            "max-idle=\"10\"/></distributed-cache>",
+            "max-idle=\"5\"/></distributed-cache>",
             cacheName);
       cacheCreateWithStringConfiguration(cacheName, xml);
    }
@@ -199,7 +199,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
             "    \"expiration\" : {\n" +
             "      \"interval\" : \"10000\",\n" +
             "      \"lifespan\" : \"10\",\n" +
-            "      \"max-idle\" : \"10\"\n" +
+            "      \"max-idle\" : \"5\"\n" +
             "    }\n" +
             "  }\n" +
             "}\n";
@@ -218,7 +218,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
             "  expiration:\n"+
             "    interval: 10000\n"+
             "    lifespan: 10\n"+
-            "    max-idle: 10\n";
+            "    max-idle: 5\n";
       cacheCreateWithStringConfiguration(cacheName, yaml);
    }
 
@@ -228,7 +228,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       Configuration configuration = manager(0).getCache(cacheName).getCacheConfiguration();
       assertEquals(10000, configuration.expiration().wakeUpInterval());
       assertEquals(10, configuration.expiration().lifespan());
-      assertEquals(10, configuration.expiration().maxIdle());
+      assertEquals(5, configuration.expiration().maxIdle());
       assertEquals(MediaType.TEXT_PLAIN, configuration.encoding().keyDataType().mediaType());
       assertEquals(MediaType.APPLICATION_JSON, configuration.encoding().valueDataType().mediaType());
    }
@@ -256,13 +256,13 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
    public void cacheCreateWithEmbeddedConfigurationTest(Method m) {
       String cacheName = m.getName();
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.expiration().wakeUpInterval(10000).maxIdle(10).lifespan(10);
+      builder.expiration().wakeUpInterval(10000).maxIdle(5).lifespan(10);
       client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE)
                .getOrCreateCache(cacheName, builder.build());
       Configuration configuration = manager(0).getCache(cacheName).getCacheConfiguration();
       assertEquals(10000, configuration.expiration().wakeUpInterval());
       assertEquals(10, configuration.expiration().lifespan());
-      assertEquals(10, configuration.expiration().maxIdle());
+      assertEquals(5, configuration.expiration().maxIdle());
    }
 
    public void cacheReindexTest(Method m) {

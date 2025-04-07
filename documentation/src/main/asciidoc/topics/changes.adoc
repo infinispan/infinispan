@@ -8,6 +8,12 @@ configuration or `@SerializeWith` annotations on classes. Users of the jboss-mar
 `AdvancedExternalizer` should either 1) migrate to using Protostream based marshalling (recommended), or 2) replace
 `AdvancedExternalizer` with `org.jboss.marshalling.Externalize` implementations.
 
+=== Expiration configuration validation
+
+We now will prevent a cache from being started if it has a max-idle setting that is greater than or
+equal to its lifespan expiration. This configuration meant that max-idle was enabled with no benefit
+as lifespan would always remove the entry first.
+
 == Upgrading from 15.1 to 15.2
 
 === Native Server

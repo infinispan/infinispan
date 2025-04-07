@@ -1325,7 +1325,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    @Test
    public void testStreamEntriesWithMetadataAndExpirationTimesConvertedToSeconds() {
       RestEntity textValue = RestEntity.create(TEXT_PLAIN, "value1");
-      join(client.cache("default").put("key1", TEXT_PLAIN_TYPE, textValue, 1000, 5000));
+      join(client.cache("default").put("key1", TEXT_PLAIN_TYPE, textValue, 5000, 1000));
       RestResponse response = join(client.cache("default").entries(1, true));
       List<Json> jsons = Json.read(response.body()).asJsonList();
 
@@ -1334,8 +1334,8 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       String entry = first.toPrettyString();
       assertThat(entry).contains("\"key\" : \"key1");
       assertThat(entry).contains("\"value\" : \"value1");
-      assertThat(entry).contains("\"timeToLiveSeconds\" : 1000");
-      assertThat(entry).contains("\"maxIdleTimeSeconds\" : 5000");
+      assertThat(entry).contains("\"timeToLiveSeconds\" : 5000");
+      assertThat(entry).contains("\"maxIdleTimeSeconds\" : 1000");
    }
 
    @Test
