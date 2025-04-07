@@ -178,6 +178,16 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
       if (touch.isModified() && touch.get() == TouchMode.SYNC && !clustering().cacheMode().isSynchronous()) {
          throw Log.CONFIG.invalidTouchMode(clustering().cacheMode());
       }
+      Attribute<TimeQuantity> maxIdle = attributes.attribute(MAX_IDLE);
+      Attribute<TimeQuantity> lifespan = attributes.attribute(LIFESPAN);
+      if (maxIdle.isModified() && lifespan.isModified()) {
+         TimeQuantity maxIdleTime = maxIdle.get();
+         TimeQuantity lifespanTime = lifespan.get();
+         if (maxIdleTime.longValue() > 0 && lifespanTime.longValue() > 0 &&
+               maxIdleTime.toDuration().compareTo(lifespanTime.toDuration()) >= 0) {
+            throw Log.CONFIG.maxIdleGreaterThanOrEqualLifespan(maxIdleTime.toString(), lifespanTime.toString());
+         }
+      }
    }
 
    @Override

@@ -70,10 +70,10 @@ public class OffHeapSingleNodeExpirationEvictionTest extends OffHeapSingleNodeTe
             defaultConfig.expiration().lifespan(10, TimeUnit.MINUTES);
             break;
          case TRANSIENT:
-            defaultConfig.expiration().maxIdle(10, TimeUnit.MINUTES);
+            defaultConfig.expiration().maxIdle(5, TimeUnit.MINUTES);
             break;
          case TRANSIENT_MORTAL:
-            defaultConfig.expiration().lifespan(10, TimeUnit.MINUTES).maxIdle(10, TimeUnit.MINUTES);
+            defaultConfig.expiration().lifespan(10, TimeUnit.MINUTES).maxIdle(5, TimeUnit.MINUTES);
             break;
       }
       if (eviction) {
@@ -96,6 +96,7 @@ public class OffHeapSingleNodeExpirationEvictionTest extends OffHeapSingleNodeTe
       CacheEntry<String, String> entry = cache.getAdvancedCache().getDataContainer().peek(convertedKey);
 
       assertNotNull(entry);
+      long maxIdleTime = TimeUnit.MINUTES.toMillis(5);
       long storedTime = TimeUnit.MINUTES.toMillis(10);
       switch (expirationType) {
          case MORTAL:
@@ -106,13 +107,13 @@ public class OffHeapSingleNodeExpirationEvictionTest extends OffHeapSingleNodeTe
             break;
          case TRANSIENT:
             assertEquals(-1, entry.getLifespan());
-            assertEquals(storedTime, entry.getMaxIdle());
+            assertEquals(maxIdleTime, entry.getMaxIdle());
             assertEquals(-1, entry.getCreated());
             assertEquals(beforeInsert, entry.getLastUsed());
             break;
          case TRANSIENT_MORTAL:
             assertEquals(storedTime, entry.getLifespan());
-            assertEquals(storedTime, entry.getMaxIdle());
+            assertEquals(maxIdleTime, entry.getMaxIdle());
             assertEquals(beforeInsert, entry.getCreated());
             assertEquals(beforeInsert, entry.getLastUsed());
             break;

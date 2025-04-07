@@ -58,8 +58,8 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       counterManager.defineCounter("strong", CounterConfiguration.builder(CounterType.UNBOUNDED_STRONG).build());
    }
 
-   private static final long DEFAULT_LIFESPAN = 45190;
-   private static final long DEFAULT_MAX_IDLE = 1859446;
+   private static final long DEFAULT_LIFESPAN = 1859446;
+   private static final long DEFAULT_MAX_IDLE = 45190;
 
    private static final long DEFAULT_LIFESPAN_SECONDS = DEFAULT_LIFESPAN / 1000;
    private static final long DEFAULT_MAX_IDLE_SECONDS = DEFAULT_MAX_IDLE / 1000;

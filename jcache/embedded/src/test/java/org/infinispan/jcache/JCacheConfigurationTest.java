@@ -162,7 +162,7 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
             Configuration configuration = unwrap.getCacheConfiguration();
             assertEquals(10500, configuration.expiration().wakeUpInterval());
             assertEquals(11, configuration.expiration().lifespan());
-            assertEquals(11, configuration.expiration().maxIdle());
+            assertEquals(6, configuration.expiration().maxIdle());
          }
       });
    }

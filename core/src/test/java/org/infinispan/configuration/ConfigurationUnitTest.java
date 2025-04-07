@@ -609,4 +609,20 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
 
       }
    }
+
+   @Test(expectedExceptions = CacheConfigurationException.class,
+         expectedExceptionsMessageRegExp = "ISPN(\\d)*: Max idle value must be less.*")
+   public void testMaxIdleLargerThanLifespanMillis() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.expiration().maxIdle("100").lifespan("10")
+            .validate();
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class,
+         expectedExceptionsMessageRegExp = "ISPN(\\d)*: Max idle value must be less.*")
+   public void testMaxIdleLargerThanLifespanTimeUnit() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.expiration().maxIdle("1 m").lifespan("10 s")
+            .validate();
+   }
 }
