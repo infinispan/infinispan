@@ -140,7 +140,7 @@
          </encoding>
          <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
          <transaction mode="FULL_XA" stop-timeout="60000" locking="OPTIMISTIC" transaction-manager-lookup="org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup" complete-timeout="34000" reaper-interval="35000" auto-commit="true" />
-         <expiration interval="10000" lifespan="10" max-idle="10"/>
+         <expiration interval="10000" lifespan="10" max-idle="5"/>
          <persistence passivation="false" availability-interval="2000" connection-attempts="5">
             <file-store path="path" shared="false" preload="true" purge="false">
                <write-behind modification-queue-size="2048" fail-silently="true"/>
@@ -152,7 +152,7 @@
       <invalidation-cache name="invalid" mode="SYNC" statistics="true">
          <locking acquire-timeout="30500" concurrency-level="2500" isolation="READ_UNCOMMITTED" striping="true"/>
          <transaction mode="BATCH" stop-timeout="60500"  locking="OPTIMISTIC"/>
-         <expiration interval="10500" lifespan="11" max-idle="11"/>
+         <expiration interval="10500" lifespan="11" max-idle="6"/>
          <memory storage="BINARY" max-count="20500"/>
       </invalidation-cache>
       <replicated-cache name="repl" mode="SYNC" statistics="true" segments="16"
@@ -164,7 +164,7 @@
          </encoding>
          <locking acquire-timeout="31000" concurrency-level="3000" isolation="SERIALIZABLE" striping="true"/>
          <transaction mode="BATCH" stop-timeout="61000" locking="PESSIMISTIC"/>
-         <expiration interval="11000" lifespan="12" max-idle="12" touch="ASYNC"/>
+         <expiration interval="11000" lifespan="12" max-idle="7" touch="ASYNC"/>
          <persistence>
             <cluster-loader remote-timeout="35000" preload="false"/>
          </persistence>
@@ -249,7 +249,7 @@
          <backup-for remote-cache="users" remote-site="LON"/>
          <locking acquire-timeout="31500" concurrency-level="3500" isolation="READ_COMMITTED" striping="true"/>
          <transaction mode="FULL_XA" stop-timeout="61500" locking="OPTIMISTIC"/>
-         <expiration interval="11500" lifespan="13" max-idle="13" touch="SYNC"/>
+         <expiration interval="11500" lifespan="13" max-idle="8" touch="SYNC"/>
          <memory storage="OBJECT" max-count="21500"/>
          <partition-handling when-split="ALLOW_READS" merge-policy="PREFERRED_NON_NULL"/>
          <state-transfer enabled="true" timeout="60500" chunk-size="10500" />
@@ -378,7 +378,7 @@
          <encoding media-type="application/x-protostream"/>
          <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
          <transaction mode="FULL_XA" stop-timeout="60000" locking="OPTIMISTIC" transaction-manager-lookup="org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup" complete-timeout="34000" reaper-interval="35000" auto-commit="true" />
-         <expiration interval="10000" lifespan="10" max-idle="10"/>
+         <expiration interval="10000" lifespan="10" max-idle="5"/>
          <persistence passivation="false">
             <file-store path="path" shared="false" preload="true" purge="false">
                <write-behind modification-queue-size="2048"/>
@@ -393,7 +393,7 @@
       <invalidation-cache-configuration name="invalidation-template" mode="SYNC" statistics="true">
          <locking acquire-timeout="30500" concurrency-level="2500" isolation="READ_UNCOMMITTED" striping="true"/>
          <transaction mode="BATCH" stop-timeout="60500"  locking="OPTIMISTIC"/>
-         <expiration interval="10500" lifespan="11" max-idle="11"/>
+         <expiration interval="10500" lifespan="11" max-idle="6"/>
          <memory storage="OBJECT" max-count="20500"/>
       </invalidation-cache-configuration>
       <invalidation-cache name="invalidation-instance" configuration="invalidation-template" />
@@ -407,7 +407,7 @@
          </encoding>
          <locking acquire-timeout="31000" concurrency-level="3000" isolation="SERIALIZABLE" striping="true"/>
          <transaction mode="BATCH" stop-timeout="61000" locking="PESSIMISTIC"/>
-         <expiration interval="11000" lifespan="12" max-idle="12"/>
+         <expiration interval="11000" lifespan="12" max-idle="7"/>
          <persistence>
             <cluster-loader remote-timeout="35000" preload="true"/>
          </persistence>
@@ -442,7 +442,7 @@
          </encoding>
          <locking acquire-timeout="31500" concurrency-level="3500" isolation="READ_COMMITTED" striping="true"/>
          <transaction mode="FULL_XA" stop-timeout="61500" locking="OPTIMISTIC"/>
-         <expiration interval="11500" lifespan="13" max-idle="13"/>
+         <expiration interval="11500" lifespan="13" max-idle="8"/>
          <memory storage="OBJECT" max-count="21500" when-full="REMOVE"/>
          <partition-handling when-split="DENY_READ_WRITES" merge-policy="PREFERRED_ALWAYS"/>
          <state-transfer enabled="true" timeout="60500" chunk-size="10500" />

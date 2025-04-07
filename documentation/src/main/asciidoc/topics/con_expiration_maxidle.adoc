@@ -24,3 +24,5 @@ The touch commands that {brandname} send have the following considerations:
 exceeded the maximum idle time limit. This behavior ensures performance because
 no remote invocations are performed during the iteration. Also note that
 iteration does not refresh any expired entries.
+* Maximum idle expiration cannot be configured to be equal or longer to lifespan
+expiration. Lifespan will always remove it at that point invalidating maximum idle.

@@ -280,21 +280,21 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    public void testNoCacheName() {
       String config =
             "<local-cache>\n" +
-                  "   <expiration interval=\"10500\" lifespan=\"11\" max-idle=\"11\"/>\n" +
+                  "   <expiration interval=\"10500\" lifespan=\"11\" max-idle=\"5\"/>\n" +
                   "</local-cache>";
       ConfigurationBuilderHolder holder = parseStringConfiguration(config);
       Configuration configuration = holder.getCurrentConfigurationBuilder().build();
       assertEquals(CacheMode.LOCAL, configuration.clustering().cacheMode());
       assertEquals(10500, configuration.expiration().wakeUpInterval());
       assertEquals(11, configuration.expiration().lifespan());
-      assertEquals(11, configuration.expiration().maxIdle());
+      assertEquals(5, configuration.expiration().maxIdle());
    }
 
    public void testWildcards() throws IOException {
       String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container>" +
                   "   <local-cache-configuration name=\"wildcache*\">\n" +
-                  "      <expiration interval=\"10500\" lifespan=\"11\" max-idle=\"11\"/>\n" +
+                  "      <expiration interval=\"10500\" lifespan=\"11\" max-idle=\"5\"/>\n" +
                   "   </local-cache-configuration>\n" +
                   "</cache-container>"
       );
@@ -304,7 +304,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          Configuration wildcache1 = cm.getCacheConfiguration("wildcache1");
          assertEquals(10500, wildcache1.expiration().wakeUpInterval());
          assertEquals(11, wildcache1.expiration().lifespan());
-         assertEquals(11, wildcache1.expiration().maxIdle());
+         assertEquals(5, wildcache1.expiration().maxIdle());
       }
    }
 
