@@ -1,5 +1,6 @@
 package org.infinispan.metadata;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -10,6 +11,8 @@ import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Metadata class for embedded caches.
@@ -19,6 +22,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  */
 @ProtoTypeId(ProtoStreamTypeIds.EMBEDDED_METADATA)
 public class EmbeddedMetadata implements Metadata {
+   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    public static final EmbeddedMetadata EMPTY = new EmbeddedMetadata(null, null);
 
    protected final EntryVersion version;
@@ -128,9 +132,13 @@ public class EmbeddedMetadata implements Metadata {
       public Metadata build() {
          boolean hasLifespan = hasLifespan();
          boolean hasMaxIdle = hasMaxIdle();
-         if (hasLifespan && hasMaxIdle)
+         if (hasLifespan && hasMaxIdle) {
+            if (lifespan <= maxIdle) {
+               log.maxIdleGreaterThanOrEqualLifespanRuntime(maxIdle, lifespan);
+               return new EmbeddedLifespanExpirableMetadata(toMillis(lifespan, lifespanUnit), version);
+            }
             return new EmbeddedExpirableMetadata(toMillis(lifespan, lifespanUnit), toMillis(maxIdle, maxIdleUnit), version);
-         else if (hasLifespan)
+         } else if (hasLifespan)
             return new EmbeddedLifespanExpirableMetadata(toMillis(lifespan, lifespanUnit), version);
          else if (hasMaxIdle)
             return new EmbeddedMaxIdleExpirableMetadata(toMillis(maxIdle, lifespanUnit), version);
