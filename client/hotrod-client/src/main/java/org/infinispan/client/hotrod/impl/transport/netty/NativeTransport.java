@@ -49,11 +49,11 @@ public final class NativeTransport {
    private static boolean useNativeIOUring() {
       try {
          Class.forName("io.netty.incubator.channel.uring.IOUring", true, NativeTransport.class.getClassLoader());
-         if (io.netty.incubator.channel.uring.IOUring.isAvailable()) {
+         if (io.netty.channel.uring.IoUring.isAvailable()) {
             return !IOURING_DISABLED && IS_LINUX;
          } else {
             if (IS_LINUX) {
-               HOTROD.ioUringNotAvailable(io.netty.incubator.channel.uring.IOUring.unavailabilityCause().toString());
+               HOTROD.ioUringNotAvailable(io.netty.channel.uring.IoUring.unavailabilityCause().toString());
             }
          }
       } catch (ClassNotFoundException e) {
@@ -68,7 +68,7 @@ public final class NativeTransport {
       if (USE_NATIVE_EPOLL) {
          return EpollSocketChannel.class;
       } else if (USE_NATIVE_IOURING) {
-         return IOURingNativeTransport.socketChannelClass();
+         return IoURingNativeTransport.socketChannelClass();
       } else {
          return NioSocketChannel.class;
       }
@@ -78,7 +78,7 @@ public final class NativeTransport {
       if (USE_NATIVE_EPOLL) {
          return EpollDatagramChannel.class;
       } else if (USE_NATIVE_IOURING) {
-         return IOURingNativeTransport.datagramChannelClass();
+         return IoURingNativeTransport.datagramChannelClass();
       } else {
          return NioDatagramChannel.class;
       }
@@ -88,7 +88,7 @@ public final class NativeTransport {
       if (USE_NATIVE_EPOLL) {
          return new EpollEventLoopGroup(maxExecutors, executorService);
       } else if (USE_NATIVE_IOURING) {
-         return IOURingNativeTransport.createEventLoopGroup(maxExecutors, executorService);
+         return IoURingNativeTransport.createEventLoopGroup(maxExecutors, executorService);
       } else {
          return new NioEventLoopGroup(maxExecutors, executorService);
       }
