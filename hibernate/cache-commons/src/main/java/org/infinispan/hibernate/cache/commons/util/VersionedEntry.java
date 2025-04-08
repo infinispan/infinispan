@@ -1,20 +1,4 @@
-/*
- * Hibernate, Relational Persistence for Idiomatic Java
- *
- * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
- * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
- */
 package org.infinispan.hibernate.cache.commons.util;
-
-import org.hibernate.cache.spi.entry.CacheEntry;
-import org.hibernate.cache.spi.entry.StructuredCacheEntry;
-import org.infinispan.commands.functional.functions.InjectableComponent;
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.functional.EntryView;
-import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -25,6 +9,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+
+import org.hibernate.cache.spi.entry.CacheEntry;
+import org.hibernate.cache.spi.entry.StructuredCacheEntry;
+import org.infinispan.commands.functional.functions.InjectableComponent;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.functional.EntryView;
+import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;

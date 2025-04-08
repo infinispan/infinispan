@@ -1,9 +1,3 @@
-/*
- * Hibernate, Relational Persistence for Idiomatic Java
- *
- * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
- * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
- */
 package org.infinispan.hibernate.cache.v62;
 
 import java.util.ArrayList;
@@ -62,7 +56,7 @@ import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.transaction.TransactionMode;
 
 /**
- * A {@link RegionFactory} for <a href="http://www.jboss.org/infinispan">Infinispan</a>-backed cache
+ * A {@link RegionFactory} for Infinispan-backed cache
  * regions.
  *
  * @author Chris Bredesen
@@ -98,7 +92,7 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
    }
 
    /**
-    * Create a new instance using conifguration properties in <code>props</code>.
+    * Create a new instance using configuration properties in <code>props</code>.
     *
     * @param props Environmental properties; currently unused.
     */
