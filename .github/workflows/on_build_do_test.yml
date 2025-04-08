@@ -51,14 +51,6 @@ jobs:
       MAVEN_OPTS: "-Xmx1500m -XX:+HeapDumpOnOutOfMemoryError"
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: set-commit-status-pending
-        uses: myrotvorets/set-commit-status-action@v2.0.1
-        with:
-            context: Test mvn verify
-            status: pending
-            sha: ${{ needs.get-info.outputs.source-head-sha }}
-            targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
       - uses: actions/checkout@v4
         with:
           sparse-checkout: ".github"
@@ -92,6 +84,30 @@ jobs:
           unzip ${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip
           mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
 
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+        # required
+          app-id: ${{ secrets.GH_APP_ISPN_ID }}
+          private-key: ${{ secrets.GH_APP_ISPN_KEY }}
+
+      - name: Create Check Run for Test Report
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        id: create_check
+        run: |
+          SHA="${{ needs.get-info.outputs.source-head-sha }}"
+          CHECK_RUN=$(gh api repos/${{ github.repository }}/check-runs \
+            -H "Accept: application/vnd.github+json" \
+            -f name="Test Report Result" \
+            -f head_sha="$SHA" \
+            -f status="in_progress" \
+            -f "output[summary]=Result from workflow run: https://github.com/rigazilla/infinispan/actions/runs/${{ github.run_id }}" \
+            -f "output[title]=Waiting for report result..." \
+            --method POST \
+            --jq '.id')
+          echo "id=$CHECK_RUN" >> $GITHUB_OUTPUT
+
       - name: Maven Test
         env:
           env:
@@ -104,23 +120,18 @@ jobs:
             -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative,coverage $HIBERNATE_MATRIX
             -Dorg.infinispan.test.server.extension.libs=org.jacoco:org.jacoco.agent:0.8.12:runtime
 
-      - name: set-commit-status-conclusion
-        if: success()
-        uses: myrotvorets/set-commit-status-action@v2.0.1
-        with:
-            context: Test mvn verify
-            status: success
-            sha: ${{ needs.get-info.outputs.source-head-sha }}
-            targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-      - name: set-commit-status-conclusion
+      - name: set-commit-failure-status
         if: always() && failure()
-        uses: myrotvorets/set-commit-status-action@v2.0.1
-        with:
-            context: Test mvn verify
-            status: failure
-            sha: ${{ needs.get-info.outputs.source-head-sha }}
-            targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh api repos/${{ github.repository }}/check-runs/${{ steps.create_check.outputs.id }} \
+            -H "Accept: application/vnd.github+json" \
+            -f status="completed" \
+            -f conclusion="failure" \
+            -f "output[summary]=Result from workflow run: https://github.com/rigazilla/infinispan/actions/runs/${{ github.run_id }}" \
+            -f "output[title]=Run Failed" \
+            --method PATCH
 
       - name: Archive commit sha PR
         if: >
@@ -201,14 +212,6 @@ jobs:
           - oracle
           - db2
     steps:
-      - name: set-commit-status-pending
-        uses: myrotvorets/set-commit-status-action@v2.0.1
-        with:
-          context: Test DB ${{ matrix.dbs }}
-          status: pending
-          sha: ${{ needs.get-info.outputs.source-head-sha }}
-          targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
       - uses: actions/checkout@v4
 
       - name: Setup Java
@@ -237,6 +240,30 @@ jobs:
           unzip ${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip
           mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
 
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          # required
+            app-id: ${{ secrets.GH_APP_ISPN_ID }}
+            private-key: ${{ secrets.GH_APP_ISPN_KEY }}
+  
+      - name: Create Check Run for Test Report
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        id: create_check
+        run: |
+          SHA="${{ needs.get-info.outputs.source-head-sha }}"
+          CHECK_RUN=$(gh api repos/${{ github.repository }}/check-runs \
+            -H "Accept: application/vnd.github+json" \
+            -f name="Test Report Result ${{ matrix.dbs }}" \
+            -f head_sha="$SHA" \
+            -f status="in_progress" \
+            -f "output[summary]=Result from workflow run: https://github.com/rigazilla/infinispan/actions/runs/${{ github.run_id }}" \
+            -f "output[title]=Waiting for report result..." \
+            --method POST \
+            --jq '.id')
+          echo "id=$CHECK_RUN" >> $GITHUB_OUTPUT
+
       - name: Test
         run: |
           cd test_dir/infinispan &&
@@ -247,6 +274,19 @@ jobs:
             -Dorg.infinispan.test.server.dir=/tmp/infinispan-server-${{ steps.dis.outputs.server-version }} \
             -P coverage \
             -Dorg.infinispan.test.server.extension.libs=org.jacoco:org.jacoco.agent:0.8.12:runtime
+
+      - name: set-commit-failure-status
+        if: always() && failure()
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh api repos/${{ github.repository }}/check-runs/${{ steps.create_check.outputs.id }} \
+            -H "Accept: application/vnd.github+json" \
+            -f status="completed" \
+            -f conclusion="failure" \
+            -f "output[summary]=Result from workflow run: https://github.com/rigazilla/infinispan/actions/runs/${{ github.run_id }}" \
+            -f "output[title]=Run Failed" \
+            --method PATCH
 
       - name: Archive commit sha PR
         if: >
@@ -267,23 +307,6 @@ jobs:
             test_dir/infinispan/**/failsafe-summary.xml
             test_dir/infinispan/jacoco/
             github-sha.txt
-      - name: set-commit-status-conclusion
-        if: success()
-        uses: myrotvorets/set-commit-status-action@v2.0.1
-        with:
-            context: Test DB ${{ matrix.dbs }}
-            status: success
-            sha: ${{ needs.get-info.outputs.source-head-sha }}
-            targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-      - name: set-commit-status-conclusion
-        if: always() && failure()
-        uses: myrotvorets/set-commit-status-action@v2.0.1
-        with:
-            context: Test DB ${{ matrix.dbs }}
-            status: failure
-            sha: ${{ needs.get-info.outputs.source-head-sha }}
-            targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
   coverage:
     needs: [get-info, ci-build-test-pr, db]
