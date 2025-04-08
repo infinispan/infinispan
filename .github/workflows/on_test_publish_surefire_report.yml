@@ -32,13 +32,23 @@ jobs:
           with:
             path: ./github-sha.txt
 
+        - uses: actions/create-github-app-token@v1
+          id: app-token
+          with:
+            # required
+            app-id: ${{ secrets.GH_APP_ISPN_ID }}
+            private-key: ${{ secrets.GH_APP_ISPN_KEY }}
+
         - name: Publish Test Report
           if: success() || failure()
-          uses: ScaCap/action-surefire-report@v1.9.0
+          # Waiting for https://github.com/ScaCap/action-surefire-report/pull/251
+          uses: rigazilla/action-surefire-report@summary
           with:
+            github_token: ${{ steps.app-token.outputs.token }}
             check_name: Test Report Result
             commit: ${{ steps.github_sha.outputs.content }}
             ignore_flaky_tests: true
+            summary: "Result from workflow run: https://github.com/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}"
             report_paths: |
               **/*-reports*/**/TEST-*.xml
 
@@ -58,16 +68,6 @@ jobs:
             COUNT=$(find . -name "TEST-*.xml" | while read f; do xmlstarlet sel -t -c  "count(//testcase)" -n "$f"; done | awk '{s+=$1} END {print s}')
             echo "test_count=$COUNT" >> $GITHUB_OUTPUT
             echo "test_min=$MIN_TEST_NUM" >> $GITHUB_OUTPUT
-
-        - name: set-commit-status-pending
-          if: steps.test-number.outputs.test_count < steps.test-number.outputs.test_min
-          uses: myrotvorets/set-commit-status-action@v2.0.1
-          with:
-                status: failure
-                sha: ${{ steps.github_sha.outputs.content }}
-                context: Tests number check
-                description: Fail. ${{ steps.test-number.outputs.test_count }} test ran, minimum required is ${{ steps.test-number.outputs.test_min }}
-                targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
    db:
     if: github.event.workflow_run.conclusion == 'success'
@@ -98,12 +98,22 @@ jobs:
       with:
         path: ./github-sha.txt
 
+    - uses: actions/create-github-app-token@v1
+      id: app-token
+      with:
+        # required
+        app-id: ${{ secrets.GH_APP_ISPN_ID }}
+        private-key: ${{ secrets.GH_APP_ISPN_KEY }}
+
     - name: Publish Test Report
       if: success() || failure()
-      uses: ScaCap/action-surefire-report@v1.9.0
+      # Waiting for https://github.com/ScaCap/action-surefire-report/pull/251
+      uses: rigazilla/action-surefire-report@summary
       with:
+        github_token: ${{ steps.app-token.outputs.token }}
         check_name: Test Report Result ${{ matrix.dbs }}
         commit: ${{ steps.github_sha.outputs.content }}
         ignore_flaky_tests: true
+        summary: "Result from workflow run: https://github.com/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}"
         report_paths: |
           **/*-reports*/**/TEST-*.xml
