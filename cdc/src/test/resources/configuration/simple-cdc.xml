@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+        xmlns="urn:infinispan:config:${infinispan.core.schema.version}"
+        xmlns:cdc="urn:infinispan:config:cdc:${infinispan.core.schema.version}"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version}
+            https://infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd">
+
+    <cache-container default-cache="default">
+        <transport/>
+        <replicated-cache name="default" >
+            <change-data-capture expand-foreign-keys="*" xmlns="urn:infinispan:config:cdc:${infinispan.core.schema.version}">
+                <simple-connection username="admin" password="password" connection-url="jdbc:mysql://localhost:3306/cdc" driver="com.mysql.cj.jdbc.Driver" />
+                <table name="student">
+                    <primary-key name="sid" />
+                    <column name="fullname"/>
+                    <column name="email"/>
+                </table>
+            </change-data-capture>
+        </replicated-cache>
+    </cache-container>
+
+</infinispan>
