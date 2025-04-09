@@ -13,7 +13,7 @@ import io.netty.channel.uring.IoUringSocketChannel;
 /**
  * @since 14.0
  **/
-public class IOURingNativeTransport {
+public class IoURingNativeTransport {
 
    public static Class<? extends SocketChannel> socketChannelClass() {
       return IoUringSocketChannel.class;

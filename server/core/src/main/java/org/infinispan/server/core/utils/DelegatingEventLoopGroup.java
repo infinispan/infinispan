@@ -41,11 +41,13 @@ public abstract class DelegatingEventLoopGroup implements EventLoopGroup {
    }
 
    @Override
+   @Deprecated
    public void shutdown() {
       delegate().shutdown();
    }
 
    @Override
+   @Deprecated
    public List<Runnable> shutdownNow() {
       return delegate().shutdownNow();
    }
@@ -141,6 +143,7 @@ public abstract class DelegatingEventLoopGroup implements EventLoopGroup {
    }
 
    @Override
+   @Deprecated
    public ChannelFuture register(Channel channel, ChannelPromise promise) {
       return delegate().register(channel, promise);
    }
