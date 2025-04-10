@@ -88,6 +88,23 @@ public class CliIT {
          terminal.send("describe k2");
          terminal.assertContains("\"timetoliveseconds\" : [ \"10\" ]");
 
+         terminal.send("cd /containers/default/caches");
+
+         terminal.clear();
+         terminal.send("create cache xml '<distributed-cache/>'");
+         terminal.send("describe xml");
+         terminal.assertContains("\"mode\" : \"SYNC\"");
+
+         terminal.clear();
+         terminal.send("create cache json '{\"distributed-cache\":{}}'");
+         terminal.send("describe json");
+         terminal.assertContains("\"mode\" : \"SYNC\"");
+
+         terminal.clear();
+         terminal.send("create cache yaml 'distributedCache: ~'");
+         terminal.send("describe yaml");
+         terminal.assertContains("\"mode\" : \"SYNC\"");
+
          terminal.send("schema upload -f=" + getCliResource("person.proto").getPath() + " person.proto");
          terminal.send("create cache --file=" + getCliResource("qcache.xml").getPath() + " qcache");
          terminal.clear();

@@ -80,7 +80,7 @@ public interface ConfigurationReader extends AutoCloseable {
       }
 
       public ConfigurationReader build() {
-         if (type == null) {
+         if (type == null || type.equals(MediaType.TEXT_PLAIN)) {
             // Auto-detect
             int first = firstChar();
             switch (first) {
@@ -96,16 +96,15 @@ public interface ConfigurationReader extends AutoCloseable {
                   break;
             }
          }
-         switch (type.getTypeSubtype()) {
-            case MediaType.APPLICATION_XML_TYPE:
-               return new XmlConfigurationReader(reader, resolver, properties, replacer, namingStrategy);
-            case MediaType.APPLICATION_YAML_TYPE:
-               return new YamlConfigurationReader(reader, resolver, properties, replacer, namingStrategy);
-            case MediaType.APPLICATION_JSON_TYPE:
-               return new JsonConfigurationReader(reader, resolver, properties, replacer, namingStrategy);
-            default:
-               throw new IllegalArgumentException(type.toString());
-         }
+         return switch (type.getTypeSubtype()) {
+            case MediaType.APPLICATION_XML_TYPE ->
+                  new XmlConfigurationReader(reader, resolver, properties, replacer, namingStrategy);
+            case MediaType.APPLICATION_YAML_TYPE ->
+                  new YamlConfigurationReader(reader, resolver, properties, replacer, namingStrategy);
+            case MediaType.APPLICATION_JSON_TYPE ->
+                  new JsonConfigurationReader(reader, resolver, properties, replacer, namingStrategy);
+            default -> throw new IllegalArgumentException(type.toString());
+         };
       }
    }
 

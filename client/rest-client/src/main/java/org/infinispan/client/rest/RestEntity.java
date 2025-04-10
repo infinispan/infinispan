@@ -103,7 +103,7 @@ public interface RestEntity {
       StringBuilder fb = new StringBuilder();
       for (Map.Entry<String, List<String>> singleEntry : formData.entrySet()) {
          for (String v : singleEntry.getValue()) {
-            if (fb.length() > 0) {
+            if (!fb.isEmpty()) {
                fb.append("&");
             }
             fb.append(URLEncoder.encode(singleEntry.getKey(), StandardCharsets.UTF_8));
@@ -136,5 +136,13 @@ public interface RestEntity {
          throw new RuntimeException(e);
       }
       return RestEntity.create(MediaType.APPLICATION_OCTET_STREAM, file);
+   }
+
+   static RestEntity create(String s) {
+      return switch (s.trim().charAt(0)) {
+         case '{' -> RestEntity.create(MediaType.APPLICATION_JSON, s);
+         case '<' -> RestEntity.create(MediaType.APPLICATION_XML, s);
+         default -> RestEntity.create(MediaType.TEXT_PLAIN, s);
+      };
    }
 }
