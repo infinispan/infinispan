@@ -356,7 +356,12 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       }
 
       if (javaOpts != null) {
-         container.withEnv("JAVA_OPTS", javaOpts);
+         String baseImage = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_BASE_IMAGE_NAME);
+         if (baseImage == null) {
+            container.withEnv("JAVA_OPTS", javaOpts);
+         } else {
+            container.withEnv("JAVA_OPTIONS", javaOpts);
+         }
       }
 
       // Process any enhancers
