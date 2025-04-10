@@ -20,7 +20,21 @@ include::cmd_examples/cli_nix.adoc[]
 +
 . Use the [command]`create cache` command to create remote caches.
 +
-For example, create a cache named "mycache" from a file named `mycache.xml` as follows:
+For example, create a distributed cache named "distcache" as follows:
++
+[source,options="nowrap",subs=attributes+]
+----
+create cache distcache "<distributed-cache />"
+----
+
+You can use any configuration format supported by {brandname}. Create a cache using a JSON configuration as follows:
++
+[source,options="nowrap",subs=attributes+]
+----
+create cache json '{"distributed-cache":{"mode":"SYNC"}}'
+----
+
+It is possible to use a configuration stored in an external file. For example, create a cache named "mycache" from a file named `mycache.xml` as follows:
 +
 [source,options="nowrap",subs=attributes+]
 ----

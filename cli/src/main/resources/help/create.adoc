@@ -10,18 +10,21 @@ create - creates caches and counters on ${infinispan.brand.name} servers.
 
 SYNOPSIS
 --------
-*create cache* ['OPTIONS'] `CACHE_NAME`
+*create cache* ['OPTIONS'] `CACHE_NAME` [`CONFIGURATION`]
 
 *create counter* ['OPTIONS'] `COUNTER_NAME`
 
 
 CREATE CACHE OPTIONS
 --------------------
+*-c, --configuration*='CONFIGURATION'::
+Specifies a configuration as a string in XML, JSON or YAML format. Mutually exclusive with `-f`, `-t` and the configuration argument.
+
 *-f, --file*='FILE'::
-Specifies a configuration file in XML, JSON or YAML format.
+Specifies a configuration file in XML, JSON or YAML format. Mutually exclusive with `-c`, `-t` and the configuration argument.
 
 *-t, --template*='TEMPLATE'::
-Specifies a configuration template. Use tab autocompletion to see available templates.
+Specifies a configuration template. Use tab autocompletion to see available templates. Mutually exclusive with `-c`, `-f` and the configuration argument.
 
 *-v, --volatile*='[true|false]'::
 Specifies whether the cache is persistent or volatile. The default is false.

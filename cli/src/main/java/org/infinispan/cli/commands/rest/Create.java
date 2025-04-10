@@ -1,6 +1,7 @@
 package org.infinispan.cli.commands.rest;
 
 import java.io.File;
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.aesh.command.Command;
@@ -9,6 +10,7 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Argument;
+import org.aesh.command.option.Arguments;
 import org.aesh.command.option.Option;
 import org.aesh.command.parser.RequiredOptionException;
 import org.aesh.io.Resource;
@@ -54,14 +56,17 @@ public class Create extends CliCommand {
    @CommandDefinition(name = "cache", description = "Create a cache", activator = ConnectionActivator.class)
    public static class Cache extends RestCliCommand {
 
-      @Argument(required = true)
-      String name;
+      @Arguments(required = true)
+      List<String> args;
 
       @Option(completer = CacheConfigurationCompleter.class, shortName = 't')
       String template;
 
       @Option(completer = FileOptionCompleter.class, shortName = 'f')
       Resource file;
+
+      @Option(shortName = 'c')
+      String configuration;
 
       @Option(defaultValue = "false", name = "volatile", shortName = 'v')
       boolean volatileCache;
@@ -76,19 +81,23 @@ public class Create extends CliCommand {
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) throws RequiredOptionException {
-         if (template != null && file != null) {
-            throw Messages.MSG.mutuallyExclusiveOptions("template", "file");
+         int count = (template == null ? 0 : 1) + (file == null ? 0 : 1) + (configuration == null ? 0 : 1) + (args.size() - 1);
+         if (count == 0) {
+            throw Messages.MSG.requiresOneOf("template", "file", "configuration", "configuration argument");
          }
-         if (template == null && file == null) {
-            throw Messages.MSG.requiresOneOf("template", "file");
+         if (count > 1) {
+            throw Messages.MSG.mutuallyExclusiveOptions("template", "file", "configuration", "configuration argument");
          }
-
-         RestCacheClient cache = client.cache(name);
-         CacheContainerAdmin.AdminFlag flags[] = volatileCache ? new CacheContainerAdmin.AdminFlag[]{CacheContainerAdmin.AdminFlag.VOLATILE} : new CacheContainerAdmin.AdminFlag[]{};
+         RestCacheClient cache = client.cache(args.get(0));
+         CacheContainerAdmin.AdminFlag[] flags = volatileCache ? new CacheContainerAdmin.AdminFlag[]{CacheContainerAdmin.AdminFlag.VOLATILE} : new CacheContainerAdmin.AdminFlag[]{};
          if (template != null) {
             return cache.createWithTemplate(template, flags);
-         } else {
+         } else if (file != null) {
             return cache.createWithConfiguration(RestEntity.create(new File(file.getAbsolutePath())), flags);
+         } else if (configuration != null) {
+            return cache.createWithConfiguration(RestEntity.create(configuration), flags);
+         } else {
+            return cache.createWithConfiguration(RestEntity.create(args.get(1)), flags);
          }
       }
    }

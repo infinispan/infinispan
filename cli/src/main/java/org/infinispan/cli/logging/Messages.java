@@ -57,11 +57,11 @@ public interface Messages {
    @Message("Illegal arguments for command")
    IllegalArgumentException illegalCommandArguments();
 
-   @Message("The options '%s' and '%s' are mutually exclusive")
-   IllegalArgumentException mutuallyExclusiveOptions(String arg1, String arg2);
+   @Message("The options '%s' are mutually exclusive")
+   IllegalArgumentException mutuallyExclusiveOptions(String... opts);
 
-   @Message("One of the '%s' and '%s' options are required")
-   RequiredOptionException requiresOneOf(String arg1, String arg2);
+   @Message("One of the '%s' options is required")
+   RequiredOptionException requiresOneOf(String... opts);
 
    @Message("Could not connect to server: %s")
    ConnectException connectionFailed(String message);

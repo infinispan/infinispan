@@ -879,7 +879,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          }, invocationHelper.getExecutor());
       }
       MediaType sourceType = request.contentType() == null ? APPLICATION_JSON : request.contentType();
-      if (!sourceType.match(APPLICATION_JSON) && !sourceType.match(APPLICATION_XML) && !sourceType.match(APPLICATION_YAML)) {
+      if (!sourceType.match(APPLICATION_JSON) && !sourceType.match(APPLICATION_XML) && !sourceType.match(APPLICATION_YAML) && !sourceType.match(TEXT_PLAIN)) {
          responseBuilder.status(HttpResponseStatus.UNSUPPORTED_MEDIA_TYPE);
          return CompletableFuture.completedFuture(responseBuilder.build());
       }
