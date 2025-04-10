@@ -14,6 +14,7 @@ public class RemoteStoreBlockHoundIntegration implements BlockHoundIntegration {
       builder.allowBlockingCallsInside("org.infinispan.client.hotrod.impl.transport.netty.ChannelInitializer", "initSsl");
       // Some tests have client failover and it is possible for it need to acquire the read lock
       builder.allowBlockingCallsInside("org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher", "getCacheInfo");
+      builder.allowBlockingCallsInside("org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher", "getClusterInfo");
 
       // When a server fails we need to acquire the write lock very briefly to update internals
       builder.allowBlockingCallsInside("org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher", "handleConnectionFailure");
