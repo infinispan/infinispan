@@ -74,6 +74,7 @@ public class GlobalMetricsConfigurationBuilder extends AbstractGlobalConfigurati
    /**
     * The global prefix to add to all metric names.
     */
+   @Deprecated(forRemoval = true, since = "16.0")
    public String prefix() {
       return attributes.attribute(PREFIX).get();
    }
@@ -81,6 +82,7 @@ public class GlobalMetricsConfigurationBuilder extends AbstractGlobalConfigurati
    /**
     * The global prefix to add to all metric names.
     */
+   @Deprecated(forRemoval = true, since = "16.0")
    public GlobalMetricsConfigurationBuilder prefix(String prefix) {
       attributes.attribute(PREFIX).set(prefix);
       return this;
@@ -89,6 +91,7 @@ public class GlobalMetricsConfigurationBuilder extends AbstractGlobalConfigurati
    /**
     * Put the cache manager and cache name in tags rather than including them in the metric name.
     */
+   @Deprecated(forRemoval = true, since = "16.0")
    public boolean namesAsTags() {
       return attributes.attribute(NAMES_AS_TAGS).get();
    }
@@ -96,6 +99,7 @@ public class GlobalMetricsConfigurationBuilder extends AbstractGlobalConfigurati
    /**
     * Put the cache manager and cache name in tags rather than including them in the metric name.
     */
+   @Deprecated(forRemoval = true, since = "16.0")
    public GlobalMetricsConfigurationBuilder namesAsTags(boolean namesAsTags) {
       attributes.attribute(NAMES_AS_TAGS).set(namesAsTags);
       return this;

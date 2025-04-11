@@ -2,11 +2,8 @@ package org.infinispan.metrics;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collection;
-import java.util.List;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -21,14 +18,13 @@ import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
 
 import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Meter;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 
 /**
  * @author anistor@redhat.com
  * @since 10.1
  */
+@Deprecated(forRemoval=true, since = "15.2")
 @Test(groups = "functional", testName = "metrics.ClusteredCacheManagerMetricsTest")
 public class ClusteredCacheManagerMetricsTest extends MultipleCacheManagersTest {
 
@@ -62,10 +58,7 @@ public class ClusteredCacheManagerMetricsTest extends MultipleCacheManagersTest 
 
    public void testMetricsAreRegistered() {
       MetricsRegistryImpl mc0 = (MetricsRegistryImpl) GlobalComponentRegistry.componentOf(manager(0), MetricsRegistry.class);
-      verifyMeters(mc0.registry());
-
       MetricsRegistryImpl mc1 = (MetricsRegistryImpl) GlobalComponentRegistry.componentOf(manager(1), MetricsRegistry.class);
-      verifyMeters(mc1.registry());
 
       GlobalConfiguration gcfg0 = manager(0).getCacheManagerConfiguration();
       Tag nodeNameTag = Tag.of(Constants.NODE_TAG_NAME, gcfg0.transport().nodeName());
@@ -76,18 +69,5 @@ public class ClusteredCacheManagerMetricsTest extends MultipleCacheManagersTest 
       Gauge statsEviction = statsEvictions.iterator().next();
       statsEviction.getId().getTags().contains(nodeNameTag);
       statsEviction.getId().getTags().contains(cacheManagerTag);
-   }
-
-   private void verifyMeters(MeterRegistry registry) {
-      List<Meter> meters = registry.getMeters();
-      assertThat(meters).isNotEmpty();
-      String firstName = meters.get(0).getId().getName();
-      assertTrue(firstName, firstName.startsWith("vendor.ispn")
-            || firstName.startsWith("jvm.") || firstName.startsWith("system.") || firstName.startsWith("process."));
-
-      for (Meter m : meters) {
-         assertFalse(m.getId().getName(), m.getId().getName().startsWith("vendor.ispn_cluster_container"));
-         assertFalse(m.getId().getName(), m.getId().getName().startsWith("vendor.ispn_cluster_cache"));
-      }
    }
 }

@@ -1,7 +1,6 @@
 package org.infinispan.metrics.impl;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,7 +21,7 @@ public final class NoMetricRegistry implements MetricsRegistry {
 
    @Override
    public Set<Object> registerMetrics(Object instance, Collection<MetricInfo> attributes, String namePrefix, Map<String, String> tags) {
-      return Collections.emptySet();
+      return Set.of();
    }
 
    @Override
@@ -31,6 +30,13 @@ public final class NoMetricRegistry implements MetricsRegistry {
    }
 
    @Override
+   @Deprecated(forRemoval = true, since = "16.0")
+   public boolean legacy() {
+       return false;
+   }
+
+   @Override
+   @Deprecated(forRemoval = true, since = "16.0")
    public boolean namesAsTags() {
       return false;
    }

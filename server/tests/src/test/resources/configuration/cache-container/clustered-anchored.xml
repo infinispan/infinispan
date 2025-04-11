@@ -5,7 +5,7 @@
                  xmlns="urn:infinispan:config:16.0"
                  name="default" statistics="true">
     <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack}"/>
-    <metrics gauges="true" histograms="true"/>
+    <metrics gauges="true" histograms="true" legacy="false" />
     <replicated-cache name="default">
         <locking concurrency-level="100" acquire-timeout="1000"/>
         <anchored-keys:anchored-keys enabled="true"/>
