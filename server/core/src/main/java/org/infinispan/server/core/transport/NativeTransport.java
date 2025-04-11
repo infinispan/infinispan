@@ -2,13 +2,15 @@ package org.infinispan.server.core.transport;
 
 import static org.infinispan.server.core.logging.Log.SERVER;
 
+import java.nio.channels.spi.SelectorProvider;
 import java.util.concurrent.ThreadFactory;
 
+import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.MultithreadEventLoopGroup;
 import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollIoHandler;
 import io.netty.channel.epoll.EpollServerSocketChannel;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.ServerSocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
@@ -46,11 +48,11 @@ public final class NativeTransport {
    private static boolean useNativeIOUring() {
       try {
          Class.forName("io.netty.incubator.channel.uring.IOUring", true, NativeTransport.class.getClassLoader());
-         if (io.netty.incubator.channel.uring.IOUring.isAvailable()) {
+         if (io.netty.channel.uring.IoUring.isAvailable()) {
             return !IOURING_DISABLED && IS_LINUX;
          } else {
             if (IS_LINUX) {
-               SERVER.ioUringNotAvailable(io.netty.incubator.channel.uring.IOUring.unavailabilityCause().toString());
+               SERVER.ioUringNotAvailable(io.netty.channel.uring.IoUring.unavailabilityCause().toString());
             }
          }
       } catch (ClassNotFoundException e) {
@@ -67,7 +69,7 @@ public final class NativeTransport {
          return EpollServerSocketChannel.class;
       } else if (USE_NATIVE_IOURING) {
          SERVER.usingTransport("IOUring");
-         return IOURingNativeTransport.serverSocketChannelClass();
+         return IoURingNativeTransport.serverSocketChannelClass();
       } else {
          SERVER.usingTransport("NIO");
          return NioServerSocketChannel.class;
@@ -76,11 +78,11 @@ public final class NativeTransport {
 
    public static MultithreadEventLoopGroup createEventLoopGroup(int maxExecutors, ThreadFactory threadFactory) {
       if (USE_NATIVE_EPOLL) {
-         return new EpollEventLoopGroup(maxExecutors, threadFactory);
+         return new MultiThreadIoEventLoopGroup(maxExecutors, threadFactory, EpollIoHandler.newFactory());
       } else if (USE_NATIVE_IOURING) {
-         return IOURingNativeTransport.createEventLoopGroup(maxExecutors, threadFactory);
+         return IoURingNativeTransport.createEventLoopGroup(maxExecutors, threadFactory);
       } else {
-         return new NioEventLoopGroup(maxExecutors, threadFactory);
+         return new MultiThreadIoEventLoopGroup(maxExecutors, threadFactory, NioIoHandler.newFactory(SelectorProvider.provider()));
       }
    }
 }
