@@ -27,6 +27,7 @@ import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.TestResponse;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -54,10 +55,20 @@ public class HotRodSingleClusteredNonLoopbackTest extends MultipleCacheManagersT
       super.createBeforeClass();
       List<NetworkInterface> nonLoopInterfaces = findNetworkInterfaces(false);
       SkipTestNG.skipIf(nonLoopInterfaces.isEmpty(), "No non-loop network interface");
-      NetworkInterface iface = nonLoopInterfaces.iterator().next();
-      String address = iface.getInetAddresses().nextElement().getHostAddress();
-      hotRodServer = startHotRodServer(cacheManagers.get(0), address, serverPort(), getDefaultHotRodConfiguration());
-      hotRodClient = new HotRodClient(address, hotRodServer.getPort(), cacheName, (byte) 20);
+      log.debugf("Found network interfaces %s", nonLoopInterfaces);
+      for (NetworkInterface iface : nonLoopInterfaces) {
+         String address = iface.getInetAddresses().nextElement().getHostAddress();
+         try {
+            hotRodServer = startHotRodServer(cacheManagers.get(0), address, serverPort(), getDefaultHotRodConfiguration());
+            hotRodClient = new HotRodClient(address, hotRodServer.getPort(), cacheName, (byte) 20);
+            return;
+         } catch (Throwable t) {
+            if (!t.getMessage().contains("Address family not supported by protocol")) {
+               throw new RuntimeException(t);
+            }
+         }
+      }
+      throw new SkipException("Could not find a valid interface for this test among " + nonLoopInterfaces);
    }
 
    @AfterClass(alwaysRun = true)
