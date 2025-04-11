@@ -6,7 +6,7 @@ import java.util.Arrays;
 import org.testng.SkipException;
 
 /**
- * Allows to skip a test on certain Operation Systems.
+ * Allows to skip a test on certain Operating Systems.
  */
 public class SkipTestNG {
    /**
@@ -69,5 +69,11 @@ public class SkipTestNG {
       if (version == 1)
          version = Integer.parseInt(parts[1]);
       return version;
+   }
+
+   public static void skipProperty(String property) {
+      if (Boolean.getBoolean(property)) {
+         throw new SkipException("Skipping because " + property + " is true");
+      }
    }
 }
