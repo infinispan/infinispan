@@ -2,7 +2,7 @@
 <infinispan xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
    <cache-container default-cache="foo">
       <local-cache-configuration name="wildcache*">
-         <expiration interval="10500" lifespan="11" max-idle="11"/>
+         <expiration interval="10500" lifespan="11" max-idle="6"/>
       </local-cache-configuration>
       <local-cache name="foo" statistics="true">
          <memory max-count="${test.max-count}" storage="OBJECT"/>
