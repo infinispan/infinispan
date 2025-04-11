@@ -28,6 +28,7 @@ import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.TestResponse;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -55,10 +56,20 @@ public class HotRodSingleClusteredNonLoopbackTest extends MultipleCacheManagersT
       super.createBeforeClass();
       List<NetworkInterface> nonLoopInterfaces = findNetworkInterfaces(false);
       SkipTestNG.skipIf(nonLoopInterfaces.isEmpty(), "No non-loop network interface");
-      NetworkInterface iface = nonLoopInterfaces.iterator().next();
-      String address = iface.getInetAddresses().nextElement().getHostAddress();
-      hotRodServer = startHotRodServer(cacheManagers.get(0), address, serverPort(), getDefaultHotRodConfiguration());
-      hotRodClient = new HotRodClient(address, hotRodServer.getPort(), cacheName, (byte) 20);
+      log.debugf("Found network interfaces %s", nonLoopInterfaces);
+      for (NetworkInterface iface : nonLoopInterfaces) {
+         String address = iface.getInetAddresses().nextElement().getHostAddress();
+         try {
+            hotRodServer = startHotRodServer(cacheManagers.get(0), address, serverPort(), getDefaultHotRodConfiguration());
+            hotRodClient = new HotRodClient(address, hotRodServer.getPort(), cacheName, (byte) 20);
+            return;
+         } catch (Throwable t) {
+            if (!t.getMessage().contains("Address family not supported by protocol")) {
+               throw new RuntimeException(t);
+            }
+         }
+      }
+      throw new SkipException("Could not find a valid interface for this test among " + nonLoopInterfaces);
    }
 
    @AfterClass(alwaysRun = true)
@@ -74,9 +85,9 @@ public class HotRodSingleClusteredNonLoopbackTest extends MultipleCacheManagersT
       InternalCacheRegistry internalCacheRegistry =
             GlobalComponentRegistry.componentOf(manager(0), InternalCacheRegistry.class);
       internalCacheRegistry.registerInternalCache("MyInternalCache",
-                                                  hotRodCacheConfiguration().build(),
-                                                  EnumSet.of(InternalCacheRegistry.Flag.USER,
-                                                             InternalCacheRegistry.Flag.PROTECTED));
+            hotRodCacheConfiguration().build(),
+            EnumSet.of(InternalCacheRegistry.Flag.USER,
+                  InternalCacheRegistry.Flag.PROTECTED));
       assertStatus(hotRodClient.ping("MyInternalCache"), Success);
       TestResponse resp = hotRodClient
             .execute(0xA0, (byte) 0x01, "MyInternalCache", k(m), 0, 0, v(m), 0, (byte) 1, 0);

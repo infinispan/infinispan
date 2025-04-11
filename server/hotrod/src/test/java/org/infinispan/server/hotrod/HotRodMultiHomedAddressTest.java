@@ -12,6 +12,7 @@ import java.net.NetworkInterface;
 import java.util.Enumeration;
 
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -28,6 +29,8 @@ import org.testng.annotations.Test;
 public class HotRodMultiHomedAddressTest extends HotRodMultiNodeTest {
 
    public void testInAddrAny() throws IOException {
+      // GitHub actions don't support IPv6 https://github.com/actions/runner-images/issues/668
+      SkipTestNG.skipProperty("github.action");
       for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
          NetworkInterface netif = en.nextElement();
          for (InterfaceAddress address : netif.getInterfaceAddresses()) {
