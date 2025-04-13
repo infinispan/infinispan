@@ -50,29 +50,12 @@ jobs:
         run: |
             ./mvnw spotbugs:spotbugs -Dspotbugs.include="${{ env.CHANGED_FILES }}"
 
+      - name: Generate Report
+        uses: jwgmeligmeyling/spotbugs-github-action@master
+        with:
+          path: 'infinispan/tools/target/spotbugsXml.xml'
 
-      - name: Check for SpotBugs errors
-        id: check-spotbugs
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-        run: |
-          SPOTBUGS_ERRORS=$(find infinispan/tools/target/spotbugsXml.xml -type f -exec grep -l "<BugInstance" {} \; | wc -l)
-          HIGH_PRIORITY=$(find infinispan/tools/target/spotbugsXml.xml -type f -exec grep -c "<BugInstance.*priority=\"1\"" {} \; || echo "0")
 
-          echo "Total issues found: $SPOTBUGS_ERRORS"
-          echo "High priority issues found: $HIGH_PRIORITY"
-
-          if [ "$HIGH_PRIORITY" -gt 0 ]; then
-            echo "::error::Found $HIGH_PRIORITY high priority issues"
-            echo "has_high_priority=true" >> $GITHUB_OUTPUT
-            exit 1
-          elif [ "$SPOTBUGS_ERRORS" -gt 0 ]; then
-            echo "::warning::Found $SPOTBUGS_ERRORS issues (no high priority)"
-            echo "has_issues=true" >> $GITHUB_OUTPUT
-          else
-            echo "No SpotBugs issues found"
-            echo "has_issues=false" >> $GITHUB_OUTPUT
-          fi
 
       - name: Comment PR with SpotBugs Summary
         if: github.event_name == 'pull_request' && (steps.check-spotbugs.outputs.has_issues == 'true' || steps.check-spotbugs.outputs.has_high_priority == 'true')
