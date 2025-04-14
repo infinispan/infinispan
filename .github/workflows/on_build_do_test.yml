@@ -87,7 +87,6 @@ jobs:
       - uses: actions/create-github-app-token@v1
         id: app-token
         with:
-        # required
           app-id: ${{ secrets.GH_APP_ISPN_ID }}
           private-key: ${{ secrets.GH_APP_ISPN_KEY }}
 
@@ -119,11 +118,19 @@ jobs:
             -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative,coverage $HIBERNATE_MATRIX
             -Dorg.infinispan.test.server.extension.libs=org.jacoco:org.jacoco.agent:0.8.12:runtime
             -Dgithub.action=true
+      # Renewing token since it last for 1 hour and cannot be extended
+      # see for more info https://github.com/actions/create-github-app-token/issues/128
+      - uses: actions/create-github-app-token@v1
+        if: always() && failure()
+        id: app-token-2
+        with:
+          app-id: ${{ secrets.GH_APP_ISPN_ID }}
+          private-key: ${{ secrets.GH_APP_ISPN_KEY }}
 
       - name: set-commit-failure-status
         if: always() && failure()
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ steps.app-token-2.outputs.token }}
         run: |
           gh api repos/${{ github.repository }}/check-runs/${{ steps.create_check.outputs.id }} \
             -H "Accept: application/vnd.github+json" \
@@ -243,7 +250,6 @@ jobs:
       - uses: actions/create-github-app-token@v1
         id: app-token
         with:
-          # required
             app-id: ${{ secrets.GH_APP_ISPN_ID }}
             private-key: ${{ secrets.GH_APP_ISPN_KEY }}
   
