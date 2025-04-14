@@ -220,11 +220,11 @@ public class SHARDS extends RespCommand implements Resp3Command {
          writer.writeNumericPrefix(RespConstants.MAP, 2);
 
          // First key and value for slots.
-         writer.simpleString("slots");
+         writer.string("slots");
          writer.array(slots, Resp3Type.INTEGER);
 
          // Key and value for nodes.
-         writer.simpleString("nodes");
+         writer.string("nodes");
          writer.arrayStart(nodes.size());
          for (NodeInformation node : nodes) {
             writer.arrayNext();
@@ -255,26 +255,26 @@ public class SHARDS extends RespCommand implements Resp3Command {
          // Write this object as a map.
          writer.writeNumericPrefix(RespConstants.MAP, 7);
 
-         writer.simpleString("id");
+         writer.string("id");
          writer.string(id);
 
-         writer.simpleString("port");
+         writer.string("port");
          writer.integers(port);
 
-         writer.simpleString("ip");
+         writer.string("ip");
          writer.string(ip);
 
-         writer.simpleString("endpoint");
+         writer.string("endpoint");
          writer.string(endpoint);
 
-         writer.simpleString("replication-offset");
+         writer.string("replication-offset");
          writer.integers(offset);
 
-         writer.simpleString("health");
-         writer.simpleString(health);
+         writer.string("health");
+         writer.string(health);
 
-         writer.simpleString("role");
-         writer.simpleString(role);
+         writer.string("role");
+         writer.string(role);
       }
    }
 }

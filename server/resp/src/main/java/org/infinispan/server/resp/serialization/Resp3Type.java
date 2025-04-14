@@ -1,5 +1,8 @@
 package org.infinispan.server.resp.serialization;
 
+import java.util.Collection;
+import java.util.Map;
+
 /**
  * Identifies the RESP3 type correspondent of a Java object.
  *
@@ -68,6 +71,23 @@ public enum Resp3Type implements SerializationHint.SimpleHint {
       @Override
       public void serialize(Object object, ResponseWriter writer) {
          writer.doubles((Number) object);
+      }
+   },
+
+   AUTO {
+      @Override
+      public void serialize(Object object, ResponseWriter writer) {
+         if (object instanceof CharSequence s) {
+            writer.string(s);
+         } else if (object instanceof Number n) {
+            writer.integers(n);
+         } else if (object instanceof Collection<?> c) {
+            writer.array(c, AUTO);
+         } else if (object instanceof Map<?,?> m) {
+            writer.map(m, AUTO);
+         } else {
+            throw new UnsupportedOperationException();
+         }
       }
    };
 

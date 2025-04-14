@@ -31,7 +31,7 @@ public class MEMORY extends RespCommand implements Resp3Command {
    private static final JavaObjectSerializer<Map<String, Number>> SERIALIZER = (res, writer) -> {
       writer.writeNumericPrefix(RespConstants.MAP, res.size());
       for (Map.Entry<String, Number> entry : res.entrySet()) {
-         writer.simpleString(entry.getKey());
+         writer.string(entry.getKey());
 
          Number v = entry.getValue();
          if (v instanceof Double) {

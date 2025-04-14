@@ -1,9 +1,11 @@
 package org.infinispan.server.resp.commands.connection;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.Version;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3AuthHandler;
@@ -12,8 +14,9 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.RespVersion;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.AuthResp3Command;
-import org.infinispan.server.resp.serialization.RespConstants;
+import org.infinispan.server.resp.serialization.Resp3Type;
 import org.infinispan.server.resp.serialization.ResponseWriter;
+import org.infinispan.server.resp.serialization.SerializationHint;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -93,27 +96,14 @@ public class HELLO extends RespCommand implements AuthResp3Command {
       // Map mixes different types.
       ResponseWriter writer = handler.writer();
 
-      writer.writeNumericPrefix(RespConstants.MAP, 7);
-
-      writer.simpleString("server");
-      writer.simpleString("Infinispan RESP");
-
-      writer.simpleString("version");
-      writer.simpleString(versionString);
-
-      writer.simpleString("proto");
-      writer.integers(3);
-
-      writer.simpleString("id");
-      writer.integers(metadata.id());
-
-      writer.simpleString("mode");
-      writer.simpleString("cluster");
-
-      writer.simpleString("role");
-      writer.simpleString("master");
-
-      writer.simpleString("modules");
-      writer.arrayEmpty();
+      LinkedHashMap<String, Object> response = new LinkedHashMap<>(7); // Preserve order
+      response.put("server", Version.getBrandName().toLowerCase());
+      response.put("version", versionString);
+      response.put("proto", 3);
+      response.put("id", metadata.id());
+      response.put("mode", SecurityActions.getCacheManagerConfiguration(handler.respServer().getCacheManager()).isClustered() ? "cluster" : "standalone");
+      response.put("role", "master"); // redis always adds this even in standalone mode
+      response.put("modules", MODULE.allModules());
+      writer.map(response, new SerializationHint.KeyValueHint(Resp3Type.BULK_STRING, Resp3Type.AUTO));
    }
 }
