@@ -7,7 +7,6 @@ on:
    # Rerun report publishing on exising test run
 jobs:
    publish:
-      if: github.event.workflow_run.conclusion == 'success'
       name: Publish Surefire Report
       runs-on: ubuntu-latest
       steps:
@@ -39,8 +38,16 @@ jobs:
             app-id: ${{ secrets.GH_APP_ISPN_ID }}
             private-key: ${{ secrets.GH_APP_ISPN_KEY }}
 
+        - name: Get job status
+          env:
+            GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          id: job-status
+          run: |
+            JOB_STATUS=$(gh api https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}/jobs --jq '.jobs[] | select(.name=="Maven Test") | .conclusion')
+            echo "job_status=$JOB_STATUS" >> $GITHUB_OUTPUT
+
         - name: Publish Test Report
-          if: success() || failure()
+          if: (success() || failure()) && steps.job-status.outputs.job_status == 'success'
           # Waiting for https://github.com/ScaCap/action-surefire-report/pull/251
           uses: rigazilla/action-surefire-report@summary
           with:
@@ -70,7 +77,6 @@ jobs:
             echo "test_min=$MIN_TEST_NUM" >> $GITHUB_OUTPUT
 
    db:
-    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -105,8 +111,16 @@ jobs:
         app-id: ${{ secrets.GH_APP_ISPN_ID }}
         private-key: ${{ secrets.GH_APP_ISPN_KEY }}
 
+    - name: Get job status
+      env:
+        GH_TOKEN: ${{ steps.app-token.outputs.token }}
+      id: job-status
+      run: |
+        JOB_STATUS=$(gh api https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ steps.run_id.outputs.runid }}/jobs --jq '.jobs[] | select(.name=="db (${{ matrix.dbs }})") | .conclusion')
+        echo "job_status=$JOB_STATUS" >> $GITHUB_OUTPUT
+
     - name: Publish Test Report
-      if: success() || failure()
+      if: (success() || failure()) && steps.job-status.outputs.job_status == 'success'
       # Waiting for https://github.com/ScaCap/action-surefire-report/pull/251
       uses: rigazilla/action-surefire-report@summary
       with:
