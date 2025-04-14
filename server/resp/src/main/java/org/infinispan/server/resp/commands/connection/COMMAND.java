@@ -60,7 +60,7 @@ public class COMMAND extends RespCommand implements Resp3Command {
 
       // Name
       writer.arrayNext();
-      writer.simpleString(command.getName());
+      writer.string(command.getName());
 
       // Arity
       writer.arrayNext();
