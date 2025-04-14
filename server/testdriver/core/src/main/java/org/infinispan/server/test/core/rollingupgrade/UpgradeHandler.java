@@ -68,28 +68,25 @@ public class UpgradeHandler {
             RemoteCache<String, String> cache = configuration.initialHandler().apply(manager);
 
             for (int i = 0; i < nodeCount; ++i) {
-
-               // TODO: disable state transfer
-
-               handler.logConsumer.accept("Starting 1 node to version " + versionTo);
-               if (handler.toDriver == null) {
-                  handler.toDriver = handler.startNode(true, 1, nodeCount + 1, site1Name,
-                        configuration.jgroupsProtocol());
-               } else {
-                  handler.toDriver.startAdditionalServer(nodeCount + 1);
-               }
-
-               if (!handler.ensureServersWorking(cache, nodeCount + 1)) {
-                  handler.logConsumer.accept("Servers are only: " + Arrays.toString(manager.getServers()));
-                  throw new IllegalStateException("Servers did not cluster within 30 seconds, assuming error");
-               }
-
                handler.logConsumer.accept("Shutting down 1 node from version: " + versionFrom);
                handler.fromDriver.stop(nodeCount - i - 1);
 
-               if (!handler.ensureServersWorking(cache, nodeCount)) {
+               if (!handler.ensureServersWorking(cache, nodeCount - 1)) {
                   handler.logConsumer.accept("Servers are: " + Arrays.toString(manager.getServers()));
                   throw new IllegalStateException("Servers did not shut down properly within 30 seconds, assuming error");
+               }
+
+               handler.logConsumer.accept("Starting 1 node to version " + versionTo);
+               if (handler.toDriver == null) {
+                  handler.toDriver = handler.startNode(true, 1, nodeCount, site1Name,
+                        configuration.jgroupsProtocol());
+               } else {
+                  handler.toDriver.startAdditionalServer(nodeCount);
+               }
+
+               if (!handler.ensureServersWorking(cache, nodeCount)) {
+                  handler.logConsumer.accept("Servers are only: " + Arrays.toString(manager.getServers()));
+                  throw new IllegalStateException("Servers did not cluster within 30 seconds, assuming error");
                }
             }
          }
@@ -127,12 +124,6 @@ public class UpgradeHandler {
       }
       if (toDriver != null) {
          toDriver.stop(configuration.toVersion());
-      }
-      if (toImageCreated != null) {
-         ContainerInfinispanServerDriver.cleanup(toImageCreated);
-      }
-      if (fromImageCreated != null) {
-         ContainerInfinispanServerDriver.cleanup(fromImageCreated);
       }
    }
 

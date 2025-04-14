@@ -67,7 +67,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
 
    @Override
    public void startAdditionalServer(int expectedClusterSize) {
-      // expectedClusterSize is not used as there could be other managers not managed by us in the cluster
+      // expectedClusterSize is not used as it currently only works for a single driver and doesn't support multiple
       int serverNumber = servers.size();
       File serverRoot = createServerHierarchy(rootDir, Integer.toString(serverNumber));
       copyArtifactsToDataDir();

@@ -5,11 +5,11 @@ import static org.infinispan.server.Server.DEFAULT_SERVER_CONFIG;
 import static org.infinispan.server.test.core.Containers.DOCKER_CLIENT;
 import static org.infinispan.server.test.core.Containers.getDockerBridgeAddress;
 import static org.infinispan.server.test.core.Containers.imageArchitecture;
+import static org.infinispan.server.test.core.TestSystemPropertyNames.COVERAGE_ENABLED;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_ULIMIT;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_LOG_FILE;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.JACOCO_REPORTS_DIR;
-import static org.infinispan.server.test.core.TestSystemPropertyNames.COVERAGE_ENABLED;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -110,6 +110,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    };
    public static final String SNAPSHOT_IMAGE = "localhost/infinispan/server-snapshot";
    private final List<InfinispanGenericContainer> containers;
+   private final String[] volumes;
    private String name;
    ImageFromDockerfile image;
    private static final List<String> sites = new ArrayList<>();
@@ -126,6 +127,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             getDockerBridgeAddress()
       );
       this.containers = new ArrayList<>(configuration.numServers());
+      this.volumes = new String[configuration.numServers()];
    }
 
    public static void cleanup() {
@@ -218,8 +220,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          throw new RuntimeException(e);
       }
       log.infof("Creating image %s", name);
-      String versionProvided = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_VERSION);
-      String versionToUse = versionProvided != null ? versionProvided : Version.getMajorMinor();
+      String versionToUse = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_VERSION, Version.getMajorMinor());
       final String imageName;
       String baseImageName = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_BASE_IMAGE_NAME);
       if (baseImageName == null) {
@@ -270,12 +271,12 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             configuration.expectedServers() > 0 ? configuration.expectedServers() : numServers));
       if (configuration.isParallelStartup()) {
          CountdownLatchLoggingConsumer startupLatch = new CountdownLatchLoggingConsumer(numServers, STARTUP_MESSAGE_REGEX);
-         IntStream.range(0, configuration.numServers()).forEach(i -> createContainer(startupLatch, clusterLatch));
+         IntStream.range(0, configuration.numServers()).forEach(i -> createContainer(i, startupLatch, clusterLatch));
          Exceptions.unchecked(() -> startupLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
       } else {
          for (int i = 0; i < configuration.numServers(); i++) {
             CountdownLatchLoggingConsumer startupLatch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
-            createContainer(startupLatch, clusterLatch);
+            createContainer(i, startupLatch, clusterLatch);
             Exceptions.unchecked(() -> startupLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
          }
       }
@@ -288,7 +289,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       CountdownLatchLoggingConsumer clusterLatch = new CountdownLatchLoggingConsumer(1, String.format(CLUSTER_VIEW_REGEX, expectedClusterSize));
       CountdownLatchLoggingConsumer startupLatch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
 
-      createContainer(startupLatch, clusterLatch);
+      createContainer(containers.size(), startupLatch, clusterLatch);
       Exceptions.unchecked(() -> startupLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
       Exceptions.unchecked(() -> clusterLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
@@ -311,17 +312,20 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       return serverOutputPath;
    }
 
-   private GenericContainer<?> createContainer(Consumer<OutputFrame>... logConsumers) {
+   private GenericContainer<?> createContainer(int i, Consumer<OutputFrame>... logConsumers) {
 
       boolean volumesRequired = Boolean.parseBoolean(configuration.properties().getProperty(INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED));
+      if (volumesRequired && this.volumes[i] == null) {
+         String volumeName = Util.threadLocalRandomUUID().toString();
+         DOCKER_CLIENT.createVolumeCmd().withName(volumeName).exec();
+         this.volumes[i] = volumeName;
+      }
 
       GenericContainer<?> container = new GenericContainer<>(image)
             .withCreateContainerCmdModifier(cmd -> {
                if (volumesRequired) {
-                  String volumeName = Util.threadLocalRandomUUID().toString();
-                  DOCKER_CLIENT.createVolumeCmd().withName(volumeName).exec();
                   cmd.getHostConfig().withMounts(
-                        Collections.singletonList(new Mount().withSource(volumeName).withTarget(serverPath()).withType(MountType.VOLUME))
+                        Collections.singletonList(new Mount().withSource(this.volumes[i]).withTarget(serverPath()).withType(MountType.VOLUME))
                   );
                }
                if (IMAGE_MEMORY != null) {
@@ -354,7 +358,6 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             sites.add(site);
          }
       }
-      int i = containers.size();
       if (i == 0 && site == null && !Boolean.parseBoolean(configuration.properties().getProperty(
             TestSystemPropertyNames.INFINISPAN_TEST_SERVER_REQUIRE_JOIN_TIMEOUT))) {
          javaOpts = "-D" + JOIN_TIMEOUT + "=0";
@@ -414,6 +417,9 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          log.infof("Stopping container %d", i);
          stop(i);
          log.infof("Stopped container %d", i);
+      }
+      if (image != null) {
+         cleanup(image.getDockerImageName());
       }
       // See https://github.com/testcontainers/testcontainers-java/issues/2276
       ThreadLeakChecker.ignoreThreadsContaining("docker-java-stream-");
@@ -475,6 +481,10 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          eventually("Container wasn't stopped.", () -> !isRunning(server));
          System.out.printf("[%d] STOP %n", server);
       }
+   }
+
+   public String volumeId(int server) {
+      return volumes[server];
    }
 
    @Override
