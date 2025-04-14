@@ -57,6 +57,7 @@ for TEST in "${TESTS[@]}"; do
       export ISSUE_KEY=$(echo "${ISSUES}" | jq  '.[0].number')
       # Re-open the issue if it was previously resolved
       if [ "$(gh issue view ${ISSUE_KEY} --json state | jq .state)" == '"CLOSED"' ]; then
+        gh issue edit {ISSUE_KEY} --remove-label Stale || true
         gh issue reopen ${ISSUE_KEY}
       fi
       gh issue comment ${ISSUE_KEY} --body "${BODY}"
