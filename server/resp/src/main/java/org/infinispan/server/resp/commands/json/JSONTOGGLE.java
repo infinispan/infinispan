@@ -1,6 +1,9 @@
 package org.infinispan.server.resp.commands.json;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -8,8 +11,7 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.json.EmbeddedJsonCache;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * JSON.TOGGLE
@@ -23,12 +25,7 @@ public class JSONTOGGLE extends RespCommand implements Resp3Command {
     private static final String TRUE = Boolean.toString(true);
 
     public JSONTOGGLE() {
-        super("JSON.TOGGLE", -2, 1, 1, 1);
-    }
-
-    @Override
-    public long aclMask() {
-        return 0;
+        super("JSON.TOGGLE", -2, 1, 1, 1, AclCategory.JSON.mask() | AclCategory.WRITE.mask() | AclCategory.SLOW.mask());
     }
 
     @Override

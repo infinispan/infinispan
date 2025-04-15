@@ -35,12 +35,7 @@ public class CLIENT extends RespCommand implements Resp3Command {
    private static final Pattern CLIENT_SETINFO_PATTERN = Pattern.compile("^(?:(?=\\p{ASCII})[^\\s\\t\\n\\x0B\\f\\r])*$");
 
    public CLIENT() {
-      super(-2, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.SLOW;
+      super(-2, 0, 0, 0, AclCategory.SLOW.mask());
    }
 
    @Override

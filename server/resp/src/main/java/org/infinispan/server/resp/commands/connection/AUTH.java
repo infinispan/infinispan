@@ -19,12 +19,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class AUTH extends RespCommand implements AuthResp3Command {
    public AUTH() {
-      super(-2, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.FAST | AclCategory.CONNECTION;
+      super(-2, 0, 0, 0, AclCategory.FAST.mask() | AclCategory.CONNECTION.mask());
    }
 
    @Override

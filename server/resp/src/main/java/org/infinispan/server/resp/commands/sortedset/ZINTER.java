@@ -11,11 +11,6 @@ import org.infinispan.server.resp.commands.sortedset.internal.AGGCommand;
  */
 public class ZINTER extends AGGCommand {
    public ZINTER() {
-      super(-3, 0, 0, 0, AGGCommandType.INTER);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.SORTEDSET | AclCategory.SLOW;
+      super(-3, 0, 0, 0, AGGCommandType.INTER, AclCategory.READ.mask() | AclCategory.SORTEDSET.mask() | AclCategory.SLOW.mask());
    }
 }

@@ -3,6 +3,7 @@ package org.infinispan.server.resp.commands.json;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.json.EmbeddedJsonCache;
 
 /**
@@ -13,7 +14,7 @@ import org.infinispan.server.resp.json.EmbeddedJsonCache;
  */
 public class JSONNUMINCRBY extends JSONNUM {
     public JSONNUMINCRBY() {
-        super("JSON.NUMINCRBY");
+        super("JSON.NUMINCRBY",  AclCategory.JSON.mask() | AclCategory.WRITE.mask() | AclCategory.SLOW.mask());
     }
 
     @Override

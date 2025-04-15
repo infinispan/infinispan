@@ -26,12 +26,7 @@ public class HEXISTS extends RespCommand implements Resp3Command {
    static final Function<Boolean, Long> CONVERTER = b -> b ? 1L : 0L;
 
    public HEXISTS() {
-      super(3, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.HASH | AclCategory.FAST;
+      super(3, 1, 1, 1, AclCategory.READ.mask() | AclCategory.HASH.mask() | AclCategory.FAST.mask());
    }
 
    @Override

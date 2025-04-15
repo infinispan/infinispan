@@ -21,12 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class ZMSCORE extends RespCommand implements Resp3Command {
    public ZMSCORE() {
-      super(-3, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.SORTEDSET | AclCategory.FAST;
+      super(-3, 1, 1, 1, AclCategory.READ.mask() | AclCategory.SORTEDSET.mask() | AclCategory.FAST.mask());
    }
 
    @Override

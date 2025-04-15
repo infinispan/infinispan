@@ -10,11 +10,6 @@ import org.infinispan.server.resp.AclCategory;
  */
 public class BLPOP extends SingleBlockingPop {
    public BLPOP() {
-      super(true, -3, 1, -2, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.LIST | AclCategory.SLOW | AclCategory.BLOCKING;
+      super(true, -3, 1, -2, 1, AclCategory.WRITE.mask() | AclCategory.LIST.mask() | AclCategory.SLOW.mask() | AclCategory.BLOCKING.mask());
    }
 }

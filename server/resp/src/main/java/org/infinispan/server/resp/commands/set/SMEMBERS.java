@@ -21,12 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class SMEMBERS extends RespCommand implements Resp3Command {
    public SMEMBERS() {
-      super(2, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.SET | AclCategory.SLOW;
+      super(2, 1, 1, 1, AclCategory.READ.mask() | AclCategory.SET.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

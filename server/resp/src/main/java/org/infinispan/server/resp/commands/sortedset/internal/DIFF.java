@@ -38,8 +38,8 @@ public abstract class DIFF extends RespCommand implements Resp3Command {
       writer.write(zres, zres);
    };
 
-   protected DIFF(int arity, int firstKeyPos, int lastKeyPos, int steps) {
-      super(arity, firstKeyPos, lastKeyPos, steps);
+   protected DIFF(int arity, int firstKeyPos, int lastKeyPos, int steps, long aclMask) {
+      super(arity, firstKeyPos, lastKeyPos, steps, aclMask);
    }
 
    @Override

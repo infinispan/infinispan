@@ -34,8 +34,8 @@ public abstract class POP extends RespCommand implements Resp3Command {
 
    protected boolean first;
 
-   public POP(boolean first) {
-      super(-2, 1, 1, 1);
+   public POP(boolean first, long aclMask) {
+      super(-2, 1, 1, 1, aclMask);
       this.first = first;
    }
 

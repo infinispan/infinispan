@@ -29,12 +29,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class HMGET extends RespCommand implements Resp3Command {
 
    public HMGET() {
-      super(-3, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.HASH | AclCategory.FAST;
+      super(-3, 1, 1, 1, AclCategory.READ.mask() | AclCategory.HASH.mask() | AclCategory.FAST.mask());
    }
 
    @Override

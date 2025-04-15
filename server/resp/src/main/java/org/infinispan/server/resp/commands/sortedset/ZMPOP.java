@@ -36,12 +36,7 @@ public class ZMPOP extends RespCommand implements Resp3Command {
    private static final byte[] COUNT = "COUNT".getBytes(StandardCharsets.US_ASCII);
 
    public ZMPOP() {
-      super(-4, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.SORTEDSET | AclCategory.SLOW;
+      super(-4, 0, 0, 0, AclCategory.WRITE.mask() | AclCategory.SORTEDSET.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

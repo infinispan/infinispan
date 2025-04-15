@@ -12,11 +12,6 @@ import org.infinispan.server.resp.commands.list.internal.PUSH;
  */
 public class RPUSH extends PUSH implements Resp3Command {
    public RPUSH() {
-      super(false);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.LIST | AclCategory.FAST;
+      super(false, AclCategory.WRITE.mask() | AclCategory.LIST.mask() | AclCategory.FAST.mask());
    }
 }

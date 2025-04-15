@@ -1,6 +1,7 @@
 package org.infinispan.server.resp.commands.connection;
 
-import java.nio.charset.StandardCharsets;
+import static org.infinispan.server.resp.RespUtil.ascii;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,19 +44,14 @@ public class MEMORY extends RespCommand implements Resp3Command {
    };
 
    public MEMORY() {
-      super(-2, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.SLOW;
+      super(-2, 0, 0, 0, AclCategory.SLOW.mask());
    }
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx,
          List<byte[]> arguments) {
       handler.checkPermission(AuthorizationPermission.ADMIN);
-      String subcommand = new String(arguments.get(0), StandardCharsets.US_ASCII).toUpperCase();
+      String subcommand = ascii(arguments.get(0)).toUpperCase();
       switch (subcommand) {
          case "STATS":
             // Map mixes integer and double values.

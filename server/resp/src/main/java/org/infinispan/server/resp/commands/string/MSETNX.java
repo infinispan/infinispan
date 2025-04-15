@@ -32,12 +32,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class MSETNX extends RespCommand implements Resp3Command {
    public MSETNX() {
-      super(-3, 1, -1, 2);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.STRING | AclCategory.SLOW;
+      super(-3, 1, -1, 2, AclCategory.WRITE.mask() | AclCategory.STRING.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

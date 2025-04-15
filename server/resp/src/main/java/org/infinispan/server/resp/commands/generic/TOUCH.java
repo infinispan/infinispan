@@ -22,12 +22,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class TOUCH extends RespCommand implements Resp3Command {
    public TOUCH() {
-      super(-2, 1, -1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.KEYSPACE | AclCategory.READ | AclCategory.FAST;
+      super(-2, 1, -1, 1, AclCategory.KEYSPACE.mask() | AclCategory.READ.mask() | AclCategory.FAST.mask());
    }
 
    @Override

@@ -24,12 +24,7 @@ public class PING extends RespCommand implements Resp3Command, PubSubResp3Comman
    private static final byte[] PONG = { 'P', 'O', 'N', 'G'};
 
    public PING() {
-      super(NAME, -1, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.FAST | AclCategory.CONNECTION;
+      super(NAME, -1, 0, 0, 0, AclCategory.FAST.mask() | AclCategory.CONNECTION.mask());
    }
 
    @Override

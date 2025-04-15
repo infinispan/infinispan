@@ -68,12 +68,7 @@ public class SHARDS extends RespCommand implements Resp3Command {
    private ConsistentHash lastAcceptedHash = null;
 
    public SHARDS() {
-      super(2, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.SLOW;
+      super(2, 0, 0, 0, AclCategory.SLOW.mask());
    }
 
    @Override

@@ -27,12 +27,7 @@ public class MSET extends RespCommand implements Resp3Command {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
 
    public MSET() {
-      super(-3, 1, -1, 2);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.STRING | AclCategory.SLOW;
+      super(-3, 1, -1, 2, AclCategory.WRITE.mask() | AclCategory.STRING.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

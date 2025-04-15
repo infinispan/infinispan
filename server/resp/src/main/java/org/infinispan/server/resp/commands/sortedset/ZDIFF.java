@@ -11,11 +11,6 @@ import org.infinispan.server.resp.commands.sortedset.internal.DIFF;
  */
 public class ZDIFF extends DIFF {
    public ZDIFF() {
-      super(-3, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.SORTEDSET | AclCategory.SLOW;
+      super(-3, 0, 0, 0, AclCategory.READ.mask() | AclCategory.SORTEDSET.mask() | AclCategory.SLOW.mask());
    }
 }

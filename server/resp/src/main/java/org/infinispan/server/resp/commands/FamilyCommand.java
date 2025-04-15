@@ -20,8 +20,8 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public abstract class FamilyCommand extends RespCommand implements Resp3Command {
 
-   public FamilyCommand(int arity, int firstKeyPos, int lastKeyPos, int steps) {
-      super(arity, firstKeyPos, lastKeyPos, steps);
+   public FamilyCommand(int arity, int firstKeyPos, int lastKeyPos, int steps, long aclMask) {
+      super(arity, firstKeyPos, lastKeyPos, steps, aclMask);
    }
 
    @Override

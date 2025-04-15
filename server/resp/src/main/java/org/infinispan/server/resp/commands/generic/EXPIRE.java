@@ -45,14 +45,9 @@ public class EXPIRE extends RespCommand implements Resp3Command {
    }
 
    protected EXPIRE(boolean at, boolean seconds) {
-      super(-3, 1, 1, 1);
+      super(-3, 1, 1, 1, AclCategory.KEYSPACE.mask() | AclCategory.WRITE.mask() | AclCategory.FAST.mask());
       this.unixTime = at;
       this.seconds = seconds;
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.KEYSPACE | AclCategory.WRITE | AclCategory.FAST;
    }
 
    @Override

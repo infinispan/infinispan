@@ -12,11 +12,6 @@ import org.infinispan.server.resp.commands.sortedset.internal.POP;
 public class ZPOPMIN extends POP {
 
    public ZPOPMIN() {
-      super(true);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.SORTEDSET | AclCategory.FAST;
+      super(true, AclCategory.WRITE.mask() | AclCategory.SORTEDSET.mask() | AclCategory.FAST.mask());
    }
 }

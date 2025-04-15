@@ -26,8 +26,8 @@ import io.netty.channel.ChannelHandlerContext;
 public abstract class BaseIterationCommand extends RespCommand implements Resp3Command {
    private static final String INITIAL_CURSOR = "0";
 
-   protected BaseIterationCommand(int arity, int firstKeyPos, int lastKeyPos, int steps) {
-      super(arity, firstKeyPos, lastKeyPos, steps);
+   protected BaseIterationCommand(int arity, int firstKeyPos, int lastKeyPos, int steps, long aclMask) {
+      super(arity, firstKeyPos, lastKeyPos, steps, aclMask);
    }
 
    protected byte[] getMatch(List<byte[]> arguments) {

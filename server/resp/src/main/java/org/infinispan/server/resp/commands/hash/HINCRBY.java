@@ -24,12 +24,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class HINCRBY extends RespCommand implements Resp3Command {
 
    public HINCRBY() {
-      super(4, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.HASH | AclCategory.FAST;
+      super(4, 1, 1, 1, AclCategory.WRITE.mask() | AclCategory.HASH.mask() | AclCategory.FAST.mask());
    }
 
    @Override

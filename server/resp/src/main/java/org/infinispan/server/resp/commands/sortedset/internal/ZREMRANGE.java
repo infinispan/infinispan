@@ -25,13 +25,8 @@ public abstract class ZREMRANGE extends RespCommand implements Resp3Command {
       RANK, SCORE, LEX
    }
    protected ZREMRANGE(int arity, ZREMRANGE.Type type) {
-      super(arity, 1, 1, 1);
+      super(arity, 1, 1, 1, AclCategory.WRITE.mask() | AclCategory.SORTEDSET.mask() | AclCategory.SLOW.mask());
       this.type = type;
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.SORTEDSET | AclCategory.SLOW;
    }
 
    @Override
@@ -43,7 +38,7 @@ public abstract class ZREMRANGE extends RespCommand implements Resp3Command {
       int pos = 0;
       byte[] name = arguments.get(pos++);
       byte[] start = arguments.get(pos++);
-      byte[] stop = arguments.get(pos++);
+      byte[] stop = arguments.get(pos);
 
       CompletionStage<Long> removeAllCall;
       if (type == Type.SCORE) {

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -25,12 +26,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class JSONARRPOP extends RespCommand implements Resp3Command {
 
     public JSONARRPOP() {
-        super("JSON.ARRPOP", -1, 1, 1, 1);
-    }
-
-    @Override
-    public long aclMask() {
-        return 0;
+        super("JSON.ARRPOP", -1, 1, 1, 1, AclCategory.JSON.mask() | AclCategory.WRITE.mask() | AclCategory.SLOW.mask());
     }
 
     @Override
@@ -51,7 +47,7 @@ public class JSONARRPOP extends RespCommand implements Resp3Command {
                 writer.error("-ERR could not perform this operation on a key that doesn't exist");
                 return;
             }
-            if (c.size() > 0) {
+            if (!c.isEmpty()) {
                 writer.string(c.get(c.size() - 1));
                 return;
             }

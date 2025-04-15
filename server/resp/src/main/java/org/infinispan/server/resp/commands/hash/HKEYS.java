@@ -25,12 +25,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class HKEYS extends RespCommand implements Resp3Command {
 
    public HKEYS() {
-      super(2, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.HASH | AclCategory.SLOW;
+      super(2, 1, 1, 1, AclCategory.READ.mask() | AclCategory.HASH.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

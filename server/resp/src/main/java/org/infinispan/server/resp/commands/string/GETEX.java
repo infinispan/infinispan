@@ -27,12 +27,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class GETEX extends RespCommand implements Resp3Command {
    public GETEX() {
-      super(-2, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.STRING | AclCategory.FAST;
+      super(-2, 1, 1, 1, AclCategory.WRITE.mask() | AclCategory.STRING.mask() | AclCategory.FAST.mask());
    }
 
    @Override

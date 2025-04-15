@@ -64,12 +64,7 @@ public class ZRANGE extends RespCommand implements Resp3Command {
    }
 
    protected ZRANGE(int arity) {
-      super(arity, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.SORTEDSET | AclCategory.SLOW;
+      super(arity, 1, 1, 1, AclCategory.READ.mask() | AclCategory.SORTEDSET.mask() | AclCategory.SLOW.mask());
    }
 
    static class ResultOptions {

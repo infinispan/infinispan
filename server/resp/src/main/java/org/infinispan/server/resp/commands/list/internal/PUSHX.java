@@ -18,8 +18,8 @@ import io.netty.channel.ChannelHandlerContext;
  * @since 15.0
  */
 public abstract class PUSHX extends PUSH implements Resp3Command {
-   public PUSHX(boolean first) {
-      super(first);
+   public PUSHX(boolean first, long aclMask) {
+      super(first, aclMask);
    }
 
    @Override

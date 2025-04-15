@@ -21,8 +21,8 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public abstract class JSONAPPEND extends RespCommand implements Resp3Command {
 
-    protected JSONAPPEND(String name, int arity, int firstKeyPos, int lastKeyPos, int steps) {
-        super(name, arity, firstKeyPos, lastKeyPos, steps);
+    protected JSONAPPEND(String name, int arity, int firstKeyPos, int lastKeyPos, int steps, long aclMask) {
+        super(name, arity, firstKeyPos, lastKeyPos, steps, aclMask);
     }
 
     protected CompletionStage<RespRequestHandler> returnResult(Resp3Handler handler, ChannelHandlerContext ctx,
@@ -35,15 +35,10 @@ public abstract class JSONAPPEND extends RespCommand implements Resp3Command {
         return handler.stageToReturn(lengths, ctx, ResponseWriter.ARRAY_INTEGER);
     }
 
-    @Override
-    public long aclMask() {
-        return 0;
-    }
-
     static BiConsumer<List<Long>, ResponseWriter> newIntegerOrErrorWriter(byte[] path, String opType) {
         // legacy path just one result and it must be not null
         return (c, writer) -> {
-            if (c == null || c.size() == 0 || c.get(0) == null) {
+            if (c == null || c.isEmpty() || c.get(0) == null) {
                 throw new CacheException("Path '" + RespUtil.ascii(path) + "' does not exist or not a " + opType);
             }
             // For compatibility, last non-null result is returned

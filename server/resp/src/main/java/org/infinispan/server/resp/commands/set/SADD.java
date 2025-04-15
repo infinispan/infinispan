@@ -21,12 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class SADD extends RespCommand implements Resp3Command {
    public SADD() {
-      super(-3, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.SET | AclCategory.FAST;
+      super(-3, 1, 1, 1, AclCategory.WRITE.mask() | AclCategory.SET.mask() | AclCategory.FAST.mask());
    }
 
    @Override

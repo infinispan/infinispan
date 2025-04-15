@@ -25,12 +25,7 @@ public class LINSERT extends RespCommand implements Resp3Command {
    public static final String AFTER = "AFTER";
 
    public LINSERT() {
-      super(5, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.LIST | AclCategory.SLOW;
+      super(5, 1, 1, 1, AclCategory.WRITE.mask() | AclCategory.LIST.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

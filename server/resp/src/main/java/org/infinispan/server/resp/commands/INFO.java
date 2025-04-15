@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.jdkspecific.ProcessInfo;
@@ -15,27 +16,22 @@ import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.commands.connection.MODULE;
 import org.infinispan.server.resp.meta.ClientMetadata;
 
 import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @see <a href="https://redis.io/commands/info/">INFO</a>
- *
+ * <p>
  * This implementation attempts to return all attributes that a real Redis server returns. However, in most
  * cases, the values are set to 0, because they cannot be retrieved or don't make any sense in Infinispan.
- *
  * @since 15.0
  */
 public class INFO extends RespCommand implements Resp3Command {
 
    public INFO() {
-      super(-1, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.SLOW | AclCategory.DANGEROUS;
+      super(-1, 0, 0, 0, AclCategory.SLOW.mask() | AclCategory.DANGEROUS.mask());
    }
 
 
@@ -294,6 +290,13 @@ public class INFO extends RespCommand implements Resp3Command {
 
       if (sections.contains(Section.MODULES)) {
          sb.append("# Modules\r\n");
+         for (Map<String, Object> module : MODULE.allModulesRESP3()) {
+            sb.append("module:name=");
+            sb.append(module.get("name"));
+            sb.append(",ver=");
+            sb.append(module.get("ver"));
+            sb.append(",api=1,filters=0,usedby=[],using=[],options=[]\r\n");
+         }
          sb.append(CRLF_STRING);
       }
 

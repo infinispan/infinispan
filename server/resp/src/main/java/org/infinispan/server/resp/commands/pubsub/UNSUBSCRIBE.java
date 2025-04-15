@@ -27,12 +27,7 @@ public class UNSUBSCRIBE extends RespCommand implements Resp3Command, PubSubResp
    public static final String NAME = "UNSUBSCRIBE";
 
    public UNSUBSCRIBE() {
-      super(NAME, -1, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.PUBSUB | AclCategory.SLOW;
+      super(NAME, -1, 0, 0, 0, AclCategory.PUBSUB.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

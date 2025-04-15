@@ -12,11 +12,6 @@ import org.infinispan.server.resp.commands.list.internal.PUSHX;
  */
 public class LPUSHX extends PUSHX implements Resp3Command {
    public LPUSHX() {
-      super(true);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.LIST | AclCategory.FAST;
+      super(true, AclCategory.WRITE.mask() | AclCategory.LIST.mask() | AclCategory.FAST.mask());
    }
 }

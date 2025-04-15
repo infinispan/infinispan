@@ -45,8 +45,8 @@ import io.netty.channel.ChannelHandlerContext;
 public abstract class AbstractBlockingPop extends RespCommand implements Resp3Command {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
 
-   public AbstractBlockingPop(int arity, int firstKeyPos, int lastKeyPos, int steps) {
-      super(arity, firstKeyPos, lastKeyPos, steps);
+   public AbstractBlockingPop(int arity, int firstKeyPos, int lastKeyPos, int steps, long aclMask) {
+      super(arity, firstKeyPos, lastKeyPos, steps, aclMask);
    }
 
    abstract PopConfiguration parseArguments(Resp3Handler handler, List<byte[]> arguments);

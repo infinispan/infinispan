@@ -19,12 +19,7 @@ import org.infinispan.server.resp.commands.iteration.BaseIterationCommand;
 public class SCAN extends BaseIterationCommand {
 
    public SCAN() {
-      super(-2, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.KEYSPACE | AclCategory.READ | AclCategory.SLOW;
+      super(-2, 0, 0, 0, AclCategory.KEYSPACE.mask() | AclCategory.READ.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

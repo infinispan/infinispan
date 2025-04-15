@@ -24,12 +24,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class LOAD extends RespCommand implements Resp3Command {
    protected LOAD() {
-      super(3, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.SCRIPTING | AclCategory.SLOW;
+      super(3, 0, 0, 0, AclCategory.SCRIPTING.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

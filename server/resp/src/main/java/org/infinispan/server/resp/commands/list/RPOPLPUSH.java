@@ -18,12 +18,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class RPOPLPUSH extends LMOVE implements Resp3Command {
    public RPOPLPUSH() {
-      super(3);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.LIST | AclCategory.SLOW;
+      super(3, AclCategory.WRITE.mask() | AclCategory.LIST.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

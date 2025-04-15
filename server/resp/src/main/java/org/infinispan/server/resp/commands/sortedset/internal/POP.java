@@ -35,8 +35,9 @@ public abstract class POP extends RespCommand implements Resp3Command {
    };
 
    private final boolean min;
-   public POP(boolean min) {
-      super(-2, 1, 1, 1);
+
+   public POP(boolean min, long aclMask) {
+      super(-2, 1, 1, 1, aclMask);
       this.min = min;
    }
 

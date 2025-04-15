@@ -19,12 +19,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class ECHO extends RespCommand implements Resp3Command {
    public ECHO() {
-      super(2, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.FAST | AclCategory.CONNECTION;
+      super(2, 0, 0, 0, AclCategory.FAST.mask() | AclCategory.CONNECTION.mask());
    }
 
    @Override

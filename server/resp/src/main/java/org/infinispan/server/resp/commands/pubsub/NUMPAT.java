@@ -24,12 +24,7 @@ import io.netty.channel.ChannelHandlerContext;
 class NUMPAT extends RespCommand implements Resp3Command {
 
    NUMPAT() {
-      super(2, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.PUBSUB | AclCategory.SLOW;
+      super(2, 0, 0, 0, AclCategory.PUBSUB.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

@@ -24,12 +24,7 @@ public class SINTERCARD extends RespCommand implements Resp3Command {
    static String LIMIT_OPT = "LIMIT";
 
    public SINTERCARD() {
-      super(-3, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.SET | AclCategory.SLOW;
+      super(-3, 0, 0, 0, AclCategory.READ.mask() | AclCategory.SET.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

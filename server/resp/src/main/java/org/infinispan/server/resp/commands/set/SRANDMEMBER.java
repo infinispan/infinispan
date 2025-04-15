@@ -22,12 +22,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class SRANDMEMBER extends RespCommand implements Resp3Command {
    public SRANDMEMBER() {
-      super(-2, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.SET | AclCategory.FAST;
+      super(-2, 1, 1, 1, AclCategory.READ.mask() | AclCategory.SET.mask() | AclCategory.FAST.mask());
    }
 
    @Override

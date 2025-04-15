@@ -22,12 +22,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class ZLEXCOUNT extends RespCommand implements Resp3Command {
 
    public ZLEXCOUNT() {
-      super(4, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.SORTEDSET | AclCategory.FAST;
+      super(4, 1, 1, 1, AclCategory.READ.mask() | AclCategory.SORTEDSET.mask() | AclCategory.FAST.mask());
    }
 
    @Override

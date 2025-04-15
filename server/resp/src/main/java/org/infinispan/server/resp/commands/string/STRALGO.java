@@ -21,12 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class STRALGO extends RespCommand implements Resp3Command {
    public STRALGO() {
-      super(-5, 1, 2, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.STRING | AclCategory.SLOW;
+      super(-5, 1, 2, 1, AclCategory.READ.mask() | AclCategory.STRING.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

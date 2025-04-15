@@ -22,12 +22,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class TYPE extends RespCommand implements Resp3Command {
    public TYPE() {
-      super(2, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.KEYSPACE | AclCategory.READ | AclCategory.FAST;
+      super(2, 1, 1, 1, AclCategory.KEYSPACE.mask() | AclCategory.READ.mask() | AclCategory.FAST.mask());
    }
 
    @Override
@@ -38,10 +33,10 @@ public class TYPE extends RespCommand implements Resp3Command {
       MediaType vmt = handler.cache().getValueDataConversion().getStorageMediaType();
       return handler.stageToReturn(handler.cache().withMediaType(MediaType.APPLICATION_OCTET_STREAM, vmt).getCacheEntryAsync(keyBytes).thenApply(e -> {
          if (e == null) {
-            return RespTypes.none.name();
+            return RespTypes.none.toString();
          }
          Class<?> c = e.getValue().getClass();
-         return RespTypes.fromValueClass(c).name();
+         return RespTypes.fromValueClass(c).toString();
       }), ctx, ResponseWriter.SIMPLE_STRING);
    }
 }

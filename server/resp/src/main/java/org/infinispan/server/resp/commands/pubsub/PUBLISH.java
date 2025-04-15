@@ -25,12 +25,7 @@ public class PUBLISH extends RespCommand implements Resp3Command {
    private static final Function<Object, Long> CONVERT = ignore -> 0L;
 
    public PUBLISH() {
-      super(3, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.PUBSUB | AclCategory.FAST;
+      super(3, 0, 0, 0, AclCategory.PUBSUB.mask() | AclCategory.FAST.mask());
    }
 
    @Override

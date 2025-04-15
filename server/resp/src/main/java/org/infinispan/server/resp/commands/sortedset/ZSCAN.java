@@ -29,12 +29,7 @@ import org.infinispan.server.resp.commands.iteration.BaseIterationCommand;
 public class ZSCAN extends BaseIterationCommand {
 
    public ZSCAN() {
-      super(-3, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.SORTEDSET | AclCategory.SLOW;
+      super(-3, 1, 1, 1, AclCategory.READ.mask() | AclCategory.SORTEDSET.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

@@ -39,12 +39,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class HELLO extends RespCommand implements AuthResp3Command {
    public HELLO() {
-      super(-1, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.FAST | AclCategory.CONNECTION;
+      super(-1, 0, 0, 0, AclCategory.FAST.mask() | AclCategory.CONNECTION.mask());
    }
 
    @Override
@@ -103,7 +98,7 @@ public class HELLO extends RespCommand implements AuthResp3Command {
       response.put("id", metadata.id());
       response.put("mode", SecurityActions.getCacheManagerConfiguration(handler.respServer().getCacheManager()).isClustered() ? "cluster" : "standalone");
       response.put("role", "master"); // redis always adds this even in standalone mode
-      response.put("modules", MODULE.allModules());
+      response.put("modules", MODULE.allModulesRESP3());
       writer.map(response, new SerializationHint.KeyValueHint(Resp3Type.BULK_STRING, Resp3Type.AUTO));
    }
 }

@@ -6,6 +6,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -28,12 +29,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class JSONMSET extends RespCommand implements Resp3Command {
 
    public JSONMSET() {
-      super("JSON.MSET", -4, 1, -1, 3);
-   }
-
-   @Override
-   public long aclMask() {
-      return 0;
+      super("JSON.MSET", -4, 1, -1, 3, AclCategory.JSON.mask() | AclCategory.WRITE.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

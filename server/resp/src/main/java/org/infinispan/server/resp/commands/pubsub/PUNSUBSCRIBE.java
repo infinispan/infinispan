@@ -19,12 +19,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class PUNSUBSCRIBE extends RespCommand implements PubSubResp3Command {
    public PUNSUBSCRIBE() {
-      super(-1, 0,0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.PUBSUB | AclCategory.SLOW;
+      super(-1, 0,0, 0, AclCategory.PUBSUB.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

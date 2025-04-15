@@ -20,12 +20,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class DBSIZE extends RespCommand implements Resp3Command {
    public DBSIZE() {
-      super(1, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.KEYSPACE | AclCategory.READ | AclCategory.FAST;
+      super(1, 0, 0, 0, AclCategory.KEYSPACE.mask() | AclCategory.READ.mask() | AclCategory.FAST.mask());
    }
 
    @Override

@@ -20,14 +20,9 @@ import io.netty.channel.ChannelHandlerContext;
 public class SORT_RO extends RespCommand implements Resp3Command {
    private final SORT sort;
    public SORT_RO() {
-      super(-2, 1, 1, 1);
+      super(-2, 1, 1, 1, AclCategory.READ.mask() | AclCategory.SET.mask() | AclCategory.SORTEDSET.mask() | AclCategory.LIST.mask() | AclCategory.SLOW.mask() | AclCategory.DANGEROUS.mask());
       sort = new SORT();
       sort.disableStore();
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.SET | AclCategory.SORTEDSET | AclCategory.LIST | AclCategory.SLOW | AclCategory.DANGEROUS;
    }
 
    @Override

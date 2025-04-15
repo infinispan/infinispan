@@ -21,12 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class GET extends RespCommand implements Resp3Command {
    public GET() {
-      super(2, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.STRING | AclCategory.FAST;
+      super(2, 1, 1, 1, AclCategory.READ.mask() | AclCategory.STRING.mask() | AclCategory.FAST.mask());
    }
 
    @Override

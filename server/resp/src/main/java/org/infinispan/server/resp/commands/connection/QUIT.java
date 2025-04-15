@@ -24,12 +24,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class QUIT extends RespCommand implements AuthResp3Command, PubSubResp3Command, TransactionResp3Command {
 
    public QUIT() {
-      super(1, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.FAST | AclCategory.CONNECTION;
+      super(1, 0, 0, 0, AclCategory.FAST.mask() | AclCategory.CONNECTION.mask());
    }
 
    @Override

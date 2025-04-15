@@ -21,12 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class ZREM extends RespCommand implements Resp3Command {
    public ZREM() {
-      super(-3, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.SORTEDSET | AclCategory.FAST;
+      super(-3, 1, 1, 1, AclCategory.WRITE.mask() | AclCategory.SORTEDSET.mask() | AclCategory.FAST.mask());
    }
 
    @Override

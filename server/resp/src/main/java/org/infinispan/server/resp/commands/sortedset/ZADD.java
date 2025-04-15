@@ -38,12 +38,7 @@ public class ZADD extends RespCommand implements Resp3Command {
    public static final Set<String> ARGUMENTS = Set.of(XX, NX, LT, GT, CH, INCR);
 
    public ZADD() {
-      super(-4, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.SORTEDSET | AclCategory.FAST;
+      super(-4, 1, 1, 1, AclCategory.WRITE.mask() | AclCategory.SORTEDSET.mask() | AclCategory.FAST.mask());
    }
 
    @Override

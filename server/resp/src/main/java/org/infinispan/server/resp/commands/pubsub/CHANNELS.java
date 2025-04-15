@@ -36,12 +36,7 @@ class CHANNELS extends RespCommand implements Resp3Command {
    private static final Predicate<byte[]> PASS_ALL = ignore -> true;
 
    CHANNELS() {
-      super(-2, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.PUBSUB | AclCategory.SLOW;
+      super(-2, 0, 0, 0, AclCategory.PUBSUB.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

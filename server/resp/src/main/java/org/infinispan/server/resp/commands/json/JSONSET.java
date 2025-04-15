@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -31,12 +32,7 @@ public class JSONSET extends RespCommand implements Resp3Command {
    private static final BiConsumer<? super String, ResponseWriter> biConsumer = JSONSET::jsonSetBiConsumer;
 
    public JSONSET() {
-      super("JSON.SET", -4, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return 0;
+      super("JSON.SET", -4, 1, 1, 1, AclCategory.JSON.mask() | AclCategory.WRITE.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

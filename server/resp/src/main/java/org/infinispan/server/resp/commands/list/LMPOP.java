@@ -34,12 +34,7 @@ public class LMPOP extends RespCommand implements Resp3Command {
    public static final byte[] RIGHT = "RIGHT".getBytes();
 
    public LMPOP() {
-      super(-4, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.LIST | AclCategory.SLOW;
+      super(-4, 0, 0, 0, AclCategory.WRITE.mask() | AclCategory.LIST.mask() | AclCategory.SLOW.mask());
    }
 
    @Override
