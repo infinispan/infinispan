@@ -205,20 +205,6 @@ public class ControlledTransport extends AbstractDelegatingTransport {
    }
 
    @Override
-   public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode,
-                                                long timeout, boolean usePriorityQueue, ResponseFilter responseFilter,
-                                                boolean totalOrder, boolean anycast) throws Exception {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode,
-                                                long timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder,
-                                                boolean anycast) throws Exception {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
    public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
                                                                         ReplicableCommand rpcCommand, ResponseMode mode,
                                                                         long timeout, ResponseFilter responseFilter,
