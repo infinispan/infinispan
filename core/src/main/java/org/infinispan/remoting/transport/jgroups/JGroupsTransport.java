@@ -24,7 +24,6 @@ import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -53,7 +52,6 @@ import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
-import org.infinispan.commons.util.logging.TraceException;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
@@ -303,40 +301,6 @@ public class JGroupsTransport implements Transport {
       } else {
          logCommand(command, targets);
          sendCommand(targets, command, Request.NO_REQUEST_ID, deliverOrder, true);
-      }
-   }
-
-   @Override
-   @Deprecated(forRemoval=true)
-   public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> commands, ResponseMode mode,
-                                                long timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder,
-                                                boolean anycast)
-         throws Exception {
-      if (commands == null || commands.isEmpty()) {
-         // don't send if recipients list is empty
-         log.trace("Destination list is empty: no need to send message");
-         return Collections.emptyMap();
-      }
-
-      if (mode.isSynchronous()) {
-         MapResponseCollector collector = MapResponseCollector.validOnly(commands.size());
-         CompletionStage<Map<Address, Response>> request =
-               invokeCommands(commands.keySet(), commands::get, collector, deliverOrder, timeout, TimeUnit.MILLISECONDS);
-
-         try {
-            return CompletableFutures.await(request.toCompletableFuture());
-         } catch (ExecutionException e) {
-            Throwable cause = e.getCause();
-            cause.addSuppressed(new TraceException());
-            throw Util.rewrapAsCacheException(cause);
-         }
-      } else {
-         commands.forEach(
-               (a, command) -> {
-                  logCommand(command, a);
-                  sendCommand(a, command, Request.NO_REQUEST_ID, deliverOrder, true, true);
-               });
-         return Collections.emptyMap();
       }
    }
 
