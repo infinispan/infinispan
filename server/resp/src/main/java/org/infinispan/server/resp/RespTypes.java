@@ -7,6 +7,7 @@ import org.infinispan.multimap.impl.SetBucket;
 import org.infinispan.multimap.impl.SortedSetBucket;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.server.resp.json.JsonBucket;
 
 /**
  * @since 15.0
@@ -21,13 +22,20 @@ public enum RespTypes {
    list,
    @ProtoEnumValue(4)
    set,
-   // We must modify the name as 'stream' is a reserved keyword in Protostream
+   // We must modify the name as 'stream' is a reserved keyword in ProtoStream
    @ProtoEnumValue(value = 5, name = "_stream")
    stream,
    @ProtoEnumValue(6)
    string,
    @ProtoEnumValue(7)
    zset,
+   @ProtoEnumValue(value = 8)
+   json {
+      @Override
+      public String toString() {
+         return "ReJSON-RL";
+      }
+   },
 
    // Not a real Resp type
    @ProtoEnumValue(0)
@@ -48,6 +56,8 @@ public enum RespTypes {
          return RespTypes.zset;
       } else if (c == byte[].class) {
          return RespTypes.string;
+      } else if (c == JsonBucket.class) {
+         return RespTypes.json;
       } else {
          return RespTypes.unknown;
       }

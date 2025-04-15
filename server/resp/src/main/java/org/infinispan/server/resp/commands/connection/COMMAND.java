@@ -1,5 +1,7 @@
 package org.infinispan.server.resp.commands.connection;
 
+import static org.infinispan.server.resp.RespUtil.ascii;
+
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -10,6 +12,7 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Commands;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.serialization.JavaObjectSerializer;
+import org.infinispan.server.resp.serialization.Resp3Type;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -33,23 +36,54 @@ public class COMMAND extends RespCommand implements Resp3Command {
    };
 
    public COMMAND() {
-      super(NAME, -1, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.SLOW | AclCategory.CONNECTION;
+      super(NAME, -1, 0, 0, 0, AclCategory.SLOW.mask() | AclCategory.CONNECTION.mask());
    }
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
-      if (!arguments.isEmpty()) {
-         handler.writer().customError("COMMAND does not currently support arguments");
-      } else {
+      ResponseWriter writer = handler.writer();
+      if (arguments.isEmpty()) {
          // If we ever support a command that isn't ASCII this will need to change
-         handler.writer().write(SERIALIZER);
+         writer.write(SERIALIZER);
+      } else {
+         String subcommand = ascii(arguments.get(0)).toUpperCase();
+         switch (subcommand) {
+            case "COUNT":
+               writer.integers(Commands.all().size());
+               break;
+            case "INFO":
+               if (arguments.size() == 1) {
+                  // print them all
+                  writer.write(SERIALIZER);
+               } else {
+                  writer.arrayStart(arguments.size() - 1);
+                  for (int i = 1; i < arguments.size(); i++) {
+                     RespCommand command = RespCommand.fromString(ascii(arguments.get(i)));
+                     if (command == null) {
+                        writer.nulls();
+                     } else {
+                        describeCommand(command, writer);
+                     }
+                  }
+                  writer.arrayEnd();
+               }
+               break;
+            case "LIST":
+               if (arguments.size() == 1) {
+                  // print them all
+                  writer.write(SERIALIZER);
+               } else {
+                  // TODO: handle FILTERBY MODULE|ACLCAT|PATTERN
+                  writer.customError("syntax error");
+               }
+               break;
+            default:
+               // this will also catch any unimplemented subcommands such as DOCS, GETKEYS, GETKEYSANDFLAGS
+               writer.customError("unknown subcommand '" + subcommand + "'. Try COMMAND HELP.");
+               break;
+         }
       }
       return handler.myStage();
    }
@@ -85,7 +119,7 @@ public class COMMAND extends RespCommand implements Resp3Command {
       // Additional command metadata
       // ACL categories
       writer.arrayNext();
-      writer.emptySet();
+      writer.array(AclCategory.aclNames(command.aclMask()), Resp3Type.BULK_STRING);
 
       // Tips
       writer.arrayNext();

@@ -373,7 +373,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       RedisCommands<String, String> redis = redisConnection.sync();
       CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).addValue("LIST");
       List<Object> response = redis.dispatch(new SimpleCommand("MODULE"), new ArrayOutput<>(StringCodec.UTF8), args);
-      assertEquals(0, response.size());
+      assertEquals(1, response.size());
    }
 
    @Test
