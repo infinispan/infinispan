@@ -19,8 +19,6 @@ import java.util.concurrent.CompletionStage;
  */
 public class JSONTYPE extends RespCommand implements Resp3Command {
 
-   private byte[] DEFAULT_PATH = { '.' };
-
    public JSONTYPE() {
       super("JSON.TYPE", -1, 1, 1, 1);
    }
