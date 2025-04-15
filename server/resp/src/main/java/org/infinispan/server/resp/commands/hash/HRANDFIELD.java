@@ -35,12 +35,7 @@ public class HRANDFIELD extends RespCommand implements Resp3Command {
    private static final byte[] WITH_VALUES = "WITHVALUES".getBytes(StandardCharsets.US_ASCII);
 
    public HRANDFIELD() {
-      super(-2, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.HASH | AclCategory.SLOW;
+      super(-2, 1, 1, 1, AclCategory.READ.mask() | AclCategory.HASH.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

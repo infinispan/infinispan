@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -25,7 +26,7 @@ public class JSONARRTRIM extends RespCommand implements Resp3Command {
     public static String ARR_TYPE_NAME = "array";
 
     public JSONARRTRIM() {
-        super("JSON.ARRTRIM", 5, 1, 1, 1);
+        super("JSON.ARRTRIM", 5, 1, 1, 1, AclCategory.JSON.mask() | AclCategory.WRITE.mask() | AclCategory.SLOW.mask());
     }
 
     @Override
@@ -67,11 +68,6 @@ public class JSONARRTRIM extends RespCommand implements Resp3Command {
         } else {
             writer.array(c, Resp3Type.INTEGER);
         }
-    }
-
-    @Override
-    public long aclMask() {
-        return 0;
     }
 
 }

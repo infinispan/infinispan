@@ -24,12 +24,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class RANDOMKEY extends RespCommand implements Resp3Command {
 
    public RANDOMKEY() {
-      super(1, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.KEYSPACE | AclCategory.READ | AclCategory.SLOW;
+      super(1, 0, 0, 0, AclCategory.KEYSPACE.mask() | AclCategory.READ.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

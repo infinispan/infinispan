@@ -20,8 +20,8 @@ import io.netty.channel.ChannelHandlerContext;
 public abstract class PUSH extends RespCommand implements Resp3Command {
    protected boolean first;
 
-   public PUSH(boolean first) {
-      super(-3, 1, 1, 1);
+   public PUSH(boolean first, long aclMask) {
+      super(-3, 1, 1, 1, aclMask);
       this.first = first;
    }
 

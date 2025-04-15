@@ -1,6 +1,10 @@
 package org.infinispan.server.resp.commands.json;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -9,19 +13,11 @@ import org.infinispan.server.resp.json.EmbeddedJsonCache;
 import org.infinispan.server.resp.json.JSONUtil;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 abstract class JSONNUM extends RespCommand implements Resp3Command {
-    public JSONNUM(String commandName) {
-        super(commandName, -2, 1, 1, 1);
-    }
-
-    @Override
-    public long aclMask() {
-        return 0;
+    public JSONNUM(String commandName, long aclMask) {
+        super(commandName, -2, 1, 1, 1, aclMask);
     }
 
     @Override

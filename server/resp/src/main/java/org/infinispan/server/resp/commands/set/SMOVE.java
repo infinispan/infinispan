@@ -31,12 +31,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class SMOVE extends RespCommand implements Resp3Command {
    public SMOVE() {
-      super(4, 1, 2, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.SET | AclCategory.FAST;
+      super(4, 1, 2, 1, AclCategory.WRITE.mask() | AclCategory.SET.mask() | AclCategory.FAST.mask());
    }
 
    @Override

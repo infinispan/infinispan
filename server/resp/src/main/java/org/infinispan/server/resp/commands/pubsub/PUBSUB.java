@@ -27,12 +27,7 @@ public class PUBSUB extends FamilyCommand {
    }
 
    public PUBSUB() {
-      super(-2, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.PUBSUB | AclCategory.SLOW;
+      super(-2, 0, 0, 0, AclCategory.PUBSUB.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

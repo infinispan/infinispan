@@ -11,11 +11,6 @@ import org.infinispan.server.resp.commands.list.internal.POP;
  */
 public class RPOP extends POP {
    public RPOP() {
-      super(false);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.LIST | AclCategory.FAST;
+      super(false, AclCategory.WRITE.mask() | AclCategory.LIST.mask() | AclCategory.FAST.mask());
    }
 }

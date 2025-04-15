@@ -55,12 +55,7 @@ public class WATCH extends RespCommand implements Resp3Command, TransactionResp3
    static final AttributeKey<List<TxKeysListener>> WATCHER_KEY = AttributeKey.newInstance("watchers");
 
    public WATCH() {
-      super(-2, 1, -1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.FAST | AclCategory.TRANSACTION;
+      super(-2, 1, -1, 1, AclCategory.FAST.mask() | AclCategory.TRANSACTION.mask());
    }
 
    @Override

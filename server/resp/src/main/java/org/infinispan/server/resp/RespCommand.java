@@ -1,5 +1,8 @@
 package org.infinispan.server.resp;
 
+import static org.infinispan.server.resp.commands.Commands.ALL_COMMANDS;
+import static org.infinispan.server.resp.serialization.RespConstants.CRLF;
+
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,8 +19,6 @@ import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import static org.infinispan.server.resp.commands.Commands.ALL_COMMANDS;
-import static org.infinispan.server.resp.serialization.RespConstants.CRLF;
 
 public abstract class RespCommand implements BaseResp3Command {
    protected final static Log log = LogFactory.getLog(RespCommand.class, Log.class);
@@ -27,6 +28,7 @@ public abstract class RespCommand implements BaseResp3Command {
    private final int lastKeyPos;
    private final int steps;
    private final byte[] bytes;
+   private final long aclMask;
 
    public boolean hasValidNumberOfArguments(List<byte[]> arguments){
       // Command arity always includes the command's name itself (and the subcommand when applicable).
@@ -58,13 +60,14 @@ public abstract class RespCommand implements BaseResp3Command {
     *                    Multi-key commands that accept an arbitrary number of keys, such as MSET, use the value -1.
     * @param steps       the step, or increment, between the first key and the position of the next key.
     */
-   protected RespCommand(int arity, int firstKeyPos, int lastKeyPos, int steps) {
+   protected RespCommand(int arity, int firstKeyPos, int lastKeyPos, int steps, long aclMask) {
       this.name = this.getClass().getSimpleName();
       this.arity = arity;
       this.firstKeyPos = firstKeyPos;
       this.lastKeyPos = lastKeyPos;
       this.steps = steps;
       this.bytes = name.getBytes(StandardCharsets.US_ASCII);
+      this.aclMask = aclMask;
    }
 
    /**
@@ -78,13 +81,14 @@ public abstract class RespCommand implements BaseResp3Command {
     *                    Multi-key commands that accept an arbitrary number of keys, such as MSET, use the value -1.
     * @param steps       the step, or increment, between the first key and the position of the next key.
     */
-   protected RespCommand(String name, int arity, int firstKeyPos, int lastKeyPos, int steps) {
+   protected RespCommand(String name, int arity, int firstKeyPos, int lastKeyPos, int steps, long aclMask) {
       this.name = name;
       this.arity = arity;
       this.firstKeyPos = firstKeyPos;
       this.lastKeyPos = lastKeyPos;
       this.steps = steps;
       this.bytes = name.getBytes(StandardCharsets.US_ASCII);
+      this.aclMask = aclMask;
    }
 
    public String getName() {
@@ -189,6 +193,10 @@ public abstract class RespCommand implements BaseResp3Command {
 
    public int getSteps() {
       return steps;
+   }
+
+   public final long aclMask() {
+      return aclMask;
    }
 
    public byte[][] extractKeys(List<byte[]> arguments) {

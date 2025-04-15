@@ -134,12 +134,7 @@ public class AccessLoggerManager implements IntConsumer {
       private static final UnknownCommand UNKNOWN_COMMAND = new UnknownCommand();
 
       private UnknownCommand() {
-         super("UNKNOWN_COMMAND", 0, 0, 0, 0);
-      }
-
-      @Override
-      public long aclMask() {
-         return AclCategory.FAST;
+         super("UNKNOWN_COMMAND", 0, 0, 0, 0, AclCategory.FAST.mask());
       }
    }
 }

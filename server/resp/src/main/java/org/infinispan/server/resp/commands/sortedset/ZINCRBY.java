@@ -23,12 +23,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class ZINCRBY extends RespCommand implements Resp3Command {
    public ZINCRBY() {
-      super(4, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.SORTEDSET | AclCategory.FAST;
+      super(4, 1, 1, 1, AclCategory.WRITE.mask() | AclCategory.SORTEDSET.mask() | AclCategory.FAST.mask());
    }
 
    @Override

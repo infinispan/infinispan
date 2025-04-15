@@ -25,12 +25,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class LRANGE extends RespCommand implements Resp3Command {
 
    public LRANGE() {
-      super(4, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.LIST | AclCategory.SLOW;
+      super(4, 1, 1, 1, AclCategory.READ.mask() | AclCategory.LIST.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

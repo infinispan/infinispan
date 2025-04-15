@@ -3,6 +3,7 @@ package org.infinispan.server.resp.commands.json;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -25,12 +26,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class JSONRESP extends RespCommand implements Resp3Command {
 
    public JSONRESP() {
-      super("JSON.RESP", -2, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return 0;
+      super("JSON.RESP", -2, 1, 1, 1, AclCategory.JSON.mask() | AclCategory.READ.mask() | AclCategory.SLOW.mask());
    }
 
    @Override
@@ -43,8 +39,8 @@ public class JSONRESP extends RespCommand implements Resp3Command {
    }
 
    private static class JsonRespResponseSerializer implements JavaObjectSerializer<List<Object>> {
-      private boolean isLegacy;
-      private String jsonPath;
+      private final boolean isLegacy;
+      private final String jsonPath;
 
       public JsonRespResponseSerializer(CommandArgs commandArgs) {
          this.isLegacy = commandArgs.isLegacy();
@@ -58,7 +54,7 @@ public class JSONRESP extends RespCommand implements Resp3Command {
             return;
          }
          if (this.isLegacy) {
-            if (list.size() == 0) {
+            if (list.isEmpty()) {
                writer.error("-ERR Path '" + this.jsonPath + "' does not exist");
                return;
             }
@@ -93,7 +89,7 @@ public class JSONRESP extends RespCommand implements Resp3Command {
             writer.booleans(b);
             return;
          }
-         if (object instanceof List list) {
+         if (object instanceof List<?> list) {
             writer.writeNumericPrefix(RespConstants.ARRAY, list.size());
             for (Object node : list) {
                writeNode(node, writer);

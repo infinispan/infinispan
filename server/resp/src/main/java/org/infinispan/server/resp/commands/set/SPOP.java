@@ -22,12 +22,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class SPOP extends RespCommand implements Resp3Command {
    public SPOP() {
-      super(-2, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.SET | AclCategory.FAST;
+      super(-2, 1, 1, 1, AclCategory.WRITE.mask() | AclCategory.SET.mask() | AclCategory.FAST.mask());
    }
 
    @Override

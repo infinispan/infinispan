@@ -46,12 +46,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class ZRANDMEMBER extends RespCommand implements Resp3Command {
    public ZRANDMEMBER() {
-      super(-2, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.SORTEDSET | AclCategory.SLOW;
+      super(-2, 1, 1, 1, AclCategory.READ.mask() | AclCategory.SORTEDSET.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

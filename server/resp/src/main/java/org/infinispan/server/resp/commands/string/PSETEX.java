@@ -25,12 +25,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class PSETEX extends SET {
 
    public PSETEX() {
-      super(4, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.STRING | AclCategory.SLOW;
+      super(4, 1, 1, 1, AclCategory.WRITE.mask() | AclCategory.STRING.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

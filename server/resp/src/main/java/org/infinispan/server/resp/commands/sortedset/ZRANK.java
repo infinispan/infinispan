@@ -27,12 +27,7 @@ public class ZRANK extends RespCommand implements Resp3Command {
    protected boolean isRev;
 
    public ZRANK() {
-      super(-3, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.SORTEDSET | AclCategory.FAST;
+      super(-3, 1, 1, 1, AclCategory.READ.mask() | AclCategory.SORTEDSET.mask() | AclCategory.FAST.mask());
    }
 
    @Override

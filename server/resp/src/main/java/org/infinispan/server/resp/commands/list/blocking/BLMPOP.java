@@ -20,12 +20,7 @@ public class BLMPOP extends AbstractBlockingPop {
    private static final byte[] RIGHT = new byte[] { 'R', 'I', 'G', 'H', 'T'};
 
    public BLMPOP() {
-      super(-5, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.LIST | AclCategory.SLOW | AclCategory.BLOCKING;
+      super(-5, 0, 0, 0, AclCategory.WRITE.mask() | AclCategory.LIST.mask() | AclCategory.SLOW.mask() | AclCategory.BLOCKING.mask());
    }
 
    @Override

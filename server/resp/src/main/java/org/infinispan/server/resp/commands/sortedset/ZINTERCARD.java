@@ -31,12 +31,7 @@ public class ZINTERCARD extends RespCommand implements Resp3Command {
    public static final String LIMIT = "LIMIT";
 
    public ZINTERCARD() {
-      super(-3, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.SORTEDSET | AclCategory.SLOW;
+      super(-3, 0, 0, 0, AclCategory.READ.mask() | AclCategory.SORTEDSET.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

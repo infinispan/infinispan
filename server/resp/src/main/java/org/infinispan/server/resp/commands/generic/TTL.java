@@ -32,13 +32,8 @@ public class TTL extends RespCommand implements Resp3Command {
    }
 
    protected TTL(ExpirationOption ... options) {
-      super(2, 1, 1, 1);
+      super(2, 1, 1, 1, AclCategory.KEYSPACE.mask() | AclCategory.READ.mask() | AclCategory.FAST.mask());
       this.options = EnumSet.copyOf(Arrays.asList(options));
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.KEYSPACE | AclCategory.READ | AclCategory.FAST;
    }
 
    @Override

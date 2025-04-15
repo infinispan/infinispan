@@ -27,12 +27,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class RENAME extends RespCommand implements Resp3Command {
 
    public RENAME() {
-      super(3, 1, 2, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.KEYSPACE | AclCategory.WRITE | AclCategory.SLOW;
+      super(3, 1, 2, 1, AclCategory.KEYSPACE.mask() | AclCategory.WRITE.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

@@ -3,6 +3,7 @@ package org.infinispan.server.resp.commands.json;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -21,19 +22,14 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class JSONDEL extends RespCommand implements Resp3Command {
 
-   private static byte[] JSON_ROOT = new byte[] { '$' };
+   private static final byte[] JSON_ROOT = new byte[] { '$' };
 
    public JSONDEL() {
-      super("JSON.DEL", -2, 1, 1, 1);
+      this("JSON.DEL", -2, 1, 1, 1);
    }
 
    protected JSONDEL(String name, int arity, int firstKeyPos, int lastKeyPos, int steps) {
-      super(name, arity, firstKeyPos, lastKeyPos, steps);
-   }
-
-   @Override
-   public long aclMask() {
-      return 0;
+      super(name, arity, firstKeyPos, lastKeyPos, steps, AclCategory.JSON.mask() | AclCategory.WRITE.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

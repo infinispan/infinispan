@@ -23,12 +23,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class HDEL extends RespCommand implements Resp3Command {
 
    public HDEL() {
-      super(-3, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.HASH | AclCategory.FAST;
+      super(-3, 1, 1, 1, AclCategory.WRITE.mask() | AclCategory.HASH.mask() | AclCategory.FAST.mask());
    }
 
    @Override

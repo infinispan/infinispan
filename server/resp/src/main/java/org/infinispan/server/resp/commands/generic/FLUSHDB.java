@@ -25,12 +25,7 @@ public class FLUSHDB extends RespCommand implements Resp3Command {
    private static final byte[] ASYNC_BYTES = "ASYNC".getBytes(StandardCharsets.US_ASCII);
 
    public FLUSHDB() {
-      super(-1, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.KEYSPACE | AclCategory.WRITE | AclCategory.SLOW | AclCategory.DANGEROUS;
+      super(-1, 0, 0, 0, AclCategory.KEYSPACE.mask() | AclCategory.WRITE.mask() | AclCategory.SLOW.mask() | AclCategory.DANGEROUS.mask());
    }
 
    @Override

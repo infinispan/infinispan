@@ -11,11 +11,6 @@ import org.infinispan.server.resp.commands.sortedset.internal.AGGCommand;
  */
 public class ZUNIONSTORE extends AGGCommand {
    public ZUNIONSTORE() {
-      super(-4, 1, 1, 1, AGGCommandType.UNION);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.SORTEDSET | AclCategory.SLOW;
+      super(-4, 1, 1, 1, AGGCommandType.UNION, AclCategory.WRITE.mask() | AclCategory.SORTEDSET.mask() | AclCategory.SLOW.mask());
    }
 }

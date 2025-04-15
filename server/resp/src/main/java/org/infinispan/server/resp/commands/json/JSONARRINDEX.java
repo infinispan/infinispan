@@ -3,6 +3,7 @@ package org.infinispan.server.resp.commands.json;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -23,12 +24,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class JSONARRINDEX extends RespCommand implements Resp3Command {
 
     public JSONARRINDEX() {
-        super("JSON.ARRINDEX", -4, 1, 1, 1);
-    }
-
-    @Override
-    public long aclMask() {
-        return 0;
+        super("JSON.ARRINDEX", -4, 1, 1, 1, AclCategory.JSON.mask() | AclCategory.READ.mask() | AclCategory.SLOW.mask());
     }
 
     @Override

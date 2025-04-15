@@ -63,15 +63,15 @@ import org.infinispan.server.resp.commands.json.JSONARRAPPEND;
 import org.infinispan.server.resp.commands.json.JSONARRINDEX;
 import org.infinispan.server.resp.commands.json.JSONARRINSERT;
 import org.infinispan.server.resp.commands.json.JSONARRLEN;
-import org.infinispan.server.resp.commands.json.JSONCLEAR;
-import org.infinispan.server.resp.commands.json.JSONARRTRIM;
 import org.infinispan.server.resp.commands.json.JSONARRPOP;
+import org.infinispan.server.resp.commands.json.JSONARRTRIM;
+import org.infinispan.server.resp.commands.json.JSONCLEAR;
 import org.infinispan.server.resp.commands.json.JSONDEL;
 import org.infinispan.server.resp.commands.json.JSONFORGET;
 import org.infinispan.server.resp.commands.json.JSONGET;
-import org.infinispan.server.resp.commands.json.JSONMSET;
 import org.infinispan.server.resp.commands.json.JSONMERGE;
 import org.infinispan.server.resp.commands.json.JSONMGET;
+import org.infinispan.server.resp.commands.json.JSONMSET;
 import org.infinispan.server.resp.commands.json.JSONNUMINCRBY;
 import org.infinispan.server.resp.commands.json.JSONNUMMULTBY;
 import org.infinispan.server.resp.commands.json.JSONOBJKEYS;
@@ -113,6 +113,7 @@ import org.infinispan.server.resp.commands.scripting.eval.EVALSHA;
 import org.infinispan.server.resp.commands.scripting.eval.EVALSHA_RO;
 import org.infinispan.server.resp.commands.scripting.eval.EVAL_RO;
 import org.infinispan.server.resp.commands.scripting.eval.SCRIPT;
+import org.infinispan.server.resp.commands.search.FT_LIST;
 import org.infinispan.server.resp.commands.set.SADD;
 import org.infinispan.server.resp.commands.set.SCARD;
 import org.infinispan.server.resp.commands.set.SDIFF;
@@ -209,7 +210,7 @@ public final class Commands {
       // DEL should always be first here
       ALL_COMMANDS[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY(), new DBSIZE(), new DISCARD()};
       ALL_COMMANDS[4] = new RespCommand[]{new ECHO(), new EXISTS(), new EXPIRE(), new EXPIREAT(), new EXPIRETIME(), new EXEC(), new EVAL(), new EVAL_RO(), new EVALSHA(), new EVALSHA_RO()};
-      ALL_COMMANDS[5] = new RespCommand[]{new FLUSHDB(), new FLUSHALL()};
+      ALL_COMMANDS[5] = new RespCommand[]{new FLUSHDB(), new FLUSHALL(), new FT_LIST()};
       // GET should always be first here
       ALL_COMMANDS[6] = new RespCommand[]{new GET(), new GETDEL(), new GETEX(), new GETRANGE(), new GETSET()};
       ALL_COMMANDS[7] = new RespCommand[]{new HELLO(), new HGET(), new HSET(), new HLEN(), new HEXISTS(), new HDEL(), new HMGET(), new HSETNX(), new HKEYS(), new HVALS(), new HSCAN(), new HGETALL(), new HMSET(), new HINCRBY(), new HINCRBYFLOAT(), new HRANDFIELD(), new HSTRLEN()};

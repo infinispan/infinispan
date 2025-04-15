@@ -26,12 +26,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class DEL extends RespCommand implements Resp3Command {
 
    public DEL() {
-      super(-2, 1, -1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.KEYSPACE | AclCategory.WRITE | AclCategory.SLOW;
+      super(-2, 1, -1, 1, AclCategory.KEYSPACE.mask() | AclCategory.WRITE.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

@@ -27,17 +27,12 @@ public class LMOVE extends RespCommand implements Resp3Command {
    public static final String LEFT = "LEFT";
    public static final String RIGHT = "RIGHT";
 
-   public LMOVE(int arity) {
-      super(arity, 1, 2, 1);
+   public LMOVE(int arity, long aclMask) {
+      super(arity, 1, 2, 1, aclMask);
    }
 
    public LMOVE() {
-      super(5, 1, 2, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.LIST | AclCategory.SLOW;
+      this(5, AclCategory.WRITE.mask() | AclCategory.LIST.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

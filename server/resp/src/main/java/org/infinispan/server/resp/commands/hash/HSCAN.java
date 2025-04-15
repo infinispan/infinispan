@@ -24,12 +24,7 @@ import org.infinispan.server.resp.commands.iteration.BaseIterationCommand;
 public class HSCAN extends BaseIterationCommand {
 
    public HSCAN() {
-      super(-3, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.HASH | AclCategory.SLOW;
+      super(-3, 1, 1, 1, AclCategory.READ.mask() | AclCategory.HASH.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

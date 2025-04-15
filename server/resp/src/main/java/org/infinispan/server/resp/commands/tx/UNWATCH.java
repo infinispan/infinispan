@@ -31,12 +31,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class UNWATCH extends RespCommand implements Resp3Command {
 
    public UNWATCH() {
-      super(1, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.FAST | AclCategory.TRANSACTION;
+      super(1, 0, 0, 0, AclCategory.FAST.mask() | AclCategory.TRANSACTION.mask());
    }
 
    @Override

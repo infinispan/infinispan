@@ -1,6 +1,9 @@
 package org.infinispan.server.resp.commands.json;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -8,8 +11,7 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.json.EmbeddedJsonCache;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * JSON.TYPE
@@ -22,12 +24,7 @@ public class JSONTYPE extends RespCommand implements Resp3Command {
    private byte[] DEFAULT_PATH = { '.' };
 
    public JSONTYPE() {
-      super("JSON.TYPE", -1, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return 0;
+      super("JSON.TYPE", -1, 1, 1, 1, AclCategory.JSON.mask() | AclCategory.READ.mask() | AclCategory.SLOW.mask());
    }
 
    @Override
@@ -39,7 +36,7 @@ public class JSONTYPE extends RespCommand implements Resp3Command {
       if (commandArgs.isLegacy()) {
          return handler.stageToReturn(result.thenApply(r -> {
             // return the first one only
-            if (r != null && r.size() > 0) {
+            if (r != null && !r.isEmpty()) {
                return r.get(0);
             }
             // return null in the other cases
@@ -47,5 +44,13 @@ public class JSONTYPE extends RespCommand implements Resp3Command {
          }), ctx, ResponseWriter.SIMPLE_STRING);
       }
       return handler.stageToReturn(result, ctx, ResponseWriter.ARRAY_STRING);
+   }
+
+   public byte[] DEFAULT_PATH() {
+      return DEFAULT_PATH;
+   }
+
+   public void setDEFAULT_PATH(byte[] DEFAULT_PATH) {
+      this.DEFAULT_PATH = DEFAULT_PATH;
    }
 }

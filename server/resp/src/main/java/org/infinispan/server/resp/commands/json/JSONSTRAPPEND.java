@@ -3,12 +3,13 @@ package org.infinispan.server.resp.commands.json;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.json.EmbeddedJsonCache;
+import org.infinispan.server.resp.json.JSONUtil;
 
 import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.server.resp.json.JSONUtil;
 
 /**
  * JSON.STRAPPEND
@@ -19,7 +20,7 @@ import org.infinispan.server.resp.json.JSONUtil;
 public class JSONSTRAPPEND extends JSONAPPEND {
     public static String STR_TYPE_NAME = "string";
     public JSONSTRAPPEND() {
-        super("JSON.STRAPPEND", -3, 1, 1, 1);
+        super("JSON.STRAPPEND", -3, 1, 1, 1, AclCategory.JSON.mask() | AclCategory.WRITE.mask() | AclCategory.SLOW.mask());
     }
 
     @Override

@@ -23,12 +23,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class SDIFFSTORE extends RespCommand implements Resp3Command {
 
    public SDIFFSTORE() {
-      super(-3, 1, -1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.SET | AclCategory.SLOW;
+      super(-3, 1, -1, 1, AclCategory.WRITE.mask() | AclCategory.SET.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

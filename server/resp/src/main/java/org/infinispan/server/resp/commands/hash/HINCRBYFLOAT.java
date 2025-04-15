@@ -28,12 +28,7 @@ public class HINCRBYFLOAT extends RespCommand implements Resp3Command {
    private static final int NAN_OR_INF = 2;
 
    public HINCRBYFLOAT() {
-      super(4, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.HASH | AclCategory.FAST;
+      super(4, 1, 1, 1, AclCategory.WRITE.mask() | AclCategory.HASH.mask() | AclCategory.FAST.mask());
    }
 
    @Override

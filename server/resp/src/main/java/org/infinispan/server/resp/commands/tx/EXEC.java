@@ -37,12 +37,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class EXEC extends RespCommand implements Resp3Command, TransactionResp3Command {
 
    public EXEC() {
-      super(1, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.SLOW | AclCategory.TRANSACTION;
+      super(1, 0, 0, 0, AclCategory.SLOW.mask() | AclCategory.TRANSACTION.mask());
    }
 
    @Override

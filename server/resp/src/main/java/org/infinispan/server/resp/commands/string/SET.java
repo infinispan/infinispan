@@ -23,16 +23,11 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class SET extends RespCommand implements Resp3Command {
    public SET() {
-      this(-3, 1, 1, 1);
+      this(-3, 1, 1, 1, AclCategory.WRITE.mask() | AclCategory.STRING.mask() | AclCategory.SLOW.mask());
    }
 
-   protected SET(int arity, int firstKeyPos, int lastKeyPos, int steps) {
-      super(arity, firstKeyPos, lastKeyPos, steps);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.STRING | AclCategory.SLOW;
+   protected SET(int arity, int firstKeyPos, int lastKeyPos, int steps, long aclMask) {
+      super(arity, firstKeyPos, lastKeyPos, steps, aclMask);
    }
 
    @Override

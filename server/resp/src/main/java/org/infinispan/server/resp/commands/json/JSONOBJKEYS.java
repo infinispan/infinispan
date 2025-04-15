@@ -5,6 +5,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -25,12 +26,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class JSONOBJKEYS extends RespCommand implements Resp3Command {
 
    public JSONOBJKEYS() {
-      super("JSON.OBJKEYS", -2, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return 0;
+      super("JSON.OBJKEYS", -2, 1, 1, 1, AclCategory.JSON.mask() | AclCategory.READ.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

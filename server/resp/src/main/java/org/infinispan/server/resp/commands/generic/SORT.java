@@ -49,12 +49,7 @@ public class SORT extends RespCommand implements Resp3Command {
    }
 
    public SORT() {
-      super(-2, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.SET | AclCategory.SORTEDSET | AclCategory.LIST | AclCategory.SLOW | AclCategory.DANGEROUS;
+      super(-2, 1, 1, 1, AclCategory.WRITE.mask() | AclCategory.SET.mask() | AclCategory.SORTEDSET.mask() | AclCategory.LIST.mask() | AclCategory.SLOW.mask() | AclCategory.DANGEROUS.mask());
    }
 
    public void disableStore() {

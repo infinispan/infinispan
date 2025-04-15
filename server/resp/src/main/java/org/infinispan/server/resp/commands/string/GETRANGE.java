@@ -33,12 +33,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class GETRANGE extends RespCommand implements Resp3Command {
 
    public GETRANGE() {
-      super(4, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.STRING | AclCategory.SLOW;
+      super(4, 1, 1, 1, AclCategory.READ.mask() | AclCategory.STRING.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

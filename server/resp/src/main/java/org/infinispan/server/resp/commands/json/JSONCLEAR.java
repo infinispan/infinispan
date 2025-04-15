@@ -1,6 +1,9 @@
 package org.infinispan.server.resp.commands.json;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -9,8 +12,7 @@ import org.infinispan.server.resp.json.EmbeddedJsonCache;
 import org.infinispan.server.resp.json.JSONUtil;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * JSON.CLEAR
@@ -20,15 +22,10 @@ import java.util.concurrent.CompletionStage;
  */
 public class JSONCLEAR extends RespCommand implements Resp3Command {
 
-   private byte[] DEFAULT_PATH = { '.' };
+   private final byte[] DEFAULT_PATH = { '.' };
 
    public JSONCLEAR() {
-      super("JSON.CLEAR", -1, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return 0;
+      super("JSON.CLEAR", -1, 1, 1, 1, AclCategory.JSON.mask() | AclCategory.WRITE.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

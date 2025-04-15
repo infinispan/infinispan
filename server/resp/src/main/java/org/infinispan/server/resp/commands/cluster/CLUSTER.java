@@ -29,12 +29,7 @@ public class CLUSTER extends FamilyCommand {
    }
 
    public CLUSTER() {
-      super(-2, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.SLOW;
+      super(-2, 0, 0, 0, AclCategory.SLOW.mask());
    }
 
    @Override

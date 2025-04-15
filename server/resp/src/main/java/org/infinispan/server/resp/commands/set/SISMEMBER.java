@@ -21,12 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class SISMEMBER extends RespCommand implements Resp3Command {
    public SISMEMBER() {
-      super(3, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.SET | AclCategory.FAST;
+      super(3, 1, 1, 1, AclCategory.READ.mask() | AclCategory.SET.mask() | AclCategory.FAST.mask());
    }
 
    @Override

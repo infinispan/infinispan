@@ -1,6 +1,9 @@
 package org.infinispan.server.resp.commands.json;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.function.BiConsumer;
+
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -10,9 +13,7 @@ import org.infinispan.server.resp.json.EmbeddedJsonCache;
 import org.infinispan.server.resp.serialization.Resp3Type;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-import java.util.function.BiConsumer;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Super Class for common code of LEN JSON commands
@@ -21,20 +22,15 @@ import java.util.function.BiConsumer;
  */
 public abstract class JSONLEN extends RespCommand implements Resp3Command {
 
-    private boolean includePathOnError;
+    private final boolean includePathOnError;
 
-    public JSONLEN(String commandName) {
-        this(commandName, false);
+    public JSONLEN(String commandName, long aclMask) {
+        this(commandName, false, aclMask);
     }
 
-    public JSONLEN(String commandName, boolean includePathOnError) {
-        super(commandName, -2, 1, 1, 1);
+    public JSONLEN(String commandName, boolean includePathOnError, long aclMask) {
+        super(commandName, -2, 1, 1, 1, aclMask);
         this.includePathOnError = includePathOnError;
-    }
-
-    @Override
-    public long aclMask() {
-        return 0;
     }
 
     @Override

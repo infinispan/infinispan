@@ -1,5 +1,8 @@
 package org.infinispan.server.resp.scripting;
 
+import static org.infinispan.server.resp.scripting.LuaTaskEngine.fName;
+import static party.iroiro.luajava.lua51.Lua51Consts.LUA_GLOBALSINDEX;
+
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -27,12 +30,10 @@ import org.infinispan.server.resp.logging.Log;
 import org.jboss.logging.Logger;
 
 import io.netty.channel.ChannelHandlerContext;
-import static org.infinispan.server.resp.scripting.LuaTaskEngine.fName;
 import party.iroiro.luajava.JFunction;
 import party.iroiro.luajava.Lua;
 import party.iroiro.luajava.lua51.Lua51;
 import party.iroiro.luajava.lua51.Lua51Consts;
-import static party.iroiro.luajava.lua51.Lua51Consts.LUA_GLOBALSINDEX;
 
 /**
  * LuaContext manages a {@link Lua} instance.
@@ -273,11 +274,11 @@ public class LuaContext implements AutoCloseable {
          return -1;
       }
       long commandMask = respCommand.aclMask();
-      if ((commandMask & AclCategory.CONNECTION) == AclCategory.CONNECTION) {
+      if (AclCategory.CONNECTION.matches(commandMask)){
          l.push("This Redis command is not allowed from script");
          return -1;
       }
-      if (ScriptFlags.NO_WRITES.isSet(flags) && (commandMask & AclCategory.WRITE) == AclCategory.WRITE) {
+      if (ScriptFlags.NO_WRITES.isSet(flags) && AclCategory.WRITE.matches(commandMask)) {
          l.push("Write commands are not allowed from read-only scripts.");
          return -1;
       }

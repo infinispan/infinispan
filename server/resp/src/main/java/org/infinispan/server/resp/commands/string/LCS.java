@@ -23,12 +23,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class LCS extends RespCommand implements Resp3Command {
 
    public LCS() {
-      super(-3, 1, 2, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.STRING | AclCategory.SLOW;
+      super(-3, 1, 2, 1, AclCategory.READ.mask() | AclCategory.STRING.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

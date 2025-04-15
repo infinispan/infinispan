@@ -29,12 +29,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class EVAL extends RespCommand implements Resp3Command {
 
    public EVAL() {
-      super(-3, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.SCRIPTING | AclCategory.SLOW;
+      super(-3, 0, 0, 0, AclCategory.SCRIPTING.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

@@ -25,12 +25,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class GETSET extends SET {
 
    public GETSET() {
-      super(3, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.STRING | AclCategory.FAST;
+      super(3, 1, 1, 1, AclCategory.WRITE.mask() | AclCategory.STRING.mask() | AclCategory.FAST.mask());
    }
 
    @Override

@@ -29,12 +29,7 @@ public class LPOS extends RespCommand implements Resp3Command {
    public static final String MAXLEN = "MAXLEN";
 
    public LPOS() {
-      super(-3, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.LIST | AclCategory.SLOW;
+      super(-3, 1, 1, 1, AclCategory.READ.mask() | AclCategory.LIST.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

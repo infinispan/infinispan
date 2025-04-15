@@ -23,18 +23,14 @@ import io.netty.channel.ChannelHandlerContext;
  * <p>
  * Returns the slot a key is mapped to. Useful for debugging.
  * </p>
- * @since 15.0
+ *
  * @see <a href="https://redis.io/commands/cluster-keyslot/">CLUSTER KEYSLOT</a>
+ * @since 15.0
  */
 public class KEYSLOT extends RespCommand implements Resp3Command {
 
    public KEYSLOT() {
-      super(3, 0, 0,0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.SLOW;
+      super(3, 0, 0, 0, AclCategory.SLOW.mask());
    }
 
    @Override
@@ -45,12 +41,11 @@ public class KEYSLOT extends RespCommand implements Resp3Command {
       KeyPartitioner partitioner = SecurityActions.getCacheComponentRegistry(respCache)
             .getComponent(KeyPartitioner.class);
 
-      if (!(partitioner instanceof HashFunctionPartitioner)) {
+      if (!(partitioner instanceof HashFunctionPartitioner hashPartitioner)) {
          handler.writer().customError("Key partitioner not configured properly");
          return handler.myStage();
       }
 
-      HashFunctionPartitioner hashPartitioner = (HashFunctionPartitioner) partitioner;
       byte[] key = arguments.get(1);
       int h = hashPartitioner.getHashForKey(key);
       CompletionStage<Integer> cs = CompletableFuture.completedFuture(handler.respServer().segmentSlotRelation().hashToSlot(h));

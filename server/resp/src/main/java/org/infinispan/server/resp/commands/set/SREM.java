@@ -21,12 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class SREM extends RespCommand implements Resp3Command {
    public SREM() {
-      super(-3, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.WRITE | AclCategory.SET | AclCategory.FAST;
+      super(-3, 1, 1, 1, AclCategory.WRITE.mask() | AclCategory.SET.mask() | AclCategory.FAST.mask());
    }
 
    @Override

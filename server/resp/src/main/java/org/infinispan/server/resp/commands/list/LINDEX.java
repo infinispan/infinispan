@@ -22,12 +22,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class LINDEX extends RespCommand implements Resp3Command {
    public LINDEX() {
-      super(3, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.READ | AclCategory.LIST | AclCategory.SLOW;
+      super(3, 1, 1, 1, AclCategory.READ.mask() | AclCategory.LIST.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

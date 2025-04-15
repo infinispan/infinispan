@@ -44,8 +44,8 @@ public abstract class AGGCommand extends RespCommand implements Resp3Command {
    protected enum AGGCommandType {
       UNION, INTER
    }
-   protected AGGCommand(int arity, int firstKeyPos, int lastKeyPos, int steps, AGGCommandType aggCommandType) {
-      super(arity, firstKeyPos, lastKeyPos, steps);
+   protected AGGCommand(int arity, int firstKeyPos, int lastKeyPos, int steps, AGGCommandType aggCommandType, long aclMask) {
+      super(arity, firstKeyPos, lastKeyPos, steps, aclMask);
       this.aggCommandType = aggCommandType;
    }
 

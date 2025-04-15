@@ -10,8 +10,8 @@ abstract class SingleBlockingPop extends AbstractBlockingPop {
 
    private final boolean head;
 
-   SingleBlockingPop(boolean head, int arity, int firstKeyPos, int lastKeyPos, int steps) {
-      super(arity, firstKeyPos, lastKeyPos, steps);
+   SingleBlockingPop(boolean head, int arity, int firstKeyPos, int lastKeyPos, int steps, long aclMask) {
+      super(arity, firstKeyPos, lastKeyPos, steps, aclMask);
       this.head = head;
    }
 

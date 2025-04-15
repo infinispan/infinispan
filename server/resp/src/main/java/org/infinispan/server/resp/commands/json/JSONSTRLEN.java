@@ -1,10 +1,11 @@
 package org.infinispan.server.resp.commands.json;
 
-import org.infinispan.server.resp.RespUtil;
-import org.infinispan.server.resp.json.EmbeddedJsonCache;
-
 import java.util.List;
 import java.util.concurrent.CompletionStage;
+
+import org.infinispan.server.resp.AclCategory;
+import org.infinispan.server.resp.RespUtil;
+import org.infinispan.server.resp.json.EmbeddedJsonCache;
 
 /**
  * JSON.STRLEN
@@ -14,7 +15,7 @@ import java.util.concurrent.CompletionStage;
  */
 public class JSONSTRLEN extends JSONLEN {
    public JSONSTRLEN() {
-      super("JSON.STRLEN");
+      super("JSON.STRLEN", AclCategory.JSON.mask() | AclCategory.READ.mask() | AclCategory.SLOW.mask());
    }
 
    @Override

@@ -1,6 +1,10 @@
 package org.infinispan.server.resp.commands.json;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.function.BiConsumer;
+
+import org.infinispan.server.resp.AclCategory;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -8,9 +12,7 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.json.EmbeddedJsonCache;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-import java.util.function.BiConsumer;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * JSON.ARRINSERT
@@ -20,7 +22,7 @@ import java.util.function.BiConsumer;
  */
 public class JSONARRINSERT extends RespCommand implements Resp3Command {
     public JSONARRINSERT() {
-        super("JSON.ARRINSERT", -5, 1, 1, 1);
+        super("JSON.ARRINSERT", -5, 1, 1, 1, AclCategory.JSON.mask() | AclCategory.WRITE.mask() | AclCategory.SLOW.mask());
     }
 
     @Override
@@ -61,10 +63,4 @@ public class JSONARRINSERT extends RespCommand implements Resp3Command {
             ResponseWriter.ARRAY_INTEGER.accept(l, writer);
         }
     }
-
-    @Override
-    public long aclMask() {
-        return 0;
-    }
-
 }

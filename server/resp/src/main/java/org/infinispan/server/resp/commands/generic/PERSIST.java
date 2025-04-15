@@ -21,12 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class PERSIST extends RespCommand implements Resp3Command {
    public PERSIST() {
-      super(2, 1, 1, 1);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.KEYSPACE | AclCategory.WRITE | AclCategory.FAST;
+      super(2, 1, 1, 1, AclCategory.KEYSPACE.mask() | AclCategory.WRITE.mask() | AclCategory.FAST.mask());
    }
 
    @Override
