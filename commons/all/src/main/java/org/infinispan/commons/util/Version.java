@@ -44,6 +44,7 @@ public class Version {
    private final String majorMinor;
    private final String major;
    private final String minor;
+   private final String patch;
    private final Properties properties;
    private final String unbrandedVersion;
 
@@ -75,6 +76,7 @@ public class Version {
       majorMinor = String.format("%s.%s", parts[0], parts[1]);
       major = parts[0];
       minor = parts[1];
+      patch = parts[2];
       unbrandedVersion = properties.getProperty(INFINISPAN_UNBRANDED_VERSION, version);
    }
 
@@ -140,6 +142,10 @@ public class Version {
       return INSTANCE.minor;
    }
 
+   public static String getPatch() {
+      return INSTANCE.patch;
+   }
+
    public static boolean compareTo(byte[] v) {
       return Arrays.equals(INSTANCE.versionId, v);
    }
@@ -152,7 +158,7 @@ public class Version {
       if (versionString == null)
          throw new IllegalArgumentException("versionString is null");
 
-      String parts[] = getParts(versionString);
+      String[] parts = getParts(versionString);
       int a = 0;
       int b = 0;
       int c = 0;

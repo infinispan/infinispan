@@ -26,12 +26,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class MODULE extends RespCommand implements Resp3Command {
    public MODULE() {
-      super(-1, 0, 0, 0);
-   }
-
-   @Override
-   public long aclMask() {
-      return AclCategory.SLOW;
+      super(-1, 0, 0, 0, AclCategory.SLOW.mask());
    }
 
    @Override
@@ -41,7 +36,7 @@ public class MODULE extends RespCommand implements Resp3Command {
       String subcommand = new String(arguments.get(0), StandardCharsets.UTF_8).toUpperCase();
       switch (subcommand) {
          case "LIST":
-            handler.writer().array(allModules(), Resp3Type.AUTO);
+            handler.writer().array(allModulesRESP2(), Resp3Type.AUTO); // RESP2 for Redis Insight
             break;
          case "LOAD":
          case "LOADEX":
@@ -52,10 +47,22 @@ public class MODULE extends RespCommand implements Resp3Command {
       return handler.myStage();
    }
 
-   public static List<Map<String, Object>> allModules() {
+   public static List<List<Object>> allModulesRESP2() {
+      long rVersion = Long.parseLong(Version.getMajor()) * 10000 + Long.parseLong(Version.getMinor()) * 100 + Long.parseLong(Version.getPatch());
+      List<Object> jsonModule = List.of(
+            "name", "ReJSON",
+            "ver", rVersion,
+            "path", "internal",
+            "args", Collections.emptyList()
+      );
+      return List.of(jsonModule);
+   }
+
+   public static List<Map<String, Object>> allModulesRESP3() {
+      long rVersion = Long.parseLong(Version.getMajor()) * 10000 + Long.parseLong(Version.getMinor()) * 100 + Long.parseLong(Version.getPatch());
       LinkedHashMap<String, Object> jsonModule = new LinkedHashMap<>(4); // Preserve order
       jsonModule.put("name", "ReJSON");
-      jsonModule.put("ver", Short.toUnsignedInt(Version.getVersionShort()));
+      jsonModule.put("ver", rVersion);
       jsonModule.put("path", "internal");
       jsonModule.put("args", Collections.emptyList());
       return List.of(jsonModule);
