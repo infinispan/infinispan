@@ -61,6 +61,7 @@ import org.infinispan.commons.util.OS;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.server.Server;
 import org.infinispan.util.logging.LogFactory;
 import org.testcontainers.containers.GenericContainer;
@@ -126,8 +127,9 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             configuration,
             getDockerBridgeAddress()
       );
-      this.containers = new ArrayList<>(configuration.numServers());
-      this.volumes = new String[configuration.numServers()];
+      int totalAmount = configuration.expectedServers() > 0 ? configuration.expectedServers() : configuration.numServers();
+      this.containers = new ArrayList<>(totalAmount);
+      this.volumes = new String[totalAmount];
    }
 
    public static void cleanup() {
@@ -146,6 +148,38 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
    @Override
    protected void start(String fqcn, File rootDir) {
+      configureImage(fqcn, rootDir);
+
+      int numServers = configuration.numServers();
+      CountdownLatchLoggingConsumer clusterLatch = new CountdownLatchLoggingConsumer(numServers, String.format(CLUSTER_VIEW_REGEX,
+            configuration.expectedServers() > 0 ? configuration.expectedServers() : numServers));
+      if (configuration.isParallelStartup()) {
+         CountdownLatchLoggingConsumer startupLatch = new CountdownLatchLoggingConsumer(numServers, STARTUP_MESSAGE_REGEX);
+         IntStream.range(0, configuration.numServers()).forEach(i -> createContainer(i, startupLatch, clusterLatch));
+         Exceptions.unchecked(() -> startupLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+      } else {
+         for (int i = 0; i < configuration.numServers(); i++) {
+            CountdownLatchLoggingConsumer startupLatch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
+            createContainer(i, startupLatch, clusterLatch);
+            Exceptions.unchecked(() -> startupLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+         }
+      }
+      // Ensure that a cluster of numServers has actually formed before proceeding
+      Exceptions.unchecked(() -> clusterLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+   }
+
+   public void configureImage(String fqcn) {
+      status = ComponentStatus.INITIALIZING;
+      try {
+         configureImage(fqcn, rootDir);
+      } catch (Throwable t) {
+         log.errorf(t, "Unable to configure server image for %s", name);
+         status = ComponentStatus.FAILED;
+         throw t;
+      }
+   }
+
+   private void configureImage(String fqcn, File rootDir) {
       this.name = abbreviate(fqcn);
       String jGroupsStack = System.getProperty(Server.INFINISPAN_CLUSTER_STACK);
       // Build a skeleton server layout
@@ -265,23 +299,6 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             });
       image.get();
       log.infof("Created image %s", name);
-
-      int numServers = configuration.numServers();
-      CountdownLatchLoggingConsumer clusterLatch = new CountdownLatchLoggingConsumer(numServers, String.format(CLUSTER_VIEW_REGEX,
-            configuration.expectedServers() > 0 ? configuration.expectedServers() : numServers));
-      if (configuration.isParallelStartup()) {
-         CountdownLatchLoggingConsumer startupLatch = new CountdownLatchLoggingConsumer(numServers, STARTUP_MESSAGE_REGEX);
-         IntStream.range(0, configuration.numServers()).forEach(i -> createContainer(i, startupLatch, clusterLatch));
-         Exceptions.unchecked(() -> startupLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
-      } else {
-         for (int i = 0; i < configuration.numServers(); i++) {
-            CountdownLatchLoggingConsumer startupLatch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
-            createContainer(i, startupLatch, clusterLatch);
-            Exceptions.unchecked(() -> startupLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
-         }
-      }
-      // Ensure that a cluster of numServers has actually formed before proceeding
-      Exceptions.unchecked(() -> clusterLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 
    /**
@@ -291,14 +308,23 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
     * This method can only be invoked after {@link #start(String)} has completed successfully
     * @param expectedClusterSize The expected number of members in the cluster. Some implementations may not work if other nodes
     *                            outside of this driver are clustered and the argument could be ignored.
+    * @param volumeName The name of the shared volume to be used when a node restarts
     */
-   public void startAdditionalServer(int expectedClusterSize) {
-      CountdownLatchLoggingConsumer clusterLatch = new CountdownLatchLoggingConsumer(1, String.format(CLUSTER_VIEW_REGEX, expectedClusterSize));
-      CountdownLatchLoggingConsumer startupLatch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
+   public void startAdditionalServer(int expectedClusterSize, String volumeName) {
+      try {
+         CountdownLatchLoggingConsumer clusterLatch = new CountdownLatchLoggingConsumer(1, String.format(CLUSTER_VIEW_REGEX, expectedClusterSize));
+         CountdownLatchLoggingConsumer startupLatch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
 
-      createContainer(containers.size(), startupLatch, clusterLatch);
-      Exceptions.unchecked(() -> startupLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
-      Exceptions.unchecked(() -> clusterLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+         log.infof("Starting new single server for container %d with volume %s", name, volumeName);
+         createContainer(containers.size(), volumeName, startupLatch, clusterLatch);
+         Exceptions.unchecked(() -> startupLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+         Exceptions.unchecked(() -> clusterLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+         status = ComponentStatus.RUNNING;
+      } catch (Throwable t) {
+         log.errorf(t, "Unable to start individual server for %s", name);
+         status = ComponentStatus.FAILED;
+         throw t;
+      }
    }
 
    private void configureSite(List<String> args) {
@@ -320,19 +346,34 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    }
 
    private GenericContainer<?> createContainer(int i, Consumer<OutputFrame>... logConsumers) {
+      return createContainer(i, null, logConsumers);
+   }
 
-      boolean volumesRequired = Boolean.parseBoolean(configuration.properties().getProperty(INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED));
-      if (volumesRequired && this.volumes[i] == null) {
-         String volumeName = Util.threadLocalRandomUUID().toString();
-         DOCKER_CLIENT.createVolumeCmd().withName(volumeName).exec();
-         this.volumes[i] = volumeName;
+   private GenericContainer<?> createContainer(int i, String volumeName, Consumer<OutputFrame>... logConsumers) {
+
+      if (volumeName != null) {
+         if (volumes[i] != null && !volumes[i].equals(volumeName)) {
+            throw new IllegalArgumentException("Provided volume name " + volumeName + " doesn't match already present volume of " + volumes[i]);
+         }
+         volumes[i] = volumeName;
+      } else if (Boolean.parseBoolean(configuration.properties().getProperty(INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED))) {
+         if (this.volumes[i] == null) {
+            volumeName = Util.threadLocalRandomUUID().toString();
+            DOCKER_CLIENT.createVolumeCmd().withName(volumeName).exec();
+            this.volumes[i] = volumeName;
+         } else {
+            volumeName = volumes[i];
+         }
       }
+
+      // Only here so it is effectively immutable
+      String volumeToUse = volumeName;
 
       GenericContainer<?> container = new GenericContainer<>(image)
             .withCreateContainerCmdModifier(cmd -> {
-               if (volumesRequired) {
+               if (volumeToUse != null) {
                   cmd.getHostConfig().withMounts(
-                        Collections.singletonList(new Mount().withSource(this.volumes[i]).withTarget(serverPath() + "/data").withType(MountType.VOLUME))
+                        Collections.singletonList(new Mount().withSource(volumeToUse).withTarget(serverPath() + "/data").withType(MountType.VOLUME))
                   );
                }
                if (IMAGE_MEMORY != null) {
