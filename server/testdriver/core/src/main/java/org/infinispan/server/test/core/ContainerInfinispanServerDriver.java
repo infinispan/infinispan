@@ -521,9 +521,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       stop(server);
 
       log.infof("Restarting container %d", server);
-      InfinispanGenericContainer container = containers.get(server);
-      container.getGenericContainer().withLogConsumer(consumer);
-      container.start();
+      createContainer(server, consumer);
    }
 
    @Override
