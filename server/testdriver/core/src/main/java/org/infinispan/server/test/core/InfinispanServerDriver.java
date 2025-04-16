@@ -42,16 +42,6 @@ public interface InfinispanServerDriver {
    void start(String name);
 
    /**
-    * Starts an additional server outside that isn't part of {@link InfinispanServerTestConfiguration#numServers()}
-    * number. This is useful to start servers at a later point.
-    * <p>
-    * This method can only be invoked after {@link #start(String)} has completed successfully
-    * @param expectedClusterSize The expected number of members in the cluster. Some implementations may not work if other nodes
-    *                            outside of this driver are clustered and the argument could be ignored.
-    */
-   void startAdditionalServer(int expectedClusterSize);
-
-   /**
     * Stops a running server configuration
     * @param name the name of the server configuration
     */
@@ -66,7 +56,7 @@ public interface InfinispanServerDriver {
 
    /**
     * Returns how many servers have been registered. Note this may vary with the configuration if additional
-    * servers have been started via {@link #startAdditionalServer(int)}.
+    * servers have been started manually.
     * @return the number of servers
     */
    int serverCount();

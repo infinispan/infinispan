@@ -65,8 +65,13 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
       }
    }
 
-   @Override
-   public void startAdditionalServer(int expectedClusterSize) {
+   /**
+    * Starts an additional server outside that isn't part of {@link InfinispanServerTestConfiguration#numServers()}
+    * number. This is useful to start servers at a later point.
+    * <p>
+    * This method can only be invoked after {@link #start(String)} has completed successfully
+    */
+   public void startAdditionalServer() {
       // expectedClusterSize is not used as it currently only works for a single driver and doesn't support multiple
       int serverNumber = servers.size();
       File serverRoot = createServerHierarchy(rootDir, Integer.toString(serverNumber));
