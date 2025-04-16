@@ -62,14 +62,16 @@ public class UpgradeHandler {
       try {
          handler.logConsumer.accept("Starting " + nodeCount + " node to version " + versionFrom);
          handler.fromDriver = handler.startNode(false, configuration.nodeCount(), configuration.nodeCount(),
-               site1Name, configuration.jgroupsProtocol());
+               site1Name, configuration.jgroupsProtocol(), null);
 
          try (RemoteCacheManager manager = handler.createRemoteCacheManager()) {
             RemoteCache<String, String> cache = configuration.initialHandler().apply(manager);
 
             for (int i = 0; i < nodeCount; ++i) {
                handler.logConsumer.accept("Shutting down 1 node from version: " + versionFrom);
-               handler.fromDriver.stop(nodeCount - i - 1);
+               int nodeId = nodeCount - i - 1;
+               String volumeId = handler.fromDriver.volumeId(nodeId);
+               handler.fromDriver.stop(nodeId);
 
                if (!handler.ensureServersWorking(cache, nodeCount - 1)) {
                   handler.logConsumer.accept("Servers are: " + Arrays.toString(manager.getServers()));
@@ -79,9 +81,9 @@ public class UpgradeHandler {
                handler.logConsumer.accept("Starting 1 node to version " + versionTo);
                if (handler.toDriver == null) {
                   handler.toDriver = handler.startNode(true, 1, nodeCount, site1Name,
-                        configuration.jgroupsProtocol());
+                        configuration.jgroupsProtocol(), volumeId);
                } else {
-                  handler.toDriver.startAdditionalServer(nodeCount);
+                  handler.toDriver.startAdditionalServer(nodeCount, volumeId);
                }
 
                if (!handler.ensureServersWorking(cache, nodeCount)) {
@@ -137,7 +139,7 @@ public class UpgradeHandler {
    }
 
    private ContainerInfinispanServerDriver startNode(boolean toOrFrom, int nodeCount, int expectedCount, String clusterName,
-                                                            String protocol) {
+                                                            String protocol, String volumeId) {
       ServerConfigBuilder builder = new ServerConfigBuilder("infinispan.xml", true);
       builder.runMode(ServerRunMode.CONTAINER);
       builder.numServers(nodeCount);
@@ -145,6 +147,7 @@ public class UpgradeHandler {
       builder.clusterName(clusterName);
       builder.property(Server.INFINISPAN_CLUSTER_STACK, protocol);
       builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_REQUIRE_JOIN_TIMEOUT, "true");
+      builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED, "true");
 
       String versionToUse = toOrFrom ? configuration.toVersion() : configuration.fromVersion();
 
@@ -171,7 +174,15 @@ public class UpgradeHandler {
 
       ContainerInfinispanServerDriver driver = (ContainerInfinispanServerDriver) ServerRunMode.CONTAINER.newDriver(config);
       driver.prepare(versionToUse);
-      driver.start(versionToUse);
+      if (volumeId != null) {
+         if (nodeCount != 1) {
+            throw new IllegalArgumentException("nodeCount " + nodeCount + " must be 1 when a volumeId is passed " + volumeId);
+         }
+         driver.configureImage(versionToUse);
+         driver.startAdditionalServer(expectedCount, volumeId);
+      } else {
+         driver.start(versionToUse);
+      }
       return driver;
    }
 }
