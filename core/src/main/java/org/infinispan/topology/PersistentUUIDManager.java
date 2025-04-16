@@ -1,7 +1,6 @@
 package org.infinispan.topology;
 
 import java.util.List;
-import java.util.Set;
 import java.util.function.UnaryOperator;
 
 import org.infinispan.factories.scopes.Scope;
@@ -65,12 +64,4 @@ public interface PersistentUUIDManager {
     * Provides a remapping operator which translates persistentuuids to addresses
     */
    UnaryOperator<Address> persistentUUIDToAddress();
-
-   /**
-    * Same as {@link #persistentUUIDToAddress()} but restricts the addresses to the allowed list.
-    *
-    * @param allowed A list of addresses allowed.
-    * @return <code>null</code> if the conversion of UUID does not exist or is not allowed. An {@link Address}, otherwise.
-    */
-   UnaryOperator<Address> persistentUUIDToAddressConstrained(Set<Address> allowed);
 }
