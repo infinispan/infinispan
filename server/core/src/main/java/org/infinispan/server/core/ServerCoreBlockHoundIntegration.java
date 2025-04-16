@@ -5,6 +5,7 @@ import java.util.Arrays;
 import org.infinispan.server.core.utils.SslUtils;
 import org.kohsuke.MetaInfServices;
 
+import io.netty.util.concurrent.SingleThreadEventExecutor;
 import reactor.blockhound.BlockHound;
 import reactor.blockhound.BlockingOperationError;
 import reactor.blockhound.integration.BlockHoundIntegration;
@@ -22,6 +23,9 @@ public class ServerCoreBlockHoundIntegration implements BlockHoundIntegration {
 
       // Nashorn prints to stderr in its constructor
       builder.allowBlockingCallsInside("jdk.nashorn.api.scripting.NashornScriptEngineFactory", "getScriptEngine");
+
+      // Don't worry about blocking in netty event loop when shutting down
+      builder.allowBlockingCallsInside(SingleThreadEventExecutor.class.getName(), "confirmShutdown");
 
       questionableBlockingMethod(builder);
       methodsToBeRemoved(builder);
