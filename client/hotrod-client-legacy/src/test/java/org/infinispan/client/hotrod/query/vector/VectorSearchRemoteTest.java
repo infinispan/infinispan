@@ -12,6 +12,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.model.Item;
+import org.infinispan.query.model.Metadata;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -43,7 +44,13 @@ public class VectorSearchRemoteTest extends SingleHotRodServerTest {
       for (byte item = 1; item <= 50; item++) {
          byte[] bytes = {item, item, item};
          String buggy = BUGGY_OPTIONS[item % 7];
-         remoteCache.put(item, new Item("c" + item, bytes, new float[]{1.1f * item, 1.1f * item, 1.1f * item}, buggy, (int) item));
+         List<Metadata> metadata;
+         if (item % 2 == 0) {
+            metadata = List.of(new Metadata("animal", "cat"), new Metadata("adjective", "mystical"));
+         } else {
+            metadata = List.of(new Metadata("animal", "dog"), new Metadata("adjective", "fun"));
+         }
+         remoteCache.put(item, new Item("c" + item, bytes, new float[]{1.1f * item, 1.1f * item, 1.1f * item}, buggy, (int) item, metadata));
       }
    }
 
@@ -100,6 +107,13 @@ public class VectorSearchRemoteTest extends SingleHotRodServerTest {
       List<Object[]> hits = query.list();
       assertThat(hits).extracting(objects -> objects[1])
             .extracting("code").containsExactly("c7", "c8", "c1");
+
+      query = remoteCache.query(
+              "select score(i), i from Item i join i.metadata m where i.floatVector <-> [:a]~:k filtering(m.key='animal' and m.value='cat')");
+      query.setParameter("a", new float[]{7.0f, 7.0f, 7.0f});
+      query.setParameter("k", 1000); // very high number to force the filtering
+      hits = query.list();
+      assertThat(hits).hasSize(25);
    }
 
    @Test
