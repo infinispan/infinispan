@@ -39,7 +39,7 @@ public class VectorSearchBroadcastTest extends MultipleCacheManagersTest {
       for (byte item = 1; item <= 50; item++) {
          byte[] bytes = {item, item, item};
          String buggy = BUGGY_OPTIONS[item % 7];
-         cache.put(item, new Item("c" + item, bytes, new float[]{1.1f * item, 1.1f * item, 1.1f * item}, buggy, (int)item));
+         cache.put(item, new Item("c" + item, bytes, new float[]{1.1f * item, 1.1f * item, 1.1f * item}, buggy, (int)item, null));
       }
    }
 

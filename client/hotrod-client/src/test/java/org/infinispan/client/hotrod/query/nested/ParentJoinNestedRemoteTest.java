@@ -65,6 +65,27 @@ public class ParentJoinNestedRemoteTest extends SingleHotRodServerTest {
       // the structure is nested, so the match searches for a player that has at the same time the color red and number 7
       assertThat(result).extracting(array -> array[0]).containsExactly("New Team");
       assertThat(queryStatistics.getLocalIndexedQueryCount()).isEqualTo(1);
+
+      query = remoteCache.query("select t.name from model.Team t " +
+              "join t.firstTeam p where p.name !='Michael'");
+      result = query.list();
+      assertThat(result).extracting(array -> array[0]).contains("Old Team");
+      query = remoteCache.query("select t.name from model.Team t join t.firstTeam p where p.number != 3 AND p.name ='Michael'");
+      result = query.list();
+      assertThat(result).extracting(array -> array[0]).contains("Old Team");
+      assertThat(queryStatistics.getLocalIndexedQueryCount()).isEqualTo(3);
+   }
+
+   @Test
+   public void nested_usingJoin_with_score_projection() {
+      RemoteCache<String, Team> remoteCache = remoteCacheManager.getCache();
+      Query<Object[]> query = remoteCache.query("select t, score(t) from model.Team t join t.firstTeam p where p.color ='red' AND p.number=7");
+      List<Object[]> result = query.list();
+      // the structure is nested, so the match searches for a player that has at the same time the color red and number 7
+      assertThat(result).extracting(array -> ((Team)array[0]).name()).containsExactly("New Team");
+      Float score = (Float) result.get(0)[1];
+      assertThat(score).isBetween(1f, 2f);
+      assertThat(queryStatistics.getLocalIndexedQueryCount()).isEqualTo(1);
    }
 
    @Test
@@ -125,11 +146,17 @@ public class ParentJoinNestedRemoteTest extends SingleHotRodServerTest {
    @Test
    public void nested_usingJoinWithNegation() {
       RemoteCache<String, Team> remoteCache = remoteCacheManager.getCache();
+      List<Player> playersC = List.of(new Player("Ulrich", "pink", 8), new Player("Martha", "blue", 2));
+      remoteCache.put("1", new Team("Another Team",playersC, playersC));
+      List<Player> playersD = List.of(new Player("Ulrich", "red", 8), new Player("Martha", "blue", 2));
+      remoteCache.put("3", new Team("Another Team 1", playersC, playersC));
+      remoteCache.put("4", new Team("Another Team 2", playersD, playersD));
       Query<Object[]> query = remoteCache.query("select t.name from model.Team t " +
-            "join t.firstTeam p " +
-            "where (p.color ='red' AND p.number!=7)");
+            "join t.firstTeam p1 join t.firstTeam p2 " +
+            "where (p1.color ='red' && p2.number!=7)");
       List<Object[]> result = query.list();
-      assertThat(result).extracting(array -> array[0]).containsExactly("New Team");
+      assertThat(result).hasSize(1);
+      assertThat(result).extracting(array -> array[0]).containsExactly("Another Team 2");
       assertThat(queryStatistics.getLocalIndexedQueryCount()).isEqualTo(1);
    }
 
