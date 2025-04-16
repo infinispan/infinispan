@@ -82,12 +82,17 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
    @Override
    protected void start(String name, File rootDir) {
       for (int i = 0; i < configuration.numServers(); i++) {
-         startAdditionalServer(-1);
+         startAdditionalServer();
       }
    }
 
-   @Override
-   public void startAdditionalServer(int expectedClusterSize) {
+   /**
+    * Starts an additional server that isn't part of {@link InfinispanServerTestConfiguration#numServers()}
+    * number. This is useful to start servers at a later point.
+    * <p>
+    * This method can only be invoked after {@link #start(String)} has completed successfully
+    */
+   public void startAdditionalServer() {
       // expectedClusterSize is not used as we can't verify completion
       int i = forkedServers.size();
       ForkedServer server;

@@ -284,7 +284,14 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       Exceptions.unchecked(() -> clusterLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
    }
 
-   @Override
+   /**
+    * Starts an additional server outside that isn't part of {@link InfinispanServerTestConfiguration#numServers()}
+    * number. This is useful to start servers at a later point.
+    * <p>
+    * This method can only be invoked after {@link #start(String)} has completed successfully
+    * @param expectedClusterSize The expected number of members in the cluster. Some implementations may not work if other nodes
+    *                            outside of this driver are clustered and the argument could be ignored.
+    */
    public void startAdditionalServer(int expectedClusterSize) {
       CountdownLatchLoggingConsumer clusterLatch = new CountdownLatchLoggingConsumer(1, String.format(CLUSTER_VIEW_REGEX, expectedClusterSize));
       CountdownLatchLoggingConsumer startupLatch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
@@ -325,7 +332,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             .withCreateContainerCmdModifier(cmd -> {
                if (volumesRequired) {
                   cmd.getHostConfig().withMounts(
-                        Collections.singletonList(new Mount().withSource(this.volumes[i]).withTarget(serverPath()).withType(MountType.VOLUME))
+                        Collections.singletonList(new Mount().withSource(this.volumes[i]).withTarget(serverPath() + "/data").withType(MountType.VOLUME))
                   );
                }
                if (IMAGE_MEMORY != null) {
