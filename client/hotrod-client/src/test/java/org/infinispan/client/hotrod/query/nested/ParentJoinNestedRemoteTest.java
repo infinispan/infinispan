@@ -68,6 +68,18 @@ public class ParentJoinNestedRemoteTest extends SingleHotRodServerTest {
    }
 
    @Test
+   public void nested_usingJoin_with_score_projection() {
+      RemoteCache<String, Team> remoteCache = remoteCacheManager.getCache();
+      Query<Object[]> query = remoteCache.query("select t, score(t) from model.Team t join t.firstTeam p where p.color ='red' AND p.number=7");
+      List<Object[]> result = query.list();
+      // the structure is nested, so the match searches for a player that has at the same time the color red and number 7
+      assertThat(result).extracting(array -> ((Team)array[0]).name()).containsExactly("New Team");
+      Float score = (Float) result.get(0)[1];
+      assertThat(score).isBetween(1f, 2f);
+      assertThat(queryStatistics.getLocalIndexedQueryCount()).isEqualTo(1);
+   }
+
+   @Test
    public void flattened_usingJoin() {
       RemoteCache<String, Team> remoteCache = remoteCacheManager.getCache();
       Query<Object[]> query = remoteCache.query("select t.name from model.Team t " +

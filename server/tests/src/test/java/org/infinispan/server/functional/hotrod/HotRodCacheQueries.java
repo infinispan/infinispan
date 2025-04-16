@@ -1,25 +1,5 @@
 package org.infinispan.server.functional.hotrod;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
-import static org.infinispan.server.test.core.Common.createQueryableCache;
-import static org.infinispan.server.test.core.Common.sync;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.assertj.core.api.Assertions;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -34,6 +14,7 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.KeywordVector;
+import org.infinispan.protostream.sampledomain.Metadata;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.server.functional.ClusteredIT;
@@ -43,6 +24,27 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
+import static org.infinispan.server.test.core.Common.createQueryableCache;
+import static org.infinispan.server.test.core.Common.sync;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -258,13 +260,28 @@ public class HotRodCacheQueries {
    }
 
    @Test
+   public void testProjectionAndFilteringOnEmbeddedData() {
+      RemoteCache<String, KeywordVector> remoteCache = createQueryableCache(SERVERS, true,
+              BANK_PROTO_FILE, "sample_bank_account.KeywordVector");
+      for (int i = 0; i < 10; i++) {
+         List<Metadata> metadata = Arrays.asList(new Metadata("key1", "value" + i), new Metadata("key2", "value" + i%2));
+         KeywordVector keywordVector = createImage(i, 50, metadata);
+         remoteCache.put(keywordVector.getName(), keywordVector);
+      }
+      Query<Object[]> queryEntityAndScoreFiltering = remoteCache.query("select i, score(i) from sample_bank_account.KeywordVector i join i.metadata m where m.key='key2' and m.value='value0'");
+      List<Object[]> listWithScoreFiltered = queryEntityAndScoreFiltering.list();
+      assertThat(listWithScoreFiltered).hasSize(5);
+   }
+
+   @Test
    public void testVectorSearch() {
       RemoteCache<String, KeywordVector> remoteCache = createQueryableCache(SERVERS, true,
             BANK_PROTO_FILE, "sample_bank_account.KeywordVector");
 
       KeywordVector center = null;
       for (int i = 0; i < 10; i++) {
-         KeywordVector keywordVector = createImage(i, 50);
+         List<Metadata> metadata = Arrays.asList(new Metadata("key1", "value" + i), new Metadata("key2", "value" + i%2));
+         KeywordVector keywordVector = createImage(i, 50, metadata);
          if (i == 7) {
             center = keywordVector;
          }
@@ -276,13 +293,30 @@ public class HotRodCacheQueries {
       query.setParameter("a", center.getByteEmbedding());
       query.setParameter("k", 3);
       List<KeywordVector> list = query.list();
-      Assertions.assertThat(list).extracting(KeywordVector::getName).containsExactly("bla-7", "bla-6", "bla-8");
+      assertThat(list).extracting(KeywordVector::getName).containsExactly("bla-7", "bla-6", "bla-8");
 
       query = remoteCache.query("from sample_bank_account.KeywordVector i where i.floatEmbedding <-> [:a]~:k");
       query.setParameter("a", center.getFloatEmbedding());
       query.setParameter("k", 3);
       list = query.list();
-      Assertions.assertThat(list).extracting(KeywordVector::getName).containsExactly("bla-7", "bla-6", "bla-8");
+      assertThat(list).extracting(KeywordVector::getName).containsExactly("bla-7", "bla-6", "bla-8");
+
+      // Entity and Scores
+      Query<Object[]> queryEntityAndScore = remoteCache.query("select i, score(i) from sample_bank_account.KeywordVector i where i.floatEmbedding <-> [:a]~:k");
+      queryEntityAndScore.setParameter("a", center.getFloatEmbedding());
+      queryEntityAndScore.setParameter("k", 3);
+      List<Object[]> listWithScore = queryEntityAndScore.list();
+      assertThat(listWithScore).hasSize(3);
+      Map<KeywordVector, Float> resultMap = listWithScore.stream().map(s-> Map.entry((KeywordVector)s[0], (Float)s[1]))
+              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+      assertThat(resultMap.keySet()).extracting(KeywordVector::getName).containsExactlyInAnyOrder("bla-7", "bla-6", "bla-8");
+      assertThat(resultMap.values().iterator().next()).isBetween(0f, 2f);
+
+      Query<Object[]> queryEntityAndScoreFiltering = remoteCache.query("select i, score(i) from sample_bank_account.KeywordVector i join i.metadata m where i.floatEmbedding <-> [:a]~:k filtering(m.key='key2' and m.value='value0')");
+      queryEntityAndScoreFiltering.setParameter("a", center.getFloatEmbedding());
+      queryEntityAndScoreFiltering.setParameter("k", 1000);
+      List<Object[]> listWithScoreFiltered = queryEntityAndScoreFiltering.list();
+      assertThat(listWithScoreFiltered).hasSize(5);
    }
 
    @Test
@@ -362,14 +396,13 @@ public class HotRodCacheQueries {
       assertEquals("1234", user.getAddresses().get(0).getPostCode());
    }
 
-   private static KeywordVector createImage(Integer seed, int dimension) {
+   private static KeywordVector createImage(Integer seed, int dimension, List<Metadata> metadata) {
       byte[] byteEmbeddings = new byte[dimension];
       float[] floatEmbeddings = new float[dimension];
       for (int i = 0; i < dimension; i++) {
          byteEmbeddings[i] = seed.byteValue();
          floatEmbeddings[i] = seed.floatValue();
       }
-
-      return new KeywordVector("bla-" + seed, byteEmbeddings, floatEmbeddings);
+      return new KeywordVector("bla-" + seed, byteEmbeddings, floatEmbeddings, metadata);
    }
 }
