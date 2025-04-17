@@ -1,0 +1,13 @@
+name: 'Close stale issues'
+on:
+  schedule:
+    - cron: '30 1 * * *'
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          any-of-labels: 'kind/flaky test'
+          days-before-close: 14
