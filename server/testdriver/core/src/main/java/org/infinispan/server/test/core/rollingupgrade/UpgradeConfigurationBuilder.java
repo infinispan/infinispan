@@ -17,6 +17,7 @@ public class UpgradeConfigurationBuilder {
    private boolean xSite;
    private String jgroupsProtocol = "tcp";
    private int serverCheckTimeSecs = 30;
+   private boolean useSharedDataMount = true;
    private BiConsumer<Throwable, UpgradeHandler> exceptionHandler = (t, uh) -> {
       t.printStackTrace();
    };
@@ -66,6 +67,11 @@ public class UpgradeConfigurationBuilder {
       return this;
    }
 
+   public UpgradeConfigurationBuilder sharedDataMount(boolean useSharedDataMount) {
+      this.useSharedDataMount = useSharedDataMount;
+      return this;
+   }
+
    public UpgradeConfigurationBuilder logConsumer(Consumer<String> logConsumer) {
       this.logConsumer = Objects.requireNonNull(logConsumer);
       return this;
@@ -77,6 +83,7 @@ public class UpgradeConfigurationBuilder {
    }
 
    public UpgradeConfiguration build() {
-      return new UpgradeConfiguration(nodeCount, fromVersion, toVersion, xSite, jgroupsProtocol, serverCheckTimeSecs, exceptionHandler, logConsumer, initialHandler);
+      return new UpgradeConfiguration(nodeCount, fromVersion, toVersion, xSite, jgroupsProtocol, serverCheckTimeSecs,
+            useSharedDataMount, exceptionHandler, logConsumer, initialHandler);
    }
 }
