@@ -110,8 +110,8 @@ public class UpgradeHandler {
          }
 
          Set<SocketAddress> servers = cache.getCacheTopologyInfo().getSegmentsPerServer().keySet();
+         logConsumer.accept("Servers are: " + servers);
          if (servers.size() == expectedCount) {
-            logConsumer.accept("Servers are: " + servers);
             return true;
          }
          Thread.sleep(TimeUnit.SECONDS.toMillis(5));
@@ -129,7 +129,7 @@ public class UpgradeHandler {
       }
    }
 
-   private RemoteCacheManager createRemoteCacheManager() {
+   public RemoteCacheManager createRemoteCacheManager() {
       TestUser user = TestUser.ADMIN;
 
       String hotrodURI = "hotrod://" + user.getUser() + ":" + user.getPassword() + "@" + fromDriver.getServerAddress(0).getHostAddress() + ":11222";
@@ -147,7 +147,9 @@ public class UpgradeHandler {
       builder.clusterName(clusterName);
       builder.property(Server.INFINISPAN_CLUSTER_STACK, protocol);
       builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_REQUIRE_JOIN_TIMEOUT, "true");
-      builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED, "true");
+      if (configuration.useSharedDataMount()) {
+         builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED, "true");
+      }
 
       String versionToUse = toOrFrom ? configuration.toVersion() : configuration.fromVersion();
 

@@ -8,7 +8,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 
 public record UpgradeConfiguration(int nodeCount, String fromVersion, String toVersion, boolean xSite,
-                                   String jgroupsProtocol, int serverCheckTimeSecs,
+                                   String jgroupsProtocol, int serverCheckTimeSecs, boolean useSharedDataMount,
                                    BiConsumer<Throwable, UpgradeHandler> exceptionHandler,
                                    Consumer<String> logConsumer,
                                    Function<RemoteCacheManager, RemoteCache<String, String>> initialHandler) {
