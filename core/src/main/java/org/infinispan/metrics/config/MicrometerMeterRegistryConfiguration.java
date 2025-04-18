@@ -2,6 +2,7 @@ package org.infinispan.metrics.config;
 
 import java.util.Objects;
 
+import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.configuration.serializing.SerializedWith;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -11,6 +12,7 @@ import io.micrometer.core.instrument.MeterRegistry;
  *
  * @since 15.0
  */
+@BuiltBy(MicrometerMeterRegisterConfigurationBuilder.class)
 @SerializedWith(MicrometerMeterRegistryConfigurationSerializer.class)
 public class MicrometerMeterRegistryConfiguration {
 
