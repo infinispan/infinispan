@@ -14,6 +14,11 @@ public interface Constants {
 
    String CACHE_TAG_NAME = "cache";
 
+   @Deprecated(forRemoval = true, since = "16.0")
+   String VENDOR_PREFIX = "vendor.";
+
+   String INFINISPAN_PREFIX = "infinispan_";
+
    String JGROUPS_PREFIX = "jgroups_";
 
    String JGROUPS_CLUSTER_TAG_NAME = "cluster";
