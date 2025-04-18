@@ -326,7 +326,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       List<Address> newMembers = context.getExpectedMembers();
       if (newAvailabilityMode == AvailabilityMode.AVAILABLE) {
          // Update the topology to remove leavers - the current topology may not have been updated for a while
-         context.updateCurrentTopology(actualMembers);
+         if (!actualMembers.isEmpty()) context.updateCurrentTopology(actualMembers);
          context.updateAvailabilityMode(actualMembers, newAvailabilityMode, false);
          // Then queue a rebalance to include the joiners as well
          context.queueRebalance(newMembers);

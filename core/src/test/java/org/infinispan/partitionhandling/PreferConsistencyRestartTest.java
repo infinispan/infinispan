@@ -1,12 +1,17 @@
 package org.infinispan.partitionhandling;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.infinispan.functional.FunctionalTestUtils.await;
+import static org.infinispan.partitionhandling.AvailabilityMode.AVAILABLE;
+import static org.infinispan.partitionhandling.AvailabilityMode.DEGRADED_MODE;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.concurrent.TimeoutException;
 
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
@@ -17,6 +22,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.PersistentUUID;
 import org.testng.annotations.Test;
@@ -31,6 +37,151 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
       numberOfOwners = 2;
       numMembersInCluster = 3;
       createDefault = true;
+   }
+
+   public void testOnlyFreshNodeLeftDuringDegraded() throws Exception {
+      Map<JGroupsAddress, PersistentUUID> addressMappings = createInitialCluster();
+
+      checkData();
+
+      // Stop two nodes, one of them is the coordinator.
+      stopManagers(2, 0);
+
+      // The remaining node is the new coordinator.
+      assertThat(manager(0).isCoordinator()).isTrue();
+
+      // The cache is now in degraded mode.
+      ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
+      assertThat(ctm.getAvailabilityMode(CACHE_NAME)).isEqualTo(DEGRADED_MODE);
+
+      // Add new node, but it is still degraded.
+      createStatefulCacheManager("Z", true);
+      manager(1).getCache(CACHE_NAME);
+      assertThat(ctm.getAvailabilityMode(CACHE_NAME)).isEqualTo(DEGRADED_MODE);
+
+      // The coordinator leaves, and only the extraneous node remains.
+      stopManagers(0);
+      assertThat(manager(0).isCoordinator()).isTrue();
+
+      // Cache still degraded.
+      ctm = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
+      assertThat(ctm.getAvailabilityMode(CACHE_NAME)).isEqualTo(DEGRADED_MODE);
+
+      // The previous nodes join now.
+      createStatefulCacheManager("A", false);
+      createStatefulCacheManager("B", false);
+      createStatefulCacheManager("C", false);
+
+      // All nodes join.
+      for (EmbeddedCacheManager manager : managers()) {
+         manager.getCache(CACHE_NAME);
+      }
+
+      // After all previous members join, the cache is available.
+      assertThat(ctm.getAvailabilityMode(CACHE_NAME)).isEqualTo(AVAILABLE);
+
+      // Check restart. Add new extraneous node.
+      PersistentUUID uuid = TestingUtil.extractGlobalComponent(manager(0), LocalTopologyManager.class)
+            .getPersistentUUID();
+      addressMappings.put((JGroupsAddress) manager(0).getAddress(), uuid);
+      checkPersistentUUIDMatch(addressMappings);
+   }
+
+   public void testCompletelyNewClusterWhileDegraded() {
+      createInitialCluster();
+
+      checkData();
+
+      // Stop two nodes, one of them is the coordinator.
+      stopManagers(2, 0);
+
+      // The remaining node is the new coordinator.
+      assertThat(manager(0).isCoordinator()).isTrue();
+
+      // The cache is now in degraded mode.
+      ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
+      assertThat(ctm.getAvailabilityMode(CACHE_NAME)).isEqualTo(DEGRADED_MODE);
+
+      // Add new node, but it is still degraded.
+      createStatefulCacheManager("Z", true);
+      manager(1).getCache(CACHE_NAME);
+      assertThat(ctm.getAvailabilityMode(CACHE_NAME)).isEqualTo(DEGRADED_MODE);
+
+      // The coordinator leaves, and only the extraneous node remains.
+      stopManagers(0);
+      assertThat(manager(0).isCoordinator()).isTrue();
+
+      // Cache still degraded.
+      ctm = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
+      assertThat(ctm.getAvailabilityMode(CACHE_NAME)).isEqualTo(DEGRADED_MODE);
+
+      // Add extraneous nodes.
+      createStatefulCacheManager("Y", true);
+      createStatefulCacheManager("X", true);
+
+      for (EmbeddedCacheManager manager : managers()) {
+         manager.getCache(CACHE_NAME);
+      }
+
+      // Since we only have new members, the cluster will remain DEGRADED.
+      // It will require a manual intervention.
+      assertThat(ctm.getAvailabilityMode(CACHE_NAME)).isEqualTo(DEGRADED_MODE);
+
+      // Force availability of cluster.
+      await(ctm.forceAvailabilityMode(CACHE_NAME, AVAILABLE));
+      assertThat(ctm.getAvailabilityMode(CACHE_NAME)).isEqualTo(AVAILABLE);
+
+      // Again, since the cluster is completely new, all data is gone.
+      assertThat(cache(0, CACHE_NAME).size()).isZero();
+
+      // Verify cache accept operations.
+      for (int i = 0; i < 100; i++) {
+         cache(0, CACHE_NAME).put(String.valueOf(i), String.valueOf(i));
+      }
+   }
+
+   public void testCoordinatorChangesWhileDegraded() throws Exception {
+      Map<JGroupsAddress, PersistentUUID> addressMappings = createInitialCluster();
+
+      // Operate directly on the default cache.
+      // Since it is created by default, it could cause the node fail to start.
+      String defaultCacheName = "defaultcache";
+
+      checkData();
+
+      // Stop two nodes, one of them is the coordinator.
+      stopManagers(2, 0);
+
+      // The remaining node is the new coordinator.
+      assertThat(manager(0).isCoordinator()).isTrue();
+
+      // The cache is now in degraded mode.
+      ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
+      assertThat(ctm.getAvailabilityMode(defaultCacheName)).isEqualTo(DEGRADED_MODE);
+
+      // Previous coordinator joins.
+      createStatefulCacheManager("A", false);
+
+      // Still in degraded.
+      assertThat(ctm.getAvailabilityMode(defaultCacheName)).isEqualTo(DEGRADED_MODE);
+
+      // The current coordinator leaves, yield control to previous coordinator.
+      stopManagers(0);
+      assertThat(manager(0).isCoordinator()).isTrue();
+
+      // And the cache is still in degraded mode.
+      ctm = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
+      assertThat(ctm.getAvailabilityMode(defaultCacheName)).isEqualTo(DEGRADED_MODE);
+
+      // Add all members back.
+      createStatefulCacheManager("B", false);
+      assertThat(ctm.getAvailabilityMode(defaultCacheName)).isEqualTo(DEGRADED_MODE);
+
+      createStatefulCacheManager("C", false);
+      assertThat(ctm.getAvailabilityMode(defaultCacheName)).isEqualTo(AVAILABLE);
+
+      // The UUID mapping recovered successfully.
+      checkPersistentUUIDMatch(addressMappings);
    }
 
    public void testCrashBeforeRecover() throws Exception {
@@ -88,7 +239,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
       waitForClusterToForm(CACHE_NAME);
       List<Address> members = cacheManagers.stream()
             .map(EmbeddedCacheManager::getAddress)
-            .collect(Collectors.toList());
+            .toList();
       LocalTopologyManager ltm = TestingUtil.extractGlobalComponent(manager(0), LocalTopologyManager.class);
       eventually(() -> {
          List<Address> actual = ltm.getCacheTopology(CACHE_NAME).getActualMembers();
@@ -99,25 +250,35 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
       // The nodes that restart will clear the underlying store, as it could lead to inconsistency.
       // Right now, what it is possible to check is that the restart is successful and the remaining data.
       // With M owners and N nodes, we still have left around ~M/N of data.
-      checkClusterRestartedCorrectly(addressMappings);
+      checkPersistentUUIDMatch(addressMappings);
       assertThat(cache(0, CACHE_NAME).size())
             .isBetween((int) (((float) numberOfOwners / numMembersInCluster) * DATA_SIZE), DATA_SIZE);
    }
 
-   private void killManagers1and2() throws Exception {
-      EmbeddedCacheManager e2 = cacheManagers.remove(2);
-      EmbeddedCacheManager e1 = cacheManagers.remove(1);
-
-      e2.start();
-      Future<Void> f2 = fork(e2::stop);
-      Future<Void> f1 = fork(e1::stop);
+   private void killManagers1and2() {
+      stopManagers(2, 1);
 
       LocalTopologyManager ltm = TestingUtil.extractGlobalComponent(manager(0), LocalTopologyManager.class);
-      eventually(() -> ltm.getCacheAvailability(CACHE_NAME) == AvailabilityMode.DEGRADED_MODE);
+      eventually(() -> ltm.getCacheAvailability(CACHE_NAME) == DEGRADED_MODE);
       eventually(() -> ltm.getCacheTopology(CACHE_NAME).getActualMembers().size() == 1);
+   }
 
-      f2.get(10, TimeUnit.SECONDS);
-      f1.get(10, TimeUnit.SECONDS);
+   private void stopManagers(int ... indexes) {
+      List<Future<Void>> stops = new ArrayList<>(indexes.length);
+      for (int index : indexes) {
+         EmbeddedCacheManager ecm = cacheManagers.remove(index);
+         stops.add(fork(ecm::stop));
+      }
+
+      stops.forEach(this::join);
+   }
+
+   private void join(Future<Void> future) {
+      try {
+         future.get(10, TimeUnit.SECONDS);
+      } catch (InterruptedException | ExecutionException | TimeoutException e) {
+         throw new RuntimeException(e);
+      }
    }
 
    private boolean isASegmentOwner(int segment) {

@@ -102,6 +102,14 @@ public interface ClusterTopologyManager {
 
    CompletionStage<Void> forceAvailabilityMode(String cacheName, AvailabilityMode availabilityMode);
 
+   /**
+    * Retrieves the current availability mode of a cache.
+    *
+    * @param cacheName Name of the cache to verify.
+    * @return <code>null</code> if the cache is not found. Otherwise, the current availability status.
+    */
+   AvailabilityMode getAvailabilityMode(String cacheName);
+
    CompletionStage<Void> handleShutdownRequest(String cacheName) throws Exception;
 
    boolean useCurrentTopologyAsStable(String cacheName, boolean force);

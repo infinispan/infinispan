@@ -1,5 +1,6 @@
 package org.infinispan.partitionhandling;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
@@ -12,6 +13,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.assertj.core.api.SoftAssertions;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -118,6 +121,26 @@ public class BaseStatefulPartitionHandlingTest extends BasePartitionHandlingTest
    }
 
    void checkClusterRestartedCorrectly(Map<JGroupsAddress, PersistentUUID> addressMappings) throws Exception {
+      checkPersistentUUIDMatch(addressMappings);
+      checkClusterDataSize(DATA_SIZE);
+   }
+
+   void checkClusterDataSize(int expectedSize) {
+      SoftAssertions sa = new SoftAssertions();
+      int size = expectedSize;
+      for (int i = 0; i < cacheManagers.size(); i++) {
+         int s = cache(i, CACHE_NAME).size();
+         if (size < 0) size = s;
+
+         sa.assertThat(s)
+               .withFailMessage(String.format("Manager %s has size %d instead of %d for '%s'", manager(i).getAddress(), s, size, CACHE_NAME))
+               .isEqualTo(size);
+      }
+
+      sa.assertAll();
+   }
+
+   void checkPersistentUUIDMatch(Map<JGroupsAddress, PersistentUUID> addressMappings) throws Exception {
       Iterator<Map.Entry<JGroupsAddress, PersistentUUID>> addressIterator = addressMappings.entrySet().iterator();
       Set<PersistentUUID> uuids = new HashSet<>();
       for (int i = 0; i < cacheManagers.size(); i++) {
@@ -141,7 +164,7 @@ public class BaseStatefulPartitionHandlingTest extends BasePartitionHandlingTest
       assertTrue(isEquivalent(addressMappings, oldConsistentHash, newConsistentHash, persistentUUIDManager));
    }
 
-   private boolean isEquivalent(Map<JGroupsAddress, PersistentUUID> addressMapping, ConsistentHash oldConsistentHash,
+   protected final boolean isEquivalent(Map<JGroupsAddress, PersistentUUID> addressMapping, ConsistentHash oldConsistentHash,
                                 ConsistentHash newConsistentHash, PersistentUUIDManager persistentUUIDManager) {
       if (oldConsistentHash.getNumSegments() != newConsistentHash.getNumSegments()) return false;
       for (int i = 0; i < oldConsistentHash.getMembers().size(); i++) {
@@ -151,7 +174,9 @@ public class BaseStatefulPartitionHandlingTest extends BasePartitionHandlingTest
          if (!remappedOldAddress.equals(newAddress)) return false;
          Set<Integer> oldSegmentsForOwner = oldConsistentHash.getSegmentsForOwner(oldAddress);
          Set<Integer> newSegmentsForOwner = newConsistentHash.getSegmentsForOwner(newAddress);
-         if (!oldSegmentsForOwner.equals(newSegmentsForOwner)) return false;
+         assertThat(oldSegmentsForOwner)
+               .withFailMessage(() -> String.format("Old: %s\nNew: %s", IntSets.from(oldSegmentsForOwner), IntSets.from(newSegmentsForOwner)))
+               .isEqualTo(newSegmentsForOwner);
       }
 
       return true;
