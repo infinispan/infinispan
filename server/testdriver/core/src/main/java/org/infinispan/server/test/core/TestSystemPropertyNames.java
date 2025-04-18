@@ -13,6 +13,11 @@ public class TestSystemPropertyNames {
     */
    public static final String INFINISPAN_TEST_SERVER_BASE_IMAGE_NAME = PREFIX + "container.baseImageName";
    /**
+    * Specifies the name to be used when creating an image from a snapshot directory. This is only used when
+    * {@link #INFINISPAN_TEST_SERVER_DIR} is provided. Note this is not required and a sensible default is used when not done.
+    */
+   public static final String INFINISPAN_TEST_SERVER_SNAPSHOT_IMAGE_NAME = PREFIX + "container.snapshotImageName";
+   /**
     * Specifies whether the base image contains a prebuilt server to use instead of using the one built locally
     */
    public static final String INFINISPAN_TEST_SERVER_PRESERVE_IMAGE = PREFIX + "container.preserveImage";
@@ -36,10 +41,22 @@ public class TestSystemPropertyNames {
     * The timeout in seconds to wait for the container driver servers to start
     */
    public static final String INFINISPAN_TEST_SERVER_FORKED_TIMEOUT_SECONDS = PREFIX + "container.timeoutSeconds";
+
    /**
     * The path to a local installation of the server
     */
    public static final String INFINISPAN_TEST_SERVER_DIR = PREFIX + "dir";
+   /**
+    * The version to use for the Infinispan Server Container. This is used for informational purposes only, unless there
+    * is no container or server directory specified. If so then a container from quay.io matching this version will be used.
+    */
+   public static final String INFINISPAN_TEST_SERVER_VERSION = PREFIX + "version";
+
+   /**
+    * Boolean property to notify the driver that the join timeout should not be skipped. This is useful when running
+    * more than one driver without xsite so that they can still join together with a merge.
+    */
+   public static final String INFINISPAN_TEST_SERVER_REQUIRE_JOIN_TIMEOUT = PREFIX + "requireJoinTimeout";
    /**
     * The log file for the container server driver
     * It should be a file name located in the module server/tests/src/test/resources/configuration or a full path

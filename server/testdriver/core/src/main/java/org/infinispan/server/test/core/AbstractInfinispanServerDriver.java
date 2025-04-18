@@ -85,15 +85,15 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
 
    protected final InfinispanServerTestConfiguration configuration;
    protected final InetAddress testHostAddress;
-   private final SelfSignedX509CertificateAndSigningKey ca;
+   protected final SelfSignedX509CertificateAndSigningKey ca;
 
-   private File rootDir;
-   private File confDir;
-   private ComponentStatus status;
-   private final AtomicLong certSerial = new AtomicLong(1);
-   private String name;
+   protected File rootDir;
+   protected File confDir;
+   protected ComponentStatus status;
+   protected final AtomicLong certSerial = new AtomicLong(1);
+   protected String name;
 
-   private final Provider[] ALL_PROVIDERS;
+   protected final Provider[] ALL_PROVIDERS;
 
    protected AbstractInfinispanServerDriver(InfinispanServerTestConfiguration configuration, InetAddress testHostAddress) {
       this.configuration = configuration;
@@ -118,7 +118,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
       return configuration;
    }
 
-   protected abstract void start(String name, File rootDir, File configurationFile);
+   protected abstract void start(String name, File rootDir);
 
    protected String debugJvmOption() {
       String nonLoopbackAddress;
@@ -171,7 +171,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
       status = ComponentStatus.INITIALIZING;
       try {
          log.infof("Starting servers %s", name);
-         start(name, rootDir, new File(configuration.configurationFile()));
+         start(name, rootDir);
          log.infof("Started servers %s", name);
          status = ComponentStatus.RUNNING;
       } catch (Throwable t) {

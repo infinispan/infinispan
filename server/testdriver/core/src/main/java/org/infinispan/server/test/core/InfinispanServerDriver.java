@@ -55,6 +55,13 @@ public interface InfinispanServerDriver {
    boolean isRunning(int server);
 
    /**
+    * Returns how many servers have been registered. Note this may vary with the configuration if additional
+    * servers have been started manually.
+    * @return the number of servers
+    */
+   int serverCount();
+
+   /**
     * Returns an InetSocketAddress for connecting to a specific port on a specific server. The implementation will need
     * to provide a specific mapping (e.g. port offset).
     *
