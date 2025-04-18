@@ -13,7 +13,8 @@ import org.infinispan.protostream.annotations.ProtoSchema;
             Note.class,
             Transaction.class,
             User.class,
-            User.Gender.class
+            User.Gender.class,
+            Metadata.class
       },
       schemaFileName = "test.protostream.sampledomain.proto",
       schemaFilePath = "proto/generated",
