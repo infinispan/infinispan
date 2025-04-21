@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -129,6 +130,10 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       );
       int totalAmount = configuration.expectedServers() > 0 ? configuration.expectedServers() : configuration.numServers();
       this.containers = new ArrayList<>(totalAmount);
+      // Fill the array list with nulls and then we directly call set
+      for (int i = 0; i < totalAmount; ++i) {
+         this.containers.add(null);
+      }
       this.volumes = new String[totalAmount];
    }
 
@@ -316,7 +321,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          CountdownLatchLoggingConsumer startupLatch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
 
          log.infof("Starting new single server for container %d with volume %s", name, volumeName);
-         createContainer(containers.size(), volumeName, startupLatch, clusterLatch);
+         createContainer(createdContainers(), volumeName, startupLatch, clusterLatch);
          Exceptions.unchecked(() -> startupLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
          Exceptions.unchecked(() -> clusterLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
          status = ComponentStatus.RUNNING;
@@ -325,6 +330,10 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          status = ComponentStatus.FAILED;
          throw t;
       }
+   }
+
+   private int createdContainers() {
+      return (int) containers.stream().filter(Objects::nonNull).count();
    }
 
    private void configureSite(List<String> args) {
@@ -373,7 +382,8 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             .withCreateContainerCmdModifier(cmd -> {
                if (volumeToUse != null) {
                   cmd.getHostConfig().withMounts(
-                        Collections.singletonList(new Mount().withSource(volumeToUse).withTarget(serverPath() + "/data").withType(MountType.VOLUME))
+                        Collections.singletonList(new Mount().withSource(volumeToUse).withTarget(serverPath()).withType(MountType.VOLUME))
+//                        Collections.singletonList(new Mount().withSource(volumeToUse).withTarget(serverPath() + "/data").withType(MountType.VOLUME))
                   );
                }
                if (IMAGE_MEMORY != null) {
@@ -454,7 +464,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
       log.infof("Starting container %d", i);
       container.start();
-      containers.add(new InfinispanGenericContainer(container));
+      containers.set(i, new InfinispanGenericContainer(container));
       log.infof("Started container %d", i);
       return container;
    }
@@ -466,9 +476,9 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          stop(i);
          log.infof("Stopped container %d", i);
       }
-      if (image != null) {
-         cleanup(image.getDockerImageName());
-      }
+//      if (image != null) {
+//         cleanup(image.getDockerImageName());
+//      }
       // See https://github.com/testcontainers/testcontainers-java/issues/2276
       ThreadLeakChecker.ignoreThreadsContaining("docker-java-stream-");
       if (leakDetectionLoggingConsumer.leakDetected()) {
@@ -483,7 +493,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
    @Override
    public int serverCount() {
-      return containers.size();
+      return createdContainers();
    }
 
    @Override
