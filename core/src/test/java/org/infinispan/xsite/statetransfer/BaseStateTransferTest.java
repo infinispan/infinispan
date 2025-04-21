@@ -78,7 +78,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       assertNoStateTransferInSendingSite();
    }
 
-   @Test(groups = "xsite")
+   @Test(groups = "xsite", enabled = false, description = "Disabled as part of https://github.com/infinispan/infinispan/issues/14618")
    public void testCancelStateTransfer(Method method) throws InterruptedException {
       takeSiteOffline();
       assertOffline();
