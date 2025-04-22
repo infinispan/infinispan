@@ -382,8 +382,8 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             .withCreateContainerCmdModifier(cmd -> {
                if (volumeToUse != null) {
                   cmd.getHostConfig().withMounts(
-                        Collections.singletonList(new Mount().withSource(volumeToUse).withTarget(serverPath()).withType(MountType.VOLUME))
-//                        Collections.singletonList(new Mount().withSource(volumeToUse).withTarget(serverPath() + "/data").withType(MountType.VOLUME))
+//                        Collections.singletonList(new Mount().withSource(volumeToUse).withTarget(serverPath()).withType(MountType.VOLUME))
+                        Collections.singletonList(new Mount().withSource(volumeToUse).withTarget(serverPath() + "/data").withType(MountType.VOLUME))
                   );
                }
                if (IMAGE_MEMORY != null) {

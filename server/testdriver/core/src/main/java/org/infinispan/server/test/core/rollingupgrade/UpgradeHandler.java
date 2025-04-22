@@ -103,7 +103,7 @@ public class UpgradeHandler {
    private boolean ensureServersWorking(RemoteCache<String, String> cache, int expectedCount) throws InterruptedException {
       long begin = System.nanoTime();
       while (TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - begin) < configuration.serverCheckTimeSecs()) {
-         logConsumer.accept("Attempting remote call to ensure cluster formed properly");
+         logConsumer.accept("Attempting remote call to ensure cluster formed properly, expecting " + expectedCount + " servers");
          String value = cache.get("foo");
          if (value != null && !value.equals("bar")) {
             throw new IllegalStateException("Remote cache returned " + value + " instead of bar");
@@ -163,10 +163,10 @@ public class UpgradeHandler {
          String imageName;
          if (toOrFrom) {
             assert toImageCreated == null;
-            imageName = toImageCreated = ContainerInfinispanServerDriver.SNAPSHOT_IMAGE + "-to";
+            imageName = toImageCreated = versionToUse.toLowerCase() + "-to";
          } else {
             assert fromImageCreated == null;
-            imageName = fromImageCreated = ContainerInfinispanServerDriver.SNAPSHOT_IMAGE + "-from";
+            imageName = fromImageCreated = versionToUse.toLowerCase() + "-from";
          }
          builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_SNAPSHOT_IMAGE_NAME, imageName);
       } else {
