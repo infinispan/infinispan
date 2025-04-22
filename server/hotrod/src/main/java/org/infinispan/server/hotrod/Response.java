@@ -27,6 +27,7 @@ class TopologyAwareResponse extends AbstractTopologyResponse {
       return "TopologyAwareResponse{" +
              "topologyId=" + topologyId +
              ", numSegments=" + numSegments +
+             ", addresses=" + serverEndpointsMap.keySet() +
              '}';
    }
 }
@@ -46,6 +47,7 @@ class HashDistAware20Response extends AbstractTopologyResponse {
              "topologyId=" + topologyId +
              ", numSegments=" + numSegments +
              ", hashFunction=" + hashFunction +
+             ", addresses=" + serverEndpointsMap.keySet() +
              '}';
    }
 }
