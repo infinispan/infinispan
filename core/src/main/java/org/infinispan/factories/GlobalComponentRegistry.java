@@ -190,6 +190,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    }
 
    private void cacheComponents() {
+      // ALWAYS keep this order. Local topology must start before cluster topology.
       localTopologyManager = basicComponentRegistry.getComponent(LocalTopologyManager.class);
       clusterTopologyManager = basicComponentRegistry.getComponent(ClusterTopologyManager.class);
    }
@@ -423,10 +424,6 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       return localTopologyManager.running();
    }
 
-   public boolean isLocalTopologyManagerRunning() {
-      return localTopologyManager != null && localTopologyManager.isRunning();
-   }
-
    public XSiteCacheMapper getXSiteCacheMapper() {
       return basicComponentRegistry.getComponent(XSiteCacheMapper.class).running();
    }
@@ -439,4 +436,22 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       return of(cacheManager).getComponent(type);
    }
 
+   /**
+    * Ensures the given component is in a running state.
+    *
+    * <p>
+    * This will guarantee that the requested component has all dependencies injected and have run all methods annotated
+    * with {@link Start}.
+    * </p>
+    *
+    * @param type The class of the component to verify.
+    * @param <T> The component type.
+    * @throws IllegalStateException If the component does not enter into a running state.
+    */
+   public <T> void ensureComponentRunning(Class<T> type) {
+      ComponentRef<T> ref = Objects.requireNonNull(basicComponentRegistry.getComponent(type));
+      T t = ref.running();
+      if (t == null || !ref.isRunning())
+         throw new IllegalStateException(String.format("Component '%s' expected to be running", ref.getName()));
+   }
 }
