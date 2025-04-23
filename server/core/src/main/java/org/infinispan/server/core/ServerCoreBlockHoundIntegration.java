@@ -5,6 +5,7 @@ import java.util.Arrays;
 import org.infinispan.server.core.utils.SslUtils;
 import org.kohsuke.MetaInfServices;
 
+import io.netty.util.concurrent.GlobalEventExecutor;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 import reactor.blockhound.BlockHound;
 import reactor.blockhound.BlockingOperationError;
@@ -26,6 +27,9 @@ public class ServerCoreBlockHoundIntegration implements BlockHoundIntegration {
 
       // Don't worry about blocking in netty event loop when shutting down
       builder.allowBlockingCallsInside(SingleThreadEventExecutor.class.getName(), "confirmShutdown");
+
+      // Don't worry about blocking in netty global executor when waiting for a delayed task
+      builder.allowBlockingCallsInside(GlobalEventExecutor.class.getName(), "takeTask");
 
       questionableBlockingMethod(builder);
       methodsToBeRemoved(builder);
