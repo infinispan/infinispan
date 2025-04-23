@@ -2,12 +2,11 @@ package org.infinispan.topology;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Arrays;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -18,15 +17,22 @@ public class ClusterTopologyStatefulTest extends AbstractStatefulCluster {
       clusterSize = 3;
    }
 
+   private Condition coordinatorHasRebalanceDisabled() {
+      return () -> cacheManagers.stream()
+            .filter(EmbeddedCacheManager::isCoordinator)
+            .map(ecm -> TestingUtil.extractGlobalComponent(ecm, ClusterTopologyManager.class))
+            .noneMatch(ClusterTopologyManager::isRebalancingEnabled);
+   }
+
    private Condition allNodesHaveRebalanceDisabled() {
-      return () -> Arrays.stream(managers())
-            .map(ecm -> TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class))
+      return () -> cacheManagers.stream()
+            .map(ecm -> TestingUtil.extractGlobalComponent(ecm, ClusterTopologyManager.class))
             .noneMatch(ClusterTopologyManager::isRebalancingEnabled);
    }
 
    private Supplier<String> dumpClusterGlobalRebalanceStatus() {
-      return () -> Arrays.stream(managers())
-            .map(ecm -> Map.entry(ecm, TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class)))
+      return () -> cacheManagers.stream()
+            .map(ecm -> Map.entry(ecm, TestingUtil.extractGlobalComponent(ecm, ClusterTopologyManager.class)))
             .map(entry -> String.format("%s is rebalance enabled? %b", entry.getKey().getAddress(), entry.getValue().isRebalancingEnabled()))
             .collect(Collectors.joining(System.lineSeparator()));
    }
@@ -35,10 +41,10 @@ public class ClusterTopologyStatefulTest extends AbstractStatefulCluster {
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
 
       // Disable rebalance globally.
-      ctm.setRebalancingEnabled(false).toCompletableFuture().get(10, TimeUnit.SECONDS);
+      ctm.setRebalancingEnabled(false);
 
       // Assert that eventually the whole cluster has rebalance disabled.
-      eventually(dumpClusterGlobalRebalanceStatus(), allNodesHaveRebalanceDisabled());
+      eventually(dumpClusterGlobalRebalanceStatus(), coordinatorHasRebalanceDisabled());
 
       // Shutdown everything. This will generate the state file.
       TestingUtil.killCacheManagers(this.cacheManagers);
@@ -67,7 +73,7 @@ public class ClusterTopologyStatefulTest extends AbstractStatefulCluster {
       createStatefulCacheManager(false, "A");
 
       // Assert the coordinator has restored the state.
-      assertThat(allNodesHaveRebalanceDisabled().isSatisfied())
+      assertThat(coordinatorHasRebalanceDisabled().isSatisfied())
             .as(dumpClusterGlobalRebalanceStatus())
             .isTrue();
 
