@@ -50,7 +50,6 @@ import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.SingleKeyNonTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
@@ -69,6 +68,7 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
@@ -122,7 +122,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
    private static Address[] createMembers(PersistentUUIDManager persistentUUIDManager) {
       Address[] addresses = new Address[4];
       for (int i = 0; i < 4; i++) {
-         addresses[i] = new TestAddress(i);
+         addresses[i] = JGroupsAddress.random();
          persistentUUIDManager.addPersistentAddressMapping(addresses[i], PersistentUUID.randomUUID());
       }
       return addresses;

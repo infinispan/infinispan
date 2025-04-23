@@ -5,12 +5,11 @@ import java.util.function.Function;
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.protostream.impl.WrappedMessages;
-import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 @ProtoTypeId(ProtoStreamTypeIds.SERVER_HR_CHECK_ADDRESS_TASK)
 class CheckAddressTask implements Function<EmbeddedCacheManager, Boolean> {
@@ -23,8 +22,8 @@ class CheckAddressTask implements Function<EmbeddedCacheManager, Boolean> {
    }
 
    @ProtoFactory
-   CheckAddressTask(String cacheName, WrappedMessage wrappedAddress) {
-      this(cacheName, (Address) WrappedMessages.unwrap(wrappedAddress));
+   CheckAddressTask(String cacheName, JGroupsAddress address) {
+      this(cacheName, (Address) address);
    }
 
    @ProtoField(1)
@@ -32,9 +31,9 @@ class CheckAddressTask implements Function<EmbeddedCacheManager, Boolean> {
       return cacheName;
    }
 
-   @ProtoField(2)
-   WrappedMessage getWrappedAddress() {
-      return WrappedMessages.orElseNull(clusterAddress);
+   @ProtoField(number = 2, javaType = JGroupsAddress.class)
+   Address getAddress() {
+      return clusterAddress;
    }
 
    @Override

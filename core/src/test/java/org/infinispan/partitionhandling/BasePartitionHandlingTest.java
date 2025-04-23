@@ -34,7 +34,6 @@ import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.TransportFlags;
@@ -435,12 +434,6 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          }
       }
 
-      public void assertConsistentHashMembers(List<org.infinispan.remoting.transport.Address> expectedMembers) {
-         for (Cache<?, ?> c : cachesInThisPartition()) {
-            assertEquals(new HashSet<>(c.getAdvancedCache().getDistributionManager().getCacheTopology().getMembers()), new HashSet<>(expectedMembers));
-         }
-      }
-
       public void assertActualMembers() {
          Set<org.infinispan.remoting.transport.Address> expected =
             cachesInThisPartition().stream()
@@ -449,10 +442,6 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          for (Cache<?, ?> c : cachesInThisPartition()) {
             eventuallyEquals(expected, () -> new HashSet<>(c.getAdvancedCache().getDistributionManager().getCacheTopology().getActualMembers()));
          }
-      }
-
-      public List<org.infinispan.remoting.transport.Address> getAddresses() {
-         return channels.stream().map(ch -> new JGroupsAddress(ch.getAddress())).collect(Collectors.toList());
       }
    }
 

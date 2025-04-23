@@ -353,7 +353,7 @@ public class JGroupsTransport implements Transport {
          if (addr.isEmpty()) {
             return Collections.emptyList();
          }
-         physicalAddress = new JGroupsAddress(addr.get());
+         physicalAddress = new PhysicalAddress(addr.get());
       }
       return Collections.singletonList(physicalAddress);
    }
@@ -372,7 +372,7 @@ public class JGroupsTransport implements Transport {
             .map(this::findPhysicalAddress)
             .filter(Optional::isPresent)
             .map(Optional::get)
-            .map(JGroupsAddress::new)
+            .map(PhysicalAddress::new)
             .collect(Collectors.toList());
    }
 
@@ -1576,14 +1576,14 @@ public class JGroupsTransport implements Transport {
       @Override
       public org.jgroups.Address generateAddress() {
          var transportCfg = configuration.transport();
-         return JGroupsTopologyAwareAddress.randomUUID(channel.getName(), transportCfg.siteId(), transportCfg.rackId(),
+         return JGroupsAddress.randomUUID(channel.getName(), transportCfg.siteId(), transportCfg.rackId(),
                      transportCfg.machineId());
       }
 
       @Override
       public org.jgroups.Address generateAddress(String name) {
          var transportCfg = configuration.transport();
-         return JGroupsTopologyAwareAddress.randomUUID(name, transportCfg.siteId(), transportCfg.rackId(),
+         return JGroupsAddress.randomUUID(name, transportCfg.siteId(), transportCfg.rackId(),
                transportCfg.machineId());
       }
    }

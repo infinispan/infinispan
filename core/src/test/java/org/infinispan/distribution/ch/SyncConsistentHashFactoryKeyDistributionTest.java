@@ -15,7 +15,6 @@ import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.jgroups.util.UUID;
 import org.testng.annotations.Test;
 
 /**
@@ -247,7 +246,7 @@ public class SyncConsistentHashFactoryKeyDistributionTest extends AbstractInfini
    }
 
    protected Address createSingleAddress(int nodeIndex) {
-      return new IndexedJGroupsAddress(UUID.randomUUID(), nodeIndex);
+      return JGroupsAddress.random();
    }
 
    protected double getSegmentsPerNodesMinMaxRatio(DefaultConsistentHash ch) {
@@ -262,27 +261,5 @@ public class SyncConsistentHashFactoryKeyDistributionTest extends AbstractInfini
       // String result = String.format("min=%d, max=%d, ch=%s, d=%f", min, max, ch, d);
       // System.out.println("segment result = " + result);
       return d;
-   }
-
-}
-
-/**
- * We extend JGroupsAddress to make mapping an address to a node easier.
- */
-class IndexedJGroupsAddress extends JGroupsAddress {
-   final int nodeIndex;
-
-   IndexedJGroupsAddress(org.jgroups.Address address, int nodeIndex) {
-      super(address);
-      this.nodeIndex = nodeIndex;
-   }
-
-   public int getNodeIndex() {
-      return nodeIndex;
-   }
-
-   @Override
-   public String toString() {
-      return Integer.toString(nodeIndex);
    }
 }

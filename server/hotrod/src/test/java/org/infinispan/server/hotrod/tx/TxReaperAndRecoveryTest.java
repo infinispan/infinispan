@@ -39,7 +39,6 @@ import org.infinispan.server.hotrod.HotRodMultiNodeTest;
 import org.infinispan.server.hotrod.counter.response.RecoveryTestResponse;
 import org.infinispan.server.hotrod.test.TestResponse;
 import org.infinispan.server.hotrod.tx.table.CacheXid;
-import org.infinispan.server.hotrod.tx.table.ClientAddress;
 import org.infinispan.server.hotrod.tx.table.GlobalTxTable;
 import org.infinispan.server.hotrod.tx.table.PerCacheTxTable;
 import org.infinispan.server.hotrod.tx.table.Status;
@@ -81,7 +80,7 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
 
    private static Address newAddress() {
       //test address isn't serializable and we just need an address that doesn't belong to the cluster (simulates a leaver)
-      return new JGroupsAddress(org.jgroups.util.UUID.randomUUID());
+      return JGroupsAddress.random();
    }
 
    @BeforeClass(alwaysRun = true)
@@ -440,7 +439,7 @@ public class TxReaperAndRecoveryTest extends HotRodMultiNodeTest {
 
    private GlobalTransaction newGlobalTransaction(String cacheName, int index, Address address) {
       TransactionFactory factory = extractComponent(cache(index, cacheName), TransactionFactory.class);
-      return factory.newGlobalTransaction(new ClientAddress(address), false);
+      return factory.newGlobalTransaction(address, false);
    }
 
    private static class LoggingSynchronization implements Synchronization {

@@ -165,7 +165,7 @@ public class BaseStatefulPartitionHandlingTest extends BasePartitionHandlingTest
    }
 
    protected final boolean isEquivalent(Map<JGroupsAddress, PersistentUUID> addressMapping, ConsistentHash oldConsistentHash,
-                                ConsistentHash newConsistentHash, PersistentUUIDManager persistentUUIDManager) {
+                                        ConsistentHash newConsistentHash, PersistentUUIDManager persistentUUIDManager) {
       if (oldConsistentHash.getNumSegments() != newConsistentHash.getNumSegments()) return false;
       for (int i = 0; i < oldConsistentHash.getMembers().size(); i++) {
          JGroupsAddress oldAddress = (JGroupsAddress) oldConsistentHash.getMembers().get(i);

@@ -11,6 +11,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.notifications.cachemanagerlistener.event.Event;
 import org.infinispan.notifications.cachemanagerlistener.event.impl.EventImpl;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -28,9 +29,9 @@ public class NumericVersionGeneratorTest {
       vg.start();
       vg.resetCounter();
 
-      TestAddress addr1 = new TestAddress(1);
-      TestAddress addr2 = new TestAddress(2);
-      TestAddress addr3 = new TestAddress(1);
+      Address addr1 = JGroupsAddress.random();
+      Address addr2 = JGroupsAddress.random();
+      Address addr3 = JGroupsAddress.random();
       List<Address> members = Arrays.asList(addr1, addr2, addr3);
       rankCalculator.updateRank(new EventImpl(null, null, Event.Type.VIEW_CHANGED, members, members, addr2, 1));
 
@@ -44,39 +45,4 @@ public class NumericVersionGeneratorTest {
       assertEquals(0x2000100000000L, rankCalculator.getVersionPrefix());
       assertEquals(new NumericVersion(0x2000100000003L), vg.generateNew());
    }
-
-   static class TestAddress implements Address {
-      int addressNum;
-
-      TestAddress(int addressNum) {
-         this.addressNum = addressNum;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
-         if (!super.equals(o)) return false;
-
-         TestAddress that = (TestAddress) o;
-
-         if (addressNum != that.addressNum) return false;
-
-         return true;
-      }
-
-      @Override
-      public int hashCode() {
-         int result = super.hashCode();
-         result = 31 * result + addressNum;
-         return result;
-      }
-
-      @Override
-      public int compareTo(Address o) {
-         TestAddress oa = (TestAddress) o;
-         return addressNum - oa.addressNum;
-      }
-   }
-
 }

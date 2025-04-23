@@ -88,11 +88,11 @@ public class ClusterListenerReplicateCallable<K, V> implements Function<Embedded
 
    @ProtoFactory
    static <K, V> ClusterListenerReplicateCallable<K, V> protoFactory(UUID identifier, String cacheName, JGroupsAddress origin, boolean sync,
-                                                        Set<Class<? extends Annotation>> filterAnnotations, DataConversion keyDataConversion,
-                                                        DataConversion valueDataConversion, boolean useStorageFormat,
-                                                        MarshallableObject<CacheEventFilter<K, V>> filter,
-                                                        MarshallableObject<CacheEventConverter<K, V, ?>> converter,
-                                                        boolean sameConverter) {
+                                                                     Set<Class<? extends Annotation>> filterAnnotations, DataConversion keyDataConversion,
+                                                                     DataConversion valueDataConversion, boolean useStorageFormat,
+                                                                     MarshallableObject<CacheEventFilter<K, V>> filter,
+                                                                     MarshallableObject<CacheEventConverter<K, V, ?>> converter,
+                                                                     boolean sameConverter) {
       CacheEventFilter<K, V> f = MarshallableObject.unwrap(filter);
       CacheEventConverter<K, V, ?> cec;
       if (sameConverter) {

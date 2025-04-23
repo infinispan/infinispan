@@ -7,5 +7,4 @@ package org.infinispan.remoting.transport;
  * @since 4.0
  */
 public interface Address extends Comparable<Address> {
-   Address[] EMPTY_ARRAY = new Address[0];
 }

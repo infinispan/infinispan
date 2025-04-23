@@ -28,16 +28,17 @@ import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
-import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
@@ -49,6 +50,7 @@ import org.infinispan.reactive.publisher.impl.Notifications;
 import org.infinispan.reactive.publisher.impl.SegmentAwarePublisherSupplier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.PersistentUUID;
@@ -57,8 +59,6 @@ import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.infinispan.transaction.impl.TransactionOriginatorChecker;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletionStages;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.BeforeMethod;
@@ -78,13 +78,13 @@ public class StateProviderTest {
 
    // Number of segments must be a power of 2 for keyPartition4Segments to work
    private static final int NUM_SEGMENTS = 4;
-   private static final TestAddress A = new TestAddress(0, "A");
-   private static final TestAddress B = new TestAddress(1, "B");
-   private static final TestAddress C = new TestAddress(2, "C");
-   private static final TestAddress D = new TestAddress(3, "D");
-   private static final TestAddress E = new TestAddress(4, "E");
-   private static final TestAddress F = new TestAddress(5, "F");
-   private static final TestAddress G = new TestAddress(6, "G");
+   private static final Address A = JGroupsAddress.random("A");
+   private static final Address B = JGroupsAddress.random("B");
+   private static final Address C = JGroupsAddress.random("C");
+   private static final Address D = JGroupsAddress.random("D");
+   private static final Address E = JGroupsAddress.random("E");
+   private static final Address F = JGroupsAddress.random("F");
+   private static final Address G = JGroupsAddress.random("G");
 
    private static final PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
    static {

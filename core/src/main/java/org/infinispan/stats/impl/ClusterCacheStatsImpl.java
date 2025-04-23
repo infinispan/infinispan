@@ -69,7 +69,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.LocalModeAddress;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -122,7 +122,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
          }
          if (a == null) {
             // Local cache manager reports null for address
-            a = LocalModeAddress.INSTANCE;
+            a = JGroupsAddress.LOCAL;
          }
          if (!v.isEmpty())
             resultMap.put(a, v);

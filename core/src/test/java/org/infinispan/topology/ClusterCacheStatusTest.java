@@ -11,13 +11,13 @@ import java.util.List;
 import java.util.Optional;
 
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PreferAvailabilityStrategy;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.statetransfer.RebalanceType;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.logging.events.EventLogManager;
@@ -35,9 +35,9 @@ public class ClusterCacheStatusTest extends AbstractInfinispanTest {
    private static final CacheJoinInfo JOIN_INFO =
       new CacheJoinInfo(DefaultConsistentHashFactory.getInstance(), 8, 2, 1000,
             CacheMode.DIST_SYNC, 1.0f, null, Optional.empty());
-   private static final Address A = new TestAddress(1, "A");
-   private static final Address B = new TestAddress(2, "B");
-   private static final Address C = new TestAddress(3, "C");
+   private static final Address A = JGroupsAddress.random("A");
+   private static final Address B = JGroupsAddress.random("B");
+   private static final Address C = JGroupsAddress.random("C");
 
    private ClusterCacheStatus status;
    private ClusterTopologyManagerImpl topologyManager;

@@ -320,6 +320,6 @@ public class PrepareCoordinator {
 
    private GlobalTransaction newGlobalTransaction() {
       TransactionFactory factory =  ComponentRegistry.componentOf(cache, TransactionFactory.class);
-      return factory.newGlobalTransaction(perCacheTxTable.getClientAddress(), false);
+      return factory.newGlobalTransaction(cache.getCacheManager().getAddress(), false, true);
    }
 }

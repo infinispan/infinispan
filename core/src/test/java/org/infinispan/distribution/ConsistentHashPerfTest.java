@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.Util;
@@ -33,10 +32,9 @@ import org.testng.annotations.Test;
 public class ConsistentHashPerfTest extends AbstractInfinispanTest {
 
    private List<Address> createAddresses(int numNodes) {
-      Random r = new Random();
       List<Address> addresses = new ArrayList<>(numNodes);
       while (addresses.size() < numNodes)
-         addresses.add(new JGroupsAddress(new org.jgroups.util.UUID(r.nextLong(), r.nextLong())));
+         addresses.add(JGroupsAddress.random());
       return addresses;
    }
 

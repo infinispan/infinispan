@@ -10,13 +10,14 @@ import static org.testng.AssertJUnit.fail;
 import java.util.Collections;
 import java.util.List;
 
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.testng.annotations.Test;
@@ -30,7 +31,7 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "distribution.TriangleOrderManagerTest")
 public class TriangleOrderManagerTest extends AbstractInfinispanTest {
 
-   private static final Address LOCAL_ADDRESS = new TestAddress(0, "A");
+   private static final Address LOCAL_ADDRESS = JGroupsAddress.random();
 
    private static LocalizedCacheTopology mockCacheTopology(int topologyId) {
       List<Address> members = Collections.singletonList(LOCAL_ADDRESS);

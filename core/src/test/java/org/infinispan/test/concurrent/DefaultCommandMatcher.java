@@ -1,7 +1,5 @@
 package org.infinispan.test.concurrent;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -15,15 +13,11 @@ import org.infinispan.remoting.transport.Address;
  * @since 7.0
  */
 public class DefaultCommandMatcher implements CommandMatcher {
-   public static final Address LOCAL_ORIGIN_PLACEHOLDER = new AddressPlaceholder();
-   public static final Address ANY_REMOTE_PLACEHOLDER = new AddressPlaceholder();
 
    private final Class<? extends ReplicableCommand> commandClass;
    private final String cacheName;
    private final Address origin;
    private final Object key;
-
-   private final AtomicInteger actualMatchCount = new AtomicInteger(0);
 
    public DefaultCommandMatcher(Class<? extends ReplicableCommand> commandClass) {
       this(commandClass, null, null, null);
@@ -53,29 +47,12 @@ public class DefaultCommandMatcher implements CommandMatcher {
          return false;
       }
 
-      if (origin != null && !addressMatches((CacheRpcCommand) command))
+      if (origin != null && origin.equals(((CacheRpcCommand) command).getOrigin()))
          return false;
 
       if (key != null && !key.equals(((DataCommand) command).getKey()))
          return false;
 
       return true;
-   }
-
-   private boolean addressMatches(CacheRpcCommand command) {
-      Address commandOrigin = command.getOrigin();
-      if (origin == LOCAL_ORIGIN_PLACEHOLDER)
-         return commandOrigin == null;
-      else if (origin == ANY_REMOTE_PLACEHOLDER)
-         return commandOrigin != null;
-      else
-         return !origin.equals(commandOrigin);
-   }
-
-   private static class AddressPlaceholder implements Address {
-      @Override
-      public int compareTo(Address o) {
-         throw new UnsupportedOperationException("This address should never be part of a view");
-      }
    }
 }
