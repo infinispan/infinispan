@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.marshall.protostream.impl.WrappedMessages;
@@ -96,11 +95,6 @@ public class TopologyUpdateCommand extends AbstractCacheControlCommand {
 
    @Override
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry gcr) throws Throwable {
-      if (!gcr.isLocalTopologyManagerRunning()) {
-         log.debugf("Discard topology update because topology manager not running %s", this);
-         return CompletableFutures.completedNull();
-      }
-
       CacheTopology topology = new CacheTopology(topologyId, rebalanceId, getCurrentCH(), getPendingCH(), phase,
             (List<Address>)(List<?>) actualMembers, persistentUUIDs);
       return gcr.getLocalTopologyManager()
