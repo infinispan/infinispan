@@ -54,8 +54,8 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered) {
-            GlobalTransaction recoveryAwareGlobalTransaction = new GlobalTransaction(addr, remote);
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered, boolean client) {
+            GlobalTransaction recoveryAwareGlobalTransaction = new GlobalTransaction(addr, remote, client);
             // TODO: Not ideal... but causes no issues so far. Could the internal id be an Object instead of a long?
             recoveryAwareGlobalTransaction.setInternalId(((NumericVersion) clusterIdGenerator.generateNew()).getVersion());
             return recoveryAwareGlobalTransaction;
@@ -75,8 +75,8 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered) {
-            return new GlobalTransaction(addr, remote);
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered, boolean client) {
+            return new GlobalTransaction(addr, remote, client);
          }
 
          @Override
@@ -93,8 +93,8 @@ public class TransactionFactory {
          }
 
          @Override
-         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered) {
-            return new GlobalTransaction(addr, remote);
+         public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered, boolean client) {
+            return new GlobalTransaction(addr, remote, client);
          }
 
          @Override
@@ -107,7 +107,12 @@ public class TransactionFactory {
                                                            boolean implicitTransaction, int topologyId,
                                                            long txCreationTime);
 
-      public abstract GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered);
+      @Deprecated(since = "16.0", forRemoval = true)
+      public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered) {
+         return newGlobalTransaction(addr, remote, clusterIdGenerator, clustered, false);
+      }
+
+      public abstract GlobalTransaction newGlobalTransaction(Address addr, boolean remote, VersionGenerator clusterIdGenerator, boolean clustered, boolean client);
 
       public RemoteTransaction newRemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx,
                                                              int topologyId, long txCreationTime) {
@@ -124,6 +129,10 @@ public class TransactionFactory {
 
    public GlobalTransaction newGlobalTransaction(Address addr, boolean remote) {
       return txFactoryEnum.newGlobalTransaction(addr, remote, this.clusterIdGenerator, isClustered);
+   }
+
+   public GlobalTransaction newGlobalTransaction(Address addr, boolean remote, boolean client) {
+      return txFactoryEnum.newGlobalTransaction(addr, remote, this.clusterIdGenerator, isClustered, client);
    }
 
    public LocalTransaction newLocalTransaction(Transaction tx, GlobalTransaction gtx, boolean implicitTransaction, int topologyId) {

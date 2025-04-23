@@ -7,12 +7,11 @@ import javax.transaction.xa.Xid;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.tx.XidImpl;
-import org.infinispan.marshall.protostream.impl.WrappedMessages;
-import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 
 /**
@@ -32,33 +31,37 @@ public class GlobalTransaction implements Cloneable {
    private static final AtomicLong sid = new AtomicLong(0);
 
    private long id;
-   private Address addr;
+   private JGroupsAddress addr;
    private int hash_code = -1;  // in the worst case, hashCode() returns 0, then increases, so we're safe here
    private boolean remote = false;
+   private final boolean clientTx;
    private volatile XidImpl xid = null;
    private volatile long internalId = -1;
 
    public GlobalTransaction(Address addr, boolean remote) {
+      this(addr, remote, false);
+   }
+
+   public GlobalTransaction(Address addr, boolean remote, boolean clientTx) {
+      assert addr == null || addr instanceof JGroupsAddress;
       this.id = sid.incrementAndGet();
-      this.addr = addr;
+      this.addr = (JGroupsAddress) addr;
       this.remote = remote;
+      this.clientTx = clientTx;
    }
 
    @ProtoFactory
-   GlobalTransaction(long id, WrappedMessage wrappedAddress, XidImpl xid, long internalId) {
+   GlobalTransaction(long id, JGroupsAddress address, XidImpl xid, long internalId, boolean clientTransaction) {
       this.id = id;
-      this.addr = WrappedMessages.unwrap(wrappedAddress);
+      this.addr = address;
       this.xid = xid;
       this.internalId = internalId;
+      this.clientTx = clientTransaction;
    }
 
+   @ProtoField(number = 1, javaType = JGroupsAddress.class)
    public Address getAddress() {
       return addr;
-   }
-
-   @ProtoField(number = 1, name = "address")
-   WrappedMessage getWrappedAddress() {
-      return WrappedMessages.orElseNull(addr);
    }
 
    @ProtoField(2)
@@ -74,6 +77,11 @@ public class GlobalTransaction implements Cloneable {
    @ProtoField(4)
    public long getInternalId() {
       return internalId;
+   }
+
+   @ProtoField(5)
+   public boolean isClientTransaction() {
+      return clientTx;
    }
 
    public boolean isRemote() {
@@ -116,7 +124,8 @@ public class GlobalTransaction implements Cloneable {
    }
 
    public void setAddress(Address address) {
-      this.addr = address;
+      assert address == null || address instanceof JGroupsAddress;
+      this.addr = (JGroupsAddress) address;
    }
 
    public void setXid(Xid xid) {

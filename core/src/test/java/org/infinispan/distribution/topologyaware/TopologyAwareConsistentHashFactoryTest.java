@@ -12,15 +12,13 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
-import org.infinispan.distribution.TestTopologyAwareAddress;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
-import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
-import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.distribution.ch.impl.OwnershipStatistics;
 import org.infinispan.distribution.ch.impl.TopologyAwareConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -38,11 +36,9 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    private static final int ADDRESS_COUNT = 25;
    public int numSegments = 100;
 
-   private TestTopologyAwareAddress[] testAddresses;
    private List<Address> chMembers;
    private Map<Address, Float> capacityFactors;
    private ConsistentHashFactory<DefaultConsistentHash> chf;
-   private KeyPartitioner keyPartitioner;
    protected DefaultConsistentHash ch;
 
    @BeforeMethod()
@@ -50,12 +46,6 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       chf = createConsistentHashFactory();
       chMembers = new ArrayList<>(ADDRESS_COUNT);
       capacityFactors = null;
-      testAddresses = new TestTopologyAwareAddress[ADDRESS_COUNT];
-      for (int i = 0; i < ADDRESS_COUNT; i++) {
-         testAddresses[i] = new TestTopologyAwareAddress(i * 100);
-         testAddresses[i].setName(Character.toString((char) ('A' + i)));
-      }
-      keyPartitioner = new HashFunctionPartitioner(numSegments);
    }
 
    protected ConsistentHashFactory<DefaultConsistentHash> createConsistentHashFactory() {
@@ -63,14 +53,14 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    public void testNumberOfOwners() {
-      addNode(testAddresses[0], "m0", null, null);
+      addNode("m0", null, null);
 
       updateConsistentHash(1);
       IntStream.range(0, numSegments).forEach(i ->  assertOwners(i, 1));
       updateConsistentHash(2);
       IntStream.range(0, numSegments).forEach(i ->  assertOwners(i, 1));
 
-      addNode(testAddresses[1], "m1", null, null);
+      addNode("m1", null, null);
 
       updateConsistentHash(1);
       int numSegments = ch.getNumSegments();
@@ -82,7 +72,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       updateConsistentHash(3);
       IntStream.range(0, numSegments).forEach(i ->  assertOwners(i, 2));
 
-      addNode(testAddresses[2], "m0", null, null);
+      addNode("m0", null, null);
 
       updateConsistentHash(1);
       IntStream.range(0, numSegments).forEach(i ->  assertOwners(i, 1));
@@ -102,10 +92,10 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    public void testDifferentMachines() {
-      addNode(testAddresses[0], "m0", null, null);
-      addNode(testAddresses[1], "m1", null, null);
-      addNode(testAddresses[2], "m0", null, null);
-      addNode(testAddresses[3], "m1", null, null);
+      addNode("m0", null, null);
+      addNode("m1", null, null);
+      addNode("m0", null, null);
+      addNode("m1", null, null);
 
       assertAllLocationsWithRebalance(1);
       assertAllLocationsWithRebalance(2);
@@ -114,9 +104,9 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
 
    public void testNumOwnerBiggerThanAvailableNodes() {
       // test first with one node
-      addNode(testAddresses[0], "m0", null, null);
-      addNode(testAddresses[1], "m0", null, null);
-      addNode(testAddresses[2], "m0", null, null);
+      addNode("m0", null, null);
+      addNode("m0", null, null);
+      addNode("m0", null, null);
 
       assertAllLocationsWithRebalance(2);
       assertAllLocationsWithRebalance(3);
@@ -125,12 +115,12 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    public void testDifferentMachines2() {
-      addNode(testAddresses[0], "m0", null, null);
-      addNode(testAddresses[1], "m0", null, null);
-      addNode(testAddresses[2], "m1", null, null);
-      addNode(testAddresses[3], "m1", null, null);
-      addNode(testAddresses[4], "m2", null, null);
-      addNode(testAddresses[5], "m2", null, null);
+      addNode("m0", null, null);
+      addNode("m0", null, null);
+      addNode("m1", null, null);
+      addNode("m1", null, null);
+      addNode("m2", null, null);
+      addNode("m2", null, null);
 
       assertAllLocationsWithRebalance(1);
       assertAllLocationsWithRebalance(2);
@@ -139,9 +129,9 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    public void testDifferentMachines3() {
-      addNode(testAddresses[0], "m0", "r1", "s1");
-      addNode(testAddresses[1], "m1", "r1", "s1");
-      addNode(testAddresses[2], "m2", "r1", "s1");
+      addNode("m0", "r1", "s1");
+      addNode("m1", "r1", "s1");
+      addNode("m2", "r1", "s1");
 
       assertAllLocationsWithRebalance(1);
       assertAllLocationsWithRebalance(2);
@@ -150,12 +140,12 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    public void testDifferentRacksAndMachines() {
-      addNode(testAddresses[0], "m0", "r0", null);
-      addNode(testAddresses[1], "m1", "r0", null);
-      addNode(testAddresses[2], "m2", "r1", null);
-      addNode(testAddresses[3], "m3", "r2", null);
-      addNode(testAddresses[4], "m2", "r1", null);
-      addNode(testAddresses[5], "m2", "r2", null);
+      addNode("m0", "r0", null);
+      addNode("m1", "r0", null);
+      addNode("m2", "r1", null);
+      addNode("m3", "r2", null);
+      addNode("m2", "r1", null);
+      addNode("m2", "r2", null);
 
       assertAllLocationsWithRebalance(1);
       assertAllLocationsWithRebalance(2);
@@ -164,12 +154,12 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    public void testAllSameMachine() {
-      addNode(testAddresses[0], "m0", null, null);
-      addNode(testAddresses[1], "m0", null, null);
-      addNode(testAddresses[2], "m0", null, null);
-      addNode(testAddresses[3], "m0", null, null);
-      addNode(testAddresses[4], "m0", null, null);
-      addNode(testAddresses[5], "m0", null, null);
+      addNode("m0", null, null);
+      addNode("m0", null, null);
+      addNode("m0", null, null);
+      addNode("m0", null, null);
+      addNode("m0", null, null);
+      addNode("m0", null, null);
 
       assertAllLocationsWithRebalance(1);
       assertAllLocationsWithRebalance(2);
@@ -178,10 +168,10 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    public void testDifferentSites() {
-      addNode(testAddresses[0], "m0", null, "s0");
-      addNode(testAddresses[1], "m1", null, "s0");
-      addNode(testAddresses[2], "m2", null, "s1");
-      addNode(testAddresses[3], "m3", null, "s1");
+      addNode("m0", null, "s0");
+      addNode("m1", null, "s0");
+      addNode("m2", null, "s1");
+      addNode("m3", null, "s1");
 
       assertAllLocationsWithRebalance(1);
       assertAllLocationsWithRebalance(2);
@@ -190,12 +180,12 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    public void testSitesMachines2() {
-      addNode(testAddresses[0], "m0", null, "s0");
-      addNode(testAddresses[1], "m1", null, "s1");
-      addNode(testAddresses[2], "m2", null, "s0");
-      addNode(testAddresses[3], "m3", null, "s2");
-      addNode(testAddresses[4], "m4", null, "s1");
-      addNode(testAddresses[5], "m5", null, "s1");
+      addNode("m0", null, "s0");
+      addNode("m1", null, "s1");
+      addNode("m2", null, "s0");
+      addNode("m3", null, "s2");
+      addNode("m4", null, "s1");
+      addNode("m5", null, "s1");
 
       assertAllLocationsWithRebalance(1);
       assertAllLocationsWithRebalance(2);
@@ -204,12 +194,12 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    public void testSitesMachinesSameMachineName() {
-      addNode(testAddresses[0], "m0", null, "r0");
-      addNode(testAddresses[1], "m0", null, "r1");
-      addNode(testAddresses[2], "m0", null, "r0");
-      addNode(testAddresses[3], "m0", null, "r2");
-      addNode(testAddresses[4], "m0", null, "r1");
-      addNode(testAddresses[5], "m0", null, "r1");
+      addNode("m0", null, "r0");
+      addNode("m0", null, "r1");
+      addNode("m0", null, "r0");
+      addNode("m0", null, "r2");
+      addNode("m0", null, "r1");
+      addNode("m0", null, "r1");
 
       assertAllLocationsWithRebalance(1);
       assertAllLocationsWithRebalance(2);
@@ -218,10 +208,10 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    public void testDifferentRacks() {
-      addNode(testAddresses[0], "m0", "r0", null);
-      addNode(testAddresses[1], "m1", "r0", null);
-      addNode(testAddresses[2], "m2", "r1", null);
-      addNode(testAddresses[3], "m3", "r1", null);
+      addNode("m0", "r0", null);
+      addNode("m1", "r0", null);
+      addNode("m2", "r1", null);
+      addNode("m3", "r1", null);
 
       assertAllLocationsWithRebalance(1);
       assertAllLocationsWithRebalance(2);
@@ -230,12 +220,12 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    public void testRacksMachines2() {
-      addNode(testAddresses[0], "m0", "r0", null);
-      addNode(testAddresses[1], "m1", "r1", null);
-      addNode(testAddresses[2], "m2", "r0", null);
-      addNode(testAddresses[3], "m3", "r2", null);
-      addNode(testAddresses[4], "m4", "r1", null);
-      addNode(testAddresses[5], "m5", "r1", null);
+      addNode("m0", "r0", null);
+      addNode("m1", "r1", null);
+      addNode("m2", "r0", null);
+      addNode("m3", "r2", null);
+      addNode("m4", "r1", null);
+      addNode("m5", "r1", null);
 
       assertAllLocationsWithRebalance(1);
       assertAllLocationsWithRebalance(2);
@@ -244,12 +234,12 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    public void testRacksMachinesSameMachineName() {
-      addNode(testAddresses[0], "m0", "r0", null);
-      addNode(testAddresses[1], "m0", "r1", null);
-      addNode(testAddresses[2], "m0", "r0", null);
-      addNode(testAddresses[3], "m0", "r2", null);
-      addNode(testAddresses[4], "m0", "r1", null);
-      addNode(testAddresses[5], "m0", "r1", null);
+      addNode("m0", "r0", null);
+      addNode("m0", "r1", null);
+      addNode("m0", "r0", null);
+      addNode("m0", "r2", null);
+      addNode("m0", "r1", null);
+      addNode("m0", "r1", null);
 
       assertAllLocationsWithRebalance(1);
       assertAllLocationsWithRebalance(2);
@@ -259,16 +249,16 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
 
    public void testComplexScenario() {
       // {s0: {r0: {m0, m1}}, s1: {r0: {m0, m1, m2}, r1: {m0}}}
-      addNode(testAddresses[0], "m2", "r0", "s1");
-      addNode(testAddresses[1], "m1", "r0", "s0");
-      addNode(testAddresses[2], "m1", "r0", "s1");
-      addNode(testAddresses[3], "m1", "r1", "s0");
-      addNode(testAddresses[4], "m0", "r0", "s1");
-      addNode(testAddresses[5], "m0", "r1", "s1");
-      addNode(testAddresses[6], "m0", "r1", "s0");
-      addNode(testAddresses[7], "m0", "r0", "s1");
-      addNode(testAddresses[8], "m0", "r0", "s0");
-      addNode(testAddresses[9], "m0", "r0", "s0");
+      addNode("m2", "r0", "s1");
+      addNode("m1", "r0", "s0");
+      addNode("m1", "r0", "s1");
+      addNode("m1", "r1", "s0");
+      addNode("m0", "r0", "s1");
+      addNode("m0", "r1", "s1");
+      addNode("m0", "r1", "s0");
+      addNode("m0", "r0", "s1");
+      addNode("m0", "r0", "s0");
+      addNode("m0", "r0", "s0");
 
       assertAllLocationsWithRebalance(1);
       assertAllLocationsWithRebalance(2);
@@ -278,15 +268,15 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
 
    public void testComplexScenario2() {
       // {s0: {r0: {m0, m1, m2}, r1: {m3, m4, m5}, r1: {m6, m7, m8}}}
-      addNode(testAddresses[0], "m0", "r0", "s0");
-      addNode(testAddresses[1], "m1", "r0", "s0");
-      addNode(testAddresses[2], "m2", "r0", "s0");
-      addNode(testAddresses[3], "m3", "r1", "s0");
-      addNode(testAddresses[4], "m4", "r1", "s0");
-      addNode(testAddresses[5], "m5", "r1", "s0");
-      addNode(testAddresses[6], "m6", "r2", "s0");
-      addNode(testAddresses[7], "m7", "r2", "s0");
-      addNode(testAddresses[8], "m8", "r2", "s0");
+      addNode("m0", "r0", "s0");
+      addNode("m1", "r0", "s0");
+      addNode("m2", "r0", "s0");
+      addNode("m3", "r1", "s0");
+      addNode("m4", "r1", "s0");
+      addNode("m5", "r1", "s0");
+      addNode("m6", "r2", "s0");
+      addNode("m7", "r2", "s0");
+      addNode("m8", "r2", "s0");
 
       assertAllLocationsWithRebalance(1);
       assertAllLocationsWithRebalance(2);
@@ -294,27 +284,28 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
 
    public void testLoadFactors() {
       try {
-         capacityFactors = new HashMap<>();
-         capacityFactors.put(testAddresses[0], 2.0f);
-         capacityFactors.put(testAddresses[1], 0.0f);
-         capacityFactors.put(testAddresses[2], 1.0f);
-         capacityFactors.put(testAddresses[3], 2.0f);
-         capacityFactors.put(testAddresses[4], 0.0f);
-         capacityFactors.put(testAddresses[5], 1.0f);
-         capacityFactors.put(testAddresses[6], 2.0f);
-         capacityFactors.put(testAddresses[7], 0.0f);
-         capacityFactors.put(testAddresses[8], 1.0f);
-
          // {s0: {r0: {m0, m1, m2}, r1: {m3, m4, m5}, r1: {m6, m7, m8}}}
-         addNode(testAddresses[0], "m0", "r0", "s0");
-         addNode(testAddresses[1], "m1", "r0", "s0");
-         addNode(testAddresses[2], "m2", "r0", "s0");
-         addNode(testAddresses[3], "m3", "r1", "s0");
-         addNode(testAddresses[4], "m4", "r1", "s0");
-         addNode(testAddresses[5], "m5", "r1", "s0");
-         addNode(testAddresses[6], "m6", "r2", "s0");
-         addNode(testAddresses[7], "m7", "r2", "s0");
-         addNode(testAddresses[8], "m8", "r2", "s0");
+         addNode("m0", "r0", "s0");
+         addNode("m1", "r0", "s0");
+         addNode("m2", "r0", "s0");
+         addNode("m3", "r1", "s0");
+         addNode("m4", "r1", "s0");
+         addNode("m5", "r1", "s0");
+         addNode("m6", "r2", "s0");
+         addNode("m7", "r2", "s0");
+         addNode("m8", "r2", "s0");
+
+         capacityFactors = new HashMap<>();
+         capacityFactors.put(chMembers.get(0), 2.0f);
+         capacityFactors.put(chMembers.get(1), 0.0f);
+         capacityFactors.put(chMembers.get(2), 1.0f);
+         capacityFactors.put(chMembers.get(3), 2.0f);
+         capacityFactors.put(chMembers.get(4), 0.0f);
+         capacityFactors.put(chMembers.get(5), 1.0f);
+         capacityFactors.put(chMembers.get(6), 2.0f);
+         capacityFactors.put(chMembers.get(7), 0.0f);
+         capacityFactors.put(chMembers.get(8), 1.0f);
+
          assertAllLocationsWithRebalance(1);
          assertAllLocationsWithRebalance(2);
          assertAllLocationsWithRebalance(3);
@@ -420,16 +411,16 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    public void testConsistencyWhenNodeLeaves() {
-      addNode(testAddresses[0], "m2", "r0", "s1");
-      addNode(testAddresses[1], "m1", "r0", "s0");
-      addNode(testAddresses[2], "m1", "r0", "s1");
-      addNode(testAddresses[3], "m1", "r1", "s0");
-      addNode(testAddresses[4], "m0", "r0", "s1");
-      addNode(testAddresses[5], "m0", "r1", "s1");
-      addNode(testAddresses[6], "m0", "r1", "s0");
-      addNode(testAddresses[7], "m0", "r0", "s3");
-      addNode(testAddresses[8], "m0", "r0", "s2");
-      addNode(testAddresses[9], "m0", "r0", "s0");
+      addNode("m2", "r0", "s1");
+      addNode("m1", "r0", "s0");
+      addNode("m1", "r0", "s1");
+      addNode("m1", "r1", "s0");
+      addNode("m0", "r0", "s1");
+      addNode("m0", "r1", "s1");
+      addNode("m0", "r1", "s0");
+      addNode("m0", "r0", "s3");
+      addNode("m0", "r0", "s2");
+      addNode("m0", "r0", "s0");
 
       int numOwners = 3;
       updateConsistentHash(numOwners);
@@ -500,11 +491,9 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       assertEquals(receivedSites.size(), expectedSites);
    }
 
-   private void addNode(TestTopologyAwareAddress address,
-                        String machineId, String rackId, String siteId) {
-      address.setSiteId(siteId);
-      address.setRackId(rackId);
-      address.setMachineId(machineId);
+   void addNode(String machineID, String rackId, String siteId) {
+      var uuid = JGroupsAddress.randomUUID(null, machineID, rackId, siteId);
+      Address address = new JGroupsAddress(uuid);
       chMembers.add(address);
    }
 
@@ -520,7 +509,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    @Test(timeOut = 10000)
    public void testSmallNumberOfSegments() {
       for (int i = 0; i < 3; i++) {
-         addNode(testAddresses[i], "m0", "r0", "s0");
+         addNode("m0", "r0", "s0");
       }
 
       updateConsistentHash(2, 1);
@@ -528,7 +517,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       assertDistribution(chMembers, 2, 1);
 
       for (int i = 3; i < ADDRESS_COUNT; i++) {
-         addNode(testAddresses[i], "m0", "r0", "s0");
+         addNode("m0", "r0", "s0");
       }
 
       updateConsistentHash(2, 256);

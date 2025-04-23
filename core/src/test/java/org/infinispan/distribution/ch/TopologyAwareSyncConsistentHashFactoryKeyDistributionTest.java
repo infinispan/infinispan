@@ -5,7 +5,7 @@ import java.util.List;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsTopologyAwareAddress;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.jgroups.util.ExtendedUUID;
 import org.testng.annotations.Test;
 
@@ -43,19 +43,7 @@ public class TopologyAwareSyncConsistentHashFactoryKeyDistributionTest extends S
 
    @Override
    protected Address createSingleAddress(int nodeIndex) {
-      ExtendedUUID uuid = JGroupsTopologyAwareAddress.randomUUID(null, "s" + (nodeIndex % 2), null, "m" + nodeIndex);
-      return new IndexedTopologyAwareJGroupsAddress(uuid, nodeIndex);
-   }
-}
-
-/**
- * We extend JGroupsAddress to make mapping an address to a node easier.
- */
-class IndexedTopologyAwareJGroupsAddress extends JGroupsTopologyAwareAddress {
-   final int nodeIndex;
-
-   public IndexedTopologyAwareJGroupsAddress(ExtendedUUID address, int nodeIndex) {
-      super(address);
-      this.nodeIndex = nodeIndex;
+      ExtendedUUID uuid = JGroupsAddress.randomUUID(null, "s" + (nodeIndex % 2), null, "m" + nodeIndex);
+      return new JGroupsAddress(uuid);
    }
 }

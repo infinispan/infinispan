@@ -76,7 +76,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
       createGlobalTxTable(cacheManager);
       // TODO We need a way for a module to install a factory before the default implementation is instantiated
       BasicComponentRegistry basicComponentRegistry = componentRegistry.getComponent(BasicComponentRegistry.class);
-      basicComponentRegistry.replaceComponent(PerCacheTxTable.class.getName(), new PerCacheTxTable(cacheManager.getAddress()), true);
+      basicComponentRegistry.replaceComponent(PerCacheTxTable.class.getName(), new PerCacheTxTable(), true);
       basicComponentRegistry.replaceComponent(TransactionOriginatorChecker.class.getName(), new ServerTransactionOriginatorChecker(), true);
       componentRegistry.rewire();
    }

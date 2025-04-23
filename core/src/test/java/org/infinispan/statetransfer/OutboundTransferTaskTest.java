@@ -1,6 +1,20 @@
 package org.infinispan.statetransfer;
 
-import io.reactivex.rxjava3.core.Flowable;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commons.util.IntSet;
@@ -12,26 +26,13 @@ import org.infinispan.reactive.publisher.impl.Notifications;
 import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.LocalModeAddress;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.TestException;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.mockito.ArgumentCaptor;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
+import io.reactivex.rxjava3.core.Flowable;
 
 @Test(groups = "functional", testName = "statetransfer.OutboundTransferTaskTest")
 @CleanupAfterMethod
@@ -46,7 +47,7 @@ public class OutboundTransferTaskTest {
       CommandsFactory commandsFactory = mock(CommandsFactory.class);
 
       OutboundTransferTask task = new OutboundTransferTask(
-            LocalModeAddress.INSTANCE,
+            JGroupsAddress.LOCAL,
             segments,
             numSegments,
             numSegments,

@@ -19,11 +19,11 @@ import org.infinispan.commands.topology.RebalanceStartCommand;
 import org.infinispan.commands.topology.RebalanceStatusRequestCommand;
 import org.infinispan.commands.topology.TopologyUpdateCommand;
 import org.infinispan.commands.topology.TopologyUpdateStableCommand;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory;
@@ -39,8 +39,8 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.MockTransport;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.TestingEventLogManager;
 import org.testng.annotations.AfterClass;
@@ -53,8 +53,8 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
    private final ExecutorService executor = Executors.newFixedThreadPool(2, getTestThreadFactory("Executor"));
    private final ExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor(getTestThreadFactory("Executor"));
 
-   private static final Address A = new TestAddress(0, "A");
-   private static final Address B = new TestAddress(1, "B");
+    private static final Address A = JGroupsAddress.random("A");
+    private static final Address B = JGroupsAddress.random("B");
    private final ConsistentHashFactory<?> replicatedChf = ReplicatedConsistentHashFactory.getInstance();
    // The persistent UUIDs are different, the rest of the join info is the same
    private final CacheJoinInfo joinInfoA = makeJoinInfo();

@@ -1,6 +1,5 @@
 package org.infinispan.test.concurrent;
 
-import org.infinispan.Cache;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -41,36 +40,8 @@ public class CommandMatcherBuilder<T extends ReplicableCommand> {
       }
    }
 
-   public CommandMatcherBuilder withCache(Cache cache) {
-      return withCache(cache.getName());
-   }
-
    public CommandMatcherBuilder withCache(String cacheName) {
       this.cacheName = cacheName;
-      return this;
-   }
-
-   /**
-    * Note that a {@code null} origin means any origin, including local. If you need to match only local
-    * commands, use {@link #localOnly()}.
-    */
-   public CommandMatcherBuilder withOrigin(Address origin) {
-      this.origin = origin;
-      return this;
-   }
-
-   public CommandMatcherBuilder localOnly() {
-      this.origin = DefaultCommandMatcher.LOCAL_ORIGIN_PLACEHOLDER;
-      return this;
-   }
-
-   public CommandMatcherBuilder remoteOnly() {
-      this.origin = DefaultCommandMatcher.ANY_REMOTE_PLACEHOLDER;
-      return this;
-   }
-
-   public CommandMatcherBuilder withKey(Object key) {
-      this.key = key;
       return this;
    }
 

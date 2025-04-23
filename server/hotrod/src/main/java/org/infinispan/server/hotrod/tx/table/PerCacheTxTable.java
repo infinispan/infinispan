@@ -3,13 +3,12 @@ package org.infinispan.server.hotrod.tx.table;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.tx.XidImpl;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
+
+import jakarta.transaction.Transaction;
 
 /**
  * A Transaction Table for client transaction.
@@ -25,16 +24,6 @@ public class PerCacheTxTable {
 
    private static final Log log = LogFactory.getLog(PerCacheTxTable.class, Log.class);
    private final Map<XidImpl, EmbeddedTransaction> localTxTable = new ConcurrentHashMap<>();
-   private final ClientAddress clientAddress;
-
-
-   public PerCacheTxTable(Address address) {
-      this.clientAddress = new ClientAddress(address);
-   }
-
-   public ClientAddress getClientAddress() {
-      return clientAddress;
-   }
 
    /**
     * @return The local {@link EmbeddedTransaction} associated to the {@code xid}.

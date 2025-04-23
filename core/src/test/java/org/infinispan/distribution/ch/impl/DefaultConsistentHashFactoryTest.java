@@ -18,9 +18,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
@@ -54,7 +54,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       for (int nn : NUM_NODES) {
          List<Address> nodes = new ArrayList<>(nn);
          for (int j = 0; j < nn; j++) {
-            nodes.add(new TestAddress(j, "TA"));
+            nodes.add(JGroupsAddress.random());
          }
 
          for (int ns : NUM_SEGMENTS) {
@@ -110,7 +110,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
             newMembers.remove(indexToRemove);
          }
          for (int k = 0; k < nodesToAdd; k++) {
-            TestAddress address = new TestAddress(nodeIndex++, "TA");
+            Address address = JGroupsAddress.random();
             newMembers.add(address);
             if (newCapacityFactors != null) {
                newCapacityFactors.put(address, capacityFactors.get(baseMembers.get(k % baseMembers.size())));
@@ -380,10 +380,10 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
 
    public void testNullCapacityFactors() {
       ConsistentHashFactory<DefaultConsistentHash> chf = createConsistentHashFactory();
-      TestAddress A = new TestAddress(0, "A");
-      TestAddress B = new TestAddress(1, "B");
-      TestAddress C = new TestAddress(2, "C");
-      TestAddress D = new TestAddress(3, "D");
+      Address A = JGroupsAddress.random("A");
+      Address B = JGroupsAddress.random("B");
+      Address C = JGroupsAddress.random("C");
+      Address D = JGroupsAddress.random("D");
       Map<Address, Float> cf = new HashMap<>();
       cf.put(A, 1f);
       cf.put(B, 1f);
@@ -415,10 +415,10 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
 
    public void testDifferentCapacityFactors() {
       ConsistentHashFactory<DefaultConsistentHash> chf = createConsistentHashFactory();
-      TestAddress A = new TestAddress(0, "A");
-      TestAddress B = new TestAddress(1, "B");
-      TestAddress C = new TestAddress(2, "C");
-      TestAddress D = new TestAddress(3, "D");
+      Address A = JGroupsAddress.random("A");
+      Address B = JGroupsAddress.random("B");
+      Address C = JGroupsAddress.random("C");
+      Address D = JGroupsAddress.random("D");
       Map<Address, Float> cf = new HashMap<>();
       cf.put(A, 1f);
       cf.put(B, 1f);

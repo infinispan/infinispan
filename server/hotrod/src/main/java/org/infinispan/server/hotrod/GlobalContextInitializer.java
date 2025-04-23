@@ -22,7 +22,6 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.server.hotrod.event.KeyValueWithPreviousEventConverter.class,
             org.infinispan.server.hotrod.SingleHomedServerAddress.class,
             org.infinispan.server.hotrod.tx.table.CacheXid.class,
-            org.infinispan.server.hotrod.tx.table.ClientAddress.class,
             org.infinispan.server.hotrod.tx.table.Status.class,
             org.infinispan.server.hotrod.tx.table.TxState.class,
             org.infinispan.server.hotrod.tx.table.functions.ConditionalMarkAsRollbackFunction.class,

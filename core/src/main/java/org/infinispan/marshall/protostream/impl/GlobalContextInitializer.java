@@ -269,7 +269,6 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.remoting.responses.SuccessfulTransientMortalCacheValueResponse.class,
             org.infinispan.remoting.responses.UnsuccessfulResponse.class,
             org.infinispan.remoting.responses.UnsureResponse.class,
-            org.infinispan.remoting.transport.jgroups.JGroupsTopologyAwareAddress.class,
             org.infinispan.statetransfer.StateChunk.class,
             org.infinispan.statetransfer.TransactionInfo.class,
             org.infinispan.stats.impl.ClusterCacheStatsImpl.DistributedCacheStatsCallable.class,

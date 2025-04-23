@@ -21,9 +21,9 @@ import org.infinispan.interceptors.impl.InvalidationInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.LocalModeAddress;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -95,7 +95,7 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
 		InvalidateCommand invalidateCommand;
 		if (!isLocalModeForced(command)) {
 			if (isTransactional) {
-				Address address = transport != null ? transport.getAddress() : LocalModeAddress.INSTANCE;
+				Address address = transport != null ? transport.getAddress() : JGroupsAddress.LOCAL;
 				invalidateCommand = new BeginInvalidationCommand(cacheName, EnumUtil.EMPTY_BIT_SET, CommandInvocationId.generateId(address), new Object[] {key}, keyLockOwner);
 			}
 			else {

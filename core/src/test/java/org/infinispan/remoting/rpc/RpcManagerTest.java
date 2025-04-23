@@ -29,7 +29,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.jgroups.util.NameCache;
-import org.jgroups.util.UUID;
 import org.testng.annotations.Test;
 
 /**
@@ -38,7 +37,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "remoting.rpc.RpcManagerTest")
 public class RpcManagerTest extends MultipleCacheManagersTest {
-   private static final JGroupsAddress SUSPECT = new JGroupsAddress(UUID.randomUUID());
+   private static final JGroupsAddress SUSPECT = JGroupsAddress.random();
 
    @Override
    protected void createCacheManagers() throws Throwable {

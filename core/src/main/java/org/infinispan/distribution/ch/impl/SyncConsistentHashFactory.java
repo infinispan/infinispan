@@ -306,17 +306,16 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          // 64-bit hashes from 32-bit hashes have a non-negligible chance of collision,
          // so we try to get all 128 bits from UUID addresses
          long[] key = new long[2];
-         if (address instanceof JGroupsAddress) {
-            org.jgroups.Address jGroupsAddress = ((JGroupsAddress) address).getJGroupsAddress();
-            if (jGroupsAddress instanceof UUID) {
-               key[0] = ((UUID) jGroupsAddress).getLeastSignificantBits();
-               key[1] = ((UUID) jGroupsAddress).getMostSignificantBits();
+         if (address instanceof JGroupsAddress addr) {
+            if (addr.getJGroupsAddress() instanceof UUID uuid) {
+               key[0] = uuid.getLeastSignificantBits();
+               key[1] = uuid.getMostSignificantBits();
             } else {
                key[0] = address.hashCode();
             }
-         } else if (address instanceof PersistentUUID) {
-            key[0] = ((PersistentUUID) address).getLeastSignificantBits();
-            key[1] = ((PersistentUUID) address).getMostSignificantBits();
+         } else if (address instanceof PersistentUUID persistentUUID) {
+            key[0] = persistentUUID.getLeastSignificantBits();
+            key[1] = persistentUUID.getMostSignificantBits();
          } else {
             key[0] = address.hashCode();
          }
