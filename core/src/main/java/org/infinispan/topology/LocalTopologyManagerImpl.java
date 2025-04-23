@@ -103,8 +103,6 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    @Inject PersistentUUIDManager persistentUUIDManager;
    @Inject EventLogManager eventLogManager;
    @Inject CacheManagerNotifier cacheManagerNotifier;
-   // Not used directly, but we have to start the ClusterTopologyManager before sending the join request
-   @Inject ClusterTopologyManager clusterTopologyManager;
 
    private TopologyManagementHelper helper;
    private ActionSequencer actionSequencer;
@@ -239,6 +237,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                                                                long endTime) {
       int viewId = transport.getViewId();
       ReplicableCommand command = new CacheJoinCommand(cacheName, transport.getAddress(), joinInfo, viewId);
+      gcr.ensureComponentRunning(ClusterTopologyManager.class);
       return handleAndCompose(helper.executeOnCoordinator(transport, command, timeout), (response, throwable) -> {
          int currentViewId = transport.getViewId();
          if (viewId != currentViewId) {
@@ -872,6 +871,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
       if (cacheStatus != null && !cacheStatus.isTopologyRestored()) {
          List<Address> members;
+         ClusterTopologyManager clusterTopologyManager = gcr.getClusterTopologyManager();
          if ((members = clusterTopologyManager.currentJoiners(cacheName)) == null) {
             members = cacheStatus.knownMembers();
          }

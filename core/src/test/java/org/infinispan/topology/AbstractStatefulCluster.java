@@ -56,6 +56,9 @@ public abstract class AbstractStatefulCluster extends MultipleCacheManagersTest 
 
    protected final void assertClusterStateFiles(String cacheName) throws IOException {
       for (int i = 0; i < clusterSize; i++) {
+         if (i >= cacheManagers.size())
+            break;
+
          assertClusterStateFiles(manager(i), cacheName);
       }
    }

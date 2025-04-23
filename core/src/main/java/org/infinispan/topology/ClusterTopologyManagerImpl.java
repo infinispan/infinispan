@@ -183,6 +183,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
       }
       ReplicableCommand command = new RebalanceStatusRequestCommand();
       Address coordinator = transport.getCoordinator();
+      gcr.ensureComponentRunning(LocalTopologyManager.class);
       return helper.executeOnCoordinator(transport, command, getGlobalTimeout() / INITIAL_CONNECTION_ATTEMPTS)
                    .handle((rebalancingStatus, throwable) -> {
                       if (throwable == null)
