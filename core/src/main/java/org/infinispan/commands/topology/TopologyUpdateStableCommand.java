@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.remoting.transport.Address;
@@ -58,11 +57,6 @@ public class TopologyUpdateStableCommand extends AbstractCacheControlCommand {
 
    @Override
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry gcr) throws Throwable {
-      if (!gcr.isLocalTopologyManagerRunning()) {
-         log.debugf("Discard stable update because topology manager not running %s", this);
-         return CompletableFutures.completedNull();
-      }
-
       CacheTopology topology = new CacheTopology(topologyId, rebalanceId, topologyRestored, currentCH, pendingCH,
             CacheTopology.Phase.NO_REBALANCE, actualMembers, persistentUUIDs);
       return gcr.getLocalTopologyManager()
