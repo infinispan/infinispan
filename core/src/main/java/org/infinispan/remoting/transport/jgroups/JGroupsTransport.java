@@ -43,8 +43,8 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.io.ByteBufferImpl;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
@@ -132,8 +132,6 @@ import org.jgroups.util.SocketFactory;
  * <li><code>configurationString</code> - a JGroups configuration String</li>
  * <li><code>configurationXml</code> - JGroups configuration XML as a String</li>
  * <li><code>configurationFile</code> - String pointing to a JGroups XML configuration file</li>
- * <li><code>channelLookup</code> - Fully qualified class name of a
- * {@link JGroupsChannelLookup} instance</li>
  * </ul>
  * These are normally passed in as Properties in
  * {@link TransportConfigurationBuilder#withProperties(Properties)} or
@@ -149,7 +147,6 @@ public class JGroupsTransport implements Transport {
    public static final String CONFIGURATION_STRING = "configurationString";
    public static final String CONFIGURATION_XML = "configurationXml";
    public static final String CONFIGURATION_FILE = "configurationFile";
-   public static final String CHANNEL_LOOKUP = "channelLookup";
    public static final String CHANNEL_CONFIGURATOR = "channelConfigurator";
    public static final String SOCKET_FACTORY = "socketFactory";
    public static final String DATA_SOURCE = "dataSource";
@@ -191,7 +188,6 @@ public class JGroupsTransport implements Transport {
    private final Condition viewUpdateCondition = viewUpdateLock.newCondition();
    private final ThreadPoolProbeHandler probeHandler;
    private final ChannelCallbacks channelCallbacks = new ChannelCallbacks();
-   protected boolean connectChannel = true, disconnectChannel = true, closeChannel = true;
    protected TypedProperties props;
    protected JChannel channel;
    protected Address address;
@@ -432,12 +428,9 @@ public class JGroupsTransport implements Transport {
       TransportConfiguration transportCfg = configuration.transport();
       if (channel == null) {
          buildChannel();
-         if (connectChannel) {
-            // Cannot change the name if the channelLookup already connected the channel
-            String transportNodeName = transportCfg.nodeName();
-            if (transportNodeName != null && !transportNodeName.isEmpty()) {
-               channel.setName(transportNodeName);
-            }
+         String transportNodeName = transportCfg.nodeName();
+         if (transportNodeName != null && !transportNodeName.isEmpty()) {
+            channel.setName(transportNodeName);
          }
       }
 
@@ -451,26 +444,9 @@ public class JGroupsTransport implements Transport {
 
       // if we have a TopologyAwareConsistentHash, we need to set our own address generator in JGroups
       if (transportCfg.hasTopologyInfo()) {
-         // We can do this only if the channel hasn't been started already
-         if (connectChannel) {
-            channel.addAddressGenerator(channelCallbacks);
-         } else {
-             verifyChannelTopology(channel.address(), transportCfg);
-         }
+         channel.addAddressGenerator(channelCallbacks);
       }
       initRaftManager();
-   }
-
-   private static void verifyChannelTopology(org.jgroups.Address jgroupsAddress, TransportConfiguration transportCfg) {
-       if (jgroupsAddress instanceof ExtendedUUID) {
-          JGroupsTopologyAwareAddress address = new JGroupsTopologyAwareAddress((ExtendedUUID) jgroupsAddress);
-          if (!address.matches(transportCfg.siteId(), transportCfg.rackId(), transportCfg.machineId())) {
-             throw new CacheException(
-                   "Topology information does not match the one set by the provided JGroups channel");
-          }
-       } else {
-          throw new CacheException("JGroups address does not contain topology coordinates");
-       }
    }
 
    private void initRaftManager() {
@@ -488,17 +464,7 @@ public class JGroupsTransport implements Transport {
          // TODO improve JGroups code so we have access to the key stored
          byte[] key = org.jgroups.util.Util.stringToBytes("raft-id");
          byte[] value = org.jgroups.util.Util.stringToBytes(transportCfg.nodeName());
-         if (connectChannel) {
-            channel.addAddressGenerator(() -> ExtendedUUID.randomUUID(channel.getName()).put(key, value));
-         } else {
-            org.jgroups.Address addr = channel.getAddress();
-            if (addr instanceof ExtendedUUID) {
-               if (!Arrays.equals(((ExtendedUUID) addr).get(key), value)) {
-                  log.raftProtocolUnavailable("non-managed JGroups channel does not have 'raft-id' set.");
-                  return;
-               }
-            }
-         }
+         channel.addAddressGenerator(() -> ExtendedUUID.randomUUID(channel.getName()).put(key, value));
          insertForkIfMissing();
          raftManager = new JGroupsRaftManager(configuration, channel);
          raftManager.start();
@@ -548,22 +514,16 @@ public class JGroupsTransport implements Transport {
          CLUSTER.startingJGroupsChannel(clusterName);
       }
 
-      if (connectChannel) {
-         try {
-            channel.connect(clusterName);
-         } catch (Exception e) {
-            throw new CacheException("Unable to start JGroups Channel", e);
-         }
+      try {
+         channel.connect(clusterName);
+      } catch (Exception e) {
+         throw new CacheException("Unable to start JGroups Channel", e);
       }
       // make sure the fields 'address' and 'clusterView' are set
       // for normal operation, receiveClusterView() is invoked during connect
       // but with the UPGRADE protocol active, it isn't the case.
       receiveClusterView(channel.getView(), true);
       registerMBeansIfNeeded(clusterName);
-      if (!connectChannel) {
-         // the channel was already started externally, we need to initialize our member list
-         metricsManager.onChannelConnected(channel, true);
-      }
       if (!(channel instanceof ForkChannel)) {
          CLUSTER.localAndPhysicalAddress(clusterName, getAddress(), getPhysicalAddresses());
       }
@@ -622,10 +582,6 @@ public class JGroupsTransport implements Transport {
       // properties, and finally the legacy JGroups String properties.
       String cfg;
       if (props != null) {
-         if (props.containsKey(CHANNEL_LOOKUP)) {
-            channelFromLookup(props.getProperty(CHANNEL_LOOKUP));
-         }
-
          if (channel == null && props.containsKey(CHANNEL_CONFIGURATOR)) {
             channelFromConfigurator((JGroupsChannelConfigurator) props.get(CHANNEL_CONFIGURATOR));
          }
@@ -685,23 +641,6 @@ public class JGroupsTransport implements Transport {
       if (props != null && props.containsKey(SOCKET_FACTORY) && !props.containsKey(CHANNEL_CONFIGURATOR)) {
          Protocol protocol = channel.getProtocolStack().getTopProtocol();
          protocol.setSocketFactory((SocketFactory) props.get(SOCKET_FACTORY));
-      }
-   }
-
-   @SuppressWarnings("removal")
-   private void channelFromLookup(String channelLookupClassName) {
-      try {
-         JGroupsChannelLookup lookup = Util.getInstance(channelLookupClassName, configuration.classLoader());
-         channel = lookup.getJGroupsChannel(props);
-         connectChannel = lookup.shouldConnect();
-         disconnectChannel = lookup.shouldDisconnect();
-         closeChannel = lookup.shouldClose();
-      } catch (ClassCastException e) {
-         CLUSTER.wrongTypeForJGroupsChannelLookup(channelLookupClassName, e);
-         throw new CacheException(e);
-      } catch (Exception e) {
-         CLUSTER.errorInstantiatingJGroupsChannelLookup(channelLookupClassName, e);
-         throw new CacheException(e);
       }
    }
 
@@ -835,14 +774,14 @@ public class JGroupsTransport implements Transport {
       raftManager.stop();
       String clusterName = configuration.transport().clusterName();
       try {
-         if (disconnectChannel && channel != null && channel.isConnected()) {
+         if (channel != null && channel.isConnected()) {
             if (!(channel instanceof ForkChannel)) {
                CLUSTER.disconnectJGroups(clusterName);
             }
             channel.disconnect();
          }
 
-         if (closeChannel && channel != null && channel.isOpen()) {
+         if (channel != null && channel.isOpen()) {
             channel.close();
          }
 

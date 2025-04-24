@@ -351,13 +351,13 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Stopping the RpcDispatcher for channel %s", id = 82)
 //   void stoppingRpcDispatcher(String cluster);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Class [%s] cannot be cast to JGroupsChannelLookup! Not using a channel lookup.", id = 83)
-   void wrongTypeForJGroupsChannelLookup(String channelLookupClassName, @Cause Exception e);
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Class [%s] cannot be cast to JGroupsChannelLookup! Not using a channel lookup.", id = 83)
+//   void wrongTypeForJGroupsChannelLookup(String channelLookupClassName, @Cause Exception e);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Errors instantiating [%s]! Not using a channel lookup.", id = 84)
-   void errorInstantiatingJGroupsChannelLookup(String channelLookupClassName, @Cause Exception e);
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Errors instantiating [%s]! Not using a channel lookup.", id = 84)
+//   void errorInstantiatingJGroupsChannelLookup(String channelLookupClassName, @Cause Exception e);
 
    @Message(value = "Error while trying to create a channel using the specified configuration file: %s", id = 85)
    CacheConfigurationException errorCreatingChannelFromConfigFile(String cfg, @Cause Exception e);
