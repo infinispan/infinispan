@@ -1,5 +1,6 @@
 package org.infinispan.commons.internal;
 
+import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Method;
 import java.security.SecureRandom;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -43,6 +44,10 @@ public class CommonsBlockHoundIntegration implements BlockHoundIntegration {
 
       // BoundedLocalCache is unfortunately package private
       builder.allowBlockingCallsInside("com.github.benmanes.caffeine.cache.BoundedLocalCache", "performCleanUp");
+
+      // ReferenceQueue in JVM can cause blocking in some cases - we are assuming users of this are responsible and the
+      // lock should be short lived even if contested
+      builder.allowBlockingCallsInside(ReferenceQueue.class.getName(), "poll");
 
       handleJREClasses(builder);
 
