@@ -12,10 +12,15 @@ import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Connection;
+import java.sql.Driver;
 import java.sql.DriverManager;
+import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -24,6 +29,7 @@ import java.util.stream.Stream;
 
 import javax.sql.DataSource;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.core.persistence.ContainerDatabase;
 import org.infinispan.server.test.core.tags.Database;
 import org.jgroups.Event;
@@ -193,7 +199,7 @@ public class JGroupsJdbcPing2IT {
 
       @Override
       public Connection getConnection(String username, String password) throws SQLException {
-         return DriverManager.getConnection(connectionUrl, username, password);
+         return ShimDriverManager.getConnection(connectionUrl, username, password, Util.getClassLoaders(null));
       }
 
       @Override
@@ -228,6 +234,118 @@ public class JGroupsJdbcPing2IT {
 
       public Logger getParentLogger() {
          throw new IllegalStateException("This should not be called!");
+      }
+   }
+
+   /**
+    * Wrapper around the {@link DriverManager}.
+    *
+    * <p>
+    * The original {@link DriverManager#getDriver(String)} is caller sensitive, and does not allow a custom
+    * {@link ClassLoader} as argument to load the {@link Driver}. This causes the method to fail with a
+    * {@link SQLException}, because even though the appropriate driver is found, a check with the class loader is performed.
+    * </p>
+    *
+    * @since 16.0
+    */
+   private static final class ShimDriverManager {
+
+      /**
+       * Attempts to locate the {@link Driver} that accepts the given URL.
+       *
+       * <p>
+       * This method accept custom {@link ClassLoader} to load the {@link Driver}. First, it will delegate the call to
+       * {@link DriverManager#getDriver(String)}, and if it fails, it will proceed to load the driver through the
+       * {@link ServiceLoader#load(Class, ClassLoader)} interface.
+       * </p>
+       *
+       * @param url a database URL of the form
+       *      *     <code>jdbc:<em>subprotocol</em>:<em>subname</em></code>
+       * @param cls the class loaders to load the {@link Driver} instance.
+       * @return A {@link Driver} capable of understanding the given URL.
+       * @throws SQLException If a {@link Driver} is not found.
+       */
+      public static Driver getDriver(String url, ClassLoader[] cls) throws SQLException {
+         SQLException original;
+         try {
+            return DriverManager.getDriver(url);
+         } catch (SQLException e) {
+            original = e;
+         }
+
+         for (ClassLoader loader : cls) {
+            Optional<ServiceLoader.Provider<Driver>> o = ServiceLoader.load(java.sql.Driver.class, loader).stream()
+                  .filter(d -> acceptUrl(d.get(), url))
+                  .findFirst();
+
+            if (o.isEmpty()) continue;
+
+            Driver driver = o.map(ServiceLoader.Provider::get).orElseThrow();
+            // Register the driver again so subsequent invocations should succeed without using the ServiceLoader.
+            DriverManager.registerDriver(new Driver() {
+               @Override
+               public Connection connect(String url, Properties info) throws SQLException {
+                  return driver.connect(url, info);
+               }
+
+               @Override
+               public boolean acceptsURL(String url) throws SQLException {
+                  return driver.acceptsURL(url);
+               }
+
+               @Override
+               public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
+                  return driver.getPropertyInfo(url, info);
+               }
+
+               @Override
+               public int getMajorVersion() {
+                  return driver.getMajorVersion();
+               }
+
+               @Override
+               public int getMinorVersion() {
+                  return driver.getMinorVersion();
+               }
+
+               @Override
+               public boolean jdbcCompliant() {
+                  return driver.jdbcCompliant();
+               }
+
+               @Override
+               public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+                  return driver.getParentLogger();
+               }
+            });
+            return driver;
+         }
+
+         throw new SQLException("No suitable driver", "08001", original);
+      }
+
+      public static Connection getConnection(String url, String user, String password, ClassLoader[] cls) throws SQLException {
+         try {
+            return DriverManager.getConnection(url, user, password);
+         } catch (SQLException ignore) { }
+
+         Properties info = new Properties();
+         if (user != null)
+            info.put("user", user);
+
+         if (password != null)
+            info.put("password", password);
+
+         Driver driver = getDriver(url, cls);
+         return driver.connect(url, info);
+      }
+
+      private static boolean acceptUrl(Driver driver, String url) {
+         try {
+            return driver.acceptsURL(url);
+         } catch (SQLException e) {
+            return false;
+         }
       }
    }
 }
