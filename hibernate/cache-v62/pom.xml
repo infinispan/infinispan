@@ -101,9 +101,10 @@
             </configuration>
             <dependencies>
                <dependency>
-                  <groupId>org.junit.vintage</groupId>
-                  <artifactId>junit-vintage-engine</artifactId>
+                  <groupId>org.junit</groupId>
+                  <artifactId>junit-bom</artifactId>
                   <version>${version.junit5}</version>
+                  <type>pom</type>
                </dependency>
             </dependencies>
             <executions>
@@ -181,6 +182,10 @@
                               <classpathDependencyExclude>io.smallrye:jandex</classpathDependencyExclude>
                               <classpathDependencyExclude>org.glassfish.jaxb:jaxb-core</classpathDependencyExclude>
                               <classpathDependencyExclude>org.glassfish.jaxb:txw2</classpathDependencyExclude>
+                              <classpathDependencyExclude>jakarta.activation:jakarta.activation-api</classpathDependencyExclude>
+                              <classpathDependencyExclude>net.bytebuddy:byte-buddy</classpathDependencyExclude>
+                              <classpathDependencyExclude>org.eclipse.angus:angus-activation</classpathDependencyExclude>
+                              <classpathDependencyExclude>org.jboss.logging:jboss-logging</classpathDependencyExclude>
                            </classpathDependencyExcludes>
                            <additionalClasspathDependencies>
                               <additionalClasspathDependency>
@@ -220,13 +225,13 @@
                               <classpathDependencyExclude>io.smallrye:jandex</classpathDependencyExclude>
                               <classpathDependencyExclude>org.glassfish.jaxb:jaxb-core</classpathDependencyExclude>
                               <classpathDependencyExclude>org.glassfish.jaxb:txw2</classpathDependencyExclude>
+                              <classpathDependencyExclude>jakarta.activation:jakarta.activation-api</classpathDependencyExclude>
+                              <classpathDependencyExclude>net.bytebuddy:byte-buddy</classpathDependencyExclude>
+                              <classpathDependencyExclude>org.eclipse.angus:angus-activation</classpathDependencyExclude>
+                              <classpathDependencyExclude>org.jboss.logging:jboss-logging</classpathDependencyExclude>
+                              <classpathDependencyExclude>org.hibernate.common:hibernate-commons-annotations</classpathDependencyExclude>
                            </classpathDependencyExcludes>
                            <additionalClasspathDependencies>
-                              <additionalClasspathDependency>
-                                 <groupId>org.junit.jupiter</groupId>
-                                 <artifactId>junit-jupiter-engine</artifactId>
-                                 <version>${version.junit5}</version>
-                              </additionalClasspathDependency>
                               <additionalClasspathDependency>
                                  <groupId>org.hibernate.orm</groupId>
                                  <artifactId>hibernate-core</artifactId>
