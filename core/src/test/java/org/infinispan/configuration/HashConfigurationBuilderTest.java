@@ -47,7 +47,7 @@ public class HashConfigurationBuilderTest extends AbstractInfinispanTest {
       Configuration c = cb.build();
       Assert.assertNull(c.clustering().hash().consistentHashFactory());
 
-      SyncConsistentHashFactory consistentHashFactory = new SyncConsistentHashFactory();
+      SyncConsistentHashFactory consistentHashFactory = SyncConsistentHashFactory.getInstance();
       cb.clustering().hash().consistentHashFactory(consistentHashFactory);
       c = cb.build();
       Assert.assertSame(c.clustering().hash().consistentHashFactory(), consistentHashFactory);

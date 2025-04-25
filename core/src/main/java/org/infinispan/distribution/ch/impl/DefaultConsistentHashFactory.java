@@ -12,6 +12,7 @@ import java.util.Set;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 
@@ -27,6 +28,14 @@ import org.infinispan.remoting.transport.Address;
  */
 @ProtoTypeId(ProtoStreamTypeIds.DEFAULT_CONSISTENT_HASH_FACTORY)
 public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<DefaultConsistentHash> {
+   private static final DefaultConsistentHashFactory INSTANCE = new DefaultConsistentHashFactory();
+
+   protected DefaultConsistentHashFactory() { }
+
+   @ProtoFactory
+   public static DefaultConsistentHashFactory getInstance() {
+      return INSTANCE;
+   }
 
    @Override
    public DefaultConsistentHash create(int numOwners, int numSegments,

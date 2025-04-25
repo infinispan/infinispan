@@ -15,7 +15,7 @@ public class SyncConsistentHashPersistenceTest extends BaseCHPersistenceTest {
 
    @Override
    protected ConsistentHashFactory<?> createConsistentHashFactory() {
-      return new SyncConsistentHashFactory();
+      return SyncConsistentHashFactory.getInstance();
    }
 
    @Override
@@ -28,7 +28,7 @@ public class SyncConsistentHashPersistenceTest extends BaseCHPersistenceTest {
       for (Address member : members) {
          capacityFactors.put(member, 1.0f);
       }
-      SyncConsistentHashFactory hashFactory = new SyncConsistentHashFactory();
+      SyncConsistentHashFactory hashFactory = SyncConsistentHashFactory.getInstance();
       return hashFactory.create(2, 100, members, capacityFactors);
    }
 

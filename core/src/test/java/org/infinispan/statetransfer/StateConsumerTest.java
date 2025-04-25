@@ -314,7 +314,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       List<Address> members2 = Arrays.asList(addresses[0], addresses[1], addresses[2]);
 
       // create CHes
-      DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
+      DefaultConsistentHashFactory chf = DefaultConsistentHashFactory.getInstance();
       DefaultConsistentHash ch1 = chf.create(2, 40, members1, null);
       final DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2, null);
       DefaultConsistentHash ch3 = chf.rebalance(ch2);
@@ -372,7 +372,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       List<Address> members2 = Arrays.asList(addresses[1], addresses[2]);
 
       // create CHes
-      DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
+      DefaultConsistentHashFactory chf = DefaultConsistentHashFactory.getInstance();
       DefaultConsistentHash ch1 = chf.create(2, 40, members1, null);
       final DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2, null);
       DefaultConsistentHash ch3 = chf.rebalance(ch2);

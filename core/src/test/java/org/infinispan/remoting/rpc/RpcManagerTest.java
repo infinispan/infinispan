@@ -141,7 +141,7 @@ public class RpcManagerTest extends MultipleCacheManagersTest {
          // Add a node to the cache topology, but not to the JGroups cluster view
          List<Address> newMembers = new ArrayList<>(initialTopology.getMembers());
          newMembers.add(SUSPECT);
-         ConsistentHash newCH = new ReplicatedConsistentHashFactory().create(1, 1,
+         ConsistentHash newCH = ReplicatedConsistentHashFactory.getInstance().create(1, 1,
                                                                              newMembers, null);
          CacheTopology suspectTopology =
             new CacheTopology(initialTopology.getTopologyId(), initialTopology.getRebalanceId(), newCH, null, null,

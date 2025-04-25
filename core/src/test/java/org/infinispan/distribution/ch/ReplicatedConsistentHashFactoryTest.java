@@ -24,7 +24,7 @@ public class ReplicatedConsistentHashFactoryTest {
    public void test1() {
       int[] testSegments = { 1, 2, 4, 8, 16, 31, 32, 33, 67, 128};
 
-      ReplicatedConsistentHashFactory factory = new ReplicatedConsistentHashFactory();
+      ReplicatedConsistentHashFactory factory = ReplicatedConsistentHashFactory.getInstance();
       Address A = new TestAddress(0, "A");
       Address B = new TestAddress(1, "B");
       Address C = new TestAddress(2, "C");

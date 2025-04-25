@@ -38,7 +38,7 @@ public class TopologyAwareSyncConsistentHashFactoryKeyDistributionTest extends S
 
    @Override
    protected ConsistentHashFactory<DefaultConsistentHash> createFactory() {
-      return new TopologyAwareSyncConsistentHashFactory();
+      return TopologyAwareSyncConsistentHashFactory.getInstance();
    }
 
    @Override

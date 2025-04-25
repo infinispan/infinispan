@@ -24,7 +24,7 @@ public class TopologyAwareSyncConsistentHashFactoryTest extends TopologyAwareCon
 
    @Override
    protected ConsistentHashFactory<DefaultConsistentHash> createConsistentHashFactory() {
-      return new TopologyAwareSyncConsistentHashFactory();
+      return TopologyAwareSyncConsistentHashFactory.getInstance();
    }
 
    @Override

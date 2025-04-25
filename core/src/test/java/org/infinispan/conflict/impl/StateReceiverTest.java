@@ -182,7 +182,7 @@ public class StateReceiverTest extends AbstractInfinispanTest {
          persistentUUIDManager.addPersistentAddressMapping(address, PersistentUUID.randomUUID());
       }
 
-      DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
+      DefaultConsistentHashFactory chf = DefaultConsistentHashFactory.getInstance();
       return chf.create(2, 40, addresses, null);
    }
 

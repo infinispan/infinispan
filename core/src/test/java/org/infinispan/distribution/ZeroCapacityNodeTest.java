@@ -78,10 +78,10 @@ public class ZeroCapacityNodeTest extends MultipleCacheManagersTest {
    @DataProvider(name = "cm_chf")
    protected Object[][] consistentHashFactory() {
       return new Object[][]{
-            {CacheMode.DIST_SYNC, new DefaultConsistentHashFactory()},
-            {CacheMode.DIST_SYNC, new SyncConsistentHashFactory()},
-            {CacheMode.REPL_SYNC, new ReplicatedConsistentHashFactory()},
-            {CacheMode.REPL_SYNC, new SyncReplicatedConsistentHashFactory()},
+            {CacheMode.DIST_SYNC, DefaultConsistentHashFactory.getInstance()},
+            {CacheMode.DIST_SYNC, SyncConsistentHashFactory.getInstance()},
+            {CacheMode.REPL_SYNC, ReplicatedConsistentHashFactory.getInstance()},
+            {CacheMode.REPL_SYNC, SyncReplicatedConsistentHashFactory.getInstance()},
             };
    }
 

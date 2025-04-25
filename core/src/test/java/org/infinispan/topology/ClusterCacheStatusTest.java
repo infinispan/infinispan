@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
 public class ClusterCacheStatusTest extends AbstractInfinispanTest {
    private static final String CACHE_NAME = "test";
    private static final CacheJoinInfo JOIN_INFO =
-      new CacheJoinInfo(new DefaultConsistentHashFactory(), 8, 2, 1000,
+      new CacheJoinInfo(DefaultConsistentHashFactory.getInstance(), 8, 2, 1000,
             CacheMode.DIST_SYNC, 1.0f, null, Optional.empty());
    private static final Address A = new TestAddress(1, "A");
    private static final Address B = new TestAddress(2, "B");

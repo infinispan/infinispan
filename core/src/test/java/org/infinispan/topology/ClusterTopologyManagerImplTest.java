@@ -55,7 +55,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
 
    private static final Address A = new TestAddress(0, "A");
    private static final Address B = new TestAddress(1, "B");
-   private final ConsistentHashFactory<?> replicatedChf = new ReplicatedConsistentHashFactory();
+   private final ConsistentHashFactory<?> replicatedChf = ReplicatedConsistentHashFactory.getInstance();
    // The persistent UUIDs are different, the rest of the join info is the same
    private final CacheJoinInfo joinInfoA = makeJoinInfo();
    private final CacheJoinInfo joinInfoB = makeJoinInfo();

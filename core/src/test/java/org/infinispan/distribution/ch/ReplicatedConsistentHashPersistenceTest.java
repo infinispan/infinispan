@@ -15,7 +15,7 @@ public class ReplicatedConsistentHashPersistenceTest extends BaseCHPersistenceTe
 
    @Override
    protected ConsistentHashFactory<?> createConsistentHashFactory() {
-      return new ReplicatedConsistentHashFactory();
+      return ReplicatedConsistentHashFactory.getInstance();
    }
 
    @Override
@@ -28,7 +28,7 @@ public class ReplicatedConsistentHashPersistenceTest extends BaseCHPersistenceTe
       for (Address member : members) {
          capacityFactors.put(member, 1.0f);
       }
-      ReplicatedConsistentHashFactory hashFactory = new ReplicatedConsistentHashFactory();
+      ReplicatedConsistentHashFactory hashFactory = ReplicatedConsistentHashFactory.getInstance();
       return hashFactory.create(2, 100, members, capacityFactors);
    }
 
