@@ -61,7 +61,7 @@ public class WorkDuringJoinTest extends BaseDistFunctionalTest<Object, String> {
       Address joinerAddress = startNewMember();
       List<Address> newMembers = new ArrayList<>(chOld.getMembers());
       newMembers.add(joinerAddress);
-      DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
+      DefaultConsistentHashFactory chf = DefaultConsistentHashFactory.getInstance();
       ConsistentHash chNew = chf.rebalance(chf.updateMembers((DefaultConsistentHash) chOld, newMembers, null));
       // which key should me mapped to the joiner?
       MagicKey keyToTest = null;

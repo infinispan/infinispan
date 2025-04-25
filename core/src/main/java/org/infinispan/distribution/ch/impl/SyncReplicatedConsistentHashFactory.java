@@ -10,6 +10,7 @@ import java.util.Map;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 
@@ -22,8 +23,16 @@ import org.infinispan.remoting.transport.Address;
  */
 @ProtoTypeId(ProtoStreamTypeIds.SYNC_REPLICATED_CONSISTENT_HASH)
 public class SyncReplicatedConsistentHashFactory implements ConsistentHashFactory<ReplicatedConsistentHash> {
+   private static final SyncReplicatedConsistentHashFactory INSTANCE = new SyncReplicatedConsistentHashFactory();
 
-   private static final SyncConsistentHashFactory syncCHF = new SyncConsistentHashFactory();
+   protected SyncReplicatedConsistentHashFactory() { }
+
+   @ProtoFactory
+   public static SyncReplicatedConsistentHashFactory getInstance() {
+      return INSTANCE;
+   }
+
+   private static final SyncConsistentHashFactory syncCHF = SyncConsistentHashFactory.getInstance();
 
    @Override
    public ReplicatedConsistentHash create(int numOwners, int numSegments,

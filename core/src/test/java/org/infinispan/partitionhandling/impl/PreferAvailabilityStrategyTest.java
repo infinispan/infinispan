@@ -62,10 +62,10 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
    }
 
    private static final CacheJoinInfo DIST_INFO =
-         new CacheJoinInfo(new DefaultConsistentHashFactory(), 8, 2, 1000, CacheMode.DIST_SYNC, 1.0f, null,
+         new CacheJoinInfo(DefaultConsistentHashFactory.getInstance(), 8, 2, 1000, CacheMode.DIST_SYNC, 1.0f, null,
                            Optional.empty());
    private static final CacheJoinInfo REPL_INFO =
-         new CacheJoinInfo(new DefaultConsistentHashFactory(), 8, 2, 1000, CacheMode.REPL_SYNC, 1.0f, null,
+         new CacheJoinInfo(DefaultConsistentHashFactory.getInstance(), 8, 2, 1000, CacheMode.REPL_SYNC, 1.0f, null,
                            Optional.empty());
    private static final Address A = new TestAddress(1, "A");
    private static final Address B = new TestAddress(2, "B");

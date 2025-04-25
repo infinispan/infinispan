@@ -15,7 +15,7 @@ public class DefaultConsistentHashPersistenceTest extends BaseCHPersistenceTest 
 
    @Override
    protected ConsistentHashFactory<?> createConsistentHashFactory() {
-      return new DefaultConsistentHashFactory();
+      return DefaultConsistentHashFactory.getInstance();
    }
 
    @Override
@@ -28,7 +28,7 @@ public class DefaultConsistentHashPersistenceTest extends BaseCHPersistenceTest 
       for (Address member : members) {
          capacityFactors.put(member, 1.0f);
       }
-      DefaultConsistentHashFactory hashFactory = new DefaultConsistentHashFactory();
+      DefaultConsistentHashFactory hashFactory = DefaultConsistentHashFactory.getInstance();
       return hashFactory.create(2, 100, members, capacityFactors);
    }
 

@@ -58,7 +58,7 @@ public class SyncConsistentHashFactoryKeyDistributionTest extends AbstractInfini
    public static final double[] PERCENTILES = { .999 };
 
    protected ConsistentHashFactory<DefaultConsistentHash> createFactory() {
-      return new SyncConsistentHashFactory();
+      return SyncConsistentHashFactory.getInstance();
    }
 
    protected List<Address> createAddresses(int numNodes) {

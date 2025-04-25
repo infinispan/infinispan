@@ -12,6 +12,7 @@ import java.util.Queue;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 
@@ -24,6 +25,14 @@ import org.infinispan.remoting.transport.Address;
  */
 @ProtoTypeId(ProtoStreamTypeIds.REPLICATED_CONSISTENT_HASH_FACTORY)
 public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<ReplicatedConsistentHash> {
+   private static final ReplicatedConsistentHashFactory INSTANCE = new ReplicatedConsistentHashFactory();
+
+   protected ReplicatedConsistentHashFactory() { }
+
+   @ProtoFactory
+   public static ReplicatedConsistentHashFactory getInstance() {
+      return INSTANCE;
+   }
 
    @Override
    public ReplicatedConsistentHash create(int numOwners, int numSegments, List<Address> members,

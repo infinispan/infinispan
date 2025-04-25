@@ -135,12 +135,12 @@ public class StateTransferManagerImpl implements StateTransferManager {
          if (cacheMode.isClustered()) {
             if (cacheMode.isDistributed()) {
                if (globalConfiguration.transport().hasTopologyInfo()) {
-                  factory = new TopologyAwareSyncConsistentHashFactory();
+                  factory = TopologyAwareSyncConsistentHashFactory.getInstance();
                } else {
-                  factory = new SyncConsistentHashFactory();
+                  factory = SyncConsistentHashFactory.getInstance();
                }
             } else if (cacheMode.isReplicated() || cacheMode.isInvalidation()) {
-               factory = new SyncReplicatedConsistentHashFactory();
+               factory = SyncReplicatedConsistentHashFactory.getInstance();
             } else {
                throw new CacheException("Unexpected cache mode: " + cacheMode);
             }

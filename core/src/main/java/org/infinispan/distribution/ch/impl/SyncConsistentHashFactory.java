@@ -15,6 +15,7 @@ import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
@@ -40,6 +41,14 @@ import org.jgroups.util.UUID;
  */
 @ProtoTypeId(ProtoStreamTypeIds.SYNC_CONSISTENT_HASH)
 public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash> {
+   private static final SyncConsistentHashFactory INSTANCE = new SyncConsistentHashFactory();
+
+   protected SyncConsistentHashFactory() { }
+
+   @ProtoFactory
+   public static SyncConsistentHashFactory getInstance() {
+      return INSTANCE;
+   }
 
    @Override
    public DefaultConsistentHash create(int numOwners, int numSegments, List<Address> members,
@@ -134,16 +143,6 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
    @Override
    public DefaultConsistentHash union(DefaultConsistentHash ch1, DefaultConsistentHash ch2) {
       return ch1.union(ch2);
-   }
-
-   @Override
-   public boolean equals(Object other) {
-      return other != null && other.getClass() == getClass();
-   }
-
-   @Override
-   public int hashCode() {
-      return -10007;
    }
 
    static class Builder {

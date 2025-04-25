@@ -6,6 +6,7 @@ import java.util.Map;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.topologyaware.TopologyInfo;
 import org.infinispan.distribution.topologyaware.TopologyLevel;
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 
@@ -24,6 +25,15 @@ import org.infinispan.remoting.transport.Address;
  */
 @ProtoTypeId(ProtoStreamTypeIds.TOPOLOGY_AWARE_SYNC_CONSISTENT_HASH)
 public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFactory {
+   private static final TopologyAwareSyncConsistentHashFactory INSTANCE = new TopologyAwareSyncConsistentHashFactory();
+
+   protected TopologyAwareSyncConsistentHashFactory() { }
+
+   @ProtoFactory
+   public static TopologyAwareSyncConsistentHashFactory getInstance() {
+      return INSTANCE;
+   }
+
    @Override
    protected Builder createBuilder(int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
       return new Builder(numOwners, numSegments, members, capacityFactors);

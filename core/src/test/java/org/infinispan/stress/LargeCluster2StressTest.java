@@ -77,8 +77,8 @@ public class LargeCluster2StressTest extends MultipleCacheManagersTest {
       final Configuration distConfig = new ConfigurationBuilder()
             .clustering().cacheMode(CacheMode.DIST_SYNC)
             .clustering().stateTransfer().awaitInitialTransfer(false)
-//            .hash().consistentHashFactory(new TopologyAwareSyncConsistentHashFactory()).numSegments(NUM_SEGMENTS)
-            .hash().consistentHashFactory(new SyncConsistentHashFactory()).numSegments(NUM_SEGMENTS)
+//            .hash().consistentHashFactory(TopologyAwareSyncConsistentHashFactory.getInstance()).numSegments(NUM_SEGMENTS)
+            .hash().consistentHashFactory(SyncConsistentHashFactory.getInstance()).numSegments(NUM_SEGMENTS)
             .build();
       final Configuration replConfig = new ConfigurationBuilder()
             .clustering().cacheMode(CacheMode.REPL_SYNC)

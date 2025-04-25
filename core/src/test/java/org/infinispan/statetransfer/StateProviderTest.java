@@ -144,7 +144,7 @@ public class StateProviderTest {
 
       // create CHes
       KeyPartitioner keyPartitioner = new HashFunctionPartitioner(StateProviderTest.NUM_SEGMENTS);
-      DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
+      DefaultConsistentHashFactory chf = DefaultConsistentHashFactory.getInstance();
       DefaultConsistentHash ch1 = chf.create(2, StateProviderTest.NUM_SEGMENTS, members1, null);
       DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2, null);
 
@@ -234,7 +234,7 @@ public class StateProviderTest {
 
       // create CHes
       KeyPartitioner keyPartitioner = new HashFunctionPartitioner(StateProviderTest.NUM_SEGMENTS);
-      DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
+      DefaultConsistentHashFactory chf = DefaultConsistentHashFactory.getInstance();
       DefaultConsistentHash ch1 = chf.create(2, NUM_SEGMENTS, members1, null);
       //todo [anistor] it seems that address 6 is not used for un-owned segments
       DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2, null);
