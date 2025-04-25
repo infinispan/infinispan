@@ -94,9 +94,10 @@
             </configuration>
             <dependencies>
                <dependency>
-                  <groupId>org.junit.vintage</groupId>
-                  <artifactId>junit-vintage-engine</artifactId>
+                  <groupId>org.junit</groupId>
+                  <artifactId>junit-bom</artifactId>
                   <version>${version.junit5}</version>
+                  <type>pom</type>
                </dependency>
             </dependencies>
             <executions>
