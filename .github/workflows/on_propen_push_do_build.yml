@@ -26,8 +26,6 @@ jobs:
       - name: Build Infinispan
         uses: ./.github/actions/build-infinispan
 
-      - run: echo Build Completed ${{ github.run_id }} > server-version.txt
-
       - name: Server version
         run: >
           mvn -q -Dexec.executable=echo -Dexec.args='-n ${project.version}'
