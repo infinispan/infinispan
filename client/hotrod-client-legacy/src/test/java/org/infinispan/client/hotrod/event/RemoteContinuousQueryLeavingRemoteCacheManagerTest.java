@@ -26,6 +26,7 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.ContinuousQueryListener;
 import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -33,7 +34,6 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.impl.filter.IckleContinuousQueryProtobufCacheEventFilterConverterFactory;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.util.KeyValuePair;
 import org.testng.annotations.Test;
 
@@ -117,10 +117,6 @@ public class RemoteContinuousQueryLeavingRemoteCacheManagerTest extends MultiHot
    }
 
    public void testContinuousQueryRemoveRCM() {
-      // Create an additional remote cache manager that registers the same query
-      RemoteCacheManager extraRemoteCacheManager = new InternalRemoteCacheManager(createHotRodClientConfigurationBuilder(server(0)).build());
-      RemoteCache<String, User> extraRemoteCache = extraRemoteCacheManager.getCache();
-
       User user1 = new UserPB();
       user1.setId(1);
       user1.setName("John");
@@ -130,22 +126,26 @@ public class RemoteContinuousQueryLeavingRemoteCacheManagerTest extends MultiHot
       user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
       user1.setNotes("Lorem ipsum dolor sit amet");
 
-      remoteCache.put("user" + user1.getId(), user1);
+      final Listener listener;
 
-      Listener listener = applyContinuousQuery(remoteCache);
+      // Create an additional remote cache manager that registers the same query
+      try (RemoteCacheManager extraRemoteCacheManager = new InternalRemoteCacheManager(createHotRodClientConfigurationBuilder(server(0)).build())) {
+         RemoteCache<String, User> extraRemoteCache = extraRemoteCacheManager.getCache();
 
-      // Also register the query on the extra remote cache
-      Listener extraListener = applyContinuousQuery(extraRemoteCache);
+         remoteCache.put("user" + user1.getId(), user1);
 
-      expectElementsInQueue(listener.joined, 1, (kv) -> kv.getValue().getAge(), 22);
-      expectElementsInQueue(extraListener.joined, 1, (kv) -> kv.getValue().getAge(), 22);
-      expectElementsInQueue(listener.updated, 0);
-      expectElementsInQueue(extraListener.updated, 0);
-      expectElementsInQueue(listener.left, 0);
-      expectElementsInQueue(extraListener.left, 0);
+         listener = applyContinuousQuery(remoteCache);
 
-      // Now we shut down the extra remote cache
-      extraRemoteCacheManager.stop();
+         // Also register the query on the extra remote cache
+         Listener extraListener = applyContinuousQuery(extraRemoteCache);
+
+         expectElementsInQueue(listener.joined, 1, (kv) -> kv.getValue().getAge(), 22);
+         expectElementsInQueue(extraListener.joined, 1, (kv) -> kv.getValue().getAge(), 22);
+         expectElementsInQueue(listener.updated, 0);
+         expectElementsInQueue(extraListener.updated, 0);
+         expectElementsInQueue(listener.left, 0);
+         expectElementsInQueue(extraListener.left, 0);
+      }
 
       user1.setAge(23);
       remoteCache.put("user" + user1.getId(), user1);
