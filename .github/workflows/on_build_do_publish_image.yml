@@ -75,7 +75,7 @@ jobs:
          repository: ${{ github.repository }}
          runId: ${{ github.event.workflow_run.id }}
          serverArtifact: infinispan-dist
-         tags:  ${{ needs.get-info.outputs.image-name }}:gh-${{ needs.get-info.outputs.image-tag }}
+         tags:  ${{ needs.get-info.outputs.image-name }}:${{ needs.get-info.outputs.image-tag }}
 
   report-status:
       runs-on: ubuntu-latest
