@@ -116,10 +116,6 @@ public class RemoteContinuousQueryLeavingRemoteCacheManagerTest extends MultiHot
    }
 
    public void testContinuousQueryRemoveRCM() {
-      // Create an additional remote cache manager that registers the same query
-      RemoteCacheManager extraRemoteCacheManager = new RemoteCacheManager(createHotRodClientConfigurationBuilder(server(0)).build());
-      RemoteCache<String, User> extraRemoteCache = extraRemoteCacheManager.getCache();
-
       User user1 = new UserPB();
       user1.setId(1);
       user1.setName("John");
@@ -129,22 +125,26 @@ public class RemoteContinuousQueryLeavingRemoteCacheManagerTest extends MultiHot
       user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
       user1.setNotes("Lorem ipsum dolor sit amet");
 
-      remoteCache.put("user" + user1.getId(), user1);
+      final Listener listener;
 
-      Listener listener = applyContinuousQuery(remoteCache);
+      // Create an additional remote cache manager that registers the same query
+      try (RemoteCacheManager extraRemoteCacheManager = new RemoteCacheManager(createHotRodClientConfigurationBuilder(server(0)).build())) {
+         RemoteCache<String, User> extraRemoteCache = extraRemoteCacheManager.getCache();
 
-      // Also register the query on the extra remote cache
-      Listener extraListener = applyContinuousQuery(extraRemoteCache);
+         remoteCache.put("user" + user1.getId(), user1);
 
-      expectElementsInQueue(listener.joined, 1, (kv) -> kv.getValue().getAge(), 22);
-      expectElementsInQueue(extraListener.joined, 1, (kv) -> kv.getValue().getAge(), 22);
-      expectElementsInQueue(listener.updated, 0);
-      expectElementsInQueue(extraListener.updated, 0);
-      expectElementsInQueue(listener.left, 0);
-      expectElementsInQueue(extraListener.left, 0);
+         listener = applyContinuousQuery(remoteCache);
 
-      // Now we shut down the extra remote cache
-      extraRemoteCacheManager.stop();
+         // Also register the query on the extra remote cache
+         Listener extraListener = applyContinuousQuery(extraRemoteCache);
+
+         expectElementsInQueue(listener.joined, 1, (kv) -> kv.getValue().getAge(), 22);
+         expectElementsInQueue(extraListener.joined, 1, (kv) -> kv.getValue().getAge(), 22);
+         expectElementsInQueue(listener.updated, 0);
+         expectElementsInQueue(extraListener.updated, 0);
+         expectElementsInQueue(listener.left, 0);
+         expectElementsInQueue(extraListener.left, 0);
+      }
 
       user1.setAge(23);
       remoteCache.put("user" + user1.getId(), user1);
