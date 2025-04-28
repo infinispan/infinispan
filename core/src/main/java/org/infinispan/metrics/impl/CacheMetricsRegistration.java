@@ -35,8 +35,9 @@ public final class CacheMetricsRegistration extends AbstractMetricsRegistration 
    }
 
    @Override
-   protected String initNamePrefix() {
-      String prefix = super.initNamePrefix();
+   @Deprecated(forRemoval = true, since = "16.0")
+   protected String initLegacyNamePrefix() {
+      String prefix = super.initLegacyNamePrefix();
       if (!globalConfig.metrics().namesAsTags()) {
          prefix += "cache_" + NameUtils.filterIllegalChars(cacheName) + '_';
       }

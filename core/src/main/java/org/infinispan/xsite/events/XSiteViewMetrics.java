@@ -67,7 +67,9 @@ class XSiteViewMetrics implements Constants {
    private SiteStatusMetric create(String siteName) {
       var registry = metricsRegistrySupplier.get();
       var status = new AtomicInteger(UNKNOWN);
-      var metricId = registry.registerMetrics(status, METRIC, JGROUPS_PREFIX, metricTags(siteName));
+      var metricId = registry.legacy()
+            ? registry.registerMetrics(status, METRIC, VENDOR_PREFIX + JGROUPS_PREFIX, metricTags(siteName))
+            : registry.registerMetrics(status, METRIC, JGROUPS_PREFIX, metricTags(siteName));
       return new SiteStatusMetric(metricId, status);
    }
 
