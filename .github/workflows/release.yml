@@ -150,10 +150,10 @@ jobs:
 
   images:
     needs: published
-    uses: infinispan/infinispan-images/.github/workflows/release.yml@main
+    uses: infinispan/infinispan-images/.github/workflows/release.yml@15.2.x
     secrets: inherit
     with:
-      branch: main
+      branch: 15.2.x
       repository: infinispan/infinispan-images
       ispnVersion: ${{ github.event.inputs.version }}
       latest: false
