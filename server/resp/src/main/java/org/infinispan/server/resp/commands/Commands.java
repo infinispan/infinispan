@@ -27,6 +27,7 @@ import org.infinispan.server.resp.commands.generic.EXPIRETIME;
 import org.infinispan.server.resp.commands.generic.FLUSHALL;
 import org.infinispan.server.resp.commands.generic.FLUSHDB;
 import org.infinispan.server.resp.commands.generic.KEYS;
+import org.infinispan.server.resp.commands.generic.LOLWUT;
 import org.infinispan.server.resp.commands.generic.PERSIST;
 import org.infinispan.server.resp.commands.generic.PEXPIRE;
 import org.infinispan.server.resp.commands.generic.PEXPIREAT;
@@ -217,7 +218,7 @@ public final class Commands {
       ALL_COMMANDS[8] = new RespCommand[]{new INCR(), new INCRBY(), new INCRBYFLOAT(), new INFO()};
       ALL_COMMANDS[9] = new RespCommand[]{new JSONGET(), new JSONSET(), new JSONARRLEN(), new JSONOBJLEN(), new JSONSTRLEN(), new JSONTYPE(), new JSONDEL(), new JSONSTRAPPEND(), new JSONARRAPPEND(), new JSONTOGGLE(), new JSONOBJKEYS(), new JSONNUMINCRBY(), new JSONNUMMULTBY(), new JSONFORGET(), new JSONARRINDEX(), new JSONARRINSERT(), new JSONARRTRIM(), new JSONCLEAR(), new JSONARRPOP(), new JSONMSET(), new JSONMERGE(), new JSONMGET(), new JSONRESP()};
       ALL_COMMANDS[10] = new RespCommand[]{new KEYS()};
-      ALL_COMMANDS[11] = new RespCommand[]{new LINDEX(), new LINSERT(), new LPUSH(), new LPUSHX(), new LPOP(), new LRANGE(), new LLEN(), new LPOS(), new LREM(), new LSET(), new LTRIM(), new LMOVE(), new LMPOP(), new LCS()};
+      ALL_COMMANDS[11] = new RespCommand[]{new LINDEX(), new LINSERT(), new LPUSH(), new LPUSHX(), new LPOP(), new LRANGE(), new LLEN(), new LPOS(), new LREM(), new LSET(), new LTRIM(), new LMOVE(), new LMPOP(), new LCS(), new LOLWUT()};
       ALL_COMMANDS[12] = new RespCommand[]{new MGET(), new MSET(), new MSETNX(), new MULTI(), new MODULE(), new MEMORY()};
       ALL_COMMANDS[15] = new RespCommand[]{new PUBLISH(), new PING(), new PSUBSCRIBE(), new PUNSUBSCRIBE(), new PUBSUB(), new PTTL(), new PEXPIREAT(), new PEXPIRE(), new PEXPIRETIME(), new PERSIST(), new PFADD(), new PSETEX()};
       ALL_COMMANDS[16] = new RespCommand[]{new QUIT()};

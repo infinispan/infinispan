@@ -33,6 +33,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
@@ -1330,6 +1331,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
             "hello_4", "hello_5", "hello_6", "hello_7", "hello_8", "hello_9");
    }
 
+   @Test
    public void testRandomKey() {
       RedisCommands<String, String> redis = redisConnection.sync();
 
@@ -1384,6 +1386,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       redis.select(0);
    }
 
+   @Test
    public void testNoAuthHello() {
       SkipTestNG.skipIf(!isAuthorizationEnabled(), "Run only with authz enabled");
 
@@ -1396,5 +1399,13 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
                .isInstanceOf(RedisCommandExecutionException.class)
                .hasMessage("NOAUTH HELLO must be called with the client already authenticated, otherwise the HELLO <proto> AUTH <user> <pass> option can be used to authenticate the client and select the RESP protocol version at the same time");
       }
+   }
+
+   @Test
+   public void testLolwut() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
+      String response = redis.dispatch(new SimpleCommand("LOLWUT"), new StatusOutput<>(StringCodec.UTF8), args);
+      assertThat(response).endsWith(Version.getBrandName() + " ver. " + Version.getBrandVersion() + "\n");
    }
 }
