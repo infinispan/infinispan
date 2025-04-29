@@ -21,8 +21,10 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,7 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -111,21 +114,26 @@ public class DefaultsExtractorMojo extends AbstractMojo {
          throw new MojoExecutionException("Exception encountered during class extraction", e);
       }
 
-      Set<Class> configClasses = new HashSet<>();
+      Set<Class<?>> configClasses = new HashSet<>();
       getClassesFromClasspath(configClasses);
       jars.forEach(jar -> getClassesFromJar(jar, configClasses));
       Map<String, String> defaults = extractDefaults(configClasses);
       writeDefaultsToFile(defaults);
 
-      if (filterXsd)
-         filterXsdSchemas();
+      if (filterXsd) {
+         try {
+            filterXsdSchemas();
+         } catch (IOException e) {
+            throw new MojoExecutionException("Exception encountered during xsd filtering", e);
+         }
+      }
    }
 
    private boolean isValidClass(String className) {
       return ispnResolver.isValidClass(className);
    }
 
-   private Map<String, String> extractDefaults(Set<Class> classes) {
+   private Map<String, String> extractDefaults(Set<Class<?>> classes) {
       String separator = outputAscii ? "-" : ".";
       Map<String, String> defaults = new HashMap<>();
       boolean extractAll = attributeDefType == AttributeDefType.ALL;
@@ -143,7 +151,7 @@ public class DefaultsExtractorMojo extends AbstractMojo {
       }
    }
 
-   private void getClassesFromClasspath(Set<Class> classes) throws MojoExecutionException {
+   private void getClassesFromClasspath(Set<Class<?>> classes) throws MojoExecutionException {
       try {
          FileSystem fs = FileSystems.getDefault();
          PathMatcher classDir = fs.getPathMatcher("glob:*/**/target/classes");
@@ -152,7 +160,7 @@ public class DefaultsExtractorMojo extends AbstractMojo {
                .map(fs::getPath)
                .filter(classDir::matches)
                .map(Path::toFile)
-               .collect(Collectors.toList());
+               .toList();
 
          for (File packageRoot : packageRoots)
             getClassesInPackage(packageRoot, "", classes);
@@ -161,7 +169,7 @@ public class DefaultsExtractorMojo extends AbstractMojo {
       }
    }
 
-   private void getClassesInPackage(File packageDir, String packageName, Set<Class> classes) throws ClassNotFoundException {
+   private void getClassesInPackage(File packageDir, String packageName, Set<Class<?>> classes) throws ClassNotFoundException {
       if (packageDir.exists()) {
          for (File file : packageDir.listFiles()) {
             String fileName = file.getName();
@@ -176,8 +184,8 @@ public class DefaultsExtractorMojo extends AbstractMojo {
       }
    }
 
-   private void getClassesFromJar(String jarName, Set<Class> classes) {
-      // Ignore version number, necessary as jar is loaded differently when sub module is installed in isolation
+   private void getClassesFromJar(String jarName, Set<Class<?>> classes) {
+      // Ignore version number, necessary as jar is loaded differently when submodule is installed in isolation
       Optional<String> jarPath = classPaths.stream().filter(str -> str.contains(jarName)).findFirst();
       if (jarPath.isPresent()) {
          try {
@@ -220,12 +228,12 @@ public class DefaultsExtractorMojo extends AbstractMojo {
       return entry.getKey() + "=" + entry.getValue();
    }
 
-   private void filterXsdSchemas() throws MojoExecutionException {
+   private void filterXsdSchemas() throws MojoExecutionException, IOException {
       executeMojo(
             plugin(
                   groupId("org.apache.maven.plugins"),
                   artifactId("maven-resources-plugin"),
-                  version("3.1.0")
+                  version("3.3.1")
             ),
             goal("copy-resources"),
             configuration(
@@ -251,5 +259,19 @@ public class DefaultsExtractorMojo extends AbstractMojo {
                   pluginManager
             )
       );
+      Pattern pattern = Pattern.compile("\\$\\{[^}]+}");
+      Path xsdPath = Paths.get(xsdTargetPath);
+      if (Files.exists(xsdPath)) {
+         List<Path> paths = Files.list(xsdPath).filter(p -> p.getFileName().toString().endsWith(".xsd")).toList();
+         for (Path path : paths) {
+            List<String> lines = Files.readAllLines(path);
+            for (String line : lines) {
+               Matcher matcher = pattern.matcher(line);
+               if (matcher.find()) {
+                  throw new MojoExecutionException(String.format("Found unreplaced property '%s' in '%s'%n", matcher.group(0), path.getFileName()));
+               }
+            }
+         }
+      }
    }
 }
