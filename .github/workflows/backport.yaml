@@ -47,3 +47,12 @@ jobs:
           pull-request: ${{ github.event.pull_request.url }}
           auth: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
           no-squash: true
+
+      - if: always() && contains(github.event.pull_request.labels.*.name, 'backport/15.2.x')
+        name: 15.2.x Backport
+        uses: kiegroup/git-backporting@v4.8.5
+        with:
+          target-branch: 15.2.x
+          pull-request: ${{ github.event.pull_request.url }}
+          auth: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+          no-squash: true
