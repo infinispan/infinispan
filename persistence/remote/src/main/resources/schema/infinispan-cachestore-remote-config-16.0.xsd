@@ -44,7 +44,7 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="socket-timeout" type="xs:long" default="${RemoteStore.socketTimeout}">
+        <xs:attribute name="socket-timeout" type="xs:long" default="${RemoteStore.socket-timeout}">
           <xs:annotation>
             <xs:documentation>
               Enable/disable SO_TIMEOUT on socket connections to remote Hot Rod servers with the specified timeout, in milliseconds.
@@ -52,14 +52,14 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="tcp-no-delay" type="xs:boolean" default="${RemoteStore.tcpNoDelay}">
+        <xs:attribute name="tcp-no-delay" type="xs:boolean" default="${RemoteStore.tcp-no-delay}">
           <xs:annotation>
             <xs:documentation>
               Enable/disable TCP_NODELAY on socket connections to remote Hot Rod servers.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="hotrod-wrapping" type="xs:boolean" default="${RemoteStore.hotRodWrapping}">
+        <xs:attribute name="hotrod-wrapping" type="xs:boolean" default="${RemoteStore.hotrod-wrapping}">
           <xs:annotation>
             <xs:documentation>
               Deprecated since 12.0. Since 13.0, use only 'raw-values' if the remote server will be accessed by Hot Rod clients.
@@ -67,35 +67,35 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="raw-values" type="xs:boolean" default="${RemoteStore.rawValues}">
+        <xs:attribute name="raw-values" type="xs:boolean" default="${RemoteStore.raw-values}">
           <xs:annotation>
             <xs:documentation>
               Enables the storage of data on the remote server in "raw" format as opposed to wrapping the entries in InternalCacheEntry. This ensures that clients can use data directly from the remote cache store.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="balancing-strategy" type="xs:string" default="${RemoteStore.balancingStrategy}">
+        <xs:attribute name="balancing-strategy" type="xs:string" default="${RemoteStore.balancing-strategy}">
           <xs:annotation>
             <xs:documentation>
               For replicated (vs distributed) Hot Rod server clusters, the client balances requests to the servers according to this strategy.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="connect-timeout" type="xs:int" default="${RemoteStore.connectionTimeout}">
+        <xs:attribute name="connect-timeout" type="xs:int" default="${RemoteStore.connect-timeout}">
           <xs:annotation>
             <xs:documentation>
               This property defines the maximum socket connect timeout before giving up connecting to the server.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="force-return-values" type="xs:boolean" default="${RemoteStore.forceReturnValues}">
+        <xs:attribute name="force-return-values" type="xs:boolean" default="${RemoteStore.force-return-values}">
           <xs:annotation>
             <xs:documentation>
               Whether or not to implicitly FORCE_RETURN_VALUE for all calls.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="key-size-estimate" type="xs:int" default="${RemoteStore.keySizeEstimate}">
+        <xs:attribute name="key-size-estimate" type="xs:int" default="${RemoteStore.key-size-estimate}">
           <xs:annotation>
             <xs:documentation>
               Deprecated since 12.0, does nothing and will be removed in 15.0
@@ -109,7 +109,7 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="protocol-version" type="xs:string" default="${RemoteStore.protocolVersion}">
+        <xs:attribute name="protocol-version" type="xs:string" default="${RemoteStore.protocol-version}">
           <xs:annotation>
             <xs:documentation>
               This property defines the protocol version that this client should use. Defaults to 1.1. Other valid values include 1.0.
@@ -124,7 +124,7 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="value-size-estimate" type="xs:int" default="${RemoteStore.valueSizeEstimate}">
+        <xs:attribute name="value-size-estimate" type="xs:int" default="${RemoteStore.value-size-estimate}">
           <xs:annotation>
             <xs:documentation>
               Deprecated since 12.0, does nothing and will be removed in 15.0
@@ -150,21 +150,21 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="max-active" type="xs:int" default="${ConnectionPool.maxActive}">
+    <xs:attribute name="max-active" type="xs:int" default="${ConnectionPool.max-active}">
       <xs:annotation>
         <xs:documentation>
           Controls the maximum number of connections per server that are allocated (checked out to client threads, or idle in the pool) at one time. When non-positive, there is no limit to the number of connections per server. When maxActive is reached, the connection pool for that server is said to be exhausted. The default setting for this parameter is -1, i.e. there is no limit.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="min-idle" type="xs:int" default="${ConnectionPool.minIdle}">
+    <xs:attribute name="min-idle" type="xs:int" default="${ConnectionPool.min-idle}">
       <xs:annotation>
         <xs:documentation>
           Sets a target value for the minimum number of idle connections (per server) that should always be available. If this parameter is set to a positive number and timeBetweenEvictionRunsMillis > 0, each time the idle connection eviction thread runs, it will try to create enough idle instances so that there will be minIdle idle instances available for each server. The default setting for this parameter is 1.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="max-pending-requests" type="xs:int" default="${ConnectionPool.maxPendingRequests}">
+    <xs:attribute name="max-pending-requests" type="xs:int" default="${ConnectionPool.max-pending-requests}">
       <xs:annotation>
         <xs:documentation>
           Specifies maximum number of requests sent over single connection at one instant. Connections with more concurrent requests will be ignored in the pool when choosing available connection
@@ -173,7 +173,7 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="min-evictable-idle-time" type="xs:long" default="${ConnectionPool.minEvictableIdleTime}">
+    <xs:attribute name="min-evictable-idle-time" type="xs:long" default="${ConnectionPool.min-evictable-idle-time}">
       <xs:annotation>
         <xs:documentation>
           Specifies the minimum amount of time that an connection may sit idle in the pool before it is eligible for eviction due to idle time. When non-positive, no connection will be dropped from the pool due to idle time alone. This setting has no effect unless timeBetweenEvictionRunsMillis > 0. The default setting for this parameter is 1800000(30 minutes).
@@ -399,7 +399,7 @@
       <xs:element name="property" type="config:property" minOccurs="0" maxOccurs="unbounded">
         <xs:annotation>
           <xs:documentation>
-            Add key/value property pair to this remote cache configuration. The configuration are applied during the Hot Rod client creation.
+            Add key/value property pair to this remote cache configuration. The configuration is applied during the Hot Rod client creation.
           </xs:documentation>
         </xs:annotation>
       </xs:element>

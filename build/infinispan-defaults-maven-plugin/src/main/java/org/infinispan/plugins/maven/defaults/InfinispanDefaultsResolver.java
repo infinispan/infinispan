@@ -25,13 +25,10 @@ class InfinispanDefaultsResolver implements DefaultsResolver {
    }
 
    @Override
-   public Map<String, String> extractDefaults(Set<Class> classes, String separator) {
+   public Map<String, String> extractDefaults(Set<Class<?>> classes, String separator) {
       Map<String, String> map = new HashMap<>();
-      for (Class clazz : classes) {
+      for (Class<?> clazz : classes) {
          AttributeSet attributeSet = getAttributeSet(clazz);
-         if (attributeSet == null)
-            continue;
-
          attributeSet.attributes().stream()
                .map(Attribute::getAttributeDefinition)
                .filter(definition -> definition.getDefaultValue() != null)
@@ -40,28 +37,28 @@ class InfinispanDefaultsResolver implements DefaultsResolver {
       return map;
    }
 
-   private AttributeSet getAttributeSet(Class clazz) {
+   private AttributeSet getAttributeSet(Class<?> clazz) {
       Field[] declaredFields = clazz.getDeclaredFields();
-      List<AttributeDefinition> attributeDefinitions = new ArrayList<>();
+      List<AttributeDefinition<?>> attributeDefinitions = new ArrayList<>();
       for (Field field : declaredFields) {
          if (Modifier.isStatic(field.getModifiers()) && AttributeDefinition.class.isAssignableFrom(field.getType())) {
             field.setAccessible(true);
             try {
-               attributeDefinitions.add((AttributeDefinition) field.get(null));
+               attributeDefinitions.add((AttributeDefinition<?>) field.get(null));
             } catch (IllegalAccessException ignore) {
                // Shouldn't happen as we have setAccessible == true
             }
          }
       }
-      return new AttributeSet(clazz, attributeDefinitions.toArray(new AttributeDefinition[attributeDefinitions.size()]));
+      return new AttributeSet(clazz, attributeDefinitions.toArray(new AttributeDefinition[0]));
    }
 
-   private String getOutputValue(AttributeDefinition definition) {
+   private String getOutputValue(AttributeDefinition<?> definition) {
       // Remove @<hashcode> from toString of classes
       return definition.getDefaultValue().toString().split("@")[0];
    }
 
-   private String getOutputKey(Class clazz, AttributeDefinition attribute, String seperator) {
+   private String getOutputKey(Class<?> clazz, AttributeDefinition<?> attribute, String seperator) {
       String className = clazz.getSimpleName();
       String root = className.startsWith("Configuration") ? className : className.replace("Configuration", "");
       return root + seperator + attribute.name();
