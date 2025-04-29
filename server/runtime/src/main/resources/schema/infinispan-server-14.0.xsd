@@ -524,8 +524,7 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="await-initial-retrieval" type="xs:boolean" use="optional"
-                    default="${TopologyCache.awaitInitialRetrieval}">
+      <xs:attribute name="await-initial-retrieval" type="xs:boolean" default="${TopologyCache.await-initial-retrieval}">
          <xs:annotation>
             <xs:documentation>Configures whether initial state retrieval should happen immediately at startup. Applies only when lazy-retrieval is false. Values are true (default) / false.
             </xs:documentation>
@@ -759,8 +758,7 @@
       <xs:sequence>
          <xs:element name="sni" type="tns:sni" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
-      <xs:attribute name="require-ssl-client-auth" type="xs:boolean" use="optional"
-                    default="${Encryption.requireSslClientAuth}">
+      <xs:attribute name="require-ssl-client-auth" type="xs:boolean" default="${Encryption.require-ssl-client-auth}">
          <xs:annotation>
             <xs:documentation>
               Requires clients to use certificates for authentication.
