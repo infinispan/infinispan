@@ -603,7 +603,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
                }
                return new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, parsingResult, parsingResult.getProjections(), rowProcessor, startOffset, maxResults, local);
             } else {
-               IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, null, null, null, sortFields);
+               IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, parsingResult.getWhereClause() != null ? parsingResult.getWhereClause() : normalizedWhereClause, null, null, null, sortFields);
                Query<?> indexQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, startOffset, maxResults, local);
                String projectionQueryStr = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), parsingResult.getProjectedPaths(), null, null, null);
                return new MetadataHybridQuery<>(queryFactory, cache, projectionQueryStr, parsingResult.getStatementType(),
@@ -644,7 +644,14 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    private IckleParsingResult<TypeMetadata> makeFilterParsingResult(IckleParsingResult<TypeMetadata> parsingResult, BooleanExpr normalizedWhereClause,
                                                                     PropertyPath[] projection, Class<?>[] projectedTypes, Object[] projectedNullMarkers,
                                                                     SortField[] sortFields) {
-      return new IckleParsingResult<>(parsingResult.getQueryString(), parsingResult.getStatementType(), parsingResult.getParameterNames(),
+      String queryString = parsingResult.getQueryString();
+
+      if (!queryString.toUpperCase().contains("JOIN")) {
+         queryString = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), projection,
+                 normalizedWhereClause, parsingResult.getFilteringClause(), sortFields);
+      }
+
+      return new IckleParsingResult<>(queryString, parsingResult.getStatementType(), parsingResult.getParameterNames(),
             normalizedWhereClause, null, parsingResult.getFilteringClause(),
             parsingResult.getTargetEntityName(), parsingResult.getTargetEntityMetadata(),
             projection, projectedTypes, projectedNullMarkers, null, sortFields);

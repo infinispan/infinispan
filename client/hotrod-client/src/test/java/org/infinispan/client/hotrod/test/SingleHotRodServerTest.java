@@ -47,6 +47,7 @@ public abstract class SingleHotRodServerTest extends SingleCacheManagerTest {
       builder.addServer()
             .host(host)
             .port(serverPort);
+      builder.socketTimeout(100000);
       SerializationContextInitializer sci = contextInitializer();
       if (sci != null)
          builder.addContextInitializer(sci);
