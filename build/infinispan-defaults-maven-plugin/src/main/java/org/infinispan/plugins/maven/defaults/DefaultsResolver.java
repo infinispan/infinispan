@@ -11,5 +11,5 @@ import java.util.Set;
  */
 interface DefaultsResolver {
    boolean isValidClass(String className);
-   Map<String, String> extractDefaults(Set<Class> classes, String separator);
+   Map<String, String> extractDefaults(Set<Class<?>> classes, String separator);
 }
