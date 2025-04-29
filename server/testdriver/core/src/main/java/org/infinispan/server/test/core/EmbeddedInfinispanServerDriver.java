@@ -65,25 +65,6 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
       }
    }
 
-   /**
-    * Starts an additional server outside that isn't part of {@link InfinispanServerTestConfiguration#numServers()}
-    * number. This is useful to start servers at a later point.
-    * <p>
-    * This method can only be invoked after {@link #start(String)} has completed successfully
-    */
-   public void startAdditionalServer() {
-      // expectedClusterSize is not used as it currently only works for a single driver and doesn't support multiple
-      int serverNumber = servers.size();
-      File serverRoot = createServerHierarchy(rootDir, Integer.toString(serverNumber));
-      copyArtifactsToDataDir();
-      Server server = createServerInstance(name, rootDir, new File(configuration.configurationFile()), serverNumber, serverRoot);
-      serverFutures.add(server.run());
-      servers.add(server);
-
-      List<EmbeddedCacheManager> cacheManagers = servers.stream().map(Server::getCacheManager).collect(Collectors.toList());
-      blockUntilViewsReceived(cacheManagers);
-   }
-
    private Server createServerInstance(String name, File rootDir, File configurationFile, int serverIndex, File serverRoot) {
       Properties properties = new Properties();
       properties.setProperty(Server.INFINISPAN_SERVER_HOME_PATH, serverRoot.getAbsolutePath());
