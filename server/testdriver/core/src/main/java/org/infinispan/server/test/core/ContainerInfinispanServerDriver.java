@@ -382,7 +382,6 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             .withCreateContainerCmdModifier(cmd -> {
                if (volumeToUse != null) {
                   cmd.getHostConfig().withMounts(
-//                        Collections.singletonList(new Mount().withSource(volumeToUse).withTarget(serverPath()).withType(MountType.VOLUME))
                         Collections.singletonList(new Mount().withSource(volumeToUse).withTarget(serverPath() + "/data").withType(MountType.VOLUME))
                   );
                }
@@ -476,9 +475,9 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          stop(i);
          log.infof("Stopped container %d", i);
       }
-//      if (image != null) {
-//         cleanup(image.getDockerImageName());
-//      }
+      if (image != null) {
+         cleanup(image.getDockerImageName());
+      }
       // See https://github.com/testcontainers/testcontainers-java/issues/2276
       ThreadLeakChecker.ignoreThreadsContaining("docker-java-stream-");
       if (leakDetectionLoggingConsumer.leakDetected()) {
