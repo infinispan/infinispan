@@ -31,15 +31,9 @@ jobs:
         ref: master
         path: infinispan.github.io
 
-    - if: github.ref == 'refs/heads/main'
-      name: Copy docs to dev
+    - name: Copy docs to version
       run: |
-        cp -r documentation/target/generated/1*/html/* infinispan.github.io/docs/dev/
-
-    - if: github.ref == 'refs/heads/14.0.x'
-      name: Copy docs to stable
-      run: |
-        cp -r documentation/target/generated/1*/html/* infinispan.github.io/docs/stable/
+        cp -r documentation/target/generated/1*/html/* infinispan.github.io/docs/${{ github.ref_name }}
 
     - name: Commit files
       run: |
