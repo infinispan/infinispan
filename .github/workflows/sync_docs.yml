@@ -45,11 +45,6 @@ jobs:
       run: |
         cp -r documentation/target/generated/1*/html/* infinispan.github.io/docs/dev/
 
-    - if: github.ref == 'refs/heads/15.1.x'
-      name: Copy docs to stable
-      run: |
-        cp -r documentation/target/generated/1*/html/* infinispan.github.io/docs/stable/
-
     - name: Commit files
       run: |
         cd infinispan.github.io
