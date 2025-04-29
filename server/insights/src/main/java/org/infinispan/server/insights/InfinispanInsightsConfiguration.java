@@ -1,5 +1,6 @@
 package org.infinispan.server.insights;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 import com.redhat.insights.config.EnvAndSysPropsInsightsConfiguration;
@@ -16,7 +17,11 @@ public class InfinispanInsightsConfiguration extends EnvAndSysPropsInsightsConfi
 
    @Override
    public String getIdentificationName() {
-      return identificationName.get();
+      String idName = identificationName.get();
+      // this can happen in case of shutdown of the clusters:
+      // see https://github.com/infinispan/infinispan/issues/14662
+      // or https://issues.redhat.com/browse/JDG-7447
+      return Objects.requireNonNullElse(idName, "server-not-available");
    }
 
    @Override
