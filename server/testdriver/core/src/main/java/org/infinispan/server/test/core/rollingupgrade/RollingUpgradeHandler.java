@@ -1,13 +1,10 @@
 package org.infinispan.server.test.core.rollingupgrade;
 
-import java.net.SocketAddress;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.server.Server;
 import org.infinispan.server.test.api.TestUser;
@@ -17,8 +14,8 @@ import org.infinispan.server.test.core.ServerConfigBuilder;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
 
-public class UpgradeHandler {
-   private final UpgradeConfiguration configuration;
+public class RollingUpgradeHandler {
+   private final RollingUpgradeConfiguration configuration;
    private final Consumer<String> logConsumer;
 
    private String toImageCreated;
@@ -27,7 +24,38 @@ public class UpgradeHandler {
    private ContainerInfinispanServerDriver fromDriver;
    private ContainerInfinispanServerDriver toDriver;
 
-   private UpgradeHandler(UpgradeConfiguration configuration) {
+   private RemoteCacheManager remoteCacheManager;
+
+   private STATE currentState = STATE.NOT_STARTED;
+
+   public enum STATE {
+      /**
+       * The upgrade procedure has not been started yet
+       */
+      NOT_STARTED,
+      /**
+       * This state signals that all the old version nodes are running currently
+       */
+      OLD_RUNNING,
+      /**
+       * This state signals that one old node has been shut down. The remaining nodes may be a mixture of old and/or new
+       */
+      REMOVED_OLD,
+      /**
+       * This state signals that a new node was just added. The remaining nodes may be a mixture of old and/or new
+       */
+      ADDED_NEW,
+      /**
+       * This state signals that the upgrade completed and all old nodes have been removed and all new nodes are running
+       */
+      NEW_RUNNING,
+      /**
+       * The upgrade procedure encountered some type of error
+       */
+      ERROR
+   }
+
+   private RollingUpgradeHandler(RollingUpgradeConfiguration configuration) {
       this.configuration = configuration;
       this.logConsumer = configuration.logConsumer();
    }
@@ -48,13 +76,21 @@ public class UpgradeHandler {
       return toDriver;
    }
 
-   public UpgradeConfiguration getConfiguration() {
+   public RollingUpgradeConfiguration getConfiguration() {
       return configuration;
    }
 
-   public static void performUpgrade(UpgradeConfiguration configuration) throws InterruptedException {
+   public RemoteCacheManager getRemoteCacheManager() {
+      return remoteCacheManager;
+   }
+
+   public STATE getCurrentState() {
+      return currentState;
+   }
+
+   public static void performUpgrade(RollingUpgradeConfiguration configuration) throws InterruptedException {
       String site1Name = "site1";
-      UpgradeHandler handler = new UpgradeHandler(configuration);
+      RollingUpgradeHandler handler = new RollingUpgradeHandler(configuration);
 
       int nodeCount = configuration.nodeCount();
       String versionFrom = configuration.fromVersion();
@@ -63,9 +99,11 @@ public class UpgradeHandler {
          handler.logConsumer.accept("Starting " + nodeCount + " node to version " + versionFrom);
          handler.fromDriver = handler.startNode(false, configuration.nodeCount(), configuration.nodeCount(),
                site1Name, configuration.jgroupsProtocol(), null);
+         handler.currentState = STATE.NEW_RUNNING;
 
          try (RemoteCacheManager manager = handler.createRemoteCacheManager()) {
-            RemoteCache<String, String> cache = configuration.initialHandler().apply(manager);
+            handler.remoteCacheManager = manager;
+            configuration.initialHandler().accept(handler);
 
             for (int i = 0; i < nodeCount; ++i) {
                handler.logConsumer.accept("Shutting down 1 node from version: " + versionFrom);
@@ -73,7 +111,9 @@ public class UpgradeHandler {
                String volumeId = handler.fromDriver.volumeId(nodeId);
                handler.fromDriver.stop(nodeId);
 
-               if (!handler.ensureServersWorking(cache, nodeCount - 1)) {
+               handler.currentState = STATE.REMOVED_OLD;
+
+               if (!ensureServersWorking(handler, nodeCount - 1)) {
                   handler.logConsumer.accept("Servers are: " + Arrays.toString(manager.getServers()));
                   throw new IllegalStateException("Servers did not shut down properly within 30 seconds, assuming error");
                }
@@ -86,13 +126,18 @@ public class UpgradeHandler {
                   handler.toDriver.startAdditionalServer(nodeCount, volumeId);
                }
 
-               if (!handler.ensureServersWorking(cache, nodeCount)) {
+               handler.currentState = STATE.ADDED_NEW;
+
+               if (!ensureServersWorking(handler, nodeCount)) {
                   handler.logConsumer.accept("Servers are only: " + Arrays.toString(manager.getServers()));
                   throw new IllegalStateException("Servers did not cluster within 30 seconds, assuming error");
                }
             }
+
+            handler.currentState = STATE.NEW_RUNNING;
          }
       } catch (Throwable t) {
+         handler.currentState = STATE.ERROR;
          configuration.exceptionHandler().accept(t, handler);
          throw t;
       } finally {
@@ -100,23 +145,17 @@ public class UpgradeHandler {
       }
    }
 
-   private boolean ensureServersWorking(RemoteCache<String, String> cache, int expectedCount) throws InterruptedException {
+   private static boolean ensureServersWorking(RollingUpgradeHandler handler, int expectedCount) throws InterruptedException {
       long begin = System.nanoTime();
-      while (TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - begin) < configuration.serverCheckTimeSecs()) {
-         logConsumer.accept("Attempting remote call to ensure cluster formed properly, expecting " + expectedCount + " servers");
-         String value = cache.get("foo");
-         if (value != null && !value.equals("bar")) {
-            throw new IllegalStateException("Remote cache returned " + value + " instead of bar");
-         }
-
-         Set<SocketAddress> servers = cache.getCacheTopologyInfo().getSegmentsPerServer().keySet();
-         logConsumer.accept("Servers are: " + servers);
-         if (servers.size() == expectedCount) {
+      while (TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - begin) < handler.configuration.serverCheckTimeSecs()) {
+         handler.logConsumer.accept("Checking to ensure cluster formed properly, expecting " + expectedCount + " servers");
+         if (handler.configuration.isValidServerState().test(handler)) {
             return true;
          }
          Thread.sleep(TimeUnit.SECONDS.toMillis(5));
       }
-      logConsumer.accept("Improper shutdown detected, servers are: " + cache.getCacheTopologyInfo().getSegmentsPerServer().keySet());
+      handler.logConsumer.accept("Cluster state check timed out after " + handler.configuration.serverCheckTimeSecs() +
+            " secs, check for possible issues");
       return false;
    }
 
