@@ -1882,6 +1882,13 @@
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-enforcer-plugin</artifactId>
                <version>${version.maven.enforcer}</version>
+               <dependencies>
+                  <dependency>
+                     <groupId>org.codehaus.mojo</groupId>
+                     <artifactId>extra-enforcer-rules</artifactId>
+                     <version>${version.maven.extra-enforcer-rules}</version>
+                  </dependency>
+               </dependencies>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -2315,6 +2322,30 @@
                   </goals>
                   <configuration>
                      <cpuCount>system.numCores</cpuCount>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-enforcer-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>enforce</id>
+                  <goals>
+                     <goal>enforce</goal>
+                  </goals>
+                  <configuration>
+                     <rules>
+                        <banDuplicateClasses>
+                           <scopes>
+                              <scope>compile</scope>
+                              <scope>provided</scope>
+                           </scopes>
+                           <findAllDuplicates>true</findAllDuplicates>
+                           <ignoreWhenIdentical>false</ignoreWhenIdentical>
+                        </banDuplicateClasses>
+                     </rules>
                   </configuration>
                </execution>
             </executions>
