@@ -206,6 +206,33 @@
                </execution>
             </executions>
          </plugin>
+         <!-- We copy the netty BlockHound files into our server core test jar as downstream tools strip these from netty -->
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>unpack-netty-hidden</id>
+                  <phase>prepare-package</phase>
+                  <goals>
+                     <goal>unpack</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>io.netty</groupId>
+                           <artifactId>netty-common</artifactId>
+                           <includes>
+                              io/netty/util/internal/Hidden.class,
+                              META-INF/services/reactor.blockhound.integration.BlockHoundIntegration
+                           </includes>
+                           <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
+                        </artifactItem>
+                     </artifactItems>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
       </plugins>
    </build>
 </project>
