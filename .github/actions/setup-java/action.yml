@@ -1,0 +1,29 @@
+name: Setup Java
+description: Setup Java
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: 21
+        distribution: temurin
+
+    # Explicitly configure the maven cache instead of using the built-in setup-java cache so that we can exclude
+    # all Infinispan modules
+    - id: weekly-cache-key
+      name: Key for weekly rotation of cache
+      shell: bash
+      run: echo "key=mvn-`date -u "+%Y-%U"`" >> $GITHUB_OUTPUT
+
+    - id: cache-maven-repository
+      name: Maven cache
+      uses: actions/cache@v4
+      with:
+        # Two asterisks are needed to make the follow-up exclusion work
+        # see https://github.com/actions/toolkit/issues/713 for the upstream issue
+        path: |
+          ~/.m2/repository/*/*
+          !~/.m2/repository/org/infinispan
+        key: ${{ steps.weekly-cache-key.outputs.key }}

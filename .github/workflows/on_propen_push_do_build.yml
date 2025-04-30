@@ -1,0 +1,37 @@
+name: Build
+on:
+  pull_request:
+    branches:
+      - 14.[0-9]+.x
+  push:
+    branches:
+      - 14.[0-9]+.x
+
+concurrency:
+  # Only cancel jobs for PR updates
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Infinispan
+        uses: ./.github/actions/build-infinispan
+
+      - name: Detect target branch
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "${{ github.event.pull_request.base.ref }}" > target-branch.txt
+          else
+            echo "${{ github.ref_name }}" > target-branch.txt
+          fi
+
+      - name: Upload target branch as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: target-branch
+          path: target-branch.txt
