@@ -5,16 +5,16 @@ on:
     branches:
       - feature/*
       - main
-      - 15.[0-9]+.x
+      - 15.*.x
       - 14.0.x
 
 concurrency:
   # Cancel jobs same head_branch same repo, works
   # both for pull_request and push
   group: >
-      ${{ github.workflow }}-${{ github.event.repository.full_name }}-
-      ${{ github.event.pull_request.head.ref || github.event.push.ref }}
-  cancel-in-progress: true
+      ${{ github.workflow }}-${{ github.repository }}-
+      ${{ github.event.pull_request.head.ref || github.event.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
 
@@ -25,8 +25,6 @@ jobs:
 
       - name: Build Infinispan
         uses: ./.github/actions/build-infinispan
-
-      - run: echo Build Completed ${{ github.run_id }} > server-version.txt
 
       - name: Server version
         run: >
