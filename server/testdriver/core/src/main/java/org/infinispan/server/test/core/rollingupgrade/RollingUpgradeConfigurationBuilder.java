@@ -20,11 +20,7 @@ public class RollingUpgradeConfigurationBuilder {
    private String jgroupsProtocol = "tcp";
    private int serverCheckTimeSecs = 30;
    private boolean useSharedDataMount = true;
-   private BiConsumer<Throwable, RollingUpgradeHandler> exceptionHandler = (t, uh) -> {
-      t.printStackTrace();
-   };
-
-   private Consumer<String> logConsumer = System.out::println;
+   private BiConsumer<Throwable, RollingUpgradeHandler> exceptionHandler = (t, uh) -> { };
 
    private Consumer<RollingUpgradeHandler> initialHandler = uh -> {
       RemoteCacheManager rcm = uh.getRemoteCacheManager();
@@ -88,11 +84,6 @@ public class RollingUpgradeConfigurationBuilder {
       return this;
    }
 
-   public RollingUpgradeConfigurationBuilder logConsumer(Consumer<String> logConsumer) {
-      this.logConsumer = Objects.requireNonNull(logConsumer);
-      return this;
-   }
-
    public RollingUpgradeConfigurationBuilder handlers(Consumer<RollingUpgradeHandler> initialHandler,
                                                       Predicate<RollingUpgradeHandler> isValidServerState) {
       this.initialHandler = Objects.requireNonNull(initialHandler);
@@ -102,6 +93,6 @@ public class RollingUpgradeConfigurationBuilder {
 
    public RollingUpgradeConfiguration build() {
       return new RollingUpgradeConfiguration(nodeCount, fromVersion, toVersion, xSite, jgroupsProtocol, serverCheckTimeSecs,
-            useSharedDataMount, exceptionHandler, logConsumer, initialHandler, isValidServerState);
+            useSharedDataMount, exceptionHandler, initialHandler, isValidServerState);
    }
 }
