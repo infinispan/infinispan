@@ -1,9 +1,9 @@
 package org.infinispan.server.test.core.rollingupgrade;
 
+import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.server.Server;
@@ -13,10 +13,12 @@ import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.ServerConfigBuilder;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 public class RollingUpgradeHandler {
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private final RollingUpgradeConfiguration configuration;
-   private final Consumer<String> logConsumer;
 
    private String toImageCreated;
    private String fromImageCreated;
@@ -57,7 +59,6 @@ public class RollingUpgradeHandler {
 
    private RollingUpgradeHandler(RollingUpgradeConfiguration configuration) {
       this.configuration = configuration;
-      this.logConsumer = configuration.logConsumer();
    }
 
    public String getToImageCreated() {
@@ -96,7 +97,7 @@ public class RollingUpgradeHandler {
       String versionFrom = configuration.fromVersion();
       String versionTo = configuration.toVersion();
       try {
-         handler.logConsumer.accept("Starting " + nodeCount + " node to version " + versionFrom);
+         log.debugf("Starting %d node to version %s", nodeCount, versionFrom);
          handler.fromDriver = handler.startNode(false, configuration.nodeCount(), configuration.nodeCount(),
                site1Name, configuration.jgroupsProtocol(), null);
          handler.currentState = STATE.NEW_RUNNING;
@@ -106,7 +107,7 @@ public class RollingUpgradeHandler {
             configuration.initialHandler().accept(handler);
 
             for (int i = 0; i < nodeCount; ++i) {
-               handler.logConsumer.accept("Shutting down 1 node from version: " + versionFrom);
+               log.debugf("Shutting down 1 node from version: %s", versionFrom);
                int nodeId = nodeCount - i - 1;
                String volumeId = handler.fromDriver.volumeId(nodeId);
                handler.fromDriver.stop(nodeId);
@@ -114,11 +115,13 @@ public class RollingUpgradeHandler {
                handler.currentState = STATE.REMOVED_OLD;
 
                if (!ensureServersWorking(handler, nodeCount - 1)) {
-                  handler.logConsumer.accept("Servers are: " + Arrays.toString(manager.getServers()));
+                  if (log.isDebugEnabled()) {
+                     log.debugf("Servers are: %s", Arrays.toString(manager.getServers()));
+                  }
                   throw new IllegalStateException("Servers did not shut down properly within 30 seconds, assuming error");
                }
 
-               handler.logConsumer.accept("Starting 1 node to version " + versionTo);
+               log.debugf("Starting 1 node to version %s", versionTo);
                if (handler.toDriver == null) {
                   handler.toDriver = handler.startNode(true, 1, nodeCount, site1Name,
                         configuration.jgroupsProtocol(), volumeId);
@@ -129,7 +132,9 @@ public class RollingUpgradeHandler {
                handler.currentState = STATE.ADDED_NEW;
 
                if (!ensureServersWorking(handler, nodeCount)) {
-                  handler.logConsumer.accept("Servers are only: " + Arrays.toString(manager.getServers()));
+                  if (log.isDebugEnabled()) {
+                     log.debugf("Servers are only: %s", Arrays.toString(manager.getServers()));
+                  }
                   throw new IllegalStateException("Servers did not cluster within 30 seconds, assuming error");
                }
             }
@@ -138,7 +143,7 @@ public class RollingUpgradeHandler {
          }
       } catch (Throwable t) {
          handler.currentState = STATE.ERROR;
-         configuration.exceptionHandler().accept(t, handler);
+         handler.configuration.exceptionHandler().accept(t, handler);
          throw t;
       } finally {
          handler.cleanup();
@@ -148,14 +153,13 @@ public class RollingUpgradeHandler {
    private static boolean ensureServersWorking(RollingUpgradeHandler handler, int expectedCount) throws InterruptedException {
       long begin = System.nanoTime();
       while (TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - begin) < handler.configuration.serverCheckTimeSecs()) {
-         handler.logConsumer.accept("Checking to ensure cluster formed properly, expecting " + expectedCount + " servers");
+         log.debugf("Checking to ensure cluster formed properly, expecting %d servers", expectedCount);
          if (handler.configuration.isValidServerState().test(handler)) {
             return true;
          }
          Thread.sleep(TimeUnit.SECONDS.toMillis(5));
       }
-      handler.logConsumer.accept("Cluster state check timed out after " + handler.configuration.serverCheckTimeSecs() +
-            " secs, check for possible issues");
+      log.debugf("Cluster state check timed out after %d secs, check for possible issues", handler.configuration.serverCheckTimeSecs());
       return false;
    }
 
@@ -172,7 +176,7 @@ public class RollingUpgradeHandler {
       TestUser user = TestUser.ADMIN;
 
       String hotrodURI = "hotrod://" + user.getUser() + ":" + user.getPassword() + "@" + fromDriver.getServerAddress(0).getHostAddress() + ":11222";
-      logConsumer.accept("Creating RCM with uri: " + hotrodURI);
+      log.debugf("Creating RCM with uri: %s", hotrodURI);
 
       return new RemoteCacheManager(hotrodURI);
    }
@@ -185,7 +189,9 @@ public class RollingUpgradeHandler {
       builder.expectedServers(expectedCount);
       builder.clusterName(clusterName);
       builder.property(Server.INFINISPAN_CLUSTER_STACK, protocol);
-      builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_REQUIRE_JOIN_TIMEOUT, "true");
+      // If the nodeCount was the same as expected it means it is the start of a fresh cluster. In that case we don't
+      // need the join timeout as there shouldn't be any existing nodes in the cluster and don't wait
+      builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_REQUIRE_JOIN_TIMEOUT, Boolean.toString(nodeCount != expectedCount));
       if (configuration.useSharedDataMount()) {
          builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED, "true");
       }

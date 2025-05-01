@@ -186,7 +186,9 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
    private void configureImage(String fqcn, File rootDir) {
       this.name = abbreviate(fqcn);
-      String jGroupsStack = System.getProperty(Server.INFINISPAN_CLUSTER_STACK);
+      // If properties define the cluster stack let that take priority over the system property
+      String jGroupsStack = !configuration.properties().containsKey(Server.INFINISPAN_CLUSTER_STACK) ?
+            System.getProperty(Server.INFINISPAN_CLUSTER_STACK) : null;
       // Build a skeleton server layout
       createServerHierarchy(rootDir);
       // Build the command-line that launches the server
