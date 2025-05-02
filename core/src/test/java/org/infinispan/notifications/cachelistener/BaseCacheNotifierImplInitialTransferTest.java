@@ -218,7 +218,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
    public void testMetadataAvailable() {
       final List<CacheEntry<String, String>> initialValues = new ArrayList<>(10);
-      for (int i = 0; i < 10; i++) {
+      for (int i = 1; i < 10; i++) {
          String key = "key-" + i;
          String value = "value-" + i;
          initialValues.add(new TransientMortalCacheEntry(key, value, i, -1, System.currentTimeMillis()));

@@ -119,12 +119,11 @@ public class ExpiryTest extends MultiHotRodServersTest {
 
    public void testLifespanMaxIdleOverflow() {
       long time = 2147484L;
-      client(0).getCache().put(10, "v0", time, TimeUnit.SECONDS, time, TimeUnit.SECONDS);
+      client(0).getCache().put(10, "v0", time + 1, TimeUnit.SECONDS, time, TimeUnit.SECONDS);
       MetadataValue<Object> withMetadata = client(0).getCache().getWithMetadata(10);
-      assertEquals(time, withMetadata.getLifespan());
+      assertEquals(time + 1, withMetadata.getLifespan());
       assertEquals(time, withMetadata.getMaxIdle());
    }
-
 
    private enum Req {
       PUT {

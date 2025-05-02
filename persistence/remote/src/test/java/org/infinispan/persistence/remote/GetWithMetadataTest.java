@@ -73,7 +73,7 @@ public class GetWithMetadataTest extends AbstractInfinispanTest {
          // Put some entries
          sourceRemoteCache = getRemoteCache(sourceServer);
          sourceRemoteCache.put("key", "value");
-         sourceRemoteCache.put("key2", "value2", 24, TimeUnit.HOURS, 1, TimeUnit.DAYS);
+         sourceRemoteCache.put("key2", "value2", 48, TimeUnit.HOURS, 1, TimeUnit.DAYS);
          sourceRemoteCache.put("key3", "value2");
 
          MetadataValue<String> key2Metadata = sourceRemoteCache.getWithMetadata("key2");
@@ -92,7 +92,7 @@ public class GetWithMetadataTest extends AbstractInfinispanTest {
 
          MetadataValue<String> otherMetadataEntry = targetRemoteCache.getWithMetadata("key2");
          assertNotNull(otherMetadataEntry);
-         assertEquals(otherMetadataEntry.getLifespan(), 24 * 3600);
+         assertEquals(otherMetadataEntry.getLifespan(), 48 * 3600);
          assertEquals(otherMetadataEntry.getMaxIdle(), 24 * 3600);
          assertEquals(otherMetadataEntry.getCreated(), k2Created);
          assertTrue(otherMetadataEntry.getLastUsed() > 0);

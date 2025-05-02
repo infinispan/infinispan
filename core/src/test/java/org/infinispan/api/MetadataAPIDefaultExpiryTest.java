@@ -88,16 +88,16 @@ public class MetadataAPIDefaultExpiryTest extends SingleCacheManagerTest {
       CacheEntry<Object, Object> entry = cache().getAdvancedCache().getCacheEntry(1);
       assertEquals(EXPIRATION_TIMEOUT, entry.getLifespan());
       assertEquals(-1, entry.getMaxIdle());
-      cache().getCacheConfiguration().expiration().attributes().attribute(ExpirationConfiguration.LIFESPAN).set(TimeQuantity.valueOf(EXPIRATION_TIMEOUT * 2));
+      cache().getCacheConfiguration().expiration().attributes().attribute(ExpirationConfiguration.LIFESPAN).set(TimeQuantity.valueOf(EXPIRATION_TIMEOUT * 3));
       cache().put(2, "value");
       entry = cache().getAdvancedCache().getCacheEntry(2);
-      assertEquals(EXPIRATION_TIMEOUT * 2, entry.getLifespan());
+      assertEquals(EXPIRATION_TIMEOUT * 3, entry.getLifespan());
       assertEquals(-1, entry.getMaxIdle());
-      cache().getCacheConfiguration().expiration().attributes().attribute(ExpirationConfiguration.MAX_IDLE).set(TimeQuantity.valueOf(EXPIRATION_TIMEOUT * 3));
+      cache().getCacheConfiguration().expiration().attributes().attribute(ExpirationConfiguration.MAX_IDLE).set(TimeQuantity.valueOf(EXPIRATION_TIMEOUT * 2));
       cache().put(3, "value");
       entry = cache().getAdvancedCache().getCacheEntry(3);
-      assertEquals(EXPIRATION_TIMEOUT * 2, entry.getLifespan());
-      assertEquals(EXPIRATION_TIMEOUT * 3, entry.getMaxIdle());
+      assertEquals(EXPIRATION_TIMEOUT * 3, entry.getLifespan());
+      assertEquals(EXPIRATION_TIMEOUT * 2, entry.getMaxIdle());
    }
 
    private void expectCachedThenExpired(Integer key, String value) {

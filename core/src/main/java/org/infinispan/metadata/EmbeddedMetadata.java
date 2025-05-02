@@ -1,5 +1,6 @@
 package org.infinispan.metadata;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -10,6 +11,8 @@ import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Metadata class for embedded caches.
@@ -87,6 +90,7 @@ public class EmbeddedMetadata implements Metadata {
    }
 
    public static class Builder implements Metadata.Builder {
+      protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
       protected Long lifespan = null;
       protected TimeUnit lifespanUnit = TimeUnit.MILLISECONDS;
@@ -128,12 +132,20 @@ public class EmbeddedMetadata implements Metadata {
       public Metadata build() {
          boolean hasLifespan = hasLifespan();
          boolean hasMaxIdle = hasMaxIdle();
-         if (hasLifespan && hasMaxIdle)
-            return new EmbeddedExpirableMetadata(toMillis(lifespan, lifespanUnit), toMillis(maxIdle, maxIdleUnit), version);
-         else if (hasLifespan)
+         if (hasLifespan && hasMaxIdle) {
+            long lifespanMillis = toMillis(lifespan, lifespanUnit);
+            long maxIdleMillis = toMillis(maxIdle, maxIdleUnit);
+            // If lifespan is less than max idle, ignore max idle - but we have to set it to -1 so defaults aren't applied
+            // Note that if lifespan was passed as -1 we ignore this as it was disabled
+            if (lifespanMillis > 0 && lifespanMillis <= maxIdleMillis) {
+               log.maxIdleGreaterThanOrEqualLifespanRuntime(maxIdleMillis, lifespanMillis);
+               maxIdleMillis = -1;
+            }
+            return new EmbeddedExpirableMetadata(lifespanMillis, maxIdleMillis, version);
+         } else if (hasLifespan)
             return new EmbeddedLifespanExpirableMetadata(toMillis(lifespan, lifespanUnit), version);
          else if (hasMaxIdle)
-            return new EmbeddedMaxIdleExpirableMetadata(toMillis(maxIdle, lifespanUnit), version);
+            return new EmbeddedMaxIdleExpirableMetadata(toMillis(maxIdle, maxIdleUnit), version);
          else
             return new EmbeddedMetadata(version);
       }

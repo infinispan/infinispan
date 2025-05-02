@@ -351,7 +351,7 @@ public abstract class BaseNonBlockingStoreTest extends AbstractInfinispanTest {
       assertContains("k", false);
 
       long lifespan = 2000;
-      long idle = 2000;
+      long idle = 1000;
       InternalCacheEntry<Object, Object> se = internalCacheEntry("k", "v", lifespan, idle);
       InternalCacheValue<?> icv = se.toInternalCacheValue();
       assertEquals(se.getCreated(), icv.getCreated());

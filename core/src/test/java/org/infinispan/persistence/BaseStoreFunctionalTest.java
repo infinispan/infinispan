@@ -156,12 +156,12 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       cache.put("k1", wrap("k1", "v"));
       cache.put("k2", wrap("k2", "v"), 111111, TimeUnit.MILLISECONDS);
       cache.put("k3", wrap("k3", "v"), -1, TimeUnit.MILLISECONDS, 222222, TimeUnit.MILLISECONDS);
-      cache.put("k4", wrap("k4", "v"), 333333, TimeUnit.MILLISECONDS, 444444, TimeUnit.MILLISECONDS);
+      cache.put("k4", wrap("k4", "v"), 444444, TimeUnit.MILLISECONDS, 333333, TimeUnit.MILLISECONDS);
 
       assertCacheEntry(cache, "k1", "v", -1, -1);
       assertCacheEntry(cache, "k2", "v", 111111, -1);
       assertCacheEntry(cache, "k3", "v", -1, 222222);
-      assertCacheEntry(cache, "k4", "v", 333333, 444444);
+      assertCacheEntry(cache, "k4", "v", 444444, 333333);
       cache.stop();
 
       cache.start();
@@ -169,7 +169,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       assertCacheEntry(cache, "k1", "v", -1, -1);
       assertCacheEntry(cache, "k2", "v", 111111, -1);
       assertCacheEntry(cache, "k3", "v", -1, 222222);
-      assertCacheEntry(cache, "k4", "v", 333333, 444444);
+      assertCacheEntry(cache, "k4", "v", 444444, 333333);
    }
 
    public void testPreloadStoredAsBinary() {
