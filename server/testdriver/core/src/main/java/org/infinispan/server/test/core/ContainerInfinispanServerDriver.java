@@ -322,7 +322,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          CountdownLatchLoggingConsumer clusterLatch = new CountdownLatchLoggingConsumer(1, String.format(CLUSTER_VIEW_REGEX, expectedClusterSize));
          CountdownLatchLoggingConsumer startupLatch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
 
-         log.infof("Starting new single server for container %d with volume %s", name, volumeName);
+         log.infof("Starting new single server for container %s with volume %s", name, volumeName);
          createContainer(createdContainers(), volumeName, startupLatch, clusterLatch);
          Exceptions.unchecked(() -> startupLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
          Exceptions.unchecked(() -> clusterLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));

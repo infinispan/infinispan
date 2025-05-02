@@ -1,11 +1,15 @@
 package org.infinispan.server.test.core.rollingupgrade;
 
 import java.lang.invoke.MethodHandles;
+import java.net.InetAddress;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.util.Util;
 import org.infinispan.server.Server;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
@@ -27,6 +31,7 @@ public class RollingUpgradeHandler {
    private ContainerInfinispanServerDriver toDriver;
 
    private RemoteCacheManager remoteCacheManager;
+   private RestClient[] restClients;
 
    private STATE currentState = STATE.NOT_STARTED;
 
@@ -85,6 +90,17 @@ public class RollingUpgradeHandler {
       return remoteCacheManager;
    }
 
+   public RestClient rest(int server, RestClientConfigurationBuilder builder) {
+      if (restClients[server] != null) return restClients[server];
+
+      InetAddress address = getCurrentState() == STATE.OLD_RUNNING
+            ? fromDriver.getServerAddress(server)
+            : toDriver.getServerAddress(server);
+
+      builder.addServer().host(address.getHostAddress()).port(11222);
+      return restClients[server] = RestClient.forConfiguration(builder.build());
+   }
+
    public STATE getCurrentState() {
       return currentState;
    }
@@ -100,10 +116,11 @@ public class RollingUpgradeHandler {
          log.debugf("Starting %d node to version %s", nodeCount, versionFrom);
          handler.fromDriver = handler.startNode(false, configuration.nodeCount(), configuration.nodeCount(),
                site1Name, configuration.jgroupsProtocol(), null);
-         handler.currentState = STATE.NEW_RUNNING;
+         handler.currentState = STATE.OLD_RUNNING;
 
          try (RemoteCacheManager manager = handler.createRemoteCacheManager()) {
             handler.remoteCacheManager = manager;
+            handler.restClients = new RestClient[nodeCount];
             configuration.initialHandler().accept(handler);
 
             for (int i = 0; i < nodeCount; ++i) {
@@ -111,6 +128,7 @@ public class RollingUpgradeHandler {
                int nodeId = nodeCount - i - 1;
                String volumeId = handler.fromDriver.volumeId(nodeId);
                handler.fromDriver.stop(nodeId);
+               handler.cleanup(i);
 
                handler.currentState = STATE.REMOVED_OLD;
 
@@ -170,6 +188,13 @@ public class RollingUpgradeHandler {
       if (toDriver != null) {
          toDriver.stop(configuration.toVersion());
       }
+
+      Arrays.stream(restClients).forEach(Util::close);
+   }
+
+   private void cleanup(int server) {
+      Util.close(restClients[server]);
+      restClients[server] = null;
    }
 
    public RemoteCacheManager createRemoteCacheManager() {
