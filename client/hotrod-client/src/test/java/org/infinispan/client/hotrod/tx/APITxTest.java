@@ -158,7 +158,7 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
       expectException(UnsupportedOperationException.class,
             () -> cache.merge(keys.get(0), values.get(0), (v1, v2) -> values.get(0), 1, TimeUnit.MINUTES));
       expectException(UnsupportedOperationException.class, () -> cache
-            .merge(keys.get(0), values.get(0), (v1, v2) -> values.get(0), 2, TimeUnit.MINUTES, 3, TimeUnit.MINUTES));
+            .merge(keys.get(0), values.get(0), (v1, v2) -> values.get(0), 3, TimeUnit.MINUTES, 2, TimeUnit.MINUTES));
       tm.commit();
    }
 
@@ -437,11 +437,11 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
       if (sync) {
          cache.put(keys.get(0), values.get(0));
          cache.put(keys.get(1), values.get(1), 1, TimeUnit.MINUTES);
-         cache.put(keys.get(2), values.get(2), 2, TimeUnit.MINUTES, 3, TimeUnit.MINUTES);
+         cache.put(keys.get(2), values.get(2), 3, TimeUnit.MINUTES, 2, TimeUnit.MINUTES);
       } else {
          cache.putAsync(keys.get(0), values.get(0)).get();
          cache.putAsync(keys.get(1), values.get(1), 1, TimeUnit.MINUTES).get();
-         cache.putAsync(keys.get(2), values.get(2), 2, TimeUnit.MINUTES, 3, TimeUnit.MINUTES).get();
+         cache.putAsync(keys.get(2), values.get(2), 3, TimeUnit.MINUTES, 2, TimeUnit.MINUTES).get();
       }
    }
 
@@ -453,11 +453,11 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
       if (sync) {
          cache.putIfAbsent(keys.get(0), values.get(0));
          cache.putIfAbsent(keys.get(1), values.get(1), 1, TimeUnit.MINUTES);
-         cache.putIfAbsent(keys.get(2), values.get(2), 2, TimeUnit.MINUTES, 3, TimeUnit.MINUTES);
+         cache.putIfAbsent(keys.get(2), values.get(2), 3, TimeUnit.MINUTES, 2, TimeUnit.MINUTES);
       } else {
          cache.putIfAbsentAsync(keys.get(0), values.get(0)).get();
          cache.putIfAbsentAsync(keys.get(1), values.get(1), 1, TimeUnit.MINUTES).get();
-         cache.putIfAbsentAsync(keys.get(2), values.get(2), 2, TimeUnit.MINUTES, 3, TimeUnit.MINUTES).get();
+         cache.putIfAbsentAsync(keys.get(2), values.get(2), 3, TimeUnit.MINUTES, 2, TimeUnit.MINUTES).get();
       }
    }
 
@@ -469,8 +469,8 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
       //outside the transaction, it returns -1 for infinite max-idle
       assertMetadataValue(values.get(1), cache.getWithMetadata(keys.get(1)), TimeUnit.MINUTES.toSeconds(1),
             inTx ? 0 : -1);
-      assertMetadataValue(values.get(2), cache.getWithMetadata(keys.get(2)), TimeUnit.MINUTES.toSeconds(2),
-            TimeUnit.MINUTES.toSeconds(3));
+      assertMetadataValue(values.get(2), cache.getWithMetadata(keys.get(2)), TimeUnit.MINUTES.toSeconds(3),
+            TimeUnit.MINUTES.toSeconds(2));
    }
 
    private void putAll(List<K> keys, List<V> values, boolean sync) throws Exception {
@@ -492,7 +492,7 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
          map.clear();
          map.put(keys.get(4), values.get(4));
          map.put(keys.get(5), values.get(5));
-         cache.putAll(map, 2, TimeUnit.MINUTES, 3, TimeUnit.MINUTES);
+         cache.putAll(map, 3, TimeUnit.MINUTES, 2, TimeUnit.MINUTES);
       } else {
          Map<K, V> map = new HashMap<>();
          map.put(keys.get(0), values.get(0));
@@ -507,7 +507,7 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
          map.clear();
          map.put(keys.get(4), values.get(4));
          map.put(keys.get(5), values.get(5));
-         cache.putAllAsync(map, 2, TimeUnit.MINUTES, 3, TimeUnit.MINUTES).get();
+         cache.putAllAsync(map, 3, TimeUnit.MINUTES, 2, TimeUnit.MINUTES).get();
       }
    }
 
@@ -522,10 +522,10 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
       assertMetadataValue(values.get(3), cache.getWithMetadata(keys.get(3)), TimeUnit.MINUTES.toSeconds(1),
             inTx ? 0 : -1);
 
-      assertMetadataValue(values.get(4), cache.getWithMetadata(keys.get(4)), TimeUnit.MINUTES.toSeconds(2),
-            TimeUnit.MINUTES.toSeconds(3));
-      assertMetadataValue(values.get(5), cache.getWithMetadata(keys.get(5)), TimeUnit.MINUTES.toSeconds(2),
-            TimeUnit.MINUTES.toSeconds(3));
+      assertMetadataValue(values.get(4), cache.getWithMetadata(keys.get(4)), TimeUnit.MINUTES.toSeconds(3),
+            TimeUnit.MINUTES.toSeconds(2));
+      assertMetadataValue(values.get(5), cache.getWithMetadata(keys.get(5)), TimeUnit.MINUTES.toSeconds(3),
+            TimeUnit.MINUTES.toSeconds(2));
    }
 
    private void replace(List<K> keys, List<V> values, boolean sync) throws Exception {
@@ -537,7 +537,7 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
          kvGenerator.assertValueEquals(values.get(0), cache.replace(keys.get(0), values.get(6)));
          kvGenerator.assertValueEquals(values.get(1), cache.replace(keys.get(1), values.get(7), 1, TimeUnit.MINUTES));
          kvGenerator.assertValueEquals(values.get(2),
-               cache.replace(keys.get(2), values.get(8), 2, TimeUnit.MINUTES, 3, TimeUnit.MINUTES));
+               cache.replace(keys.get(2), values.get(8), 3, TimeUnit.MINUTES, 2, TimeUnit.MINUTES));
          assertTrue(cache.replace(keys.get(3), values.get(3), values.get(9)));
          assertTrue(cache.replace(keys.get(4), values.get(4), values.get(10), 4, TimeUnit.MINUTES));
          assertTrue(
@@ -547,7 +547,7 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
          kvGenerator.assertValueEquals(values.get(1),
                cache.replaceAsync(keys.get(1), values.get(7), 1, TimeUnit.MINUTES).get());
          kvGenerator.assertValueEquals(values.get(2),
-               cache.replaceAsync(keys.get(2), values.get(8), 2, TimeUnit.MINUTES, 3, TimeUnit.MINUTES).get());
+               cache.replaceAsync(keys.get(2), values.get(8), 3, TimeUnit.MINUTES, 2, TimeUnit.MINUTES).get());
 
          cache.replaceAsync(keys.get(3), values.get(3), values.get(9));
          cache.replaceAsync(keys.get(4), values.get(4), values.get(10), 4, TimeUnit.MINUTES);
@@ -567,7 +567,7 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
          assertTrue(cache.replaceWithVersion(keys.get(1), values.get(5), value.getVersion(), 60));
 
          value = cache.getWithMetadata(keys.get(2));
-         assertTrue(cache.replaceWithVersion(keys.get(2), values.get(6), value.getVersion(), 120, 180));
+         assertTrue(cache.replaceWithVersion(keys.get(2), values.get(6), value.getVersion(), 180, 120));
 
          value = cache.getWithMetadata(keys.get(3));
          assertTrue(cache.replaceWithVersion(keys.get(3), values.get(7), value.getVersion(), 4, TimeUnit.MINUTES, 5,
@@ -580,7 +580,7 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
          assertTrue(cache.replaceWithVersionAsync(keys.get(1), values.get(5), value.getVersion(), 60).get());
 
          value = cache.getWithMetadata(keys.get(2));
-         assertTrue(cache.replaceWithVersionAsync(keys.get(2), values.get(6), value.getVersion(), 120, 180).get());
+         assertTrue(cache.replaceWithVersionAsync(keys.get(2), values.get(6), value.getVersion(), 180, 120).get());
 
          value = cache.getWithMetadata(keys.get(3));
          assertTrue(cache.replaceWithVersion(keys.get(3), values.get(7), value.getVersion(), 4, TimeUnit.MINUTES, 5,

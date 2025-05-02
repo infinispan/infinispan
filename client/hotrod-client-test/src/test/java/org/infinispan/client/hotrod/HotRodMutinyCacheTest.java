@@ -37,14 +37,14 @@ import io.smallrye.mutiny.Multi;
 public class HotRodMutinyCacheTest<K, V> extends AbstractMutinyCacheSingleServerTest<K, V> {
 
    @MethodSource("parameterized")
-   @ParameterizedTest(name = "getPut[{0}]")
+   @ParameterizedTest(name = "testPut[{0}]")
    public void testPut(KeyValueGenerator<K, V> kvGenerator) {
       final K key = kvGenerator.generateKey(cacheName, 0);
       final V v1 = kvGenerator.generateValue(cacheName, 0);
 
       final CacheWriteOptions options = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(15))
-            .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
+            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(20))
             .build();
       assertEntry(key, null, kvGenerator, await(cache.put(key, v1, options)));
       kvGenerator.assertValueEquals(v1, await(cache.get(key)));
@@ -52,7 +52,7 @@ public class HotRodMutinyCacheTest<K, V> extends AbstractMutinyCacheSingleServer
 
       CacheWriteOptions optionsV1 = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(20))
-            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(30))
+            .lifespanAndMaxIdle(Duration.ofSeconds(30), Duration.ofSeconds(25))
             .build();
       final V v2 = kvGenerator.generateValue(cacheName, 1);
       assertEntry(key, v1, kvGenerator, await(cache.put(key, v2, optionsV1)), options);
@@ -67,7 +67,7 @@ public class HotRodMutinyCacheTest<K, V> extends AbstractMutinyCacheSingleServer
 
       final CacheWriteOptions options = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(15))
-            .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
+            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(20))
             .build();
       assertAwaitEquals(null, cache.putIfAbsent(key, v1, options));
       assertEntry(key, v1, kvGenerator, await(cache.getEntry(key)), options);
@@ -89,7 +89,7 @@ public class HotRodMutinyCacheTest<K, V> extends AbstractMutinyCacheSingleServer
 
       CacheWriteOptions options = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(15))
-            .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
+            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(20))
             .build();
       assertAwaitEquals(true, cache.setIfAbsent(key, value, options));
       assertEntry(key, value, kvGenerator, await(cache.getEntry(key)), options);
@@ -111,14 +111,14 @@ public class HotRodMutinyCacheTest<K, V> extends AbstractMutinyCacheSingleServer
 
       final CacheWriteOptions options = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(15))
-            .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
+            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(20))
             .build();
       await(cache.set(key, v1, options));
       assertEntry(key, v1, kvGenerator, await(cache.getEntry(key)), options);
 
       final CacheWriteOptions optionsV2 = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(20))
-            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(30))
+            .lifespanAndMaxIdle(Duration.ofSeconds(30), Duration.ofSeconds(25))
             .build();
       final V v2 = kvGenerator.generateValue(cacheName, 1);
       await(cache.set(key, v2, optionsV2));
@@ -135,7 +135,7 @@ public class HotRodMutinyCacheTest<K, V> extends AbstractMutinyCacheSingleServer
       final V value = kvGenerator.generateValue(cacheName, 0);
       final CacheWriteOptions options = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(15))
-            .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
+            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(20))
             .build();
       assertEntry(key, null, kvGenerator, await(cache.put(key, value, options)));
 
@@ -157,7 +157,7 @@ public class HotRodMutinyCacheTest<K, V> extends AbstractMutinyCacheSingleServer
 
       final CacheWriteOptions options = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(15))
-            .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
+            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(20))
             .build();
       await(cache.putAll(entries, options));
 
@@ -183,7 +183,7 @@ public class HotRodMutinyCacheTest<K, V> extends AbstractMutinyCacheSingleServer
 
       final CacheWriteOptions options = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(15))
-            .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
+            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(20))
             .build();
       await(cache.putAll(entries, options));
 
@@ -207,7 +207,7 @@ public class HotRodMutinyCacheTest<K, V> extends AbstractMutinyCacheSingleServer
       Map<K, V> entries = new HashMap<>();
       final CacheWriteOptions options = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(15))
-            .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
+            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(20))
             .build();
 
       for (int i = 0; i < 10; i++) {
@@ -247,7 +247,7 @@ public class HotRodMutinyCacheTest<K, V> extends AbstractMutinyCacheSingleServer
       final V initialValue = kvGenerator.generateValue(cacheName, 0);
       final CacheWriteOptions options = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(15))
-            .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
+            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(20))
             .build();
 
       // Returns false for a nonexistent entry.

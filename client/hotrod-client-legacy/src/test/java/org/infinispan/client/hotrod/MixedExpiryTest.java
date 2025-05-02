@@ -55,17 +55,20 @@ public class MixedExpiryTest extends MultiHotRodServersTest {
 
       String key = "someKey";
 
-      assertNull(remoteCache0.put(key, "value1", 1000, TimeUnit.SECONDS, 1000, TimeUnit.SECONDS));
+      long lifespan = 1000;
+      long maxIdle = 100;
+
+      assertNull(remoteCache0.put(key, "value1", lifespan, TimeUnit.SECONDS, maxIdle, TimeUnit.SECONDS));
       assertEquals("value1", remoteCache0.get(key)); // expected "value1"
-      assertMetadataAndValue(remoteCache0.getWithMetadata(key), "value1", 1000, 1000);
-      assertEquals("value1", remoteCache0.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "value2", -1, TimeUnit.SECONDS, 1000,
-              TimeUnit.SECONDS));
+      assertMetadataAndValue(remoteCache0.getWithMetadata(key), "value1", lifespan, maxIdle);
+      assertEquals("value1", remoteCache0.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "value2", -1, TimeUnit.SECONDS, maxIdle,
+            TimeUnit.SECONDS));
       assertEquals("value2", remoteCache0.get(key)); // expected "value2"
-      assertMetadataAndValue(remoteCache0.getWithMetadata(key), "value2", -1, 1000);
-      assertEquals("value2", remoteCache0.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "value3", -1, TimeUnit.SECONDS, 1000,
-              TimeUnit.SECONDS));
+      assertMetadataAndValue(remoteCache0.getWithMetadata(key), "value2", -1, maxIdle);
+      assertEquals("value2", remoteCache0.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "value3", -1, TimeUnit.SECONDS, maxIdle,
+            TimeUnit.SECONDS));
       assertEquals("value3", remoteCache0.get(key)); // expected "value3"
-      assertMetadataAndValue(remoteCache0.getWithMetadata(key), "value3", -1, 1000);
+      assertMetadataAndValue(remoteCache0.getWithMetadata(key), "value3", -1, maxIdle);
    }
 
    public void testMixedExpiryMaxIdle() {
@@ -74,17 +77,20 @@ public class MixedExpiryTest extends MultiHotRodServersTest {
 
       String key = "someKey";
 
-      assertNull(remoteCache0.put(key, "value1", 1000, TimeUnit.SECONDS, 1000, TimeUnit.SECONDS));
+      long lifespan = 1000;
+      long maxIdle = 100;
+
+      assertNull(remoteCache0.put(key, "value1", lifespan, TimeUnit.SECONDS, maxIdle, TimeUnit.SECONDS));
       assertEquals("value1", remoteCache0.get(key)); // expected "value1"
-      assertMetadataAndValue(remoteCache0.getWithMetadata(key), "value1", 1000, 1000);
-      assertEquals("value1", remoteCache0.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "value2", 1000, TimeUnit.SECONDS, -1,
-              TimeUnit.SECONDS));
+      assertMetadataAndValue(remoteCache0.getWithMetadata(key), "value1", lifespan, maxIdle);
+      assertEquals("value1", remoteCache0.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "value2", lifespan, TimeUnit.SECONDS, -1,
+            TimeUnit.SECONDS));
       assertEquals("value2", remoteCache0.get(key)); // expected "value2"
-      assertMetadataAndValue(remoteCache0.getWithMetadata(key), "value2", 1000, -1);
-      assertEquals("value2", remoteCache0.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "value3", 1000, TimeUnit.SECONDS, -1,
-              TimeUnit.SECONDS));
+      assertMetadataAndValue(remoteCache0.getWithMetadata(key), "value2", lifespan, -1);
+      assertEquals("value2", remoteCache0.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "value3", lifespan, TimeUnit.SECONDS, -1,
+            TimeUnit.SECONDS));
       assertEquals("value3", remoteCache0.get(key)); // expected "value3"
-      assertMetadataAndValue(remoteCache0.getWithMetadata(key), "value3", 1000, -1);
+      assertMetadataAndValue(remoteCache0.getWithMetadata(key), "value3", lifespan, -1);
    }
 
    public void testMaxIdleRemovedOnAccess() throws InterruptedException, IOException {
@@ -113,7 +119,7 @@ public class MixedExpiryTest extends MultiHotRodServersTest {
    }
 
    private <V> void assertMetadataAndValue(MetadataValue<V> metadataValue, V value, long lifespanSeconds,
-           long maxIdleSeconds) {
+                                           long maxIdleSeconds) {
       assertEquals(value, metadataValue.getValue());
       assertEquals(lifespanSeconds, metadataValue.getLifespan());
       assertEquals(maxIdleSeconds, metadataValue.getMaxIdle());

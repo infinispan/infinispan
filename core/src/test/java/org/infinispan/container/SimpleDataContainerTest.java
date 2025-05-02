@@ -15,6 +15,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
@@ -28,9 +30,7 @@ import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.util.CoreImmutables;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.mockito.Mockito;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -176,19 +176,31 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
 
       value = "v4";
       dc.put("k", value, new EmbeddedMetadata.Builder()
-            .lifespan(100, TimeUnit.MINUTES).maxIdle(100, TimeUnit.MINUTES).build());
+            .lifespan(100, TimeUnit.MINUTES).maxIdle(50, TimeUnit.MINUTES).build());
       assertContainerEntry(transientmortaltype(), value);
       assertTrue(dc.hasExpirable());
 
       value = "v41";
       dc.put("k", value, new EmbeddedMetadata.Builder()
-            .lifespan(100, TimeUnit.MINUTES).maxIdle(100, TimeUnit.MINUTES).build());
+            .lifespan(100, TimeUnit.MINUTES).maxIdle(50, TimeUnit.MINUTES).build());
       assertContainerEntry(transientmortaltype(), value);
       assertTrue(dc.hasExpirable());
 
       value = "v5";
       dc.put("k", value, new EmbeddedMetadata.Builder().lifespan(100, TimeUnit.MINUTES).build());
       assertContainerEntry(mortaltype(), value);
+      assertTrue(dc.hasExpirable());
+
+      value = "v6";
+      // Max idle time is higher than lifespan so it is ignored
+      dc.put("k", value, new EmbeddedMetadata.Builder().maxIdle(100000, TimeUnit.MINUTES).lifespan(100, TimeUnit.MINUTES).build());
+      assertContainerEntry(mortaltype(), value);
+      assertTrue(dc.hasExpirable());
+
+      value = "v61";
+      // Note that max idle micro seconds is smaller than 100 minutes, so it will apply both
+      dc.put("k", value, new EmbeddedMetadata.Builder().maxIdle(100000, TimeUnit.MICROSECONDS).lifespan(100, TimeUnit.MINUTES).build());
+      assertContainerEntry(transientmortaltype(), value);
       assertTrue(dc.hasExpirable());
    }
 

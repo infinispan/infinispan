@@ -178,11 +178,11 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
    }
 
    protected long lifespan(int i) {
-      return 1000L * (i + 1000);
+      return 10000L * (i + 1000);
    }
 
    protected long maxIdle(int i) {
-      return 10000L * (i + 1000);
+      return 1000L * (i + 1000);
    }
 
    protected Object wrapKey(int key) {

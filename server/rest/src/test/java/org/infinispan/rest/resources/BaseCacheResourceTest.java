@@ -614,7 +614,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       final RestCacheClient expirationCache = client.cache("expiration");
 
       //when
-      CompletionStage<RestResponse> response = expirationCache.post("test", "test", 50, 50);
+      CompletionStage<RestResponse> response = expirationCache.post("test", "test", 50, 30);
       ResponseAssertion.assertThat(response).isOk();
 
       RestResponse getResponse = join(expirationCache.get("test"));
@@ -622,7 +622,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       //then
       ResponseAssertion.assertThat(getResponse).isOk();
       Assertions.assertThat(getLifespan(getResponse)).isEqualTo(50);
-      Assertions.assertThat(getMaxIdle(getResponse)).isEqualTo(50);
+      Assertions.assertThat(getMaxIdle(getResponse)).isEqualTo(30);
    }
 
    @Test

@@ -77,7 +77,7 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
 
       for (char ch = 'A'; ch <= 'Z'; ch++) {
          String s = Character.toString(ch);
-         sourceRemoteCache.put(s, s, 20, TimeUnit.SECONDS, 30, TimeUnit.SECONDS);
+         sourceRemoteCache.put(s, s, 30, TimeUnit.SECONDS, 20, TimeUnit.SECONDS);
       }
 
       // Verify access to some of the data from the new cluster
@@ -92,8 +92,8 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
       upgradeManager.disconnectSource("hotrod");
 
       MetadataValue<String> metadataValue = targetRemoteCache.getWithMetadata("Z");
-      assertEquals(20, metadataValue.getLifespan());
-      assertEquals(30, metadataValue.getMaxIdle());
+      assertEquals(30, metadataValue.getLifespan());
+      assertEquals(20, metadataValue.getMaxIdle());
 
    }
 

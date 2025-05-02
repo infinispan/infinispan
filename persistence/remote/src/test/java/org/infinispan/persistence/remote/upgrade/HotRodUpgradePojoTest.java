@@ -108,7 +108,7 @@ public class HotRodUpgradePojoTest extends AbstractInfinispanTest {
 
       startTxIfNeeded(sourceRemoteCache);
       for (int i = 0; i < ENTRIES; i++) {
-         sourceRemoteCache.put(i, new CustomObject("text", i), 20, TimeUnit.MINUTES, 30, TimeUnit.MINUTES);
+         sourceRemoteCache.put(i, new CustomObject("text", i), 30, TimeUnit.MINUTES, 20, TimeUnit.MINUTES);
       }
       commitTxIfNeeded(sourceRemoteCache);
 
@@ -130,8 +130,8 @@ public class HotRodUpgradePojoTest extends AbstractInfinispanTest {
       assertEquals(sourceCluster.getEmbeddedCache(CACHE_NAME).size(), targetCluster.getEmbeddedCache(CACHE_NAME).size());
       assertEquals(new CustomObject("text", 10), targetRemoteCache.get(10));
       MetadataValue<Object> metadataValue = targetRemoteCache.getWithMetadata(ENTRIES - 1);
-      assertEquals(20 * 60, metadataValue.getLifespan());
-      assertEquals(30 * 60, metadataValue.getMaxIdle());
+      assertEquals(30 * 60, metadataValue.getLifespan());
+      assertEquals(20 * 60, metadataValue.getMaxIdle());
    }
 
    public void testSynchronizationBetweenEmbedded() throws Exception {
@@ -146,7 +146,7 @@ public class HotRodUpgradePojoTest extends AbstractInfinispanTest {
       startTxIfNeeded(sourceCache);
       // Populate source cluster
       for (int i = 0; i < ENTRIES; i++) {
-         sourceCache.put(i, new CustomObject("text", i), 20, TimeUnit.MINUTES, 30, TimeUnit.MINUTES);
+         sourceCache.put(i, new CustomObject("text", i), 30, TimeUnit.MINUTES, 20, TimeUnit.MINUTES);
       }
       commitTxIfNeeded(sourceCache);
 
@@ -168,8 +168,8 @@ public class HotRodUpgradePojoTest extends AbstractInfinispanTest {
       assertEquals(sourceCluster.getEmbeddedCache(CACHE_NAME).size(), targetCluster.getEmbeddedCache(CACHE_NAME).size());
       assertEquals(new CustomObject("text", 10), targetCache.get(10));
       CacheEntry<Object, Object> entry = targetCache.getAdvancedCache().getCacheEntry(ENTRIES - 1);
-      assertEquals(20 * 60 * 1000, entry.getLifespan());
-      assertEquals(30 * 60 * 1000, entry.getMaxIdle());
+      assertEquals(30 * 60 * 1000, entry.getLifespan());
+      assertEquals(20 * 60 * 1000, entry.getMaxIdle());
 
    }
 

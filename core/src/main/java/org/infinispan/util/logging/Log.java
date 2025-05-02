@@ -2393,4 +2393,9 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Max idle value must be less than lifespan when configured. Max idle value is %s and lifespan is %s", id = 705)
    CacheConfigurationException maxIdleGreaterThanOrEqualLifespan(String maxIdle, String lifespan);
+
+   @Once
+   @LogMessage(level = DEBUG)
+   @Message(value = "Runtime encountered entry with max idle %d ms being greater or equal to lifespan %d ms, ignoring max idle", id = 706)
+   void maxIdleGreaterThanOrEqualLifespanRuntime(long maxIdle, long lifespan);
 }

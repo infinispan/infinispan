@@ -518,14 +518,14 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
          long startMillis = System.currentTimeMillis();
          long lifespanMillis = TimeUnit.MINUTES.toMillis(1);
          int expirationUnixTime = (int) ((startMillis + lifespanMillis) / 1000);
-         assertStatus(client2x.put(k(m), expirationUnixTime, expirationUnixTime, v(m)), Success);
+         assertStatus(client2x.put(k(m), expirationUnixTime + 1, expirationUnixTime, v(m)), Success);
 
          CacheEntry<byte[], byte[]> entry = advancedCache.withStorageMediaType().getCacheEntry(k(m));
          // The lifespan is set to expirationUnixTime * 1000 - <current time on the server>
          long endMillis = System.currentTimeMillis();
          long lowerBound = expirationUnixTime * 1000L - endMillis;
          long upperBound = expirationUnixTime * 1000L - startMillis;
-         assertBetween(lowerBound, upperBound, entry.getLifespan());
+         assertBetween(lowerBound + 1000, upperBound + 1000, entry.getLifespan());
          assertBetween(lowerBound, upperBound, entry.getMaxIdle());
       }
    }
@@ -534,11 +534,11 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
       try (HotRodClient client3x = connectClient(HotRodVersion.HOTROD_30.getVersion())) {
          // Set a lifespan that would be interpreted as seconds since the Unix epoch in previous versions
          int expirationSeconds = (int) TimeUnit.DAYS.toSeconds(90);
-         assertStatus(client3x.put(k(m), expirationSeconds, expirationSeconds, v(m)), Success);
+         assertStatus(client3x.put(k(m), expirationSeconds + 1, expirationSeconds, v(m)), Success);
 
          CacheEntry<byte[], byte[]> entry = advancedCache.withStorageMediaType().getCacheEntry(k(m));
          // The lifespan is interpreted as seconds since inserted, not since the Unix epoch
-         assertEquals(expirationSeconds * 1000L, entry.getLifespan());
+         assertEquals(expirationSeconds * 1000L + 1000, entry.getLifespan());
          assertEquals(expirationSeconds * 1000L, entry.getMaxIdle());
       }
    }

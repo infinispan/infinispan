@@ -64,7 +64,7 @@ public class HotRodUpgradeWithStoreTest extends AbstractInfinispanTest {
       RemoteCache<String, String> targetRemoteCache = targetCluster.getRemoteCache(CACHE_NAME);
 
       IntStream.rangeClosed(1, INITIAL_NUM_ENTRIES).boxed().map(String::valueOf)
-            .forEach(s -> sourceRemoteCache.put(s, s, 10, TimeUnit.MINUTES, 30, TimeUnit.MINUTES));
+            .forEach(s -> sourceRemoteCache.put(s, s, 30, TimeUnit.MINUTES, 10, TimeUnit.MINUTES));
 
       // Check data is persisted in the source cluster
       assertEquals(INITIAL_NUM_ENTRIES, storeWrites(sourceCluster));
@@ -73,10 +73,10 @@ public class HotRodUpgradeWithStoreTest extends AbstractInfinispanTest {
       assertEquals("4", targetRemoteCache.get("4"));
 
       // Change data from the target cluster and check it propagates to the source cluster's store
-      targetRemoteCache.put("8", "changed", 10, TimeUnit.MINUTES, 30, TimeUnit.MINUTES);
+      targetRemoteCache.put("8", "changed", 30, TimeUnit.MINUTES, 10, TimeUnit.MINUTES);
       targetRemoteCache.remove("5");
       targetRemoteCache.remove("1");
-      targetRemoteCache.put("new key", "new value", 10, TimeUnit.MINUTES, 30, TimeUnit.MINUTES);
+      targetRemoteCache.put("new key", "new value", 30, TimeUnit.MINUTES, 10, TimeUnit.MINUTES);
       assertEquals(INITIAL_NUM_ENTRIES - 1, storeSize(sourceCluster));
       assertEquals(INITIAL_NUM_ENTRIES + 2, storeWrites(sourceCluster));
 
@@ -92,8 +92,8 @@ public class HotRodUpgradeWithStoreTest extends AbstractInfinispanTest {
       assertEquals(sourceCluster.getEmbeddedCache(CACHE_NAME).size(), targetCluster.getEmbeddedCache(CACHE_NAME).size());
 
       MetadataValue<String> metadataValue = targetRemoteCache.getWithMetadata("10");
-      assertEquals(10 * 60, metadataValue.getLifespan());
-      assertEquals(30 * 60, metadataValue.getMaxIdle());
+      assertEquals(30 * 60, metadataValue.getLifespan());
+      assertEquals(10 * 60, metadataValue.getMaxIdle());
 
       // Verify data correctly migrated
       assertFalse(targetRemoteCache.containsKey("5"));

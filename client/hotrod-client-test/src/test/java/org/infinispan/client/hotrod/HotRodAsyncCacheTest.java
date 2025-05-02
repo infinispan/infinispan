@@ -42,7 +42,7 @@ public class HotRodAsyncCacheTest<K, V> extends AbstractAsyncCacheSingleServerTe
 
       final CacheWriteOptions options = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(15))
-            .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
+            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(20))
             .build();
       assertEntry(key, null, kvGenerator, await(cache.put(key, v1, options)));
       kvGenerator.assertValueEquals(v1, await(cache.get(key)));
@@ -50,7 +50,7 @@ public class HotRodAsyncCacheTest<K, V> extends AbstractAsyncCacheSingleServerTe
 
       CacheWriteOptions optionsV1 = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(20))
-            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(30))
+            .lifespanAndMaxIdle(Duration.ofSeconds(30), Duration.ofSeconds(25))
             .build();
       final V v2 = kvGenerator.generateValue(cacheName, 1);
       assertEntry(key, v1, kvGenerator, await(cache.put(key, v2, optionsV1)), options);
@@ -65,7 +65,7 @@ public class HotRodAsyncCacheTest<K, V> extends AbstractAsyncCacheSingleServerTe
 
       final CacheWriteOptions options = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(15))
-            .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
+            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(20))
             .build();
       assertAwaitEquals(null, cache.putIfAbsent(key, v1, options));
       assertEntry(key, v1, kvGenerator, await(cache.getEntry(key)), options);
@@ -87,7 +87,7 @@ public class HotRodAsyncCacheTest<K, V> extends AbstractAsyncCacheSingleServerTe
 
       CacheWriteOptions options = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(15))
-            .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
+            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(20))
             .build();
       assertAwaitEquals(true, cache.setIfAbsent(key, value, options));
       assertEntry(key, value, kvGenerator, await(cache.getEntry(key)), options);
@@ -109,14 +109,14 @@ public class HotRodAsyncCacheTest<K, V> extends AbstractAsyncCacheSingleServerTe
 
       final CacheWriteOptions options = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(15))
-            .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
+            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(20))
             .build();
       await(cache.set(key, v1, options));
       assertEntry(key, v1, kvGenerator, await(cache.getEntry(key)), options);
 
       final CacheWriteOptions optionsV2 = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(20))
-            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(30))
+            .lifespanAndMaxIdle(Duration.ofSeconds(30), Duration.ofSeconds(25))
             .build();
       final V v2 = kvGenerator.generateValue(cacheName, 1);
       await(cache.set(key, v2, optionsV2));
@@ -133,7 +133,7 @@ public class HotRodAsyncCacheTest<K, V> extends AbstractAsyncCacheSingleServerTe
       final V value = kvGenerator.generateValue(cacheName, 0);
       final CacheWriteOptions options = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(15))
-            .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
+            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(20))
             .build();
       assertEntry(key, null, kvGenerator, await(cache.put(key, value, options)));
 
@@ -155,7 +155,7 @@ public class HotRodAsyncCacheTest<K, V> extends AbstractAsyncCacheSingleServerTe
 
       final CacheWriteOptions options = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(15))
-            .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
+            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(20))
             .build();
       await(cache.putAll(entries, options));
 
@@ -181,7 +181,7 @@ public class HotRodAsyncCacheTest<K, V> extends AbstractAsyncCacheSingleServerTe
 
       final CacheWriteOptions options = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(15))
-            .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
+            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(20))
             .build();
       await(cache.putAll(entries, options));
 
@@ -206,7 +206,7 @@ public class HotRodAsyncCacheTest<K, V> extends AbstractAsyncCacheSingleServerTe
       SubmissionPublisher<CacheEntry<K, V>> entriesPublisher = new SubmissionPublisher<>();
       final CacheWriteOptions options = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(15))
-            .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
+            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(20))
             .build();
       CompletionStage<Void> putAll = cache.putAll(entriesPublisher, options);
 
@@ -249,7 +249,7 @@ public class HotRodAsyncCacheTest<K, V> extends AbstractAsyncCacheSingleServerTe
       final V initialValue = kvGenerator.generateValue(cacheName, 0);
       final CacheWriteOptions options = CacheWriteOptions.writeOptions()
             .timeout(Duration.ofSeconds(15))
-            .lifespanAndMaxIdle(Duration.ofSeconds(20), Duration.ofSeconds(25))
+            .lifespanAndMaxIdle(Duration.ofSeconds(25), Duration.ofSeconds(20))
             .build();
 
       // Returns false for a nonexistent entry.
