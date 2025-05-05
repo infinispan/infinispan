@@ -2833,9 +2833,6 @@
                   <configuration>
                      <propertyName>jacoco.agent.argLine</propertyName>
                      <destFile>${dir.jacoco}/${project.artifactId}.exec</destFile>
-                     <excludes>
-                        <exclude>**/logging/**</exclude>
-                     </excludes>
                   </configuration>
                </plugin>
                <!-- Overriding surefire configuration, for attaching jacoco agent to command line. -->
@@ -3053,6 +3050,9 @@
                      <outputDirectory>${dir.jacoco.report}</outputDirectory>
                      <excludes>
                         <exclude>**/logging/**</exclude>
+                        <exclude>org/infinispan/cli/benchmark/jmh_generated/**</exclude>
+                        <exclude>org/infinispan/objectfilter/impl/ql/parse/**</exclude>
+                        <exclude>org/infinispan/server/hotrod/HotRodDecoder.class</exclude>
                      </excludes>
                   </configuration>
                </plugin>

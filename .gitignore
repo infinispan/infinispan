@@ -44,3 +44,4 @@ classes
 .idea
 # recording files
 *.jfr
+jacoco
