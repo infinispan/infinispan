@@ -1381,6 +1381,16 @@
             <version>${versionx.org.jboss.spec.jboss-jakartaee-8.0}</version>
             <type>pom</type>
             <scope>test</scope>
+            <exclusions>
+               <exclusion>
+                  <groupId>org.apache.taglibs</groupId>
+                  <artifactId>taglibs-standard-spec</artifactId>
+               </exclusion>
+               <exclusion>
+                  <groupId>org.apache.taglibs</groupId>
+                  <artifactId>taglibs-standard-impl</artifactId>
+               </exclusion>
+            </exclusions>
          </dependency>
          <dependency>
             <groupId>org.jboss.spec.javax.ejb</groupId>

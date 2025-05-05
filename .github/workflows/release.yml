@@ -1,66 +1,84 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - '*'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "The Infinispan branch to checkout when cutting the release."
+        required: true
+        default: "main"
+      version:
+        description: "Release version"
+        required: true
+      nextVersion:
+        description: "Next version"
+        required: true
 
 jobs:
   release:
     runs-on: ubuntu-latest
 
-    outputs:
-      images: ${{ steps.images.outputs.images }}
-      upload_url: ${{ steps.release.outputs.upload_url }}
-
     steps:
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '24'
+          distribution: 'temurin'
+          server-id: central
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+          gpg-private-key: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
       - name: Checkout Source
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
 
-      - id: images
+      - name: Configure Git User
         run: |
-          BRANCH=${{ github.ref_name }}
-          MAJOR=${BRANCH%.*.*.*}
-          [ "${MAJOR}" -ge "15" ] && echo "images=true" >> ${GITHUB_OUTPUT} || true
+          git config user.email "infinispan@infinispan.org"
+          git config user.name "Infinispan"
 
-      - id: release
-        name: Create Release
-        uses: actions/create-release@v1
+      - name: Update proto.lock files
+        run: |
+          mvn -B clean install -DskipTests -DcommitProtoLockChanges=true -Dcheckstyle.skip
+
+      - name: Set release version
+        run: |
+          mvn -B versions:set -DprocessAllModules=true -DnewVersion=${{ github.event.inputs.version }}
+          mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ github.event.inputs.version }}
+          sed -i "s/^:ispn_version:.*\$/:ispn_version: ${{ github.event.inputs.version }}/" documentation/src/main/asciidoc/topics/attributes/community-attributes.adoc
+          git commit --no-verify -a -m "Releasing ${{ github.event.inputs.version }}"
+
+      - name: Publish to Central
+        run: mvn -B -Drelease-mode=upstream -Pdistribution -Pcommunity-release -DskipTests clean deploy -Dinfinispan.brand.version=${{ github.event.inputs.version }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{github.ref_name}}
-          release_name: ${{github.ref_name}}
-          prerelease: ${{ !contains(github.ref_name, '.Final') }}
+          MAVEN_USERNAME: ${{ secrets.SONATYPE_CENTRAL_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.SONATYPE_CENTRAL_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}
 
-  images:
-    needs: release
-    if: needs.release.outputs.images == 'true'
-    uses: infinispan/infinispan-images/.github/workflows/release.yml@main
-    secrets: inherit
-    with:
-      branch: 15.0.x
-      repository: infinispan/infinispan-images
-      ispnVersion: ${{ github.ref_name }}
-      latest: false
-      images: "server, cli"
+      - name: Tag Release
+        run: |
+          git tag -a ${{ github.event.inputs.version }} -m ${{ github.event.inputs.version }} 
 
-  server-upload:
-    needs: release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download Server
-        run: wget https://downloads.jboss.org/infinispan/${{github.ref_name}}/infinispan-server-${{github.ref_name}}.zip
+      - name: Next Version
+        run: |
+          mvn -B versions:set -DprocessAllModules=true -DnewVersion=${{ github.event.inputs.nextVersion }}
+          mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${{ github.event.inputs.nextVersion }}
+          git commit --no-verify -a -m "Next version ${{ github.event.inputs.nextVersion }}"
 
-      - name: Upload Server to Release
-        uses: actions/upload-release-asset@v1
+      - name: Push changes
+        run: |
+          git push --tags origin ${{ github.event.inputs.branch }}
+
+      - name: Create Release
+        run: |
+          gh release create ${{ github.event.inputs.version }} --generate-notes
+          gh release upload ${{ github.event.inputs.version }} distribution/target/distribution/infinispan-server-${{ github.event.inputs.version }}.zip
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url:  ${{ needs.release.outputs.upload_url }}
-          asset_path: infinispan-server-${{github.ref_name}}.zip
-          asset_name: infinispan-server-${{github.ref_name}}.zip
-          asset_content_type: application/zip
+          GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
 
   native-cli:
     needs: release
@@ -68,17 +86,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-2022]
+        os: [ubuntu-latest, macos-latest, windows-2022, ubuntu-24.04-arm]
         include:
           - os: ubuntu-latest
-            asset_name: linux-amd64
+            asset_name: linux-x86_64
             gu_binary: gu
           - os: macos-latest
-            asset_name: darwin-amd64
+            asset_name: osx-aarch_64
             gu_binary: gu
           - os: windows-2022
-            asset_name: windows-amd64
+            asset_name: windows-x86_64
             gu_binary: gu.cmd
+          - os: ubuntu-24.04-arm
+            asset_name: linux-aarch_64
+            gu_binary: gu
     steps:
       - uses: actions/checkout@v4
 
@@ -94,32 +115,40 @@ jobs:
 
       - name: Checkout Release Tag
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
 
       - if: ${{ matrix.os == 'windows-2022' }}
         name: Build native executable
         run: |
           call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
-          mvnw.cmd package -s maven-settings.xml -Pdistribution -Pwindows -Pnative -am -pl quarkus/cli
+          mvnw.cmd package -Pdistribution -Pwindows -Pnative -am -pl quarkus/cli
         shell: cmd
 
       - if: ${{ matrix.os != 'windows-2022' }}
         name: Build native executable
-        run: ./mvnw package -s maven-settings.xml -Pdistribution -Pnative -am -pl quarkus/cli
+        run: ./mvnw package -Pdistribution -Pnative -am -pl quarkus/cli
 
       - name: Upload CLI native executable
         id: upload-cli-native-executable
-        uses: actions/upload-release-asset@v1
+        run: |
+          gh release upload ${{ github.event.inputs.version }} quarkus/cli/target/infinispan-cli-${{ github.event.inputs.version }}-${{ matrix.asset_name }}.zip
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url:  ${{ needs.release.outputs.upload_url }}
-          asset_path: ./quarkus/cli/target/infinispan-cli-${{github.ref_name}}.zip
-          asset_name: infinispan-cli-${{github.ref_name}}-${{ matrix.asset_name }}.zip
-          asset_content_type: application/zip
+          GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+
+  images:
+    needs: release
+    uses: infinispan/infinispan-images/.github/workflows/release.yml@main
+    secrets: inherit
+    with:
+      branch: main
+      repository: infinispan/infinispan-images
+      ispnVersion: ${{ github.event.inputs.version }}
+      latest: false
 
   operator:
     needs: images
-    if: contains(github.ref_name, '.Final')
+    if: contains(github.event.inputs.version, '.Final')
     uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@main
     secrets: inherit
     with:
