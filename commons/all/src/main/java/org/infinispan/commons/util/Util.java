@@ -39,7 +39,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
@@ -227,8 +226,8 @@ public final class Util {
 
    /**
     * Instantiates a class by invoking the constructor that matches the provided parameter types passing the given
-    * arguments. If no matching constructor is found this will return null. Note that the constructor must be public.
-        * Any exceptions encountered are wrapped in a {@link CacheConfigurationException} and rethrown.
+    * arguments. If no matching constructor is found, this will return null. Note that the constructor must be public.
+    * Any exceptions encountered are wrapped in a {@link CacheConfigurationException} and rethrown.
     *
     * @param clazz class to instantiate
     * @param <T>   the instance type
@@ -241,16 +240,13 @@ public final class Util {
       }
       try {
          Constructor<T> constructor = clazz.getDeclaredConstructor(parameterTypes);
-
-         if (constructor != null) {
-            return constructor.newInstance(arguments);
-         }
-
-      } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+         return constructor.newInstance(arguments);
+      } catch (NoSuchMethodException e) {
+         return null;
+      } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
          throw new CacheConfigurationException("Unable to instantiate class '" + clazz.getName() + "' with constructor " +
                "taking parameters " + Arrays.toString(arguments), e);
       }
-      return null;
    }
 
    /**
@@ -299,8 +295,7 @@ public final class Util {
     * Instantiates a class based on the class name provided.  Instantiation is attempted via an appropriate, static
     * factory method named <code>getInstance()</code> first, and failing the existence of an appropriate factory, falls back
     * to an empty constructor.
-        * Any exceptions encountered loading and instantiating the class is wrapped in a
-    * {@link CacheConfigurationException}.
+    * Any exceptions encountered loading and instantiating the class are wrapped in a {@link CacheConfigurationException}.
     *
     * @param classname class to instantiate
     * @return an instance of classname
@@ -316,11 +311,11 @@ public final class Util {
     *
     * @param classname class to instantiate
     * @return an instance of classname
-    * @throws ClassNotFoundException
-    * @throws InstantiationException
-    * @throws IllegalAccessException
-    * @throws NoSuchMethodException
-    * @throws InvocationTargetException
+    * @throws ClassNotFoundException if the class cannot be loaded
+    * @throws InstantiationException if the class cannot be instantiated
+    * @throws IllegalAccessException if the class cannot be accessed
+    * @throws NoSuchMethodException if the class does not have a static <code>getInstance()</code> method
+    * @throws InvocationTargetException if the class cannot be instantiated
     */
    public static <T> T getInstanceStrict(String classname, ClassLoader cl) throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
       if (classname == null) throw new IllegalArgumentException("Cannot load null class!");
@@ -680,17 +675,6 @@ public final class Util {
       return hashFct.hash(object) & Integer.MAX_VALUE;
    }
 
-   /**
-    * Returns the size of each segment, given a number of segments. This assumes
-    * a 32 bit hash is used and we ignore the most significant bit.
-    *
-    * @param numSegments number of segments required
-    * @return the size of each segment
-    */
-   public static int getSegmentSize(int numSegments) {
-      return (int) Math.ceil((double) (1L << 31) / numSegments);
-   }
-
    public static int getSegmentSize(Hash hash, int numSegments) {
       return getSegmentSize(hash.maxHashBits(), numSegments);
    }
@@ -718,22 +702,6 @@ public final class Util {
       return (n & (n - 1)) == 0;
    }
 
-   public static String join(List<String> strings, String separator) {
-      StringBuilder sb = new StringBuilder();
-      boolean first = true;
-
-      for (String string : strings) {
-         if (!first) {
-            sb.append(separator);
-         } else {
-            first = false;
-         }
-         sb.append(string);
-      }
-
-      return sb.toString();
-   }
-
    /**
     * Returns a number such that the number is a power of two that is equal to, or greater than, the number passed in as
     * an argument.  The smallest number returned will be 1. Due to having to be a power of two, the highest int this can
@@ -747,22 +715,6 @@ public final class Util {
       }
       int highestBit = Integer.highestOneBit(num);
       return num <= highestBit ? highestBit : highestBit << 1;
-   }
-
-   /**
-    * A function that calculates hash code of a byte array based on its contents but using the given size parameter as
-    * deliminator for the content.
-    */
-   public static int hashCode(byte[] bytes, int size) {
-      int contentLimit = size;
-      if (size > bytes.length)
-         contentLimit = bytes.length;
-
-      int hashCode = 1;
-      for (int i = 0; i < contentLimit; i++)
-         hashCode = 31 * hashCode + bytes[i];
-
-      return hashCode;
    }
 
    /**
@@ -1030,11 +982,6 @@ public final class Util {
       } catch (ClassNotFoundException e) {
          return null;
       }
-   }
-
-   // TODO: Replace with Objects.requireNonNullElse(T obj, T defaultObj) when upgrading to JDK 9+
-   public static <T> T requireNonNullElse(T obj, T defaultObj) {
-      return (obj != null) ? obj : Objects.requireNonNull(defaultObj, "defaultObj");
    }
 
    public static void longToBytes(long val, byte[] array, int offset) {

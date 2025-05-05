@@ -31,7 +31,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 
 /**
@@ -294,8 +293,8 @@ public class PatchTool {
 
    private List<PatchInfo> getInstalledPatches(Path target) {
       Path patchesFile = target.resolve(PATCHES_DIR).resolve(PATCHES_FILE);
-      try (InputStream is = Files.newInputStream(patchesFile, StandardOpenOption.READ)) {
-         Json read = Json.read(Util.read(is));
+      try {
+         Json read = Json.read(Files.readString(patchesFile));
          return read.asJsonList().stream().map(PatchInfo::fromJson).collect(Collectors.toList());
       } catch (NoSuchFileException e) {
          return new ArrayList<>();
@@ -394,13 +393,11 @@ public class PatchTool {
    private List<PatchInfo> getPatchInfos(FileSystem zipfs) throws IOException {
       List<Path> paths = Files.find(zipfs.getPath("/"), 1,
             (p, a) -> a.isRegularFile() && p.getFileName().toString().startsWith("patch-") && p.getFileName().toString().endsWith(".json")
-      ).collect(Collectors.toList());
+      ).toList();
       List<PatchInfo> infos = new ArrayList<>(paths.size());
       for (Path path : paths) {
-         try (InputStream is = Files.newInputStream(path, StandardOpenOption.READ)) {
-            Json json = Json.read(Util.read(is));
-            infos.add(PatchInfo.fromJson(json));
-         }
+         Json json = Json.read(Files.readString(path));
+         infos.add(PatchInfo.fromJson(json));
       }
       return infos;
    }
