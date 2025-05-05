@@ -1,7 +1,5 @@
 package org.infinispan.commons.tx;
 
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -15,9 +13,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A {@link Xid} implementation.
- * <p>
- * If need to be serialized, use the methods {@link #writeTo(ObjectOutput, XidImpl)} and {@link #readFrom(ObjectInput)}
- * or the {@link AdvancedExternalizer} in {@link #EXTERNALIZER}.
  *
  * @author Pedro Ruivo
  * @since 9.1

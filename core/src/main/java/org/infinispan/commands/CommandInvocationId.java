@@ -1,7 +1,5 @@
 package org.infinispan.commands;
 
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -13,13 +11,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 /**
- * Represents an unique identified for non-transaction write commands.
- * <p>
+ * Represents a unique identifier for non-transaction write commands.
  * It is used to lock the key for a specific command.
- * <p>
- * This class is final to prevent issues as it is usually not marshalled
- * as polymorphic object but directly using {@link #writeTo(ObjectOutput, CommandInvocationId)}
- * and {@link #readFrom(ObjectInput)}.
  *
  * @author Pedro Ruivo
  * @since 8.0

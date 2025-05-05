@@ -21,7 +21,7 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * A wrapper for arrays of objects whose type is unknown until runtime. This is equivalent to utilising a
- * <code>MarshallableObject[]</code> without the overhead of creating a {@link MarshallableObject} per
+ * <code>Object[]</code> without the overhead of creating a {@link MarshallableObject} per
  * element.
  *
  * @author Ryan Emerson

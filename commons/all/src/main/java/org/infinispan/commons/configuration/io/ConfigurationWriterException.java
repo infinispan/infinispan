@@ -1,6 +1,8 @@
 package org.infinispan.commons.configuration.io;
 
 /**
+ * ConfigurationWriterException.
+ *
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.1
  **/

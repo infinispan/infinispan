@@ -2,46 +2,6 @@ package org.infinispan.tools.store.migrator.marshaller.common;
 
 import java.util.Set;
 
-/**
- * {@link AdvancedExternalizer} provides an alternative way to provide
- * externalizers for marshalling/unmarshalling user defined classes that
- * overcome the deficiencies of the more user-friendly externalizer definition
- * model explained in {@link Externalizer}.
- *
- * The first noticeable difference is that this method does not require user
- * classes to be annotated in anyway, so it can be used with classes for which
- * source code is not available or that cannot be modified. The bound between
- * the externalizer and the classes that are marshalled/unmarshalled is set by
- * providing an implementation for {@link #getTypeClasses()} which should
- * return the list of classes that this externalizer can marshall.
- *
- * Secondly, in order to save the maximum amount of space possible in the
- * payloads generated, this externalizer method requires externalizer
- * implementations to provide a positive identified via {@link #getId()}
- * implementations or via XML/programmatic configuration that identifies the
- * externalizer when unmarshalling a payload.  In order for this to work
- * however, this externalizer method requires externalizers to be registered
- * on cache manager creation time via XML or programmatic configuration. On
- * the contrary, externalizers based on {@link Externalizer} and
- * {@link SerializeWith} require no pre-registration whatsoever.
- *
- * Internally, Infinispan uses this advanced externalizer mechanism in order
- * to marshall/unmarshall internal classes.
- *
- * Finally, {@link AbstractExternalizer} provides default implementations for
- * some of the methods defined in this interface and so it's generally
- * recommended that implementations extend that abstract class instead of
- * implementing {@link AdvancedExternalizer} directly.
- *
- * Even though {@link AdvancedExternalizer} currently extends
- * {@link java.io.Serializable} indirectly, there's no requirement for the
- * advanced externalizer to be marshalled, because the pre-registration done
- * on startup allows the marshaller to identify the externalizer from the
- * given id.
- *
- * @author Galder Zamarreño
- * @since 5.0
- */
 public interface AdvancedExternalizer<T> extends Externalizer<T> {
 
    /**

@@ -12,7 +12,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A wrapper for a {@link Deque} of objects whose type is unknown until runtime. This is equivalent to utilising a
- * <code>Deque<MarshallableObject></code> without the overhead of creating a {@link MarshallableObject} per
+ * <code>Deque</code> without the overhead of creating a {@link MarshallableObject} per
  * entry.
  *
  * @author Ryan Emerson
