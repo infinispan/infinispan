@@ -76,17 +76,17 @@ import org.infinispan.util.logging.LogFactory;
  * It is implemented based on the Triangle algorithm.
  * <p>
  * The {@link GetKeyValueCommand} reads the value locally if it is available (the node is an owner or the value is
- * stored in L1). If it isn't available, a remote request is made. The {@link DataWriteCommand} is performed as follow:
+ * stored in L1). If it isn't available, a remote request is made. The {@link DataWriteCommand} is performed as follows:
  * <ul> <li>The command if forwarded to the primary owner of the key.</li> <li>The primary owner locks the key and
  * executes the operation; sends the {@link BackupWriteCommand} to the backup owners; releases the lock; sends the
  * {@link SuccessfulResponse} or {@link UnsuccessfulResponse} back to the originator.</li>
  * <li>The backup owner applies the update and sends a {@link
- * BackupAckCommand} back to the originator.</li> <li>The originator collects the ack from all the owners and
+ * BackupMultiKeyAckCommand} back to the originator.</li> <li>The originator collects the ack from all the owners and
  * returns.</li> </ul> The {@link PutMapCommand} is performed in a similar way: <ul> <li>The subset of the map is split
- * by primary owner.</li> <li>The primary owner locks the key and executes the command; splits the keys by backup owner
+ * by the primary owner.</li> <li>The primary owner locks the key and executes the command; splits the keys by backup owner
  * and send them; and replies to the originator.</li> <li>The backup owner applies the update and sends back the {@link
- * BackupMultiKeyAckCommand} to the originator.</li> <li>The originator collects all the acknowledges from all owners
- * and returns.</li> </ul> The acknowledges management is done by the {@link CommandAckCollector}.
+ * BackupMultiKeyAckCommand} to the originator.</li> <li>The originator collects all the acknowledgements from all owners
+ * and returns.</li> </ul> The acknowledgement management is done by the {@link CommandAckCollector}.
  * <p>
  * If a topology changes while a command is executed, an {@link OutdatedTopologyException} is thrown. The {@link
  * StateTransferInterceptor} will catch it and retries the command.

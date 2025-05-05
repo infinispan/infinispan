@@ -24,7 +24,7 @@ import org.infinispan.protostream.descriptors.WireType;
  * as that exclusively utilises the user marshaller.
  * <p>
  * A good example of when this class is required, is for the marshalling of {@link Metadata} implementations. We utilise
- * many internal implementations, which always have a ProtoStream marshaller available, however it's also possible for
+ * many internal implementations, which always have a ProtoStream marshaller available; however, it's also possible for
  * users to provide custom implementations which must be handled by the configured user marshaller.
  *
  * @author Ryan Emerson

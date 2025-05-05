@@ -12,7 +12,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A wrapper for a {@link Set} of objects whose type is unknown until runtime. This is equivalent to utilising a
- * <code>Set<MarshallableObject></code> without the overhead of creating a {@link MarshallableObject} per
+ * <code>Set</code> without the overhead of creating a {@link MarshallableObject} per
  * entry.
  *
  * @author Ryan Emerson
