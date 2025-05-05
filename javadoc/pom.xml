@@ -13,6 +13,7 @@
 
    <properties>
       <javadoc.outputDirectory>${project.build.directory}</javadoc.outputDirectory>
+      <skipCentralPublish>true</skipCentralPublish>
    </properties>
 
    <dependencies>
@@ -351,23 +352,4 @@
          </plugin>
       </plugins>
    </build>
-
-   <profiles>
-      <profile>
-         <id>nexus-staging</id>
-         <activation>
-            <property><name>!skipNexusStaging</name></property>
-         </activation>
-         <build>
-            <plugins>
-               <plugin>
-                  <artifactId>maven-deploy-plugin</artifactId>
-                  <configuration>
-                     <skip>true</skip>
-                  </configuration>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-   </profiles>
 </project>
