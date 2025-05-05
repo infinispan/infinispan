@@ -1,5 +1,7 @@
 package org.infinispan.commons.configuration.attributes;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -8,11 +10,19 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.File;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.nio.file.FileVisitOption;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.util.TypedProperties;
 import org.junit.Test;
@@ -20,7 +30,7 @@ import org.junit.Test;
 public class AttributeTest {
    @Test
    public void testAttributeDefinitionType() {
-      AttributeDefinition<Long> def = AttributeDefinition.builder("long", 10l).build();
+      AttributeDefinition<Long> def = AttributeDefinition.builder("long", 10L).build();
       assertEquals(Long.class, def.getType());
 
       AttributeDefinition<String> def2 = AttributeDefinition.builder("string", null, String.class).build();
@@ -112,7 +122,7 @@ public class AttributeTest {
       AttributeSet set2 = new AttributeSet("set", def);
       set2.read(set1, Combine.DEFAULT);
       assertEquals(set1.attribute(def).get(), set2.attribute(def).get());
-      assertFalse(set1.attribute(def).get() == set2.attribute(def).get());
+      assertNotSame(set1.attribute(def).get(), set2.attribute(def).get());
    }
 
    @Test
@@ -166,6 +176,70 @@ public class AttributeTest {
 
    @Test
    public void testAttributeFromString() {
+      AttributeDefinition<Character> charAttrDef = AttributeDefinition.builder("char", 'c').build();
+      Attribute<Character> characterAttr = new Attribute<>(charAttrDef);
+      characterAttr.fromString("a");
+      assertEquals('a', characterAttr.get().charValue());
+      assertThatThrownBy(() -> characterAttr.fromString("ab")).isInstanceOf(IllegalArgumentException.class);
+
+      AttributeDefinition<char[]> charArrayAttrDef = AttributeDefinition.builder("chararray", new char[]{}).build();
+      Attribute<char[]> charArrayAttr = new Attribute<>(charArrayAttrDef);
+      charArrayAttr.fromString("abc");
+      assertArrayEquals(new char[]{'a', 'b', 'c'}, charArrayAttr.get());
+
+      AttributeDefinition<Byte> byteAttrDef = AttributeDefinition.builder("byte", (byte) 0).build();
+      Attribute<Byte> byteAttr = new Attribute<>(byteAttrDef);
+      byteAttr.fromString("5");
+      assertEquals(5, byteAttr.get().byteValue());
+
+      AttributeDefinition<Short> shortAttrDef = AttributeDefinition.builder("short", (short) 0).build();
+      Attribute<Short> shortAttr = new Attribute<>(shortAttrDef);
+      shortAttr.fromString("5");
+      assertEquals(5, shortAttr.get().shortValue());
+
+      AttributeDefinition<String> stringAttrDef = AttributeDefinition.builder("string", "").build();
+      Attribute<String> stringAttr = new Attribute<>(stringAttrDef);
+      stringAttr.fromString("a");
+      assertEquals("a", stringAttr.get());
+
+      AttributeDefinition<Integer> integerAttrDef = AttributeDefinition.builder("integer", 0).build();
+      Attribute<Integer> integerAttr = new Attribute<>(integerAttrDef);
+      integerAttr.fromString("1");
+      assertEquals(1, integerAttr.get().intValue());
+
+      AttributeDefinition<Long> longAttrDef = AttributeDefinition.builder("long", 0L).build();
+      Attribute<Long> longAttr = new Attribute<>(longAttrDef);
+      longAttr.fromString("1");
+      assertEquals(1L, longAttr.get().longValue());
+
+      AttributeDefinition<Float> floatAttrDef = AttributeDefinition.builder("float", 0F).build();
+      Attribute<Float> floatAttr = new Attribute<>(floatAttrDef);
+      floatAttr.fromString("0.1");
+      assertEquals(0.1F, floatAttr.get(), 0.000001F);
+
+      AttributeDefinition<Double> doubleAttrDef = AttributeDefinition.builder("double", 0D).build();
+      Attribute<Double> doubleAttr = new Attribute<>(doubleAttrDef);
+      doubleAttr.fromString("0.1");
+      assertEquals(0.1D, doubleAttr.get(), 0.000001D);
+
+      AttributeDefinition<Boolean> booleanAttrDef = AttributeDefinition.builder("boolean", false).build();
+      Attribute<Boolean> booleanAttr = new Attribute<>(booleanAttrDef);
+      booleanAttr.fromString("true");
+      assertTrue(booleanAttr.get());
+      booleanAttr.fromString("false");
+      assertFalse(booleanAttr.get());
+      assertThatThrownBy(() -> booleanAttr.fromString("blah")).isInstanceOf(IllegalArgumentException.class).hasMessage("ISPN000955: 'blah' is not a valid boolean value (true|false|yes|no|y|n|on|off)");
+
+      AttributeDefinition<BigDecimal> bigDecimalAttrDef = AttributeDefinition.builder("bigdecimal", new BigDecimal(0)).build();
+      Attribute<BigDecimal> bigDecimalAttr = new Attribute<>(bigDecimalAttrDef);
+      bigDecimalAttr.fromString("0.1");
+      assertEquals(BigDecimal.valueOf(0.1), bigDecimalAttr.get());
+
+      AttributeDefinition<BigInteger> bigIntegerAttrDef = AttributeDefinition.builder("biginteger", BigInteger.valueOf(0)).build();
+      Attribute<BigInteger> bigIntegerAttr = new Attribute<>(bigIntegerAttrDef);
+      bigIntegerAttr.fromString("100");
+      assertEquals(BigInteger.valueOf(100), bigIntegerAttr.get());
+
       AttributeDefinition<String[]> stringArrayDef = AttributeDefinition.builder("stringArray", new String[]{}).build();
       Attribute<String[]> stringArray = new Attribute<>(stringArrayDef);
       stringArray.fromString("a b c");
@@ -174,6 +248,47 @@ public class AttributeTest {
       assertArrayEquals(new String[]{"d"}, stringArray.get());
       stringArray.fromString("");
       assertArrayEquals(new String[]{}, stringArray.get());
+
+      AttributeDefinition<List<String>> listAttrDef = AttributeDefinition.builder("list", Collections.emptyList(), (Class<List<String>>) (Class<?>) List.class).build();
+      Attribute<List<String>> listAttr = new Attribute<>(listAttrDef);
+      listAttr.fromString("a b c");
+      assertEquals(Arrays.asList("a", "b", "c"), listAttr.get());
+      listAttr.fromString("d");
+      assertEquals(List.of("d"), listAttr.get());
+      listAttr.fromString("");
+      assertEquals(Collections.emptyList(), listAttr.get());
+
+      AttributeDefinition<Set<String>> setAttrDef = AttributeDefinition.builder("set", Collections.emptySet(), (Class<Set<String>>) (Class<?>) Set.class).build();
+      Attribute<Set<String>> setAttr = new Attribute<>(setAttrDef);
+      setAttr.fromString("a b c");
+      assertEquals(Set.of("a", "b", "c"), setAttr.get());
+      setAttr.fromString("d");
+      assertEquals(Set.of("d"), setAttr.get());
+      setAttr.fromString("");
+      assertEquals(Collections.emptySet(), setAttr.get());
+
+      AttributeDefinition<File> fileAttrDef = AttributeDefinition.builder("file", null, File.class).build();
+      Attribute<File> fileAttr = new Attribute<>(fileAttrDef);
+      fileAttr.fromString("/home/user/tmp/test.txt");
+      assertEquals(new File("/home/user/tmp/test.txt"), fileAttr.get());
+
+      AttributeDefinition<Properties> propertiesAttrDef = AttributeDefinition.builder("properties", new Properties(), Properties.class).build();
+      Attribute<Properties> propertiesAttr = new Attribute<>(propertiesAttrDef);
+      propertiesAttr.fromString("A=B\nC=D\n");
+      assertThat(propertiesAttr.get()).containsExactlyInAnyOrderEntriesOf(new Properties() {{
+         put("A", "B");
+         put("C", "D");
+      }});
+
+      AttributeDefinition<FileVisitOption> enumAttrDef = AttributeDefinition.builder("enum", null, FileVisitOption.class).build();
+      Attribute<FileVisitOption> enumAttr = new Attribute<>(enumAttrDef);
+      enumAttr.fromString("FOLLOW_LINKS");
+      assertEquals(FileVisitOption.FOLLOW_LINKS, enumAttr.get());
+      assertThatThrownBy(() -> enumAttr.fromString("BLAH")).isInstanceOf(IllegalArgumentException.class).hasMessage("ISPN000956: 'BLAH' is not one of [FOLLOW_LINKS]");
+
+      AttributeDefinition<Path> unknownAttrDef = AttributeDefinition.builder("path", null, Path.class).build();
+      Attribute<Path> unknownAttr = new Attribute<>(unknownAttrDef);
+      assertThatThrownBy(() -> unknownAttr.fromString("a")).isInstanceOf(CacheConfigurationException.class).hasMessageContaining("Cannot convert a to type java.nio.file.Path");
    }
 
    static class Holder<T> {
