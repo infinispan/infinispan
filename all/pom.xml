@@ -17,31 +17,6 @@
       <skipCreateSourcesJar>true</skipCreateSourcesJar>
    </properties>
 
-   <build>
-      <plugins>
-         <plugin>
-            <artifactId>maven-jar-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>default-jar</id>
-                  <goals>
-                     <goal>jar</goal>
-                  </goals>
-                  <phase>prepare-package</phase>
-               </execution>
-               <execution>
-                  <id>build-test-jar</id>
-                  <goals>
-                     <goal>jar</goal>
-                  </goals>
-                  <phase>none</phase>
-               </execution>
-            </executions>
-            <inherited>true</inherited>
-         </plugin>
-      </plugins>
-   </build>
-
    <profiles>
 
       <profile>

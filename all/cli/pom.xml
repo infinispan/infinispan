@@ -14,6 +14,10 @@
    <name>Infinispan CLI</name>
    <description>Infinispan CLI All-in-One module</description>
 
+   <properties>
+       <maven.javadoc.skip>true</maven.javadoc.skip>
+   </properties>
+
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
@@ -41,7 +45,7 @@
                      <goal>shade</goal>
                   </goals>
                   <configuration>
-                     <createSourcesJar>${createSourcesJar}</createSourcesJar>
+                     <createSourcesJar>true</createSourcesJar>
                      <artifactSet>
                         <excludes>
                            <exclude>org.infinispan:infinispan-cli</exclude>
@@ -92,4 +96,35 @@
       </plugins>
    </build>
 
+   <profiles>
+      <profile>
+         <id>community-release</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.codehaus.mojo</groupId>
+                  <artifactId>build-helper-maven-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>attach</id>
+                        <phase>package</phase>
+                        <goals>
+                           <goal>attach-artifact</goal>
+                        </goals>
+                        <configuration>
+                           <artifacts>
+                              <artifact>
+                                 <file>../../cli/target/infinispan-cli-client-${project.version}-javadoc.jar</file>
+                                 <type>jar</type>
+                                 <classifier>javadoc</classifier>
+                              </artifact>
+                           </artifacts>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
 </project>

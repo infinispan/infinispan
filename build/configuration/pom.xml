@@ -106,15 +106,7 @@
       <wildfly.brand.name>WildFly</wildfly.brand.name>
       <wildfly.brand.prefix>wildfly</wildfly.brand.prefix>
 
-      <!-- maven repository urls -->
-      <maven.releases.nexus.url>https://s01.oss.sonatype.org/</maven.releases.nexus.url>
-      <maven.releases.repo.id>ossrh</maven.releases.repo.id>
-      <maven.releases.repo.url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</maven.releases.repo.url>
-      <maven.snapshots.repo.id>ossrh</maven.snapshots.repo.id>
-      <maven.snapshots.repo.url>https://s01.oss.sonatype.org/content/repositories/snapshots</maven.snapshots.repo.url>
-
       <!-- === Application Server Configuration === -->
-
       <!-- org.wildfly / org.jboss.eap -->
       <appserver.groupId>org.wildfly</appserver.groupId>
       <appserver.version>24.0.1.Final</appserver.version>
@@ -164,9 +156,7 @@
       <version.jboss.logging>3.5.3.Final</version.jboss.logging>
       <version.jboss.logging.processor>2.2.1.Final</version.jboss.logging.processor>
       <version.jboss.marshalling>2.1.5.Final</version.jboss.marshalling>
-      <version.jboss.naming>5.0.6.CR1</version.jboss.naming>
       <version.jboss.narayana>5.13.1.Final</version.jboss.narayana>
-      <version.jboss.security>3.0.6.Final</version.jboss.security>
       <version.jboss.shrinkwrap>1.2.6</version.jboss.shrinkwrap>
       <version.jboss.shrinkwrap.descriptors>2.0.0</version.jboss.shrinkwrap.descriptors>
       <version.jboss.shrinkwrap.resolver>3.1.6</version.jboss.shrinkwrap.resolver>
@@ -238,7 +228,7 @@
       <version.maven.antrun>3.1.0</version.maven.antrun>
       <version.maven.buildhelper>3.4.0</version.maven.buildhelper>
       <version.maven.bundle>4.2.1</version.maven.bundle>
-      <version.maven.gpg>3.1.0</version.maven.gpg>
+      <version.maven.gpg>3.2.8</version.maven.gpg>
       <version.maven.clean>3.3.2</version.maven.clean>
       <version.maven-compiler-plugin>3.11.0</version.maven-compiler-plugin>
       <version.maven.enforcer>3.3.0</version.maven.enforcer>
@@ -250,7 +240,9 @@
       <version.maven.release>3.0.1</version.maven.release>
       <version.maven.remote.resource>3.1.0</version.maven.remote.resource>
       <version.maven.resources>3.3.1</version.maven.resources>
-      <version.maven.shade>3.5.3</version.maven.shade>
+      <version.maven.scm>2.1.0</version.maven.scm>
+      <version.maven.shade>3.6.0</version.maven.shade>
+      <version.maven.sonatype.central>0.8.0</version.maven.sonatype.central>
       <version.maven.source>3.3.1</version.maven.source>
       <version.maven.surefire>3.1.2</version.maven.surefire>
       <version.org.jboss.galleon>4.2.9.Final</version.org.jboss.galleon>
@@ -269,7 +261,7 @@
       <versionx.net.sourceforge.pmd>7.0.0-rc3</versionx.net.sourceforge.pmd>
 
       <!-- configuration properties -->
-      <org.infinispan.attachServerZip>false</org.infinispan.attachServerZip>
+      <org.infinispan.attachServerZip>true</org.infinispan.attachServerZip>
       <!-- empty by default, means no profiles for upstream or downstream release are enabled. -->
       <!-- upstream: enables profiles for community release -->
       <!-- downstream: enables profiles for downstream/product release -->
@@ -290,14 +282,14 @@
                <version>${version.owasp-dependency-check-plugin}</version>
             </plugin>
             <plugin>
-               <groupId>org.sonatype.plugins</groupId>
-               <artifactId>nexus-staging-maven-plugin</artifactId>
-               <version>${version.sonatype.nexus-staging-plugin}</version>
+               <groupId>org.sonatype.central</groupId>
+               <artifactId>central-publishing-maven-plugin</artifactId>
+               <version>${version.maven.sonatype.central}</version>
+               <extensions>true</extensions>
                <configuration>
-                  <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                  <stagingDescription>${infinispan.brand.name} ${project.version} release</stagingDescription>
-                  <nexusUrl>${maven.releases.nexus.url}</nexusUrl>
-                  <serverId>${maven.releases.repo.id}</serverId>
+                  <autoPublish>true</autoPublish>
+                  <deploymentName>Infinispan ${project.version}</deploymentName>
+                  <publishingServerId>central</publishingServerId>
                </configuration>
             </plugin>
             <plugin>
@@ -325,10 +317,6 @@
                      <goals>
                         <goal>sign</goal>
                      </goals>
-                     <configuration>
-                        <keyname>${infinispan.gpg.key}</keyname>
-                        <passphraseServerId>${infinispan.gpg.key}</passphraseServerId>
-                     </configuration>
                   </execution>
                </executions>
             </plugin>
@@ -459,7 +447,6 @@
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-javadoc-plugin</artifactId>
                   <configuration>
-                     <skip>${maven.javadoc.skip}</skip>
                      <detectOfflineLinks>false</detectOfflineLinks>
                   </configuration>
                </plugin>
@@ -492,28 +479,24 @@
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-gpg-plugin</artifactId>
+                  <version>${version.maven.gpg}</version>
+                  <executions>
+                     <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                           <goal>sign</goal>
+                        </goals>
+                     </execution>
+                  </executions>
                </plugin>
-            </plugins>
-         </build>
-      </profile>
-
-      <profile>
-         <!-- nexus-staging-maven-plugin blocks maven-deploy-plugin -->
-         <id>nexus-staging</id>
-         <activation>
-            <property><name>!skipNexusStaging</name></property>
-         </activation>
-         <build>
-            <plugins>
                <plugin>
-                  <groupId>org.sonatype.plugins</groupId>
-                  <artifactId>nexus-staging-maven-plugin</artifactId>
-                  <extensions>false</extensions>
+                  <groupId>org.sonatype.central</groupId>
+                  <artifactId>central-publishing-maven-plugin</artifactId>
+                  <extensions>true</extensions>
                </plugin>
             </plugins>
          </build>
       </profile>
-
    </profiles>
-
 </project>

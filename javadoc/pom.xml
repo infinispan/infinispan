@@ -15,6 +15,8 @@
       <analytics.code>
          <!-- <script id="adobe_dtm" src="//www.redhat.com/dtm.js" type="text/javascript"></script> -->
       </analytics.code>
+      <javadoc.outputDirectory>${project.build.directory}</javadoc.outputDirectory>
+      <skipCentralPublish>true</skipCentralPublish>
    </properties>
 
    <dependencies>
@@ -379,58 +381,4 @@
          </plugin>
       </plugins>
    </build>
-
-   <profiles>
-
-      <profile>
-         <id>nexus-staging</id>
-         <activation>
-            <property><name>!skipNexusStaging</name></property>
-         </activation>
-         <build>
-            <plugins>
-               <plugin>
-                  <artifactId>maven-deploy-plugin</artifactId>
-                  <configuration>
-                     <skip>true</skip>
-                  </configuration>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-
-      <profile>
-         <id>distribution</id>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-antrun-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>upload</id>
-                        <phase>deploy</phase>
-                        <goals>
-                           <goal>run</goal>
-                        </goals>
-                        <configuration>
-                           <skip>${skipArtifactUpload}</skip>
-                           <target>
-                              <echo level="info" message="Uploading JavaDocs"/>
-                              <exec dir="${project.build.directory}" executable="rsync" failonerror="${rsync.failonerror}">
-                                 <arg value="-rvm"/>
-                                 <arg line="--protocol=29"/>
-                                 <arg line="-e &quot;ssh -i ${upload.keyFile} -p ${upload.remotePort}&quot;"/>
-                                 <arg value="apidocs"/>
-                                 <arg value="${upload.docsDir}"/>
-                              </exec>
-                           </target>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-   </profiles>
 </project>

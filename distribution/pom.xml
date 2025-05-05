@@ -11,6 +11,17 @@
    <name>Infinispan Distribution</name>
    <packaging>pom</packaging>
 
+    <repositories>
+        <repository>
+            <id>jboss-community</id>
+            <url>https://repository.jboss.org/nexus/content/groups/public-jboss</url>
+        </repository>
+        <repository>
+            <id>redhat</id>
+            <url>https://maven.repository.redhat.com/ga/</url>
+        </repository>
+    </repositories>
+
    <dependencies>
       <dependency>
          <groupId>org.infinispan</groupId>
@@ -190,112 +201,6 @@
          </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <executions>
-               <execution>
-                  <!-- Build the Schema documentation -->
-                  <id>xsdocgen</id>
-                  <phase>package</phase>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-                  <configuration>
-                     <target>
-                        <property name="plugin_classpath" refid="maven.plugin.classpath" />
-                        <echo level="info" message="Base dir: ${basedir}" />
-                        <path id="xsd.fileset.path">
-                           <fileset casesensitive="yes" dir="${basedir}/..">
-                              <!-- make sure core comes first -->
-                              <include name="core/target/classes/schema/infinispan-config-${infinispan.core.schema.version}.xsd" />
-                              <include name="persistence/*/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
-                              <include name="spring/spring5/spring5-common/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
-                              <include name="server/runtime/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
-                              <include name="counter/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
-                              <include name="lock/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
-                           </fileset>
-                        </path>
-                        <pathconvert pathsep=" " property="xsd.fileset" refid="xsd.fileset.path" />
-                        <echo level="info" message="XSDs: ${xsd.fileset}" />
-                        <java classname="org.infinispan.tools.xsd.XSDoc">
-                           <arg value="-o" />
-                           <arg value="${project.build.directory}/site/configdocs" />
-                           <arg value="-s" />
-                           <!-- file contains only abstract types. Skip rendering to HTML-->
-                           <arg value="infinispan-cachestore-jdbc-common-config-${infinispan.core.schema.version}.xsd" />
-                           <arg line="${xsd.fileset}" />
-                           <classpath>
-                              <pathelement path="${plugin_classpath}" />
-                           </classpath>
-                        </java>
-                     </target>
-                  </configuration>
-               </execution>
-               <execution>
-                  <id>distribution</id>
-                  <phase>package</phase>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-                  <configuration>
-                     <target>
-                        <ant antfile="package.xml" inheritRefs="true">
-                           <property name="plugin_classpath" refid="maven.plugin.classpath" />
-                           <property name="infinispan.brand.version" value="${infinispan.brand.version}"/>
-                           <property name="infinispan.brand.prefix" value="${infinispan.brand.prefix}"/>
-                           <property name="infinispan.brand.name" value="${infinispan.brand.name}"/>
-                           <property name="wildfly.brand.prefix" value="${wildfly.brand.prefix}"/>
-                        </ant>
-                     </target>
-                  </configuration>
-               </execution>
-               <execution>
-                  <id>upload-distributions</id>
-                  <phase>deploy</phase>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-                  <configuration>
-                     <skip>${skipArtifactUpload}</skip>
-                     <target>
-                        <echo level="info" message="Creating checksums of distribution files"/>
-                        <checksum algorithm="SHA-1" fileext=".sha1">
-                           <fileset dir="${project.build.directory}/distribution">
-                              <include name="*.zip"/>
-                           </fileset>
-                        </checksum>
-                        <echo level="info" message="Uploading Distributions to ${upload.downloadsDir}"/>
-                        <exec dir="${project.build.directory}/distribution" executable="rsync" failonerror="${rsync.failonerror}">
-                           <arg value="-rvm"/>
-                           <arg line="--protocol=29"/>
-                           <arg line="-e &quot;ssh -i ${upload.keyFile} -p ${upload.remotePort}&quot;"/>
-                           <arg line="--include='*.zip'"/>
-                           <arg line="--include='*.sha1'"/>
-                           <arg line="--exclude='*'"/>
-                           <arg value="."/>
-                           <arg value="${upload.downloadsDir}"/>
-                        </exec>
-                        <echo level="info" message="Uploading Schema docs to ${upload.docsDir}"/>
-                        <exec dir="${project.build.directory}/site" executable="rsync" failonerror="${rsync.failonerror}">
-                           <arg value="-rvm"/>
-                           <arg line="--protocol=29"/>
-                           <arg line="-e &quot;ssh -i ${upload.keyFile} -p ${upload.remotePort}&quot;"/>
-                           <arg value="configdocs"/>
-                           <arg value="${upload.docsDir}"/>
-                        </exec>
-                     </target>
-                  </configuration>
-               </execution>
-            </executions>
-            <dependencies>
-               <dependency>
-                  <groupId>org.infinispan</groupId>
-                  <artifactId>infinispan-tools</artifactId>
-                  <version>${version.infinispan}</version>
-               </dependency>
-            </dependencies>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-assembly-plugin</artifactId>
             <executions>
                <execution>
@@ -343,52 +248,9 @@
             <configuration>
                <outputDirectory>${project.build.directory}/distribution</outputDirectory>
                <workDirectory>${project.build.directory}/assembly/work</workDirectory>
-               <!-- (Do not attach ZIP files to the Maven repository) -->
                <attach>${org.infinispan.attachServerZip}</attach>
             </configuration>
          </plugin>
       </plugins>
    </build>
-
-   <profiles>
-      <profile>
-         <id>nexus-staging</id>
-         <activation>
-            <property><name>deployServerZip</name></property>
-         </activation>
-         <properties>
-            <!-- Default repositoryId and url for maven-deploy-plugin. Can be overwritten using -DrepositoryId and -Durl (product) -->
-            <repositoryId>${maven.snapshots.repo.id}</repositoryId>
-            <url>${maven.snapshots.repo.url}</url>
-         </properties>
-         <build>
-            <plugins>
-               <!-- Deploy the file we've explicitly installed.
-                    MUST provide properties repositoryId and url
-               -->
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-deploy-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>deploy-fat-server</id>
-                        <phase>deploy</phase>
-                        <goals>
-                           <goal>deploy-file</goal>
-                        </goals>
-                        <configuration>
-                           <groupId>org.infinispan.server</groupId>
-                           <artifactId>infinispan-server</artifactId>
-                           <version>${project.version}</version>
-                           <packaging>zip</packaging>
-                           <file>${project.build.directory}/distribution/${infinispan.brand.prefix}-server-${infinispan.brand.version}.zip</file>
-                           <generatePom>false</generatePom>
-                        </configuration>
-                     </execution>
-                  </executions>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-   </profiles>
 </project>

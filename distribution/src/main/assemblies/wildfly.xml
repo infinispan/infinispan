@@ -6,13 +6,6 @@
         <format>zip</format>
     </formats>
     <includeBaseDirectory>true</includeBaseDirectory>
-    <files>
-        <!-- add README -->
-        <file>
-            <source>target/${infinispan.brand.prefix}-${wildfly.brand.prefix}-modules-${infinispan.brand.version}/README.txt</source>
-            <outputDirectory/>
-        </file>
-    </files>
     <fileSets>
         <fileSet>
             <!-- add licenses -->
