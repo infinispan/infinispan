@@ -1,5 +1,7 @@
 package org.infinispan.server;
 
+import static java.util.Objects.requireNonNullElse;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -508,7 +510,7 @@ public class Server extends BaseServerManagement implements AutoCloseable {
             protocolServers.put("endpoint-" + endpoint.socketBinding(), endpointServer);
             log.protocolStarted(endpointServer.getName(), singlePortRouter.socketBinding(), singlePortRouter.host(), singlePortRouter.port());
             log.endpointUrl(
-                  Util.requireNonNullElse(cacheManager.getAddress(), "local"),
+                  requireNonNullElse(cacheManager.getAddress(), "local"),
                   singlePortRouter.ssl().enabled() ? "https" : "http", singlePortRouter.host(), singlePortRouter.port()
             );
          }
