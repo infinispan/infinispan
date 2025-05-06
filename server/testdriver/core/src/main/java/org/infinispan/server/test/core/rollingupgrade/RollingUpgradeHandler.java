@@ -1,11 +1,14 @@
 package org.infinispan.server.test.core.rollingupgrade;
 
+import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -26,6 +29,8 @@ import org.infinispan.util.logging.LogFactory;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.RedisClusterClient;
+import net.spy.memcached.ConnectionFactoryBuilder;
+import net.spy.memcached.MemcachedClient;
 
 public class RollingUpgradeHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
@@ -39,6 +44,7 @@ public class RollingUpgradeHandler {
 
    private RemoteCacheManager remoteCacheManager;
    private RedisClusterClient respClient;
+   private MemcachedClient[] memcachedClients;
    private RestClient[] restClients;
 
    private STATE currentState = STATE.NOT_STARTED;
@@ -128,6 +134,20 @@ public class RollingUpgradeHandler {
       return respClient = RedisClusterClient.create(uris);
    }
 
+   public MemcachedClient memcached(int server, ConnectionFactoryBuilder builder) {
+      if (memcachedClients[server] != null) return memcachedClients[server];
+
+      InetAddress address = getCurrentState() == STATE.OLD_RUNNING
+            ? fromDriver.getServerAddress(server)
+            : toDriver.getServerAddress(server);
+
+      try {
+         return memcachedClients[server] = new MemcachedClient(builder.build(), Collections.singletonList(InetSocketAddress.createUnresolved(address.getHostAddress(), 11222)));
+      } catch (IOException e) {
+         throw new RuntimeException(e);
+      }
+   }
+
    public STATE getCurrentState() {
       return currentState;
    }
@@ -148,6 +168,7 @@ public class RollingUpgradeHandler {
          try (RemoteCacheManager manager = handler.createRemoteCacheManager()) {
             handler.remoteCacheManager = manager;
             handler.restClients = new RestClient[nodeCount];
+            handler.memcachedClients = new MemcachedClient[nodeCount];
             configuration.initialHandler().accept(handler);
 
             for (int i = 0; i < nodeCount; ++i) {
@@ -217,12 +238,20 @@ public class RollingUpgradeHandler {
       }
 
       Arrays.stream(restClients).forEach(Util::close);
+      Arrays.stream(memcachedClients).forEach(c -> {
+         if (c != null) c.shutdown();
+      });
       Util.close(respClient);
    }
 
    private void cleanup(int server) {
       Util.close(restClients[server]);
       restClients[server] = null;
+
+      if (memcachedClients[server] != null) {
+         memcachedClients[server].shutdown();
+         memcachedClients[server] = null;
+      }
    }
 
    public RemoteCacheManager createRemoteCacheManager() {
