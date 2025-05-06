@@ -2,10 +2,12 @@
 :context: server-endpoints
 = {brandname} Server endpoints
 
-{brandname} Server endpoints provide client access to the cache manager over Hot Rod and REST protocols.
+{brandname} Server endpoints provide client access to the cache manager over different protocols.
+A server endpoint can multiplex multiple protocols on the same socket binding by detecting the incoming
+traffic type and routing it to the appropriate internal connector handler.
 
 include::{topics}/con_server_endpoints.adoc[leveloffset=+1]
-include::{topics}/ref_endpoints_comparison.adoc[leveloffset=+2]
+include::{topics}/ref_protocols_comparison.adoc[leveloffset=+2]
 include::{topics}/con_hotrod_server_compatibility.adoc[leveloffset=+2]
 include::{topics}/proc_configuring_server_endpoints.adoc[leveloffset=+1]
 include::{topics}/ref_endpoints_connectors.adoc[leveloffset=+1]

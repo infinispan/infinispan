@@ -1,0 +1,8 @@
+endpoints:
+  - socketBinding: default
+    securityRealm: default
+    connectors:
+      rest:
+        restConnector: ~
+      hotrod:
+        hotrodConnector: ~

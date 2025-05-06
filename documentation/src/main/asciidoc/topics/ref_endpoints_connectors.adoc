@@ -1,12 +1,31 @@
 [id='endpoint-connectors_{context}']
-= Endpoint connectors
-Connectors configure Hot Rod and REST endpoints to use socket bindings and security realms.
+= Endpoint protocol connectors
+Endpoints multiplex different protocol connectors through a single port.
+Protocol connectors employ detectors to inspect incoming traffic and direct client connections to the appropriate handler.
+An endpoint will enable all protocol connectors that support the configured security realm, unless connectors are declared
+explicitly.
+The default endpoint configuration, using the default property security realm, implicitly enables all the protocol connectors
+(Hot Rod, REST, RESP, Memcached).
 
-.Default endpoint configuration
-[source,xml,options="nowrap",subs=attributes+]
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/server_endpoints_default.xml[]
 ----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_endpoints_default.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_endpoints_default.yaml[]
+----
+
+Enable specific protocol connectors using explicit declaration.
 
 [%autowidth,cols="1,1",stripes=even]
 |===
@@ -30,6 +49,69 @@ include::xml/server_endpoints_default.xml[]
 |`memcached-connector`
 |Includes the Memcached endpoint in the `endpoint` configuration.
 |===
+
+Expose a single endpoint with only the REST and Hot Rod connectors on the `default` socket binding with the `default`
+security realm:
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/server_endpoints_rest_hotrod.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_endpoints_rest_hotrod.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_endpoints_rest_hotrod.yaml[]
+----
+
+Expose a REST connector on the `default` socket binding with the `default` security realm and a RESP connector on the
+`resp` socket binding with the `none` security realm:
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/server_endpoints_rest_resp.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_endpoints_rest_resp.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_endpoints_rest_resp.yaml[]
+----
+
+== Endpoint request limits
+
+Endpoints, by default, impose a `10MB` limit on request sizes. 
+If the client sends a request larger than the limit, the request may be met with an exception or the connection may be forcibly closed.
+The limit is configured via the `max-content-length` attributed. This is expressed in bytes and allows for a string
+value with a size suffix (e.g. 128KB, 10MB, 1.5GB). Note that this is the size of the entire request and is not limited to a single key or value.
+
+.Hot Rod, RESP & Memcached endpoints
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/server_endpoints_limits_hotrod_resp_memcached.xml[]
+----
+
+.REST endpoint
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/server_endpoints_limits_rest.xml[]
+----
 
 [role="_additional-resources"]
 .Additional resources

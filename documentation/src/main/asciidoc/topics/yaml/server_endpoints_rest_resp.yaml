@@ -1,0 +1,10 @@
+endpoints:
+  - socketBinding: default
+    securityRealm: default
+    connectors:
+      rest:
+        restConnector: ~
+      resp:
+        respConnector:
+          socketBinding: resp
+          securityRealm: none
