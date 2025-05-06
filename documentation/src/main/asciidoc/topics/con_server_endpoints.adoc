@@ -1,5 +1,5 @@
 [id='server-endpoints_{context}']
-= {brandname} Server endpoints
+= {brandname} Server protocols
 
 == Hot Rod
 
@@ -14,9 +14,9 @@ access and improved performance in comparison to text-based protocols.
 Topology caches contain entries that map internal JGroups transport addresses
 to exposed Hot Rod endpoints.
 
-When client send requests, {brandname} servers compare the topology ID in
+When clients send requests, {brandname} servers compare the topology ID in
 request headers with the topology ID from the cache. {brandname} servers send
-new topology views if client have older topology IDs.
+new topology views if clients have older topology IDs.
 
 Cluster topology views allow Hot Rod clients to immediately detect when nodes
 join and leave, which enables dynamic load balancing and failover.
@@ -36,9 +36,10 @@ occur.
 
 == RESP
 
-{brandname} provides an implementation of the link:https://github.com/redis/redis-specifications/blob/master/protocol/RESP3.md[RESP3] protocol.
+{brandname} provides an implementation of the link:https://github.com/redis/redis-specifications/blob/master/protocol/RESP3.md[RESP3] protocol
+used by link:https://redis.io/[Redis], link:https://valkey.io/[Valkey], link:https://aws.amazon.com/elasticache/Elasticache[Elasticache] and others.
 
-The RESP connector supports a subset of the Redis commands.
+The RESP connector supports a large subset of the Redis commands.
 
 == Memcached
 
@@ -48,7 +49,7 @@ remote client access.
 The {brandname} Memcached endpoint supports clustering with replicated and
 distributed cache modes.
 
-There are some Memcached client implementations, such as the Cache::Memcached
+There are some Memcached client implementations, such as the link:https://metacpan.org/pod/Cache::Memcached[Cache::Memcached]
 Perl client, that can offer load balancing and failover detection capabilities
 with static lists of {brandname} server addresses that require manual updates
 when cluster topology changes occur.

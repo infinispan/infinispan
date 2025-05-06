@@ -1,0 +1,4 @@
+server:
+  endpoints:
+    - socketBinding: default
+      securityRealm: default

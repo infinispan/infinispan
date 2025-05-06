@@ -1,0 +1,8 @@
+<server xmlns="urn:infinispan:server:{schemaversion}">
+    <endpoints>
+        <endpoint socket-binding="default" security-realm="default">
+            <rest-connector/>
+            <hotrod-connector/>
+        </endpoint>
+    </endpoints>
+</server>

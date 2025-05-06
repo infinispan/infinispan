@@ -1,0 +1,18 @@
+{
+  "endpoints": [
+    {
+      "endpoint": {
+        "socket-binding": "default",
+        "security-realm": "default",
+        "connectors": {
+          "rest": {
+            "rest-connector": {}
+          },
+          "hotrod": {
+            "hotrod-connector": {}
+          }
+        }
+      }
+    }
+  ]
+}
