@@ -4,6 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.server.test.core.rollingupgrade.RollingUpgradeHandler.STATE.REMOVED_OLD;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
@@ -18,6 +23,10 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.models.partitions.Partitions;
+import net.spy.memcached.ClientMode;
+import net.spy.memcached.ConnectionFactoryBuilder;
+import net.spy.memcached.MemcachedClient;
+import net.spy.memcached.auth.AuthDescriptor;
 
 public class DefaultRollingUpgradeTest {
    @Test
@@ -115,5 +124,55 @@ public class DefaultRollingUpgradeTest {
 
       // At least the initial interaction plus one when removing and one when adding a node.
       assertThat(interactions.get()).isGreaterThanOrEqualTo(1 + 2 * nodeCount);
+   }
+
+   @Test
+   public void testMemcachedClient() throws Exception {
+      TestUser user = TestUser.ADMIN;
+      int nodeCount = 3;
+      ByRef.Integer interactions = new ByRef.Integer(0);
+      ByRef.Integer node = new ByRef.Integer(0);
+      ConnectionFactoryBuilder memcachedBuilder = new ConnectionFactoryBuilder()
+            .setClientMode(ClientMode.Static)
+            .setOpTimeout(TimeUnit.SECONDS.toMillis(30))
+            .setAuthDescriptor(AuthDescriptor.typical(user.getUser(), user.getPassword()));
+
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder("15.2.0.Final", "15.2.1.Final")
+            .nodeCount(nodeCount);
+      builder.handlers(
+            uh -> {
+               MemcachedClient client = uh.memcached(0, memcachedBuilder);
+               join(client.set("foo", 0, "bar"));
+               interactions.inc();
+            },
+            uh -> {
+               if (uh.getCurrentState() == REMOVED_OLD)
+                  return true;
+
+               MemcachedClient client = uh.memcached(node.get(), memcachedBuilder);
+               node.inc();
+
+               try {
+                  return "bar".equals(client.get("foo"));
+               } catch (Throwable ignore) {
+                  return false;
+               } finally {
+                  interactions.inc();
+               }
+            }
+      );
+
+      RollingUpgradeHandler.performUpgrade(builder.build());
+
+      // At least the initial interaction plus one for each node added.
+      assertThat(interactions.get()).isGreaterThanOrEqualTo(1 + nodeCount);
+   }
+
+   private static void join(Future<?> future) {
+      try {
+         future.get(10, TimeUnit.SECONDS);
+      } catch (InterruptedException | ExecutionException | TimeoutException e) {
+         throw new AssertionError(e);
+      }
    }
 }
