@@ -3,8 +3,12 @@ package org.infinispan.server.test.core.rollingupgrade;
 import java.lang.invoke.MethodHandles;
 import java.net.InetAddress;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.rest.RestClient;
@@ -20,6 +24,9 @@ import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.cluster.RedisClusterClient;
+
 public class RollingUpgradeHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private final RollingUpgradeConfiguration configuration;
@@ -31,6 +38,7 @@ public class RollingUpgradeHandler {
    private ContainerInfinispanServerDriver toDriver;
 
    private RemoteCacheManager remoteCacheManager;
+   private RedisClusterClient respClient;
    private RestClient[] restClients;
 
    private STATE currentState = STATE.NOT_STARTED;
@@ -99,6 +107,25 @@ public class RollingUpgradeHandler {
 
       builder.addServer().host(address.getHostAddress()).port(11222);
       return restClients[server] = RestClient.forConfiguration(builder.build());
+   }
+
+   public RedisClusterClient resp(RedisURI.Builder builder) {
+      if (respClient != null) return respClient;
+
+      int nodeCount = configuration.nodeCount();
+      Function<Integer, InetAddress> addressFunction = i ->
+            fromDriver.isRunning(i) ? fromDriver.getServerAddress(i) : toDriver.getServerAddress(i);
+      List<RedisURI> uris = new ArrayList<>();
+      for (int i = 0; i < nodeCount; i++) {
+         InetAddress address = addressFunction.apply(i);
+         RedisURI uri = builder
+               .withHost(address.getHostAddress())
+               .withPort(11222)
+               .withTimeout(Duration.ofSeconds(30))
+               .build();
+         uris.add(uri);
+      }
+      return respClient = RedisClusterClient.create(uris);
    }
 
    public STATE getCurrentState() {
@@ -190,6 +217,7 @@ public class RollingUpgradeHandler {
       }
 
       Arrays.stream(restClients).forEach(Util::close);
+      Util.close(respClient);
    }
 
    private void cleanup(int server) {

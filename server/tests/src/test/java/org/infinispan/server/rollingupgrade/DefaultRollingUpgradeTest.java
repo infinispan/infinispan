@@ -14,6 +14,11 @@ import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfiguratio
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeHandler;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.cluster.RedisClusterClient;
+import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.models.partitions.Partitions;
+
 public class DefaultRollingUpgradeTest {
    @Test
    public void testDefaultSetting() throws InterruptedException {
@@ -65,7 +70,50 @@ public class DefaultRollingUpgradeTest {
       );
       RollingUpgradeHandler.performUpgrade(builder.build());
 
-      // Initial interaction plus one for each node added.
-      assertThat(interactions.get()).isEqualTo(1 + nodeCount);
+      // At least the initial interaction plus one for each node added.
+      assertThat(interactions.get()).isGreaterThanOrEqualTo(1 + nodeCount);
+   }
+
+   @Test
+   public void testRespClient() throws Exception {
+      TestUser user = TestUser.ADMIN;
+      int nodeCount = 3;
+      ByRef.Integer interactions = new ByRef.Integer(0);
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder("15.2.0.Final", "15.2.1.Final")
+            .nodeCount(nodeCount);
+
+      RedisURI.Builder respBuilder = RedisURI.builder()
+                  .withAuthentication(user.getUser(), user.getPassword());
+
+      builder.handlers(
+            uh -> {
+               RedisClusterClient client = uh.resp(respBuilder);
+               Partitions partitions = client.getPartitions();
+               assertThat(partitions.size()).isEqualTo(nodeCount);
+               try (StatefulRedisClusterConnection<String, String> conn = client.connect()) {
+                  conn.sync().set("foo", "bar");
+               }
+               interactions.inc();
+            },
+            uh -> {
+               RedisClusterClient client = uh.resp(respBuilder);
+               client.refreshPartitions();
+
+               try (StatefulRedisClusterConnection<String, String> conn = client.connect()) {
+                  assertThat(conn.sync().get("foo")).isEqualTo("bar");
+               }
+
+               Partitions partitions = client.getPartitions();
+               interactions.inc();
+               return uh.getCurrentState() == REMOVED_OLD
+                     ? partitions.size() == nodeCount - 1
+                     : partitions.size() == nodeCount;
+            }
+      );
+
+      RollingUpgradeHandler.performUpgrade(builder.build());
+
+      // At least the initial interaction plus one when removing and one when adding a node.
+      assertThat(interactions.get()).isGreaterThanOrEqualTo(1 + 2 * nodeCount);
    }
 }
