@@ -20,8 +20,6 @@ import java.util.TreeSet;
 public class ObjectDuplicator {
    @SuppressWarnings("unchecked")
    public static <K, V> Map<K, V> duplicateMap(Map<K, V> original) {
-      if (original instanceof FastCopyHashMap)
-         return ((FastCopyHashMap<K, V>) original).clone();
       if (original instanceof HashMap)
          return (Map<K, V>) ((HashMap<K, V>) original).clone();
       if (original instanceof TreeMap)
@@ -41,8 +39,6 @@ public class ObjectDuplicator {
          return (Set<E>) ((HashSet<E>) original).clone();
       if (original instanceof TreeSet)
          return (Set<E>) ((TreeSet<E>) original).clone();
-      if (original instanceof FastCopyHashMap.EntrySet || original instanceof FastCopyHashMap.KeySet)
-         return new HashSet<>(original);
       if (original.getClass() == Collections.emptySet().getClass())
          return Collections.emptySet();
       if (original.getClass() == Collections.singleton("").getClass())
