@@ -1,5 +1,5 @@
 [id='endpoint-protocol-comparison_{context}']
-= Comparison of endpoint protocols
+= Comparison of protocols
 
 [cols="20,^20,^20,^20,^20",options="header"]
 |============================================================
