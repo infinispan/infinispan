@@ -15,7 +15,6 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.util.FastCopyHashMap;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareCollection;
 import org.infinispan.tools.store.migrator.marshaller.common.AbstractMigratorExternalizer;
@@ -70,8 +69,7 @@ public class CollectionExternalizer extends AbstractMigratorExternalizer<Collect
       Set<Class<? extends Collection>> typeClasses = Util.asSet(ArrayList.class, LinkedList.class,
             HashSet.class, TreeSet.class,
             ArrayDeque.class,
-            ReadOnlySegmentAwareCollection.class,
-            FastCopyHashMap.KeySet.class, FastCopyHashMap.Values.class, FastCopyHashMap.EntrySet.class);
+            ReadOnlySegmentAwareCollection.class);
       typeClasses.addAll(getSupportedPrivateClasses());
       return typeClasses;
    }
