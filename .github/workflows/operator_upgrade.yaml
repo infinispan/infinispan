@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - main
-      - '*.0.x'
+      - '*.*.x'
   pull_request:
     branches:
       - main
-      - '*.0.x'
+      - '*.*.x'
 
 concurrency:
   # Cancel jobs same head_branch same repo, works
@@ -86,7 +86,7 @@ jobs:
       operand: localhost:5001/server:${{ github.sha }}
       operandArtifact: operand-image
       operandVersion: ${{ needs.image.outputs.version }}
-      ref: main
+      ref: 2.4.x
       repository: infinispan/infinispan-operator
       skipList: '15.1.0,15.1.1'
       testName: TestOperandUpgrades
