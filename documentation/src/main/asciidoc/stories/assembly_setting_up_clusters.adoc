@@ -16,6 +16,7 @@ include::{topics}/ref_discovery_mping.adoc[leveloffset=+2]
 include::{topics}/ref_discovery_gossip_router.adoc[leveloffset=+2]
 include::{topics}/ref_discovery_jdbc.adoc[leveloffset=+2]
 include::{topics}/ref_discovery_dns_ping.adoc[leveloffset=+2]
+include::{topics}/proc_os_configuring_clusters.adoc[leveloffset=+2]
 include::{topics}/ref_discovery_cloud.adoc[leveloffset=+2]
 
 //Default JGroups

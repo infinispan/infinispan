@@ -1,0 +1,67 @@
+[id="os-configuring-clusters_{context}"]
+= Configuring Data Grid for OpenShift Clusters 
+
+[id="os_cluster_discovery"]
+== Configuring Cluster Discovery 
+
+Data Grid for OpenShift can use either the Kubernetes or DNS discovery mechanisms for clustering. These discovery mechanisms enable images to automatically join clusters.
+
+Data Grid for OpenShift templates and services use DNS by default. If you deploy Data Grid for OpenShift directly from the image or custom template, you must configure the appropriate discovery mechanism.
+
+[id="os_cluster_discovery_dns"]
+=== Configuring DNS_PING 
+
+.Procedure
+
+To configure the DNS discovery mechanism for clustering, do the following:
+
+. Set `openshift.DNS_PING` as the value for the `JGROUPS_PING_PROTOCOL` environment variable:
++
+----
+JGROUPS_PING_PROTOCOL=openshift.DNS_PING
+----
+
+. Specify the name of the ping service for the cluster as the value for the `OPENSHIFT_DNS_PING_SERVICE_NAME` environment variable:
++
+----
+OPENSHIFT_DNS_PING_SERVICE_NAME=${PING_SERVICE_NAME}
+----
+
+. Specify the port number where the ping service is exposed as the value for the `OPENSHIFT_DNS_PING_SERVICE_PORT` environment variable. The default value is `8888`:
++
+----
+OPENSHIFT_DNS_PING_SERVICE_PORT=${PING_SERVICE_NAME}
+----
+
+. Define a ping service that exposes the ping port, as in the following example:
++
+[source,yaml]
+----
+apiVersion: v1
+kind: Service
+spec:
+  clusterIP: None
+  ports:
+    - name: ping
+      port: 8888
+      protocol: TCP
+      targetPort: 8888
+  selector: deploymentConfig=datagrid-service
+metadata:
+  annotations:
+    description: The JGroups ping port for clustering.
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: 'true'
+----
+
+[IMPORTANT]
+====
+You should configure `clusterIP: None` so that the service is headless. Here is an example of how to set up the `spec` for your headless service needed to join the pods:
+
+[source,yaml]
+----
+spec: 
+  type: ClusterIP 
+  clusterIP: None 
+  publishNotReadyAddresses: true
+----
+====
