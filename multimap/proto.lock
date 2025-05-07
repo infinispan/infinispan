@@ -117,5 +117,599 @@
         "name" : "org.infinispan.persistence.multimap"
       }
     }
+  }, {
+    "protopath" : "generated:/:global.multimap.proto",
+    "def" : {
+      "enums" : [ {
+        "name" : "AggregateFunction",
+        "type_id" : 5344,
+        "enum_fields" : [ {
+          "name" : "SUM"
+        }, {
+          "name" : "MIN",
+          "integer" : 1
+        }, {
+          "name" : "MAX",
+          "integer" : 2
+        } ]
+      }, {
+        "name" : "SortedSetOperationType",
+        "type_id" : 5345,
+        "enum_fields" : [ {
+          "name" : "INDEX"
+        }, {
+          "name" : "SCORE",
+          "integer" : 1
+        }, {
+          "name" : "LEX",
+          "integer" : 2
+        }, {
+          "name" : "OTHER",
+          "integer" : 3
+        } ]
+      }, {
+        "name" : "SortedSetAggregateFunction.AggregateType",
+        "type_id" : 5343,
+        "enum_fields" : [ {
+          "name" : "UNION"
+        }, {
+          "name" : "INTER",
+          "integer" : 1
+        } ]
+      } ],
+      "messages" : [ {
+        "name" : "GetFunction",
+        "type_id" : 5318,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "supportsDuplicates",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "RemoveManyFunction",
+        "type_id" : 5330,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "includeMin",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "includeMax",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "type",
+          "type" : "SortedSetOperationType",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "values",
+          "type" : "org.infinispan.global.core.MarshallableList",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SPopFunction",
+        "type_id" : 5338,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "count",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "remove",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "AddManyFunction",
+        "type_id" : 5310,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "addOnly",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "updateOnly",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "updateLessScoresOnly",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "updateGreaterScoresOnly",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "returnChangedCount",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "replace",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "scoredValues",
+          "type" : "org.infinispan.persistence.multimap.ScoredValue",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "PollFunction",
+        "type_id" : 5325,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "first",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "count",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "TrimFunction",
+        "type_id" : 5348,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "from",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "to",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IndexFunction",
+        "type_id" : 5320,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "index",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SRemoveFunction",
+        "type_id" : 5339,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "values",
+          "type" : "org.infinispan.global.core.MarshallableCollection",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "HashMapRemoveFunction",
+        "type_id" : 5316,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "keys",
+          "type" : "org.infinispan.global.core.MarshallableCollection",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SortedSetAggregateFunction",
+        "type_id" : 5342,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "type",
+          "type" : "SortedSetAggregateFunction.AggregateType",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "scoredValues",
+          "type" : "org.infinispan.persistence.multimap.ScoredValue",
+          "is_repeated" : true
+        }, {
+          "id" : 3,
+          "name" : "weight",
+          "type" : "double",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "function",
+          "type" : "AggregateFunction",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SubListFunction",
+        "type_id" : 5333,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "from",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "to",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CountFunction",
+        "type_id" : 5312,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "min",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "includeMin",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "max",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "includeMax",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "countType",
+          "type" : "SortedSetOperationType",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "InsertFunction",
+        "type_id" : 5323,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "before",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "pivot",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "element",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SSetFunction",
+        "type_id" : 5337,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "values",
+          "type" : "org.infinispan.global.core.MarshallableCollection",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "RemoveFunction",
+        "type_id" : 5328,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "supportsDuplicates",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "PopFunction",
+        "type_id" : 5326,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "min",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "count",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "HashMapValuesFunction",
+        "type_id" : 5315,
+        "fields" : [ ]
+      }, {
+        "name" : "RemoveCountFunction",
+        "type_id" : 5329,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "count",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "element",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IncrFunction",
+        "type_id" : 5319,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "score",
+          "type" : "double",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "addOnly",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "updateOnly",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "updateLessScoresOnly",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "updateGreaterScoresOnly",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "member",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SGetFunction",
+        "type_id" : 5335,
+        "fields" : [ ]
+      }, {
+        "name" : "PutFunction",
+        "type_id" : 5327,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "supportsDuplicates",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ReplaceListFunction",
+        "type_id" : 5331,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "values",
+          "type" : "org.infinispan.global.core.MarshallableDeque",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "HashMapPutFunction",
+        "type_id" : 5313,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "entries",
+          "type" : "org.infinispan.global.core.KeyValuePair",
+          "is_repeated" : true
+        }, {
+          "id" : 2,
+          "name" : "putIfAbsent",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "RotateFunction",
+        "type_id" : 5332,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "rotateRight",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IndexOfFunction",
+        "type_id" : 5321,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "count",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "rank",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "maxLen",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "element",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IndexOfSortedSetFunction",
+        "type_id" : 5322,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "member",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "rev",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "OfferFunction",
+        "type_id" : 5324,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "org.infinispan.global.core.MarshallableCollection",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "first",
+          "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "HashMapKeySetFunction",
+        "type_id" : 5314,
+        "fields" : [ ]
+      }, {
+        "name" : "ContainsFunction",
+        "type_id" : 5311,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SMIsMember",
+        "type_id" : 5336,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "values",
+          "type" : "org.infinispan.global.core.MarshallableArray",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ScoreFunction",
+        "type_id" : 5341,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "members",
+          "type" : "org.infinispan.global.core.MarshallableList",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "HashMapReplaceFunction",
+        "type_id" : 5317,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "property",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "expected",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "replacement",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SetFunction",
+        "type_id" : 5340,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "index",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SubsetFunction",
+        "type_id" : 5347,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "isRev",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "includeStart",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "includeStop",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "offset",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "count",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "subsetType",
+          "type" : "SortedSetOperationType",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "start",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "stop",
+          "type" : "org.infinispan.global.core.MarshallableObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SortedSetRandomFunction",
+        "type_id" : 5346,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "count",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SAddFunction",
+        "type_id" : 5334,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "values",
+          "type" : "org.infinispan.global.core.MarshallableCollection",
+          "optional" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "persistence.multimap.proto"
+      }, {
+        "path" : "global.core.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.global.multimap"
+      }
+    }
   } ]
 }

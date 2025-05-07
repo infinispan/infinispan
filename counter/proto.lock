@@ -58,5 +58,117 @@
         "name" : "org.infinispan.persistence.counters"
       }
     }
+  }, {
+    "protopath" : "generated:/:global.counters.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "ResetFunction",
+        "type_id" : 4012,
+        "fields" : [ ]
+      }, {
+        "name" : "CreateAndAddFunction",
+        "type_id" : 4006,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "configuration",
+          "type" : "org.infinispan.persistence.commons.CounterConfiguration",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "delta",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "AddFunction",
+        "type_id" : 4004,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "delta",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CompareAndSwapFunction",
+        "type_id" : 4005,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "expect",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SetFunction",
+        "type_id" : 4013,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "value",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ReadFunction",
+        "type_id" : 4010,
+        "fields" : [ ]
+      }, {
+        "name" : "CreateAndCASFunction",
+        "type_id" : 4007,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "configuration",
+          "type" : "org.infinispan.persistence.commons.CounterConfiguration",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "expect",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "value",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "InitializeCounterFunction",
+        "type_id" : 4009,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "counterConfiguration",
+          "type" : "org.infinispan.persistence.commons.CounterConfiguration",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "CreateAndSetFunction",
+        "type_id" : 4008,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "configuration",
+          "type" : "org.infinispan.persistence.commons.CounterConfiguration",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "value",
+          "type" : "int64",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "RemoveFunction",
+        "type_id" : 4011,
+        "fields" : [ ]
+      } ],
+      "imports" : [ {
+        "path" : "persistence.counters-api.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.global.counters"
+      }
+    }
   } ]
 }

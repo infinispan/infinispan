@@ -59,5 +59,103 @@
         "name" : "org.infinispan.persistence.event_logger"
       }
     }
-  }]
+  }, {
+    "protopath" : "generated:/:global.server.runtime.proto",
+    "def" : {
+      "enums" : [ {
+        "name" : "ExitStatus.ExitMode",
+        "type_id" : 6801,
+        "enum_fields" : [ {
+          "name" : "SERVER_SHUTDOWN"
+        }, {
+          "name" : "CLUSTER_SHUTDOWN",
+          "integer" : 1
+        }, {
+          "name" : "ERROR",
+          "integer" : 2
+        } ]
+      } ],
+      "messages" : [ {
+        "name" : "IgnoredCaches",
+        "type_id" : 5400,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "caches",
+          "type" : "string",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "ExitStatus",
+        "type_id" : 6802,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "mode",
+          "type" : "ExitStatus.ExitMode",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "status",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "DistributedServerTask",
+        "type_id" : 4802,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "taskName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "context",
+          "type" : "org.infinispan.global.tasks.api.TaskContext",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "IpFilterRules",
+        "type_id" : 5403,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "rules",
+          "type" : "IpFilterRule",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "IpFilterRule",
+        "type_id" : 5404,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cidr",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "type",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "ShutdownRunnable",
+        "type_id" : 6803,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "exitStatus",
+          "type" : "ExitStatus",
+          "optional" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "global.tasks.api.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.global.server.runtime"
+      }
+    }
+  } ]
 }
