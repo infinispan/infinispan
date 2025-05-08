@@ -1,6 +1,6 @@
 {
   "definitions" : [ {
-    "protopath" : "generated:/:global.server.rest.proto",
+    "protopath" : "generated:/:persistence.distribution.proto",
     "def" : {
       "enums" : [ ],
       "messages" : [ {
@@ -20,12 +20,20 @@
           "id" : 3,
           "name" : "memoryAvailable",
           "type" : "int64",
-          "optional" : true
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
         }, {
           "id" : 4,
           "name" : "memoryUsed",
           "type" : "int64",
-          "optional" : true
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
         } ]
       }, {
         "name" : "CacheDistributionInfo",
@@ -44,17 +52,29 @@
           "id" : 3,
           "name" : "memoryEntries",
           "type" : "int64",
-          "optional" : true
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
         }, {
           "id" : 4,
           "name" : "totalEntries",
           "type" : "int64",
-          "optional" : true
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
         }, {
           "id" : 5,
           "name" : "memoryUsed",
           "type" : "int64",
-          "optional" : true
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
         } ]
       }, {
         "name" : "KeyDistributionInfo",
@@ -68,7 +88,11 @@
           "id" : 2,
           "name" : "primary",
           "type" : "bool",
-          "optional" : true
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "false"
+          } ]
         }, {
           "id" : 3,
           "name" : "addresses",
@@ -77,7 +101,7 @@
         } ]
       } ],
       "package" : {
-        "name" : "org.infinispan.global.server.rest"
+        "name" : "org.infinispan.persistence.distribution"
       }
     }
   } ]

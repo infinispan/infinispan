@@ -87,7 +87,11 @@
           "id" : 6,
           "name" : "local",
           "type" : "bool",
-          "optional" : true
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "false"
+          } ]
         }, {
           "id" : 7,
           "name" : "hitCountAccuracy",
@@ -115,12 +119,20 @@
           "id" : 1,
           "name" : "numResults",
           "type" : "int32",
-          "optional" : true
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
         }, {
           "id" : 2,
           "name" : "projectionSize",
           "type" : "int32",
-          "optional" : true
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
         }, {
           "id" : 3,
           "name" : "results",
@@ -130,12 +142,20 @@
           "id" : 4,
           "name" : "hitCount",
           "type" : "int32",
-          "optional" : true
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
         }, {
           "id" : 5,
           "name" : "hitCountExact",
           "type" : "bool",
-          "optional" : true
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "false"
+          } ]
         } ]
       } ],
       "imports" : [ {

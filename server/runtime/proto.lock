@@ -60,43 +60,37 @@
       }
     }
   }, {
-    "protopath" : "generated:/:global.server.runtime.proto",
+    "protopath" : "generated:/:persistence.servertasks.proto",
     "def" : {
-      "enums" : [ {
-        "name" : "ExitStatus.ExitMode",
-        "type_id" : 6801,
-        "enum_fields" : [ {
-          "name" : "SERVER_SHUTDOWN"
-        }, {
-          "name" : "CLUSTER_SHUTDOWN",
-          "integer" : 1
-        }, {
-          "name" : "ERROR",
-          "integer" : 2
-        } ]
-      } ],
+      "enums" : [ ],
       "messages" : [ {
-        "name" : "IgnoredCaches",
-        "type_id" : 5400,
+        "name" : "TaskContext",
+        "type_id" : 4804,
         "fields" : [ {
           "id" : 1,
-          "name" : "caches",
-          "type" : "string",
+          "name" : "parameters",
+          "type" : "TaskContext.TaskParameter",
           "is_repeated" : true
-        } ]
-      }, {
-        "name" : "ExitStatus",
-        "type_id" : 6802,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "mode",
-          "type" : "ExitStatus.ExitMode",
-          "optional" : true
         }, {
           "id" : 2,
-          "name" : "status",
-          "type" : "int32",
+          "name" : "subject",
+          "type" : "Subject",
           "optional" : true
+        } ],
+        "messages" : [ {
+          "name" : "TaskParameter",
+          "type_id" : 4803,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "key",
+            "type" : "string",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "value",
+            "type" : "string",
+            "optional" : true
+          } ]
         } ]
       }, {
         "name" : "DistributedServerTask",
@@ -114,8 +108,34 @@
         }, {
           "id" : 3,
           "name" : "context",
-          "type" : "org.infinispan.global.tasks.api.TaskContext",
+          "type" : "TaskContext",
           "optional" : true
+        } ]
+      }, {
+        "name" : "Subject",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "principals",
+          "type" : "string",
+          "is_repeated" : true
+        } ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.servertasks"
+      }
+    }
+  }, {
+    "protopath" : "generated:/:persistence.server_state.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "IgnoredCaches",
+        "type_id" : 5400,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "caches",
+          "type" : "string",
+          "is_repeated" : true
         } ]
       }, {
         "name" : "IpFilterRules",
@@ -140,21 +160,9 @@
           "type" : "string",
           "optional" : true
         } ]
-      }, {
-        "name" : "ShutdownRunnable",
-        "type_id" : 6803,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "exitStatus",
-          "type" : "ExitStatus",
-          "optional" : true
-        } ]
-      } ],
-      "imports" : [ {
-        "path" : "global.tasks.api.proto"
       } ],
       "package" : {
-        "name" : "org.infinispan.global.server.runtime"
+        "name" : "org.infinispan.persistence.server_state"
       }
     }
   } ]
