@@ -41,7 +41,7 @@ public class RpcManagerTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      NameCache.add(SUSPECT.getJGroupsAddress(), "SUSPECT");
+      NameCache.add(JGroupsAddress.toExtendedUUID(SUSPECT), "SUSPECT");
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.REPL_SYNC);

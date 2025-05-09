@@ -28,6 +28,7 @@ import org.jgroups.conf.ClassConfigurator;
 import org.jgroups.fork.ForkChannel;
 import org.jgroups.fork.UnknownForkHandler;
 import org.jgroups.protocols.FORK;
+import org.jgroups.util.ExtendedUUID;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -146,6 +147,7 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
                                                                   new TransportFlags());
       JChannel channel = new JChannel(new ByteArrayInputStream(configString.getBytes()));
       channel.setName(name);
+      channel.addAddressGenerator(ExtendedUUID::randomUUID);
       channel.connect(ConcurrentStartForkChannelTest.class.getSimpleName());
       log.tracef("Channel %s connected: %s", channel, channel.getViewAsString());
       return channel;

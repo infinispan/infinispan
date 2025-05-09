@@ -20,7 +20,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.topology.PersistentUUID;
-import org.jgroups.util.UUID;
 
 /**
  * {@link org.infinispan.distribution.ch.ConsistentHashFactory} implementation
@@ -307,12 +306,8 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          // so we try to get all 128 bits from UUID addresses
          long[] key = new long[2];
          if (address instanceof JGroupsAddress addr) {
-            if (addr.getJGroupsAddress() instanceof UUID uuid) {
-               key[0] = uuid.getLeastSignificantBits();
-               key[1] = uuid.getMostSignificantBits();
-            } else {
-               key[0] = address.hashCode();
-            }
+            key[0] = addr.getLeastSignificantBits();
+            key[1] = addr.getMostSignificantBits();
          } else if (address instanceof PersistentUUID persistentUUID) {
             key[0] = persistentUUID.getLeastSignificantBits();
             key[1] = persistentUUID.getMostSignificantBits();

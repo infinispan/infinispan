@@ -1,10 +1,14 @@
 package org.infinispan.remoting.transport.jgroups;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
-import org.infinispan.commons.util.ImmutableHopscotchHashSet;
 import org.infinispan.remoting.transport.Address;
+import org.jgroups.util.ExtendedUUID;
 
 /**
  * Information about the JGroups cluster.
@@ -17,21 +21,22 @@ public class ClusterView {
    static final int FINAL_VIEW_ID = Integer.MAX_VALUE;
 
    private final int viewId;
-   private final List<Address> members;
-   private final Set<Address> membersSet;
-   private final Address coordinator;
+   private final Map<Address, ExtendedUUID> view;
    private final boolean isCoordinator;
+   private final Address coordinator;
 
-   ClusterView(int viewId, List<Address> members, Address self) {
+   ClusterView(int viewId, List<ExtendedUUID> members, ExtendedUUID self) {
       this.viewId = viewId;
-      this.members = List.copyOf(members);
-      this.membersSet = new ImmutableHopscotchHashSet<>(members);
-      if (!members.isEmpty()) {
-         this.coordinator = members.get(0);
-         this.isCoordinator = coordinator.equals(self);
+      if (members.isEmpty()) {
+         view = Map.of();
+         isCoordinator = false;
+         coordinator = null;
       } else {
-         this.coordinator = null;
-         this.isCoordinator = false;
+         this.view = new LinkedHashMap<>();
+         isCoordinator = Objects.equals(self, members.get(0));
+         coordinator = JGroupsAddressCache.fromExtendedUUID(members.get(0));
+         members.forEach(extendedUUID -> view.put(JGroupsAddressCache.fromExtendedUUID(extendedUUID), extendedUUID));
+
       }
    }
 
@@ -48,11 +53,11 @@ public class ClusterView {
    }
 
    public List<Address> getMembers() {
-      return members;
+      return List.copyOf(view.keySet());
    }
 
    public Set<Address> getMembersSet() {
-      return membersSet;
+      return Collections.unmodifiableSet(view.keySet());
    }
 
    public Address getCoordinator() {
@@ -64,11 +69,16 @@ public class ClusterView {
    }
 
    boolean contains(Address address) {
-      return getMembersSet().contains(address);
+      return view.containsKey(address);
    }
 
    @Override
    public String toString() {
-      return coordinator + "|" + viewId + members;
+      return coordinator + "|" + viewId + view.keySet();
+   }
+
+   public ExtendedUUID getAddressFromView(Address address) {
+      assert address instanceof JGroupsAddress;
+      return view.get(address);
    }
 }

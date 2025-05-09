@@ -1,6 +1,7 @@
 package org.infinispan.manager.impl;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
@@ -73,7 +74,7 @@ class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecuto
          if (log.isTraceEnabled()) {
             log.tracef("Submitting runnable to single remote node - JGroups Address %s", target);
          }
-         if (target == me) {
+         if (Objects.equals(target, me)) {
             // Interrupt does nothing
             super.execute(runnable);
          } else {
@@ -97,7 +98,7 @@ class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecuto
          log.tracef("Submitting runnable to single remote node - JGroups Address %s", target);
       }
       CompletableFuture<Void> future = new CompletableFuture<>();
-      if (target == me) {
+      if (Objects.equals(target, me)) {
          return super.submit(runnable);
       } else {
          ReplicableCommand command = new ReplicableRunnableCommand(runnable);
@@ -126,7 +127,7 @@ class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecuto
       if (log.isTraceEnabled()) {
          log.tracef("Submitting runnable to single remote node - JGroups Address %s", target);
       }
-      if (target == me) {
+      if (Objects.equals(target, me)) {
          return super.submitConsumer(function, triConsumer);
       } else {
          CompletableFuture<Void> future = new CompletableFuture<>();

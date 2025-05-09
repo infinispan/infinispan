@@ -35,6 +35,7 @@ import org.jgroups.conf.ClassConfigurator;
 import org.jgroups.fork.ForkChannel;
 import org.jgroups.fork.UnknownForkHandler;
 import org.jgroups.protocols.FORK;
+import org.jgroups.util.ExtendedUUID;
 import org.testng.annotations.Test;
 
 /**
@@ -131,6 +132,7 @@ public class ForkChannelRestartTest extends MultipleCacheManagersTest {
          }
       });
       channel.setName(name);
+      channel.addAddressGenerator(ExtendedUUID::randomUUID);
       FORK fork = new FORK();
       fork.setUnknownForkHandler(new UnknownForkHandler() {
          @Override

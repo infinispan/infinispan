@@ -47,7 +47,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.management.JMException;
@@ -271,7 +270,11 @@ public class TestingUtil {
    }
 
    public static void installNewView(Stream<Address> members, Function<EmbeddedCacheManager, JChannel> channelRetriever, EmbeddedCacheManager... where) {
-      List<org.jgroups.Address> viewMembers = members.map(a -> ((JGroupsAddress) a).getJGroupsAddress()).collect(Collectors.toList());
+      List<org.jgroups.Address> viewMembers = members
+            .map(JGroupsAddress.class::cast)
+            .map(JGroupsAddress::toExtendedUUID)
+            .map(org.jgroups.Address.class::cast)
+            .toList();
 
       List<View> previousViews = new ArrayList<>(where.length);
       // Compute the merge digest, without it nodes would request the retransmission of all messages

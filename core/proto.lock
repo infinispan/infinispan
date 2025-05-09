@@ -186,15 +186,6 @@
           } ]
         } ]
       }, {
-        "name" : "JGroupsAddress",
-        "type_id" : 10,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "bytes",
-          "type" : "bytes",
-          "optional" : true
-        } ]
-      }, {
         "name" : "MetaParamsInternalMetadata",
         "type_id" : 1003,
         "fields" : [ {

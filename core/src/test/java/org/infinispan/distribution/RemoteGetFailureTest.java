@@ -259,8 +259,10 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       JChannel channel = transport.getChannel();
 
       org.jgroups.Address[] members = Stream.of(cachesInView)
-                                            .map(c -> ((JGroupsAddress) address(c)).getJGroupsAddress())
-                                            .toArray(org.jgroups.Address[]::new);
+            .map(this::address)
+            .map(JGroupsAddress.class::cast)
+            .map(JGroupsAddress::toExtendedUUID)
+            .toArray(org.jgroups.Address[]::new);
       View view = View.create(members[0], transport.getViewId() + 1, members);
       ((GMS) channel.getProtocolStack().findProtocol(GMS.class)).installView(view);
    }
