@@ -861,6 +861,12 @@
             <version>${versionx.org.assertj.assertj-core}</version>
             <scope>test</scope>
          </dependency>
+         <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>${version.awaitility}</version>
+            <scope>test</scope>
+         </dependency>
          <!-- Dependency of org.hibernate:hibernate-core. Overwrite verison to 2.1.3 -->
          <dependency>
             <groupId>org.dom4j</groupId>
