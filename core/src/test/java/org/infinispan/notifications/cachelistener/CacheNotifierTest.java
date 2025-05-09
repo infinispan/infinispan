@@ -23,6 +23,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
@@ -32,7 +33,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -52,9 +52,9 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
    public void setUp() throws Exception {
       ConfigurationBuilder c = new ConfigurationBuilder();
       c
-         .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
-         .clustering().cacheMode(CacheMode.LOCAL)
-         .locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
+            .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
+            .clustering().cacheMode(CacheMode.LOCAL)
+            .locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       cm = TestCacheManagerFactory.createCacheManager(c);
       cache = getCache();
       CacheNotifier mockNotifier = mock(CacheNotifier.class, i -> CompletableFutures.completedNull());
@@ -94,7 +94,7 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
    }
 
 
-   public void testVisit() throws Exception {
+   public void testVisit() {
       Matcher<FlagAffectedCommand> matcher = getFlagMatcher();
       initCacheData(cache, Collections.singletonMap("key", "value"));
 
@@ -106,7 +106,7 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
             eq(false), isA(InvocationContext.class), argThat(matcher));
    }
 
-   public void testRemoveData() throws Exception {
+   public void testRemoveData() {
       Matcher<FlagAffectedCommand> matcher = getFlagMatcher();
       Map<String, String> data = new HashMap<>();
       data.put("key", "value");
@@ -118,10 +118,10 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
       verify(getMockNotifier(cache)).notifyCacheEntryRemoved(eq("key2"), eq("value2"),
             any(Metadata.class), eq(true), isA(InvocationContext.class), argThat(matcher));
       verify(getMockNotifier(cache)).notifyCacheEntryRemoved(eq("key2"), eq("value2"), any(Metadata.class), eq(false),
-                                                   isA(InvocationContext.class), argThat(matcher));
+            isA(InvocationContext.class), argThat(matcher));
    }
 
-   public void testPutMap() throws Exception {
+   public void testPutMap() {
       Matcher<FlagAffectedCommand> matcher = getFlagMatcher();
       Map<Object, Object> data = new HashMap<Object, Object>();
       data.put("key", "value");
@@ -133,7 +133,7 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
       expectSingleEntryCreated(cache, "key2", "value2", matcher);
    }
 
-   public void testOnlyModification() throws Exception {
+   public void testOnlyModification() {
       Matcher<FlagAffectedCommand> matcher = getFlagMatcher();
       initCacheData(cache, Collections.singletonMap("key", "value"));
 
@@ -153,7 +153,26 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
             any(Metadata.class), eq(false), isA(InvocationContext.class), argThat(matcher));
    }
 
-   public void testReplaceNotification() throws Exception {
+   public void testCompute() {
+      Matcher<FlagAffectedCommand> matcher = getFlagMatcher();
+      initCacheData(cache, Collections.singletonMap("key", "value"));
+
+      cache.put("key", "value2");
+
+      verify(getMockNotifier(cache)).notifyCacheEntryModified(eq("key"), eq("value2"), any(Metadata.class), eq("value"),
+            any(Metadata.class), eq(true), isA(InvocationContext.class), argThat(matcher));
+      verify(getMockNotifier(cache)).notifyCacheEntryModified(eq("key"), eq("value2"), any(Metadata.class), eq("value"),
+            any(Metadata.class), eq(false), isA(InvocationContext.class), argThat(matcher));
+
+      cache.compute("key", (k, v) -> "value3");
+
+      verify(getMockNotifier(cache)).notifyCacheEntryModified(eq("key"), eq("value3"), any(Metadata.class), eq("value2"),
+            any(Metadata.class), eq(true), isA(InvocationContext.class), argThat(matcher));
+      verify(getMockNotifier(cache)).notifyCacheEntryModified(eq("key"), eq("value3"), any(Metadata.class), eq("value2"),
+            any(Metadata.class), eq(false), isA(InvocationContext.class), argThat(matcher));
+   }
+
+   public void testReplaceNotification() {
       Matcher<FlagAffectedCommand> matcher = getFlagMatcher();
       initCacheData(cache, Collections.singletonMap("key", "value"));
 
@@ -165,7 +184,7 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
             any(Metadata.class), eq(false), isA(InvocationContext.class), argThat(matcher));
    }
 
-   public void testReplaceNoNotificationOnNoChange() throws Exception {
+   public void testReplaceNoNotificationOnNoChange() {
       initCacheData(cache, Collections.singletonMap("key", "value"));
 
       cache.replace("key", "value2", "value3");
@@ -177,15 +196,15 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
             any(Metadata.class), eq(false), any(InvocationContext.class), argThat(matcher));
    }
 
-   public void testNonexistentVisit() throws Exception {
+   public void testNonexistentVisit() {
       cache.get("doesNotExist");
    }
 
-   public void testNonexistentRemove() throws Exception {
+   public void testNonexistentRemove() {
       cache.remove("doesNotExist");
    }
 
-   public void testCreation() throws Exception {
+   public void testCreation() {
       creation(cache, getFlagMatcher());
    }
 
@@ -209,9 +228,9 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
                                          Matcher<FlagAffectedCommand> matcher) {
       verify(getMockNotifier(cache))
             .notifyCacheEntryCreated(eq(key), eq(value), any(Metadata.class), eq(true), any(InvocationContext.class),
-                                     argThat(matcher));
+                  argThat(matcher));
       verify(getMockNotifier(cache))
             .notifyCacheEntryCreated(eq(key), eq(value), any(Metadata.class), eq(false), any(InvocationContext.class),
-                                     argThat(matcher));
+                  argThat(matcher));
    }
 }

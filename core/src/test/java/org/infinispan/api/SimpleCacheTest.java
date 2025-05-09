@@ -2,11 +2,13 @@ package org.infinispan.api;
 
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+import static org.infinispan.test.TestingUtil.k;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
@@ -15,6 +17,7 @@ import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.cache.impl.SimpleCacheImpl;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
@@ -25,6 +28,7 @@ import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.stats.Stats;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
@@ -261,5 +265,48 @@ public class SimpleCacheTest extends APINonTxTest {
       assertEquals(expected.version(), actual.version());
       assertEquals(expected.lifespan(), actual.lifespan());
       assertEquals(expected.maxIdle(), actual.maxIdle());
+   }
+
+   public void testGetGroup() {
+      assertEquals(0, cache.getAdvancedCache().getGroup("group").size());
+   }
+
+   public void testGetAvailability() {
+      assertEquals(AvailabilityMode.AVAILABLE, cache.getAdvancedCache().getAvailability());
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   public void testSetAvailability() {
+      cache.getAdvancedCache().setAvailability(AvailabilityMode.DEGRADED_MODE);
+   }
+
+   @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = "ISPN000696:.*")
+   public void testQuery() {
+      cache.query("some query");
+   }
+
+   @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = "ISPN000696:.*")
+   public void testContinuousQuery() {
+      cache.continuousQuery();
+   }
+
+   @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = "ISPN000378:.*")
+   public void testStartBatch() {
+      cache.startBatch();
+   }
+
+   @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = "ISPN000378:.*")
+   public void testEndBatch() {
+      cache.endBatch(true);
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class, expectedExceptionsMessageRegExp = "ISPN000377:.*")
+   public void testLock() {
+      cache.getAdvancedCache().lock(k());
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class, expectedExceptionsMessageRegExp = "ISPN000377:.*")
+   public void testLockCollection() {
+      cache.getAdvancedCache().lock(List.of(k()));
    }
 }
