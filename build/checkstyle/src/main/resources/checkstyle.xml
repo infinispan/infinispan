@@ -8,6 +8,13 @@
 
 <module name="Checker">
 
+    <!-- Excludes all 'module-info.java' files              -->
+    <!-- See https://checkstyle.org/config_filefilters.html -->
+    <module name="BeforeExecutionExclusionFileFilter">
+        <property name="fileNamePattern" value="module\-info\.java$"/>
+    </module>
+
+
     <!-- Source code is not formatted using tabs -->
     <module name="FileTabCharacter" />
 
