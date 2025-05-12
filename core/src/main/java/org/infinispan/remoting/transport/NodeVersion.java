@@ -24,12 +24,13 @@ public record NodeVersion(byte major, byte minor, byte patch) implements Compara
       INSTANCE = new NodeVersion(major, minor, patch);
    }
 
-   public boolean lessThan(NodeVersion other) {
-      return compareTo(other) < 0;
+   public static NodeVersion from(String s) {
+      var version = s.split("\\.");
+      return new NodeVersion(Byte.parseByte(version[0]), Byte.parseByte(version[1]), Byte.parseByte(version[2]));
    }
 
-   public byte[] toByteArray() {
-      return new byte[]{major, minor, patch};
+   public boolean lessThan(NodeVersion other) {
+      return compareTo(other) < 0;
    }
 
    @Override

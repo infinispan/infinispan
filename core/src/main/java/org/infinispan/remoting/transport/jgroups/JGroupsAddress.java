@@ -53,11 +53,15 @@ public class JGroupsAddress implements TopologyAwareAddress {
    }
 
    public static ExtendedUUID randomUUID(String name, String siteId, String rackId, String machineId) {
+      return randomUUID(name, NodeVersion.INSTANCE, siteId, rackId, machineId);
+   }
+
+   public static ExtendedUUID randomUUID(String name, NodeVersion version, String siteId, String rackId, String machineId) {
       ExtendedUUID uuid = ExtendedUUID.randomUUID(name);
       if (name != null) {
          NameCache.add(uuid, name);
       }
-      addId(uuid, VERSION_KEY, NodeVersion.INSTANCE.toString());
+      addId(uuid, VERSION_KEY, version.toString());
       addId(uuid, SITE_KEY, siteId);
       addId(uuid, RACK_KEY, rackId);
       addId(uuid, MACHINE_KEY, machineId);
@@ -81,7 +85,7 @@ public class JGroupsAddress implements TopologyAwareAddress {
 
    public JGroupsAddress(ExtendedUUID address) {
       this(address.getMostSignificantBits(), address.getLeastSignificantBits(),
-            NodeVersion.INSTANCE,
+            NodeVersion.from(Util.bytesToString(VERSION_KEY)),
             Util.bytesToString(address.get(SITE_KEY)),
             Util.bytesToString(address.get(RACK_KEY)),
             Util.bytesToString(address.get(MACHINE_KEY)));
