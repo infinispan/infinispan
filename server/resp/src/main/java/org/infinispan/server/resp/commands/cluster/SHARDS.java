@@ -1,8 +1,6 @@
 package org.infinispan.server.resp.commands.cluster;
 
 import static org.infinispan.server.resp.commands.cluster.CLUSTER.findPhysicalAddress;
-import static org.infinispan.server.resp.commands.cluster.CLUSTER.findPort;
-import static org.infinispan.server.resp.commands.cluster.CLUSTER.getOnlyIp;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -154,11 +152,17 @@ public class SHARDS extends RespCommand implements Resp3Command {
    private static Map<String, Object> readLocalNodeInformation(EmbeddedCacheManager ecm) {
       CacheManagerInfo manager = ecm.getCacheManagerInfo();
       String name = manager.getNodeName();
-      Address address = findPhysicalAddress(ecm);
-      int port = findPort(address);
-      String addressString = address != null ? getOnlyIp(address) : ecm.getCacheManagerInfo().getNodeAddress();
+      var address = findPhysicalAddress(ecm);
+      String host;
+      int port = 0;
+      if (address == null) {
+         host = ecm.getCacheManagerInfo().getNodeAddress();
+      } else {
+         host = address.address().getHostAddress();
+         port = address.port();
+      }
 
-      return createNodeSerialized(name, addressString, port, "online");
+      return createNodeSerialized(name, host, port, "online");
    }
 
    private static Map<String, Object> createNodeSerialized(String name, String address, int port, String health) {

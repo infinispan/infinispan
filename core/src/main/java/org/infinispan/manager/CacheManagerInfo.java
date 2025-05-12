@@ -16,7 +16,6 @@ import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.registry.InternalCacheRegistry;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.topology.LocalTopologyManager;
@@ -109,14 +108,14 @@ public class CacheManagerInfo implements JsonSerialization {
    public String getPhysicalAddresses() {
       Transport transport = getTransport();
       if (transport == null) return "local";
-      List<Address> address = transport.getPhysicalAddresses();
+      var address = transport.getPhysicalAddresses();
       return address == null ? "local" : address.toString();
    }
 
    public List<String> getPhysicalAddressesRaw() {
       Transport transport = getTransport();
       if (transport == null) return LOCAL_NODE;
-      List<Address> address = transport.getPhysicalAddresses();
+      var address = transport.getPhysicalAddresses();
       return address == null
             ? LOCAL_NODE
             : address.stream().map(Object::toString).collect(Collectors.toList());
@@ -131,8 +130,10 @@ public class CacheManagerInfo implements JsonSerialization {
    public List<String> getClusterMembersPhysicalAddresses() {
       Transport transport = getTransport();
       if (transport == null) return LOCAL_NODE;
-      List<Address> addressList = transport.getMembersPhysicalAddresses();
-      return addressList.stream().map(Objects::toString).collect(Collectors.toList());
+      return transport.getMembersPhysicalAddresses()
+            .stream()
+            .map(Objects::toString)
+            .toList();
    }
 
    public int getClusterSize() {

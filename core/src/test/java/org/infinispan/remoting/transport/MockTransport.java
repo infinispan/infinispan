@@ -160,7 +160,7 @@ public class MockTransport implements Transport {
    }
 
    @Override
-   public List<Address> getPhysicalAddresses() {
+   public List<PhysicalAddress> getPhysicalAddresses() {
       throw new UnsupportedOperationException();
    }
 
@@ -170,7 +170,7 @@ public class MockTransport implements Transport {
    }
 
    @Override
-   public List<Address> getMembersPhysicalAddresses() {
+   public List<PhysicalAddress> getMembersPhysicalAddresses() {
       throw new UnsupportedOperationException();
    }
 

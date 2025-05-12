@@ -119,7 +119,7 @@ public interface Transport extends Lifecycle {
     *
     * @return an List of Address
     */
-   List<Address> getPhysicalAddresses();
+   List<PhysicalAddress> getPhysicalAddresses();
 
    /**
     * Returns a list of  members in the current cluster view.
@@ -134,7 +134,7 @@ public interface Transport extends Lifecycle {
     *
     * @return a list of physical addresses
     */
-   List<Address> getMembersPhysicalAddresses();
+   List<PhysicalAddress> getMembersPhysicalAddresses();
 
    /**
     * Tests whether the transport supports true multicast

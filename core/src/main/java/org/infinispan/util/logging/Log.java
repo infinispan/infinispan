@@ -46,6 +46,7 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.PhysicalAddress;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.topology.CacheJoinException;
 import org.infinispan.topology.CacheTopology;
@@ -337,7 +338,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = INFO)
    @Message(value = "Channel `%s` local address is `%s`, physical addresses are `%s`", id = 79)
-   void localAndPhysicalAddress(String cluster, Address address, List<Address> physicalAddresses);
+   void localAndPhysicalAddress(String cluster, Address address, List<PhysicalAddress> physicalAddresses);
 
    @LogMessage(level = INFO)
    @Message(value = "Disconnecting JGroups channel `%s`", id = 80)
