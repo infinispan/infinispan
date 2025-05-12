@@ -815,7 +815,7 @@ public interface Log extends BasicLogger {
    void entriesMigrated(long count, String name, String prettyTime);
 
    @Message(value = "Received exception from %s, see cause for remote stack trace", id = 217)
-   RemoteException remoteException(Address sender, @Cause Throwable t);
+   RemoteException remoteException(Object sender, @Cause Throwable t);
 
 //   @LogMessage(level = INFO)
 //   @Message(value = "Timeout while waiting for the transaction validation. The command will not be processed. " +
@@ -1026,7 +1026,7 @@ public interface Log extends BasicLogger {
    CacheListenerException exceptionInvokingListener(String name, Method m, Object target, @Cause Throwable cause);
 
    @Message(value = "%s reported that a third node was suspected, see cause for info on the node that was suspected", id = 281)
-   SuspectException thirdPartySuspected(Address sender, @Cause SuspectException e);
+   SuspectException thirdPartySuspected(Object sender, @Cause SuspectException e);
 
    @Message(value = "Cannot enable Invocation Batching when the Transaction Mode is NON_TRANSACTIONAL, set the transaction mode to TRANSACTIONAL", id = 282)
    CacheConfigurationException invocationBatchingNeedsTransactionalCache();
@@ -1393,7 +1393,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Node %s was suspected", id = 400)
    @Description("A node in the cluster is offline or cannot be reached on the network. If you are using cross-site replication this message indicates that the relay nodes are not reachable. Check network settings for all nodes in the cluster.")
-   SuspectException remoteNodeSuspected(Address address);
+   SuspectException remoteNodeSuspected(Object address);
 
    @Message(value = "Node %s timed out, time : %s %s", id = 401)
    TimeoutException remoteNodeTimedOut(Address address, long time, TimeUnit unit);

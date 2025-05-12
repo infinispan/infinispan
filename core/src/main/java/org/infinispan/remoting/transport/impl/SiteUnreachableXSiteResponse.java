@@ -5,7 +5,6 @@ import static org.infinispan.util.logging.Log.CLUSTER;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.remoting.transport.SiteAddress;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.xsite.XSiteBackup;
@@ -24,7 +23,7 @@ public class SiteUnreachableXSiteResponse<T> extends CompletableFuture<T> implem
    public SiteUnreachableXSiteResponse(XSiteBackup backup, TimeService timeService) {
       this.backup = backup;
       this.sendTimeNanos = timeService.time();
-      this.exception = CLUSTER.remoteNodeSuspected(new SiteAddress(backup.getSiteName()));
+      this.exception = CLUSTER.remoteNodeSuspected("site:" + backup.getSiteName());
       completeExceptionally(exception);
    }
 

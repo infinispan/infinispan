@@ -19,7 +19,7 @@ import org.infinispan.remoting.responses.ValidResponse;
  * @since 9.1
  */
 @Experimental
-public abstract class ValidResponseCollector<T> implements ResponseCollector<T> {
+public abstract class ValidResponseCollector<T> implements ResponseCollector<Address, T> {
 
    @Override
    public final T addResponse(Address sender, Response response) {

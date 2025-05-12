@@ -77,8 +77,8 @@ public class OutboundRpcSequencerAction {
 
       @Override
       protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command,
-                                                      ResponseCollector<T> collector,
-                                                      Function<ResponseCollector<T>, CompletionStage<T>>
+                                                      ResponseCollector<Address, T> collector,
+                                                      Function<ResponseCollector<Address, T>, CompletionStage<T>>
                                                          invoker, RpcOptions rpcOptions) {
          boolean accept;
          try {

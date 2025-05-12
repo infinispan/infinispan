@@ -63,8 +63,8 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
          TestingUtil.wrapComponent(c, RpcManager.class, original -> new AbstractDelegatingRpcManager(original) {
             @Override
             protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command,
-                                                            ResponseCollector<T> collector,
-                                                            Function<ResponseCollector<T>, CompletionStage<T>> invoker,
+                                                            ResponseCollector<Address, T> collector,
+                                                            Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker,
                                                             RpcOptions rpcOptions) {
                if (command instanceof InvalidateL1Command) {
                   InvalidateL1Command invalidateL1Command = (InvalidateL1Command) command;

@@ -20,12 +20,12 @@ import org.infinispan.test.TestingUtil;
  */
 public class CountingRequestRepository extends RequestRepository {
    private final AtomicLong generation = new AtomicLong();
-   private final Map<Long, Map<Long, Request<?>>> requests = new ConcurrentHashMap<>();
+   private final Map<Long, Map<Long, Request<?, ?>>> requests = new ConcurrentHashMap<>();
 
    public static CountingRequestRepository replaceDispatcher(EmbeddedCacheManager cacheManager) {
       JGroupsTransport transport = (JGroupsTransport) GlobalComponentRegistry.componentOf(cacheManager, Transport.class);
       RequestRepository requestRepository =
-            (RequestRepository) TestingUtil.extractField(JGroupsTransport.class, transport, "requests");
+            TestingUtil.extractField(JGroupsTransport.class, transport, "requests");
       CountingRequestRepository instance = new CountingRequestRepository(requestRepository);
       TestingUtil.replaceField(instance, "requests", transport, JGroupsTransport.class);
       return instance;
@@ -36,7 +36,7 @@ public class CountingRequestRepository extends RequestRepository {
    }
 
    @Override
-   public void addRequest(Request<?> request) {
+   public void addRequest(Request<?, ?> request) {
       requests.compute(generation.get(), (generation, map) -> {
          if (map == null) {
             map = new ConcurrentHashMap<>();
@@ -52,12 +52,12 @@ public class CountingRequestRepository extends RequestRepository {
     */
    public void advanceGenerationAndAwait(long timeout, TimeUnit timeUnit) throws Exception {
       long lastGen = generation.getAndIncrement();
-      Map<Long, Request<?>> lastGenRequests = requests.getOrDefault(lastGen, Collections.emptyMap());
+      Map<Long, Request<?, ?>> lastGenRequests = requests.getOrDefault(lastGen, Collections.emptyMap());
       long now = System.nanoTime();
       long deadline = now + timeUnit.toNanos(timeout);
       synchronized (this) {
-         for (Map.Entry<Long, Request<?>> entry : lastGenRequests.entrySet()) {
-            Request<?> request = entry.getValue();
+         for (Map.Entry<Long, Request<?, ?>> entry : lastGenRequests.entrySet()) {
+            Request<?, ?> request = entry.getValue();
             request.toCompletableFuture().get(deadline - now, TimeUnit.NANOSECONDS);
             now = System.currentTimeMillis();
          }

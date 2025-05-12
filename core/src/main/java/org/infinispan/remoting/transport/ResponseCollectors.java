@@ -15,7 +15,7 @@ import org.infinispan.statetransfer.OutdatedTopologyException;
  */
 @Experimental
 public class ResponseCollectors {
-   public static CacheException wrapRemoteException(Address sender, Throwable exception) {
+   public static <S> CacheException wrapRemoteException(S sender, Throwable exception) {
       CacheException e;
       if (exception instanceof SuspectException) {
          e = CLUSTER.thirdPartySuspected(sender, (SuspectException) exception);
@@ -28,7 +28,7 @@ public class ResponseCollectors {
       return e;
    }
 
-   public static SuspectException remoteNodeSuspected(Address sender) {
+   public static <S> SuspectException remoteNodeSuspected(S sender) {
       return CLUSTER.remoteNodeSuspected(sender);
    }
 }

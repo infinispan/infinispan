@@ -56,7 +56,6 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.ExponentialBackOff;
@@ -307,7 +306,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
          log.tracef("Sending state response to %s. Batch=%s", dst, Util.toStr(batch));
       }
       RpcOptions rpcOptions = rpcManager.getSyncRpcOptions();
-      ResponseCollector<Void> rspCollector = ignoreLeavers();
+      var rspCollector = ignoreLeavers();
       IracStateResponseCommand cmd = commandsFactory.buildIracStateResponseCommand(batch.size());
       for (IracManagerKeyState state : batch) {
          IracMetadata tombstone = iracTombstoneManager.getTombstone(state.getKey());

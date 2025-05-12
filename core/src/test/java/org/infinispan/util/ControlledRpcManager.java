@@ -196,8 +196,8 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
 
    @Override
    protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command,
-                                                   ResponseCollector<T> collector,
-                                                   Function<ResponseCollector<T>, CompletionStage<T>> invoker,
+                                                   ResponseCollector<Address, T> collector,
+                                                   Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker,
                                                    RpcOptions rpcOptions) {
       if (stopped || isCommandExcluded(command)) {
          log.tracef("Not blocking excluded command %s", command);
@@ -244,7 +244,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
 
    @Override
    protected <T> void performSend(Collection<Address> targets, CacheRpcCommand command,
-                                  Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
+                                  Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker) {
       performRequest(targets, command, null, invoker, null);
    }
 
@@ -285,7 +285,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
    static class ControlledRequest<T> {
       private final ReplicableCommand command;
       private final Collection<Address> targets;
-      private final Function<ResponseCollector<T>, CompletionStage<T>> invoker;
+      private final Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker;
       private final ExecutorService executor;
 
       private final CompletableFuture<T> resultFuture = new CompletableFuture<>();
@@ -295,15 +295,15 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
 
       private final Lock collectLock = new ReentrantLock();
       @GuardedBy("collectLock")
-      private final ResponseCollector<T> collector;
+      private final ResponseCollector<Address, T> collector;
       @GuardedBy("collectLock")
       private final Set<Address> collectedResponses = new HashSet<>();
       @GuardedBy("collectLock")
       private boolean collectedFinish;
 
 
-      ControlledRequest(ReplicableCommand command, Collection<Address> targets, ResponseCollector<T> collector,
-                        Function<ResponseCollector<T>, CompletionStage<T>> invoker,
+      ControlledRequest(ReplicableCommand command, Collection<Address> targets, ResponseCollector<Address, T> collector,
+                        Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker,
                         ExecutorService executor, Address excluded) {
          this.command = command;
          this.targets = targets;

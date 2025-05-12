@@ -37,9 +37,9 @@ public class TopologyManagementHelper {
    }
 
    public <T> CompletionStage<T> executeOnClusterSync(Transport transport, ReplicableCommand command,
-         int timeout, ResponseCollector<T> responseCollector) {
+         int timeout, ResponseCollector<Address, T> responseCollector) {
       // First invoke the command remotely, but make sure we don't call finish() on the collector
-      ResponseCollector<Void> delegatingCollector = new DelegatingResponseCollector<>(responseCollector);
+      ResponseCollector<Address, Void> delegatingCollector = new DelegatingResponseCollector<>(responseCollector);
       CompletionStage<Void> remoteFuture =
             transport.invokeCommandOnAll(command, delegatingCollector, DeliverOrder.NONE, timeout, MILLISECONDS);
 
@@ -120,7 +120,7 @@ public class TopologyManagementHelper {
       }
    }
 
-   private <T> CompletionStage<T> addLocalResult(ResponseCollector<T> responseCollector,
+   private <T> CompletionStage<T> addLocalResult(ResponseCollector<Address, T> responseCollector,
                                                  CompletionStage<Void> remoteFuture,
                                                  CompletionStage<?> localFuture, Address localAddress) {
       return remoteFuture.thenCompose(ignore -> localFuture.handle((v, t) -> {
@@ -153,22 +153,17 @@ public class TopologyManagementHelper {
       return command.invokeAsync();
    }
 
-   private static class DelegatingResponseCollector<T> implements ResponseCollector<Void> {
-      private final ResponseCollector<T> responseCollector;
-
-      public DelegatingResponseCollector(ResponseCollector<T> responseCollector) {
-         this.responseCollector = responseCollector;
-      }
+   private record DelegatingResponseCollector<T>(ResponseCollector<Address, T> responseCollector) implements ResponseCollector<Address, Void> {
 
       @Override
-      public Void addResponse(Address sender, Response response) {
-         responseCollector.addResponse(sender, response);
-         return null;
-      }
+         public Void addResponse(Address sender, Response response) {
+            responseCollector.addResponse(sender, response);
+            return null;
+         }
 
-      @Override
-      public Void finish() {
-         return null;
+         @Override
+         public Void finish() {
+            return null;
+         }
       }
-   }
 }

@@ -559,7 +559,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    }
 
    private class StatePushTask extends CompletableFuture<Void>
-         implements ResponseCollector<Response>, BiFunction<Response, Throwable, Void> {
+         implements ResponseCollector<Address, Response>, BiFunction<Response, Throwable, Void> {
       private final List<XSiteState> chunk;
       private final Address address;
       private final long endTime;

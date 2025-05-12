@@ -810,7 +810,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
     * After processing all responses, if any of them were either {@link UnsureResponse} or
     * {@link CacheNotFoundResponse}, throw an {@link OutdatedTopologyException}.</p>
     */
-   private class RemoteGetManyKeyCollector implements ResponseCollector<Map<Object, Collection<Address>>> {
+   private class RemoteGetManyKeyCollector implements ResponseCollector<Address, Map<Object, Collection<Address>>> {
       private final Map<Address, List<Object>> requestedKeys;
       private final InvocationContext ctx;
       private final ReplicableCommand command;

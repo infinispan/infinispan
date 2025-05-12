@@ -43,7 +43,7 @@ import org.infinispan.xsite.irac.IracManager;
 @ProtoTypeId(ProtoStreamTypeIds.IRAC_TOMBSTONE_CHECKOUT_REQUEST)
 public class IracTombstoneCheckRequest extends XSiteCacheRequest<IntSet> {
 
-   private List<Object> keys;
+   private final List<Object> keys;
 
    public IracTombstoneCheckRequest(ByteString cacheName, List<Object> keys) {
       super(cacheName);
@@ -104,7 +104,7 @@ public class IracTombstoneCheckRequest extends XSiteCacheRequest<IntSet> {
             '}';
    }
 
-   private static class IntSetResponseCollector extends ValidSingleResponseCollector<Void> {
+   private static class IntSetResponseCollector extends ValidSingleResponseCollector<Address, Void> {
 
       private final List<Object> keys;
       private final int[] keyIndexes;

@@ -162,27 +162,27 @@ public abstract class AbstractDelegatingTransport implements Transport {
 
    @Override
    public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
-                                               ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                               ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                long timeout, TimeUnit unit) {
       return actual.invokeCommand(target, command, collector, deliverOrder, timeout, unit);
    }
 
    @Override
    public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
-                                               ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                               ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                long timeout, TimeUnit unit) {
       return actual.invokeCommand(targets, command, collector, deliverOrder, timeout, unit);
    }
 
    @Override
-   public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
+   public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<Address, T> collector,
                                                     DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
       return actual.invokeCommandOnAll(command, collector, deliverOrder, timeout, unit);
    }
 
    @Override
    public <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
-                                                        ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                        ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                         long timeout, TimeUnit unit) {
       return actual.invokeCommandStaggered(targets, command, collector, deliverOrder, timeout, unit);
    }
@@ -190,7 +190,7 @@ public abstract class AbstractDelegatingTransport implements Transport {
    @Override
    public <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
                                                 Function<Address, ReplicableCommand> commandGenerator,
-                                                ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                 long timeout,
                                                 TimeUnit timeUnit) {
       return actual.invokeCommands(targets, commandGenerator, collector, deliverOrder, timeout, timeUnit);

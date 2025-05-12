@@ -22,13 +22,13 @@ import org.infinispan.util.logging.LogFactory;
  * @author Dan Berindei
  * @since 9.1
  */
-public class SingleTargetRequest<T> extends AbstractRequest<T> {
+public class SingleTargetRequest<T> extends AbstractRequest<Address, T> {
    private static final Log log = LogFactory.getLog(SingleTargetRequest.class);
 
    // Only changes from non-null to null
    private final AtomicReference<RequestTracker> requestTracker;
 
-   public SingleTargetRequest(ResponseCollector<T> wrapper, long requestId, RequestRepository repository, RequestTracker requestTracker) {
+   public SingleTargetRequest(ResponseCollector<Address, T> wrapper, long requestId, RequestRepository repository, RequestTracker requestTracker) {
       super(requestId, wrapper, repository);
       this.requestTracker = new AtomicReference<>(Objects.requireNonNull(requestTracker));
    }

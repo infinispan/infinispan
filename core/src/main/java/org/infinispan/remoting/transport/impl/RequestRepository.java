@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -17,7 +16,7 @@ import org.infinispan.util.logging.LogFactory;
 public class RequestRepository {
    private static final Log log = LogFactory.getLog(RequestRepository.class);
 
-   private final ConcurrentHashMap<Long, Request<?>> requests;
+   private final ConcurrentHashMap<Long, Request<?, ?>> requests;
    private final AtomicLong nextRequestId = new AtomicLong(1);
 
    public RequestRepository() {
@@ -33,7 +32,7 @@ public class RequestRepository {
       return requestId;
    }
 
-   public void addRequest(Request<?> request) {
+   public void addRequest(Request<?, ?> request) {
       long requestId = request.getRequestId();
       Request existingRequest = requests.putIfAbsent(requestId, request);
       if (existingRequest != null) {
@@ -41,8 +40,8 @@ public class RequestRepository {
       }
    }
 
-   public void addResponse(long requestId, Address sender, Response response) {
-      Request<?> request = requests.get(requestId);
+   public void addResponse(long requestId, Object sender, Response response) {
+      Request request = requests.get(requestId);
       if (request == null) {
          if (log.isTraceEnabled())
             log.tracef("Ignoring response for non-existent request %d from %s: %s", requestId, sender, response);
@@ -55,7 +54,7 @@ public class RequestRepository {
       requests.remove(requestId);
    }
 
-   public void forEach(Consumer<Request<?>> consumer) {
+   public void forEach(Consumer<Request<?, ?>> consumer) {
       requests.forEach((id, request) -> consumer.accept(request));
    }
 }

@@ -112,7 +112,7 @@ public class StateTransferRestart2Test extends MultipleCacheManagersTest {
 
       @Override
       public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
-                                                  ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                  ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                   long timeout, TimeUnit unit) {
          if (command instanceof StateTransferStartCommand && target.equals(address(1))) {
             d1.discardAll(true);

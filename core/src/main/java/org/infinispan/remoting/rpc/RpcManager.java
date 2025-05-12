@@ -36,7 +36,7 @@ public interface RpcManager {
     * @since 9.2
     */
    <T> CompletionStage<T> invokeCommand(Address target, CacheRpcCommand command,
-                                        ResponseCollector<T> collector, RpcOptions rpcOptions);
+                                        ResponseCollector<Address, T> collector, RpcOptions rpcOptions);
 
    /**
     * Invoke a command on a collection of node and pass the responses to a {@link ResponseCollector}.
@@ -46,7 +46,7 @@ public interface RpcManager {
     * @since 9.2
     */
    <T> CompletionStage<T> invokeCommand(Collection<Address> targets, CacheRpcCommand command,
-                                        ResponseCollector<T> collector, RpcOptions rpcOptions);
+                                        ResponseCollector<Address, T> collector, RpcOptions rpcOptions);
 
    /**
     * Invoke a command on all the nodes in the cluster and pass the responses to a {@link ResponseCollector}.
@@ -55,7 +55,7 @@ public interface RpcManager {
     *
     * @since 9.2
     */
-   <T> CompletionStage<T> invokeCommandOnAll(CacheRpcCommand command, ResponseCollector<T> collector,
+   <T> CompletionStage<T> invokeCommandOnAll(CacheRpcCommand command, ResponseCollector<Address, T> collector,
                                              RpcOptions rpcOptions);
 
    /**
@@ -63,7 +63,7 @@ public interface RpcManager {
     *
     * The command is only sent immediately to the first target, and there is an implementation-dependent
     * delay before sending the command to each target. There is no delay if the target responds or leaves
-    * the cluster. The remaining targets are skipped if {@link ResponseCollector#addResponse(Address, Response)}
+    * the cluster. The remaining targets are skipped if {@link ResponseCollector#addResponse(Object, Response)}
     * returns a non-{@code null} value.
     *
     * The command is only executed on the remote nodes.
@@ -71,7 +71,7 @@ public interface RpcManager {
     * @since 9.2
     */
    <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, CacheRpcCommand command,
-                                                 ResponseCollector<T> collector, RpcOptions rpcOptions);
+                                                 ResponseCollector<Address, T> collector, RpcOptions rpcOptions);
 
    /**
     * Invoke different commands on a collection of nodes and pass the responses to a {@link ResponseCollector}.
@@ -82,7 +82,7 @@ public interface RpcManager {
     */
    <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
                                          Function<Address, CacheRpcCommand> commandGenerator,
-                                         ResponseCollector<T> collector, RpcOptions rpcOptions);
+                                         ResponseCollector<Address, T> collector, RpcOptions rpcOptions);
 
    /**
     * Block on a request and return its result.

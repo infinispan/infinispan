@@ -27,13 +27,13 @@ import net.jcip.annotations.GuardedBy;
  * to the update being possibly enqueued, and thus we cannot guarantee its correctness.
  * @author William Burns
  */
-public abstract class ExclusiveTargetRequest<T> extends AbstractRequest<T> {
+public abstract class ExclusiveTargetRequest<T> extends AbstractRequest<Address, T> {
    @GuardedBy("this")
    private Queue<Runnable> queue;
    @GuardedBy("this")
    private boolean handling;
 
-   public ExclusiveTargetRequest(ResponseCollector<T> responseCollector, long requestId, RequestRepository repository) {
+   public ExclusiveTargetRequest(ResponseCollector<Address, T> responseCollector, long requestId, RequestRepository repository) {
       super(requestId, responseCollector, repository);
    }
 

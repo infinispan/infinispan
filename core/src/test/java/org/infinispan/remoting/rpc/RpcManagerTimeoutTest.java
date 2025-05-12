@@ -74,7 +74,7 @@ public class RpcManagerTimeoutTest extends MultipleCacheManagersTest {
    }
 
 
-   private void doTest(ResponseCollector<?> collector,boolean broadcast) {
+   private void doTest(ResponseCollector<Address, ?> collector, boolean broadcast) {
       if (collector == null)
          collector = VoidResponseCollector.ignoreLeavers();
 

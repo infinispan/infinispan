@@ -29,7 +29,7 @@ public class MultiTargetRequest<T> extends ExclusiveTargetRequest<T> {
    private final RequestTracker[] trackers;
    private int missingResponses;
 
-   public MultiTargetRequest(ResponseCollector<T> responseCollector, long requestId, RequestRepository repository,
+   public MultiTargetRequest(ResponseCollector<Address, T> responseCollector, long requestId, RequestRepository repository,
                              Collection<Address> targets, Address excluded, JGroupsMetricsManager metricsCollector) {
       super(responseCollector, requestId, repository);
       trackers = new RequestTracker[targets.size()];

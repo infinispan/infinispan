@@ -38,20 +38,20 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
 
    @Override
    public final <T> CompletionStage<T> invokeCommand(Address target, CacheRpcCommand command,
-                                                     ResponseCollector<T> collector, RpcOptions rpcOptions) {
+                                                     ResponseCollector<Address, T> collector, RpcOptions rpcOptions) {
       return performRequest(Collections.singleton(target), command, collector,
                             c -> realOne.invokeCommand(target, command, c, rpcOptions), rpcOptions);
    }
 
    @Override
    public final <T> CompletionStage<T> invokeCommand(Collection<Address> targets, CacheRpcCommand command,
-                                                     ResponseCollector<T> collector, RpcOptions rpcOptions) {
+                                                     ResponseCollector<Address, T> collector, RpcOptions rpcOptions) {
       return performRequest(targets, command, collector,
                             c -> realOne.invokeCommand(targets, command, c, rpcOptions), rpcOptions);
    }
 
    @Override
-   public final <T> CompletionStage<T> invokeCommandOnAll(CacheRpcCommand command, ResponseCollector<T> collector,
+   public final <T> CompletionStage<T> invokeCommandOnAll(CacheRpcCommand command, ResponseCollector<Address, T> collector,
                                                           RpcOptions rpcOptions) {
       return performRequest(getTransport().getMembers(), command, collector,
                             c -> realOne.invokeCommandOnAll(command, c, rpcOptions), rpcOptions);
@@ -59,7 +59,7 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
 
    @Override
    public final <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, CacheRpcCommand command,
-                                                              ResponseCollector<T> collector, RpcOptions rpcOptions) {
+                                                              ResponseCollector<Address, T> collector, RpcOptions rpcOptions) {
       return performRequest(targets, command, collector,
                             c -> realOne.invokeCommandStaggered(targets, command, c, rpcOptions), rpcOptions);
    }
@@ -67,7 +67,7 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
    @Override
    public final <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
                                                       Function<Address, CacheRpcCommand> commandGenerator,
-                                                      ResponseCollector<T> collector, RpcOptions rpcOptions) {
+                                                      ResponseCollector<Address, T> collector, RpcOptions rpcOptions) {
       // Split the invocation into multiple unicast requests
       CommandsRequest<T> action = new CommandsRequest<>(targets, collector);
       for (Address target : targets) {
@@ -163,8 +163,8 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
     * Wrap the remote invocation.
     */
    protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command,
-                                                   ResponseCollector<T> collector,
-                                                   Function<ResponseCollector<T>, CompletionStage<T>> invoker,
+                                                   ResponseCollector<Address, T> collector,
+                                                   Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker,
                                                    RpcOptions rpcOptions) {
       return invoker.apply(collector);
    }
@@ -174,16 +174,16 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
     * Wrap the remote invocation.
     */
    protected <T> void performSend(Collection<Address> targets, CacheRpcCommand command,
-                                  Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
+                                  Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker) {
       invoker.apply(null);
    }
 
    public static class CommandsRequest<T> implements BiConsumer<Map<Address, Response>, Throwable> {
-      private final ResponseCollector<T> collector;
+      private final ResponseCollector<Address, T> collector;
       CompletableFuture<T> resultFuture;
       int missingResponses;
 
-      public CommandsRequest(Collection<Address> targets, ResponseCollector<T> collector) {
+      public CommandsRequest(Collection<Address> targets, ResponseCollector<Address, T> collector) {
          this.collector = collector;
          resultFuture = new CompletableFuture<>();
          missingResponses = targets.size();

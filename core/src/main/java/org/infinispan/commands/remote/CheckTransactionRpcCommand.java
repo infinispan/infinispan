@@ -36,7 +36,7 @@ public class CheckTransactionRpcCommand implements CacheRpcCommand {
    @ProtoField(2)
    final Collection<GlobalTransaction> gtxToCheck;
 
-   public static ResponseCollector<Collection<GlobalTransaction>> responseCollector() {
+   public static ResponseCollector<Address, Collection<GlobalTransaction>> responseCollector() {
       return INSTANCE;
    }
 
@@ -88,7 +88,7 @@ public class CheckTransactionRpcCommand implements CacheRpcCommand {
     * <p>
     * It ignores all the exceptions and convert them to {@link Collections#emptyList()}.
     */
-   private static class ResponseCollectorImpl extends ValidSingleResponseCollector<Collection<GlobalTransaction>> {
+   private static class ResponseCollectorImpl extends ValidSingleResponseCollector<Address, Collection<GlobalTransaction>> {
 
       @Override
       protected Collection<GlobalTransaction> withValidResponse(Address sender, ValidResponse response) {

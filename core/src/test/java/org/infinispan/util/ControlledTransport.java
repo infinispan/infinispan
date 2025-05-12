@@ -48,8 +48,6 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -57,12 +55,9 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
-import org.infinispan.remoting.transport.SiteAddress;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
-import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
-import org.infinispan.remoting.transport.impl.XSiteResponseImpl;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
@@ -252,39 +247,12 @@ public class ControlledTransport extends AbstractDelegatingTransport {
 
    @Override
    public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteRequest<O> rpcCommand) {
-      XSiteResponseImpl<O> xSiteResponse = new XSiteResponseImpl<>(timeService, backup);
-      SiteAddress address = new SiteAddress(backup.getSiteName());
-      CompletionStage<ValidResponse> request =
-            performRequest(Collections.singletonList(address), rpcCommand, SingleResponseCollector.validOnly(), c -> {
-               try {
-                  return actual.backupRemotely(backup, rpcCommand).handle(
-                        (rv, t) -> {
-                           // backupRemotely parses the response, here we turn the value/exception back into a response
-                           ValidResponse cv;
-                           if (t == null) {
-                              cv = c.addResponse(address, SuccessfulResponse.create(rv));
-                           } else if (t instanceof Exception) {
-                              cv = c.addResponse(address, new ExceptionResponse((Exception) t));
-                           } else {
-                              cv = c.addResponse(address, new ExceptionResponse(new TestException(t)));
-                           }
-                           if (cv == null) {
-                              cv = c.finish();
-                           }
-
-                           return cv;
-                        });
-               } catch (Exception e) {
-                  return CompletableFuture.failedFuture(e);
-               }
-            });
-      request.whenComplete(xSiteResponse);
-      return xSiteResponse;
+      throw new UnsupportedOperationException();
    }
 
    @Override
    public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
-                                               ResponseCollector<T> collector, DeliverOrder deliverOrder, long timeout,
+                                               ResponseCollector<Address, T> collector, DeliverOrder deliverOrder, long timeout,
                                                TimeUnit unit) {
       return performRequest(Collections.singletonList(target), command, collector,
                             c -> actual.invokeCommand(target, command, c, deliverOrder, timeout, unit));
@@ -292,14 +260,14 @@ public class ControlledTransport extends AbstractDelegatingTransport {
 
    @Override
    public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
-                                               ResponseCollector<T> collector, DeliverOrder deliverOrder, long timeout,
+                                               ResponseCollector<Address, T> collector, DeliverOrder deliverOrder, long timeout,
                                                TimeUnit unit) {
       return performRequest(targets, command, collector,
                             c -> actual.invokeCommand(targets, command, c, deliverOrder, timeout, unit));
    }
 
    @Override
-   public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
+   public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<Address, T> collector,
                                                     DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
       return performRequest(actual.getMembers(), command, collector,
                             c -> actual.invokeCommandOnAll(command, c, deliverOrder, timeout, unit));
@@ -307,7 +275,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
 
    @Override
    public <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
-                                                        ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                        ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                         long timeout, TimeUnit unit) {
       return performRequest(actual.getMembers(), command, collector,
                             c -> actual.invokeCommandStaggered(targets, command, c, deliverOrder, timeout,
@@ -317,7 +285,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
    @Override
    public <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
                                                 Function<Address, ReplicableCommand> commandGenerator,
-                                                ResponseCollector<T> collector, DeliverOrder deliverOrder, long timeout,
+                                                ResponseCollector<Address, T> collector, DeliverOrder deliverOrder, long timeout,
                                                 TimeUnit timeUnit) {
       // Split the invocation into multiple unicast requests
       AbstractDelegatingRpcManager.CommandsRequest<T>
@@ -334,8 +302,8 @@ public class ControlledTransport extends AbstractDelegatingTransport {
    }
 
    protected <T> CompletionStage<T> performRequest(Collection<Address> targets, Object command,
-                                                   ResponseCollector<T> collector,
-                                                   Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
+                                                   ResponseCollector<Address, T> collector,
+                                                   Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker) {
       if (stopped || isCommandExcluded(command)) {
          log.tracef("Not blocking excluded command %s", command);
          return invoker.apply(collector);
@@ -380,7 +348,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
    }
 
    protected <T> void performSend(Collection<Address> targets, ReplicableCommand command,
-                                  Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
+                                  Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker) {
       performRequest(targets, command, null, invoker);
    }
 
@@ -427,7 +395,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
    static class ControlledRequest<T> {
       private final Object command;
       private final Collection<Address> targets;
-      private final Function<ResponseCollector<T>, CompletionStage<T>> invoker;
+      private final Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker;
       private final ExecutorService executor;
 
       private final CompletableFuture<T> resultFuture = new CompletableFuture<>();
@@ -437,15 +405,15 @@ public class ControlledTransport extends AbstractDelegatingTransport {
 
       private final Lock collectLock = new ReentrantLock();
       @GuardedBy("collectLock")
-      private final ResponseCollector<T> collector;
+      private final ResponseCollector<Address, T> collector;
       @GuardedBy("collectLock")
       private final Set<Address> collectedResponses = new HashSet<>();
       @GuardedBy("collectLock")
       private boolean collectedFinish;
 
 
-      ControlledRequest(Object command, Collection<Address> targets, ResponseCollector<T> collector,
-                        Function<ResponseCollector<T>, CompletionStage<T>> invoker,
+      ControlledRequest(Object command, Collection<Address> targets, ResponseCollector<Address, T> collector,
+                        Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker,
                         ExecutorService executor, Address excluded) {
          this.command = command;
          this.targets = targets;
@@ -461,7 +429,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
       }
 
       void send() {
-         invoker.apply(new ResponseCollector<T>() {
+         invoker.apply(new ResponseCollector<>() {
             @Override
             public T addResponse(Address sender, Response response) {
                queueResponse(sender, response);

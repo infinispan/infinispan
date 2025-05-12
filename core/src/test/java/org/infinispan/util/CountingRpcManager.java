@@ -50,8 +50,8 @@ public class CountingRpcManager extends AbstractDelegatingRpcManager {
 
    @Override
    protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command,
-                                                   ResponseCollector<T> collector,
-                                                   Function<ResponseCollector<T>, CompletionStage<T>> invoker,
+                                                   ResponseCollector<Address, T> collector,
+                                                   Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker,
                                                    RpcOptions rpcOptions) {
       if (command instanceof LockControlCommand) {
          lockCount++;

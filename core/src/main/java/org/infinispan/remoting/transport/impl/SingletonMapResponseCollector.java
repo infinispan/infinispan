@@ -24,7 +24,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
  * @since 9.2
  */
 public class SingletonMapResponseCollector
-      extends ValidSingleResponseCollector<Map<Address, Response>> {
+      extends ValidSingleResponseCollector<Address, Map<Address, Response>> {
    private static final SingletonMapResponseCollector VALID_ONLY = new SingletonMapResponseCollector(false);
    private static final SingletonMapResponseCollector IGNORE_LEAVERS = new SingletonMapResponseCollector(true);
 

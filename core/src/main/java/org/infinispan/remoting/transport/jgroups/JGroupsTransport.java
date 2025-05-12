@@ -118,6 +118,7 @@ import org.jgroups.protocols.relay.RELAY2;
 import org.jgroups.protocols.relay.RouteStatusListener;
 import org.jgroups.protocols.relay.SiteAddress;
 import org.jgroups.protocols.relay.SiteMaster;
+import org.jgroups.protocols.relay.SiteUUID;
 import org.jgroups.stack.AddressGenerator;
 import org.jgroups.stack.Protocol;
 import org.jgroups.stack.ProtocolStack;
@@ -892,7 +893,7 @@ public class JGroupsTransport implements Transport {
 
    @Override
    public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
-                                               ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                               ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                long timeout, TimeUnit unit) {
       if (target.equals(address)) {
          return CompletableFuture.completedFuture(collector.finish());
@@ -913,7 +914,7 @@ public class JGroupsTransport implements Transport {
 
    @Override
    public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
-                                               ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                               ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                long timeout, TimeUnit unit) {
       long requestId = requests.newRequestId();
       logRequest(requestId, command, targets, "multi");
@@ -943,7 +944,7 @@ public class JGroupsTransport implements Transport {
    }
 
    @Override
-   public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
+   public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<Address, T> collector,
                                                     DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
       long requestId = requests.newRequestId();
       logRequest(requestId, command, null, "broadcast");
@@ -971,7 +972,7 @@ public class JGroupsTransport implements Transport {
 
    @Override
    public <T> CompletionStage<T> invokeCommandOnAll(Collection<Address> requiredTargets, ReplicableCommand command,
-                                                    ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                    ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                     long timeout, TimeUnit unit) {
       long requestId = requests.newRequestId();
       logRequest(requestId, command, requiredTargets, "broadcast");
@@ -999,7 +1000,7 @@ public class JGroupsTransport implements Transport {
 
    @Override
    public <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
-                                                        ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                        ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                         long timeout, TimeUnit unit) {
       long requestId = requests.newRequestId();
       logRequest(requestId, command, targets, "staggered");
@@ -1021,7 +1022,7 @@ public class JGroupsTransport implements Transport {
    @Override
    public <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
                                                 Function<Address, ReplicableCommand> commandGenerator,
-                                                ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                 long timeout, TimeUnit timeUnit) {
       long requestId;
       requestId = requests.newRequestId();
@@ -1060,7 +1061,7 @@ public class JGroupsTransport implements Transport {
       return raftManager;
    }
 
-   private void addRequest(AbstractRequest<?> request) {
+   private void addRequest(AbstractRequest<?, ?> request) {
       try {
          requests.addRequest(request);
          if (!running) {
@@ -1073,7 +1074,7 @@ public class JGroupsTransport implements Transport {
       }
    }
 
-   private void traceRequest(AbstractRequest<?> request, TracedCommand command) {
+   private void traceRequest(AbstractRequest<?, ?> request, TracedCommand command) {
       var traceSpan = command.getSpanAttributes();
       if (traceSpan != null) {
          InfinispanSpan<Object> span = telemetry.startTraceRequest(command.getOperationName(), traceSpan);
@@ -1205,11 +1206,11 @@ public class JGroupsTransport implements Transport {
          request = invokeCommandStaggered(targets, command, collector, deliverOrder, timeout, TimeUnit.MILLISECONDS);
       } else {
          if (singleTarget != null) {
-            ResponseCollector<Map<Address, Response>> collector =
+            ResponseCollector<Address, Map<Address, Response>> collector =
                   ignoreLeavers ? SingletonMapResponseCollector.ignoreLeavers() : SingletonMapResponseCollector.validOnly();
             request = invokeCommand(singleTarget, command, collector, deliverOrder, timeout, TimeUnit.MILLISECONDS);
          } else {
-            ResponseCollector<Map<Address, Response>> collector;
+            ResponseCollector<Address, Map<Address, Response>> collector;
             if (mode == ResponseMode.WAIT_FOR_VALID_RESPONSE) {
                collector = new FilterMapResponseCollector(responseFilter, false, targets.size());
             } else if (responseFilter != null) {
@@ -1466,8 +1467,11 @@ public class JGroupsTransport implements Transport {
          }
          if (log.isTraceEnabled())
             log.tracef("%s received response for request %d from %s: %s", getAddress(), requestId, src, response);
-         Address address = fromJGroupsAddress(src);
-         requests.addResponse(requestId, address, response);
+         if (src instanceof SiteUUID siteUUID) {
+            requests.addResponse(requestId, siteUUID.getSite(), response);
+         } else {
+            requests.addResponse(requestId, fromJGroupsAddress(src), response);
+         }
       } catch (Throwable t) {
          CLUSTER.errorProcessingResponse(requestId, src, t);
       }

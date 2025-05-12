@@ -162,9 +162,7 @@ public class AnchoredFetchInterceptor<K, V> extends BaseRpcInterceptor {
       if (stage == null)
          return CompletableFutures.completedNull();
 
-      return stage.thenAccept(externalEntry -> {
-         entryFactory.wrapExternalEntry(ctx, key, externalEntry, true, isWrite);
-      });
+      return stage.thenAccept(externalEntry -> entryFactory.wrapExternalEntry(ctx, key, externalEntry, true, isWrite));
    }
 
    private CompletionStage<Void> fetchAllContextValues(InvocationContext ctx, FlagAffectedCommand command,
@@ -205,9 +203,8 @@ public class AnchoredFetchInterceptor<K, V> extends BaseRpcInterceptor {
          // The key exists and the anchor location is the local node
          // Note: CacheEntry.isNull() cannot be used, some InternalCacheEntry impls always return false
          return null;
-      } else if (ctxEntry.getMetadata() instanceof RemoteMetadata) {
+      } else if (ctxEntry.getMetadata() instanceof RemoteMetadata remoteMetadata) {
          // The key exists and the anchor location is a remote node
-         RemoteMetadata remoteMetadata = (RemoteMetadata) ctxEntry.getMetadata();
          Address keyLocation = remoteMetadata.getAddress();
 
          if (isWrite && !isLocalModeForced(command)) {
@@ -245,7 +242,7 @@ public class AnchoredFetchInterceptor<K, V> extends BaseRpcInterceptor {
       return rpcManager.invokeCommand(keyLocation, getCommand, collector, rpcManager.getSyncRpcOptions());
    }
 
-   private static class FetchResponseCollector<K, V> extends ValidSingleResponseCollector<CacheEntry<K, V>> {
+   private static class FetchResponseCollector<K, V> extends ValidSingleResponseCollector<Address, CacheEntry<K, V>> {
       private final K key;
 
       public FetchResponseCollector(K key) {
