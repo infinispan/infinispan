@@ -257,7 +257,7 @@
                <extensions>true</extensions>
                <configuration>
                   <autoPublish>true</autoPublish>
-                  <deploymentName>Infinispan ${version}</deploymentName>
+                  <deploymentName>Infinispan ${project.version}</deploymentName>
                   <publishingServerId>central</publishingServerId>
                </configuration>
             </plugin>
