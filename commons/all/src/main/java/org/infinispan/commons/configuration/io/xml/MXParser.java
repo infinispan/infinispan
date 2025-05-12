@@ -6,7 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
  * Absolutely minimal implementation of XMLPULL V1 API
@@ -14,70 +14,78 @@ import java.nio.charset.StandardCharsets;
  * @author <a href="http://www.extreme.indiana.edu/~aslom/">Aleksander Slominski</a>
  */
 
-public class MXParser implements XmlPullParser {
-   protected static final String XML_URI = "http://www.w3.org/XML/1998/namespace";
-   protected static final String XMLNS_URI = "http://www.w3.org/2000/xmlns/";
-   protected static final String FEATURE_XML_ROUNDTRIP =
+public class MXParser
+      implements XmlPullParser {
+   //NOTE: no interning of those strings --> by Java lang spec they MUST be already interned
+   private static final String XML_URI = "http://www.w3.org/XML/1998/namespace";
+   private static final String XMLNS_URI = "http://www.w3.org/2000/xmlns/";
+   private static final String FEATURE_XML_ROUNDTRIP =
+         //"http://xmlpull.org/v1/doc/features.html#xml-roundtrip";
          "http://xmlpull.org/v1/doc/features.html#xml-roundtrip";
-   protected static final String FEATURE_NAMES_INTERNED =
+   private static final String FEATURE_NAMES_INTERNED =
          "http://xmlpull.org/v1/doc/features.html#names-interned";
-   protected static final String PROPERTY_XMLDECL_VERSION =
+   private static final String PROPERTY_XMLDECL_VERSION =
          "http://xmlpull.org/v1/doc/properties.html#xmldecl-version";
-   protected static final String PROPERTY_XMLDECL_STANDALONE =
+   private static final String PROPERTY_XMLDECL_STANDALONE =
          "http://xmlpull.org/v1/doc/properties.html#xmldecl-standalone";
-   protected static final String PROPERTY_XMLDECL_CONTENT =
+   private static final String PROPERTY_XMLDECL_CONTENT =
          "http://xmlpull.org/v1/doc/properties.html#xmldecl-content";
-   protected static final String PROPERTY_LOCATION =
+   private static final String PROPERTY_LOCATION =
          "http://xmlpull.org/v1/doc/properties.html#location";
 
    /**
-    * Implementation notice: the is instance variable that controls if newString() is interning.
+    * Implementation notice:
+    * the is instance variable that controls if newString() is interning.
     * <p><b>NOTE:</b> newStringIntern <b>always</b> returns interned strings
     * and newString MAY return interned String depending on this variable.
     * <p><b>NOTE:</b> by default in this minimal implementation it is false!
     */
-   protected boolean allStringsInterned;
+   private final boolean allStringsInterned = false;
 
-   protected String newString(char[] cbuf, int off, int len) {
+   private void resetStringCache() {
+      //System.out.println("resetStringCache() minimum called");
+   }
+
+   private String newString(char[] cbuf, int off, int len) {
       return new String(cbuf, off, len);
    }
 
-   protected String newStringIntern(char[] cbuf, int off, int len) {
+   private String newStringIntern(char[] cbuf, int off, int len) {
       return (new String(cbuf, off, len)).intern();
    }
 
    private static final boolean TRACE_SIZING = false;
 
    // NOTE: features are not resettable and typically defaults to false ...
-   protected boolean processNamespaces;
-   protected boolean roundtripSupported;
+   private boolean processNamespaces;
+   private boolean roundtripSupported;
 
    // global parser state
-   protected String location;
-   protected int lineNumber;
-   protected int columnNumber;
-   protected boolean seenRoot;
-   protected boolean reachedEnd;
-   protected int eventType;
-   protected boolean emptyElementTag;
+   private String location;
+   private int lineNumber;
+   private int columnNumber;
+   private boolean seenRoot;
+   private boolean reachedEnd;
+   private int eventType;
+   private boolean emptyElementTag;
    // element stack
-   protected int depth;
-   protected char[][] elRawName;
-   protected int[] elRawNameEnd;
-   protected int[] elRawNameLine;
+   private int depth;
+   private char[][] elRawName;
+   private int[] elRawNameEnd;
+   private int[] elRawNameLine;
 
-   protected String[] elName;
-   protected String[] elPrefix;
-   protected String[] elUri;
-   //protected String elValue[];
-   protected int[] elNamespaceCount;
+   private String[] elName;
+   private String[] elPrefix;
+   private String[] elUri;
+   //private String elValue[];
+   private int[] elNamespaceCount;
 
 
    /**
-    * Make sure that we have enough space to keep element stack if passed size. It will always create one additional
-    * slot then current depth
+    * Make sure that we have enough space to keep element stack if passed size.
+    * It will always create one additional slot then current depth
     */
-   protected void ensureElementsCapacity() {
+   private void ensureElementsCapacity() {
       final int elStackSize = elName != null ? elName.length : 0;
       if ((depth + 1) >= elStackSize) {
          // we add at least one extra slot ...
@@ -125,21 +133,41 @@ public class MXParser implements XmlPullParser {
             System.arraycopy(elRawName, 0, carr, 0, elStackSize);
          }
          elRawName = carr;
+         //            arr = new String[newSize];
+         //            if(needsCopying) System.arraycopy(elLocalName, 0, arr, 0, elStackSize);
+         //            elLocalName = arr;
+         //            arr = new String[newSize];
+         //            if(needsCopying) System.arraycopy(elDefaultNs, 0, arr, 0, elStackSize);
+         //            elDefaultNs = arr;
+         //            int[] iarr = new int[newSize];
+         //            if(needsCopying) System.arraycopy(elNsStackPos, 0, iarr, 0, elStackSize);
+         //            for (int i = elStackSize; i < iarr.length; i++)
+         //            {
+         //                iarr[i] = (i > 0) ? -1 : 0;
+         //            }
+         //            elNsStackPos = iarr;
+         //assert depth < elName.length;
       }
    }
 
+
    // attribute stack
-   protected int attributeCount;
-   protected String[] attributeName;
-   protected int[] attributeNameHash;
-   protected String[] attributePrefix;
-   protected String[] attributeUri;
-   protected String[] attributeValue;
+   private int attributeCount;
+   private String[] attributeName;
+   private int[] attributeNameHash;
+   //private int attributeNameStart[];
+   //private int attributeNameEnd[];
+   private String[] attributePrefix;
+   private String[] attributeUri;
+   private String[] attributeValue;
+   //private int attributeValueStart[];
+   //private int attributeValueEnd[];
+
 
    /**
     * Make sure that in attributes temporary array is enough space.
     */
-   protected void ensureAttributesCapacity(int size) {
+   private void ensureAttributesCapacity(int size) {
       final int attrPosSize = attributeName != null ? attributeName.length : 0;
       if (size >= attrPosSize) {
          final int newSize = size > 7 ? 2 * size : 8; // = lucky 7 + 1 //25
@@ -177,12 +205,12 @@ public class MXParser implements XmlPullParser {
    }
 
    // namespace stack
-   protected int namespaceEnd;
-   protected String[] namespacePrefix;
-   protected int[] namespacePrefixHash;
-   protected String[] namespaceUri;
+   private int namespaceEnd;
+   private String[] namespacePrefix;
+   private int[] namespacePrefixHash;
+   private String[] namespaceUri;
 
-   protected void ensureNamespacesCapacity(int size) {
+   private void ensureNamespacesCapacity(int size) {
       final int namespaceSize = namespacePrefix != null ? namespacePrefix.length : 0;
       if (size >= namespaceSize) {
          final int newSize = size > 7 ? 2 * size : 8; // = lucky 7 + 1 //25
@@ -215,10 +243,11 @@ public class MXParser implements XmlPullParser {
    }
 
    /**
-    * simplistic implementation of hash function that has <b>constant</b> time to compute - so it also means diminishing
-    * hash quality for long strings but for XML parsing it should be good enough ...
+    * simplistic implementation of hash function that has <b>constant</b>
+    * time to compute - so it also means diminishing hash quality for long strings
+    * but for XML parsing it should be good enough ...
     */
-   protected static int fastHash(char[] ch, int off, int len) {
+   private static int fastHash(char[] ch, int off, int len) {
       if (len == 0) return 0;
       //assert len >0
       int hash = ch[off]; // hash at beginning
@@ -237,16 +266,16 @@ public class MXParser implements XmlPullParser {
    }
 
    // entity replacement stack
-   protected int entityEnd;
+   private int entityEnd;
 
-   protected String[] entityName;
-   protected char[][] entityNameBuf;
-   protected String[] entityReplacement;
-   protected char[][] entityReplacementBuf;
+   private String[] entityName;
+   private char[][] entityNameBuf;
+   private String[] entityReplacement;
+   private char[][] entityReplacementBuf;
 
-   protected int[] entityNameHash;
+   private int[] entityNameHash;
 
-   protected void ensureEntityCapacity() {
+   private void ensureEntityCapacity() {
       final int entitySize = entityReplacementBuf != null ? entityReplacementBuf.length : 0;
       if (entityEnd >= entitySize) {
          final int newSize = entityEnd > 7 ? 2 * entityEnd : 8; // = lucky 7 + 1 //25
@@ -279,57 +308,62 @@ public class MXParser implements XmlPullParser {
    }
 
    // input buffer management
-   protected static final int READ_CHUNK_SIZE = 8 * 1024; //max data chars in one read() call
-   protected Reader reader;
-   protected String inputEncoding;
-   protected InputStream inputStream;
+   private static final int READ_CHUNK_SIZE = 8 * 1024; //max data chars in one read() call
+   private Reader reader;
+   private String inputEncoding;
 
 
-   protected int bufLoadFactor = 95;  // 99%
-   //protected int bufHardLimit;  // only matters when expanding
+   private final int bufLoadFactor = 95;  // 99%
+   //private int bufHardLimit;  // only matters when expanding
+   private final float bufferLoadFactor = bufLoadFactor / 100f;
 
-   protected char[] buf = new char[
+   private char[] buf = new char[
          Runtime.getRuntime().freeMemory() > 1000000L ? READ_CHUNK_SIZE : 256];
-   protected int bufSoftLimit = (bufLoadFactor * buf.length) / 100; // desirable size of buffer
-   protected boolean preventBufferCompaction;
+   private int bufSoftLimit = (int) (bufferLoadFactor * buf.length) / 100; // desirable size of buffer
+   private boolean preventBufferCompaction;
 
-   protected int bufAbsoluteStart; // this is buf
-   protected int bufStart;
-   protected int bufEnd;
-   protected int pos;
-   protected int posStart;
-   protected int posEnd;
+   private int bufAbsoluteStart; // this is buf
+   private int bufStart;
+   private int bufEnd;
+   private int pos;
+   private int posStart;
+   private int posEnd;
 
-   protected char[] pc = new char[
+   private char[] pc = new char[
          Runtime.getRuntime().freeMemory() > 1000000L ? READ_CHUNK_SIZE : 64];
-   protected int pcStart;
-   protected int pcEnd;
+   private int pcStart;
+   private int pcEnd;
 
 
    // parsing state
-   protected boolean usePC;
+   //private boolean needsMore;
+   //private boolean seenMarkup;
+   private boolean usePC;
 
 
-   protected boolean seenStartTag;
-   protected boolean seenEndTag;
-   protected boolean pastEndTag;
-   protected boolean seenAmpersand;
-   protected boolean seenMarkup;
-   protected boolean seenDocdecl;
+   private boolean seenStartTag;
+   private boolean seenEndTag;
+   private boolean pastEndTag;
+   private boolean seenAmpersand;
+   private boolean seenMarkup;
+   private boolean seenDocdecl;
 
    // transient variable set during each call to next/Token()
-   protected boolean tokenize;
-   protected String text;
-   protected String entityRefName;
+   private boolean tokenize;
+   private String text;
+   private String entityRefName;
 
-   protected String xmlDeclVersion;
-   protected Boolean xmlDeclStandalone;
-   protected String xmlDeclContent;
+   private String xmlDeclVersion;
+   private Boolean xmlDeclStandalone;
+   private String xmlDeclContent;
 
-   protected void reset() {
+   private static boolean noUnicode4;
+
+   private void reset() {
+      //System.out.println("reset() called");
       location = null;
       lineNumber = 1;
-      columnNumber = 0;
+      columnNumber = 1;
       seenRoot = false;
       reachedEnd = false;
       eventType = START_DOCUMENT;
@@ -365,6 +399,8 @@ public class MXParser implements XmlPullParser {
       xmlDeclVersion = null;
       xmlDeclStandalone = null;
       xmlDeclContent = null;
+
+      resetStringCache();
    }
 
    public MXParser() {
@@ -384,40 +420,53 @@ public class MXParser implements XmlPullParser {
    public void setFeature(String name,
                           boolean state) throws XmlPullParserException {
       if (name == null) throw new IllegalArgumentException("feature name should not be null");
-      switch (name) {
-         case FEATURE_PROCESS_NAMESPACES:
-            if (eventType != START_DOCUMENT) throw new XmlPullParserException(
-                  "namespace processing feature can only be changed before parsing", this, null);
-            processNamespaces = state;
-            break;
-         case FEATURE_NAMES_INTERNED:
-            if (state) {
-               throw new XmlPullParserException(
-                     "interning names in this implementation is not supported");
-            }
-            break;
-         case FEATURE_PROCESS_DOCDECL:
-            if (state) {
-               throw new XmlPullParserException(
-                     "processing DOCDECL is not supported");
-            }
-            break;
-         case FEATURE_XML_ROUNDTRIP:
-            roundtripSupported = state;
-            break;
-         default:
-            throw new XmlPullParserException("unsupported feature " + name);
+      if (FEATURE_PROCESS_NAMESPACES.equals(name)) {
+         if (eventType != START_DOCUMENT) throw new XmlPullParserException(
+               "namespace processing feature can only be changed before parsing", this, null);
+         processNamespaces = state;
+         //        } else if(FEATURE_REPORT_NAMESPACE_ATTRIBUTES.equals(name)) {
+         //      if(type != START_DOCUMENT) throw new XmlPullParserException(
+         //              "namespace reporting feature can only be changed before parsing", this, null);
+         //            reportNsAttribs = state;
+      } else if (FEATURE_NAMES_INTERNED.equals(name)) {
+         if (state) {
+            throw new XmlPullParserException(
+                  "interning names in this implementation is not supported");
+         }
+      } else if (FEATURE_PROCESS_DOCDECL.equals(name)) {
+         if (state) {
+            throw new XmlPullParserException(
+                  "processing DOCDECL is not supported");
+         }
+         //} else if(REPORT_DOCDECL.equals(name)) {
+         //    paramNotifyDoctype = state;
+      } else if (FEATURE_XML_ROUNDTRIP.equals(name)) {
+         //if(state == false) {
+         //    throw new XmlPullParserException(
+         //        "roundtrip feature can not be switched off");
+         //}
+         roundtripSupported = state;
+      } else {
+         throw new XmlPullParserException("unsupported feature " + name);
       }
    }
 
    /**
-    * Unknown properties are <b>always</b> returned as false
+    * Unknown properties are <strong>always</strong> returned as false
     */
    public boolean getFeature(String name) {
       if (name == null) throw new IllegalArgumentException("feature name should not be null");
       return switch (name) {
          case FEATURE_PROCESS_NAMESPACES -> processNamespaces;
-         case FEATURE_XML_ROUNDTRIP -> roundtripSupported;
+         //        } else if(FEATURE_REPORT_NAMESPACE_ATTRIBUTES.equals(name)) {
+         //            return reportNsAttribs;
+         case FEATURE_NAMES_INTERNED -> false;
+         case FEATURE_PROCESS_DOCDECL -> false;
+         //} else if(REPORT_DOCDECL.equals(name)) {
+         //    return paramNotifyDoctype;
+         case FEATURE_XML_ROUNDTRIP ->
+            //return true;
+               roundtripSupported;
          default -> false;
       };
    }
@@ -445,29 +494,30 @@ public class MXParser implements XmlPullParser {
    }
 
 
-   public void setInput(Reader in) {
+   public void setInput(Reader in) throws XmlPullParserException {
       reset();
       reader = in;
    }
 
-   public void setInput(java.io.InputStream inputStream, String inputEncoding) {
+   public void setInput(InputStream inputStream, String inputEncoding)
+         throws XmlPullParserException {
       if (inputStream == null) {
          throw new IllegalArgumentException("input stream can not be null");
       }
-      this.inputStream = inputStream;
       Reader reader;
+      //if(inputEncoding != null) {
       try {
-         if (inputEncoding != null) {
-            reader = new InputStreamReader(inputStream, inputEncoding);
-         } else {
-            //by default use UTF-8 (InputStreamReader(inputStream)) would use OS default ...
-            reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
-         }
+         //by default use UTF-8 (InputStreamReader(inputStream)) would use OS default ...
+         reader = new InputStreamReader(inputStream, Objects.requireNonNullElse(inputEncoding, "UTF-8"));
       } catch (UnsupportedEncodingException une) {
          throw new XmlPullParserException(
                "could not create reader for encoding " + inputEncoding + " : " + une, this, une);
       }
+      //} else {
+      //    reader = new InputStreamReader(inputStream);
+      //}
       setInput(reader);
+      //must be here as reset() was called in setInput() and has set this.inputEncoding to null ...
       this.inputEncoding = inputEncoding;
    }
 
@@ -478,8 +528,21 @@ public class MXParser implements XmlPullParser {
    public void defineEntityReplacementText(String entityName,
                                            String replacementText)
          throws XmlPullParserException {
+      //      throw new XmlPullParserException("not allowed");
+
+      if (!replacementText.startsWith("&#") && this.entityName != null && replacementText.length() > 1) {
+         String tmp = replacementText.substring(1, replacementText.length() - 1);
+         for (int i = 0; i < this.entityName.length; i++) {
+            if (this.entityName[i] != null && this.entityName[i].equals(tmp)) {
+               replacementText = this.entityReplacement[i];
+            }
+         }
+      }
+
+      //private char[] entityReplacement[];
       ensureEntityCapacity();
 
+      // this is to make sure that if interning works we will take advantage of it ...
       this.entityName[entityEnd] = newString(entityName.toCharArray(), 0, entityName.length());
       entityNameBuf[entityEnd] = entityName.toCharArray();
 
@@ -490,6 +553,8 @@ public class MXParser implements XmlPullParser {
                fastHash(entityNameBuf[entityEnd], 0, entityNameBuf[entityEnd].length);
       }
       ++entityEnd;
+      //TODO disallow < or & in entity replacement text (or ]]>???)
+      // TOOD keepEntityNormalizedForAttributeValue cached as well ...
    }
 
    public int getNamespaceCount(int depth)
@@ -497,6 +562,8 @@ public class MXParser implements XmlPullParser {
       if (!processNamespaces || depth == 0) {
          return 0;
       }
+      //int maxDepth = eventType == END_TAG ? this.depth + 1 : this.depth;
+      //if(depth < 0 || depth > maxDepth) throw new IllegalArgumentException(
       if (depth < 0 || depth > this.depth) throw new IllegalArgumentException(
             "allowed namespace depth 0.." + this.depth + " not " + depth);
       return elNamespaceCount[depth];
@@ -504,6 +571,9 @@ public class MXParser implements XmlPullParser {
 
    public String getNamespacePrefix(int pos)
          throws XmlPullParserException {
+
+      //int end = eventType == END_TAG ? elNamespaceCount[ depth + 1 ] : namespaceEnd;
+      //if(pos < end) {
       if (pos < namespaceEnd) {
          return namespacePrefix[pos];
       } else {
@@ -513,6 +583,8 @@ public class MXParser implements XmlPullParser {
    }
 
    public String getNamespaceUri(int pos) throws XmlPullParserException {
+      //int end = eventType == END_TAG ? elNamespaceCount[ depth + 1 ] : namespaceEnd;
+      //if(pos < end) {
       if (pos < namespaceEnd) {
          return namespaceUri[pos];
       } else {
@@ -521,7 +593,10 @@ public class MXParser implements XmlPullParser {
       }
    }
 
-   public String getNamespace(String prefix) {
+   public String getNamespace(String prefix)
+   //throws XmlPullParserException
+   {
+      //int count = namespaceCount[ depth ];
       if (prefix != null) {
          for (int i = namespaceEnd - 1; i >= 0; i--) {
             if (prefix.equals(namespacePrefix[i])) {
@@ -535,19 +610,23 @@ public class MXParser implements XmlPullParser {
          }
       } else {
          for (int i = namespaceEnd - 1; i >= 0; i--) {
-            if (namespacePrefix[i] == null) {
+            if (namespacePrefix[i] == null) { //"") { //null ) { //TODO check FIXME Alek
                return namespaceUri[i];
             }
          }
+
       }
       return null;
    }
+
 
    public int getDepth() {
       return depth;
    }
 
+
    private static int findFragment(int bufMinPos, char[] b, int start, int end) {
+      //System.err.println("bufStart="+bufStart+" b="+printable(new String(b, start, end - start))+" start="+start+" end="+end);
       if (start < bufMinPos) {
          start = bufMinPos;
          if (start > end) start = end;
@@ -565,18 +644,24 @@ public class MXParser implements XmlPullParser {
       return i;
    }
 
+
    /**
-    * Return string describing current position of parsers as text 'STATE [seen %s...] @line:column'.
+    * Return string describing current position of parsers as
+    * text 'STATE [seen %s...] @line:column'.
     */
    public String getPositionDescription() {
       String fragment = null;
       if (posStart <= pos) {
          final int start = findFragment(0, buf, posStart, pos);
+         //System.err.println("start="+start);
          if (start < pos) {
             fragment = new String(buf, start, pos - start);
          }
          if (bufAbsoluteStart > 0 || start > 0) fragment = "..." + fragment;
       }
+      //        return " at line "+tokenizerPosRow
+      //            +" and column "+(tokenizerPosCol-1)
+      //            +(fragment != null ? " seen "+printable(fragment)+"..." : "");
       return " " + TYPES[eventType] +
             (fragment != null ? " seen " + printable(fragment) + "..." : "")
             + " " + (location != null ? location : "")
@@ -611,10 +696,14 @@ public class MXParser implements XmlPullParser {
       throw new XmlPullParserException("no content available to check for white spaces");
    }
 
-   @Override
    public String getText() {
       if (eventType == START_DOCUMENT || eventType == END_DOCUMENT) {
+         //throw new XmlPullParserException("no content available to read");
+         //      if(roundtripSupported) {
+         //          text = new String(buf, posStart, posEnd - posStart);
+         //      } else {
          return null;
+         //      }
       } else if (eventType == ENTITY_REF) {
          return text;
       }
@@ -628,7 +717,6 @@ public class MXParser implements XmlPullParser {
       return text;
    }
 
-   @Override
    public char[] getTextCharacters(int[] holderForStartAndLength) {
       if (eventType == TEXT) {
          if (usePC) {
@@ -639,6 +727,7 @@ public class MXParser implements XmlPullParser {
             holderForStartAndLength[0] = posStart;
             holderForStartAndLength[1] = posEnd - posStart;
             return buf;
+
          }
       } else if (eventType == START_TAG
             || eventType == END_TAG
@@ -670,7 +759,6 @@ public class MXParser implements XmlPullParser {
       //      return cb;
    }
 
-   @Override
    public String getNamespace() {
       if (eventType == START_TAG) {
          //return processNamespaces ? elUri[ depth - 1 ] : NO_NAMESPACE;
@@ -679,9 +767,24 @@ public class MXParser implements XmlPullParser {
          return processNamespaces ? elUri[depth] : NO_NAMESPACE;
       }
       return null;
+      //        String prefix = elPrefix[ maxDepth ];
+      //        if(prefix != null) {
+      //            for( int i = namespaceEnd -1; i >= 0; i--) {
+      //                if( prefix.equals( namespacePrefix[ i ] ) ) {
+      //                    return namespaceUri[ i ];
+      //                }
+      //            }
+      //        } else {
+      //            for( int i = namespaceEnd -1; i >= 0; i--) {
+      //                if( namespacePrefix[ i ]  == null ) {
+      //                    return namespaceUri[ i ];
+      //                }
+      //            }
+      //
+      //        }
+      //        return "";
    }
 
-   @Override
    public String getName() {
       if (eventType == START_TAG) {
          //return elName[ depth - 1 ] ;
@@ -698,30 +801,31 @@ public class MXParser implements XmlPullParser {
       }
    }
 
-   @Override
    public String getPrefix() {
       if (eventType == START_TAG) {
+         //return elPrefix[ depth - 1 ] ;
          return elPrefix[depth];
       } else if (eventType == END_TAG) {
          return elPrefix[depth];
       }
       return null;
+      //        if(eventType != START_TAG && eventType != END_TAG) return null;
+      //        int maxDepth = eventType == END_TAG ? depth : depth - 1;
+      //        return elPrefix[ maxDepth ];
    }
 
-   @Override
+
    public boolean isEmptyElementTag() throws XmlPullParserException {
       if (eventType != START_TAG) throw new XmlPullParserException(
             "parser must be on START_TAG to check for empty element", this, null);
       return emptyElementTag;
    }
 
-   @Override
    public int getAttributeCount() {
       if (eventType != START_TAG) return -1;
       return attributeCount;
    }
 
-   @Override
    public String getAttributeNamespace(int index) {
       if (eventType != START_TAG) throw new IndexOutOfBoundsException(
             "only START_TAG can have attributes");
@@ -731,7 +835,6 @@ public class MXParser implements XmlPullParser {
       return attributeUri[index];
    }
 
-   @Override
    public String getAttributeName(int index) {
       if (eventType != START_TAG) throw new IndexOutOfBoundsException(
             "only START_TAG can have attributes");
@@ -740,7 +843,6 @@ public class MXParser implements XmlPullParser {
       return attributeName[index];
    }
 
-   @Override
    public String getAttributePrefix(int index) {
       if (eventType != START_TAG) throw new IndexOutOfBoundsException(
             "only START_TAG can have attributes");
@@ -750,7 +852,6 @@ public class MXParser implements XmlPullParser {
       return attributePrefix[index];
    }
 
-   @Override
    public String getAttributeType(int index) {
       if (eventType != START_TAG) throw new IndexOutOfBoundsException(
             "only START_TAG can have attributes");
@@ -759,7 +860,6 @@ public class MXParser implements XmlPullParser {
       return "CDATA";
    }
 
-   @Override
    public boolean isAttributeDefault(int index) {
       if (eventType != START_TAG) throw new IndexOutOfBoundsException(
             "only START_TAG can have attributes");
@@ -768,7 +868,6 @@ public class MXParser implements XmlPullParser {
       return false;
    }
 
-   @Override
    public String getAttributeValue(int index) {
       if (eventType != START_TAG) throw new IndexOutOfBoundsException(
             "only START_TAG can have attributes");
@@ -777,7 +876,6 @@ public class MXParser implements XmlPullParser {
       return attributeValue[index];
    }
 
-   @Override
    public String getAttributeValue(String namespace,
                                    String name) {
       if (eventType != START_TAG) throw new IndexOutOfBoundsException(
@@ -815,13 +913,12 @@ public class MXParser implements XmlPullParser {
       return null;
    }
 
-   @Override
+
    public int getEventType()
          throws XmlPullParserException {
       return eventType;
    }
 
-   @Override
    public void require(int type, String namespace, String name)
          throws XmlPullParserException, IOException {
       if (!processNamespaces && namespace != null) {
@@ -872,8 +969,35 @@ public class MXParser implements XmlPullParser {
       }
    }
 
-   @Override
+   //    public String readText() throws XmlPullParserException, IOException
+   //    {
+   //        if (getEventType() != TEXT) return "";
+   //        String result = getText();
+   //        next();
+   //        return result;
+   //    }
+
    public String nextText() throws XmlPullParserException, IOException {
+      //        String result = null;
+      //        boolean onStartTag = false;
+      //        if(eventType == START_TAG) {
+      //            onStartTag = true;
+      //            next();
+      //        }
+      //        if(eventType == TEXT) {
+      //            result = getText();
+      //            next();
+      //        } else if(onStartTag && eventType == END_TAG) {
+      //            result = "";
+      //        } else {
+      //            throw new XmlPullParserException(
+      //                "parser must be on START_TAG or TEXT to read text", this, null);
+      //        }
+      //        if(eventType != END_TAG) {
+      //            throw new XmlPullParserException(
+      //                "event TEXT it must be immediately followed by END_TAG", this, null);
+      //        }
+      //        return result;
       if (getEventType() != START_TAG) {
          throw new XmlPullParserException(
                "parser must be on START_TAG to read next text", this, null);
@@ -896,7 +1020,6 @@ public class MXParser implements XmlPullParser {
       }
    }
 
-   @Override
    public int nextTag() throws XmlPullParserException, IOException {
       next();
       if (eventType == TEXT && isWhitespace()) {  // skip whitespace
@@ -909,14 +1032,12 @@ public class MXParser implements XmlPullParser {
       return eventType;
    }
 
-   @Override
    public int next()
          throws XmlPullParserException, IOException {
       tokenize = false;
       return nextImpl();
    }
 
-   @Override
    public int nextToken()
          throws XmlPullParserException, IOException {
       tokenize = true;
@@ -924,7 +1045,7 @@ public class MXParser implements XmlPullParser {
    }
 
 
-   protected int nextImpl()
+   private int nextImpl()
          throws XmlPullParserException, IOException {
       text = null;
       pcEnd = pcStart = 0;
@@ -1004,6 +1125,10 @@ public class MXParser implements XmlPullParser {
                         posStart = pos;  //completely ignore comment
                      }
                   } else if (ch == '[') {
+                     //posEnd = pos - 3;
+                     // must remember previous posStart/End as it merges with content of CDATA
+                     //int oldStart = posStart + bufAbsoluteStart;
+                     //int oldEnd = posEnd + bufAbsoluteStart;
                      parseCDSect(hadCharData);
                      if (tokenize) return eventType = CDSECT;
                      final int cdStart = posStart;
@@ -1017,6 +1142,44 @@ public class MXParser implements XmlPullParser {
                            needsMerging = true;
                         }
                      }
+
+                     //                          posStart = oldStart;
+                     //                          posEnd = oldEnd;
+                     //                          if(cdLen > 0) { // was there anything inside CDATA section?
+                     //                              if(hadCharData) {
+                     //                                  // do merging if there was anything in CDSect!!!!
+                     //                                  //                                    if(!usePC) {
+                     //                                  //                                        // posEnd is correct already!!!
+                     //                                  //                                        if(posEnd > posStart) {
+                     //                                  //                                            joinPC();
+                     //                                  //                                        } else {
+                     //                                  //                                            usePC = true;
+                     //                                  //                                            pcStart = pcEnd = 0;
+                     //                                  //                                        }
+                     //                                  //                                    }
+                     //                                  //                                    if(pcEnd + cdLen >= pc.length) ensurePC(pcEnd + cdLen);
+                     //                                  //                                    // copy [cdStart..cdEnd) into PC
+                     //                                  //                                    System.arraycopy(buf, cdStart, pc, pcEnd, cdLen);
+                     //                                  //                                    pcEnd += cdLen;
+                     //                                  if(!usePC) {
+                     //                                      needsMerging = true;
+                     //                                      posStart = cdStart;
+                     //                                      posEnd = cdEnd;
+                     //                                  }
+                     //                              } else {
+                     //                                  if(!usePC) {
+                     //                                      needsMerging = true;
+                     //                                      posStart = cdStart;
+                     //                                      posEnd = cdEnd;
+                     //                                      hadCharData = true;
+                     //                                  }
+                     //                              }
+                     //                              //hadCharData = true;
+                     //                          } else {
+                     //                              if( !usePC && hadCharData ) {
+                     //                                  needsMerging = true;
+                     //                              }
+                     //                          }
                   } else {
                      throw new XmlPullParserException(
                            "unexpected character in markup " + printable(ch), this, null);
@@ -1044,7 +1207,7 @@ public class MXParser implements XmlPullParser {
                // do content compaction if it makes sense!!!!
 
             } else if (ch == '&') {
-               // work on ENTITTY
+               // work on ENTITY
                //posEnd = pos - 1;
                if (tokenize && hadCharData) {
                   seenAmpersand = true;
@@ -1076,26 +1239,41 @@ public class MXParser implements XmlPullParser {
                      pcStart = pcEnd = 0;
                   }
                }
+               //assert usePC == true;
+               // write into PC replacement text - do merge for replacement text!!!!
                for (char c : resolvedEntity) {
                   if (pcEnd >= pc.length) ensurePC(pcEnd);
                   pc[pcEnd++] = c;
 
                }
                hadCharData = true;
+               //assert needsMerging == false;
             } else {
 
                if (needsMerging) {
+                  //assert usePC == false;
                   joinPC();  // posEnd is already set correctly!!!
+                  //posStart = pos  -  1;
                   needsMerging = false;
                }
+
+
+               //no MARKUP nor ENTITIES so work on character data ...
+
+
+               // [14] CharData ::=   [^<&]* - ([^<&]* ']]>' [^<&]*)
+
 
                hadCharData = true;
 
                boolean normalizedCR = false;
                final boolean normalizeInput = !tokenize || !roundtripSupported;
+               // use loop locality here!!!!
                boolean seenBracket = false;
                boolean seenBracketBracket = false;
                do {
+
+                  // check that ]]> does not show in
                   if (ch == ']') {
                      if (seenBracket) {
                         seenBracketBracket = true;
@@ -1116,7 +1294,7 @@ public class MXParser implements XmlPullParser {
                      if (ch == '\r') {
                         normalizedCR = true;
                         posEnd = pos - 1;
-                        // posEnd is already is set
+                        // posEnd is already set
                         if (!usePC) {
                            if (posEnd > posStart) {
                               joinPC();
@@ -1160,8 +1338,11 @@ public class MXParser implements XmlPullParser {
       }
    }
 
-   protected int parseProlog()
+
+   private int parseProlog()
          throws XmlPullParserException, IOException {
+      // [2] prolog: ::= XMLDecl? Misc* (doctypedecl Misc*)? and look for [39] element
+
       char ch;
       if (seenMarkup) {
          ch = buf[pos - 1];
@@ -1203,16 +1384,13 @@ public class MXParser implements XmlPullParser {
             if (ch == '?') {
                // check if it is 'xml'
                // deal with XMLDecl
-               if (parsePI()) {  // make sure to skip XMLDecl
-                  if (tokenize) {
-                     return eventType = PROCESSING_INSTRUCTION;
+               boolean isXMLDecl = parsePI();
+               if (tokenize) {
+                  if (isXMLDecl) {
+                     return eventType = START_DOCUMENT;
                   }
-               } else {
-                  // skip over - continue tokenizing
-                  posStart = pos;
-                  gotS = false;
+                  return eventType = PROCESSING_INSTRUCTION;
                }
-
             } else if (ch == '!') {
                ch = more();
                if (ch == 'D') {
@@ -1247,7 +1425,7 @@ public class MXParser implements XmlPullParser {
                   normalizedCR = true;
                   //posEnd = pos -1;
                   //joinPC();
-                  // posEnd is already is set
+                  // posEnd is already set
                   if (!usePC) {
                      posEnd = pos - 1;
                      if (posEnd > posStart) {
@@ -1283,7 +1461,7 @@ public class MXParser implements XmlPullParser {
       }
    }
 
-   protected int parseEpilog()
+   private int parseEpilog()
          throws XmlPullParserException, IOException {
       if (eventType == END_DOCUMENT) {
          throw new XmlPullParserException("already reached end of XML input", this, null);
@@ -1403,15 +1581,11 @@ public class MXParser implements XmlPullParser {
       } catch (EOFException ex) {
          reachedEnd = true;
       }
-      if (reachedEnd) {
-         if (tokenize && gotS) {
-            posEnd = pos; // well - this is LAST available character pos
-            return eventType = IGNORABLE_WHITESPACE;
-         }
-         return eventType = END_DOCUMENT;
-      } else {
-         throw new XmlPullParserException("internal error in parseEpilog");
+      if (tokenize && gotS) {
+         posEnd = pos; // well - this is LAST available character pos
+         return eventType = IGNORABLE_WHITESPACE;
       }
+      return eventType = END_DOCUMENT;
    }
 
 
@@ -1518,24 +1692,22 @@ public class MXParser implements XmlPullParser {
       elRawNameEnd[depth] = elLen;
       elRawNameLine[depth] = lineNumber;
 
-      String name = null;
-
       // work on prefixes and namespace URI
       String prefix = null;
       if (processNamespaces) {
          if (colonPos != -1) {
             prefix = elPrefix[depth] = newString(buf, nameStart - bufAbsoluteStart,
                   colonPos - nameStart);
-            name = elName[depth] = newString(buf, colonPos + 1 - bufAbsoluteStart,
+            elName[depth] = newString(buf, colonPos + 1 - bufAbsoluteStart,
                   //(pos -1) - (colonPos + 1));
                   pos - 2 - (colonPos - bufAbsoluteStart));
          } else {
-            prefix = elPrefix[depth] = null;
-            name = elName[depth] = newString(buf, nameStart - bufAbsoluteStart, elLen);
+            elPrefix[depth] = null;
+            elName[depth] = newString(buf, nameStart - bufAbsoluteStart, elLen);
          }
       } else {
 
-         name = elName[depth] = newString(buf, nameStart - bufAbsoluteStart, elLen);
+         elName[depth] = newString(buf, nameStart - bufAbsoluteStart, elLen);
 
       }
 
@@ -1559,7 +1731,6 @@ public class MXParser implements XmlPullParser {
          } else if (isNameStartChar(ch)) {
             ch = parseAttribute();
             ch = more();
-            continue;
          } else {
             throw new XmlPullParserException(
                   "start tag unexpected character " + printable(ch), this, null);
@@ -1606,7 +1777,7 @@ public class MXParser implements XmlPullParser {
 
          //TODO
          //[ WFC: Unique Att Spec ]
-         // check attribute uniqueness constraint for attributes that has namespace!!!
+         // check namespaced attribute uniqueness constraint!!!
 
          for (int i = 1; i < attributeCount; i++) {
             for (int j = 0; j < i; j++) {
@@ -1656,7 +1827,7 @@ public class MXParser implements XmlPullParser {
       return eventType = START_TAG;
    }
 
-   protected char parseAttribute() throws XmlPullParserException, IOException {
+   private char parseAttribute() throws XmlPullParserException, IOException {
       // parse attribute
       // [41] Attribute ::= Name Eq AttValue
       // [WFC: No External Entity References]
@@ -1707,7 +1878,6 @@ public class MXParser implements XmlPullParser {
 
       // --- start processing attributes
       String name = null;
-      String prefix = null;
       // work on prefixes and namespace URI
       if (processNamespaces) {
          if (xmlnsPos < 4) startsWithXmlns = false;
@@ -1727,7 +1897,7 @@ public class MXParser implements XmlPullParser {
          } else {
             if (colonPos != -1) {
                int prefixLen = colonPos - nameStart;
-               prefix = attributePrefix[attributeCount] =
+               attributePrefix[attributeCount] =
                      newString(buf, nameStart - bufAbsoluteStart, prefixLen);
                //colonPos - (nameStart - bufAbsoluteStart));
                int nameLen = pos - 2 - (colonPos - bufAbsoluteStart);
@@ -1737,7 +1907,7 @@ public class MXParser implements XmlPullParser {
 
                //name.substring(0, colonPos-nameStart);
             } else {
-               prefix = attributePrefix[attributeCount] = null;
+               attributePrefix[attributeCount] = null;
                name = attributeName[attributeCount] =
                      newString(buf, nameStart - bufAbsoluteStart,
                            pos - 1 - (nameStart - bufAbsoluteStart));
@@ -1877,7 +2047,7 @@ public class MXParser implements XmlPullParser {
             // declare  new default namespace ...
             namespacePrefix[namespaceEnd] = null; //""; //null; //TODO check FIXME Alek
             if (!allStringsInterned) {
-               prefixHash = namespacePrefixHash[namespaceEnd] = -1;
+               namespacePrefixHash[namespaceEnd] = -1;
             }
          }
          namespaceUri[namespaceEnd] = ns;
@@ -1912,9 +2082,9 @@ public class MXParser implements XmlPullParser {
       return ch;
    }
 
-   protected char[] charRefOneCharBuf = new char[1];
+   private char[] charRefOneCharBuf = new char[1];
 
-   protected char[] parseEntityRef()
+   private char[] parseEntityRef()
          throws XmlPullParserException, IOException {
       // entity reference http://www.w3.org/TR/2000/REC-xml-20001006#NT-Reference
       // [67] Reference          ::=          EntityRef | CharRef
@@ -1927,16 +2097,21 @@ public class MXParser implements XmlPullParser {
          // parse character reference
          char charRef = 0;
          ch = more();
-         if (ch == 'x') {
+         StringBuilder sb = new StringBuilder();
+         boolean isHex = (ch == 'x');
+         if (isHex) {
             //encoded in hex
             while (true) {
                ch = more();
                if (ch >= '0' && ch <= '9') {
                   charRef = (char) (charRef * 16 + (ch - '0'));
+                  sb.append(ch);
                } else if (ch >= 'a' && ch <= 'f') {
                   charRef = (char) (charRef * 16 + (ch - ('a' - 10)));
+                  sb.append(ch);
                } else if (ch >= 'A' && ch <= 'F') {
                   charRef = (char) (charRef * 16 + (ch - ('A' - 10)));
+                  sb.append(ch);
                } else if (ch == ';') {
                   break;
                } else {
@@ -1950,6 +2125,7 @@ public class MXParser implements XmlPullParser {
             while (true) {
                if (ch >= '0' && ch <= '9') {
                   charRef = (char) (charRef * 10 + (ch - '0'));
+                  sb.append(ch);
                } else if (ch == ';') {
                   break;
                } else {
@@ -1961,9 +2137,34 @@ public class MXParser implements XmlPullParser {
             }
          }
          posEnd = pos - 1;
-         charRefOneCharBuf[0] = charRef;
+         int codePoint = Integer.parseInt(sb.toString(), isHex ? 16 : 10);
+         if (!noUnicode4) {
+            try {
+               charRefOneCharBuf = Character.toChars(codePoint);
+            } catch (IllegalArgumentException e) {
+               throw new XmlPullParserException("character reference (with "
+                     + (isHex ? "hex" : "decimal")
+                     + " value "
+                     + sb.toString()
+                     + ") is invalid", this, null);
+            } catch (NoSuchMethodError e) {
+               noUnicode4 = true;
+            }
+         }
+         if (noUnicode4) {
+            int i = codePoint;
+            if (i > Character.MAX_VALUE) {
+               throw new XmlPullParserException("Unicode character reference (with "
+                     + (isHex ? "hex" : "decimal")
+                     + " value "
+                     + sb.toString()
+                     + ") is not supported in this runtime", this, null);
+            }
+            charRefOneCharBuf = new char[1];
+            charRefOneCharBuf[0] = (char) i;
+         }
          if (tokenize) {
-            text = newString(charRefOneCharBuf, 0, 1);
+            text = newString(charRefOneCharBuf, 0, charRefOneCharBuf.length);
          }
          return charRefOneCharBuf;
       } else {
@@ -2026,7 +2227,7 @@ public class MXParser implements XmlPullParser {
             charRefOneCharBuf[0] = '"';
             return charRefOneCharBuf;
          } else {
-            final char[] result = lookuEntityReplacement(len);
+            final char[] result = lookupEntityReplacement(len);
             if (result != null) {
                return result;
             }
@@ -2036,15 +2237,14 @@ public class MXParser implements XmlPullParser {
       }
    }
 
-   protected char[] lookuEntityReplacement(int entitNameLen)
-         throws XmlPullParserException, IOException {
+   private char[] lookupEntityReplacement(int entityNameLen) {
       if (!allStringsInterned) {
          final int hash = fastHash(buf, posStart, posEnd - posStart);
          LOOP:
          for (int i = entityEnd - 1; i >= 0; --i) {
-            if (hash == entityNameHash[i] && entitNameLen == entityNameBuf[i].length) {
+            if (hash == entityNameHash[i] && entityNameLen == entityNameBuf[i].length) {
                final char[] entityBuf = entityNameBuf[i];
-               for (int j = 0; j < entitNameLen; j++) {
+               for (int j = 0; j < entityNameLen; j++) {
                   if (buf[posStart + j] != entityBuf[j]) continue LOOP;
                }
                if (tokenize) text = entityReplacement[i];
@@ -2065,7 +2265,7 @@ public class MXParser implements XmlPullParser {
    }
 
 
-   protected void parseComment()
+   private void parseComment()
          throws XmlPullParserException, IOException {
       // implements XML 1.0 Section 2.5 Comments
 
@@ -2076,7 +2276,7 @@ public class MXParser implements XmlPullParser {
       if (tokenize) posStart = pos;
 
       final int curLine = lineNumber;
-      final int curColumn = columnNumber;
+      final int curColumn = columnNumber - 4;
       try {
          final boolean normalizeIgnorableWS = tokenize && !roundtripSupported;
          boolean normalizedCR = false;
@@ -2086,6 +2286,9 @@ public class MXParser implements XmlPullParser {
          while (true) {
             // scan until it hits -->
             ch = more();
+            if (ch == (char) -1) {
+               throw new EOFException("no more data available" + getPositionDescription());
+            }
             if (seenDashDash && ch != '>') {
                throw new XmlPullParserException(
                      "in comment after two dashes (--) next character must be >"
@@ -2096,7 +2299,6 @@ public class MXParser implements XmlPullParser {
                   seenDash = true;
                } else {
                   seenDashDash = true;
-                  seenDash = false;
                }
             } else if (ch == '>') {
                if (seenDashDash) {
@@ -2154,7 +2356,7 @@ public class MXParser implements XmlPullParser {
       }
    }
 
-   protected boolean parsePI()
+   private boolean parsePI()
          throws XmlPullParserException, IOException {
       // implements XML 1.0 Section 2.6 Processing Instructions
 
@@ -2163,13 +2365,14 @@ public class MXParser implements XmlPullParser {
       //ASSUMPTION: seen <?
       if (tokenize) posStart = pos;
       final int curLine = lineNumber;
-      final int curColumn = columnNumber;
-      int piTargetStart = pos + bufAbsoluteStart;
+      final int curColumn = columnNumber - 2;
+      int piTargetStart = pos;
       int piTargetEnd = -1;
       final boolean normalizeIgnorableWS = tokenize && !roundtripSupported;
       boolean normalizedCR = false;
 
       try {
+         boolean seenPITarget = false;
          boolean seenQ = false;
          char ch = more();
          if (isS(ch)) {
@@ -2181,16 +2384,24 @@ public class MXParser implements XmlPullParser {
             // scan until it hits ?>
             //ch = more();
 
+            if (ch == (char) -1) {
+               throw new EOFException("no more data available" + getPositionDescription());
+            }
             if (ch == '?') {
+               if (!seenPITarget) {
+                  throw new XmlPullParserException("processing instruction PITarget name not found", this, null);
+               }
                seenQ = true;
             } else if (ch == '>') {
                if (seenQ) {
                   break;  // found end sequence!!!!
                }
-               seenQ = false;
+               if (!seenPITarget) {
+                  throw new XmlPullParserException("processing instruction PITarget name not found", this, null);
+               }
             } else {
                if (piTargetEnd == -1 && isS(ch)) {
-                  piTargetEnd = pos - 1 + bufAbsoluteStart;
+                  piTargetEnd = pos - 1;
 
                   // [17] PITarget ::= Name - (('X' | 'x') ('M' | 'm') ('L' | 'l'))
                   if ((piTargetEnd - piTargetStart) == 3) {
@@ -2200,7 +2411,7 @@ public class MXParser implements XmlPullParser {
                      ) {
                         if (piTargetStart > 3) {  //<?xml is allowed as first characters in input ...
                            throw new XmlPullParserException(
-                                 "processing instruction can not have PITarget with reserveld xml name",
+                                 "processing instruction can not have PITarget with reserved xml name",
                                  this, null);
                         } else {
                            if (buf[piTargetStart] != 'x'
@@ -2213,10 +2424,10 @@ public class MXParser implements XmlPullParser {
                         }
                         parseXmlDecl(ch);
                         if (tokenize) posEnd = pos - 2;
-                        final int off = piTargetStart - bufAbsoluteStart + 3;
+                        final int off = piTargetStart + 3;
                         final int len = pos - 2 - off;
                         xmlDeclContent = newString(buf, off, len);
-                        return false;
+                        return true;
                      }
                   }
                }
@@ -2254,13 +2465,14 @@ public class MXParser implements XmlPullParser {
                   normalizedCR = false;
                }
             }
+            seenPITarget = true;
             ch = more();
          }
       } catch (EOFException ex) {
          // detect EOF and create meaningful error ...
          throw new XmlPullParserException(
-               "processing instruction started on line " + curLine + " and column " + curColumn
-                     + " was not closed",
+               "processing instruction started on line " + curLine +
+                     " and column " + curColumn + " was not closed",
                this, ex);
       }
       if (piTargetEnd == -1) {
@@ -2268,31 +2480,28 @@ public class MXParser implements XmlPullParser {
          //throw new XmlPullParserException(
          //    "processing instruction must have PITarget name", this, null);
       }
-      piTargetStart -= bufAbsoluteStart;
-      piTargetEnd -= bufAbsoluteStart;
       if (tokenize) {
          posEnd = pos - 2;
          if (normalizeIgnorableWS) {
             --pcEnd;
          }
       }
-      return true;
+      return false;
    }
 
-   //    protected static final char[] VERSION = {'v','e','r','s','i','o','n'};
-   //    protected static final char[] NCODING = {'n','c','o','d','i','n','g'};
-   //    protected static final char[] TANDALONE = {'t','a','n','d','a','l','o','n','e'};
-   //    protected static final char[] YES = {'y','e','s'};
-   //    protected static final char[] NO = {'n','o'};
+   //    private final static char[] VERSION = {'v','e','r','s','i','o','n'};
+   //    private final static char[] NCODING = {'n','c','o','d','i','n','g'};
+   //    private final static char[] TANDALONE = {'t','a','n','d','a','l','o','n','e'};
+   //    private final static char[] YES = {'y','e','s'};
+   //    private final static char[] NO = {'n','o'};
 
-   static final char[] VERSION = "version".toCharArray();
-   static final char[] NCODING = "ncoding".toCharArray();
-   static final char[] TANDALONE = "tandalone".toCharArray();
-   static final char[] YES = "yes".toCharArray();
-   static final char[] NO = "no".toCharArray();
+   private static final char[] VERSION = "version".toCharArray();
+   private static final char[] NCODING = "ncoding".toCharArray();
+   private static final char[] TANDALONE = "tandalone".toCharArray();
+   private static final char[] YES = "yes".toCharArray();
+   private static final char[] NO = "no".toCharArray();
 
-
-   protected void parseXmlDecl(char ch)
+   private void parseXmlDecl(char ch)
          throws XmlPullParserException, IOException {
       // [23] XMLDecl ::= '<?xml' VersionInfo EncodingDecl? SDDecl? S? '?>'
 
@@ -2335,10 +2544,11 @@ public class MXParser implements XmlPullParser {
       }
       final int versionEnd = pos - 1;
       parseXmlDeclWithVersion(versionStart, versionEnd);
-      preventBufferCompaction = false; // alow again buffer commpaction - pos MAY chnage
+      preventBufferCompaction = false; // allow again buffer compaction - pos MAY change
    }
+   //private String xmlDeclVersion;
 
-   protected void parseXmlDeclWithVersion(int versionStart, int versionEnd)
+   private void parseXmlDeclWithVersion(int versionStart, int versionEnd)
          throws XmlPullParserException, IOException {
       String oldEncoding = this.inputEncoding;
 
@@ -2422,11 +2632,11 @@ public class MXParser implements XmlPullParser {
          if (ch == 'y') {
             ch = requireInput(ch, YES);
             //Boolean standalone = new Boolean(true);
-            xmlDeclStandalone = true;
+            xmlDeclStandalone = Boolean.TRUE;
          } else if (ch == 'n') {
             ch = requireInput(ch, NO);
             //Boolean standalone = new Boolean(false);
-            xmlDeclStandalone = false;
+            xmlDeclStandalone = Boolean.FALSE;
          } else {
             throw new XmlPullParserException(
                   "expected 'yes' or 'no' after standalone and not "
@@ -2453,9 +2663,28 @@ public class MXParser implements XmlPullParser {
                "expected ?> as last part of <?xml not "
                      + printable(ch), this, null);
       }
+
+// NOTE: this code is broken as for some types of input streams (URLConnection ...)
+// it is not possible to do more than once new InputStreamReader(inputStream)
+// as it somehow detects it and closes underlying input stream (b.....d!)
+// In future one will need better low level byte-by-byte reading of prolog and then doing InputStream ...
+// for more details see http://www.extreme.indiana.edu/bugzilla/show_bug.cgi?id=135
+      //        //reset input stream
+//        if ((this.inputEncoding != oldEncoding) && (this.inputStream != null)) {
+//            if ((this.inputEncoding != null) && (!this.inputEncoding.equalsIgnoreCase(oldEncoding))) {
+//                //              //there is need to reparse input to set location OK
+//                //              reset();
+//                this.reader = new InputStreamReader(this.inputStream, this.inputEncoding);
+//                //              //skip <?xml
+//                //              for (int i = 0; i < 5; i++){
+//                //                  ch=more();
+//                //              }
+//                //              parseXmlDecl(ch);
+//            }
+//        }
    }
 
-   protected void parseDocdecl()
+   private void parseDocdecl()
          throws XmlPullParserException, IOException {
       //ASSUMPTION: seen <!D
       char ch = more();
@@ -2494,7 +2723,7 @@ public class MXParser implements XmlPullParser {
                normalizedCR = true;
                //posEnd = pos -1;
                //joinPC();
-               // posEnd is alreadys set
+               // posEnd is already set
                if (!usePC) {
                   posEnd = pos - 1;
                   if (posEnd > posStart) {
@@ -2526,7 +2755,7 @@ public class MXParser implements XmlPullParser {
       posEnd = pos - 1;
    }
 
-   protected void parseCDSect(boolean hadCharData)
+   private void parseCDSect(boolean hadCharData)
          throws XmlPullParserException, IOException {
       // implements XML 1.0 Section 2.7 CDATA Sections
 
@@ -2590,13 +2819,11 @@ public class MXParser implements XmlPullParser {
             } else if (ch == '>') {
                if (seenBracket && seenBracketBracket) {
                   break;  // found end sequence!!!!
-               } else {
-                  seenBracketBracket = false;
                }
                seenBracket = false;
             } else {
                if (seenBracket) {
-                  seenBracket = false;
+                  seenBracketBracket = seenBracket = false;
                }
             }
             if (normalizeInput) {
@@ -2604,7 +2831,7 @@ public class MXParser implements XmlPullParser {
                if (ch == '\r') {
                   normalizedCR = true;
                   posStart = cdStart - bufAbsoluteStart;
-                  posEnd = pos - 1; // posEnd is alreadys set
+                  posEnd = pos - 1; // posEnd is already set
                   if (!usePC) {
                      if (posEnd > posStart) {
                         joinPC();
@@ -2646,7 +2873,7 @@ public class MXParser implements XmlPullParser {
       posEnd = pos - 3;
    }
 
-   protected void fillBuf() throws IOException, XmlPullParserException {
+   private void fillBuf() throws IOException, XmlPullParserException {
       if (reader == null) throw new XmlPullParserException(
             "reader must be set before parsing is started");
 
@@ -2654,21 +2881,8 @@ public class MXParser implements XmlPullParser {
       if (bufEnd > bufSoftLimit) {
 
          // expand buffer it makes sense!!!!
-         boolean compact = bufStart > bufSoftLimit;
-         boolean expand = false;
-         if (preventBufferCompaction) {
-            compact = false;
-            expand = true;
-         } else if (!compact) {
-            //freeSpace
-            if (bufStart < buf.length / 2) {
-               // less then half buffer available forcompactin --> expand instead!!!
-               expand = true;
-            } else {
-               // at least half of buffer can be reclaimed --> worthwhile effort!!!
-               compact = true;
-            }
-         }
+         // check if we need to compact or expand the buffer
+         boolean compact = !preventBufferCompaction && (bufStart > bufSoftLimit || bufStart >= buf.length / 2);
 
          // if buffer almost full then compact it
          if (compact) {
@@ -2679,22 +2893,17 @@ public class MXParser implements XmlPullParser {
                   "TRACE_SIZING fillBuf() compacting " + bufStart
                         + " bufEnd=" + bufEnd
                         + " pos=" + pos + " posStart=" + posStart + " posEnd=" + posEnd
-                        + " buf first 100 chars:" + new String(buf, bufStart,
-                        Math.min(bufEnd - bufStart, 100)));
-
-         } else if (expand) {
+                        + " buf first 100 chars:"
+                        + new String(buf, 0, Math.min(bufEnd, 100)));
+         } else {
             final int newSize = 2 * buf.length;
-            final char newBuf[] = new char[newSize];
+            final char[] newBuf = new char[newSize];
             if (TRACE_SIZING) System.out.println("TRACE_SIZING fillBuf() " + buf.length + " => " + newSize);
             System.arraycopy(buf, bufStart, newBuf, 0, bufEnd - bufStart);
             buf = newBuf;
-            if (bufLoadFactor > 0) {
-               //bufSoftLimit = ( bufLoadFactor * buf.length ) /100;
-               bufSoftLimit = (int) ((((long) bufLoadFactor) * buf.length) / 100);
-            }
-
-         } else {
-            throw new XmlPullParserException("internal error in fillBuffer()");
+            // Include a fix for
+            // https://web.archive.org/web/20070831191548/http://www.extreme.indiana.edu/bugzilla/show_bug.cgi?id=228
+            bufSoftLimit = (int) (bufferLoadFactor * buf.length);
          }
          bufEnd -= bufStart;
          pos -= bufStart;
@@ -2728,30 +2937,49 @@ public class MXParser implements XmlPullParser {
             } else {
                StringBuilder expectedTagStack = new StringBuilder();
                if (depth > 0) {
-                  //final char[] cbuf = elRawName[depth];
-                  //final String startname = new String(cbuf, 0, elRawNameEnd[depth]);
-                  expectedTagStack.append(" - expected end tag");
-                  if (depth > 1) {
-                     expectedTagStack.append("s"); //more than one end tag
-                  }
-                  expectedTagStack.append(" ");
-                  for (int i = depth; i > 0; i--) {
-                     String tagName = new String(elRawName[i], 0, elRawNameEnd[i]);
-                     expectedTagStack.append("</").append(tagName).append('>');
-                  }
-                  expectedTagStack.append(" to close");
-                  for (int i = depth; i > 0; i--) {
-                     if (i != depth) {
-                        expectedTagStack.append(" and"); //more than one end tag
+                  if (elRawName == null || elRawName[depth] == null) {
+                     String tagName = new String(buf, posStart + 1, pos - posStart - 1);
+                     expectedTagStack.append(" - expected the opening tag <").append(tagName).append("...>");
+                  } else {
+                     //final char[] cbuf = elRawName[depth];
+                     //final String startname = new String(cbuf, 0, elRawNameEnd[depth]);
+                     expectedTagStack.append(" - expected end tag");
+                     if (depth > 1) {
+                        expectedTagStack.append("s"); //more than one end tag
                      }
-                     String tagName = new String(elRawName[i], 0, elRawNameEnd[i]);
-                     expectedTagStack.append(" start tag <").append(tagName).append(">");
-                     expectedTagStack.append(" from line ").append(elRawNameLine[i]);
+                     expectedTagStack.append(" ");
+                     for (int i = depth; i > 0; i--) {
+                        if (elRawName == null || elRawName[i] == null) {
+                           String tagName = new String(buf, posStart + 1, pos - posStart - 1);
+                           expectedTagStack
+                                 .append(" - expected the opening tag <")
+                                 .append(tagName)
+                                 .append("...>");
+                        } else {
+                           String tagName = new String(elRawName[i], 0, elRawNameEnd[i]);
+                           expectedTagStack.append("</").append(tagName).append('>');
+                        }
+                     }
+                     expectedTagStack.append(" to close");
+                     for (int i = depth; i > 0; i--) {
+                        if (i != depth) {
+                           expectedTagStack.append(" and"); //more than one end tag
+                        }
+                        if (elRawName == null || elRawName[i] == null) {
+                           String tagName = new String(elRawName[i], 0, elRawNameEnd[i]);
+                           expectedTagStack.append(" start tag <").append(tagName).append(">");
+                           expectedTagStack.append(" from line ").append(elRawNameLine[i]);
+                        } else {
+                           String tagName = new String(elRawName[i], 0, elRawNameEnd[i]);
+                           expectedTagStack.append(" start tag <").append(tagName).append(">");
+                           expectedTagStack.append(" from line ").append(elRawNameLine[i]);
+                        }
+                     }
+                     expectedTagStack.append(", parser stopped on");
                   }
-                  expectedTagStack.append(", parser stopped on");
                }
                throw new EOFException("no more data available"
-                     + expectedTagStack.toString() + getPositionDescription());
+                     + expectedTagStack + getPositionDescription());
             }
          }
       } else {
@@ -2759,13 +2987,14 @@ public class MXParser implements XmlPullParser {
       }
    }
 
-   protected char more() throws IOException, XmlPullParserException {
+   private char more() throws IOException, XmlPullParserException {
       if (pos >= bufEnd) {
          fillBuf();
-         // this return value should be ignonored as it is used in epilog parsing ...
+         // this return value should be ignored as it is used in epilog parsing ...
          if (reachedEnd) return (char) -1;
       }
       final char ch = buf[pos++];
+      //System.out.println(lineNumber +"/"+columnNumber+": "+printable(ch));
       //line/columnNumber
       if (ch == '\n') {
          ++lineNumber;
@@ -2773,7 +3002,6 @@ public class MXParser implements XmlPullParser {
       } else {
          ++columnNumber;
       }
-      //System.out.print(ch);
       return ch;
    }
 
@@ -2787,7 +3015,7 @@ public class MXParser implements XmlPullParser {
    //        return pos + bufAbsoluteStart;
    //    }
 
-   protected void ensurePC(int end) {
+   private void ensurePC(int end) {
       //assert end >= pc.length;
       final int newSize = end > READ_CHUNK_SIZE ? 2 * end : 2 * READ_CHUNK_SIZE;
       final char[] newPC = new char[newSize];
@@ -2797,7 +3025,7 @@ public class MXParser implements XmlPullParser {
       //assert end < pc.length;
    }
 
-   protected void joinPC() {
+   private void joinPC() {
       //assert usePC == false;
       //assert posEnd > posStart;
       final int len = posEnd - posStart;
@@ -2810,7 +3038,7 @@ public class MXParser implements XmlPullParser {
 
    }
 
-   protected char requireInput(char ch, char[] input)
+   private char requireInput(char ch, char[] input)
          throws XmlPullParserException, IOException {
       for (char c : input) {
          if (ch != c) {
@@ -2823,7 +3051,7 @@ public class MXParser implements XmlPullParser {
       return ch;
    }
 
-   protected char requireNextS()
+   private char requireNextS()
          throws XmlPullParserException, IOException {
       final char ch = more();
       if (!isS(ch)) {
@@ -2833,7 +3061,7 @@ public class MXParser implements XmlPullParser {
       return skipS(ch);
    }
 
-   protected char skipS(char ch)
+   private char skipS(char ch)
          throws XmlPullParserException, IOException {
       while (isS(ch)) {
          ch = more();
@@ -2842,10 +3070,10 @@ public class MXParser implements XmlPullParser {
    }
 
    // nameStart / name lookup tables based on XML 1.1 http://www.w3.org/TR/2001/WD-xml11-20011213/
-   protected static final int LOOKUP_MAX = 0x400;
-   protected static final char LOOKUP_MAX_CHAR = (char) LOOKUP_MAX;
-   //    protected static int lookupNameStartChar[] = new int[ LOOKUP_MAX_CHAR / 32 ];
-   //    protected static int lookupNameChar[] = new int[ LOOKUP_MAX_CHAR / 32 ];
+   private static final int LOOKUP_MAX = 0x400;
+   private static final char LOOKUP_MAX_CHAR = (char) LOOKUP_MAX;
+   //    private static int lookupNameStartChar[] = new int[ LOOKUP_MAX_CHAR / 32 ];
+   //    private static int lookupNameChar[] = new int[ LOOKUP_MAX_CHAR / 32 ];
    private static final boolean[] lookupNameStartChar = new boolean[LOOKUP_MAX];
    private static final boolean[] lookupNameChar = new boolean[LOOKUP_MAX];
 
@@ -2878,13 +3106,11 @@ public class MXParser implements XmlPullParser {
       for (char ch = '\u0300'; ch <= '\u036f'; ++ch) setName(ch);
    }
 
-   //private static final boolean isNameStartChar(char ch) {
-   protected boolean isNameStartChar(char ch) {
-      return (ch < LOOKUP_MAX_CHAR && lookupNameStartChar[ch])
-            || (ch >= LOOKUP_MAX_CHAR && ch <= '\u2027')
-            || (ch >= '\u202A' && ch <= '\u218F')
-            || (ch >= '\u2800' && ch <= '\uFFEF')
-            ;
+   //private final static boolean isNameStartChar(char ch) {
+   private boolean isNameStartChar(char ch) {
+      return ch < LOOKUP_MAX_CHAR
+            ? lookupNameStartChar[ch]
+            : (ch <= '\u2027') || (ch >= '\u202A' && ch <= '\u218F') || (ch >= '\u2800' && ch <= '\uFFEF');
 
       //      if(ch < LOOKUP_MAX_CHAR) return lookupNameStartChar[ ch ];
       //      else return ch <= '\u2027'
@@ -2899,7 +3125,7 @@ public class MXParser implements XmlPullParser {
       //        //[#x202A-#x218F]
       //        if(ch < '\u202A') return false;
       //        if(ch <= '\u218F') return true;
-      //        // added pairts [#x2800-#xD7FF] | [#xE000-#xFDCF] | [#xFDE0-#xFFEF] | [#x10000-#x10FFFF]
+      //        // added parts [#x2800-#xD7FF] | [#xE000-#xFDCF] | [#xFDE0-#xFFEF] | [#x10000-#x10FFFF]
       //        if(ch < '\u2800') return false;
       //        if(ch <= '\uFFEF') return true;
       //        return false;
@@ -2908,17 +3134,15 @@ public class MXParser implements XmlPullParser {
       // else return (supportXml11 && ( (ch < '\u2027') || (ch > '\u2029' && ch < '\u2200') ...
    }
 
-   //private static final boolean isNameChar(char ch) {
-   protected boolean isNameChar(char ch) {
+   //private final static boolean isNameChar(char ch) {
+   private boolean isNameChar(char ch) {
       //return isNameStartChar(ch);
 
       //        if(ch < LOOKUP_MAX_CHAR) return (lookupNameChar[ (int)ch / 32 ] & (1 << (ch % 32))) != 0;
 
-      return (ch < LOOKUP_MAX_CHAR && lookupNameChar[ch])
-            || (ch >= LOOKUP_MAX_CHAR && ch <= '\u2027')
-            || (ch >= '\u202A' && ch <= '\u218F')
-            || (ch >= '\u2800' && ch <= '\uFFEF')
-            ;
+      return ch < LOOKUP_MAX_CHAR
+            ? lookupNameChar[ch]
+            : (ch <= '\u2027') || (ch >= '\u202A' && ch <= '\u218F') || (ch >= '\u2800' && ch <= '\uFFEF');
       //return false;
       //        return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == ':'
       //          || (ch >= '0' && ch <= '9');
@@ -2929,23 +3153,23 @@ public class MXParser implements XmlPullParser {
       //        //[#x202A-#x218F]
       //        else if(ch < '\u202A') return false;
       //        else if(ch <= '\u218F') return true;
-      //        // added pairts [#x2800-#xD7FF] | [#xE000-#xFDCF] | [#xFDE0-#xFFEF] | [#x10000-#x10FFFF]
+      //        // added parts [#x2800-#xD7FF] | [#xE000-#xFDCF] | [#xFDE0-#xFFEF] | [#x10000-#x10FFFF]
       //        else if(ch < '\u2800') return false;
       //        else if(ch <= '\uFFEF') return true;
       //else return false;
    }
 
-   protected boolean isS(char ch) {
+   private boolean isS(char ch) {
       return (ch == ' ' || ch == '\n' || ch == '\r' || ch == '\t');
       // || (supportXml11 && (ch == '\u0085' || ch == '\u2028');
    }
 
-   //protected boolean isChar(char ch) { return (ch < '\uD800' || ch > '\uDFFF')
+   //private boolean isChar(char ch) { return (ch < '\uD800' || ch > '\uDFFF')
    //  ch != '\u0000' ch < '\uFFFE'
 
 
-   //protected char printable(char ch) { return ch; }
-   protected String printable(char ch) {
+   //private char printable(char ch) { return ch; }
+   private String printable(char ch) {
       if (ch == '\n') {
          return "\\n";
       } else if (ch == '\r') {
@@ -2956,12 +3180,12 @@ public class MXParser implements XmlPullParser {
          return "\\'";
       }
       if (ch > 127 || ch < 32) {
-         return "\\u" + Integer.toHexString((int) ch);
+         return "\\u" + Integer.toHexString(ch);
       }
       return "" + ch;
    }
 
-   protected String printable(String s) {
+   private String printable(String s) {
       if (s == null) return null;
       final int sLen = s.length();
       StringBuilder buf = new StringBuilder(sLen + 10);
