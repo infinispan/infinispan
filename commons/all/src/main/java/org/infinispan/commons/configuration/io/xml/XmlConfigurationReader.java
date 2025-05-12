@@ -59,23 +59,13 @@ public class XmlConfigurationReader extends AbstractConfigurationReader {
 
    @Override
    public void require(ElementType elementType, String namespace, String name) {
-      int type;
-      switch (elementType) {
-         case START_DOCUMENT:
-            type = XmlPullParser.START_DOCUMENT;
-            break;
-         case END_DOCUMENT:
-            type = XmlPullParser.END_DOCUMENT;
-            break;
-         case START_ELEMENT:
-            type = XmlPullParser.START_TAG;
-            break;
-         case END_ELEMENT:
-            type = XmlPullParser.END_TAG;
-            break;
-         default:
-            throw new IllegalArgumentException(elementType.name());
-      }
+      int type = switch (elementType) {
+         case START_DOCUMENT -> XmlPullParser.START_DOCUMENT;
+         case END_DOCUMENT -> XmlPullParser.END_DOCUMENT;
+         case START_ELEMENT -> XmlPullParser.START_TAG;
+         case END_ELEMENT -> XmlPullParser.END_TAG;
+         default -> throw new IllegalArgumentException(elementType.name());
+      };
       try {
          state.parser.require(type, namespace, name);
       } catch (IOException e) {
@@ -131,18 +121,13 @@ public class XmlConfigurationReader extends AbstractConfigurationReader {
          event = nextEvent();
       }
 
-      switch (event) {
-         case XmlPullParser.START_DOCUMENT:
-            return ElementType.START_DOCUMENT;
-         case XmlPullParser.END_DOCUMENT:
-            return ElementType.END_DOCUMENT;
-         case XmlPullParser.START_TAG:
-            return ElementType.START_ELEMENT;
-         case XmlPullParser.END_TAG:
-            return ElementType.END_ELEMENT;
-         default:
-            throw new ConfigurationReaderException("Expecting event type >=1 <=4, got " + event, getLocation());
-      }
+      return switch (event) {
+         case XmlPullParser.START_DOCUMENT -> ElementType.START_DOCUMENT;
+         case XmlPullParser.END_DOCUMENT -> ElementType.END_DOCUMENT;
+         case XmlPullParser.START_TAG -> ElementType.START_ELEMENT;
+         case XmlPullParser.END_TAG -> ElementType.END_ELEMENT;
+         default -> throw new ConfigurationReaderException("Expecting event type >=1 <=4, got " + event, getLocation());
+      };
    }
 
    @Override
