@@ -19,7 +19,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.PassthroughMapResponseCollector;
 import org.infinispan.remoting.transport.impl.PassthroughSingleResponseCollector;
@@ -110,7 +109,7 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
       } else if (size > 1) {
          remoteFuture = new CompletableFuture<>();
          ReplicableCommand command = new ReplicableRunnableCommand(runnable);
-         ResponseCollector<Map<Address, Response>> collector = new PassthroughMapResponseCollector(targets.size());
+         var collector = new PassthroughMapResponseCollector(targets.size());
          CompletionStage<Map<Address, Response>> request = transport.invokeCommand(targets, command, collector, DeliverOrder.NONE, time, unit);
          request.handle((r, t) -> {
             if (t != null) {

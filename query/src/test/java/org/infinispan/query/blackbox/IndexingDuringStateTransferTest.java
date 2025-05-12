@@ -157,8 +157,8 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
             c -> TestingUtil.wrapComponent(c, RpcManager.class, original -> new AbstractDelegatingRpcManager(original) {
                @Override
                protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command,
-                                                               ResponseCollector<T> collector,
-                                                               Function<ResponseCollector<T>, CompletionStage<T>> invoker,
+                                                               ResponseCollector<Address, T> collector,
+                                                               Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker,
                                                                RpcOptions rpcOptions) {
                   if (command instanceof StateResponseCommand) {
                      CompletableFuture<Void> stageWithTimeout = orTimeout(allowStateResponse, 10, SECONDS,

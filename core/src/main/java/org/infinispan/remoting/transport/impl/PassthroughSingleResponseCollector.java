@@ -10,7 +10,7 @@ import org.infinispan.remoting.transport.ResponseCollector;
  * @author Dan Berindei
  * @since 9.1
  */
-public class PassthroughSingleResponseCollector implements ResponseCollector<Response> {
+public class PassthroughSingleResponseCollector implements ResponseCollector<Address, Response> {
    public static final PassthroughSingleResponseCollector INSTANCE = new PassthroughSingleResponseCollector();
 
    // No need for new instances

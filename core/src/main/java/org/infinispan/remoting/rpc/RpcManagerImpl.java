@@ -231,7 +231,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
 
    @Override
    public <T> CompletionStage<T> invokeCommand(Address target, CacheRpcCommand command,
-                                               ResponseCollector<T> collector, RpcOptions rpcOptions) {
+                                               ResponseCollector<Address, T> collector, RpcOptions rpcOptions) {
       CacheRpcCommand cacheRpc = initRpcCommand(command);
 
       if (!statisticsEnabled) {
@@ -252,7 +252,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
 
    @Override
    public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, CacheRpcCommand command,
-                                               ResponseCollector<T> collector, RpcOptions rpcOptions) {
+                                               ResponseCollector<Address, T> collector, RpcOptions rpcOptions) {
       CacheRpcCommand cacheRpc = initRpcCommand(command);
 
       if (!statisticsEnabled) {
@@ -289,7 +289,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    }
 
    @Override
-   public <T> CompletionStage<T> invokeCommandOnAll(CacheRpcCommand command, ResponseCollector<T> collector,
+   public <T> CompletionStage<T> invokeCommandOnAll(CacheRpcCommand command, ResponseCollector<Address, T> collector,
                                                     RpcOptions rpcOptions) {
       CacheRpcCommand cacheRpc = initRpcCommand(command);
       List<Address> cacheMembers = distributionManager.getCacheTopology().getMembers();
@@ -312,7 +312,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
 
    @Override
    public <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, CacheRpcCommand command,
-                                                        ResponseCollector<T> collector, RpcOptions rpcOptions) {
+                                                        ResponseCollector<Address, T> collector, RpcOptions rpcOptions) {
       CacheRpcCommand cacheRpc = initRpcCommand(command);
 
       if (!statisticsEnabled) {
@@ -334,7 +334,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    @Override
    public <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
                                                 Function<Address, CacheRpcCommand> commandGenerator,
-                                                ResponseCollector<T> collector, RpcOptions rpcOptions) {
+                                                ResponseCollector<Address, T> collector, RpcOptions rpcOptions) {
       if (!statisticsEnabled) {
          return t.invokeCommands(targets, commandGenerator.andThen(setClusterTraceSpanAttributes), collector,
                                  rpcOptions.deliverOrder(), rpcOptions.timeout(), rpcOptions.timeUnit());
@@ -485,8 +485,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    }
 
    private void setTopologyId(CacheRpcCommand command) {
-      if (command instanceof TopologyAffectedCommand) {
-         TopologyAffectedCommand topologyAffectedCommand = (TopologyAffectedCommand) command;
+      if (command instanceof TopologyAffectedCommand topologyAffectedCommand) {
          if (topologyAffectedCommand.getTopologyId() == -1) {
             int currentTopologyId = distributionManager.getCacheTopology().getTopologyId();
             if (log.isTraceEnabled()) {

@@ -229,8 +229,8 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       @SuppressWarnings("unchecked")
       @Override
       protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command,
-                                                      ResponseCollector<T> collector,
-                                                      Function<ResponseCollector<T>, CompletionStage<T>> invoker,
+                                                      ResponseCollector<Address, T> collector,
+                                                      Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker,
                                                       RpcOptions rpcOptions) {
          return super.performRequest(targets, command, collector, invoker, rpcOptions)
                .thenApply(responseObject -> {

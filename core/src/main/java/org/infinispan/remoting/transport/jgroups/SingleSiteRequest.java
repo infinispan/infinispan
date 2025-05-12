@@ -11,7 +11,6 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.AbstractRequest;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
-import org.infinispan.remoting.transport.SiteAddress;
 import org.infinispan.remoting.transport.impl.RequestRepository;
 
 /**
@@ -20,17 +19,17 @@ import org.infinispan.remoting.transport.impl.RequestRepository;
  * @author Dan Berindei
  * @since 9.1
  */
-public class SingleSiteRequest<T> extends AbstractRequest<T> {
+public class SingleSiteRequest<T> extends AbstractRequest<String, T> {
    private final String site;
    private final AtomicBoolean completed = new AtomicBoolean();
 
-   SingleSiteRequest(ResponseCollector<T> wrapper, long requestId, RequestRepository repository, String site) {
+   SingleSiteRequest(ResponseCollector<String, T> wrapper, long requestId, RequestRepository repository, String site) {
       super(requestId, wrapper, repository);
       this.site = site;
    }
 
    @Override
-   public void onResponse(Address sender, Response response) {
+   public void onResponse(String sender, Response response) {
       receiveResponse(sender, response);
    }
 
@@ -40,7 +39,7 @@ public class SingleSiteRequest<T> extends AbstractRequest<T> {
       return false;
    }
 
-   private void receiveResponse(Address sender, Response response) {
+   private void receiveResponse(String sender, Response response) {
       try {
          if (completed.getAndSet(true)) {
             return;
@@ -64,7 +63,7 @@ public class SingleSiteRequest<T> extends AbstractRequest<T> {
 
    public void sitesUnreachable(String unreachableSite) {
       if (site.equals(unreachableSite)) {
-         receiveResponse(new SiteAddress(site), CacheNotFoundResponse.INSTANCE);
+         receiveResponse(site, CacheNotFoundResponse.INSTANCE);
       }
    }
 }

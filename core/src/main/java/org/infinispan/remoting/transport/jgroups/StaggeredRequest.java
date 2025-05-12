@@ -24,7 +24,7 @@ public class StaggeredRequest<T> extends MultiTargetRequest<T> {
    private final long deadline;
    private int targetIndex;
 
-   StaggeredRequest(ResponseCollector<T> responseCollector, long requestId, RequestRepository repository,
+   StaggeredRequest(ResponseCollector<Address, T> responseCollector, long requestId, RequestRepository repository,
                     Collection<Address> targets, Address excludedTarget, ReplicableCommand command,
                     DeliverOrder deliverOrder, long timeout, TimeUnit unit, JGroupsTransport transport) {
       super(responseCollector, requestId, repository, targets, excludedTarget, transport.metricsManager);

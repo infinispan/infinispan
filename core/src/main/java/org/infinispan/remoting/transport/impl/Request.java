@@ -12,7 +12,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Dan Berindei
  * @since 9.1
  */
-public interface Request<T> extends CompletionStage<T> {
+public interface Request<S, T> extends CompletionStage<T> {
    long NO_REQUEST_ID = 0;
 
    /**
@@ -23,7 +23,7 @@ public interface Request<T> extends CompletionStage<T> {
    /**
     * Called when a response is received for this response.
     */
-   void onResponse(Address sender, Response response);
+   void onResponse(S sender, Response response);
 
    /**
     * Called when the node received a new cluster view.

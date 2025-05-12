@@ -286,7 +286,7 @@ public class PessimisticTxIracLocalInterceptor extends AbstractIracLocalSiteInte
       return !ctx.isOriginLocal() || command.hasAnyFlag(FlagBitSets.IRAC_UPDATE);
    }
 
-   private static class IracMetadataResponseCollector extends ValidSingleResponseCollector<IracMetadata> {
+   private static class IracMetadataResponseCollector extends ValidSingleResponseCollector<Address, IracMetadata> {
 
       @Override
       protected IracMetadata withValidResponse(Address sender, ValidResponse response) {

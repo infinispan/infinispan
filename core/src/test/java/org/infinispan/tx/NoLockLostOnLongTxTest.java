@@ -24,7 +24,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.transaction.LockingMode;
@@ -117,7 +116,7 @@ public class NoLockLostOnLongTxTest extends MultipleCacheManagersTest {
 
       RpcManager rpcManager = cache0.getAdvancedCache().getRpcManager();
       RpcOptions rpcOptions = rpcManager.getSyncRpcOptions();
-      ResponseCollector<Collection<GlobalTransaction>> collector = CheckTransactionRpcCommand.responseCollector();
+      var collector = CheckTransactionRpcCommand.responseCollector();
 
       Address remoteAddress = cache1.getAdvancedCache().getRpcManager().getAddress();
       TransactionTable transactionTable = ComponentRegistry.of(cache1).getTransactionTable();

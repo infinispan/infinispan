@@ -15,7 +15,7 @@ import org.infinispan.remoting.transport.ResponseCollectors;
  * @author Pedro Ruivo
  * @since 12.1
  */
-public class AutoStateTransferResponseCollector implements ResponseCollector<AutoStateTransferResponse> {
+public class AutoStateTransferResponseCollector implements ResponseCollector<Address, AutoStateTransferResponse> {
 
    private boolean isOffline;
    private XSiteStateTransferMode stateTransferMode;

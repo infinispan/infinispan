@@ -20,15 +20,15 @@ import org.infinispan.remoting.transport.impl.RequestRepository;
  * @author Dan Berindei
  * @since 9.1
  */
-public abstract class AbstractRequest<T> extends CompletableFuture<T> implements Callable<Void>, Request<T> {
-   protected final ResponseCollector<T> responseCollector;
+public abstract class AbstractRequest<S, T> extends CompletableFuture<T> implements Callable<Void>, Request<S, T> {
+   protected final ResponseCollector<S, T> responseCollector;
    protected final long requestId;
    protected final RequestRepository repository;
 
    private volatile Future<?> timeoutFuture = null;
    private volatile long timeoutMs = -1;
 
-   protected AbstractRequest(long requestId, ResponseCollector<T> responseCollector, RequestRepository repository) {
+   protected AbstractRequest(long requestId, ResponseCollector<S, T> responseCollector, RequestRepository repository) {
       this.responseCollector = responseCollector;
       this.repository = repository;
       this.requestId = requestId;

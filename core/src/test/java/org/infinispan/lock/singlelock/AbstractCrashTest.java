@@ -120,7 +120,7 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
       RpcManager rpcManager = new AbstractDelegatingRpcManager(cache.getRpcManager()) {
          @Override
          protected <T> void performSend(Collection<Address> targets, CacheRpcCommand command,
-                                        Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
+                                        Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker) {
             if (command instanceof TxCompletionNotificationCommand) {
                releaseLocksLatch.countDown();
                log.tracef("Skipping TxCompletionNotificationCommand");

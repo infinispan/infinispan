@@ -217,7 +217,7 @@ public interface Transport extends Lifecycle {
     */
    @Experimental
    default <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
-                                                ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                 long timeout, TimeUnit unit) {
       // Implement the new methods on top of invokeRemotelyAsync to support custom implementations
       return invokeCommand(Collections.singleton(target), command, collector, deliverOrder, timeout, unit);
@@ -232,7 +232,7 @@ public interface Transport extends Lifecycle {
     */
    @Experimental
    default <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
-                                                ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                 long timeout, TimeUnit unit) {
       // Implement the new methods on top of invokeRemotelyAsync to support custom implementations
       try {
@@ -259,7 +259,7 @@ public interface Transport extends Lifecycle {
     * @since 9.1
     */
    @Experimental
-   default <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
+   default <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<Address, T> collector,
                                                      DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
       return invokeCommand(getMembers(), command, collector, deliverOrder, timeout, unit);
    }
@@ -273,7 +273,7 @@ public interface Transport extends Lifecycle {
     */
    @Experimental
    default <T> CompletionStage<T> invokeCommandOnAll(Collection<Address> requiredTargets, ReplicableCommand command,
-                                                       ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                       ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                        long timeout, TimeUnit unit) {
       return invokeCommand(requiredTargets, command, collector, deliverOrder, timeout, unit);
    }
@@ -283,7 +283,7 @@ public interface Transport extends Lifecycle {
     * <p>
     * The command is only sent immediately to the first target, and there is an implementation-dependent
     * delay before sending the command to each target. There is no delay if the target responds or leaves
-    * the cluster. The remaining targets are skipped if {@link ResponseCollector#addResponse(Address, Response)}
+    * the cluster. The remaining targets are skipped if {@link ResponseCollector#addResponse(Object, Response)}
     * returns a non-{@code null} value.
     * <p>
     * The command is only executed on the remote nodes.
@@ -292,7 +292,7 @@ public interface Transport extends Lifecycle {
     */
    @Experimental
    default <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
-                                                         ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                         ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                          long timeout, TimeUnit unit) {
       // Implement the new methods on top of invokeRemotelyAsync to support custom implementations
       AtomicReference<Object> result = new AtomicReference<>(null);
@@ -344,10 +344,10 @@ public interface Transport extends Lifecycle {
    @Experimental
    default <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
                                                  Function<Address, ReplicableCommand> commandGenerator,
-                                                 ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                 ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                  long timeout, TimeUnit timeUnit) {
       AtomicReference<Object> result = new AtomicReference<>(null);
-      ResponseCollector<T> partCollector = new ResponseCollector<>() {
+      ResponseCollector<Address, T> partCollector = new ResponseCollector<>() {
          @Override
          public T addResponse(Address sender, Response response) {
             synchronized (this) {

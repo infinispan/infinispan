@@ -17,7 +17,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
@@ -231,7 +230,7 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
 
       List<IracTombstoneInfo> segmentKeys = keys.stream()
             .filter(tombstoneInfo -> segment == tombstoneInfo.getSegment())
-            .collect(Collectors.toList());
+            .toList();
 
       // wait until it is transferred
       eventuallyEquals(segmentKeys.size(), () -> tombstoneManager(cache0).size());
@@ -356,20 +355,20 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command, ResponseCollector<T> collector, Function<ResponseCollector<T>, CompletionStage<T>> invoker, RpcOptions rpcOptions) {
-         if (recording && command instanceof CacheRpcCommand) {
+      protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command, ResponseCollector<Address, T> collector, Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker, RpcOptions rpcOptions) {
+         if (recording) {
             synchronized (this) {
-               commandList.add((CacheRpcCommand) command);
+               commandList.add(command);
             }
          }
          return super.performRequest(targets, command, collector, invoker, rpcOptions);
       }
 
       @Override
-      protected <T> void performSend(Collection<Address> targets, CacheRpcCommand command, Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
-         if (recording && command instanceof CacheRpcCommand) {
+      protected <T> void performSend(Collection<Address> targets, CacheRpcCommand command, Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker) {
+         if (recording) {
             synchronized (this) {
-               commandList.add((CacheRpcCommand) command);
+               commandList.add(command);
             }
          }
          super.performSend(targets, command, invoker);

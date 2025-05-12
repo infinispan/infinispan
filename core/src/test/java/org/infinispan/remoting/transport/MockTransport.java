@@ -236,41 +236,41 @@ public class MockTransport implements Transport {
    }
 
    @Override
-   public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command, ResponseCollector<T>
+   public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command, ResponseCollector<Address, T>
       collector, DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
       return blockRequest(Collections.singleton(target), command, collector);
    }
 
    @Override
    public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
-                                               ResponseCollector<T> collector, DeliverOrder deliverOrder, long
+                                               ResponseCollector<Address, T> collector, DeliverOrder deliverOrder, long
                                                   timeout, TimeUnit unit) {
       return blockRequest(targets, command, collector);
    }
 
    @Override
-   public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
+   public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<Address, T> collector,
                                                     DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
       return blockRequest(members, command, collector);
    }
 
    @Override
    public <T> CompletableFuture<T> invokeCommandOnAll(Collection<Address> requiredTargets, ReplicableCommand command,
-                                                      ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                      ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                       long timeout, TimeUnit unit) {
       return blockRequest(requiredTargets, command, collector);
    }
 
    @Override
    public <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
-                                                        ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                        ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                         long timeout, TimeUnit unit) {
       return blockRequest(targets, command, collector);
    }
 
    @Override
    public <T> CompletionStage<T> invokeCommands(Collection<Address> targets, Function<Address, ReplicableCommand>
-      commandGenerator, ResponseCollector<T> responseCollector, DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
+      commandGenerator, ResponseCollector<Address, T> responseCollector, DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
       throw new UnsupportedOperationException();
    }
 
@@ -279,7 +279,7 @@ public class MockTransport implements Transport {
       return EmptyRaftManager.INSTANCE;
    }
 
-   private <T> CompletableFuture<T> blockRequest(Collection<Address> targets, ReplicableCommand command, ResponseCollector<T> collector) {
+   private <T> CompletableFuture<T> blockRequest(Collection<Address> targets, ReplicableCommand command, ResponseCollector<Address, T> collector) {
       log.debugf("Intercepted command %s to %s", command, targets);
       BlockedRequest request = new BlockedRequest(command, collector);
       blockedRequests.add(request);
@@ -298,10 +298,10 @@ public class MockTransport implements Transport {
     */
    public static class BlockedRequest {
       private final ReplicableCommand command;
-      private final ResponseCollector<?> collector;
+      private final ResponseCollector<Address, ?> collector;
       private final CompletableFuture<Object> resultFuture = new CompletableFuture<>();
 
-      private BlockedRequest(ReplicableCommand command, ResponseCollector<?> collector) {
+      private BlockedRequest(ReplicableCommand command, ResponseCollector<Address,?> collector) {
          this.command = command;
          this.collector = collector;
       }

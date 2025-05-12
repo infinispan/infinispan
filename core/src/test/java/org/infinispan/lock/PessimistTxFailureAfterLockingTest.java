@@ -102,8 +102,8 @@ public class PessimistTxFailureAfterLockingTest extends MultipleCacheManagersTes
 
       @Override
       protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command,
-                                                      ResponseCollector<T> collector,
-                                                      Function<ResponseCollector<T>, CompletionStage<T>> invoker,
+                                                      ResponseCollector<Address, T> collector,
+                                                      Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker,
                                                       RpcOptions rpcOptions) {
          if (command instanceof LockControlCommand) {
             throw new TimeoutException("Exception expected!");

@@ -22,7 +22,7 @@ import org.infinispan.statetransfer.OutdatedTopologyException;
  * @author Dan Berindei
  * @since 9.4
  */
-public class RemoteGetSingleKeyCollector implements ResponseCollector<SuccessfulResponse> {
+public class RemoteGetSingleKeyCollector implements ResponseCollector<Address, SuccessfulResponse> {
    private boolean hasSuspectResponse;
 
    @Override

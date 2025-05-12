@@ -12,9 +12,9 @@ import org.infinispan.remoting.responses.ValidResponse;
  * @since 9.1
  */
 @Experimental
-public abstract class ValidSingleResponseCollector<T> implements ResponseCollector<T> {
+public abstract class ValidSingleResponseCollector<S, T> implements ResponseCollector<S, T> {
    @Override
-   public final T addResponse(Address sender, Response response) {
+   public final T addResponse(S sender, Response response) {
       if (response instanceof ValidResponse) {
          return withValidResponse(sender, ((ValidResponse) response));
       } else if (response instanceof ExceptionResponse) {
@@ -33,12 +33,12 @@ public abstract class ValidSingleResponseCollector<T> implements ResponseCollect
       return null;
    }
 
-   protected T withException(Address sender, Exception exception) {
+   protected T withException(S sender, Exception exception) {
       throw ResponseCollectors.wrapRemoteException(sender, exception);
    }
 
-   protected abstract T withValidResponse(Address sender, ValidResponse response);
+   protected abstract T withValidResponse(S sender, ValidResponse response);
 
-   protected abstract T targetNotFound(Address sender);
+   protected abstract T targetNotFound(S sender);
 
 }

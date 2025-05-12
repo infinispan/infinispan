@@ -348,7 +348,7 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
       return "Incorrect site name: " + site;
    }
 
-   private XSiteResponse invokeOnAll(CacheRpcCommand command, ResponseCollector<XSiteResponse> responseCollector) {
+   private XSiteResponse invokeOnAll(CacheRpcCommand command, ResponseCollector<Address, XSiteResponse> responseCollector) {
       RpcOptions rpcOptions = rpcManager.getSyncRpcOptions();
       CompletionStage<XSiteResponse> rsp = rpcManager.invokeCommandOnAll(command, responseCollector, rpcOptions);
       return rpcManager.blocking(rsp);
