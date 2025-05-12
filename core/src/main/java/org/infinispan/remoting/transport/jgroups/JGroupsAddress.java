@@ -7,22 +7,24 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.jgroups.util.ExtendedUUID;
 import org.jgroups.util.NameCache;
 import org.jgroups.util.Util;
 
 /**
- * An encapsulation of a JGroups {@link ExtendedUUID} with a site id, a rack id, and a machine id.
+ * An encapsulation of a JGroups {@link ExtendedUUID} with a {@link NodeVersion}, site id, rack id, and a machine id.
  *
  * @author Bela Ban
  * @since 5.0
  */
 @ProtoTypeId(ProtoStreamTypeIds.JGROUPS_ADDRESS)
 public class JGroupsAddress implements TopologyAwareAddress {
-   private static final byte[] SITE_KEY = Util.stringToBytes("site-id");
-   private static final byte[] RACK_KEY = Util.stringToBytes("rack-id");
-   private static final byte[] MACHINE_KEY = Util.stringToBytes("machine-id");
+   private static final byte[] VERSION_KEY = Util.stringToBytes("v");
+   private static final byte[] SITE_KEY = Util.stringToBytes("site");
+   private static final byte[] RACK_KEY = Util.stringToBytes("rack");
+   private static final byte[] MACHINE_KEY = Util.stringToBytes("machine");
 
    public static final JGroupsAddress LOCAL = new JGroupsAddress(ExtendedUUID.randomUUID());
 
@@ -31,10 +33,12 @@ public class JGroupsAddress implements TopologyAwareAddress {
    @ProtoField(value = 2, defaultValue = "0")
    final long leastSignificantBits;
    @ProtoField(3)
-   final String siteId;
+   final NodeVersion version;
    @ProtoField(4)
-   final String rackId;
+   final String siteId;
    @ProtoField(5)
+   final String rackId;
+   @ProtoField(6)
    final String machineId;
    private transient String cachedName;
 
@@ -53,6 +57,7 @@ public class JGroupsAddress implements TopologyAwareAddress {
       if (name != null) {
          NameCache.add(uuid, name);
       }
+      addId(uuid, VERSION_KEY, NodeVersion.INSTANCE.toString());
       addId(uuid, SITE_KEY, siteId);
       addId(uuid, RACK_KEY, rackId);
       addId(uuid, MACHINE_KEY, machineId);
@@ -61,6 +66,7 @@ public class JGroupsAddress implements TopologyAwareAddress {
 
    public static ExtendedUUID toExtendedUUID(JGroupsAddress address) {
       var uuid = new ExtendedUUID(address.getMostSignificantBits(), address.getLeastSignificantBits());
+      addId(uuid, VERSION_KEY, address.getVersion().toString());
       addId(uuid, SITE_KEY, address.siteId);
       addId(uuid, RACK_KEY, address.rackId);
       addId(uuid, MACHINE_KEY, address.machineId);
@@ -75,26 +81,30 @@ public class JGroupsAddress implements TopologyAwareAddress {
 
    public JGroupsAddress(ExtendedUUID address) {
       this(address.getMostSignificantBits(), address.getLeastSignificantBits(),
+            NodeVersion.INSTANCE,
             Util.bytesToString(address.get(SITE_KEY)),
             Util.bytesToString(address.get(RACK_KEY)),
             Util.bytesToString(address.get(MACHINE_KEY)));
    }
 
-   private JGroupsAddress(long mostSignificantBits, long leastSignificantBits, String siteId, String rackId, String machineId) {
+   private JGroupsAddress(long mostSignificantBits, long leastSignificantBits, NodeVersion version, String siteId,
+                          String rackId, String machineId) {
       this.mostSignificantBits = mostSignificantBits;
       this.leastSignificantBits = leastSignificantBits;
+      this.version = version;
       this.siteId = siteId;
       this.rackId = rackId;
       this.machineId = machineId;
    }
 
    @ProtoFactory
-   public static JGroupsAddress protoFactory(long mostSignificantBits, long leastSignificantBits, String siteId, String rackId, String machineId) {
+   public static JGroupsAddress protoFactory(long mostSignificantBits, long leastSignificantBits, NodeVersion version,
+                                             String siteId, String rackId, String machineId) {
       var existing = JGroupsAddressCache.getIfPresent(mostSignificantBits, leastSignificantBits);
       if (existing != null) {
          return existing;
       }
-      return new JGroupsAddress(mostSignificantBits, leastSignificantBits, siteId, rackId, machineId);
+      return new JGroupsAddress(mostSignificantBits, leastSignificantBits, version, siteId, rackId, machineId);
    }
 
    public long getLeastSignificantBits() {
@@ -103,6 +113,10 @@ public class JGroupsAddress implements TopologyAwareAddress {
 
    public long getMostSignificantBits() {
       return mostSignificantBits;
+   }
+
+   public NodeVersion getVersion() {
+      return version;
    }
 
    @Override

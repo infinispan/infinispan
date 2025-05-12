@@ -14,6 +14,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.annotations.ProtoSyntax;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.CacheRoleImpl;
@@ -45,6 +46,7 @@ import org.infinispan.util.logging.events.EventLogLevel;
             JGroupsAddress.class,
             MarshalledValueImpl.class,
             MetaParamsInternalMetadata.class,
+            NodeVersion.class,
             NumericVersion.class,
             RemoteMetadata.class,
             SimpleClusteredVersion.class,

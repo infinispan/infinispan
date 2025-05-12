@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.jgroups.util.ExtendedUUID;
 
 /**
@@ -24,9 +25,11 @@ public class ClusterView {
    private final Map<JGroupsAddress, ExtendedUUID> view;
    private final boolean isCoordinator;
    private final Address coordinator;
+   private final NodeVersion oldestMember;
 
    ClusterView(int viewId, List<ExtendedUUID> members, ExtendedUUID self) {
       this.viewId = viewId;
+      var oldestVersion = NodeVersion.INSTANCE;
       if (members.isEmpty()) {
          view = Map.of();
          isCoordinator = false;
@@ -35,9 +38,17 @@ public class ClusterView {
          this.view = new LinkedHashMap<>();
          isCoordinator = Objects.equals(self, members.get(0));
          coordinator = JGroupsAddressCache.fromExtendedUUID(members.get(0));
-         members.forEach(extendedUUID -> view.put(JGroupsAddressCache.fromExtendedUUID(extendedUUID), extendedUUID));
 
+         for (ExtendedUUID member : members) {
+            var address = JGroupsAddressCache.fromExtendedUUID(member);
+            view.put(address, member);
+
+            var v = address.getVersion();
+            if (v.lessThan(oldestVersion))
+               oldestVersion = v;
+         }
       }
+      this.oldestMember = oldestVersion;
    }
 
    public int getViewId() {
@@ -66,6 +77,14 @@ public class ClusterView {
 
    public boolean isCoordinator() {
       return isCoordinator;
+   }
+
+   public NodeVersion getOldestMember() {
+      return oldestMember;
+   }
+
+   public boolean isMixedVersionCluster() {
+      return !oldestMember.equals(NodeVersion.INSTANCE);
    }
 
    @Override

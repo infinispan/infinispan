@@ -87,10 +87,17 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
       MBeanServer server = mBeanServerLookup.getMBeanServer();
       ObjectName jchannelName1 = getJGroupsChannelObjectName(manager(0));
       ObjectName jchannelName2 = getJGroupsChannelObjectName(manager(1));
-      assertEquals(server.getAttribute(name1, "NodeAddress"), server.getAttribute(jchannelName1, "address"));
-      assertEquals(server.getAttribute(name2, "NodeAddress"), server.getAttribute(jchannelName2, "address"));
+      assertAddressNames(server, name1, jchannelName1);
+      assertAddressNames(server, name2, jchannelName2);
       assertTrue((Boolean) server.getAttribute(jchannelName1, "connected"));
       assertTrue((Boolean) server.getAttribute(jchannelName2, "connected"));
+   }
+
+   private void assertAddressNames(MBeanServer server, ObjectName name, ObjectName jChannelName) throws Exception {
+      // The JChannel Address now always contains the Version key in the ExtendedUUID, so just assert that the two addresses start the same
+      var nodeAddress = server.getAttribute(name, "NodeAddress");
+      String jChannelAddress = (String) server.getAttribute(jChannelName, "address");
+      assertEquals(nodeAddress, jChannelAddress.split("\\(")[0]);
    }
 
    public void testExecutorMBeans() throws Exception {
