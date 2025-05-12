@@ -5,6 +5,8 @@ import static org.infinispan.util.logging.Log.CLUSTER;
 import static org.infinispan.util.logging.Log.CONTAINER;
 import static org.infinispan.util.logging.Log.XSITE;
 
+import javax.management.ObjectName;
+import javax.sql.DataSource;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,9 +35,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import javax.management.ObjectName;
-import javax.sql.DataSource;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TracedCommand;
@@ -78,6 +77,7 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.AbstractRequest;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.PhysicalAddress;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
@@ -119,6 +119,7 @@ import org.jgroups.protocols.relay.RouteStatusListener;
 import org.jgroups.protocols.relay.SiteAddress;
 import org.jgroups.protocols.relay.SiteMaster;
 import org.jgroups.stack.AddressGenerator;
+import org.jgroups.stack.IpAddress;
 import org.jgroups.stack.Protocol;
 import org.jgroups.stack.ProtocolStack;
 import org.jgroups.util.ExtendedUUID;
@@ -191,7 +192,6 @@ public class JGroupsTransport implements Transport {
    protected TypedProperties props;
    protected JChannel channel;
    protected Address address;
-   protected Address physicalAddress;
    // these members are not valid until we have received the first view on a second thread
    // and channelConnectedLatch is signaled
    protected volatile ClusterView clusterView =
@@ -347,15 +347,16 @@ public class JGroupsTransport implements Transport {
    }
 
    @Override
-   public List<Address> getPhysicalAddresses() {
-      if (physicalAddress == null && channel != null) {
-         var addr = findPhysicalAddress(channel.getAddress());
-         if (addr.isEmpty()) {
-            return Collections.emptyList();
-         }
-         physicalAddress = new PhysicalAddress(addr.get());
+   public List<PhysicalAddress> getPhysicalAddresses() {
+      if (channel == null) {
+         return List.of();
       }
-      return Collections.singletonList(physicalAddress);
+      var ipAddress = channel.getProtocolStack().getTransport().localPhysicalAddress();
+      if (ipAddress == null) {
+         return List.of();
+      }
+      assert ipAddress instanceof IpAddress;
+      return List.of(new PhysicalAddress(((IpAddress) ipAddress).getIpAddress(), ((IpAddress) ipAddress).getPort()));
    }
 
    @Override
@@ -364,16 +365,19 @@ public class JGroupsTransport implements Transport {
    }
 
    @Override
-   public List<Address> getMembersPhysicalAddresses() {
+   public List<PhysicalAddress> getMembersPhysicalAddresses() {
       if (channel == null) {
-         return Collections.emptyList();
+         return List.of();
       }
-      return Arrays.stream(channel.getView().getMembersRaw())
-            .map(this::findPhysicalAddress)
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .map(PhysicalAddress::new)
-            .collect(Collectors.toList());
+      return channel.getProtocolStack()
+            .getTransport()
+            .getLogicalAddressCache()
+            .values()
+            .stream()
+            .filter(IpAddress.class::isInstance)
+            .map(IpAddress.class::cast)
+            .map(ipAddress -> new PhysicalAddress(ipAddress.getIpAddress(), ipAddress.getPort()))
+            .toList();
    }
 
    @Override
@@ -1480,10 +1484,6 @@ public class JGroupsTransport implements Transport {
 
    private Optional<RELAY2> findRelay2() {
       return Optional.ofNullable(channel.getProtocolStack().findProtocol(RELAY2.class));
-   }
-
-   private Optional<org.jgroups.Address> findPhysicalAddress(org.jgroups.Address member) {
-      return  Optional.ofNullable((org.jgroups.Address) channel.down(new Event(Event.GET_PHYSICAL_ADDRESS, member)));
    }
 
    private class ChannelCallbacks implements RouteStatusListener, UpHandler, ChannelListener, AddressGenerator {

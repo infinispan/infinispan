@@ -85,7 +85,7 @@ public abstract class AbstractDelegatingTransport implements Transport {
    }
 
    @Override
-   public List<Address> getPhysicalAddresses() {
+   public List<PhysicalAddress> getPhysicalAddresses() {
       return actual.getPhysicalAddresses();
    }
 
@@ -95,7 +95,7 @@ public abstract class AbstractDelegatingTransport implements Transport {
    }
 
    @Override
-   public List<Address> getMembersPhysicalAddresses() {
+   public List<PhysicalAddress> getMembersPhysicalAddresses() {
       return actual.getMembersPhysicalAddresses();
    }
 
