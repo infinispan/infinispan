@@ -296,7 +296,7 @@ public class JGroupsTransport implements Transport {
          sendCommandToAll(command, Request.NO_REQUEST_ID, deliverOrder);
       } else {
          logCommand(command, targets);
-         sendCommand(targets, command, Request.NO_REQUEST_ID, deliverOrder, true);
+         sendCommand(targets, command, Request.NO_REQUEST_ID, deliverOrder);
       }
    }
 
@@ -933,8 +933,11 @@ public class JGroupsTransport implements Transport {
       try {
          addRequest(request);
          traceRequest(request, command);
-         boolean checkView = request.onNewView(clusterView.getMembersSet());
-         sendCommand(targets, command, requestId, deliverOrder, checkView);
+         request.onNewView(clusterView.getMembersSet());
+         if (request.isDone()) {
+            return request;
+         }
+         sendCommand(targets, command, requestId, deliverOrder);
       } catch (Throwable t) {
          request.cancel(true);
          throw t;
@@ -1202,7 +1205,7 @@ public class JGroupsTransport implements Transport {
          sendCommandCheckingView(singleTarget, command, Request.NO_REQUEST_ID, deliverOrder);
       } else {
          logCommand(command, recipients);
-         sendCommand(recipients, command, Request.NO_REQUEST_ID, deliverOrder, true);
+         sendCommand(recipients, command, Request.NO_REQUEST_ID, deliverOrder);
       }
       return EMPTY_RESPONSES_FUTURE;
    }
@@ -1313,7 +1316,7 @@ public class JGroupsTransport implements Transport {
     * Send a command to multiple targets.
     */
    private void sendCommand(Collection<Address> targets, ReplicableCommand command, long requestId,
-                            DeliverOrder deliverOrder, boolean checkView) {
+                            DeliverOrder deliverOrder) {
       Objects.requireNonNull(targets);
       Message message = new BytesMessage();
       marshallRequest(message, command, requestId);
@@ -1322,9 +1325,6 @@ public class JGroupsTransport implements Transport {
       Message copy = message;
       for (Iterator<Address> it = targets.iterator(); it.hasNext(); ) {
          Address address = it.next();
-
-         if (checkView && !clusterView.contains(address))
-            continue;
 
          if (address.equals(this.address))
             continue;

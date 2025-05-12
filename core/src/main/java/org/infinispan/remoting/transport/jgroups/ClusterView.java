@@ -21,7 +21,7 @@ public class ClusterView {
    static final int FINAL_VIEW_ID = Integer.MAX_VALUE;
 
    private final int viewId;
-   private final Map<Address, ExtendedUUID> view;
+   private final Map<JGroupsAddress, ExtendedUUID> view;
    private final boolean isCoordinator;
    private final Address coordinator;
 
@@ -66,10 +66,6 @@ public class ClusterView {
 
    public boolean isCoordinator() {
       return isCoordinator;
-   }
-
-   boolean contains(Address address) {
-      return view.containsKey(address);
    }
 
    @Override
