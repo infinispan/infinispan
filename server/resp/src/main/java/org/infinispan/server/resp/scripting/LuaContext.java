@@ -286,7 +286,7 @@ public class LuaContext implements AutoCloseable {
       for (int i = -argc + 1; i < 0; i++) {
          args.add(l.toString(i).getBytes(StandardCharsets.US_ASCII));
       }
-      CompletableFuture<RespRequestHandler> future = handler.handleRequest (ctx, respCommand, args).toCompletableFuture();
+      CompletableFuture<RespRequestHandler> future = handler.handleRequest(ctx, respCommand, args).toCompletableFuture();
       try {
          future.get(); // TODO: handle timeouts ?
       } catch (Throwable t) {

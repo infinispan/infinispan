@@ -49,7 +49,7 @@ public final class Params {
    }
 
    @ProtoFactory
-   static Params protoFactory (byte bits) {
+   static Params protoFactory(byte bits) {
       PersistenceMode persistenceMode = PersistenceMode.valueOf(bits & 3);
       LockingMode lockingMode = LockingMode.valueOf((bits >>> 2) & 3);
       ExecutionMode executionMode = ExecutionMode.valueOf((bits >>> 4) & 3);

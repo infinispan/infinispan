@@ -78,6 +78,7 @@ public class SoftIndexFileStoreConfiguration extends AbstractStoreConfiguration<
     * <p>
     * Index files will reserve 1/10th of the open files, with a minimum value of 1 and a maximum equal to the
     * number of cache segments.
+    *
     * @return How many open files SIFS will utilize
     */
    public int openFilesLimit() {
