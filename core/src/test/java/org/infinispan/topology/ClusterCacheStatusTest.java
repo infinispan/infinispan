@@ -54,8 +54,7 @@ public class ClusterCacheStatusTest extends AbstractInfinispanTest {
       topologyManager = mock(ClusterTopologyManagerImpl.class);
       transport = mock(Transport.class);
       PreferAvailabilityStrategy availabilityStrategy =
-         new PreferAvailabilityStrategy(eventLogManager, persistentUUIDManager,
-                                        ClusterTopologyManagerImpl::distLostDataCheck);
+         new PreferAvailabilityStrategy(eventLogManager, persistentUUIDManager);
       status = new ClusterCacheStatus(cacheManager, null, CACHE_NAME, availabilityStrategy, RebalanceType.FOUR_PHASE,
                                       topologyManager, transport, persistentUUIDManager, eventLogManager,
                                       Optional.empty(), false);

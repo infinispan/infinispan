@@ -32,7 +32,7 @@ public class PreferConsistencyStrategyTest {
       ClusterTopologyManagerImpl topologyManager = new ClusterTopologyManagerImpl();
       EmbeddedCacheManager cacheManager = mock(EmbeddedCacheManager.class);
 
-      preferConsistencyStrategy = new PreferConsistencyStrategy(eventLogManager, persistentUUIDManager, null);
+      preferConsistencyStrategy = new PreferConsistencyStrategy(eventLogManager, persistentUUIDManager);
       status = new ClusterCacheStatus(cacheManager, null, "does-not-matter", preferConsistencyStrategy, RebalanceType.FOUR_PHASE, topologyManager,
                                       null, persistentUUIDManager, eventLogManager, Optional.empty(), false);
    }

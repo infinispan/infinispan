@@ -29,7 +29,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.ClusterTopologyManagerImpl;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.infinispan.topology.TestClusterCacheStatus;
 import org.infinispan.util.logging.events.EventLogManager;
@@ -103,8 +102,7 @@ public class PreferAvailabilityStrategyTest extends AbstractInfinispanTest {
       persistentUUIDManager.addPersistentAddressMapping(C, persistentUUID(C));
       persistentUUIDManager.addPersistentAddressMapping(D, persistentUUID(D));
 
-      strategy = new PreferAvailabilityStrategy(eventLogManager, persistentUUIDManager,
-                                                ClusterTopologyManagerImpl::distLostDataCheck);
+      strategy = new PreferAvailabilityStrategy(eventLogManager, persistentUUIDManager);
    }
 
    @AfterMethod(alwaysRun = true)
