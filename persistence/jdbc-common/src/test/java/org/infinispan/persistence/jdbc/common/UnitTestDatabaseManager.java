@@ -74,8 +74,7 @@ public class UnitTestDatabaseManager {
                .username("sa");
    }
 
-   public static ConnectionFactoryConfigurationBuilder<?> configureBrokenConnectionFactory
-         (AbstractJdbcStoreConfigurationBuilder<?, ?> storeBuilder) {
+   public static ConnectionFactoryConfigurationBuilder<?> configureBrokenConnectionFactory(AbstractJdbcStoreConfigurationBuilder<?, ?> storeBuilder) {
       return storeBuilder.connectionPool()
                   .driverClass(NON_EXISTENT_DRIVER);
    }

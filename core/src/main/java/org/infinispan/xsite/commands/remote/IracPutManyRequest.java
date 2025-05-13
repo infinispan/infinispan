@@ -121,7 +121,7 @@ public class IracPutManyRequest extends IracUpdateKeyRequest<IntSet> {
 
       @ProtoFactory
       Remove(MarshallableObject<Object> key, IracMetadata iracMetadata) {
-         this(MarshallableObject.unwrap(key),  iracMetadata);
+         this(MarshallableObject.unwrap(key), iracMetadata);
       }
 
       Remove(Object key, IracMetadata iracMetadata) {
@@ -149,7 +149,7 @@ public class IracPutManyRequest extends IracUpdateKeyRequest<IntSet> {
 
       @ProtoFactory
       Expire(MarshallableObject<Object> key, IracMetadata iracMetadata) {
-         this(MarshallableObject.unwrap(key),  iracMetadata);
+         this(MarshallableObject.unwrap(key), iracMetadata);
       }
 
       private Expire(Object key, IracMetadata tombstone) {
@@ -185,7 +185,7 @@ public class IracPutManyRequest extends IracUpdateKeyRequest<IntSet> {
 
       @ProtoFactory
       Write(MarshallableObject<Object> key, IracMetadata iracMetadata, MarshallableObject<Object> value, MarshallableObject<Metadata> metadata) {
-         this (MarshallableObject.unwrap(key), iracMetadata, MarshallableObject.unwrap(value), MarshallableObject.unwrap(metadata));
+         this(MarshallableObject.unwrap(key), iracMetadata, MarshallableObject.unwrap(value), MarshallableObject.unwrap(metadata));
       }
 
       @ProtoField(3)

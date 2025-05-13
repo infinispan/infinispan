@@ -55,10 +55,10 @@
         <!--<module name="DeclarationOrder" />-->
         <module name="MissingOverride"/>
 
-        <!--<module name="MethodParamPad">-->
-            <!--<property name="option" value="nospace" />-->
-            <!--<property name="allowLineBreaks" value="false" />-->
-        <!--</module>-->
+        <module name="MethodParamPad">
+            <property name="option" value="nospace" />
+            <property name="allowLineBreaks" value="false" />
+        </module>
 
         <!--&lt;!&ndash; Checks for blocks. You know, those {}'s &ndash;&gt;-->
         <!--<module name="LeftCurly">-->

@@ -82,13 +82,13 @@ public class DistributedWriteBehindStreamIteratorTest extends BaseSetupStreamIte
 
    @DataProvider(name = "rehashAware")
    public Object[][] dataProvider() {
-      return new Object[][] {
-            { Boolean.TRUE } , { Boolean.FALSE }
+      return new Object[][]{
+            {Boolean.TRUE}, {Boolean.FALSE}
       };
    }
 
    @Test(dataProvider = "rehashAware")
-   public void testBackupSegmentsOptimizationWithWriteBehindStore (boolean rehashAware) {
+   public void testBackupSegmentsOptimizationWithWriteBehindStore(boolean rehashAware) {
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
 
       RpcManager rpcManager = Mocks.replaceComponentWithSpy(cache1, RpcManager.class);

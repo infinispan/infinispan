@@ -44,8 +44,7 @@ public class CacheEventHolder {
     * @param event Event itself.
     * @param <T> Generic information about event type.
     */
-   public synchronized <T extends org.infinispan.notifications.cachelistener.event.Event> void addEvent
-         (Class<?> cacheAnnotationClass, Class<T> eventStaticClass, T event) {
+   public synchronized <T extends org.infinispan.notifications.cachelistener.event.Event> void addEvent(Class<?> cacheAnnotationClass, Class<T> eventStaticClass, T event) {
       addEventClass(cacheAnnotationClass, eventStaticClass);
       eventMap.get(cacheAnnotationClass).get(eventStaticClass).add(event);
    }
