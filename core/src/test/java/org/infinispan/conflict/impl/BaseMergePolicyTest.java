@@ -19,13 +19,11 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.partitionhandling.PartitionHandling;
-import org.infinispan.partitionhandling.impl.LostDataCheck;
 import org.infinispan.partitionhandling.impl.PreferAvailabilityStrategy;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.ClusterTopologyManagerImpl;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.ManagerStatusResponse;
 import org.infinispan.commons.util.concurrent.CompletionStages;
@@ -158,8 +156,7 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
       Map<Address, CacheStatusResponse> statusResponses =
          Arrays.stream(caches).collect(Collectors.toMap(this::address, this::getCacheStatus));
 
-      LostDataCheck lostDataCheck = ClusterTopologyManagerImpl::distLostDataCheck;
-      CacheTopology preferredTopology = new PreferAvailabilityStrategy(null, null, lostDataCheck)
+      CacheTopology preferredTopology = new PreferAvailabilityStrategy(null, null)
                                            .computePreferredTopology(statusResponses);
 
       log.tracef("getCacheFromPreferredPartition: partition=%s", preferredTopology.getMembers());

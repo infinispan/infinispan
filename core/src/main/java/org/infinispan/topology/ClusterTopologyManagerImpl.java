@@ -39,7 +39,6 @@ import org.infinispan.commands.topology.TopologyUpdateStableCommand;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -48,7 +47,6 @@ import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
@@ -65,7 +63,6 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.partitionhandling.impl.AvailabilityStrategy;
-import org.infinispan.partitionhandling.impl.LostDataCheck;
 import org.infinispan.partitionhandling.impl.PreferAvailabilityStrategy;
 import org.infinispan.partitionhandling.impl.PreferConsistencyStrategy;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -445,12 +442,12 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
       });
    }
 
-   private <T> CompletionStage<T> orderOnManager(Callable<CompletionStage<T>> action) {
-      return actionSequencer.orderOnKey(ClusterTopologyManagerImpl.class, action);
+   private <T> void orderOnManager(Callable<CompletionStage<T>> action) {
+      actionSequencer.orderOnKey(ClusterTopologyManagerImpl.class, action);
    }
 
-   private CompletionStage<Void> orderOnCache(String cacheName, Runnable action) {
-      return actionSequencer.orderOnKey(cacheName, () -> {
+   private void orderOnCache(String cacheName, Runnable action) {
+      actionSequencer.orderOnKey(cacheName, () -> {
          action.run();
          return CompletableFutures.completedNull();
       });
@@ -546,7 +543,6 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
       return cacheStatusMap.computeIfAbsent(cacheName, (name) -> {
          // We assume that any cache with partition handling configured is already defined on all the nodes
          // (including the coordinator) before it starts on any node.
-         LostDataCheck lostDataCheck = ClusterTopologyManagerImpl::distLostDataCheck;
          // TODO Partition handling config should be part of the join info
          AvailabilityStrategy availabilityStrategy;
          Configuration config = configurationManager.getConfiguration(cacheName, true);
@@ -554,10 +550,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
                config != null ? config.clustering().partitionHandling().whenSplit() : null;
          boolean resolveConflictsOnMerge = resolveConflictsOnMerge(config, cacheMode);
          if (partitionHandling != null && partitionHandling != PartitionHandling.ALLOW_READ_WRITES) {
-            availabilityStrategy = new PreferConsistencyStrategy(eventLogManager, persistentUUIDManager, lostDataCheck);
+            availabilityStrategy = new PreferConsistencyStrategy(eventLogManager, persistentUUIDManager);
          } else {
-            availabilityStrategy = new PreferAvailabilityStrategy(eventLogManager, persistentUUIDManager,
-                                                                  lostDataCheck);
+            availabilityStrategy = new PreferAvailabilityStrategy(eventLogManager, persistentUUIDManager);
          }
          Optional<GlobalStateManager> globalStateManager = gcr.getOptionalComponent(GlobalStateManager.class);
          Optional<ScopedPersistentState> persistedState =
@@ -782,7 +777,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
    }
 
    @Override
-   public CompletionStage<Void> handleShutdownRequest(String cacheName) throws Exception {
+   public CompletionStage<Void> handleShutdownRequest(String cacheName) {
       ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
       return cacheStatus.shutdownCache();
    }
@@ -796,13 +791,5 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
       // We are sure this one is completed.
       status.forceRebalance();
       return true;
-   }
-
-   public static boolean distLostDataCheck(ConsistentHash stableCH, List<Address> newMembers) {
-      for (int i = 0; i < stableCH.getNumSegments(); i++) {
-         if (!InfinispanCollections.containsAny(newMembers, stableCH.locateOwnersForSegment(i)))
-            return true;
-      }
-      return false;
    }
 }

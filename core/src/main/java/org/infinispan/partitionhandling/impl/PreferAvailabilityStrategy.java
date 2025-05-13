@@ -1,5 +1,6 @@
 package org.infinispan.partitionhandling.impl;
 
+import static org.infinispan.partitionhandling.impl.AvailabilityStrategy.isDataLost;
 import static org.infinispan.partitionhandling.impl.AvailabilityStrategy.ownersConsistentHash;
 import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
@@ -27,12 +28,10 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
 
    private final EventLogManager eventLogManager;
    private final PersistentUUIDManager persistentUUIDManager;
-   private final LostDataCheck lostDataCheck;
 
-   public PreferAvailabilityStrategy(EventLogManager eventLogManager, PersistentUUIDManager persistentUUIDManager, LostDataCheck lostDataCheck) {
+   public PreferAvailabilityStrategy(EventLogManager eventLogManager, PersistentUUIDManager persistentUUIDManager) {
       this.eventLogManager = eventLogManager;
       this.persistentUUIDManager = persistentUUIDManager;
-      this.lostDataCheck = lostDataCheck;
    }
 
    @Override
@@ -50,7 +49,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
          context.updateCurrentTopology(newMembers);
          return;
       }
-      if (context.getStableTopology() != null && lostDataCheck.test(context.getStableTopology().getCurrentCH(), newMembers)) {
+      if (context.getStableTopology() != null && isDataLost(context.getStableTopology().getCurrentCH(), newMembers)) {
          eventLogManager.getEventLogger().context(context.getCacheName()).warn(EventLogCategory.CLUSTER, MESSAGES.lostDataBecauseOfGracefulLeaver(leaver));
       }
 
@@ -84,7 +83,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       List<Address> stableMembers = stableTopology.getMembers();
       List<Address> lostMembers = new ArrayList<>(stableMembers);
       lostMembers.removeAll(newMembers);
-      if (lostDataCheck.test(stableTopology.getCurrentCH(), newMembers)) {
+      if (isDataLost(stableTopology.getCurrentCH(), newMembers)) {
          eventLogManager.getEventLogger().context(cacheName).fatal(EventLogCategory.CLUSTER, MESSAGES.lostDataBecauseOfAbruptLeavers(lostMembers));
       } else if (lostMembers.size() >= Math.ceil(stableMembers.size() / 2d)) {
          eventLogManager.getEventLogger().context(cacheName).warn(EventLogCategory.CLUSTER, MESSAGES.minorityPartition(newMembers, lostMembers, stableMembers));
@@ -314,7 +313,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
                // that the other members lost.
                // Having a majority doesn't matter, because the lost data check ensures p's sender
                // couldn't make any updates without talking to the reference partition's members
-               if (!lostDataCheck.test(p.readCH, referencePartition.actualMembers)) {
+               if (!isDataLost(p.readCH, referencePartition.actualMembers)) {
                   if (log.isTraceEnabled())
                      log.tracef("Cache %s ignoring compatible old topology from %s: %s",
                                 cacheName, p.senders, p.topology);

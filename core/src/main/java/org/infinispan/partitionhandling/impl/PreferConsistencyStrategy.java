@@ -1,5 +1,6 @@
 package org.infinispan.partitionhandling.impl;
 
+import static org.infinispan.partitionhandling.impl.AvailabilityStrategy.isDataLost;
 import static org.infinispan.partitionhandling.impl.AvailabilityStrategy.ownersConsistentHash;
 import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
@@ -26,12 +27,10 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
    private static final Log log = LogFactory.getLog(PreferConsistencyStrategy.class);
    private final EventLogManager eventLogManager;
    private final PersistentUUIDManager persistentUUIDManager;
-   private final LostDataCheck lostDataCheck;
 
-   public PreferConsistencyStrategy(EventLogManager eventLogManager, PersistentUUIDManager persistentUUIDManager, LostDataCheck lostDataCheck) {
+   public PreferConsistencyStrategy(EventLogManager eventLogManager, PersistentUUIDManager persistentUUIDManager) {
       this.eventLogManager = eventLogManager;
       this.persistentUUIDManager = persistentUUIDManager;
-      this.lostDataCheck = lostDataCheck;
    }
 
    @Override
@@ -55,13 +54,12 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
          });
 
          // Nodes might be joining back with different addresses, we utilize the persistent UUID to verify.
-         ConsistentHash ch = stableTopology.getCurrentCH().remapAddresses(persistentUUIDManager.addressToPersistentUUID());
-         List<Address> membersUuid = currentMembers.stream()
-               .map(persistentUUIDManager::getPersistentUuid)
-               .collect(Collectors.toList());
+         var membersUuid = currentMembers.stream()
+               .map(persistentUUIDManager.addressToPersistentUUID())
+               .collect(Collectors.toSet());
 
          // Not losing any data with the members. We utilize the persistent UUID to verify.
-         if (!lostDataCheck.test(ch, membersUuid)) {
+         if (!isDataLost(stableTopology.getCurrentCH(), membersUuid, persistentUUIDManager.addressToPersistentUUID())) {
             List<Address> lost = new ArrayList<>(stableTopology.getMembers()).stream()
                   .map(persistentUUIDManager::getPersistentUuid)
                   .filter(m -> !membersUuid.contains(m))
@@ -105,7 +103,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
          return;
       }
 
-      if (lostDataCheck.test(context.getStableTopology().getCurrentCH(), newMembers)) {
+      if (isDataLost(context.getStableTopology().getCurrentCH(), newMembers)) {
          eventLogManager.getEventLogger().context(context.getCacheName()).warn(EventLogCategory.CLUSTER, MESSAGES.enteringDegradedModeGracefulLeaver(leaver));
          context.updateAvailabilityMode(newMembers, AvailabilityMode.DEGRADED_MODE, true);
          return;
@@ -138,7 +136,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       stableMembers.removeIf(a -> stableTopology.getCurrentCH().getSegmentsForOwner(a).isEmpty());
       List<Address> lostMembers = new ArrayList<>(stableMembers);
       lostMembers.removeAll(newMembers);
-      if (lostDataCheck.test(stableTopology.getCurrentCH(), newMembers)) {
+      if (isDataLost(stableTopology.getCurrentCH(), newMembers)) {
          eventLogManager.getEventLogger().context(context.getCacheName()).error(EventLogCategory.CLUSTER, MESSAGES.enteringDegradedModeLostData(lostMembers));
          context.updateAvailabilityMode(newMembers, AvailabilityMode.DEGRADED_MODE, true);
          return;
@@ -299,7 +297,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
          List<Address> stableMembers = maxStableTopology.getMembers();
          List<Address> lostMembers = new ArrayList<>(stableMembers);
          lostMembers.removeAll(context.getExpectedMembers());
-         if (lostDataCheck.test(maxStableTopology.getCurrentCH(), newMembers)) {
+         if (isDataLost(maxStableTopology.getCurrentCH(), newMembers)) {
             eventLogManager.getEventLogger().context(context.getCacheName()).error(EventLogCategory.CLUSTER, MESSAGES.keepingDegradedModeAfterMergeDataLost(newMembers, lostMembers, stableMembers));
             return AvailabilityMode.DEGRADED_MODE;
          }

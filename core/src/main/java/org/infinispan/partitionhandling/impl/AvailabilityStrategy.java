@@ -1,7 +1,9 @@
 package org.infinispan.partitionhandling.impl;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
@@ -73,4 +75,47 @@ public interface AvailabilityStrategy {
     * Called when the administrator manually changes the availability status.
     */
    void onManualAvailabilityChange(AvailabilityStrategyContext context, AvailabilityMode newAvailabilityMode);
+
+   /**
+    * Checks that all segments have, at least, one owner online to ensure data availability.
+    *
+    * @param consistentHash The {@link ConsistentHash} with the ownership.
+    * @param members        The current online members.
+    * @param addressMapper  A {@link Function} to map the {@link Address} to a different type, matching the
+    *                       {@code members} collection type.
+    * @param <T>            The type of the {@code members} collection.
+    * @return {@code true} if some data is lost and {@code false} otherwise.
+    */
+   static <T> boolean isDataLost(ConsistentHash consistentHash, Collection<T> members, Function<Address, T> addressMapper) {
+      for (int i = 0; i < consistentHash.getNumSegments(); i++) {
+         if (consistentHash.locateOwnersForSegment(i)
+               .stream()
+               .map(addressMapper)
+               .noneMatch(members::contains)) {
+            return true;
+         }
+      }
+      return false;
+   }
+
+   /**
+    * Checks that all segments have, at least, one owner online to ensure data availability.
+    * <p>
+    * This is a syntactic sugar for {@link #isDataLost(ConsistentHash, Collection, Function)} when the type is an
+    * {@link Address}.
+    *
+    * @param consistentHash The {@link ConsistentHash} with the ownership.
+    * @param members        The current online members.
+    * @return {@code true} if some data is lost and {@code false} otherwise.
+    */
+   static boolean isDataLost(ConsistentHash consistentHash, Collection<Address> members) {
+      for (int i = 0; i < consistentHash.getNumSegments(); i++) {
+         if (consistentHash.locateOwnersForSegment(i)
+               .stream()
+               .noneMatch(members::contains)) {
+            return true;
+         }
+      }
+      return false;
+   }
 }
