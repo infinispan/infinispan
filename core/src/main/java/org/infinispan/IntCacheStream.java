@@ -39,42 +39,49 @@ public interface IntCacheStream extends IntStream, BaseCacheStream<Integer, IntS
     * {@inheritDoc}
     * @return a stream with parallel distribution disabled.
     */
+   @Override
    IntCacheStream sequentialDistribution();
 
    /**
     * {@inheritDoc}
     * @return a stream with parallel distribution enabled.
     */
+   @Override
    IntCacheStream parallelDistribution();
 
    /**
     * {@inheritDoc}
     * @return a stream with the keys filtered.
     */
+   @Override
    IntCacheStream filterKeys(Set<?> keys);
 
    /**
     * {@inheritDoc}
     * @return a stream with the batch size updated
     */
+   @Override
    IntCacheStream distributedBatchSize(int batchSize);
 
    /**
     * {@inheritDoc}
     * @return a stream with the listener registered.
     */
+   @Override
    IntCacheStream segmentCompletionListener(SegmentCompletionListener listener);
 
    /**
     * {@inheritDoc}
     * @return a stream with rehash awareness disabled.
     */
+   @Override
    IntCacheStream disableRehashAware();
 
    /**
     * {@inheritDoc}
     * @return a stream with the timeout set
     */
+   @Override
    IntCacheStream timeout(long timeout, TimeUnit unit);
 
    /**

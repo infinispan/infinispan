@@ -6,12 +6,15 @@ package org.infinispan.commons.configuration.io.xml;
  * @author <a href="http://www.extreme.indiana.edu/~aslom/">Aleksander Slominski</a>
  */
 public class XmlPullParserException extends RuntimeException {
-   protected Throwable detail;
-   protected int row = -1;
-   protected int column = -1;
+   private final Throwable detail;
+   private final int row;
+   private final int column;
 
    public XmlPullParserException(String s) {
       super(s);
+      this.detail = null;
+      this.row = -1;
+      this.column = -1;
    }
 
    public XmlPullParserException(String msg, XmlPullParser parser, Throwable chain) {
@@ -22,6 +25,9 @@ public class XmlPullParserException extends RuntimeException {
       if (parser != null) {
          this.row = parser.getLineNumber();
          this.column = parser.getColumnNumber();
+      } else {
+         this.row = -1;
+         this.column = -1;
       }
       this.detail = chain;
    }

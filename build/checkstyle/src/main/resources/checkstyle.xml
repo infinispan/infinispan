@@ -34,16 +34,16 @@
         <!--<module name="ModifierOrder" />-->
         <module name="GenericWhitespace" />
         <module name="PackageAnnotation" />
-        <!--<module name="CovariantEquals" />-->
+        <module name="CovariantEquals" />
         <!--<module name="ModifiedControlVariable" />-->
-        <!--<module name="OneStatementPerLine" />-->
+        <module name="OneStatementPerLine" />
         <module name="EmptyStatement" />
         <!--<module name="MissingDeprecated" />-->
         <module name="DefaultComesLast" />
         <!--<module name="TypecastParenPad" />-->
         <!--<module name="InnerTypeLast" />-->
         <!--<module name="HideUtilityClassConstructor" />-->
-        <!--<module name="MutableException" />-->
+        <module name="MutableException" />
         <!--<module name="CovariantEquals" />-->
         <!--<module name="EqualsAvoidNull" />-->
         <!--<module name="IllegalCatch">-->
@@ -53,7 +53,7 @@
         <!--&lt;!&ndash; <module name="IllegalThrows"/>  &ndash;&gt;-->
 
         <!--<module name="DeclarationOrder" />-->
-        <!--<module name="MissingOverride"/>-->
+        <module name="MissingOverride"/>
 
         <!--<module name="MethodParamPad">-->
             <!--<property name="option" value="nospace" />-->
