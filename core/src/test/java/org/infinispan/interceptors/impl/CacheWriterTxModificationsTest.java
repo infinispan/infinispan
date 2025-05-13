@@ -76,7 +76,7 @@ public class CacheWriterTxModificationsTest extends SingleCacheManagerTest {
          assertEquals(entry.getValue(), storeEntry.getValue());
       });
       store.keySet().forEach(k -> {
-         assertEquals(store.loadEntry(k).getValue(), dataContainer.get(k).getValue());
+         assertEquals(store.loadEntry(k).getValue(), dataContainer.peek(k).getValue());
       });
    }
 }

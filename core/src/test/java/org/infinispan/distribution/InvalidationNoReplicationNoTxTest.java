@@ -29,8 +29,8 @@ public class InvalidationNoReplicationNoTxTest extends InvalidationNoReplication
       cache(0).put(k0, "v1");
 
       log.info("before assertions!");
-      assertEquals(advancedCache(1).getDataContainer().get(k0), null);
-      assertEquals(advancedCache(0).getDataContainer().get(k0).getValue(), "v1");
+      assertEquals(advancedCache(1).getDataContainer().peek(k0), null);
+      assertEquals(advancedCache(0).getDataContainer().peek(k0).getValue(), "v1");
    }
 
 }

@@ -271,19 +271,15 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
     *
     * @since 7.1
     * @return statistics for this cache manager
-    * @deprecated Since 10.1.3. This mixes statistics across unrelated caches so the reported numbers don't have too much
-    * relevance.
     */
-   @Deprecated(forRemoval=true, since = "10.1")
    CacheContainerStats getStats();
 
    /**
-    * Providess the cache manager based executor.  This can be used to execute a given operation upon the
-    * cluster or a single node if desired.  If this manager is not clustered this will execute locally only.
+    * Providess the cachemanager-based executor.  This can be used to execute a given operation upon the
+    * cluster or a single node if desired.  If this manager is not clustered, this will execute locally only.
     * <p>
     * Note that not all {@link EmbeddedCacheManager} implementations may implement this.  Those that don't will throw
     * a {@link UnsupportedOperationException} upon invocation.
-    * @return
     */
    default ClusterExecutor executor() {
       throw new UnsupportedOperationException();

@@ -91,7 +91,7 @@ public class OffHeapSingleNodeExpirationEvictionTest extends OffHeapSingleNodeTe
       DataConversion dataConversion = cache.getAdvancedCache().getKeyDataConversion();
 
       Object convertedKey = dataConversion.toStorage("k");
-      assertNotNull(cache.getAdvancedCache().getDataContainer().get(convertedKey));
+      assertNotNull(cache.getAdvancedCache().getDataContainer().peek(convertedKey));
 
       CacheEntry<String, String> entry = cache.getAdvancedCache().getDataContainer().peek(convertedKey);
 

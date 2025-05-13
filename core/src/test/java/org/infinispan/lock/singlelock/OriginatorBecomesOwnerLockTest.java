@@ -7,12 +7,6 @@ import static org.testng.Assert.fail;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.transaction.HeuristicMixedException;
-import jakarta.transaction.HeuristicRollbackException;
-import jakarta.transaction.NotSupportedException;
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.SystemException;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
@@ -38,6 +32,12 @@ import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.SystemException;
 
 
 /**
@@ -273,8 +273,8 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
          TestingUtil.waitForNoRebalance(originatorCache, otherCache);
       }
       log.tracef("Checking key: %s", key);
-      InternalCacheEntry d0 = advancedCache(ORIGINATOR_INDEX).getDataContainer().get(key);
-      InternalCacheEntry d1 = advancedCache(OTHER_INDEX).getDataContainer().get(key);
+      InternalCacheEntry d0 = advancedCache(ORIGINATOR_INDEX).getDataContainer().peek(key);
+      InternalCacheEntry d1 = advancedCache(OTHER_INDEX).getDataContainer().peek(key);
       assertEquals(d0.getValue(), value);
       assertEquals(d1.getValue(), value);
    }

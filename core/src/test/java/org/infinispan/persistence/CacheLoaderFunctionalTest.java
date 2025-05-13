@@ -145,7 +145,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    }
 
    private <K> void assertInCacheAndStore(Cache<? super K, ?> cache, DummyInMemoryStore loader, K key, Object value, long lifespanMillis) throws PersistenceException {
-      InternalCacheEntry se = cache.getAdvancedCache().getDataContainer().get(key);
+      InternalCacheEntry se = cache.getAdvancedCache().getDataContainer().peek(key);
       testStoredEntry(se.getValue(), value, se.getLifespan(), lifespanMillis, "Cache", key);
       MarshallableEntry load = loader.loadEntry(key);
       testStoredEntry(load.getValue(), value, load.getMetadata() == null ? -1 : load.getMetadata().lifespan(), lifespanMillis, "Store", key);
@@ -653,7 +653,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
          final Object value = "v" + i;
          final long lifespan = i % 2 == 1 ? -1 : this.lifespan;
          boolean found = false;
-         InternalCacheEntry se = preloadingCache.getAdvancedCache().getDataContainer().get(key);
+         InternalCacheEntry se = preloadingCache.getAdvancedCache().getDataContainer().peek(key);
          MarshallableEntry load = preloadingCacheLoader.loadEntry(key);
          if (se != null) {
             testStoredEntry(se.getValue(), value, se.getLifespan(), lifespan, "Cache", key);
@@ -684,7 +684,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
          final Object value = "v" + i;
          final long lifespan = i % 2 == 1 ? -1 : this.lifespan;
          boolean found = false;
-         InternalCacheEntry se = preloadingCache.getAdvancedCache().getDataContainer().get(key);
+         InternalCacheEntry se = preloadingCache.getAdvancedCache().getDataContainer().peek(key);
          MarshallableEntry load = preloadingCacheLoader.loadEntry(key);
          if (se != null) {
             testStoredEntry(se.getValue(), value, se.getLifespan(), lifespan, "Cache", key);

@@ -117,7 +117,7 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
    }
 
    private void assertInCacheAndStore(Cache<Object, Object> cache, WaitNonBlockingStore<Object, Object> loader, Object key, Object value) throws PersistenceException {
-      InternalCacheValue<Object> se = cache.getAdvancedCache().getDataContainer().get(key).toInternalCacheValue();
+      InternalCacheValue<Object> se = cache.getAdvancedCache().getDataContainer().peek(key).toInternalCacheValue();
       assertStoredEntry(se.getValue(), value, "Cache", key);
       MarshallableEntry<Object, Object> me = loader.loadEntry(key);
       assertStoredEntry(me.getValue(), value, "Store", key);

@@ -246,8 +246,8 @@ public class SimpleCacheTest extends APINonTxTest {
             .maxIdle(42_000)
             .build();
       CacheEntry<Object, Object> previousEntry = await(c.replaceAsyncEntry("k", "v2", updatedMetadata));
-      assertEquals(previousEntry.getKey(), "k");
-      assertEquals(previousEntry.getValue(), "v1");
+      assertEquals("k", previousEntry.getKey());
+      assertEquals("v1", previousEntry.getValue());
       assertMetadata(metadata, previousEntry.getMetadata());
 
       CacheEntry<Object, Object> currentEntry = await(c.getCacheEntryAsync("k"));

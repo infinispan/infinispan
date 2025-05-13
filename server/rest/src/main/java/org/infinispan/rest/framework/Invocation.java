@@ -31,7 +31,7 @@ public interface Invocation {
    Set<String> paths();
 
    /**
-    * The user friendly name of the invocation
+    * The user-friendly name of the invocation
     */
    default String getName() {
       return toString();

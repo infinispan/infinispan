@@ -280,7 +280,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
          // It should be in L1 now with the second value
          assertIsInL1(nonOwnerCache, key);
-         assertEquals(secondValue, nonOwnerCache.getAdvancedCache().getDataContainer().get(key).getValue());
+         assertEquals(secondValue, nonOwnerCache.getAdvancedCache().getDataContainer().peek(key).getValue());
 
          // Now let the original get complete
          nonOwnerGetBarrier.await(10, TimeUnit.SECONDS);
@@ -289,7 +289,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
          // It should STILL be in L1 now with the second value
          assertIsInL1(nonOwnerCache, key);
-         assertEquals(secondValue, nonOwnerCache.getAdvancedCache().getDataContainer().get(key).getValue());
+         assertEquals(secondValue, nonOwnerCache.getAdvancedCache().getDataContainer().peek(key).getValue());
 
       } finally {
          removeAllBlockingInterceptorsFromCache(nonOwnerCache);

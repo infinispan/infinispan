@@ -86,6 +86,21 @@ public class InvocationImpl implements Invocation {
       return deprecated;
    }
 
+   @Override
+   public String toString() {
+      return "InvocationImpl{" +
+            "action='" + action + '\'' +
+            ", methods=" + methods +
+            ", paths=" + paths +
+            ", handler=" + handler +
+            ", name='" + name + '\'' +
+            ", anonymous=" + anonymous +
+            ", deprecated=" + deprecated +
+            ", permission=" + permission +
+            ", auditContext=" + auditContext +
+            '}';
+   }
+
    public static class Builder {
       private final Invocations.Builder parent;
       private final Set<Method> methods = new HashSet<>();
@@ -169,20 +184,5 @@ public class InvocationImpl implements Invocation {
       InvocationImpl build() {
          return new InvocationImpl(methods, paths, handler, action, name, anonymous, permission, deprecated, auditContext);
       }
-   }
-
-   @Override
-   public String toString() {
-      return "InvocationImpl{" +
-            "methods=" + methods +
-            ", paths=" + paths +
-            ", handler=" + handler +
-            ", action='" + action + '\'' +
-            ", name='" + name + '\'' +
-            ", anonymous=" + anonymous +
-            ", deprecated=" + deprecated +
-            ", permission=" + permission +
-            ", auditContext=" + auditContext +
-            '}';
    }
 }
