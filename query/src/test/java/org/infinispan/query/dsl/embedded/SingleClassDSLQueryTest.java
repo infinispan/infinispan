@@ -118,7 +118,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
       String getGender();
    }
 
-   public static abstract class PersonBase implements PersonInterface {
+   public abstract static class PersonBase implements PersonInterface {
 
       String name;
 

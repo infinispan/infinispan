@@ -10,7 +10,7 @@ import javax.security.auth.Subject;
  * @author Tristan Tarrant
  * @since 8.1
  */
-final public class CacheSubjectPair {
+public final class CacheSubjectPair {
    private final Subject subject;
    private final String cacheName;
    private final int hashCode;

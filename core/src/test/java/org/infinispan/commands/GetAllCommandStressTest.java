@@ -33,9 +33,9 @@ import org.testng.annotations.Test;
 @InCacheMode({ CacheMode.DIST_SYNC })
 public class GetAllCommandStressTest extends StressTest {
    protected final String CACHE_NAME = "testCache";
-   protected final static int CACHE_COUNT = 6;
-   protected final static int THREAD_MULTIPLIER = 4;
-   protected final static int CACHE_ENTRY_COUNT = 50000;
+   protected static final int CACHE_COUNT = 6;
+   protected static final int THREAD_MULTIPLIER = 4;
+   protected static final int CACHE_ENTRY_COUNT = 50000;
 
    @Override
    protected void createCacheManagers() throws Throwable {

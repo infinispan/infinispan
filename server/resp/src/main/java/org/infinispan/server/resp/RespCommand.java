@@ -21,7 +21,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 public abstract class RespCommand implements BaseResp3Command {
-   protected final static Log log = LogFactory.getLog(RespCommand.class, Log.class);
+   protected static final Log log = LogFactory.getLog(RespCommand.class, Log.class);
    private final String name;
    private final int arity;
    private final int firstKeyPos;

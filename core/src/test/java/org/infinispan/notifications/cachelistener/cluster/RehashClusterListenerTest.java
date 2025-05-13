@@ -30,9 +30,9 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "org.infinispan.notifications.cachelistener.cluster.RehashClusterListenerTest")
 public class RehashClusterListenerTest extends MultipleCacheManagersTest {
-   protected final static String CACHE_NAME = "cluster-listener";
-   protected final static String KEY = "key";
-   protected final static String VALUE = "value";
+   protected static final String CACHE_NAME = "cluster-listener";
+   protected static final String KEY = "key";
+   protected static final String VALUE = "value";
 
    protected ConfigurationBuilder builderUsed;
 

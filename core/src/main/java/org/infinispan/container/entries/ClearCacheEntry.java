@@ -110,7 +110,7 @@ public class ClearCacheEntry<K, V> implements CacheEntry<K, V> {
    }
 
    @Override
-   final public CacheEntry<K, V> clone() {
+   public final CacheEntry<K, V> clone() {
       return getInstance(); //no clone. singleton
    }
 

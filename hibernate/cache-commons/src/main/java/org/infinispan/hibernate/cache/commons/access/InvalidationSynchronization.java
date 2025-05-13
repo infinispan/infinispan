@@ -10,7 +10,7 @@ import jakarta.transaction.Status;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class InvalidationSynchronization implements jakarta.transaction.Synchronization {
-	private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(InvalidationSynchronization.class);
+	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(InvalidationSynchronization.class);
 
 	private final Object lockOwner;
 	private final NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor;

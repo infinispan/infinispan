@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
 @Deprecated(forRemoval=true, since = "12.0")
 public class SecureTypeIdResolver implements TypeIdResolver {
 
-   protected final static Log logger = LogFactory.getLog(SecureTypeIdResolver.class, Log.class);
+   protected static final Log logger = LogFactory.getLog(SecureTypeIdResolver.class, Log.class);
 
    private final TypeIdResolver internalTypeIdResolver;
    private final ClassAllowList classAllowList;

@@ -16,7 +16,7 @@ import net.jcip.annotations.ThreadSafe;
 @Immutable
 public class CRC16 implements Hash {
 
-   private final static CRC16 instance = new CRC16();
+   private static final CRC16 instance = new CRC16();
 
    private CRC16() { }
 

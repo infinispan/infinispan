@@ -1798,7 +1798,7 @@ public class TestingUtil {
       return subjects;
    }
 
-   static public void assertAnyEquals(Object expected, Object actual) {
+   public static void assertAnyEquals(Object expected, Object actual) {
       if (expected instanceof byte[] && actual instanceof byte[])
          AssertJUnit.assertArrayEquals((byte[]) expected, (byte[]) actual);
       else

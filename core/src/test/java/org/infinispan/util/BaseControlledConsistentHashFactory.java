@@ -166,7 +166,7 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
       }
    }
 
-   public static abstract class Default extends BaseControlledConsistentHashFactory<DefaultConsistentHash> {
+   public abstract static class Default extends BaseControlledConsistentHashFactory<DefaultConsistentHash> {
       protected Default(int numSegments) {
          super(new DefaultTrait(), numSegments);
       }

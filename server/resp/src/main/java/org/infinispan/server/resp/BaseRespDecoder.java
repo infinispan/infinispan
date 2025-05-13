@@ -12,7 +12,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 
 public abstract class BaseRespDecoder extends ByteToMessageDecoder {
-   protected final static Log log = LogFactory.getLog(BaseRespDecoder.class, Log.class);
+   protected static final Log log = LogFactory.getLog(BaseRespDecoder.class, Log.class);
    protected final Intrinsics.Resp2LongProcessor longProcessor = new Intrinsics.Resp2LongProcessor();
    protected final int maxContentLength;
    // And this is the ByteBuf pos before decode is performed

@@ -16,8 +16,8 @@ import org.infinispan.search.mapper.mapping.EntityConverter;
 
 public final class ProtobufEntityConverter implements EntityConverter {
 
-   private final static PojoRawTypeIdentifier<byte[]> BYTE_ARRAY_TYPE_IDENTIFIER = PojoRawTypeIdentifier.of(byte[].class);
-   private final static PojoRawTypeIdentifier<ProtobufKeyValuePair> KEY_VALUE_TYPE_IDENTIFIER = PojoRawTypeIdentifier.of(ProtobufKeyValuePair.class);
+   private static final PojoRawTypeIdentifier<byte[]> BYTE_ARRAY_TYPE_IDENTIFIER = PojoRawTypeIdentifier.of(byte[].class);
+   private static final PojoRawTypeIdentifier<ProtobufKeyValuePair> KEY_VALUE_TYPE_IDENTIFIER = PojoRawTypeIdentifier.of(ProtobufKeyValuePair.class);
 
    private final SerializationContext serializationContext;
    private final GlobalReferenceHolder globalReferenceHolder;

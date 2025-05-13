@@ -463,7 +463,7 @@ public class MapStressTest extends SingleCacheManagerTest {
       }
    }
 
-   private static abstract class Operation<K, V> {
+   private abstract static class Operation<K, V> {
       protected final Map<K, V> map;
       protected final String name;
 

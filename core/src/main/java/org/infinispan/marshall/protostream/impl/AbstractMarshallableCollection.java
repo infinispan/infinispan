@@ -30,7 +30,7 @@ abstract class AbstractMarshallableCollection<T> {
 
    abstract Collection<T> get();
 
-   static abstract class Marshaller extends GeneratedMarshallerBase implements ProtobufTagMarshaller<AbstractMarshallableCollection> {
+   abstract static class Marshaller extends GeneratedMarshallerBase implements ProtobufTagMarshaller<AbstractMarshallableCollection> {
       private final String typeName;
       private final AbstractInternalProtoStreamMarshaller marshaller;
 

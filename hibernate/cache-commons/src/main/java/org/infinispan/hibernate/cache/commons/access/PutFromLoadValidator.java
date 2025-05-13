@@ -263,7 +263,7 @@ public class PutFromLoadValidator {
 	/**
 	 * Marker for lock acquired in {@link #acquirePutFromLoadLock(Object, Object, long)}
 	 */
-	public static abstract class Lock {
+	public abstract static class Lock {
 		private Lock() {}
 	}
 

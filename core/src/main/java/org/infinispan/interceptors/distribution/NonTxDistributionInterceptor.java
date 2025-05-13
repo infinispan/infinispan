@@ -486,7 +486,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       return handleNonTxWriteCommand(ctx, command);
    }
 
-   private final static class MutableInt {
+   private static final class MutableInt {
       public int value;
    }
 

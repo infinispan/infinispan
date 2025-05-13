@@ -14,7 +14,7 @@ import org.infinispan.tools.store.migrator.marshaller.common.AbstractUnsupported
 
 public class Infinispan10Marshaller extends AbstractUnsupportedStreamingMarshaller {
 
-   final static Set<SerializationContextInitializer> internalSCIs = new HashSet<>();
+   static final Set<SerializationContextInitializer> internalSCIs = new HashSet<>();
    static {
       internalSCIs.add(new org.infinispan.commons.marshall.PersistenceContextInitializerImpl());
       internalSCIs.add(new org.infinispan.marshall.persistence.impl.PersistenceContextInitializerImpl());

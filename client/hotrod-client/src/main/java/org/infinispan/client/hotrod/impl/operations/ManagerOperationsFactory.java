@@ -13,7 +13,7 @@ import org.infinispan.client.hotrod.impl.transaction.operations.RecoveryOperatio
 
 public class ManagerOperationsFactory {
 
-   private final static ManagerOperationsFactory INSTANCE = new ManagerOperationsFactory();
+   private static final ManagerOperationsFactory INSTANCE = new ManagerOperationsFactory();
 
    private ManagerOperationsFactory() {
 

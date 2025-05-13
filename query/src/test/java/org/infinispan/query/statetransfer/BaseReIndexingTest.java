@@ -30,7 +30,7 @@ public abstract class BaseReIndexingTest extends MultipleCacheManagersTest {
    protected Person[] persons;
    protected ConfigurationBuilder builder;
 
-   abstract protected void configureCache(ConfigurationBuilder builder);
+   protected abstract void configureCache(ConfigurationBuilder builder);
 
    @Override
    protected void createCacheManagers() throws Throwable {

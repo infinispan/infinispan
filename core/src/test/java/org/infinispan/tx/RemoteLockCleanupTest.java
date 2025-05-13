@@ -57,7 +57,7 @@ public class RemoteLockCleanupTest extends MultipleCacheManagersTest {
    }
 
 
-   static public class DelayInterceptor extends DDAsyncInterceptor {
+   public static class DelayInterceptor extends DDAsyncInterceptor {
 
       volatile boolean receivedReplRequest = false;
 

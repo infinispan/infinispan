@@ -22,7 +22,7 @@ public class Charset {
 
    private static final String CHARSET_HEADER = "charset=";
 
-   protected final static Log logger = LogFactory.getLog(Charset.class, Log.class);
+   protected static final Log logger = LogFactory.getLog(Charset.class, Log.class);
 
    private final java.nio.charset.Charset javaCharset;
    private final String charset;

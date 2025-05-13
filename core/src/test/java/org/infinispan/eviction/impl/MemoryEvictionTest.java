@@ -25,7 +25,7 @@ public class MemoryEvictionTest extends SingleCacheManagerTest {
    private final long MAX_MEMORY = 400 * 1000 * 1000;
    private final int MATCH_COUNT = 5;
 
-   private final static Log log = LogFactory.getLog(MemoryEvictionTest.class);
+   private static final Log log = LogFactory.getLog(MemoryEvictionTest.class);
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {

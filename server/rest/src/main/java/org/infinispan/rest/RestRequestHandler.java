@@ -53,7 +53,7 @@ import io.netty.handler.codec.http.HttpUtil;
  */
 public class RestRequestHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
 
-   protected final static Log logger = LogFactory.getLog(RestRequestHandler.class, Log.class);
+   protected static final Log logger = LogFactory.getLog(RestRequestHandler.class, Log.class);
    private final RestAccessLoggingHandler restAccessLoggingHandler = new RestAccessLoggingHandler();
    protected final RestServer restServer;
    protected final RestServerConfiguration configuration;

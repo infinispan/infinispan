@@ -58,7 +58,7 @@ public class TransactionTrackInterceptor extends BaseCustomAsyncInterceptor {
       return interceptor;
    }
 
-   public synchronized final GlobalTransaction getLastExecutedTransaction() {
+   public final synchronized GlobalTransaction getLastExecutedTransaction() {
       int size = localTransactionsOperation.size();
       if (size == 0) {
          return null;
@@ -66,7 +66,7 @@ public class TransactionTrackInterceptor extends BaseCustomAsyncInterceptor {
       return localTransactionsOperation.get(size - 1);
    }
 
-   public synchronized final List<GlobalTransaction> getExecutedTransactions() {
+   public final synchronized List<GlobalTransaction> getExecutedTransactions() {
       return Collections.unmodifiableList(localTransactionsOperation);
    }
 

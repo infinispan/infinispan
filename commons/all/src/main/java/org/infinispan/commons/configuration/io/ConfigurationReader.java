@@ -23,7 +23,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 public interface ConfigurationReader extends AutoCloseable {
 
    class Builder {
-      final private BufferedReader reader;
+      private final BufferedReader reader;
       private MediaType type;
       private PropertyReplacer replacer = PropertyReplacer.DEFAULT;
       private Properties properties = new Properties();

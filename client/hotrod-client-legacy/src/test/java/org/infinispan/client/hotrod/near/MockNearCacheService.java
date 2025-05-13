@@ -23,8 +23,8 @@ public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
       return new MockNearCache<>(delegate, events);
    }
 
-   static abstract class MockEvent {}
-   static abstract class MockKeyValueEvent<K, V> extends MockEvent {
+   abstract static class MockEvent {}
+   abstract static class MockKeyValueEvent<K, V> extends MockEvent {
       final K key;
       final MetadataValue<V> value;
       MockKeyValueEvent(K key, MetadataValue<V> value) {

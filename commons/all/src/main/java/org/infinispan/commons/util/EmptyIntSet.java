@@ -18,7 +18,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.INTSET_EMPTY)
 public class EmptyIntSet extends AbstractImmutableIntSet {
    // We just use default hashCode as we only have 1 instance
-   private final static EmptyIntSet INSTANCE = new EmptyIntSet();
+   private static final EmptyIntSet INSTANCE = new EmptyIntSet();
 
    @ProtoFactory
    public static EmptyIntSet getInstance() {

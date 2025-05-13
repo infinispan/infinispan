@@ -21,7 +21,7 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 @Immutable
 public class MurmurHash3Old implements Hash {
-   private final static MurmurHash3Old instance = new MurmurHash3Old();
+   private static final MurmurHash3Old instance = new MurmurHash3Old();
 
    public static MurmurHash3Old getInstance() {
       return instance;

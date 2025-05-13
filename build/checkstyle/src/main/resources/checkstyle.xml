@@ -31,7 +31,7 @@
         <module name="IllegalInstantiation" />
 
         <!-- Miscellaneous other checks. -->
-        <!--<module name="ModifierOrder" />-->
+        <module name="ModifierOrder" />
         <module name="GenericWhitespace" />
         <module name="PackageAnnotation" />
         <module name="CovariantEquals" />

@@ -38,7 +38,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
-	private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(TxPutFromLoadInterceptor.class);
+	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(TxPutFromLoadInterceptor.class);
    private static final Log ispnLog = LogFactory.getLog(TxPutFromLoadInterceptor.class);
 	private final PutFromLoadValidator putFromLoadValidator;
 	private final ByteString cacheName;

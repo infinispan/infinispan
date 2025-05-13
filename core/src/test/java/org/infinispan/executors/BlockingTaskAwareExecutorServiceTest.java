@@ -96,20 +96,20 @@ public class BlockingTaskAwareExecutorServiceTest extends AbstractInfinispanTest
       private volatile boolean executed = false;
 
       @Override
-      public synchronized final boolean isReady() {
+      public final synchronized boolean isReady() {
          return ready;
       }
 
       @Override
-      public synchronized final void run() {
+      public final synchronized void run() {
          executed = true;
       }
 
-      public synchronized final void markReady() {
+      public final synchronized void markReady() {
          ready = true;
       }
 
-      public synchronized final boolean isExecuted() {
+      public final synchronized boolean isExecuted() {
          return executed;
       }
    }

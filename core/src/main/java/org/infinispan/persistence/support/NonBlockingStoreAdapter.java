@@ -10,12 +10,11 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
@@ -30,7 +29,6 @@ import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.TransactionalCacheWriter;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -39,6 +37,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.processors.FlowableProcessor;
 import io.reactivex.rxjava3.processors.UnicastProcessor;
+import jakarta.transaction.Transaction;
 
 public class NonBlockingStoreAdapter<K, V> implements NonBlockingStore<K, V> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
@@ -63,7 +62,7 @@ public class NonBlockingStoreAdapter<K, V> implements NonBlockingStore<K, V> {
       return log.isTraceEnabled() ? "StoreAdapter-" + operationName + "-" + id.getAndIncrement() : null;
    }
 
-   static private Set<Characteristic> determineCharacteristics(Object storeImpl) {
+   private static Set<Characteristic> determineCharacteristics(Object storeImpl) {
       EnumSet<Characteristic> characteristics;
       if (storeImpl instanceof SegmentedAdvancedLoadWriteStore) {
           characteristics = EnumSet.of(Characteristic.SEGMENTABLE, Characteristic.EXPIRATION,

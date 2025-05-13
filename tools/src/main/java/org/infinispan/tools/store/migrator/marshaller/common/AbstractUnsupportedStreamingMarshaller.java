@@ -17,7 +17,7 @@ import org.infinispan.jboss.marshalling.commons.StreamingMarshaller;
  * @author Ryan Emerson
  * @since 10.0
  */
-abstract public class AbstractUnsupportedStreamingMarshaller extends AbstractMarshaller implements StreamingMarshaller {
+public abstract class AbstractUnsupportedStreamingMarshaller extends AbstractMarshaller implements StreamingMarshaller {
 
    @Override
    public void start() {

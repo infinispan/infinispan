@@ -31,6 +31,7 @@ import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
@@ -52,7 +53,6 @@ import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.IMethodInstance;
 import org.testng.annotations.AfterClass;
@@ -164,13 +164,13 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
    }
 
-   final protected void registerCacheManager(CacheContainer... cacheContainers) {
+   protected final void registerCacheManager(CacheContainer... cacheContainers) {
       for (CacheContainer ecm : cacheContainers) {
          this.cacheManagers.add((EmbeddedCacheManager) ecm);
       }
    }
 
-   final protected void registerCacheManager(List<? extends EmbeddedCacheManager> cacheContainers) {
+   protected final void registerCacheManager(List<? extends EmbeddedCacheManager> cacheContainers) {
       this.cacheManagers.addAll(cacheContainers);
    }
 
@@ -1041,7 +1041,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
    }
 
-   protected static abstract class FilterByProperty<T> implements Predicate<IMethodInstance> {
+   private abstract static class FilterByProperty<T> implements Predicate<IMethodInstance> {
       private final String property;
       // this could be done through abstract method but this way is more concise
       private final Function<MultipleCacheManagersTest, T> getMode;
