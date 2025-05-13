@@ -67,12 +67,12 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
    }
 
    @Override
-   final public void objectToObjectStream(final Object obj, final ObjectOutput out) throws IOException {
+   public final void objectToObjectStream(final Object obj, final ObjectOutput out) throws IOException {
       out.writeObject(obj);
    }
 
    @Override
-   final protected ByteBuffer objectToBuffer(final Object o, final int estimatedSize) throws IOException {
+   protected final ByteBuffer objectToBuffer(final Object o, final int estimatedSize) throws IOException {
       LazyByteArrayOutputStream baos = new LazyByteArrayOutputStream(estimatedSize);
       ObjectOutput marshaller = startObjectOutput(baos, false, estimatedSize);
       try {
@@ -84,7 +84,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
    }
 
    @Override
-   final public ObjectOutput startObjectOutput(final OutputStream os, final boolean isReentrant, final int estimatedSize) throws IOException {
+   public final ObjectOutput startObjectOutput(final OutputStream os, final boolean isReentrant, final int estimatedSize) throws IOException {
       PerThreadInstanceHolder instanceHolder = getPerThreadInstanceHolder();
       org.jboss.marshalling.Marshaller marshaller = instanceHolder.getMarshaller(estimatedSize);
       marshaller.start(Marshalling.createByteOutput(os));
@@ -92,7 +92,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
    }
 
    @Override
-   final public void finishObjectOutput(final ObjectOutput oo) {
+   public final void finishObjectOutput(final ObjectOutput oo) {
       try {
          if (log.isTraceEnabled()) log.trace("Stop marshaller");
 
@@ -102,7 +102,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
    }
 
    @Override
-   final public Object objectFromByteBuffer(final byte[] buf, final int offset, final int length) throws IOException,
+   public final Object objectFromByteBuffer(final byte[] buf, final int offset, final int length) throws IOException,
          ClassNotFoundException {
       ByteArrayInputStream is = new ByteArrayInputStream(buf, offset, length);
       ObjectInput unmarshaller = startObjectInput(is, false);
@@ -116,7 +116,7 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
    }
 
    @Override
-   final public ObjectInput startObjectInput(final InputStream is, final boolean isReentrant) throws IOException {
+   public final ObjectInput startObjectInput(final InputStream is, final boolean isReentrant) throws IOException {
       PerThreadInstanceHolder instanceHolder = getPerThreadInstanceHolder();
       Unmarshaller unmarshaller = instanceHolder.getUnmarshaller();
 
@@ -129,12 +129,12 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
    }
 
    @Override
-   final public Object objectFromObjectStream(final ObjectInput in) throws IOException, ClassNotFoundException {
+   public final Object objectFromObjectStream(final ObjectInput in) throws IOException, ClassNotFoundException {
       return in.readObject();
    }
 
    @Override
-   final public void finishObjectInput(final ObjectInput oi) {
+   public final void finishObjectInput(final ObjectInput oi) {
       try {
          if (log.isTraceEnabled())
             log.trace("Stop unmarshaller");

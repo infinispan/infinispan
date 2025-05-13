@@ -187,7 +187,7 @@ public class QueryNamedParameterParser {
       return (c < 128 && separatorIndex[c]) || Character.isWhitespace(c);
    }
 
-   static public class ParserResults {
+   public static class ParserResults {
       private final String sqlToUse;
       private final List<String> orderedParameters;
 

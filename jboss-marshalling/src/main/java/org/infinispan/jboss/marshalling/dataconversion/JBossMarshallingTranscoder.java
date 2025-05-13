@@ -22,7 +22,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class JBossMarshallingTranscoder extends OneToManyTranscoder {
 
-   protected final static Log logger = LogFactory.getLog(JBossMarshallingTranscoder.class, Log.class);
+   protected static final Log logger = LogFactory.getLog(JBossMarshallingTranscoder.class, Log.class);
    private final Marshaller marshaller;
 
    public JBossMarshallingTranscoder(Marshaller marshaller) {

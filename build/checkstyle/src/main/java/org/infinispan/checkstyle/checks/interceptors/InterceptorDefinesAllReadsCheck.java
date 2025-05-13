@@ -8,7 +8,7 @@ import java.util.Set;
  * Checks that if the interceptor handles one read command it handles all of them.
  */
 public class InterceptorDefinesAllReadsCheck extends AbstractInterceptorCheck {
-   private final static Set<String> READ_METHODS = new HashSet<>(Arrays.asList(
+   private static final Set<String> READ_METHODS = new HashSet<>(Arrays.asList(
          "visitGetKeyValueCommand",
          "visitGetCacheEntryCommand",
          "visitGetAllCommand",

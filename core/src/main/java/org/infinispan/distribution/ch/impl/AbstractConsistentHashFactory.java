@@ -66,7 +66,7 @@ public abstract class AbstractConsistentHashFactory<CH extends ConsistentHash> i
       return best;
    }
 
-   static abstract class Builder {
+   abstract static class Builder {
       protected final OwnershipStatistics stats;
       protected final List<Address> members;
       protected final Map<Address, Float> capacityFactors;

@@ -67,7 +67,7 @@ class ClientListenerRegistry {
       this.nonBlockingExecutor = nonBlockingExecutor;
    }
 
-   private final static Log log = LogFactory.getLog(ClientListenerRegistry.class, Log.class);
+   private static final Log log = LogFactory.getLog(ClientListenerRegistry.class, Log.class);
 
    private final ConcurrentMap<WrappedByteArray, Object> eventSenders = new ConcurrentHashMap<>();
    private final ConcurrentMap<String, CacheEventFilterFactory> cacheEventFilterFactories = new ConcurrentHashMap<>(4, 0.9f, 16);

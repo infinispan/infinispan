@@ -49,7 +49,7 @@ public class HotRodServerStartStopTest extends MultipleCacheManagersTest {
       }
    }
 
-   private final static int FIRST_SERVER_PORT = randomPort();
+   private static final int FIRST_SERVER_PORT = randomPort();
    private HotRodServer hotRodServer1;
    private HotRodServer hotRodServer2;
    private HotRodServer hotRodServer3;

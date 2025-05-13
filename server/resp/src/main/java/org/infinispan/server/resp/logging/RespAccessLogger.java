@@ -13,7 +13,7 @@ import io.netty.channel.ChannelFuture;
 
 public class RespAccessLogger {
 
-   public final static Logger log = LogFactory.getLogger("RESP_ACCESS_LOG");
+   public static final Logger log = LogFactory.getLogger("RESP_ACCESS_LOG");
 
    public static boolean isEnabled() {
       return log.isTraceEnabled();

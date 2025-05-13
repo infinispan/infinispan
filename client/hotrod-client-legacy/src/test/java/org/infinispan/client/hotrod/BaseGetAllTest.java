@@ -33,9 +33,9 @@ public abstract class BaseGetAllTest extends MultipleCacheManagersTest {
    protected RemoteCacheManager remoteCacheManager;
    protected RemoteCache<Object, Object> remoteCache;
 
-   abstract protected int numberOfHotRodServers();
+   protected abstract int numberOfHotRodServers();
 
-   abstract protected ConfigurationBuilder clusterConfig();
+   protected abstract ConfigurationBuilder clusterConfig();
 
    @Override
    protected void createCacheManagers() throws Throwable {

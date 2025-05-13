@@ -20,9 +20,9 @@ import io.netty.util.AttributeKey;
 public class MemcachedInboundAdapter extends ChannelInboundHandlerAdapter {
 
    static final AttributeKey<ByteBufPool> ALLOCATOR_KEY = AttributeKey.valueOf("allocator");
-   protected final static int MINIMUM_BUFFER_SIZE;
+   protected static final int MINIMUM_BUFFER_SIZE;
 
-   protected final static Log log = LogFactory.getLog(MemcachedInboundAdapter.class, Log.class);
+   protected static final Log log = LogFactory.getLog(MemcachedInboundAdapter.class, Log.class);
 
    private final MemcachedBaseDecoder decoder;
 

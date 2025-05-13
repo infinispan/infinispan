@@ -11,7 +11,7 @@ import org.infinispan.server.core.admin.AdminOperationsHandler;
 
 public abstract class AbstractProtocolServerConfigurationChildBuilder<T extends ProtocolServerConfiguration<T, A>, S extends ProtocolServerConfigurationChildBuilder<T, S, A>, A extends AuthenticationConfiguration>
       implements ProtocolServerConfigurationChildBuilder<T, S, A> {
-   final protected ProtocolServerConfigurationChildBuilder<T, S, A> builder;
+   protected final ProtocolServerConfigurationChildBuilder<T, S, A> builder;
 
    protected AbstractProtocolServerConfigurationChildBuilder(ProtocolServerConfigurationChildBuilder<T, S, A> builder) {
       this.builder = builder;

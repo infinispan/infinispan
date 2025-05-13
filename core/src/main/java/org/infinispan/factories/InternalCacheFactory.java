@@ -187,7 +187,7 @@ public class InternalCacheFactory<K, V> {
    }
 
    @Scope(Scopes.NAMED_CACHE)
-   static abstract class AbstractGetAdvancedCache<K, V, T extends AbstractGetAdvancedCache<K, V, T>>
+   abstract static class AbstractGetAdvancedCache<K, V, T extends AbstractGetAdvancedCache<K, V, T>>
          extends AbstractDelegatingAdvancedCache<K, V> {
 
       @Inject

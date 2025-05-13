@@ -385,7 +385,7 @@ public class CacheListenerVisibilityTest extends SingleCacheManagerTest {
 
    }
 
-   public static abstract class WithAssertListener {
+   public abstract static class WithAssertListener {
 
       Log log = LogFactory.getLog(WithAssertListener.class);
 

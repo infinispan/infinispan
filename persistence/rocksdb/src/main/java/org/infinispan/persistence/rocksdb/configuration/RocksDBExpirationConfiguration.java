@@ -9,7 +9,7 @@ import org.infinispan.commons.configuration.attributes.ConfigurationElement;
  */
 public class RocksDBExpirationConfiguration extends ConfigurationElement<RocksDBExpirationConfiguration> {
 
-   final static AttributeDefinition<String> EXPIRED_LOCATION = AttributeDefinition.builder(org.infinispan.persistence.rocksdb.configuration.Attribute.PATH, null, String.class).immutable().autoPersist(false).build();
+   static final AttributeDefinition<String> EXPIRED_LOCATION = AttributeDefinition.builder(org.infinispan.persistence.rocksdb.configuration.Attribute.PATH, null, String.class).immutable().autoPersist(false).build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RocksDBExpirationConfiguration.class, EXPIRED_LOCATION);

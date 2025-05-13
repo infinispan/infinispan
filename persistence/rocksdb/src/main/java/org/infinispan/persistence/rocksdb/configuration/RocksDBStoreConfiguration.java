@@ -19,8 +19,8 @@ import org.infinispan.persistence.rocksdb.RocksDBStore;
 @SerializedWith(RocksDBStoreConfigurationSerializer.class)
 public class RocksDBStoreConfiguration extends AbstractStoreConfiguration<RocksDBStoreConfiguration> {
 
-   final static AttributeDefinition<String> LOCATION = AttributeDefinition.builder(org.infinispan.persistence.rocksdb.configuration.Attribute.PATH, null, String.class).immutable().build();
-   public final static AttributeDefinition<CompressionType> COMPRESSION_TYPE = AttributeDefinition.builder(org.infinispan.persistence.rocksdb.configuration.Attribute.COMPRESSION_TYPE, CompressionType.NONE).immutable().autoPersist(false).build();
+   static final AttributeDefinition<String> LOCATION = AttributeDefinition.builder(org.infinispan.persistence.rocksdb.configuration.Attribute.PATH, null, String.class).immutable().build();
+   public static final AttributeDefinition<CompressionType> COMPRESSION_TYPE = AttributeDefinition.builder(org.infinispan.persistence.rocksdb.configuration.Attribute.COMPRESSION_TYPE, CompressionType.NONE).immutable().autoPersist(false).build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RocksDBStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), LOCATION, COMPRESSION_TYPE);

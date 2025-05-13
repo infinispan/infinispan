@@ -141,7 +141,7 @@ public class CacheListenerCacheLoaderTest extends AbstractInfinispanTest {
 
 
    @Listener
-   static public class TestListener {
+   public static class TestListener {
       List<Object> loaded = new LinkedList<Object>();
       List<Object> activated = new LinkedList<Object>();
       List<Object> passivated = new LinkedList<Object>();

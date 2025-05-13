@@ -77,7 +77,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  */
 @Scope(Scopes.NAMED_CACHE)
 public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K, V> {
-   private final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    static final int PARALLEL_BATCH_SIZE = 1024;
 
    @Inject ComponentRef<Cache<K, V>> cacheComponentRef;

@@ -22,7 +22,7 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
 public class RxJavaInterop extends org.infinispan.commons.reactive.RxJavaInterop {
    private RxJavaInterop() { }
 
-   protected final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    private static final BiFunction<Object, Object, Flowable<Object>> combineBiFunction = (v1, v2) -> {
       if (v1 != null) {

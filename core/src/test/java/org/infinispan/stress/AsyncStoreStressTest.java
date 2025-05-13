@@ -29,6 +29,7 @@ import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.BlockingRejectedExecutionHandler;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.commons.util.concurrent.NonBlockingRejectedExecutionHandler;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
@@ -62,7 +63,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.BlockingManagerImpl;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.locks.impl.LockContainer;
 import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
 import org.infinispan.util.logging.Log;
@@ -434,7 +434,7 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
       }
    }
 
-   private static abstract class Operation<K, V> {
+   private abstract static class Operation<K, V> {
       protected final String name;
 
       public Operation(String name) {

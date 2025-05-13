@@ -22,7 +22,7 @@ public final class Mutations {
    private Mutations() {
    }
 
-   static abstract class BaseMutation<K, V, R> implements Mutation<K, V, R> {
+   abstract static class BaseMutation<K, V, R> implements Mutation<K, V, R> {
 
       @ProtoField(1)
       protected final DataConversion keyDataConversion;

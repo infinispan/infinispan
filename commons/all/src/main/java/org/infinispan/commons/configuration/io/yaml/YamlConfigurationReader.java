@@ -32,11 +32,11 @@ import org.infinispan.commons.util.Util;
  **/
 public class YamlConfigurationReader extends AbstractConfigurationReader {
    private static final int INDENT = 2;
-   final private Deque<Parsed> state = new ArrayDeque<>();
-   final private List<String> attributeNames = new ArrayList<>();
-   final private List<String> attributeValues = new ArrayList<>();
-   final private List<String> attributeNamespaces = new ArrayList<>();
-   final private Map<String, String> namespaces = new HashMap<>();
+   private final Deque<Parsed> state = new ArrayDeque<>();
+   private final List<String> attributeNames = new ArrayList<>();
+   private final List<String> attributeValues = new ArrayList<>();
+   private final List<String> attributeNamespaces = new ArrayList<>();
+   private final Map<String, String> namespaces = new HashMap<>();
    private final BufferedReader reader;
    private Parsed next;
    private ElementType type = ElementType.START_DOCUMENT;

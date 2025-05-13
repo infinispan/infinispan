@@ -12,7 +12,7 @@ import org.infinispan.security.AuthorizationPermission;
  * @author Ryan Emerson
  * @since 9.1
  */
-final public class ConflictManagerFactory {
+public final class ConflictManagerFactory {
    @SuppressWarnings("unchecked")
    public static <K,V> ConflictManager<K,V> get(AdvancedCache<K, V> cache) {
       AuthorizationManager authzManager = cache.getAuthorizationManager();

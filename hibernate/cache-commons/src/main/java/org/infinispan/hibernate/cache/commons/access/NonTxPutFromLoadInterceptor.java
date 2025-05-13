@@ -20,7 +20,7 @@ import org.infinispan.util.ByteString;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class NonTxPutFromLoadInterceptor extends BaseCustomAsyncInterceptor {
-	private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(NonTxPutFromLoadInterceptor.class);
+	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(NonTxPutFromLoadInterceptor.class);
 	private final ByteString cacheName;
 	private final PutFromLoadValidator putFromLoadValidator;
 

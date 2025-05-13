@@ -104,7 +104,7 @@ public class HotRodClient implements Closeable {
    public static final int DEFAULT_TIMEOUT_SECONDS = 60;
 
    private static final Log log = LogFactory.getLog(HotRodClient.class, Log.class);
-   final static AtomicLong idCounter = new AtomicLong();
+   static final AtomicLong idCounter = new AtomicLong();
 
    final String host;
    final int port;
@@ -766,7 +766,7 @@ class Encoder extends MessageToByteEncoder<Object> {
 class Decoder extends ReplayingDecoder<Void> {
    private final HotRodClient client;
 
-   private final static Log log = LogFactory.getLog(Decoder.class, Log.class);
+   private static final Log log = LogFactory.getLog(Decoder.class, Log.class);
 
    Decoder(HotRodClient client) {
       this.client = client;

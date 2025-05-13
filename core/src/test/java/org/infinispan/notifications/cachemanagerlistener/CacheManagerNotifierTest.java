@@ -64,7 +64,7 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
    }
 
    @Listener
-   static public class GetCacheManagerCheckListener {
+   public static class GetCacheManagerCheckListener {
       CompletableFuture<ViewChangedEvent> firstEvent = new CompletableFuture<>();
 
       @ViewChanged

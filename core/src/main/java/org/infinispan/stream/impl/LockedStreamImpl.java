@@ -198,9 +198,9 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
    }
 
    @Scope(Scopes.NONE)
-   static abstract class LockHelper<K, V, R> {
+   abstract static class LockHelper<K, V, R> {
       protected final Predicate<? super CacheEntry<K, V>> predicate;
-      protected volatile transient LockManager lockManager;
+      protected transient volatile LockManager lockManager;
 
       @Inject
       void init(LockManager lockManager) {

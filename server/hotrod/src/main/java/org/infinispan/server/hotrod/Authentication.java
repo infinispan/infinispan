@@ -27,8 +27,8 @@ import io.netty.channel.ChannelFuture;
  * @since 9.0
  */
 public class Authentication extends BaseRequestProcessor {
-   private final static Log log = LogFactory.getLog(Authentication.class, Log.class);
-   private final static Subject ANONYMOUS = new Subject();
+   private static final Log log = LogFactory.getLog(Authentication.class, Log.class);
+   private static final Subject ANONYMOUS = new Subject();
 
    public static final String HOTROD_SASL_PROTOCOL = "hotrod";
 

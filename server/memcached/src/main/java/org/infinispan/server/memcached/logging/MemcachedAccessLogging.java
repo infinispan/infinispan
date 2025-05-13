@@ -17,7 +17,7 @@ import io.netty.channel.ChannelFuture;
  * @since 15.0
  */
 public final class MemcachedAccessLogging {
-   public final static Logger log = LogFactory.getLogger("MEMCACHED_ACCESS_LOG");
+   public static final Logger log = LogFactory.getLogger("MEMCACHED_ACCESS_LOG");
 
    public static boolean isEnabled() {
       return log.isTraceEnabled();

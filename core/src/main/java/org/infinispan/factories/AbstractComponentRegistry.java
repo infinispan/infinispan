@@ -9,6 +9,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
@@ -17,7 +18,6 @@ import org.infinispan.factories.impl.BasicComponentRegistryImpl;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.ModuleRepository;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 
 /**
@@ -280,7 +280,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
 
    protected abstract void postStart();
 
-   abstract protected CompletionStage<Void> delayStart();
+   protected abstract CompletionStage<Void> delayStart();
 
    /**
     * Stops the component and sets its status to {@link org.infinispan.lifecycle.ComponentStatus#TERMINATED} once it

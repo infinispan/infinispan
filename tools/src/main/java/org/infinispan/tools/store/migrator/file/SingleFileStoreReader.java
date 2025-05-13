@@ -137,7 +137,7 @@ public class SingleFileStoreReader implements StoreIterator {
 
    }
 
-   private static abstract class BaseReader implements FileEntryReader {
+   private abstract static class BaseReader implements FileEntryReader {
 
       private final int keyOffset;
       final ByteBuffer byteBuffer;

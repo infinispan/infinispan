@@ -21,7 +21,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 public class ExpectingInterceptor extends BaseCustomAsyncInterceptor {
-   private final static Log log = LogFactory.getLog(ExpectingInterceptor.class);
+   private static final Log log = LogFactory.getLog(ExpectingInterceptor.class);
    private final List<Condition> conditions = new LinkedList<>();
 
    private final InvocationFinallyAction assertCondition = this::assertCondition;

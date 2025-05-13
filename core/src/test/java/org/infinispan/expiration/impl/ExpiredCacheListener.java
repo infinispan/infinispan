@@ -13,7 +13,7 @@ import org.infinispan.util.logging.LogFactory;
 
 @Listener
 public class ExpiredCacheListener {
-   private final static Log log = LogFactory.getLog(ExpiredCacheListener.class);
+   private static final Log log = LogFactory.getLog(ExpiredCacheListener.class);
    private final List<CacheEntryExpiredEvent> events = Collections.synchronizedList(new ArrayList<>());
    private final AtomicInteger invocationCount = new AtomicInteger();
 

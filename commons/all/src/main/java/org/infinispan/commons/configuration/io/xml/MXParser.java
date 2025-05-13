@@ -15,19 +15,19 @@ import java.nio.charset.StandardCharsets;
  */
 
 public class MXParser implements XmlPullParser {
-   protected final static String XML_URI = "http://www.w3.org/XML/1998/namespace";
-   protected final static String XMLNS_URI = "http://www.w3.org/2000/xmlns/";
-   protected final static String FEATURE_XML_ROUNDTRIP =
+   protected static final String XML_URI = "http://www.w3.org/XML/1998/namespace";
+   protected static final String XMLNS_URI = "http://www.w3.org/2000/xmlns/";
+   protected static final String FEATURE_XML_ROUNDTRIP =
          "http://xmlpull.org/v1/doc/features.html#xml-roundtrip";
-   protected final static String FEATURE_NAMES_INTERNED =
+   protected static final String FEATURE_NAMES_INTERNED =
          "http://xmlpull.org/v1/doc/features.html#names-interned";
-   protected final static String PROPERTY_XMLDECL_VERSION =
+   protected static final String PROPERTY_XMLDECL_VERSION =
          "http://xmlpull.org/v1/doc/properties.html#xmldecl-version";
-   protected final static String PROPERTY_XMLDECL_STANDALONE =
+   protected static final String PROPERTY_XMLDECL_STANDALONE =
          "http://xmlpull.org/v1/doc/properties.html#xmldecl-standalone";
-   protected final static String PROPERTY_XMLDECL_CONTENT =
+   protected static final String PROPERTY_XMLDECL_CONTENT =
          "http://xmlpull.org/v1/doc/properties.html#xmldecl-content";
-   protected final static String PROPERTY_LOCATION =
+   protected static final String PROPERTY_LOCATION =
          "http://xmlpull.org/v1/doc/properties.html#location";
 
    /**
@@ -2279,17 +2279,17 @@ public class MXParser implements XmlPullParser {
       return true;
    }
 
-   //    protected final static char[] VERSION = {'v','e','r','s','i','o','n'};
-   //    protected final static char[] NCODING = {'n','c','o','d','i','n','g'};
-   //    protected final static char[] TANDALONE = {'t','a','n','d','a','l','o','n','e'};
-   //    protected final static char[] YES = {'y','e','s'};
-   //    protected final static char[] NO = {'n','o'};
+   //    protected static final char[] VERSION = {'v','e','r','s','i','o','n'};
+   //    protected static final char[] NCODING = {'n','c','o','d','i','n','g'};
+   //    protected static final char[] TANDALONE = {'t','a','n','d','a','l','o','n','e'};
+   //    protected static final char[] YES = {'y','e','s'};
+   //    protected static final char[] NO = {'n','o'};
 
-   final static char[] VERSION = "version".toCharArray();
-   final static char[] NCODING = "ncoding".toCharArray();
-   final static char[] TANDALONE = "tandalone".toCharArray();
-   final static char[] YES = "yes".toCharArray();
-   final static char[] NO = "no".toCharArray();
+   static final char[] VERSION = "version".toCharArray();
+   static final char[] NCODING = "ncoding".toCharArray();
+   static final char[] TANDALONE = "tandalone".toCharArray();
+   static final char[] YES = "yes".toCharArray();
+   static final char[] NO = "no".toCharArray();
 
 
    protected void parseXmlDecl(char ch)
@@ -2878,7 +2878,7 @@ public class MXParser implements XmlPullParser {
       for (char ch = '\u0300'; ch <= '\u036f'; ++ch) setName(ch);
    }
 
-   //private final static boolean isNameStartChar(char ch) {
+   //private static final boolean isNameStartChar(char ch) {
    protected boolean isNameStartChar(char ch) {
       return (ch < LOOKUP_MAX_CHAR && lookupNameStartChar[ch])
             || (ch >= LOOKUP_MAX_CHAR && ch <= '\u2027')
@@ -2908,7 +2908,7 @@ public class MXParser implements XmlPullParser {
       // else return (supportXml11 && ( (ch < '\u2027') || (ch > '\u2029' && ch < '\u2200') ...
    }
 
-   //private final static boolean isNameChar(char ch) {
+   //private static final boolean isNameChar(char ch) {
    protected boolean isNameChar(char ch) {
       //return isNameStartChar(ch);
 

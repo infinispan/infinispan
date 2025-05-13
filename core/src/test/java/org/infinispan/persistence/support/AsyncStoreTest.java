@@ -22,6 +22,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
@@ -38,7 +39,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.util.PersistenceMockUtil;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
@@ -305,7 +305,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       }
    }
 
-   private static abstract class OneEntryCacheManagerCallable extends CacheManagerCallable {
+   private abstract static class OneEntryCacheManagerCallable extends CacheManagerCallable {
       protected final Cache<String, String> cache;
       protected final DelayStore store;
 

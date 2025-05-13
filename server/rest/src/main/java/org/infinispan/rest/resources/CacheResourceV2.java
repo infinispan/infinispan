@@ -1314,7 +1314,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
           .thenApply(Function.identity());
    }
 
-   public static abstract class BaseCacheListener {
+   public abstract static class BaseCacheListener {
       protected final Cache<?, ?> cache;
       protected final EventStream eventStream;
 

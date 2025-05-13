@@ -127,10 +127,10 @@ public abstract class CorrectnessTestCase {
    static final int NUM_FAMILIES = 1;
    static final int NUM_ACCESS_AFTER_REMOVAL = NUM_THREADS * 2;
    static final int MAX_MEMBERS = 10;
-   private final static Comparator<Log<?>> WALL_CLOCK_TIME_COMPARATOR = (o1, o2) -> Long.compare(o1.wallClockTime, o2.wallClockTime);
+   private static final Comparator<Log<?>> WALL_CLOCK_TIME_COMPARATOR = (o1, o2) -> Long.compare(o1.wallClockTime, o2.wallClockTime);
 
-   private final static boolean INVALIDATE_REGION = Boolean.getBoolean("testInfinispan.correctness.invalidateRegion");
-   private final static boolean INJECT_FAILURES = Boolean.getBoolean("testInfinispan.correctness.injectFailures");
+   private static final boolean INVALIDATE_REGION = Boolean.getBoolean("testInfinispan.correctness.invalidateRegion");
+   private static final boolean INJECT_FAILURES = Boolean.getBoolean("testInfinispan.correctness.injectFailures");
 
    @Parameterized.Parameter(0)
    public String name;
@@ -334,7 +334,7 @@ public abstract class CorrectnessTestCase {
       }
    }
 
-   private final static Class[][] EXPECTED = {
+   private static final Class[][] EXPECTED = {
          {TransactionException.class, RollbackException.class, StaleObjectStateException.class},
          {TransactionException.class, RollbackException.class, PessimisticLockException.class},
          {TransactionException.class, RollbackException.class, LockAcquisitionException.class},
@@ -926,7 +926,7 @@ public abstract class CorrectnessTestCase {
    }
 
    private class QueryFamilies extends Operation {
-      final static int MAX_RESULTS = 10;
+      static final int MAX_RESULTS = 10;
 
       public QueryFamilies() {
          super(false);
