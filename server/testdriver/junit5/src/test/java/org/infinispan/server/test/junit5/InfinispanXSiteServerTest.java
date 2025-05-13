@@ -48,6 +48,6 @@ public class InfinispanXSiteServerTest {
       assertEquals("v1", lonCache.get("k1"));
       Eventually.eventuallyEquals("v1", () -> nycCache.get("k1"));
       assertEquals(null, lonCache.get("k2"));
-      assertEquals ("v2", nycCache.get("k2"));
+      assertEquals("v2", nycCache.get("k2"));
    }
 }

@@ -25,7 +25,7 @@ import org.infinispan.remoting.transport.Address;
 /**
  * A special type of key that if passed a cache in its constructor, will ensure it will always be assigned to that cache
  * (plus however many additional caches in the hash space).
- *
+ * <p>
  * Note that this only works if all the caches have joined a single cluster before creating the key.
  * If the cluster membership changes then the keys may move to other servers.
  */
@@ -73,7 +73,7 @@ public class MagicKey implements Serializable {
       int segment = findSegment(ch.getNumSegments(), s -> primaryAddress.equals(ch.locatePrimaryOwnerForSegment(s)));
       if (segment < 0) {
          throw new IllegalStateException("Could not find any segment owned by " + primaryOwner +
-            ", primary segments: " + segments(primaryOwner));
+               ", primary segments: " + segments(primaryOwner));
       }
       this.segment = segment;
       hashcode = getHashCodeForSegment(cacheTopology, segment);
@@ -98,8 +98,8 @@ public class MagicKey implements Serializable {
       });
       if (segment < 0) {
          throw new IllegalStateException("Could not find any segment owned by " + primaryOwner + ", "
-            + Arrays.toString(backupOwners) + ", primary segments: " + segments(primaryOwner)
-            + ", backup segments: " + Stream.of(backupOwners).collect(Collectors.toMap(Function.identity(), this::segments)));
+               + Arrays.toString(backupOwners) + ", primary segments: " + segments(primaryOwner)
+               + ", backup segments: " + Stream.of(backupOwners).collect(Collectors.toMap(Function.identity(), this::segments)));
       }
       hashcode = getHashCodeForSegment(cacheTopology, segment);
       unique = counter.getAndIncrement();
@@ -140,7 +140,7 @@ public class MagicKey implements Serializable {
 
    private Set<Integer> segments(Cache<?, ?> owner) {
       return owner.getAdvancedCache().getDistributionManager().getWriteConsistentHash()
-                  .getPrimarySegmentsForOwner(owner.getCacheManager().getAddress());
+            .getPrimarySegmentsForOwner(owner.getCacheManager().getAddress());
    }
 
    public MagicKey(Cache<?, ?> primaryOwner) {
@@ -152,7 +152,7 @@ public class MagicKey implements Serializable {
    }
 
    @Override
-   public int hashCode () {
+   public int hashCode() {
       return hashcode;
    }
 
@@ -161,7 +161,7 @@ public class MagicKey implements Serializable {
    }
 
    @Override
-   public boolean equals (Object o) {
+   public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
@@ -174,6 +174,6 @@ public class MagicKey implements Serializable {
    @Override
    public String toString() {
       return String.format("MagicKey%s{%X/%08X/%d@%s}", name == null ? "" : "#" + name,
-         unique, hashcode, segment, address);
+            unique, hashcode, segment, address);
    }
 }
