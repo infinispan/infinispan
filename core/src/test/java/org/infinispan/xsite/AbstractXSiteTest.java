@@ -363,10 +363,9 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
 
          //get the transport here as clone.read below would inject the same transport reference into the clone
          // which we don't want
-         Transport transport = clone.transport().getTransport();
          GlobalConfiguration original = gcb.build();
          clone.read(original);
-         clone.transport().transport(transport);
+         clone.transport().defaultTransport();
          clone.transport().clusterName("ISPN(SITE " + siteName + ")");
          if (original.jmx().enabled()) {
             clone.jmx().enabled(true).domain(original.jmx().domain() + cacheManagers.size());

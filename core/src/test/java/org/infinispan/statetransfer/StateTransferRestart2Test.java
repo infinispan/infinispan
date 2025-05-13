@@ -1,5 +1,6 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.Callable;
@@ -17,6 +18,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -82,10 +84,13 @@ public class StateTransferRestart2Test extends MultipleCacheManagersTest {
 
       DISCARD d1 = TestingUtil.getDiscardForCache(c1.getCacheManager());
       GlobalConfigurationBuilder gcb2 = new GlobalConfigurationBuilder();
-      gcb2.transport().transport(new KillingJGroupsTransport(d1, c1));
+      gcb2.transport().defaultTransport();
 
       log.info("adding cache c2");
-      addClusterEnabledCacheManager(gcb2, cfgBuilder, new TransportFlags().withFD(true));
+      var cm = createClusteredCacheManager(false, gcb2, cfgBuilder, new TransportFlags().withFD(true));
+      cacheManagers.add(cm);
+      TestingUtil.replaceComponent(cm, Transport.class, new KillingJGroupsTransport(d1, c1), true);
+      cm.start();
       log.info("get c2");
       final Cache<Object, Object> c2 = cache(2);
 

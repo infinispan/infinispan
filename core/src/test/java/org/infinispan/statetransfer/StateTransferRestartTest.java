@@ -1,5 +1,6 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.Callable;
@@ -18,6 +19,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -43,7 +45,6 @@ import org.testng.annotations.Test;
 public class StateTransferRestartTest extends MultipleCacheManagersTest {
 
    private ConfigurationBuilder cfgBuilder;
-   private GlobalConfigurationBuilder gcfgBuilder;
 
    static class MockTransport extends JGroupsTransport {
       volatile Callable<Void> callOnStateResponseCommand;
@@ -76,9 +77,6 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
       cfgBuilder.clustering().hash().numOwners(2);
       cfgBuilder.clustering().stateTransfer().fetchInMemoryState(true);
       cfgBuilder.clustering().stateTransfer().timeout(20000);
-
-      gcfgBuilder = new GlobalConfigurationBuilder();
-      gcfgBuilder.transport().transport(mockTransport);
    }
 
    @Override
@@ -86,11 +84,18 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
       NoOpGlobalConfigurationManager.amendCacheManager(cm);
    }
 
-   public void testStateTransferRestart() throws Throwable {
+   public void testStateTransferRestart() {
       final int numKeys = 100;
 
-      addClusterEnabledCacheManager(cfgBuilder, new TransportFlags().withFD(true));
-      addClusterEnabledCacheManager(gcfgBuilder, cfgBuilder, new TransportFlags().withFD(true));
+      var transportFlags = new TransportFlags().withFD(true);
+      addClusterEnabledCacheManager(cfgBuilder, transportFlags);
+
+      var cm = createClusteredCacheManager(false, GlobalConfigurationBuilder.defaultClusteredBuilder(), cfgBuilder, transportFlags);
+      TestingUtil.replaceComponent(cm, Transport.class, mockTransport, true);
+      amendCacheManagerBeforeStart(cm);
+      cacheManagers.add(cm);
+      cm.start();
+
       log.info("waiting for cluster { c0, c1 }");
       waitForClusterToForm();
 
@@ -128,7 +133,7 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
       };
 
       log.info("adding cache c2");
-      addClusterEnabledCacheManager(cfgBuilder, new TransportFlags().withFD(true));
+      addClusterEnabledCacheManager(cfgBuilder, transportFlags);
       log.info("get c2");
       final Cache<Object, Object> c2 = cache(2);
 

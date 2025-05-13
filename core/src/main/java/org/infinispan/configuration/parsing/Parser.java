@@ -52,7 +52,6 @@ import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.globalstate.LocalConfigurationStorage;
 import org.infinispan.protostream.config.Configuration;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.BuiltinJGroupsChannelConfigurator;
 import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigurator;
 import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
@@ -444,29 +443,21 @@ public class Parser extends CacheParser {
    }
 
    private void parseJGroups(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      Transport transport = null;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          if (!ParseUtils.isNoNamespaceAttribute(reader, i))
             continue;
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
 
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case TRANSPORT:
-               transport = Util.getInstance(value, holder.getClassLoader());
+               ParseUtils.attributeRemovedSince(reader, 16, 0, i);
                break;
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }
          }
       }
-
-      if (transport == null) {
-         // Set up default transport
-         holder.getGlobalConfigurationBuilder().transport().defaultTransport();
-      } else {
-         holder.getGlobalConfigurationBuilder().transport().transport(transport);
-      }
+      holder.getGlobalConfigurationBuilder().transport().defaultTransport();
 
       while (reader.inTag(Element.JGROUPS)) {
          Element element = Element.forName(reader.getLocalName());

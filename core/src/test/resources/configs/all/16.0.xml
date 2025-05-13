@@ -4,7 +4,7 @@
                           urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.3.xsd"
       xmlns="urn:infinispan:config:16.0"
       xmlns:ispn="urn:infinispan:config:16.0">
-   <jgroups transport="org.infinispan.remoting.transport.jgroups.JGroupsTransport">
+   <jgroups>
       <!-- Load external JGroups stacks -->
       <stack-file name="udp-test" path="stacks/udp.xml"/>
       <stack-file name="tcp-test" path="stacks/tcp_mping/tcp1.xml"/>

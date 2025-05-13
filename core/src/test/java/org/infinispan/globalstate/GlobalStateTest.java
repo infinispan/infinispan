@@ -35,6 +35,7 @@ import org.infinispan.manager.EmbeddedCacheManagerStartupException;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ConfigurationChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -203,11 +204,11 @@ public class GlobalStateTest extends AbstractInfinispanTest {
       return global;
    }
 
-   public void testFailStartup(Method m) throws Exception {
+   public void testFailStartup(Method m) {
       String state = tmpDirectory(this.getClass().getSimpleName(), m.getName());
       GlobalConfigurationBuilder global = statefulGlobalBuilder(state, true);
-      global.transport().transport(new FailingJGroupsTransport());
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false, global, new ConfigurationBuilder(), new TransportFlags());
+      TestingUtil.replaceComponent(cm, Transport.class, new FailingJGroupsTransport(), false);
       try {
          cm.start();
          fail("Should not reach here");

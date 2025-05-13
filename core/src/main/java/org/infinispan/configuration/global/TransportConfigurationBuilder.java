@@ -157,7 +157,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
     *
     * @param transport transport instance
     */
-   public TransportConfigurationBuilder transport(Transport transport) {
+   TransportConfigurationBuilder transport(Transport transport) {
       jgroupsConfigurationBuilder.transport(transport);
       return this;
    }

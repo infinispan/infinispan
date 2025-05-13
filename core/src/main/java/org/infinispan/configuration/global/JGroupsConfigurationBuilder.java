@@ -60,9 +60,8 @@ public class JGroupsConfigurationBuilder extends AbstractGlobalConfigurationBuil
       return stackFileConfigurationBuilder;
    }
 
-   public JGroupsConfigurationBuilder transport(Transport transport) {
+   void transport(Transport transport) {
       attributes.attribute(TRANSPORT).set(transport);
-      return this;
    }
 
    public JGroupsConfigurationBuilder clear() {

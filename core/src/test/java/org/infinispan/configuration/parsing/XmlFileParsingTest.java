@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
@@ -45,7 +44,6 @@ import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigura
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -227,21 +225,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(storeConfiguration instanceof AbstractStoreConfiguration);
       AbstractStoreConfiguration abstractStoreConfiguration = (AbstractStoreConfiguration) storeConfiguration;
       assertTrue(abstractStoreConfiguration.preload());
-   }
-
-   public void testCustomTransport() {
-      String config = TestingUtil.wrapXMLWithSchema(
-            "<jgroups transport=\"" + CustomTransport.class.getName() + "\"/>\n" +
-                  "<cache-container default-cache=\"default\">\n" +
-                  "  <transport cluster=\"ispn-perf-test\"/>\n" +
-                  "  <distributed-cache name=\"default\"/>\n" +
-                  "</cache-container>"
-      );
-
-      ConfigurationBuilderHolder holder = parseStringConfiguration(config);
-      Transport transport = holder.getGlobalConfigurationBuilder().build().transport().transport();
-      assertNotNull(transport);
-      assertTrue(transport instanceof CustomTransport);
    }
 
    public void testNoDefaultCache() {
@@ -736,9 +719,5 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             """
       );
       assertThatThrownBy(() -> parseStringConfiguration(config)).hasMessage("ISPN000624: Attribute 'version' of element 'serialization' at '[4,35]' has been removed with no replacement");
-   }
-
-   public static class CustomTransport extends JGroupsTransport {
-
    }
 }
