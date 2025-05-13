@@ -13,7 +13,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 7.2
  */
 public class NullRunner implements ScriptRunner {
-   final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
    public static final NullRunner INSTANCE = new NullRunner();
 
    private NullRunner() {

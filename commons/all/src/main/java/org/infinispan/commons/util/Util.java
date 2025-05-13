@@ -573,7 +573,7 @@ public final class Util {
       return s;
    }
 
-   private final static String INDENT = "    ";
+   private static final String INDENT = "    ";
 
    public static String threadDump() {
       SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

@@ -40,7 +40,7 @@ import net.jcip.annotations.ThreadSafe;
 public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
 
    // TODO During state transfer, we should try to assign keys to a node only if they are owners in both CHs
-   public final static float THRESHOLD = 0.5f;
+   public static final float THRESHOLD = 0.5f;
 
    //interval between key/queue poll
    private static final int POLL_INTERVAL_MILLIS = 50;

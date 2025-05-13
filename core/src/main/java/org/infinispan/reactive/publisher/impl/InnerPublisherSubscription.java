@@ -33,7 +33,7 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
  * @param <R>
  */
 public class InnerPublisherSubscription<K, I, R, E> implements LongConsumer, Action {
-   protected final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    private final InnerPublisherSubscriptionBuilder<K, I, R> builder;
    private final FlowableProcessor<E> flowableProcessor;

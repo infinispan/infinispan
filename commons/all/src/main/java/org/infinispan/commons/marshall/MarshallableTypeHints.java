@@ -159,7 +159,7 @@ public final class MarshallableTypeHints {
       }
    }
 
-   final static class NullBufferSizePredictor implements BufferSizePredictor {
+   static final class NullBufferSizePredictor implements BufferSizePredictor {
       static final BufferSizePredictor INSTANCE = new NullBufferSizePredictor();
 
       @Override

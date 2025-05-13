@@ -1,7 +1,7 @@
 public class MyCallbackHandler implements CallbackHandler {
-   final private String username;
-   final private char[] password;
-   final private String realm;
+   private final String username;
+   private final char[] password;
+   private final String realm;
 
    public MyCallbackHandler(String username, String realm, char[] password) {
       this.username = username;

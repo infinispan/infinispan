@@ -314,7 +314,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       }
    }
 
-   private static abstract class AbstractForEach implements CacheAware<Integer, String> {
+   private abstract static class AbstractForEach implements CacheAware<Integer, String> {
       Cache<?, ?> cache;
 
       @ProtoField(1)

@@ -20,7 +20,7 @@ import org.infinispan.util.logging.LogFactory;
 @ProtoTypeId(ProtoStreamTypeIds.CACHE_STATUS_REQUEST_COMMAND)
 public class CacheStatusRequestCommand extends AbstractCacheControlCommand {
 
-   private final static Log log = LogFactory.getLog(CacheStatusRequestCommand.class);
+   private static final Log log = LogFactory.getLog(CacheStatusRequestCommand.class);
 
    @ProtoField(1)
    final int viewId;

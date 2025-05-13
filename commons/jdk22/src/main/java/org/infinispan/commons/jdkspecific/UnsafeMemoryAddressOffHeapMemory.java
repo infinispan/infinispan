@@ -32,7 +32,7 @@ class UnsafeMemoryAddressOffHeapMemory implements OffHeapMemory {
    static final MethodHandle allocator;
    static final MethodHandle deallocator;
 
-   static public OffHeapMemory getInstance() {
+   public static OffHeapMemory getInstance() {
       return INSTANCE;
    }
 

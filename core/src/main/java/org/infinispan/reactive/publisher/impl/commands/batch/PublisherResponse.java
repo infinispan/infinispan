@@ -34,7 +34,7 @@ public class PublisherResponse {
    // How many elements are in the results
    // Note that after being deserialized this is always equal to results.length - local this will be how many entries
    // are in the array
-   transient final int size;
+   final transient int size;
 
    public PublisherResponse(Object[] results, IntSet completedSegments, IntSet lostSegments, int size, boolean complete,
          List<PublisherHandler.SegmentResult> segmentResults) {

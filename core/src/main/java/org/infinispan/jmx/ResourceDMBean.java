@@ -378,7 +378,7 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
       objectName = null;
    }
 
-   private static abstract class InvokableMBeanAttributeInfo {
+   private abstract static class InvokableMBeanAttributeInfo {
 
       private final MBeanAttributeInfo attributeInfo;
 

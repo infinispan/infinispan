@@ -196,7 +196,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
    }
 
    @Listener
-   static public class TestControlListener {
+   public static class TestControlListener {
       @CacheEntryVisited
       @CacheEntryRemoved
       public void callback(Event e) {
@@ -204,34 +204,34 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
    }
 
    @Listener
-   static public class TestCacheListenerNoMethodsListener {
+   public static class TestCacheListenerNoMethodsListener {
       public String toString() {
          return "Hello";
       }
    }
 
-   static public class TestNonAnnotatedListener {
+   public static class TestNonAnnotatedListener {
       public String toString() {
          return "Hello";
       }
    }
 
    @Listener
-   static protected class TestNonPublicListener {
+   protected static class TestNonPublicListener {
       @CacheEntryVisited
       public void callback() {
       }
    }
 
    @Listener
-   static public class TestNonPublicListenerMethodListener {
+   public static class TestNonPublicListenerMethodListener {
       @CacheEntryVisited
       protected void callback(Event e) {
       }
    }
 
    @Listener
-   static public class TestNonVoidReturnTypeMethodListener {
+   public static class TestNonVoidReturnTypeMethodListener {
       @CacheEntryVisited
       public String callback(Event e) {
          return "Hello";
@@ -239,35 +239,35 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
    }
 
    @Listener
-   static public class TestIncorrectMethodSignature1Listener {
+   public static class TestIncorrectMethodSignature1Listener {
       @CacheEntryVisited
       public void callback() {
       }
    }
 
    @Listener
-   static public class TestIncorrectMethodSignature2Listener {
+   public static class TestIncorrectMethodSignature2Listener {
       @CacheEntryVisited
       public void callback(Event e, String s) {
       }
    }
 
    @Listener
-   static public class TestIncorrectMethodSignature3Listener {
+   public static class TestIncorrectMethodSignature3Listener {
       @CacheEntryVisited
       public void callback(Event e, String... s) {
       }
    }
 
    @Listener
-   static public class TestUnassignableMethodSignatureListener {
+   public static class TestUnassignableMethodSignatureListener {
       @CacheEntryVisited
       public void callback(CacheEntryRemovedEvent e) {
       }
    }
 
    @Listener
-   static public class TestPartlyUnassignableMethodSignatureListener {
+   public static class TestPartlyUnassignableMethodSignatureListener {
       @CacheEntryVisited
       @CacheEntryRemoved
       public void callback(CacheEntryRemovedEvent e) {
@@ -275,7 +275,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
    }
 
    @Listener
-   static public class TestMultipleMethodsListener {
+   public static class TestMultipleMethodsListener {
       @CacheEntryVisited
       public void callback1(Event e) {
       }
@@ -286,7 +286,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
    }
 
    @Listener
-   static public class TestMultipleAnnotationsOneMethodListener {
+   public static class TestMultipleAnnotationsOneMethodListener {
       @CacheEntryRemoved
       @CacheEntryVisited
       public void callback(Event nme) {
@@ -294,7 +294,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
    }
 
    @Listener
-   static public class TestMultipleMethodsOneAnnotationListener {
+   public static class TestMultipleMethodsOneAnnotationListener {
       @CacheEntryVisited
       public void callback1(Event e) {
       }

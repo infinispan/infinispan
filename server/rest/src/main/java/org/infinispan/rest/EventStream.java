@@ -17,7 +17,7 @@ import io.netty.channel.ChannelHandlerContext;
  * @since 13.0
  **/
 public class EventStream implements Closeable {
-   private final static Log log = LogFactory.getLog(EventStream.class, Log.class);
+   private static final Log log = LogFactory.getLog(EventStream.class, Log.class);
    private final Consumer<EventStream> onOpen;
    private final Runnable onClose;
    private ChannelHandlerContext ctx;

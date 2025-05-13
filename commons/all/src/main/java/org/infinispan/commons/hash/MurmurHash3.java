@@ -22,7 +22,7 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 @Immutable
 public class MurmurHash3 implements Hash {
-   private final static MurmurHash3 instance = new MurmurHash3();
+   private static final MurmurHash3 instance = new MurmurHash3();
    public static final byte INVALID_CHAR = (byte) '?';
 
    public static MurmurHash3 getInstance() {

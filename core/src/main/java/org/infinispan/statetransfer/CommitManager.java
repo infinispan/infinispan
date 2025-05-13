@@ -9,6 +9,7 @@ import java.util.function.Function;
 
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ReadCommittedEntry;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -18,7 +19,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -236,7 +236,7 @@ public class CommitManager {
          this.discardXSiteST = discardXSiteST;
       }
 
-      public synchronized final boolean ignore(Flag operation) {
+      public final synchronized boolean ignore(Flag operation) {
          return (discardST && operation == Flag.PUT_FOR_STATE_TRANSFER) ||
                (discardXSiteST && operation == Flag.PUT_FOR_X_SITE_STATE_TRANSFER);
       }

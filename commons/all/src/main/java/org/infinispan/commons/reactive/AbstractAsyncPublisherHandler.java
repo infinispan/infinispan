@@ -55,7 +55,7 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
  * to do so can cause multiple requests and unexpected problems.
  */
 public abstract class AbstractAsyncPublisherHandler<Target, Output, InitialResponse, NextResponse> implements LongConsumer, Action {
-   protected final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    protected final int batchSize;
    protected final Supplier<Target> supplier;

@@ -143,7 +143,7 @@ public class DistListenerTest extends MultipleCacheManagersTest {
    }
 
    @Listener
-   static public class TestListener {
+   public static class TestListener {
 
       boolean created = false;
       boolean modified = false;

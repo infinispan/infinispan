@@ -555,11 +555,11 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       }
    }
 
-   static private boolean requiresMetadataSize(byte type) {
+   private static boolean requiresMetadataSize(byte type) {
       return (type & (CUSTOM | HAS_VERSION)) != 0;
    }
 
-   static private boolean requiresInternalMetadataSize(byte type) {
+   private static boolean requiresInternalMetadataSize(byte type) {
       return (type & HAS_PRIVATE_METADATA) == HAS_PRIVATE_METADATA;
    }
 

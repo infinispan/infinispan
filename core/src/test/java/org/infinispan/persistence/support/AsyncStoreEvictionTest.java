@@ -10,6 +10,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
@@ -21,7 +22,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "persistence.decorators.AsyncStoreEvictionTest")
@@ -41,7 +41,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
       return config;
    }
 
-   private final static ThreadLocal<LockableStore> STORE = new ThreadLocal<LockableStore>();
+   private static final ThreadLocal<LockableStore> STORE = new ThreadLocal<LockableStore>();
 
 
    public static class LockableStoreConfigurationBuilder extends DummyInMemoryStoreConfigurationBuilder {
@@ -83,7 +83,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
       }
    }
 
-   private static abstract class CacheCallable extends CacheManagerCallable {
+   private abstract static class CacheCallable extends CacheManagerCallable {
       protected final Cache<String, String> cache;
       protected final LockableStore store;
 

@@ -86,5 +86,5 @@ public enum ClusterExecutionPolicy {
    },
    ;
 
-   abstract public boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress);
+   public abstract boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress);
 }

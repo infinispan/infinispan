@@ -67,7 +67,7 @@ class ByteBufPrimitiveSerializer {
     * <b>Warning:</b> Always check with the null serializer first before trying any other. This approach guarantees the
     * value is non-null during the serialization.
     */
-   final static class NullSerializer implements ResponseSerializer<Object, ByteBufPool> {
+   static final class NullSerializer implements ResponseSerializer<Object, ByteBufPool> {
       public static final NullSerializer INSTANCE = new NullSerializer();
 
       @Override
@@ -99,7 +99,7 @@ class ByteBufPrimitiveSerializer {
     * bulk strings must be byte arrays.
     * </p>
     */
-   final static class SimpleStringSerializer implements ResponseSerializer<CharSequence, ByteBufPool> {
+   static final class SimpleStringSerializer implements ResponseSerializer<CharSequence, ByteBufPool> {
       public static final SimpleStringSerializer INSTANCE = new SimpleStringSerializer();
 
       @Override
@@ -149,7 +149,7 @@ class ByteBufPrimitiveSerializer {
     * </p>
     *
     */
-   final static class SimpleErrorSerializer implements ResponseSerializer<CharSequence, ByteBufPool> {
+   static final class SimpleErrorSerializer implements ResponseSerializer<CharSequence, ByteBufPool> {
       public static final SimpleErrorSerializer INSTANCE = new SimpleErrorSerializer();
 
       @Override
@@ -198,7 +198,7 @@ class ByteBufPrimitiveSerializer {
     * representation might also contain a plus/minus symbol as the sign.
     * </p>
     */
-   final static class IntegerSerializer implements ResponseSerializer<Number, ByteBufPool> {
+   static final class IntegerSerializer implements ResponseSerializer<Number, ByteBufPool> {
       public static final IntegerSerializer INSTANCE = new IntegerSerializer();
 
       @Override
@@ -230,7 +230,7 @@ class ByteBufPrimitiveSerializer {
     * symbol as the suffix.
     * </p>
     */
-   final static class BulkStringSerializer implements ResponseSerializer<byte[], ByteBufPool> {
+   static final class BulkStringSerializer implements ResponseSerializer<byte[], ByteBufPool> {
       public static final BulkStringSerializer INSTANCE = new BulkStringSerializer();
 
       @Override
@@ -254,7 +254,7 @@ class ByteBufPrimitiveSerializer {
     *
     * @see BulkStringSerializer
     */
-   final static class BulkStringSerializer2 implements ResponseSerializer<CharSequence, ByteBufPool> {
+   static final class BulkStringSerializer2 implements ResponseSerializer<CharSequence, ByteBufPool> {
       public static final BulkStringSerializer2 INSTANCE = new BulkStringSerializer2();
 
       @Override
@@ -283,7 +283,7 @@ class ByteBufPrimitiveSerializer {
     * true or <code>'f'</code> for false, and the suffix is the terminator symbol.
     * </p>
     */
-   final static class BooleanSerializer implements ResponseSerializer<Boolean, ByteBufPool> {
+   static final class BooleanSerializer implements ResponseSerializer<Boolean, ByteBufPool> {
       public static final BooleanSerializer INSTANCE = new BooleanSerializer();
       private static final byte TRUE = 't';
       private static final byte FALSE = 'f';

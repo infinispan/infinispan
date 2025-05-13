@@ -46,13 +46,13 @@ public class LuaContext implements AutoCloseable {
 
    private static final String REDIS_API_NAME = "redis";
 
-   private final static String[] LIBRARIES_ALLOW_LIST = {"string", "math", "table", "os"}; // bit, cjson, cmsgpack, struct are not available in luajava
-   private final static String[] REDIS_API_ALLOW_LIST = {"redis", "__redis__err__handler"};
-   private final static String[] LUA_BUILTINS_ALLOW_LIST = {"xpcall", "tostring", "getfenv", "setmetatable", "next", "assert", "tonumber", "rawequal", "collectgarbage", "getmetatable", "rawset", "pcall", "coroutine", "type", "_G", "select", "unpack", "gcinfo", "pairs", "rawget", "loadstring", "ipairs", "_VERSION", "setfenv", "load", "error"};
-   private final static String[] LUA_BUILTINS_NOT_DOCUMENTED_ALLOW_LIST = {"newproxy"};
-   private final static String[] LUA_BUILTINS_REMOVED_AFTER_INITIALIZATION_ALLOW_LIST = {"debug"};
-   private final static Set<String> ALLOW_LISTS;
-   private final static Set<String> DENY_LIST = Set.of("dofile", "loadfile", "print");
+   private static final String[] LIBRARIES_ALLOW_LIST = {"string", "math", "table", "os"}; // bit, cjson, cmsgpack, struct are not available in luajava
+   private static final String[] REDIS_API_ALLOW_LIST = {"redis", "__redis__err__handler"};
+   private static final String[] LUA_BUILTINS_ALLOW_LIST = {"xpcall", "tostring", "getfenv", "setmetatable", "next", "assert", "tonumber", "rawequal", "collectgarbage", "getmetatable", "rawset", "pcall", "coroutine", "type", "_G", "select", "unpack", "gcinfo", "pairs", "rawget", "loadstring", "ipairs", "_VERSION", "setfenv", "load", "error"};
+   private static final String[] LUA_BUILTINS_NOT_DOCUMENTED_ALLOW_LIST = {"newproxy"};
+   private static final String[] LUA_BUILTINS_REMOVED_AFTER_INITIALIZATION_ALLOW_LIST = {"debug"};
+   private static final Set<String> ALLOW_LISTS;
+   private static final Set<String> DENY_LIST = Set.of("dofile", "loadfile", "print");
 
    public static final int LOG_DEBUG = 0; // TRACE
    public static final int LOG_VERBOSE = 1; // DEBUG

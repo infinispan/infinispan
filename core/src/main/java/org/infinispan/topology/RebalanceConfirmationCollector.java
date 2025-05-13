@@ -16,7 +16,7 @@ import org.infinispan.util.logging.LogFactory;
 * @since 5.2
 */
 class RebalanceConfirmationCollector {
-   private final static Log log = LogFactory.getLog(RebalanceConfirmationCollector.class);
+   private static final Log log = LogFactory.getLog(RebalanceConfirmationCollector.class);
 
    private final ReentrantLock lock = new ReentrantLock();
    private final String cacheName;

@@ -18,5 +18,5 @@ public abstract class InternalCacheManager implements EmbeddedCacheManager {
       return globalComponentRegistry();
    }
 
-   abstract protected GlobalComponentRegistry globalComponentRegistry();
+   protected abstract GlobalComponentRegistry globalComponentRegistry();
 }

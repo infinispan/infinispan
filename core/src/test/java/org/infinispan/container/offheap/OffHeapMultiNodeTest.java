@@ -172,8 +172,8 @@ public class OffHeapMultiNodeTest extends MultipleCacheManagersTest {
       return (DataContainer<WrappedByteArray, WrappedByteArray>) obj;
    }
 
-   final static int KEY_SIZE = 20;
-   final static int VALUE_SIZE = 1024;
+   static final int KEY_SIZE = 20;
+   static final int VALUE_SIZE = 1024;
 
    byte[] randomBytes(int size) {
       byte[] bytes = new byte[size];

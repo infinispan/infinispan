@@ -21,11 +21,11 @@ import java.util.concurrent.TimeUnit;
 
 import org.hibernate.LockMode;
 import org.hibernate.stat.CacheRegionStatistics;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Contact;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Customer;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
-import org.infinispan.commons.time.ControlledTimeService;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -320,7 +320,7 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 
 	class UserRunner implements Callable<Void> {
 		private final CyclicBarrier barrier;
-		final private Integer customerId;
+		private final Integer customerId;
 		private int completedIterations = 0;
 		private Throwable causeOfFailure;
 

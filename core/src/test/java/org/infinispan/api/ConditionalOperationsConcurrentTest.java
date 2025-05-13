@@ -21,12 +21,12 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -400,7 +400,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       }
    }
 
-   public static abstract class CacheOperation {
+   public abstract static class CacheOperation {
       private final boolean isCas;
 
       protected CacheOperation(boolean cas) {

@@ -16,7 +16,7 @@ public class PmemUtilWrapper {
    /**
     * Same as {@link PmemUtil#pmemChannelFor(File, int, boolean, boolean)}.
     */
-   static public FileChannel pmemChannelFor(File file, int length, boolean create, boolean readSharedMetadata) throws FileNotFoundException {
+   public static FileChannel pmemChannelFor(File file, int length, boolean create, boolean readSharedMetadata) throws FileNotFoundException {
       return PmemUtil.pmemChannelFor(file, length, create, readSharedMetadata);
    }
 }

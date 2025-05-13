@@ -6,7 +6,7 @@ import jakarta.transaction.Status;
 import jakarta.transaction.Synchronization;
 
 public class LocalInvalidationSynchronization implements Synchronization {
-   private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(LocalInvalidationSynchronization.class);
+   private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(LocalInvalidationSynchronization.class);
 
    private final Object lockOwner;
    private final PutFromLoadValidator validator;

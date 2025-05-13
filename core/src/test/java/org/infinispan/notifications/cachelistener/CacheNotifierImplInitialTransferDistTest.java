@@ -630,7 +630,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       return listener.getClass().getAnnotation(Listener.class).clustered();
    }
 
-   protected static abstract class StateListener<K, V> {
+   private abstract static class StateListener<K, V> {
       final List<CacheEntryEvent<K, V>> events = Collections.synchronizedList(new ArrayList<>());
       private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 

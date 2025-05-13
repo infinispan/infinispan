@@ -430,7 +430,7 @@ public final class FlowableCreate<T> extends Flowable<T> {
 
     }
 
-    static abstract class NoOverflowBaseAsyncEmitter<T> extends BaseEmitter<T> {
+    abstract static class NoOverflowBaseAsyncEmitter<T> extends BaseEmitter<T> {
 
         private static final long serialVersionUID = 4127754106204442833L;
 

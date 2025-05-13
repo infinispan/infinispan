@@ -144,7 +144,7 @@ public class OffHeapMultiNodeStressTest extends MultipleCacheManagersTest {
       }
    }
 
-   final static int KEY_SIZE = 20;
+   static final int KEY_SIZE = 20;
 
    byte[] randomBytes(int size) {
       byte[] bytes = new byte[size];

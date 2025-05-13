@@ -11,7 +11,7 @@ import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class InvalidationInvocation implements Invocation {
-   private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(InvalidationInvocation.class);
+   private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(InvalidationInvocation.class);
 
    private final Object lockOwner;
    private final NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor;

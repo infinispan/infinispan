@@ -46,7 +46,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  */
 public class SearchAdminResource implements ResourceHandler {
 
-   private final static Log LOG = LogFactory.getLog(SearchAdminResource.class, Log.class);
+   private static final Log LOG = LogFactory.getLog(SearchAdminResource.class, Log.class);
 
    private final InvocationHelper invocationHelper;
 

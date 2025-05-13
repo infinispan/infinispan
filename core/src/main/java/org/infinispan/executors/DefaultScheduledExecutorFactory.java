@@ -16,7 +16,7 @@ import org.infinispan.commons.util.TypedProperties;
  * @since 4.0
  */
 public class DefaultScheduledExecutorFactory implements ScheduledExecutorFactory {
-   final static AtomicInteger counter = new AtomicInteger(0);
+   static final AtomicInteger counter = new AtomicInteger(0);
 
    @Override
    public ScheduledExecutorService getScheduledExecutor(Properties p) {

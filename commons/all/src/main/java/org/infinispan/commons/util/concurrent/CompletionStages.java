@@ -247,7 +247,7 @@ public class CompletionStages {
     * This class implements BiConsumer and extends CompletableFuture to avoid additional object/lambda allocation per instance
     * @param <R>
     */
-   private static abstract class AbstractAggregateCompletionStage<R> extends CompletableFuture<R>
+   private abstract static class AbstractAggregateCompletionStage<R> extends CompletableFuture<R>
          implements AggregateCompletionStage<R>, BiConsumer<Object, Throwable> {
       private static final AtomicIntegerFieldUpdater<AbstractAggregateCompletionStage> remainingUpdater =
             AtomicIntegerFieldUpdater.newUpdater(AbstractAggregateCompletionStage.class, "remaining");
@@ -268,7 +268,7 @@ public class CompletionStages {
       }
 
       @Override
-      final public AggregateCompletionStage<R> dependsOn(CompletionStage<?> stage) {
+      public final AggregateCompletionStage<R> dependsOn(CompletionStage<?> stage) {
          Objects.requireNonNull(stage);
          if (frozen) {
             throw new IllegalStateException();
@@ -282,7 +282,7 @@ public class CompletionStages {
       }
 
       @Override
-      final public CompletionStage<R> freeze() {
+      public final CompletionStage<R> freeze() {
          frozen = true;
          if (remainingUpdater.get(this) == 0) {
             complete();

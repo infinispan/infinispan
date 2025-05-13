@@ -25,7 +25,7 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.DecoderException;
 
 abstract class BaseDecoder extends ByteToMessageDecoder {
-   protected final static Log log = LogFactory.getLog(BaseDecoder.class, Log.class);
+   protected static final Log log = LogFactory.getLog(BaseDecoder.class, Log.class);
 
    protected final EmbeddedCacheManager cacheManager;
    protected final Executor executor;

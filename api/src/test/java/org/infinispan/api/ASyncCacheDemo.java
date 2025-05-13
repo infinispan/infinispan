@@ -98,7 +98,7 @@ public class ASyncCacheDemo {
    }
 
    // Some utilities
-   private final static long BIG_DELAY_NANOS = TimeUnit.DAYS.toNanos(1);
+   private static final long BIG_DELAY_NANOS = TimeUnit.DAYS.toNanos(1);
 
    static <T> T await(CompletionStage<T> cf) {
       return await(cf.toCompletableFuture());

@@ -44,7 +44,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    private static final String STATE_SEGMENT_OWNER_COUNT = "segmentOwner.%d.num";
 
    private final int numOwners;
-   private transient final int hashCode;
+   private final transient int hashCode;
 
    /**
     * The routing table.

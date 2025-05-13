@@ -55,8 +55,8 @@ import net.jcip.annotations.GuardedBy;
 @Scope(Scopes.SERVER)
 public class NettyTransport implements Transport {
 
-   static private final Log log = LogFactory.getLog(NettyTransport.class, Log.class);
-   static private final boolean isLog4jAvailable = isIsLog4jAvailable();
+   private static final Log log = LogFactory.getLog(NettyTransport.class, Log.class);
+   private static final boolean isLog4jAvailable = isIsLog4jAvailable();
    private final DefaultThreadFactory masterThreadFactory;
    private final DefaultThreadFactory ioThreadFactory;
 
