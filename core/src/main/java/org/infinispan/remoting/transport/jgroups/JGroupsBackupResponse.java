@@ -36,7 +36,7 @@ public class JGroupsBackupResponse implements BackupResponse {
 
    private static final Log log = LogFactory.getLog(JGroupsBackupResponse.class);
 
-   private final Map<XSiteBackup, CompletableFuture<ValidResponse>> backupCalls;
+   private final Map<XSiteBackup, CompletableFuture<ValidResponse<?>>> backupCalls;
    private Map<String, Throwable> errors;
    private Set<String> communicationErrors;
    private final TimeService timeService;
@@ -46,7 +46,7 @@ public class JGroupsBackupResponse implements BackupResponse {
    private volatile LongConsumer timeElapsedConsumer = value -> {
    };
 
-   public JGroupsBackupResponse(Map<XSiteBackup, CompletableFuture<ValidResponse>> backupCalls,
+   public JGroupsBackupResponse(Map<XSiteBackup, CompletableFuture<ValidResponse<?>>> backupCalls,
          TimeService timeService) {
       this.backupCalls = Objects.requireNonNull(backupCalls);
       this.timeService = timeService;
@@ -59,7 +59,7 @@ public class JGroupsBackupResponse implements BackupResponse {
       errors = new HashMap<>(backupCalls.size());
       long elapsedTime = 0;
       boolean hasSyncBackups = false;
-      for (Map.Entry<XSiteBackup, CompletableFuture<ValidResponse>> entry : backupCalls.entrySet()) {
+      for (var entry : backupCalls.entrySet()) {
          XSiteBackup xSiteBackup = entry.getKey();
 
          if (!xSiteBackup.isSync()) {
@@ -162,7 +162,7 @@ public class JGroupsBackupResponse implements BackupResponse {
    @Override
    public void notifyAsyncAck(XSiteAsyncAckListener listener) {
       XSiteAsyncAckListener nonNullListener = Objects.requireNonNull(listener);
-      for (Map.Entry<XSiteBackup, CompletableFuture<ValidResponse>> entry : backupCalls.entrySet()) {
+      for (var entry : backupCalls.entrySet()) {
          XSiteBackup backup = entry.getKey();
          if (backup.isSync()) {
             continue;

@@ -11,11 +11,11 @@ import java.util.function.BiConsumer;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.concurrent.BlockingRunnable;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * Common logic to handle {@link org.infinispan.commands.remote.CacheRpcCommand}.
@@ -181,10 +181,9 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
 
    @Override
    public String toString() {
-      final StringBuilder sb = new StringBuilder(getClass().getSimpleName());
-      sb.append("{command=").append(command);
-      sb.append(", sync=").append(sync);
-      sb.append('}');
-      return sb.toString();
+      return getClass().getSimpleName() +
+            "{command=" + command +
+            ", sync=" + sync +
+            '}';
    }
 }

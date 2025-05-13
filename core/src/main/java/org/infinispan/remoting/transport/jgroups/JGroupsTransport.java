@@ -72,7 +72,6 @@ import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.AbstractRequest;
@@ -311,8 +310,7 @@ public class JGroupsTransport implements Transport {
       Address recipient = JGroupsAddressCache.fromJGroupsAddress(new SiteMaster(backup.getSiteName()));
       long requestId = requests.newRequestId();
       logRequest(requestId, rpcCommand, recipient, "backup");
-      SingleSiteRequest<ValidResponse> request =
-            new SingleSiteRequest<>(SingleResponseCollector.validOnly(), requestId, requests, backup.getSiteName());
+      var request = new SingleSiteRequest<>(SingleResponseCollector.validOnly(), requestId, requests, backup.getSiteName());
       addRequest(request);
 
       DeliverOrder order = backup.isSync() ? DeliverOrder.NONE : DeliverOrder.PER_SENDER;

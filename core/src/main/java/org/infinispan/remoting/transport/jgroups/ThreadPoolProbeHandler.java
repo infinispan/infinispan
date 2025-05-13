@@ -1,6 +1,6 @@
 package org.infinispan.remoting.transport.jgroups;
 
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -30,24 +30,17 @@ class ThreadPoolProbeHandler implements DiagnosticsHandler.ProbeHandler {
          return null;
       }
       ThreadPoolExecutor exec = extract(executor);
-      if (exec == null) {
+      if (exec == null || !Arrays.asList(keys).contains(KEY)) {
          return null;
       }
-      Map<String, String> map = new HashMap<>();
-      for (String key : keys) {
-         switch (key) {
-            case KEY:
-               map.put("active-thread", String.valueOf(exec.getActiveCount()));
-               map.put("min-thread", String.valueOf(exec.getCorePoolSize()));
-               map.put("max-thread", String.valueOf(exec.getMaximumPoolSize()));
-               map.put("current-pool-size", String.valueOf(exec.getPoolSize()));
-               map.put("largest-pool-size", String.valueOf(exec.getLargestPoolSize()));
-               map.put("keep-alive", String.valueOf(exec.getKeepAliveTime(TimeUnit.MILLISECONDS)));
-               map.put("queue-size", String.valueOf(exec.getQueue().size()));
-               break;
-         }
-      }
-      return map.isEmpty() ? null : map;
+      return Map.of(
+            "active-thread", String.valueOf(exec.getActiveCount()),
+            "min-thread", String.valueOf(exec.getCorePoolSize()),
+            "max-thread", String.valueOf(exec.getMaximumPoolSize()),
+            "current-pool-size", String.valueOf(exec.getPoolSize()),
+            "largest-pool-size", String.valueOf(exec.getLargestPoolSize()),
+            "keep-alive", String.valueOf(exec.getKeepAliveTime(TimeUnit.MILLISECONDS)),
+            "queue-size", String.valueOf(exec.getQueue().size()));
    }
 
    @Override

@@ -15,12 +15,10 @@ import org.jgroups.raft.StateMachine;
  *
  * @since 14.0
  */
-class JGroupsStateMachineAdapter<T extends RaftStateMachine> implements StateMachine {
+record JGroupsStateMachineAdapter<T extends RaftStateMachine>(T stateMachine) implements StateMachine {
 
-   private final T stateMachine;
-
-   JGroupsStateMachineAdapter(T stateMachine) {
-      this.stateMachine = Objects.requireNonNull(stateMachine);
+   JGroupsStateMachineAdapter {
+      Objects.requireNonNull(stateMachine);
    }
 
    @Override
@@ -38,9 +36,5 @@ class JGroupsStateMachineAdapter<T extends RaftStateMachine> implements StateMac
    @Override
    public void writeContentTo(DataOutput out) throws Exception {
       stateMachine.writeStateTo(out);
-   }
-
-   T getStateMachine() {
-      return stateMachine;
    }
 }

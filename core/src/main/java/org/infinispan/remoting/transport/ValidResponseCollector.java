@@ -24,7 +24,7 @@ public abstract class ValidResponseCollector<T> implements ResponseCollector<Add
    @Override
    public final T addResponse(Address sender, Response response) {
       if (response instanceof ValidResponse) {
-         return addValidResponse(sender, ((ValidResponse) response));
+         return addValidResponse(sender, ((ValidResponse<?>) response));
       } else if (response instanceof ExceptionResponse) {
          return addException(sender, ((ExceptionResponse) response).getException());
       } else if (response instanceof CacheNotFoundResponse) {
@@ -43,7 +43,7 @@ public abstract class ValidResponseCollector<T> implements ResponseCollector<Add
     *
     * @return {@code null} to continue waiting for response, non-{@code null} to complete with that value.
     */
-   protected abstract T addValidResponse(Address sender, ValidResponse response);
+   protected abstract T addValidResponse(Address sender, ValidResponse<?> response);
 
    /**
     * Process a target leaving the cluster or stopping the cache.

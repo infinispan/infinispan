@@ -6,7 +6,7 @@ import org.infinispan.container.entries.InternalCacheValue;
 
 abstract class AbstractInternalCacheValueResponse implements SuccessfulResponse<InternalCacheValue<?>> {
 
-   protected InternalCacheValue<?> icv;
+   protected final InternalCacheValue<?> icv;
 
    public AbstractInternalCacheValueResponse(InternalCacheValue<?> icv) {
       this.icv = icv;

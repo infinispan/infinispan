@@ -271,20 +271,8 @@ public class JGroupsMetricsManagerImpl implements JGroupsMetricsManager {
       }
    }
 
-   private static class DestinationMetrics {
-      final TimerTracker syncRequests;
-      final CounterTracker asyncRequests;
-      final CounterTracker timedOutRequests;
-      final IntConsumer bytesSent;
-      final Set<Object> metricsIds;
-
-      DestinationMetrics(TimerTracker syncRequests, CounterTracker asyncRequests, CounterTracker timedOutRequests, IntConsumer bytesSent, Set<Object> metricsIds) {
-         this.syncRequests = syncRequests;
-         this.asyncRequests = asyncRequests;
-         this.timedOutRequests = timedOutRequests;
-         this.bytesSent = bytesSent;
-         this.metricsIds = metricsIds;
-      }
+   private record DestinationMetrics(TimerTracker syncRequests, CounterTracker asyncRequests,
+                                     CounterTracker timedOutRequests, IntConsumer bytesSent, Set<Object> metricsIds) {
 
       void recordSyncMessage(long durationNanos) {
          syncRequests.update(Duration.ofNanos(durationNanos));

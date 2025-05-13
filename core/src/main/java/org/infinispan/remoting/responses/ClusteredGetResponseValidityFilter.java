@@ -21,7 +21,7 @@ public class ClusteredGetResponseValidityFilter implements ResponseFilter {
    private int missingResponses;
 
    public ClusteredGetResponseValidityFilter(Collection<Address> targets, Address self) {
-      this.targets = new HashSet<Address>(targets);
+      this.targets = new HashSet<>(targets);
       this.acceptableResponses = 0;
       this.missingResponses = targets.size();
       if (this.targets.contains(self)) {

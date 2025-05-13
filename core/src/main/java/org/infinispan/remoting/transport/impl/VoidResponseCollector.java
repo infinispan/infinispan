@@ -57,7 +57,7 @@ public class VoidResponseCollector extends ValidResponseCollector<Void> {
    }
 
    @Override
-   protected Void addValidResponse(Address sender, ValidResponse response) {
+   protected Void addValidResponse(Address sender, ValidResponse<?> response) {
       return null;
    }
 

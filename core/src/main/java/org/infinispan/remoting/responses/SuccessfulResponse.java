@@ -22,7 +22,7 @@ import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheVal
  */
 public interface SuccessfulResponse<T> extends ValidResponse<T> {
 
-   SuccessfulResponse SUCCESSFUL_EMPTY_RESPONSE = new SuccessfulObjResponse<>(null);
+   SuccessfulResponse<?> SUCCESSFUL_EMPTY_RESPONSE = new SuccessfulObjResponse<>(null);
 
    static SuccessfulResponse<?> create(Object rv) {
       if (rv == null)

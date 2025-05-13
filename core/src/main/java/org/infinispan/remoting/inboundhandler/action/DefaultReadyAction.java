@@ -40,17 +40,15 @@ public class DefaultReadyAction implements ReadyAction, ActionListener {
          return true;
       }
       Action action = actions[current];
-      switch (action.check(state)) {
-         case READY:
-            //check the next action. If currentAction has changed, some thread already advanced.
-            return currentAction.compareAndSet(current, current + 1) && isReady();
-         case NOT_READY:
-            return false;
-         case CANCELED:
+      return switch (action.check(state)) {
+         //check the next action. If currentAction has changed, some thread already advanced.
+         case READY -> currentAction.compareAndSet(current, current + 1) && isReady();
+         case NOT_READY -> false;
+         case CANCELED -> {
             currentAction.set(actions.length);
-            return true;
-      }
-      return false;
+            yield true;
+         }
+      };
    }
 
    @Override

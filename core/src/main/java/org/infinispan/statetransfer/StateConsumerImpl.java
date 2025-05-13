@@ -80,7 +80,6 @@ import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
@@ -1036,8 +1035,7 @@ public class StateConsumerImpl implements StateConsumer {
 
       CacheRpcCommand cmd = commandsFactory.buildStateTransferGetListenersCommand(topologyId);
 
-      CompletionStage<ValidResponse> remoteStage =
-            rpcManager.invokeCommand(source, cmd, SingleResponseCollector.validOnly(), rpcOptions);
+      var remoteStage = rpcManager.invokeCommand(source, cmd, SingleResponseCollector.validOnly(), rpcOptions);
       return handleAndCompose(remoteStage, (response, throwable) -> {
          if (throwable != null) {
             log.exceptionDuringClusterListenerRetrieval(source, throwable);

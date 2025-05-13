@@ -134,12 +134,12 @@ public class NamedSocketFactory implements SocketFactory {
    }
 
    @Override
-   public void close(Socket socket) throws IOException {
+   public void close(Socket socket) {
       Util.close(socket);
    }
 
    @Override
-   public void close(ServerSocket serverSocket) throws IOException {
+   public void close(ServerSocket serverSocket) {
       Util.close(serverSocket);
    }
 

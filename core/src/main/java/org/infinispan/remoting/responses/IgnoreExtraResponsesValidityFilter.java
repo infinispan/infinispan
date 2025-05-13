@@ -24,7 +24,7 @@ public final class IgnoreExtraResponsesValidityFilter implements ResponseFilter 
    private int missingResponses;
 
    public IgnoreExtraResponsesValidityFilter(Collection<Address> targets, Address self, boolean removeSelf) {
-      this.targets = new HashSet<Address>(targets);
+      this.targets = new HashSet<>(targets);
       this.missingResponses = targets.size();
       if (removeSelf && this.targets.contains(self)) {
          missingResponses--;

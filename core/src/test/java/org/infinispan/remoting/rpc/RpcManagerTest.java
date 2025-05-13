@@ -19,7 +19,6 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory;
 import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
@@ -49,41 +48,41 @@ public class RpcManagerTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
    }
 
-   public void testInvokeCommand1() throws Exception {
+   public void testInvokeCommand1() {
       ClusteredGetCommand command =
             TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", 0, 0L);
       RpcManager rpcManager0 = cache(0).getAdvancedCache().getRpcManager();
 
       command.setTopologyId(rpcManager0.getTopologyId());
-      CompletionStage<ValidResponse> stage1 =
+      var stage1 =
          rpcManager0.invokeCommand(address(0), command, SingleResponseCollector.validOnly(),
                                    rpcManager0.getSyncRpcOptions());
       assertResponse(null, stage1);
 
-      CompletionStage<ValidResponse> stage2 =
+      var stage2 =
          rpcManager0.invokeCommand(address(1), command, SingleResponseCollector.validOnly(),
                                    rpcManager0.getSyncRpcOptions());
       assertResponse(SUCCESSFUL_EMPTY_RESPONSE, stage2);
 
-      CompletionStage<ValidResponse> stage3 =
+      var stage3 =
          rpcManager0.invokeCommand(SUSPECT, command, SingleResponseCollector.validOnly(),
                                    rpcManager0.getSyncRpcOptions());
       Exceptions.expectExecutionException(SuspectException.class, stage3.toCompletableFuture());
    }
 
-   public void testInvokeCommandCollection() throws Exception {
+   public void testInvokeCommandCollection() {
       ClusteredGetCommand command =
          TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", 0, 0L);
       RpcManager rpcManager0 = cache(0).getAdvancedCache().getRpcManager();
 
       command.setTopologyId(rpcManager0.getTopologyId());
       CompletionStage<Map<Address, Response>> stage1 =
-         rpcManager0.invokeCommand(Arrays.asList(address(0)), command, MapResponseCollector.validOnly(),
+         rpcManager0.invokeCommand(List.of(address(0)), command, MapResponseCollector.validOnly(),
                                    rpcManager0.getSyncRpcOptions());
       assertResponse(Collections.emptyMap(), stage1);
 
       CompletionStage<Map<Address, Response>> stage2 =
-         rpcManager0.invokeCommand(Arrays.asList(address(1)), command, MapResponseCollector.validOnly(),
+         rpcManager0.invokeCommand(List.of(address(1)), command, MapResponseCollector.validOnly(),
                                    rpcManager0.getSyncRpcOptions());
       assertResponse(Collections.singletonMap(address(1), SUCCESSFUL_EMPTY_RESPONSE), stage2);
 
@@ -93,14 +92,14 @@ public class RpcManagerTest extends MultipleCacheManagersTest {
       assertResponse(Collections.singletonMap(address(1), SUCCESSFUL_EMPTY_RESPONSE), stage3);
    }
 
-   public void testInvokeCommandCollectionSuspect() throws Exception {
+   public void testInvokeCommandCollectionSuspect() {
       ClusteredGetCommand command =
          TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", 0, 0L);
       RpcManager rpcManager0 = cache(0).getAdvancedCache().getRpcManager();
 
       command.setTopologyId(rpcManager0.getTopologyId());
       CompletionStage<Map<Address, Response>> stage1 =
-         rpcManager0.invokeCommand(Arrays.asList(SUSPECT), command, MapResponseCollector.validOnly(),
+         rpcManager0.invokeCommand(List.of(SUSPECT), command, MapResponseCollector.validOnly(),
                                    rpcManager0.getSyncRpcOptions());
       Exceptions.expectExecutionException(SuspectException.class, stage1.toCompletableFuture());
 
@@ -115,7 +114,7 @@ public class RpcManagerTest extends MultipleCacheManagersTest {
       Exceptions.expectExecutionException(SuspectException.class, stage3.toCompletableFuture());
    }
 
-   public void testInvokeCommandOnAll() throws Exception {
+   public void testInvokeCommandOnAll() {
       ClusteredGetCommand command =
          TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", 0, 0L);
       RpcManager rpcManager0 = cache(0).getAdvancedCache().getRpcManager();
@@ -127,7 +126,7 @@ public class RpcManagerTest extends MultipleCacheManagersTest {
       assertResponse(makeMap(address(1), SUCCESSFUL_EMPTY_RESPONSE, address(2), SUCCESSFUL_EMPTY_RESPONSE), stage1);
    }
 
-   public void testInvokeCommandOnAllSuspect() throws Exception {
+   public void testInvokeCommandOnAllSuspect() {
       DistributionManager distributionManager = cache(0).getAdvancedCache().getDistributionManager();
       CacheTopology initialTopology = distributionManager.getCacheTopology();
       assertEquals(CacheTopology.Phase.NO_REBALANCE, initialTopology.getPhase());
@@ -156,46 +155,46 @@ public class RpcManagerTest extends MultipleCacheManagersTest {
       }
    }
 
-   public void testInvokeCommandStaggered() throws Exception {
+   public void testInvokeCommandStaggered() {
       ClusteredGetCommand command =
          TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", 0, 0L);
       RpcManager rpcManager0 = cache(0).getAdvancedCache().getRpcManager();
 
       command.setTopologyId(rpcManager0.getTopologyId());
-      CompletionStage<ValidResponse> stage1 =
-         rpcManager0.invokeCommandStaggered(Arrays.asList(address(0)), command, SingleResponseCollector.validOnly(),
+      var stage1 =
+         rpcManager0.invokeCommandStaggered(List.of(address(0)), command, SingleResponseCollector.validOnly(),
                                             rpcManager0.getSyncRpcOptions());
       assertResponse(null, stage1);
 
-      CompletionStage<ValidResponse> stage2 =
-         rpcManager0.invokeCommandStaggered(Arrays.asList(address(1)), command, SingleResponseCollector.validOnly(),
+      var stage2 =
+         rpcManager0.invokeCommandStaggered(List.of(address(1)), command, SingleResponseCollector.validOnly(),
                                             rpcManager0.getSyncRpcOptions());
       assertResponse(SUCCESSFUL_EMPTY_RESPONSE, stage2);
 
-      CompletionStage<ValidResponse> stage3 =
-         rpcManager0.invokeCommandStaggered(Arrays.asList(address(0), address(1)), command,
+      var stage3 =
+         rpcManager0.invokeCommandStaggered(List.of(address(0), address(1)), command,
                                             SingleResponseCollector.validOnly(), rpcManager0.getSyncRpcOptions());
       assertResponse(SUCCESSFUL_EMPTY_RESPONSE, stage3);
 
-      CompletionStage<ValidResponse> stage4 =
-         rpcManager0.invokeCommandStaggered(Arrays.asList(address(0), address(1), address(2)), command,
+      var stage4 =
+         rpcManager0.invokeCommandStaggered(List.of(address(0), address(1), address(2)), command,
                                             SingleResponseCollector.validOnly(), rpcManager0.getSyncRpcOptions());
       assertResponse(SUCCESSFUL_EMPTY_RESPONSE, stage4);
    }
 
-   public void testInvokeCommands() throws Exception {
+   public void testInvokeCommands() {
       ClusteredGetCommand command =
          TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", 0, 0L);
       RpcManager rpcManager0 = cache(0).getAdvancedCache().getRpcManager();
 
       command.setTopologyId(rpcManager0.getTopologyId());
       CompletionStage<Map<Address, Response>> stage1 =
-         rpcManager0.invokeCommands(Arrays.asList(address(0)), a -> command, MapResponseCollector.validOnly(),
+         rpcManager0.invokeCommands(List.of(address(0)), a -> command, MapResponseCollector.validOnly(),
                                     rpcManager0.getSyncRpcOptions());
       assertResponse(Collections.emptyMap(), stage1);
 
       CompletionStage<Map<Address, Response>> stage2 =
-         rpcManager0.invokeCommands(Arrays.asList(address(1)), a -> command, MapResponseCollector.validOnly(),
+         rpcManager0.invokeCommands(List.of(address(1)), a -> command, MapResponseCollector.validOnly(),
                                     rpcManager0.getSyncRpcOptions());
       assertResponse(Collections.singletonMap(address(1), SUCCESSFUL_EMPTY_RESPONSE), stage2);
 

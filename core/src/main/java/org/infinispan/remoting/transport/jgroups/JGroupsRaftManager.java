@@ -239,7 +239,7 @@ class JGroupsRaftManager implements RaftManager {
          StateMachine stateMachine = raftHandle.stateMachine();
          assert stateMachine instanceof JGroupsStateMachineAdapter;
          //noinspection unchecked
-         return ((JGroupsStateMachineAdapter<T>) stateMachine).getStateMachine();
+         return ((JGroupsStateMachineAdapter<T>) stateMachine).stateMachine();
       }
 
       void disconnect() {

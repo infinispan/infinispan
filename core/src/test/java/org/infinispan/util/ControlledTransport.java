@@ -203,13 +203,12 @@ public class ControlledTransport extends AbstractDelegatingTransport {
    public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
                                                                         ReplicableCommand rpcCommand, ResponseMode mode,
                                                                         long timeout, ResponseFilter responseFilter,
-                                                                        DeliverOrder deliverOrder, boolean anycast)
-         throws Exception {
+                                                                        DeliverOrder deliverOrder, boolean anycast) {
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public void sendTo(Address destination, ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception {
+   public void sendTo(Address destination, ReplicableCommand rpcCommand, DeliverOrder deliverOrder) {
       performSend(Collections.singletonList(destination), rpcCommand, c -> {
          try {
             actual.sendTo(destination, rpcCommand, deliverOrder);
@@ -221,8 +220,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
    }
 
    @Override
-   public void sendToMany(Collection<Address> destinations, ReplicableCommand rpcCommand, DeliverOrder deliverOrder)
-         throws Exception {
+   public void sendToMany(Collection<Address> destinations, ReplicableCommand rpcCommand, DeliverOrder deliverOrder) {
       performSend(destinations, rpcCommand, c -> {
          try {
             actual.sendToMany(destinations, rpcCommand, deliverOrder);
