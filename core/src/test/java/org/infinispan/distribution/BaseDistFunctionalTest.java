@@ -7,13 +7,12 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -25,8 +24,9 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.util.ControlledConsistentHashFactory;
+
+import jakarta.transaction.TransactionManager;
 
 
 public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagersTest {
@@ -202,7 +202,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
    protected void assertOwnershipAndNonOwnership(Object key, boolean allowL1) {
       for (Cache<K, V> c : caches) {
          DataContainer<K, V> dc = c.getAdvancedCache().getDataContainer();
-         InternalCacheEntry<K, V> ice = dc.get(key);
+         InternalCacheEntry<K, V> ice = dc.peek(key);
          if (isOwner(c, key)) {
             assert ice != null && ice.getValue() != null : "Fail on owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + ice;
             assert ice instanceof ImmortalCacheEntry : "Fail on owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
@@ -212,7 +212,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
             } else {
                // Segments no longer owned are invalidated asynchronously
                eventually("Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ")", () -> {
-                  InternalCacheEntry<K, V> ice2 = dc.get(key);
+                  InternalCacheEntry<K, V> ice2 = dc.peek(key);
                   return ice2 == null || ice2.getValue() == null;
                });
             }
@@ -226,7 +226,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
 
    protected boolean isInL1(Cache<?, ?> cache, Object key) {
       DataContainer<?, ?> dc = cache.getAdvancedCache().getDataContainer();
-      InternalCacheEntry<?, ?> ice = dc.get(key);
+      InternalCacheEntry<?, ?> ice = dc.peek(key);
       return ice != null && ice.getValue() != null && !(ice instanceof ImmortalCacheEntry);
    }
 

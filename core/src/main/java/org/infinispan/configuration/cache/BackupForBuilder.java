@@ -44,16 +44,6 @@ public class BackupForBuilder extends AbstractConfigurationChildBuilder implemen
       return this;
    }
 
-   /**
-    * Use this method if the remote cache that backups in this cache is the default cache.
-    * @deprecated Use a named cache with {@link #remoteCache(String)} instead.
-    */
-   @Deprecated(forRemoval=true, since = "10.0")
-   public BackupForBuilder defaultRemoteCache() {
-      attributes.attribute(REMOTE_CACHE).set("");
-      return this;
-   }
-
    @Override
    public void validate() {
       //if both remote cache and remote site are not specified then this is not a backup

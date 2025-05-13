@@ -19,24 +19,11 @@ public abstract class AbstractSegmentedStoreConfiguration<T extends AbstractStor
     * Method that is invoked each time a new store is created for a segment. This method should return a new
     * configuration that is configured to be persisted using the given segment.
     * @param segment the segment to use
-    * @return the newly created configuration
-    * @deprecated since 10.0 - please implement {@link #newConfigurationFrom(int, InitializationContext)}.
-    */
-   @Deprecated(forRemoval=true, since = "10.0")
-   public T newConfigurationFrom(int segment) {
-      throw new UnsupportedOperationException("Please make sure you are implementing newConfigurationFrom(int, InitializationContext)");
-   }
-
-   /**
-    * Same as {@link #newConfigurationFrom(int)} except that you can utilize the intialization context when
-    * initializing the segmented store object. This method
-    * @param segment the segment to use
     * @param ctx the initialization context from the persistence layer
     * @return the newly created configuration
-    * This invokes the {@link #newConfigurationFrom(int)} method and this default impl will be removed in the future
     */
    public T newConfigurationFrom(int segment, InitializationContext ctx) {
-      return newConfigurationFrom(segment);
+      throw new UnsupportedOperationException("Please make sure you are implementing newConfigurationFrom(int, InitializationContext)");
    }
 
    /**

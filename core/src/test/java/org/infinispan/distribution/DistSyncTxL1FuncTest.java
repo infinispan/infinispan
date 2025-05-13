@@ -25,6 +25,7 @@ import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.distribution.L1TxInterceptor;
@@ -36,7 +37,6 @@ import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ControlledRpcManager;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.DistSyncTxL1FuncTest")
@@ -79,7 +79,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
          super.assertL1StateOnLocalWrite(cache, updatingCache, key, valueWrite);
       }
       else {
-         InternalCacheEntry ice = cache.getAdvancedCache().getDataContainer().get(key);
+         InternalCacheEntry ice = cache.getAdvancedCache().getDataContainer().peek(key);
          assertNotNull(ice);
          assertEquals(valueWrite, ice.getValue());
       }
@@ -125,12 +125,12 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
       nonOwnerCache.getAdvancedCache().getTransactionManager().begin();
       assertEquals(firstValue, nonOwnerCache.put(key, secondValue));
 
-      InternalCacheEntry ice = nonOwnerCache.getAdvancedCache().getDataContainer().get(key);
+      InternalCacheEntry ice = nonOwnerCache.getAdvancedCache().getDataContainer().peek(key);
       assertNotNull(ice);
       assertEquals(firstValue, ice.getValue());
       // Commit the put which should now update
       nonOwnerCache.getAdvancedCache().getTransactionManager().commit();
-      ice = nonOwnerCache.getAdvancedCache().getDataContainer().get(key);
+      ice = nonOwnerCache.getAdvancedCache().getDataContainer().peek(key);
       assertNotNull(ice);
       assertEquals(secondValue, ice.getValue());
    }
@@ -147,7 +147,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
       nonOwnerCache.getAdvancedCache().getTransactionManager().begin();
       assertEquals(firstValue, nonOwnerCache.remove(key));
 
-      InternalCacheEntry ice = nonOwnerCache.getAdvancedCache().getDataContainer().get(key);
+      InternalCacheEntry ice = nonOwnerCache.getAdvancedCache().getDataContainer().peek(key);
       assertNotNull(ice);
       assertEquals(firstValue, ice.getValue());
       // Commit the put which should now update
@@ -289,8 +289,8 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
          // Wait until owner has tried to replicate to backup owner
          backupPutBarrier.await(10, TimeUnit.SECONDS);
 
-         assertEquals(firstValue, ownerCache.getAdvancedCache().getDataContainer().get(key).getValue());
-         assertEquals(firstValue, backupOwnerCache.getAdvancedCache().getDataContainer().get(key).getValue());
+         assertEquals(firstValue, ownerCache.getAdvancedCache().getDataContainer().peek(key).getValue());
+         assertEquals(firstValue, backupOwnerCache.getAdvancedCache().getDataContainer().peek(key).getValue());
 
          // Now remove the interceptor, just so we can add another.  This is okay since it still retains the next
          // interceptor reference properly
@@ -319,7 +319,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
          // This is async in the LastChance interceptor
          eventually(() -> !isInL1(nonOwnerCache, key));
 
-         assertEquals(secondValue, ownerCache.getAdvancedCache().getDataContainer().get(key).getValue());
+         assertEquals(secondValue, ownerCache.getAdvancedCache().getDataContainer().peek(key).getValue());
       } finally {
          removeAllBlockingInterceptorsFromCache(ownerCache);
          removeAllBlockingInterceptorsFromCache(backupOwnerCache);

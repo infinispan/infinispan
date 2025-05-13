@@ -13,9 +13,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -33,6 +30,9 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 @Test(testName = "lock.StaleTxWithCommitDuringStateTransferTest", groups = "functional")
 @CleanupAfterMethod
@@ -126,11 +126,11 @@ public class StaleTxWithCommitDuringStateTransferTest extends MultipleCacheManag
 
       // Check the key on all caches
       if (commit) {
-         assertEquals("v0", TestingUtil.extractComponent(cache0, InternalDataContainer.class).get(key).getValue());
-         assertEquals("v0", TestingUtil.extractComponent(cache1, InternalDataContainer.class).get(key).getValue());
+         assertEquals("v0", TestingUtil.extractComponent(cache0, InternalDataContainer.class).peek(key).getValue());
+         assertEquals("v0", TestingUtil.extractComponent(cache1, InternalDataContainer.class).peek(key).getValue());
       } else {
-         assertNull(TestingUtil.extractComponent(cache0, InternalDataContainer.class).get(key));
-         assertNull(TestingUtil.extractComponent(cache1, InternalDataContainer.class).get(key));
+         assertNull(TestingUtil.extractComponent(cache0, InternalDataContainer.class).peek(key));
+         assertNull(TestingUtil.extractComponent(cache1, InternalDataContainer.class).peek(key));
       }
 
       // Check for stale locks

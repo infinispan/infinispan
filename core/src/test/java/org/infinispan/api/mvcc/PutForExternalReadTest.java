@@ -193,9 +193,9 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       }
 
       assertNull("Should have cleaned up", cache1.get(key));
-      assertNull("Should have cleaned up", cache1.getAdvancedCache().getDataContainer().get(key));
+      assertNull("Should have cleaned up", cache1.getAdvancedCache().getDataContainer().peek(key));
       assertNull("Should have cleaned up", cache2.get(key));
-      InternalCacheEntry<Object, String> cache2Entry = cache2.getAdvancedCache().getDataContainer().get(key);
+      InternalCacheEntry<Object, String> cache2Entry = cache2.getAdvancedCache().getDataContainer().peek(key);
       assertTrue("Should have cleaned up", cache2Entry == null);
 
       // should not barf

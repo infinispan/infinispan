@@ -132,7 +132,7 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
 
       future.get(10, TimeUnit.SECONDS);
 
-      InternalCacheEntry<Object, Object> ice = cache(2).getAdvancedCache().getDataContainer().get("key");
+      InternalCacheEntry<Object, Object> ice = cache(2).getAdvancedCache().getDataContainer().peek("key");
       assertEquals("Current ICE: " + ice, 1 + expectedIncrement, ice.getValue());
    }
 
@@ -173,7 +173,7 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
 
       future.get(10, TimeUnit.SECONDS);
 
-      InternalCacheEntry<Object, Object> ice = cache(2).getAdvancedCache().getDataContainer().get("key");
+      InternalCacheEntry<Object, Object> ice = cache(2).getAdvancedCache().getDataContainer().peek("key");
       assertEquals("Current ICE: " + ice, 1 + expectedIncrement, ice.getValue());
    }
 

@@ -62,19 +62,6 @@ public class GlobalJmxConfigurationBuilder extends AbstractGlobalConfigurationBu
    }
 
    /**
-    * If JMX is enabled, this property represents the name of this cache manager. It offers the possibility for clients
-    * to provide a user-defined name to the cache manager which later can be used to identify the cache manager within a
-    * JMX based management tool amongst other cache managers that might be running under the same JVM.
-    *
-    * @deprecated Use {@link GlobalConfigurationBuilder#cacheManagerName(String)} instead
-    */
-   @Deprecated(forRemoval=true, since = "10.1")
-   public GlobalJmxConfigurationBuilder cacheManagerName(String cacheManagerName) {
-      getGlobalConfig().cacheContainer().name(cacheManagerName);
-      return this;
-   }
-
-   /**
     * Sets the instance of the {@link org.infinispan.commons.jmx.MBeanServerLookup} class to be used to bound JMX MBeans
     * to.
     *
