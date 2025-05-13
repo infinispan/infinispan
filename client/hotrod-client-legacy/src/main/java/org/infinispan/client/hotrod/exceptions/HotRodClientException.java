@@ -7,22 +7,30 @@ package org.infinispan.client.hotrod.exceptions;
  * @since 4.1
  */
 public class HotRodClientException extends RuntimeException {
-   private long messageId = -1;
-   private int errorStatusCode = -1;
+   private final long messageId;
+   private final int errorStatusCode;
 
    public HotRodClientException() {
+      this.messageId = -1;
+      this.errorStatusCode = -1;
    }
 
    public HotRodClientException(String message) {
       super(message);
+      this.messageId = -1;
+      this.errorStatusCode = -1;
    }
 
    public HotRodClientException(Throwable cause) {
       super(cause);
+      this.messageId = -1;
+      this.errorStatusCode = -1;
    }
 
    public HotRodClientException(String message, Throwable cause) {
       super(message, cause);
+      this.messageId = -1;
+      this.errorStatusCode = -1;
    }
 
    public HotRodClientException(String remoteMessage, long messageId, int errorStatusCode) {

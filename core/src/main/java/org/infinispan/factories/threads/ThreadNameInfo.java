@@ -15,7 +15,7 @@ public class ThreadNameInfo {
    private final String component;
 
    ThreadNameInfo(long globalThreadSequenceNum, long perFactoryThreadSequenceNum,
-         long factorySequenceNum, String node, String component) {
+                  long factorySequenceNum, String node, String component) {
       this.globalThreadSequenceNum = globalThreadSequenceNum;
       this.perFactoryThreadSequenceNum = perFactoryThreadSequenceNum;
       this.factorySequenceNum = factorySequenceNum;
@@ -39,7 +39,7 @@ public class ThreadNameInfo {
     * <li>{@code %c} - emit the component name</li>
     * </ul>
     *
-    * @param thread the thread
+    * @param thread       the thread
     * @param formatString the format string
     * @return the thread name string
     */
@@ -52,15 +52,33 @@ public class ThreadNameInfo {
             builder.append(matcher.group());
          } else {
             switch (matcher.group().charAt(1)) {
-               case '%': builder.append('%'); break;
-               case 't': builder.append(perFactoryThreadSequenceNum); break;
-               case 'g': builder.append(globalThreadSequenceNum); break;
-               case 'f': builder.append(factorySequenceNum); break;
-               case 'p': if (group != null) appendGroupPath(group, builder); break;
-               case 'i': builder.append(thread.getId()); break;
-               case 'G': if (group != null) builder.append(group.getName()); break;
-               case 'n': if (node != null) builder.append(node); break;
-               case 'c': if (component != null) builder.append(component); break;
+               case '%':
+                  builder.append('%');
+                  break;
+               case 't':
+                  builder.append(perFactoryThreadSequenceNum);
+                  break;
+               case 'g':
+                  builder.append(globalThreadSequenceNum);
+                  break;
+               case 'f':
+                  builder.append(factorySequenceNum);
+                  break;
+               case 'p':
+                  if (group != null) appendGroupPath(group, builder);
+                  break;
+               case 'i':
+                  builder.append(thread.getId());
+                  break;
+               case 'G':
+                  if (group != null) builder.append(group.getName());
+                  break;
+               case 'n':
+                  if (node != null) builder.append(node);
+                  break;
+               case 'c':
+                  if (component != null) builder.append(component);
+                  break;
             }
          }
       }
