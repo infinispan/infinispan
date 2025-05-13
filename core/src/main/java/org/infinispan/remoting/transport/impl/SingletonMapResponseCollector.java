@@ -43,7 +43,7 @@ public class SingletonMapResponseCollector
    }
 
    @Override
-   protected Map<Address, Response> withValidResponse(Address sender, ValidResponse response) {
+   protected Map<Address, Response> withValidResponse(Address sender, ValidResponse<?> response) {
       return Collections.singletonMap(sender, response);
    }
 

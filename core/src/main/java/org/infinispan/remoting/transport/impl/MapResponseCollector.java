@@ -75,7 +75,7 @@ public abstract class MapResponseCollector extends ValidResponseCollector<Map<Ad
    }
 
    @Override
-   protected Map<Address, Response> addValidResponse(Address sender, ValidResponse response) {
+   protected Map<Address, Response> addValidResponse(Address sender, ValidResponse<?> response) {
       map.put(sender, response);
       return null;
    }

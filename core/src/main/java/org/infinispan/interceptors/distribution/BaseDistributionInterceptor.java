@@ -694,7 +694,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          rpcManager.sendTo(primaryOwner, command, DeliverOrder.PER_SENDER);
          return null;
       }
-      CompletionStage<ValidResponse> remoteInvocation;
+      CompletionStage<ValidResponse<?>> remoteInvocation;
       try {
          remoteInvocation = rpcManager.invokeCommand(primaryOwner, command, SingleResponseCollector.validOnly(),
                rpcManager.getSyncRpcOptions());

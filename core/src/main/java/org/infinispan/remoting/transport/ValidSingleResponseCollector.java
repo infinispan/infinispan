@@ -15,10 +15,10 @@ import org.infinispan.remoting.responses.ValidResponse;
 public abstract class ValidSingleResponseCollector<S, T> implements ResponseCollector<S, T> {
    @Override
    public final T addResponse(S sender, Response response) {
-      if (response instanceof ValidResponse) {
-         return withValidResponse(sender, ((ValidResponse) response));
-      } else if (response instanceof ExceptionResponse) {
-         return withException(sender, ((ExceptionResponse) response).getException());
+      if (response instanceof ValidResponse<?> rsp) {
+         return withValidResponse(sender, rsp);
+      } else if (response instanceof ExceptionResponse rsp) {
+         return withException(sender, rsp.getException());
       } else if (response instanceof CacheNotFoundResponse) {
          return targetNotFound(sender);
       } else {
@@ -37,7 +37,7 @@ public abstract class ValidSingleResponseCollector<S, T> implements ResponseColl
       throw ResponseCollectors.wrapRemoteException(sender, exception);
    }
 
-   protected abstract T withValidResponse(S sender, ValidResponse response);
+   protected abstract T withValidResponse(S sender, ValidResponse<?> response);
 
    protected abstract T targetNotFound(S sender);
 

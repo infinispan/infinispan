@@ -34,7 +34,7 @@ public class RequestRepository {
 
    public void addRequest(Request<?, ?> request) {
       long requestId = request.getRequestId();
-      Request existingRequest = requests.putIfAbsent(requestId, request);
+      var existingRequest = requests.putIfAbsent(requestId, request);
       if (existingRequest != null) {
          throw new IllegalStateException("Duplicate request id " + requestId);
       }

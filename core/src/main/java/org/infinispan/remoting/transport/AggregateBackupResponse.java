@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.LongConsumer;
 
@@ -66,11 +67,9 @@ public class AggregateBackupResponse implements BackupResponse {
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof AggregateBackupResponse)) return false;
+      if (!(o instanceof AggregateBackupResponse that)) return false;
 
-      AggregateBackupResponse that = (AggregateBackupResponse) o;
-
-      return responses != null ? responses.equals(that.responses) : that.responses == null;
+      return Objects.equals(responses, that.responses);
    }
 
    @Override

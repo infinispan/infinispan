@@ -13,20 +13,24 @@ import org.infinispan.remoting.transport.ValidSingleResponseCollector;
  * @author Dan Berindei
  * @since 9.2
  */
-public class SingleResponseCollector<S> extends ValidSingleResponseCollector<S, ValidResponse> {
-   private static final SingleResponseCollector VALID_ONLY = new SingleResponseCollector<>();
+public class SingleResponseCollector<S> extends ValidSingleResponseCollector<S, ValidResponse<?>> {
+   private static final SingleResponseCollector<?> VALID_ONLY = new SingleResponseCollector<>();
 
+   @SuppressWarnings("unchecked")
    public static <S> SingleResponseCollector<S> validOnly() {
-      return VALID_ONLY;
+      return (SingleResponseCollector<S>) VALID_ONLY;
+   }
+
+   private SingleResponseCollector() {
    }
 
    @Override
-   protected ValidResponse withValidResponse(S sender, ValidResponse response) {
+   protected ValidResponse<?> withValidResponse(S sender, ValidResponse<?> response) {
       return response;
    }
 
    @Override
-   protected ValidResponse targetNotFound(S sender) {
+   protected ValidResponse<?> targetNotFound(S sender) {
       throw ResponseCollectors.remoteNodeSuspected(sender);
    }
 }

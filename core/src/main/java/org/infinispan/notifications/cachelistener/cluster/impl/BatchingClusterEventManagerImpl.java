@@ -26,7 +26,6 @@ import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.cluster.MultiClusterEventCommand;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
@@ -135,7 +134,7 @@ public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManage
          for (Entry<Address, TargetEvents<K, V>> entry : targets.entrySet()) {
             TargetEvents<K, V> multiEvents = entry.getValue();
             MultiClusterEventCommand<K, V> callable = factory.buildMultiClusterEventCommand(multiEvents.events);
-            CompletionStage<ValidResponse> stage = rpcManager.invokeCommand(entry.getKey(), callable, SingleResponseCollector.validOnly(),
+            var stage = rpcManager.invokeCommand(entry.getKey(), callable, SingleResponseCollector.validOnly(),
                   new RpcOptions(DeliverOrder.NONE, timeout, TimeUnit.MILLISECONDS));
             if (multiEvents.sync) {
                aggregateCompletionStage.dependsOn(stage);

@@ -389,7 +389,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
       for (Map.Entry<Address, Set<Object>> entry : splitter.primaries.entrySet()) {
          C copy = commandCopy.copySubset(command, entry.getValue());
          copy.setTopologyId(command.getTopologyId());
-         CompletionStage<ValidResponse> remoteFuture = rpcManager.invokeCommand(entry.getKey(), copy,
+         var remoteFuture = rpcManager.invokeCommand(entry.getKey(), copy,
                SingleResponseCollector.validOnly(),
                rpcManager.getSyncRpcOptions());
          future = remoteFuture.toCompletableFuture().thenCombine(future, mergeResults);
@@ -553,7 +553,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
 
    private void forwardToPrimary(DataWriteCommand command, DistributionInfo distributionInfo,
          Collector<Object> collector) {
-      CompletionStage<ValidResponse> remoteInvocation =
+      var remoteInvocation =
             rpcManager.invokeCommand(distributionInfo.primary(), command, SingleResponseCollector.validOnly(),
                   rpcManager.getSyncRpcOptions());
       remoteInvocation.handle((response, throwable) -> {

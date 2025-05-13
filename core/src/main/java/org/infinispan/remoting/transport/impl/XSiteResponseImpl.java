@@ -18,7 +18,7 @@ import org.infinispan.xsite.XSiteBackup;
  * @author Pedro Ruivo
  * @since 10.0
  */
-public class XSiteResponseImpl<O> extends CompletableFuture<O> implements XSiteResponse<O>, BiConsumer<ValidResponse, Throwable> {
+public class XSiteResponseImpl<O> extends CompletableFuture<O> implements XSiteResponse<O>, BiConsumer<ValidResponse<?>, Throwable> {
 
    private final long sendTimeNanos;
    private final TimeService timeService;

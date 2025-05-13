@@ -8,18 +8,7 @@ import org.infinispan.remoting.transport.Address;
  * It does not keep track of any metric information about the request and all the operations are no-op. The method
  * {@link #destination()} returns the destination {@link Address}.
  */
-class NoOpRequestTracker implements RequestTracker {
-
-   private final Address destination;
-
-   NoOpRequestTracker(Address destination) {
-      this.destination = destination;
-   }
-
-   @Override
-   public Address destination() {
-      return destination;
-   }
+record NoOpRequestTracker(Address destination) implements RequestTracker {
 
    @Override
    public void resetSendTime() {

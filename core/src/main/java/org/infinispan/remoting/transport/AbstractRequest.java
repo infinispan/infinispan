@@ -85,7 +85,7 @@ public abstract class AbstractRequest<S, T> extends CompletableFuture<T> impleme
 
    // Implement Callable for the timeout task
    @Override
-   public final Void call() throws Exception {
+   public final Void call() {
       onTimeout();
       return null;
    }

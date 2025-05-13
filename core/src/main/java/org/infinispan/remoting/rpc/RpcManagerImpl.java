@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -52,7 +51,6 @@ import org.infinispan.metrics.Constants;
 import org.infinispan.metrics.impl.CustomMetricsSupplier;
 import org.infinispan.metrics.impl.MetricUtils;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
@@ -369,37 +367,6 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
       }
    }
 
-   @Override
-   public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
-                                                                        CacheRpcCommand rpc,
-                                                                        RpcOptions options) {
-      // Set the topology id of the command, in case we don't have it yet
-      setTopologyId(rpc);
-      CacheRpcCommand cacheRpc = initRpcCommand(rpc);
-
-      long startTimeNanos = statisticsEnabled ? timeService.time() : 0;
-      CompletableFuture<Map<Address, Response>> invocation;
-      try {
-         // Using Transport.invokeCommand* would require us to duplicate the JGroupsTransport.invokeRemotelyAsync logic
-         invocation = t.invokeRemotelyAsync(recipients, cacheRpc,
-               ResponseMode.SYNCHRONOUS, options.timeUnit().toMillis(options.timeout()),
-               null, options.deliverOrder(),
-               configuration.clustering().cacheMode().isDistributed());
-      } catch (Exception e) {
-         CLUSTER.unexpectedErrorReplicating(e);
-         if (statisticsEnabled) {
-            replicationFailures.increment();
-         }
-         return rethrowAsCacheException(e);
-      }
-
-      return invocation.whenComplete((responseMap, throwable) -> {
-         if (statisticsEnabled) {
-            updateStatistics(startTimeNanos, responseMap, throwable);
-         }
-      });
-   }
-
    private <T> T rethrowAsCacheException(Throwable throwable) {
       if (throwable.getCause() != null && throwable instanceof CompletionException) {
          throwable = throwable.getCause();
@@ -680,8 +647,8 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    }
 
    private CacheRpcCommand initRpcCommand(CacheRpcCommand command) {
-      assert !(command instanceof TopologyAffectedCommand) ||
-            (command instanceof TopologyAffectedCommand && ((TopologyAffectedCommand) command).getTopologyId() >= 0) ||
+      assert !(command instanceof TopologyAffectedCommand topologyCmd) ||
+            topologyCmd.getTopologyId() >= 0 ||
             command instanceof InvalidateL1Command;
 
       command.setSpanAttributes(clusterSpanAttributes);

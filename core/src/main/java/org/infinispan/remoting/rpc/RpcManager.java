@@ -2,8 +2,6 @@ package org.infinispan.remoting.rpc;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
@@ -15,7 +13,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
-import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.commands.remote.XSiteCacheRequest;
 
@@ -90,25 +87,6 @@ public interface RpcManager {
     * @since 9.2
     */
    <T> T blocking(CompletionStage<T> request);
-
-   /**
-    * Invokes a command on remote nodes.
-    *
-    * @param recipients A list of nodes, or {@code null} to invoke the command on all the members of the cluster
-    * @param command The command to invoke
-    * @param options The invocation options
-    * @return A future that, when completed, returns the responses from the remote nodes.
-    * @deprecated since 11.0, use {@link #sendToMany(Collection, CacheRpcCommand, DeliverOrder)} or
-    * {@link #invokeCommand(Collection, CacheRpcCommand, ResponseCollector, RpcOptions)} instead.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   default CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
-                                                                         CacheRpcCommand command, RpcOptions options) {
-      // Always perform with ResponseMode.SYNCHRONOUS as RpcOptions no longer allows ResponseMode to be passed
-      Collection<Address> targets = recipients != null ? recipients : getTransport().getMembers();
-      MapResponseCollector collector = MapResponseCollector.ignoreLeavers(false, targets.size());
-      return invokeCommand(recipients, command, collector, options).toCompletableFuture();
-   }
 
    /**
     * Asynchronously sends the {@link ReplicableCommand} to the destination using the specified {@link DeliverOrder}.

@@ -4,8 +4,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 
 /**
  * The default {@link Runnable} for the remote commands receives.
@@ -28,14 +28,11 @@ public class DefaultTopologyRunnable extends BaseBlockingRunnable {
 
    @Override
    public boolean isReady() {
-      switch (topologyMode) {
-         case READY_TOPOLOGY:
-            return handler.getStateTransferLock().topologyReceived(waitTopology());
-         case READY_TX_DATA:
-            return handler.getStateTransferLock().transactionDataReceived(waitTopology());
-         default:
-            return true;
-      }
+      return switch (topologyMode) {
+         case READY_TOPOLOGY -> handler.getStateTransferLock().topologyReceived(waitTopology());
+         case READY_TX_DATA -> handler.getStateTransferLock().transactionDataReceived(waitTopology());
+         default -> true;
+      };
    }
 
    @Override
@@ -69,12 +66,11 @@ public class DefaultTopologyRunnable extends BaseBlockingRunnable {
 
    @Override
    public String toString() {
-      final StringBuilder sb = new StringBuilder("DefaultTopologyRunnable{");
-      sb.append("topologyMode=").append(topologyMode);
-      sb.append(", commandTopologyId=").append(commandTopologyId);
-      sb.append(", command=").append(command);
-      sb.append(", sync=").append(sync);
-      sb.append('}');
-      return sb.toString();
+      return "DefaultTopologyRunnable{" +
+            "topologyMode=" + topologyMode +
+            ", commandTopologyId=" + commandTopologyId +
+            ", command=" + command +
+            ", sync=" + sync +
+            '}';
    }
 }

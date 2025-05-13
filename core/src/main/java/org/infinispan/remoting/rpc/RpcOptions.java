@@ -65,7 +65,7 @@ public class RpcOptions {
 
    @Override
    public int hashCode() {
-      int result = (int) (timeout ^ (timeout >>> 32));
+      int result = Long.hashCode(timeout);
       result = 31 * result + unit.hashCode();
       result = 31 * result + deliverOrder.hashCode();
       return result;

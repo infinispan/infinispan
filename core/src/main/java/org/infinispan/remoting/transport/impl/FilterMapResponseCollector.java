@@ -34,7 +34,7 @@ public class FilterMapResponseCollector extends ValidResponseCollector<Map<Addre
    }
 
    @Override
-   protected Map<Address, Response> addValidResponse(Address sender, ValidResponse response) {
+   protected Map<Address, Response> addValidResponse(Address sender, ValidResponse<?> response) {
       boolean isDone;
       if (filter != null) {
          boolean isAcceptable = filter.isAcceptable(response, sender);

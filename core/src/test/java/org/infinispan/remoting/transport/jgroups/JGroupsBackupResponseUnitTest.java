@@ -43,9 +43,9 @@ public class JGroupsBackupResponseUnitTest extends AbstractInfinispanTest {
 
    private final ControlledTimeService timeService = new ControlledTimeService();
 
-   private static Map<XSiteBackup, CompletableFuture<ValidResponse>> createResponseMap(
+   private static Map<XSiteBackup, CompletableFuture<ValidResponse<?>>> createResponseMap(
          Collection<XSiteBackup> backups) {
-      Map<XSiteBackup, CompletableFuture<ValidResponse>> responses = new HashMap<>(backups.size());
+      Map<XSiteBackup, CompletableFuture<ValidResponse<?>>> responses = new HashMap<>(backups.size());
       for (XSiteBackup backup : backups) {
          responses.put(backup, new CompletableFuture<>());
       }
@@ -65,7 +65,7 @@ public class JGroupsBackupResponseUnitTest extends AbstractInfinispanTest {
       backups.add(createSyncBackup("sync", 10000));
       backups.add(createAsyncBackup("async"));
 
-      Map<XSiteBackup, CompletableFuture<ValidResponse>> responses = createResponseMap(backups);
+      var responses = createResponseMap(backups);
       BackupResponse response = newBackupResponse(responses);
 
       Future<Void> waiting = waitBackupResponse(response);
@@ -79,7 +79,7 @@ public class JGroupsBackupResponseUnitTest extends AbstractInfinispanTest {
 
    public void testNoWaitForAsyncWith() {
       List<XSiteBackup> backups = Collections.singletonList(createAsyncBackup("async-only"));
-      Map<XSiteBackup, CompletableFuture<ValidResponse>> responses = createResponseMap(backups);
+      var responses = createResponseMap(backups);
 
       BackupResponse response = newBackupResponse(responses);
       Future<Void> waiting = waitBackupResponse(response);
@@ -95,7 +95,7 @@ public class JGroupsBackupResponseUnitTest extends AbstractInfinispanTest {
       List<XSiteBackup> backups = new ArrayList<>(2);
       backups.add(createAsyncBackup("async-1"));
       backups.add(createAsyncBackup("async-2"));
-      Map<XSiteBackup, CompletableFuture<ValidResponse>> responses = createResponseMap(backups);
+      var responses = createResponseMap(backups);
       BackupResponse backupResponse = newBackupResponse(responses);
 
       backupResponse.notifyAsyncAck(listener);
@@ -120,7 +120,7 @@ public class JGroupsBackupResponseUnitTest extends AbstractInfinispanTest {
       List<XSiteBackup> backups = new ArrayList<>(2);
       backups.add(createSyncBackup("sync-1", 10000));
       backups.add(createAsyncBackup("async-2"));
-      Map<XSiteBackup, CompletableFuture<ValidResponse>> responses = createResponseMap(backups);
+      var responses = createResponseMap(backups);
       BackupResponse backupResponse = newBackupResponse(responses);
 
       backupResponse.notifyFinish(listener);
@@ -148,7 +148,7 @@ public class JGroupsBackupResponseUnitTest extends AbstractInfinispanTest {
       backups.add(createSyncBackup("sync-2", 2 * timeoutMs));
       backups.add(createAsyncBackup("async"));
 
-      Map<XSiteBackup, CompletableFuture<ValidResponse>> responses = createResponseMap(backups);
+      var responses = createResponseMap(backups);
       BackupResponse response = newBackupResponse(responses);
 
       timeService.advance(timeoutMs + 1); //this will trigger a timeout for sync-1
@@ -211,7 +211,7 @@ public class JGroupsBackupResponseUnitTest extends AbstractInfinispanTest {
       return fork(response::waitForBackupToFinish);
    }
 
-   private BackupResponse newBackupResponse(Map<XSiteBackup, CompletableFuture<ValidResponse>> responses) {
+   private BackupResponse newBackupResponse(Map<XSiteBackup, CompletableFuture<ValidResponse<?>>> responses) {
       return new JGroupsBackupResponse(responses, timeService);
    }
 
