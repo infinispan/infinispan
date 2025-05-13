@@ -15,5 +15,6 @@ public class RoleMapperTest {
       CommonNameRoleMapper mapper = new CommonNameRoleMapper();
       assertEquals(Collections.singleton("MadHatter"), mapper.principalToRoles(new TestingUtil.TestPrincipal("CN=MadHatter,OU=Users,DC=infinispan,DC=org")));
       assertEquals(Collections.singleton("MadHatter"), mapper.principalToRoles(new TestingUtil.TestPrincipal("cn=MadHatter,ou=Users,dc=infinispan,dc=org")));
+      assertEquals(Collections.singleton("MadHatter"), mapper.principalToRoles(new TestingUtil.TestPrincipal("MadHatter")));
    }
 }
