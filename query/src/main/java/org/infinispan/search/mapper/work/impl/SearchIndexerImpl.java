@@ -61,9 +61,9 @@ public class SearchIndexerImpl implements SearchIndexer {
    @Override
    public void start() {
       requestProcessor = UnicastProcessor.<Supplier<Flowable<?>>>create().toSerialized();
-      // onBackpressureLatest will drop any item that it can't immediately pass downstream
+      // onBackpressureDrop will drop any item that it can't immediately pass downstream
       // Thus next downstream must batch them to not immediately drop
-      processorDisposer = requestProcessor.onBackpressureLatest(supplier -> {
+      processorDisposer = requestProcessor.onBackpressureDrop(supplier -> {
                CompletableFuture<?> completableFuture = submittedTasks.remove(supplier);
                if (completableFuture == null) {
                   throw new IllegalStateException("Dropped task " + supplier + " not found in submittedTask " + submittedTasks);
