@@ -7,6 +7,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 
 /**
  * Tell members to shutdown cache.
@@ -29,6 +30,11 @@ public class CacheShutdownCommand extends AbstractCacheControlCommand {
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry gcr) throws Throwable {
       return gcr.getLocalTopologyManager()
             .handleCacheShutdown(cacheName);
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

@@ -18,6 +18,7 @@ import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.TriangleFunctionsUtil;
 
@@ -79,5 +80,10 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
                   keyDataConversion, valueDataConversion);
       cmd.setForwarded(true);
       return cmd;
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 }

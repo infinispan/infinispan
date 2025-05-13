@@ -3,6 +3,7 @@ package org.infinispan.commands.read;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.remoting.transport.NodeVersion;
 
 /**
  * Command implementation for {@link java.util.Map#entrySet()} functionality.
@@ -20,6 +21,11 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitEntrySetCommand(ctx, this);
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

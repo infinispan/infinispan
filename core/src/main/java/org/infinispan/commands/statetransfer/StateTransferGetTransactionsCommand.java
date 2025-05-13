@@ -10,6 +10,7 @@ import org.infinispan.marshall.protostream.impl.WrappedMessages;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.statetransfer.TransactionInfo;
 import org.infinispan.util.ByteString;
@@ -36,6 +37,11 @@ public class StateTransferGetTransactionsCommand extends AbstractStateTransferCo
    public CompletionStage<List<TransactionInfo>> invokeAsync(ComponentRegistry registry) throws Throwable {
       StateProvider stateProvider = registry.getStateTransferManager().getStateProvider();
       return stateProvider.getTransactionsForSegments(origin, topologyId, segments);
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

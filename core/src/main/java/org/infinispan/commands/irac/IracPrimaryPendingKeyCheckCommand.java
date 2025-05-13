@@ -10,6 +10,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.irac.IracManagerKeyInfo;
 
@@ -53,6 +54,11 @@ public class IracPrimaryPendingKeyCheckCommand extends BaseIracCommand {
    @Override
    public void setOrigin(Address origin) {
       this.origin = origin;
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

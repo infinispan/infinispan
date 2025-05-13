@@ -15,6 +15,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.TriangleFunctionsUtil;
 
@@ -65,6 +66,11 @@ public class PutMapBackupWriteCommand extends BackupWriteCommand {
    @ProtoField(9)
    MarshallableMap<Object, PrivateMetadata> getInternalMetadata() {
       return MarshallableMap.create(internalMetadataMap);
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

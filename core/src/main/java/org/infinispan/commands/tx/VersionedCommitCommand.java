@@ -10,6 +10,7 @@ import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 
@@ -44,6 +45,11 @@ public class VersionedCommitCommand extends CommitCommand {
 
    public void setUpdatedVersions(Map<Object, IncrementableEntryVersion> updatedVersions) {
       this.updatedVersions = MarshallableMap.create(updatedVersions);
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

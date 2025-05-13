@@ -8,6 +8,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.topology.RebalancingStatus;
 
 /**
@@ -44,6 +45,11 @@ public class RebalanceStatusRequestCommand extends AbstractCacheControlCommand {
 
    public String getCacheName() {
       return cacheName;
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

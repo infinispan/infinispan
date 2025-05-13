@@ -5,6 +5,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 
 /**
@@ -24,6 +25,11 @@ public class BackupNoopCommand extends BackupWriteCommand {
 
    public BackupNoopCommand(ByteString cacheName, WriteCommand command, long sequence, int segmentId) {
       super(cacheName, command, sequence, segmentId);
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

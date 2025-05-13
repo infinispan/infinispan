@@ -46,6 +46,7 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.remoting.transport.PhysicalAddress;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.topology.CacheJoinException;
@@ -57,6 +58,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.InvalidTransactionException;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransaction;
+import org.infinispan.upgrade.UnsupportedException;
 import org.infinispan.util.ByteString;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -2399,4 +2401,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = DEBUG)
    @Message(value = "Runtime encountered entry with max idle %d ms being greater or equal to lifespan %d ms, ignoring max idle", id = 706)
    void maxIdleGreaterThanOrEqualLifespanRuntime(long maxIdle, long lifespan);
+
+   @Message(value = "Command '%s' not yet supported by all cluster members, requires version '%s'")
+   UnsupportedException commandNotYeySupportedByAllClusterMembers(String command, NodeVersion version);
 }
