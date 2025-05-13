@@ -6,9 +6,6 @@ import static org.testng.AssertJUnit.fail;
 import java.util.HashMap;
 import java.util.Map;
 
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.Transaction;
-
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -21,6 +18,9 @@ import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Transaction;
 
 /**
  * Main owner changes due to state transfer in a distributed cluster using optimistic locking.
@@ -111,9 +111,9 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
 
    private Object getValue(Object key) {
       log.tracef("Checking key: %s", key);
-      InternalCacheEntry d0 = advancedCache(0).getDataContainer().get(key);
-      InternalCacheEntry d1 = advancedCache(1).getDataContainer().get(key);
-      InternalCacheEntry d2 = advancedCache(2).getDataContainer().get(key);
+      InternalCacheEntry d0 = advancedCache(0).getDataContainer().peek(key);
+      InternalCacheEntry d1 = advancedCache(1).getDataContainer().peek(key);
+      InternalCacheEntry d2 = advancedCache(2).getDataContainer().peek(key);
       if (d0 == null) {
          assert sameValue(d1, d2);
          return d1.getValue();

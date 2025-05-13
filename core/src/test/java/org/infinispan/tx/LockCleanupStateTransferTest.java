@@ -87,7 +87,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
          //at this stage everything should be committed locally
          DataContainer dc = advancedCache(1).getDataContainer();
          for (Object k : keys) {
-            assertEquals(k, dc.get(k).getValue());
+            assertEquals(k, dc.peek(k).getValue());
          }
       }
 

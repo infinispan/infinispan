@@ -415,10 +415,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             gc.listenerThreadPool().threadFactory();
       assertEquals("AsyncListenerThread", listenerThreadFactory.threadNamePattern());
 
-      AbstractThreadPoolExecutorFactory persistenceThreadPool =
-            gc.persistenceThreadPool().threadPoolFactory();
-      assertNull(persistenceThreadPool);
-
       AbstractThreadPoolExecutorFactory blockingThreadPool =
             gc.blockingThreadPool().threadPoolFactory();
       assertEquals(6, blockingThreadPool.maxThreads());
@@ -426,10 +422,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       DefaultThreadFactory persistenceThreadFactory =
             gc.blockingThreadPool().threadFactory();
       assertEquals("BlockingThread", persistenceThreadFactory.threadNamePattern());
-
-      AbstractThreadPoolExecutorFactory asyncThreadPool =
-            gc.asyncThreadPool().threadPoolFactory();
-      assertNull(asyncThreadPool);
 
       AbstractThreadPoolExecutorFactory nonBlockingThreadPool =
             gc.nonBlockingThreadPool().threadPoolFactory();

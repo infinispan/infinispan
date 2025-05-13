@@ -106,7 +106,7 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest<D>> extends Bas
       c1.put(key, value, 10, TimeUnit.MINUTES);
 
       DataContainer<String, String> dc1 = c1.getAdvancedCache().getDataContainer();
-      CacheEntry<?, ?> entry = dc1.get(key);
+      CacheEntry<?, ?> entry = dc1.peek(key);
       assertNotNull(entry);
       assertEquals(createdTime, entry.getCreated());
 

@@ -231,6 +231,21 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache
       return CompletableFuture.completedFuture(getAndPutInternalEntry(key, value, applyDefaultMetadata(metadata)));
    }
 
+   private InternalCacheEntry<K, V> internalGet(Object k) {
+      InternalCacheEntry<K, V> e = getDataContainer().peek(k);
+      if (e != null && e.canExpire()) {
+         long currentTimeMillis = timeService.wallClockTime();
+         InternalExpirationManager<K, V> iem = (InternalExpirationManager<K, V>) getExpirationManager();
+         if (e.isExpired(currentTimeMillis) &&
+               iem.entryExpiredInMemory(e, currentTimeMillis, false).join() == Boolean.TRUE) {
+            e = null;
+         } else {
+            e.touch(currentTimeMillis);
+         }
+      }
+      return e;
+   }
+
    @Override
    public Map<K, V> getAll(Set<?> keys) {
       Map<K, V> map = new HashMap<>(keys.size());
@@ -240,7 +255,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache
       }
       for (Object k : keys) {
          Objects.requireNonNull(k, NULL_KEYS_NOT_SUPPORTED);
-         InternalCacheEntry<K, V> entry = getDataContainer().get(k);
+         InternalCacheEntry<K, V> entry = internalGet(k);
          if (entry != null) {
             K key = entry.getKey();
             V value = entry.getValue();
@@ -266,7 +281,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache
 
    @Override
    public CacheEntry<K, V> getCacheEntry(Object k) {
-      InternalCacheEntry<K, V> entry = getDataContainer().get(k);
+      InternalCacheEntry<K, V> entry = internalGet(k);
       if (entry != null) {
          K key = entry.getKey();
          V value = entry.getValue();
@@ -292,7 +307,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache
       }
       for (Object key : keys) {
          Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
-         InternalCacheEntry<K, V> entry = getDataContainer().get(key);
+         InternalCacheEntry<K, V> entry = internalGet(key);
          if (entry != null) {
             V value = entry.getValue();
             if (aggregateCompletionStage != null) {
@@ -565,7 +580,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache
    @Override
    public V get(Object key) {
       Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
-      InternalCacheEntry<K, V> entry = getDataContainer().get(key);
+      InternalCacheEntry<K, V> entry = internalGet(key);
       if (entry == null) {
          return null;
       } else {
@@ -604,13 +619,13 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache
 
    @Override
    public CompletableFuture<Boolean> removeLifespanExpired(K key, V value, Long lifespan) {
-      checkExpiration(getDataContainer().get(key), timeService.wallClockTime());
+      checkExpiration(getDataContainer().peek(key), timeService.wallClockTime());
       return CompletableFutures.completedTrue();
    }
 
    @Override
    public CompletableFuture<Boolean> removeMaxIdleExpired(K key, V value) {
-      if (checkExpiration(getDataContainer().get(key), timeService.wallClockTime())) {
+      if (checkExpiration(getDataContainer().peek(key), timeService.wallClockTime())) {
          return CompletableFutures.completedTrue();
       }
       return CompletableFutures.completedFalse();
@@ -1752,7 +1767,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache
 
       @Override
       public boolean contains(Object o) {
-         return delegate.get(o) != null;
+         return delegate.containsKey(o);
       }
 
       @Override

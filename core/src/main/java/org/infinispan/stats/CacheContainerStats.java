@@ -1,23 +1,26 @@
 package org.infinispan.stats;
 
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
 /**
- * Similar to {@link Stats} but in the scope of a single per node CacheContainer.
+ * Similar to {@link Stats} but in the scope of a single per-node CacheContainer.
  *
  * @author Vladimir Blagojevic
  * @since 7.1
- * @deprecated Since 10.1.3. This mixes statistics across unrelated caches so the reported numbers don't have too much
- * relevance. Please use {@link org.infinispan.stats.Stats} or {@link org.infinispan.stats.ClusterCacheStats} instead.
  */
 @Scope(Scopes.GLOBAL)
-@Deprecated(forRemoval=true, since = "10.1")
-public interface CacheContainerStats extends Stats {
-
+public interface CacheContainerStats {
    String OBJECT_NAME = "CacheContainerStats";
 
-   double getHitRatio();
+   int getRequiredMinimumNumberOfNodes();
 
-   double getReadWriteRatio();
+   long getDataMemoryUsed();
+
+   long getOffHeapMemoryUsed();
+
+   void reset();
+
+   Json toJson();
 }

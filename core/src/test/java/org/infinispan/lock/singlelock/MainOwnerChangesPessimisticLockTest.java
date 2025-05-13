@@ -5,8 +5,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.HashMap;
 import java.util.Map;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -19,6 +17,8 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Transaction;
 
 /**
  * Main owner changes due to state transfer in a distributed cluster using pessimistic locking.
@@ -142,9 +142,9 @@ public class MainOwnerChangesPessimisticLockTest extends MultipleCacheManagersTe
             expectedValue = "someValue";
          }
          // check them directly in data container
-         InternalCacheEntry d0 = advancedCache(0).getDataContainer().get(key);
-         InternalCacheEntry d1 = advancedCache(1).getDataContainer().get(key);
-         InternalCacheEntry d2 = advancedCache(2).getDataContainer().get(key);
+         InternalCacheEntry d0 = advancedCache(0).getDataContainer().peek(key);
+         InternalCacheEntry d1 = advancedCache(1).getDataContainer().peek(key);
+         InternalCacheEntry d2 = advancedCache(2).getDataContainer().peek(key);
          int c = 0;
          if (d0 != null && !d0.isExpired(TIME_SERVICE.wallClockTime())) {
             assertEquals(expectedValue, d0.getValue());

@@ -13,8 +13,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.configuration.cache.CacheMode;
@@ -33,6 +31,8 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 @Test(testName = "lock.ManyTxsDuringStateTransferTest", groups = "functional")
 @CleanupAfterMethod
@@ -128,8 +128,8 @@ public class ManyTxsDuringStateTransferTest extends MultipleCacheManagersTest {
       DataContainer dataContainer1 = TestingUtil.extractComponent(cache1, InternalDataContainer.class);
       for (int i = 0; i < NUM_TXS; i++) {
          futures[i].get(10, SECONDS);
-         assertEquals("v" + i, dataContainer0.get("testkey" + i).getValue());
-         assertEquals("v" + i, dataContainer1.get("testkey" + i).getValue());
+         assertEquals("v" + i, dataContainer0.peek("testkey" + i).getValue());
+         assertEquals("v" + i, dataContainer1.peek("testkey" + i).getValue());
       }
 
       // Check for stale locks

@@ -6,13 +6,13 @@ import static org.testng.AssertJUnit.assertNotNull;
 import java.util.function.Function;
 
 import org.infinispan.Cache;
-import org.infinispan.functional.EntryView.ReadEntryView;
-import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
+import org.infinispan.marshall.core.MarshallableFunctions;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "functional.FunctionalL1Test")
@@ -55,11 +55,11 @@ public class FunctionalL1Test extends AbstractFunctionalOpTest {
    }
 
    private static void assertNoEntry(Cache<Object, String> cache, Object KEY) {
-      assertEquals(null, cache.getAdvancedCache().getDataContainer().get(KEY));
+      assertEquals(null, cache.getAdvancedCache().getDataContainer().peek(KEY));
    }
 
    private static void assertEntry(Cache<Object, String> cache, Object KEY, String expectedValue, boolean isL1) {
-      InternalCacheEntry<Object, String> ice = cache.getAdvancedCache().getDataContainer().get(KEY);
+      InternalCacheEntry<Object, String> ice = cache.getAdvancedCache().getDataContainer().peek(KEY);
       assertNotNull(ice);
       assertEquals(expectedValue, ice.getValue());
       assertEquals(ice.toString(), isL1, ice.isL1Entry());

@@ -5,8 +5,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 
-import jakarta.transaction.Status;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -20,6 +18,8 @@ import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Status;
 
 /**
  * Checks if the transactions are forward correctly to the new owners
@@ -141,7 +141,7 @@ public class TxDuringStateTransferTest extends MultipleCacheManagersTest {
          if (this == REMOVE || this == CONDITIONAL_REMOVE) {
             assertFalse("Key was not removed in '" + cacheAddress + "'!", dataContainer.containsKey(key));
          } else {
-            InternalCacheEntry entry = dataContainer.get(key);
+            InternalCacheEntry entry = dataContainer.peek(key);
             assertNotNull("Cache '" + cacheAddress + "' does not contains entry!", entry);
             assertEquals("Cache '" + cacheAddress + "' has wrong value!", FINAL_VALUE, entry.getValue());
          }

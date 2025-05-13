@@ -113,7 +113,7 @@ public class FunctionalDistributionTest extends AbstractFunctionalTest {
 
       // we want to ensure that each of the owners executes the function only once:
       Assert.assertEquals(owners.stream()
-                  .map(cache -> cache.getDataContainer().get(key).getValue())
+                  .map(cache -> cache.getDataContainer().peek(key).getValue())
                   .collect(Collectors.toList()),
             Collections.nCopies(numDistOwners, expectedValue));
    }

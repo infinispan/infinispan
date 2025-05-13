@@ -3,8 +3,6 @@ package org.infinispan.container;
 import static org.mockito.Mockito.mock;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.HashSet;
@@ -25,7 +23,6 @@ import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.impl.DefaultDataContainer;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.InternalEntryFactoryImpl;
-import org.infinispan.eviction.impl.ActivationManager;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -57,88 +54,22 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       InternalEntryFactoryImpl internalEntryFactory = new InternalEntryFactoryImpl();
       timeService = new ControlledTimeService();
       TestingUtil.inject(internalEntryFactory, timeService);
-      ActivationManager activationManager = mock(ActivationManager.class);
-      InternalExpirationManager expirationManager = mock(InternalExpirationManager.class);
+      InternalExpirationManager<String, String> expirationManager = mock(InternalExpirationManager.class);
       Mockito.when(expirationManager.entryExpiredInMemory(Mockito.any(), Mockito.anyLong(), Mockito.anyBoolean())).thenReturn(CompletableFutures.completedTrue());
       TestingUtil.inject(dc, internalEntryFactory, timeService, expirationManager);
       return dc;
    }
 
-   public void testExpiredData() throws InterruptedException {
-      dc.put("k", "v", new EmbeddedMetadata.Builder().maxIdle(100, TimeUnit.MINUTES).build());
-      timeService.advance(100);
-
-      InternalCacheEntry entry = dc.get("k");
-      assertNotNull(entry);
-      assertEquals(transienttype(), entry.getClass());
-      assertEquals(timeService.wallClockTime(), entry.getLastUsed());
-      long entryLastUsed = entry.getLastUsed();
-      timeService.advance(100);
-      entry = dc.get("k");
-      assertEquals(entryLastUsed + 100, entry.getLastUsed());
-      dc.put("k", "v", new EmbeddedMetadata.Builder().maxIdle(1, TimeUnit.MILLISECONDS).build());
-
-      long oldTime = timeService.wallClockTime();
-      dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(100, TimeUnit.MINUTES).build());
-      timeService.advance(100);
-      assertEquals(1, dc.size());
-
-      entry = dc.get("k");
-      assertNotNull(entry);
-      assertEquals(mortaltype(), entry.getClass());
-      assertEquals(oldTime, entry.getCreated());
-      assertEquals(-1, entry.getMaxIdle());
-
-      dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(1, TimeUnit.MILLISECONDS).build());
-      timeService.advance(10);
-      assertNull(dc.get("k"));
-      assertEquals(0, dc.size());
-
-      dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(1, TimeUnit.MILLISECONDS).build());
-      timeService.advance(100);
-      assertEquals(0, dc.size());
-   }
-
-   public void testResetOfCreationTime() throws Exception {
+   public void testResetOfCreationTime() {
       long now = timeService.wallClockTime();
       timeService.advance(1);
       dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(1000, TimeUnit.SECONDS).build());
-      long created1 = dc.get("k").getCreated();
+      long created1 = dc.peek("k").getCreated();
       assertEquals(now + 1, created1);
       timeService.advance(100);
       dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(1000, TimeUnit.SECONDS).build());
-      long created2 = dc.get("k").getCreated();
+      long created2 = dc.peek("k").getCreated();
       assertEquals(now + 101, created2);
-   }
-
-   public void testUpdatingLastUsed() throws Exception {
-      long idle = 600000;
-      dc.put("k", "v", new EmbeddedMetadata.Builder().build());
-      InternalCacheEntry ice = dc.get("k");
-      assertEquals(immortaltype(), ice.getClass());
-      assertEquals(-1, ice.toInternalCacheValue().getExpiryTime());
-      assertEquals(-1, ice.getMaxIdle());
-      assertEquals(-1, ice.getLifespan());
-      assertFalse(dc.hasExpirable());
-      dc.put("k", "v", new EmbeddedMetadata.Builder().maxIdle(idle, TimeUnit.MILLISECONDS).build());
-      timeService.advance(100); // for time calc granularity
-      ice = dc.get("k");
-      assertEquals(transienttype(), ice.getClass());
-      assertEquals(idle + timeService.wallClockTime(), ice.toInternalCacheValue().getExpiryTime());
-      assertEquals(timeService.wallClockTime(), ice.getLastUsed());
-      assertEquals(idle, ice.getMaxIdle());
-      assertEquals(-1, ice.getLifespan());
-      assertTrue(dc.hasExpirable());
-
-      timeService.advance(100); // for time calc granularity
-      assertNotNull(dc.get("k"));
-
-      long oldTime = timeService.wallClockTime();
-      // check that the last used stamp has been updated on a get
-      assertEquals(oldTime, ice.getLastUsed());
-
-      timeService.advance(100); // for time calc granularity
-      assertEquals(oldTime, ice.getLastUsed());
    }
 
    protected Class<? extends InternalCacheEntry> mortaltype() {
@@ -156,7 +87,6 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    protected Class<? extends InternalCacheEntry> transientmortaltype() {
       return TransientMortalCacheEntry.class;
    }
-
 
    public void testExpirableToImmortalAndBack() {
       String value = "v";
@@ -207,7 +137,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    private void assertContainerEntry(Class<? extends InternalCacheEntry> type,
                                      String expectedValue) {
       assertTrue(dc.containsKey("k"));
-      InternalCacheEntry entry = dc.get("k");
+      InternalCacheEntry<String, String> entry = dc.peek("k");
       assertEquals(type, entry.getClass());
       assertEquals(expectedValue, entry.getValue());
    }
@@ -302,13 +232,13 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       dc.put("k4", "v4", new EmbeddedMetadata.Builder()
             .maxIdle(100, TimeUnit.MINUTES).lifespan(100, TimeUnit.MINUTES).build());
 
-      Set<Map.Entry> expected = new HashSet<>();
-      expected.add(CoreImmutables.immutableInternalCacheEntry(dc.get("k1")));
-      expected.add(CoreImmutables.immutableInternalCacheEntry(dc.get("k2")));
-      expected.add(CoreImmutables.immutableInternalCacheEntry(dc.get("k3")));
-      expected.add(CoreImmutables.immutableInternalCacheEntry(dc.get("k4")));
+      Set<Map.Entry<String, String>> expected = new HashSet<>();
+      expected.add(CoreImmutables.immutableInternalCacheEntry(dc.peek("k1")));
+      expected.add(CoreImmutables.immutableInternalCacheEntry(dc.peek("k2")));
+      expected.add(CoreImmutables.immutableInternalCacheEntry(dc.peek("k3")));
+      expected.add(CoreImmutables.immutableInternalCacheEntry(dc.peek("k4")));
 
-      Set<Map.Entry> actual = new HashSet<>();
+      Set<Map.Entry<String, String>> actual = new HashSet<>();
       for (Map.Entry<String, String> o : dc) {
          assertTrue(actual.add(o));
       }
@@ -335,10 +265,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       dc.put("k3", "v3", new EmbeddedMetadata.Builder().maxIdle(200, TimeUnit.MILLISECONDS).build());
 
       Set<Map.Entry<String, String>> expected = new HashSet<>();
-      Map.Entry<String, String> k1 = CoreImmutables.immutableInternalCacheEntry(dc.get("k1"));
+      Map.Entry<String, String> k1 = CoreImmutables.immutableInternalCacheEntry(dc.peek("k1"));
       expected.add(k1);
-      expected.add(CoreImmutables.immutableInternalCacheEntry(dc.get("k2")));
-      Map.Entry<String, String> k3 = CoreImmutables.immutableInternalCacheEntry(dc.get("k3"));
+      expected.add(CoreImmutables.immutableInternalCacheEntry(dc.peek("k2")));
+      Map.Entry<String, String> k3 = CoreImmutables.immutableInternalCacheEntry(dc.peek("k3"));
       expected.add(k3);
 
       List<Map.Entry<String, String>> results = StreamSupport.stream(dc.spliterator(), false).collect(Collectors.toList());
