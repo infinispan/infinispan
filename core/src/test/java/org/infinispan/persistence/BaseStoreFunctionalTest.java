@@ -35,6 +35,7 @@ import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -67,7 +68,6 @@ import org.infinispan.test.data.Sex;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 /**
@@ -441,7 +441,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
    private void assertCacheEntry(Cache cache, String key, String value, long lifespanMillis, long maxIdleMillis) {
       DataContainer dc = cache.getAdvancedCache().getDataContainer();
-      InternalCacheEntry ice = dc.get(toStorage(cache, key));
+      InternalCacheEntry ice = dc.peek(toStorage(cache, key));
       assertNotNull(ice);
       assertEquals(value, unwrap(fromStorage(cache, ice.getValue())));
       assertEquals(lifespanMillis, ice.getLifespan());

@@ -163,8 +163,8 @@ public class ConcurrentOperationsTest extends MultipleCacheManagersTest {
    protected boolean checkOwners(List<Address> owners) {
       assert owners.size() == 2;
 
-      InternalCacheEntry entry0 = advancedCache(owners.get(0)).getDataContainer().get("k");
-      InternalCacheEntry entry1 = advancedCache(owners.get(1)).getDataContainer().get("k");
+      InternalCacheEntry entry0 = advancedCache(owners.get(0)).getDataContainer().peek("k");
+      InternalCacheEntry entry1 = advancedCache(owners.get(1)).getDataContainer().peek("k");
       return checkOwnerEntries(entry0, entry1, owners.get(0), owners.get(1));
    }
 

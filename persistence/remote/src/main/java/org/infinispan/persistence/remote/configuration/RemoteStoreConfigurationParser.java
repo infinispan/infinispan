@@ -481,7 +481,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
                break;
             }
             default: {
-               Parser.parseStoreAttribute(reader, i, builder);
+               CacheParser.parseStoreAttribute(reader, i, builder);
                break;
             }
          }

@@ -105,7 +105,7 @@ public class OffHeapBoundedSingleNodeStressTest extends OffHeapMultiNodeStressTe
                KeyGenerator generator = new KeyGenerator();
                while (!Thread.interrupted()) {
                   WrappedByteArray key = generator.getNextKey();
-                  InternalCacheEntry<WrappedBytes, WrappedBytes> innerV = map.get(key);
+                  InternalCacheEntry<WrappedBytes, WrappedBytes> innerV = map.peek(key);
                   // Here just to make sure get doesn't get optimized away
                   if (innerV != null && innerV.equals(cache)) {
                      System.out.println(System.currentTimeMillis());

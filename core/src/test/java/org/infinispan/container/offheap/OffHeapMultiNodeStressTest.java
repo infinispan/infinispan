@@ -125,7 +125,7 @@ public class OffHeapMultiNodeStressTest extends MultipleCacheManagersTest {
                for (int j = 0; j < EXECUTECOUNT; ++j) {
                   DataContainer<WrappedByteArray, WrappedByteArray> container =
                         castDC(bchm.getAdvancedCache().getDataContainer());
-                  container.forEach(ice -> assertEquals(ice, container.get(ice.getKey())));
+                  container.forEach(ice -> assertEquals(ice, container.peek(ice.getKey())));
                }
                return null;
             });

@@ -74,7 +74,7 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
    }
 
    private void assertInCacheAndInStore(Object key, Object cacheValue, Object storeValue, long lifespanMillis) throws PersistenceException {
-      InternalCacheValue se = cache.getAdvancedCache().getDataContainer().get(key).toInternalCacheValue();
+      InternalCacheValue se = cache.getAdvancedCache().getDataContainer().peek(key).toInternalCacheValue();
       testStoredEntry(se, cacheValue, lifespanMillis, "Cache", key);
       MarshallableEntry<?, ?> storeEntry = store.loadEntry(key);
       assertNotNull(storeEntry);
@@ -86,7 +86,7 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
    }
 
    private void assertInCacheNotInStore(Object key, Object value, long lifespanMillis) throws PersistenceException {
-      InternalCacheValue se = cache.getAdvancedCache().getDataContainer().get(key).toInternalCacheValue();
+      InternalCacheValue se = cache.getAdvancedCache().getDataContainer().peek(key).toInternalCacheValue();
       testStoredEntry(se, value, lifespanMillis, "Cache", key);
       eventually(() -> !store.contains(key));
    }

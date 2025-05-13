@@ -11,13 +11,13 @@ import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.commons.util.FilterIterator;
 import org.infinispan.commons.util.FilterSpliterator;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * @author wburns
@@ -49,11 +49,6 @@ public class BoundedOffHeapDataContainer extends SegmentedBoundedOffHeapDataCont
    }
 
    @Override
-   public InternalCacheEntry<WrappedBytes, WrappedBytes> get(Object k) {
-      return super.get(0, k);
-   }
-
-   @Override
    public InternalCacheEntry<WrappedBytes, WrappedBytes> compute(WrappedBytes key, ComputeAction<WrappedBytes, WrappedBytes> action) {
       return super.compute(0, key, action);
    }
@@ -81,11 +76,6 @@ public class BoundedOffHeapDataContainer extends SegmentedBoundedOffHeapDataCont
    @Override
    public InternalCacheEntry<WrappedBytes, WrappedBytes> peek(int segment, Object k) {
       return super.peek(0, k);
-   }
-
-   @Override
-   public InternalCacheEntry<WrappedBytes, WrappedBytes> get(int segment, Object k) {
-      return super.get(0, k);
    }
 
    @Override
