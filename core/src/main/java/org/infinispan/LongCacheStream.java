@@ -39,42 +39,49 @@ public interface LongCacheStream extends LongStream, BaseCacheStream<Long, LongS
     * {@inheritDoc}
     * @return a stream with parallel distribution disabled.
     */
+   @Override
    LongCacheStream sequentialDistribution();
 
    /**
     * {@inheritDoc}
     * @return a stream with parallel distribution enabled.
     */
+   @Override
    LongCacheStream parallelDistribution();
 
    /**
     * {@inheritDoc}
     * @return a stream with the keys filtered.
     */
+   @Override
    LongCacheStream filterKeys(Set<?> keys);
 
    /**
     * {@inheritDoc}
     * @return a stream with the batch size updated
     */
+   @Override
    LongCacheStream distributedBatchSize(int batchSize);
 
    /**
     * {@inheritDoc}
     * @return a stream with the listener registered.
     */
+   @Override
    LongCacheStream segmentCompletionListener(SegmentCompletionListener listener);
 
    /**
     * {@inheritDoc}
     * @return a stream with rehash awareness disabled.
     */
+   @Override
    LongCacheStream disableRehashAware();
 
    /**
     * {@inheritDoc}
     * @return a stream with the timeout set
     */
+   @Override
    LongCacheStream timeout(long timeout, TimeUnit unit);
 
    /**

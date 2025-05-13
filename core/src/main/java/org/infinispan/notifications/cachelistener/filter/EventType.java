@@ -21,7 +21,9 @@ public class EventType {
       this.type = type;
    }
 
-   public boolean isPreEvent() { return pre; };
+   public boolean isPreEvent() {
+      return pre;
+   }
 
    public boolean isRetry() {
       return retried;

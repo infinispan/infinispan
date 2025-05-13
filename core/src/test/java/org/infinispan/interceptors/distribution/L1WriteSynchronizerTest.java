@@ -43,7 +43,6 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
    private L1WriteSynchronizer sync;
    private InternalDataContainer dc;
    private StateTransferLock stl;
-   private ClusteringDependentLogic cdl;
    private final long l1Timeout = 1000;
 
 
@@ -51,7 +50,7 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
    public void beforeMethod() {
       dc = mock(InternalDataContainer.class);
       stl = mock(StateTransferLock.class);
-      cdl = mock(ClusteringDependentLogic.class);
+      ClusteringDependentLogic cdl = mock(ClusteringDependentLogic.class);
       when(cdl.getCacheTopology()).thenReturn(mock(LocalizedCacheTopology.class));
 
       sync = new L1WriteSynchronizer(dc, l1Timeout, stl, cdl);
@@ -249,7 +248,10 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
 
       // We use the topology lock as a sync point to know when the write is being attempted - note this is after
       // the synchronizer has been marked as a write occurring
-      doAnswer(i -> { barrier.await(); return null; }).when(stl).acquireSharedTopologyLock();
+      doAnswer(i -> {
+         barrier.await();
+         return null;
+      }).when(stl).acquireSharedTopologyLock();
 
       Future<Void> future = fork(() -> {
          Object keyValue = new Object();

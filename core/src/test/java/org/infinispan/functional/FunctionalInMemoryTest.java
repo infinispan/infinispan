@@ -10,7 +10,6 @@ import static org.testng.Assert.fail;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CompletionException;
 
-import jakarta.transaction.RollbackException;
 import javax.transaction.xa.XAException;
 
 import org.infinispan.Cache;
@@ -19,6 +18,8 @@ import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.test.TestException;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.RollbackException;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt; and Krzysztof Sobolewski &lt;Krzysztof.Sobolewski@atende.pl&gt;
@@ -49,7 +50,10 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
       Object key = getKey(isOwner, DIST);
 
       method.eval(key, wo, rw,
-            view -> { assertFalse(view.find().isPresent()); return null; },
+            view -> {
+               assertFalse(view.find().isPresent());
+               return null;
+            },
             (view, nil) -> view.set("value"), getClass());
 
       assertInvocations(Boolean.TRUE.equals(transactional) && !isOwner && !method.doesRead ? 3 : 2);
@@ -72,13 +76,14 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
                assertEquals(view.get(), "value");
                return null;
             },
-            (view, nil) -> {}, getClass());
+            (view, nil) -> {
+            }, getClass());
 
       // TODO ISPN-8676: routing optimization for no-write many commands not implemented
       if (method.isMany) {
          assertInvocations(Boolean.TRUE.equals(transactional) && !isOwner && !method.doesRead ? 3 : 2);
       } else {
-         assertInvocations(Boolean.TRUE.equals(transactional) && !isOwner && method.doesRead? 2 : 1);
+         assertInvocations(Boolean.TRUE.equals(transactional) && !isOwner && method.doesRead ? 2 : 1);
       }
    }
 
@@ -94,9 +99,12 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
    }
 
    private <K, R> void testWriteLoad(WriteMethod method, K key, FunctionalMap.WriteOnlyMap<K, String> wo,
-                                FunctionalMap.ReadWriteMap<K, String> rw, String name) {
+                                     FunctionalMap.ReadWriteMap<K, String> rw, String name) {
       method.eval(key, wo, rw,
-            view -> { assertFalse(view.find().isPresent()); return null; },
+            view -> {
+               assertFalse(view.find().isPresent());
+               return null;
+            },
             (view, nil) -> view.set("value"), getClass());
 
       assertInvocations(1);
@@ -109,7 +117,8 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
                assertEquals(view.get(), "value");
                return null;
             },
-            (view, nil) -> {}, getClass());
+            (view, nil) -> {
+            }, getClass());
 
       assertInvocations(2);
    }
@@ -150,7 +159,8 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
       try {
          method.eval(key, null, rw,
                view -> view.get(),
-               (view, nil) -> {}, getClass());
+               (view, nil) -> {
+               }, getClass());
          fail("Should throw CompletionException:CacheException:[RemoteException:]*NoSuchElementException");
       } catch (CompletionException e) { // catches RemoteExceptions, too
          Throwable t = e;
@@ -168,7 +178,10 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
    public void testReadLoad(boolean isOwner, ReadMethod method) {
       Object key = getKey(isOwner, DIST);
 
-      assertTrue(method.eval(key, ro, view -> { assertFalse(view.find().isPresent()); return true; }));
+      assertTrue(method.eval(key, ro, view -> {
+         assertFalse(view.find().isPresent());
+         return true;
+      }));
 
       // we can't add from read-only cache, so we put manually:
       cache(0, DIST).put(key, "value");
@@ -195,7 +208,10 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
       Integer key = 1;
 
       assertTrue(method.eval(key, lro,
-            view -> { assertFalse(view.find().isPresent()); return true; }));
+            view -> {
+               assertFalse(view.find().isPresent());
+               return true;
+            }));
 
       // we can't add from read-only cache, so we put manually:
       Cache<Integer, String> cache = cacheManagers.get(0).getCache();
