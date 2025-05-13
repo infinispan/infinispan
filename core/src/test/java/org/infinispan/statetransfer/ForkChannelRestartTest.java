@@ -21,6 +21,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.PartitionHandling;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -35,7 +36,6 @@ import org.jgroups.conf.ClassConfigurator;
 import org.jgroups.fork.ForkChannel;
 import org.jgroups.fork.UnknownForkHandler;
 import org.jgroups.protocols.FORK;
-import org.jgroups.util.ExtendedUUID;
 import org.testng.annotations.Test;
 
 /**
@@ -132,7 +132,7 @@ public class ForkChannelRestartTest extends MultipleCacheManagersTest {
          }
       });
       channel.setName(name);
-      channel.addAddressGenerator(ExtendedUUID::randomUUID);
+      channel.addAddressGenerator(JGroupsAddress::randomUUID);
       FORK fork = new FORK();
       fork.setUnknownForkHandler(new UnknownForkHandler() {
          @Override

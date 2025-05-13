@@ -19,7 +19,7 @@ public class JGroupsAddressCache {
       // New entries are rarely added after startup, but computeIfAbsent synchronizes every time
       var existing = addressCache.get(addr);
       return existing == null ?
-            addressCache.computeIfAbsent(addr, JGroupsAddress::new) :
+            addressCache.computeIfAbsent(addr, JGroupsAddress::fromExtendedUUID) :
             existing;
    }
 

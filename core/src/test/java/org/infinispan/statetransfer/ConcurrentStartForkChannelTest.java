@@ -14,6 +14,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -28,7 +29,6 @@ import org.jgroups.conf.ClassConfigurator;
 import org.jgroups.fork.ForkChannel;
 import org.jgroups.fork.UnknownForkHandler;
 import org.jgroups.protocols.FORK;
-import org.jgroups.util.ExtendedUUID;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -147,7 +147,7 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
                                                                   new TransportFlags());
       JChannel channel = new JChannel(new ByteArrayInputStream(configString.getBytes()));
       channel.setName(name);
-      channel.addAddressGenerator(ExtendedUUID::randomUUID);
+      channel.addAddressGenerator(JGroupsAddress::randomUUID);
       channel.connect(ConcurrentStartForkChannelTest.class.getSimpleName());
       log.tracef("Channel %s connected: %s", channel, channel.getViewAsString());
       return channel;

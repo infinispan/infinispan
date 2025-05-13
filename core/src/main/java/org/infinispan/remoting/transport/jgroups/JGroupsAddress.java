@@ -26,7 +26,7 @@ public class JGroupsAddress implements TopologyAwareAddress {
    private static final byte[] RACK_KEY = Util.stringToBytes("rack");
    private static final byte[] MACHINE_KEY = Util.stringToBytes("machine");
 
-   public static final JGroupsAddress LOCAL = new JGroupsAddress(ExtendedUUID.randomUUID());
+   public static final JGroupsAddress LOCAL = random();
 
    @ProtoField(value = 1, defaultValue = "0")
    final long mostSignificantBits;
@@ -43,13 +43,20 @@ public class JGroupsAddress implements TopologyAwareAddress {
    private transient String cachedName;
 
    public static JGroupsAddress random() {
-      var uuid = randomUUID(null, null, null, null);
-      return new JGroupsAddress(uuid);
+      return random(null, null, null, null);
    }
 
    public static JGroupsAddress random(String name) {
-      var uuid = randomUUID(name, null, null, null);
-      return new JGroupsAddress(uuid);
+      return random(name, null, null, null);
+   }
+
+   public static JGroupsAddress random(String name, String siteId, String rackId, String machineId) {
+      var uuid = randomUUID(name);
+      return new JGroupsAddress(uuid.getMostSignificantBits(), uuid.getLeastSignificantBits(), NodeVersion.INSTANCE, siteId, rackId, machineId);
+   }
+
+   public static ExtendedUUID randomUUID() {
+      return randomUUID(null, null, null, null);
    }
 
    public static ExtendedUUID randomUUID(String name, String siteId, String rackId, String machineId) {
@@ -57,14 +64,19 @@ public class JGroupsAddress implements TopologyAwareAddress {
    }
 
    public static ExtendedUUID randomUUID(String name, NodeVersion version, String siteId, String rackId, String machineId) {
-      ExtendedUUID uuid = ExtendedUUID.randomUUID(name);
-      if (name != null) {
-         NameCache.add(uuid, name);
-      }
+      ExtendedUUID uuid = randomUUID(name);
       addId(uuid, VERSION_KEY, version.toString());
       addId(uuid, SITE_KEY, siteId);
       addId(uuid, RACK_KEY, rackId);
       addId(uuid, MACHINE_KEY, machineId);
+      return uuid;
+   }
+
+   private static ExtendedUUID randomUUID(String name) {
+      ExtendedUUID uuid = ExtendedUUID.randomUUID(name);
+      if (name != null) {
+         NameCache.add(uuid, name);
+      }
       return uuid;
    }
 
@@ -77,18 +89,21 @@ public class JGroupsAddress implements TopologyAwareAddress {
       return uuid;
    }
 
+   public static JGroupsAddress fromExtendedUUID(ExtendedUUID address) {
+      return new JGroupsAddress(
+            address.getMostSignificantBits(),
+            address.getLeastSignificantBits(),
+            NodeVersion.from(Util.bytesToString(address.get(VERSION_KEY))),
+            Util.bytesToString(address.get(SITE_KEY)),
+            Util.bytesToString(address.get(RACK_KEY)),
+            Util.bytesToString(address.get(MACHINE_KEY))
+      );
+   }
+
    private static void addId(ExtendedUUID uuid, byte[] key, String stringValue) {
       if (stringValue != null) {
          uuid.put(key, Util.stringToBytes(stringValue));
       }
-   }
-
-   public JGroupsAddress(ExtendedUUID address) {
-      this(address.getMostSignificantBits(), address.getLeastSignificantBits(),
-            NodeVersion.from(Util.bytesToString(VERSION_KEY)),
-            Util.bytesToString(address.get(SITE_KEY)),
-            Util.bytesToString(address.get(RACK_KEY)),
-            Util.bytesToString(address.get(MACHINE_KEY)));
    }
 
    private JGroupsAddress(long mostSignificantBits, long leastSignificantBits, NodeVersion version, String siteId,
