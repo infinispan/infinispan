@@ -27,7 +27,7 @@ public abstract class BaseCHPersistenceTest {
       ConsistentHash ch = createConsistentHash();
       generateRandomPersistentUUIDs(ch.getMembers(), persistentUUIDManager);
       ScopedPersistentState state = new ScopedPersistentStateImpl("scope");
-      ch.remapAddresses(persistentUUIDManager.addressToPersistentUUID()).toScopedState(state);
+      ch.toScopedState(state, persistentUUIDManager.addressToPersistentUUID().andThen(Object::toString));
 
       ConsistentHashFactory<?> hashFactory = createConsistentHashFactory();
       ConsistentHash restoredCH = hashFactory.fromPersistentState(state).remapAddresses(persistentUUIDManager.persistentUUIDToAddress());
@@ -41,7 +41,7 @@ public abstract class BaseCHPersistenceTest {
 
 
       ScopedPersistentState state = new ScopedPersistentStateImpl("scope");
-      ch.remapAddresses(persistentUUIDManager.addressToPersistentUUID()).toScopedState(state);
+      ch.toScopedState(state, persistentUUIDManager.addressToPersistentUUID().andThen(Object::toString));
 
       persistentUUIDManager.removePersistentAddressMapping(addressMap.keySet().iterator().next());
 

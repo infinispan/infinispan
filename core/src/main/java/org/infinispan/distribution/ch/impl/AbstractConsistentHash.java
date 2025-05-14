@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -77,14 +78,10 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
    }
 
    @Override
-   public void toScopedState(ScopedPersistentState state) {
+   public void toScopedState(ScopedPersistentState state, Function<Address, String> addressMapper) {
       state.setProperty(ConsistentHashPersistenceConstants.STATE_CONSISTENT_HASH, this.getClass().getName());
       state.setProperty(STATE_NUM_SEGMENTS, getNumSegments());
-      state.setProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS, members.size());
-      for (int i = 0; i < members.size(); i++) {
-         state.setProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i),
-            members.get(i).toString());
-      }
+      writeAddressToState(state, members, ConsistentHashPersistenceConstants.STATE_MEMBERS, ConsistentHashPersistenceConstants.STATE_MEMBER, addressMapper);
       state.setProperty(STATE_CAPACITY_FACTORS, capacityFactors.size());
       for (int i = 0; i < capacityFactors.size(); i++) {
          state.setProperty(String.format(STATE_CAPACITY_FACTOR, i), capacityFactors.get(i));
@@ -185,5 +182,12 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
          remappedMembers.add(a);
       }
       return remappedMembers;
+   }
+
+   protected static void writeAddressToState(ScopedPersistentState state, List<Address> members, String sizeKey, String memberKeyFormat, Function<Address, String> addressMapper) {
+      state.setProperty(sizeKey, members.size());
+      for (int i = 0; i < members.size(); i++) {
+         state.setProperty(String.format(memberKeyFormat, i), addressMapper.apply(members.get(i)));
+      }
    }
 }

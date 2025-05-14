@@ -888,11 +888,9 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       CacheTopology topology = cacheStatus != null ? cacheStatus.getCurrentTopology() : null;
 
       if (cacheStatus != null && topology != null) {
-         ConsistentHash remappedCH = topology.getCurrentCH()
-               .remapAddresses(persistentUUIDManager.addressToPersistentUUID());
-         remappedCH.toScopedState(cacheState);
+         topology.getCurrentCH().toScopedState(cacheState, persistentUUIDManager.addressToPersistentUUID().andThen(Object::toString));
          globalStateManager.writeScopedState(cacheState);
-         if (log.isTraceEnabled()) log.tracef("Written CH state for cache %s, checksum=%s: %s", cacheName, cacheState.getChecksum(), remappedCH);
+         if (log.isTraceEnabled()) log.tracef("Written CH state for cache %s, checksum=%s: %s", cacheName, cacheState.getChecksum(), topology.getCurrentCH());
       } else {
          log.tracef("Cache '%s' status not found (%s) to write CH or without topology", cacheName, cacheStatus);
       }
