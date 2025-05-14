@@ -3,6 +3,7 @@ package org.infinispan.distribution.ch;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 import org.infinispan.globalstate.ScopedPersistentState;
@@ -108,12 +109,13 @@ public interface ConsistentHash {
    String getRoutingTableAsString();
 
    /**
-     * Writes this ConsistentHash to the specified scoped state. Before invoking this method, the ConsistentHash
-     * addresses will have to be replaced with their corresponding {@link org.infinispan.topology.PersistentUUID}s
-     *
-     * @param state the state to which this ConsistentHash will be written
-     */
-   default void toScopedState(ScopedPersistentState state) {
+    * Writes this {@link ConsistentHash} to the specified scoped persistent state.
+    *
+    * @param state         The state to which this {@link ConsistentHash} will be written.
+    * @param addressMapper The mapper {@link Function} to convert the {@link Address} to the unique string used to
+    *                      persist the address within the state.
+    */
+   default void toScopedState(ScopedPersistentState state, Function<Address, String> addressMapper) {
       throw new UnsupportedOperationException();
    }
 

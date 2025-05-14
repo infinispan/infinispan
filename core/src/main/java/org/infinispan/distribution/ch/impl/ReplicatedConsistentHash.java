@@ -2,6 +2,7 @@ package org.infinispan.distribution.ch.impl;
 
 import static org.infinispan.distribution.ch.impl.AbstractConsistentHash.STATE_CAPACITY_FACTOR;
 import static org.infinispan.distribution.ch.impl.AbstractConsistentHash.STATE_CAPACITY_FACTORS;
+import static org.infinispan.distribution.ch.impl.AbstractConsistentHash.writeAddressToState;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -291,18 +293,10 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       return true;
    }
 
-   public void toScopedState(ScopedPersistentState state) {
+   public void toScopedState(ScopedPersistentState state, Function<Address, String> addressMapper) {
       state.setProperty(ConsistentHashPersistenceConstants.STATE_CONSISTENT_HASH, this.getClass().getName());
-      state.setProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS, Integer.toString(members.size()));
-      for (int i = 0; i < members.size(); i++) {
-         state.setProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i),
-                           members.get(i).toString());
-      }
-      state.setProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS_NO_ENTRIES, Integer.toString(membersWithoutState.size()));
-      for (int i = 0; i < membersWithoutState.size(); i++) {
-         state.setProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER_NO_ENTRIES, i),
-                           membersWithoutState.get(i).toString());
-      }
+      writeAddressToState(state, members, ConsistentHashPersistenceConstants.STATE_MEMBERS, ConsistentHashPersistenceConstants.STATE_MEMBER, addressMapper);
+      writeAddressToState(state, membersWithoutState, ConsistentHashPersistenceConstants.STATE_MEMBERS_NO_ENTRIES, ConsistentHashPersistenceConstants.STATE_MEMBER_NO_ENTRIES, addressMapper);
       state.setProperty(STATE_CAPACITY_FACTORS, Integer.toString(capacityFactors.size()));
       for (int i = 0; i < members.size(); i++) {
          state.setProperty(String.format(STATE_CAPACITY_FACTOR, i),

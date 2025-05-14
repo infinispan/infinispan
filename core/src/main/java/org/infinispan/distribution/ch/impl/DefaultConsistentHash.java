@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -307,16 +308,15 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    }
 
    @Override
-   public void toScopedState(ScopedPersistentState state) {
-      super.toScopedState(state);
+   public void toScopedState(ScopedPersistentState state, Function<Address, String> addressMapper) {
+      super.toScopedState(state, addressMapper);
       state.setProperty(STATE_NUM_OWNERS, numOwners);
       state.setProperty(STATE_SEGMENT_OWNERS, segmentOwners.length);
       for (int i = 0; i < segmentOwners.length; i++) {
          List<Address> segmentOwnerAddresses = segmentOwners[i];
          state.setProperty(String.format(STATE_SEGMENT_OWNER_COUNT, i), segmentOwnerAddresses.size());
          for(int j = 0; j < segmentOwnerAddresses.size(); j++) {
-            state.setProperty(String.format(STATE_SEGMENT_OWNER, i, j),
-                  segmentOwnerAddresses.get(j).toString());
+            state.setProperty(String.format(STATE_SEGMENT_OWNER, i, j), addressMapper.apply(segmentOwnerAddresses.get(j)));
          }
       }
    }
