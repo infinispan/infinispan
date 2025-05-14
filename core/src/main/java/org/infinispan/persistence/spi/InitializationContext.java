@@ -86,4 +86,14 @@ public interface InitializationContext {
     * Returns the global configuration
     */
    GlobalConfiguration getGlobalConfiguration();
+
+   /**
+    * This method returns whether the store can directly purge its contents on startup, which can be more performant than a clear.
+    * This will only be true if {@link StoreConfiguration#purgeOnStartup()} is true, but it may be false even when it is
+    * if there are other constraints limiting purge until after contents are loaded.
+    * @return whether a store can directly purge its contents on startup
+    */
+   default boolean canStoreDirectlyPurgeOnStartup() {
+      return getConfiguration().fetchPersistentState();
+   }
 }
