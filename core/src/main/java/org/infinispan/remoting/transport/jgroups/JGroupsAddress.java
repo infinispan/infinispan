@@ -21,10 +21,10 @@ import org.jgroups.util.Util;
  */
 @ProtoTypeId(ProtoStreamTypeIds.JGROUPS_ADDRESS)
 public class JGroupsAddress implements TopologyAwareAddress {
-   private static final byte[] VERSION_KEY = Util.stringToBytes("v");
-   private static final byte[] SITE_KEY = Util.stringToBytes("site");
-   private static final byte[] RACK_KEY = Util.stringToBytes("rack");
-   private static final byte[] MACHINE_KEY = Util.stringToBytes("machine");
+   private static final byte[] VERSION_KEY = new byte[] {'v'};
+   private static final byte[] SITE_KEY = new byte[] {'s'};
+   private static final byte[] RACK_KEY = new byte[] {'r'};
+   private static final byte[] MACHINE_KEY = new byte[] {'m'};
 
    public static final JGroupsAddress LOCAL = random();
 
