@@ -9,6 +9,8 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.globalstate.GlobalStateManager;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
@@ -113,5 +115,22 @@ public class InitializationContextImpl implements InitializationContext {
    @Override
    public GlobalConfiguration getGlobalConfiguration() {
       return globalConfiguration;
+   }
+
+   @Override
+   public boolean canStoreDirectlyPurgeOnStartup() {
+      // purgeOnStartup is false, so no we can't
+      if (!InitializationContext.super.canStoreDirectlyPurgeOnStartup()) {
+         return false;
+      }
+
+      GlobalStateManager gsm = ComponentRegistry.of(getCache())
+            .getGlobalComponentRegistry()
+            .getComponent(GlobalStateManager.class);
+
+      // If the global state is present that means we can't purge if this cache is part of state transfer as its
+      // contents may be required to send to other nodes during state transfer before clearing
+      return gsm.readScopedState(getCache().getName()).isEmpty() ||
+            !getCache().getCacheConfiguration().clustering().cacheMode().needsStateTransfer();
    }
 }

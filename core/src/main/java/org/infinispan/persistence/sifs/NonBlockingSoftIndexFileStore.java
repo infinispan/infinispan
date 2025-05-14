@@ -234,35 +234,45 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
          // get the old files
          FileProvider oldFileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_10_1,
              configuration.maxFileSize());
-         if (oldFileProvider.hasFiles()) {
-            throw PERSISTENCE.persistedDataMigrationUnsupportedVersion("< 11");
-         }
-         oldFileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_11_0,
-             configuration.maxFileSize());
-         if (oldFileProvider.hasFiles()) {
+         // Don't even try to rebuild index or read files if we are allowed to directly purge on startup
+         if (ctx.canStoreDirectlyPurgeOnStartup()) {
             try {
+               fileProvider.clear();
                index.reset();
             } catch (IOException e) {
-               throw PERSISTENCE.issueEncounteredResettingIndex(ctx.getCache().getName(), e);
-            }
-            migrateFromOldFormat(oldFileProvider);
-            migrateData = true;
-         } else if (index.load()) {
-            log.debug("Not building the index - loaded from persisted state");
-            try {
-               maxSeqId.set(index.getMaxSeqId());
-            } catch (IOException e) {
-               log.debug("Failed to load index. Rebuilding it.");
-               buildIndex(maxSeqId);
+               throw log.cannotClearData(e);
             }
          } else {
-            log.debug("Building the index");
-            try {
-               index.reset();
-            } catch (IOException e) {
-               throw PERSISTENCE.issueEncounteredResettingIndex(ctx.getCache().getName(), e);
+            if (oldFileProvider.hasFiles()) {
+               throw PERSISTENCE.persistedDataMigrationUnsupportedVersion("< 11");
             }
-            buildIndex(maxSeqId);
+            oldFileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_11_0,
+                  configuration.maxFileSize());
+            if (oldFileProvider.hasFiles()) {
+               try {
+                  index.reset();
+               } catch (IOException e) {
+                  throw PERSISTENCE.issueEncounteredResettingIndex(ctx.getCache().getName(), e);
+               }
+               migrateFromOldFormat(oldFileProvider);
+               migrateData = true;
+            } else if (index.load()) {
+               log.debug("Not building the index - loaded from persisted state");
+               try {
+                  maxSeqId.set(index.getMaxSeqId());
+               } catch (IOException e) {
+                  log.debug("Failed to load index. Rebuilding it.");
+                  buildIndex(maxSeqId);
+               }
+            } else {
+               log.debug("Building the index");
+               try {
+                  index.reset();
+               } catch (IOException e) {
+                  throw PERSISTENCE.issueEncounteredResettingIndex(ctx.getCache().getName(), e);
+               }
+               buildIndex(maxSeqId);
+            }
          }
          if (!migrateData) {
             logAppender.setSeqId(maxSeqId.get() + 1);
