@@ -13,11 +13,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          sparse-checkout: .github/scripts
       - name: Add release labels on merge
         run: |
           .github/scripts/pr-label-issues.sh "${{ github.event.pull_request.number }}" "$GITHUB_REPOSITORY" "$GITHUB_BASE_REF" >> "$GITHUB_STEP_SUMMARY"
-        if: github.repository == 'infinispan/infinispan' && github.event.pull_request.merged == true
+        if: github.event.pull_request.merged == true
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
