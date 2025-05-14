@@ -365,7 +365,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          // which we don't want
          GlobalConfiguration original = gcb.build();
          clone.read(original);
-         clone.transport().defaultTransport();
+         clone.transport().transport(new JGroupsTransport());
          clone.transport().clusterName("ISPN(SITE " + siteName + ")");
          if (original.jmx().enabled()) {
             clone.jmx().enabled(true).domain(original.jmx().domain() + cacheManagers.size());

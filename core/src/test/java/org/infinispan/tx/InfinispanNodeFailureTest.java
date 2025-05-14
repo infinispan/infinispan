@@ -2,7 +2,6 @@ package org.infinispan.tx;
 
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -15,19 +14,16 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.test.transport.DelayedViewJGroupsTransport;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
@@ -163,12 +159,9 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
 
       viewLatch = new CompletableFuture<>();
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.transport().defaultTransport();
+      global.transport().transport(new DelayedViewJGroupsTransport(viewLatch));
       global.serialization().addContextInitializer(TestDataSCI.INSTANCE);
-      var cm = createClusteredCacheManager(false, global, configuration, new TransportFlags());
-      TestingUtil.replaceComponent(cm, Transport.class, new DelayedViewJGroupsTransport(viewLatch), true);
-      cacheManagers.add(cm);
-      cm.start();
+      addClusterEnabledCacheManager(global, configuration);
       createCluster(TestDataSCI.INSTANCE, configuration, 2);
    }
 }
