@@ -20,7 +20,7 @@ public record NodeVersion(byte major, byte minor, byte patch) implements Compara
    static {
       byte major = Byte.parseByte(Version.getMajor());
       byte minor = Byte.parseByte(Version.getMinor());
-      byte patch = Byte.parseByte(Version.getMinor());
+      byte patch = Byte.parseByte(Version.getPatch());
       INSTANCE = new NodeVersion(major, minor, patch);
    }
 
