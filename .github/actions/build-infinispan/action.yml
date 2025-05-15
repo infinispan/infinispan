@@ -33,5 +33,5 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: infinispan-dist
-        path: distribution/target/distribution/infinispan-server*.zip
+        path: distribution/target/distribution/infinispan-*.zip
         retention-days: 1

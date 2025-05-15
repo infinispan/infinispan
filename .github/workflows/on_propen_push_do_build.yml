@@ -1,0 +1,24 @@
+name: Build
+on:
+  pull_request:
+    branches:
+      - 15.[0-9]+.x
+  push:
+    branches:
+      - 15.[0-9]+.x
+
+concurrency:
+  # Only cancel jobs for PR updates
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Infinispan
+        uses: ./.github/actions/build-infinispan
+
