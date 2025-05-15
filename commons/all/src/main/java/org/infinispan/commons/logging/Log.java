@@ -5,6 +5,7 @@ import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.EnumSet;
 
 import org.infinispan.commons.CacheConfigurationException;
@@ -306,6 +307,14 @@ public interface Log extends BasicLogger {
 
    @Message(value = "WEAK and BOUNDED encoded flag isn't supported!", id = 29522)
    CounterException invalidCounterTypeEncoded();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Task '%s', pending (%d) tasks, last check had (%d), task status is %s", id = 972)
+   void taskProgression(String name, long pending, long lastCheck, String status);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Task '%s' started at %s and done %s", id = 973)
+   void taskDone(String name, Instant started, Instant completed);
 
    @Message(value = "Cannot instantiate class '%s'", id = 29523)
    CacheConfigurationException cannotInstantiateClass(String classname, @Suppressed Throwable t);
