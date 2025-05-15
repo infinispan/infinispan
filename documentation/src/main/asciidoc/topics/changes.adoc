@@ -10,7 +10,7 @@ configuration or `@SerializeWith` annotations on classes. Users of the jboss-mar
 
 === Transport Changes
 It's no longer possible to provide custom `org.infinispan.remoting.transport.Transport` implementations via the `GlobalConfiguration`.
-This was removed with no replacement as in reality Infinispan is tightly coupled to the underlying JGroupsTransport implementation.
+This was removed with no replacement as in reality Infinispan is tightly coupled to the underlying `JGroupsTransport` implementation.
 
 === Expiration configuration validation
 
