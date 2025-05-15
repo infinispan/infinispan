@@ -4,16 +4,16 @@ import java.util.Objects;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Version;
-import org.infinispan.protostream.annotations.Proto;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
- * A DTO record used to represent the basic major, minor and patch values of an instance's {@link Version} over the wire.
+ * A DTO class used to represent the basic major, minor and patch values of an instance's {@link Version} over the wire.
  * @since 16.0
  */
-@Proto
 @ProtoTypeId(ProtoStreamTypeIds.NODE_VERSION)
-public record NodeVersion(byte major, byte minor, byte patch) implements Comparable<NodeVersion> {
+public class NodeVersion implements Comparable<NodeVersion> {
 
    public static final NodeVersion INSTANCE;
 
@@ -24,9 +24,41 @@ public record NodeVersion(byte major, byte minor, byte patch) implements Compara
       INSTANCE = new NodeVersion(major, minor, patch);
    }
 
+   @ProtoFactory
+   static NodeVersion from(byte major, byte minor, byte patch) {
+      if (INSTANCE.major == major && INSTANCE.minor == minor && INSTANCE.patch == patch)
+         return INSTANCE;
+      return new NodeVersion(major, minor, patch);
+   }
+
    public static NodeVersion from(String s) {
       var version = s.split("\\.");
       return new NodeVersion(Byte.parseByte(version[0]), Byte.parseByte(version[1]), Byte.parseByte(version[2]));
+   }
+
+   final byte major;
+   final byte minor;
+   final byte patch;
+
+   private NodeVersion(byte major, byte minor, byte patch) {
+      this.major = major;
+      this.minor = minor;
+      this.patch = patch;
+   }
+
+   @ProtoField(value = 1, defaultValue = "0")
+   public byte getMajor() {
+      return major;
+   }
+
+   @ProtoField(value = 2, defaultValue = "0")
+   public byte getMinor() {
+      return minor;
+   }
+
+   @ProtoField(value = 3, defaultValue = "0")
+   public byte getPatch() {
+      return patch;
    }
 
    public boolean lessThan(NodeVersion other) {
