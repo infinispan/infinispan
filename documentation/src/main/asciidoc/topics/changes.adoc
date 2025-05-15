@@ -8,6 +8,10 @@ configuration or `@SerializeWith` annotations on classes. Users of the jboss-mar
 `AdvancedExternalizer` should either 1) migrate to using Protostream based marshalling (recommended), or 2) replace
 `AdvancedExternalizer` with `org.jboss.marshalling.Externalize` implementations.
 
+=== Transport Changes
+It's no longer possible to provide custom `org.infinispan.remoting.transport.Transport` implementations via the `GlobalConfiguration`.
+This was removed with no replacement as in reality Infinispan is tightly coupled to the underlying `JGroupsTransport` implementation.
+
 === Expiration configuration validation
 
 We now will prevent a cache from being started if it has a max-idle setting that is greater than or

@@ -13,6 +13,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 
 /**
  * @since 10.0
@@ -60,7 +61,7 @@ public class JGroupsConfigurationBuilder extends AbstractGlobalConfigurationBuil
       return stackFileConfigurationBuilder;
    }
 
-   public JGroupsConfigurationBuilder transport(Transport transport) {
+   public JGroupsConfigurationBuilder transport(JGroupsTransport transport) {
       attributes.attribute(TRANSPORT).set(transport);
       return this;
    }

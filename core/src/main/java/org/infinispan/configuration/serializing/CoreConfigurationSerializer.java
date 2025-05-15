@@ -127,7 +127,6 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
    private void writeJGroups(ConfigurationWriter writer, GlobalConfiguration globalConfiguration) {
       if (globalConfiguration.isClustered()) {
          writer.writeStartElement(Element.JGROUPS);
-         writer.writeAttribute(Attribute.TRANSPORT, globalConfiguration.transport().transport().getClass().getName());
          List<StackFileConfiguration> stackFiles = globalConfiguration.transport().jgroups().stackFiles();
          List<StackConfiguration> stacks = globalConfiguration.transport().jgroups().stacks();
          if ((stackFiles.stream().filter(s -> !s.builtIn()).count() + stacks.size()) > 0) {

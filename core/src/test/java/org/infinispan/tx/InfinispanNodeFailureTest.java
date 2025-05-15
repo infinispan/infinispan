@@ -14,6 +14,7 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
@@ -23,7 +24,6 @@ import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.transport.DelayedViewJGroupsTransport;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**

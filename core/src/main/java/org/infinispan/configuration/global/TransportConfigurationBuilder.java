@@ -26,8 +26,8 @@ import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.commons.util.Util;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 
 /**
  * Configures the transport used for network communications across the cluster.
@@ -157,7 +157,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
     *
     * @param transport transport instance
     */
-   public TransportConfigurationBuilder transport(Transport transport) {
+   public TransportConfigurationBuilder transport(JGroupsTransport transport) {
       jgroupsConfigurationBuilder.transport(transport);
       return this;
    }
@@ -239,8 +239,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    }
 
    public TransportConfigurationBuilder defaultTransport() {
-      Transport transport = Util.getInstance(DEFAULT_TRANSPORT, this.getGlobalConfig().getClassLoader());
-      transport(transport);
+      transport(new JGroupsTransport());
       return this;
    }
 
@@ -292,8 +291,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       this.jgroupsConfigurationBuilder.read(template.jgroups(), combine);
       this.typedProperties = new TypedProperties(template.properties());
       if (template.transport() != null) {
-         Transport transport = Util.getInstance(template.transport().getClass().getName(), template.transport().getClass().getClassLoader());
-         transport(transport);
+         transport(new JGroupsTransport());
       }
 
       return this;
