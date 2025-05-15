@@ -11,6 +11,7 @@ import java.util.concurrent.locks.StampedLock;
 import org.apache.logging.log4j.spi.AbstractLogger;
 import org.infinispan.commons.dataconversion.MediaTypeResolver;
 import org.infinispan.commons.executors.NonBlockingResource;
+import org.infinispan.commons.util.ProgressTracker;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.commons.util.concurrent.NonBlockingRejectedExecutionHandler;
@@ -43,6 +44,11 @@ public class CommonsBlockHoundIntegration implements BlockHoundIntegration {
 
       // BoundedLocalCache is unfortunately package private
       builder.allowBlockingCallsInside("com.github.benmanes.caffeine.cache.BoundedLocalCache", "performCleanUp");
+
+      // Allow blocking calls for progress tracking.
+      builder.allowBlockingCallsInside(ProgressTracker.class.getName(), "addTasks");
+      builder.allowBlockingCallsInside(ProgressTracker.class.getName(), "removeTasks");
+      builder.allowBlockingCallsInside(ProgressTracker.class.getName(), "finishedAllTasks");
 
       handleJREClasses(builder);
 
