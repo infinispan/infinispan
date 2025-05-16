@@ -468,6 +468,10 @@ public class DummyInMemoryStore<K, V> implements WaitNonBlockingStore<K, V> {
    private long actualSize(IntSet segments) {
       record("size");
 
+      if (!configuration.segmented()) {
+         segments = IntSets.immutableSet(0);
+      }
+
       AtomicLong size = new AtomicLong();
       long now = timeService.wallClockTime();
       for (PrimitiveIterator.OfInt iter = segments.iterator(); iter.hasNext(); ) {
