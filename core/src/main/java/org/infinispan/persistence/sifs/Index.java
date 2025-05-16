@@ -235,6 +235,18 @@ class Index {
     * @return True if the index was loaded from well persisted state
     */
    public boolean load() {
+      boolean loaded = attemptLoad();
+
+      // If we failed to load any of the index we have to make sure the sizer per segment is cleared
+      if (!loaded) {
+         for (int i = 0; i < sizePerSegment.length(); ++i) {
+            sizePerSegment.set(i, 0);
+         }
+      }
+      return loaded;
+   }
+
+   private boolean attemptLoad() {
       if (!checkForExistingIndexSizeFile()) {
          return false;
       }
