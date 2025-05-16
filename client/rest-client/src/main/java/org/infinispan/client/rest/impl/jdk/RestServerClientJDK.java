@@ -149,4 +149,14 @@ public class RestServerClientJDK implements RestServerClient {
    public CompletionStage<RestResponse> cacheConfigDefaults() {
       return client.get(path + "/caches/defaults");
    }
+
+   @Override
+   public CompletionStage<RestResponse> ready() {
+      return client.head("/health/ready");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> live() {
+      return client.head("/health/live");
+   }
 }
