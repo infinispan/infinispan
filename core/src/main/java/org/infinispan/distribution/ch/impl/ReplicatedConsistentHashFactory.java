@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.UUID;
 import java.util.function.Function;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -17,7 +18,6 @@ import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.topology.PersistentUUID;
 
 /**
  * Factory for ReplicatedConsistentHash.
@@ -57,7 +57,7 @@ public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<Re
    }
 
    @Override
-   public PersistedConsistentHash<ReplicatedConsistentHash> fromPersistentState(ScopedPersistentState state, Function<PersistentUUID, Address> addressMapper) {
+   public PersistedConsistentHash<ReplicatedConsistentHash> fromPersistentState(ScopedPersistentState state, Function<UUID, Address> addressMapper) {
       String consistentHashClass = state.getProperty("consistentHash");
       if (!ReplicatedConsistentHash.class.getName().equals(consistentHashClass))
          throw CONTAINER.persistentConsistentHashMismatch(this.getClass().getName(), consistentHashClass);

@@ -1,6 +1,7 @@
 package org.infinispan.commands.topology;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -14,7 +15,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.PersistentUUID;
 
 /**
  * Update the stable topology.
@@ -31,7 +31,7 @@ public class TopologyUpdateStableCommand extends AbstractCacheControlCommand {
    final String cacheName;
 
    @ProtoField(2)
-   final List<PersistentUUID> persistentUUIDs;
+   final List<UUID> persistentUUIDs;
 
    @ProtoField(3)
    final int rebalanceId;
@@ -57,7 +57,7 @@ public class TopologyUpdateStableCommand extends AbstractCacheControlCommand {
    }
 
    @ProtoFactory
-   TopologyUpdateStableCommand(String cacheName, List<PersistentUUID> persistentUUIDs, int rebalanceId, int topologyId,
+   TopologyUpdateStableCommand(String cacheName, List<UUID> persistentUUIDs, int rebalanceId, int topologyId,
                                int viewId, WrappedMessage currentCH, WrappedMessage pendingCH, List<JGroupsAddress> actualMembers,
                                boolean topologyRestored) {
       this.currentCH = currentCH;

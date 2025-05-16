@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -76,7 +77,6 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -134,7 +134,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       Address[] addresses = new Address[4];
       for (int i = 0; i < 4; i++) {
          addresses[i] = JGroupsAddress.random();
-         persistentUUIDManager.addPersistentAddressMapping(addresses[i], PersistentUUID.randomUUID());
+         persistentUUIDManager.addPersistentAddressMapping(addresses[i], UUID.randomUUID());
       }
       return addresses;
    }

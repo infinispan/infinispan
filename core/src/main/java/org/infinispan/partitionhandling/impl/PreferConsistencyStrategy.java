@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -60,14 +61,14 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
 
          // Not losing any data with the members. We utilize the persistent UUID to verify.
          if (!isDataLost(stableTopology.getCurrentCH(), membersUuid, persistentUUIDManager.addressToPersistentUUID())) {
-            List<Address> lost = stableTopology.getMembers().stream()
+            var lost = stableTopology.getMembers().stream()
                   .map(persistentUUIDManager::getPersistentUuid)
-                  .filter(m -> !membersUuid.contains(m))
-                  .collect(Collectors.toList());
+                  .filter(Predicate.not(membersUuid::contains))
+                  .count();
 
             // We know we are not losing data, but doing the inverse check from the partition.
             // We check if there is still a partition taking place and only recover if it is safe.
-            if (!isMinorityPartition(currentMembers, lost)) {
+            if (!isMinorityPartition(currentMembers.size(), lost)) {
                if (log.isDebugEnabled())
                   log.debugf("Cache %s was unavailable (%s), members joined back %s", context.getCacheName(),
                         context.getAvailabilityMode(), currentMembers);
@@ -141,7 +142,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
          context.updateAvailabilityMode(newMembers, AvailabilityMode.DEGRADED_MODE, true);
          return;
       }
-      if (isMinorityPartition(stableMembers, lostMembers)) {
+      if (isMinorityPartition(stableMembers.size(), lostMembers.size())) {
          eventLogManager.getEventLogger().context(context.getCacheName()).error(EventLogCategory.CLUSTER, MESSAGES.enteringDegradedModeMinorityPartition(newMembers, lostMembers, stableMembers));
          context.updateAvailabilityMode(newMembers, AvailabilityMode.DEGRADED_MODE, true);
          return;
@@ -152,8 +153,8 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       updateMembersAndRebalance(context, newMembers, newMembers);
    }
 
-   protected boolean isMinorityPartition(List<Address> stableMembers, List<Address> lostMembers) {
-      return lostMembers.size() >= Math.ceil(stableMembers.size() / 2d);
+   private static boolean isMinorityPartition(long stableMembers, long lostMembers) {
+      return lostMembers >= Math.ceil(stableMembers / 2d);
    }
 
    @Override

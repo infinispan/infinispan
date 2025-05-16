@@ -339,7 +339,6 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.topology.CacheTopology.Phase.class,
             org.infinispan.topology.HeartBeatCommand.class,
             org.infinispan.topology.ManagerStatusResponse.class,
-            org.infinispan.topology.PersistentUUID.class,
             org.infinispan.topology.RebalancingStatus.class,
             org.infinispan.transaction.xa.GlobalTransaction.class,
             org.infinispan.transaction.xa.recovery.InDoubtTxInfo.class,

@@ -10,6 +10,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -62,7 +63,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
 
    private CacheJoinInfo makeJoinInfo() {
       return new CacheJoinInfo(replicatedChf, 16, 1, 1000,
-            CacheMode.REPL_SYNC, 1.0f, PersistentUUID.randomUUID(), Optional.empty());
+            CacheMode.REPL_SYNC, 1.0f, UUID.randomUUID(), Optional.empty());
    }
 
    /**

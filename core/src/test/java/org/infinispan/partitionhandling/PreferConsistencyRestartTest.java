@@ -7,7 +7,6 @@ import static org.infinispan.partitionhandling.AvailabilityMode.DEGRADED_MODE;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -24,7 +23,6 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.LocalTopologyManager;
-import org.infinispan.topology.PersistentUUID;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "partitionhandling.PreferConsistencyRestartTest")
@@ -40,7 +38,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
    }
 
    public void testOnlyFreshNodeLeftDuringDegraded() throws Exception {
-      Map<JGroupsAddress, PersistentUUID> addressMappings = createInitialCluster();
+      var addressMappings = createInitialCluster();
 
       checkData();
 
@@ -81,7 +79,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
       assertThat(ctm.getAvailabilityMode(CACHE_NAME)).isEqualTo(AVAILABLE);
 
       // Check restart. Add new extraneous node.
-      PersistentUUID uuid = TestingUtil.extractGlobalComponent(manager(0), LocalTopologyManager.class)
+      var uuid = TestingUtil.extractGlobalComponent(manager(0), LocalTopologyManager.class)
             .getPersistentUUID();
       addressMappings.put((JGroupsAddress) manager(0).getAddress(), uuid);
       checkPersistentUUIDMatch(addressMappings);
@@ -141,7 +139,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
    }
 
    public void testCoordinatorChangesWhileDegraded() throws Exception {
-      Map<JGroupsAddress, PersistentUUID> addressMappings = createInitialCluster();
+      var addressMappings = createInitialCluster();
 
       // Operate directly on the default cache.
       // Since it is created by default, it could cause the node fail to start.
@@ -185,7 +183,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
    }
 
    public void testCrashBeforeRecover() throws Exception {
-      Map<JGroupsAddress, PersistentUUID> addressMappings = createInitialCluster();
+      var addressMappings = createInitialCluster();
 
       checkData();
 

@@ -4,12 +4,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.topology.PersistentUUID;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -52,7 +52,7 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
       return state.getIntProperty(STATE_NUM_SEGMENTS);
    }
 
-   protected static PersistedMembers parseMembers(ScopedPersistentState state, Function<PersistentUUID, Address> addressMapper) {
+   protected static PersistedMembers parseMembers(ScopedPersistentState state, Function<UUID, Address> addressMapper) {
       var numMembers = Integer.parseInt(state.getProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS));
       var numCapacityFactors = Integer.parseInt(state.getProperty(STATE_CAPACITY_FACTORS));
 
@@ -60,10 +60,10 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
       assert numCapacityFactors == 0 || numCapacityFactors == numMembers;
       var members = new ArrayList<Address>(numMembers);
       var capacityFactors = new HashMap<Address, Float>();
-      var missingUuids = new ArrayList<PersistentUUID>(numMembers);
+      var missingUuids = new ArrayList<UUID>(numMembers);
 
       for(int i = 0; i < numMembers; i++) {
-         var uuid = PersistentUUID.fromString(state.getProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i)));
+         var uuid = UUID.fromString(state.getProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i)));
          var address = addressMapper.apply(uuid);
          if (address == null) {
             missingUuids.add(uuid);
@@ -79,7 +79,7 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
    }
 
    @Override
-   public void toScopedState(ScopedPersistentState state, Function<Address, PersistentUUID> addressMapper) {
+   public void toScopedState(ScopedPersistentState state, Function<Address, UUID> addressMapper) {
       state.setProperty(ConsistentHashPersistenceConstants.STATE_CONSISTENT_HASH, this.getClass().getName());
       state.setProperty(STATE_NUM_SEGMENTS, getNumSegments());
       writeAddressToState(state, members, ConsistentHashPersistenceConstants.STATE_MEMBERS, ConsistentHashPersistenceConstants.STATE_MEMBER, addressMapper);
@@ -156,7 +156,7 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
       }
    }
 
-   protected static void writeAddressToState(ScopedPersistentState state, List<Address> members, String sizeKey, String memberKeyFormat, Function<Address, PersistentUUID> addressMapper) {
+   protected static void writeAddressToState(ScopedPersistentState state, List<Address> members, String sizeKey, String memberKeyFormat, Function<Address, UUID> addressMapper) {
       state.setProperty(sizeKey, members.size());
       for (int i = 0; i < members.size(); i++) {
          state.setProperty(String.format(memberKeyFormat, i), addressMapper.apply(members.get(i)).toString());

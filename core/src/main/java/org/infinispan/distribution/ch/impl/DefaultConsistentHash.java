@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -21,7 +22,6 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.infinispan.topology.PersistentUUID;
 
 import net.jcip.annotations.Immutable;
 
@@ -77,7 +77,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
       this.hashCode = hashCodeInternal();
    }
 
-   static PersistedConsistentHash<DefaultConsistentHash> fromPersistentState(ScopedPersistentState state, Function<PersistentUUID, Address> addressMapper) {
+   static PersistedConsistentHash<DefaultConsistentHash> fromPersistentState(ScopedPersistentState state, Function<UUID, Address> addressMapper) {
       var segments = parseNumSegments(state);
       var members = parseMembers(state, addressMapper);
       var missingUuids = new HashSet<>(members.missingUuids());
@@ -89,7 +89,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
          int segmentOwnerCount = Integer.parseInt(state.getProperty(String.format(STATE_SEGMENT_OWNER_COUNT, i)));
          segmentOwners[i] = new ArrayList<>();
          for (int j = 0; j < segmentOwnerCount; j++) {
-            var uuid = PersistentUUID.fromString(state.getProperty(String.format(STATE_SEGMENT_OWNER, i, j)));
+            var uuid = UUID.fromString(state.getProperty(String.format(STATE_SEGMENT_OWNER, i, j)));
             var address = addressMapper.apply(uuid);
             if (address == null) {
                missingUuids.add(uuid);
@@ -310,7 +310,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    }
 
    @Override
-   public void toScopedState(ScopedPersistentState state, Function<Address, PersistentUUID> addressMapper) {
+   public void toScopedState(ScopedPersistentState state, Function<Address, UUID> addressMapper) {
       super.toScopedState(state, addressMapper);
       state.setProperty(STATE_NUM_OWNERS, numOwners);
       state.setProperty(STATE_SEGMENT_OWNERS, segmentOwners.length);

@@ -2,6 +2,7 @@ package org.infinispan.topology;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -18,27 +19,27 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class PersistentUUIDManagerImpl implements PersistentUUIDManager {
    private static final Log log = LogFactory.getLog(PersistentUUIDManagerImpl.class);
-   private final ConcurrentMap<Address, PersistentUUID> address2uuid = new ConcurrentHashMap<>();
-   private final ConcurrentMap<PersistentUUID, Address> uuid2address = new ConcurrentHashMap<>();
+   private final ConcurrentMap<Address, UUID> address2uuid = new ConcurrentHashMap<>();
+   private final ConcurrentMap<UUID, Address> uuid2address = new ConcurrentHashMap<>();
 
    @Override
-   public void addPersistentAddressMapping(Address address, PersistentUUID persistentUUID) {
+   public void addPersistentAddressMapping(Address address, UUID persistentUUID) {
       address2uuid.put(address, persistentUUID);
       uuid2address.put(persistentUUID, address);
    }
 
    @Override
-   public PersistentUUID getPersistentUuid(Address address) {
+   public UUID getPersistentUuid(Address address) {
       return address2uuid.get(address);
    }
 
    @Override
-   public Address getAddress(PersistentUUID persistentUUID) {
+   public Address getAddress(UUID persistentUUID) {
       return uuid2address.get(persistentUUID);
    }
 
    @Override
-   public void removePersistentAddressMapping(PersistentUUID persistentUUID) {
+   public void removePersistentAddressMapping(UUID persistentUUID) {
       if (persistentUUID == null) {
          //A null would be invalid here, but letting it proceed would trigger an NPE
          //which would hide the real issue.
@@ -53,7 +54,7 @@ public class PersistentUUIDManagerImpl implements PersistentUUIDManager {
 
    @Override
    public void removePersistentAddressMapping(Address address) {
-      PersistentUUID uuid = address2uuid.get(address);
+      UUID uuid = address2uuid.get(address);
       if (uuid != null) {
          uuid2address.remove(uuid);
          address2uuid.remove(address);
@@ -61,10 +62,10 @@ public class PersistentUUIDManagerImpl implements PersistentUUIDManager {
    }
 
    @Override
-   public List<PersistentUUID> mapAddresses(List<Address> addresses) {
-      ArrayList<PersistentUUID> list = new ArrayList<>(addresses.size());
+   public List<UUID> mapAddresses(List<Address> addresses) {
+      ArrayList<UUID> list = new ArrayList<>(addresses.size());
       for(Address address : addresses) {
-         PersistentUUID persistentUUID = address2uuid.get(address);
+         UUID persistentUUID = address2uuid.get(address);
          if (persistentUUID == null) {
             // This should never happen, but if it does, better log it here to avoid it being swallowed elsewhere
             NullPointerException npe = new NullPointerException();
@@ -78,12 +79,12 @@ public class PersistentUUIDManagerImpl implements PersistentUUIDManager {
    }
 
    @Override
-   public Function<Address, PersistentUUID> addressToPersistentUUID() {
+   public Function<Address, UUID> addressToPersistentUUID() {
       return address2uuid::get;
    }
 
    @Override
-   public Function<PersistentUUID, Address> persistentUUIDToAddress() {
+   public Function<UUID, Address> persistentUUIDToAddress() {
       return uuid2address::get;
    }
 }

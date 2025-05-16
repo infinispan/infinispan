@@ -8,6 +8,7 @@ import static org.testng.AssertJUnit.assertNull;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -160,7 +161,7 @@ class MockLocalTopologyManager implements LocalTopologyManager {
    }
 
    @Override
-   public PersistentUUID getPersistentUUID() {
+   public UUID getPersistentUUID() {
       return null;
    }
 

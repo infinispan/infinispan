@@ -5,11 +5,11 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.globalstate.impl.ScopedPersistentStateImpl;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.testng.annotations.Test;
@@ -36,7 +36,7 @@ public abstract class BaseCHPersistenceTest {
    public void testCHPersistenceMissingMembers() {
       PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
       ConsistentHash ch = createConsistentHash();
-      Map<Address, PersistentUUID> addressMap = generateRandomPersistentUUIDs(ch.getMembers(), persistentUUIDManager);
+      var addressMap = generateRandomPersistentUUIDs(ch.getMembers(), persistentUUIDManager);
 
 
       ScopedPersistentState state = new ScopedPersistentStateImpl("scope");
@@ -51,10 +51,10 @@ public abstract class BaseCHPersistenceTest {
       assertEquals(addressMap.get(toRemove), restoredCH.missingUuids().iterator().next());
    }
 
-   private Map<Address, PersistentUUID> generateRandomPersistentUUIDs(List<Address> members, PersistentUUIDManager persistentUUIDManager) {
-      Map<Address, PersistentUUID> addressMap = new HashMap<>();
+   private Map<Address, UUID> generateRandomPersistentUUIDs(List<Address> members, PersistentUUIDManager persistentUUIDManager) {
+      Map<Address, UUID> addressMap = new HashMap<>();
       for (Address member : members) {
-         PersistentUUID uuid = PersistentUUID.randomUUID();
+         var uuid = UUID.randomUUID();
          persistentUUIDManager.addPersistentAddressMapping(member, uuid);
          addressMap.put(member, uuid);
       }

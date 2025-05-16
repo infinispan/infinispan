@@ -1,6 +1,7 @@
 package org.infinispan.topology;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.configuration.cache.CacheMode;
@@ -29,12 +30,12 @@ public class CacheJoinInfo {
    private final float capacityFactor;
 
    // Per-node state info
-   private final PersistentUUID persistentUUID;
+   private final UUID persistentUUID;
    private final Optional<Integer> persistentStateChecksum;
 
    public CacheJoinInfo(ConsistentHashFactory consistentHashFactory, int numSegments, int numOwners, long timeout,
                         CacheMode cacheMode, float capacityFactor,
-                        PersistentUUID persistentUUID, Optional<Integer> persistentStateChecksum) {
+                        UUID persistentUUID, Optional<Integer> persistentStateChecksum) {
       this.consistentHashFactory = consistentHashFactory;
       this.numSegments = numSegments;
       this.numOwners = numOwners;
@@ -48,7 +49,7 @@ public class CacheJoinInfo {
    @ProtoFactory
    CacheJoinInfo(MarshallableObject<ConsistentHashFactory<?>> wrappedConsistentHashFactory, int numSegments, int numOwners,
                  long timeout, CacheMode cacheMode, float capacityFactor,
-                 PersistentUUID persistentUUID, Integer persistentStateChecksum) {
+                 UUID persistentUUID, Integer persistentStateChecksum) {
       this(MarshallableObject.unwrap(wrappedConsistentHashFactory), numSegments, numOwners, timeout, cacheMode, capacityFactor,
             persistentUUID, Optional.ofNullable(persistentStateChecksum));
    }
@@ -88,7 +89,7 @@ public class CacheJoinInfo {
    }
 
    @ProtoField(8)
-   public PersistentUUID getPersistentUUID() {
+   public UUID getPersistentUUID() {
       return persistentUUID;
    }
 
@@ -106,7 +107,7 @@ public class CacheJoinInfo {
       result = prime * result + cacheMode.hashCode();
       result = prime * result + numOwners;
       result = prime * result + numSegments;
-      result = prime * result + (int) (timeout ^ (timeout >>> 32));
+      result = prime * result + Long.hashCode(timeout);
       result = prime * result + ((persistentUUID == null) ? 0 : persistentUUID.hashCode());
       result = prime * result + ((persistentStateChecksum == null) ? 0 : persistentStateChecksum.hashCode());
       return result;
@@ -142,11 +143,8 @@ public class CacheJoinInfo {
       } else if (!persistentUUID.equals(other.persistentUUID))
          return false;
       if (persistentStateChecksum == null) {
-         if (other.persistentStateChecksum != null)
-            return false;
-      } else if (!persistentStateChecksum.equals(other.persistentStateChecksum))
-         return false;
-      return true;
+         return other.persistentStateChecksum == null;
+      } else return persistentStateChecksum.equals(other.persistentStateChecksum);
    }
 
    @Override

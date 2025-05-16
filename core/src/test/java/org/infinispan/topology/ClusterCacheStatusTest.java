@@ -9,6 +9,7 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
@@ -134,7 +135,7 @@ public class ClusterCacheStatusTest extends AbstractInfinispanTest {
    }
 
    private CacheJoinInfo makeJoinInfo(Address a) {
-      PersistentUUID persistentUUID = new PersistentUUID(a.hashCode(), a.hashCode());
+      var persistentUUID = new UUID(a.hashCode(), a.hashCode());
       return new CacheJoinInfo(JOIN_INFO.getConsistentHashFactory(), JOIN_INFO.getNumSegments(), JOIN_INFO.getNumOwners(),
             JOIN_INFO.getTimeout(), JOIN_INFO.getCacheMode(), JOIN_INFO.getCapacityFactor(),
             persistentUUID, Optional.empty());

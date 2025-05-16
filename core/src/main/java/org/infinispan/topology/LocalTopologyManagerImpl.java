@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -116,7 +117,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    private volatile boolean running;
    @GuardedBy("runningCaches")
    private int latestStatusResponseViewId;
-   private PersistentUUID persistentUUID;
+   private UUID persistentUUID;
 
    private EventLoggerViewListener viewListener;
 
@@ -138,7 +139,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          log.tracef("Starting LocalTopologyManager on %s", transport.getAddress());
       }
       if (persistentUUID == null) {
-         persistentUUID = PersistentUUID.randomUUID();
+         persistentUUID = UUID.randomUUID();
          globalStateManager.writeGlobalState();
       }
       persistentUUIDManager.addPersistentAddressMapping(transport.getAddress(), persistentUUID);
@@ -497,7 +498,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          unionCH = null;
       }
 
-      List<PersistentUUID> persistentUUIDs = persistentUUIDManager.mapAddresses(cacheTopology.getActualMembers());
+      var persistentUUIDs = persistentUUIDManager.mapAddresses(cacheTopology.getActualMembers());
       CacheTopology unionTopology = new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(),
                                                       cacheTopology.wasTopologyRestoredFromState(),
                                                       currentCH, pendingCH, unionCH, cacheTopology.getPhase(),
@@ -921,11 +922,11 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       if (!state.containsProperty("uuid")) {
          throw CONFIG.invalidPersistentState(ScopedPersistentState.GLOBAL_SCOPE);
       }
-      persistentUUID = PersistentUUID.fromString(state.getProperty("uuid"));
+      persistentUUID = UUID.fromString(state.getProperty("uuid"));
    }
 
    @Override
-   public PersistentUUID getPersistentUUID() {
+   public UUID getPersistentUUID() {
       return persistentUUID;
    }
 
