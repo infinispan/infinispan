@@ -1,10 +1,15 @@
 package org.infinispan.remoting.transport.jgroups;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
-import org.infinispan.commons.util.ImmutableHopscotchHashSet;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.NodeVersion;
+import org.jgroups.util.ExtendedUUID;
 
 /**
  * Information about the JGroups cluster.
@@ -17,22 +22,40 @@ public class ClusterView {
    static final int FINAL_VIEW_ID = Integer.MAX_VALUE;
 
    private final int viewId;
-   private final List<Address> members;
-   private final Set<Address> membersSet;
-   private final Address coordinator;
+   private final Map<JGroupsAddress, ExtendedUUID> view;
    private final boolean isCoordinator;
+   private final Address coordinator;
+   private final NodeVersion oldestMember;
+   private final boolean mixedVersionCluster;
 
-   ClusterView(int viewId, List<Address> members, Address self) {
+   ClusterView(int viewId, List<ExtendedUUID> members, ExtendedUUID self) {
       this.viewId = viewId;
-      this.members = List.copyOf(members);
-      this.membersSet = new ImmutableHopscotchHashSet<>(members);
-      if (!members.isEmpty()) {
-         this.coordinator = members.get(0);
-         this.isCoordinator = coordinator.equals(self);
+      var oldestVersion = NodeVersion.INSTANCE;
+      var mixedVersionCluster = false;
+      if (members.isEmpty()) {
+         view = Map.of();
+         isCoordinator = false;
+         coordinator = null;
       } else {
-         this.coordinator = null;
-         this.isCoordinator = false;
+         this.view = new LinkedHashMap<>();
+         isCoordinator = Objects.equals(self, members.get(0));
+         coordinator = JGroupsAddressCache.fromExtendedUUID(members.get(0));
+
+         for (ExtendedUUID member : members) {
+            var address = JGroupsAddressCache.fromExtendedUUID(member);
+            view.put(address, member);
+
+            var v = address.getVersion();
+            if (!v.equals(NodeVersion.INSTANCE)) {
+               mixedVersionCluster = true;
+
+               if (v.lessThan(oldestVersion))
+                  oldestVersion = v;
+            }
+         }
       }
+      this.oldestMember = oldestVersion;
+      this.mixedVersionCluster = mixedVersionCluster;
    }
 
    public int getViewId() {
@@ -48,11 +71,11 @@ public class ClusterView {
    }
 
    public List<Address> getMembers() {
-      return members;
+      return List.copyOf(view.keySet());
    }
 
    public Set<Address> getMembersSet() {
-      return membersSet;
+      return Collections.unmodifiableSet(view.keySet());
    }
 
    public Address getCoordinator() {
@@ -63,12 +86,21 @@ public class ClusterView {
       return isCoordinator;
    }
 
-   boolean contains(Address address) {
-      return getMembersSet().contains(address);
+   public NodeVersion getOldestMember() {
+      return oldestMember;
+   }
+
+   public boolean isMixedVersionCluster() {
+      return mixedVersionCluster;
    }
 
    @Override
    public String toString() {
-      return coordinator + "|" + viewId + members;
+      return coordinator + "|" + viewId + view.keySet();
+   }
+
+   public ExtendedUUID getAddressFromView(Address address) {
+      assert address instanceof JGroupsAddress;
+      return view.get(address);
    }
 }

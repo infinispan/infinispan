@@ -27,7 +27,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.commands.remote.XSiteRequest;
-import org.jgroups.util.UUID;
 import org.testng.annotations.Test;
 
 /**
@@ -47,8 +46,7 @@ public class JGroupsTransportTest extends MultipleCacheManagersTest {
    }
 
    public void testSynchronousIgnoreLeaversInvocationToNonMembers() throws Exception {
-      UUID randomUuid = UUID.randomUUID();
-      Address randomAddress = JGroupsAddressCache.fromJGroupsAddress(randomUuid);
+      Address randomAddress = JGroupsAddress.random();
 
       JGroupsTransport transport = (JGroupsTransport) extractGlobalComponent(manager(0), Transport.class);
       long initialMessages = transport.getChannel().getProtocolStack().getTransport().getMessageStats().getNumMsgsSent();
@@ -61,8 +59,7 @@ public class JGroupsTransportTest extends MultipleCacheManagersTest {
    }
 
    public void testInvokeCommandStaggeredToNonMember() throws Exception {
-      UUID randomUuid = UUID.randomUUID();
-      Address randomAddress = JGroupsAddressCache.fromJGroupsAddress(randomUuid);
+      Address randomAddress = JGroupsAddress.random();
 
       // Send message only to non-member
       JGroupsTransport transport = (JGroupsTransport) extractGlobalComponent(manager(0), Transport.class);

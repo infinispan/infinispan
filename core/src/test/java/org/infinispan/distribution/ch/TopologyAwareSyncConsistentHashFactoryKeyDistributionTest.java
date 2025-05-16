@@ -6,7 +6,6 @@ import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.jgroups.util.ExtendedUUID;
 import org.testng.annotations.Test;
 
 /**
@@ -43,7 +42,6 @@ public class TopologyAwareSyncConsistentHashFactoryKeyDistributionTest extends S
 
    @Override
    protected Address createSingleAddress(int nodeIndex) {
-      ExtendedUUID uuid = JGroupsAddress.randomUUID(null, "s" + (nodeIndex % 2), null, "m" + nodeIndex);
-      return new JGroupsAddress(uuid);
+      return JGroupsAddress.random(null, "s" + (nodeIndex % 2), null, "m" + nodeIndex);
    }
 }
