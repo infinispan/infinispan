@@ -93,7 +93,6 @@ jobs:
 
       - name: Maven Test
         env:
-          env:
           HIBERNATE_MATRIX: ${{ github.event.workflow_run.event == 'push' && '-Phibernate-matrix' || '' }}
         id: maven-test
         shell: bash
@@ -102,6 +101,7 @@ jobs:
             ./mvnw verify -V -B -e -DrerunFailingTestsCount=2
             -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative,coverage $HIBERNATE_MATRIX
             -Dorg.infinispan.test.server.extension.libs=org.jacoco:org.jacoco.agent:0.8.12:runtime
+            -Dgithub.action=true
 
       - name: set-commit-status-conclusion
         if: success()
