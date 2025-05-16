@@ -7,17 +7,18 @@ import static org.infinispan.distribution.ch.impl.AbstractConsistentHash.writeAd
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.UnaryOperator;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.PersistedConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.protostream.impl.MarshallableList;
 import org.infinispan.marshall.protostream.impl.MarshallableMap;
@@ -29,7 +30,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.topology.PersistentUUID;
 
 /**
- * Special implementation of {@link org.infinispan.distribution.ch.ConsistentHash} for replicated caches.
+ * Special implementation of {@link ConsistentHash} for replicated caches.
  * The hash-space has several segments owned by all members and the primary ownership of each segment is evenly
  * spread between members.
  *
@@ -143,57 +144,57 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       return new ReplicatedConsistentHash(unionMembers, unionCapacityFactors, unionMembersWithoutState, primaryOwners);
    }
 
-   ReplicatedConsistentHash(ScopedPersistentState state) {
-      List<Address> members = parseMembers(state, ConsistentHashPersistenceConstants.STATE_MEMBERS,
-                        ConsistentHashPersistenceConstants.STATE_MEMBER);
-      List<Address> membersWithoutState = parseMembers(state, ConsistentHashPersistenceConstants.STATE_MEMBERS_NO_ENTRIES,
-                                                   ConsistentHashPersistenceConstants.STATE_MEMBER_NO_ENTRIES);
-      Map<Address, Float> capacityFactors = parseCapacityFactors(state, members);
-      List<Integer> primaryOwners = parsePrimaryOwners(state);
+   static PersistedConsistentHash<ReplicatedConsistentHash> fromPersistentScope(ScopedPersistentState state, Function<PersistentUUID, Address> addressMapper) {
+      var members = parseMembers(state, ConsistentHashPersistenceConstants.STATE_MEMBERS,
+            ConsistentHashPersistenceConstants.STATE_MEMBER, addressMapper, true);
+      var missingUuids = new HashSet<>(members.missingUuids());
+      var membersWithoutState = parseMembers(state, ConsistentHashPersistenceConstants.STATE_MEMBERS_NO_ENTRIES,
+            ConsistentHashPersistenceConstants.STATE_MEMBER_NO_ENTRIES, addressMapper, false);
+      missingUuids.addAll(membersWithoutState.missingUuids());
+      var primaryOwners = parsePrimaryOwners(state);
 
-      this.members = List.copyOf(members);
-      this.membersWithoutState = List.copyOf(membersWithoutState);
-      this.membersWithState = computeMembersWithState(members, membersWithoutState);
-      this.membersWithStateSet = Set.copyOf(this.membersWithState);
-      this.primaryOwners = primaryOwners;
-      this.capacityFactors = Map.copyOf(capacityFactors);
-      this.segments = IntSets.immutableRangeSet(this.primaryOwners.size());
+      var ch = new ReplicatedConsistentHash(members.members(), members.capacityFactors(), membersWithoutState.members(), primaryOwners);
+      return new PersistedConsistentHash<>(ch, missingUuids);
    }
 
-   private static List<Address> parseMembers(ScopedPersistentState state, String numMembersPropertyName,
-                                             String memberPropertyFormat) {
+   private static PersistedMembers parseMembers(ScopedPersistentState state, String numMembersPropertyName,
+                                                String memberPropertyFormat, Function<PersistentUUID, Address> addressMapper, boolean parseCapacityFactors) {
       String property = state.getProperty(numMembersPropertyName);
       if (property == null) {
-          return Collections.emptyList();
+         return new PersistedMembers(List.of(), null, Set.of());
       }
-      int numMembers = Integer.parseInt(property);
-      List<Address> members = new ArrayList<>(numMembers);
+      var numMembers = Integer.parseInt(property);
+      var members = new ArrayList<Address>(numMembers);
+      var missingUuids = new ArrayList<PersistentUUID>(numMembers);
+
+      Map<Address, Float> capacityFactors = null;
+      if (parseCapacityFactors) {
+         capacityFactors = new HashMap<>();
+      }
+      var numCapacityFactorsString = state.getProperty(STATE_CAPACITY_FACTORS);
+      var version11State = numCapacityFactorsString == null;
+
       for (int i = 0; i < numMembers; i++) {
-         PersistentUUID uuid = PersistentUUID.fromString(state.getProperty(String.format(memberPropertyFormat, i)));
-         members.add(uuid);
-      }
-      return members;
-   }
-
-   private static Map<Address, Float> parseCapacityFactors(ScopedPersistentState state,
-                                                           List<Address> members) {
-      String numCapacityFactorsString = state.getProperty(STATE_CAPACITY_FACTORS);
-      if (numCapacityFactorsString == null) {
-         // Cache state version 11 did not have capacity factors
-         Map<Address, Float> map = new HashMap<>();
-         for (Address a : members) {
-            map.put(a, 1f);
+         var uuid = PersistentUUID.fromString(state.getProperty(String.format(memberPropertyFormat, i)));
+         var address = addressMapper.apply(uuid);
+         if (address == null) {
+            missingUuids.add(uuid);
+         } else {
+            members.add(address);
+            if (capacityFactors == null) {
+               continue;
+            }
+            if (version11State) {
+               capacityFactors.put(address, 1f);
+               continue;
+            }
+            var cf = state.getProperty(String.format(STATE_CAPACITY_FACTOR, i));
+            if (cf != null) {
+               capacityFactors.put(address, Float.parseFloat(cf));
+            }
          }
-         return map;
       }
-
-      int numCapacityFactors = Integer.parseInt(numCapacityFactorsString);
-      Map<Address, Float> capacityFactors = new HashMap<>(numCapacityFactors * 2);
-      for (int i = 0; i < numCapacityFactors; i++) {
-         float capacityFactor = Float.parseFloat(state.getProperty(String.format(STATE_CAPACITY_FACTOR, i)));
-         capacityFactors.put(members.get(i), capacityFactor);
-      }
-      return capacityFactors;
+      return new PersistedMembers(members, capacityFactors, missingUuids);
    }
 
    private static List<Integer> parsePrimaryOwners(ScopedPersistentState state) {
@@ -293,7 +294,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       return true;
    }
 
-   public void toScopedState(ScopedPersistentState state, Function<Address, String> addressMapper) {
+   public void toScopedState(ScopedPersistentState state, Function<Address, PersistentUUID> addressMapper) {
       state.setProperty(ConsistentHashPersistenceConstants.STATE_CONSISTENT_HASH, this.getClass().getName());
       writeAddressToState(state, members, ConsistentHashPersistenceConstants.STATE_MEMBERS, ConsistentHashPersistenceConstants.STATE_MEMBER, addressMapper);
       writeAddressToState(state, membersWithoutState, ConsistentHashPersistenceConstants.STATE_MEMBERS_NO_ENTRIES, ConsistentHashPersistenceConstants.STATE_MEMBER_NO_ENTRIES, addressMapper);
@@ -308,33 +309,6 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       }
    }
 
-   @Override
-   public ConsistentHash remapAddresses(UnaryOperator<Address> remapper) {
-      List<Address> remappedMembers = new ArrayList<>(members.size());
-      for (Address member : members) {
-         Address a = remapper.apply(member);
-         if (a == null) {
-            return null;
-         }
-         remappedMembers.add(a);
-      }
-      List<Address> remappedMembersWithoutState = new ArrayList<>(membersWithoutState.size());
-      for (Address member : membersWithoutState) {
-         Address a = remapper.apply(member);
-         if (a == null) {
-            return null;
-         }
-         remappedMembersWithoutState.add(a);
-      }
-      Map<Address, Float> remappedCapacityFactors = null;
-      if (capacityFactors != null) {
-         remappedCapacityFactors = new HashMap<>(members.size());
-         for (Address member : members) {
-            remappedCapacityFactors.put(remapper.apply(member), capacityFactors.get(member));
-         }
-      }
-      return new ReplicatedConsistentHash(remappedMembers, remappedCapacityFactors, remappedMembersWithoutState, primaryOwners);
-   }
    @Override
    public Map<Address, Float> getCapacityFactors() {
       return capacityFactors;
@@ -410,8 +384,6 @@ public class ReplicatedConsistentHash implements ConsistentHash {
             return false;
       } else if (!membersWithoutState.equals(other.membersWithoutState))
          return false;
-      if (!Objects.equals(primaryOwners, other.primaryOwners))
-         return false;
-      return true;
+      return Objects.equals(primaryOwners, other.primaryOwners);
    }
 }

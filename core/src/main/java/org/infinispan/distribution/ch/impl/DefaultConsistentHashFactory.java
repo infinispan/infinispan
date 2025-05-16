@@ -8,13 +8,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.distribution.ch.PersistedConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.PersistentUUID;
 
 /**
  * Default implementation of {@link ConsistentHashFactory}.
@@ -55,11 +58,11 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
    }
 
    @Override
-   public DefaultConsistentHash fromPersistentState(ScopedPersistentState state) {
+   public PersistedConsistentHash<DefaultConsistentHash> fromPersistentState(ScopedPersistentState state, Function<PersistentUUID, Address> addressMapper) {
       String consistentHashClass = state.getProperty("consistentHash");
       if (!DefaultConsistentHash.class.getName().equals(consistentHashClass))
          throw CONTAINER.persistentConsistentHashMismatch(this.getClass().getName(), consistentHashClass);
-      return new DefaultConsistentHash(state);
+      return DefaultConsistentHash.fromPersistentState(state, addressMapper);
    }
 
    /**
@@ -222,7 +225,7 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
    protected void removeExtraBackupOwners(Builder builder) {
       // Find the node with the worst segments-to-capacity ratio, and replace it in one of the owner lists
       // Repeat with the next-worst node, and so on.
-      List<Address> untestedNodes = new ArrayList<Address>(builder.getMembers());
+      List<Address> untestedNodes = new ArrayList<>(builder.getMembers());
       while (!untestedNodes.isEmpty()) {
          boolean ownerRemoved = false;
          Address worstNode = findWorstBackupOwner(builder, untestedNodes);
@@ -239,7 +242,7 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
                builder.removeOwner(segment, worstNode);
                ownerRemoved = true;
                // The worst node might have changed.
-               untestedNodes = new ArrayList<Address>(builder.getMembers());
+               untestedNodes = new ArrayList<>(builder.getMembers());
                worstNode = findWorstBackupOwner(builder, untestedNodes);
             }
          }
@@ -281,7 +284,7 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
       // If it's not possible to replace any owner with the worst node, remove the worst from the untested nodes
       // list and try with the new worst, repeating as necessary. After replacing one owner,
       // go back to the original untested nodes list.
-      List<Address> untestedNodes = new ArrayList<Address>(builder.getMembers());
+      List<Address> untestedNodes = new ArrayList<>(builder.getMembers());
       while (!untestedNodes.isEmpty()) {
          Address worstNode = findWorstBackupOwner(builder, untestedNodes);
          boolean backupOwnerReplaced = false;
@@ -302,7 +305,7 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
                builder.addOwner(segment, replacement);
                backupOwnerReplaced = true;
                // The worst node might have changed.
-               untestedNodes = new ArrayList<Address>(builder.getMembers());
+               untestedNodes = new ArrayList<>(builder.getMembers());
                worstNode = findWorstBackupOwner(builder, untestedNodes);
             }
          }
@@ -350,7 +353,7 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
          this.actualNumOwners = computeActualNumOwners(numOwners, members, capacityFactors);
          this.segmentOwners = new List[numSegments];
          for (int segment = 0; segment < numSegments; segment++) {
-            segmentOwners[segment] = new ArrayList<Address>(actualNumOwners);
+            segmentOwners[segment] = new ArrayList<>(actualNumOwners);
          }
       }
 
@@ -358,8 +361,8 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
                      Map<Address, Float> actualCapacityFactors) {
          super(new OwnershipStatistics(baseCH, actualMembers), actualMembers, actualCapacityFactors);
          int numSegments = baseCH.getNumSegments();
-         Set<Address> actualMembersSet = new HashSet<Address>(actualMembers);
-         List[] owners = new List[numSegments];
+         Set<Address> actualMembersSet = new HashSet<>(actualMembers);
+         List<Address>[] owners = new List[numSegments];
          for (int segment = 0; segment < numSegments; segment++) {
             owners[segment] = new ArrayList<>(baseCH.locateOwnersForSegment(segment));
             owners[segment].retainAll(actualMembersSet);
@@ -376,9 +379,9 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
       public Builder(Builder other) {
          super(other);
          int numSegments = other.getNumSegments();
-         List[] owners = new List[numSegments];
+         List<Address>[] owners = new List[numSegments];
          for (int segment = 0; segment < numSegments; segment++) {
-            owners[segment] = new ArrayList<Address>(other.segmentOwners[segment]);
+            owners[segment] = new ArrayList<>(other.segmentOwners[segment]);
          }
          this.initialNumOwners = other.initialNumOwners;
          this.actualNumOwners = other.actualNumOwners;
@@ -476,7 +479,7 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
       }
 
       public DefaultConsistentHash build() {
-         return new DefaultConsistentHash(initialNumOwners, segmentOwners.length, members, capacityFactors,
+         return DefaultConsistentHash.create(initialNumOwners, segmentOwners.length, members, capacityFactors,
                segmentOwners);
       }
 

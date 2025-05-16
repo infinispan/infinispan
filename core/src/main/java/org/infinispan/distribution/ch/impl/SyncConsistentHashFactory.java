@@ -10,10 +10,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.function.Function;
 
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.distribution.ch.PersistedConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
@@ -57,15 +59,15 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       Builder builder = createBuilder(numOwners, numSegments, members, capacityFactors);
       builder.populateOwners();
 
-      return new DefaultConsistentHash(numOwners, numSegments, members, capacityFactors, builder.segmentOwners);
+      return DefaultConsistentHash.create(numOwners, numSegments, members, capacityFactors, builder.segmentOwners);
    }
 
    @Override
-   public DefaultConsistentHash fromPersistentState(ScopedPersistentState state) {
+   public PersistedConsistentHash<DefaultConsistentHash> fromPersistentState(ScopedPersistentState state, Function<PersistentUUID, Address> addressMapper) {
       String consistentHashClass = state.getProperty("consistentHash");
       if (!DefaultConsistentHash.class.getName().equals(consistentHashClass))
          throw CONTAINER.persistentConsistentHashMismatch(this.getClass().getName(), consistentHashClass);
-      return new DefaultConsistentHash(state);
+      return DefaultConsistentHash.fromPersistentState(state, addressMapper);
    }
 
    Builder createBuilder(int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
@@ -102,7 +104,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
 
       // We assume leavers are far fewer than members, so it makes sense to check for leavers
       HashSet<Address> leavers = new HashSet<>(baseCH.getMembers());
-      leavers.removeAll(newMembers);
+      newMembers.forEach(leavers::remove);
 
       // Create a new "balanced" CH in case we need to allocate new owners for segments with 0 owners
       DefaultConsistentHash rebalancedCH = null;
@@ -123,7 +125,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          }
       }
 
-      return new DefaultConsistentHash(numOwners, numSegments, newMembers,
+      return DefaultConsistentHash.create(numOwners, numSegments, newMembers,
             actualCapacityFactors, newSegmentOwners);
    }
 
@@ -519,11 +521,6 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          int nodeIndex;
          long distance;
 
-         SegmentInfo(int segment) {
-            this.segment = segment;
-            reset();
-         }
-
          public SegmentInfo(int segment, int nodeIndex, long distance) {
             this.segment = segment;
             this.nodeIndex = nodeIndex;
@@ -566,14 +563,11 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          }
 
          private String segmentDescription() {
-            switch (nodeIndex) {
-               case NO_NODE:
-                  return "NO_NODE";
-               case NO_AVAILABLE_OWNERS:
-                  return "NO_AVAILABLE_OWNERS";
-               default:
-                  return String.valueOf(segment);
-            }
+            return switch (nodeIndex) {
+               case NO_NODE -> "NO_NODE";
+               case NO_AVAILABLE_OWNERS -> "NO_AVAILABLE_OWNERS";
+               default -> String.valueOf(segment);
+            };
          }
       }
    }

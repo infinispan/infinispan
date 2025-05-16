@@ -60,7 +60,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
 
          // Not losing any data with the members. We utilize the persistent UUID to verify.
          if (!isDataLost(stableTopology.getCurrentCH(), membersUuid, persistentUUIDManager.addressToPersistentUUID())) {
-            List<Address> lost = new ArrayList<>(stableTopology.getMembers()).stream()
+            List<Address> lost = stableTopology.getMembers().stream()
                   .map(persistentUUIDManager::getPersistentUuid)
                   .filter(m -> !membersUuid.contains(m))
                   .collect(Collectors.toList());

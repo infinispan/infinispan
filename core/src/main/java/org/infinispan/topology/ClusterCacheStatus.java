@@ -28,7 +28,6 @@ import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.conflict.impl.InternalConflictManager;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.globalstate.ScopedPersistentState;
@@ -367,7 +366,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       }
    }
 
-   public void confirmRebalancePhase(Address member, int receivedTopologyId) throws Exception {
+   public void confirmRebalancePhase(Address member, int receivedTopologyId) {
       acquireLock();
       try {
          if (currentTopology == null) {
@@ -436,7 +435,6 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
    @GuardedBy("lock")
    private void endRebalance() {
-      CacheTopology newTopology;
       rebalanceInProgress = false;
 
       CacheTopology currentTopology = getCurrentTopology();
@@ -444,20 +442,17 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          log.tracef("Rebalance finished because there are no more members in cache %s", cacheName);
          return;
       }
+      if (rebalanceType != RebalanceType.FOUR_PHASE) {
+         throw new IllegalStateException();
+      }
       assert currentTopology.getPhase().isRebalance();
 
       int currentTopologyId = currentTopology.getTopologyId();
       List<Address> members = currentTopology.getMembers();
-      switch (rebalanceType) {
-         case FOUR_PHASE:
-            newTopology = new CacheTopology(currentTopologyId + 1, currentTopology.getRebalanceId(),
-                  currentTopology.getCurrentCH(), currentTopology.getPendingCH(),
-                  CacheTopology.Phase.READ_ALL_WRITE_ALL, members,
-                  persistentUUIDManager.mapAddresses(members));
-            break;
-         default:
-            throw new IllegalStateException();
-      }
+      var newTopology = new CacheTopology(currentTopologyId + 1, currentTopology.getRebalanceId(),
+            currentTopology.getCurrentCH(), currentTopology.getPendingCH(),
+            CacheTopology.Phase.READ_ALL_WRITE_ALL, members,
+            persistentUUIDManager.mapAddresses(members));
 
       setCurrentTopology(newTopology);
 
@@ -534,7 +529,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          if (currentTopology == null) {
             createInitialCacheTopology();
          }
-         ConsistentHashFactory<ConsistentHash> consistentHashFactory = getJoinInfo().getConsistentHashFactory();
+         var consistentHashFactory = getJoinInfo().getConsistentHashFactory();
          int topologyId = currentTopology.getTopologyId();
          int rebalanceId = currentTopology.getRebalanceId();
          ConsistentHash currentCH = currentTopology.getCurrentCH();
@@ -816,21 +811,21 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    protected CacheTopology restoreCacheTopology(ScopedPersistentState state) {
       if (log.isTraceEnabled()) log.tracef("Attempting to restore CH for cache %s", cacheName);
 
-      ConsistentHash originalCH = joinInfo.getConsistentHashFactory().fromPersistentState(state);
-      ConsistentHash persistedCH = originalCH.remapAddresses(persistentUUIDManager.persistentUUIDToAddress());
-      if (persistedCH == null || !getExpectedMembers().containsAll(persistedCH.getMembers())) {
-         log.recoverFromStateMissingMembers(cacheName, expectedMembers, originalCH.getMembers().size());
+      var persistedCH = joinInfo.getConsistentHashFactory().fromPersistentState(state, persistentUUIDManager.persistentUUIDToAddress());
+      var ch = persistedCH.consistentHash();
+      if (persistedCH.hasMissingMembers() || !getExpectedMembers().containsAll(ch.getMembers())) {
+         log.recoverFromStateMissingMembers(cacheName, expectedMembers, ch.getMembers().size());
          return null;
       }
 
-      if (getExpectedMembers().size() > persistedCH.getMembers().size()) {
+      if (getExpectedMembers().size() > ch.getMembers().size()) {
          List<Address> extraneousMembers = new ArrayList<>(getExpectedMembers());
-         extraneousMembers.removeAll(persistedCH.getMembers());
+         extraneousMembers.removeAll(ch.getMembers());
          throw CLUSTER.extraneousMembersJoinRestoredCache(extraneousMembers, cacheName);
       }
       int topologyId = currentTopology == null ? initialTopologyId : currentTopology.getTopologyId() + 1;
-      CacheTopology initialTopology = new CacheTopology(topologyId, INITIAL_REBALANCE_ID, true, persistedCH, null,
-            CacheTopology.Phase.NO_REBALANCE, persistedCH.getMembers(), persistentUUIDManager.mapAddresses(persistedCH.getMembers()));
+      CacheTopology initialTopology = new CacheTopology(topologyId, INITIAL_REBALANCE_ID, true, ch, null,
+            CacheTopology.Phase.NO_REBALANCE, ch.getMembers(), persistentUUIDManager.mapAddresses(ch.getMembers()));
       return cacheTopologyCreated(initialTopology);
    }
 
@@ -872,13 +867,13 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
          if (persistentState.isPresent()) {
             List<Address> members = getExpectedMembers();
-            ConsistentHash pastConsistentHash = joinInfo.getConsistentHashFactory()
-                    .fromPersistentState(persistentState.get());
-            int missing = pastConsistentHash.getMembers().size() - members.size();
+            var persistedCH = joinInfo.getConsistentHashFactory()
+                  .fromPersistentState(persistentState.get(), persistentUUIDManager.persistentUUIDToAddress());
+            int missing = persistedCH.missingUuids().size();
             int owners = joinInfo.getNumOwners();
             boolean isReplicated = gcr.getCacheManager().getCacheConfiguration(cacheName).clustering().cacheMode().isReplicated();
             if (!isReplicated && !force && missing >= owners) {
-               throw log.missingTooManyMembers(cacheName, owners, missing, pastConsistentHash.getMembers().size());
+               throw log.missingTooManyMembers(cacheName, owners, missing, persistedCH.totalMembers());
             }
 
             boolean safelyRecovered = missing < owners;
@@ -887,11 +882,11 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                // We reuse the previous topology, only changing it to reflect the current members.
                // This is necessary to keep the same segments mapping as before.
                // If another node joins, it will trigger rebalance, properly redistributing the segments.
-               ch = pastConsistentHash.remapAddressRemoveMissing(persistentUUIDManager.persistentUUIDToAddress());
+               ch = persistedCH.consistentHash();
             } else {
                // We don't have enough members to safely recover the previous topology, so we create a new one, as the
                // node will clear the storage, so we don't need the same segments mapping.
-               ConsistentHashFactory<ConsistentHash> chf = joinInfo.getConsistentHashFactory();
+               var chf = joinInfo.getConsistentHashFactory();
                ch = chf.create(joinInfo.getNumOwners(), joinInfo.getNumSegments(), members, getCapacityFactors());
             }
             CacheTopology topology = new CacheTopology(initialTopologyId, INITIAL_REBALANCE_ID, true, ch, null,
@@ -920,7 +915,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       return initialTopology;
    }
 
-   public CompletionStage<Void> doLeave(Address leaver) throws Exception {
+   public CompletionStage<Void> doLeave(Address leaver) {
       acquireLock();
       try {
          boolean actualLeaver = removeMember(leaver);
@@ -1008,7 +1003,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
             return;
          }
 
-         ConsistentHashFactory chFactory = getJoinInfo().getConsistentHashFactory();
+         var chFactory = getJoinInfo().getConsistentHashFactory();
          // This update will only add the joiners to the CH, we have already checked that we don't have leavers
          ConsistentHash updatedMembersCH = chFactory.updateMembers(currentCH, newMembers, getCapacityFactors());
          ConsistentHash balancedCH = chFactory.rebalance(updatedMembersCH);
@@ -1184,7 +1179,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                                                List<Address> actualMembers) {
       // If we are required to resolveConflicts, then we utilise a union of all distinct CHs. This is necessary
       // to ensure that we read the entries associated with all possible read owners before the rebalance occurs
-      ConsistentHashFactory chf = getJoinInfo().getConsistentHashFactory();
+      var chf = getJoinInfo().getConsistentHashFactory();
       ConsistentHash unionHash = distinctHashes.stream().reduce(preferredHash, chf::union);
       unionHash = chf.union(unionHash, chf.rebalance(unionHash));
       return chf.updateMembers(unionHash, actualMembers, capacityFactors);
@@ -1259,7 +1254,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          }
 
          CacheTopology conflictTopology = conflictResolution.topology;
-         ConsistentHashFactory chf = getJoinInfo().getConsistentHashFactory();
+         var chf = getJoinInfo().getConsistentHashFactory();
          ConsistentHash newHash = chf.updateMembers(conflictTopology.getCurrentCH(), members, capacityFactors);
 
          conflictTopology = new CacheTopology(currentTopology.getTopologyId() + 1, currentTopology.getRebalanceId(),
