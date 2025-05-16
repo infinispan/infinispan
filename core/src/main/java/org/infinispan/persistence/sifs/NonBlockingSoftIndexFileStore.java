@@ -1,5 +1,6 @@
 package org.infinispan.persistence.sifs;
 
+import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
 import static org.infinispan.persistence.PersistenceUtil.getQualifiedLocation;
 import static org.infinispan.util.logging.Log.PERSISTENCE;
 
@@ -14,6 +15,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
@@ -31,6 +34,7 @@ import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.ProgressTracker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
@@ -38,6 +42,7 @@ import org.infinispan.commons.util.concurrent.FileSystemLock;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration;
@@ -156,6 +161,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    private ActionSequencer sizeAndClearSequencer;
    private KeyPartitioner keyPartitioner;
    private InitializationContext ctx;
+   private ProgressTracker progressTracker;
 
    @Override
    public Set<Characteristic> characteristics() {
@@ -227,6 +233,11 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       logAppender.start(blockingManager.asExecutor("sifs-log-processor"));
       startIndex();
       final AtomicLong maxSeqId = new AtomicLong(0);
+      TimeService ts = ComponentRegistry.componentOf(ctx.getCache(), TimeService.class);
+      ScheduledExecutorService timeoutExecutor = ComponentRegistry.componentOf(ctx.getCache(), ScheduledExecutorService.class, TIMEOUT_SCHEDULE_EXECUTOR);
+      Configuration cfg = ComponentRegistry.of(ctx.getCache()).getConfiguration();
+      long timeout = cfg.clustering().remoteTimeout();
+      progressTracker = new ProgressTracker("sifs-task", timeoutExecutor, ts, timeout, TimeUnit.MILLISECONDS);
 
       return blockingManager.runBlocking(() -> {
          boolean migrateData = false;
@@ -334,7 +345,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       }
       // Only update the key/value/meta bytes if the default marshaller is configured
       boolean transformationRequired = ctx.getGlobalConfiguration().serialization().marshaller() == null;
-      try(CloseableIterator<Integer> it = oldFileProvider.getFileIterator()) {
+      try(CloseableIterator<Integer> it = oldFileProvider.getFileIterator(null)) {
          while (it.hasNext()) {
             int fileId = it.next();
             try (FileProvider.Handle handle = oldFileProvider.getFile(fileId)) {
@@ -423,7 +434,10 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                      index.handleRequest(IndexRequest.update(segment, key, ByteBufferImpl.create(serializedKey), file, offset, size));
                   }
                   return null;
-               }).doOnComplete(() -> compactor.completeFile(outerFile, -1, nextExpirationTime.get(), false));
+               }).doOnComplete(() -> {
+                  progressTracker.removeTasks(1);
+                  compactor.completeFile(outerFile, -1, nextExpirationTime.get(), false);
+               });
       }).ignoreElements().toCompletionStage(null);
       CompletionStages.join(stage);
    }
@@ -491,6 +505,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
             fileProvider.stop();
             fileProvider = null;
             temporaryTable = null;
+            progressTracker.finishedAllTasks();
          } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw log.interruptedWhileStopping(e);
@@ -734,10 +749,13 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    }
 
    private Flowable<Integer> filePublisher() {
-      return Flowable.using(fileProvider::getFileIterator, it -> Flowable.fromIterable(() -> it),
-            // This close happens after the lasst file iterator is returned, but before processing it.
+      return Flowable.using(() -> fileProvider.getFileIterator(progressTracker), it -> Flowable.fromIterable(() -> it),
+            // This close happens after the last file iterator is returned, but before processing it.
             // TODO: Is this okay or can compaction etc affect this?
-            CloseableIterator::close);
+            it -> {
+         progressTracker.finishedAllTasks();
+         it.close();
+      });
    }
 
    private <R> Flowable<R> handleFilePublisher(int file, boolean fetchValue, boolean fetchMetadata,

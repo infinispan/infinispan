@@ -309,7 +309,7 @@ public interface Log extends BasicLogger {
    CounterException invalidCounterTypeEncoded();
 
    @LogMessage(level = INFO)
-   @Message(value = "Task '%s', pending (%d) tasks, last check had (%d), task status is %s", id = 972)
+   @Message(value = "Task '%s', pending (%d), last check had (%d) pending, status is %s", id = 972)
    void taskProgression(String name, long pending, long lastCheck, String status);
 
    @LogMessage(level = INFO)
