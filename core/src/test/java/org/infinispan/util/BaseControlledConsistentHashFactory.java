@@ -119,7 +119,7 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
       public DefaultConsistentHash create(int numOwners, int numSegments, List<Address> members,
                                           Map<Address, Float> capacityFactors, List<Address>[] segmentOwners,
                                           boolean rebalanced) {
-         return new DefaultConsistentHash(numOwners, numSegments, members, capacityFactors, segmentOwners);
+         return DefaultConsistentHash.create(numOwners, numSegments, members, capacityFactors, segmentOwners);
       }
 
       @Override

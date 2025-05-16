@@ -2,11 +2,9 @@ package org.infinispan.distribution.ch.impl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.function.UnaryOperator;
 
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
@@ -50,35 +48,38 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
       this.capacityFactors = capacityFactors;
    }
 
-   protected AbstractConsistentHash(ScopedPersistentState state) {
-      this(parseNumSegments(state), parseMembers(state), parseCapacityFactors(state));
-   }
-
    protected static int parseNumSegments(ScopedPersistentState state) {
       return state.getIntProperty(STATE_NUM_SEGMENTS);
    }
 
-   protected static List<Address> parseMembers(ScopedPersistentState state) {
-      int numMembers = Integer.parseInt(state.getProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS));
-      List<Address> members = new ArrayList<>(numMembers);
-      for(int i = 0; i < numMembers; i++) {
-         PersistentUUID uuid = PersistentUUID.fromString(state.getProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i)));
-         members.add(uuid);
-      }
-      return members;
-   }
+   protected static PersistedMembers parseMembers(ScopedPersistentState state, Function<PersistentUUID, Address> addressMapper) {
+      var numMembers = Integer.parseInt(state.getProperty(ConsistentHashPersistenceConstants.STATE_MEMBERS));
+      var numCapacityFactors = Integer.parseInt(state.getProperty(STATE_CAPACITY_FACTORS));
 
-   protected static List<Float> parseCapacityFactors(ScopedPersistentState state) {
-      int numCapacityFactors = Integer.parseInt(state.getProperty(STATE_CAPACITY_FACTORS));
-      List<Float> capacityFactors = new ArrayList<>(numCapacityFactors);
-      for (int i = 0; i < numCapacityFactors; i++) {
-         capacityFactors.add(Float.parseFloat(state.getProperty(String.format(STATE_CAPACITY_FACTOR, i))));
+      // capacity factors may be empty
+      assert numCapacityFactors == 0 || numCapacityFactors == numMembers;
+      var members = new ArrayList<Address>(numMembers);
+      var capacityFactors = new HashMap<Address, Float>();
+      var missingUuids = new ArrayList<PersistentUUID>(numMembers);
+
+      for(int i = 0; i < numMembers; i++) {
+         var uuid = PersistentUUID.fromString(state.getProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i)));
+         var address = addressMapper.apply(uuid);
+         if (address == null) {
+            missingUuids.add(uuid);
+         }  else {
+            members.add(address);
+            var factor = state.getProperty(String.format(STATE_CAPACITY_FACTOR, i));
+            if (factor != null) {
+               capacityFactors.put(address, Float.parseFloat(factor));
+            }
+         }
       }
-      return capacityFactors;
+      return new PersistedMembers(members, capacityFactors, missingUuids);
    }
 
    @Override
-   public void toScopedState(ScopedPersistentState state, Function<Address, String> addressMapper) {
+   public void toScopedState(ScopedPersistentState state, Function<Address, PersistentUUID> addressMapper) {
       state.setProperty(ConsistentHashPersistenceConstants.STATE_CONSISTENT_HASH, this.getClass().getName());
       state.setProperty(STATE_NUM_SEGMENTS, getNumSegments());
       writeAddressToState(state, members, ConsistentHashPersistenceConstants.STATE_MEMBERS, ConsistentHashPersistenceConstants.STATE_MEMBER, addressMapper);
@@ -155,39 +156,10 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
       }
    }
 
-   protected Map<Address, Float> remapCapacityFactors(UnaryOperator<Address> remapper, boolean allowMissing) {
-      Map<Address, Float> remappedCapacityFactors = null;
-      if (capacityFactors != null) {
-         remappedCapacityFactors = new HashMap<>(members.size());
-         for(int i=0; i < members.size(); i++) {
-            Address a = remapper.apply(members.get(i));
-            if (a == null) {
-               if (allowMissing) continue;
-               return null;
-            }
-            remappedCapacityFactors.put(a, capacityFactors.get(i));
-         }
-      }
-      return remappedCapacityFactors;
-   }
-
-   protected List<Address> remapMembers(UnaryOperator<Address> remapper, boolean allowMissing) {
-      List<Address> remappedMembers = new ArrayList<>(members.size());
-      for(Iterator<Address> i = members.iterator(); i.hasNext(); ) {
-         Address a = remapper.apply(i.next());
-         if (a == null) {
-            if (allowMissing) continue;
-            return null;
-         }
-         remappedMembers.add(a);
-      }
-      return remappedMembers;
-   }
-
-   protected static void writeAddressToState(ScopedPersistentState state, List<Address> members, String sizeKey, String memberKeyFormat, Function<Address, String> addressMapper) {
+   protected static void writeAddressToState(ScopedPersistentState state, List<Address> members, String sizeKey, String memberKeyFormat, Function<Address, PersistentUUID> addressMapper) {
       state.setProperty(sizeKey, members.size());
       for (int i = 0; i < members.size(); i++) {
-         state.setProperty(String.format(memberKeyFormat, i), addressMapper.apply(members.get(i)));
+         state.setProperty(String.format(memberKeyFormat, i), addressMapper.apply(members.get(i)).toString());
       }
    }
 }

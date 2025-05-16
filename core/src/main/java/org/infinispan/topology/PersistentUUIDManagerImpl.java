@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.UnaryOperator;
+import java.util.function.Function;
 
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
@@ -78,12 +78,12 @@ public class PersistentUUIDManagerImpl implements PersistentUUIDManager {
    }
 
    @Override
-   public UnaryOperator<Address> addressToPersistentUUID() {
-      return (address) -> address2uuid.get(address);
+   public Function<Address, PersistentUUID> addressToPersistentUUID() {
+      return address2uuid::get;
    }
 
    @Override
-   public UnaryOperator<Address> persistentUUIDToAddress() {
-      return (address) -> uuid2address.get(address);
+   public Function<PersistentUUID, Address> persistentUUIDToAddress() {
+      return uuid2address::get;
    }
 }
