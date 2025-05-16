@@ -100,6 +100,7 @@ public class ContainerResource implements ResourceHandler {
             .deprecated() // TODO: remove in 16
             .handleWith(this::getHealth)
             .invocation().methods(GET, HEAD).path("/v2/container/health")
+            .deprecated()
             .handleWith(this::getHealth)
 
             .invocation().methods(GET, HEAD).anonymous(true).path("/v2/cache-managers/{name}/health/status")

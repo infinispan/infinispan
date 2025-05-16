@@ -28,6 +28,7 @@ import org.infinispan.rest.resources.ProtobufResource;
 import org.infinispan.rest.resources.RedirectResource;
 import org.infinispan.rest.resources.SearchAdminResource;
 import org.infinispan.rest.resources.SecurityResource;
+import org.infinispan.rest.resources.HealthCheckResource;
 import org.infinispan.rest.resources.ServerResource;
 import org.infinispan.rest.resources.StaticContentResource;
 import org.infinispan.rest.resources.TasksResource;
@@ -148,6 +149,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       resourceManager.registerResource(restContext, new SearchAdminResource(invocationHelper));
       resourceManager.registerResource(restContext, new TasksResource(invocationHelper));
       resourceManager.registerResource(restContext, new ProtobufResource(invocationHelper, telemetryService));
+      resourceManager.registerResource(rootContext, new HealthCheckResource(invocationHelper));
       resourceManager.registerResource(rootContext, new MetricsResource(auth.metricsAuth(), invocationHelper));
       Path staticResources = configuration.staticResources();
       if (staticResources != null) {
