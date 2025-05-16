@@ -3,19 +3,22 @@ package org.infinispan.query.impl.massindex;
 import java.util.concurrent.CompletableFuture;
 
 import org.hibernate.search.util.common.impl.Futures;
+import org.infinispan.commons.util.ProgressTracker;
 import org.infinispan.query.core.impl.Log;
 import org.infinispan.util.logging.LogFactory;
 
-public class MassIndexerProgressState {
+class MassIndexerProgressState {
 
    private static final Log LOG = LogFactory.getLog(IndexUpdater.class, Log.class);
 
    private final MassIndexerProgressNotifier notifier;
+   private final ProgressTracker progressTracker;
 
    private CompletableFuture<?> lastFuture = CompletableFuture.completedFuture( null );
 
-   public MassIndexerProgressState(MassIndexerProgressNotifier notifier) {
+   public MassIndexerProgressState(MassIndexerProgressNotifier notifier, ProgressTracker progressTracker) {
       this.notifier = notifier;
+      this.progressTracker = progressTracker;
    }
 
    public void addItem(Object key, Object value, CompletableFuture<?> future) {
@@ -26,6 +29,7 @@ public class MassIndexerProgressState {
          } else {
             notifier.notifyDocumentsAdded(1);
          }
+         progressTracker.removeTasks(1);
       }).thenCombine(lastFuture, (ignored1, ignored2) -> null);
    }
 
