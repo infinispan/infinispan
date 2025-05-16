@@ -1,5 +1,6 @@
 package org.infinispan.util;
 
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -19,7 +20,6 @@ import org.infinispan.topology.CacheTopologyHandler;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.LocalTopologyManagerImpl;
 import org.infinispan.topology.ManagerStatusResponse;
-import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.RebalancingStatus;
 import org.infinispan.util.logging.events.EventLogManager;
 
@@ -175,7 +175,7 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
    }
 
    @Override
-   public PersistentUUID getPersistentUUID() {
+   public UUID getPersistentUUID() {
       return delegate.getPersistentUUID();
    }
 

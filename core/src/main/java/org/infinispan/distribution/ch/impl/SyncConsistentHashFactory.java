@@ -21,7 +21,6 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.infinispan.topology.PersistentUUID;
 
 /**
  * {@link org.infinispan.distribution.ch.ConsistentHashFactory} implementation
@@ -63,7 +62,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
    }
 
    @Override
-   public PersistedConsistentHash<DefaultConsistentHash> fromPersistentState(ScopedPersistentState state, Function<PersistentUUID, Address> addressMapper) {
+   public PersistedConsistentHash<DefaultConsistentHash> fromPersistentState(ScopedPersistentState state, Function<java.util.UUID, Address> addressMapper) {
       String consistentHashClass = state.getProperty("consistentHash");
       if (!DefaultConsistentHash.class.getName().equals(consistentHashClass))
          throw CONTAINER.persistentConsistentHashMismatch(this.getClass().getName(), consistentHashClass);
@@ -310,9 +309,6 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
          if (address instanceof JGroupsAddress addr) {
             key[0] = addr.getLeastSignificantBits();
             key[1] = addr.getMostSignificantBits();
-         } else if (address instanceof PersistentUUID persistentUUID) {
-            key[0] = persistentUUID.getLeastSignificantBits();
-            key[1] = persistentUUID.getMostSignificantBits();
          } else {
             key[0] = address.hashCode();
          }

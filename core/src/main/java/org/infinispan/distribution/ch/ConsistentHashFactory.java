@@ -2,11 +2,11 @@ package org.infinispan.distribution.ch;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.topology.PersistentUUID;
 
 /**
  * Factory for {@link ConsistentHash} instances.
@@ -86,17 +86,17 @@ public interface ConsistentHashFactory<CH extends ConsistentHash> {
    /**
     * Recreates a {@link ConsistentHash} from a previously stored persistent state.
     * <p>
-    * The stored state typically contains a collection of {@link PersistentUUID}s representing the members. If a member
-    * is not present when reading from the state, its {@link PersistentUUID} must be added to the
+    * The stored state typically contains a collection of {@link UUID}s representing the members. If a member is not
+    * present when reading from the state, its {@link UUID} must be added to the
     * {@link PersistedConsistentHash#missingUuids()} list. The {@link PersistedConsistentHash#consistentHash()} may have
-    *  incomplete ownership when there are missing UUIDs.
+    * incomplete ownership when there are missing UUIDs.
     *
-    * @param state         the state to restore, containing member {@link PersistentUUID}s.
-    * @param addressMapper A function to map the {@link PersistentUUID} to {@link Address}.
-    * @return A {@link PersistedConsistentHash} with the {@link ConsistentHash} and with the missing
-    * {@link PersistentUUID} if any.
+    * @param state         the state to restore, containing member {@link UUID}s.
+    * @param addressMapper A function to map the {@link UUID} to {@link Address}.
+    * @return A {@link PersistedConsistentHash} with the {@link ConsistentHash} and with the missing {@link UUID} if
+    * any.
     */
-   default PersistedConsistentHash<CH> fromPersistentState(ScopedPersistentState state, Function<PersistentUUID, Address> addressMapper) {
+   default PersistedConsistentHash<CH> fromPersistentState(ScopedPersistentState state, Function<UUID, Address> addressMapper) {
       throw new UnsupportedOperationException();
    }
 }

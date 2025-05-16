@@ -3,11 +3,11 @@ package org.infinispan.distribution.ch;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.topology.PersistentUUID;
 
 /**
  * A consistent hash algorithm implementation. Implementations would typically be constructed via a
@@ -112,10 +112,10 @@ public interface ConsistentHash {
     * Writes this {@link ConsistentHash} to the specified scoped persistent state.
     *
     * @param state         The state to which this {@link ConsistentHash} will be written.
-    * @param addressMapper The mapper {@link Function} to convert the {@link Address} to the {@link PersistentUUID} used
-    *                      to persist the address within the state.
+    * @param addressMapper The mapper {@link Function} to convert the {@link Address} to the {@link UUID} used to
+    *                      persist the address within the state.
     */
-   default void toScopedState(ScopedPersistentState state, Function<Address, PersistentUUID> addressMapper) {
+   default void toScopedState(ScopedPersistentState state, Function<Address, UUID> addressMapper) {
       throw new UnsupportedOperationException();
    }
 

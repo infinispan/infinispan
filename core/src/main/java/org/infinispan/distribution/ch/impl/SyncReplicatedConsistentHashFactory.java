@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -15,7 +16,6 @@ import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.topology.PersistentUUID;
 
 /**
  * {@link SyncConsistentHashFactory} adapted for replicated caches, so that the primary owner of a key
@@ -46,7 +46,7 @@ public class SyncReplicatedConsistentHashFactory implements ConsistentHashFactor
    }
 
    @Override
-   public PersistedConsistentHash<ReplicatedConsistentHash> fromPersistentState(ScopedPersistentState state, Function<PersistentUUID, Address> addressMapper) {
+   public PersistedConsistentHash<ReplicatedConsistentHash> fromPersistentState(ScopedPersistentState state, Function<UUID, Address> addressMapper) {
       String consistentHashClass = state.getProperty("consistentHash");
       if (!ReplicatedConsistentHash.class.getName().equals(consistentHashClass))
          throw CONTAINER.persistentConsistentHashMismatch(this.getClass().getName(), consistentHashClass);

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -27,7 +28,6 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.infinispan.topology.PersistentUUID;
 
 /**
  * Special implementation of {@link ConsistentHash} for replicated caches.
@@ -144,7 +144,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       return new ReplicatedConsistentHash(unionMembers, unionCapacityFactors, unionMembersWithoutState, primaryOwners);
    }
 
-   static PersistedConsistentHash<ReplicatedConsistentHash> fromPersistentScope(ScopedPersistentState state, Function<PersistentUUID, Address> addressMapper) {
+   static PersistedConsistentHash<ReplicatedConsistentHash> fromPersistentScope(ScopedPersistentState state, Function<UUID, Address> addressMapper) {
       var members = parseMembers(state, ConsistentHashPersistenceConstants.STATE_MEMBERS,
             ConsistentHashPersistenceConstants.STATE_MEMBER, addressMapper, true);
       var missingUuids = new HashSet<>(members.missingUuids());
@@ -158,14 +158,14 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    }
 
    private static PersistedMembers parseMembers(ScopedPersistentState state, String numMembersPropertyName,
-                                                String memberPropertyFormat, Function<PersistentUUID, Address> addressMapper, boolean parseCapacityFactors) {
+                                                String memberPropertyFormat, Function<UUID, Address> addressMapper, boolean parseCapacityFactors) {
       String property = state.getProperty(numMembersPropertyName);
       if (property == null) {
          return new PersistedMembers(List.of(), null, Set.of());
       }
       var numMembers = Integer.parseInt(property);
       var members = new ArrayList<Address>(numMembers);
-      var missingUuids = new ArrayList<PersistentUUID>(numMembers);
+      var missingUuids = new ArrayList<UUID>(numMembers);
 
       Map<Address, Float> capacityFactors = null;
       if (parseCapacityFactors) {
@@ -175,7 +175,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       var version11State = numCapacityFactorsString == null;
 
       for (int i = 0; i < numMembers; i++) {
-         var uuid = PersistentUUID.fromString(state.getProperty(String.format(memberPropertyFormat, i)));
+         var uuid = UUID.fromString(state.getProperty(String.format(memberPropertyFormat, i)));
          var address = addressMapper.apply(uuid);
          if (address == null) {
             missingUuids.add(uuid);
@@ -294,7 +294,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       return true;
    }
 
-   public void toScopedState(ScopedPersistentState state, Function<Address, PersistentUUID> addressMapper) {
+   public void toScopedState(ScopedPersistentState state, Function<Address, UUID> addressMapper) {
       state.setProperty(ConsistentHashPersistenceConstants.STATE_CONSISTENT_HASH, this.getClass().getName());
       writeAddressToState(state, members, ConsistentHashPersistenceConstants.STATE_MEMBERS, ConsistentHashPersistenceConstants.STATE_MEMBER, addressMapper);
       writeAddressToState(state, membersWithoutState, ConsistentHashPersistenceConstants.STATE_MEMBERS_NO_ENTRIES, ConsistentHashPersistenceConstants.STATE_MEMBER_NO_ENTRIES, addressMapper);

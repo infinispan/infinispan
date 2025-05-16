@@ -1,5 +1,6 @@
 package org.infinispan.topology;
 
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.factories.scopes.Scope;
@@ -117,7 +118,7 @@ public interface LocalTopologyManager {
     * Returns the local UUID of this node. If global state persistence is enabled, this UUID will be saved and reused
     * across restarts
     */
-   PersistentUUID getPersistentUUID();
+   UUID getPersistentUUID();
 
    /**
     * Initiates a cluster-wide cache shutdown for the specified cache

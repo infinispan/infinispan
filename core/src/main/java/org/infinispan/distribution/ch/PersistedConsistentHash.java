@@ -3,26 +3,26 @@ package org.infinispan.distribution.ch;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 
 import org.infinispan.globalstate.ScopedPersistentState;
-import org.infinispan.topology.PersistentUUID;
 
 /**
  * A record containing the {@link ConsistentHash} restored from persistent state and any missing
- * {@link PersistentUUID}s.
+ * {@link UUID}s.
  *
  * @param consistentHash The {@link ConsistentHash} instance. Note that its ownership information might be incomplete if
  *                       {@link #missingUuids()} is not empty.
- * @param missingUuids   A collection of {@link PersistentUUID}s representing members that were present in the
+ * @param missingUuids   A collection of {@link UUID}s representing members that were present in the
  *                       persistent state but are not currently online.
  * @param <CH>           The specific implementation type of the {@link ConsistentHash}.
  * @see ConsistentHashFactory#fromPersistentState(ScopedPersistentState, Function)
  */
 public record PersistedConsistentHash<CH extends ConsistentHash>(CH consistentHash,
-                                                                 Collection<PersistentUUID> missingUuids) {
+                                                                 Collection<UUID> missingUuids) {
 
-   public PersistedConsistentHash(CH consistentHash, Collection<PersistentUUID> missingUuids) {
+   public PersistedConsistentHash(CH consistentHash, Collection<UUID> missingUuids) {
       this.consistentHash = Objects.requireNonNull(consistentHash);
       this.missingUuids = Set.copyOf(missingUuids);
    }

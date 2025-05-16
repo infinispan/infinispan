@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
@@ -53,7 +54,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.infinispan.transaction.impl.TransactionOriginatorChecker;
@@ -88,7 +88,7 @@ public class StateProviderTest {
 
    private static final PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
    static {
-      Arrays.asList(A, B, C, D, E, F, G).forEach(address -> persistentUUIDManager.addPersistentAddressMapping(address, PersistentUUID.randomUUID()));
+      Arrays.asList(A, B, C, D, E, F, G).forEach(address -> persistentUUIDManager.addPersistentAddressMapping(address, UUID.randomUUID()));
    }
 
    private Configuration configuration;

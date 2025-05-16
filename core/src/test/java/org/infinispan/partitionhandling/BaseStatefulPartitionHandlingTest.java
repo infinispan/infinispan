@@ -8,10 +8,10 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.assertj.core.api.SoftAssertions;
 import org.infinispan.commons.util.IntSets;
@@ -26,7 +26,6 @@ import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.topology.LocalTopologyManager;
-import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.PersistentUUIDManager;
 
 public class BaseStatefulPartitionHandlingTest extends BasePartitionHandlingTest {
@@ -75,13 +74,13 @@ public class BaseStatefulPartitionHandlingTest extends BasePartitionHandlingTest
       if (start) manager.defineConfiguration(CACHE_NAME, config.build());
    }
 
-   protected Map<JGroupsAddress, PersistentUUID> createInitialCluster() {
+   protected Map<JGroupsAddress, UUID> createInitialCluster() {
       waitForClusterToForm(CACHE_NAME);
-      Map<JGroupsAddress, PersistentUUID> addressMappings = new LinkedHashMap<>();
+      Map<JGroupsAddress, UUID> addressMappings = new LinkedHashMap<>();
 
       for (int i = 0; i < numMembersInCluster; i++) {
          LocalTopologyManager ltm = TestingUtil.extractGlobalComponent(manager(i), LocalTopologyManager.class);
-         PersistentUUID uuid = ltm.getPersistentUUID();
+         var uuid = ltm.getPersistentUUID();
          assertNotNull(uuid);
          addressMappings.put((JGroupsAddress) manager(i).getAddress(), uuid);
       }
@@ -107,7 +106,7 @@ public class BaseStatefulPartitionHandlingTest extends BasePartitionHandlingTest
       }
    }
 
-   protected void assertHealthyCluster(Map<JGroupsAddress, PersistentUUID> addressMappings, ConsistentHash oldConsistentHash) throws Throwable {
+   protected void assertHealthyCluster(Map<JGroupsAddress, UUID> addressMappings, ConsistentHash oldConsistentHash) throws Throwable {
       // Healthy cluster
       waitForClusterToForm(CACHE_NAME);
 
@@ -120,7 +119,7 @@ public class BaseStatefulPartitionHandlingTest extends BasePartitionHandlingTest
       assertEquivalent(addressMappings, oldConsistentHash, newConsistentHash, persistentUUIDManager);
    }
 
-   void checkClusterRestartedCorrectly(Map<JGroupsAddress, PersistentUUID> addressMappings) throws Exception {
+   void checkClusterRestartedCorrectly(Map<JGroupsAddress, UUID> addressMappings) throws Exception {
       checkPersistentUUIDMatch(addressMappings);
       checkClusterDataSize(DATA_SIZE);
    }
@@ -140,9 +139,9 @@ public class BaseStatefulPartitionHandlingTest extends BasePartitionHandlingTest
       sa.assertAll();
    }
 
-   void checkPersistentUUIDMatch(Map<JGroupsAddress, PersistentUUID> addressMappings) throws Exception {
-      Iterator<Map.Entry<JGroupsAddress, PersistentUUID>> addressIterator = addressMappings.entrySet().iterator();
-      Set<PersistentUUID> uuids = new HashSet<>();
+   void checkPersistentUUIDMatch(Map<JGroupsAddress, UUID> addressMappings) throws Exception {
+      var addressIterator = addressMappings.entrySet().iterator();
+      Set<UUID> uuids = new HashSet<>();
       for (int i = 0; i < cacheManagers.size(); i++) {
          LocalTopologyManager ltm = TestingUtil.extractGlobalComponent(manager(i), LocalTopologyManager.class);
          assertTrue(uuids.add(ltm.getPersistentUUID()));
@@ -151,7 +150,7 @@ public class BaseStatefulPartitionHandlingTest extends BasePartitionHandlingTest
       for (int i = 0; i < cacheManagers.size(); i++) {
          LocalTopologyManager ltm = TestingUtil.extractGlobalComponent(manager(i), LocalTopologyManager.class);
          // Ensure that nodes have the old UUID
-         Map.Entry<JGroupsAddress, PersistentUUID> entry = addressIterator.next();
+         var entry = addressIterator.next();
          assertTrue(entry.getKey() + " is mapping to the wrong UUID: " +
                "Expected: " + entry.getValue() + " not found in: " + uuids, uuids.contains(entry.getValue()));
          // Ensure that rebalancing is enabled for the cache
@@ -159,12 +158,12 @@ public class BaseStatefulPartitionHandlingTest extends BasePartitionHandlingTest
       }
    }
 
-   void assertEquivalent(Map<JGroupsAddress, PersistentUUID> addressMappings, ConsistentHash oldConsistentHash,
+   void assertEquivalent(Map<JGroupsAddress, UUID> addressMappings, ConsistentHash oldConsistentHash,
                          ConsistentHash newConsistentHash, PersistentUUIDManager persistentUUIDManager) {
       assertTrue(isEquivalent(addressMappings, oldConsistentHash, newConsistentHash, persistentUUIDManager));
    }
 
-   protected final boolean isEquivalent(Map<JGroupsAddress, PersistentUUID> addressMapping, ConsistentHash oldConsistentHash,
+   protected final boolean isEquivalent(Map<JGroupsAddress, UUID> addressMapping, ConsistentHash oldConsistentHash,
                                         ConsistentHash newConsistentHash, PersistentUUIDManager persistentUUIDManager) {
       if (oldConsistentHash.getNumSegments() != newConsistentHash.getNumSegments()) return false;
       for (int i = 0; i < oldConsistentHash.getMembers().size(); i++) {

@@ -1,6 +1,7 @@
 package org.infinispan.commands.topology;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -16,9 +17,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.PersistentUUID;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Coordinator to member:
@@ -30,7 +28,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 @ProtoTypeId(ProtoStreamTypeIds.TOPOLOGY_UPDATE_COMMAND)
 public class TopologyUpdateCommand extends AbstractCacheControlCommand {
-   private static final Log log = LogFactory.getLog(TopologyUpdateCommand.class);
 
    @ProtoField(1)
    final String cacheName;
@@ -48,7 +45,7 @@ public class TopologyUpdateCommand extends AbstractCacheControlCommand {
    final List<JGroupsAddress> actualMembers;
 
    @ProtoField(6)
-   final List<PersistentUUID> persistentUUIDs;
+   final List<UUID> persistentUUIDs;
 
    @ProtoField(7)
    final AvailabilityMode availabilityMode;
@@ -65,7 +62,7 @@ public class TopologyUpdateCommand extends AbstractCacheControlCommand {
    @ProtoFactory
    TopologyUpdateCommand(String cacheName, WrappedMessage currentCH, WrappedMessage pendingCH,
                          CacheTopology.Phase phase, List<JGroupsAddress> actualMembers,
-                         List<PersistentUUID> persistentUUIDs, AvailabilityMode availabilityMode,
+                         List<UUID> persistentUUIDs, AvailabilityMode availabilityMode,
                          int rebalanceId, int topologyId, int viewId) {
       this.cacheName = cacheName;
       this.currentCH = currentCH;

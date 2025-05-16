@@ -1,6 +1,7 @@
 package org.infinispan.commands.topology;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -14,7 +15,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.PersistentUUID;
 
 /**
  * The coordinator is starting a rebalance operation.
@@ -38,7 +38,7 @@ public class RebalanceStartCommand extends AbstractCacheControlCommand {
    final CacheTopology.Phase phase;
 
    @ProtoField(5)
-   final List<PersistentUUID> persistentUUIDs;
+   final List<UUID> persistentUUIDs;
 
    @ProtoField(6)
    final int rebalanceId;
@@ -49,11 +49,11 @@ public class RebalanceStartCommand extends AbstractCacheControlCommand {
    @ProtoField(8)
    final int viewId;
 
-   private List<Address> actualMembers;
+   private final List<Address> actualMembers;
 
    @ProtoFactory
    RebalanceStartCommand(String cacheName, WrappedMessage currentCH, WrappedMessage pendingCH,
-                                CacheTopology.Phase phase, List<PersistentUUID> persistentUUIDs,
+                                CacheTopology.Phase phase, List<UUID> persistentUUIDs,
                                 int rebalanceId, int topologyId, int viewId, List<JGroupsAddress> actualMembers) {
       this.cacheName = cacheName;
       this.currentCH = currentCH;

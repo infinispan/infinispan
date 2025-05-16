@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -51,7 +52,6 @@ import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.mockito.stubbing.Answer;
@@ -179,7 +179,7 @@ public class StateReceiverTest extends AbstractInfinispanTest {
       for (int i = 0; i < numberOfNodes; i++) {
          Address address = JGroupsAddress.random();
          addresses.add(address);
-         persistentUUIDManager.addPersistentAddressMapping(address, PersistentUUID.randomUUID());
+         persistentUUIDManager.addPersistentAddressMapping(address, UUID.randomUUID());
       }
 
       DefaultConsistentHashFactory chf = DefaultConsistentHashFactory.getInstance();

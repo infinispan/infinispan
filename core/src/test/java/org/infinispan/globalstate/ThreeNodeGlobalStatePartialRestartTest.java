@@ -5,7 +5,6 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Map;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.test.Exceptions;
@@ -15,10 +14,8 @@ import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.PartitionHandling;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.MissingMembersException;
-import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.PersistentUUIDManager;
 import org.testng.annotations.Test;
 
@@ -51,7 +48,7 @@ public class ThreeNodeGlobalStatePartialRestartTest extends AbstractGlobalStateR
    }
 
    public void testClusterDelayedJoiners() throws Exception {
-      Map<JGroupsAddress, PersistentUUID> addressMappings = createInitialCluster();
+      var addressMappings = createInitialCluster();
 
       ConsistentHash oldConsistentHash = advancedCache(0, CACHE_NAME).getDistributionManager().getWriteConsistentHash();
 
@@ -92,7 +89,7 @@ public class ThreeNodeGlobalStatePartialRestartTest extends AbstractGlobalStateR
    }
 
    public void testConnectAndDisconnectDuringRestart() throws Exception {
-      Map<JGroupsAddress, PersistentUUID> addressMappings = createInitialCluster();
+      var addressMappings = createInitialCluster();
 
       ConsistentHash oldConsistentHash = advancedCache(0, CACHE_NAME).getDistributionManager().getWriteConsistentHash();
 
@@ -149,7 +146,7 @@ public class ThreeNodeGlobalStatePartialRestartTest extends AbstractGlobalStateR
    }
 
    public void testClusterWithRestartsDuringPartitioning() throws Exception {
-      Map<JGroupsAddress, PersistentUUID> addressMappings = createInitialCluster();
+      var addressMappings = createInitialCluster();
 
       ConsistentHash oldConsistentHash = advancedCache(0, CACHE_NAME).getDistributionManager().getWriteConsistentHash();
 
