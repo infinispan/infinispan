@@ -67,7 +67,7 @@ public class SoftIndexFileStoreIterator implements StoreIterator {
             this.fileProvider = new FileProvider(location, 1000, prefix, 1024 * 1024);
             this.reader = EntryRecord::readEntryHeader;
          }
-         this.iterator = fileProvider.getFileIterator();
+         this.iterator = fileProvider.getFileIterator(null);
       }
 
       @Override

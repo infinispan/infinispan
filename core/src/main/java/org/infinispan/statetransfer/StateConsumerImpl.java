@@ -1,5 +1,7 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.commons.util.concurrent.CompletionStages.handleAndCompose;
+import static org.infinispan.commons.util.concurrent.CompletionStages.ignoreValue;
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
 import static org.infinispan.context.Flag.IRAC_STATE;
@@ -10,9 +12,8 @@ import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
 import static org.infinispan.context.Flag.SKIP_SHARED_CACHE_STORE;
 import static org.infinispan.context.Flag.SKIP_XSITE_BACKUP;
 import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
-import static org.infinispan.commons.util.concurrent.CompletionStages.handleAndCompose;
-import static org.infinispan.commons.util.concurrent.CompletionStages.ignoreValue;
 import static org.infinispan.util.logging.Log.PERSISTENCE;
 
 import java.util.ArrayList;
@@ -29,11 +30,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
+
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
@@ -43,10 +48,14 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.ProgressTracker;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.conflict.impl.InternalConflictManager;
@@ -94,9 +103,7 @@ import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CommandAckCollector;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
@@ -104,8 +111,6 @@ import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
 import net.jcip.annotations.GuardedBy;
 
 /**
@@ -147,6 +152,9 @@ public class StateConsumerImpl implements StateConsumer {
    @Inject protected LocalPublisherManager<Object, Object> localPublisherManager;
    @Inject PerCacheInboundInvocationHandler inboundInvocationHandler;
    @Inject XSiteStateTransferManager xSiteStateTransferManager;
+   @Inject @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR)
+   ScheduledExecutorService timeoutExecutor;
+   @Inject TimeService timeService;
 
    protected String cacheName;
    protected long timeout;
@@ -200,6 +208,11 @@ public class StateConsumerImpl implements StateConsumer {
     * Limit to one state request at a time.
     */
    protected LimitedExecutor stateRequestExecutor;
+
+   /**
+    * Tracks and logs the progress of the state transfer.
+    */
+   private ProgressTracker progressTracker;
 
    private volatile boolean ownsData = false;
 
@@ -827,6 +840,7 @@ public class StateConsumerImpl implements StateConsumer {
       requestedTransactionalSegments = IntSets.concurrentSet(numSegments);
 
       stateRequestExecutor = new LimitedExecutor("StateRequest-" + cacheName, nonBlockingExecutor, 1);
+      progressTracker = new ProgressTracker("state-transfer-" + cacheName, timeoutExecutor, timeService, timeout >> 2, TimeUnit.MILLISECONDS);
       running = true;
    }
 
@@ -856,6 +870,7 @@ public class StateConsumerImpl implements StateConsumer {
          }
          requestedTransactionalSegments.clear();
          stateRequestExecutor.shutdownNow();
+         progressTracker.finishedAllTasks();
       } catch (Throwable t) {
          log.errorf(t, "Failed to stop StateConsumer of cache %s on node %s", cacheName, rpcManager.getAddress());
       }
@@ -1238,6 +1253,7 @@ public class StateConsumerImpl implements StateConsumer {
    protected void addTransfer(InboundTransferTask inboundTransfer, IntSet segments) {
       if (!running)
          throw new IllegalLifecycleStateException("State consumer is not running for cache " + cacheName);
+      progressTracker.addTasks(segments.size());
 
       for (PrimitiveIterator.OfInt iter = segments.iterator(); iter.hasNext(); ) {
          int segmentId = iter.nextInt();
@@ -1257,10 +1273,16 @@ public class StateConsumerImpl implements StateConsumer {
          // Box the segment as the map uses Integer as key
          for (Integer segment : inboundTransfer.getSegments()) {
             List<InboundTransferTask> innerTransfers = transfersBySegment.get(segment);
-            if (innerTransfers != null && innerTransfers.remove(inboundTransfer) && innerTransfers.isEmpty()) {
-               transfersBySegment.remove(segment);
+            if (innerTransfers != null && innerTransfers.remove(inboundTransfer)) {
+               progressTracker.removeTasks(1);
+               if (innerTransfers.isEmpty()) {
+                  transfersBySegment.remove(segment);
+               }
             }
          }
+
+         if (!hasActiveTransfers())
+            progressTracker.finishedAllTasks();
       }
    }
 

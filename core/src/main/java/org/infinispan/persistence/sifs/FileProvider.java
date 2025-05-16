@@ -25,6 +25,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.ProgressTracker;
 import org.infinispan.persistence.sifs.pmem.PmemUtilWrapper;
 import org.infinispan.util.logging.LogFactory;
 
@@ -274,7 +275,7 @@ public class FileProvider {
       }
    }
 
-   public CloseableIterator<Integer> getFileIterator() {
+   public CloseableIterator<Integer> getFileIterator(ProgressTracker tracker) {
       String regex = String.format(REGEX_FORMAT, prefix);
       lock.readLock().lock();
       try {
@@ -284,6 +285,7 @@ public class FileProvider {
                set.add(Integer.parseInt(file.substring(prefix.length())));
             }
          }
+         if (tracker != null && !set.isEmpty()) tracker.addTasks(set.size());
          FileIterator iterator = new FileIterator(set.iterator());
          iterators.add(iterator);
          return iterator;

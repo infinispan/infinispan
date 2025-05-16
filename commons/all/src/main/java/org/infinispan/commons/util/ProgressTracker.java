@@ -111,9 +111,9 @@ public final class ProgressTracker {
       }
 
       public void completed() {
-         reset();
          status = Progression.DONE;
          log.taskDone(name, startedAt, timeService.instant());
+         reset();
       }
 
       @Override
