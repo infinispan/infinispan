@@ -1,6 +1,7 @@
 package org.infinispan.statetransfer;
 
 import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -25,7 +26,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +41,7 @@ import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
 import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -101,6 +105,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
    private static final ByteString CACHE_NAME = ByteString.fromString("test-cache");
 
    private ExecutorService pooledExecutorService;
+   private ScheduledExecutorService scheduledExecutorService;
 
    @BeforeMethod
    public void createExecutorService() {
@@ -108,6 +113,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
             TimeUnit.MILLISECONDS, new SynchronousQueue<>(),
             getTestThreadFactory("Worker"),
             new ThreadPoolExecutor.CallerRunsPolicy());
+      scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
    }
 
    @AfterMethod
@@ -115,6 +121,11 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       if (pooledExecutorService != null) {
          pooledExecutorService.shutdownNow();
          pooledExecutorService = null;
+      }
+
+      if (scheduledExecutorService != null) {
+         scheduledExecutorService.shutdownNow();
+         scheduledExecutorService = null;
       }
    }
 
@@ -302,7 +313,10 @@ public class StateConsumerTest extends AbstractInfinispanTest {
             mock(DistributionManager.class),
             mock(LocalPublisherManager.class),
             mock(PerCacheInboundInvocationHandler.class),
-            mockXSiteStateTransferManager());
+            mockXSiteStateTransferManager(),
+            new ControlledTimeService(),
+            TestingUtil.named(TIMEOUT_SCHEDULE_EXECUTOR, scheduledExecutorService)
+            );
    }
 
    public void testClusterRecoverDuringStateTransfer() throws Exception {

@@ -11,15 +11,19 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.ProgressTracker;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -59,20 +63,24 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
       DataConversion valueDataConversion = cache.getValueDataConversion();
 
       AdvancedCache<Object, Object> reindexCache = cache.withStorageMediaType();
-      boolean javaEmbeddedEntities = SecurityActions.getCacheConfiguration(reindexCache).indexing().useJavaEmbeddedEntities();
+      Configuration cfg = SecurityActions.getCacheConfiguration(reindexCache);
+      boolean javaEmbeddedEntities = cfg.indexing().useJavaEmbeddedEntities();
 
       SearchMapping searchMapping = ComponentRegistryUtils.getSearchMapping(cache);
       TimeService timeService = ComponentRegistryUtils.getTimeService(cache);
+      ScheduledExecutorService timeoutExecutor = ComponentRegistryUtils.getTimeoutScheduledExecutor(cache);
 
       MassIndexerProgressNotifier notifier = new MassIndexerProgressNotifier(searchMapping, timeService);
+      ProgressTracker progressTracker = new ProgressTracker("query-indexer", timeoutExecutor, timeService, cfg.clustering().remoteTimeout(), TimeUnit.MILLISECONDS);
       IndexUpdater indexUpdater = new IndexUpdater(searchMapping);
       KeyPartitioner keyPartitioner = ComponentRegistryUtils.getKeyPartitioner(cache);
 
       if (keys == null || keys.isEmpty()) {
          preIndex(cache, indexUpdater, notifier);
-         MassIndexerProgressState progressState = new MassIndexerProgressState(notifier);
+         MassIndexerProgressState progressState = new MassIndexerProgressState(notifier, progressTracker);
 
          if (!skipIndex) {
+            progressTracker.addTasks(reindexCache.withFlags(Flag.CACHE_MODE_LOCAL).size());
             try (Stream<CacheEntry<Object, Object>> stream = reindexCache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL)
                   .cacheEntrySet().stream()) {
                Iterator<UpdateRecord> records = stream.map(entry -> {
@@ -100,6 +108,8 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
          Set<Class<?>> classSet = new HashSet<>(keys.size());
          AggregateCompletionStage<Void> updates = CompletionStages.aggregateCompletionStage();
 
+         progressTracker.addTasks(keys.size());
+
          for (Object key : keys) {
             Object storedKey = keyDataConversion.toStorage(key);
             Object unwrappedKey = keyDataConversion.extractIndexable(storedKey, javaEmbeddedEntities);
@@ -116,6 +126,7 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
             indexUpdater.refresh(classSet);
          }
       }
+      progressTracker.finishedAllTasks();
       return null;
    }
 
