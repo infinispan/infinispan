@@ -201,6 +201,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
       Security.doAs(ADMIN, () -> restServers.forEach(RestServerHelper::stop));
       Util.close(client);
       Util.close(adminClient);
+      restServers.clear();
    }
 
    @AfterMethod
