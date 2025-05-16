@@ -16,6 +16,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.context.Flag;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -116,7 +117,7 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
          cache.put("key-" + i, "value-" + i, 1, TimeUnit.MILLISECONDS);
       }
       timeService.advance(2);
-      assertEquals(0, cache.size());
+      assertEquals(0, cache.getAdvancedCache().withFlags(Flag.SKIP_SIZE_OPTIMIZATION).size());
    }
 
    protected int maxInMemory() {

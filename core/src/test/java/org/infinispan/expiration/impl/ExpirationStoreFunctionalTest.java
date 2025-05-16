@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.context.Flag;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -64,7 +65,7 @@ public class ExpirationStoreFunctionalTest extends ExpirationFunctionalTest {
 
       timeService.advance(6);
 
-      assertEquals(SIZE, cache.size());
+      assertEquals(SIZE, cache.getAdvancedCache().withFlags(Flag.SKIP_SIZE_OPTIMIZATION).size());
 
       // Now we read just a few of them
       assertNotNull(cache.get("key-" + 1));
@@ -76,12 +77,14 @@ public class ExpirationStoreFunctionalTest extends ExpirationFunctionalTest {
       // This will expire all but the 3 we touched above
       timeService.advance(6);
 
-      assertEquals(3, cache.size());
+      // Local cache will check the store contents only, but stores without passivation don't
+      // update for max idle, so it the store would report 0
+      assertEquals(3, cache.getAdvancedCache().withFlags(Flag.SKIP_SIZE_OPTIMIZATION).size());
 
       // This will expire the rest
       timeService.advance(6);
 
-      assertEquals(0, cache.size());
+      assertEquals(0, cache.getAdvancedCache().withFlags(Flag.SKIP_SIZE_OPTIMIZATION).size());
 
       processExpiration();
 

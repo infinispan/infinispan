@@ -111,6 +111,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
 
    protected boolean activation;
    private volatile boolean usingStores;
+   protected boolean isLocalCache;
 
    private final ConcurrentMap<Object, CompletionStage<InternalCacheEntry<K, V>>> pendingLoads = new ConcurrentHashMap<>();
 
@@ -118,6 +119,9 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
    public void start() {
       this.activation = cacheConfiguration.persistence().passivation();
       this.usingStores = cacheConfiguration.persistence().usingStores();
+      // A non clustered or invalidation only reads the local contents
+      this.isLocalCache = !cacheConfiguration.clustering().cacheMode().isClustered() ||
+            cacheConfiguration.clustering().cacheMode().isInvalidation();
    }
 
    @Override
@@ -277,12 +281,15 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
          return NonBlockingStore.SIZE_UNAVAILABLE_FUTURE;
       }
 
-      // Get the size from any shared store that isn't async
-      return persistenceManager.size(SHARED.and(NOT_ASYNC))
-            .thenCompose(v -> v >= 0 || !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)
-                  ? CompletableFuture.completedFuture(v)
-                  // For a local request get the size private not asynchronous store
-                  : persistenceManager.size(PRIVATE.and(NOT_ASYNC), command.getSegments()));
+      var stage = persistenceManager.size(SHARED.and(NOT_ASYNC));
+      // If the call is for a cache that isn't remote and doesn't have local mode forced we can't use the optimization
+      // as we have to ask other nodes for the value as well
+      if (!command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL) && !isLocalCache) {
+         return stage;
+      }
+
+      return stage.thenCompose(v -> v >= 0 ? CompletableFuture.completedFuture(v) :
+            persistenceManager.size(PRIVATE.and(NOT_ASYNC), command.getSegments()));
    }
 
    protected final boolean isConditional(WriteCommand cmd) {
