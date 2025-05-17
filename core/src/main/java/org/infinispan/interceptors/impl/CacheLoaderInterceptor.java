@@ -1,5 +1,10 @@
 package org.infinispan.interceptors.impl;
 
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.NOT_ASYNC;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
+import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.SHARED;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -81,10 +86,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.NOT_ASYNC;
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.SHARED;
 
 /**
  * @since 9.0
@@ -110,6 +111,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
 
    protected boolean activation;
    private volatile boolean usingStores;
+   protected boolean isLocalCache;
 
    private final ConcurrentMap<Object, CompletionStage<InternalCacheEntry<K, V>>> pendingLoads = new ConcurrentHashMap<>();
 
@@ -117,6 +119,9 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
    public void start() {
       this.activation = cacheConfiguration.persistence().passivation();
       this.usingStores = cacheConfiguration.persistence().usingStores();
+      // A non clustered or invalidation only reads the local contents
+      this.isLocalCache = !cacheConfiguration.clustering().cacheMode().isClustered() ||
+            cacheConfiguration.clustering().cacheMode().isInvalidation();
    }
 
    @Override
@@ -278,7 +283,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
 
       // Get the size from any shared store that isn't async
       return persistenceManager.size(SHARED.and(NOT_ASYNC))
-            .thenCompose(v -> v >= 0 || !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)
+            .thenCompose(v -> v >= 0 || (!command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL) && !isLocalCache)
                   ? CompletableFuture.completedFuture(v)
                   // For a local request get the size private not asynchronous store
                   : persistenceManager.size(PRIVATE.and(NOT_ASYNC), command.getSegments()));
