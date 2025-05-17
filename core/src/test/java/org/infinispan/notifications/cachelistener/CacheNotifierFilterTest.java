@@ -1,5 +1,7 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;
@@ -121,6 +123,16 @@ public class CacheNotifierFilterTest extends MultipleCacheManagersTest {
       cache0.getAdvancedCache().getAll(Collections.singleton("not" + key));
 
       assertEquals(4, listener.visitedEvents.size());
+   }
+
+   @Test
+   public void testMerge() {
+      Cache<String, String> cache0 = cache(0, CACHE_NAME);
+      AllCacheEntryListener listener = new AllCacheEntryListener();
+      cache0.addListener(listener);
+      cache0.put(k(), v());
+      cache0.merge(k(), v(1), (oldValue, newValue) -> oldValue+newValue);
+      System.out.println(listener.events);
    }
 
    @Test
