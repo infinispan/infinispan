@@ -1,0 +1,21 @@
+{
+  "endpoints": [
+    {
+      "endpoint": {
+        "socket-binding": "default",
+        "security-realm": "default",
+        "connectors": {
+          "rest": {
+            "rest-connector": {}
+          },
+          "resp": {
+            "resp-connector": {
+              "socket-binding": "resp",
+              "security-realm": "none"
+            }
+          }
+        }
+      }
+    }
+  ]
+}
