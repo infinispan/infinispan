@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.configuration.cache.L1Configuration.CLEANUP_TASK_FREQUENCY;
 import static org.infinispan.configuration.cache.L1Configuration.ENABLED;
 import static org.infinispan.configuration.cache.L1Configuration.INVALIDATION_THRESHOLD;
+import static org.infinispan.configuration.cache.L1Configuration.INVALIDATION_THRESHOLD_RATIO;
 import static org.infinispan.configuration.cache.L1Configuration.LIFESPAN;
 import static org.infinispan.util.logging.Log.CONFIG;
 
@@ -39,12 +40,12 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
     * </p>
     *
     * <p>
-    * By default multicast will be used.
+    * If the threshold is set to a negative number, then unicasts will always be used. If the threshold is set to a
+    * positive number, then multicast will be used if the number of nodes to send to exceeds this number.
     * </p>
     *
     * <p>
-    * If the threshold is set to -1, then unicasts will always be used. If the threshold is set to
-    * 0, then multicast will be always be used.
+    * By default, this is not used and {@link #invalidationThresholdRatio()} will be used instead.
     * </p>
     *
     * @param invalidationThreshold the threshold over which to use a multicast
@@ -52,6 +53,26 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
     */
    public L1ConfigurationBuilder invalidationThreshold(int invalidationThreshold) {
       attributes.attribute(INVALIDATION_THRESHOLD).set(invalidationThreshold);
+      return this;
+   }
+
+   /**
+    * <p>
+    * Determines whether a multicast or a web of unicasts are used when performing L1 invalidations.
+    * </p>
+    *
+    * <p>
+    * If the threshold is set to a negative number, then unicasts will always be used. If the threshold is set to a
+    * positive number, then multicast will be used if the ratio between nodes to send to and total number of nodes
+    * exceeds this number.
+    * </p>
+    *
+    * <p>
+    * By default multicast will be used if the number of nodes to send exceeds 0.5 of the total number of nodes.
+    * </p>
+    */
+   public L1ConfigurationBuilder invalidationThresholdRatio(float invalidationThresholdRatio) {
+      attributes.attribute(INVALIDATION_THRESHOLD_RATIO).set(invalidationThresholdRatio);
       return this;
    }
 
