@@ -26,6 +26,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -215,5 +216,10 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
 
    public void setRetriedCommand(boolean retriedCommand) {
       this.retriedCommand = retriedCommand;
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 }

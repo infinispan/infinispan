@@ -11,6 +11,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 
 /**
@@ -20,13 +21,14 @@ import org.infinispan.util.ByteString;
 public class CustomCacheRpcCommand extends BaseRpcCommand implements VisitableCommand {
 
    final Object arg;
+   NodeVersion supportSinceVersion = NodeVersion.INSTANCE;
 
    @ProtoFactory
    CustomCacheRpcCommand(ByteString cacheName, MarshallableObject<?> arg) {
       this(cacheName, MarshallableObject.unwrap(arg));
    }
 
-   CustomCacheRpcCommand(ByteString cacheName, Object arg) {
+   public CustomCacheRpcCommand(ByteString cacheName, Object arg) {
       super(cacheName);
       this.arg = arg;
    }
@@ -59,5 +61,14 @@ public class CustomCacheRpcCommand extends BaseRpcCommand implements VisitableCo
    @Override
    public LoadType loadType() {
       throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return supportSinceVersion;
+   }
+
+   public void setSupportedSince(NodeVersion version) {
+      this.supportSinceVersion = version;
    }
 }

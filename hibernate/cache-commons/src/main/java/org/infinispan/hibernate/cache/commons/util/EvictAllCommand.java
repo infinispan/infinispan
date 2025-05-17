@@ -9,6 +9,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 
 /**
@@ -44,5 +45,10 @@ public class EvictAllCommand extends BaseRpcCommand {
    @Override
 	public boolean isReturnValueExpected() {
 		return false;
+	}
+
+	@Override
+	public NodeVersion supportedSince() {
+		return NodeVersion.SIXTEEN;
 	}
 }

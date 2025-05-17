@@ -19,6 +19,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.reactive.publisher.impl.PublisherHandler;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 import org.reactivestreams.Publisher;
 
@@ -163,5 +164,10 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
 
       PublisherHandler publisherHandler = componentRegistry.getPublisherHandler().running();
       return publisherHandler.register(this);
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 }

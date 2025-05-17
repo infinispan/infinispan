@@ -3,6 +3,7 @@ package org.infinispan.commands.read;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.remoting.transport.NodeVersion;
 
 /**
  * Command implementation for {@link java.util.Map#keySet()} functionality.
@@ -21,6 +22,11 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitKeySetCommand(ctx, this);
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

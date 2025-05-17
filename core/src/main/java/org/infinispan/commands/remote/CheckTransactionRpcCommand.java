@@ -13,6 +13,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.responses.SuccessfulCollectionResponse;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.ValidSingleResponseCollector;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -73,6 +74,11 @@ public class CheckTransactionRpcCommand implements CacheRpcCommand {
    @Override
    public void setOrigin(Address origin) {
       //we don't need to keep track who sent the message
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

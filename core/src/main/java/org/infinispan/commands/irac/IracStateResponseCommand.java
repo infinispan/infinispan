@@ -14,6 +14,7 @@ import org.infinispan.protostream.annotations.Proto;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.irac.IracManager;
 import org.infinispan.xsite.irac.IracManagerKeyInfo;
@@ -52,6 +53,11 @@ public class IracStateResponseCommand extends BaseIracCommand {
 
    public void add(IracManagerKeyInfo keyInfo, IracMetadata tombstone) {
       stateCollection.add(new State(keyInfo, tombstone));
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

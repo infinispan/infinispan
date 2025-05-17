@@ -28,9 +28,9 @@ public class ClusterView {
    private final NodeVersion oldestMember;
    private final boolean mixedVersionCluster;
 
-   ClusterView(int viewId, List<ExtendedUUID> members, ExtendedUUID self) {
+   ClusterView(int viewId, List<ExtendedUUID> members, ExtendedUUID self, NodeVersion version) {
       this.viewId = viewId;
-      var oldestVersion = NodeVersion.INSTANCE;
+      var oldestVersion = version;
       var mixedVersionCluster = false;
       if (members.isEmpty()) {
          view = Map.of();
@@ -46,7 +46,7 @@ public class ClusterView {
             view.put(address, member);
 
             var v = address.getVersion();
-            if (!v.equals(NodeVersion.INSTANCE)) {
+            if (!v.equals(version)) {
                mixedVersionCluster = true;
 
                if (v.lessThan(oldestVersion))

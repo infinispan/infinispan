@@ -8,6 +8,7 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 
 /**
  * A hear-beat command used to ping members in {@link ClusterTopologyManagerImpl#confirmMembersAvailable()}.
@@ -33,5 +34,10 @@ public class HeartBeatCommand implements GlobalRpcCommand {
    @Override
    public boolean isReturnValueExpected() {
       return true;
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 }

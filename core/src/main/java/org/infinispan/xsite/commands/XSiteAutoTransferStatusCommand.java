@@ -11,6 +11,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.response.AutoStateTransferResponse;
 import org.infinispan.xsite.status.SiteState;
@@ -43,6 +44,11 @@ public class XSiteAutoTransferStatusCommand extends BaseRpcCommand {
       boolean offline = registry.getTakeOfflineManager().running().getSiteState(site) == SiteState.OFFLINE;
       XSiteStateTransferMode mode = registry.getXSiteStateTransferManager().running().stateTransferMode(site);
       return CompletableFuture.completedFuture(new AutoStateTransferResponse(offline, mode));
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

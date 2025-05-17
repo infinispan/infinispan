@@ -4,6 +4,7 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.remoting.transport.NodeVersion;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -17,6 +18,11 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitEvictCommand(ctx, this);
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

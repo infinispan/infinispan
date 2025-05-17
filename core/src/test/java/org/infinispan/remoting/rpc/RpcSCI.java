@@ -21,6 +21,6 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
       service = false,
       syntax = ProtoSyntax.PROTO3
 )
-interface RpcSCI extends SerializationContextInitializer {
+public interface RpcSCI extends SerializationContextInitializer {
    SerializationContextInitializer INSTANCE = new RpcSCIImpl();
 }

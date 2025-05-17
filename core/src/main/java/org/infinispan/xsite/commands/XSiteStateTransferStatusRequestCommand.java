@@ -9,6 +9,7 @@ import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.statetransfer.StateTransferStatus;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
@@ -36,6 +37,11 @@ public class XSiteStateTransferStatusRequestCommand extends BaseRpcCommand {
    @Override
    public boolean isReturnValueExpected() {
       return true;
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

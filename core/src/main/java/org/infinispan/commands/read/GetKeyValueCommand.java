@@ -5,6 +5,7 @@ import static org.infinispan.commons.util.Util.toStr;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 
 /**
@@ -28,6 +29,11 @@ public class GetKeyValueCommand extends AbstractDataCommand implements LocalComm
    @Override
    public LoadType loadType() {
       return LoadType.OWNER;
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    public String toString() {

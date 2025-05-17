@@ -8,6 +8,7 @@ import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 
 /**
  * Change the availability of a cache.
@@ -34,6 +35,11 @@ public class CacheAvailabilityUpdateCommand extends AbstractCacheControlCommand 
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry gcr) throws Throwable {
       return gcr.getClusterTopologyManager()
             .forceAvailabilityMode(cacheName, availabilityMode);
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

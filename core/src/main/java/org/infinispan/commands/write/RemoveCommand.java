@@ -16,6 +16,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 
 
@@ -196,5 +197,10 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
    public final boolean isReturnValueExpected() {
       // IGNORE_RETURN_VALUES ignored for conditional remove
       return isConditional() || super.isReturnValueExpected();
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 }

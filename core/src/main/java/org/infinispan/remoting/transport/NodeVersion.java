@@ -15,6 +15,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.NODE_VERSION)
 public class NodeVersion implements Comparable<NodeVersion> {
 
+   public static final NodeVersion SIXTEEN = new NodeVersion((byte) 16, (byte) 0, (byte) 0);
    public static final NodeVersion INSTANCE;
 
    static {
@@ -25,7 +26,7 @@ public class NodeVersion implements Comparable<NodeVersion> {
    }
 
    @ProtoFactory
-   static NodeVersion from(byte major, byte minor, byte patch) {
+   public static NodeVersion from(byte major, byte minor, byte patch) {
       if (INSTANCE.major == major && INSTANCE.minor == minor && INSTANCE.patch == patch)
          return INSTANCE;
       return new NodeVersion(major, minor, patch);

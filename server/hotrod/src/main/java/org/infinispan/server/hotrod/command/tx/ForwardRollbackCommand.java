@@ -9,6 +9,7 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.server.hotrod.tx.operation.Util;
 import org.infinispan.util.ByteString;
 
@@ -31,6 +32,11 @@ public class ForwardRollbackCommand extends AbstractForwardTxCommand {
    public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
       Util.rollbackLocalTransaction(componentRegistry.getCache().wired(), xid, timeout);
       return CompletableFutures.completedNull();
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

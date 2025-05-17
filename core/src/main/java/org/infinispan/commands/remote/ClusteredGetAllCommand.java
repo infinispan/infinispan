@@ -20,6 +20,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
@@ -72,6 +73,11 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
                .invokeAsync(componentRegistry)
                .thenCompose(o -> invokeGetAll(componentRegistry));
       }
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    private CompletionStage<Object> invokeGetAll(ComponentRegistry cr) {

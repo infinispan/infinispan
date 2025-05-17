@@ -18,6 +18,7 @@ import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 
 /**
@@ -103,6 +104,11 @@ public class SizeCommand extends BaseRpcCommand implements FlagAffectedCommand, 
    @ProtoField(4)
    WrappedMessage getWrappedSegments() {
       return WrappedMessages.orElseNull(segments);
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override
