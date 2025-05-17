@@ -87,7 +87,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    private static final FileDescriptorSource.ProgressCallback EMPTY_CALLBACK = new FileDescriptorSource.ProgressCallback() {
    };
 
-   private final static class ProgressCallback implements FileDescriptorSource.ProgressCallback {
+   private static final class ProgressCallback implements FileDescriptorSource.ProgressCallback {
       // keep them sorted by file name
       private final Map<String, DescriptorParserException> fileStatus = new TreeMap<>();
 

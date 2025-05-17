@@ -469,7 +469,7 @@ public class SecondLevelCacheStressTestCase {
    }
 
 
-   private static abstract class Operation {
+   private abstract static class Operation {
       final String name;
 
       Operation(String name) {

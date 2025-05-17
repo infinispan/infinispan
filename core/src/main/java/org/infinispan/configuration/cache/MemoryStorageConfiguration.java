@@ -21,7 +21,7 @@ public class MemoryStorageConfiguration {
 
    private final AttributeSet attributes;
 
-   static public AttributeSet attributeDefinitionSet() {
+   public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(MemoryStorageConfiguration.class, SIZE, EVICTION_TYPE, EVICTION_STRATEGY, STORAGE_TYPE);
    }
 

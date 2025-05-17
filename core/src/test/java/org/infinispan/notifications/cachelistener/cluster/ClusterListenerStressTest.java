@@ -37,8 +37,8 @@ import org.testng.annotations.Test;
 @Test(groups = "stress", testName = "notifications.cachelistener.cluster.ClusterListenerStressTest", timeOut = 15*60*1000)
 @InCacheMode({ CacheMode.DIST_SYNC })
 public class ClusterListenerStressTest extends MultipleCacheManagersTest {
-   protected final static String CACHE_NAME = "cluster-listener";
-   protected final static String KEY = "ClusterListenerStressTestKey";
+   protected static final String CACHE_NAME = "cluster-listener";
+   protected static final String KEY = "ClusterListenerStressTestKey";
    private static final int NUM_NODES = 3;
 
    protected ConfigurationBuilder builderUsed;

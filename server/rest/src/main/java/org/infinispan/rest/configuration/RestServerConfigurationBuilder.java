@@ -29,7 +29,7 @@ import io.netty.handler.codec.http.cors.CorsConfig;
 public class RestServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<RestServerConfiguration, RestServerConfigurationBuilder, RestAuthenticationConfiguration> implements
       Builder<RestServerConfiguration> {
 
-   final static Log logger = LogFactory.getLog(RestServerConfigurationBuilder.class, Log.class);
+   static final Log logger = LogFactory.getLog(RestServerConfigurationBuilder.class, Log.class);
 
    private final RestAuthenticationConfigurationBuilder authentication;
    private final CorsConfigurationBuilder cors;

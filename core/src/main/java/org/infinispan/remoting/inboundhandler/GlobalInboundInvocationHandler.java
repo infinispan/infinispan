@@ -209,7 +209,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
       }
    }
 
-   private static abstract class BaseResponseConsumer<T> implements BiConsumer<Object, Throwable> {
+   private abstract static class BaseResponseConsumer<T> implements BiConsumer<Object, Throwable> {
 
       private final Reply reply;
 

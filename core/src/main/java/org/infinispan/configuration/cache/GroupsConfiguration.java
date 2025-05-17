@@ -18,8 +18,8 @@ import org.infinispan.distribution.group.Grouper;
  *
  */
 public class GroupsConfiguration extends ConfigurationElement<GroupsConfiguration> {
-   public final static AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, false).immutable().build();
-   public final static AttributeDefinition<List<Grouper<?>>> GROUPERS = AttributeDefinition.builder(Element.GROUPER, null, (Class<List<Grouper<?>>>) (Class<?>) List.class).initializer(ArrayList::new)
+   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, false).immutable().build();
+   public static final AttributeDefinition<List<Grouper<?>>> GROUPERS = AttributeDefinition.builder(Element.GROUPER, null, (Class<List<Grouper<?>>>) (Class<?>) List.class).initializer(ArrayList::new)
          .immutable().build();
 
    static AttributeSet attributeDefinitionSet() {

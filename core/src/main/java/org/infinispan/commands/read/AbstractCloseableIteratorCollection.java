@@ -59,7 +59,7 @@ public abstract class AbstractCloseableIteratorCollection<O, K, V> extends Abstr
       Object[] r = new Object[size()];
       try (CloseableIterator<O> it = iterator()) {
          for (int i = 0; i < r.length; i++) {
-            if (! it.hasNext()) // fewer elements than expected
+            if (!it.hasNext()) // fewer elements than expected
                return Arrays.copyOf(r, i);
             r[i] = it.next();
          }
@@ -73,11 +73,11 @@ public abstract class AbstractCloseableIteratorCollection<O, K, V> extends Abstr
       // Estimate size of array; be prepared to see more or fewer elements
       int size = size();
       T[] r = a.length >= size ? a :
-            (T[])java.lang.reflect.Array
+            (T[]) java.lang.reflect.Array
                   .newInstance(a.getClass().getComponentType(), size);
       try (CloseableIterator<O> it = iterator()) {
          for (int i = 0; i < r.length; i++) {
-            if (! it.hasNext()) { // fewer elements than expected
+            if (!it.hasNext()) { // fewer elements than expected
                if (a == r) {
                   r[i] = null; // null-terminate
                } else if (a.length < i) {
@@ -90,7 +90,7 @@ public abstract class AbstractCloseableIteratorCollection<O, K, V> extends Abstr
                }
                return a;
             }
-            r[i] = (T)it.next();
+            r[i] = (T) it.next();
          }
          // more elements than expected
          return it.hasNext() ? finishToArray(r, it) : r;
@@ -141,7 +141,7 @@ public abstract class AbstractCloseableIteratorCollection<O, K, V> extends Abstr
                newCap = hugeCapacity(cap + 1);
             r = Arrays.copyOf(r, newCap);
          }
-         r[i++] = (T)it.next();
+         r[i++] = (T) it.next();
       }
       // trim if overallocated
       return (i == r.length) ? r : Arrays.copyOf(r, i);
@@ -150,8 +150,7 @@ public abstract class AbstractCloseableIteratorCollection<O, K, V> extends Abstr
    // Copied from AbstractCollection to support toArray methods
    private static int hugeCapacity(int minCapacity) {
       if (minCapacity < 0) // overflow
-         throw new OutOfMemoryError
-               ("Required array size too large");
+         throw new OutOfMemoryError("Required array size too large");
       return (minCapacity > MAX_ARRAY_SIZE) ?
             Integer.MAX_VALUE :
             MAX_ARRAY_SIZE;

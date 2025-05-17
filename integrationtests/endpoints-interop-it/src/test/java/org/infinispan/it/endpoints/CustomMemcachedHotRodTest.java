@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "it.interop.CustomMemcachedHotRodTest")
 public class CustomMemcachedHotRodTest extends AbstractInfinispanTest {
 
-   final static String CACHE_NAME = "memcachedCache";
+   static final String CACHE_NAME = "memcachedCache";
 
    EndpointsCacheFactory<String, String> cacheFactory;
 

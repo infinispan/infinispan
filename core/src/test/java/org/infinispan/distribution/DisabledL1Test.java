@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "distribution.DisabledL1Test")
 public class DisabledL1Test extends BaseDistFunctionalTest<Object, String> {
 
-   public DisabledL1Test () {
+   public DisabledL1Test() {
       testRetVals = false;
       l1CacheEnabled = false;
    }

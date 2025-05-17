@@ -50,7 +50,7 @@ public abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest {
    protected MemcachedServer server;
    protected static final int timeout = 60;
    protected boolean decoderReplay = true;
-   final protected ControlledTimeService timeService = new ControlledTimeService("memcached", 1000L * TextConstants.MAX_EXPIRATION);
+   protected final ControlledTimeService timeService = new ControlledTimeService("memcached", 1000L * TextConstants.MAX_EXPIRATION);
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {

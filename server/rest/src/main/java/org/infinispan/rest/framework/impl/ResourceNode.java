@@ -23,7 +23,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 class ResourceNode {
 
-   private final static Log logger = LogFactory.getLog(ResourceNode.class, Log.class);
+   private static final Log logger = LogFactory.getLog(ResourceNode.class, Log.class);
    public static final StringPathItem WILDCARD_PATH = new StringPathItem("*");
 
    private final PathItem pathItem;

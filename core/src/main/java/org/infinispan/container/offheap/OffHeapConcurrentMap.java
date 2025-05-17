@@ -98,17 +98,17 @@ public class OffHeapConcurrentMap implements ConcurrentMap<WrappedBytes, Interna
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    // We always have to have more buckets than locks
-   public final static int INITIAL_SIZE = 256;
+   public static final int INITIAL_SIZE = 256;
 
-   private final static int LOCK_COUNT = Math.min(Util.findNextHighestPowerOfTwo(ProcessorInfo.availableProcessors()) << 1,
+   private static final int LOCK_COUNT = Math.min(Util.findNextHighestPowerOfTwo(ProcessorInfo.availableProcessors()) << 1,
          INITIAL_SIZE);
    // This is the largest power of 2 positive integer value
-   private final static int MAX_ADDRESS_COUNT = 1 << 31;
+   private static final int MAX_ADDRESS_COUNT = 1 << 31;
    // Since lockCount is always a power of 2 - We can just shift by this many bits which is the same as dividing by
    // the number of locks
-   private final static int LOCK_SHIFT = 31 - Integer.numberOfTrailingZeros(LOCK_COUNT);
+   private static final int LOCK_SHIFT = 31 - Integer.numberOfTrailingZeros(LOCK_COUNT);
    // The number of bits required to shift to the right to get the bucket size from a given pointer address
-   private final static int LOCK_REGION_SHIFT = Integer.numberOfTrailingZeros(LOCK_COUNT);
+   private static final int LOCK_REGION_SHIFT = Integer.numberOfTrailingZeros(LOCK_COUNT);
 
    private final AtomicLong size = new AtomicLong();
    private final StripedLock locks;

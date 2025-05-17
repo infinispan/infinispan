@@ -6,7 +6,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.objectfilter.impl.MetadataAdapter;
 import org.infinispan.objectfilter.impl.predicateindex.MetadataProjectable;
 
-abstract public class MetadataProjectableAdapter<TypeMetadata, AttributeMetadata, AttributeId extends Comparable<AttributeId>>
+public abstract class MetadataProjectableAdapter<TypeMetadata, AttributeMetadata, AttributeId extends Comparable<AttributeId>>
       implements MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId>,
       MetadataProjectable<AttributeId> {
 

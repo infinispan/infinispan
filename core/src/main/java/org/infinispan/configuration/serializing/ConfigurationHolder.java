@@ -12,8 +12,8 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * @since 9.0
  */
 public class ConfigurationHolder {
-   final private GlobalConfiguration globalConfiguration;
-   final private Map<String, Configuration> configurations;
+   private final GlobalConfiguration globalConfiguration;
+   private final Map<String, Configuration> configurations;
 
    public ConfigurationHolder(GlobalConfiguration globalConfiguration, Map<String, Configuration> configurations) {
       this.globalConfiguration = globalConfiguration;

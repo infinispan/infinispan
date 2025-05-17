@@ -20,7 +20,7 @@ import io.netty.handler.codec.http.QueryStringDecoder;
  */
 public class ResourceManagerImpl implements ResourceManager {
 
-   private final static Log logger = LogFactory.getLog(ResourceManagerImpl.class, Log.class);
+   private static final Log logger = LogFactory.getLog(ResourceManagerImpl.class, Log.class);
    private static final StringPathItem ROOT = new StringPathItem("/");
 
    private final ResourceNode resourceTree;

@@ -235,15 +235,15 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       return namedComponents.get(name);
    }
 
-   public synchronized final void registerNamedComponentRegistry(ComponentRegistry componentRegistry, String name) {
+   public final synchronized void registerNamedComponentRegistry(ComponentRegistry componentRegistry, String name) {
       namedComponents.put(ByteString.fromString(name), componentRegistry);
    }
 
-   public synchronized final void unregisterNamedComponentRegistry(String name) {
+   public final synchronized void unregisterNamedComponentRegistry(String name) {
       namedComponents.remove(ByteString.fromString(name));
    }
 
-   public synchronized final void rewireNamedRegistries() {
+   public final synchronized void rewireNamedRegistries() {
       for (ComponentRegistry cr : namedComponents.values())
          cr.rewire();
    }

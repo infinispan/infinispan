@@ -45,7 +45,7 @@ public abstract class AbstractInternalProtoStreamMarshaller implements Marshalle
    protected boolean skipUserMarshaller;
    protected Log log;
 
-   abstract public ImmutableSerializationContext getSerializationContext();
+   public abstract ImmutableSerializationContext getSerializationContext();
 
    protected AbstractInternalProtoStreamMarshaller(Log log) {
       this.log = log;

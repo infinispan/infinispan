@@ -352,7 +352,7 @@ public class TopologyInfo {
     *
     * <p>Implements Comparable, but locations with equal capacity are equal, so they can't be used as map keys.</p>
     */
-   public static abstract class Location implements Comparable<Location> {
+   public abstract static class Location implements Comparable<Location> {
       float totalCapacity;
       int nodeCount;
       float expectedPrimarySegments;

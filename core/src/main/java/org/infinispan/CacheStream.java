@@ -1,5 +1,8 @@
 package org.infinispan;
 
+import static org.infinispan.util.Casting.toSerialSupplierCollect;
+import static org.infinispan.util.Casting.toSupplierCollect;
+
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -38,9 +41,6 @@ import org.infinispan.util.function.SerializableSupplier;
 import org.infinispan.util.function.SerializableToDoubleFunction;
 import org.infinispan.util.function.SerializableToIntFunction;
 import org.infinispan.util.function.SerializableToLongFunction;
-
-import static org.infinispan.util.Casting.toSerialSupplierCollect;
-import static org.infinispan.util.Casting.toSupplierCollect;
 
 /**
  * A {@link Stream} that has additional operations to monitor or control behavior when used from a {@link Cache}.
@@ -90,48 +90,56 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     * {@inheritDoc}
     * @return a stream with parallel distribution disabled.
     */
+   @Override
    CacheStream<R> sequentialDistribution();
 
    /**
     * {@inheritDoc}
     * @return a stream with parallel distribution enabled.
     */
+   @Override
    CacheStream<R> parallelDistribution();
 
    /**
     * {@inheritDoc}
     * @return a stream with the segments filtered.
     */
+   @Override
    CacheStream<R> filterKeySegments(IntSet segments);
 
    /**
     * {@inheritDoc}
     * @return a stream with the keys filtered.
     */
+   @Override
    CacheStream<R> filterKeys(Set<?> keys);
 
    /**
     * {@inheritDoc}
     * @return a stream with the batch size updated
     */
+   @Override
    CacheStream<R> distributedBatchSize(int batchSize);
 
    /**
     * {@inheritDoc}
     * @return a stream with the listener registered.
     */
+   @Override
    CacheStream<R> segmentCompletionListener(SegmentCompletionListener listener);
 
    /**
     * {@inheritDoc}
     * @return a stream with rehash awareness disabled.
     */
+   @Override
    CacheStream<R> disableRehashAware();
 
    /**
     * {@inheritDoc}
     * @return a stream with the timeout set
     */
+   @Override
    CacheStream<R> timeout(long timeout, TimeUnit unit);
 
    /**

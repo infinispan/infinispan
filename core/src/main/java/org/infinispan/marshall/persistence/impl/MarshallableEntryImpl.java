@@ -24,10 +24,10 @@ public class MarshallableEntryImpl<K, V> implements MarshallableEntry<K, V> {
    ByteBuffer metadataBytes;
    ByteBuffer internalMetadataBytes;
    volatile ByteBuffer keyBytes;
-   volatile transient K key;
-   volatile transient V value;
-   volatile transient Metadata metadata;
-   volatile transient PrivateMetadata internalMetadata;
+   transient volatile K key;
+   transient volatile V value;
+   transient volatile Metadata metadata;
+   transient volatile PrivateMetadata internalMetadata;
    transient org.infinispan.commons.marshall.Marshaller marshaller;
 
    MarshallableEntryImpl() {}

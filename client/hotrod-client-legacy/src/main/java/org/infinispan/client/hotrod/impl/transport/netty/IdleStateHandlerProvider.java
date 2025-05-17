@@ -12,7 +12,7 @@ import io.netty.handler.timeout.IdleStateEvent;
 public class IdleStateHandlerProvider extends ChannelInboundHandlerAdapter {
    private final int minIdle;
    private final ChannelPool channelPool;
-   private final static Log log = LogFactory.getLog(IdleStateHandlerProvider.class);
+   private static final Log log = LogFactory.getLog(IdleStateHandlerProvider.class);
 
    static final String NAME = "idle-state-handler-provider";
 

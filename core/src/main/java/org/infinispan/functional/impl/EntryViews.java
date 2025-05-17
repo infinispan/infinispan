@@ -515,7 +515,7 @@ public final class EntryViews {
       }
    }
 
-   private static abstract class AbstractReadEntryView<K, V> implements ReadEntryView<K, V> {
+   private abstract static class AbstractReadEntryView<K, V> implements ReadEntryView<K, V> {
       final K key;
       final V value;
       final Metadata metadata;

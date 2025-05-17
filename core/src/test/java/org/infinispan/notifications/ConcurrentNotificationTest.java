@@ -105,7 +105,7 @@ public class ConcurrentNotificationTest extends AbstractInfinispanTest {
    }
 
    @Listener
-   static public class CacheListener {
+   public static class CacheListener {
       private final AtomicInteger counter = new AtomicInteger(0);
 
       @CacheEntryModified

@@ -134,5 +134,5 @@ public abstract class ClientListenerOperation extends RetryOnFailureOperation<So
    }
 
 
-   abstract public ClientListenerOperation copy();
+   public abstract ClientListenerOperation copy();
 }

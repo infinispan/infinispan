@@ -31,9 +31,9 @@ import com.github.dockerjava.api.model.MountType;
  * @since 10.0
  **/
 public class ContainerDatabase extends Database {
-   private final static Log log = LogFactory.getLog(ContainerDatabase.class);
-   public final static String DB_PREFIX = "database.container.";
-   private final static String ENV_PREFIX = DB_PREFIX + "env.";
+   private static final Log log = LogFactory.getLog(ContainerDatabase.class);
+   public static final String DB_PREFIX = "database.container.";
+   private static final String ENV_PREFIX = DB_PREFIX + "env.";
    private final int port;
    private final String volumeName;
    private final boolean volumeRequired;

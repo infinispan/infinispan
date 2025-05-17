@@ -142,7 +142,7 @@ import org.reactivestreams.Publisher;
  */
 public class ControlledCommandFactory implements CommandsFactory {
 
-   private final static Log log = LogFactory.getLog(ControlledCommandFactory.class);
+   private static final Log log = LogFactory.getLog(ControlledCommandFactory.class);
 
    public final CommandsFactory actual;
    public final ReclosableLatch gate = new ReclosableLatch(true);

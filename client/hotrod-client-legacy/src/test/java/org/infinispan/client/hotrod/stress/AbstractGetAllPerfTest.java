@@ -36,9 +36,9 @@ public abstract class AbstractGetAllPerfTest extends MultipleCacheManagersTest {
    protected RemoteCacheManager remoteCacheManager;
    protected RemoteCache<Object, Object> remoteCache;
 
-   abstract protected int numberOfHotRodServers();
+   protected abstract int numberOfHotRodServers();
 
-   abstract protected ConfigurationBuilder clusterConfig();
+   protected abstract ConfigurationBuilder clusterConfig();
 
    protected final long millisecondsToRun = TimeUnit.MINUTES.toMillis(1);
 

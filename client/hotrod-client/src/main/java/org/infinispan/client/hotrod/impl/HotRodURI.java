@@ -100,7 +100,7 @@ public class HotRodURI {
    }
 
    public ConfigurationBuilder toConfigurationBuilder(ConfigurationBuilder builder) {
-      for(InetSocketAddress address : addresses) {
+      for (InetSocketAddress address : addresses) {
          builder.addServer().host(address.getHostString()).port(address.getPort());
       }
       if (ssl) {
@@ -123,14 +123,18 @@ public class HotRodURI {
 
    public String toString(boolean withCredentials) {
       StringBuilder sb = new StringBuilder();
-      if (ssl) sb.append("hotrods://"); else sb.append("hotrod://");
+      if (ssl) {
+         sb.append("hotrods://");
+      } else {
+         sb.append("hotrod://");
+      }
       if (withCredentials) {
          sb.append(username);
          sb.append(':');
          sb.append(password);
          sb.append('@');
       }
-      for(int i = 0; i < addresses.size(); i++) {
+      for (int i = 0; i < addresses.size(); i++) {
          if (i > 0) {
             sb.append(',');
          }
@@ -143,7 +147,7 @@ public class HotRodURI {
       }
       if (!properties.isEmpty()) {
          sb.append('?');
-         for(Map.Entry<Object, Object> property : properties.entrySet()) {
+         for (Map.Entry<Object, Object> property : properties.entrySet()) {
             String key = property.getKey().toString();
             if (key.startsWith(ConfigurationProperties.ICH)) {
                sb.append(key.substring(ConfigurationProperties.ICH.length()));

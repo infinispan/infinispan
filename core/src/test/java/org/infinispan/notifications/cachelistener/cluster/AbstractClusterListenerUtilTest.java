@@ -68,9 +68,9 @@ import org.mockito.stubbing.Answer;
  * @since 7.0
  */
 public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManagersTest {
-   protected final static String CACHE_NAME = "cluster-listener";
-   protected final static String FIRST_VALUE = "first-value";
-   protected final static String SECOND_VALUE = "second-value";
+   protected static final String CACHE_NAME = "cluster-listener";
+   protected static final String FIRST_VALUE = "first-value";
+   protected static final String SECOND_VALUE = "second-value";
    public static final String PRE_ADD_LISTENER_INVOKED = "pre_add_listener_invoked_";
    public static final String PRE_ADD_LISTENER_RELEASE = "pre_add_listener_release_";
    public static final String POST_ADD_LISTENER_INVOKED = "post_add_listener_invoked_";

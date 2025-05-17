@@ -27,11 +27,11 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "stress", testName = "commands.PutMapCommandStressTest", timeOut = 15*60*1000)
 public class PutMapCommandStressTest extends StressTest {
-   protected final static int NUM_OWNERS = 3;
-   protected final static int CACHE_COUNT = 6;
-   protected final static int THREAD_MULTIPLIER = 1;
-   protected final static int THREAD_WORKER_COUNT = (CACHE_COUNT - 1) * THREAD_MULTIPLIER;
-   protected final static int CACHE_ENTRY_COUNT = 50000;
+   protected static final int NUM_OWNERS = 3;
+   protected static final int CACHE_COUNT = 6;
+   protected static final int THREAD_MULTIPLIER = 1;
+   protected static final int THREAD_WORKER_COUNT = (CACHE_COUNT - 1) * THREAD_MULTIPLIER;
+   protected static final int CACHE_ENTRY_COUNT = 50000;
 
    protected boolean enableStore;
 

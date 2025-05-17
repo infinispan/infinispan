@@ -186,7 +186,7 @@ public class TestResourceTracker {
       }
    }
 
-   public static abstract class Cleaner<T> {
+   public abstract static class Cleaner<T> {
       protected final T ref;
 
       protected Cleaner(T ref) {

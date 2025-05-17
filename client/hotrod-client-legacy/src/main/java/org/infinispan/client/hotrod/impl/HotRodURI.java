@@ -123,7 +123,11 @@ public class HotRodURI {
 
    public String toString(boolean withCredentials) {
       StringBuilder sb = new StringBuilder();
-      if (ssl) sb.append("hotrods://"); else sb.append("hotrod://");
+      if (ssl) {
+         sb.append("hotrods://");
+      } else {
+         sb.append("hotrod://");
+      }
       if (withCredentials) {
          sb.append(username);
          sb.append(':');
