@@ -16,6 +16,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.model.Item;
+import org.infinispan.query.model.Metadata;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.session.SearchSession;
@@ -44,7 +45,7 @@ public class VectorSearchWithPreFilteringTest extends SingleCacheManagerTest {
       for (byte item = 1; item <= 50; item++) {
          byte[] bytes = {item, item, item};
          String buggy = BUGGY_OPTIONS[item % 7];
-         cache.put(item, new Item("c" + item, bytes, new float[]{1.1f * item, 1.1f * item, 1.1f * item}, buggy, (int) item));
+         cache.put(item, new Item("c" + item, bytes, new float[]{1.1f * item, 1.1f * item, 1.1f * item}, buggy, (int) item, List.of(new Metadata("animal", "cat"))));
       }
    }
 
