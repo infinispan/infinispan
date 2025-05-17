@@ -108,12 +108,12 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
                   () -> stopped.complete(null));
    }
 
-   public synchronized CompletionStage<Void> stop() {
+   public synchronized CompletionStage<Long> stop() {
       assert requestProcessor != null;
       requestProcessor.onComplete();
       requestProcessor = null;
 
-      return stopped;
+      return stopped.thenApply(___ -> seqId);
    }
 
    void handleRequestCompletion(LogRequest request) {

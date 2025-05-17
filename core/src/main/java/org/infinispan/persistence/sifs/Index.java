@@ -1,5 +1,6 @@
 package org.infinispan.persistence.sifs;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -29,10 +30,10 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.logging.LogFactory;
 
@@ -87,6 +88,9 @@ class Index {
    // This is used to signal that a segment is not currently being used
    private final Segment emptySegment;
    private final FlowableProcessor<IndexRequest> emptyFlowable;
+
+   // This will be set to > 0 if present in the index count
+   private long maxSeqId = -1;
 
    @GuardedBy("lock")
    private CompletionStage<Void> removeSegmentsStage = CompletableFutures.completedNull();
@@ -199,11 +203,12 @@ class Index {
                sizePerSegment.set(i, value);
             }
 
-            if (indexCount.read() != -1) {
-               log.tracef("Previous index file has more bytes than desired, assuming index is a different format");
-            } else {
-               validCount = true;
+            try {
+               maxSeqId = UnsignedNumeric.readUnsignedLong(indexCount);
+            } catch (EOFException e) {
+               log.tracef("Index didn't contain sequence id, will need to calculate, still retaining index");
             }
+            validCount = true;
          } else {
             log.tracef("Previous index file cache segments " + cacheSegmentsCount + " doesn't match configured" +
                   " cache segments " + cacheSegments);
@@ -401,7 +406,7 @@ class Index {
       });
    }
 
-   public CompletionStage<Void> stop() throws InterruptedException {
+   public CompletionStage<Void> stop(long maxSeqId) throws InterruptedException {
       AggregateCompletionStage<Void> aggregateCompletionStage;
       long stamp = lock.readLock();
       try {
@@ -430,6 +435,7 @@ class Index {
                for (int i = 0; i < sizePerSegment.length(); ++i) {
                   UnsignedNumeric.writeUnsignedLong(indexCountStream, sizePerSegment.get(i));
                }
+               UnsignedNumeric.writeUnsignedLong(indexCountStream, maxSeqId);
             }
 
             ConcurrentMap<Integer, Compactor.Stats> map = compactor.getFileStats();
@@ -475,6 +481,9 @@ class Index {
    }
 
    public long getMaxSeqId() throws IOException {
+      if (maxSeqId >= 0) {
+         return maxSeqId;
+      }
       long maxSeqId = 0;
       long stamp = lock.readLock();
       try {
