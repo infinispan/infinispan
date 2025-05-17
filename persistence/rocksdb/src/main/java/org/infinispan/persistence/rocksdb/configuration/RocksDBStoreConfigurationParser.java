@@ -69,16 +69,17 @@ public class RocksDBStoreConfigurationParser implements ConfigurationParser {
                   throw ParseUtils.attributeRemoved(reader, i);
                }
             }
-            case BLOCK_SIZE: {
-               builder.blockSize(Integer.parseInt(value));
-               break;
-            }
+            case BLOCK_SIZE:
             case CACHE_SIZE: {
-               builder.cacheSize(Long.parseLong(value));
-               break;
+               if (!reader.getSchema().since(11, 0)) {
+                  ignoreAttribute(reader, i);
+                  break;
+               } else {
+                  throw ParseUtils.attributeRemoved(reader, i);
+               }
             }
             default: {
-               Parser.parseStoreAttribute(reader, i, builder);
+               CacheParser.parseStoreAttribute(reader, i, builder);
             }
          }
       }

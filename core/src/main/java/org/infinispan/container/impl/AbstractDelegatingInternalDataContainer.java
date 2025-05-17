@@ -31,16 +31,6 @@ public abstract class AbstractDelegatingInternalDataContainer<K, V> implements I
    protected abstract InternalDataContainer<K, V> delegate();
 
    @Override
-   public InternalCacheEntry<K, V> get(Object k) {
-      return delegate().get(k);
-   }
-
-   @Override
-   public InternalCacheEntry<K, V> get(int segment, Object k) {
-      return delegate().get(segment, k);
-   }
-
-   @Override
    public InternalCacheEntry<K, V> peek(Object k) {
       return delegate().peek(k);
    }

@@ -24,17 +24,14 @@ class CacheContainerConfiguration {
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", "DefaultCacheManager").immutable().build();
    static final AttributeDefinition<Boolean> STATISTICS = AttributeDefinition.builder("statistics", false).immutable().build();
    static final AttributeDefinition<Boolean> ZERO_CAPACITY_NODE = AttributeDefinition.builder("zeroCapacityNode", Boolean.FALSE).immutable().build();
-   static final AttributeDefinition<String> ASYNC_EXECUTOR = AttributeDefinition.builder("asyncExecutor", "async-pool", String.class).immutable().build();
    static final AttributeDefinition<String> LISTENER_EXECUTOR = AttributeDefinition.builder("listenerExecutor", "listener-pool", String.class).immutable().build();
    static final AttributeDefinition<String> EXPIRATION_EXECUTOR = AttributeDefinition.builder("expirationExecutor", "expiration-pool", String.class).immutable().build();
-   static final AttributeDefinition<String> PERSISTENCE_EXECUTOR = AttributeDefinition.builder("persistenceExecutor", "persistence-pool", String.class).immutable().build();
-   static final AttributeDefinition<String> STATE_TRANSFER_EXECUTOR = AttributeDefinition.builder("stateTransferExecutor", "state-transfer-pool", String.class).immutable().build();
    static final AttributeDefinition<String> NON_BLOCKING_EXECUTOR = AttributeDefinition.builder("nonBlockingExecutor", "non-blocking-pool", String.class).immutable().build();
    static final AttributeDefinition<String> BLOCKING_EXECUTOR = AttributeDefinition.builder("blockingExecutor", "blocking-pool", String.class).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(CacheContainerConfiguration.class, NAME, STATISTICS, ZERO_CAPACITY_NODE, DEFAULT_CACHE,
-            ASYNC_EXECUTOR, LISTENER_EXECUTOR, EXPIRATION_EXECUTOR, PERSISTENCE_EXECUTOR, STATE_TRANSFER_EXECUTOR,
+            LISTENER_EXECUTOR, EXPIRATION_EXECUTOR,
             NON_BLOCKING_EXECUTOR, BLOCKING_EXECUTOR);
    }
 
@@ -131,29 +128,12 @@ class CacheContainerConfiguration {
       return shutdown;
    }
 
-   @Deprecated(forRemoval = true, since = "10.1")
-   public String asyncExecutor() {
-      return attributes.attribute(ASYNC_EXECUTOR).get();
-   }
-
    public String listenerExecutor() {
       return attributes.attribute(LISTENER_EXECUTOR).get();
    }
 
    public String expirationExecutor() {
       return attributes.attribute(EXPIRATION_EXECUTOR).get();
-   }
-
-   public String persistenceExecutor() {
-      return attributes.attribute(PERSISTENCE_EXECUTOR).get();
-   }
-
-   /**
-    * @deprecated Since 10.1, no longer used.
-    */
-   @Deprecated(forRemoval = true, since = "10.1")
-   public String stateTransferExecutor() {
-      return attributes.attribute(STATE_TRANSFER_EXECUTOR).get();
    }
 
    public String nonBlockingExecutor() {
@@ -186,11 +166,6 @@ class CacheContainerConfiguration {
 
    public ThreadPoolConfiguration persistenceThreadPool() {
       return threads.persistenceThreadPool();
-   }
-
-   @Deprecated(forRemoval = true, since = "10.1")
-   public ThreadPoolConfiguration asyncThreadPool() {
-      return threads.asyncThreadPool();
    }
 
    public ThreadPoolConfiguration nonBlockingThreadPool() {

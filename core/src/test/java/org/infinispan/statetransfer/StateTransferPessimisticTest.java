@@ -99,7 +99,7 @@ public class StateTransferPessimisticTest extends MultipleCacheManagersTest {
       int c = 0;
       // check them directly in data container
       for (Cache cache : caches) {
-         InternalCacheEntry e = cache.getAdvancedCache().getDataContainer().get(key);
+         InternalCacheEntry e = cache.getAdvancedCache().getDataContainer().peek(key);
          if (e != null) {
             assertEquals(key, e.getValue());
             c++;

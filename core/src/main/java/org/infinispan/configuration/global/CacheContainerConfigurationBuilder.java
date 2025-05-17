@@ -1,14 +1,11 @@
 package org.infinispan.configuration.global;
 
-import static org.infinispan.configuration.global.CacheContainerConfiguration.ASYNC_EXECUTOR;
 import static org.infinispan.configuration.global.CacheContainerConfiguration.BLOCKING_EXECUTOR;
 import static org.infinispan.configuration.global.CacheContainerConfiguration.DEFAULT_CACHE;
 import static org.infinispan.configuration.global.CacheContainerConfiguration.EXPIRATION_EXECUTOR;
 import static org.infinispan.configuration.global.CacheContainerConfiguration.LISTENER_EXECUTOR;
 import static org.infinispan.configuration.global.CacheContainerConfiguration.NAME;
 import static org.infinispan.configuration.global.CacheContainerConfiguration.NON_BLOCKING_EXECUTOR;
-import static org.infinispan.configuration.global.CacheContainerConfiguration.PERSISTENCE_EXECUTOR;
-import static org.infinispan.configuration.global.CacheContainerConfiguration.STATE_TRANSFER_EXECUTOR;
 import static org.infinispan.configuration.global.CacheContainerConfiguration.STATISTICS;
 import static org.infinispan.configuration.global.CacheContainerConfiguration.ZERO_CAPACITY_NODE;
 
@@ -171,25 +168,12 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
       return this;
    }
 
-   /**
-    * @deprecated Since 10.1.3. Use {@link #statistics(boolean)} instead.
-    */
-   @Deprecated(forRemoval=true, since = "10.1")
-   public CacheContainerConfigurationBuilder statistics(Boolean statistics) {
-      return statistics(statistics.booleanValue());
-   }
-
    public boolean statistics() {
       return attributes.attribute(STATISTICS).get();
    }
 
    CacheContainerConfigurationBuilder zeroCapacityNode(boolean zeroCapacityNode) {
       attributes.attribute(ZERO_CAPACITY_NODE).set(zeroCapacityNode);
-      return this;
-   }
-
-   public CacheContainerConfigurationBuilder asyncExecutor(String name) {
-      attributes.attribute(ASYNC_EXECUTOR).set(name);
       return this;
    }
 
@@ -200,20 +184,6 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
 
    CacheContainerConfigurationBuilder expirationExecutor(String name) {
       attributes.attribute(EXPIRATION_EXECUTOR).set(name);
-      return this;
-   }
-
-   public CacheContainerConfigurationBuilder persistenceExecutor(String name) {
-      attributes.attribute(PERSISTENCE_EXECUTOR).set(name);
-      return this;
-   }
-
-   /**
-    * @deprecated Since 10.1, no longer used.
-    */
-   @Deprecated(forRemoval=true, since = "10.1")
-   public CacheContainerConfigurationBuilder stateTransferExecutor(String name) {
-      attributes.attribute(STATE_TRANSFER_EXECUTOR).set(name);
       return this;
    }
 

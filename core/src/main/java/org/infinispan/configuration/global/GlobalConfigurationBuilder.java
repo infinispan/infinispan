@@ -127,11 +127,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return cacheContainerConfiguration.nonBlockingThreadPool();
    }
 
-   public GlobalConfigurationBuilder asyncThreadPoolName(String name) {
-      cacheContainer().asyncExecutor(name);
-      return this;
-   }
-
    public GlobalConfigurationBuilder listenerThreadPoolName(String name) {
       cacheContainer().listenerExecutor(name);
       return this;
@@ -139,11 +134,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 
    public GlobalConfigurationBuilder expirationThreadPoolName(String name) {
       cacheContainer().expirationExecutor(name);
-      return this;
-   }
-
-   public GlobalConfigurationBuilder persistenceThreadPoolName(String name) {
-      cacheContainer().persistenceExecutor(name);
       return this;
    }
 

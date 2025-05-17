@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.DefaultDataContainer;
@@ -25,7 +26,6 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.EmbeddedTimeService;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -158,7 +158,7 @@ public class DataContainerStressTest {
 //               TestingUtil.sleepThread(10);
                R.nextBytes(captureByte);
                key[4] = captureByte[0];
-               dc.get(key);
+               dc.peek(key);
                runs++;
             }
             perf.put("GET", opsPerMS(System.nanoTime() - start, runs));
