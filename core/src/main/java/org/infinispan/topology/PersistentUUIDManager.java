@@ -1,7 +1,7 @@
 package org.infinispan.topology;
 
 import java.util.List;
-import java.util.function.UnaryOperator;
+import java.util.function.Function;
 
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -58,10 +58,10 @@ public interface PersistentUUIDManager {
    /**
     * Provides a remapping operator which translates addresses to persistentuuids
     */
-   UnaryOperator<Address> addressToPersistentUUID();
+   Function<Address, PersistentUUID> addressToPersistentUUID();
 
    /**
     * Provides a remapping operator which translates persistentuuids to addresses
     */
-   UnaryOperator<Address> persistentUUIDToAddress();
+   Function<PersistentUUID, Address> persistentUUIDToAddress();
 }

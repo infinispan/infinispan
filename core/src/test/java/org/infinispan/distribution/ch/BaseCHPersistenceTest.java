@@ -1,7 +1,6 @@
 package org.infinispan.distribution.ch;
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 
 import java.util.HashMap;
 import java.util.List;
@@ -27,10 +26,10 @@ public abstract class BaseCHPersistenceTest {
       ConsistentHash ch = createConsistentHash();
       generateRandomPersistentUUIDs(ch.getMembers(), persistentUUIDManager);
       ScopedPersistentState state = new ScopedPersistentStateImpl("scope");
-      ch.toScopedState(state, persistentUUIDManager.addressToPersistentUUID().andThen(Object::toString));
+      ch.toScopedState(state, persistentUUIDManager.addressToPersistentUUID());
 
-      ConsistentHashFactory<?> hashFactory = createConsistentHashFactory();
-      ConsistentHash restoredCH = hashFactory.fromPersistentState(state).remapAddresses(persistentUUIDManager.persistentUUIDToAddress());
+      var hashFactory = createConsistentHashFactory();
+      ConsistentHash restoredCH = hashFactory.fromPersistentState(state, persistentUUIDManager.persistentUUIDToAddress()).consistentHash();
       assertEquals(ch, restoredCH);
    }
 
@@ -41,13 +40,15 @@ public abstract class BaseCHPersistenceTest {
 
 
       ScopedPersistentState state = new ScopedPersistentStateImpl("scope");
-      ch.toScopedState(state, persistentUUIDManager.addressToPersistentUUID().andThen(Object::toString));
+      ch.toScopedState(state, persistentUUIDManager.addressToPersistentUUID());
 
-      persistentUUIDManager.removePersistentAddressMapping(addressMap.keySet().iterator().next());
+      var toRemove = addressMap.keySet().iterator().next();
+      persistentUUIDManager.removePersistentAddressMapping(toRemove);
 
-      ConsistentHashFactory<?> hashFactory = createConsistentHashFactory();
-      ConsistentHash restoredCH = hashFactory.fromPersistentState(state).remapAddresses(persistentUUIDManager.persistentUUIDToAddress());
-      assertNull(restoredCH);
+      var hashFactory = createConsistentHashFactory();
+      var restoredCH = hashFactory.fromPersistentState(state, persistentUUIDManager.persistentUUIDToAddress());
+      assertEquals(1, restoredCH.missingUuids().size());
+      assertEquals(addressMap.get(toRemove), restoredCH.missingUuids().iterator().next());
    }
 
    private Map<Address, PersistentUUID> generateRandomPersistentUUIDs(List<Address> members, PersistentUUIDManager persistentUUIDManager) {

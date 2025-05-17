@@ -3,17 +3,18 @@ package org.infinispan.distribution.ch.impl;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.UnaryOperator;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.PersistedConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -50,37 +51,55 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
     */
    private final List<Address>[] segmentOwners;
 
-   public DefaultConsistentHash(int numOwners, int numSegments, List<Address> members,
-                                Map<Address, Float> capacityFactors, List<Address>[] segmentOwners) {
-      super(numSegments, members, capacityFactors);
+   public static DefaultConsistentHash create(int numOwners, int numSegments, List<Address> members,
+                                              Map<Address, Float> capacityFactors, List<Address>[] segmentOwners) {
       if (numOwners < 1)
          throw new IllegalArgumentException("The number of owners must be strictly positive");
-
-      this.numOwners = numOwners;
-      this.segmentOwners = new List[numSegments];
+      if (numSegments < 1)
+         throw new IllegalArgumentException("The number of segments must be strictly positive");
+      assert numSegments == segmentOwners.length;
       for (int s = 0; s < numSegments; s++) {
          if (segmentOwners[s] == null || segmentOwners[s].isEmpty()) {
             throw new IllegalArgumentException("Segment owner list cannot be null or empty");
          }
+      }
+      return new DefaultConsistentHash(numOwners, numSegments, members, capacityFactors, segmentOwners);
+   }
+
+   private DefaultConsistentHash(int numOwners, int numSegments, List<Address> members,
+                                Map<Address, Float> capacityFactors, List<Address>[] segmentOwners) {
+      super(numSegments, members, capacityFactors);
+      this.numOwners = numOwners;
+      this.segmentOwners = new List[numSegments];
+      for (int s = 0; s < numSegments; ++s) {
          this.segmentOwners[s] = List.copyOf(segmentOwners[s]);
       }
       this.hashCode = hashCodeInternal();
    }
 
-   DefaultConsistentHash(ScopedPersistentState state) {
-      super(state);
-      this.numOwners = Integer.parseInt(state.getProperty(STATE_NUM_OWNERS));
-      int numSegments = parseNumSegments(state);
-      this.segmentOwners = new List[numSegments];
+   static PersistedConsistentHash<DefaultConsistentHash> fromPersistentState(ScopedPersistentState state, Function<PersistentUUID, Address> addressMapper) {
+      var segments = parseNumSegments(state);
+      var members = parseMembers(state, addressMapper);
+      var missingUuids = new HashSet<>(members.missingUuids());
+
+      var numOwners = Integer.parseInt(state.getProperty(STATE_NUM_OWNERS));
+      List<Address>[] segmentOwners = new List[segments];
+
       for (int i = 0; i < segmentOwners.length; i++) {
          int segmentOwnerCount = Integer.parseInt(state.getProperty(String.format(STATE_SEGMENT_OWNER_COUNT, i)));
          segmentOwners[i] = new ArrayList<>();
          for (int j = 0; j < segmentOwnerCount; j++) {
-            PersistentUUID uuid = PersistentUUID.fromString(state.getProperty(String.format(STATE_SEGMENT_OWNER, i, j)));
-            segmentOwners[i].add(uuid);
+            var uuid = PersistentUUID.fromString(state.getProperty(String.format(STATE_SEGMENT_OWNER, i, j)));
+            var address = addressMapper.apply(uuid);
+            if (address == null) {
+               missingUuids.add(uuid);
+            } else {
+               segmentOwners[i].add(address);
+            }
          }
       }
-      this.hashCode = hashCodeInternal();
+      var ch = new DefaultConsistentHash(numOwners, segments, members.members(), members.capacityFactors(), segmentOwners);
+      return new PersistedConsistentHash<>(ch, missingUuids);
    }
 
    @ProtoFactory
@@ -290,25 +309,8 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
       return new DefaultConsistentHash(numOwners, unionSegmentOwners.length, unionMembers, unionCapacityFactors, unionSegmentOwners);
    }
 
-   public String prettyPrintOwnership() {
-      StringBuilder sb = new StringBuilder();
-      for (Address member : getMembers()) {
-         sb.append("\n").append(member).append(":");
-         for (int segment = 0; segment < segmentOwners.length; segment++) {
-            int index = segmentOwners[segment].indexOf(member);
-            if (index >= 0) {
-               sb.append(' ').append(segment);
-               if (index == 0) {
-                  sb.append('\'');
-               }
-            }
-         }
-      }
-      return sb.toString();
-   }
-
    @Override
-   public void toScopedState(ScopedPersistentState state, Function<Address, String> addressMapper) {
+   public void toScopedState(ScopedPersistentState state, Function<Address, PersistentUUID> addressMapper) {
       super.toScopedState(state, addressMapper);
       state.setProperty(STATE_NUM_OWNERS, numOwners);
       state.setProperty(STATE_SEGMENT_OWNERS, segmentOwners.length);
@@ -316,46 +318,9 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
          List<Address> segmentOwnerAddresses = segmentOwners[i];
          state.setProperty(String.format(STATE_SEGMENT_OWNER_COUNT, i), segmentOwnerAddresses.size());
          for(int j = 0; j < segmentOwnerAddresses.size(); j++) {
-            state.setProperty(String.format(STATE_SEGMENT_OWNER, i, j), addressMapper.apply(segmentOwnerAddresses.get(j)));
+            state.setProperty(String.format(STATE_SEGMENT_OWNER, i, j), addressMapper.apply(segmentOwnerAddresses.get(j)).toString());
          }
       }
    }
 
-   @Override
-   public ConsistentHash remapAddresses(UnaryOperator<Address> remapper) {
-      List<Address> remappedMembers = remapMembers(remapper, false);
-      if (remappedMembers == null) return null;
-      // At this point, all members are present in the remapper.
-      Map<Address, Float> remappedCapacityFactors = remapCapacityFactors(remapper, false);
-      List<Address>[] remappedSegmentOwners = remapSegmentOwners(remapper, false);
-      return new DefaultConsistentHash(this.numOwners, this.segmentOwners.length, remappedMembers,
-            remappedCapacityFactors, remappedSegmentOwners);
-   }
-
-   @Override
-   public ConsistentHash remapAddressRemoveMissing(UnaryOperator<Address> remapper) {
-      List<Address> remappedMembers = remapMembers(remapper, true);
-      if (remappedMembers == null) return null;
-      Map<Address, Float> remappedCapacityFactors = remapCapacityFactors(remapper, true);
-      List<Address>[] remappedSegmentOwners = remapSegmentOwners(remapper, true);
-      return new DefaultConsistentHash(this.numOwners, this.segmentOwners.length, remappedMembers,
-            remappedCapacityFactors, remappedSegmentOwners);
-   }
-
-   private List<Address>[] remapSegmentOwners(UnaryOperator<Address> remapper, boolean allowMissing) {
-      List<Address>[] remappedSegmentOwners = new List[segmentOwners.length];
-      for(int i=0; i < segmentOwners.length; i++) {
-         List<Address> remappedOwners = new ArrayList<>(segmentOwners[i].size());
-         for (Address address : segmentOwners[i]) {
-            Address a = remapper.apply(address);
-            if (a == null) {
-               if (allowMissing) continue;
-               return null;
-            }
-            remappedOwners.add(a);
-         }
-         remappedSegmentOwners[i] = remappedOwners;
-      }
-      return remappedSegmentOwners;
-   }
 }

@@ -98,7 +98,7 @@ public class OnlyPrimaryOwnerTest {
       public LocalizedCacheTopology getCacheTopology() {
          List<Address> members = Arrays.asList(PRIMARY, BACKUP, NON_OWNER);
          List<Address>[] ownership = new List[]{Arrays.asList(PRIMARY, BACKUP)};
-         ConsistentHash ch = new DefaultConsistentHash(2, 1, members, null, ownership);
+         ConsistentHash ch = DefaultConsistentHash.create(2, 1, members, null, ownership);
          CacheTopology cacheTopology = new CacheTopology(0, 0, ch, null, CacheTopology.Phase.NO_REBALANCE, null, null);
          Address localAddress = isPrimaryOwner ? PRIMARY : (isOwner ? BACKUP : NON_OWNER);
          return new LocalizedCacheTopology(CacheMode.DIST_SYNC, cacheTopology, key -> 0, localAddress, true);
