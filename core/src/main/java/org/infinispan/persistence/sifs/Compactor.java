@@ -204,7 +204,7 @@ class Compactor {
       // We have to copy the file ids into its own collection because it can pickup the compactor files sometimes
       // causing extra unneeded churn in some cases
       Set<Integer> currentFiles = new HashSet<>();
-      try (CloseableIterator<Integer> iter = fileProvider.getFileIterator()) {
+      try (CloseableIterator<Integer> iter = fileProvider.getFileIterator(null)) {
          while (iter.hasNext()) {
             currentFiles.add(iter.next());
          }

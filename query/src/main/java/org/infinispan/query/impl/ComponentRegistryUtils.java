@@ -1,5 +1,9 @@
 package org.infinispan.query.impl;
 
+import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
+
+import java.util.concurrent.ScheduledExecutorService;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.time.TimeService;
@@ -27,9 +31,9 @@ public final class ComponentRegistryUtils {
    private ComponentRegistryUtils() {
    }
 
-   private static <T> T getRequiredComponent(Cache<?, ?> cache, Class<T> clazz) {
+   private static <T> T getRequiredComponent(Cache<?, ?> cache, Class<T> clazz, String name) {
       ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
-      T component = componentRegistry.getComponent(clazz, clazz.getName());
+      T component = componentRegistry.getComponent(clazz, name == null ? clazz.getName() : name);
       if (component == null) {
          throw new IllegalStateException(clazz.getName() + " not found in component registry");
       }
@@ -49,12 +53,12 @@ public final class ComponentRegistryUtils {
    }
 
    public static KeyPartitioner getKeyPartitioner(Cache<?, ?> cache) {
-      return getRequiredComponent(cache, KeyPartitioner.class);
+      return getRequiredComponent(cache, KeyPartitioner.class, null);
    }
 
    public static QueryInterceptor getQueryInterceptor(Cache<?, ?> cache) {
       ensureIndexed(cache);
-      return getRequiredComponent(cache, QueryInterceptor.class);
+      return getRequiredComponent(cache, QueryInterceptor.class, null);
    }
 
    public static LocalQueryStatistics getLocalQueryStatistics(Cache<?, ?> cache) {
@@ -67,15 +71,19 @@ public final class ComponentRegistryUtils {
 
    public static KeyTransformationHandler getKeyTransformationHandler(Cache<?, ?> cache) {
       ensureIndexed(cache);
-      return getRequiredComponent(cache, KeyTransformationHandler.class);
+      return getRequiredComponent(cache, KeyTransformationHandler.class, null);
    }
 
    public static QueryEngine<Class<?>> getEmbeddedQueryEngine(Cache<?, ?> cache) {
-      return getRequiredComponent(cache, QueryEngine.class);
+      return getRequiredComponent(cache, QueryEngine.class, null);
    }
 
    public static TimeService getTimeService(Cache<?, ?> cache) {
-      return getRequiredComponent(cache, TimeService.class);
+      return getRequiredComponent(cache, TimeService.class, null);
+   }
+
+   public static ScheduledExecutorService getTimeoutScheduledExecutor(Cache<?, ?> cache) {
+      return getRequiredComponent(cache, ScheduledExecutorService.class, TIMEOUT_SCHEDULE_EXECUTOR);
    }
 
    /**
@@ -87,10 +95,10 @@ public final class ComponentRegistryUtils {
 
    public static Indexer getIndexer(AdvancedCache<?, ?> cache) {
       ensureIndexed(cache);
-      return getRequiredComponent(cache, Indexer.class);
+      return getRequiredComponent(cache, Indexer.class, null);
    }
 
    public static InfinispanQueryStatisticsInfo getQueryStatistics(AdvancedCache<?, ?> cache) {
-      return getRequiredComponent(cache, InfinispanQueryStatisticsInfo.class);
+      return getRequiredComponent(cache, InfinispanQueryStatisticsInfo.class, null);
    }
 }
