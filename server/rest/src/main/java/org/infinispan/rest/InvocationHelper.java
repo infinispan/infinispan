@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.concurrent.Executor;
 
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.counter.EmbeddedCounterManagerFactory;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -25,7 +26,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 public class InvocationHelper {
    private final ParserRegistry parserRegistry = new ParserRegistry();
    private final RestCacheManager<Object> restCacheManager;
-   private final EmbeddedCounterManager counterManager;
    private final RestServerConfiguration configuration;
    private final ServerManagement server;
    private final Executor executor;
@@ -35,11 +35,10 @@ public class InvocationHelper {
    private final ProtobufMetadataManager protobufMetadataManager;
    private final String cspHeader;
 
-   InvocationHelper(RestServer protocolServer, RestCacheManager<Object> restCacheManager, EmbeddedCounterManager counterManager,
+   InvocationHelper(RestServer protocolServer, RestCacheManager<Object> restCacheManager,
                     RestServerConfiguration configuration, ServerManagement server, Executor executor) {
       this.protocolServer = protocolServer;
       this.restCacheManager = restCacheManager;
-      this.counterManager = counterManager;
       this.configuration = configuration;
       this.server = server;
       this.executor = executor;
@@ -93,7 +92,7 @@ public class InvocationHelper {
 
    public EmbeddedCounterManager getCounterManager() {
       checkServerStatus();
-      return counterManager;
+      return (EmbeddedCounterManager) EmbeddedCounterManagerFactory.asCounterManager(protocolServer.getCacheManager());
    }
 
    public String getContext() {

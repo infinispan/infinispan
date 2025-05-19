@@ -50,6 +50,7 @@ public class RespDecoderTest {
    public void beforeClass() {
       RespServer server = mock();
       when(server.getTimeService()).thenReturn(new ControlledTimeService());
+      when(server.isDefaultCacheRunning()).thenReturn(true);
       queuedCommands = new ArrayDeque<>();
       RespRequestHandler myRespRequestHandler = new RespRequestHandler(server) {
          @Override
