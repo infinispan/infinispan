@@ -7,6 +7,7 @@ import java.util.concurrent.Executor;
 
 import javax.security.auth.Subject;
 
+import org.infinispan.counter.EmbeddedCounterManagerFactory;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.exception.CounterNotFoundException;
 import org.infinispan.counter.exception.CounterOutOfBoundsException;
@@ -21,18 +22,27 @@ import io.netty.channel.Channel;
 
 class CounterRequestProcessor extends BaseRequestProcessor {
 
-   private final ClientCounterManagerNotificationManager notificationManager;
-   private final EmbeddedCounterManager counterManager;
+   private ClientCounterManagerNotificationManager notificationManager;
+   private EmbeddedCounterManager counterManager;
 
-   CounterRequestProcessor(Channel channel, EmbeddedCounterManager counterManager, Executor executor, HotRodServer server) {
+   CounterRequestProcessor(Channel channel, Executor executor, HotRodServer server) {
       super(channel, executor, server);
-      this.counterManager = counterManager;
-      notificationManager = server.getClientCounterNotificationManager();
    }
 
    private EmbeddedCounterManager counterManager(HotRodHeader header) {
       header.cacheName = CounterModuleLifecycle.COUNTER_CACHE_NAME;
+      if (counterManager == null) {
+         counterManager = (EmbeddedCounterManager) EmbeddedCounterManagerFactory.asCounterManager(server.getCacheManager());
+      }
+
       return counterManager;
+   }
+
+   private ClientCounterManagerNotificationManager notificationManager() {
+      if (notificationManager == null) {
+         notificationManager = server.getClientCounterNotificationManager();
+      }
+      return notificationManager;
    }
 
    void removeCounterListener(HotRodHeader header, Subject subject, String counterName, byte[] listenerId) {
@@ -41,7 +51,7 @@ class CounterRequestProcessor extends BaseRequestProcessor {
 
    private void removeCounterListenerInternal(HotRodHeader header, String counterName, byte[] listenerId) {
       try {
-         writeResponse(header, createResponseFrom(header, notificationManager
+         writeResponse(header, createResponseFrom(header, notificationManager()
                .removeCounterListener(listenerId, counterName)));
       } catch (Throwable t) {
          writeException(header, t);
@@ -54,7 +64,7 @@ class CounterRequestProcessor extends BaseRequestProcessor {
 
    private void addCounterListenerInternal(HotRodHeader header, String counterName, byte[] listenerId) {
       try {
-         writeResponse(header, createResponseFrom(header, notificationManager
+         writeResponse(header, createResponseFrom(header, notificationManager()
                .addCounterListener(listenerId, header.getVersion(), counterName, channel, header.encoder())));
       } catch (Throwable t) {
          writeException(header, t);

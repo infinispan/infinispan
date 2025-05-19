@@ -61,7 +61,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    }
 
    @Override
-   protected void startInternal() {
+   protected void internalPostStart() {
       GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cacheManager);
       this.timeService = gcr.getTimeService();
       this.iterationManager = new DefaultIterationManager(gcr.getTimeService());
@@ -123,7 +123,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
          segmentSlots = new SegmentSlotRelation(explicitConfiguration.clustering().hash().numSegments());
       }
       initializeLuaTaskEngine(gcr);
-      super.startInternal();
+      super.internalPostStart();
    }
 
    // To be replaced for svm

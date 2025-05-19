@@ -58,11 +58,16 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
          builder.statistics().enable();
          cacheManager.defineConfiguration(configuration.defaultCacheName(), builder.build());
       }
+      super.startInternal();
+   }
+
+   @Override
+   protected void internalPostStart() {
+      super.internalPostStart();
       memcachedCache = cacheManager.getCache(configuration.defaultCacheName());
       if (memcachedCache.getCacheConfiguration().statistics().enabled()) {
          statistics = new MemcachedStats();
       }
-      super.startInternal();
    }
 
    @Override

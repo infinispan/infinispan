@@ -46,6 +46,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.OS;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
@@ -54,7 +55,6 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.globalstate.ConfigurationStorage;
-import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.DefaultCacheManager;
@@ -122,8 +122,6 @@ import org.infinispan.telemetry.InfinispanTelemetry;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.util.logging.events.EventLogManager;
-import org.infinispan.util.logging.events.EventLogger;
 import org.wildfly.security.auth.server.ModifiableRealmIdentityIterator;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.RealmUnavailableException;
@@ -216,6 +214,7 @@ public class Server extends BaseServerManagement implements AutoCloseable {
    private final long startTime;
    private final Properties properties;
    private final LoggingAuditLogger defaultAuditLogger = new LoggingAuditLogger();
+   private final CompletableFuture<Void> cacheManagerStart = new CompletableFuture<>();
    private ExitHandler exitHandler = new DefaultExitHandler();
    private ConfigurationBuilderHolder configurationBuilderHolder;
    private DefaultCacheManager cacheManager;
@@ -440,9 +439,7 @@ public class Server extends BaseServerManagement implements AutoCloseable {
             defaultAuditLogger.setTelemetryService(gcr.getComponent(InfinispanTelemetry.class));
          }
 
-         // Start the cache manager
-         SecurityActions.startCacheManager(cacheManager);
-         serverStateManager = new ServerStateManagerImpl(this, cacheManager, gcr.getComponent(GlobalConfigurationManager.class));
+         serverStateManager = new ServerStateManagerImpl(this, cacheManager);
          gcr.registerComponent(serverStateManager, ServerStateManager.class);
          blockingManager = gcr.getComponent(BlockingManager.class);
          ScheduledExecutorService timeoutExecutor = gcr.getComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR);
@@ -450,9 +447,11 @@ public class Server extends BaseServerManagement implements AutoCloseable {
          // BlockingManager of single container used for writing the global manifest, but this will need to change
          // when multiple containers are supported by the server. Similarly, the default cache manager is used to create
          // the clustered locks.
-         EventLogger eventLogger = gcr.getComponent(EventLogManager.class).getEventLogger();
-         backupManager = new BackupManagerImpl(eventLogger, blockingManager, cacheManager, dataPath);
-         backupManager.init();
+         backupManager = new BackupManagerImpl(blockingManager, cacheManager, dataPath);
+
+         // Asynchronously start the cache manager.
+         // Offloads the cache manager initialization and proceed to initialize the transport to receive requests.
+         startCacheManager(blockingManager);
 
          // Register the task manager
          taskManager = gcr.getComponent(TaskManager.class);
@@ -514,11 +513,25 @@ public class Server extends BaseServerManagement implements AutoCloseable {
                   singlePortRouter.ssl().enabled() ? "https" : "http", singlePortRouter.host(), singlePortRouter.port()
             );
          }
-         serverStateManager.start();
-         // Change status
-         this.status = ComponentStatus.RUNNING;
-         SecurityActions.postStartProtocolServer(protocolServers.values());
-         log.serverStarted(Version.getBrandName(), Version.getBrandVersion(), timeService.timeDuration(startTime, TimeUnit.MILLISECONDS));
+         cacheManagerStart.whenComplete((ignore, t) -> {
+            if (t != null) {
+               r.completeExceptionally(t);
+               return;
+            }
+
+            serverStateManager.start();
+
+            try {
+               backupManager.init();
+            } catch (IOException e) {
+               throw CompletableFutures.asCompletionException(e);
+            }
+
+            // Change status
+            this.status = ComponentStatus.RUNNING;
+            SecurityActions.postStartProtocolServer(protocolServers.values());
+            log.serverStarted(Version.getBrandName(), Version.getBrandVersion(), timeService.timeDuration(startTime, TimeUnit.MILLISECONDS));
+         });
       } catch (Exception e) {
          r.completeExceptionally(e);
       }
@@ -531,6 +544,21 @@ public class Server extends BaseServerManagement implements AutoCloseable {
       ServerConfigurationSerializer serializer = new ServerConfigurationSerializer();
       serializer.serialize(writer, this.serverConfiguration);
       writer.writeEndDocument();
+   }
+
+   private void startCacheManager(BlockingManager bm) {
+      bm.runBlocking(() -> {
+         try {
+            SecurityActions.startCacheManager(cacheManager);
+            cacheManagerStart.complete(null);
+         } catch (Throwable t) {
+            cacheManagerStart.completeExceptionally(t);
+         }
+      }, "start-cm");
+   }
+
+   public CompletionStage<Void> cacheManagerStart() {
+      return cacheManagerStart;
    }
 
    @Override
