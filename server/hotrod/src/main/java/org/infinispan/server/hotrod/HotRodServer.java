@@ -166,6 +166,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    }
 
    public ClientCounterManagerNotificationManager getClientCounterNotificationManager() {
+      if (clientCounterNotificationManager == null)
+         throw new IllegalLifecycleStateException("HotRod server is not fully initialized");
       return clientCounterNotificationManager;
    }
 
@@ -187,6 +189,13 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    @Override
    public void installDetector(Channel ch) {
       ch.pipeline().addLast(HotRodDetector.NAME, new HotRodDetector(this));
+   }
+
+   @Override
+   public boolean isDefaultCacheRunning() {
+      // HotRod operate over all caches.
+      // We verify readiness at the decoder.
+      return true;
    }
 
    /**
@@ -244,7 +253,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       queryFacade = loadQueryFacade();
       clientListenerRegistry = new ClientListenerRegistry(gcr.getComponent(EncoderRegistry.class),
             gcr.getComponent(ExecutorService.class, NON_BLOCKING_EXECUTOR));
-      clientCounterNotificationManager = new ClientCounterManagerNotificationManager(asCounterManager(cacheManager));
 
       addKeyValueFilterConverterFactory(ToEmptyBytesKeyValueFilterConverter.class.getName(), new ToEmptyBytesFactory());
 
@@ -271,6 +279,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    @Override
    public void internalPostStart() {
       super.internalPostStart();
+      clientCounterNotificationManager = new ClientCounterManagerNotificationManager(asCounterManager(cacheManager));
 
       // Add self to topology cache last, after everything is initialized
       if (Configurations.isClustered(SecurityActions.getCacheManagerConfiguration(cacheManager))) {

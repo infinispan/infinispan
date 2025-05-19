@@ -54,7 +54,7 @@ public class RespTransactionHandler extends CacheRespRequestHandler {
       // Doing specific checks here instead of implementing on the commands, so we can update this later, if necessary.
       if (command instanceof SUBSCRIBE || command instanceof PSUBSCRIBE) {
          CompletionStage<?> drop = dropTransaction(ctx);
-         SubscriberHandler subscriberHandler = new SubscriberHandler(respServer(), respServer().newHandler(cache));
+         SubscriberHandler subscriberHandler = new SubscriberHandler(respServer(), respServer().newHandler(cache()));
          return subscriberHandler.handleRequest(ctx, command, arguments).thenCombine(drop, (handler, ignore) -> handler);
       }
 

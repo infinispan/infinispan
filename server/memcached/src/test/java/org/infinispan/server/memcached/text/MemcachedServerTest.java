@@ -33,6 +33,7 @@ public class MemcachedServerTest extends AbstractInfinispanTest {
       Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager(), cm ->
             Stoppable.useServer(new MemcachedServer(), ms -> {
                ms.start(new MemcachedServerConfigurationBuilder().build(), cm);
+               ms.postStart();
                assertEquals(ms.getHost(), "127.0.0.1");
                assertEquals((int) ms.getPort(), 11211);
             }));
@@ -43,6 +44,7 @@ public class MemcachedServerTest extends AbstractInfinispanTest {
       Stoppable.useCacheManager(new DefaultCacheManager(global.build()), cm ->
             Stoppable.useServer(new MemcachedServer(), ms -> {
                ms.start(new MemcachedServerConfigurationBuilder().build(), cm);
+               ms.postStart();
                assertEquals(CacheMode.LOCAL, ms.getCache().getCacheConfiguration().clustering().cacheMode());
             }));
    }
@@ -52,6 +54,7 @@ public class MemcachedServerTest extends AbstractInfinispanTest {
       Stoppable.useCacheManager(new DefaultCacheManager(global.build()), cm ->
             Stoppable.useServer(new MemcachedServer(), ms -> {
                ms.start(new MemcachedServerConfigurationBuilder().build(), cm);
+               ms.postStart();
                assertEquals(CacheMode.REPL_SYNC, ms.getCache().getCacheConfiguration().clustering().cacheMode());
             }));
    }
@@ -69,6 +72,7 @@ public class MemcachedServerTest extends AbstractInfinispanTest {
       Stoppable.useCacheManager(new DefaultCacheManager(global.build()), cm ->
             Stoppable.useServer(new MemcachedServer(), ms -> {
                ms.start(new MemcachedServerConfigurationBuilder().build(), cm);
+               ms.postStart();
                ConnectionFactoryBuilder builder = new ConnectionFactoryBuilder().setProtocol(protocol).setOpTimeout(5).setClientMode(ClientMode.Static);
                MemcachedClient client = null;
                try {

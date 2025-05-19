@@ -56,6 +56,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
          copyArtifactsToDataDir();
          Server server = createServerInstance(name, rootDir, new File(configuration.configurationFile()), i, serverRoot);
          serverFutures.add(server.run());
+         waitCompletion(server.cacheManagerStart().toCompletableFuture());
          servers.add(server);
       }
       // Ensure that the cluster has formed if we start more than one server
@@ -63,6 +64,13 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
       if(cacheManagers.size() > 1) {
          blockUntilViewsReceived(cacheManagers);
       }
+   }
+
+   private static void waitCompletion(CompletableFuture<?> cf) {
+      try {
+         // Only waits for it to complete, we don't care if successfully or not.
+         cf.get(30, TimeUnit.SECONDS);
+      } catch (Throwable ignore) { }
    }
 
    private Server createServerInstance(String name, File rootDir, File configurationFile, int serverIndex, File serverRoot) {
@@ -154,6 +162,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
                                            serverIndex, serverRoot);
       servers.set(serverIndex, server);
       serverFutures.set(serverIndex, server.run());
+      waitCompletion(server.cacheManagerStart().toCompletableFuture());
    }
 
    @Override
