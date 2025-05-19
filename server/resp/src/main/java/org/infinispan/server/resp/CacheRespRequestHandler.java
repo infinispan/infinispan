@@ -4,14 +4,17 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 
 public class CacheRespRequestHandler extends RespRequestHandler {
-   protected AdvancedCache<byte[], byte[]> cache;
+   private AdvancedCache<byte[], byte[]> cache;
 
    protected CacheRespRequestHandler(RespServer respServer, AdvancedCache<byte[], byte[]> cache) {
       super(respServer);
-      setCache(cache.withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM));
+      if (cache != null)
+         setCache(cache.withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM));
    }
 
    public AdvancedCache<byte[], byte[]> cache() {
+      if (cache == null)
+         setCache(respServer().getCache().withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM));
       return cache;
    }
 

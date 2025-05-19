@@ -140,6 +140,6 @@ public class RestReinitializeCacheIT {
    private void assertCacheMissingMembers(ThrowableAssert.ThrowingCallable callable) {
       assertThatThrownBy(callable)
             .isInstanceOf(HotRodClientException.class)
-            .hasMessageContaining("MissingMembersException: ISPN000689:");
+            .hasMessageFindingMatch(".*: (ISPN000689|ISPN005066):");
    }
 }

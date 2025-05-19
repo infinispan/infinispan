@@ -9,8 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.counter.EmbeddedCounterManagerFactory;
-import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.configuration.RestAuthenticationConfiguration;
 import org.infinispan.rest.configuration.RestServerConfiguration;
@@ -22,13 +20,13 @@ import org.infinispan.rest.resources.CacheResourceV2;
 import org.infinispan.rest.resources.ClusterResource;
 import org.infinispan.rest.resources.ContainerResource;
 import org.infinispan.rest.resources.CounterResource;
+import org.infinispan.rest.resources.HealthCheckResource;
 import org.infinispan.rest.resources.LoggingResource;
 import org.infinispan.rest.resources.MetricsResource;
 import org.infinispan.rest.resources.ProtobufResource;
 import org.infinispan.rest.resources.RedirectResource;
 import org.infinispan.rest.resources.SearchAdminResource;
 import org.infinispan.rest.resources.SecurityResource;
-import org.infinispan.rest.resources.HealthCheckResource;
 import org.infinispan.rest.resources.ServerResource;
 import org.infinispan.rest.resources.StaticContentResource;
 import org.infinispan.rest.resources.TasksResource;
@@ -135,9 +133,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       super.startInternal();
       restCacheManager = new RestCacheManager<>(cacheManager, this::isCacheIgnored);
 
-      invocationHelper = new InvocationHelper(this, restCacheManager,
-            (EmbeddedCounterManager) EmbeddedCounterManagerFactory.asCounterManager(cacheManager),
-            configuration, server, getExecutor());
+      invocationHelper = new InvocationHelper(this, restCacheManager, configuration, server, getExecutor());
 
       String restContext = configuration.contextPath();
       String rootContext = "/";
@@ -203,5 +199,11 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
    @Override
    public void installDetector(Channel ch) {
       // NO-OP
+   }
+
+   @Override
+   public boolean isDefaultCacheRunning() {
+      // REST operate over all caches. We provide the health API to verify for readiness.
+      return true;
    }
 }

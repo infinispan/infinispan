@@ -70,6 +70,7 @@ public class RestServerHelper {
       Map<String, ProtocolServer> protocolServers = new HashMap<>();
       restServer.setServerManagement(new DummyServerManagement(cacheManager, protocolServers), true);
       restServer.start(restServerConfigurationBuilder.build(), cacheManager);
+      restServer.postStart();
       protocolServers.put("DummyProtocol", new MockProtocolServer("DummyProtocol", restServer.getTransport()));
       return this;
    }

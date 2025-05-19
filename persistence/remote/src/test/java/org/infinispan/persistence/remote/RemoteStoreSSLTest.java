@@ -74,6 +74,7 @@ public class RemoteStoreSSLTest extends BaseNonBlockingStoreTest {
                .authenticator(ssa);
          hrServer = new HotRodServer();
          hrServer.start(serverBuilder.build(), serverCacheManager);
+         hrServer.postStart();
       }
 
       SecurityConfigurationBuilder remoteSecurity = builder
