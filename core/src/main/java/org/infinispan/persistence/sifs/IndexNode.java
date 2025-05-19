@@ -12,6 +12,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.infinispan.commons.time.TimeService;
@@ -1065,6 +1066,7 @@ class IndexNode {
 
    static class InnerNode extends Index.IndexSpace {
       private volatile SoftReference<IndexNode> reference;
+      private final ReentrantLock lock = new ReentrantLock();
 
       InnerNode(long offset, short length) {
          super(offset, length);
@@ -1078,7 +1080,8 @@ class IndexNode {
       IndexNode getIndexNode(Index.Segment segment) throws IOException {
          IndexNode node;
          if (reference == null || (node = reference.get()) == null) {
-            synchronized (this) {
+            lock.lock();
+            try {
                if (reference == null || (node = reference.get()) == null) {
                   if (offset < 0) return null;
                   // Is this okay?
@@ -1088,6 +1091,8 @@ class IndexNode {
                      log.trace("Loaded inner node from " + offset + " - " + length);
                   }
                }
+            } finally {
+               lock.unlock();
             }
          }
          return node;
@@ -1097,6 +1102,7 @@ class IndexNode {
    static class LeafNode extends EntryInfo {
       private static final LeafNode[] EMPTY_ARRAY = new LeafNode[0];
       private volatile SoftReference<EntryRecord> keyReference;
+      private final ReentrantLock lock = new ReentrantLock();
 
       LeafNode(int file, int offset, int numRecords) {
          super(file, offset, numRecords);
@@ -1109,7 +1115,8 @@ class IndexNode {
       private EntryRecord getHeaderAndKey(FileProvider fileProvider, FileProvider.Handle handle) throws IOException, IndexNodeOutdatedException {
          EntryRecord headerAndKey;
          if (keyReference == null || (headerAndKey = keyReference.get()) == null) {
-            synchronized (this) {
+            lock.lock();
+            try {
                if (keyReference == null || (headerAndKey = keyReference.get()) == null) {
                   boolean ownHandle = false;
                   if (handle == null) {
@@ -1137,6 +1144,8 @@ class IndexNode {
                      }
                   }
                }
+            } finally {
+               lock.unlock();
             }
          }
          assert headerAndKey.getKey() != null;
