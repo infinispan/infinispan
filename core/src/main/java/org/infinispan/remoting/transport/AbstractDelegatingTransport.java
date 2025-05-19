@@ -44,9 +44,8 @@ public abstract class AbstractDelegatingTransport implements Transport {
                                                                         ReplicableCommand rpcCommand,
                                                                         ResponseMode mode, long timeout,
                                                                         ResponseFilter responseFilter,
-                                                                        DeliverOrder deliverOrder,
-                                                                        boolean anycast) throws Exception {
-      return actual.invokeRemotelyAsync(recipients, rpcCommand, mode, timeout, responseFilter, deliverOrder, anycast);
+                                                                        DeliverOrder deliverOrder) throws Exception {
+      return actual.invokeRemotelyAsync(recipients, rpcCommand, mode, timeout, responseFilter, deliverOrder);
    }
 
    @Override

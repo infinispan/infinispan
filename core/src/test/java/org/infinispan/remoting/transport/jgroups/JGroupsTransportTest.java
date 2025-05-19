@@ -53,7 +53,7 @@ public class JGroupsTransportTest extends MultipleCacheManagersTest {
       ReplicableCommand command = new ClusteredGetCommand("key", CACHE_NAME, 0, 0);
       CompletableFuture<Map<Address, Response>> future = transport
             .invokeRemotelyAsync(Collections.singletonList(randomAddress), command,
-                                 ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, 1, null, DeliverOrder.NONE, true);
+                                 ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, 1, null, DeliverOrder.NONE);
       assertEquals(CacheNotFoundResponse.INSTANCE, future.get().get(randomAddress));
       assertEquals(initialMessages, transport.getChannel().getProtocolStack().getTransport().getMessageStats().getNumMsgsSent());
    }

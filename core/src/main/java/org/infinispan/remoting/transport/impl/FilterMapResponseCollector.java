@@ -17,7 +17,7 @@ import org.infinispan.remoting.transport.ValidResponseCollector;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 
 /**
- * Response collector supporting {@link JGroupsTransport#invokeRemotelyAsync(Collection, ReplicableCommand, ResponseMode, long, ResponseFilter, DeliverOrder, boolean)}.
+ * Response collector supporting {@link JGroupsTransport#invokeRemotelyAsync(Collection, ReplicableCommand, ResponseMode, long, ResponseFilter, DeliverOrder)}.
  *
  * <p>This class is not thread-safe by itself. It expects an {@link org.infinispan.remoting.transport.AbstractRequest}
  * to handle synchronization.</p>

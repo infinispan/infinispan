@@ -234,8 +234,7 @@ public class JGroupsTransport implements Transport {
                                                                         ReplicableCommand command,
                                                                         ResponseMode mode, long timeout,
                                                                         ResponseFilter responseFilter,
-                                                                        DeliverOrder deliverOrder,
-                                                                        boolean anycast) {
+                                                                        DeliverOrder deliverOrder) {
       if (recipients != null && recipients.isEmpty()) {
          // don't send if recipients list is empty
          log.tracef("Destination list is empty: no need to send command %s", command);

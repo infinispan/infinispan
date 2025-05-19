@@ -44,8 +44,7 @@ public interface Transport extends Lifecycle {
                                                                  ReplicableCommand rpcCommand,
                                                                  ResponseMode mode, long timeout,
                                                                  ResponseFilter responseFilter,
-                                                                 DeliverOrder deliverOrder,
-                                                                 boolean anycast) throws Exception;
+                                                                 DeliverOrder deliverOrder) throws Exception;
 
    /**
     * Asynchronously sends the {@link ReplicableCommand} to the destination using the specified {@link DeliverOrder}.
@@ -237,7 +236,7 @@ public interface Transport extends Lifecycle {
       // Implement the new methods on top of invokeRemotelyAsync to support custom implementations
       try {
          return invokeRemotelyAsync(targets, command, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
-                                    unit.toMillis(timeout), null, deliverOrder, false)
+                                    unit.toMillis(timeout), null, deliverOrder)
                    .thenApply(map -> {
                       for (Map.Entry<Address, Response> e : map.entrySet()) {
                          T result = collector.addResponse(e.getKey(), e.getValue());
@@ -317,7 +316,7 @@ public interface Transport extends Lifecycle {
             }
          };
          return invokeRemotelyAsync(targets, command, ResponseMode.WAIT_FOR_VALID_RESPONSE,
-                                    unit.toMillis(timeout), responseFilter, deliverOrder, false)
+                                    unit.toMillis(timeout), responseFilter, deliverOrder)
                    .thenApply(map -> {
                       synchronized (result) {
                          if (result.get() != null) {
@@ -386,4 +385,18 @@ public interface Transport extends Lifecycle {
     * @return The {@link RaftManager} instance,
     */
    RaftManager raftManager();
+
+   /**
+    * @deprecated Use {@link #invokeRemotelyAsync(Collection, ReplicableCommand, ResponseMode, long, ResponseFilter,
+    * DeliverOrder)}.
+    */
+   @Deprecated(forRemoval=true, since = "16.0")
+   default CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
+                                                                 ReplicableCommand rpcCommand,
+                                                                 ResponseMode mode, long timeout,
+                                                                 ResponseFilter responseFilter,
+                                                                 DeliverOrder deliverOrder,
+                                                                 boolean anycast) throws Exception {
+      return invokeRemotelyAsync(recipients, rpcCommand, mode, timeout, responseFilter, deliverOrder);
+   }
 }
