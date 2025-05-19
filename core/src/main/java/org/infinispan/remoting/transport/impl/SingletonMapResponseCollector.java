@@ -18,7 +18,7 @@ import org.infinispan.remoting.transport.ValidSingleResponseCollector;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 
 /**
- * Response collector supporting {@link JGroupsTransport#invokeRemotelyAsync(Collection, ReplicableCommand, ResponseMode, long, ResponseFilter, DeliverOrder, boolean)}.
+ * Response collector supporting {@link JGroupsTransport#invokeRemotelyAsync(Collection, ReplicableCommand, ResponseMode, long, ResponseFilter, DeliverOrder)}.
  *
  * @author Dan Berindei
  * @since 9.2

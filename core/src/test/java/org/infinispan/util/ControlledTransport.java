@@ -203,7 +203,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
    public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
                                                                         ReplicableCommand rpcCommand, ResponseMode mode,
                                                                         long timeout, ResponseFilter responseFilter,
-                                                                        DeliverOrder deliverOrder, boolean anycast) {
+                                                                        DeliverOrder deliverOrder) {
       throw new UnsupportedOperationException();
    }
 

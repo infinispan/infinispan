@@ -20,7 +20,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
- * Response collector supporting {@link JGroupsTransport#invokeRemotelyAsync(Collection, ReplicableCommand, ResponseMode, long, ResponseFilter, DeliverOrder, boolean)}.
+ * Response collector supporting {@link JGroupsTransport#invokeRemotelyAsync(Collection, ReplicableCommand, ResponseMode, long, ResponseFilter, DeliverOrder)}.
  *
  * @author Dan Berindei
  * @since 9.2

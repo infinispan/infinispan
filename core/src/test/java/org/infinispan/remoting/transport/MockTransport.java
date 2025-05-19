@@ -117,7 +117,7 @@ public class MockTransport implements Transport {
    public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
                                                                         ReplicableCommand rpcCommand, ResponseMode mode,
                                                                         long timeout, ResponseFilter responseFilter,
-                                                                        DeliverOrder deliverOrder, boolean anycast) {
+                                                                        DeliverOrder deliverOrder) {
       Collection<Address> targets = recipients != null ? recipients : members;
       MapResponseCollector collector =
          mode.isSynchronous() ? MapResponseCollector.ignoreLeavers(shouldIgnoreLeavers(mode), targets.size()) : null;
