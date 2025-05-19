@@ -346,8 +346,6 @@ public interface Transport extends Lifecycle {
                                                  Function<Address, ReplicableCommand> commandGenerator,
                                                  ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                  long timeout, TimeUnit timeUnit) {
-
-
       AtomicReference<Object> result = new AtomicReference<>(null);
       ResponseCollector<Address, T> partCollector = new ResponseCollector<>() {
          @Override

@@ -6,7 +6,6 @@ import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCac
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -15,6 +14,8 @@ import java.util.stream.IntStream;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.test.ExceptionRunnable;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -30,12 +31,12 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
-import org.infinispan.upgrade.UnsupportedException;
+import org.infinispan.upgrade.UnsupportedVersionException;
 import org.infinispan.util.ByteString;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
-/**
+/*
  * A test to ensure that an Exception is thrown when a node attempts to send a command to a mixed version cluster where
  * one or more of the cluster members do not support the command.
  */
@@ -160,29 +161,25 @@ public class MixedVersionClusterTest extends MultipleCacheManagersTest {
       assertCommandExec(() -> rpcManager.sendToAll(cmd, DeliverOrder.NONE), fail);
    }
 
-   private void assertCommandExec(Runnable r, boolean expectFail) {
-      try {
+   private void assertCommandExec(ExceptionRunnable r, boolean expectFail) throws Exception {
+      if (expectFail) {
+         Exceptions.expectException(CacheException.class, UnsupportedVersionException.class, "Command 'CustomCacheRpcCommand' not yet supported by all cluster members, requires version '127.127.127'", r);
+      } else {
          r.run();
-         if (expectFail) fail();
-      } catch (CacheException e) {
-         if (!expectFail) fail("Unexpected exception: " + e.getCause());
-         assertUnsupportedException(e.getCause());
       }
    }
 
    private void assertCommandExec(CompletionStage<?> stage, boolean expectFail) throws Exception {
-      try {
+      if (expectFail) {
+         Exceptions.expectException(
+               ExecutionException.class,
+               UnsupportedVersionException.class,
+               "Command 'CustomCacheRpcCommand' not yet supported by all cluster members, requires version '127.127.127'",
+               () -> stage.toCompletableFuture().get(MAX_WAIT_SECS, TimeUnit.SECONDS)
+         );
+      } else {
          stage.toCompletableFuture().get(MAX_WAIT_SECS, TimeUnit.SECONDS);
-         if (expectFail) fail("Expected an exception to be thrown on command execution");
-      } catch (ExecutionException e) {
-         if (!expectFail) fail("Unexpected exception: " + e.getCause());
-         assertUnsupportedException(e.getCause());
       }
-   }
-
-   private void assertUnsupportedException(Throwable t) {
-      assertTrue(t instanceof UnsupportedException);
-      assertEquals("Command 'CustomCacheRpcCommand' not yet supported by all cluster members, requires version '127.127.127'", t.getMessage());
    }
 
    private boolean isMixedCluster(int i) {

@@ -58,7 +58,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.InvalidTransactionException;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransaction;
-import org.infinispan.upgrade.UnsupportedException;
+import org.infinispan.upgrade.UnsupportedVersionException;
 import org.infinispan.util.ByteString;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -2403,5 +2403,5 @@ public interface Log extends BasicLogger {
    void maxIdleGreaterThanOrEqualLifespanRuntime(long maxIdle, long lifespan);
 
    @Message(value = "Command '%s' not yet supported by all cluster members, requires version '%s'")
-   UnsupportedException commandNotYeySupportedByAllClusterMembers(String command, NodeVersion version);
+   UnsupportedVersionException commandNotYeySupportedByAllClusterMembers(String command, NodeVersion version);
 }
