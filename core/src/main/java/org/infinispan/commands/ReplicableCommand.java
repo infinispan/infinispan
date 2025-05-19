@@ -10,6 +10,8 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.NodeVersion;
+import org.infinispan.upgrade.VersionAware;
 
 /**
  * The core of the command-based cache framework.  Commands correspond to specific areas of functionality in the cache,
@@ -19,7 +21,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface ReplicableCommand extends TracedCommand {
+public interface ReplicableCommand extends TracedCommand, VersionAware {
 
    /**
     * Invoke the command asynchronously.
@@ -132,4 +134,17 @@ public interface ReplicableCommand extends TracedCommand {
    default void setOrigin(Address origin) {
       //no-op by default
    }
+
+   /**
+    * Returns a {@link NodeVersion} representing the Infinispan version in which this command was added. This value
+    * is used to ensure that when the cluster contains different Infinispan versions, only commands compatible with the
+    * oldest version are transmitted.
+    * <p>
+    * Abstract classes should not implement this method as the version should be specific to an individual implementation.
+    * Similarly, implementations which extend another {@link ReplicableCommand} should always override this method.
+    *
+    * @return a {@link NodeVersion} corresponding to the Infinispan version this command was added.
+    */
+   @Override
+   NodeVersion supportedSince();
 }

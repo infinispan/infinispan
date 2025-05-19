@@ -9,6 +9,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.xsite.events.XSiteEvent;
 import org.infinispan.xsite.events.XSiteEventsManager;
 
@@ -36,6 +37,11 @@ public class XSiteLocalEventCommand implements GlobalRpcCommand {
    @Override
    public boolean isReturnValueExpected() {
       return false;
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

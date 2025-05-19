@@ -21,6 +21,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -161,6 +162,11 @@ public class TxCompletionNotificationCommand extends BaseRpcCommand implements T
          // and they must be OOB + asynchronous
          rpcManager.sendToMany(newTargets, this, DeliverOrder.NONE);
       }
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

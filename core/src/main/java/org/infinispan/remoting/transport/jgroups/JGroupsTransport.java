@@ -75,6 +75,7 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.AbstractRequest;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.remoting.transport.PhysicalAddress;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
@@ -193,10 +194,10 @@ public class JGroupsTransport implements Transport {
    protected Address address;
    // these members are not valid until we have received the first view on a second thread
    // and channelConnectedLatch is signaled
-   protected volatile ClusterView clusterView =
-         new ClusterView(ClusterView.INITIAL_VIEW_ID, Collections.emptyList(), null);
+   protected volatile ClusterView clusterView;
    private CompletableFuture<Void> nextViewFuture = new CompletableFuture<>();
    private RequestRepository requests;
+   private final NodeVersion version;
    private final Map<String, SiteUnreachableReason> unreachableSites;
    private String localSite;
    private volatile RaftManager raftManager = EmptyRaftManager.INSTANCE;
@@ -225,8 +226,18 @@ public class JGroupsTransport implements Transport {
    }
 
    public JGroupsTransport() {
+      this(NodeVersion.INSTANCE);
+   }
+
+   protected JGroupsTransport(NodeVersion version) {
       this.probeHandler = new ThreadPoolProbeHandler();
       this.unreachableSites = new ConcurrentHashMap<>();
+      this.version = version;
+      initClusterView();
+   }
+
+   private void initClusterView() {
+      this.clusterView = new ClusterView(ClusterView.INITIAL_VIEW_ID, Collections.emptyList(), null, version);
    }
 
    @Override
@@ -239,6 +250,11 @@ public class JGroupsTransport implements Transport {
          // don't send if recipients list is empty
          log.tracef("Destination list is empty: no need to send command %s", command);
          return EMPTY_RESPONSES_FUTURE;
+      }
+
+      if (isCommandUnsupported(command)) {
+         CompletionStage<Map<Address, Response>> stage = commandUnsupportedFuture(command);
+         return stage.toCompletableFuture();
       }
 
       ClusterView view = this.clusterView;
@@ -283,12 +299,14 @@ public class JGroupsTransport implements Transport {
             log.tracef("%s not sending command to self: %s", address, command);
          return;
       }
+      checkCommandCompatibility(command);
       logCommand(command, destination);
       sendCommandCheckingView(destination, command, Request.NO_REQUEST_ID, deliverOrder);
    }
 
    @Override
    public void sendToMany(Collection<Address> targets, ReplicableCommand command, DeliverOrder deliverOrder) {
+      checkCommandCompatibility(command);
       if (targets == null) {
          logCommand(command, "all");
          sendCommandToAll(command, Request.NO_REQUEST_ID, deliverOrder);
@@ -296,6 +314,31 @@ public class JGroupsTransport implements Transport {
          logCommand(command, targets);
          sendCommand(targets, command, Request.NO_REQUEST_ID, deliverOrder);
       }
+   }
+
+   public boolean isMixedVersionCluster() {
+      return clusterView.isMixedVersionCluster();
+   }
+
+   public NodeVersion getOldestMember() {
+      return clusterView.getOldestMember();
+   }
+
+
+   private boolean isCommandUnsupported(ReplicableCommand cmd) {
+      return isMixedVersionCluster() && getOldestMember().lessThan(cmd.supportedSince());
+   }
+
+   private <T> CompletionStage<T> commandUnsupportedFuture(ReplicableCommand cmd) {
+      var t = log.commandNotYeySupportedByAllClusterMembers(cmd.getClass().getSimpleName(), cmd.supportedSince());
+      var cf = new CompletableFuture<T>();
+      cf.completeExceptionally(t);
+      return cf;
+   }
+
+   private void checkCommandCompatibility(ReplicableCommand cmd) {
+      if (isMixedVersionCluster() && getOldestMember().lessThan(cmd.supportedSince()))
+         throw log.commandNotYeySupportedByAllClusterMembers(cmd.getClass().getSimpleName(), cmd.supportedSince());
    }
 
    @Override
@@ -676,7 +719,7 @@ public class JGroupsTransport implements Transport {
          return;
       }
       long viewId = newView.getViewId().getId();
-      var newClusterView = new ClusterView((int) viewId, newView.getMembers().stream().map(ExtendedUUID.class::cast).toList(), (ExtendedUUID) channel.getAddress());
+      var newClusterView = new ClusterView((int) viewId, newView.getMembers().stream().map(ExtendedUUID.class::cast).toList(), (ExtendedUUID) channel.getAddress(), version);
       List<List<Address>> subGroups;
       if (newView instanceof MergeView) {
          if (!(channel instanceof ForkChannel)) {
@@ -793,7 +836,7 @@ public class JGroupsTransport implements Transport {
 
       // Don't keep a reference to the channel, but keep the address and physical address
       channel = null;
-      clusterView = new ClusterView(ClusterView.FINAL_VIEW_ID, Collections.emptyList(), null);
+      clusterView = new ClusterView(ClusterView.FINAL_VIEW_ID, Collections.emptyList(), null, version);
 
       CompletableFuture<Void> oldFuture = null;
       viewUpdateLock.lock();
@@ -893,6 +936,9 @@ public class JGroupsTransport implements Transport {
    public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
                                                ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                long timeout, TimeUnit unit) {
+      if (isCommandUnsupported(command))
+         return commandUnsupportedFuture(command);
+
       if (target.equals(address)) {
          return CompletableFuture.completedFuture(collector.finish());
       }
@@ -915,6 +961,9 @@ public class JGroupsTransport implements Transport {
    public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
                                                ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                long timeout, TimeUnit unit) {
+      if (isCommandUnsupported(command))
+         return commandUnsupportedFuture(command);
+
       long requestId = requests.newRequestId();
       logRequest(requestId, command, targets, "multi");
       if (targets.isEmpty()) {
@@ -948,6 +997,9 @@ public class JGroupsTransport implements Transport {
    @Override
    public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<Address, T> collector,
                                                     DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
+      if (isCommandUnsupported(command))
+         return commandUnsupportedFuture(command);
+
       long requestId = requests.newRequestId();
       logRequest(requestId, command, null, "broadcast");
       Address excludedTarget = getAddress();
@@ -976,6 +1028,9 @@ public class JGroupsTransport implements Transport {
    public <T> CompletionStage<T> invokeCommandOnAll(Collection<Address> requiredTargets, ReplicableCommand command,
                                                     ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                     long timeout, TimeUnit unit) {
+      if (isCommandUnsupported(command))
+         return commandUnsupportedFuture(command);
+
       long requestId = requests.newRequestId();
       logRequest(requestId, command, requiredTargets, "broadcast");
       Address excludedTarget = getAddress();
@@ -986,6 +1041,9 @@ public class JGroupsTransport implements Transport {
          return request;
       }
       try {
+         if (isCommandUnsupported(command)) {
+            return commandUnsupportedFuture(command);
+         }
          addRequest(request);
          traceRequest(request, command);
          request.onNewView(clusterView.getMembersSet());
@@ -1004,6 +1062,9 @@ public class JGroupsTransport implements Transport {
    public <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
                                                         ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                         long timeout, TimeUnit unit) {
+      if (isCommandUnsupported(command))
+         return commandUnsupportedFuture(command);
+
       long requestId = requests.newRequestId();
       logRequest(requestId, command, targets, "staggered");
       StaggeredRequest<T> request =
@@ -1026,6 +1087,13 @@ public class JGroupsTransport implements Transport {
                                                 Function<Address, ReplicableCommand> commandGenerator,
                                                 ResponseCollector<Address, T> collector, DeliverOrder deliverOrder,
                                                 long timeout, TimeUnit timeUnit) {
+
+      for (Address target : targets) {
+         var cmd = commandGenerator.apply(target);
+         if (isCommandUnsupported(cmd))
+            return commandUnsupportedFuture(cmd);
+      }
+
       long requestId;
       requestId = requests.newRequestId();
       Address excludedTarget = getAddress();
@@ -1240,6 +1308,7 @@ public class JGroupsTransport implements Transport {
    }
 
    public void sendToAll(ReplicableCommand command, DeliverOrder deliverOrder) {
+      checkCommandCompatibility(command);
       logCommand(command, "all");
       sendCommandToAll(command, Request.NO_REQUEST_ID, deliverOrder);
    }
@@ -1590,15 +1659,13 @@ public class JGroupsTransport implements Transport {
 
       @Override
       public org.jgroups.Address generateAddress() {
-         var transportCfg = configuration.transport();
-         return JGroupsAddress.randomUUID(channel.getName(), transportCfg.siteId(), transportCfg.rackId(),
-                     transportCfg.machineId());
+         return generateAddress(channel.getName());
       }
 
       @Override
       public org.jgroups.Address generateAddress(String name) {
          var transportCfg = configuration.transport();
-         return JGroupsAddress.randomUUID(name, transportCfg.siteId(), transportCfg.rackId(),
+         return JGroupsAddress.randomUUID(name, version, transportCfg.siteId(), transportCfg.rackId(),
                transportCfg.machineId());
       }
    }

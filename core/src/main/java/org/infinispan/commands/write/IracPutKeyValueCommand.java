@@ -16,6 +16,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.spi.SiteEntry;
 import org.infinispan.xsite.spi.XSiteEntryMergePolicy;
@@ -206,6 +207,11 @@ public class IracPutKeyValueCommand extends AbstractDataWriteCommand implements 
    @Override
    public int hashCode() {
       return Objects.hash(super.hashCode(), value, metadata, privateMetadata);
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

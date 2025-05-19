@@ -12,6 +12,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.util.ByteString;
 
@@ -54,6 +55,11 @@ public class InvalidateL1Command extends InvalidateCommand {
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitInvalidateL1Command(ctx, this);
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

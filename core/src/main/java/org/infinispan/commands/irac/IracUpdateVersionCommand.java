@@ -11,6 +11,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 
 /**
@@ -37,6 +38,11 @@ public class IracUpdateVersionCommand extends BaseIracCommand {
       IracVersionGenerator versionGenerator = registry.getIracVersionGenerator().running();
       versions.forEach(versionGenerator::updateVersion);
       return CompletableFutures.completedNull();
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

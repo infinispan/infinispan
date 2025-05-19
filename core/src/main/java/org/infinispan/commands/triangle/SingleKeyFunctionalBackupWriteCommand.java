@@ -28,6 +28,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 
 /**
@@ -141,6 +142,11 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
          default:
             throw new IllegalStateException("Unknown operation " + operation);
       }
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Proto

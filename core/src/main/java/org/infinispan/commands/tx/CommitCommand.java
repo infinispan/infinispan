@@ -13,6 +13,7 @@ import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
@@ -63,6 +64,11 @@ public class CommitCommand extends AbstractTransactionBoundaryCommand {
          default:  // NOT_COMPLETED
             throw new IllegalStateException("Remote transaction not found: " + globalTx);
       }
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

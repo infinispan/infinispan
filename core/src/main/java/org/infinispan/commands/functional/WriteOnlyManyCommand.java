@@ -19,6 +19,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 
 @ProtoTypeId(ProtoStreamTypeIds.WRITE_ONLY_MANY_COMMAND)
@@ -120,5 +121,10 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    @Override
    public Mutation<K, V, ?> toMutation(Object key) {
       return new Mutations.Write<>(keyDataConversion, valueDataConversion, f);
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 }

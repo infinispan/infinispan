@@ -10,6 +10,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.reactive.publisher.impl.PublisherHandler;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 
 @ProtoTypeId(ProtoStreamTypeIds.NEXT_PUBLISHER_COMMAND)
@@ -44,5 +45,10 @@ public class NextPublisherCommand extends BaseRpcCommand implements TopologyAffe
    @Override
    public boolean isReturnValueExpected() {
       return true;
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 }

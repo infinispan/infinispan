@@ -9,6 +9,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.NodeVersion;
 
 /**
  * A member is confirming that it has finished a topology change during rebalance.
@@ -51,6 +52,11 @@ public class RebalancePhaseConfirmCommand extends AbstractCacheControlCommand {
 
    public String getCacheName() {
       return cacheName;
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

@@ -8,6 +8,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.topology.CacheJoinInfo;
 
 /**
@@ -48,6 +49,11 @@ public class CacheJoinCommand extends AbstractCacheControlCommand {
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry gcr) throws Throwable {
       return gcr.getClusterTopologyManager()
             .handleJoin(cacheName, origin, joinInfo, viewId);
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

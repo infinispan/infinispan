@@ -20,6 +20,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 
 @ProtoTypeId(ProtoStreamTypeIds.READ_WRITE_KEY_VALUE_COMMAND)
@@ -94,6 +95,11 @@ public final class ReadWriteKeyValueCommand<K, V, T, R> extends AbstractWriteKey
    @Override
    public LoadType loadType() {
       return LoadType.OWNER;
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

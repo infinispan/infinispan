@@ -15,6 +15,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 
 /**
@@ -176,6 +177,11 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    @Override
    public final boolean isReturnValueExpected() {
      return true;
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

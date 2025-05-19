@@ -17,6 +17,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 
 @ProtoTypeId(ProtoStreamTypeIds.COMPUTE_IF_ABSENT_COMMAND)
@@ -122,6 +123,11 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
    @Override
    public LoadType loadType() {
       return LoadType.PRIMARY;
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

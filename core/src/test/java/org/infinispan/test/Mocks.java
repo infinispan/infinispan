@@ -33,6 +33,7 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.xsite.commands.remote.XSiteRequest;
 import org.mockito.AdditionalAnswers;
@@ -486,6 +487,11 @@ public class Mocks {
                            handler.handleFromCluster(origin, command, completableReply, order);
                            return cf;
                         });
+               }
+
+               @Override
+               public NodeVersion supportedSince() {
+                  return NodeVersion.SIXTEEN;
                }
             };
 

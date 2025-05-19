@@ -10,6 +10,7 @@ import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 
 /**
  * Replicable Command that runs the given Runnable
@@ -51,5 +52,10 @@ public class ReplicableRunnableCommand implements GlobalRpcCommand {
    public boolean canBlock() {
       // These commands can be arbitrary user commands - so be careful about them blocking
       return true;
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 }

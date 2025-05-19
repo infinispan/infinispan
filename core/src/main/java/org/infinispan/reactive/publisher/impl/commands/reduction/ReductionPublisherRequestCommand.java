@@ -22,6 +22,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 
 /**
@@ -142,6 +143,11 @@ public class ReductionPublisherRequestCommand<K> extends BaseRpcCommand implemen
    @Override
    public boolean isReturnValueExpected() {
       return true;
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override

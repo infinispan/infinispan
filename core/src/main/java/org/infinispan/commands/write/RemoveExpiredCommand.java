@@ -16,6 +16,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
 
 
@@ -68,6 +69,11 @@ public class RemoveExpiredCommand extends RemoveCommand {
    public boolean shouldReplicate(InvocationContext ctx, boolean requireReplicateIfRemote) {
       // TODO: I think expiration always has to replicate - check if works later
       return isSuccessful();
+   }
+
+   @Override
+   public NodeVersion supportedSince() {
+      return NodeVersion.SIXTEEN;
    }
 
    @Override
