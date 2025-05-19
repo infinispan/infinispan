@@ -20,7 +20,7 @@ import io.netty.channel.ChannelFuture;
  * @since 9.0
  */
 public class HotRodAccessLogging {
-   private final static Logger log = LogFactory.getLogger("HOTROD_ACCESS_LOG");
+   private static final Logger log = LogFactory.getLogger("HOTROD_ACCESS_LOG");
 
    public static boolean isEnabled() {
       return log.isTraceEnabled();

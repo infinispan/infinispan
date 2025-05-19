@@ -41,7 +41,7 @@ public class Raft extends CliCommand {
       return CommandResult.FAILURE;
    }
 
-   public static abstract class RaftMemberCommand extends RestCliCommand {
+   public abstract static class RaftMemberCommand extends RestCliCommand {
 
       @Argument(description = "The raft ID of the member")
       String raftId;

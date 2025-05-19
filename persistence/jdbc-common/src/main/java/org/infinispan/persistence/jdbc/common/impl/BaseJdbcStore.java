@@ -11,8 +11,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.persistence.jdbc.common.TableOperations;
@@ -29,6 +27,7 @@ import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.internal.functions.Functions;
+import jakarta.transaction.Transaction;
 
 public abstract class BaseJdbcStore<K, V, C extends AbstractJdbcStoreConfiguration> implements NonBlockingStore<K, V> {
    protected static final Log log = LogFactory.getLog(BaseJdbcStore.class, Log.class);
@@ -57,7 +56,7 @@ public abstract class BaseJdbcStore<K, V, C extends AbstractJdbcStoreConfigurati
     * @return the table operations to use for future calls
     * @throws SQLException if any database exception occurs during creation
     */
-   abstract protected TableOperations<K, V> createTableOperations(InitializationContext ctx, C config) throws SQLException;
+   protected abstract TableOperations<K, V> createTableOperations(InitializationContext ctx, C config) throws SQLException;
 
    @Override
    public CompletionStage<Void> start(InitializationContext ctx) {

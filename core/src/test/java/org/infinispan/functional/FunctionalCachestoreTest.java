@@ -23,9 +23,9 @@ import org.testng.annotations.Test;
 public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
    @Override
    public Object[] factory() {
-      return new Object[] {
-         new FunctionalCachestoreTest().persistence(true).passivation(false),
-         new FunctionalCachestoreTest().persistence(true).passivation(true)
+      return new Object[]{
+            new FunctionalCachestoreTest().persistence(true).passivation(false),
+            new FunctionalCachestoreTest().persistence(true).passivation(true)
       };
    }
 
@@ -43,7 +43,10 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
             .collect(Collectors.toList());
 
       method.eval(key, wo, rw,
-            view -> { assertFalse(view.find().isPresent()); return null; },
+            view -> {
+               assertFalse(view.find().isPresent());
+               return null;
+            },
             (view, nil) -> view.set("value"), getClass());
 
       assertInvocations(2);
@@ -66,7 +69,8 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
                assertEquals(view.get(), "value");
                return null;
             },
-            (view, nil) -> {}, getClass());
+            (view, nil) -> {
+            }, getClass());
 
       if (method.isMany) {
          assertInvocations(2);
@@ -85,8 +89,11 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
       Integer key = 1;
 
       method.eval(key, lwo, lrw,
-         view -> { assertFalse(view.find().isPresent()); return null; },
-         (view, nil) -> view.set("value"), getClass());
+            view -> {
+               assertFalse(view.find().isPresent());
+               return null;
+            },
+            (view, nil) -> view.set("value"), getClass());
 
       assertInvocations(1);
 
@@ -99,12 +106,13 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
       assertTrue(store.contains(key));
 
       method.eval(key, lwo, lrw,
-         view -> {
-            assertTrue(view.find().isPresent());
-            assertEquals(view.get(), "value");
-            return null;
-         },
-         (view, nil) -> {}, getClass());
+            view -> {
+               assertTrue(view.find().isPresent());
+               assertEquals(view.get(), "value");
+               return null;
+            },
+            (view, nil) -> {
+            }, getClass());
 
       assertInvocations(2);
    }
@@ -116,7 +124,10 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
             .filter(cache -> cache.getAdvancedCache().getDistributionManager().getCacheTopology().isReadOwner(key))
             .collect(Collectors.toList());
 
-      assertTrue(method.eval(key, ro, view -> { assertFalse(view.find().isPresent()); return true; }));
+      assertTrue(method.eval(key, ro, view -> {
+         assertFalse(view.find().isPresent());
+         return true;
+      }));
 
       // we can't add from read-only cache, so we put manually:
       cache(0, DIST).put(key, "value");

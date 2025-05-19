@@ -786,7 +786,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       }
    }
 
-   private static abstract class BackupListener {
+   private abstract static class BackupListener {
 
       void beforeCommand(VisitableCommand command) throws Exception {
          //no-op by default

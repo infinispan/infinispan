@@ -39,42 +39,49 @@ public interface DoubleCacheStream extends DoubleStream, BaseCacheStream<Double,
     * {@inheritDoc}
     * @return a stream with parallel distribution disabled.
     */
+   @Override
    DoubleCacheStream sequentialDistribution();
 
    /**
     * {@inheritDoc}
     * @return a stream with parallel distribution enabled.
     */
+   @Override
    DoubleCacheStream parallelDistribution();
 
    /**
     * {@inheritDoc}
     * @return a stream with the keys filtered.
     */
+   @Override
    DoubleCacheStream filterKeys(Set<?> keys);
 
    /**
     * {@inheritDoc}
     * @return a stream with the batch size updated
     */
+   @Override
    DoubleCacheStream distributedBatchSize(int batchSize);
 
    /**
     * {@inheritDoc}
     * @return a stream with the listener registered.
     */
+   @Override
    DoubleCacheStream segmentCompletionListener(SegmentCompletionListener listener);
 
    /**
     * {@inheritDoc}
     * @return a stream with rehash awareness disabled.
     */
+   @Override
    DoubleCacheStream disableRehashAware();
 
    /**
     * {@inheritDoc}
     * @return a stream with the timeout set
     */
+   @Override
    DoubleCacheStream timeout(long timeout, TimeUnit unit);
 
    /**

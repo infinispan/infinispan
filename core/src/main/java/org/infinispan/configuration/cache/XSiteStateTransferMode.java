@@ -22,7 +22,7 @@ public enum XSiteStateTransferMode {
     */
    AUTO;
 
-   private final static XSiteStateTransferMode[] CACHED = XSiteStateTransferMode.values();
+   private static final XSiteStateTransferMode[] CACHED = XSiteStateTransferMode.values();
 
    public static XSiteStateTransferMode valueOf(int index) {
       return CACHED[index];

@@ -117,7 +117,7 @@ public class EagerNearCacheStressTest {
       });
    }
 
-   static abstract class Runner implements Callable<Void> {
+   abstract static class Runner implements Callable<Void> {
 
       final CyclicBarrier barrier;
       final RemoteCache<Integer, String> remote;
@@ -143,7 +143,7 @@ public class EagerNearCacheStressTest {
       abstract void run();
    }
 
-   final static class Main extends Runner {
+   static final class Main extends Runner {
       static final ThreadLocalRandom R = ThreadLocalRandom.current();
 
       Main(CyclicBarrier barrier, RemoteCache<Integer, String> remote, double getRatio) {

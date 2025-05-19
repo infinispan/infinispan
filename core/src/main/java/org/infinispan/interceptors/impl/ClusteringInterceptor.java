@@ -70,7 +70,7 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
       return distributionManager.getCacheTopology();
    }
 
-   private static abstract class AbstractTouchResponseCollector extends ValidResponseCollector<Boolean> {
+   private abstract static class AbstractTouchResponseCollector extends ValidResponseCollector<Boolean> {
       @Override
       protected Boolean addTargetNotFound(Address sender) {
          throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;

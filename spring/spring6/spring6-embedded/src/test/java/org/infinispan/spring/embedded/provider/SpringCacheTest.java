@@ -42,7 +42,7 @@ import static org.testng.AssertJUnit.assertTrue;
 @Test(testName = "spring.embedded.provider.SpringCacheTest", groups = "unit")
 public class SpringCacheTest extends SingleCacheManagerTest {
 
-   protected final static String CACHE_NAME = "testCache";
+   protected static final String CACHE_NAME = "testCache";
 
    private final InfinispanNamedEmbeddedCacheFactoryBean<Object, Object> fb = new InfinispanNamedEmbeddedCacheFactoryBean<Object, Object>();
 

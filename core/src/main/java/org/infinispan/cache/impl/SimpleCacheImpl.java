@@ -121,12 +121,12 @@ import jakarta.transaction.TransactionManager;
 @MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents an individual cache instance.")
 @Scope(Scopes.NAMED_CACHE)
 public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V> {
-   private final static Log log = LogFactory.getLog(SimpleCacheImpl.class);
+   private static final Log log = LogFactory.getLog(SimpleCacheImpl.class);
 
-   private final static String NULL_KEYS_NOT_SUPPORTED = "Null keys are not supported!";
-   private final static String NULL_VALUES_NOT_SUPPORTED = "Null values are not supported!";
-   private final static String NULL_FUNCTION_NOT_SUPPORTED = "Null functions are not supported!";
-   private final static Class<? extends Annotation>[] FIRED_EVENTS = new Class[]{
+   private static final String NULL_KEYS_NOT_SUPPORTED = "Null keys are not supported!";
+   private static final String NULL_VALUES_NOT_SUPPORTED = "Null values are not supported!";
+   private static final String NULL_FUNCTION_NOT_SUPPORTED = "Null functions are not supported!";
+   private static final Class<? extends Annotation>[] FIRED_EVENTS = new Class[]{
          CacheEntryCreated.class, CacheEntryRemoved.class, CacheEntryVisited.class,
          CacheEntryModified.class, CacheEntriesEvicted.class, CacheEntryInvalidated.class,
          CacheEntryExpired.class};

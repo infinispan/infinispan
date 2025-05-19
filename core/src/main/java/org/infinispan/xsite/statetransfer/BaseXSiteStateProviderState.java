@@ -87,7 +87,7 @@ public abstract class BaseXSiteStateProviderState<T extends BaseXSiteStateProvid
 
    abstract T createTask(Address originator, XSiteStateProvider provider);
 
-   static abstract class OutboundTask implements XSiteStatePushTask, Predicate<List<XSiteState>>, Function<List<XSiteState>, CompletableSource>, CompletableObserver {
+   abstract static class OutboundTask implements XSiteStatePushTask, Predicate<List<XSiteState>>, Function<List<XSiteState>, CompletableSource>, CompletableObserver {
 
       private final Address coordinator;
       final XSiteStateProvider provider;

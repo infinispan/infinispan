@@ -37,7 +37,7 @@ import io.netty.handler.codec.http.QueryStringDecoder;
  */
 public class NettyRestRequest implements RestRequest {
 
-   private final static Log logger = LogFactory.getLog(NettyRestRequest.class, Log.class);
+   private static final Log logger = LogFactory.getLog(NettyRestRequest.class, Log.class);
 
    private static final MediaType DEFAULT_KEY_CONTENT_TYPE = MediaType.fromString("text/plain; charset=utf-8");
 

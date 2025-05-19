@@ -16,7 +16,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 10.0
  */
 public class DataOperationOrderer {
-   private final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    private final ConcurrentMap<Object, CompletionStage<Operation>> objectStages = new ConcurrentHashMap<>();
 

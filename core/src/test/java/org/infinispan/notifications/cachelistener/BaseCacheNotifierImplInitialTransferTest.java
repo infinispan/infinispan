@@ -522,7 +522,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       return listener.getClass().getAnnotation(Listener.class).clustered();
    }
 
-   protected static abstract class StateListener<K, V> {
+   private abstract static class StateListener<K, V> {
       final List<CacheEntryEvent<K, V>> events = new ArrayList<>();
       private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 

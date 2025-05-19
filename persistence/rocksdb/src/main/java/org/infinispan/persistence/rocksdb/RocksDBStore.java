@@ -652,7 +652,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       }
    }
 
-   private static abstract class BaseRocksIterator<T> extends AbstractIterator<T> {
+   private abstract static class BaseRocksIterator<T> extends AbstractIterator<T> {
       private final RocksIterator it;
 
       private BaseRocksIterator(RocksIterator it) {

@@ -32,7 +32,7 @@ import net.spy.memcached.CASValue;
 @Test(groups = {"functional", "smoke"}, testName = "it.endpoints.EmbeddedRestMemcachedHotRodTest")
 public class EmbeddedRestMemcachedHotRodTest extends AbstractInfinispanTest {
 
-   final static String CACHE_NAME = "memcachedCache";
+   static final String CACHE_NAME = "memcachedCache";
 
    protected EndpointsCacheFactory<String, Object> cacheFactory;
 

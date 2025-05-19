@@ -96,7 +96,7 @@ import io.reactivex.rxjava3.processors.UnicastProcessor;
  */
 @Scope(Scopes.NAMED_CACHE)
 public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManager<K, V> {
-   protected final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    @Inject PublisherHandler publisherHandler;
    @Inject LocalPublisherManager<K, V> localPublisherManager;
@@ -947,9 +947,9 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             sizeComposedType(), null, PublisherReducers.add());
    }
 
-   private final static AtomicInteger requestCounter = new AtomicInteger();
+   private static final AtomicInteger requestCounter = new AtomicInteger();
 
-   private final static Function<ValidResponse, PublisherResponse> responseHandler = vr -> {
+   private static final Function<ValidResponse, PublisherResponse> responseHandler = vr -> {
       if (vr instanceof SuccessfulResponse) {
          return (PublisherResponse) vr.getResponseValue();
       } else {

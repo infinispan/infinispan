@@ -31,7 +31,7 @@ public enum OperationStatus {
    NodeSuspected(0x87),
    IllegalLifecycleState(0x88),;
 
-   private final static Map<Byte, OperationStatus> intMap = new HashMap<>();
+   private static final Map<Byte, OperationStatus> intMap = new HashMap<>();
 
    static {
       for (OperationStatus status : OperationStatus.values()) {

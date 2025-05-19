@@ -41,9 +41,9 @@ import org.testng.annotations.Test;
 @InCacheMode({CacheMode.DIST_SYNC, CacheMode.REPL_SYNC })
 public class DistributedStreamRehashStressTest extends StressTest {
    protected final String CACHE_NAME = "testCache";
-   protected final static int CACHE_COUNT = 5;
-   protected final static int THREAD_MULTIPLIER = 5;
-   protected final static long CACHE_ENTRY_COUNT = 250000;
+   protected static final int CACHE_COUNT = 5;
+   protected static final int THREAD_MULTIPLIER = 5;
+   protected static final long CACHE_ENTRY_COUNT = 250000;
 
    @Override
    protected void createCacheManagers() throws Throwable {

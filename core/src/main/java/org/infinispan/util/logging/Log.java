@@ -2399,4 +2399,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = DEBUG)
    @Message(value = "Runtime encountered entry with max idle %d ms being greater or equal to lifespan %d ms, ignoring max idle", id = 706)
    void maxIdleGreaterThanOrEqualLifespanRuntime(long maxIdle, long lifespan);
+
+   @Message(value = "Failed to backup cache `%s` to one or more remote sites: %s", id = 707)
+   String failedToBackupData(String cacheName, String siteMessages);
 }

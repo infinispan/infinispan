@@ -4,7 +4,7 @@ import org.infinispan.commons.configuration.BuiltBy;
 
 @BuiltBy(MyModuleConfigurationBuilder.class)
 public class MyModuleConfiguration {
-   final private String attribute;
+   private final String attribute;
 
    MyModuleConfiguration(String attribute) {
       this.attribute = attribute;

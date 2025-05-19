@@ -14,9 +14,9 @@ import org.infinispan.commons.util.Util;
  * @since 12.1
  **/
 public abstract class AbstractConfigurationWriter implements ConfigurationWriter {
-   final protected Writer writer;
-   final protected Deque<Tag> tagStack = new ArrayDeque<>();
-   final protected Map<String, String> namespaces = new HashMap<>();
+   protected final Writer writer;
+   protected final Deque<Tag> tagStack = new ArrayDeque<>();
+   protected final Map<String, String> namespaces = new HashMap<>();
    protected int currentIndent = 0;
    private final int indent;
    protected final boolean prettyPrint;

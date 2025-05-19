@@ -41,7 +41,7 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
  */
 public class JsonTranscoder extends OneToManyTranscoder {
 
-   protected final static Log logger = LogFactory.getLog(JsonTranscoder.class, Log.class);
+   protected static final Log logger = LogFactory.getLog(JsonTranscoder.class, Log.class);
 
    public static final String TYPE_PROPERTY = "_type";
 

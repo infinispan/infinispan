@@ -25,7 +25,7 @@ import org.infinispan.commons.marshall.WrappedByteArray;
 import io.netty.handler.codec.DecoderException;
 
 public class Util {
-   private final static long BIG_DELAY_NANOS = TimeUnit.DAYS.toNanos(1);
+   private static final long BIG_DELAY_NANOS = TimeUnit.DAYS.toNanos(1);
    private static final Xid DUMMY_XID = new Xid() {
       @Override
       public int getFormatId() {

@@ -25,7 +25,7 @@ public class GlobMatchFilterConverter<K, V> extends AbstractKeyValueFilterConver
 
    @ProtoField(number = 2, defaultValue = "false")
    final boolean returnValue;
-   private transient final byte[] pattern;
+   private final transient byte[] pattern;
 
    @ProtoFactory
    GlobMatchFilterConverter(String glob, boolean returnValue) {

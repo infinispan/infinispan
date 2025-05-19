@@ -63,7 +63,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class RestCacheManager<V> {
 
-   protected final static Log logger = LogFactory.getLog(RestCacheManager.class, Log.class);
+   protected static final Log logger = LogFactory.getLog(RestCacheManager.class, Log.class);
 
    private final EmbeddedCacheManager instance;
    private final InternalCacheRegistry icr;

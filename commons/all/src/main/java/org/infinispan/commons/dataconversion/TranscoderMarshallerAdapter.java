@@ -17,7 +17,7 @@ import org.infinispan.commons.util.Util;
  */
 public class TranscoderMarshallerAdapter extends OneToManyTranscoder {
 
-   protected final static Log logger = LogFactory.getLog(TranscoderMarshallerAdapter.class, Log.class);
+   protected static final Log logger = LogFactory.getLog(TranscoderMarshallerAdapter.class, Log.class);
 
 
    private final Marshaller marshaller;

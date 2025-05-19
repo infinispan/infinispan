@@ -113,7 +113,7 @@ public enum ResponseWriter {
       }
    }
 
-   final static Log logger = LogFactory.getLog(ResponseWriter.class, Log.class);
+   static final Log logger = LogFactory.getLog(ResponseWriter.class, Log.class);
    final RestAccessLoggingHandler accessLog = new RestAccessLoggingHandler();
 
    abstract void writeResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response);

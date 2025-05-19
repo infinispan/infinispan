@@ -39,7 +39,7 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
 
 
    @Inject
-   void inject (ComponentRegistry componentRegistry) {
+   void inject(ComponentRegistry componentRegistry) {
       componentRegistry.wireDependencies(persistenceManager, false);
    }
 
@@ -172,37 +172,37 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
 
    @Override
    public CompletionStage<Void> prepareAllTxStores(TxInvocationContext<AbstractCacheTransaction> txInvocationContext,
-         Predicate<? super StoreConfiguration> predicate) throws PersistenceException {
+                                                   Predicate<? super StoreConfiguration> predicate) throws PersistenceException {
       return persistenceManager.prepareAllTxStores(txInvocationContext, predicate);
    }
 
    @Override
    public CompletionStage<Void> commitAllTxStores(TxInvocationContext<AbstractCacheTransaction> txInvocationContext,
-         Predicate<? super StoreConfiguration> predicate) {
+                                                  Predicate<? super StoreConfiguration> predicate) {
       return persistenceManager.commitAllTxStores(txInvocationContext, predicate);
    }
 
    @Override
    public CompletionStage<Void> rollbackAllTxStores(TxInvocationContext<AbstractCacheTransaction> txInvocationContext,
-         Predicate<? super StoreConfiguration> predicate) {
+                                                    Predicate<? super StoreConfiguration> predicate) {
       return persistenceManager.rollbackAllTxStores(txInvocationContext, predicate);
    }
 
    @Override
    public CompletionStage<Long> writeMapCommand(PutMapCommand putMapCommand, InvocationContext ctx,
-         BiPredicate<? super PutMapCommand, Object> commandKeyPredicate) {
+                                                BiPredicate<? super PutMapCommand, Object> commandKeyPredicate) {
       return persistenceManager.writeMapCommand(putMapCommand, ctx, commandKeyPredicate);
    }
 
    @Override
    public <K, V> CompletionStage<Void> writeEntries(Iterable<MarshallableEntry<K, V>> iterable,
-         Predicate<? super StoreConfiguration> predicate) {
+                                                    Predicate<? super StoreConfiguration> predicate) {
       return persistenceManager.writeEntries(iterable, predicate);
    }
 
    @Override
    public CompletionStage<Long> performBatch(TxInvocationContext<AbstractCacheTransaction> invocationContext,
-         TriPredicate<? super WriteCommand, Object, MVCCEntry<?, ?>> commandKeyPredicate) {
+                                             TriPredicate<? super WriteCommand, Object, MVCCEntry<?, ?>> commandKeyPredicate) {
       return persistenceManager.performBatch(invocationContext, commandKeyPredicate);
    }
 

@@ -19,10 +19,10 @@ import io.netty.handler.codec.http.HttpResponse;
  * @since 9.0
  */
 public class RestAccessLoggingHandler {
-   private final static Logger log = LogFactory.getLogger("REST_ACCESS_LOG");
-   final static String X_REQUEST_TIME = "X-Request-Time";
-   final static String X_FORWARDED_FOR = "X-Forwarded-For";
-   final static String X_PRINCIPAL = "X-Principal";
+   private static final Logger log = LogFactory.getLogger("REST_ACCESS_LOG");
+   static final String X_REQUEST_TIME = "X-Request-Time";
+   static final String X_FORWARDED_FOR = "X-Forwarded-For";
+   static final String X_PRINCIPAL = "X-Principal";
 
    private boolean isEnabled() {
       return log.isTraceEnabled();

@@ -1,7 +1,7 @@
 package org.infinispan.commons.jdkspecific;
 
 public class CallerId {
-   static private final StackWalker WALKER = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
+   private static final StackWalker WALKER = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
 
    public static Class<?> getCallerClass(int n) {
       return WALKER.walk(s ->

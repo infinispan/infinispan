@@ -18,6 +18,7 @@ import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.context.impl.FlagBitSets;
@@ -42,7 +43,6 @@ import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -421,7 +421,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       }
    }
 
-   private static abstract class BaseTransactionInfo implements TransactionInfo {
+   private abstract static class BaseTransactionInfo implements TransactionInfo {
       private final GlobalTransaction globalTransaction;
       private final Collection<Address> affectedNodes;
       private final Collection<Object> lockedKeys;

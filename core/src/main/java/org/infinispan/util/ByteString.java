@@ -24,7 +24,7 @@ public final class ByteString implements Comparable<ByteString> {
    private static final ByteString EMPTY = new ByteString(Util.EMPTY_BYTE_ARRAY);
    private static final int MAX_LENGTH = 255;
    private transient String s;
-   private transient final int hash;
+   private final transient int hash;
 
    final byte[] bytes;
 
