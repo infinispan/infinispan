@@ -80,7 +80,7 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
       }
       ConnectionMetadata metadata = ConnectionMetadata.getInstance(ctx.channel());
       metadata.subject(subject);
-      setCache(cache.withSubject(subject));
+      setCache(cache().withSubject(subject));
       return true;
    }
 

@@ -46,8 +46,8 @@ public class BackupManagerImpl implements BackupManager {
    final BlockingManager blockingManager;
    final Path rootDir;
    final BackupReader reader;
-   final ConfigCacheLock backupLock;
-   final ConfigCacheLock restoreLock;
+   volatile ConfigCacheLock backupLock;
+   volatile ConfigCacheLock restoreLock;
    private final EmbeddedCacheManager cacheManager;
    final Map<String, DefaultCacheManager> cacheManagers;
    final Map<String, BackupRequest> backupMap;
@@ -61,8 +61,6 @@ public class BackupManagerImpl implements BackupManager {
       this.cacheManagers = Collections.singletonMap(cm.getName(), cm);
       this.parserRegistry = new ParserRegistry();
       this.reader = new BackupReader(blockingManager, cacheManagers, parserRegistry);
-      this.backupLock = new ConfigCacheLock("backup", cm);
-      this.restoreLock = new ConfigCacheLock("restore", cm);
       this.backupMap = new ConcurrentHashMap<>();
       this.restoreMap = new ConcurrentHashMap<>();
    }
@@ -70,6 +68,8 @@ public class BackupManagerImpl implements BackupManager {
    @Override
    public void init() throws IOException {
       Files.createDirectories(rootDir);
+      this.backupLock = new ConfigCacheLock("backup", cacheManager);
+      this.restoreLock = new ConfigCacheLock("restore", cacheManager);
    }
 
    @Override

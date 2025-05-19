@@ -45,9 +45,11 @@ public abstract class MemcachedMultiNodeTest extends MultipleCacheManagersTest {
       MemcachedServerConfigurationBuilder builder = serverBuilder().defaultCacheName(cacheName).protocol(getProtocol());
       MemcachedServer server1 = MemcachedTestingUtil.createMemcachedServer(replayDecoder);
       server1.start(builder.build(), cacheManagers.get(0));
+      server1.postStart();
       servers.add(server1);
       MemcachedServer server2 = MemcachedTestingUtil.createMemcachedServer(replayDecoder);
       server2.start(builder.port(server1.getPort() + 50).build(), cacheManagers.get(1));
+      server2.postStart();
       servers.add(server2);
       servers.forEach(s -> {
          MemcachedClient client;

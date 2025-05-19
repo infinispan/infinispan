@@ -10,7 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -56,6 +58,11 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
          copyArtifactsToDataDir();
          Server server = createServerInstance(name, rootDir, new File(configuration.configurationFile()), i, serverRoot);
          serverFutures.add(server.run());
+         try {
+            server.cacheManagerStart().toCompletableFuture().get(30, TimeUnit.SECONDS);
+         } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            throw new RuntimeException("Failed to start cache manager", e);
+         }
          servers.add(server);
       }
       // Ensure that the cluster has formed if we start more than one server
