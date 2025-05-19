@@ -133,6 +133,7 @@ public class SinglePortTest {
         restServerConfigurationBuilder.name(TestResourceTracker.getCurrentTestName());
         restServer.setServerManagement(new DummyServerManagement(), true);
         restServer.start(restServerConfigurationBuilder.build(), cacheManager);
+        restServer.postStart();
         // Initialize a Single Port server with routes to the Hot Rod and REST servers
         HotRodServerRouteDestination hotrodDestination = new HotRodServerRouteDestination("hotrod", hotrodServer);
         RestServerRouteDestination restDestination = new RestServerRouteDestination("rest", restServer);

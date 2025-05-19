@@ -147,7 +147,7 @@ public class SubscriberHandler extends CacheRespRequestHandler {
       for (Iterator<Map.Entry<WrappedByteArray, RespCacheListener>> iterator = specificChannelSubscribers.entrySet().iterator(); iterator.hasNext(); ) {
          Map.Entry<WrappedByteArray, RespCacheListener> entry = iterator.next();
          RespCacheListener listener = entry.getValue();
-         cache.removeListenerAsync(listener);
+         cache().removeListenerAsync(listener);
          iterator.remove();
       }
    }
@@ -159,7 +159,7 @@ public class SubscriberHandler extends CacheRespRequestHandler {
       for (Iterator<Map.Entry<WrappedByteArray, RespCacheListener>> iterator = specificChannelSubscribers.entrySet().iterator(); iterator.hasNext(); ) {
          Map.Entry<WrappedByteArray, RespCacheListener> entry = iterator.next();
          RespCacheListener listener = entry.getValue();
-         CompletionStage<Void> stage = cache.removeListenerAsync(listener);
+         CompletionStage<Void> stage = cache().removeListenerAsync(listener);
          byte[] keyChannel = entry.getKey().getBytes();
          channels.add(keyChannel);
          aggregateCompletionStage.dependsOn(handleStageListenerError(stage, keyChannel, false));

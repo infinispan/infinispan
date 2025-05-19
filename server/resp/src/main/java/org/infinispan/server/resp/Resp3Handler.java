@@ -40,13 +40,13 @@ public class Resp3Handler extends Resp3AuthHandler {
       super(respServer, cache);
       this.valueMediaType = valueMediaType;
 
-      GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cache.getCacheManager());
+      GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(respServer.getCacheManager());
       this.scheduler = gcr.getComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR);
       this.blockingManager = gcr.getComponent(BlockingManager.class);
    }
 
    protected Resp3Handler(Resp3Handler delegate) {
-      this(delegate.respServer, delegate.valueMediaType, delegate.cache);
+      this(delegate.respServer, delegate.valueMediaType, delegate.cache());
    }
 
    @Override
@@ -110,7 +110,7 @@ public class Resp3Handler extends Resp3AuthHandler {
    }
 
    public void checkPermission(AuthorizationPermission authorizationPermission) {
-      AuthorizationManager authorizationManager = cache.getAuthorizationManager();
+      AuthorizationManager authorizationManager = cache().getAuthorizationManager();
       if (authorizationManager != null) {
          authorizationManager.checkPermission(authorizationPermission);
       }
