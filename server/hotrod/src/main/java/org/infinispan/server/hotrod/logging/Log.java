@@ -3,6 +3,7 @@ package org.infinispan.server.hotrod.logging;
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 
+import java.lang.invoke.MethodHandles;
 import java.net.SocketAddress;
 
 import org.infinispan.commons.CacheConfigurationException;
@@ -28,7 +29,7 @@ import org.jboss.logging.annotations.ValidIdRange;
 @MessageLogger(projectCode = "ISPN")
 @ValidIdRange(min = 6001, max = 7000)
 public interface Log extends BasicLogger {
-   Log CONFIG = Logger.getMessageLogger(Log.class, "org.infinispan.CONFIG");
+   Log CONFIG = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, "org.infinispan.CONFIG");
 
    @LogMessage(level = ERROR)
    @Message(value = "Error detecting crashed member", id = 6002)

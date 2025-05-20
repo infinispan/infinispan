@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,7 @@ import org.jboss.logging.Logger;
 //todo [anistor] make package local
 public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends Comparable<AttributeId>> implements Matcher {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, BaseMatcher.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, BaseMatcher.class.getName());
 
    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 

@@ -1,5 +1,7 @@
 package org.infinispan.query.dsl.impl;
 
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.query.dsl.impl.logging.Log;
 import org.jboss.logging.Logger;
 
@@ -13,7 +15,7 @@ import org.jboss.logging.Logger;
  */
 final class ValueRange {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, ValueRange.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, ValueRange.class.getName());
 
    private final Object from;
 

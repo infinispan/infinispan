@@ -4,6 +4,7 @@ import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -29,8 +30,8 @@ import org.jboss.logging.annotations.ValidIdRange;
 @MessageLogger(projectCode = "ISPN")
 @ValidIdRange(min = 8001, max = 9000)
 public interface Log extends BasicLogger {
-   Log CONFIG = Logger.getMessageLogger(Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "CONFIG");
-   Log PERSISTENCE = Logger.getMessageLogger(Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "PERSISTENCE");
+   Log CONFIG = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "CONFIG");
+   Log PERSISTENCE = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "PERSISTENCE");
 
    @LogMessage(level = ERROR)
    @Message(value = "Failed clearing cache store", id = 8001)

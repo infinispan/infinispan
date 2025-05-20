@@ -1,5 +1,7 @@
 package org.infinispan.objectfilter.impl.aggregation;
 
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.jboss.logging.Logger;
 
@@ -16,7 +18,7 @@ import org.jboss.logging.Logger;
  */
 final class AvgAccumulator extends FieldAccumulator {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, AvgAccumulator.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, AvgAccumulator.class.getName());
 
    AvgAccumulator(int inPos, int outPos, Class<?> fieldType) {
       super(inPos, outPos);

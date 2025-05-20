@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +19,7 @@ import org.jboss.logging.Logger;
  */
 public abstract class BaseQueryBuilder implements QueryBuilder, Visitable {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, BaseQueryBuilder.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, BaseQueryBuilder.class.getName());
 
    protected final QueryFactory queryFactory;
 

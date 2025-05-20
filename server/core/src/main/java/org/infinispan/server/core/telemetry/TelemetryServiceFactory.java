@@ -2,6 +2,7 @@ package org.infinispan.server.core.telemetry;
 
 import static org.infinispan.util.logging.Log.CONTAINER;
 
+import java.lang.invoke.MethodHandles;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -31,7 +32,7 @@ public class TelemetryServiceFactory extends AbstractComponentFactory implements
 
    public static final String IN_MEMORY_COLLECTOR_ENDPOINT = "file://in-memory-local-process";
 
-   private static final Log log = Logger.getMessageLogger(Log.class, "org.infinispan.SERVER");
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, "org.infinispan.SERVER");
 
    @Override
    public Object construct(String componentName) {

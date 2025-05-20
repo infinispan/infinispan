@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.impl.syntax.parser;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -19,7 +20,7 @@ import org.jboss.logging.Logger;
  */
 final class QueryResolverDelegateImpl<TypeMetadata> implements QueryResolverDelegate<TypeDescriptor<TypeMetadata>> {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, QueryResolverDelegateImpl.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, QueryResolverDelegateImpl.class.getName());
 
    private final Map<String, String> aliasToEntityType = new HashMap<>();
 

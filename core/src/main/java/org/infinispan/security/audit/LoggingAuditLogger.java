@@ -1,5 +1,7 @@
 package org.infinispan.security.audit;
 
+import java.lang.invoke.MethodHandles;
+
 import javax.security.auth.Subject;
 
 import org.infinispan.security.AuditContext;
@@ -22,7 +24,7 @@ import org.jboss.logging.Logger;
  * @api.public
  */
 public class LoggingAuditLogger implements AuditLogger {
-   static final AuditMessages auditLog = Logger.getMessageLogger(AuditMessages.class, "org.infinispan.AUDIT");
+   static final AuditMessages auditLog = Logger.getMessageLogger(MethodHandles.lookup(), AuditMessages.class, "org.infinispan.AUDIT");
 
    volatile InfinispanTelemetry telemetryService;
 

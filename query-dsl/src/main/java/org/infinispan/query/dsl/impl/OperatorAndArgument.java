@@ -1,5 +1,7 @@
 package org.infinispan.query.dsl.impl;
 
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.query.dsl.impl.logging.Log;
 import org.jboss.logging.Logger;
 
@@ -9,7 +11,7 @@ import org.jboss.logging.Logger;
  */
 abstract class OperatorAndArgument<ArgumentType> implements Visitable {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, OperatorAndArgument.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, OperatorAndArgument.class.getName());
 
    protected final AttributeCondition attributeCondition;
 

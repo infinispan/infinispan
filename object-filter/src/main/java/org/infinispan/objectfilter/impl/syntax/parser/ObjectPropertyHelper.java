@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.impl.syntax.parser;
 
+import java.lang.invoke.MethodHandles;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
@@ -21,7 +22,7 @@ import org.jboss.logging.Logger;
  */
 public abstract class ObjectPropertyHelper<TypeMetadata> {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, ObjectPropertyHelper.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, ObjectPropertyHelper.class.getName());
 
    /**
     * A map of all types that we consider to be 'primitives'. They are mapped to the equivalent 'boxed' type.

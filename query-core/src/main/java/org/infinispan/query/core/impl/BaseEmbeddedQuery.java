@@ -3,6 +3,7 @@ package org.infinispan.query.core.impl;
 import static java.util.Spliterators.spliteratorUnknownSize;
 import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -36,7 +37,7 @@ import org.jboss.logging.Logger;
  */
 public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, BaseEmbeddedQuery.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, BaseEmbeddedQuery.class.getName());
 
    /**
     * Initial capacity of the collection used for collecting results when performing internal sorting.
