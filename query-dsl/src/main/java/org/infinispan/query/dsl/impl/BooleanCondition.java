@@ -1,5 +1,7 @@
 package org.infinispan.query.dsl.impl;
 
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.logging.Log;
@@ -13,7 +15,7 @@ import org.jboss.logging.Logger;
  */
 abstract class BooleanCondition extends BaseCondition {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, BooleanCondition.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, BooleanCondition.class.getName());
 
    private BaseCondition leftCondition;
 

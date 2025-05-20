@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.impl.syntax.parser;
 
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Objects;
 
@@ -16,7 +17,7 @@ import org.jboss.logging.Logger;
  */
 public final class FunctionPropertyPath<TypeMetadata> extends PropertyPath<TypeDescriptor<TypeMetadata>> {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, FunctionPropertyPath.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, FunctionPropertyPath.class.getName());
 
    private final Function function;
 

@@ -9,6 +9,7 @@ import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.security.Permission;
@@ -102,12 +103,12 @@ import jakarta.transaction.TransactionManager;
 @ValidIdRange(min = 1, max = 900)
 public interface Log extends BasicLogger {
    String LOG_ROOT = "org.infinispan.";
-   Log CONFIG = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONFIG");
-   Log CLUSTER = Logger.getMessageLogger(Log.class, LOG_ROOT + "CLUSTER");
-   Log CONTAINER = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONTAINER");
-   Log PERSISTENCE = Logger.getMessageLogger(Log.class, LOG_ROOT + "PERSISTENCE");
-   Log SECURITY = Logger.getMessageLogger(Log.class, LOG_ROOT + "SECURITY");
-   Log XSITE = Logger.getMessageLogger(Log.class, LOG_ROOT + "XSITE");
+   Log CONFIG = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "CONFIG");
+   Log CLUSTER = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "CLUSTER");
+   Log CONTAINER = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "CONTAINER");
+   Log PERSISTENCE = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "PERSISTENCE");
+   Log SECURITY = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "SECURITY");
+   Log XSITE = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "XSITE");
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "Unable to load %s from cache loader", id = 1)

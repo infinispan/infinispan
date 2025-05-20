@@ -1,5 +1,7 @@
 package org.infinispan.server.insights;
 
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.lifecycle.ModuleLifecycle;
@@ -17,7 +19,7 @@ public class InsightsModule implements ModuleLifecycle {
 
    private static final String REDHAT_INSIGHTS_ACTIVATION_VARIABLE_NAME = "INFINISPAN_INSIGHTS_ACTIVATION";
 
-   public static final Log log = Logger.getMessageLogger(Log.class, "org.infinispan.SERVER");
+   public static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, "org.infinispan.SERVER");
 
    private InsightsService service;
 
