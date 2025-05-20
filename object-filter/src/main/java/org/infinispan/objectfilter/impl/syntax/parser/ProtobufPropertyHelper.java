@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.impl.syntax.parser;
 
+import java.lang.invoke.MethodHandles;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -28,7 +29,7 @@ import org.jboss.logging.Logger;
  */
 public class ProtobufPropertyHelper extends ObjectPropertyHelper<Descriptor> {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, ProtobufPropertyHelper.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, ProtobufPropertyHelper.class.getName());
 
    public static final String BIG_INTEGER_COMMON_TYPE = "org.infinispan.protostream.commons.BigInteger";
    public static final String BIG_DECIMAL_COMMON_TYPE = "org.infinispan.protostream.commons.BigDecimal";

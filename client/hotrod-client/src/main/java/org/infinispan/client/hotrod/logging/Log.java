@@ -6,6 +6,7 @@ import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.TRACE;
 import static org.jboss.logging.Logger.Level.WARN;
 
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.net.SocketAddress;
 import java.util.Collection;
@@ -47,7 +48,7 @@ import io.netty.channel.Channel;
 @ValidIdRange(min = 4001, max = 5000)
 public interface Log extends BasicLogger {
    String LOG_ROOT = "org.infinispan.";
-   Log HOTROD = Logger.getMessageLogger(Log.class, LOG_ROOT + "HOTROD");
+   Log HOTROD = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "HOTROD");
 
    @LogMessage(level = WARN)
    @Message(value = "Could not find '%s' file in classpath, using defaults.", id = 4001)

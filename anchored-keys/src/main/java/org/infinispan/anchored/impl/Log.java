@@ -1,5 +1,7 @@
 package org.infinispan.anchored.impl;
 
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -10,7 +12,7 @@ import org.jboss.logging.annotations.ValidIdRange;
 @MessageLogger(projectCode = "ISPN")
 @ValidIdRange(min = 30001, max = 30500)
 public interface Log extends BasicLogger {
-   Log CONFIG = Logger.getMessageLogger(Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "CONFIG");
+   Log CONFIG = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "CONFIG");
 
    @Message(value = "Anchored keys requires cache to be in replication mode", id = 30001)
    CacheConfigurationException replicationModeRequired();

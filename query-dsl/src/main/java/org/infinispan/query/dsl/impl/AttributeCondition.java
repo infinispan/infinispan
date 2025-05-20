@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 
 import org.infinispan.query.dsl.Expression;
@@ -15,7 +16,7 @@ import org.jboss.logging.Logger;
  */
 final class AttributeCondition extends BaseCondition implements FilterConditionEndContext, RangeConditionContextQueryBuilder {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, AttributeCondition.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, AttributeCondition.class.getName());
 
    private final Expression expression;
 

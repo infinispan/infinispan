@@ -1,5 +1,7 @@
 package org.infinispan.query.dsl.impl;
 
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.FilterConditionBeginContext;
 import org.infinispan.query.dsl.FilterConditionContext;
@@ -14,7 +16,7 @@ import org.jboss.logging.Logger;
  */
 public abstract class BaseQueryFactory implements QueryFactory {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, BaseQueryFactory.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, BaseQueryFactory.class.getName());
 
    @Override
    public FilterConditionEndContext having(String attributePath) {

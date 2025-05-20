@@ -1,5 +1,7 @@
 package org.infinispan.query.dsl.impl;
 
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.FilterConditionBeginContext;
 import org.infinispan.query.dsl.FilterConditionContext;
@@ -18,7 +20,7 @@ import org.jboss.logging.Logger;
  */
 abstract class BaseCondition implements FilterConditionContextQueryBuilder, Visitable {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, BaseCondition.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, BaseCondition.class.getName());
 
    protected BaseCondition parent = null;
 

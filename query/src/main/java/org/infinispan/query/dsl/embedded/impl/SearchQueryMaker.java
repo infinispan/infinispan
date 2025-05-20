@@ -7,6 +7,7 @@ import static org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelp
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -99,7 +100,7 @@ import org.jboss.logging.Logger;
  */
 public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFinalStep, PredicateFinalStep> {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, SearchQueryMaker.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, SearchQueryMaker.class.getName());
 
    private static final char LUCENE_SINGLE_CHARACTER_WILDCARD = '?';
    private static final char LUCENE_MULTIPLE_CHARACTERS_WILDCARD = '*';

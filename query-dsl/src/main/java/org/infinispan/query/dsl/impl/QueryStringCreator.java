@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -22,7 +23,7 @@ import org.jboss.logging.Logger;
  */
 public class QueryStringCreator implements Visitor<String> {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, QueryStringCreator.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, QueryStringCreator.class.getName());
 
    public static final String DEFAULT_ALIAS = "_gen0";
 

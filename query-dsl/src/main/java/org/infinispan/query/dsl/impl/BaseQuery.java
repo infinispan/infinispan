@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,7 +21,7 @@ import org.jboss.logging.Logger;
  */
 public abstract class BaseQuery<T> implements Query<T> {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, BaseQuery.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, BaseQuery.class.getName());
 
    protected final QueryFactory queryFactory;
 

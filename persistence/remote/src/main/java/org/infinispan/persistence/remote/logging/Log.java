@@ -2,6 +2,8 @@ package org.infinispan.persistence.remote.logging;
 
 import static org.infinispan.util.logging.Log.LOG_ROOT;
 
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
@@ -22,7 +24,7 @@ import org.jboss.logging.annotations.ValidIdRange;
 @MessageLogger(projectCode = "ISPN")
 @ValidIdRange(min = 10001, max = 11000)
 public interface Log extends BasicLogger {
-   Log CONFIG = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONFIG");
+   Log CONFIG = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "CONFIG");
 
    @Message(value = "Cannot enable HotRod wrapping if a marshaller and/or an entryWrapper have already been set", id = 10005)
    CacheConfigurationException cannotEnableHotRodWrapping();

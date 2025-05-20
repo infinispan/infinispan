@@ -3,6 +3,8 @@ package org.infinispan.query.remote.impl.logging;
 import static org.infinispan.util.logging.Log.LOG_ROOT;
 import static org.jboss.logging.Logger.Level.WARN;
 
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.protostream.descriptors.JavaType;
@@ -23,7 +25,7 @@ import org.jboss.logging.annotations.ValidIdRange;
 @MessageLogger(projectCode = "ISPN")
 @ValidIdRange(min = 28001, max = 28500)
 public interface Log extends BasicLogger {
-   Log CONTAINER = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONTAINER");
+   Log CONTAINER = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "CONTAINER");
 
    /*@Message(value = "Unknown field %s in type %s", id = 28001)
    IllegalArgumentException unknownField(String fieldName, String fullyQualifiedTypeName);

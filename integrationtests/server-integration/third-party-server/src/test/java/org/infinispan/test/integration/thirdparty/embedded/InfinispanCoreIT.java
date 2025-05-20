@@ -1,8 +1,8 @@
 package org.infinispan.test.integration.thirdparty.embedded;
 
 import org.infinispan.test.integration.GenericDeploymentHelper;
-import org.infinispan.test.integration.thirdparty.DeploymentHelper;
 import org.infinispan.test.integration.embedded.AbstractInfinispanCoreIT;
+import org.infinispan.test.integration.thirdparty.DeploymentHelper;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
 import org.jboss.arquillian.junit.Arquillian;

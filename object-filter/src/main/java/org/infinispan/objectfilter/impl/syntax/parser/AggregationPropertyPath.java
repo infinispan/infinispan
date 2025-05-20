@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.impl.syntax.parser;
 
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 
 import org.infinispan.objectfilter.impl.logging.Log;
@@ -17,7 +18,7 @@ import org.jboss.logging.Logger;
  */
 public class AggregationPropertyPath<TypeMetadata> extends PropertyPath<TypeDescriptor<TypeMetadata>> {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, AggregationPropertyPath.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, AggregationPropertyPath.class.getName());
 
    private final AggregationFunction aggregationFunction;
 
