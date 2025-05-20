@@ -55,6 +55,37 @@ public class GracefulShutdownRestartIT {
    }
 
    @Test
+   public void testClusterReadyDuringRecovery() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC).persistence().addSingleFileStore().segmented(false);
+      RemoteCache<Object, Object> hotRod = SERVER.hotrod().withServerConfiguration(builder).create();
+
+      populateCache(hotRod);
+
+      RestClientConfigurationBuilder restClientBuilder = new RestClientConfigurationBuilder()
+            .socketTimeout(RestClientConfigurationProperties.DEFAULT_SO_TIMEOUT * 60)
+            .connectionTimeout(RestClientConfigurationProperties.DEFAULT_CONNECT_TIMEOUT * 60);
+      RestClient rest = SERVER.rest().withClientConfiguration(restClientBuilder).get();
+
+      sync(rest.cluster().stop(), 5, TimeUnit.MINUTES).close();
+      ContainerInfinispanServerDriver serverDriver = (ContainerInfinispanServerDriver) SERVER.getServerDriver();
+      Eventually.eventually(
+            "Cluster did not shutdown within timeout",
+            () -> (!serverDriver.isRunning(0) && !serverDriver.isRunning(1)),
+            serverDriver.getTimeout(), 1, TimeUnit.SECONDS);
+
+      for (int i = 0; i < serverDriver.serverCount(); i++) {
+         serverDriver.restart(i);
+
+         try (RestResponse res = sync(rest.server().ready())) {
+            assertThat(res.status()).isEqualTo(200);
+         }
+      }
+
+      assertCacheData(hotRod);
+   }
+
+   @Test
    public void testRebalanceAndRestart() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).persistence().addSoftIndexFileStore();
