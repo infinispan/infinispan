@@ -42,3 +42,4 @@ classes
 # Checkstyle in Eclipse
 .checkstyle
 .idea
+jacoco
