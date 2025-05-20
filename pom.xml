@@ -120,7 +120,7 @@
       <!-- unstable and stress because we can have them inside a functional class, for example -->
       <defaultExcludedTestNGGroups>unstable,stress</defaultExcludedTestNGGroups>
       <defaultTestNGGroups>functional,unit,xsite,arquillian</defaultTestNGGroups>
-      <org.infinispan.tests.threads.virtual>false</org.infinispan.tests.threads.virtual>
+      <org.infinispan.tests.threads.virtual>true</org.infinispan.tests.threads.virtual>
       <dir.ispn>../</dir.ispn>
       <dir.jacoco>${maven.multiModuleProjectDirectory}/jacoco/</dir.jacoco>
       <dir.jacoco.merged>${dir.jacoco}/merged/</dir.jacoco.merged>
@@ -168,7 +168,7 @@
       <testjvm.dynamicAgentLoading/>
       <testjvm.jdkSpecificArgs>${testjvm.jigsawArgs} -Dnet.bytebuddy.experimental=true ${testjvm.blockHoundRedefinitionArgs} ${testjvm.dynamicAgentLoading}</testjvm.jdkSpecificArgs>
       <testjvm.extraArgs/>
-      <forkJvmArgs>-Xmx2G ${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs}</forkJvmArgs>
+      <forkJvmArgs>-Djdk.virtualThreadScheduler.parallelism=16 -Xmx2G ${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs}</forkJvmArgs>
       <server.jvm>${env.JAVA_HOME}</server.jvm>
       <server.jvm.args>${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs}</server.jvm.args>
       <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
@@ -3060,16 +3060,6 @@
                </plugin>
             </plugins>
          </build>
-      </profile>
-      <profile>
-         <id>vthreads-tests</id>
-         <activation>
-            <activeByDefault>false</activeByDefault>
-         </activation>
-         <properties>
-            <org.infinispan.tests.threads.virtual>true</org.infinispan.tests.threads.virtual>
-            <infinispan.test.parallel.threads>${system.numCores}</infinispan.test.parallel.threads>
-         </properties>
       </profile>
    </profiles>
 </project>

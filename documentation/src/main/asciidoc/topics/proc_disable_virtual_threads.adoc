@@ -1,0 +1,27 @@
+[id='disable-virtual-threads_{context}']
+= Disable Virtual Threads
+
+Disables the virtual threads pool.
+
+ifdef::embedded_caches[]
+. Append `-Dorg.infinispan.threads.virtual=false` to the Java options used to start your application.
+endif::embedded_caches[]
+
+ifdef::remote_caches[]
+. Set the `-Dorg.infinispan.threads.virtual=false` option in the `JAVA_OPTS` environment variable before starting the {brandname} server.
++
+Alternatively, you can append this option directly to the command used to start the {brandname} server:
++
+[source,options="nowrap",subs=attributes+]
+----
+bin/server.sh -Dorg.infinispan.threads.virtual=false
+----
+endif::remote_caches[]
+
+. Verify by checking the server logs.
+The following log entry should *not* be present:
++
+[source,options="nowrap",subs=attributes+]
+----
+Virtual threads support enabled
+----
