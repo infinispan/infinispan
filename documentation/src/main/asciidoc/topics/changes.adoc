@@ -18,6 +18,36 @@ We now will prevent a cache from being started if it has a max-idle setting that
 equal to its lifespan expiration. This configuration meant that max-idle was enabled with no benefit
 as lifespan would always remove the entry first.
 
+=== Metrics
+
+The format for metrics have changed.
+
+The prefix `base_` for JVM and system metrics has been removed. A setting `jvm` can be used to disable export of JVM and
+system metrics, for example when embedded in a service where these metrics are already exported (e.g. by Spring Boot).
+
+The prefix `vendor_` for Infinispan metrics has been changed to `infinispan_` and the cache manager and cache name appear
+as tags. The previous settings `names-as-tags` and `prefix` are deprecated and have no effect on the new metrics format.
+
+As an example, metrics for cache manager `Foo` and cache `Bar` previously had the format:
+[source]
+----
+vendor_cache_manager_Foo_cache_Bar_statistics_approximate_entries
+vendor_cache_manager_Foo_cache_Bar_statistics_hits
+----
+
+And will now instead have the format:
+[source]
+----
+infinispan_statistics_approximate_entries{cache_manager="Foo",cache="Bar"}
+infinispan_statistics_hits{cache_manager="Foo",cache="Bar"}
+----
+
+[NOTE]
+====
+For backwards compatibility, metrics are currently exported in the previous format. The setting `legacy` should be set to 
+`false` to export metrics in the new format.
+====
+
 == Upgrading from 15.1 to 15.2
 
 === Native Server

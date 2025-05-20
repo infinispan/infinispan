@@ -21,7 +21,7 @@ import io.micrometer.core.instrument.binder.MeterBinder;
  * <p>
  * Inspired by io.micrometer.core.instrument.binder.system.ProcessorMetrics
  */
-@Deprecated(forRemoval = true, since = "15.2")
+@Deprecated(forRemoval = true, since = "16.0")
 class BaseOperatingSystemAdditionalMetrics implements MeterBinder {
 
    private static final Log log = LogFactory.getLog(BaseOperatingSystemAdditionalMetrics.class);

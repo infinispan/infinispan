@@ -10,5 +10,5 @@
          <regex>.*</regex>
       </allow-list>
    </serialization>
-   <metrics gauges="true" histograms="true" accurate-size="true"/>
+   <metrics gauges="true" histograms="true" accurate-size="true" legacy="false" />
 </cache-container>
