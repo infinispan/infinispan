@@ -1,5 +1,6 @@
 package org.infinispan.query.core.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -25,7 +26,7 @@ import org.jboss.logging.Logger;
  */
 final class DelegatingQuery<TypeMetadata, T> extends BaseQuery<T> {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, DelegatingQuery.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, DelegatingQuery.class.getName());
 
    private final QueryEngine<TypeMetadata> queryEngine;
 

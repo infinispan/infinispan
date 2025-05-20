@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -31,7 +32,7 @@ import org.jboss.logging.Logger;
 final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extends Comparable<AttributeId>>
       extends ObjectFilterBase<TypeMetadata> implements ObjectFilter {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, ObjectFilterImpl.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, ObjectFilterImpl.class.getName());
 
    private static final FilterCallback emptyCallback = (userContext, eventType, instance, projection, sortProjection) -> {
       // do nothing

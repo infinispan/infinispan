@@ -3,6 +3,8 @@ package org.infinispan.hibernate.cache.commons.util;
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 
+import java.lang.invoke.MethodHandles;
+
 import javax.naming.NamingException;
 
 import org.hibernate.cache.CacheException;
@@ -28,7 +30,7 @@ public interface InfinispanMessageLogger extends BasicLogger {
 	// Workaround for JBLOGGING-120: cannot add static interface method
 	class Provider {
 		public static InfinispanMessageLogger getLog(Class clazz) {
-			return Logger.getMessageLogger(InfinispanMessageLogger.class, clazz.getName());
+			return Logger.getMessageLogger(MethodHandles.lookup(), InfinispanMessageLogger.class, clazz.getName());
 		}
 	}
 
