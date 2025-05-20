@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.test;
 
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
@@ -56,7 +57,7 @@ final class FilterQueryFactory extends BaseQueryFactory {
 
    private static final class FilterQueryBuilder extends BaseQueryBuilder {
 
-      private static final Log log = Logger.getMessageLogger(Log.class, FilterQueryBuilder.class.getName());
+      private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, FilterQueryBuilder.class.getName());
 
       FilterQueryBuilder(FilterQueryFactory queryFactory, String rootType) {
          super(queryFactory, rootType);

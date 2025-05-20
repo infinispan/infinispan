@@ -15,6 +15,8 @@
  */
 package org.infinispan.objectfilter.impl.ql;
 
+import java.lang.invoke.MethodHandles;
+
 import org.antlr.runtime.ANTLRStringStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.RecognitionException;
@@ -43,7 +45,7 @@ import org.jboss.logging.Logger;
  */
 public final class QueryParser {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, QueryParser.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, QueryParser.class.getName());
 
    /**
     * Parses the given query string.

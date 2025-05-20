@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
@@ -17,7 +18,7 @@ import org.jboss.logging.Logger;
  */
 abstract class ObjectFilterBase<TypeMetadata> implements ObjectFilter {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, ObjectFilterBase.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, ObjectFilterBase.class.getName());
 
    protected final IckleParsingResult<TypeMetadata> parsingResult;
 

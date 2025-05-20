@@ -1,6 +1,7 @@
 package org.infinispan.counter.logging;
 
 import java.io.File;
+import java.lang.invoke.MethodHandles;
 
 import org.infinispan.counter.exception.CounterConfigurationException;
 import org.infinispan.counter.exception.CounterException;
@@ -22,7 +23,7 @@ import org.jboss.logging.annotations.ValidIdRange;
 @ValidIdRange(min = 29501, max = 30000)
 public interface Log extends BasicLogger {
    String LOG_ROOT = "org.infinispan.";
-   Log CONTAINER = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONTAINER");
+   Log CONTAINER = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "CONTAINER");
 
    @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 29501)
    CounterOutOfBoundsException counterOurOfBounds(String bound);

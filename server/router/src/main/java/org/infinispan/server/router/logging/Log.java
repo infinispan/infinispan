@@ -3,6 +3,8 @@ package org.infinispan.server.router.logging;
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.INFO;
 
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.server.router.RoutingTable;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -21,7 +23,7 @@ import org.jboss.logging.annotations.ValidIdRange;
 @MessageLogger(projectCode = "ISPN")
 @ValidIdRange(min = 15001, max = 16000)
 public interface Log extends BasicLogger {
-    Log SERVER = Logger.getMessageLogger(Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "SERVER");
+    Log SERVER = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "SERVER");
 
     @Message(value = "Could not find matching route", id = 15002)
     IllegalArgumentException noRouteFound();
