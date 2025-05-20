@@ -143,4 +143,8 @@ public interface LocalTopologyManager {
     */
    default void assertTopologyStable(String cacheName) { }
 
+   default boolean isCacheRecoveringShutdown(String cacheName) {
+      return false;
+   }
+
 }
