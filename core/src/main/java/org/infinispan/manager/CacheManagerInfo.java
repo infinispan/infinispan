@@ -233,8 +233,11 @@ public class CacheManagerInfo implements JsonSerialization {
          }
 
          // Verify if the component registry isn't in shutdown state.
-         if (!cr.getStatus().allowInvocations())
-            return false;
+         if (!cr.getStatus().allowInvocations()) {
+            // If the cache is recovering from a graceful shutdown we allow it to proceed.
+            LocalTopologyManager ltm = gcr.getLocalTopologyManager();
+            return ltm != null && ltm.isCacheRecoveringShutdown(cacheName);
+         }
 
          // Non-clustered caches accepting invocations will be ready.
          if (!cr.getConfiguration().clustering().cacheMode().isClustered())
