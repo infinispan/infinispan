@@ -2,6 +2,7 @@ package org.infinispan.remoting.transport.jgroups;
 
 import static org.infinispan.metrics.Constants.JGROUPS_CLUSTER_TAG_NAME;
 import static org.infinispan.metrics.Constants.JGROUPS_PREFIX;
+import static org.infinispan.metrics.Constants.VENDOR_PREFIX;
 import static org.infinispan.metrics.Constants.NODE_TAG_NAME;
 
 import java.time.Duration;
@@ -58,15 +59,16 @@ public class JGroupsMetricsManagerImpl implements JGroupsMetricsManager {
    private final Map<Address, DestinationMetrics> perDestinationMetrics;
    private final List<ClusterMetrics> otherChannels;
    private final boolean histogramEnabled;
-   private final String globalPrefix;
+   @Deprecated(forRemoval = true, since = "16.0")
+   private String legacyGlobalPrefix;
    private volatile MainChannelRegistry mainChannelRegistry;
    private volatile boolean stopped = true;
 
-   public JGroupsMetricsManagerImpl(boolean histogramEnabled, String globalPrefix) {
+   public JGroupsMetricsManagerImpl(boolean histogramEnabled, String legacyGlobalPrefix) {
       this.histogramEnabled = histogramEnabled;
       perDestinationMetrics = new ConcurrentHashMap<>(16);
       otherChannels = new CopyOnWriteArrayList<>();
-      this.globalPrefix = globalPrefix;
+      this.legacyGlobalPrefix = legacyGlobalPrefix;
    }
 
    @Start
@@ -214,10 +216,11 @@ public class JGroupsMetricsManagerImpl implements JGroupsMetricsManager {
       return attrs;
    }
 
+   @Deprecated(forRemoval = true, since = "16.0")
    private String metricPrefix(String clusterName, String componentName) {
       var builder = new StringBuilder();
-      if (globalPrefix != null && !globalPrefix.isEmpty()) {
-         builder.append(globalPrefix).append("_");
+      if (legacyGlobalPrefix != null && !legacyGlobalPrefix.isEmpty()) {
+         builder.append(legacyGlobalPrefix).append("_");
       }
       builder.append(JGROUPS_PREFIX);
       if (!registry.namesAsTags()) {
@@ -387,9 +390,12 @@ public class JGroupsMetricsManagerImpl implements JGroupsMetricsManager {
       }
 
       Set<Object> registerComponent(Object instance, String component, String clusterName, Collection<MetricInfo> attributes) {
-         return registry.registerMetrics(instance, attributes, metricPrefix(clusterName, component.toLowerCase()), Map.of(NODE_TAG_NAME, nodeName, JGROUPS_CLUSTER_TAG_NAME, clusterName));
+         Map<String, String> tags = Map.of(NODE_TAG_NAME, nodeName, JGROUPS_CLUSTER_TAG_NAME, clusterName);
+         if (registry.legacy()) {
+            return registry.registerMetrics(instance, attributes, VENDOR_PREFIX + metricPrefix(clusterName, component.toLowerCase()), tags);
+         } else {
+            return registry.registerMetrics(instance, attributes, JGROUPS_PREFIX + component.toLowerCase() + "_", tags);
+         }
       }
    }
-
-
 }

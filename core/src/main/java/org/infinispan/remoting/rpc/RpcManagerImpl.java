@@ -123,33 +123,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
 
       for (String site : xSiteMetricsCollector.sites()) {
          Map<String, String> tags = Map.of(Constants.SITE_TAG_NAME, site);
-         if (configuration.namesAsTags()) {
-            attributes.add(MetricUtils.<RpcManagerImpl>createGauge("AverageXSiteReplicationTimeToSite",
-                  "Average Cross-Site replication time to " + site,
-                  rpcManager -> rpcManager.getAverageXSiteReplicationTimeTo(site), tags));
-            attributes.add(MetricUtils.<RpcManagerImpl>createGauge("MinimumXSiteReplicationTimeToSite",
-                  "Minimum Cross-Site replication time to " + site,
-                  rpcManager -> rpcManager.getMinimumXSiteReplicationTimeTo(site), tags));
-            attributes.add(MetricUtils.<RpcManagerImpl>createGauge("MaximumXSiteReplicationTimeToSite",
-                  "Maximum Cross-Site replication time to " + site,
-                  rpcManager -> rpcManager.getMaximumXSiteReplicationTimeTo(site), tags));
-            attributes.add(MetricUtils.<RpcManagerImpl>createGauge("NumberXSiteRequestsSentToSite",
-                  "Number of Cross-Site request sent to " + site,
-                  rpcManager -> rpcManager.getNumberXSiteRequestsSentTo(site), tags));
-            attributes.add(MetricUtils.<RpcManagerImpl>createGauge("NumberXSiteRequestsReceivedFromSite",
-                  "Number of Cross-Site request received from " + site,
-                  rpcManager -> rpcManager.getNumberXSiteRequestsReceivedFrom(site), tags));
-            if (histograms) {
-               attributes.add(MetricUtils.<RpcManagerImpl>createTimer("ReplicationTimesToSite",
-                     "Replication times to " + site,
-                     (rpcManager, timer) -> rpcManager.xSiteMetricsCollector.registerTimer(site, timer), tags));
-            } else {
-               attributes.add(MetricUtils.<RpcManagerImpl>createFunctionTimer("ReplicationTimesToSite",
-                     "Replication times to " + site,
-                     (rpcManager, timer) -> rpcManager.xSiteMetricsCollector.registerTimer(site, timer),
-                     tags));
-            }
-         } else {
+         if (configuration.legacy() && !configuration.namesAsTags()) {
             String lSite = site.toLowerCase();
             attributes.add(MetricUtils.<RpcManagerImpl>createGauge("AverageXSiteReplicationTimeTo_" + lSite,
                   "Average Cross-Site replication time to " + site,
@@ -172,6 +146,32 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
                      (rpcManager, timer) -> rpcManager.xSiteMetricsCollector.registerTimer(site, timer), tags));
             } else {
                attributes.add(MetricUtils.<RpcManagerImpl>createFunctionTimer("ReplicationTimesTo_" + lSite,
+                     "Replication times to " + site,
+                     (rpcManager, timer) -> rpcManager.xSiteMetricsCollector.registerTimer(site, timer),
+                     tags));
+            }
+         } else {
+            attributes.add(MetricUtils.<RpcManagerImpl>createGauge("AverageXSiteReplicationTimeToSite",
+                  "Average Cross-Site replication time to " + site,
+                  rpcManager -> rpcManager.getAverageXSiteReplicationTimeTo(site), tags));
+            attributes.add(MetricUtils.<RpcManagerImpl>createGauge("MinimumXSiteReplicationTimeToSite",
+                  "Minimum Cross-Site replication time to " + site,
+                  rpcManager -> rpcManager.getMinimumXSiteReplicationTimeTo(site), tags));
+            attributes.add(MetricUtils.<RpcManagerImpl>createGauge("MaximumXSiteReplicationTimeToSite",
+                  "Maximum Cross-Site replication time to " + site,
+                  rpcManager -> rpcManager.getMaximumXSiteReplicationTimeTo(site), tags));
+            attributes.add(MetricUtils.<RpcManagerImpl>createGauge("NumberXSiteRequestsSentToSite",
+                  "Number of Cross-Site request sent to " + site,
+                  rpcManager -> rpcManager.getNumberXSiteRequestsSentTo(site), tags));
+            attributes.add(MetricUtils.<RpcManagerImpl>createGauge("NumberXSiteRequestsReceivedFromSite",
+                  "Number of Cross-Site request received from " + site,
+                  rpcManager -> rpcManager.getNumberXSiteRequestsReceivedFrom(site), tags));
+            if (histograms) {
+               attributes.add(MetricUtils.<RpcManagerImpl>createTimer("ReplicationTimesToSite",
+                     "Replication times to " + site,
+                     (rpcManager, timer) -> rpcManager.xSiteMetricsCollector.registerTimer(site, timer), tags));
+            } else {
+               attributes.add(MetricUtils.<RpcManagerImpl>createFunctionTimer("ReplicationTimesToSite",
                      "Replication times to " + site,
                      (rpcManager, timer) -> rpcManager.xSiteMetricsCollector.registerTimer(site, timer),
                      tags));

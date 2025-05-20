@@ -807,14 +807,14 @@
     <xs:attribute name="prefix" type="xs:string">
       <xs:annotation>
         <xs:documentation>
-          Specifies a global name prefix for metrics.
+          Deprecated since 16.0. Only used for legacy metrics format. Specifies a global name prefix for metrics.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="names-as-tags" type="xs:boolean" default="${GlobalMetrics.names-as-tags}">
       <xs:annotation>
         <xs:documentation>
-          Put the cache manager and cache name in tags rather than include them in the metric name.
+          Deprecated since 16.0. Only used for legacy metrics format. Put the cache manager and cache name in tags rather than include them in the metric name.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

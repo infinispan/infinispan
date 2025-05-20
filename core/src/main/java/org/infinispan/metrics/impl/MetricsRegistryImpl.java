@@ -57,8 +57,6 @@ public class MetricsRegistryImpl implements MetricsRegistry {
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
-   private static final String PREFIX = "vendor.";
-
    @Inject GlobalConfiguration globalConfiguration;
    private ScrapeRegistry registry;
    private JvmMetrics jvmMetrics = new JvmMetrics();
@@ -72,9 +70,10 @@ public class MetricsRegistryImpl implements MetricsRegistry {
 
       if (registerListeners) {
          if (globalConfiguration.metrics().jvm()) {
-            jvmMetrics.bindTo(registry.registry());
             if (globalConfiguration.metrics().legacy()) {
                new BaseAdditionalMetrics().bindTo(registry.registry());
+            } else {
+               jvmMetrics.bindTo(registry.registry());
             }
          }
          registry.registry().config().onMeterAdded(MetricsRegistryImpl::onMeterAdded);
@@ -105,12 +104,13 @@ public class MetricsRegistryImpl implements MetricsRegistry {
    }
 
    @Override
-   public Set<Object> registerMetrics(Object instance, Collection<MetricInfo> metricInfos, String prefix, Map<String, String> tags) {
+   public Set<Object> registerMetrics(Object instance, Collection<MetricInfo> metricInfos, String namePrefix, Map<String, String> tags) {
       Set<Object> metricIds = new HashSet<>(metricInfos.size());
 
       for (MetricInfo info : metricInfos) {
+         String name = metricName(namePrefix, info);
          if (globalConfiguration.metrics().gauges()) {
-            var id = onGaugeEnabled(instance, prefix, info, tags);
+            var id = onGaugeEnabled(instance, name, info, tags);
             if (id != null) {
                metricIds.add(id);
                continue;
@@ -120,7 +120,7 @@ public class MetricsRegistryImpl implements MetricsRegistry {
          }
 
          if (globalConfiguration.metrics().histograms()) {
-            var id = onHistogramEnabled(instance, prefix, info, tags);
+            var id = onHistogramEnabled(instance, name, info, tags);
             if (id != null) {
                metricIds.add(id);
                continue;
@@ -163,6 +163,13 @@ public class MetricsRegistryImpl implements MetricsRegistry {
    }
 
    @Override
+   @Deprecated(forRemoval = true, since = "16.0")
+   public boolean legacy() {
+      return globalConfiguration.metrics().legacy();
+   }
+
+   @Override
+   @Deprecated(forRemoval = true, since = "16.0")
    public boolean namesAsTags() {
       return globalConfiguration.metrics().namesAsTags();
    }
@@ -199,15 +206,15 @@ public class MetricsRegistryImpl implements MetricsRegistry {
    }
 
    @SuppressWarnings("unchecked")
-   private Meter.Id onGaugeEnabled(Object targetInstance, String prefix, MetricInfo metricInfo, Map<String, String> commonTags) {
+   private Meter.Id onGaugeEnabled(Object targetInstance, String name, MetricInfo metricInfo, Map<String, String> commonTags) {
       if (metricInfo instanceof GaugeMetricInfo) {
-         return createGauge(targetInstance, prefix, (GaugeMetricInfo<Object>) metricInfo, commonTags);
+         return createGauge(targetInstance, name, (GaugeMetricInfo<Object>) metricInfo, commonTags);
       } else if (metricInfo instanceof CounterMetricInfo) {
-         return createCounter(targetInstance, prefix, (CounterMetricInfo<Object>) metricInfo, commonTags);
+         return createCounter(targetInstance, name, (CounterMetricInfo<Object>) metricInfo, commonTags);
       } else if (metricInfo instanceof FunctionTimerMetricInfo) {
-         return createFunctionTimer(targetInstance, prefix, (FunctionTimerMetricInfo<Object>) metricInfo, commonTags);
+         return createFunctionTimer(targetInstance, name, (FunctionTimerMetricInfo<Object>) metricInfo, commonTags);
       } else if (metricInfo instanceof TimeGaugeMetricInfo) {
-         return createTimeGauge(targetInstance, prefix, (TimeGaugeMetricInfo<Object>) metricInfo, commonTags);
+         return createTimeGauge(targetInstance, name, (TimeGaugeMetricInfo<Object>) metricInfo, commonTags);
       }
       return null;
    }
@@ -222,11 +229,11 @@ public class MetricsRegistryImpl implements MetricsRegistry {
    }
 
    @SuppressWarnings("unchecked")
-   private Meter.Id onHistogramEnabled(Object targetInstance, String prefix, MetricInfo metricInfo, Map<String, String> commonTags) {
+   private Meter.Id onHistogramEnabled(Object targetInstance, String name, MetricInfo metricInfo, Map<String, String> commonTags) {
       if (metricInfo instanceof TimerMetricInfo) {
-         return createTimer(targetInstance, prefix, (TimerMetricInfo<Object>) metricInfo, commonTags);
+         return createTimer(targetInstance, name, (TimerMetricInfo<Object>) metricInfo, commonTags);
       } else if (metricInfo instanceof DistributionSummaryMetricInfo) {
-         return createSummary(targetInstance, prefix, (DistributionSummaryMetricInfo<Object>) metricInfo, commonTags);
+         return createSummary(targetInstance, name, (DistributionSummaryMetricInfo<Object>) metricInfo, commonTags);
       }
       return null;
    }
@@ -240,12 +247,9 @@ public class MetricsRegistryImpl implements MetricsRegistry {
       }
    }
 
-
    private Collection<Tag> createTags(Map<String, String> attrTags, Map<String, String> tags) {
       Map<String, String> allTags = new TreeMap<>();
-      if (namesAsTags()) {
-         allTags.put(CACHE_MANAGER_TAG_NAME, globalConfiguration.cacheManagerName());
-      }
+      allTags.put(CACHE_MANAGER_TAG_NAME, globalConfiguration.cacheManagerName());
       if (tags != null) {
          allTags.putAll(tags);
       }
@@ -262,11 +266,11 @@ public class MetricsRegistryImpl implements MetricsRegistry {
    }
 
    private static String metricName(String prefix, MetricInfo info) {
-      return PREFIX + prefix + NameUtils.decamelize(info.getName());
+      return prefix + NameUtils.decamelize(info.getName());
    }
 
-   private Meter.Id createTimeGauge(Object instance, String prefix, TimeGaugeMetricInfo<Object> info, Map<String, String> tags) {
-      return TimeGauge.builder(metricName(prefix, info), info.getGauge(instance), info.getTimeUnit())
+   private Meter.Id createTimeGauge(Object instance, String name, TimeGaugeMetricInfo<Object> info, Map<String, String> tags) {
+      return TimeGauge.builder(name, info.getGauge(instance), info.getTimeUnit())
             .strongReference(true)
             .tags(createTags(info.getTags(), tags))
             .description(info.getDescription())
@@ -274,8 +278,8 @@ public class MetricsRegistryImpl implements MetricsRegistry {
             .getId();
    }
 
-   private Meter.Id createGauge(Object instance, String prefix, GaugeMetricInfo<Object> info, Map<String, String> tags) {
-      return Gauge.builder(metricName(prefix, info), info.getGauge(instance))
+   private Meter.Id createGauge(Object instance, String name, GaugeMetricInfo<Object> info, Map<String, String> tags) {
+      return Gauge.builder(name, info.getGauge(instance))
             .strongReference(true)
             .tags(createTags(info.getTags(), tags))
             .description(info.getDescription())
@@ -283,8 +287,8 @@ public class MetricsRegistryImpl implements MetricsRegistry {
             .getId();
    }
 
-   private Meter.Id createCounter(Object instance, String prefix, CounterMetricInfo<Object> info, Map<String, String> tags) {
-      Counter counter = Counter.builder(metricName(prefix, info))
+   private Meter.Id createCounter(Object instance, String name, CounterMetricInfo<Object> info, Map<String, String> tags) {
+      Counter counter = Counter.builder(name)
             .description(info.getDescription())
             .tags(createTags(info.getTags(), tags))
             .register(registry.registry());
@@ -292,18 +296,18 @@ public class MetricsRegistryImpl implements MetricsRegistry {
       return counter.getId();
    }
 
-   private Meter.Id createFunctionTimer(Object instance, String prefix, FunctionTimerMetricInfo<Object> info, Map<String, String> tags) {
+   private Meter.Id createFunctionTimer(Object instance, String name, FunctionTimerMetricInfo<Object> info, Map<String, String> tags) {
       var timerTracker = new SimpleTimerTracker();
       info.accept(instance, timerTracker);
-      return FunctionTimer.builder(metricName(prefix, info), timerTracker, SimpleTimerTracker::count, SimpleTimerTracker::totalTime, TimeUnit.NANOSECONDS)
+      return FunctionTimer.builder(name, timerTracker, SimpleTimerTracker::count, SimpleTimerTracker::totalTime, TimeUnit.NANOSECONDS)
             .description(info.getDescription())
             .tags(createTags(info.getTags(), tags))
             .register(registry.registry())
             .getId();
    }
 
-   private Meter.Id createTimer(Object instance, String prefix, TimerMetricInfo<Object> info, Map<String, String> tags) {
-      Timer timer = Timer.builder(metricName(prefix, info))
+   private Meter.Id createTimer(Object instance, String name, TimerMetricInfo<Object> info, Map<String, String> tags) {
+      Timer timer = Timer.builder(name)
             .description(info.getDescription())
             .publishPercentileHistogram(true)
             .tags(createTags(info.getTags(), tags))
@@ -312,8 +316,8 @@ public class MetricsRegistryImpl implements MetricsRegistry {
       return timer.getId();
    }
 
-   private Meter.Id createSummary(Object instance, String prefix, DistributionSummaryMetricInfo<Object> info, Map<String, String> tags) {
-      DistributionSummary summary = DistributionSummary.builder(metricName(prefix, info))
+   private Meter.Id createSummary(Object instance, String name, DistributionSummaryMetricInfo<Object> info, Map<String, String> tags) {
+      DistributionSummary summary = DistributionSummary.builder(name)
             .description(info.getDescription())
             .publishPercentileHistogram(true)
             .tags(createTags(info.getTags(), tags))

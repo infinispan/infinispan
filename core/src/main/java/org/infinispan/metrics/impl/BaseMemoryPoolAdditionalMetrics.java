@@ -10,7 +10,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.BaseUnits;
 import io.micrometer.core.instrument.binder.MeterBinder;
 
-@Deprecated(forRemoval = true, since = "15.2")
+@Deprecated(forRemoval = true, since = "16.0")
 class BaseMemoryPoolAdditionalMetrics implements MeterBinder {
 
    // These metrics are really base metrics but prefix is vendor due to backwards compatibility

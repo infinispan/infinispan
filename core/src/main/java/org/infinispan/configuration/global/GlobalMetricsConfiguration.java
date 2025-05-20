@@ -13,10 +13,13 @@ public class GlobalMetricsConfiguration {
 
    public static final AttributeDefinition<Boolean> GAUGES = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.GAUGES, true).immutable().build();
    public static final AttributeDefinition<Boolean> HISTOGRAMS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.HISTOGRAMS, false).immutable().build();
+   @Deprecated(forRemoval = true, since = "16.0")
    public static final AttributeDefinition<String> PREFIX = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PREFIX, "").immutable().build();
+   @Deprecated(forRemoval = true, since = "16.0")
    public static final AttributeDefinition<Boolean> NAMES_AS_TAGS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.NAMES_AS_TAGS, false).immutable().build();
    public static final AttributeDefinition<Boolean> ACCURATE_SIZE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ACCURATE_SIZE, false).build();
    public static final AttributeDefinition<Boolean> JVM = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.JVM, true).build();
+   @Deprecated(forRemoval = true, since = "16.0")
    public static final AttributeDefinition<Boolean> LEGACY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.LEGACY, true).build();
 
    static AttributeSet attributeDefinitionSet() {
@@ -26,7 +29,9 @@ public class GlobalMetricsConfiguration {
    private final AttributeSet attributes;
    private final Attribute<Boolean> gauges;
    private final Attribute<Boolean> histograms;
+   @Deprecated(forRemoval = true, since = "16.0")
    private final Attribute<String> prefix;
+   @Deprecated(forRemoval = true, since = "16.0")
    private final Attribute<Boolean> namesAsTags;
    private final Attribute<Boolean> accurateSize;
    private final Attribute<Boolean> jvm;
@@ -71,6 +76,7 @@ public class GlobalMetricsConfiguration {
    /**
     * The global prefix to add to all metric names.
     */
+   @Deprecated(forRemoval = true, since = "16.0")
    public String prefix() {
       return prefix.get();
    }
@@ -78,6 +84,7 @@ public class GlobalMetricsConfiguration {
    /**
     * Put the cache manager and cache name in tags rather then include them in the metric name.
     */
+   @Deprecated(forRemoval = true, since = "16.0")
    public boolean namesAsTags() {
       return namesAsTags.get();
    }

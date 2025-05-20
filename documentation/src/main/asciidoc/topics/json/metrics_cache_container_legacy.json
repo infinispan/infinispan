@@ -3,7 +3,7 @@
     "cache-container" : {
       "statistics" : "true",
       "metrics" : {
-        "names-as-tags" : "true"
+        "legacy" : "false"
       }
     }
   }

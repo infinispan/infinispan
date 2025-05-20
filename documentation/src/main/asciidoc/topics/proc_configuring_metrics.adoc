@@ -27,7 +27,7 @@ endif::embedded_caches[]
 . Add the `metrics` element or object to the cache container.
 . Enable or disable gauges with the `gauges` attribute or field.
 . Enable or disable histograms with the `histograms` attribute or field.
-. Enable or disable the inclusion of element names as tags using the `names-as-tags` attribute or field.
+. Enable or disable the export of metrics in legacy format using the `legacy` attribute or field.
 . Save and close your client configuration.
 
 [discrete]
@@ -60,26 +60,26 @@ include::code_examples/MetricsGlobalConfigurationBuilder.java[]
 endif::embedded_caches[]
 
 [discrete]
-=== Names as tags
-By default, element identifiers, such as the name of the cache manager and the cache, are embedded into the name of the
-metric. Enabling `names-as-tags` places these identifiers into tags, making the metric name independent.
+=== Legacy format
+For backwards compatibility, metrics are currently exported in a legacy format by default. The setting `legacy` should be set to 
+`false` to export metrics in the new format.
 
 .XML
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
-include::xml/metrics_cache_container_names_as_tags.xml[]
+include::xml/metrics_cache_container_legacy.xml[]
 ----
 
 .JSON
 [source,json,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::json/metrics_cache_container_names_as_tags.json[]
+include::json/metrics_cache_container_legacy.json[]
 ----
 
 .YAML
 [source,yaml,options="nowrap",subs=attributes+,role="secondary"]
 ----
-include::yaml/metrics_cache_container_names_as_tags.yaml[]
+include::yaml/metrics_cache_container_legacy.yaml[]
 ----
 
 ifdef::remote_caches[]

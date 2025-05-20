@@ -57,14 +57,23 @@ public interface MetricsRegistry extends Constants {
    }
 
    /**
+    * Same as {@link GlobalMetricsConfiguration#legacy()}.
+    *
+    * @return {@code true} if legacy metrics should be exported.
+    */
+   @Deprecated(forRemoval = true, since = "16.0")
+   boolean legacy();
+
+   /**
     * Same as {@link GlobalMetricsConfiguration#namesAsTags()}.
     *
     * @return {@code true} if it should use tags to identify the cluster, site or cache manager name.
     */
+   @Deprecated(forRemoval = true, since = "16.0")
    boolean namesAsTags();
 
    /**
-    * If this instance supports scrapping.
+    * If this instance supports scraping.
     *
     * @return {@code true} if it supports Prometheus scrapping.
     * @see #scrape(String)
