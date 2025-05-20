@@ -873,6 +873,12 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       }
    }
 
+   @Override
+   public boolean isCacheRecoveringShutdown(String cacheName) {
+      LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
+      return cacheStatus != null && cacheStatus.needRecovery() && !cacheStatus.isTopologyRestored();
+   }
+
    private void writeCHState(String cacheName) {
       ScopedPersistentState cacheState = new ScopedPersistentStateImpl(cacheName);
       cacheState.setProperty(GlobalStateManagerImpl.VERSION, Version.getVersion());
