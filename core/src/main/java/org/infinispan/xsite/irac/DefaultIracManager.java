@@ -429,6 +429,15 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
 
             validState.add(data.state);
             if (data.state.isExpiration()) {
+               if (data.tombstone == null || data.entry != null) {
+                  if (log.isTraceEnabled()) {
+                     log.tracef("[IRAC] Skipping expiration command. Tombstone not found or entry written by another command. State=%s", data.state.getKeyInfo());
+                  }
+                  // Concurrent write added a new entry and removed the tombstone.
+                  // Those events are not atomic so we test both here.
+                  invalidState.add(data.state);
+                  continue;
+               }
                cmd.addExpire(data.state.getKey(), data.tombstone);
             } else if (data.entry == null) {
                cmd.addRemove(data.state.getKey(), data.tombstone);
