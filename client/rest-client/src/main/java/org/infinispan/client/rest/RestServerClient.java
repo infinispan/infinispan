@@ -81,8 +81,4 @@ public interface RestServerClient {
    CompletionStage<RestResponse> dataSourceTest(String name);
 
    CompletionStage<RestResponse> cacheConfigDefaults();
-
-   CompletionStage<RestResponse> ready();
-
-   CompletionStage<RestResponse> live();
 }
