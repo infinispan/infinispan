@@ -20,6 +20,7 @@ import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.category.Resilience;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  * contains more than one server.
  */
 @Category(Resilience.class)
+@Tag("embedded")
 public class ResilienceMaxRetryIT {
 
    @RegisterExtension

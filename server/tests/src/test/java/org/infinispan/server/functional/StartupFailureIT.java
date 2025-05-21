@@ -7,6 +7,7 @@ import java.net.ServerSocket;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.AfterAllCallback;
@@ -21,6 +22,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  **/
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(StartupFailureIT.Extension.class)
+@Tag("embedded")
+
 public class StartupFailureIT {
 
    @RegisterExtension

@@ -11,12 +11,14 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @since 10.1
  */
+@Tag("embedded")
 public class ConcurrentShutdownRestIT {
 
    @RegisterExtension

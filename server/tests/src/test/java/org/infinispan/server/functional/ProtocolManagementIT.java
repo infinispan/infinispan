@@ -23,6 +23,7 @@ import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.1
  **/
+@Tag("embedded")
 public class ProtocolManagementIT {
 
    @RegisterExtension

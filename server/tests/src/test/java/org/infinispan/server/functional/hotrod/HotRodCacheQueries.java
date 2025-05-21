@@ -36,6 +36,7 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.functional.extensions.entities.Entities;
+import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -184,7 +185,11 @@ public class HotRodCacheQueries {
       RestClient restClient = SERVERS.rest().withClientConfiguration(new RestClientConfigurationBuilder()).get();
       try (RestResponse response = sync(restClient.cache(SERVERS.getMethodName()).query(query))) {
          Json results = Json.read(response.getBody());
-         assertEquals(1, results.at("total_results").asInteger());
+         if (Boolean.getBoolean(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_NEWER_THAN_14)) {
+            assertEquals(1, results.at("hit_count").asInteger());
+         } else {
+            assertEquals(1, results.at("total_results").asInteger());
+         }
       }
    }
 
@@ -236,7 +241,7 @@ public class HotRodCacheQueries {
 
       if (indexed) {
          Exception expectedException = assertThrows(HotRodClientException.class, query::execute);
-         assertTrue(expectedException.getMessage().contains("org.apache.lucene.search.BooleanQuery$TooManyClauses: maxClauseCount is set to 1025"));
+         assertTrue(expectedException.getMessage().contains("maxClauseCount is set to 1025"));
       } else {
          query.execute();
       }

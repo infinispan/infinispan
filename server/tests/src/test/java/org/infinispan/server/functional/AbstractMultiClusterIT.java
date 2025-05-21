@@ -29,11 +29,13 @@ import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.util.KeyValuePair;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Tag;
 
 /**
  * @author Ryan Emerson
  * @since 12.0
  */
+@Tag("embedded")
 abstract class AbstractMultiClusterIT {
 
    protected final String config;

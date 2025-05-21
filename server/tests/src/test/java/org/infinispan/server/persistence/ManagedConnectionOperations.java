@@ -17,6 +17,7 @@ import org.infinispan.server.test.core.category.Persistence;
 import org.infinispan.server.test.core.persistence.Database;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -87,6 +88,7 @@ public class ManagedConnectionOperations {
 
    @ParameterizedTest
    @ArgumentsSource(Common.DatabaseProvider.class)
+   @Tag("cli")
    public void testDataSourceCLI(Database database) {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, new Properties());

@@ -20,6 +20,7 @@ import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.KafkaContainer;
@@ -30,6 +31,8 @@ import org.testcontainers.utility.DockerImageName;
  * @since 12.1
  */
 @Disabled("The cp-kafka image is not available.")
+@Tag("embedded")
+
 public class CloudEventsIntegrationIT {
    public static final String CACHE_ENTRIES_TOPIC = "cache-entries";
 

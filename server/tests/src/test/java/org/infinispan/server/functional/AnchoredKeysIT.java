@@ -11,6 +11,7 @@ import org.infinispan.commons.util.Version;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  * @author Ryan Emerson
  * @since 11.0
  */
+@Tag("embedded")
 public class AnchoredKeysIT {
 
    @RegisterExtension
