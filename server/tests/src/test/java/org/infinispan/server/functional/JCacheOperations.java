@@ -16,6 +16,8 @@ import javax.cache.Caching;
 import javax.cache.spi.CachingProvider;
 
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.server.test.api.HotRodTestClientDriver;
+import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -34,7 +36,16 @@ public class JCacheOperations {
       Properties properties = new Properties();
       InetAddress serverAddress = SERVERS.getServerDriver().getServerAddress(0);
       properties.put(ConfigurationProperties.SERVER_LIST, serverAddress.getHostAddress() + ":11222");
-      properties.put(ConfigurationProperties.CACHE_PREFIX + SERVERS.getMethodName() + ConfigurationProperties.CACHE_TEMPLATE_NAME_SUFFIX, "org.infinispan.DIST_SYNC");
+      if (Boolean.getBoolean(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_NEWER_THAN_14)) {
+         properties.put(
+               ConfigurationProperties.CACHE_PREFIX + SERVERS.getMethodName()
+                     + ConfigurationProperties.CACHE_CONFIGURATION_SUFFIX,
+               HotRodTestClientDriver.toConfiguration("DIST_SYNC").toXMLString());
+      } else {
+         properties.put(ConfigurationProperties.CACHE_PREFIX + SERVERS.getMethodName()
+               + ConfigurationProperties.CACHE_TEMPLATE_NAME_SUFFIX, "org.infinispan.DIST_SYNC");
+      }
+
       doJCacheOperations(properties);
    }
 
@@ -43,7 +54,15 @@ public class JCacheOperations {
       Properties properties = new Properties();
       InetAddress serverAddress = SERVERS.getServerDriver().getServerAddress(0);
       properties.put(ConfigurationProperties.SERVER_LIST, serverAddress.getHostAddress() + ":11222");
-      properties.put(ConfigurationProperties.CACHE_PREFIX + '[' + SERVERS.getMethodName().substring(0, 8) + "*]" + ConfigurationProperties.CACHE_TEMPLATE_NAME_SUFFIX, "org.infinispan.DIST_SYNC");
+      if (Boolean.getBoolean(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_NEWER_THAN_14)) {
+         properties.put(
+               ConfigurationProperties.CACHE_PREFIX + '[' + SERVERS.getMethodName().substring(0, 8) + "*]"
+                     + ConfigurationProperties.CACHE_CONFIGURATION_SUFFIX,
+               HotRodTestClientDriver.toConfiguration("DIST_SYNC").toXMLString());
+      } else {
+         properties.put(ConfigurationProperties.CACHE_PREFIX + '[' + SERVERS.getMethodName().substring(0, 8) + "*]"
+               + ConfigurationProperties.CACHE_TEMPLATE_NAME_SUFFIX, "org.infinispan.DIST_SYNC");
+      }
       doJCacheOperations(properties);
    }
 

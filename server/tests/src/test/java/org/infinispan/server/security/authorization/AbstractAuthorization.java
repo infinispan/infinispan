@@ -70,6 +70,7 @@ import org.infinispan.rest.resources.WeakSSEListener;
 import org.infinispan.server.functional.hotrod.HotRodCacheQueries;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.ServerRunMode;
+import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.junit.jupiter.api.Test;
@@ -487,6 +488,9 @@ public abstract class AbstractAuthorization {
    @Test
    public void testBulkReadUsersCanQuery() {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = prepareIndexedCache();
+      if (Boolean.getBoolean(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_NEWER_THAN_14)) {
+         builder.statistics().enable();
+      }
       for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.DEPLOYER, TestUser.APPLICATION, TestUser.OBSERVER)) {
          RemoteCache<Integer, User> userCache = getServers().hotrod().withClientConfiguration(clientConfigurationWithProtostreamMarshaller(user)).withServerConfiguration(builder.build()).get();
          User fromCache = userCache.get(1);
@@ -541,6 +545,9 @@ public abstract class AbstractAuthorization {
             .security().authorization().enable()
             .indexing().enable().storage(LOCAL_HEAP).addIndexedEntity("sample_bank_account.User");
 
+      if (Boolean.getBoolean(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_NEWER_THAN_14)) {
+         builder.statistics().enable();
+      }
       RemoteCache<Integer, User> adminCache = getServers().hotrod().withClientConfiguration(clientConfigurationWithProtostreamMarshaller(TestUser.ADMIN)).withServerConfiguration(builder.build()).create();
       adminCache.put(1, HotRodCacheQueries.createUser1());
       adminCache.put(2, HotRodCacheQueries.createUser2());

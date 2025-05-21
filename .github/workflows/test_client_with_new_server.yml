@@ -1,0 +1,74 @@
+name: Cross-compatibility with new Infinispan Server
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # Runs every night at 2:00 AM UTC
+  workflow_dispatch:
+  push:
+
+jobs:
+  nightly-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get latest Infinispan Server version
+        id: get-latest-server-ver
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(gh release view --repo infinispan/infinispan --json name -q .name)
+          echo "ISPN_SERVER_VER=$VERSION" >> $GITHUB_ENV
+
+      - name: Checkout 14.0.x branch
+        uses: actions/checkout@v4
+        with:
+          ref: 14.0.x
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Download and unzip Infinispan Server ${{ env.ISPN_SERVER_VER }}
+        run: |
+          wget https://github.com/infinispan/infinispan/releases/download/${ISPN_SERVER_VER}/infinispan-server-${ISPN_SERVER_VER}.zip
+          unzip infinispan-server-${ISPN_SERVER_VER}.zip
+
+      - name: Maven Install (skip tests)
+        run: ./mvnw install -DskipTests -B
+
+      - name: Replace configuration folder from 15.2.x
+        run: |
+          rm -rf server/tests/src/test/resources/configuration
+          git fetch origin 15.2.x
+          git checkout origin/15.2.x -- server/tests/src/test/resources/configuration
+          git checkout origin/15.2.x -- server/tests/src/test/resources/jgroups_metrics.txt
+
+      - name: Maven Verify (server/tests)
+        run: |
+            ./mvnw clean verify \
+            -V -B -e -DrerunFailingTestsCount=2 \
+            -Dmaven.test.failure.ignore=true -Dansi.strip=true \
+            -pl server/tests -DdefaultExcludedJUnitGroups=embeddedserver,cli \
+            -Dorg.infinispan.test.server.dir=${{ github.workspace }}/infinispan-server-${ISPN_SERVER_VER}/ \
+            -Dorg.infinispan.test.server.container.newerThan14=true \
+            -Dorg.infinispan.test.database.jdbc.drivers=com.oracle.database.jdbc:ojdbc11:23.5.0.24.07,\
+            com.ibm.db2:jcc:12.1.2.0,com.microsoft.sqlserver:mssql-jdbc:12.10.1.jre11
+        # Get GitHub App token to use in API calls
+
+      - uses: actions/create-github-app-token@v2
+        if: success() || failure()
+        id: app-token
+        with:
+          # required
+          app-id: ${{ secrets.GH_APP_ISPN_ID }}
+          private-key: ${{ secrets.GH_APP_ISPN_KEY }}
+      - name: Publish Test Report
+        if: success() || failure()
+        # Waiting for https://github.com/ScaCap/action-surefire-report/pull/251
+        uses: rigazilla/action-surefire-report@summary
+        with:
+            report_paths: '**/target/*-reports/TEST-*.xml'
+            github_token: ${{ steps.app-token.outputs.token }}
+            check_name: 'Cross-compatibility Test Report'
+            summary: "Result from workflow run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"

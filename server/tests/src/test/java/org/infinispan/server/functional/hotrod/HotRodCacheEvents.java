@@ -27,6 +27,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.functional.extensions.entities.Entities;
 import org.infinispan.server.test.core.Common;
+import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -89,7 +90,11 @@ public class HotRodCacheEvents {
       new EventLogListener<>(remoteCache(protocolVersion)).accept((l, remote) -> {
          l.expectNoEvents();
          remote.remove(1);
-         l.expectNoEvents();
+         if (Boolean.getBoolean(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_NEWER_THAN_14)) {
+            l.expectOnlyRemovedEvent(1);
+         } else {
+            l.expectNoEvents();
+         }
          remote.put(1, "one");
          l.expectOnlyCreatedEvent(1);
          remote.remove(1);

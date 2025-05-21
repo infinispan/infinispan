@@ -63,6 +63,7 @@ import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.io.StringBuilderWriter;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
@@ -138,6 +139,18 @@ import io.reactivex.rxjava3.core.Flowable;
  */
 public class CacheResourceV2 extends BaseCacheResource implements ResourceHandler {
 
+   @Deprecated
+   private static final Map<String, Configuration> SERVER_TEMPLATES = Map.of(
+         "org.infinispan.LOCAL", createServerTemplate(CacheMode.LOCAL),
+         "org.infinispan.REPL_SYNC", createServerTemplate(CacheMode.REPL_SYNC),
+         "org.infinispan.REPL_ASYNC", createServerTemplate(CacheMode.REPL_ASYNC),
+         "org.infinispan.DIST_SYNC", createServerTemplate(CacheMode.DIST_SYNC),
+         "org.infinispan.DIST_ASYNC", createServerTemplate(CacheMode.DIST_ASYNC),
+         "org.infinispan.INVALIDATION_SYNC", createServerTemplate(CacheMode.INVALIDATION_SYNC),
+         "org.infinispan.INVALIDATION_ASYNC", createServerTemplate(CacheMode.INVALIDATION_ASYNC)
+
+   );
+
    private static final int STREAM_BATCH_SIZE = 1000;
    private static final String MIGRATOR_NAME = "hotrod";
 
@@ -149,6 +162,17 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       GlobalComponentRegistry globalComponentRegistry = SecurityActions.getGlobalComponentRegistry(cacheManager);
       this.internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
+   }
+
+   /**
+    * @deprecated to be removed after DefaultTemplate enum
+    */
+   @Deprecated(forRemoval = true)
+   private static Configuration createServerTemplate(CacheMode cacheMode) {
+      var builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(cacheMode);
+      builder.statistics().enable();
+      return builder.build();
    }
 
    @Override
@@ -607,7 +631,12 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          }
          String templateName = template.iterator().next();
          return CompletableFuture.supplyAsync(() -> {
-            administration.createCache(cacheName, templateName);
+            var config = SERVER_TEMPLATES.get(templateName);
+            if (config != null) {
+               administration.createCache(cacheName, config);
+            } else {
+               administration.createCache(cacheName, templateName);
+            }
             responseBuilder.status(OK);
             return responseBuilder.build();
          }, invocationHelper.getExecutor());

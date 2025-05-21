@@ -4,12 +4,15 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.commons.configuration.BasicConfiguration;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
+import org.infinispan.server.test.core.TestSystemPropertyNames;
 
 /**
- *  REST operations for the testing framework
+ * REST operations for the testing framework
  *
  * @author Tristan Tarrant
  * @since 10
@@ -34,7 +37,8 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
     * Provide a custom client configuration to connect to the server.
     *
     * @param clientConfiguration
-    * @return the current {@link HotRodTestClientDriver} instance with the client configuration override
+    * @return the current {@link HotRodTestClientDriver} instance with the client configuration
+    *         override
     */
    public HotRodTestClientDriver withClientConfiguration(ConfigurationBuilder clientConfiguration) {
       this.clientConfiguration = applyDefaultConfiguration(clientConfiguration);
@@ -45,7 +49,8 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
     * Provide the Client Intelligence override
     *
     * @param clientIntelligence
-    * @return the current {@link HotRodTestClientDriver} instance with the client intelligence override
+    * @return the current {@link HotRodTestClientDriver} instance with the client intelligence
+    *         override
     */
    public HotRodTestClientDriver withClientConfiguration(ClientIntelligence clientIntelligence) {
       clientConfiguration.clientIntelligence(clientIntelligence);
@@ -56,13 +61,13 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
     * The {@link Marshaller} to be used by the client.
     *
     * @param marshallerClass
-    * @return the current {@link HotRodTestClientDriver} instance with the Marshaller configuration override
+    * @return the current {@link HotRodTestClientDriver} instance with the Marshaller configuration
+    *         override
     */
    public HotRodTestClientDriver withMarshaller(Class<? extends Marshaller> marshallerClass) {
       this.clientConfiguration.marshaller(marshallerClass);
       return this;
    }
-
 
    public HotRodTestClientDriver withPort(int port) {
       this.port = port;
@@ -91,8 +96,8 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
    }
 
    /**
-    * Created a cache with the name of the method where this method is being called from.
-    * If the cache already exists, retrieves the existing cache
+    * Created a cache with the name of the method where this method is being called from. If the
+    * cache already exists, retrieves the existing cache
     *
     * @return {@link RemoteCache}, the cache
     */
@@ -100,9 +105,18 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
       return create(-1);
    }
 
+   public static BasicConfiguration toConfiguration(String template) {
+      org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.valueOf(template));
+      builder.statistics().enable();
+      return builder.build();
+   }
+
    /**
     * Create a cache adding in the initial server list the server address given by the index
-    * @param index the server index, -1 for all
+    *
+    * @param index
+    *           the server index, -1 for all
     * @return {@link RemoteCache}, the cache
     */
    public <K, V> RemoteCache<K, V> create(int index) {
@@ -115,11 +129,17 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
       String name = testClient.getMethodName(qualifiers);
       if (serverConfiguration != null) {
          return remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, serverConfiguration);
-      } else if (mode != null) {
-         return remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, "org.infinispan." + mode);
-      } else {
-         return remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, "org.infinispan.DIST_SYNC");
       }
+      if (Boolean.getBoolean(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_NEWER_THAN_14)) {
+         // Newer servers doesn't support templates, so we use the cache configuration directly
+         return mode != null
+               ? remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, toConfiguration(mode))
+               : remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name,
+                     toConfiguration("DIST_SYNC"));
+      }
+         return mode != null
+               ? remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, "org.infinispan." + mode)
+               : remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, "org.infinispan.DIST_SYNC");
    }
 
    public RemoteCacheManager createRemoteCacheManager() {
