@@ -18,7 +18,7 @@ interface as an argument. Also since these arguments will be sent to other nodes
 used a nice trick to ensure our lambdas are immediately Serializable.  That is by having the arguments implement both
 Serializable and the real argument type (ie. Runnable or Function).  The JRE will pick the most specific class when
 determining which method to invoke, so in that case your lambdas will always be serializable.
-It is also possible to use an Externalizer to possibly reduce message size further.
+It is also possible to use ProtoStream marshalling to reduce message size further.
 
 The manager by default will submit a given command to all nodes in the cluster including the node
 where it was submitted from. You can control on which nodes the task is executed on

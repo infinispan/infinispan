@@ -1,5 +1,0 @@
-<cache-container>
-   <serialization>
-      <advanced-externalizer class="Book$BookExternalizer"/>
-   </serialization>
-</cache-container>
