@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -17,7 +18,9 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
@@ -70,6 +73,41 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
       Iterator<Map.Entry<MagicKey, String>> iterator = cache.entrySet().iterator();
       Map<MagicKey, String> results = mapFromIterator(iterator);
       assertEquals(values, results);
+   }
+
+   private void assertConversionEquals(Map<Object, String> map, CloseableIterator<? extends Map.Entry<MagicKey, byte[]>> iterator) {
+      try (iterator) {
+         iterator.forEachRemaining(e -> {
+            String val = map.get(e.getKey());
+            assertNotNull("No value found for " + e, val);
+
+            assertEquals(val.getBytes(StandardCharsets.UTF_8), e.getValue());
+         });
+      }
+   }
+
+   @Test
+   public void entrySetWithConversionTest() {
+      Map<Object, String> values = putValuesInCache();
+
+      Cache<MagicKey, String> cache = cache(0, CACHE_NAME);
+      CloseableIterator<Map.Entry<MagicKey, byte[]>> iterator = cache.getAdvancedCache()
+            .<MagicKey, byte[]>withMediaType(MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_OCTET_STREAM)
+            .entrySet()
+            .iterator();
+      assertConversionEquals(values, iterator);
+   }
+
+   @Test
+   public void cacheEntrySetWithConversionTest() {
+      Map<Object, String> values = putValuesInCache();
+
+      Cache<MagicKey, String> cache = cache(0, CACHE_NAME);
+      CloseableIterator<CacheEntry<MagicKey, byte[]>> iterator = cache.getAdvancedCache()
+            .<MagicKey, byte[]>withMediaType(MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_OCTET_STREAM)
+            .cacheEntrySet()
+            .iterator();
+      assertConversionEquals(values, iterator);
    }
 
    @Test
