@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNotSame;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
@@ -431,17 +432,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          @Override
          public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
             Configuration c = holder.getDefaultConfigurationBuilder().build();
-            assertFalse(c.memory().evictionType() == EvictionType.MEMORY);
+            assertNotSame(EvictionType.MEMORY, c.memory().evictionType());
             c = getConfiguration(holder, "invalid");
-            assertTrue(c.memory().evictionType() == EvictionType.COUNT);
-
-            DefaultThreadFactory threadFactory;
-            AbstractThreadPoolExecutorFactory threadPool;
-
-            threadFactory = getGlobalConfiguration(holder).asyncThreadPool().threadFactory();
-            assertNull(threadFactory);
-            threadPool = getGlobalConfiguration(holder).asyncThreadPool().threadPoolFactory();
-            assertNull(threadPool);
+            assertSame(EvictionType.COUNT, c.memory().evictionType());
 
             assertTemplateConfiguration(holder, "local-template");
             assertTemplateConfiguration(holder, "invalidation-template");

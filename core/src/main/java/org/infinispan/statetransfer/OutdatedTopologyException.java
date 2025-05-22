@@ -43,24 +43,4 @@ public class OutdatedTopologyException extends CacheException {
       this.topologyIdDelta = topologyIdDelta;
    }
 
-   /**
-    * Request the next topology (delta = 1) and use a custom message.
-    *
-    * @deprecated Since 10.0, please use the constants
-    */
-   @Deprecated(forRemoval=true, since = "10.0")
-   public OutdatedTopologyException(String msg) {
-      super(msg, null, false, false);
-      this.topologyIdDelta = 1;
-   }
-
-   /**
-    * Request retrying the command in explicitly set topology (or later one).
-    *
-    * @deprecated Since 10.0, the explicit topology is ignored and the delta is set to 1
-    */
-   @Deprecated(forRemoval=true, since = "10.0")
-   public OutdatedTopologyException(int topologyIdDelta) {
-      this(null, 1);
-   }
 }

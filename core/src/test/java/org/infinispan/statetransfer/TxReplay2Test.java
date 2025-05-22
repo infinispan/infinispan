@@ -21,6 +21,7 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -38,7 +39,6 @@ import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.ControlledConsistentHashFactory;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -157,7 +157,7 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
    private void checkKeyInDataContainer(Object key) {
       for (Cache<Object, Object> cache : caches()) {
          DataContainer container = cache.getAdvancedCache().getDataContainer();
-         InternalCacheEntry entry = container.get(key);
+         InternalCacheEntry entry = container.peek(key);
          assertNotNull("Cache '" + address(cache) + "' does not contain key!", entry);
          assertEquals("Cache '" + address(cache) + "' has wrong value!", VALUE, entry.getValue());
       }

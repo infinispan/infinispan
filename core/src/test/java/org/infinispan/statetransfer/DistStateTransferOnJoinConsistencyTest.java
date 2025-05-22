@@ -17,6 +17,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -31,7 +32,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -221,9 +221,9 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
       if (op == Operation.CLEAR || op == Operation.REMOVE) {
          // caches should be empty. check that no keys were revived by an inconsistent state transfer
          for (int i = 0; i < numKeys; i++) {
-            assertNull(dc0.get(i));
-            assertNull(dc1.get(i));
-            assertNull(dc2.get(i));
+            assertNull(dc0.peek(i));
+            assertNull(dc1.peek(i));
+            assertNull(dc2.peek(i));
          }
       } else if (op == Operation.PUT || op == Operation.PUT_MAP || op == Operation.REPLACE) {
          // check that all values are the ones expected after state transfer and were not overwritten with old values carried by state transfer
@@ -245,7 +245,7 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
    }
 
    private void assertValue(int cacheIndex, int key, String expectedValue) {
-      InternalCacheEntry ice = cache(cacheIndex).getAdvancedCache().getDataContainer().get(key);
+      InternalCacheEntry ice = cache(cacheIndex).getAdvancedCache().getDataContainer().peek(key);
       assertNotNull("Found null on cache " + cacheIndex, ice);
       assertEquals("Did not find the expected value on cache " + cacheIndex, expectedValue, ice.getValue());
       assertEquals("Did not find the expected value on cache " + cacheIndex, expectedValue, cache(cacheIndex).get(key));

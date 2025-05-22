@@ -168,9 +168,6 @@ public class TestCacheManagerFactory {
       GlobalConfiguration gc = holder.getGlobalConfigurationBuilder().build();
       updateNodeName(testShortName, gc.listenerThreadPool());
       updateNodeName(testShortName, gc.expirationThreadPool());
-      updateNodeName(testShortName, gc.persistenceThreadPool());
-      updateNodeName(testShortName, gc.asyncThreadPool());
-      updateNodeName(testShortName, gc.transport().transportThreadPool());
       return holder;
    }
 

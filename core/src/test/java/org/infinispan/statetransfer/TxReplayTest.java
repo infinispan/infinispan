@@ -89,7 +89,7 @@ public class TxReplayTest extends MultipleCacheManagersTest {
    private void checkKeyInDataContainer(Object key) {
       for (Cache<Object, Object> cache : caches()) {
          DataContainer container = cache.getAdvancedCache().getDataContainer();
-         InternalCacheEntry entry = container.get(key);
+         InternalCacheEntry entry = container.peek(key);
          assertNotNull("Cache '" + address(cache) + "' does not contain key!", entry);
          assertEquals("Cache '" + address(cache) + "' has wrong value!", VALUE, entry.getValue());
       }
