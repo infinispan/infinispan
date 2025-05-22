@@ -2,10 +2,11 @@ package org.infinispan.distribution.ch;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
-import org.infinispan.commons.hash.Hash;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.PersistentUUID;
 
 /**
  * Factory for {@link ConsistentHash} instances.
@@ -24,27 +25,6 @@ import org.infinispan.remoting.transport.Address;
  */
 @Deprecated(forRemoval=true, since = "11.0")
 public interface ConsistentHashFactory<CH extends ConsistentHash> {
-
-   /**
-    * Create a new consistent hash instance.
-    *
-    * The consistent hash will be <em>balanced</em>.
-    *
-    * @param numOwners The ideal number of owners for each key. The created consistent hash
-    *                  can have more or less owners, but each key will have at least one owner.
-    * @param numSegments Number of hash-space segments. The implementation may round up the number
-    *                    of segments for performance, or may ignore the parameter altogether.
-    * @param members A list of addresses representing the new cache members.
-    * @param capacityFactors The capacity factor of each member. Determines the relative capacity of each node compared
-    *                        to the others. The implementation may ignore this parameter.
-    *                        If {@code null}, all the members are assumed to have a capacity factor of 1.
-    * @deprecated since 11.0. hashFunction is ignored, use {@link #create(int, int, List, Map)} instead.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   default CH create(Hash hashFunction, int numOwners, int numSegments, List<Address> members,
-                     Map<Address, Float> capacityFactors) {
-      return create(numOwners, numSegments, members, capacityFactors);
-   }
 
    /**
     * Create a new consistent hash instance.
@@ -104,11 +84,19 @@ public interface ConsistentHashFactory<CH extends ConsistentHash> {
    CH union(CH ch1, CH ch2);
 
    /**
-    * Recreates a ConsistentHash from a previously stored persistent state. The returned ConsistentHash will not have
-    * proper addresses, but {@link org.infinispan.topology.PersistentUUID}s instead so they will need to be replaced
-    * @param state the state to restore
+    * Recreates a {@link ConsistentHash} from a previously stored persistent state.
+    * <p>
+    * The stored state typically contains a collection of {@link PersistentUUID}s representing the members. If a member
+    * is not present when reading from the state, its {@link PersistentUUID} must be added to the
+    * {@link PersistedConsistentHash#missingUuids()} list. The {@link PersistedConsistentHash#consistentHash()} may have
+    *  incomplete ownership when there are missing UUIDs.
+    *
+    * @param state         the state to restore, containing member {@link PersistentUUID}s.
+    * @param addressMapper A function to map the {@link PersistentUUID} to {@link Address}.
+    * @return A {@link PersistedConsistentHash} with the {@link ConsistentHash} and with the missing
+    * {@link PersistentUUID} if any.
     */
-   default CH fromPersistentState(ScopedPersistentState state) {
+   default PersistedConsistentHash<CH> fromPersistentState(ScopedPersistentState state, Function<PersistentUUID, Address> addressMapper) {
       throw new UnsupportedOperationException();
    }
 }
