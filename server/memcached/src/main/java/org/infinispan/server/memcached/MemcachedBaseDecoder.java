@@ -20,6 +20,7 @@ import java.util.function.BiConsumer;
 import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.container.entries.CacheEntry;
@@ -82,6 +83,11 @@ public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
       this.statsEnabled = statistics != null;
       this.accessLogging = MemcachedAccessLogging.isEnabled();
       this.maxContentLength = server.getConfiguration().maxContentLengthBytes();
+   }
+
+   protected final void assertCacheIsReady() {
+      if (!server.isDefaultCacheRunning())
+         throw new IllegalLifecycleStateException("Memcached cache not ready");
    }
 
    protected int bytesAvailable(ByteBuf buf, int requestBytes) {

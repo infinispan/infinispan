@@ -9,9 +9,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.counter.EmbeddedCounterManagerFactory;
-import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.ServerConstants;
@@ -52,6 +51,13 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
       return executor;
    }
 
+   protected String checkCacheReady(String cacheName) {
+      if (cacheName != null && cacheManager.cacheExists(cacheName) && !cacheManager.isRunning(cacheName))
+         throw new IllegalLifecycleStateException(String.format("Cache '%s' is not running", cacheName));
+
+      return cacheName;
+   }
+
    @Override
    public void handlerAdded(ChannelHandlerContext ctx) {
       InfinispanTelemetry telemetryService = SecurityActions.getGlobalComponentRegistry(cacheManager)
@@ -59,7 +65,7 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
 
       auth = new Authentication(ctx.channel(), executor, server);
       cacheProcessor = new TransactionRequestProcessor(ctx.channel(), executor, server, telemetryService);
-      counterProcessor = new CounterRequestProcessor(ctx.channel(), (EmbeddedCounterManager) EmbeddedCounterManagerFactory.asCounterManager(cacheManager), executor, server);
+      counterProcessor = new CounterRequestProcessor(ctx.channel(), executor, server);
       multimapProcessor = new MultimapRequestProcessor(ctx.channel(), executor, server);
       taskProcessor = new TaskRequestProcessor(ctx.channel(), executor, server);
    }

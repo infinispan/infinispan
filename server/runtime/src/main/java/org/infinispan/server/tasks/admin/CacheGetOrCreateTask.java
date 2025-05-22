@@ -4,6 +4,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -38,6 +39,10 @@ public class CacheGetOrCreateTask extends CacheCreateTask {
       String name = requireParameter(parameters, "name");
       String template = getParameter(parameters, "template");
       String configuration = getParameter(parameters, "configuration");
+
+      if (!cacheManager.cacheExists(name) && !cacheManager.getStatus().allowInvocations())
+         throw new IllegalLifecycleStateException("Cache manager not initialized yet");
+
       if (configuration != null) {
          Configuration config = getConfigurationBuilder(name, configuration).build();
          cacheManager.administration().withFlags(flags).getOrCreateCache(name, config);

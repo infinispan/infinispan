@@ -65,6 +65,7 @@ public class RespTestingUtil {
    public static RespServer startServer(EmbeddedCacheManager cacheManager, RespServerConfiguration configuration) {
       RespServer server = new RespServer();
       server.start(configuration, cacheManager);
+      server.postStart();
       return server;
    }
 
@@ -85,8 +86,8 @@ public class RespTestingUtil {
          }
       };
       String serverName = TestResourceTracker.getCurrentTestShortName();
-      server.start(new RespServerConfigurationBuilder().name(serverName).host(HOST).port(port).build(),
-            cacheManager);
+      server.start(new RespServerConfigurationBuilder().name(serverName).host(HOST).port(port).build(), cacheManager);
+      server.postStart();
       return server;
    }
 
