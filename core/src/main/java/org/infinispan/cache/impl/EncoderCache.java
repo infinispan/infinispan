@@ -496,7 +496,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       EncoderEntryMapper<K, V, CacheEntry<K, V>> cacheEntryMapper = EncoderEntryMapper.newCacheEntryMapper(
             keyDataConversion, valueDataConversion, entryFactory);
       return new WriteableCacheSetMapper<>(cache.cacheEntrySet(), cacheEntryMapper,
-            e -> new CacheEntryWrapper<>(cacheEntryMapper.apply(e), e), this::toCacheEntry, this::keyToStorage);
+            e -> new CacheEntryWrapper<>(e, cacheEntryMapper.apply(e)), this::toCacheEntry, this::keyToStorage);
    }
 
    @Override
