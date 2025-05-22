@@ -25,11 +25,11 @@ import org.infinispan.xsite.statetransfer.XSiteState;
  */
 public class ManualIracManager extends ControlledIracManager {
 
-   private final Map<Object, PendingKeyRequest> pendingKeys = new ConcurrentHashMap<>(16);
-   private volatile boolean enabled;
+   protected final Map<Object, PendingKeyRequest> pendingKeys = new ConcurrentHashMap<>(16);
+   protected volatile boolean enabled;
    private final List<StateTransferRequest> pendingStateTransfer = new ArrayList<>(2);
 
-   private ManualIracManager(IracManager actual) {
+   protected ManualIracManager(IracManager actual) {
       super(actual);
    }
 
@@ -121,7 +121,7 @@ public class ManualIracManager extends ControlledIracManager {
       return !pendingKeys.isEmpty();
    }
 
-   private void send(PendingKeyRequest request) {
+   protected void send(PendingKeyRequest request) {
       if (request.isExpiration()) {
          super.trackExpiredKey(request.getSegment(), request.getKey(), request.getOwner());
          return;
@@ -160,12 +160,12 @@ public class ManualIracManager extends ControlledIracManager {
       }
    }
 
-   private static class PendingKeyRequest implements IracManagerKeyState {
+   protected static class PendingKeyRequest implements IracManagerKeyState {
 
       private final IracManagerKeyInfo keyInfo;
       private final boolean expiration;
 
-      private PendingKeyRequest(Object key, Object lockOwner, int segment, boolean expiration) {
+      protected PendingKeyRequest(Object key, Object lockOwner, int segment, boolean expiration) {
          keyInfo = new IracManagerKeyInfo(segment, key, lockOwner);
          this.expiration = expiration;
       }

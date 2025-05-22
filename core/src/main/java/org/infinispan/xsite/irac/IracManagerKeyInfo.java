@@ -3,6 +3,7 @@ package org.infinispan.xsite.irac;
 import java.util.Objects;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -56,13 +57,11 @@ public class IracManagerKeyInfo {
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof IracManagerKeyInfo)) return false;
+      if (!(o instanceof IracManagerKeyInfo that)) return false;
 
-      IracManagerKeyInfo that = (IracManagerKeyInfo) o;
-
-      if (segment != that.getSegment()) return false;
-      if (!key.equals(that.getKey())) return false;
-      return owner.equals(that.getOwner());
+      return segment == that.getSegment() &&
+            key.equals(that.getKey()) &&
+            owner.equals(that.getOwner());
    }
 
    @Override
@@ -75,6 +74,6 @@ public class IracManagerKeyInfo {
 
    @Override
    public String toString() {
-      return "IracManagerKeyInfoImpl{" + "segment=" + segment + ", key=" + key + ", owner=" + owner + '}';
+      return "IracManagerKeyInfoImpl{" + "segment=" + segment + ", key=" + Util.toStr(key) + ", owner=" + owner + '}';
    }
 }

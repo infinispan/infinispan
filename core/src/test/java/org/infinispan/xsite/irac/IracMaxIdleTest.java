@@ -8,7 +8,6 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.time.ControlledTimeService;
@@ -16,6 +15,9 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
@@ -33,11 +35,6 @@ public class IracMaxIdleTest extends AbstractMultipleSitesTest {
 
    private static final long MAX_IDLE = 1000; //milliseconds
    private final ControlledTimeService timeService = new ControlledTimeService();
-
-   @Override
-   protected int defaultNumberOfSites() {
-      return 2;
-   }
 
    @Override
    protected int defaultNumberOfNodes() {
@@ -69,7 +66,7 @@ public class IracMaxIdleTest extends AbstractMultipleSitesTest {
       List<ManualIracManager> iracManagers = caches(0, cacheName).stream()
             .map(ManualIracManager::wrapCache)
             .peek(m -> m.disable(ManualIracManager.DisableMode.DROP)) // reset state
-            .collect(Collectors.toList());
+            .toList();
       final String key = createKeyOrValue(testData, "key");
       final String value = createKeyOrValue(testData, "value");
 
@@ -101,17 +98,67 @@ public class IracMaxIdleTest extends AbstractMultipleSitesTest {
       assertNoDataLeak(cacheName);
    }
 
-   private static String createKeyOrValue(TestData testData, String prefix) {
-      switch (testData) {
-         case NON_TX:
-            return prefix + "_ntx_";
-         case PESSIMISTIC:
-            return prefix + "_pes_";
-         case OPTIMISTIC:
-            return prefix + "_opt_";
-         default:
-            throw new IllegalStateException(String.valueOf(testData));
+   @Test
+   public void testConcurrentWriteWithExpiration() throws Throwable {
+      final var cacheName = "concurrent";
+
+      // create cache
+      for (int i = 0; i < defaultNumberOfSites(); ++i) {
+         defineInSite(site(i), cacheName, defaultConfigurationForSite(i).build());
+         site(i).waitForClusterToForm(cacheName);
       }
+
+      // register irac manager
+      var iracManagers = caches(0, cacheName).stream()
+            .map(cache -> {
+               IracManager iracManager = TestingUtil.extractComponent(cache, IracManager.class);
+               if (iracManager instanceof SendExpirationAfterWriteIracManager) {
+                  return (SendExpirationAfterWriteIracManager) iracManager;
+               }
+               return TestingUtil.wrapComponent(cache, IracManager.class, SendExpirationAfterWriteIracManager::new);
+            })
+            .peek(m -> m.disable(ManualIracManager.DisableMode.DROP)) // reset state
+            .toList();
+
+      final var key = "c_key";
+      final var value = "c_value";
+      final var value2 = "c_value_2";
+
+      cache(0, 0, cacheName).put(key, value, -1, TimeUnit.MILLISECONDS, MAX_IDLE, TimeUnit.MILLISECONDS);
+
+      eventuallyAssertInAllSitesAndCaches(cacheName, c -> Objects.equals(value, c.get(key)));
+
+      // block xsite replication (remove expired).
+      // the touch command is not blocked
+      iracManagers.forEach(ManualIracManager::enable);
+
+      timeService.advance(MAX_IDLE + 1);
+
+      // get should trigger the expiration
+      assertNull(cache(0, 0, cacheName).get(key));
+
+      // one of them should have the key there
+      assertTrue(iracManagers.stream().anyMatch(ManualIracManager::hasPendingKeys));
+
+      // Test concurrent write
+      // Tiggers the cross-site expiration request and block the cross-site write command in IracManager.
+      cache(0, 0, cacheName).put(key, value2);
+
+      // if the bug occurs, the entry is never remove from IracManager and this fails.
+      eventually(() -> iracManagers.stream().allMatch(ManualIracManager::isEmpty), 10, TimeUnit.SECONDS);
+
+      iracManagers.forEach(m -> m.disable(ManualIracManager.DisableMode.SEND));
+
+      eventuallyAssertInAllSitesAndCaches(cacheName, c -> Objects.equals(value2, c.get(key)));
+      assertTrue(iracManagers.stream().allMatch(ManualIracManager::isEmpty));
+   }
+
+   private static String createKeyOrValue(TestData testData, String prefix) {
+      return switch (testData) {
+         case NON_TX -> prefix + "_ntx_";
+         case PESSIMISTIC -> prefix + "_pes_";
+         case OPTIMISTIC -> prefix + "_opt_";
+      };
    }
 
    private String createCaches(TestData testData) {
@@ -162,9 +209,30 @@ public class IracMaxIdleTest extends AbstractMultipleSitesTest {
       }
    }
 
-   private enum TestData {
+   public enum TestData {
       NON_TX,
       PESSIMISTIC,
       OPTIMISTIC
+   }
+
+   @Scope(Scopes.NAMED_CACHE)
+   public static class SendExpirationAfterWriteIracManager extends ManualIracManager {
+
+      SendExpirationAfterWriteIracManager(IracManager actual) {
+         super(actual);
+      }
+
+      @Override
+      public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
+         if (enabled) {
+            var existing = pendingKeys.get(key);
+            if (existing != null && existing.isExpiration()) {
+               actual.trackExpiredKey(existing.getSegment(), existing.getKey(), existing.getOwner());
+            }
+            pendingKeys.put(key, new PendingKeyRequest(key, lockOwner, segment, false));
+         } else {
+            super.trackUpdatedKey(segment, key, lockOwner);
+         }
+      }
    }
 }
