@@ -257,6 +257,7 @@
                   <autoPublish>true</autoPublish>
                   <deploymentName>Infinispan ${project.version}</deploymentName>
                   <publishingServerId>central</publishingServerId>
+                  <waitForPublishCompletion>true</waitForPublishCompletion>
                </configuration>
             </plugin>
             <plugin>
