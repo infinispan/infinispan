@@ -9,6 +9,7 @@
    <!-- jgroups.tcp.address is deprecated and will be removed, see ISPN-11867 -->
    <TCP bind_addr="${jgroups.bind.address,jgroups.tcp.address:SITE_LOCAL}"
         bind_port="${jgroups.bind.port,jgroups.tcp.port:7800}"
+        port_range="${jgroups.port_range:0}"
 
         diag.enabled="${jgroups.diag.enabled:false}"
         diag.enable_tcp="${jgroups.diag.enable_tcp:true}"
