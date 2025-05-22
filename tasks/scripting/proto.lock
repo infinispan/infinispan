@@ -50,6 +50,14 @@
           "name" : "role",
           "type" : "string",
           "optional" : true
+        } ],
+        "maps" : [ {
+          "key_type" : "string",
+          "field" : {
+            "id" : 8,
+            "name" : "properties",
+            "type" : "string"
+          }
         } ]
       } ],
       "imports" : [ {
