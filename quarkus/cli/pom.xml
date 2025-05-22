@@ -129,7 +129,7 @@
                                     <descriptors>
                                         <descriptor>src/main/assembly/zip.xml</descriptor>
                                     </descriptors>
-                                    <finalName>${infinispan.brand.short-name}-cli-${infinispan.brand.version}</finalName>
+                                    <finalName>${infinispan.brand.short-name}-cli-${infinispan.brand.version}-${os.detected.classifier}</finalName>
                                 </configuration>
                             </execution>
                         </executions>
