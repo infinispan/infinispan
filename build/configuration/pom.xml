@@ -127,6 +127,7 @@
       <version.jboss.shrinkwrap>1.2.6</version.jboss.shrinkwrap>
       <version.jboss.shrinkwrap.descriptors>2.0.0</version.jboss.shrinkwrap.descriptors>
       <version.jboss.shrinkwrap.resolver>3.3.4</version.jboss.shrinkwrap.resolver>
+      <version.jboss.threads>3.9.1</version.jboss.threads>
       <version.jcip-annotations>1.0</version.jcip-annotations>
       <version.jgroups>5.4.8.Final</version.jgroups>
       <version.jgroups.raft>1.1.0.Final</version.jgroups.raft>
