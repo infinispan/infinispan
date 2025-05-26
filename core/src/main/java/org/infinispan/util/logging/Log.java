@@ -2388,4 +2388,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Received new cross-site event, site(s) %s: %s", id = 703)
    @Description("A cluster has either joined or left the global cluster view.")
    void crossSiteViewEvent(String action, String sites);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed to initialize cache: '%s'", id = 708)
+   void failedToInitializeCache(String cacheName, @Cause Throwable t);
 }

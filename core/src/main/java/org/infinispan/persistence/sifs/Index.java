@@ -816,7 +816,7 @@ class Index {
          }
          try {
             IndexNode.setPosition(root, request, overwriteHook, recordChange);
-         } catch (IllegalStateException e) {
+         } catch (Throwable e) {
             request.completeExceptionally(e);
          }
          temporaryTable.removeConditionally(request.getSegment(), request.getKey(), request.getFile(), request.getOffset());
