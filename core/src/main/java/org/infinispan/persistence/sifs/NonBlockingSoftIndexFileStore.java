@@ -237,7 +237,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       ScheduledExecutorService timeoutExecutor = ComponentRegistry.componentOf(ctx.getCache(), ScheduledExecutorService.class, TIMEOUT_SCHEDULE_EXECUTOR);
       Configuration cfg = ComponentRegistry.of(ctx.getCache()).getConfiguration();
       long timeout = cfg.clustering().remoteTimeout();
-      progressTracker = new ProgressTracker("sifs-task", timeoutExecutor, ts, timeout, TimeUnit.MILLISECONDS);
+      progressTracker = new ProgressTracker("sifs-task-" + ctx.getCache().getName(), timeoutExecutor, ts, timeout, TimeUnit.MILLISECONDS);
 
       return blockingManager.runBlocking(() -> {
          boolean migrateData = false;
