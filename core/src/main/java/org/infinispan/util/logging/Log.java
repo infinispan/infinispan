@@ -2404,4 +2404,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Command '%s' not yet supported by all cluster members, requires version '%s'")
    UnsupportedVersionException commandNotYeySupportedByAllClusterMembers(String command, NodeVersion version);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed to initialize cache: '%s'", id = 708)
+   void failedToInitializeCache(String cacheName, @Cause Throwable t);
 }
