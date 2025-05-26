@@ -556,6 +556,7 @@ public class DefaultCacheManager extends InternalCacheManager {
          } catch (CompletionException e) {
             caches.computeIfPresent(actualName, (k, v) -> {
                if (v == cacheFuture) {
+                  log.failedToInitializeCache(actualName, e);
                   return null;
                }
                return v;

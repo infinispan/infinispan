@@ -2394,4 +2394,22 @@ public interface Log extends BasicLogger {
    @Message(value = "Received new cross-site event, site(s) %s: %s", id = 976)
    @Description("A cluster has either joined or left the global cluster view.")
    void crossSiteViewEvent(String action, String sites);
+
+   @Message(value = "%s marshaller implementation not overridden in SerializationContext", id = 704)
+   IllegalStateException marshallerNotOverridden(String className);
+
+   @Message(value = "Max idle value must be less than lifespan when configured. Max idle value is %s and lifespan is %s", id = 705)
+   CacheConfigurationException maxIdleGreaterThanOrEqualLifespan(String maxIdle, String lifespan);
+
+   @Once
+   @LogMessage(level = DEBUG)
+   @Message(value = "Runtime encountered entry with max idle %d ms being greater or equal to lifespan %d ms, ignoring max idle", id = 706)
+   void maxIdleGreaterThanOrEqualLifespanRuntime(long maxIdle, long lifespan);
+
+   @Message(value = "Command '%s' not yet supported by all cluster members, requires version '%s'")
+   UnsupportedVersionException commandNotYeySupportedByAllClusterMembers(String command, NodeVersion version);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed to initialize cache: '%s'", id = 708)
+   void failedToInitializeCache(String cacheName, @Cause Throwable t);
 }
