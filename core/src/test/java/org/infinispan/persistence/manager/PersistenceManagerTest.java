@@ -1,11 +1,11 @@
 package org.infinispan.persistence.manager;
 
 import static org.infinispan.commons.test.Exceptions.expectCompletionException;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.getFirstStore;
 import static org.infinispan.test.TestingUtil.getStore;
-import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -46,6 +46,8 @@ import io.reactivex.rxjava3.subscribers.TestSubscriber;
 @CleanupAfterMethod
 public class PersistenceManagerTest extends SingleCacheManagerTest {
    private boolean transactional;
+
+   private static final int EMIT_TIMEOUT_MS = 200;
 
    private PersistenceManagerTest transactional(boolean transactional) {
       this.transactional = transactional;
@@ -182,9 +184,31 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
       cache.remove("k");
    }
 
+   public void testEmitTooSlow() throws InterruptedException {
+      PersistenceManagerImpl persistenceManager = (PersistenceManagerImpl) extractComponent(cache, PersistenceManager.class);
+      KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
+      String key = "slow";
+      insertEntry(persistenceManager, keyPartitioner, key, "v");
+
+      DelayStore store1 = getStore(cache, 0, true);
+      store1.delayBeforeEmit(1);
+
+      TestSubscriber<Object> subscriber = TestSubscriber.create(0);
+      Flowable.fromPublisher(persistenceManager.publishEntries(true, true))
+            .subscribe(subscriber);
+      subscriber.request(Long.MAX_VALUE);
+      assertTrue(persistenceManager.anyLocksHeld());
+      assertTrue("Subscriber should have completed with error", subscriber.await(EMIT_TIMEOUT_MS * 2, TimeUnit.MILLISECONDS));
+
+      subscriber.assertError(org.infinispan.commons.TimeoutException.class);
+      assertFalse(persistenceManager.anyLocksHeld());
+   }
+
    @Override
    protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(transactional);
+      // If an entry is not emitted by a publisher after this amount of time it will raise an error instead
+      cfg.clustering().remoteTimeout(EMIT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
       cfg.persistence().addStore(DelayStore.ConfigurationBuilder.class);
       cfg.persistence().addStore(FailStore.ConfigurationBuilder.class);
       cfg.persistence().addStore(FailStore.ConfigurationBuilder.class);
