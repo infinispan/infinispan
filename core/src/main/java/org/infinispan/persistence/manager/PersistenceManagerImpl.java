@@ -17,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.StampedLock;
@@ -30,12 +31,16 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.io.ByteBufferFactory;
+import org.infinispan.commons.jdkspecific.CallerId;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -81,9 +86,7 @@ import org.infinispan.persistence.support.NonBlockingStoreAdapter;
 import org.infinispan.persistence.support.SegmentPublisherWrapper;
 import org.infinispan.persistence.support.SingleSegmentPublisher;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.function.TriPredicate;
 import org.infinispan.util.logging.Log;
@@ -93,8 +96,10 @@ import org.reactivestreams.Publisher;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Function;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import net.jcip.annotations.GuardedBy;
 
 @Scope(Scopes.NAMED_CACHE)
@@ -133,6 +138,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private boolean allSegmentedOrShared;
 
    private int segmentCount;
+
+   private Flowable<?> TIMEOUT_FLOWABLE;
+   private Scheduler timeoutScheduler;
 
    @GuardedBy("lock")
    private List<StoreStatus> stores = null;
@@ -193,6 +201,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   __ -> startManagerAndStores(configuration.persistence().stores()),
                   this::releaseWriteLock)
             .blockingAwait();
+
+      TIMEOUT_FLOWABLE = Flowable.error(log.storeTimeoutBetweenEntries(configuration.clustering().remoteTimeout()));
+      timeoutScheduler = Schedulers.from(blockingManager.asExecutor("persistence-manager-timeout"));
    }
 
    @GuardedBy("lock#writeLock")
@@ -800,7 +811,17 @@ public class PersistenceManagerImpl implements PersistenceManager {
                      } else {
                         filterToUse = filter;
                      }
-                     return storeStatus.<K, V>store().publishEntries(segments, filterToUse, fetchValue);
+                     Flowable<MarshallableEntry<K, V>> flowable;
+                     if (PERSISTENCE.isTraceEnabled()) {
+                        flowable = Flowable.error(new TimeoutException("Store publisher didn't publish a value in " +
+                              configuration.clustering().remoteTimeout() + " ms. Stack trace of the original caller is: \n" +
+                              CallerId.getStackTrace()));
+                     } else {
+                        flowable = (Flowable<MarshallableEntry<K,V>>) TIMEOUT_FLOWABLE;
+                     }
+                     return Flowable.fromPublisher(storeStatus.<K, V>store().publishEntries(segments, filterToUse, fetchValue))
+                           .timeout(configuration.clustering().remoteTimeout(), TimeUnit.MILLISECONDS, timeoutScheduler,
+                                 flowable);
                   }
                }
                return Flowable.empty();
