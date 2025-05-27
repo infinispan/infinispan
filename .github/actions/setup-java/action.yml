@@ -1,6 +1,12 @@
 name: Setup Java
 description: Setup Java
 
+inputs:
+  gpg-private-key:
+    description: "GPG private key for signing artifacts"
+    required: false
+    default: ""
+
 runs:
   using: composite
   steps:
@@ -9,6 +15,10 @@ runs:
       with:
         java-version: 21
         distribution: temurin
+        server-id: central
+        server-username: MAVEN_USERNAME
+        server-password: MAVEN_PASSWORD
+        gpg-private-key: ${{ inputs.gpg-private-key }}
 
     # Explicitly configure the maven cache instead of using the built-in setup-java cache so that we can exclude
     # all Infinispan modules

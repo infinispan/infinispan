@@ -1,0 +1,47 @@
+name: Publish SNAPSHOT to Central (Nightly)
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # Runs every day at 02:00 UTC
+    # Only run on main branch for scheduled events
+  workflow_dispatch:
+    # Only allow manual runs from main branch
+    inputs: {}
+
+jobs:
+  publish-snapshot:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for recent commits on main
+        if: github.event_name == 'schedule'
+        run: |
+          if ! git log --since="24 hours ago" --oneline | grep .; then
+            echo "No commits to main in the last 24 hours. Skipping publish."
+            exit 78 # Exit code 78 is conventionally used to skip the job
+          fi
+
+      - name: Build Infinispan
+        uses: ./.github/actions/build-infinispan
+        with:
+          gpg-private-key: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
+
+      - name: Server version
+        run: >
+          echo "SERVER_VERSION=$(mvn -q -Dexec.executable=echo
+          -Dexec.args='${project.version}' --non-recursive exec:exec)"
+          >> $GITHUB_ENV
+
+      - name: Publish SNAPSHOT to Central
+        run: |
+          mvn -B -Drelease-mode=upstream -Pdistribution -Pcommunity-release \
+          -DskipTests deploy \
+          -Dinfinispan.brand.version=${SERVER_VERSION} \
+          -Dmaven.snapshots.repo.id=central \
+          -Dmaven.snapshots.repo.url=https://central.sonatype.com/repository/maven-snapshots
+        env:
+          MAVEN_USERNAME: ${{ secrets.SONATYPE_CENTRAL_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.SONATYPE_CENTRAL_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}
