@@ -306,8 +306,9 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          Future<?> cacheStartFuture = fork(() -> manager.createCache(CACHE_NAME, new ConfigurationBuilder().build()));
          cacheStartBlocked.get(10, SECONDS);
 
-         Future<?> managerStopFuture = fork(() -> manager.stop());
-         Exceptions.expectException(TimeoutException.class, () -> managerStopBlocked.get(1, SECONDS));
+         // After we call stop in the manager, it should not block.
+         Future<?> managerStopFuture = fork(manager::stop);
+         managerStopBlocked.get(1, SECONDS);
 
          Future<?> cacheStartFuture2 = fork(() -> manager.getCache(CACHE_NAME));
          Exceptions.expectExecutionException(IllegalLifecycleStateException.class, cacheStartFuture2);
@@ -315,7 +316,6 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          cacheStartResumed.complete(null);
          cacheStartFuture.get(10, SECONDS);
 
-         managerStopBlocked.get(10, SECONDS);
          managerStopResumed.complete(null);
          managerStopFuture.get(10, SECONDS);
       } finally {
