@@ -4,6 +4,7 @@ import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.globalstate.GlobalConfigurationManager;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.RolePermissionMapper;
@@ -26,6 +27,11 @@ public class CoreModule implements ModuleLifecycle {
 
    public static void startLifecycleComponent(GlobalComponentRegistry gcr, Class<?>... klasses) {
       for (Class<?> klass : klasses) {
+         // Cache manager was stopped before all components were started.
+         // Check the manager status because it stops before the global component registry.
+         ComponentStatus status = gcr.getCacheManager().getStatus();
+         if (status.isStopping() || status.isTerminated()) break;
+
          if (gcr.getComponent(klass) instanceof Lifecycle l) {
             l.start();
          }

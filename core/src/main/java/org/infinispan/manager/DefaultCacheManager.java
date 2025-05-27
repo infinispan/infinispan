@@ -874,6 +874,12 @@ public class DefaultCacheManager extends InternalCacheManager {
    private void terminate(String cacheName) {
       CompletableFuture<Cache<?, ?>> cacheFuture = this.caches.get(cacheName);
       if (cacheFuture != null) {
+         if (!cacheFuture.isDone()) {
+            ComponentRegistry cr = globalComponentRegistry.getNamedComponentRegistry(cacheName);
+            if (cr != null) cr.stop();
+            cacheFuture.completeExceptionally(log.cacheManagerIsStopping());
+            return;
+         }
          Cache<?, ?> cache = cacheFuture.join();
          if (cache.getStatus().isTerminated()) {
             log.tracef("Ignoring cache %s, it is already terminated.", cacheName);
