@@ -102,10 +102,11 @@ import jakarta.transaction.TransactionManager;
 @ValidIdRange(min = 1, max = 900)
 public interface Log extends BasicLogger {
    String LOG_ROOT = "org.infinispan.";
+   String PERSISTENCE_STRING = LOG_ROOT + "PERSISTENCE";
    Log CONFIG = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONFIG");
    Log CLUSTER = Logger.getMessageLogger(Log.class, LOG_ROOT + "CLUSTER");
    Log CONTAINER = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONTAINER");
-   Log PERSISTENCE = Logger.getMessageLogger(Log.class, LOG_ROOT + "PERSISTENCE");
+   Log PERSISTENCE = Logger.getMessageLogger(Log.class, PERSISTENCE_STRING);
    Log SECURITY = Logger.getMessageLogger(Log.class, LOG_ROOT + "SECURITY");
    Log XSITE = Logger.getMessageLogger(Log.class, LOG_ROOT + "XSITE");
 
@@ -2415,4 +2416,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Failed to initialize global registry", id = 710)
    void failedToInitializeGlobalRegistry(@Cause Throwable t);
+
+   @Message(value = "Time between entries retrieved from store exceeded %s ms. Enable TRACE for " + PERSISTENCE_STRING + " to track callers of this", id = 711)
+   TimeoutException storeTimeoutBetweenEntries(long ms);
 }
