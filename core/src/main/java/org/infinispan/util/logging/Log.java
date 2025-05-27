@@ -103,10 +103,11 @@ import jakarta.transaction.TransactionManager;
 @ValidIdRange(min = 1, max = 900)
 public interface Log extends BasicLogger {
    String LOG_ROOT = "org.infinispan.";
+   String PERSISTENCE_STRING = LOG_ROOT + "PERSISTENCE";
    Log CONFIG = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "CONFIG");
    Log CLUSTER = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "CLUSTER");
    Log CONTAINER = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "CONTAINER");
-   Log PERSISTENCE = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "PERSISTENCE");
+   Log PERSISTENCE = Logger.getMessageLogger(Log.class, PERSISTENCE_STRING);
    Log SECURITY = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "SECURITY");
    Log XSITE = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "XSITE");
 
@@ -2420,4 +2421,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "View event rejected. The installed view id '%s' is newer than the received view: %s", id = 711)
    void rejectOutdatedView(int viewId, String newView);
+
+   @Message(value = "Time between entries/keys retrieved from store exceeded %s ms. Enable TRACE for " + PERSISTENCE_STRING + " to track callers of this", id = 712)
+   TimeoutException storeTimeoutBetweenEntries(long ms);
 }
