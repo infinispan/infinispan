@@ -291,7 +291,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    private void modulesManagerStarted() {
       for (ModuleLifecycle l : moduleLifecycles) {
-         if (state != ComponentStatus.RUNNING) {
+         if (state != ComponentStatus.RUNNING || cacheManager.getStatus().isStopping()) {
             log.tracef("Registry was shut down while performing postStart, ignoring remainder of moduleLifecycle instances.");
             break;
          }
