@@ -1,19 +1,27 @@
 name: Build Infinispan
 description: Builds Infinispan and Maven repository with all required artifacts
 
+inputs:
+  gpg-private-key:
+    description: "GPG private key for signing artifacts"
+    required: false
+    default: ""
+
 runs:
   using: composite
   steps:
     - name: Setup Java
       uses: ./.github/actions/setup-java
+      with:
+        gpg-private-key: ${{ inputs.gpg-private-key }}
 
     - name: Build Infinispan
       shell: bash
       run: |
         # Ensure this plugin is built first to avoid warnings in the build
-        ./mvnw install -Pdistribution
+        ./mvnw install -B -Pdistribution
         # By using "dependency:resolve", it will download all dependencies used in later stages for running the tests
-        ./mvnw install dependency:resolve -V -e -DskipTests -DexcludeGroupIds=org.infinispan -Dsilent=true
+        ./mvnw install dependency:resolve -B -V -e -DskipTests -DexcludeGroupIds=org.infinispan -Dsilent=true
 
     - name: Compress Infinispan Maven artifacts
       shell: bash
