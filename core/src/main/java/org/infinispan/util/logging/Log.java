@@ -2402,7 +2402,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Runtime encountered entry with max idle %d ms being greater or equal to lifespan %d ms, ignoring max idle", id = 706)
    void maxIdleGreaterThanOrEqualLifespanRuntime(long maxIdle, long lifespan);
 
-   @Message(value = "Command '%s' not yet supported by all cluster members, requires version '%s'")
+   @Message(value = "Command '%s' not yet supported by all cluster members, requires version '%s'", id = 707)
    UnsupportedVersionException commandNotYeySupportedByAllClusterMembers(String command, NodeVersion version);
 
    @LogMessage(level = ERROR)
