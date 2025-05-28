@@ -33,7 +33,7 @@ public class JdbcStringBasedStoreVamTest extends JdbcStringBasedStoreTest {
 
    @BeforeClass
    public void setUpClass() {
-      cm = TestCacheManagerFactory.createCacheManager(false);
+      cm = TestCacheManagerFactory.createCacheManager(true);
       marshaller = extractPersistenceMarshaller(cm.getCache().getCacheManager());
    }
 

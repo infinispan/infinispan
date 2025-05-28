@@ -174,4 +174,11 @@ public class SecurityActions {
          return null;
       });
    }
+
+   public static void startManager(EmbeddedCacheManager cacheManager) {
+      doPrivileged(() -> {
+         cacheManager.start();
+         return null;
+      });
+   }
 }

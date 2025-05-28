@@ -1035,6 +1035,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V>
    )
    public void start() {
       componentRegistry.start();
+      componentRegistry.postStart();
       queryProducer = componentRegistry.getComponent(QueryProducer.class);
 
       if (stateTransferManager != null) {

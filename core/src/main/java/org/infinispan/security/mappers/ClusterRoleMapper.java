@@ -1,13 +1,13 @@
 package org.infinispan.security.mappers;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  * @since 7.0
  */
 @Scope(Scopes.GLOBAL)
-public class ClusterRoleMapper implements MutablePrincipalRoleMapper {
+public class ClusterRoleMapper implements MutablePrincipalRoleMapper, Lifecycle {
    @Inject
    EmbeddedCacheManager cacheManager;
    @Inject
@@ -45,12 +45,15 @@ public class ClusterRoleMapper implements MutablePrincipalRoleMapper {
    private Cache<String, RoleSet> clusterRoleReadMap;
    private NameRewriter nameRewriter = NameRewriter.IDENTITY_REWRITER;
 
-   @Start
-   void start() {
+   @Override
+   public void start() {
       initializeInternalCache();
       clusterRoleMap = cacheManager.getCache(CLUSTER_ROLE_MAPPER_CACHE);
       clusterRoleReadMap = clusterRoleMap.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD, Flag.CACHE_MODE_LOCAL);
    }
+
+   @Override
+   public void stop() { }
 
    @Override
    public Set<String> principalToRoles(Principal principal) {

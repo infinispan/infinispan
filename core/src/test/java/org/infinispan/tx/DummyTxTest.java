@@ -32,7 +32,7 @@ public class DummyTxTest extends SingleCacheManagerTest {
    protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);  // also try this test with 'true' so you can tell the difference between DummyTransactionManager and JBoss TM
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(true);  // also try this test with 'true' so you can tell the difference between DummyTransactionManager and JBoss TM
 
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.transaction().transactionMode(TransactionMode.TRANSACTIONAL) //default to write-skew
