@@ -3,6 +3,7 @@ package org.infinispan.lock.impl;
 import java.util.EnumSet;
 import java.util.Map;
 
+import org.infinispan.CoreModule;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.CacheMode;
@@ -42,6 +43,16 @@ public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
    private static final Log log = LogFactory.getLog(ClusteredLockModuleLifecycle.class, Log.class);
 
    public static final String CLUSTERED_LOCK_CACHE_NAME = "org.infinispan.LOCKS";
+
+   @Override
+   public void cacheManagerStarted(GlobalComponentRegistry gcr) {
+      CoreModule.startLifecycleComponent(gcr, ClusteredLockManager.class);
+   }
+
+   @Override
+   public void cacheManagerStopping(GlobalComponentRegistry gcr) {
+      CoreModule.stopLifecycleComponent(gcr, ClusteredLockManager.class);
+   }
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {

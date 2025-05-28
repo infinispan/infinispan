@@ -40,7 +40,7 @@ public class TxEmbeddedMultimapCacheTest extends EmbeddedMultimapCacheTest {
       // start a single multimapCache instance
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(true);
       c.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(true);
       MultimapCacheManager multimapCacheManager = EmbeddedMultimapCacheManagerFactory.from(cm);
       multimapCacheManager.defineConfiguration("test", c.build());
       multimapCache = multimapCacheManager.get("test");
