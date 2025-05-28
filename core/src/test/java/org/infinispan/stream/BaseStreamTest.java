@@ -455,7 +455,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
 
          int lueCount = 0;
          for (String string : queue) {
-            if (string.equals("lue")) lueCount++;
+            if ("lue".equals(string)) lueCount++;
          }
          assertEquals(10, lueCount);
       } finally {

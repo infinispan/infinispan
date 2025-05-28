@@ -1,6 +1,7 @@
 package org.infinispan.query.backend;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Base64;
 import java.util.UUID;
@@ -36,80 +37,80 @@ public class KeyTransformationHandlerTest {
 
    public void testKeyToStringWithStringAndPrimitives() {
       String s = keyTransformationHandler.keyToString("key");
-      assert s.equals("S:key");
+      assertEquals("S:key", s);
 
       s = keyTransformationHandler.keyToString(1);
-      assert s.equals("I:1");
+      assertEquals("I:1", s);
 
       s = keyTransformationHandler.keyToString(true);
-      assert s.equals("B:true");
+      assertEquals("B:true", s);
 
       s = keyTransformationHandler.keyToString((short) 1);
-      assert s.equals("X:1");
+      assertEquals("X:1", s);
 
       s = keyTransformationHandler.keyToString((long) 1);
-      assert s.equals("L:1");
+      assertEquals("L:1", s);
 
       s = keyTransformationHandler.keyToString((byte) 1);
-      assert s.equals("Y:1");
+      assertEquals("Y:1", s);
 
       s = keyTransformationHandler.keyToString((float) 1);
-      assert s.equals("F:1.0");
+      assertEquals("F:1.0", s);
 
       s = keyTransformationHandler.keyToString('A');
-      assert s.equals("C:A");
+      assertEquals("C:A", s);
 
       s = keyTransformationHandler.keyToString(1.0);
-      assert s.equals("D:1.0");
+      assertEquals("D:1.0", s);
 
       s = keyTransformationHandler.keyToString(randomUUID);
-      assert s.equals("U:" + randomUUID);
+      assertEquals("U:" + randomUUID, s);
 
       byte[] arr = new byte[]{1, 2, 3, 4, 5, 6};
       s = keyTransformationHandler.keyToString(arr);
-      assert s.equals("A:" + Base64.getEncoder().encodeToString(arr));
+      assertEquals("A:" + Base64.getEncoder().encodeToString(arr), s);
    }
 
    public void testStringToKeyWithStringAndPrimitives() {
       Object key = keyTransformationHandler.stringToKey("S:key1");
-      assert key.getClass() == String.class;
-      assert key.equals("key1");
+      assertEquals(String.class, key.getClass());
+      assertEquals("key1", key);
 
       key = keyTransformationHandler.stringToKey("I:2");
-      assert key.getClass() == Integer.class;
-      assert key.equals(2);
+      assertEquals(Integer.class, key.getClass());
+      assertEquals(2, key);
 
       key = keyTransformationHandler.stringToKey("Y:3");
-      assert key.getClass() == Byte.class;
-      assert key.equals((byte) 3);
+      assertEquals(Byte.class, key.getClass());
+      assertEquals((byte) 3, key);
 
       key = keyTransformationHandler.stringToKey("F:4.0");
-      assert key.getClass() == Float.class;
-      assert key.equals((float) 4.0);
+      assertEquals(Float.class, key.getClass());
+      assertEquals(4.0f, key);
 
       key = keyTransformationHandler.stringToKey("L:5");
-      assert key.getClass() == Long.class;
-      assert key.equals((long) 5);
+      assertEquals(Long.class, key.getClass());
+      assertEquals((long) 5, key);
 
       key = keyTransformationHandler.stringToKey("X:6");
-      assert key.getClass() == Short.class;
-      assert key.equals((short) 6);
+      assertEquals(Short.class, key.getClass());
+      assertEquals((short) 6, key);
 
       key = keyTransformationHandler.stringToKey("B:true");
-      assert key.getClass() == Boolean.class;
-      assert key.equals(true);
+      assertEquals(Boolean.class, key.getClass());
+      assertTrue((Boolean) key);
 
       key = keyTransformationHandler.stringToKey("D:8.0");
-      assert key.getClass() == Double.class;
-      assert key.equals(8.0);
+      assertEquals(Double.class, key.getClass());
+      assertEquals(8.0, key);
 
       key = keyTransformationHandler.stringToKey("C:9");
-      assert key.getClass() == Character.class;
-      assert key.equals('9');
+      assertEquals(Character.class, key.getClass());
+      assertEquals('9', key);
 
       key = keyTransformationHandler.stringToKey("U:" + randomUUID);
-      assert key.getClass() == UUID.class;
-      assert key.equals(randomUUID);
+      assertEquals(UUID.class, key.getClass());
+      assertEquals(randomUUID, key);
 
       byte[] arr = new byte[]{1, 2, 3, 4, 5, 6};
       key = keyTransformationHandler.stringToKey("A:" + Base64.getEncoder().encodeToString(arr));

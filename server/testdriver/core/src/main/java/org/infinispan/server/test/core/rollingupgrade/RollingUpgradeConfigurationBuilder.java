@@ -34,7 +34,7 @@ public class RollingUpgradeConfigurationBuilder {
       RemoteCache<String, String> cache = rcm.getCache("rolling-upgrade");
 
       String value = cache.get("foo");
-      if (value != null && !value.equals("bar")) {
+      if (value != null && !"bar".equals(value)) {
          throw new IllegalStateException("Remote cache returned " + value + " instead of bar");
       }
 

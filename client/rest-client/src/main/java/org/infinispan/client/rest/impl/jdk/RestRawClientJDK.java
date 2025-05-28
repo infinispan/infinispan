@@ -223,7 +223,7 @@ public class RestRawClientJDK implements RestRawClient, AutoCloseable {
       if (accept == null && encoding == null) {
          return HttpResponse.BodyHandlers::ofString;
       } else {
-         if (encoding != null && !encoding.equals("identity")) {
+         if (encoding != null && !"identity".equals(encoding)) {
             return HttpResponse.BodyHandlers::ofByteArray;
          }
          MediaType mediaType = MediaType.parseList(accept).findFirst().get();

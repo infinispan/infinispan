@@ -540,14 +540,14 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
    protected void createTable(String cacheName, String tableName, ConnectionFactoryConfigurationBuilder<ConnectionFactoryConfiguration> builder) {
       String tableCreation;
       String upperCaseCacheName = cacheName.toUpperCase();
-      if (cacheName.equalsIgnoreCase("testKeyWithNullFields")) {
+      if ("testKeyWithNullFields".equalsIgnoreCase(cacheName)) {
          tableCreation = "CREATE TABLE " + tableName + " (" +
                "NAME VARCHAR(255) NOT NULL, " +
                "street VARCHAR(255), " +
                "city VARCHAR(255), " +
                "zip INT, " +
                "PRIMARY KEY (zip))";
-      } else if (cacheName.equalsIgnoreCase("testPreloadStoredAsBinary")) {
+      } else if ("testPreloadStoredAsBinary".equalsIgnoreCase(cacheName)) {
          tableCreation = "CREATE TABLE " + tableName + " (" +
                "keycolumn VARCHAR(255) NOT NULL, " +
                "NAME VARCHAR(255) NOT NULL, " +
@@ -563,7 +563,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
                "decimalField DECIMAL(10, 4), " +
                "realField REAL, " +
                "PRIMARY KEY (keycolumn))";
-      } else if (cacheName.equalsIgnoreCase("testStoreByteArrays")) {
+      } else if ("testStoreByteArrays".equalsIgnoreCase(cacheName)) {
          tableCreation = "CREATE TABLE " + tableName + " (" +
                "keycolumn " + binaryType() + " NOT NULL, " +
                "value1 " + binaryType() + " NOT NULL, " +
@@ -614,7 +614,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
                "sex VARCHAR(255) NOT NULL, " +
                "name VARCHAR(255), " +
                "PRIMARY KEY (sex))";
-      } else if (upperCaseCacheName.equals("TESTNUMERICCOLUMNS")) {
+      } else if ("TESTNUMERICCOLUMNS".equals(upperCaseCacheName)) {
          tableCreation = "CREATE TABLE " + tableName + " (" +
                "keycolumn " + integerType() + ", " +
                "simpleLong " + longType() + ", " +

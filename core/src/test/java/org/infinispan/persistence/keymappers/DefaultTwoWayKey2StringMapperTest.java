@@ -1,5 +1,9 @@
 package org.infinispan.persistence.keymappers;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+
 import java.util.UUID;
 
 import org.infinispan.commons.util.Util;
@@ -12,107 +16,104 @@ public class DefaultTwoWayKey2StringMapperTest {
 
    public void testKeyMapper() {
       String skey = mapper.getStringMapping("k1");
-      assert skey.equals("k1");
+      assertEquals("k1", skey);
 
-      skey = mapper.getStringMapping(Integer.valueOf(100));
-
-      assert !skey.equals("100");
+      skey = mapper.getStringMapping(100);
+      assertNotEquals("100", skey);
 
       Integer i = (Integer) mapper.getKeyMapping(skey);
-      assert i == 100;
+      assertEquals(100, i.intValue());
 
       skey = mapper.getStringMapping(Boolean.TRUE);
-
-      assert !skey.equalsIgnoreCase("true");
+      assertNotEquals("true", skey);
 
       Boolean b = (Boolean) mapper.getKeyMapping(skey);
 
-      assert b;
+      assertTrue(b);
 
-      skey = mapper.getStringMapping(Double.valueOf(3.141592d));
-
-      assert !skey.equals("3.141592");
+      skey = mapper.getStringMapping(3.141592d);
+      assertNotEquals("3.141592", skey);
 
       Double d = (Double) mapper.getKeyMapping(skey);
 
-      assert d == 3.141592d;
+      assertEquals(3.141592d, d);
 
       UUID uuid = Util.threadLocalRandomUUID();
       skey = mapper.getStringMapping(uuid);
-      assert !uuid.equals(uuid.toString());
+      assertNotEquals(uuid.toString(), skey);
 
       UUID u = (UUID) mapper.getKeyMapping(skey);
-      assert u.equals(uuid);
+      assertEquals(uuid, u);
 
    }
 
    public void testPrimitivesAreSupported() {
-      assert mapper.isSupportedType(Integer.class);
-      assert mapper.isSupportedType(Byte.class);
-      assert mapper.isSupportedType(Short.class);
-      assert mapper.isSupportedType(Long.class);
-      assert mapper.isSupportedType(Double.class);
-      assert mapper.isSupportedType(Float.class);
-      assert mapper.isSupportedType(Boolean.class);
-      assert mapper.isSupportedType(String.class);
+      assertTrue(mapper.isSupportedType(Integer.class));
+      assertTrue(mapper.isSupportedType(Byte.class));
+      assertTrue(mapper.isSupportedType(Short.class));
+      assertTrue(mapper.isSupportedType(Long.class));
+      assertTrue(mapper.isSupportedType(Double.class));
+      assertTrue(mapper.isSupportedType(Float.class));
+      assertTrue(mapper.isSupportedType(Boolean.class));
+      assertTrue(mapper.isSupportedType(String.class));
    }
 
    public void testTwoWayContract() {
-      Object[] toTest = { 0, (byte) 1, (short)2, 3.4, (float) 3.5, false, "some string" };
+      Object[] toTest = {0, (byte) 1, (short) 2, 3.4, (float) 3.5, false, "some string"};
       for (Object o : toTest) {
          Class<?> type = o.getClass();
          String rep = mapper.getStringMapping(o);
-         assert o.equals(mapper.getKeyMapping(rep)) : String.format("Failed on type %s and value %s", type, rep);
+         assertEquals(String.format("Failed on type %s and value %s", type, rep), o, mapper.getKeyMapping(rep));
       }
    }
 
    public void testString() {
-      assert mapper.isSupportedType(String.class);
-      assert assertWorks("") : "Expected empty string, was " + mapper.getStringMapping("");
-      assert assertWorks("mircea") : "Expected 'mircea', was " + mapper.getStringMapping("mircea");
+      assertTrue(mapper.isSupportedType(String.class));
+      assertTrue(assertWorks(""), "Expected empty string, was " + mapper.getStringMapping(""));
+      assertTrue(assertWorks("mircea"), "Expected 'mircea', was " + mapper.getStringMapping("mircea"));
    }
 
    public void testShort() {
-      assert mapper.isSupportedType(Short.class);
-      assert assertWorks((short) 2);
+      assertTrue(mapper.isSupportedType(Short.class));
+      assertTrue(assertWorks((short) 2));
    }
 
    public void testByte() {
-      assert mapper.isSupportedType(Byte.class);
-      assert assertWorks((byte) 2);
+      assertTrue(mapper.isSupportedType(Byte.class));
+      assertTrue(assertWorks((byte) 2));
    }
 
    public void testLong() {
-      assert mapper.isSupportedType(Long.class);
-      assert assertWorks(2L);
+      assertTrue(mapper.isSupportedType(Long.class));
+      assertTrue(assertWorks(2L));
    }
 
    public void testInteger() {
-      assert mapper.isSupportedType(Integer.class);
-      assert assertWorks(2);
+      assertTrue(mapper.isSupportedType(Integer.class));
+      assertTrue(assertWorks(2));
    }
 
    public void testDouble() {
-      assert mapper.isSupportedType(Double.class);
-      assert assertWorks(2.4d);
+      assertTrue(mapper.isSupportedType(Double.class));
+      assertTrue(assertWorks(2.4d));
 
    }
 
    public void testFloat() {
-      assert mapper.isSupportedType(Float.class);
-      assert assertWorks(2.1f);
+      assertTrue(mapper.isSupportedType(Float.class));
+      assertTrue(assertWorks(2.1f));
 
    }
 
    public void testBoolean() {
-      assert mapper.isSupportedType(Boolean.class);
-      assert assertWorks(true);
-      assert assertWorks(false);
+      assertTrue(mapper.isSupportedType(Boolean.class));
+      assertTrue(assertWorks(true));
+      assertTrue(assertWorks(false));
    }
 
    public void testUuid() {
-      assert mapper.isSupportedType(UUID.class);
-      assert assertWorks(Util.threadLocalRandomUUID());
+      assertTrue(mapper.isSupportedType(UUID.class));
+      assertTrue(assertWorks(Util.threadLocalRandomUUID()));
    }
 
    private boolean assertWorks(Object key) {

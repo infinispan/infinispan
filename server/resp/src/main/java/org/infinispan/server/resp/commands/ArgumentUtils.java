@@ -51,13 +51,13 @@ public final class ArgumentUtils {
    }
 
    private static double toDoubleWithInfinity(String sArg, byte[] number, int offset) {
-      if (sArg.equalsIgnoreCase("Inf")
-            || sArg.equalsIgnoreCase("+Inf")
-            || sArg.equals("Infinity")) {
+      if ("Inf".equalsIgnoreCase(sArg)
+            || "+Inf".equalsIgnoreCase(sArg)
+            || "Infinity".equals(sArg)) {
          return Double.POSITIVE_INFINITY;
       }
 
-      if (sArg.equalsIgnoreCase("-Inf") || sArg.equals("-Infinity")) {
+      if ("-Inf".equalsIgnoreCase(sArg) || "-Infinity".equals(sArg)) {
          return Double.NEGATIVE_INFINITY;
       }
 

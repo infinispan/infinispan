@@ -145,7 +145,7 @@ public final class StandardConversions {
       String classType = destination.getClassType();
       if (classType == null) return source;
 
-      if (classType.equals("ByteArray")) {
+      if ("ByteArray".equals(classType)) {
          return source;
       }
       if (destination.hasStringType()) {
@@ -252,7 +252,7 @@ public final class StandardConversions {
       String type = contentMediaType.getClassType();
       if (type == null) return content;
 
-      if (type.equals("ByteArray")) {
+      if ("ByteArray".equals(type)) {
          if (content instanceof byte[]) return content;
          if (content instanceof String) return hexToBytes(content.toString());
          throw new EncodingException("Cannot read ByteArray!");
@@ -336,7 +336,7 @@ public final class StandardConversions {
       if (input instanceof String) {
          String encoding = octetStream.getParameter("encoding").orElse("hex");
          String src = input.toString();
-         return encoding.equals("hex") ? hexToBytes(src) : getUrlDecoder().decode(src);
+         return "hex".equals(encoding) ? hexToBytes(src) : getUrlDecoder().decode(src);
       }
       throw new EncodingException("Cannot decode binary content " + input.getClass());
    }

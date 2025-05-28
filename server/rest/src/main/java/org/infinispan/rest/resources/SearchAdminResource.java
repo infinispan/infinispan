@@ -86,7 +86,7 @@ public class SearchAdminResource implements ResourceHandler {
 
       String scopeParam = request.getParameter("scope");
       boolean pretty = isPretty(request);
-      if (scopeParam != null && scopeParam.equalsIgnoreCase("cluster")) {
+      if ("cluster".equalsIgnoreCase(scopeParam)) {
          CompletionStage<SearchStatisticsSnapshot> stats = Search.getClusteredSearchStatistics(cache);
          return stats.thenApply(s -> asJsonResponse(invocationHelper.newResponse(request), s.toJson(), pretty));
       } else {
@@ -111,7 +111,7 @@ public class SearchAdminResource implements ResourceHandler {
       String scopeParam = request.getParameter("scope");
 
       //TODO: cluster clear
-      if (scopeParam != null && scopeParam.equalsIgnoreCase("cluster")) {
+      if ("cluster".equalsIgnoreCase(scopeParam)) {
          throw new CacheException("NotImplemented");
       } else {
          SearchStatistics searchStatistics = Search.getSearchStatistics(cache);
