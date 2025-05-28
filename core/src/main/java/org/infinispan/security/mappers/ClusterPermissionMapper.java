@@ -8,12 +8,12 @@ import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -30,7 +30,7 @@ import org.infinispan.security.actions.SecurityActions;
  * @since 14.0
  */
 @Scope(Scopes.GLOBAL)
-public class ClusterPermissionMapper implements MutableRolePermissionMapper {
+public class ClusterPermissionMapper implements MutableRolePermissionMapper, Lifecycle {
    public static final String CLUSTER_PERMISSION_MAPPER_CACHE = "org.infinispan.PERMISSIONS";
    @Inject
    EmbeddedCacheManager cacheManager;
@@ -39,12 +39,15 @@ public class ClusterPermissionMapper implements MutableRolePermissionMapper {
    private Cache<String, Role> clusterPermissionMap;
    private Cache<String, Role> clusterPermissionReadMap;
 
-   @Start
-   void start() {
+   @Override
+   public void start() {
       initializeInternalCache();
       clusterPermissionMap = cacheManager.getCache(CLUSTER_PERMISSION_MAPPER_CACHE);
       clusterPermissionReadMap = clusterPermissionMap.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD, Flag.CACHE_MODE_LOCAL);
    }
+
+   @Override
+   public void stop() { }
 
    private void initializeInternalCache() {
       GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);

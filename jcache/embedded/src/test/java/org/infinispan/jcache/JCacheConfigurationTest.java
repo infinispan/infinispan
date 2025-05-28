@@ -44,7 +44,7 @@ import org.testng.annotations.Test;
 public class JCacheConfigurationTest extends AbstractInfinispanTest {
 
    public void testNamedCacheConfiguration() {
-      withCacheManager(TestCacheManagerFactory.createCacheManager(false), cm -> {
+      withCacheManager(TestCacheManagerFactory.createCacheManager(true), cm -> {
          cm.defineConfiguration("oneCache", new ConfigurationBuilder().build());
          JCacheManager jCacheManager = new JCacheManager(URI.create("oneCacheManager"), cm, null);
          assertNotNull(jCacheManager.getCache("oneCache"));

@@ -258,7 +258,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
-   protected void postStart() {
+   public void postStart() {
       CompletionStages.join(cacheManagerNotifier.notifyCacheStarted(cacheName));
    }
 

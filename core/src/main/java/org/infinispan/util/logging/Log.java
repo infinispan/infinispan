@@ -2411,4 +2411,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Failed to backup cache `%s` to one or more remote sites: %s", id = 709)
    String failedToBackupData(String cacheName, String siteMessages);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed to initialize global registry", id = 710)
+   void failedToInitializeGlobalRegistry(@Cause Throwable t);
 }

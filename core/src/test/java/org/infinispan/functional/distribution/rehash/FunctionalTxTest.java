@@ -115,6 +115,7 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
                                                             cb, new TransportFlags());
       registerCacheManager(cm);
       Future<?> future = fork(() -> {
+         cm.start();
          cache(3);
       });
 
@@ -149,6 +150,7 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
                                                             cb, new TransportFlags());
       registerCacheManager(cm);
       Future<?> future = fork(() -> {
+         cm.start();
          cache(3);
       });
 

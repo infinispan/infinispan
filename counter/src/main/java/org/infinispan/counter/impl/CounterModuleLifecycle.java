@@ -4,6 +4,7 @@ import static java.util.EnumSet.of;
 import static org.infinispan.registry.InternalCacheRegistry.Flag.EXCLUSIVE;
 import static org.infinispan.registry.InternalCacheRegistry.Flag.PERSISTENT;
 
+import org.infinispan.CoreModule;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -13,6 +14,7 @@ import org.infinispan.counter.configuration.CounterManagerConfiguration;
 import org.infinispan.counter.configuration.CounterManagerConfigurationBuilder;
 import org.infinispan.counter.configuration.Reliability;
 import org.infinispan.counter.impl.interceptor.CounterInterceptor;
+import org.infinispan.counter.impl.manager.CounterConfigurationManager;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.counter.impl.persistence.PersistenceContextInitializerImpl;
 import org.infinispan.counter.logging.Log;
@@ -131,5 +133,16 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
          bcr.getComponent(AsyncInterceptorChain.class).wired()
                .addInterceptorAfter(counterInterceptor, EntryWrappingInterceptor.class);
       }
+   }
+
+   @Override
+   public void cacheManagerStarted(GlobalComponentRegistry gcr) {
+      // We cannot initialize the cache during the start of the manager otherwise it creates a cyclic dependency
+      CoreModule.startLifecycleComponent(gcr, CounterConfigurationManager.class);
+   }
+
+   @Override
+   public void cacheManagerStopping(GlobalComponentRegistry gcr) {
+      CoreModule.stopLifecycleComponent(gcr, CounterConfigurationManager.class);
    }
 }
