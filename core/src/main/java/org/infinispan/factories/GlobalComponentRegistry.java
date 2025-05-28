@@ -270,6 +270,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       basicComponentRegistry.getComponent(XSiteEventsManager.class).running();
    }
 
+   @Override
    public void postStart() {
       modulesManagerStarted();
    }
@@ -290,6 +291,10 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    private void modulesManagerStarted() {
       for (ModuleLifecycle l : moduleLifecycles) {
+         if (state != ComponentStatus.RUNNING) {
+            log.tracef("Registry was shut down while performing postStart, ignoring remainder of moduleLifecycle instances.");
+            break;
+         }
          if (log.isTraceEnabled()) {
             log.tracef("Invoking %s.cacheManagerStarted()", l);
          }

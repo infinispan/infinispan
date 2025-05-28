@@ -14,7 +14,7 @@ public class ClusteredLockWithoutClusterTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(false);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(true);
       cm.defineConfiguration("test", c.build());
       cache = cm.getCache("test");
       return cm;

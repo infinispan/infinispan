@@ -89,7 +89,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    private static final java.lang.String CACHE_NAME = "name";
 
    public void testDefaultCache() {
-      EmbeddedCacheManager cm = createCacheManager(false);
+      EmbeddedCacheManager cm = createCacheManager(true);
 
       try {
          assertEquals(ComponentStatus.RUNNING, cm.getCache().getStatus());
@@ -125,9 +125,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          public void call() {
             assertEquals(ComponentStatus.INSTANTIATED, cm.getStatus());
             assertFalse(cm.getStatus().allowInvocations());
-            Cache<Object, Object> cache = cm.getCache();
-            cache.put("k", "v");
-            assertEquals(cache.get("k"), "v");
+            Exceptions.expectException(IllegalLifecycleStateException.class, cm::getCache);
          }
       });
    }
@@ -160,7 +158,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    public void testStartAndStop() {
-      EmbeddedCacheManager cm = createCacheManager(false);
+      EmbeddedCacheManager cm = createCacheManager(true);
       try {
          cm.defineConfiguration("cache1", new ConfigurationBuilder().build());
          cm.defineConfiguration("cache2", new ConfigurationBuilder().build());
@@ -225,7 +223,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    public void testGetCacheNames() {
-      EmbeddedCacheManager cm = createCacheManager(false);
+      EmbeddedCacheManager cm = createCacheManager(true);
       try {
          cm.defineConfiguration("one", new ConfigurationBuilder().build());
          cm.defineConfiguration("two", new ConfigurationBuilder().build());
@@ -242,7 +240,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    public void testCacheStopTwice() {
-      EmbeddedCacheManager localCacheManager = createCacheManager(false);
+      EmbeddedCacheManager localCacheManager = createCacheManager(true);
       try {
          Cache<String, String> cache = localCacheManager.getCache();
          cache.put("k", "v");
@@ -254,7 +252,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    public void testCacheManagerStopTwice() {
-      EmbeddedCacheManager localCacheManager = createCacheManager(false);
+      EmbeddedCacheManager localCacheManager = createCacheManager(true);
       try {
          Cache<String, String> cache = localCacheManager.getCache();
          cache.put("k", "v");

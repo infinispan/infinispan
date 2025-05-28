@@ -60,9 +60,9 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm2 = createCacheManager();
 
       // Install the blocking invocation handlers
-      assertEquals(ComponentStatus.INSTANTIATED, extractGlobalComponentRegistry(cm1).getStatus());
+      assertEquals(ComponentStatus.RUNNING, extractGlobalComponentRegistry(cm1).getStatus());
       replaceInboundInvocationHandler(cm1, checkPoint, 0);
-      assertEquals(ComponentStatus.INSTANTIATED, extractGlobalComponentRegistry(cm2).getStatus());
+      assertEquals(ComponentStatus.RUNNING, extractGlobalComponentRegistry(cm2).getStatus());
       replaceInboundInvocationHandler(cm2, checkPoint, 1);
 
       log.debugf("Cache managers created. Starting the caches");
@@ -106,7 +106,7 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       gcb.transport().defaultTransport();
       TestCacheManagerFactory.amendGlobalConfiguration(gcb, new TransportFlags());
       ConfigurationBuilder defaultCacheConfig = new ConfigurationBuilder();
-      EmbeddedCacheManager cm = TestCacheManagerFactory.newDefaultCacheManager(false, gcb, defaultCacheConfig);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.newDefaultCacheManager(true, gcb, defaultCacheConfig);
       registerCacheManager(cm);
 
       Configuration replCfg = new ConfigurationBuilder().clustering().cacheMode(CacheMode.REPL_SYNC).build();

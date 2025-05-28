@@ -22,7 +22,7 @@ public class UnwrapTest extends AbstractInfinispanTest {
 
    public void testUnwrap() {
       withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(false)) {
+            TestCacheManagerFactory.createCacheManager(true)) {
          @Override
          public void call() {
             cm.defineConfiguration("UnwrapCache", new ConfigurationBuilder().build());

@@ -158,6 +158,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache
             .lifespan(configuration.expiration().lifespan())
             .maxIdle(configuration.expiration().maxIdle()).build();
       componentRegistry.start();
+      componentRegistry.postStart();
    }
 
    @Override
