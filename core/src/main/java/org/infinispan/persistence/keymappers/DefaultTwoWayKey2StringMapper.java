@@ -4,8 +4,6 @@ import java.util.Base64;
 import java.util.UUID;
 
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Default implementation for {@link TwoWayKey2StringMapper} that knows how to handle all primitive
@@ -17,7 +15,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.1
  */
 public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
-   private static final Log log = LogFactory.getLog(DefaultTwoWayKey2StringMapper.class);
 
    private static final char NON_STRING_PREFIX = '\uFEFF';
    private static final char SHORT_IDENTIFIER = '1';
@@ -103,7 +100,7 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
    }
 
    private String generateString(char identifier, String s) {
-      return String.valueOf(NON_STRING_PREFIX) + String.valueOf(identifier) + s;
+      return NON_STRING_PREFIX + String.valueOf(identifier) + s;
    }
 
    private static boolean isPrimitive(Class<?> key) {

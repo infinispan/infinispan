@@ -68,7 +68,7 @@ public class TasksResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> listTasks(RestRequest request) {
       String type = request.getParameter("type");
-      boolean userOnly = type != null && type.equalsIgnoreCase("user");
+      boolean userOnly = "user".equalsIgnoreCase(type);
       boolean pretty = isPretty(request);
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       TaskManager taskManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(TaskManager.class);

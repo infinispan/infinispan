@@ -53,7 +53,7 @@ abstract class BinaryDecoder extends MemcachedBaseDecoder {
       }
       String k = new String(key, StandardCharsets.US_ASCII);
       StringBuilder sb = new StringBuilder();
-      if (k.equals("cluster")) {
+      if ("cluster".equals(k)) {
          sb.append("1");
          sb.append("\r\n");
          sb.append(server.getHost());

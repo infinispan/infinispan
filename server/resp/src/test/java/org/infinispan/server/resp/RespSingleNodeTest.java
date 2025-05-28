@@ -1344,7 +1344,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       boolean c = false;
       for (int i = 0; i < 20; i++) {
          String k = redis.randomkey();
-         if (k.equals("k2")) {
+         if ("k2".equals(k)) {
             c = true;
             break;
          }

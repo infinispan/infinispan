@@ -62,7 +62,7 @@ public class TestResourceTracker {
          // other alternative. It does not offer any callbacks within the
          // thread that runs the test that can timeout.
          String threadName = Thread.currentThread().getName();
-         if (threadName.equals("main") || threadName.equals("TestNG")) {
+         if ("main".equals(threadName) || "TestNG".equals(threadName)) {
             // Regular test, force the user to extend AbstractInfinispanTest
             throw new IllegalStateException("Test name is not set! Please extend AbstractInfinispanTest!");
          } else if (threadName.startsWith("TestNGInvoker-")) {

@@ -114,7 +114,7 @@ abstract class AbstractMetricsRegistration implements Constants {
          throw new IllegalArgumentException("No MBean name and no component name was specified.");
       }
       String metricPrefix = "";
-      if (!jmxObjectName.equals("Cache") && !jmxObjectName.equals("CacheManager")) {
+      if (!"Cache".equals(jmxObjectName) && !"CacheManager".equals(jmxObjectName)) {
          if (prefix != null) {
             metricPrefix += NameUtils.decamelize(prefix) + '_';
          }

@@ -52,9 +52,9 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    /**
     * The current parsing phase
     */
-   protected Phase phase;
+   Phase phase;
 
-   protected boolean filtering;
+   boolean filtering;
 
    private IckleParsingResult.StatementType statementType;
 
@@ -346,7 +346,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
 
       checkAnalyzed(property, true);
       Object comparisonObject = parameterValue(term);
-      Integer fuzzy = fuzzyFlop == null ? null : (fuzzyFlop.equals("~") ? 2 : Integer.parseInt(fuzzyFlop));
+      Integer fuzzy = fuzzyFlop == null ? null : ("~".equals(fuzzyFlop) ? 2 : Integer.parseInt(fuzzyFlop));
       expressionBuilder.addFullTextTerm(property, comparisonObject, fuzzy);
    }
 

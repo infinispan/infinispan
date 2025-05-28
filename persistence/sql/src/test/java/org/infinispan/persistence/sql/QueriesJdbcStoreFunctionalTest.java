@@ -60,7 +60,7 @@ public class QueriesJdbcStoreFunctionalTest extends AbstractSQLStoreFunctionalTe
             .deleteAll("DELETE FROM " + tableName)
             .size("SELECT COUNT(*) FROM " + tableName);
       storeBuilder.keyColumns(KEY_COLUMN);
-      if (cacheName.equalsIgnoreCase("testKeyWithNullFields")) {
+      if ("testKeyWithNullFields".equalsIgnoreCase(cacheName)) {
          String upsert = manager.getUpsertStatement(Arrays.asList("street", "city"), Arrays.asList("name", "street", "city", "zip"));
          storeBuilder.keyColumns("street, city");
          storeBuilder.queries()
@@ -68,14 +68,14 @@ public class QueriesJdbcStoreFunctionalTest extends AbstractSQLStoreFunctionalTe
                .selectAll("SELECT name, street, city, zip FROM " + tableName)
                .upsert(upsert)
                .delete("DELETE FROM " + tableName + " WHERE (street = :street OR :street IS NULL) AND city = :city");
-      } else if (cacheName.equalsIgnoreCase("testPreloadStoredAsBinary")) {
+      } else if ("testPreloadStoredAsBinary".equalsIgnoreCase(cacheName)) {
          storeBuilder.queries()
                .select("SELECT " + KEY_COLUMN + ", name, STREET, city, ZIP, picture, sex, birthdate, accepted_tos, moneyOwned, moneyOwed, decimalField, realField FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
                .selectAll("SELECT " + KEY_COLUMN + ", name, street, city, zip, picture, sex, birthdate, accepted_tos, moneyOwned, moneyOwed, decimalField, realField FROM " + tableName)
                .upsert(manager.getUpsertStatement(Collections.singletonList(KEY_COLUMN),
                      Arrays.asList(KEY_COLUMN, "name", "street", "CITY", "zip", "picture", "sex", "birthdate", "accepted_tos", "moneyOwned", "moneyOwed", "decimalField", "realField")))
                .delete("DELETE FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN);
-      } else if (cacheName.equalsIgnoreCase("testStoreByteArrays")) {
+      } else if ("testStoreByteArrays".equalsIgnoreCase(cacheName)) {
          storeBuilder.queries()
                .select("SELECT " + KEY_COLUMN + ", value1 FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
                .selectAll("SELECT " + KEY_COLUMN + ", value1 FROM " + tableName)
@@ -130,7 +130,7 @@ public class QueriesJdbcStoreFunctionalTest extends AbstractSQLStoreFunctionalTe
                .upsert(manager.getUpsertStatement(Collections.singletonList("sex"),
                      Arrays.asList("name", "sex")))
                .delete("DELETE FROM " + tableName + " WHERE sex = :sex");
-      } else if (cacheName.equalsIgnoreCase("TESTNUMERICCOLUMNS")) {
+      } else if ("TESTNUMERICCOLUMNS".equalsIgnoreCase(cacheName)) {
          storeBuilder.queries()
                .select("SELECT " + KEY_COLUMN + ", simpleLong, simpleFloat, simpleDouble, largeInteger FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
                .selectAll("SELECT " + KEY_COLUMN + ", simpleLong, simpleFloat, simpleDouble, largeInteger FROM " + tableName)

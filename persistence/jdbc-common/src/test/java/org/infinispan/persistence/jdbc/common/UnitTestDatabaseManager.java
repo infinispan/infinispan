@@ -26,9 +26,9 @@ public class UnitTestDatabaseManager {
    private static final DatabaseType dt;
 
    static {
-      String driver = "";
+      String driver;
       try {
-         if (DB_TYPE.equalsIgnoreCase("mysql")) {
+         if ("mysql".equalsIgnoreCase(DB_TYPE)) {
             driver = com.mysql.jdbc.Driver.class.getName();
             dt = DatabaseType.MYSQL;
          } else {
@@ -38,7 +38,6 @@ public class UnitTestDatabaseManager {
          try {
             Class.forName(driver);
          } catch (ClassNotFoundException e) {
-            driver = H2_DRIVER;
             Class.forName(H2_DRIVER);
          }
       } catch (ClassNotFoundException e) {
