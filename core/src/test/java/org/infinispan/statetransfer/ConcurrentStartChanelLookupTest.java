@@ -67,7 +67,10 @@ public class ConcurrentStartChanelLookupTest extends MultipleCacheManagersTest {
          assertEquals(ComponentStatus.INSTANTIATED, extractGlobalComponentRegistry(cm2).getStatus());
 
          log.debugf("Channels created. Starting the caches");
-         Future<Object> repl1Future = fork(() -> manager(eagerManager).getCache());
+         Future<Object> repl1Future = fork(() -> {
+            manager(eagerManager).start();
+            return manager(eagerManager).getCache();
+         });
 
          // If eagerManager == 0, the coordinator broadcasts a GET_STATUS command.
          // If eagerManager == 1, the non-coordinator sends a JOIN command to the coordinator.
@@ -77,7 +80,10 @@ public class ConcurrentStartChanelLookupTest extends MultipleCacheManagersTest {
          // command, so we don't try to wait for a precise amount of time.
          Thread.sleep(1000);
 
-         Future<Object> repl2Future = fork(() -> manager(lazyManager).getCache());
+         Future<Object> repl2Future = fork(() -> {
+            manager(lazyManager).start();
+            return manager(lazyManager).getCache();
+         });
 
          repl1Future.get(10, SECONDS);
          repl2Future.get(10, SECONDS);

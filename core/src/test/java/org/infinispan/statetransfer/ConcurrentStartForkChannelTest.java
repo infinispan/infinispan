@@ -80,9 +80,15 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
          // When the coordinator starts first, it's ok to just start the caches in sequence.
          // When the coordinator starts last, however, the other node is not able to start before the
          // coordinator has the ClusterTopologyManager running.
-         Future<Cache<String, String>> c1rFuture = fork(() -> manager(eagerManager).getCache(CACHE_NAME));
+         Future<Cache<String, String>> c1rFuture = fork(() -> {
+            EmbeddedCacheManager m = manager(eagerManager);
+            m.start();
+            return m.getCache(CACHE_NAME);
+         });
          Thread.sleep(1000);
-         Cache<String, String> c2r = manager(lazyManager).getCache(CACHE_NAME);
+         EmbeddedCacheManager m = manager(lazyManager);
+         m.start();
+         Cache<String, String> c2r = m.getCache(CACHE_NAME);
          Cache<String, String> c1r = c1rFuture.get(10, TimeUnit.SECONDS);
 
          blockUntilViewsReceived(10000, cm1, cm2);
