@@ -20,7 +20,7 @@ public class TerminatedCacheTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createCacheManager(false);
+      return TestCacheManagerFactory.createCacheManager(true);
    }
 
    @Test(expectedExceptions = IllegalLifecycleStateException.class)

@@ -136,7 +136,10 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       EmbeddedCacheManager cm = createClusteredCacheManager(false, GlobalConfigurationBuilder.defaultClusteredBuilder(),
                                                             cb, new TransportFlags());
       registerCacheManager(cm);
-      Future<?> newNode = fork(() -> cache(3));
+      Future<?> newNode = fork(() -> {
+         cm.start();
+         return cache(3);
+      });
 
       // block sending segment 0 to node 2
       crm2.expectCommand(StateTransferGetTransactionsCommand.class).send().receiveAll();

@@ -197,7 +197,7 @@ public class APITest extends MultipleCacheManagersTest {
    @Test(expectedExceptions = UnsupportedOperationException.class)
    public void testLockOnNonTransactionalCache() {
       withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(false)) {
+            TestCacheManagerFactory.createCacheManager(true)) {
          @Override
          public void call() {
             cm.getCache().getAdvancedCache().lock("k");

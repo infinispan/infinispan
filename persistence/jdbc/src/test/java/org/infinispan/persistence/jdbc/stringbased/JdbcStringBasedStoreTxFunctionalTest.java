@@ -89,7 +89,11 @@ public class JdbcStringBasedStoreTxFunctionalTest extends JdbcStringBasedStoreFu
             holder.newConfigurationBuilder(defaultName).read(cb.build(), Combine.DEFAULT);
          }
          global.transport().defaultTransport();
-         return TestCacheManagerFactory.createClusteredCacheManager(start, holder);
+         EmbeddedCacheManager ecm = TestCacheManagerFactory.createClusteredCacheManager(false, holder);
+         if (start) {
+            TestingUtil.startCacheManager(ecm);
+         }
+         return ecm;
       } else {
          return super.createCacheManager(start, global, cb);
       }

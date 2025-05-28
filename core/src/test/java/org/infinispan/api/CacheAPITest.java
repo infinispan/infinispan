@@ -44,7 +44,7 @@ public abstract class CacheAPITest extends APINonTxTest {
       cb.locking().isolationLevel(getIsolationLevel());
       addEviction(cb);
       amend(cb);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(true);
       cm.defineConfiguration("test", cb.build());
       cache = cm.getCache("test");
       return cm;
