@@ -27,7 +27,7 @@ public class CacheListenerCacheLoaderTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    public void setUp() {
-      cm = TestCacheManagerFactory.createCacheManager(false);
+      cm = TestCacheManagerFactory.createCacheManager(true);
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class)
          .storeName("no_passivation");

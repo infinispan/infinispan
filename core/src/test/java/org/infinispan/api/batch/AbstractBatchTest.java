@@ -20,7 +20,7 @@ public abstract class AbstractBatchTest extends SingleCacheManagerTest {
 
    @Override
    public EmbeddedCacheManager createCacheManager() {
-      return TestCacheManagerFactory.createCacheManager(false);
+      return TestCacheManagerFactory.createCacheManager(true);
    }
 
    public void testClearInBatch(Method method) {

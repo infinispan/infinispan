@@ -47,6 +47,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.internal.BlockHoundUtil;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Immutables;
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
@@ -533,6 +534,10 @@ public class DefaultCacheManager extends InternalCacheManager {
          throw new NullPointerException("Null arguments not allowed");
 
       assertIsNotTerminated();
+      if (!globalComponentRegistry.getStatus().allowInvocations()) {
+         throw new IllegalLifecycleStateException("Cache cannot be retrieved while global registry is not running!!");
+      }
+
       String actualName = configurationManager.selectCache(cacheName);
       if (getCacheBlockingCheck != null) {
          if (actualName.equals(getCacheBlockingCheck.get())) {
@@ -561,6 +566,10 @@ public class DefaultCacheManager extends InternalCacheManager {
                }
                return v;
             });
+            // We were interrupted don't attempt to restart the cache
+            if (Util.getRootCause(e) instanceof InterruptedException) {
+               return null;
+            }
          }
       }
       AdvancedCache<K, V> cache = (AdvancedCache<K, V>) createCache(actualName);
@@ -777,11 +786,51 @@ public class DefaultCacheManager extends InternalCacheManager {
       try {
          globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).start();
          globalComponentRegistry.start();
+         // Some caches are started during postStart and we have to extract it out
+         globalComponentRegistry.postStart();
+         // We could get a stop concurrently, in which case we only want to update to RUNNING if not
+         ComponentStatus prev = updateStatusIfPrevious(ComponentStatus.INITIALIZING, ComponentStatus.RUNNING);
+         if (prev != null) {
+            log.debugf("Cache status changed to %s whiled starting %s", prev, identifierString());
+            return;
+         }
          log.debugf("Started cache manager %s", identifierString());
       } catch (Exception e) {
-         throw new EmbeddedCacheManagerStartupException(e);
-      } finally {
-         updateStatus(globalComponentRegistry.getStatus());
+         log.failedToInitializeGlobalRegistry(e);
+
+         boolean performShutdown = false;
+         lifecycleLock.lock();
+         try {
+            // First wait if another is stopping us.. if they are we have to wait until they are done with the stop
+            while (status == ComponentStatus.STOPPING) {
+               lifecycleCondition.await();
+            }
+            // It is possible another concurrent stop happened which killed our start, so we stop only if that
+            // wasn't taking place
+            if (status != ComponentStatus.FAILED && status != ComponentStatus.TERMINATED) {
+               performShutdown = true;
+               status = ComponentStatus.STOPPING;
+               lifecycleCondition.signalAll();
+            }
+         } catch (InterruptedException ie) {
+            throw new CacheException("Interrupted waiting for the cache manager to stop");
+         } finally {
+            lifecycleLock.unlock();
+         }
+
+         if (performShutdown) {
+            log.tracef("Stopping all caches first before global component registry");
+            stopCaches();
+            try {
+               globalComponentRegistry.componentFailed(e);
+            } catch (Exception e1) {
+               // Certain tests require this exception
+               throw new EmbeddedCacheManagerStartupException(e1);
+            } finally {
+               updateStatus(ComponentStatus.FAILED);
+            }
+            throw new EmbeddedCacheManagerStartupException(e);
+         }
       }
    }
 
@@ -799,6 +848,24 @@ public class DefaultCacheManager extends InternalCacheManager {
       try {
          this.status = status;
          lifecycleCondition.signalAll();
+      } finally {
+         lifecycleLock.unlock();
+      }
+   }
+
+   /**
+    * Updates the status to the new status only if the previous status is equal. Returns null if updated otherwise
+    * returns the previous status that didn't match.
+    */
+   private ComponentStatus updateStatusIfPrevious(ComponentStatus prev, ComponentStatus status) {
+      lifecycleLock.lock();
+      try {
+         if (this.status == prev) {
+            this.status = status;
+            lifecycleCondition.signalAll();
+            return null;
+         }
+         return this.status;
       } finally {
          lifecycleLock.unlock();
       }

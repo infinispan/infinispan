@@ -1,9 +1,9 @@
 package org.infinispan.counter.impl.manager;
 
+import static org.infinispan.commons.internal.InternalCacheNames.CONFIG_STATE_CACHE_NAME;
 import static org.infinispan.counter.configuration.ConvertUtil.parsedConfigToConfig;
 import static org.infinispan.counter.impl.Utils.validateStrongCounterBounds;
 import static org.infinispan.counter.logging.Log.CONTAINER;
-import static org.infinispan.commons.internal.InternalCacheNames.CONFIG_STATE_CACHE_NAME;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.counter.api.CounterConfiguration;
@@ -22,8 +23,6 @@ import org.infinispan.counter.configuration.AbstractCounterConfiguration;
 import org.infinispan.counter.configuration.CounterManagerConfiguration;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.globalstate.ScopeFilter;
@@ -50,7 +49,7 @@ import org.infinispan.util.concurrent.BlockingManager;
  * @since 9.2
  */
 @Scope(Scopes.GLOBAL)
-public class CounterConfigurationManager {
+public class CounterConfigurationManager implements Lifecycle {
 
    public static final String COUNTER_SCOPE = "counter";
 
@@ -81,7 +80,7 @@ public class CounterConfigurationManager {
     * <p>
     * If any is found, it starts the counter's {@link Cache}.
     */
-   @Start
+   @Override
    public void start() {
       stateCache = cacheManager
             .<ScopedState, CounterConfiguration>getCache(CONFIG_STATE_CACHE_NAME)
@@ -98,13 +97,12 @@ public class CounterConfigurationManager {
       }
    }
 
-
    /**
     * Removes the listener for new coming defined counter's.
     * <p>
     * The persistence is done on the fly when the configuration is defined.
     */
-   @Stop
+   @Override
    public void stop() {
       counterCacheStarted.set(true); //avoid starting the counter cache if it hasn't started yet
       if (listener != null && stateCache != null) {
@@ -113,6 +111,7 @@ public class CounterConfigurationManager {
       listener = null;
       stateCache = null;
    }
+
 
    /**
     * It defines a new counter with the {@link CounterConfiguration}.

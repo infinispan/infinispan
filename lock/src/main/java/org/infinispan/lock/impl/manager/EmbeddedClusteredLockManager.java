@@ -6,13 +6,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
@@ -39,7 +38,7 @@ import org.infinispan.util.ByteString;
  */
 @Scope(Scopes.GLOBAL)
 @MBean(objectName = EmbeddedClusteredLockManager.OBJECT_NAME, description = "Component to manage clustered locks")
-public class EmbeddedClusteredLockManager implements ClusteredLockManager {
+public class EmbeddedClusteredLockManager implements ClusteredLockManager, Lifecycle {
    public static final String OBJECT_NAME = "ClusteredLockManager";
    private static final Log log = LogFactory.getLog(EmbeddedClusteredLockManager.class, Log.class);
    public static final String FORCE_RELEASE = "forceRelease";
@@ -63,7 +62,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
       this.config = config;
    }
 
-   @Start
+   @Override
    public void start() {
       if (log.isTraceEnabled())
          log.trace("Starting EmbeddedClusteredLockManager");
@@ -74,7 +73,7 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager {
       started = true;
    }
 
-   @Stop
+   @Override
    public void stop() {
       if (log.isTraceEnabled())
          log.trace("Stopping EmbeddedClusteredLockManager");
