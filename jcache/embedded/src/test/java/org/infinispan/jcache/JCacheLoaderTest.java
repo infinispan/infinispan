@@ -49,7 +49,7 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
 //      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
 //      globalBuilder.asyncTransportExecutor().addProperty("maxThreads", "1");
       withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(false)) {
+            TestCacheManagerFactory.createCacheManager(true)) {
          @Override
          public void call() {
             JCacheManager jCacheManager = createJCacheManager(cm, this);
@@ -75,7 +75,7 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
 
    public void testLoadAllWithInfinispanCacheLoader() {
       withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(false)) {
+            TestCacheManagerFactory.createCacheManager(true)) {
          @Override
          public void call() {
             ConfigurationBuilder builder = new ConfigurationBuilder();
@@ -115,7 +115,7 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
    public void testLoadEntryWithExpiration(Method m) {
       final String cacheName = m.getName();
       withCacheManager(new CacheManagerCallable(
-         TestCacheManagerFactory.createCacheManager(false)) {
+         TestCacheManagerFactory.createCacheManager(true)) {
          @Override
          public void call() {
             ControlledTimeService timeService = new ControlledTimeService();
@@ -166,7 +166,7 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
       NonMarshallablePojo v2 = new NonMarshallablePojo("v2");
 
       withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(false)) {
+            TestCacheManagerFactory.createCacheManager(true)) {
          @Override
          public void call() {
             JCacheManager jCacheManager = createJCacheManager(cm, this);

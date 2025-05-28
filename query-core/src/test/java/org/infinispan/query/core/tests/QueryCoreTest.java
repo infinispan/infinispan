@@ -57,7 +57,7 @@ public class QueryCoreTest extends SingleCacheManagerTest {
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(false);
       ConfigurationBuilder stat = getDefaultStandaloneCacheConfig(false);
       stat.statistics().enable();
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(true);
       cm.defineConfiguration("test", c.build());
       cm.defineConfiguration("stat", stat.build());
       cache = cm.getCache("test");

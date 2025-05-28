@@ -116,6 +116,7 @@ public class ExpirationFileStoreDistListenerFunctionalTest extends ExpirationSto
       extraManager = createClusteredCacheManager(false, globalBuilder, builder, new TransportFlags());
       // Inject our time service into the new CacheManager as well
       TestingUtil.replaceComponent(extraManager, TimeService.class, timeService, true);
+      extraManager.start();
       extraCache = extraManager.getCache();
 
       globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
@@ -128,6 +129,7 @@ public class ExpirationFileStoreDistListenerFunctionalTest extends ExpirationSto
       // Unfortunately we can't reinject timeservice once a cache has been started, thus we have to inject
       // here as well, since we need the cache to verify the cluster was formed
       TestingUtil.replaceComponent(returned, TimeService.class, timeService, true);
+      returned.start();
       Cache<Object, Object> checkCache = returned.getCache();
       TestingUtil.blockUntilViewReceived(checkCache, 2, TimeUnit.SECONDS.toMillis(10));
       return returned;

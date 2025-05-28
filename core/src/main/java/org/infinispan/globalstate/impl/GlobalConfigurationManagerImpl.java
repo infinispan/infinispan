@@ -25,7 +25,6 @@ import org.infinispan.configuration.parsing.CacheParser;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.globalstate.GlobalConfigurationManager;
@@ -82,8 +81,8 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       return CACHE_SCOPE.equals(scope) || TEMPLATE_SCOPE.equals(scope);
    }
 
-   @Start
-   void start() {
+   @Override
+   public void postStart() {
       switch (configurationManager.getGlobalConfiguration().globalState().configurationStorage()) {
          case IMMUTABLE:
             this.localConfigurationManager = new ImmutableLocalConfigurationStorage();

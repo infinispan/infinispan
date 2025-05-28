@@ -20,7 +20,7 @@ public class SkipLockingTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createCacheManager(false);
+      return TestCacheManagerFactory.createCacheManager(true);
    }
 
    public void testSkipLockingAfterPutWithoutTm(Method m) {

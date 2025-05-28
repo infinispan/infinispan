@@ -78,7 +78,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
       // start a single cache instance
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(false);
       configure(c);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false, TestDataSCI.INSTANCE);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(true, TestDataSCI.INSTANCE);
       cm.defineConfiguration("test", c.build());
       cache = cm.getCache("test");
       return cm;
