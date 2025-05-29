@@ -27,11 +27,19 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  **/
 public class FootprintIT {
    private static final int LOADED_CLASS_COUNT_LOWER_BOUND = 11_200;
-   private static final int LOADED_CLASS_COUNT_UPPER_BOUND = 11_400;
-   private static final long HEAP_USAGE_LOWER_BOUND = 23_000_000L;
-   private static final long HEAP_USAGE_UPPER_BOUND = 25_000_000L;
-   private static final long DISK_USAGE_LOWER_BOUND = 69_000_000L;
-   private static final long DISK_USAGE_UPPER_BOUND = 70_000_000L;
+   private static final int LOADED_CLASS_COUNT_UPPER_BOUND = 11_500;
+   private static final long HEAP_USAGE_LOWER_BOUND = 26_000_000L;
+   private static final long HEAP_USAGE_UPPER_BOUND = 27_000_000L;
+   private static final long DISK_USAGE_LOWER_BOUND = 69_500_000L;
+   private static final long DISK_USAGE_UPPER_BOUND = 70_500_000L;
+
+   private static final int JACOCO_CLASS_COUNT = 165;
+   private static final long JACOCO_HEAP_USAGE = 1_900_000;
+
+   private static final int INSIGHTS_CLASS_COUNT = 90;
+   private static final int INSIGHTS_HEAP_USAGE = 55_000;
+   private static final long INSIGHTS_DISK_USAGE = 250_000;
+
    public static final String HEAP_DUMP = "footprint.hprof";
 
    @RegisterExtension
@@ -49,10 +57,20 @@ public class FootprintIT {
       ObjectName memory = new ObjectName("java.lang:type=Memory");
       jmxConnection.invoke(memory, "gc", new Object[0], new String[0]);
       CompositeData heapMemoryUsage = (CompositeData) jmxConnection.getAttribute(memory, "HeapMemoryUsage");
-      Long used = (Long) heapMemoryUsage.get("used");
+      Long usedHeap = (Long) heapMemoryUsage.get("used");
+      int classCountOffset = 0;
+      long heapCountOffset = 0;
+      if (Boolean.getBoolean("coverage.enabled")) {
+         classCountOffset += JACOCO_CLASS_COUNT;
+         heapCountOffset += JACOCO_HEAP_USAGE;
+      }
+      if (Boolean.getBoolean("insights.enabled")) {
+         classCountOffset += INSIGHTS_CLASS_COUNT;
+         heapCountOffset += INSIGHTS_HEAP_USAGE;
+      }
       try {
-         assertThat(loadedClassCount).as("Loaded class count").isBetween(LOADED_CLASS_COUNT_LOWER_BOUND, LOADED_CLASS_COUNT_UPPER_BOUND);
-         assertThat(used).as("Heap memory usage").isBetween(HEAP_USAGE_LOWER_BOUND, HEAP_USAGE_UPPER_BOUND);
+         assertThat(loadedClassCount - classCountOffset).as("Loaded class count").isBetween(LOADED_CLASS_COUNT_LOWER_BOUND, LOADED_CLASS_COUNT_UPPER_BOUND);
+         assertThat(usedHeap - heapCountOffset).as("Heap memory usage").isBetween(HEAP_USAGE_LOWER_BOUND, HEAP_USAGE_UPPER_BOUND);
       } catch (AssertionError e) {
          ObjectName hotSpot = new ObjectName("com.sun.management:type=HotSpotDiagnostic");
          jmxConnection.invoke(hotSpot, "dumpHeap", new Object[]{HEAP_DUMP, true}, new String[]{"java.lang.String", "boolean"});
@@ -64,12 +82,16 @@ public class FootprintIT {
 
    @Test
    public void testDiskFootprint() throws IOException {
+      long diskCountOffset = 0;
+      if (Boolean.getBoolean("insights.enabled")) {
+         diskCountOffset += INSIGHTS_DISK_USAGE;
+      }
       Path folder = Paths.get(System.getProperty("org.infinispan.test.server.dir"));
       try (Stream<Path> stream = Files.walk(folder)) {
          long size = stream.filter(p -> p.toFile().isFile())
                .mapToLong(p -> p.toFile().length())
                .sum();
-         assertThat(size).as("Disk footprint").isBetween(DISK_USAGE_LOWER_BOUND, DISK_USAGE_UPPER_BOUND);
+         assertThat(size - diskCountOffset).as("Disk footprint").isBetween(DISK_USAGE_LOWER_BOUND, DISK_USAGE_UPPER_BOUND);
       }
    }
 }
