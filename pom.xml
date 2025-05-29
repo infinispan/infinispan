@@ -2785,6 +2785,7 @@
                   <configuration>
                      <systemPropertyVariables>
                         <coverage.enabled>true</coverage.enabled>
+                        <version.jacoco>${version.jacoco}</version.jacoco>
                      </systemPropertyVariables>
                   </configuration>
                </plugin>
