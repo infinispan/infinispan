@@ -5,7 +5,6 @@ import static org.infinispan.server.Server.DEFAULT_SERVER_CONFIG;
 import static org.infinispan.server.test.core.Containers.DOCKER_CLIENT;
 import static org.infinispan.server.test.core.Containers.getDockerBridgeAddress;
 import static org.infinispan.server.test.core.Containers.imageArchitecture;
-import static org.infinispan.server.test.core.TestSystemPropertyNames.COVERAGE_ENABLED;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_ULIMIT;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_LOG_FILE;
@@ -88,7 +87,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    private static final Long IMAGE_MEMORY = Long.getLong(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_MEMORY, null);
    private static final Long IMAGE_MEMORY_SWAP = Long.getLong(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_MEMORY_SWAP, null);
    public static final String INFINISPAN_SERVER_HOME = "/opt/infinispan";
-   public static final String JACOCO_COVERAGE_CONTAINER_PATH = INFINISPAN_SERVER_HOME + "/server/lib/jacoco.exec";
+   public static final String JACOCO_COVERAGE_CONTAINER_PATH = INFINISPAN_SERVER_HOME + "/bin/jacoco.exec";
    public static final String JACOCO_COVERAGE_HOST_PATH = "target/";
    public static final String JDK_BASE_IMAGE_NAME = "registry.access.redhat.com/ubi9/openjdk-21-runtime";
    private static final String[] IMAGE_DEPENDENCIES = {
@@ -203,7 +202,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          args.add("-j");
          args.add(jGroupsStack);
       }
-      args.add("-Dinfinispan.cluster.name=" + (configuration.getClusterName() != null ? configuration.getClusterName() :  name));
+      args.add("-Dinfinispan.cluster.name=" + (configuration.getClusterName() != null ? configuration.getClusterName() : name));
       args.add("-D" + TEST_HOST_ADDRESS + "=" + testHostAddress.getHostAddress());
       if (configuration.isJMXEnabled()) {
          args.add("--jmx");
@@ -240,6 +239,9 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       libDir.mkdirs();
       copyArtifactsToDataDir();
       copyArtifactsToUserLibDir(libDir);
+      if (isCoverage()) {
+         addArtifactsToLibDir(libDir, "org.jacoco:org.jacoco.agent:" + System.getProperty("version.jacoco") + ":runtime");
+      }
       // Copy the resources to a location from where they can be added to the image
       try {
          URL resource = ContainerInfinispanServerDriver.class.getResource("/overlay");
@@ -313,9 +315,10 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
     * number. This is useful to start servers at a later point.
     * <p>
     * This method can only be invoked after {@link #start(String)} has completed successfully
+    *
     * @param expectedClusterSize The expected number of members in the cluster. Some implementations may not work if other nodes
     *                            outside of this driver are clustered and the argument could be ignored.
-    * @param volumeName The name of the shared volume to be used when a node restarts
+    * @param volumeName          The name of the shared volume to be used when a node restarts
     */
    public void startAdditionalServer(int expectedClusterSize, String volumeName) {
       try {
@@ -354,6 +357,11 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       Util.recursiveFileRemove(serverOutputPath.resolve("server").resolve("data").toString());
       Util.recursiveFileRemove(serverOutputPath.resolve("server").resolve("log").toString());
       return serverOutputPath;
+   }
+
+   private static boolean isCoverage() {
+      String jacocoVersion = System.getProperty("version.jacoco");
+      return jacocoVersion != null;
    }
 
    private GenericContainer<?> createContainer(int i, Consumer<OutputFrame>... logConsumers) {
@@ -400,44 +408,42 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                   assert softHard.length == 2 : "Ulimit property must have format '<soft>,<hard>'";
                   long soft = Long.parseLong(softHard[0]);
                   long hard = Long.parseLong(softHard[1]);
-                  cmd.getHostConfig().withUlimits(new Ulimit[] { new Ulimit("nofile", soft, hard) });
+                  cmd.getHostConfig().withUlimits(new Ulimit[]{new Ulimit("nofile", soft, hard)});
                }
             });
       if (configuration.numServers() == 1 && (OS.getCurrentOs().equals(OS.MAC_OS) || OS.getCurrentOs().equals(OS.WINDOWS))) {
          container.addExposedPorts(
-                 11222, // HTTP/Hot Rod
-                 7800  // JGroups TCP
+               11222, // HTTP/Hot Rod
+               7800  // JGroups TCP
          );
       }
       String debug = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_DEBUG);
-      String javaOpts = null;
+      StringBuilder javaOpts = new StringBuilder();
       String site = configuration.site();
       if (site != null) {
          if (!sites.contains(site)) {
             sites.add(site);
          }
       }
-      if (i == 0 && site == null && !Boolean.parseBoolean(configuration.properties().getProperty(
-            TestSystemPropertyNames.INFINISPAN_TEST_SERVER_REQUIRE_JOIN_TIMEOUT))) {
-         javaOpts = "-D" + JOIN_TIMEOUT + "=0";
+      if (i == 0 && site == null && !Boolean.parseBoolean(configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_REQUIRE_JOIN_TIMEOUT))) {
+         javaOpts.append("-D").append(JOIN_TIMEOUT).append("=0");
       }
       if (debug != null && Integer.parseInt(debug) == i) {
-         javaOpts = javaOpts == null ? debugJvmOption() : javaOpts + " " + debugJvmOption();
+         javaOpts.append(" ").append(debugJvmOption());
          log.infof("Container debug enabled with options '%s'%n", javaOpts);
       }
-      String isCoverageEnabled = System.getProperty(COVERAGE_ENABLED);
-      if (Boolean.parseBoolean(isCoverageEnabled)) {
-         javaOpts = javaOpts == null ? "-javaagent:/opt/infinispan/server/lib/org.jacoco.agent-0.8.13-runtime.jar=output=file,destfile=" + JACOCO_COVERAGE_CONTAINER_PATH + ",append=true"
-                 : javaOpts + " " + "-javaagent:/opt/infinispan/server/lib/org.jacoco.agent-0.8.13-runtime.jar=output=file,destfile=" + JACOCO_COVERAGE_CONTAINER_PATH + ",append=true";
+      if (isCoverage()) {
+         String jacocoVersion = System.getProperty("version.jacoco");
+         javaOpts.append(" -javaagent:").append(INFINISPAN_SERVER_HOME).append("/server/lib/org.jacoco.agent-").append(jacocoVersion).append("-runtime.jar=output=file,destfile=").append(JACOCO_COVERAGE_CONTAINER_PATH).append(",append=true");
          // Code coverage requires more metaspace when the base image only has 96MB by default
          container.withEnv("JAVA_GC_MAX_METASPACE_SIZE", "512M");
       }
 
-      if (javaOpts != null) {
+      if (!javaOpts.isEmpty()) {
          // We set both environment variables as an image from infinispan-images uses JAVA_OPTIONS
          // and an image from a directory would use JAVA_OPTS. And a custom image could be either.
-         container.withEnv("JAVA_OPTS", javaOpts);
-         container.withEnv("JAVA_OPTIONS", javaOpts);
+         container.withEnv("JAVA_OPTS", javaOpts.toString());
+         container.withEnv("JAVA_OPTIONS", javaOpts.toString());
       }
 
       // Process any enhancers
@@ -535,8 +541,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          CountdownLatchLoggingConsumer latch = new CountdownLatchLoggingConsumer(1, SHUTDOWN_MESSAGE_REGEX);
          container.withLogConsumer(latch);
          container.stop();
-         String isCoverageEnabled = System.getProperty(COVERAGE_ENABLED);
-         if (Boolean.parseBoolean(isCoverageEnabled) && !container.isKilled()) {
+         if (isCoverage() && !container.isKilled()) {
             //Getting Jacoco Coverage Report after stopping the container
             container.uploadCoverageInfoToHost(JACOCO_COVERAGE_CONTAINER_PATH, JACOCO_COVERAGE_HOST_PATH + this.name + "-" + server + ".exec");
          }
@@ -599,7 +604,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          RMIServer stub = (RMIServer) registry.lookup("jmxrmi");
          JMXConnector connector = new RMIConnector(stub, null);
          Map<String, Object> env = new HashMap<>();
-         env.put(JMXConnector.CREDENTIALS, new String[] {username, password});
+         env.put(JMXConnector.CREDENTIALS, new String[]{username, password});
          connector.connect(env);
          log.infof("Connecting to JMX URL %s", url.toString());
          reaper.accept(connector);

@@ -150,11 +150,4 @@ public class TestSystemPropertyNames {
     * Specifies the type of sasl mechanism for the Hot Rod client. Not all tests are using it.
     */
    public static final String HOTROD_CLIENT_SASL_MECHANISM = "org.infinispan.test.hotrod.client.salsmechanism";
-   /**
-    * Specifies if the coverage profile is enabled. Is used for enableing jacoco agent during container run.
-    */
-   public static final String COVERAGE_ENABLED = "coverage.enabled";
-
-
-
 }
