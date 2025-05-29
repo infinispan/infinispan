@@ -45,6 +45,7 @@ public class MixedVersionClusterTest extends MultipleCacheManagersTest {
 
    private static final String TEST_NAME = MixedVersionClusterTest.class.getSimpleName();
    private static final String TEST_CACHE = TEST_NAME;
+   private static final String EXPECTED_EXCEPTION_MESSAGE = "ISPN000707: Command 'CustomCacheRpcCommand' not yet supported by all cluster members, requires version '127.127.127'";
    private static final int NUM_NODES = 3;
 
    @AfterClass(alwaysRun = true)
@@ -163,7 +164,7 @@ public class MixedVersionClusterTest extends MultipleCacheManagersTest {
 
    private void assertCommandExec(ExceptionRunnable r, boolean expectFail) throws Exception {
       if (expectFail) {
-         Exceptions.expectException(CacheException.class, UnsupportedVersionException.class, "Command 'CustomCacheRpcCommand' not yet supported by all cluster members, requires version '127.127.127'", r);
+         Exceptions.expectException(CacheException.class, UnsupportedVersionException.class, EXPECTED_EXCEPTION_MESSAGE, r);
       } else {
          r.run();
       }
@@ -174,7 +175,7 @@ public class MixedVersionClusterTest extends MultipleCacheManagersTest {
          Exceptions.expectException(
                ExecutionException.class,
                UnsupportedVersionException.class,
-               "Command 'CustomCacheRpcCommand' not yet supported by all cluster members, requires version '127.127.127'",
+               EXPECTED_EXCEPTION_MESSAGE,
                () -> stage.toCompletableFuture().get(MAX_WAIT_SECS, TimeUnit.SECONDS)
          );
       } else {
