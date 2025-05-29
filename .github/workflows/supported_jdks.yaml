@@ -20,13 +20,14 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  build:
+  jdk-compatibility:
+    name: Check JDK ${{ matrix.jdk }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         jdk:
-          - '25-ea'
+          - '25'
 
     steps:
       - uses: actions/checkout@v4
@@ -39,3 +40,18 @@ jobs:
 
       - name: Build Infinispan
         run: ./mvnw -B install -DskipTests
+
+  jdk-compatibility-summary:
+    name: Check JDK Summary
+    runs-on: ubuntu-latest
+    needs: jdk-compatibility
+    if: always()
+    steps:
+      - name: Check all matrix jobs
+        run: |
+          echo "Test job result: ${{ needs.jdk-compatibility.result }}"
+          if [[ "${{ needs.jdk-compatibility.result }}" != "success" ]]; then
+            echo "One or more matrix jobs failed"
+            exit 1
+          fi
+          echo "All additional JDKs build passed successfully"
