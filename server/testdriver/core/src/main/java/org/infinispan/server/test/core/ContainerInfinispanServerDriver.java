@@ -5,11 +5,11 @@ import static org.infinispan.server.Server.DEFAULT_SERVER_CONFIG;
 import static org.infinispan.server.test.core.Containers.DOCKER_CLIENT;
 import static org.infinispan.server.test.core.Containers.getDockerBridgeAddress;
 import static org.infinispan.server.test.core.Containers.imageArchitecture;
+import static org.infinispan.server.test.core.TestSystemPropertyNames.COVERAGE_ENABLED;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_ULIMIT;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_LOG_FILE;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.JACOCO_REPORTS_DIR;
-import static org.infinispan.server.test.core.TestSystemPropertyNames.COVERAGE_ENABLED;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -325,17 +325,17 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                   assert softHard.length == 2 : "Ulimit property must have format '<soft>,<hard>'";
                   long soft = Long.parseLong(softHard[0]);
                   long hard = Long.parseLong(softHard[1]);
-                  cmd.getHostConfig().withUlimits(new Ulimit[] { new Ulimit("nofile", soft, hard) });
+                  cmd.getHostConfig().withUlimits(new Ulimit[]{new Ulimit("nofile", soft, hard)});
                }
             });
       if (configuration.numServers() == 1 && (OS.getCurrentOs().equals(OS.MAC_OS) || OS.getCurrentOs().equals(OS.WINDOWS))) {
          container.addExposedPorts(
-                 11222, // HTTP/Hot Rod
-                 7800  // JGroups TCP
+               11222, // HTTP/Hot Rod
+               7800  // JGroups TCP
          );
       }
       String debug = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_DEBUG);
-      String javaOpts = null;
+      StringBuilder javaOpts = new StringBuilder();
       String site = configuration.site();
       if (site != null) {
          if (!sites.contains(site)) {
@@ -343,24 +343,24 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          }
       }
       if (i == 0 && site == null) {
-         javaOpts = "-D" + JOIN_TIMEOUT + "=0";
+         javaOpts.append("-D").append(JOIN_TIMEOUT).append("=0");
       }
       if (debug != null && Integer.parseInt(debug) == i) {
-         javaOpts = javaOpts == null ? debugJvmOption() : javaOpts + " " + debugJvmOption();
+         javaOpts.append(" ").append(debugJvmOption());
          log.infof("Container debug enabled with options '%s'%n", javaOpts);
       }
       String isCoverageEnabled = System.getProperty(COVERAGE_ENABLED);
       if (Boolean.parseBoolean(isCoverageEnabled)) {
-         javaOpts = javaOpts == null ? "-javaagent:/opt/infinispan/server/lib/org.jacoco.agent-0.8.12-runtime.jar=output=file,destfile=" + JACOCO_COVERAGE_CONTAINER_PATH + ",append=true"
-                 : javaOpts + " " + "-javaagent:/opt/infinispan/server/lib/org.jacoco.agent-0.8.12-runtime.jar=output=file,destfile=" + JACOCO_COVERAGE_CONTAINER_PATH + ",append=true";
+         String jacocoVersion = System.getProperty("version.jacoco");
+         javaOpts.append(" -javaagent:/opt/infinispan/server/lib/org.jacoco.agent-").append(jacocoVersion).append("-runtime.jar=output=file,destfile=").append(JACOCO_COVERAGE_CONTAINER_PATH).append(",append=true");
       }
 
-      if (javaOpts != null) {
+      if (!javaOpts.isEmpty()) {
          String baseImage = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_BASE_IMAGE_NAME);
          if (baseImage == null) {
-            container.withEnv("JAVA_OPTS", javaOpts);
+            container.withEnv("JAVA_OPTS", javaOpts.toString());
          } else {
-            container.withEnv("JAVA_OPTIONS", javaOpts);
+            container.withEnv("JAVA_OPTIONS", javaOpts.toString());
          }
       }
 
@@ -505,7 +505,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          RMIServer stub = (RMIServer) registry.lookup("jmxrmi");
          JMXConnector connector = new RMIConnector(stub, null);
          Map<String, Object> env = new HashMap<>();
-         env.put(JMXConnector.CREDENTIALS, new String[] {username, password});
+         env.put(JMXConnector.CREDENTIALS, new String[]{username, password});
          connector.connect(env);
          log.infof("Connecting to JMX URL %s", url.toString());
          reaper.accept(connector);

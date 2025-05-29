@@ -2754,6 +2754,8 @@
                   <configuration>
                      <systemPropertyVariables>
                         <coverage.enabled>true</coverage.enabled>
+                        <version.jacoco>${version.jacoco}</version.jacoco>
+                        <org.infinispan.test.server.extension.libs>org.jacoco:org.jacoco.agent:${version.jacoco}:runtime</org.infinispan.test.server.extension.libs>
                      </systemPropertyVariables>
                   </configuration>
                </plugin>
