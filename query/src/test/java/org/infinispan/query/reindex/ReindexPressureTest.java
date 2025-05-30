@@ -8,7 +8,6 @@ import java.util.Map;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingMode;
-import org.infinispan.configuration.cache.PrivateIndexingConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.Search;
@@ -30,10 +29,11 @@ public class ReindexPressureTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder config = new ConfigurationBuilder();
-      // the fix set the concurrency to 100,
-      // so to reproduce the use case we need to use a rebatch-requests-size value that is grater than 100:
-      config.addModule(PrivateIndexingConfigurationBuilder.class).rebatchRequestsSize(200);
       config.statistics().enable();
+      // While testing this fails around with queueCount=2 & queueSize=50 so making it more for CI to pass (2.5x2 more)
+      config.indexing().writer()
+            .queueCount(5)
+            .queueSize(100);
       config.indexing().enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity(Game.class)
