@@ -70,9 +70,6 @@ public class SearchIndexerImpl implements SearchIndexer {
                }
                completableFuture.completeExceptionally(log.hibernateSearchBackpressure());
             })
-            // We give HS some extra buffer room before we start throwing back pressure exceptions if
-            // the flatMap operations can't keep up
-            .rebatchRequests(10_000)
             // This will only request up to maxConcurrency items at the same time
             .flatMap(Supplier::get, maxConcurrency)
             // Clear the submittedTasks on error/completion/cancel just in case
