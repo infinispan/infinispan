@@ -43,7 +43,7 @@ public class Config {
    @ApplicationScoped
    @SuppressWarnings("unused")
    public EmbeddedCacheManager defaultCacheManager() {
-      EmbeddedCacheManager externalCacheContainerManager = TestCacheManagerFactory.createCacheManager(false);
+      EmbeddedCacheManager externalCacheContainerManager = TestCacheManagerFactory.createCacheManager(true);
 
       // define large configuration
       externalCacheContainerManager.defineConfiguration("large", new ConfigurationBuilder()

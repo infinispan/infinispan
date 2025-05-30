@@ -107,11 +107,15 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
       global.serialization().addContextInitializer(getSerializationContextInitializer());
       global.cacheContainer().security().authorization().enable();
-      return createCacheManager(false, global, new ConfigurationBuilder());
+      return createCacheManager(true, global, new ConfigurationBuilder());
    }
 
    protected EmbeddedCacheManager createCacheManager(boolean start, GlobalConfigurationBuilder global, ConfigurationBuilder cb) {
-      return TestCacheManagerFactory.newDefaultCacheManager(start, global, cb);
+      EmbeddedCacheManager embeddedCacheManager = TestCacheManagerFactory.newDefaultCacheManager(false, global, cb);
+      if (start) {
+         TestingUtil.startCacheManager(embeddedCacheManager);
+      }
+      return embeddedCacheManager;
    }
 
    protected SerializationContextInitializer getSerializationContextInitializer() {
