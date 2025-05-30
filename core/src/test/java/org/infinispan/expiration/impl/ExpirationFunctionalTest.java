@@ -66,6 +66,7 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
       // Create the cache manager, but don't start it until we replace the time service
       EmbeddedCacheManager cm = createCacheManager(builder);
       TestingUtil.replaceComponent(cm, TimeService.class, timeService, true);
+      cm.start();
       cache = cm.getCache();
       expirationManager = cache.getAdvancedCache().getExpirationManager();
       afterCacheCreated(cm);

@@ -2013,6 +2013,10 @@ public class TestingUtil {
       SecurityActions.defineConfiguration(cacheManager, cacheName, configuration);
    }
 
+   public static void startCacheManager(EmbeddedCacheManager cacheManager) {
+      SecurityActions.startManager(cacheManager);
+   }
+
    public static Set<Object> getListeners(Cache<?, ?> cache) {
       CacheNotifierImpl<?, ?> notifier = (CacheNotifierImpl<?, ?>) extractComponent(cache, CacheNotifier.class);
       return notifier.getListeners();

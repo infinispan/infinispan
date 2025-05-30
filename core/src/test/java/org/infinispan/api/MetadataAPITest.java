@@ -39,7 +39,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(true);
       advCache = cm.<Integer, String>getCache().getAdvancedCache();
       return cm;
    }

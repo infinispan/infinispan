@@ -141,6 +141,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       EmbeddedCacheManager cm = createClusteredCacheManager(false, globalBuilder, c, new TransportFlags());
       registerCacheManager(cm);
       addBlockingLocalTopologyManager(manager(2), checkPoint, joinTopologyId, stateReceivedTopologyId);
+      cm.start();
 
 
       log.tracef("Starting the cache on the joiner");

@@ -14,7 +14,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.manager.EmbeddedCacheManagerStartupException;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -45,8 +44,7 @@ public class SoftIndexFileStoreLockingTest extends SingleCacheManagerTest {
       tmpDirectory = CommonsTestingUtil.tmpDirectory(getClass());
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
       global.globalState().persistentLocation(CommonsTestingUtil.tmpDirectory(this.getClass()));
-      global.cacheContainer().security().authorization().enable();
-      EmbeddedCacheManager ecm = TestCacheManagerFactory.newDefaultCacheManager(false, global, new ConfigurationBuilder());
+      EmbeddedCacheManager ecm = TestCacheManagerFactory.newDefaultCacheManager(true, global, new ConfigurationBuilder());
       TestingUtil.defineConfiguration(ecm, CACHE_NAME, createCacheConfiguration().build());
       return ecm;
    }
@@ -81,7 +79,7 @@ public class SoftIndexFileStoreLockingTest extends SingleCacheManagerTest {
 
       // It is not possible to retrieve the running cache.
       Exceptions.expectException("ISPN029025: Failed acquiring lock .*", () -> ecm.getCache(CACHE_NAME),
-            EmbeddedCacheManagerStartupException.class, PersistenceException.class);
+            PersistenceException.class);
       TestingUtil.killCacheManagers(ecm);
 
       // The original cache still works properly.
