@@ -38,7 +38,7 @@ public class SearchMappingHelper {
       AdvancedCache<?, ?> cache = Mockito.mock(AdvancedCache.class);
       LocalQueryStatistics queryStatistics = Mockito.mock(LocalQueryStatistics.class);
       return SearchMapping.builder(introspector, null, Collections.emptyList(), blockingManager, new FailureCounter(),
-                  new IndexerConfig(10_000, 10_000))
+                  new IndexerConfig(10_000))
                    .setProperties(properties)
                    .addEntityTypes(new HashSet<>(Arrays.asList(types)))
                    .setEntityLoader(new EntityLoaderFactory<>(cache, queryStatistics))
