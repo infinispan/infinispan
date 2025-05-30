@@ -91,9 +91,9 @@ jobs:
           private-key: ${{ secrets.GH_APP_ISPN_KEY }}
 
       - name: Create Check Run for Test Report
+        id: create_check
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        id: create_check
         run: |
           SHA="${{ needs.get-info.outputs.source-head-sha }}"
           CHECK_RUN=$(gh api repos/${{ github.repository }}/check-runs \
@@ -106,6 +106,13 @@ jobs:
             --method POST \
             --jq '.id')
           echo "id=$CHECK_RUN" >> $GITHUB_OUTPUT
+          echo "$CHECK_RUN" > check-run-id.txt
+
+      - name: Upload Check Run ID
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-run-id
+          path: check-run-id.txt
 
       - name: Maven Test
         env:
@@ -269,6 +276,14 @@ jobs:
             --method POST \
             --jq '.id')
           echo "id=$CHECK_RUN" >> $GITHUB_OUTPUT
+          echo "$CHECK_RUN" > check-run-id-${{ matrix.dbs }}.txt
+
+      - name: Upload Check Run ID
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-run-id-${{ matrix.dbs }}
+          path: check-run-id-${{ matrix.dbs }}.txt
+
 
       - name: Test
         run: |
@@ -292,6 +307,19 @@ jobs:
             -f conclusion="failure" \
             -f "output[summary]=Result from workflow run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
             -f "output[title]=Run Failed" \
+            --method PATCH
+
+      - name: set-commit-failure-status
+        if: always() && cancelled()
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh api repos/${{ github.repository }}/check-runs/${{ steps.create_check.outputs.id }} \
+            -H "Accept: application/vnd.github+json" \
+            -f status="completed" \
+            -f conclusion="failure" \
+            -f "output[summary]=Result from workflow run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            -f "output[title]=Run Cancelled" \
             --method PATCH
 
       - name: Archive commit sha PR
