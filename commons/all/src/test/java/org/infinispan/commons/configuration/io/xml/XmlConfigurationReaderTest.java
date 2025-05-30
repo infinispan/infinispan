@@ -32,4 +32,18 @@ public class XmlConfigurationReaderTest {
          r.require(ConfigurationReader.ElementType.END_DOCUMENT);
       }
    }
+
+   @Test
+   public void testCDATA() {
+      StringReader sr =new StringReader("""
+            <e1><![CDATA[<v2>]]></e1>
+            """);
+      try (XmlConfigurationReader r = new XmlConfigurationReader(sr, ConfigurationResourceResolvers.DEFAULT, new Properties(), PropertyReplacer.DEFAULT, NamingStrategy.CAMEL_CASE)) {
+         r.require(ConfigurationReader.ElementType.START_DOCUMENT);
+         r.nextElement();
+         r.require(ConfigurationReader.ElementType.START_ELEMENT, "", "e1");
+         assertEquals("<v2>", r.getElementText());
+         r.nextElement();
+      }
+   }
 }
