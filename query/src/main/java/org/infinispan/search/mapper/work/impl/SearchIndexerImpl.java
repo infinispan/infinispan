@@ -15,8 +15,8 @@ import org.hibernate.search.mapper.pojo.work.spi.PojoIndexer;
 import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.query.backend.QueryInterceptor;
-import org.infinispan.query.impl.IndexerConfig;
 import org.infinispan.query.core.impl.Log;
+import org.infinispan.query.impl.IndexerConfig;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 import org.infinispan.search.mapper.session.impl.InfinispanIndexedTypeContext;
 import org.infinispan.search.mapper.session.impl.InfinispanTypeContextProvider;
@@ -65,15 +65,12 @@ public class SearchIndexerImpl implements SearchIndexer {
       // onBackpressureDrop will drop any item that it can't immediately pass downstream
       // Thus next downstream must batch them to not immediately drop
       processorDisposer = requestProcessor.onBackpressureDrop(supplier -> {
-               CompletableFuture<?> completableFuture = submittedTasks.remove(supplier);
-               if (completableFuture == null) {
-                  throw new IllegalStateException("Dropped task " + supplier + " not found in submittedTask " + submittedTasks);
-               }
-               completableFuture.completeExceptionally(log.hibernateSearchBackpressure());
-            })
-            // We give HS some extra buffer room before we start throwing back pressure exceptions if
-            // the flatMap operations can't keep up
-            .rebatchRequests(indexerConfig.rebatchRequestsSize())
+                     CompletableFuture<?> completableFuture = submittedTasks.remove(supplier);
+                     if (completableFuture == null) {
+                        throw new IllegalStateException("Dropped task " + supplier + " not found in submittedTask " + submittedTasks);
+                     }
+                     completableFuture.completeExceptionally(log.hibernateSearchBackpressure());
+                  })
             // This will only request up to maxConcurrency items at the same time
             .flatMap(Supplier::get, indexerConfig.maxConcurrency())
             // Clear the submittedTasks on error/completion/cancel just in case
