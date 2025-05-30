@@ -739,9 +739,11 @@ class Index {
                indexFileSize = freeBlocksOffset;
                loaded = true;
             } else {
+               // If the file was empty and we had no entries in our sizePerSegment we can treat this as loaded
+               // as this means we didn't own the segment before
+               loaded = handle.getFileSize() == 0 && index.sizePerSegment.get(id) == 0;
                handle.truncate(0);
                root = IndexNode.emptyWithLeaves(this);
-               loaded = false;
                // reserve space for shutdown
                indexFileSize = INDEX_FILE_HEADER_SIZE;
             }
