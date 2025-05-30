@@ -26,6 +26,10 @@ public class CoreModule implements ModuleLifecycle {
 
    public static void startLifecycleComponent(GlobalComponentRegistry gcr, Class<?>... klasses) {
       for (Class<?> klass : klasses) {
+         // Cache manager was stopped before all components were started.
+         // Check the manager status because it stops before the global component registry.
+         if (!gcr.getCacheManager().getStatus().allowInvocations()) break;
+
          if (gcr.getComponent(klass) instanceof Lifecycle l) {
             l.start();
          }
