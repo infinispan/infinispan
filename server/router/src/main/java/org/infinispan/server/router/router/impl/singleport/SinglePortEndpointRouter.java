@@ -64,7 +64,6 @@ public class SinglePortEndpointRouter extends AbstractProtocolServer<SinglePortR
          }
          throw re;
       }
-      registerMetrics();
       Log.SERVER.debugf("REST EndpointRouter listening on %s:%d", transport.getHostName(), transport.getPort());
    }
 
