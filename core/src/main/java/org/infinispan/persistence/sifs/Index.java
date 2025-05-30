@@ -242,8 +242,10 @@ class Index {
    public boolean load() {
       boolean loaded = attemptLoad();
 
-      // If we failed to load any of the index we have to make sure the sizer per segment is cleared
+      // If we failed to load any of the index we have to make sure to clear anything we may have loaded
       if (!loaded) {
+         maxSeqId = -1;
+         compactor.getFileStats().clear();
          for (int i = 0; i < sizePerSegment.length(); ++i) {
             sizePerSegment.set(i, 0);
          }
@@ -775,6 +777,7 @@ class Index {
 
             write(handle, buffer, 0);
          }
+         freeBlocks.clear();
       }
 
       @Override
