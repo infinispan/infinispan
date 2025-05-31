@@ -98,7 +98,7 @@ public class InitialStateTransferCompletionTest extends MultipleCacheManagersTes
          String key = "k" + i;
          String expectedValue = "v" + i;
          assertTrue(cacheTopology.isReadOwner(key));
-         InternalCacheEntry entry = dc2.get(key);
+         InternalCacheEntry entry = dc2.peek(key);
          assertNotNull(entry);
          assertEquals(expectedValue, entry.getValue());
       }

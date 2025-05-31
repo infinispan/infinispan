@@ -66,24 +66,6 @@ public class GlobalConfiguration {
       return cacheContainerConfiguration.listenerThreadPool();
    }
 
-   /**
-    * @return An empty {@code ThreadPoolConfiguration}.
-    * @deprecated Since 11.0, no longer used.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public ThreadPoolConfiguration persistenceThreadPool() {
-      return cacheContainerConfiguration.persistenceThreadPool();
-   }
-
-   /**
-    * @return An empty {@code ThreadPoolConfiguration}.
-    * @deprecated Since 11.0, no longer used.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public ThreadPoolConfiguration asyncThreadPool() {
-      return cacheContainerConfiguration.asyncThreadPool();
-   }
-
    public ThreadPoolConfiguration nonBlockingThreadPool() {
       return cacheContainerConfiguration.nonBlockingThreadPool();
    }
@@ -128,14 +110,6 @@ public class GlobalConfiguration {
       return cacheContainerConfiguration.globalState();
    }
 
-   /**
-    * @deprecated Since 11.0, no longer used.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public String asyncThreadPoolName() {
-      return cacheContainer().asyncExecutor();
-   }
-
    public String nonBlockingThreadPoolName() {
       return cacheContainer().nonBlockingExecutor();
    }
@@ -146,14 +120,6 @@ public class GlobalConfiguration {
 
    public String expirationThreadPoolName() {
       return cacheContainer().expirationExecutor();
-   }
-
-   /**
-    * @deprecated Since 11.0, no longer used.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public String persistenceThreadPoolName() {
-      return cacheContainer().persistenceExecutor();
    }
 
    public String blockingThreadPoolName() {

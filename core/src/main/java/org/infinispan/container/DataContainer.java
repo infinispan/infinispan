@@ -13,7 +13,7 @@ import org.infinispan.metadata.Metadata;
 
 /**
  * The main internal data structure which stores entries. Care should be taken when using this directly as entries
- * could be stored in a different way than they were given to a {@link org.infinispan.Cache}. If you wish to convert
+ * could be stored differently than they were given to a {@link org.infinispan.Cache}. If you wish to convert
  * entries to the stored format, you should use the provided {@link org.infinispan.encoding.DataConversion} such as
  * <pre>
  * cache.getAdvancedCache().getKeyDataConversion().toStorage(key);
@@ -22,7 +22,7 @@ import org.infinispan.metadata.Metadata;
  * <pre>
  * cache.getAdvancedCache().getValueDataConversion().toStorage(value);
  * </pre>
- * You can also convert from storage to the user provided type by using the
+ * You can also convert from storage to the user-provided type by using the
  * {@link org.infinispan.encoding.DataConversion#fromStorage(Object)} method on any value returned from the DataContainer
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Galder Zamarreño
@@ -31,23 +31,10 @@ import org.infinispan.metadata.Metadata;
  */
 @Scope(Scopes.NAMED_CACHE)
 public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> {
-
    /**
-    * Retrieves a cached entry
-    *
-    * @param k key under which entry is stored
-    * @return entry, if it exists and has not expired, or null if not
-    * @deprecated since 10.1 - Please use {@link #peek(Object)} instead.
-    */
-   @Deprecated(forRemoval=true, since = "10.1")
-   InternalCacheEntry<K, V> get(Object k);
-
-   /**
-    * Retrieves a cache entry in the same way as {@link #get(Object)}} except that it does not update or reorder any of
-    * the internal constructs. I.e., expiration does not happen, and in the case of the LRU container, the entry is not
+    * Retrieves a cache entry. This method does not update or reorder any of the internal constructs.
+    * I.e., expiration does not happen, and in the case of the LRU container, the entry is not
     * moved to the end of the chain.
-        * This method should be used instead of {@link #get(Object)}} when called while iterating through the data container
-    * using methods like {@link #iterator()} to avoid changing the underlying collection's order.
     *
     * @param k key under which entry is stored
     * @return entry, if it exists, or null if not
@@ -136,7 +123,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
 
    /**
     * {@inheritDoc}
-    * <p>This spliterator only returns entries that are not expired, however it will not remove them while doing so.</p>
+    * <p>This spliterator only returns entries that are not expired; however, it will not remove them while doing so.</p>
     * @return spliterator that doesn't produce expired entries
     */
    @Override
@@ -186,7 +173,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * Returns the capacity of the underlying container. This is only supported if the container is bounded. An {@link UnsupportedOperationException} is thrown
     * otherwise.
     *
-    * @return
+    * @return the capacity of a bounded container
     */
    default long capacity() {
       throw new UnsupportedOperationException();

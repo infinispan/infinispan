@@ -1,6 +1,7 @@
 package org.infinispan.multimap.impl;
 
 import static java.lang.String.format;
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.multimap.impl.MultimapTestUtils.EMPTY_KEY;
 import static org.infinispan.multimap.impl.MultimapTestUtils.JULIEN;
@@ -12,7 +13,6 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.PEPE;
 import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
 import static org.infinispan.multimap.impl.MultimapTestUtils.assertMultimapCacheSize;
 import static org.infinispan.multimap.impl.MultimapTestUtils.putValuesOnMultimapCache;
-import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -514,7 +514,7 @@ public class DistributedMultimapCacheTest extends BaseDistFunctionalTest<String,
       for (Cache cache : caches) {
          Object keyToBeChecked = cache.getAdvancedCache().getKeyDataConversion().toStorage(key);
          DataContainer dc = cache.getAdvancedCache().getDataContainer();
-         InternalCacheEntry ice = dc.get(keyToBeChecked);
+         InternalCacheEntry ice = dc.peek(keyToBeChecked);
          if (isOwner(cache, keyToBeChecked)) {
             assertNotNull(ice);
             assertTrue(ice instanceof ImmortalCacheEntry);
@@ -524,7 +524,7 @@ public class DistributedMultimapCacheTest extends BaseDistFunctionalTest<String,
             } else {
                // Segments no longer owned are invalidated asynchronously
                eventuallyEquals("Fail on non-owner cache " + addressOf(cache) + ": dc.get(" + key + ")",
-                     null, () -> dc.get(keyToBeChecked));
+                     null, () -> dc.peek(keyToBeChecked));
             }
          }
       }

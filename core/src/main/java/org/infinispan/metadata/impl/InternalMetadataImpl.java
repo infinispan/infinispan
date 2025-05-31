@@ -2,6 +2,7 @@ package org.infinispan.metadata.impl;
 
 import static java.lang.Math.min;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -19,7 +20,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  * @author Mircea Markus
  * @since 6.0
  */
-@Deprecated(forRemoval=true, since = "10.0")
 @ProtoTypeId(ProtoStreamTypeIds.INTERNAL_METADATA_IMPL)
 public class InternalMetadataImpl implements InternalMetadata {
    private final Metadata actual;
@@ -31,7 +31,7 @@ public class InternalMetadataImpl implements InternalMetadata {
       this(MarshallableObject.unwrap(wrappedMetadata), created, lastUsed);
    }
 
-   public InternalMetadataImpl(InternalCacheEntry ice) {
+   public InternalMetadataImpl(InternalCacheEntry<?, ?> ice) {
       this(ice.getMetadata(), ice.getCreated(), ice.getLastUsed());
    }
 
@@ -159,24 +159,14 @@ public class InternalMetadataImpl implements InternalMetadata {
 
    @Override
    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof InternalMetadataImpl)) return false;
-
+      if (o == null || getClass() != o.getClass()) return false;
       InternalMetadataImpl that = (InternalMetadataImpl) o;
-
-      if (created != that.created) return false;
-      if (lastUsed != that.lastUsed) return false;
-      if (actual != null ? !actual.equals(that.actual) : that.actual != null) return false;
-
-      return true;
+      return created == that.created && lastUsed == that.lastUsed && Objects.equals(actual, that.actual);
    }
 
    @Override
    public int hashCode() {
-      int result = actual != null ? actual.hashCode() : 0;
-      result = 31 * result + (int) (created ^ (created >>> 32));
-      result = 31 * result + (int) (lastUsed ^ (lastUsed >>> 32));
-      return result;
+      return Objects.hash(actual, created, lastUsed);
    }
 
    @Override

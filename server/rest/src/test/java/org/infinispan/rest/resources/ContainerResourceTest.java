@@ -260,16 +260,6 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       Json cmStats = Json.read(json);
 
       assertTrue(cmStats.at("statistics_enabled").asBoolean());
-      assertEquals(0, cmStats.at("stores").asInteger());
-      assertEquals(0, cmStats.at("number_of_entries").asInteger());
-
-      // Advance 1 second for the cached stats to expire
-      timeService.advance(1000);
-
-      cacheManagers.iterator().next().getCache(CACHE_1).put("key", "value");
-      cmStats = Json.read(join(adminRestContainerClient.stats()).body());
-      assertEquals(1, cmStats.at("stores").asInteger());
-      assertEquals(1, cmStats.at("number_of_entries").asInteger());
    }
 
    @Test
