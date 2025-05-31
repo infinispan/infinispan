@@ -1,5 +1,7 @@
 package org.infinispan.util.logging;
 
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.util.ByteString;
 import org.jboss.logging.Logger;
 import org.jboss.logging.NDC;
@@ -13,15 +15,15 @@ import org.jboss.logging.NDC;
 public class LogFactory {
 
    public static Log getLog(Class<?> clazz) {
-      return Logger.getMessageLogger(Log.class, clazz.getName());
+      return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
    }
 
    public static <T> T getLog(Class<?> clazz, Class<T> logClass) {
-      return Logger.getMessageLogger(logClass, clazz.getName());
+      return Logger.getMessageLogger(MethodHandles.lookup(), logClass, clazz.getName());
    }
 
    public static <T> T getLog(String category, Class<T> logClass) {
-      return Logger.getMessageLogger(logClass, Log.LOG_ROOT + category);
+      return Logger.getMessageLogger(MethodHandles.lookup(), logClass, Log.LOG_ROOT + category);
    }
 
    public static Logger getLogger(String category) {

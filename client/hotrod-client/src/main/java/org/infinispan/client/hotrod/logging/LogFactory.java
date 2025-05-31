@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.logging;
 
+import java.lang.invoke.MethodHandles;
+
 import org.jboss.logging.Logger;
 
 /**
@@ -11,11 +13,11 @@ import org.jboss.logging.Logger;
 public class LogFactory {
 
    public static Log getLog(Class<?> clazz) {
-      return Logger.getMessageLogger(Log.class, clazz.getName());
+      return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, clazz.getName());
    }
 
    public static <T> T getLog(Class<?> clazz, Class<T> logClass) {
-      return Logger.getMessageLogger(logClass, clazz.getName());
+      return Logger.getMessageLogger(MethodHandles.lookup(), logClass, clazz.getName());
    }
 
 }

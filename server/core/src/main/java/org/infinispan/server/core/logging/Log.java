@@ -6,6 +6,7 @@ import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.file.Path;
@@ -39,9 +40,9 @@ import io.netty.handler.ipfilter.IpFilterRule;
 @ValidIdRange(min = 5001, max = 6000)
 public interface Log extends BasicLogger {
    String LOG_ROOT = "org.infinispan.";
-   Log CONFIG = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONFIG");
-   Log SECURITY = Logger.getMessageLogger(Log.class, LOG_ROOT + "SECURITY");
-   Log SERVER = Logger.getMessageLogger(Log.class, LOG_ROOT + "SERVER");
+   Log CONFIG = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "CONFIG");
+   Log SECURITY = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "SECURITY");
+   Log SERVER = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "SERVER");
 
    @LogMessage(level = ERROR)
    @Message(value = "Exception reported", id = 5003)

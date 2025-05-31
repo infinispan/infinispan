@@ -1,6 +1,7 @@
 package org.infinispan.objectfilter.impl.predicateindex;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.syntax.parser.ProtobufPropertyHelper;
@@ -21,7 +22,7 @@ import org.jboss.logging.Logger;
  */
 public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descriptor, FieldDescriptor, Integer> implements TagHandler {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, ProtobufMatcherEvalContext.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, ProtobufMatcherEvalContext.class.getName());
 
    private boolean payloadStarted = false;
    private int skipping = 0;

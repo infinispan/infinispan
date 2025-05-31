@@ -5,6 +5,7 @@ import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.time.Instant;
 import java.util.EnumSet;
 
@@ -54,9 +55,9 @@ import org.jboss.logging.annotations.ValidIdRanges;
 })
 public interface Log extends BasicLogger {
    String LOG_ROOT = "org.infinispan.";
-   Log CONFIG = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONFIG");
-   Log CONTAINER = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONTAINER");
-   Log SECURITY = Logger.getMessageLogger(Log.class, LOG_ROOT + "SECURITY");
+   Log CONFIG = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "CONFIG");
+   Log CONTAINER = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "CONTAINER");
+   Log SECURITY = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "SECURITY");
 
    @LogMessage(level = WARN)
    @Message(value = "Property %s could not be replaced as intended!", id = 901)

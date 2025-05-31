@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.impl.syntax.parser;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,7 +34,7 @@ import org.jboss.logging.Logger;
  */
 final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDelegate<TypeDescriptor<TypeMetadata>> {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, QueryRendererDelegateImpl.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, QueryRendererDelegateImpl.class.getName());
 
    /**
     * Initial length for various internal growable arrays.

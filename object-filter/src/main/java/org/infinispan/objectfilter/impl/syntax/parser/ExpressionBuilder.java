@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.impl.syntax.parser;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -44,7 +45,7 @@ import org.jboss.logging.Logger;
  */
 final class ExpressionBuilder<TypeMetadata> {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, ExpressionBuilder.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, ExpressionBuilder.class.getName());
 
    private final ObjectPropertyHelper<TypeMetadata> propertyHelper;
 

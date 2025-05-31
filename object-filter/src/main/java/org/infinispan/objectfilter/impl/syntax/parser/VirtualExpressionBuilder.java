@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.impl.syntax.parser;
 
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Map;
 
@@ -12,7 +13,7 @@ import org.jboss.logging.Logger;
 
 public class VirtualExpressionBuilder<TypeMetadata> {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, VirtualExpressionBuilder.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, VirtualExpressionBuilder.class.getName());
 
    private final QueryRendererDelegateImpl<TypeMetadata> owner;
 

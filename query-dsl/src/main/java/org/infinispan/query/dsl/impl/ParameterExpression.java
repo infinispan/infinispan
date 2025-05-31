@@ -1,5 +1,7 @@
 package org.infinispan.query.dsl.impl;
 
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.impl.logging.Log;
 import org.jboss.logging.Logger;
@@ -10,7 +12,7 @@ import org.jboss.logging.Logger;
  */
 public final class ParameterExpression implements Expression {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, ParameterExpression.class.getName());
+   private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, ParameterExpression.class.getName());
 
    private final String paramName;
 

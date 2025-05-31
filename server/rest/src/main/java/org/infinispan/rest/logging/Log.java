@@ -5,6 +5,7 @@ import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.util.NoSuchElementException;
 
 import org.infinispan.commons.CacheConfigurationException;
@@ -33,7 +34,7 @@ import org.jboss.logging.annotations.ValidIdRange;
 @MessageLogger(projectCode = "ISPN")
 @ValidIdRange(min = 12001, max = 13000)
 public interface Log extends BasicLogger {
-   Log REST = Logger.getMessageLogger(Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "REST");
+   Log REST = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, org.infinispan.util.logging.Log.LOG_ROOT + "REST");
 
 //   @Message(value = "Error transcoding content", id = 495)
 //   EncodingException errorTranscoding(@Cause Throwable cause);
