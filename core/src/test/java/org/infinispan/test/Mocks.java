@@ -527,4 +527,33 @@ public class Mocks {
       TestingUtil.replaceComponent(cache, componentClass, spiedComponent, true);
       return spiedComponent;
    }
+
+   /**
+    * Replaces the given field with a spy and returns it for further mocking as needed. Note the original object
+    * is not retrieved and thus requires retrieving before invoking this method if needed.
+    * <p>
+    * If the existing object is already a mock it will reuse it but reset it via {@link MockUtil#resetMock(Object)},
+    * this most likely happens between method runs in the same test file.
+    * @param parentObject The parent object that contains the field
+    * @param fieldName The name of the field to replace in the parent Object
+    * @param fieldClass The field's class
+    * @return The spied object to add mock invocations on
+    * @param <C> The field type
+    */
+   public static <C> C replaceFieldWithSpy(Object parentObject, String fieldName, Class<? extends C> fieldClass) {
+      ByRef<C> ref = new ByRef<>(null);
+      TestingUtil.replaceField(parentObject, fieldName, c -> {
+         C fieldObject = TestingUtil.extractField(parentObject, fieldName);
+         C mock;
+         if (MockUtil.isMock(fieldObject)) {
+            MockUtil.resetMock(fieldObject);
+            mock = fieldObject;
+         } else {
+            mock = spy(fieldObject);
+         }
+         ref.set(mock);
+         return mock;
+      });
+      return ref.get();
+   }
 }
