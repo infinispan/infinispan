@@ -255,6 +255,10 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       if (availabilityMode == AvailabilityMode.AVAILABLE)
          return;
 
+      if (availabilityMode == AvailabilityMode.STOPPED) {
+         throw CONTAINER.cacheIsTerminated(cacheName, "AvailabilityMode.STOPPED");
+      }
+
       LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
       if (isKeyOperationAllowed(isWrite, flagBitSet, cacheTopology, key)) {
          if (log.isTraceEnabled()) log.tracef("Key %s is available.", key);
