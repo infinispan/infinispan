@@ -2,7 +2,10 @@ package org.infinispan.persistence.sifs;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -10,6 +13,7 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.Queue;
@@ -34,6 +38,8 @@ import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
+import org.infinispan.util.PersistenceMockUtil;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.mockito.Mockito;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -414,5 +420,35 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
       startStore(store);
 
       assertNotNull("bar-231", TestingUtil.join(store.load(1, "foo-231")));
+   }
+
+   public void testRestartWhileNotOwningSomeSegments() throws ExecutionException, InterruptedException, TimeoutException, IOException {
+      // Remove the first segment
+      TestingUtil.join(store.removeSegments(IntSets.immutableRangeSet(1)));
+
+      TestingUtil.join(store.stop());
+      PersistenceMockUtil.InvocationContextBuilder builder = new PersistenceMockUtil.InvocationContextBuilder(getClass(), configuration, getMarshaller())
+            .setTimeService(timeService)
+            .setKeyPartitioner(keyPartitioner);
+
+      CheckPoint checkPoint = new CheckPoint();
+      checkPoint.triggerForever(Mocks.AFTER_RELEASE);
+      Mocks.blockingFieldMock(checkPoint, BlockingManager.class,
+            builder, PersistenceMockUtil.InvocationContextBuilder.class, "blockingManager", (stub, mock) ->
+            stub.when(mock).runBlocking(any(), anyString()));
+
+      Future<Void> startFuture = fork(() -> store.startAndWait(builder.build()));
+
+      // Wait until we are about to try to rebuild the index
+      checkPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
+
+      Index index = Mocks.replaceFieldWithSpy(store.delegate(), "index", Index.class);
+
+      checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
+
+      startFuture.get(10, TimeUnit.SECONDS);
+
+      verify(index).load();
+      verify(index, never()).reset();
    }
 }
