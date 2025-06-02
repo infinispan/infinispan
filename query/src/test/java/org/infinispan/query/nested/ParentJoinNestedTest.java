@@ -110,11 +110,15 @@ public class ParentJoinNestedTest extends SingleCacheManagerTest {
 
    @Test
    public void nested_usingJoinWithNegation() {
+      List<Player> playersC = List.of(new Player("Ulrich", "red", 3), new Player("Martha", "blue", 0));
+      cache.put("1", new Team("New New Team", playersC, playersC));
+
       Query<Object[]> query = cache.query("select t.name from org.infinispan.query.model.Team t " +
-            "join t.firstTeam p " +
-            "where (p.color ='red' AND p.number!=7)");
+            "join t.firstTeam p join t.firstTeam p2 " +
+            "where (p.color ='red' AND p2.number!=7)");
       List<Object[]> result = query.list();
-      assertThat(result).extracting(array -> array[0]).containsExactly("New Team");
+      assertThat(result).hasSize(1);
+      assertThat(result).extracting(array -> array[0]).containsExactly("New New Team");
       assertThat(queryStatistics.getLocalIndexedQueryCount()).isEqualTo(1);
    }
 

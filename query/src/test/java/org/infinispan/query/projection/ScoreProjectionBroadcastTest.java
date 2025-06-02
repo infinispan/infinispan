@@ -32,7 +32,7 @@ public class ScoreProjectionBroadcastTest extends MultipleCacheManagersTest {
    public void test() {
       for (byte item = 1; item <= 10; item++) {
          byte[] bytes = {item, item, item};
-         cache.put(item, new Item("c" + item, bytes, new float[]{1.1f * item, 1.1f * item, 1.1f * item}, "bla" + item, (int)item));
+         cache.put(item, new Item("c" + item, bytes, new float[]{1.1f * item, 1.1f * item, 1.1f * item}, "bla" + item, (int)item, null));
       }
 
       Query<Object[]> query;
@@ -49,5 +49,7 @@ public class ScoreProjectionBroadcastTest extends MultipleCacheManagersTest {
       hits = query.list();
       assertThat(hits).extracting(objects -> objects[0]).extracting("code").containsExactly("c5", "c6", "c7");
       assertThat(hits).extracting(objects -> objects[1]).hasOnlyElementsOfType(Float.class).isNotNull().allMatch(o -> !o.equals(Float.NaN));
+
+
    }
 }
