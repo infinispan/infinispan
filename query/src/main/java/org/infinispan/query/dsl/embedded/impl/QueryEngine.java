@@ -603,7 +603,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
                }
                return new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, parsingResult, parsingResult.getProjections(), rowProcessor, startOffset, maxResults, local);
             } else {
-               IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, null, null, null, sortFields);
+               IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, parsingResult.getWhereClause() != null ? parsingResult.getWhereClause() : normalizedWhereClause, null, null, null, sortFields);
                Query<?> indexQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, startOffset, maxResults, local);
                String projectionQueryStr = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), parsingResult.getProjectedPaths(), null, null, null);
                return new MetadataHybridQuery<>(queryFactory, cache, projectionQueryStr, parsingResult.getStatementType(),
@@ -613,6 +613,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
          } else {
             // projections may be stored but some sort fields are not so we need to query the index and then execute in-memory sorting and projecting in a second phase
             IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, null, null, null, null);
+
             Query<?> indexQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, -1, -1, local);
             String projectionQueryStr = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), parsingResult.getProjectedPaths(), null, null, sortFields);
             return new MetadataHybridQuery<>(queryFactory, cache, projectionQueryStr, parsingResult.getStatementType(),
@@ -643,8 +644,13 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    private IckleParsingResult<TypeMetadata> makeFilterParsingResult(IckleParsingResult<TypeMetadata> parsingResult, BooleanExpr normalizedWhereClause,
                                                                     PropertyPath[] projection, Class<?>[] projectedTypes, Object[] projectedNullMarkers,
                                                                     SortField[] sortFields) {
-      String queryString = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), projection,
-            normalizedWhereClause, parsingResult.getFilteringClause(), sortFields);
+      String queryString = parsingResult.getQueryString();
+
+      if (!queryString.toUpperCase().contains("JOIN")) {
+         queryString = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), projection,
+                 normalizedWhereClause, parsingResult.getFilteringClause(), sortFields);
+      }
+
       return new IckleParsingResult<>(queryString, parsingResult.getStatementType(), parsingResult.getParameterNames(),
             normalizedWhereClause, null, parsingResult.getFilteringClause(),
             parsingResult.getTargetEntityName(), parsingResult.getTargetEntityMetadata(),
