@@ -275,6 +275,22 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    }
 
    @Override
+   public void stopCache(String cacheName) {
+      synchronized (cacheName2RemoteCache) {
+         // Remove any mappings
+         InternalRemoteCache<?, ?> removed = cacheName2RemoteCache.remove(new RemoteCacheKey(cacheName, true));
+         if (removed != null) {
+            // stop the remote cache like we do it in the stop() method
+            removed.stop();
+         }
+         removed = cacheName2RemoteCache.remove(new RemoteCacheKey(cacheName, false));
+         if (removed != null) {
+            removed.stop();
+         }
+      }
+   }
+
+   @Override
    public Set<String> getCacheNames() {
       HotRodOperation<String> executeOp = managerOpFactory.executeOperation("@@cache@names", Collections.emptyMap());
       String names = await(dispatcher.execute(executeOp));
@@ -690,21 +706,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
     * @return an instance of {@link RemoteCacheManagerAdmin} which can perform administrative operations on the server.
     */
    public RemoteCacheManagerAdmin administration() {
-      return new RemoteCacheManagerAdminImpl(this, managerOpFactory, dispatcher, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
-            name -> {
-               synchronized (cacheName2RemoteCache) {
-                  // Remove any mappings
-                  InternalRemoteCache<?, ?> removed = cacheName2RemoteCache.remove(new RemoteCacheKey(name, true));
-                  if (removed != null) {
-                     // stop the remote cache like we do it in the stop() method
-                     removed.stop();
-                  }
-                  removed = cacheName2RemoteCache.remove(new RemoteCacheKey(name, false));
-                  if (removed != null) {
-                     removed.stop();
-                  }
-               }
-            });
+      return new RemoteCacheManagerAdminImpl(this, managerOpFactory, dispatcher, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class), this::stopCache);
    }
 
    /**

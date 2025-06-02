@@ -31,6 +31,17 @@ public interface BasicCacheContainer extends Lifecycle {
    <K, V> BasicCache<K, V> getCache(String cacheName);
 
    /**
+    * Forcefully stops a cache with the given name.
+    *
+    * <p>
+    * This method will force a stop of the cache, even if it is not completely initialized.
+    * </p>
+    *
+    * @param cacheName name of the cache to stop
+    */
+   void stopCache(String cacheName);
+
+   /**
     * This method returns a collection of all cache names.
         * The configurations may have been defined via XML, in the programmatic configuration,
     * or at runtime.

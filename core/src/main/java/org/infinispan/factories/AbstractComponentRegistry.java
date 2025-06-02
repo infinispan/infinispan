@@ -359,6 +359,10 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
       // Start all the components. The order doesn't matter, as starting one component starts its dependencies as well
       Collection<ComponentRef<?>> components = basicComponentRegistry.getRegisteredComponents();
       for (ComponentRef<?> component : components) {
+         if (state.isStopping() || state.isTerminated()) {
+            getLog().tracef("Component %s not started because the registry was stopped or terminated", getName());
+            break;
+         }
          component.running();
       }
 

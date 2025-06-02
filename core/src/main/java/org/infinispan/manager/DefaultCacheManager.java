@@ -928,6 +928,11 @@ public class DefaultCacheManager extends InternalCacheManager {
       internalStop();
    }
 
+   @Override
+   public void stopCache(String cacheName) {
+      terminate(cacheName);
+   }
+
    private void internalStop() {
       lifecycleLock.lock();
       String identifierString = identifierString();
@@ -986,7 +991,7 @@ public class DefaultCacheManager extends InternalCacheManager {
 
       for (String cacheName : cachesToStop) {
          try {
-            terminate(cacheName);
+            stopCache(cacheName);
          } catch (Throwable t) {
             CONTAINER.componentFailedToStop(t);
          }

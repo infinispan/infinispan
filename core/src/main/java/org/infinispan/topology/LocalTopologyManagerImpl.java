@@ -60,6 +60,7 @@ import org.infinispan.globalstate.impl.ScopedPersistentStateImpl;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
@@ -289,6 +290,11 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                                                             CacheStatusResponse initialStatus) {
       log.debugf("Cache %s received join response %s", cacheName, initialStatus);
       CacheTopology ct = getJoinTopology(initialStatus);
+      if (initialStatus.availabilityMode == AvailabilityMode.STOPPED) {
+         stopCache(cacheName);
+         return CompletableFuture.completedFuture(ct);
+      }
+
       int viewId = transport.getViewId();
       return doHandleTopologyUpdate(cacheName, ct, initialStatus.getAvailabilityMode(),
                                     viewId, transport.getCoordinator(), cacheStatus, initialStatus)
@@ -853,6 +859,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    public CompletionStage<Void> handleCacheShutdown(String cacheName) {
       // The cache has shutdown, write the CH state
       writeCHState(cacheName);
+      stopCache(cacheName);
       return completedNull();
    }
 
@@ -898,6 +905,11 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       } else {
          log.tracef("Cache '%s' status not found (%s) to write CH or without topology", cacheName, cacheStatus);
       }
+   }
+
+   private void stopCache(String cacheName) {
+      EmbeddedCacheManager ecm = gcr.getCacheManager();
+      ecm.stopCache(cacheName);
    }
 
    private void deleteCHState(String cacheName) {
