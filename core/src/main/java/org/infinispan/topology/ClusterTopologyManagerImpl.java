@@ -311,6 +311,13 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
                     leaver, cacheName);
          return CompletableFutures.completedNull();
       }
+
+      if (cacheStatus.isGracefulStopped()) {
+         log.tracef("Ignoring leave request from %s for cache %s because it is graceful stopped",
+                    leaver, cacheName);
+         return CompletableFutures.completedNull();
+      }
+
       return cacheStatus.doLeave(leaver);
    }
 
