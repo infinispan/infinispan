@@ -23,7 +23,6 @@ import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.IdentityWrapper;
-import org.infinispan.commons.dataconversion.JavaSerializationEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.UTF8Encoder;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
@@ -164,34 +163,6 @@ public class DataConversionTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testConversionWithListeners() {
-      ConfigurationBuilder cfg = new ConfigurationBuilder();
-
-      withCacheManager(new CacheManagerCallable(
-            createCacheManager(TestDataSCI.INSTANCE, cfg)) {
-         @Override
-         public void call() {
-            Cache<String, Person> cache = cm.getCache();
-            cm.getClassAllowList().addClasses(Person.class);
-            // Obtain cache with custom valueEncoder
-            Cache storeMarshalled = cache.getAdvancedCache().withEncoding(JavaSerializationEncoder.class);
-
-            // Add a listener
-            SimpleListener simpleListener = new SimpleListener();
-            storeMarshalled.addListener(simpleListener);
-
-            Person value = new Person();
-            storeMarshalled.put("1", value);
-
-            // Assert values returned are passed through the valueEncoder
-            assertEquals(simpleListener.events.size(), 1);
-            assertEquals(simpleListener.events.get(0).getKey(), "1");
-            assertEquals(simpleListener.events.get(0).getValue(), value);
-         }
-      });
-   }
-
-   @Test
    @SuppressWarnings("unchecked")
    public void testTranscoding() {
 
@@ -298,28 +269,6 @@ public class DataConversionTest extends AbstractInfinispanTest {
       });
    }
 
-   public void testWithCustomEncoder() {
-      withCacheManager(new CacheManagerCallable(
-            createCacheManager(TestDataSCI.INSTANCE, new ConfigurationBuilder())) {
-         @Override
-         public void call() {
-            EncoderRegistry encoderRegistry = TestingUtil.extractGlobalComponent(cm, EncoderRegistry.class);
-            encoderRegistry.registerEncoder(new GzipEncoder());
-
-            AdvancedCache<String, String> cache = cm.<String, String>getCache().getAdvancedCache();
-
-            AdvancedCache<String, String> compressingCache = (AdvancedCache<String, String>) cache.withEncoding(IdentityEncoder.class, GzipEncoder.class);
-
-            compressingCache.put("297931749", "0412c789a37f5086f743255cfa693dd502b6a2ecb2ceee68380ff58ad15e7b56");
-
-            assertEquals(compressingCache.get("297931749"), "0412c789a37f5086f743255cfa693dd502b6a2ecb2ceee68380ff58ad15e7b56");
-
-            Object value = compressingCache.withEncoding(IdentityEncoder.class).get("297931749");
-            assert value instanceof byte[];
-         }
-      });
-   }
-
    @Test
    public void testSerialization() {
       withCacheManager(new CacheManagerCallable(createCacheManager(TestDataSCI.INSTANCE, new ConfigurationBuilder())) {
@@ -336,10 +285,6 @@ public class DataConversionTest extends AbstractInfinispanTest {
          @Override
          public void call() throws Exception {
             ComponentRegistry registry = ComponentRegistry.of(cm.getCache());
-            testWith(DataConversion.DEFAULT_KEY, registry);
-            testWith(DataConversion.DEFAULT_VALUE, registry);
-            testWith(DataConversion.IDENTITY_KEY, registry);
-            testWith(DataConversion.IDENTITY_VALUE, registry);
 
             ConfigurationBuilder builder = new ConfigurationBuilder();
             cm.defineConfiguration("compat", builder.build());

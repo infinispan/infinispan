@@ -1,9 +1,5 @@
 package org.infinispan.commons.dataconversion;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_INFINISPAN_MARSHALLING;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JBOSS_MARSHALLING;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
@@ -20,6 +16,9 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_CSS;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_CSV;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_HTML;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Short ids for common media types
@@ -47,7 +46,6 @@ public final class MediaTypeIds {
       idByType.put(TEXT_PLAIN, (short) 13);
       idByType.put(TEXT_HTML, (short) 14);
       idByType.put(APPLICATION_JBOSS_MARSHALLING, (short) 15);
-      idByType.put(APPLICATION_INFINISPAN_MARSHALLING, (short) 16);
       idByType.put(APPLICATION_UNKNOWN, (short) 17);
 
       idByType.forEach((key, value) -> typeById.put(value, key));
