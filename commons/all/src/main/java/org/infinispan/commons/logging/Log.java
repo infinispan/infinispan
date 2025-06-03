@@ -61,6 +61,7 @@ public interface Log extends BasicLogger {
    Log CONFIG = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONFIG");
    Log CONTAINER = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONTAINER");
    Log SECURITY = Logger.getMessageLogger(Log.class, LOG_ROOT + "SECURITY");
+   Log LIFECYCLE = Logger.getMessageLogger(Log.class, LOG_ROOT + "LIFECYCLE");
 
    @LogMessage(level = WARN)
    @Message(value = "Property %s could not be replaced as intended!", id = 901)
