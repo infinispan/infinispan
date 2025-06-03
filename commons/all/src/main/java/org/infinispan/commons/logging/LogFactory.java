@@ -1,7 +1,5 @@
 package org.infinispan.commons.logging;
 
-import java.lang.invoke.MethodHandles;
-
 import org.jboss.logging.Logger;
 
 /**
@@ -18,9 +16,5 @@ public class LogFactory {
 
    public static <T> T getLog(Class<?> clazz, Class<T> logClass) {
       return Logger.getMessageLogger(logClass, clazz.getName());
-   }
-
-   public static Log getLog(String category) {
-      return Logger.getMessageLogger(MethodHandles.lookup(), Log.class, Log.LOG_ROOT + category);
    }
 }

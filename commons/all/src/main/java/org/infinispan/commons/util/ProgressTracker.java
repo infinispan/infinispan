@@ -8,7 +8,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.time.TimeService;
 
 import net.jcip.annotations.GuardedBy;
@@ -17,7 +16,7 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public final class ProgressTracker {
 
-   private static final Log log = LogFactory.getLog("LIFECYCLE");
+   private static final Log log = Log.LIFECYCLE;
 
    private final String name;
    private final ScheduledExecutorService executor;
