@@ -23,9 +23,10 @@ public class InvalidatedFailoverNearCacheBloomTest extends InvalidatedFailoverNe
 
       clientBuilder.connectionPool().maxActive(1);
 
-      clientBuilder.nearCache().mode(NearCacheMode.INVALIDATED)
-            .maxEntries(4)
-            .bloomFilter(true);
+      clientBuilder.remoteCache("")
+            .nearCacheMode(NearCacheMode.INVALIDATED)
+            .nearCacheMaxEntries(4)
+            .nearCacheUseBloomFilter(true);
       return AssertsNearCache.create(cache(0), clientBuilder);
    }
 

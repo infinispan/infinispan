@@ -5,7 +5,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.configuration.NearCacheConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -77,12 +76,7 @@ public class EvictInvalidatedNearCacheTest extends SingleHotRodServerTest {
    protected <K, V> AssertsNearCache<K, V> createClient() {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
-      NearCacheConfigurationBuilder nearCacheConfigurationBuilder = builder.nearCache().mode(getNearCacheMode())
-            .maxEntries(entryCount);
-      if (bloomFilter) {
-         builder.connectionPool().maxActive(1);
-         nearCacheConfigurationBuilder.bloomFilter(true);
-      }
+      builder.remoteCache("").nearCacheMode(getNearCacheMode()).nearCacheMaxEntries(entryCount).nearCacheUseBloomFilter(bloomFilter);
       return AssertsNearCache.create(cache(), builder);
    }
 

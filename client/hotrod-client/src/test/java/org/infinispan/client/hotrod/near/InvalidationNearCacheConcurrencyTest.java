@@ -75,7 +75,7 @@ public class InvalidationNearCacheConcurrencyTest extends SingleHotRodServerTest
       InternalDataContainer<?, ?> realContainer = Mocks.blockingMock(checkPoint, InternalDataContainer.class, cache,
             (stub, m) -> stub.when(m).peek(Mockito.anyInt(), Mockito.any()));
 
-      Future<Void> future = fork(() -> assertEquals(remoteCache.get(1), "foo"));
+      Future<Void> future = fork(() -> assertEquals("foo", remoteCache.get(1)));
 
       checkPoint.awaitStrict(Mocks.AFTER_INVOCATION, 10, TimeUnit.SECONDS);
 

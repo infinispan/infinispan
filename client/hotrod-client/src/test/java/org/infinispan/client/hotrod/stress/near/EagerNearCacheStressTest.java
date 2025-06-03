@@ -60,7 +60,7 @@ public class EagerNearCacheStressTest {
 
    RemoteCacheManager getRemoteCacheManager(int port, NearCacheMode nearCacheMode, int maxEntries) {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      builder.nearCache().mode(nearCacheMode).maxEntries(maxEntries);
+      builder.remoteCache("").nearCacheMode(nearCacheMode).nearCacheMaxEntries(maxEntries);
       builder.addServer().host("127.0.0.1").port(port);
       return new RemoteCacheManager(builder.build());
    }

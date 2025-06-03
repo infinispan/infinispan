@@ -16,7 +16,6 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.configuration.NearCacheConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -47,13 +46,7 @@ public class AvoidStaleNearCacheReadsTest extends SingleHotRodServerTest {
    protected RemoteCacheManager getRemoteCacheManager() {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
-      NearCacheConfigurationBuilder nearCacheConfigurationBuilder = builder.nearCache()
-            .mode(NearCacheMode.INVALIDATED)
-            .maxEntries(entryCount)
-            .bloomFilter(bloomFilter);
-      if (bloomFilter) {
-         builder.connectionPool().maxActive(1);
-      }
+      builder.remoteCache("").nearCacheMode(NearCacheMode.INVALIDATED).nearCacheMaxEntries(entryCount).nearCacheUseBloomFilter(bloomFilter);
       return new RemoteCacheManager(builder.build());
    }
 

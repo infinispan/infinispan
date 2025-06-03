@@ -2,23 +2,17 @@ package org.infinispan.client.hotrod.configuration;
 
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
-import java.util.Properties;
-import java.util.regex.Pattern;
-
-import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.near.DefaultNearCacheFactory;
 import org.infinispan.client.hotrod.near.NearCacheFactory;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.util.TypedProperties;
 
 public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBuilder
       implements Builder<NearCacheConfiguration> {
 
    private NearCacheMode mode = NearCacheMode.DISABLED;
    private Integer maxEntries = null; // undefined
-   private Pattern cacheNamePattern = null; // matches all
    private boolean bloomFilter = false;
    private NearCacheFactory nearCacheFactory = DefaultNearCacheFactory.INSTANCE;
 
@@ -65,33 +59,6 @@ public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBui
    }
 
    /**
-    * Specifies a cache name pattern (in the form of a regular expression) that matches all cache names for which
-    * near caching should be enabled. See the {@link Pattern} syntax for details on the format.
-    *
-    * @param pattern a regular expression.
-    * @return an instance of the builder
-    * @deprecated use {@link RemoteCacheConfigurationBuilder#nearCacheMode(NearCacheMode)} to enable near-caching per-cache
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public NearCacheConfigurationBuilder cacheNamePattern(String pattern) {
-      this.cacheNamePattern = Pattern.compile(pattern);
-      return this;
-   }
-
-   /**
-    * Specifies a cache name pattern that matches all cache names for which near caching should be enabled.
-    *
-    * @param pattern a {@link Pattern}
-    * @return an instance of the builder
-    * @deprecated use {@link RemoteCacheConfigurationBuilder#nearCacheMode(NearCacheMode)} to enable near-caching per-cache
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public NearCacheConfigurationBuilder cacheNamePattern(Pattern pattern) {
-      this.cacheNamePattern = pattern;
-      return this;
-   }
-
-   /**
     * Specifies a {@link NearCacheFactory} which is responsible for creating {@link org.infinispan.client.hotrod.near.NearCache} instances.
     *
     * @param factory a {@link NearCacheFactory}
@@ -110,20 +77,12 @@ public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBui
          } else if (maxEntries < 0 && bloomFilter) {
             throw HOTROD.nearCacheMaxEntriesPositiveWithBloom(maxEntries);
          }
-
-         if (bloomFilter) {
-            int maxActive = connectionPool().maxActive();
-            ExhaustedAction exhaustedAction = connectionPool().exhaustedAction();
-            if (maxActive != 1 || exhaustedAction != ExhaustedAction.WAIT) {
-               throw HOTROD.bloomFilterRequiresMaxActiveOneAndWait(maxEntries, exhaustedAction);
-            }
-         }
       }
    }
 
    @Override
    public NearCacheConfiguration create() {
-      return new NearCacheConfiguration(mode, maxEntries == null ? -1 : maxEntries, bloomFilter, cacheNamePattern, nearCacheFactory);
+      return new NearCacheConfiguration(mode, maxEntries == null ? -1 : maxEntries, bloomFilter, nearCacheFactory);
    }
 
    @Override
@@ -131,26 +90,7 @@ public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBui
       mode = template.mode();
       maxEntries = template.maxEntries();
       bloomFilter = template.bloomFilter();
-      cacheNamePattern = template.cacheNamePattern();
       nearCacheFactory = template.nearCacheFactory();
       return this;
-   }
-
-   @Override
-   public ConfigurationBuilder withProperties(Properties properties) {
-      TypedProperties typed = TypedProperties.toTypedProperties(properties);
-      if (typed.containsKey(ConfigurationProperties.NEAR_CACHE_MAX_ENTRIES)) {
-         this.maxEntries(typed.getIntProperty(ConfigurationProperties.NEAR_CACHE_MAX_ENTRIES, -1));
-      }
-      if (typed.containsKey(ConfigurationProperties.NEAR_CACHE_MODE)) {
-         this.mode(NearCacheMode.valueOf(typed.getProperty(ConfigurationProperties.NEAR_CACHE_MODE)));
-      }
-      if (typed.containsKey(ConfigurationProperties.NEAR_CACHE_BLOOM_FILTER)) {
-         this.bloomFilter(typed.getBooleanProperty(ConfigurationProperties.NEAR_CACHE_BLOOM_FILTER, false));
-      }
-      if (typed.containsKey(ConfigurationProperties.NEAR_CACHE_NAME_PATTERN)) {
-         this.cacheNamePattern(typed.getProperty(ConfigurationProperties.NEAR_CACHE_NAME_PATTERN));
-      }
-      return builder;
    }
 }

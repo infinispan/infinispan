@@ -53,8 +53,8 @@ public class ClusterInvalidatedNearCacheTest extends MultiHotRodServersTest {
       for (HotRodServer server : servers)
          clientBuilder.addServer().host("127.0.0.1").port(server.getPort());
 
-      clientBuilder.nearCache().mode(getNearCacheMode()).maxEntries(-1);
-      return AssertsNearCache.create(this.<byte[], Object>cache(0), clientBuilder);
+      clientBuilder.remoteCache("").nearCacheMode(getNearCacheMode());
+      return AssertsNearCache.create(this.cache(0), clientBuilder);
    }
 
    public void testNearCacheUpdatesSeenByAllClients() {

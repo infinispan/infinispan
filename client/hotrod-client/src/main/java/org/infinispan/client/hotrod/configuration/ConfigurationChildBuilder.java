@@ -72,15 +72,16 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder clientIntelligence(ClientIntelligence clientIntelligence);
 
    /**
-    * Configures the connection pool
-    */
-   ConnectionPoolConfigurationBuilder connectionPool();
-
-   /**
     * This property defines the maximum socket connect timeout in milliseconds before giving up connecting to the
     * server. Defaults to {@link org.infinispan.client.hotrod.impl.ConfigurationProperties#DEFAULT_CONNECT_TIMEOUT}
     */
    ConfigurationBuilder connectionTimeout(int connectionTimeout);
+
+   /**
+    * Configures the connection pool
+    */
+   @Deprecated(forRemoval = true, since = "15.1")
+   ConnectionPoolConfigurationBuilder connectionPool();
 
    /**
     * Defines the {@link ConsistentHash} implementation to use for the specified version. By default,

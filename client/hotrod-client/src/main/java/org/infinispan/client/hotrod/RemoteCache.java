@@ -498,7 +498,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * @param keys The keys to find values for
     * @return The entries that were present for the given keys
     */
-   public Map<K, V> getAll(Set<? extends K> keys);
+   Map<K, V> getAll(Set<? extends K> keys);
 
    /**
     * Returns the HotRod protocol version supported by this RemoteCache implementation

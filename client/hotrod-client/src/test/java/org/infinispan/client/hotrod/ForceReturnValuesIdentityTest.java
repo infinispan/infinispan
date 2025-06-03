@@ -5,7 +5,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNotSame;
 import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertSame;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -44,19 +43,9 @@ public class ForceReturnValuesIdentityTest extends SingleCacheManagerTest {
       hotRodServer = null;
    }
 
-   public void testSameInstanceForSameForceReturnValues() {
-      RemoteCache<String, String> rcDontForceReturn = remoteCacheManager.getCache(false);
-      RemoteCache<String, String> rcDontForceReturn2 = remoteCacheManager.getCache(false);
-      assertSame("RemoteCache instances should be the same", rcDontForceReturn, rcDontForceReturn2);
-
-      RemoteCache<String, String> rcForceReturn = remoteCacheManager.getCache(true);
-      RemoteCache<String, String> rcForceReturn2 = remoteCacheManager.getCache(true);
-      assertSame("RemoteCache instances should be the same", rcForceReturn, rcForceReturn2);
-   }
-
    public void testDifferentInstancesForDifferentForceReturnValues() {
-      RemoteCache<String, String> rcDontForceReturn = remoteCacheManager.getCache(false);
-      RemoteCache<String, String> rcForceReturn = remoteCacheManager.getCache(true);
+      RemoteCache<String, String> rcDontForceReturn = remoteCacheManager.getCache();
+      RemoteCache<String, String> rcForceReturn = rcDontForceReturn.withFlags(Flag.FORCE_RETURN_VALUE);
       assertNotSame("RemoteCache instances should not be the same", rcDontForceReturn, rcForceReturn);
 
       String rv = rcDontForceReturn.put("Key", "Value");
