@@ -26,12 +26,6 @@ public interface EncoderRegistry {
    Wrapper getWrapper(Class<? extends Wrapper> wrapperClass, byte wrapperId);
 
    /**
-    * @param encoder {@link Encoder to be registered}.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   void registerEncoder(Encoder encoder);
-
-   /**
     * @deprecated Since 11.0. To be removed in 14.0, with {@link DataConversion#getWrapper()}
     */
    @Deprecated(forRemoval=true, since = "11.0")
