@@ -31,9 +31,6 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STOR
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_PASSWORD;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MARSHALLER;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MAX_RETRIES;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.NEAR_CACHE_MAX_ENTRIES;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.NEAR_CACHE_MODE;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.NEAR_CACHE_NAME_PATTERN;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_BALANCING_STRATEGY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SASL_MECHANISM;
@@ -106,7 +103,6 @@ public class Configuration implements org.infinispan.api.configuration.Configura
    private final boolean tcpKeepAlive;
    private final int valueSizeEstimate;
    private final int maxRetries;
-   private final NearCacheConfiguration nearCache;
    private final List<ClusterConfiguration> clusters;
    private final List<String> serialAllowList;
    private final int batchSize;
@@ -131,7 +127,7 @@ public class Configuration implements org.infinispan.api.configuration.Configura
                         boolean forceReturnValues, int keySizeEstimate,
                         Marshaller marshaller, Class<? extends Marshaller> marshallerClass,
                         ProtocolVersion protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
-                        int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
+                        int valueSizeEstimate, int maxRetries,
                         List<ClusterConfiguration> clusters, List<String> serialAllowList, int batchSize,
                         TransactionConfiguration transaction, StatisticsConfiguration statistics, Features features,
                         List<SerializationContextInitializer> contextInitializers,
@@ -160,7 +156,6 @@ public class Configuration implements org.infinispan.api.configuration.Configura
       this.tcpNoDelay = tcpNoDelay;
       this.tcpKeepAlive = tcpKeepAlive;
       this.valueSizeEstimate = valueSizeEstimate;
-      this.nearCache = nearCache;
       this.clusters = clusters;
       this.serialAllowList = serialAllowList;
       this.classAllowList = new ClassAllowList(serialAllowList);
@@ -239,11 +234,6 @@ public class Configuration implements org.infinispan.api.configuration.Configura
 
    public Class<? extends Marshaller> marshallerClass() {
       return marshallerClass;
-   }
-
-   @Deprecated(forRemoval=true, since = "11.0")
-   public NearCacheConfiguration nearCache() {
-      return nearCache;
    }
 
    public ProtocolVersion version() {
@@ -415,7 +405,6 @@ public class Configuration implements org.infinispan.api.configuration.Configura
             + ", valueSizeEstimate=" + valueSizeEstimate + ", maxRetries=" + maxRetries
             + ", serialAllowList=" + serialAllowList
             + ", batchSize=" + batchSize
-            + ", nearCache=" + nearCache
             + ", remoteCaches= " + remoteCaches
             + ", transaction=" + transaction
             + ", statistics=" + statistics
@@ -429,7 +418,7 @@ public class Configuration implements org.infinispan.api.configuration.Configura
       if (asyncExecutorFactory().factoryClass() != null) {
          properties.setProperty(ASYNC_EXECUTOR_FACTORY, asyncExecutorFactory().factoryClass().getName());
          TypedProperties aefProps = asyncExecutorFactory().properties();
-         for (String key : Arrays.asList(DEFAULT_EXECUTOR_FACTORY_POOL_SIZE)) {
+         for (String key : List.of(DEFAULT_EXECUTOR_FACTORY_POOL_SIZE)) {
             if (aefProps.containsKey(key)) {
                properties.setProperty(key, aefProps.getProperty(key));
             }
@@ -475,7 +464,7 @@ public class Configuration implements org.infinispan.api.configuration.Configura
 
       StringBuilder servers = new StringBuilder();
       for (ServerConfiguration server : servers()) {
-         if (servers.length() > 0) {
+         if (!servers.isEmpty()) {
             servers.append(";");
          }
          servers.append(server.host()).append(":").append(server.port());
@@ -527,11 +516,6 @@ public class Configuration implements org.infinispan.api.configuration.Configura
       properties.setProperty(BATCH_SIZE, Integer.toString(batchSize));
 
       transaction.toProperties(properties);
-
-      properties.setProperty(NEAR_CACHE_MODE, nearCache.mode().name());
-      properties.setProperty(NEAR_CACHE_MAX_ENTRIES, Integer.toString(nearCache.maxEntries()));
-      if (nearCache.cacheNamePattern() != null)
-         properties.setProperty(NEAR_CACHE_NAME_PATTERN, nearCache.cacheNamePattern().pattern());
 
       if (contextInitializers != null && !contextInitializers.isEmpty())
          properties.setProperty(CONTEXT_INITIALIZERS, contextInitializers.stream().map(sci -> sci.getClass().getName()).collect(Collectors.joining(",")));

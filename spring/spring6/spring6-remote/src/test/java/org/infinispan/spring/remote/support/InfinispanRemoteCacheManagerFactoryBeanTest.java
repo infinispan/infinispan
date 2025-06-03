@@ -5,7 +5,6 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.FORCE_RE
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_ALLOWLIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_SIZE_ESTIMATE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MARSHALLER;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.NEAR_CACHE_MODE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_BALANCING_STRATEGY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_LIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_KEEP_ALIVE;
@@ -24,7 +23,6 @@ import java.util.Properties;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.SomeRequestBalancingStrategy;
-import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.IdentityMarshaller;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
@@ -466,29 +464,6 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest extends AbstractInfinis
                          + ") should have overridden property 'forceReturnValue'. However, it didn't.",
                    String.valueOf(expectedForceReturnValues),
                    remoteCacheManager.getConfiguration().properties().get(FORCE_RETURN_VALUES));
-      objectUnderTest.destroy();
-   }
-
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.remote.support.InfinispanRemoteCacheManagerFactoryBean#setNearCacheMode(String)}
-    *
-    * @throws Exception
-    */
-   @Test
-   public final void setNearCacheModeShouldOverrideDefaultNearCacheMode() throws Exception {
-      final NearCacheMode expectedNearCacheMode = NearCacheMode.INVALIDATED;
-      final InfinispanRemoteCacheManagerFactoryBean objectUnderTest = new InfinispanRemoteCacheManagerFactoryBean();
-      objectUnderTest.setNearCacheMode(expectedNearCacheMode.name());
-      objectUnderTest.setNearCacheMaxEntries(100);
-      objectUnderTest.afterPropertiesSet();
-
-      final RemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
-
-      assertEquals("setNearCacheMode(" + expectedNearCacheMode
-                  + ") should have overridden property 'nearCacheMode'. However, it didn't.",
-            expectedNearCacheMode.name(),
-            remoteCacheManager.getConfiguration().properties().get(NEAR_CACHE_MODE));
       objectUnderTest.destroy();
    }
 }

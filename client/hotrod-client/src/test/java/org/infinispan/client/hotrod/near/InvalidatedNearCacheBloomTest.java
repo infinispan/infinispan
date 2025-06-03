@@ -15,10 +15,10 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.util.BloomFilter;
 import org.infinispan.commons.util.MurmurHash3BloomFilter;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Factory;
@@ -85,16 +85,16 @@ public class InvalidatedNearCacheBloomTest extends SingleHotRodServerTest {
 
    private <K, V> AssertsNearCache<K, V> createAssertClient() {
       ConfigurationBuilder builder = clientConfiguration();
-      builder.connectionPool().maxActive(1);
       return AssertsNearCache.create(this.cache(), builder);
    }
 
    private ConfigurationBuilder clientConfiguration() {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
-      builder.nearCache().mode(NearCacheMode.INVALIDATED)
-            .maxEntries(NEAR_CACHE_SIZE)
-            .bloomFilter(true);
+      builder.remoteCache("")
+            .nearCacheMode(NearCacheMode.INVALIDATED)
+            .nearCacheMaxEntries(NEAR_CACHE_SIZE)
+            .nearCacheUseBloomFilter(true);
       return builder;
    }
 
