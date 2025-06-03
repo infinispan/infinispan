@@ -87,12 +87,9 @@ public class ClusterInvalidatedNearCacheBloomTest extends MultiHotRodServersTest
             HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       for (HotRodServer server : servers)
          clientBuilder.addServer().host("127.0.0.1").port(server.getPort());
-
-      clientBuilder.connectionPool().maxActive(1);
-
-      clientBuilder.nearCache().mode(NearCacheMode.INVALIDATED)
-            .maxEntries(NEAR_CACHE_SIZE)
-            .bloomFilter(true);
+      clientBuilder.remoteCache("").nearCacheMode(NearCacheMode.INVALIDATED)
+            .nearCacheMaxEntries(NEAR_CACHE_SIZE)
+            .nearCacheUseBloomFilter(true);
       return AssertsNearCache.create(cache(0), clientBuilder);
    }
 

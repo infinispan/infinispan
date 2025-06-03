@@ -1,6 +1,10 @@
 package org.infinispan.client.hotrod;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -40,18 +44,13 @@ public class ForceReturnValuesTest extends SingleCacheManagerTest {
 
    public void testDontForceReturnValues() {
       RemoteCache<String, String> rc = remoteCacheManager.getCache();
-      String rv = rc.put("Key", "Value");
-      assert rv == null;
-      rv = rc.put("Key", "Value2");
-      assert rv == null;
+      assertNull(rc.put(k(), v()));
    }
 
    public void testForceReturnValues() {
-      RemoteCache<String, String> rc = remoteCacheManager.getCache(true);
-      String rv = rc.put("Key", "Value");
-      assert rv == null;
-      rv = rc.put("Key", "Value2");
-      assert rv != null;
-      assert "Value".equals(rv);
+      RemoteCache<String, String> rc = remoteCacheManager.getCache();
+      rc.put(k(), v());
+      String rv = rc.withFlags(Flag.FORCE_RETURN_VALUE).put(k(), v(1));
+      assertEquals(v(), rv);
    }
 }

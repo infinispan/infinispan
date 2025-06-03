@@ -115,23 +115,10 @@ public abstract class AbstractRemoteCacheManagerFactory {
 
    private Properties loadPropertiesFromFile(final Resource propertiesFileLocation)
          throws IOException {
-      InputStream propsStream = null;
-      try {
-         propsStream = propertiesFileLocation.getInputStream();
+      try (InputStream propsStream = propertiesFileLocation.getInputStream()) {
          final Properties answer = new Properties();
          answer.load(propsStream);
-
          return answer;
-      } finally {
-         if (propsStream != null) {
-            try {
-               propsStream.close();
-            } catch (final IOException e) {
-               logger.warn(
-                     "Failed to close InputStream used to load configuration properties: "
-                           + e.getMessage(), e);
-            }
-         }
       }
    }
 
@@ -267,29 +254,5 @@ public abstract class AbstractRemoteCacheManagerFactory {
     */
    public void setWriteTimeout(final long writeTimeout) {
       this.configurationPropertiesOverrides.setWriteTimeout(writeTimeout);
-   }
-
-   /**
-    * @param mode
-    * @see ConfigurationPropertiesOverrides#setNearCacheMode(String)
-    */
-   public void setNearCacheMode(String mode) {
-      this.configurationPropertiesOverrides.setNearCacheMode(mode);
-   }
-
-   /**
-    * @param maxEntries
-    * @see ConfigurationPropertiesOverrides#setNearCacheMaxEntries(int)
-    */
-   public void setNearCacheMaxEntries(int maxEntries) {
-      this.configurationPropertiesOverrides.setNearCacheMaxEntries(maxEntries);
-   }
-
-   /**
-    * @param pattern
-    * @see ConfigurationPropertiesOverrides#setNearCacheNamePattern(String)
-    */
-   public void setNearCacheNamePattern(String pattern) {
-      this.configurationPropertiesOverrides.setNearCacheNamePattern(pattern);
    }
 }

@@ -53,11 +53,9 @@ public class ClusterNearCacheMarshallingTest extends MultiHotRodServersTest {
    protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder cb = super.createHotRodClientConfigurationBuilder(host, serverPort);
       if (marshaller != null) cb.marshaller(marshaller);
-      cb.nearCache().mode(NearCacheMode.INVALIDATED).maxEntries(100);
       cb.remoteCache("").nearCacheMode(NearCacheMode.INVALIDATED)
             .nearCacheMaxEntries(2)
             .nearCacheUseBloomFilter(bloomFilter);
-      cb.connectionPool().maxActive(1);
       return cb;
    }
 

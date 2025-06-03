@@ -1,7 +1,8 @@
 package io.micrometer.core.instrument.binder.cache;
 
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import static java.util.Collections.emptyList;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
@@ -17,8 +18,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import static java.util.Collections.emptyList;
-import static org.assertj.core.api.Assertions.assertThat;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 public class NotAuthorizedRemoteCacheMetricBinderTest {
 
@@ -26,7 +27,6 @@ public class NotAuthorizedRemoteCacheMetricBinderTest {
    static InfinispanServerExtension infinispanServerExtension = InfinispanServerExtensionBuilder.server();
 
    private RemoteCache<String, String> cacheAdminConnection;
-   private RemoteCache<String, String> cacheObserverConnection;
 
    private final MeterRegistry registry = new SimpleMeterRegistry();
    private CacheMeterBinder binder;
@@ -73,7 +73,7 @@ public class NotAuthorizedRemoteCacheMetricBinderTest {
                   .createRemoteCacheManager();
 
       // The cache is got with OBSERVER instead of ADMIN
-      cacheObserverConnection = remoteCacheManagerObserver.getCache("mycache");
+      RemoteCache<String, String> cacheObserverConnection = remoteCacheManagerObserver.getCache("mycache");
       RemoteInfinispanCacheMeterBinderProvider remoteInfinispanCacheMeterBinderProvider =
             new RemoteInfinispanCacheMeterBinderProvider();
       return (CacheMeterBinder) remoteInfinispanCacheMeterBinderProvider

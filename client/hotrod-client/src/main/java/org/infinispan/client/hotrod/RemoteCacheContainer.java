@@ -1,11 +1,8 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.marshall.Marshaller;
-
-import jakarta.transaction.TransactionManager;
 
 public interface RemoteCacheContainer extends BasicCacheContainer {
 
@@ -38,99 +35,6 @@ public interface RemoteCacheContainer extends BasicCacheContainer {
     */
    Configuration getConfiguration();
 
-   /**
-    * Same as {@code getCache(cacheName, forceReturnValue, null, null)}
-    *
-    * @see #getCache(String, boolean, TransactionMode, TransactionManager)
-    * @deprecated since 11.0. Use {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#remoteCache(String)} to configure the cache and then {@link #getCache(String)} to obtain it.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   default <K, V> RemoteCache<K, V> getCache(String cacheName, boolean forceReturnValue) {
-      return getCache(cacheName, forceReturnValue, null, null);
-   }
-
-   /**
-    * Same as {@code getCache("", forceReturnValue, null, null)}
-    *
-    * @see #getCache(String, boolean, TransactionMode, TransactionManager)
-    * @deprecated since 11.0. Use {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#remoteCache(String)} to configure the cache and then {@link #getCache(String)} to obtain it.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   default <K, V> RemoteCache<K, V> getCache(boolean forceReturnValue) {
-      return getCache("", forceReturnValue, null, null);
-   }
-
-   /**
-    * Same as {@code getCache(cacheName, transactionMode, null)}
-    *
-    * @see #getCache(String, TransactionMode, TransactionManager)
-    * @deprecated since 11.0. Use {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#remoteCache(String)} to configure the cache and then {@link #getCache(String)} to obtain it.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   default <K, V> RemoteCache<K, V> getCache(String cacheName, TransactionMode transactionMode) {
-      return getCache(cacheName, transactionMode, null);
-   }
-
-   /**
-    * Same as {@code getCache(cacheName, forceReturnValue, transactionMode, null)}
-    *
-    * @see #getCache(String, boolean, TransactionMode, TransactionManager)
-    * @deprecated since 11.0. Use {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#remoteCache(String)} to configure the cache and then {@link #getCache(String)} to obtain it.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   default <K, V> RemoteCache<K, V> getCache(String cacheName, boolean forceReturnValue,
-         TransactionMode transactionMode) {
-      return getCache(cacheName, forceReturnValue, transactionMode, null);
-   }
-
-   /**
-    * Same as {@code getCache(cacheName, null, transactionManager)}
-    *
-    * @see #getCache(String, TransactionMode, TransactionManager)
-    * @deprecated since 11.0. Use {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#remoteCache(String)} to configure the cache and then {@link #getCache(String)} to obtain it.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   default <K, V> RemoteCache<K, V> getCache(String cacheName, TransactionManager transactionManager) {
-      return getCache(cacheName, null, transactionManager);
-   }
-
-   /**
-    * Same as {@code getCache(cacheName, forceReturnValue, null, transactionManager)}
-    *
-    * @see #getCache(String, boolean, TransactionMode, TransactionManager)
-    * @deprecated since 11.0. Use {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#remoteCache(String)} to configure the cache and then {@link #getCache(String)} to obtain it.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   default <K, V> RemoteCache<K, V> getCache(String cacheName, boolean forceReturnValue,
-         TransactionManager transactionManager) {
-      return getCache(cacheName, forceReturnValue, null, transactionManager);
-   }
-
-   /**
-    *
-    * @param cacheName The cache's name.
-    * @param transactionMode The {@link TransactionMode} to override. If {@code null}, it uses the configured value.
-    * @param transactionManager The {@link TransactionManager} to override. If {@code null}, it uses the configured value.
-    * @return the {@link RemoteCache} implementation.
-    * @deprecated since 11.0. Use {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#remoteCache(String)} to configure the cache and then {@link #getCache(String)} to obtain it.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   <K, V> RemoteCache<K, V> getCache(String cacheName, TransactionMode transactionMode,
-         TransactionManager transactionManager);
-
-   /**
-    * @param cacheName          The cache's name.
-    * @param forceReturnValue   {@code true} to force a return value when it is not needed.
-    * @param transactionMode    The {@link TransactionMode} to override. If {@code null}, it uses the configured value.
-    * @param transactionManager The {@link TransactionManager} to override. If {@code null}, it uses the configured
-    *                           value.
-    * @return the {@link RemoteCache} implementation.
-    * @deprecated since 11.0. Use {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#remoteCache(String)} to configure the cache and then {@link #getCache(String)} to obtain it.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   <K, V> RemoteCache<K, V> getCache(String cacheName, boolean forceReturnValue, TransactionMode transactionMode,
-         TransactionManager transactionManager);
-
    boolean isStarted();
 
    /**
@@ -144,7 +48,7 @@ public interface RemoteCacheContainer extends BasicCacheContainer {
    boolean switchToCluster(String clusterName);
 
    /**
-    * Switch remote cache manager to a the default cluster, previously
+    * Switch remote cache manager to the default cluster, previously
     * declared via configuration. If the switch was completed successfully,
     * this method returns {@code true}, otherwise it returns {@code false}.
     *

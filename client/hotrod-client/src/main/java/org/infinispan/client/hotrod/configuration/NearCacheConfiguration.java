@@ -1,7 +1,5 @@
 package org.infinispan.client.hotrod.configuration;
 
-import java.util.regex.Pattern;
-
 import org.infinispan.client.hotrod.near.DefaultNearCacheFactory;
 import org.infinispan.client.hotrod.near.NearCacheFactory;
 
@@ -10,18 +8,16 @@ public class NearCacheConfiguration {
    private final NearCacheMode mode;
    private final int maxEntries;
    private final boolean bloomFilter;
-   private final Pattern cacheNamePattern;
    private final NearCacheFactory nearCacheFactory;
 
    public NearCacheConfiguration(NearCacheMode mode, int maxEntries, boolean bloomFilterOptimization) {
-      this(mode, maxEntries, bloomFilterOptimization, null, DefaultNearCacheFactory.INSTANCE);
+      this(mode, maxEntries, bloomFilterOptimization, DefaultNearCacheFactory.INSTANCE);
    }
 
-   public NearCacheConfiguration(NearCacheMode mode, int maxEntries, boolean bloomFilter, Pattern cacheNamePattern, NearCacheFactory nearCacheFactory) {
+   public NearCacheConfiguration(NearCacheMode mode, int maxEntries, boolean bloomFilter, NearCacheFactory nearCacheFactory) {
       this.mode = mode;
       this.maxEntries = maxEntries;
       this.bloomFilter = bloomFilter;
-      this.cacheNamePattern = cacheNamePattern;
       this.nearCacheFactory = nearCacheFactory;
    }
 
@@ -37,11 +33,6 @@ public class NearCacheConfiguration {
       return bloomFilter;
    }
 
-   @Deprecated(forRemoval=true, since = "11.0")
-   public Pattern cacheNamePattern() {
-      return cacheNamePattern;
-   }
-
    public NearCacheFactory nearCacheFactory() {
       return nearCacheFactory;
    }
@@ -52,7 +43,6 @@ public class NearCacheConfiguration {
             "mode=" + mode +
             ", maxEntries=" + maxEntries +
             ", bloomFilter=" + bloomFilter +
-            ", cacheNamePattern=" + cacheNamePattern +
             ", nearCacheFactory=" + nearCacheFactory +
             '}';
    }

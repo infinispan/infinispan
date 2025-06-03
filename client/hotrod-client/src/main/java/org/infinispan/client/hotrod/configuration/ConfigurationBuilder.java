@@ -86,7 +86,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private int valueSizeEstimate = ConfigurationProperties.DEFAULT_VALUE_SIZE;
    private int maxRetries = ConfigurationProperties.DEFAULT_MAX_RETRIES;
    private int serverFailureTimeout = ConfigurationProperties.DEFAULT_SERVER_FAILURE_TIMEOUT;
-   private final NearCacheConfigurationBuilder nearCache;
    private final List<String> allowListRegExs = new ArrayList<>();
    private int batchSize = ConfigurationProperties.DEFAULT_BATCH_SIZE;
    private final TransactionConfigurationBuilder transaction;
@@ -108,7 +107,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.connectionPool = new ConnectionPoolConfigurationBuilder(this);
       this.asyncExecutorFactory = new ExecutorFactoryConfigurationBuilder(this);
       this.security = new SecurityConfigurationBuilder(this);
-      this.nearCache = new NearCacheConfigurationBuilder(this);
       this.transaction = new TransactionConfigurationBuilder(this);
       this.statistics = new StatisticsConfigurationBuilder(this);
       this.remoteCacheBuilders = new HashMap<>();
@@ -292,16 +290,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    public ConfigurationBuilder addContextInitializers(SerializationContextInitializer... contextInitializers) {
       this.contextInitializers.addAll(Arrays.asList(contextInitializers));
       return this;
-   }
-
-   /**
-    * @deprecated since 11.0. To be removed in 14.0. Use
-    * {@link RemoteCacheConfigurationBuilder#nearCacheMode(NearCacheMode)} and
-    * {@link RemoteCacheConfigurationBuilder#nearCacheMaxEntries(int)} instead.
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public NearCacheConfigurationBuilder nearCache() {
-      return nearCache;
    }
 
    @Override
@@ -532,7 +520,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       }
       //TODO read TRANSACTION_TIMEOUT property after TransactionConfigurationBuilder is removed.
       transaction.withTransactionProperties(typed);
-      nearCache.withProperties(properties);
 
       parseClusterProperties(typed);
 
@@ -593,7 +580,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       connectionPool.validate();
       asyncExecutorFactory.validate();
       security.validate();
-      nearCache.validate();
       transaction.validate();
       statistics.validate();
       if (maxRetries < 0) {
@@ -643,7 +629,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
             clientIntelligence, connectionPool.create(), connectionTimeout, consistentHashImpl,
             dnsResolverMinTTL, dnsResolverMaxTTL, dnsResolverNegativeTTL,
             forceReturnValues, keySizeEstimate, buildMarshaller, buildMarshallerClass, protocolVersion, servers, socketTimeout,
-            security.create(), tcpNoDelay, tcpKeepAlive, valueSizeEstimate, maxRetries, nearCache.create(),
+            security.create(), tcpNoDelay, tcpKeepAlive, valueSizeEstimate, maxRetries,
             serverClusterConfigs, allowListRegExs, batchSize, transaction.create(), statistics.create(), features,
             contextInitializers, remoteCaches, transportFactory, tracingPropagationEnabled, metricRegistry, serverFailureTimeout);
    }
@@ -697,7 +683,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.transportFactory = template.transportFactory();
       this.valueSizeEstimate = template.valueSizeEstimate();
       this.maxRetries = template.maxRetries();
-      this.nearCache.read(template.nearCache(), combine);
       this.allowListRegExs.addAll(template.serialWhitelist());
       this.transaction.read(template.transaction(), combine);
       this.statistics.read(template.statistics(), combine);

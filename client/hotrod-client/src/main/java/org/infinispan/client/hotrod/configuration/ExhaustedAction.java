@@ -7,6 +7,7 @@ package org.infinispan.client.hotrod.configuration;
  * @author Tristan Tarrant
  * @since 5.3
  */
+@Deprecated(since = "15.1", forRemoval = true)
 public enum ExhaustedAction {
    EXCEPTION, // GenericKeyedObjectPool.WHEN_EXHAUSTED_FAIL
    WAIT, // GenericKeyedObjectPool.WHEN_EXHAUSTED_BLOCK

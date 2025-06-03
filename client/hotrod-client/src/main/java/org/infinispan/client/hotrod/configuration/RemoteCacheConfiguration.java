@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.configuration;
 
+import java.util.Objects;
+
 import org.infinispan.client.hotrod.near.DefaultNearCacheFactory;
 import org.infinispan.client.hotrod.near.NearCacheFactory;
 import org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManagerLookup;
@@ -119,27 +121,14 @@ public class RemoteCacheConfiguration {
    }
 
    @Override
-   public boolean equals(Object obj) {
-      if (this == obj)
-         return true;
-      if (obj == null)
-         return false;
-      if (getClass() != obj.getClass())
-         return false;
-      RemoteCacheConfiguration other = (RemoteCacheConfiguration) obj;
-      if (attributes == null) {
-         if (other.attributes != null)
-            return false;
-      } else if (!attributes.equals(other.attributes))
-         return false;
-      return true;
+   public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) return false;
+      RemoteCacheConfiguration that = (RemoteCacheConfiguration) o;
+      return Objects.equals(attributes, that.attributes);
    }
 
    @Override
    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
-      return result;
+      return Objects.hashCode(attributes);
    }
 }
