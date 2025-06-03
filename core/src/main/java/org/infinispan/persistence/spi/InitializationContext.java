@@ -94,6 +94,6 @@ public interface InitializationContext {
     * @return whether a store can directly purge its contents on startup
     */
    default boolean canStoreDirectlyPurgeOnStartup() {
-      return getConfiguration().fetchPersistentState();
+      return getConfiguration().purgeOnStartup();
    }
 }
