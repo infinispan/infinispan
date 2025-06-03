@@ -492,8 +492,22 @@ class Index {
       return size;
    }
 
-   public long getMaxSeqId() throws IOException {
-      if (maxSeqId >= 0) {
+   /**
+    * Returns the maximum sequence id or -1 if it is not yet set. This method does not calculate the sequence. If you
+    * want to retrieve an initialized sequence id you can use {@link #getOrCalculateMaxSeqId()} which will calculate
+    * it if needed and return it.
+    * @return the maximum sequence id or -1 if not yet calculated
+    */
+   public long getMaxSeqId() {
+      return maxSeqId;
+   }
+
+   /**
+    * Returns the maximum sequence id for the index which will always be 0 or greater
+    * @return the maximum sequence id to use for writes
+    */
+   public long getOrCalculateMaxSeqId() throws IOException {
+      if (maxSeqId > 0) {
          return maxSeqId;
       }
       long maxSeqId = 0;
