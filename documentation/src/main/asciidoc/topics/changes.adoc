@@ -85,6 +85,11 @@ If you encounter this, you have a couple of straightforward solutions:
 
 We recommend monitoring your application's performance after the upgrade, especially if you are running on a system with a low CPU count.
 
+=== Removed legacy Hot Rod client
+
+The legacy Hot Rod client (`org.infinispan:infinispan-hotrod-client-legacy`) has been removed. If, for some reason,
+you still need to use it, please use one from previous versions which are still maintained.
+
 == Upgrading from 15.1 to 15.2
 
 === Native Server
