@@ -27,7 +27,7 @@ import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
 
-class AssertsNearCache<K, V> {
+public class AssertsNearCache<K, V> {
    final InternalRemoteCache<K, V> remote;
    final Cache<byte[], ?> server;
    final BlockingQueue<MockEvent> events;
@@ -41,12 +41,12 @@ class AssertsNearCache<K, V> {
       this.remote = (InternalRemoteCache<K, V>) (cacheName == null ? manager.getCache() : manager.getCache(cacheName));
       this.server = server;
       this.events = events;
-      this.nearCacheMode = manager.getConfiguration().nearCache().mode();
+      this.nearCacheMode = manager.getConfiguration().remoteCaches().get(cacheName).nearCacheMode();
       this.nearCacheService = nearCacheService;
    }
 
    static <K, V> AssertsNearCache<K, V> create(Cache<byte[], ?> server, ConfigurationBuilder builder) {
-      return create(server, null, builder);
+      return create(server, "", builder);
    }
 
    static <K, V> AssertsNearCache<K, V> create(Cache<byte[], ?> server, String cacheName, ConfigurationBuilder builder) {
