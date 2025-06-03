@@ -546,9 +546,21 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       return sizeAndClearSequencer.orderOnKey(this, () ->
             logAppender.pause()
                   .thenCompose(v -> {
-                     // Since this is invoked with the logAppender paused it is an exact size
-                     long size = index.approximateSize(segments);
-                     return logAppender.resume().thenApply(ignore -> size);
+                     CompletableFuture<Long> future = new CompletableFuture<>();
+                     // By running approximateSize in an ensureRunOnLast call with a paused logAppender means the size
+                     // will be exact as we have no pending updates
+                     index.ensureRunOnLast(() -> {
+                        long size = index.approximateSize(segments);
+                        logAppender.resume()
+                                    .whenComplete((___, t) -> {
+                                       if (t != null) {
+                                          future.completeExceptionally(t);
+                                       } else {
+                                          future.complete(size);
+                                       }
+                                    });
+                     });
+                     return future;
                   })
       );
    }
