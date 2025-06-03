@@ -694,6 +694,7 @@ public class StateConsumerImpl implements StateConsumer {
          if (innerTransfers != null && innerTransfers.remove(inboundTransfer) && innerTransfers.isEmpty()) {
             commitManager.stopTrackFor(PUT_FOR_STATE_TRANSFER, segmentId);
             transfersBySegment.remove(segmentId);
+            progressTracker.removeTasks(1);
          }
       }
    }
