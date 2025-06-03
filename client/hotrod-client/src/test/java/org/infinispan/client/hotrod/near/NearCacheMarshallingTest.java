@@ -58,11 +58,9 @@ public class NearCacheMarshallingTest extends SingleHotRodServerTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
       if (marshaller != null) builder.marshaller(marshaller);
-      builder.nearCache().mode(NearCacheMode.INVALIDATED).maxEntries(100);
       builder.remoteCache("").nearCacheMode(NearCacheMode.INVALIDATED)
             .nearCacheMaxEntries(2)
             .nearCacheUseBloomFilter(useBloomFilter);
-      builder.connectionPool().maxActive(1);
       return new RemoteCacheManager(builder.build());
    }
 
@@ -75,7 +73,7 @@ public class NearCacheMarshallingTest extends SingleHotRodServerTest {
       cacheManager.stop();
    }
 
-   public void testRemoteWriteOnLocal() throws Exception {
+   public void testRemoteWriteOnLocal() {
       RemoteCacheManager cacheManager = getRemoteCacheManager();
       RemoteCacheManager cacheManager1 = getRemoteCacheManager();
 

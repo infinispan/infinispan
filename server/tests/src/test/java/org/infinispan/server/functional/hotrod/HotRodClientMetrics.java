@@ -223,7 +223,7 @@ public class HotRodClientMetrics {
       builder.withMetricRegistry(metricsBuilder.build());
       builder.statistics().enable();
       if (nearCache) {
-         builder.nearCache().mode(NearCacheMode.INVALIDATED).maxEntries(1000);
+         builder.remoteCache("*").nearCacheMode(NearCacheMode.INVALIDATED).nearCacheMaxEntries(1000);
       }
       return builder;
    }

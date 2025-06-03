@@ -24,9 +24,6 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_SIZE
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_FILE_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_PASSWORD;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MAX_RETRIES;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.NEAR_CACHE_MAX_ENTRIES;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.NEAR_CACHE_MODE;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.NEAR_CACHE_NAME_PATTERN;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_BALANCING_STRATEGY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SASL_MECHANISM;
@@ -49,6 +46,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.VALUE_SI
 import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
@@ -134,12 +132,9 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       OPTIONS.put(SASL_PROPERTIES_PREFIX + ".B", c -> c.security().authentication().saslProperties().get("B"));
       OPTIONS.put(SASL_PROPERTIES_PREFIX + ".C", c -> c.security().authentication().saslProperties().get("C"));
       OPTIONS.put(JAVA_SERIAL_ALLOWLIST, Configuration::serialAllowList);
-      OPTIONS.put(NEAR_CACHE_MODE, c -> c.nearCache().mode());
-      OPTIONS.put(NEAR_CACHE_MAX_ENTRIES, c -> c.nearCache().maxEntries());
-      OPTIONS.put(NEAR_CACHE_NAME_PATTERN, c -> c.nearCache().cacheNamePattern().pattern());
 
       TYPES.put(Boolean.class, b -> Boolean.toString((Boolean) b));
-      TYPES.put(ExhaustedAction.class, e -> e.toString());
+      TYPES.put(ExhaustedAction.class, Object::toString);
       TYPES.put(Class.class, c -> ((Class<?>) c).getName());
       TYPES.put(Integer.class, Object::toString);
       TYPES.put(Long.class, Object::toString);
@@ -147,8 +142,8 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       TYPES.put(SSLContext.class, Function.identity());
       TYPES.put(MyCallbackHandler.class, Function.identity());
       TYPES.put(Subject.class, Function.identity());
-      TYPES.put(ProtocolVersion.class, p -> p.toString());
-      TYPES.put(NearCacheMode.class, p -> p.toString());
+      TYPES.put(ProtocolVersion.class, Object::toString);
+      TYPES.put(NearCacheMode.class, Object::toString);
       TYPES.put(mkClass(), l -> String.join(",", (List<String>) l));
       TYPES.put(Pattern.class, Function.identity());
    }
@@ -223,10 +218,6 @@ public class ConfigurationTest extends AbstractInfinispanTest {
             .clientSubject(clientSubject)
             .saslProperties(saslProperties)
             .addJavaSerialAllowList(".*Person.*", ".*Employee.*")
-            .nearCache()
-            .mode(NearCacheMode.INVALIDATED)
-            .maxEntries(10_000)
-            .cacheNamePattern("near.*")
             .addCluster("siteA")
             .addClusterNode("hostA1", 11222)
             .addClusterNode("hostA2", 11223)
@@ -286,9 +277,6 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       p.setProperty(SASL_PROPERTIES_PREFIX + ".B", "2");
       p.setProperty(SASL_PROPERTIES_PREFIX + ".C", "3");
       p.setProperty(JAVA_SERIAL_ALLOWLIST, ".*Person.*,.*Employee.*");
-      p.setProperty(NEAR_CACHE_MODE, NearCacheMode.INVALIDATED.name());
-      p.setProperty(NEAR_CACHE_MAX_ENTRIES, "10000");
-      p.setProperty(NEAR_CACHE_NAME_PATTERN, "near.*");
       p.setProperty(CLUSTER_PROPERTIES_PREFIX + ".siteA", "hostA1:11222; hostA2:11223");
       p.setProperty(CLUSTER_PROPERTIES_PREFIX + ".siteB", "hostB1:11222; hostB2:11223");
       p.setProperty(STATISTICS, "true");
@@ -578,7 +566,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       }
       assertEqualsConfig(SomeAsyncExecutorFactory.class, ASYNC_EXECUTOR_FACTORY, configuration);
       assertEqualsConfig(SomeRequestBalancingStrategy.class, REQUEST_BALANCING_STRATEGY, configuration);
-      assertEquals(null, configuration.consistentHashImpl(1));
+      assertNull(configuration.consistentHashImpl(1));
       assertEquals(SomeCustomConsistentHashV2.class, configuration.consistentHashImpl(2));
       assertEqualsConfig(100, "maxActive", configuration);
       assertEqualsConfig(100, CONNECTION_POOL_MAX_ACTIVE, configuration);
@@ -613,9 +601,6 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       assertEqualsConfig("3", SASL_PROPERTIES_PREFIX + ".C", configuration);
       assertEqualsConfig(ProtocolVersion.PROTOCOL_VERSION_30, PROTOCOL_VERSION, configuration);
       assertEqualsConfig(Arrays.asList(".*Person.*", ".*Employee.*"), JAVA_SERIAL_ALLOWLIST, configuration);
-      assertEqualsConfig(NearCacheMode.INVALIDATED, NEAR_CACHE_MODE, configuration);
-      assertEqualsConfig(10_000, NEAR_CACHE_MAX_ENTRIES, configuration);
-      assertEqualsConfig("near.*", NEAR_CACHE_NAME_PATTERN, configuration);
       assertEquals(2, configuration.clusters().size());
       assertEquals("siteA", configuration.clusters().get(0).getClusterName());
       assertEquals("hostA1", configuration.clusters().get(0).getCluster().get(0).host());

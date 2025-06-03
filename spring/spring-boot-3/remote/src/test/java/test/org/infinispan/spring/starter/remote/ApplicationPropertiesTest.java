@@ -17,7 +17,6 @@ import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.ClusterConfiguration;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
-import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.security.BasicCallbackHandler;
@@ -124,11 +123,6 @@ public class ApplicationPropertiesTest {
       // transactions
       assertThat(configuration.transaction().transactionMode()).isEqualTo(TransactionMode.NON_DURABLE_XA);
       assertThat(configuration.transaction().timeout()).isEqualTo(50000);
-
-      // near cache
-      assertThat(configuration.nearCache().mode()).isEqualTo(NearCacheMode.INVALIDATED);
-      assertThat(configuration.nearCache().maxEntries()).isEqualTo(2000);
-      assertThat(configuration.nearCache().cacheNamePattern().pattern()).isEqualTo("appCache*");
 
       // xsite
       assertThat(configuration.clusters()).hasSize(1);

@@ -15,7 +15,7 @@ import org.infinispan.commons.util.TypedProperties;
  * @since 5.3
  * @deprecated since 15.1, the connection pool is no longer used
  */
-@Deprecated
+@Deprecated(forRemoval = true, since = "15.1")
 public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<ConnectionPoolConfiguration> {
    private ExhaustedAction exhaustedAction = ExhaustedAction.WAIT;
    private int maxActive = ConfigurationProperties.DEFAULT_MAX_ACTIVE;
