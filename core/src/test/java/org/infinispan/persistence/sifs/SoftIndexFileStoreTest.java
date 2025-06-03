@@ -25,6 +25,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Exceptions;
@@ -422,11 +423,7 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
       assertNotNull("bar-231", TestingUtil.join(store.load(1, "foo-231")));
    }
 
-   public void testRestartWhileNotOwningSomeSegments() throws ExecutionException, InterruptedException, TimeoutException, IOException {
-      // Remove the first segment
-      TestingUtil.join(store.removeSegments(IntSets.immutableRangeSet(1)));
-
-      TestingUtil.join(store.stop());
+   private <V> V performWhileStarting(Supplier<V> callable) throws InterruptedException, TimeoutException, ExecutionException {
       PersistenceMockUtil.InvocationContextBuilder builder = new PersistenceMockUtil.InvocationContextBuilder(getClass(), configuration, getMarshaller())
             .setTimeService(timeService)
             .setKeyPartitioner(keyPartitioner);
@@ -435,20 +432,46 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
       checkPoint.triggerForever(Mocks.AFTER_RELEASE);
       Mocks.blockingFieldMock(checkPoint, BlockingManager.class,
             builder, PersistenceMockUtil.InvocationContextBuilder.class, "blockingManager", (stub, mock) ->
-            stub.when(mock).runBlocking(any(), anyString()));
+                  stub.when(mock).runBlocking(any(), anyString()));
 
       Future<Void> startFuture = fork(() -> store.startAndWait(builder.build()));
 
       // Wait until we are about to try to rebuild the index
       checkPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
 
-      Index index = Mocks.replaceFieldWithSpy(store.delegate(), "index", Index.class);
+      V result = callable.get();
 
       checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
 
       startFuture.get(10, TimeUnit.SECONDS);
 
+      return result;
+   }
+
+   public void testRestartWhileNotOwningSomeSegments() throws ExecutionException, InterruptedException, TimeoutException, IOException {
+      // Remove the first segment
+      TestingUtil.join(store.removeSegments(IntSets.immutableRangeSet(1)));
+
+      TestingUtil.join(store.stop());
+
+      // We replace the index so we can verify what happened during startup
+      Index index = performWhileStarting(() -> Mocks.replaceFieldWithSpy(store.delegate(), "index", Index.class));
+
       verify(index).load();
       verify(index, never()).reset();
+   }
+
+   public void testRestartReusesSequenceId() throws ExecutionException, InterruptedException, TimeoutException, IOException {
+      // Write an entry to make sure sequence is an actual value
+      store.write(marshalledEntry(internalCacheEntry("never", "dies", -1)));
+
+      TestingUtil.join(store.stop());
+
+      // We replace the index so we can verify what happened during startup
+      Index index = performWhileStarting(() -> Mocks.replaceFieldWithSpy(store.delegate(), "index", Index.class));
+
+      verify(index).load();
+      verify(index).getMaxSeqId();
+      verify(index, never()).getOrCalculateMaxSeqId();
    }
 }
