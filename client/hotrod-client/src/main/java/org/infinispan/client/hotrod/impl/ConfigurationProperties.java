@@ -9,7 +9,6 @@ import org.infinispan.client.hotrod.TransportFactory;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
-import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.configuration.StatisticsConfiguration;
 import org.infinispan.client.hotrod.configuration.TransactionConfigurationBuilder;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
@@ -97,11 +96,6 @@ public class ConfigurationProperties {
    public static final String TRANSACTION_MANAGER_LOOKUP = ICH + "transaction.transaction_manager_lookup";
    public static final String TRANSACTION_MODE = ICH + "transaction.transaction_mode";
    public static final String TRANSACTION_TIMEOUT = ICH + "transaction.timeout";
-   // Near cache properties
-   public static final String NEAR_CACHE_MAX_ENTRIES = ICH + "near_cache.max_entries";
-   public static final String NEAR_CACHE_MODE = ICH + "near_cache.mode";
-   public static final String NEAR_CACHE_BLOOM_FILTER = ICH + "near_cache.bloom_filter";
-   public static final String NEAR_CACHE_NAME_PATTERN = ICH + "near_cache.name_pattern";
    // Pool properties
    public static final String CONNECTION_POOL_MAX_ACTIVE = ICH + "connection_pool.max_active";
    public static final String CONNECTION_POOL_MAX_WAIT = ICH + "connection_pool.max_wait";
@@ -536,32 +530,6 @@ public class ConfigurationProperties {
 
    public String getTransactionManagerLookup() {
       return props.getProperty(TRANSACTION_MANAGER_LOOKUP, TransactionConfigurationBuilder.defaultTransactionManagerLookup().getClass().getName(), true);
-   }
-
-   public NearCacheMode getNearCacheMode() {
-      return props.getEnumProperty(NEAR_CACHE_MODE, NearCacheMode.class, NearCacheMode.DISABLED, true);
-   }
-
-   public void setNearCacheMode(String nearCacheMode) {
-      props.setProperty(NEAR_CACHE_MODE, nearCacheMode);
-   }
-
-   public int getNearCacheMaxEntries() {
-      return props.getIntProperty(NEAR_CACHE_MAX_ENTRIES, -1);
-   }
-
-   public void setNearCacheMaxEntries(int nearCacheMaxEntries) {
-      props.setProperty(NEAR_CACHE_MAX_ENTRIES, nearCacheMaxEntries);
-   }
-
-   @Deprecated(forRemoval=true, since = "11.0")
-   public String getNearCacheNamePattern() {
-      return props.getProperty(NEAR_CACHE_NAME_PATTERN);
-   }
-
-   @Deprecated(forRemoval=true, since = "11.0")
-   public void setNearCacheNamePattern(String nearCacheNamePattern) {
-      props.setProperty(NEAR_CACHE_NAME_PATTERN, nearCacheNamePattern);
    }
 
    public int getConnectionPoolMaxActive() {

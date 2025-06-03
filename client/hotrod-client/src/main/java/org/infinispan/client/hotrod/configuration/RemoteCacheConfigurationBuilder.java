@@ -253,6 +253,11 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
       if (attributes.attribute(TRANSACTION_MANAGER).get() == null) {
          throw HOTROD.invalidTransactionManagerLookup();
       }
+      if (attributes.attribute(NEAR_CACHE_MODE).get().enabled()) {
+         if (attributes.attribute(NEAR_CACHE_BLOOM_FILTER).get() && attributes.attribute(NEAR_CACHE_MAX_ENTRIES).get() < 1) {
+            throw HOTROD.nearCacheMaxEntriesPositiveWithBloom(attributes.attribute(NEAR_CACHE_MAX_ENTRIES).get());
+         }
+      }
    }
 
    @Override
