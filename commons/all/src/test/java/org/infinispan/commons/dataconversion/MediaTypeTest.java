@@ -131,7 +131,6 @@ public class MediaTypeTest {
       assertTrue(type.contains("; a=2"));
       assertTrue(type.contains("; b=1"));
       assertTrue(type.contains("; c=2"));
-      assertEquals("a/b; p=1", MediaType.fromString("a/b; p=1; q=2").toStringExcludingParam("q"));
    }
 
    @Test
