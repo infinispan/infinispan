@@ -100,7 +100,7 @@ public class PersistenceEntryStreamSupplier<K, V> implements AbstractLocalCacheS
          Flowable<CacheEntry<K, V>> flowable = Flowable.fromPublisher(publisher)
                .map(me -> PersistenceUtil.convert(me, iceFactory));
          CloseableIterator<CacheEntry<K, V>> iterator = new LazyConcatIterator<>(localIterator,
-               () -> org.infinispan.util.Closeables.iterator(flowable, 128));
+               () -> Closeables.iterator(flowable, 128));
 
          Iterable<CacheEntry<K, V>> iterable = () -> iterator;
          // Make sure we close the iterator when the resulting stream is closed
