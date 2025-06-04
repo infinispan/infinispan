@@ -312,8 +312,7 @@
                 "topology-state-transfer": {
                   "await-initial-retrieval": false,
                   "lock-timeout": "12",
-                  "replication-timeout": "13",
-                  "lazy-retrieval": false
+                  "replication-timeout": "13"
                 },
                 "authentication": {
                   "security-realm": "default",
