@@ -15,9 +15,9 @@ import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory;
+import org.infinispan.distribution.impl.DistributionManagerImpl;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
@@ -127,7 +127,7 @@ public class RpcManagerTest extends MultipleCacheManagersTest {
    }
 
    public void testInvokeCommandOnAllSuspect() {
-      DistributionManager distributionManager = cache(0).getAdvancedCache().getDistributionManager();
+      DistributionManagerImpl distributionManager = (DistributionManagerImpl) cache(0).getAdvancedCache().getDistributionManager();
       CacheTopology initialTopology = distributionManager.getCacheTopology();
       assertEquals(CacheTopology.Phase.NO_REBALANCE, initialTopology.getPhase());
 

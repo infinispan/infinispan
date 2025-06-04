@@ -46,7 +46,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
       rehashListener = new DataRehashedListener();
       c1.addListener(rehashListener);
 
-      ConsistentHash ch1Node = advancedCache(0).getDistributionManager().getReadConsistentHash();
+      ConsistentHash ch1Node = advancedCache(0).getDistributionManager().getCacheTopology().getReadConsistentHash();
       assertEquals(rehashListener.removeEvents().size(), 0);
 
       // start a second node and wait for the rebalance to end
@@ -54,7 +54,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
       cache(1);
       TestingUtil.waitForNoRebalance(cache(0), cache(1));
 
-      ConsistentHash ch2Nodes = advancedCache(0).getDistributionManager().getReadConsistentHash();
+      ConsistentHash ch2Nodes = advancedCache(0).getDistributionManager().getCacheTopology().getReadConsistentHash();
       rehashListener.waitForEvents(2);
       List<DataRehashedEvent<Object, Object>> events = rehashListener.removeEvents();
       assertEquals(events.size(), 2);
@@ -76,7 +76,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
       cache(2);
       TestingUtil.waitForNoRebalance(cache(0), cache(1), cache(2));
 
-      ConsistentHash ch3Nodes = advancedCache(0).getDistributionManager().getReadConsistentHash();
+      ConsistentHash ch3Nodes = advancedCache(0).getDistributionManager().getCacheTopology().getReadConsistentHash();
       rehashListener.waitForEvents(2);
       events = rehashListener.removeEvents();
       assertEquals(events.size(), 2);
@@ -97,7 +97,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
       killMember(2);
 
       // this CH might be different than the CH before the 3rd node joined
-      ConsistentHash chAfterLeave = advancedCache(0).getDistributionManager().getReadConsistentHash();
+      ConsistentHash chAfterLeave = advancedCache(0).getDistributionManager().getCacheTopology().getReadConsistentHash();
       rehashListener.waitForEvents(2);
       events = rehashListener.removeEvents();
       assertEquals(events.size(), 2);

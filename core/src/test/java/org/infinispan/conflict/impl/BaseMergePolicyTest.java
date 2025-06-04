@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.conflict.ConflictManager;
 import org.infinispan.conflict.ConflictManagerFactory;
@@ -26,7 +27,6 @@ import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.ManagerStatusResponse;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -141,7 +141,7 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
    protected <K, V> AdvancedCache<K, V> getCacheFromNonPreferredPartition(AdvancedCache preferredCache) {
       for (Cache c : caches()) {
          AdvancedCache cache = (AdvancedCache) c;
-         if (!cache.getDistributionManager().getWriteConsistentHash().equals(preferredCache.getDistributionManager().getWriteConsistentHash()))
+         if (!cache.getDistributionManager().getCacheTopology().getWriteConsistentHash().equals(preferredCache.getDistributionManager().getCacheTopology().getWriteConsistentHash()))
             return cache;
       }
       return null;
