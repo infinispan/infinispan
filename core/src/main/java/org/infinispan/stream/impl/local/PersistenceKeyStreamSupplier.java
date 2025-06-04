@@ -88,7 +88,7 @@ public class PersistenceKeyStreamSupplier<K> implements AbstractLocalCacheStream
          });
          Flowable<K> flowable = Flowable.fromPublisher(publisher);
          CloseableIterator<K> iterator = new LazyConcatIterator<>(localIterator,
-               () -> org.infinispan.util.Closeables.iterator(flowable, 128));
+               () -> Closeables.iterator(flowable, 128));
 
          Iterable<K> iterable = () -> iterator;
          // Make sure we close the iterator when the resulting stream is closed
