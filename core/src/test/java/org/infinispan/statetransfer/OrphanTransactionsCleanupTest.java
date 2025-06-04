@@ -4,8 +4,6 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Arrays;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -16,6 +14,8 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Transaction;
 
 @Test(groups = "functional", testName = "statetransfer.OrphanTransactionsCleanupTest")
 public class OrphanTransactionsCleanupTest extends MultipleCacheManagersTest {
@@ -69,7 +69,7 @@ public class OrphanTransactionsCleanupTest extends MultipleCacheManagersTest {
       // Cache 2 should not be in the CH yet
       TestingUtil.waitForNoRebalance(c0);
 
-      assertEquals(Arrays.asList(address(0)), c0.getAdvancedCache().getDistributionManager().getWriteConsistentHash().getMembers());
+      assertEquals(Arrays.asList(address(0)), c0.getAdvancedCache().getDistributionManager().getCacheTopology().getWriteConsistentHash().getMembers());
       eventuallyEquals(1, () -> tt0.getRemoteTransactions().size());
 
       // Committing the tx on c2 should succeed

@@ -57,7 +57,7 @@ public class ThreeNodeReplGlobalStateRestartTest extends AbstractGlobalStateRest
 
    public void testDisableRebalanceRestartEnableRebalance() throws Throwable {
       var addressMappings = createInitialCluster();
-      ConsistentHash oldConsistentHash = advancedCache(0, CACHE_NAME).getDistributionManager().getWriteConsistentHash();
+      ConsistentHash oldConsistentHash = advancedCache(0, CACHE_NAME).getDistributionManager().getCacheTopology().getWriteConsistentHash();
 
       GlobalComponentRegistry.of(manager(0)).getLocalTopologyManager().setRebalancingEnabled(false);
 

@@ -133,7 +133,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       consistentHashFactory.triggerRebalance(cache(0));
       // waitForStableTopology doesn't work here, since the cache looks already "balanced"
       // So we wait for the primary owner of segment 1 to change
-      eventuallyEquals(address(2), () -> advancedCache(0).getDistributionManager().getReadConsistentHash().locatePrimaryOwnerForSegment(1));
+      eventuallyEquals(address(2), () -> advancedCache(0).getDistributionManager().getCacheTopology().getReadConsistentHash().locatePrimaryOwnerForSegment(1));
 
       // See https://issues.jboss.org/browse/ISPN-3120?focusedCommentId=12777231
       // Start with segment 0 owned by [cache1, cache2, cache3], and segment 1 owned by [cache2, cache1, cache3]

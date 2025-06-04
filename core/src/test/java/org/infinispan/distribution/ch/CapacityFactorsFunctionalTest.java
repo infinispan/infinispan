@@ -63,7 +63,7 @@ public class CapacityFactorsFunctionalTest extends MultipleCacheManagersTest {
    }
 
    private void assertCapacityFactors(float... expectedCapacityFactors) {
-      ConsistentHash ch = cache(0).getAdvancedCache().getDistributionManager().getReadConsistentHash();
+      ConsistentHash ch = cache(0).getAdvancedCache().getDistributionManager().getCacheTopology().getReadConsistentHash();
       int numNodes = expectedCapacityFactors.length;
       Map<Address,Float> capacityFactors = ch.getCapacityFactors();
       for (int i = 0; i < numNodes; i++) {
@@ -72,7 +72,7 @@ public class CapacityFactorsFunctionalTest extends MultipleCacheManagersTest {
    }
 
    private void assertPrimaryOwned(int... expectedPrimaryOwned) {
-      ConsistentHash ch = cache(0).getAdvancedCache().getDistributionManager().getReadConsistentHash();
+      ConsistentHash ch = cache(0).getAdvancedCache().getDistributionManager().getCacheTopology().getReadConsistentHash();
       OwnershipStatistics stats = new OwnershipStatistics(ch, ch.getMembers());
       int numNodes = expectedPrimaryOwned.length;
       for (int i = 0; i < numNodes; i++) {
@@ -83,7 +83,7 @@ public class CapacityFactorsFunctionalTest extends MultipleCacheManagersTest {
    }
 
    private void assertOwned(int... expectedOwned) {
-      ConsistentHash ch = cache(0).getAdvancedCache().getDistributionManager().getReadConsistentHash();
+      ConsistentHash ch = cache(0).getAdvancedCache().getDistributionManager().getCacheTopology().getReadConsistentHash();
       OwnershipStatistics stats = new OwnershipStatistics(ch, ch.getMembers());
       int numNodes = expectedOwned.length;
       for (int i = 0; i < numNodes; i++) {

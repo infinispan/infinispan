@@ -94,7 +94,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
    protected void shutdownAndRestart(int extraneousNodePosition, boolean reverse) throws Throwable {
       var addressMappings = createInitialCluster();
 
-      ConsistentHash oldConsistentHash = advancedCache(0, CACHE_NAME).getDistributionManager().getWriteConsistentHash();
+      ConsistentHash oldConsistentHash = advancedCache(0, CACHE_NAME).getDistributionManager().getCacheTopology().getWriteConsistentHash();
 
       // Shutdown the cache cluster-wide
       cache(0, CACHE_NAME).shutdown();
@@ -164,7 +164,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
       checkData();
 
       ConsistentHash newConsistentHash =
-            advancedCache(0, CACHE_NAME).getDistributionManager().getWriteConsistentHash();
+            advancedCache(0, CACHE_NAME).getDistributionManager().getCacheTopology().getWriteConsistentHash();
       PersistentUUIDManager persistentUUIDManager = TestingUtil.extractGlobalComponent(manager(0), PersistentUUIDManager.class);
       assertEquivalent(addressMappings, oldConsistentHash, newConsistentHash, persistentUUIDManager);
    }

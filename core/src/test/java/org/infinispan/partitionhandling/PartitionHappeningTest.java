@@ -59,7 +59,7 @@ public class PartitionHappeningTest extends BasePartitionHandlingTest {
 
    public boolean clusterAndChFormed(int cacheIndex, int memberCount) {
       return advancedCache(cacheIndex).getRpcManager().getTransport().getMembers().size() == memberCount &&
-            advancedCache(cacheIndex).getDistributionManager().getWriteConsistentHash().getMembers().size() == memberCount;
+            advancedCache(cacheIndex).getDistributionManager().getCacheTopology().getWriteConsistentHash().getMembers().size() == memberCount;
    }
 
 }

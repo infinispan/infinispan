@@ -25,7 +25,7 @@ public class NodeRestartPartitionHandlingTest extends BaseStatefulPartitionHandl
 
    public void testRestartDuringNetworkPartition() throws Throwable {
       var addressMappings = createInitialCluster();
-      ConsistentHash oldConsistentHash = advancedCache(0, CACHE_NAME).getDistributionManager().getWriteConsistentHash();
+      ConsistentHash oldConsistentHash = advancedCache(0, CACHE_NAME).getDistributionManager().getCacheTopology().getWriteConsistentHash();
 
       for (int i = 0; i < numMembersInCluster; i++) {
          ((DefaultCacheManager) manager(i)).shutdownAllCaches();

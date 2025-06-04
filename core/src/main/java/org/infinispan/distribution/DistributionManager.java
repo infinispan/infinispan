@@ -1,6 +1,5 @@
 package org.infinispan.distribution;
 
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.topology.CacheTopology;
@@ -16,20 +15,6 @@ import org.infinispan.topology.CacheTopology;
  */
 @Scope(Scopes.NAMED_CACHE)
 public interface DistributionManager {
-
-   /**
-    * @return the consistent hash used for reading.
-    * @deprecated Since 11.0, to be removed in 14.0. Please use {@link #getCacheTopology()} instead.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   ConsistentHash getReadConsistentHash();
-
-   /**
-    * @return the consistent hash used for writing.
-    * @deprecated Since 11.0, to be removed in 14.0. Please use {@link #getCacheTopology()} instead.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   ConsistentHash getWriteConsistentHash();
 
    /**
     * Tests whether a given key is affected by a rehash that may be in progress.  If no rehash is in progress, this method
@@ -56,12 +41,6 @@ public interface DistributionManager {
     * @return the current cache topology, which includes the read and write consistent hashes.
     */
    LocalizedCacheTopology getCacheTopology();
-
-   /**
-    * @deprecated Internal only.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   void setCacheTopology(CacheTopology cacheTopology);
 
    LocalizedCacheTopology createLocalizedCacheTopology(CacheTopology cacheTopology);
 }
