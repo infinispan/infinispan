@@ -37,9 +37,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -69,6 +66,7 @@ import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.distribution.impl.DistributionManagerImpl;
 import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -111,6 +109,8 @@ import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 import net.jcip.annotations.GuardedBy;
 
 /**
@@ -358,7 +358,10 @@ public class StateConsumerImpl implements StateConsumer {
          stateTransferLock.acquireExclusiveTopologyLock();
          try {
             this.cacheTopology = cacheTopology;
-            distributionManager.setCacheTopology(cacheTopology);
+            // Protect from mocks
+            if (distributionManager instanceof DistributionManagerImpl dm) {
+               dm.setCacheTopology(cacheTopology);
+            }
          } finally {
             stateTransferLock.releaseExclusiveTopologyLock();
          }

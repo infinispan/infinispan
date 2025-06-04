@@ -40,7 +40,7 @@ public class DefaultSegmentedDataContainerTest extends MultipleCacheManagersTest
 
          DistributionManager dm = TestingUtil.extractComponent(cache, DistributionManager.class);
          Address address = cache.getCacheManager().getAddress();
-         Set<Integer> segments = dm.getReadConsistentHash().getSegmentsForOwner(address);
+         Set<Integer> segments = dm.getCacheTopology().getReadConsistentHash().getSegmentsForOwner(address);
 
          int mapCount = 0;
 

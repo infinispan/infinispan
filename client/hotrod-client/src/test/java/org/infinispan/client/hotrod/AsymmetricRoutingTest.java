@@ -104,7 +104,7 @@ public class AsymmetricRoutingTest extends HitsAwareCacheManagersTest {
 
    private void assertSegments(String cacheName, HotRodServer server, Address owner) {
       AdvancedCache<Object, Object> cache = server.getCacheManager().getCache(cacheName).getAdvancedCache();
-      ConsistentHash ch = cache.getDistributionManager().getReadConsistentHash();
+      ConsistentHash ch = cache.getDistributionManager().getCacheTopology().getReadConsistentHash();
       assertEquals(1, ch.getNumSegments());
       Set<Integer> segments = ch.getSegmentsForOwner(owner);
       assertEquals(1, segments.size());
