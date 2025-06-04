@@ -10,7 +10,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -49,9 +48,6 @@ public class ClusterListenerStressTest extends MultipleCacheManagersTest {
       for (int i = 0; i < NUM_NODES; i++) {
          GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
          gcb.transport().defaultTransport().nodeName(TestResourceTracker.getNameForIndex(i));
-         BlockingThreadPoolExecutorFactory remoteExecutorFactory = new BlockingThreadPoolExecutorFactory(
-               10, 1, 0, 60000);
-         gcb.transport().remoteCommandThreadPool().threadPoolFactory(remoteExecutorFactory);
          EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build());
          registerCacheManager(cm);
          cm.defineConfiguration(CACHE_NAME, distConfig);

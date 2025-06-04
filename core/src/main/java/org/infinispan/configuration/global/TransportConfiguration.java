@@ -55,19 +55,13 @@ public class TransportConfiguration {
    private final Attribute<TimeQuantity> initialClusterTimeout;
    private final AttributeSet attributes;
    private final JGroupsConfiguration jgroupsConfiguration;
-   private final ThreadPoolConfiguration transportThreadPool;
-   private final ThreadPoolConfiguration remoteCommandThreadPool;
    private final TypedProperties properties;
 
    TransportConfiguration(AttributeSet attributes,
                           JGroupsConfiguration jgroupsConfiguration,
-                          ThreadPoolConfiguration transportThreadPool,
-                          ThreadPoolConfiguration remoteCommandThreadPool,
                           TypedProperties properties) {
       this.attributes = attributes.checkProtection();
       this.jgroupsConfiguration = jgroupsConfiguration;
-      this.transportThreadPool = transportThreadPool;
-      this.remoteCommandThreadPool = remoteCommandThreadPool;
       this.properties = properties;
       clusterName = attributes.attribute(CLUSTER_NAME);
       stack = attributes.attribute(STACK);
@@ -134,25 +128,6 @@ public class TransportConfiguration {
 
    public boolean hasTopologyInfo() {
       return siteId() != null || rackId() != null || machineId() != null;
-   }
-
-   @Deprecated(forRemoval=true, since = "11.0")
-   public ThreadPoolConfiguration transportThreadPool() {
-      return transportThreadPool;
-   }
-
-   @Deprecated(forRemoval=true, since = "11.0")
-   public ThreadPoolConfiguration remoteCommandThreadPool() {
-      return remoteCommandThreadPool;
-   }
-
-   @Deprecated(forRemoval=true, since = "11.0")
-   public String transportThreadPoolName() {
-      return attributes.attribute(TRANSPORT_EXECUTOR).get();
-   }
-
-   public String remoteThreadPoolName() {
-      return attributes.attribute(REMOTE_EXECUTOR).get();
    }
 
    public JGroupsConfiguration jgroups() {

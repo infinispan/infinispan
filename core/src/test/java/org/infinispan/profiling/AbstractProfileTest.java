@@ -5,10 +5,6 @@ import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
 import static org.infinispan.configuration.cache.CacheMode.REPL_ASYNC;
 import static org.infinispan.configuration.cache.CacheMode.REPL_SYNC;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadFactory;
-
-import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -16,7 +12,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.Test;
 
 @Test(groups = "profiling", testName = "profiling.AbstractProfileTest")
@@ -58,7 +53,6 @@ public abstract class AbstractProfileTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
-      builder.transport().transportThreadPool().threadPoolFactory(new WithinThreadExecutorFactory());
       cacheManager = TestCacheManagerFactory.createClusteredCacheManager(builder, new ConfigurationBuilder());
 
       cacheManager.defineConfiguration(LOCAL_CACHE_NAME, getBaseCfg().build());
@@ -73,16 +67,4 @@ public abstract class AbstractProfileTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   public static class WithinThreadExecutorFactory implements ThreadPoolExecutorFactory {
-
-      @Override
-      public ExecutorService createExecutor(ThreadFactory factory) {
-         return new WithinThreadExecutor();
-      }
-
-      @Override
-      public void validate() {
-         // No-op
-      }
-   }
 }
