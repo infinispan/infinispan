@@ -220,7 +220,6 @@ infinispan:
                 awaitInitialRetrieval: false
                 lockTimeout: '12'
                 replicationTimeout: '13'
-                lazyRetrieval: false
               authentication:
                 securityRealm: default
                 sasl:

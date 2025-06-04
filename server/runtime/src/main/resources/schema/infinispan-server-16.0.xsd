@@ -639,12 +639,6 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="lazy-retrieval" type="xs:boolean" default="false">
-         <xs:annotation>
-            <xs:documentation>Enables lazy retrieval of cluster topology from nodes via a ClusterCacheLoader. Values are true / false (default).
-            </xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
       <xs:attribute name="await-initial-retrieval" type="xs:boolean"
                     default="${TopologyCache.await-initial-retrieval}">
          <xs:annotation>

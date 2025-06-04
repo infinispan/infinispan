@@ -148,7 +148,7 @@
             <hotrod-connector name="hotrod" io-threads="23" tcp-nodelay="false" tcp-keepalive="false"
                               send-buffer-size="10" receive-buffer-size="20" idle-timeout="2" socket-binding="hotrod"
                               external-host="external" external-port="12345"  max-content-length="1027">
-               <topology-state-transfer await-initial-retrieval="false" lazy-retrieval="false" lock-timeout="12"
+               <topology-state-transfer await-initial-retrieval="false" lock-timeout="12"
                                         replication-timeout="13"/>
                <authentication security-realm="default">
                   <sasl server-name="localhost" mechanisms="GSSAPI DIGEST-MD5 PLAIN" qop="auth auth-conf"
