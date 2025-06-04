@@ -1,7 +1,6 @@
 package org.infinispan.persistence.spi;
 
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactory;
@@ -41,15 +40,6 @@ public interface InitializationContext {
     * To be used for building {@link org.infinispan.commons.io.ByteBuffer} objects.
     */
    ByteBufferFactory getByteBufferFactory();
-
-   /**
-    * Returns the preferred executor to be used by stores if needed. Stores normally shouldn't need this unless they
-    * *must* perform some blocking code asynchronously.
-    * @return the executor to be used with stores
-    * @deprecated since 11.0 - Please use {@link #getBlockingManager()} ()} or {@link #getNonBlockingExecutor()} instead
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   ExecutorService getExecutor();
 
    /**
     * Returns an executor for non-blocking tasks. Users must guarantee that the tasks they submit to this executor
