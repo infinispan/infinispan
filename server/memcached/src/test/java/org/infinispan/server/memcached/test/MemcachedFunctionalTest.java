@@ -1,6 +1,5 @@
 package org.infinispan.server.memcached.test;
 
-import static org.infinispan.server.memcached.test.MemcachedTestingUtil.serverBuilder;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.sleepThread;
 import static org.infinispan.test.TestingUtil.v;
@@ -18,16 +17,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.util.Version;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.StorageType;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.memcached.MemcachedServer;
-import org.infinispan.server.memcached.configuration.MemcachedProtocol;
-import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import net.spy.memcached.CASResponse;
@@ -416,25 +406,6 @@ public abstract class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertEquals(versions.size(), 1);
       String version = versions.values().iterator().next();
       assertEquals(Version.getVersion(), version);
-   }
-
-   public void testStoreAsBinaryOverride() {
-      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      builder.memory().storageType(StorageType.BINARY);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder);
-      Configuration cfg = builder.build();
-      cm.defineConfiguration(new MemcachedServerConfigurationBuilder().build().defaultCacheName(), cfg);
-      assertEquals(StorageType.BINARY, cfg.memory().storageType());
-      MemcachedServerConfigurationBuilder serverBuilder = serverBuilder().protocol(MemcachedProtocol.TEXT).port(server.getPort() + 33);
-      MemcachedServer testServer = MemcachedTestingUtil.createMemcachedServer(decoderReplay);
-      testServer.start(serverBuilder.build(), cm);
-      try {
-         Cache memcachedCache = cm.getCache(testServer.getConfiguration().defaultCacheName());
-         assertEquals(StorageType.BINARY, memcachedCache.getCacheConfiguration().memory().storageType());
-      } finally {
-         cm.stop();
-         testServer.stop();
-      }
    }
 
    private void addAndGet(Method m) throws InterruptedException, ExecutionException, TimeoutException {

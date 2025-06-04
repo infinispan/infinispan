@@ -544,7 +544,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    }
 
    protected void configureEviction(ConfigurationBuilder builder) {
-      builder.memory().size(1);
+      builder.memory().maxCount(1);
    }
 
    protected void configurePersistence(ConfigurationBuilder builder) {

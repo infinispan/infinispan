@@ -29,7 +29,7 @@ public class AnchoredKeysScalingTest extends AbstractAnchoredKeysTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            new AnchoredKeysScalingTest().storageType(StorageType.OBJECT),
+            new AnchoredKeysScalingTest().storageType(StorageType.HEAP),
             new AnchoredKeysScalingTest().storageType(StorageType.BINARY),
             new AnchoredKeysScalingTest().storageType(StorageType.OFF_HEAP),
             };

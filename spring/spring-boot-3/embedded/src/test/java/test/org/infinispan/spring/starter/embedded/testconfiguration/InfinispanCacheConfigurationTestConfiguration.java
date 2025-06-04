@@ -1,7 +1,6 @@
 package test.org.infinispan.spring.starter.embedded.testconfiguration;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.eviction.EvictionType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -17,8 +16,7 @@ public class InfinispanCacheConfigurationTestConfiguration {
     public org.infinispan.configuration.cache.Configuration smallCache() {
         return new ConfigurationBuilder()
             .read(baseCache)
-            .memory().size(1000L)
-            .memory().evictionType(EvictionType.COUNT)
+            .memory().maxCount(1000L)
             .build();
     }
 
@@ -26,8 +24,7 @@ public class InfinispanCacheConfigurationTestConfiguration {
     public org.infinispan.configuration.cache.Configuration largeCache() {
         return new ConfigurationBuilder()
             .read(baseCache)
-            .memory().size(2000L)
-            .memory().evictionType(EvictionType.COUNT)
+            .memory().maxCount(2000L)
             .build();
     }
 }

@@ -8,14 +8,13 @@ import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
@@ -50,11 +49,10 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
       builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true, true);
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL).lockingMode(LockingMode.PESSIMISTIC)
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
-            .memory().size(1000)
+            .memory().maxCount(1000)
             .locking().lockAcquisitionTimeout(20000)
             .concurrencyLevel(5000) // lowering this to 50 makes the test pass also on 5.2 but it's just a temporary workaround
             .useLockStriping(false).isolationLevel(IsolationLevel.READ_COMMITTED)
-            .memory().storageType(StorageType.BINARY)
             .clustering().remoteTimeout(20000)
             .stateTransfer().timeout(240000).fetchInMemoryState(false).chunkSize(10000)
             .persistence().addSingleFileStore().location(new File(tmpDir, "store0").getAbsolutePath());

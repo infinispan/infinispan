@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.eviction.EvictionType;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;
@@ -44,8 +44,7 @@ public class InfinispanEmbeddedAutoConfigurationCustomizerIntegrationTest {
       assertThat(manager.getDefaultCacheConfiguration()).isNull();
 
       assertThat(manager.getCacheNames()).contains("small-cache");
-      assertThat(manager.getCacheConfiguration("small-cache").memory().size()).isEqualTo(1000L);
-      assertThat(manager.getCacheConfiguration("small-cache").memory().evictionType()).isEqualTo(EvictionType.COUNT);
+      assertThat(manager.getCacheConfiguration("small-cache").memory().maxCount()).isEqualTo(1000L);
       assertThat(startedEvent).isNotNull();
    }
 
@@ -64,8 +63,7 @@ public class InfinispanEmbeddedAutoConfigurationCustomizerIntegrationTest {
       public org.infinispan.configuration.cache.Configuration smallCache() {
          return new ConfigurationBuilder()
                .simpleCache(true)
-               .memory().size(1000L)
-               .memory().evictionType(EvictionType.COUNT)
+               .memory().maxCount(1000L)
                .build();
       }
 
@@ -82,7 +80,7 @@ public class InfinispanEmbeddedAutoConfigurationCustomizerIntegrationTest {
       @Bean
       public InfinispanConfigurationCustomizer configurationCustomizer() {
          return builder -> {
-            builder.memory().evictionType(EvictionType.COUNT);
+            builder.memory().whenFull(EvictionStrategy.REMOVE);
          };
       }
    }

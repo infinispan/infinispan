@@ -10,17 +10,17 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Transaction;
 
 /**
  * This test is to ensure that values in the context are properly counted for various cache operations
@@ -37,7 +37,7 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
    public Object[] factory() {
       return new Object[] {
             new ContextAffectsTransactionReadCommittedTest().withStorage(StorageType.BINARY),
-            new ContextAffectsTransactionReadCommittedTest().withStorage(StorageType.OBJECT),
+            new ContextAffectsTransactionReadCommittedTest().withStorage(StorageType.HEAP),
             new ContextAffectsTransactionReadCommittedTest().withStorage(StorageType.OFF_HEAP)
       };
    }
@@ -55,7 +55,7 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(true);
-      builder.memory().storageType(storage);
+      builder.memory().storage(storage);
       configure(builder);
       return TestCacheManagerFactory.createCacheManager(builder);
    }

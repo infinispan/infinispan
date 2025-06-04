@@ -1,5 +1,9 @@
 package test.org.infinispan.spring.starter.embedded;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.Collections;
+
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -13,10 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.TestPropertySource;
-
-import java.util.Collections;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(
       classes = {
@@ -47,7 +47,7 @@ public class InfinispanEmbeddedAutoConfigurationCustomizerWhenPropertiesAreSetTe
       assertThat(globalConfiguration.serialization().marshaller()).isInstanceOf(JavaSerializationMarshaller.class);
 
       final Configuration defaultCacheConfiguration = defaultCacheManager.getDefaultCacheConfiguration();
-      assertThat(defaultCacheConfiguration.memory().size()).isEqualTo(2000L);
+      assertThat(defaultCacheConfiguration.memory().maxCount()).isEqualTo(2000L);
    }
 
    @org.springframework.context.annotation.Configuration

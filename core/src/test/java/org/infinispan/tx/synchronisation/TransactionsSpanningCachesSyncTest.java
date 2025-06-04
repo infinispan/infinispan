@@ -16,9 +16,9 @@ import org.testng.annotations.Test;
 public class TransactionsSpanningCachesSyncTest extends TransactionsSpanningCachesTest {
    public Object[] factory() {
       return new Object[] {
-            new TransactionsSpanningCachesSyncTest().withStorage(StorageType.OBJECT, StorageType.OBJECT),
+            new TransactionsSpanningCachesSyncTest().withStorage(StorageType.HEAP, StorageType.HEAP),
             new TransactionsSpanningCachesSyncTest().withStorage(StorageType.OFF_HEAP, StorageType.OFF_HEAP),
-            new TransactionsSpanningCachesSyncTest().withStorage(StorageType.OBJECT, StorageType.OFF_HEAP)
+            new TransactionsSpanningCachesSyncTest().withStorage(StorageType.HEAP, StorageType.OFF_HEAP)
       };
    }
 

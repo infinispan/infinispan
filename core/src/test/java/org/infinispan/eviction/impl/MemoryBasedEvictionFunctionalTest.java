@@ -13,7 +13,6 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.SerializationConfigurationBuilder;
 import org.infinispan.container.offheap.OffHeapConcurrentMap;
 import org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestDataSCI;
@@ -38,12 +37,9 @@ public class MemoryBasedEvictionFunctionalTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      builder.memory().evictionType(EvictionType.MEMORY).storageType(storageType);
-      if (storageType == StorageType.BINARY) {
-         builder.memory().size(CACHE_SIZE);
-      } else {
-         builder.memory().size(CACHE_SIZE + UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(OffHeapConcurrentMap.INITIAL_SIZE << 3));
-      }
+      builder.memory().storage(storageType);
+      builder.memory().maxSize(CACHE_SIZE + UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(OffHeapConcurrentMap.INITIAL_SIZE << 3));
+
       configure(builder);
 
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
@@ -58,7 +54,6 @@ public class MemoryBasedEvictionFunctionalTest extends SingleCacheManagerTest {
    @Factory
    public Object[] factory() {
       return new Object[]{
-            new MemoryBasedEvictionFunctionalTest().storageType(StorageType.BINARY),
             new MemoryBasedEvictionFunctionalTest().storageType(StorageType.OFF_HEAP)
       };
    }
