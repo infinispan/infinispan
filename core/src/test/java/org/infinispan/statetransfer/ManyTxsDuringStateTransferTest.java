@@ -14,7 +14,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -49,10 +48,7 @@ public class ManyTxsDuringStateTransferTest extends MultipleCacheManagersTest {
    }
 
    private GlobalConfigurationBuilder getGlobalConfigurationBuilder() {
-      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      BlockingThreadPoolExecutorFactory threadPoolFactory = new BlockingThreadPoolExecutorFactory(1, 1, 0, Thread.NORM_PRIORITY);
-      globalBuilder.transport().remoteCommandThreadPool().threadPoolFactory(threadPoolFactory);
-      return globalBuilder;
+      return GlobalConfigurationBuilder.defaultClusteredBuilder();
    }
 
    public void testManyTxs() throws Throwable {

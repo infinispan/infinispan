@@ -6,7 +6,6 @@ import static org.infinispan.hibernate.cache.spi.InfinispanProperties.DEF_TIMEST
 import java.util.Map;
 import java.util.Properties;
 
-import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -32,9 +31,6 @@ public class TestConfigurationHook {
       TransportConfigurationBuilder transport = holder.getGlobalConfigurationBuilder().transport();
       transport.nodeName(TestResourceTracker.getNextNodeName());
       transport.clusterName(TestResourceTracker.getCurrentTestName());
-      // minimize number of threads using unlimited cached thread pool
-      transport.remoteCommandThreadPool().threadPoolFactory(CachedThreadPoolExecutorFactory.create());
-      transport.transportThreadPool().threadPoolFactory(CachedThreadPoolExecutorFactory.create());
       for (Map.Entry<String, ConfigurationBuilder> cfg : holder.getNamedConfigurationBuilders().entrySet()) {
          amendCacheConfiguration(cfg.getKey(), cfg.getValue());
       }
