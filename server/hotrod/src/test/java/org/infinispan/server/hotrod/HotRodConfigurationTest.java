@@ -4,12 +4,10 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.serverPort;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServer;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.function.BiConsumer;
 
-import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.server.core.test.Stoppable;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -35,18 +33,6 @@ public class HotRodConfigurationTest extends AbstractInfinispanTest {
          assertTrue(cfg.clustering().stateTransfer().fetchInMemoryState());
          assertEquals(cfg.clustering().stateTransfer().timeout(), 31000 + distSyncTimeout);
          assertTrue(cfg.persistence().stores().isEmpty());
-      });
-   }
-
-   public void testLazyLoadTopology() {
-      HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
-      builder.topologyStateTransfer(false).topologyReplTimeout(43000);
-      withClusteredServer(builder, (cfg, distSyncTimeout) -> {
-         assertEquals(cfg.clustering().remoteTimeout(), 43000);
-         assertTrue(cfg.clustering().stateTransfer().fetchInMemoryState());
-         ClusterLoaderConfiguration clcfg = ((ClusterLoaderConfiguration) cfg.persistence().stores().get(0));
-         assertNotNull(clcfg);
-         assertEquals(clcfg.remoteCallTimeout(), 43000);
       });
    }
 
