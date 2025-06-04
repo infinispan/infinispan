@@ -73,14 +73,6 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration<HotRo
       return topologyCache.networkPrefixOverride();
    }
 
-   /**
-    * @deprecated since 11.0. To be removed in 14.0 ISPN-11864 with no direct replacement.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public boolean topologyStateTransfer() {
-      return !topologyCache.lazyRetrieval();
-   }
-
    @Override
    public SaslAuthenticationConfiguration authentication() {
       return authentication;
