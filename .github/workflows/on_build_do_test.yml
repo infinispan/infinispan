@@ -119,8 +119,10 @@ jobs:
         id: target-branch
         shell: bash
         run: |
-          TARGET_BRANCH=$(cat target-branch.txt)
-          echo "value=$TARGET_BRANCH" >> $GITHUB_OUTPUT
+          if [[ -f target-branch/target-branch.txt ]]; then
+            TARGET_BRANCH=$(cat target-branch/target-branch.txt)
+            echo "value=$TARGET_BRANCH" >> $GITHUB_OUTPUT
+          fi
 
       - name: Per branch configuration
         id: branch-config
@@ -199,11 +201,11 @@ jobs:
       - name: Archive base_ref
         if: (success() || failure()) && steps.check_flaky_report.outputs.files_exists == 'true'
         env:
-          TARGET_BRANCH: ${{ needs.get-info.outputs.source-head-sha }}
+          TARGET_BRANCH_SHA: ${{ needs.get-info.outputs.source-head-sha }}
           EVENT_NAME: ${{ needs.get-info.outputs.source-event }}
           EVENT_NUMBER: ${{ github.event.workflow_run.id }}
         run: |
-          echo -n $TARGET_BRANCH > target-branch.txt
+          echo -n $TARGET_BRANCH_SHA > target-branch-sha.txt
           echo -n $EVENT_NAME > event-name.txt
           echo -n $EVENT_NUMBER > event-number.txt
 

@@ -40,7 +40,7 @@ jobs:
           run: |
             set +e
             cat target-branch.txt
-            TARGET_BRANCH=$(cat target-branch.txt) bin/gh/track_flaky_tests.sh
+            TARGET_BRANCH=$(cat target-branch-sha.txt) bin/gh/track_flaky_tests.sh
             true
 
         - name: Get event name
