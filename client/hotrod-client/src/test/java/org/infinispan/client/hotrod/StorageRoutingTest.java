@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod;
 
-import static org.infinispan.configuration.cache.StorageType.BINARY;
-import static org.infinispan.configuration.cache.StorageType.OBJECT;
+import static org.infinispan.configuration.cache.StorageType.HEAP;
 import static org.infinispan.configuration.cache.StorageType.OFF_HEAP;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -35,12 +34,10 @@ public class StorageRoutingTest extends MultiHotRodServersTest {
       byte[] byteArrayKey = new byte[]{1, 2, 3};
 
       return new Object[]{
-            new StorageRoutingTest().withStorageType(OBJECT).withKey(stringKey),
-            new StorageRoutingTest().withStorageType(OBJECT).withKey(byteArrayKey),
+            new StorageRoutingTest().withStorageType(HEAP).withKey(stringKey),
+            new StorageRoutingTest().withStorageType(HEAP).withKey(byteArrayKey),
             new StorageRoutingTest().withStorageType(OFF_HEAP).withKey(stringKey),
             new StorageRoutingTest().withStorageType(OFF_HEAP).withKey(byteArrayKey),
-            new StorageRoutingTest().withStorageType(BINARY).withKey(stringKey),
-            new StorageRoutingTest().withStorageType(BINARY).withKey(byteArrayKey)
       };
    }
 

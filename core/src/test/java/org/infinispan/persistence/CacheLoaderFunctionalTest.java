@@ -341,13 +341,13 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
    public void testPreloadingWithEvictionAndOneMaxEntry() throws Exception {
       ConfigurationBuilder preloadingCfg = newPreloadConfiguration(cfg.build(), this.getClass().getName() + "preloadingCache_3");
-      preloadingCfg.memory().size(1);
+      preloadingCfg.memory().maxCount(1);
       doPreloadingTestWithEviction(preloadingCfg.build(), "preloadingCache_3");
    }
 
    public void testPreloadingWithEviction() throws Exception {
       ConfigurationBuilder preloadingCfg = newPreloadConfiguration(cfg.build(), this.getClass().getName() + "preloadingCache_4");
-      preloadingCfg.memory().size(3);
+      preloadingCfg.memory().maxCount(3);
       doPreloadingTestWithEviction(preloadingCfg.build(), "preloadingCache_4");
    }
 
@@ -631,7 +631,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       cm.defineConfiguration(cacheName, preloadingCfg);
 
       final Cache<String, String> preloadingCache = getCache(cm, cacheName);
-      final long expectedEntriesInContainer = Math.min(4L, preloadingCfg.memory().size());
+      final long expectedEntriesInContainer = Math.min(4L, preloadingCfg.memory().maxCount());
       DummyInMemoryStore preloadingCacheLoader = TestingUtil.getFirstStore(preloadingCache);
 
       assertTrue("Preload not enabled in cache configuration",

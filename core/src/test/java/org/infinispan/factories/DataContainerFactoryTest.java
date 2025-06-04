@@ -44,14 +44,14 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
    @Test
    public void testOffHeap() {
       dataContainerFactory.configuration = new ConfigurationBuilder()
-            .memory().storageType(StorageType.OFF_HEAP).build();
+            .memory().storage(StorageType.OFF_HEAP).build();
       assertEquals(OffHeapDataContainer.class, dataContainerFactory.construct(COMPONENT_NAME).getClass());
    }
 
    @Test
    public void testSegmentedOffHeap() {
       dataContainerFactory.configuration = new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_ASYNC)
-            .memory().storageType(StorageType.OFF_HEAP).build();
+            .memory().storage(StorageType.OFF_HEAP).build();
 
       Object component = dataContainerFactory.construct(COMPONENT_NAME);
       assertEquals(DefaultSegmentedDataContainer.class, component.getClass());
@@ -68,7 +68,7 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
       dataContainerFactory.configuration = new ConfigurationBuilder().clustering()
             .cacheMode(CacheMode.DIST_ASYNC)
             .l1().enable()
-            .memory().storageType(StorageType.OFF_HEAP).build();
+            .memory().storage(StorageType.OFF_HEAP).build();
 
       Object component = dataContainerFactory.construct(COMPONENT_NAME);
       assertEquals(L1SegmentedDataContainer.class, component.getClass());
@@ -96,7 +96,7 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
    @Test
    public void testEvictionRemoveNotSegmented() {
       dataContainerFactory.configuration = new ConfigurationBuilder().clustering()
-            .memory().evictionStrategy(EvictionStrategy.REMOVE).size(1000).build();
+            .memory().whenFull(EvictionStrategy.REMOVE).maxCount(1000).build();
 
       assertEquals(DefaultDataContainer.class, this.dataContainerFactory.construct(COMPONENT_NAME).getClass());
    }
@@ -104,7 +104,7 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
    @Test
    public void testEvictionRemoveSegmented() {
       dataContainerFactory.configuration = new ConfigurationBuilder().clustering()
-            .memory().evictionStrategy(EvictionStrategy.REMOVE).size(1000)
+            .memory().whenFull(EvictionStrategy.REMOVE).maxCount(1000)
             .clustering().cacheMode(CacheMode.DIST_ASYNC).build();
 
       Object component = dataContainerFactory.construct(COMPONENT_NAME);
@@ -114,7 +114,7 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
    @Test
    public void testEvictionRemoveNotSegmentedOffHeap() {
       dataContainerFactory.configuration = new ConfigurationBuilder().clustering()
-            .memory().storageType(StorageType.OFF_HEAP).evictionStrategy(EvictionStrategy.REMOVE).size(1000)
+            .memory().storage(StorageType.OFF_HEAP).whenFull(EvictionStrategy.REMOVE).maxCount(1000)
             .build();
 
       assertEquals(BoundedOffHeapDataContainer.class, this.dataContainerFactory.construct(COMPONENT_NAME).getClass());
@@ -123,7 +123,7 @@ public class DataContainerFactoryTest extends AbstractInfinispanTest {
    @Test
    public void testEvictionRemoveSegmentedOffHeap() {
       dataContainerFactory.configuration = new ConfigurationBuilder().clustering()
-            .memory().storageType(StorageType.OFF_HEAP).evictionStrategy(EvictionStrategy.REMOVE).size(1000)
+            .memory().storage(StorageType.OFF_HEAP).whenFull(EvictionStrategy.REMOVE).maxCount(1000)
             .clustering().cacheMode(CacheMode.DIST_ASYNC).build();
 
       Object component = dataContainerFactory.construct(COMPONENT_NAME);

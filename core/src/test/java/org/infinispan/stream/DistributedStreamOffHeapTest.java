@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 public class DistributedStreamOffHeapTest extends DistributedStreamTest {
    @Override
    protected void enhanceConfiguration(ConfigurationBuilder builder) {
-      builder.memory().storageType(StorageType.OFF_HEAP);
+      builder.memory().storage(StorageType.OFF_HEAP);
    }
 
    // Test is disabled, it assumes specific keys tie to specific segments which aren't true with

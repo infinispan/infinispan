@@ -21,7 +21,6 @@ import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.interceptors.impl.ContainerFullException;
 import org.infinispan.interceptors.impl.TransactionalExceptionEvictionInterceptor;
@@ -94,17 +93,11 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
             new ExceptionEvictionTest().nodeCount(3).storageType(StorageType.OFF_HEAP).cacheMode(CacheMode.DIST_SYNC).lockingMode(LockingMode.OPTIMISTIC),
             new ExceptionEvictionTest().nodeCount(3).storageType(StorageType.OFF_HEAP).cacheMode(CacheMode.REPL_SYNC).lockingMode(LockingMode.OPTIMISTIC),
 
-            new ExceptionEvictionTest().nodeCount(1).storageType(StorageType.BINARY).cacheMode(CacheMode.LOCAL).lockingMode(LockingMode.OPTIMISTIC),
-            new ExceptionEvictionTest().nodeCount(1).storageType(StorageType.BINARY).cacheMode(CacheMode.DIST_SYNC).lockingMode(LockingMode.OPTIMISTIC),
-            new ExceptionEvictionTest().nodeCount(1).storageType(StorageType.BINARY).cacheMode(CacheMode.REPL_SYNC).lockingMode(LockingMode.OPTIMISTIC),
-            new ExceptionEvictionTest().nodeCount(3).storageType(StorageType.BINARY).cacheMode(CacheMode.DIST_SYNC).lockingMode(LockingMode.OPTIMISTIC),
-            new ExceptionEvictionTest().nodeCount(3).storageType(StorageType.BINARY).cacheMode(CacheMode.REPL_SYNC).lockingMode(LockingMode.OPTIMISTIC),
-
-            new ExceptionEvictionTest().nodeCount(1).storageType(StorageType.OBJECT).cacheMode(CacheMode.LOCAL).lockingMode(LockingMode.OPTIMISTIC),
-            new ExceptionEvictionTest().nodeCount(1).storageType(StorageType.OBJECT).cacheMode(CacheMode.DIST_SYNC).lockingMode(LockingMode.OPTIMISTIC),
-            new ExceptionEvictionTest().nodeCount(1).storageType(StorageType.OBJECT).cacheMode(CacheMode.REPL_SYNC).lockingMode(LockingMode.OPTIMISTIC),
-            new ExceptionEvictionTest().nodeCount(3).storageType(StorageType.OBJECT).cacheMode(CacheMode.DIST_SYNC).lockingMode(LockingMode.OPTIMISTIC),
-            new ExceptionEvictionTest().nodeCount(3).storageType(StorageType.OBJECT).cacheMode(CacheMode.REPL_SYNC).lockingMode(LockingMode.OPTIMISTIC),
+            new ExceptionEvictionTest().nodeCount(1).storageType(StorageType.HEAP).cacheMode(CacheMode.LOCAL).lockingMode(LockingMode.OPTIMISTIC),
+            new ExceptionEvictionTest().nodeCount(1).storageType(StorageType.HEAP).cacheMode(CacheMode.DIST_SYNC).lockingMode(LockingMode.OPTIMISTIC),
+            new ExceptionEvictionTest().nodeCount(1).storageType(StorageType.HEAP).cacheMode(CacheMode.REPL_SYNC).lockingMode(LockingMode.OPTIMISTIC),
+            new ExceptionEvictionTest().nodeCount(3).storageType(StorageType.HEAP).cacheMode(CacheMode.DIST_SYNC).lockingMode(LockingMode.OPTIMISTIC),
+            new ExceptionEvictionTest().nodeCount(3).storageType(StorageType.HEAP).cacheMode(CacheMode.REPL_SYNC).lockingMode(LockingMode.OPTIMISTIC),
 
             new ExceptionEvictionTest().nodeCount(1).storageType(StorageType.OFF_HEAP).cacheMode(CacheMode.LOCAL).lockingMode(LockingMode.PESSIMISTIC),
             new ExceptionEvictionTest().nodeCount(1).storageType(StorageType.OFF_HEAP).cacheMode(CacheMode.DIST_SYNC).lockingMode(LockingMode.PESSIMISTIC),
@@ -112,17 +105,11 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
             new ExceptionEvictionTest().nodeCount(3).storageType(StorageType.OFF_HEAP).cacheMode(CacheMode.DIST_SYNC).lockingMode(LockingMode.PESSIMISTIC),
             new ExceptionEvictionTest().nodeCount(3).storageType(StorageType.OFF_HEAP).cacheMode(CacheMode.REPL_SYNC).lockingMode(LockingMode.PESSIMISTIC),
 
-            new ExceptionEvictionTest().nodeCount(1).storageType(StorageType.BINARY).cacheMode(CacheMode.LOCAL).lockingMode(LockingMode.PESSIMISTIC),
-            new ExceptionEvictionTest().nodeCount(1).storageType(StorageType.BINARY).cacheMode(CacheMode.DIST_SYNC).lockingMode(LockingMode.PESSIMISTIC),
-            new ExceptionEvictionTest().nodeCount(1).storageType(StorageType.BINARY).cacheMode(CacheMode.REPL_SYNC).lockingMode(LockingMode.PESSIMISTIC),
-            new ExceptionEvictionTest().nodeCount(3).storageType(StorageType.BINARY).cacheMode(CacheMode.DIST_SYNC).lockingMode(LockingMode.PESSIMISTIC),
-            new ExceptionEvictionTest().nodeCount(3).storageType(StorageType.BINARY).cacheMode(CacheMode.REPL_SYNC).lockingMode(LockingMode.PESSIMISTIC),
-
-            new ExceptionEvictionTest().nodeCount(1).storageType(StorageType.OBJECT).cacheMode(CacheMode.LOCAL).lockingMode(LockingMode.PESSIMISTIC),
-            new ExceptionEvictionTest().nodeCount(1).storageType(StorageType.OBJECT).cacheMode(CacheMode.DIST_SYNC).lockingMode(LockingMode.PESSIMISTIC),
-            new ExceptionEvictionTest().nodeCount(1).storageType(StorageType.OBJECT).cacheMode(CacheMode.REPL_SYNC).lockingMode(LockingMode.PESSIMISTIC),
-            new ExceptionEvictionTest().nodeCount(3).storageType(StorageType.OBJECT).cacheMode(CacheMode.DIST_SYNC).lockingMode(LockingMode.PESSIMISTIC),
-            new ExceptionEvictionTest().nodeCount(3).storageType(StorageType.OBJECT).cacheMode(CacheMode.REPL_SYNC).lockingMode(LockingMode.PESSIMISTIC),
+            new ExceptionEvictionTest().nodeCount(1).storageType(StorageType.HEAP).cacheMode(CacheMode.LOCAL).lockingMode(LockingMode.PESSIMISTIC),
+            new ExceptionEvictionTest().nodeCount(1).storageType(StorageType.HEAP).cacheMode(CacheMode.DIST_SYNC).lockingMode(LockingMode.PESSIMISTIC),
+            new ExceptionEvictionTest().nodeCount(1).storageType(StorageType.HEAP).cacheMode(CacheMode.REPL_SYNC).lockingMode(LockingMode.PESSIMISTIC),
+            new ExceptionEvictionTest().nodeCount(3).storageType(StorageType.HEAP).cacheMode(CacheMode.DIST_SYNC).lockingMode(LockingMode.PESSIMISTIC),
+            new ExceptionEvictionTest().nodeCount(3).storageType(StorageType.HEAP).cacheMode(CacheMode.REPL_SYNC).lockingMode(LockingMode.PESSIMISTIC),
       };
    }
 
@@ -140,17 +127,14 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       configurationBuilder = new ConfigurationBuilder();
       MemoryConfigurationBuilder memoryConfigurationBuilder = configurationBuilder.memory();
-      memoryConfigurationBuilder.storageType(storageType);
-      memoryConfigurationBuilder.evictionStrategy(EvictionStrategy.EXCEPTION);
+      memoryConfigurationBuilder.storage(storageType);
+      memoryConfigurationBuilder.whenFull(EvictionStrategy.EXCEPTION);
       switch (storageType) {
-         case OBJECT:
-            memoryConfigurationBuilder.size(SIZE);
-            break;
-         case BINARY:
-            memoryConfigurationBuilder.evictionType(EvictionType.MEMORY).size(convertAmountForStorage(SIZE) + MORTAL_ENTRY_OVERHEAD);
+         case HEAP:
+            memoryConfigurationBuilder.maxCount(SIZE);
             break;
          case OFF_HEAP:
-            memoryConfigurationBuilder.evictionType(EvictionType.MEMORY).size(
+            memoryConfigurationBuilder.maxSize(
                   // The first entry has metadata with expiration which adds 2 additional bytes
                   MORTAL_ENTRY_OVERHEAD +
                   // If we are running optimistic transactions we have to store version so it is larger than pessimistic
@@ -217,10 +201,8 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
    long convertAmountForStorage(long expected) {
       boolean optimistic = lockingMode == LockingMode.OPTIMISTIC;
       switch (storageType) {
-         case OBJECT:
+         case HEAP:
             return expected;
-         case BINARY:
-            return expected * (optimistic ? IMMORTAL_ENTRY_SIZE + OPTIMISTIC_TX_OVERHEAD : IMMORTAL_ENTRY_SIZE);
          case OFF_HEAP:
             int perEntrySize = 25;
             if (optimistic) {

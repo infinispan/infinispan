@@ -1,14 +1,14 @@
 package org.infinispan.test.integration.cdi;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.inject.Disposes;
-import jakarta.enterprise.inject.Produces;
-
 import org.infinispan.cdi.embedded.ConfigureCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.DefaultCacheManager;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Disposes;
+import jakarta.enterprise.inject.Produces;
 
 /**
  * This is the configuration class.
@@ -35,7 +35,7 @@ public class CdiConfig {
    @Produces
    public Configuration greetingCache() {
       return new ConfigurationBuilder()
-            .memory().storageType(StorageType.OBJECT).size(128)
+            .memory().storage(StorageType.HEAP).maxCount(128)
             .build();
    }
 

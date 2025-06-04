@@ -57,7 +57,7 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
             .metrics().accurateSize(true);
 
       ConfigurationBuilder configuration = getDefaultStandaloneCacheConfig(false);
-      configuration.memory().size(1)
+      configuration.memory().maxCount(1)
             .persistence()
             .passivation(true)
             .addStore(DummyInMemoryStoreConfigurationBuilder.class);

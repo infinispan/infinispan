@@ -6,9 +6,9 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -26,7 +26,8 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
-      cfg.memory().size(CACHE_SIZE).evictionType(EvictionType.COUNT).storageType(StorageType.BINARY)
+      cfg.memory().maxCount(CACHE_SIZE).storage(StorageType.HEAP)
+            .encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM)
             .expiration().wakeUpInterval(100L)
             .locking().useLockStriping(false) // to minimise chances of deadlock in the unit test
             .build();
@@ -41,7 +42,7 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
       int expectedReads = 0;
       for (int i = 0; i < CACHE_SIZE * 2; i++) {
          EvictionPojo p1 = new EvictionPojo();
-         p1.i = (int) Util.random(2000);
+         p1.i = Util.random(2000);
          EvictionPojo p2 = new EvictionPojo();
          p2.i = 24;
          Object old = cache.put(p1, p2);
@@ -62,7 +63,7 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
       int expectedReads = 0;
       for (int i = 0; i < CACHE_SIZE * 2; i++) {
          EvictionPojo p1 = new EvictionPojo();
-         p1.i = (int) Util.random(2000);
+         p1.i = Util.random(2000);
          Object old = cache.put(i, p1);
          if (old != null)
             expectedReads++; // unmarshall old value if overwritten

@@ -237,8 +237,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
             || (transaction.transactionMode() != null && transaction.transactionMode().isTransactional())
             || !persistence.stores().isEmpty()
             || invocationBatching.isEnabled()
-            || indexing.enabled()
-            || memory.create().storage() == StorageType.BINARY) {
+            || indexing.enabled()) {
          throw CONFIG.notSupportedInSimpleCache();
       }
    }

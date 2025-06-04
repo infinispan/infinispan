@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.function.BiPredicate;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
@@ -357,6 +358,10 @@ public final class ParseUtils {
     }
 
     public static void parseAttributes(ConfigurationReader reader, Builder<?> builder) {
+        parseAttributes(reader, builder, null);
+    }
+
+    public static void parseAttributes(ConfigurationReader reader, Builder<?> builder, BiPredicate<String, String> invalidAttributeHandler) {
         AttributeSet attributes = builder.attributes();
         attributes.touch();
         int major = reader.getSchema().getMajor();
@@ -378,7 +383,9 @@ public final class ParseUtils {
                         CONFIG.attributeDeprecated(attribute.name(), attributes.getName(), major, minor);
                     }
                 } catch (IllegalArgumentException e) {
-                    throw CONFIG.invalidAttributeValue(reader.getLocalName(), name, value, reader.getLocation(), e.getLocalizedMessage());
+                    if (invalidAttributeHandler == null || !invalidAttributeHandler.test(name, value)) {
+                        throw CONFIG.invalidAttributeValue(reader.getLocalName(), name, value, reader.getLocation(), e.getLocalizedMessage());
+                    }
                 }
             }
         }

@@ -55,7 +55,7 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
       dimcs.fetchPersistentState(false).purgeOnStartup(false).shared(sharedCacheLoader.get()).preload(true);
       configurationBuilder.persistence().passivation(false).addStore(dimcs);
       // Want to enable eviction, but don't actually evict anything
-      configurationBuilder.memory().size(INSERTION_COUNT * 10);
+      configurationBuilder.memory().maxCount(INSERTION_COUNT * 10);
 
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(sci, configurationBuilder, new TransportFlags().withMerge(true));
       cm.defineConfiguration(cacheName, configurationBuilder.build());

@@ -33,7 +33,7 @@ public class OffHeapBoundedMultiNodeTest extends OffHeapMultiNodeTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      dcc.memory().storageType(StorageType.OFF_HEAP).size(EVICTION_SIZE);
+      dcc.memory().storage(StorageType.OFF_HEAP).maxCount(EVICTION_SIZE);
       dcc.transaction().transactionMode(transactionMode);
       createCluster(dcc, 4);
       waitForClusterToForm();

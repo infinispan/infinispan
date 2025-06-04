@@ -29,8 +29,8 @@ public class ClusteredStatsTest extends SingleStatsTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            new ClusteredStatsTest().withStorage(StorageType.OBJECT).withCountEviction(true),
-            new ClusteredStatsTest().withStorage(StorageType.OBJECT).withCountEviction(true).withAccurateSize(false),
+            new ClusteredStatsTest().withStorage(StorageType.HEAP).withCountEviction(true),
+            new ClusteredStatsTest().withStorage(StorageType.HEAP).withCountEviction(true).withAccurateSize(false),
             new ClusteredStatsTest().withStorage(StorageType.OFF_HEAP).withCountEviction(true),
             new ClusteredStatsTest().withStorage(StorageType.OFF_HEAP).withCountEviction(true).withAccurateSize(false),
       };

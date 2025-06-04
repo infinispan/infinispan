@@ -140,7 +140,7 @@ public class ClassLoaderManagerDisablingTest extends AbstractInfinispanTest {
 
    private void enablePassivation(ConfigurationBuilder builder) {
       builder.persistence().passivation(true);
-      builder.memory().size(1);
+      builder.memory().maxCount(1);
    }
 
    private void disableWithConfiguration(ConfigurationBuilder builder) {

@@ -1,14 +1,14 @@
 package org.infinispan.integrationtests.cdi.weld;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.inject.Disposes;
-import jakarta.enterprise.inject.Produces;
-
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Disposes;
+import jakarta.enterprise.inject.Produces;
 
 /**
  * Cache configuration
@@ -25,7 +25,7 @@ public class Config {
       holder.getGlobalConfigurationBuilder().defaultCacheName("cdi");
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.memory().size(100);
+      builder.memory().maxCount(100);
       holder.getNamedConfigurationBuilders().put("cdi", builder);
 
       return new DefaultCacheManager(holder, true);

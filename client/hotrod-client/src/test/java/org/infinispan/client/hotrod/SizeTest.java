@@ -52,7 +52,7 @@ public class SizeTest extends MultiHotRodServersTest {
    public void testPersistentDistributedCacheSize() {
       String cacheName = "persistent-distributed-size";
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      builder.memory().size(1);
+      builder.memory().maxCount(1);
       builder.persistence()
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .storeName(getClass().getName())

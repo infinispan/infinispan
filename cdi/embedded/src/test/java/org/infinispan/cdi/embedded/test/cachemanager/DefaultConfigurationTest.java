@@ -3,10 +3,6 @@ package org.infinispan.cdi.embedded.test.cachemanager;
 import static org.infinispan.cdi.embedded.test.testutil.Deployments.baseDeployment;
 import static org.testng.Assert.assertEquals;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.inject.Produces;
-import jakarta.inject.Inject;
-
 import org.infinispan.Cache;
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.configuration.cache.Configuration;
@@ -16,6 +12,10 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.Test;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
 
 /**
  * Tests that the default embedded cache configuration can be overridden.
@@ -36,7 +36,7 @@ public class DefaultConfigurationTest extends Arquillian {
    private Cache<?, ?> cache;
 
    public void testDefaultConfiguration() {
-      assertEquals(cache.getCacheConfiguration().memory().size(), 16);
+      assertEquals(cache.getCacheConfiguration().memory().maxCount(), 16);
       assertEquals(cache.getName(), TestCacheManagerFactory.DEFAULT_CACHE_NAME);
    }
 
@@ -49,7 +49,7 @@ public class DefaultConfigurationTest extends Arquillian {
       @Produces
       public Configuration customDefaultConfiguration() {
          return new ConfigurationBuilder()
-               .memory().size(16)
+               .memory().maxCount(16)
                .build();
       }
    }

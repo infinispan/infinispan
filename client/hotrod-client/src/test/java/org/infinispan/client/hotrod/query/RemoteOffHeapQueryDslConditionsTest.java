@@ -13,7 +13,7 @@ public class RemoteOffHeapQueryDslConditionsTest extends RemoteQueryDslCondition
    @Override
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder builder = super.getConfigurationBuilder();
-      builder.memory().storageType(StorageType.OFF_HEAP);
+      builder.memory().storage(StorageType.OFF_HEAP);
       return builder;
    }
 }

@@ -2,19 +2,19 @@ package org.infinispan.persistence;
 
 import static org.infinispan.test.TestingUtil.getTransactionManager;
 
-import jakarta.transaction.HeuristicMixedException;
-import jakarta.transaction.HeuristicRollbackException;
-import jakarta.transaction.NotSupportedException;
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.SystemException;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "persistence.ConcurrentLoadAndEvictTxTest")
 public class ConcurrentLoadAndEvictTxTest extends SingleCacheManagerTest {
@@ -25,7 +25,7 @@ public class ConcurrentLoadAndEvictTxTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder config = getDefaultStandaloneCacheConfig(true);
       config
-         .memory().size(10)
+         .memory().maxCount(10)
          .expiration().wakeUpInterval(10L)
          .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class)
          .build();

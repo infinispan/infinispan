@@ -36,7 +36,7 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder c = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      c.memory().storageType(StorageType.BINARY)
+      c.memory().storage(StorageType.BINARY)
          .transaction().lockingMode(LockingMode.PESSIMISTIC);
       return TestCacheManagerFactory.createCacheManager(TestDataSCI.INSTANCE, c);
    }

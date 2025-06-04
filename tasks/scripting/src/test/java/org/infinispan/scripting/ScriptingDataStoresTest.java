@@ -35,8 +35,7 @@ public class ScriptingDataStoresTest extends AbstractScriptingTest {
    public Object[] factory() {
       return new Object[]{
             new ScriptingDataStoresTest().withStorageType(StorageType.OFF_HEAP),
-            new ScriptingDataStoresTest().withStorageType(StorageType.BINARY),
-            new ScriptingDataStoresTest().withStorageType(StorageType.OBJECT),
+            new ScriptingDataStoresTest().withStorageType(StorageType.HEAP),
       };
    }
 
@@ -52,7 +51,7 @@ public class ScriptingDataStoresTest extends AbstractScriptingTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder conf = new ConfigurationBuilder();
-      conf.memory().storageType(storageType);
+      conf.memory().storage(storageType);
       return TestCacheManagerFactory.createCacheManager(conf);
    }
 
@@ -60,7 +59,7 @@ public class ScriptingDataStoresTest extends AbstractScriptingTest {
    protected void setup() throws Exception {
       super.setup();
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.memory().storageType(this.storageType);
+      builder.memory().storage(this.storageType);
       cacheManager.defineConfiguration(CACHE_NAME, builder.build());
       cacheManager.getCache(CACHE_NAME);
    }
