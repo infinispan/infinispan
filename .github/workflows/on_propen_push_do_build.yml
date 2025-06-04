@@ -25,13 +25,13 @@ jobs:
       - name: Detect target branch
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "${{ github.event.pull_request.base.ref }}" > base_branch.txt
+            echo "${{ github.event.pull_request.base.ref }}" > target-branch.txt
           else
-            echo "${{ github.ref_name }}" > target_branch.txt
+            echo "${{ github.ref_name }}" > target-branch.txt
           fi
 
       - name: Upload target branch as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: target_branch
+          name: target-branch
           path: target-branch.txt
