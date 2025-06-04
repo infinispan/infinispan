@@ -181,12 +181,9 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
             globalConfiguration.expirationThreadPool(),
             globalConfiguration.listenerThreadPool(),
             globalConfiguration.nonBlockingThreadPool(),
-            globalConfiguration.blockingThreadPool(),
-            globalConfiguration.transport().remoteCommandThreadPool(),
-            globalConfiguration.transport().transportThreadPool())) {
+            globalConfiguration.blockingThreadPool())) {
          ThreadFactory threadFactory = threadPoolConfiguration.threadFactory();
-         if (threadFactory instanceof DefaultThreadFactory) {
-            DefaultThreadFactory tf = (DefaultThreadFactory) threadFactory;
+         if (threadFactory instanceof DefaultThreadFactory tf) {
             threadFactories.putIfAbsent(tf.getName(), tf);
          }
       }
@@ -202,7 +199,6 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          writeThreadPool(writer, globalConfiguration.expirationThreadPoolName(), globalConfiguration.expirationThreadPool());
          writeThreadPool(writer, globalConfiguration.listenerThreadPoolName(), globalConfiguration.listenerThreadPool());
          writeThreadPool(writer, globalConfiguration.blockingThreadPoolName(), globalConfiguration.blockingThreadPool());
-         writeThreadPool(writer, globalConfiguration.transport().remoteThreadPoolName(), globalConfiguration.transport().remoteCommandThreadPool());
          writer.writeEndMap();
          writer.writeEndElement();
       }
@@ -514,9 +510,6 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          }
          attributes.write(writer, TransportConfiguration.NODE_NAME, Attribute.NODE_NAME);
          attributes.write(writer, TransportConfiguration.STACK);
-         if (transport.remoteCommandThreadPool().threadPoolFactory() != null) {
-            writer.writeAttribute(Attribute.REMOTE_COMMAND_EXECUTOR, transport.remoteThreadPoolName());
-         }
          attributes.write(writer, TransportConfiguration.DISTRIBUTED_SYNC_TIMEOUT, Attribute.LOCK_TIMEOUT);
          attributes.write(writer, TransportConfiguration.INITIAL_CLUSTER_SIZE, Attribute.INITIAL_CLUSTER_SIZE);
          attributes.write(writer, TransportConfiguration.INITIAL_CLUSTER_TIMEOUT, Attribute.INITIAL_CLUSTER_TIMEOUT);

@@ -12,7 +12,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -51,15 +50,7 @@ public class GetAllCommandStressTest extends StressTest {
 
    protected EmbeddedCacheManager addClusterEnabledCacheManager(TransportFlags flags) {
       GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      // Amend first so we can increase the transport thread pool
       TestCacheManagerFactory.amendGlobalConfiguration(gcb, flags);
-      // we need to increase the transport and remote thread pools to default values
-      BlockingThreadPoolExecutorFactory executorFactory = new BlockingThreadPoolExecutorFactory(
-            25, 25, 10000, 30000);
-      gcb.transport().transportThreadPool().threadPoolFactory(executorFactory);
-
-      gcb.transport().remoteCommandThreadPool().threadPoolFactory(executorFactory);
-
       EmbeddedCacheManager cm = TestCacheManagerFactory.newDefaultCacheManager(true, gcb,
             new ConfigurationBuilder());
       cacheManagers.add(cm);

@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -503,16 +502,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals("infinispan", threadFactory.threadGroup().getName());
             assertEquals("%G %i", threadFactory.threadNamePattern());
             assertEquals(5, threadFactory.initialPriority());
-
-            threadFactory = getGlobalConfiguration(holder).transport().remoteCommandThreadPool().threadFactory();
-            assertNull(threadFactory);
-            threadPool = getGlobalConfiguration(holder).transport().remoteCommandThreadPool().threadPoolFactory();
-            assertNull(threadPool);
-
-            threadFactory = getGlobalConfiguration(holder).transport().transportThreadPool().threadFactory();
-            assertNull(threadFactory);
-            threadPool = getGlobalConfiguration(holder).transport().transportThreadPool().threadPoolFactory();
-            assertNull(threadPool);
 
             assertTrue(g.serialization().marshaller() instanceof TestObjectStreamMarshaller);
 

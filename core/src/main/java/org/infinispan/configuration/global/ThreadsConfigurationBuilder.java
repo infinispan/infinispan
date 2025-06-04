@@ -16,9 +16,6 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
    private final ThreadPoolConfigurationBuilder expirationThreadPool;
    private final ThreadPoolConfigurationBuilder listenerThreadPool;
    private final ThreadPoolConfigurationBuilder persistenceThreadPool;
-   private final ThreadPoolConfigurationBuilder remoteCommandThreadPool;
-   private final ThreadPoolConfigurationBuilder stateTransferThreadPool;
-   private final ThreadPoolConfigurationBuilder transportThreadPool;
    private final ThreadPoolConfigurationBuilder nonBlockingThreadPool;
    private final ThreadPoolConfigurationBuilder blockingThreadPool;
    private final List<ThreadFactoryConfigurationBuilder> threadFactoryBuilders = new ArrayList<>();
@@ -35,9 +32,6 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
       this.expirationThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
       this.listenerThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
       this.persistenceThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
-      this.stateTransferThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
-      this.remoteCommandThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
-      this.transportThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
       this.nonBlockingThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
       this.blockingThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
    }
@@ -95,18 +89,6 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
       return persistenceThreadPool;
    }
 
-   public ThreadPoolConfigurationBuilder remoteCommandThreadPool() {
-      return remoteCommandThreadPool;
-   }
-
-   /**
-    * @deprecated Since 11.0, no longer used.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public ThreadPoolConfigurationBuilder transportThreadPool() {
-      return transportThreadPool;
-   }
-
    @Override
    public ThreadPoolConfigurationBuilder nonBlockingThreadPool() {
       return nonBlockingThreadPool;
@@ -123,8 +105,6 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
       this.expirationThreadPool.read(template.expirationThreadPool(), combine);
       this.listenerThreadPool.read(template.listenerThreadPool(), combine);
       this.persistenceThreadPool.read(template.persistenceThreadPool(), combine);
-      this.remoteCommandThreadPool.read(template.remoteThreadPool(), combine);
-      this.transportThreadPool.read(template.transportThreadPool(), combine);
       this.nonBlockingThreadPool.read(template.nonBlockingThreadPool(), combine);
       this.blockingThreadPool.read(template.blockingThreadPool(), combine);
 
@@ -155,8 +135,6 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
             expirationThreadPool.create(),
             listenerThreadPool.create(),
             persistenceThreadPool.create(),
-            remoteCommandThreadPool.create(),
-            transportThreadPool.create(),
             nonBlockingThreadPool.create(),
             blockingThreadPool.create());
    }

@@ -12,7 +12,6 @@ import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.TimeoutException;
-import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -102,12 +101,6 @@ public class LargeCluster2StressTest extends MultipleCacheManagersTest {
                   GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
                   gcb.transport().defaultTransport().nodeName(nodeName)
                         .addProperty(JGroupsTransport.CONFIGURATION_STRING, configurator.getProtocolStackString());
-                  BlockingThreadPoolExecutorFactory transportExecutorFactory = new BlockingThreadPoolExecutorFactory(
-                        TRANSPORT_MAX_THREADS, TRANSPORT_MAX_THREADS, TRANSPORT_QUEUE_SIZE, 60000);
-                  gcb.transport().transportThreadPool().threadPoolFactory(transportExecutorFactory);
-                  BlockingThreadPoolExecutorFactory remoteExecutorFactory = new BlockingThreadPoolExecutorFactory(
-                        REMOTE_MAX_THREADS, REMOTE_MAX_THREADS, REMOTE_QUEUE_SIZE, 60000);
-                  gcb.transport().remoteCommandThreadPool().threadPoolFactory(remoteExecutorFactory);
                   final EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build());
                   try {
                      for (int i = 0; i < NUM_CACHES / 2; i++) {
