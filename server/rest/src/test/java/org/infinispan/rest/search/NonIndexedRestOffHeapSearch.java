@@ -17,7 +17,7 @@ public class NonIndexedRestOffHeapSearch extends BaseRestSearchTest {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       configurationBuilder.encoding().key().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
       configurationBuilder.encoding().value().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
-      configurationBuilder.memory().storageType(StorageType.OFF_HEAP);
+      configurationBuilder.memory().storage(StorageType.OFF_HEAP);
       return configurationBuilder;
    }
 

@@ -1,9 +1,5 @@
 package org.infinispan.cdi.embedded.test.cache.specific;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.inject.Disposes;
-import jakarta.enterprise.inject.Produces;
-
 import org.infinispan.cdi.embedded.ConfigureCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -11,6 +7,10 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Disposes;
+import jakarta.enterprise.inject.Produces;
 
 /**
  * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
@@ -30,7 +30,7 @@ public class Config {
    public Configuration largeConfiguration(@Large EmbeddedCacheManager cacheManager) {
       return new ConfigurationBuilder()
             .read(cacheManager.getDefaultCacheConfiguration())
-            .memory().size(2000)
+            .memory().maxCount(2000)
             .build();
    }
 
@@ -47,7 +47,7 @@ public class Config {
    public Configuration smallConfiguration(@Small EmbeddedCacheManager cacheManager) {
       return new ConfigurationBuilder()
             .read(cacheManager.getDefaultCacheConfiguration())
-            .memory().size(20)
+            .memory().maxCount(20)
             .build();
    }
 
@@ -64,7 +64,7 @@ public class Config {
       holder.getGlobalConfigurationBuilder().defaultCacheName("default");
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.memory().size(4000);
+      builder.memory().maxCount(4000);
       holder.getNamedConfigurationBuilders().put("default", builder);
 
       return new DefaultCacheManager(holder, true);

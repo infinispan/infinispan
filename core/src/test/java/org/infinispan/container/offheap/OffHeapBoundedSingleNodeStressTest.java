@@ -17,7 +17,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.eviction.EvictionType;
 import org.testng.annotations.Test;
 
 /**
@@ -31,8 +30,7 @@ public class OffHeapBoundedSingleNodeStressTest extends OffHeapMultiNodeStressTe
 
    @Override protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
-      dcc.memory().storageType(StorageType.OFF_HEAP).evictionType(EvictionType.COUNT)
-            .size(500);
+      dcc.memory().storage(StorageType.OFF_HEAP).maxCount(500);
       // Only start up the 1 cache
       addClusterEnabledCacheManager(dcc);
    }

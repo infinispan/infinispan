@@ -19,7 +19,7 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
-      cfg.memory().storageType(StorageType.BINARY);
+      cfg.memory().storage(StorageType.BINARY);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(TestDataSCI.INSTANCE, cfg);
       cache = cm.getCache();
       return cm;

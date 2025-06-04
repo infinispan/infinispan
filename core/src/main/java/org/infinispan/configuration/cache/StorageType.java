@@ -15,14 +15,6 @@ import org.infinispan.configuration.parsing.Element;
 public enum StorageType {
 
    /**
-    * Objects are stored on heap as objects as provided. These are serialized across to other nodes and stored as
-    * deserialized instances of the object. Equality is defined by the equals method of the implementation class.
-    * @deprecated since 11.0, use {@link StorageType#HEAP} instead.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   OBJECT(Element.OBJECT),
-
-   /**
     * Objects are stored on heap. Equality is defined by the equals of the implementation class.
     * If the configured {@link MediaType} causes the storage to be byte[], then equality is defined by these
     * byte[] instances.
@@ -59,7 +51,7 @@ public enum StorageType {
    }
 
    public boolean canStoreReferences() {
-      return this == HEAP || this == OBJECT;
+      return this == HEAP || this == HEAP;
    }
 
    private static final Map<String, StorageType> STORAGE_PER_ELEMENT = new HashMap<>(3);

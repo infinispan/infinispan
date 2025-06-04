@@ -20,7 +20,7 @@ public class Configurations {
    }
 
    public static boolean isExceptionBasedEviction(Configuration cfg) {
-      return cfg.memory().size() > 0 && cfg.memory().evictionStrategy().isExceptionBased();
+      return (cfg.memory().maxCount() > 0 || cfg.memory().maxSizeBytes() > 0) && cfg.memory().whenFull().isExceptionBased();
    }
 
    public static boolean isOnePhaseCommit(Configuration cfg) {
