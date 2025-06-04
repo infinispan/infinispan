@@ -61,17 +61,17 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
 //      assert advancedCache(2).getDistributionManager().getConsistentHash() instanceof TopologyAwareConsistentHash;
 
       DistributionManagerImpl dmi = (DistributionManagerImpl) advancedCache(0).getDistributionManager();
-      log.trace("distributionManager.ConsistentHash() = " + dmi.getWriteConsistentHash());
-      assertTopologyInfo3Nodes(dmi.getWriteConsistentHash().getMembers());
+      log.trace("distributionManager.ConsistentHash() = " + dmi.getCacheTopology().getWriteConsistentHash());
+      assertTopologyInfo3Nodes(dmi.getCacheTopology().getWriteConsistentHash().getMembers());
       dmi = (DistributionManagerImpl) advancedCache(1).getDistributionManager();
-      assertTopologyInfo3Nodes(dmi.getWriteConsistentHash().getMembers());
+      assertTopologyInfo3Nodes(dmi.getCacheTopology().getWriteConsistentHash().getMembers());
       dmi = (DistributionManagerImpl) advancedCache(2).getDistributionManager();
-      assertTopologyInfo3Nodes(dmi.getWriteConsistentHash().getMembers());
+      assertTopologyInfo3Nodes(dmi.getCacheTopology().getWriteConsistentHash().getMembers());
 
-      ConsistentHash tach0 = advancedCache(0).getDistributionManager().getWriteConsistentHash();
-      ConsistentHash tach1 = advancedCache(1).getDistributionManager().getWriteConsistentHash();
+      ConsistentHash tach0 = advancedCache(0).getDistributionManager().getCacheTopology().getWriteConsistentHash();
+      ConsistentHash tach1 = advancedCache(1).getDistributionManager().getCacheTopology().getWriteConsistentHash();
       assertEquals(tach0.getMembers(), tach1.getMembers());
-      ConsistentHash tach2 = advancedCache(2).getDistributionManager().getWriteConsistentHash();
+      ConsistentHash tach2 = advancedCache(2).getDistributionManager().getCacheTopology().getWriteConsistentHash();
       assertEquals(tach0.getMembers(), tach2.getMembers());
    }
 
@@ -82,12 +82,12 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
       TestingUtil.waitForNoRebalance(cache(0), cache(2));
 
       DistributionManagerImpl dmi = (DistributionManagerImpl) advancedCache(0).getDistributionManager();
-      assertTopologyInfo2Nodes(dmi.getWriteConsistentHash().getMembers());
+      assertTopologyInfo2Nodes(dmi.getCacheTopology().getWriteConsistentHash().getMembers());
       dmi = (DistributionManagerImpl) advancedCache(2).getDistributionManager();
-      assertTopologyInfo2Nodes(dmi.getWriteConsistentHash().getMembers());
+      assertTopologyInfo2Nodes(dmi.getCacheTopology().getWriteConsistentHash().getMembers());
 
-      ConsistentHash tach0 = advancedCache(0).getDistributionManager().getWriteConsistentHash();
-      ConsistentHash tach2 = advancedCache(2).getDistributionManager().getWriteConsistentHash();
+      ConsistentHash tach0 = advancedCache(0).getDistributionManager().getCacheTopology().getWriteConsistentHash();
+      ConsistentHash tach2 = advancedCache(2).getDistributionManager().getCacheTopology().getWriteConsistentHash();
       assertEquals(tach0.getMembers(), tach2.getMembers());
    }
 
