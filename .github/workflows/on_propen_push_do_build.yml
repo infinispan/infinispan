@@ -22,3 +22,16 @@ jobs:
       - name: Build Infinispan
         uses: ./.github/actions/build-infinispan
 
+      - name: Detect target branch
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "${{ github.event.pull_request.base.ref }}" > base_branch.txt
+          else
+            echo "${{ github.ref_name }}" > target_branch.txt
+          fi
+
+      - name: Upload target branch as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: target_branch
+          path: target-branch.txt
