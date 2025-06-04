@@ -139,7 +139,7 @@ public class MagicKey implements Serializable {
    }
 
    private Set<Integer> segments(Cache<?, ?> owner) {
-      return owner.getAdvancedCache().getDistributionManager().getWriteConsistentHash()
+      return owner.getAdvancedCache().getDistributionManager().getCacheTopology().getWriteConsistentHash()
             .getPrimarySegmentsForOwner(owner.getCacheManager().getAddress());
    }
 
