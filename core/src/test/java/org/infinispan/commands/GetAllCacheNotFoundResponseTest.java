@@ -18,9 +18,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.distribution.impl.DistributionManagerImpl;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
@@ -98,7 +98,7 @@ public class GetAllCacheNotFoundResponseTest extends MultipleCacheManagersTest {
 
    private Future<Void> simulateTopologyUpdate(Cache<Object, Object> cache) {
       StateTransferLock stl4 = TestingUtil.extractComponent(cache, StateTransferLock.class);
-      DistributionManager dm4 = cache.getAdvancedCache().getDistributionManager();
+      DistributionManagerImpl dm4 = (DistributionManagerImpl) cache.getAdvancedCache().getDistributionManager();
       LocalizedCacheTopology cacheTopology = dm4.getCacheTopology();
       int newTopologyId = cacheTopology.getTopologyId() + 1;
       CacheTopology newTopology = new CacheTopology(newTopologyId, cacheTopology.getRebalanceId(),
