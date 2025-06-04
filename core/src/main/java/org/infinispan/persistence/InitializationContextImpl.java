@@ -1,7 +1,6 @@
 package org.infinispan.persistence;
 
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactory;
@@ -16,7 +15,6 @@ import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.NonBlockingManager;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 
 /**
  * @author Mircea Markus
@@ -84,12 +82,6 @@ public class InitializationContextImpl implements InitializationContext {
    public <K,V> MarshallableEntryFactory<K,V> getMarshallableEntryFactory() {
       //noinspection unchecked
       return marshallableEntryFactory;
-   }
-
-   @Deprecated(forRemoval=true, since = "11.0")
-   @Override
-   public ExecutorService getExecutor() {
-      return new WithinThreadExecutor();
    }
 
    @Override
