@@ -72,11 +72,6 @@ public interface GlobalConfigurationChildBuilder {
    ShutdownConfigurationBuilder shutdown();
 
    /**
-    * Cross-site replication configuration
-    */
-   SiteConfigurationBuilder site();
-
-   /**
     * Global state configuration
     */
    GlobalStateConfigurationBuilder globalState();
