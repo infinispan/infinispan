@@ -38,7 +38,7 @@ public class MarshalledValuesFineGrainedTest extends AbstractInfinispanTest {
 
    public void testStoreAsBinaryOnBoth() {
       ConfigurationBuilder c = new ConfigurationBuilder();
-      c.memory().storageType(StorageType.BINARY).build();
+      c.memory().storage(StorageType.BINARY).build();
       ecm = TestCacheManagerFactory.createCacheManager(TestDataSCI.INSTANCE, c);
       ecm.getCache().put(key, value);
       DataConversion keyDataConversion = ecm.getCache().getAdvancedCache().getKeyDataConversion();

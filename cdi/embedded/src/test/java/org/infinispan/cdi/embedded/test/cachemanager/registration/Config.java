@@ -1,13 +1,13 @@
 package org.infinispan.cdi.embedded.test.cachemanager.registration;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.inject.Produces;
-
 import org.infinispan.cdi.embedded.ConfigureCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
 
 /**
  * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
@@ -35,7 +35,7 @@ public class Config {
    @SuppressWarnings("unused")
    public Configuration largeConfiguration() {
       return new ConfigurationBuilder()
-            .memory().size(1024)
+            .memory().maxCount(1024)
             .build();
    }
 
@@ -50,7 +50,7 @@ public class Config {
    @SuppressWarnings("unused")
    public Configuration veryLargeConfiguration() {
       return new ConfigurationBuilder()
-            .memory().size(4096)
+            .memory().maxCount(4096)
             .build();
    }
 

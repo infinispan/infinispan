@@ -5,15 +5,11 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
-import jakarta.transaction.HeuristicRollbackException;
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -21,8 +17,12 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 @Test(testName = "container.versioning.AbstractClusteredWriteSkewTest", groups = "functional")
 public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManagersTest {
@@ -262,7 +262,7 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
 
       builder = defaultConfigurationBuilder();
       builder.persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class);
-      builder.memory().size(MAX_ENTRIES);
+      builder.memory().maxCount(MAX_ENTRIES);
       decorate(builder);
       defineConfigurationOnAllManagers(PASSIVATION_CACHE, builder);
       waitForClusterToForm(PASSIVATION_CACHE);

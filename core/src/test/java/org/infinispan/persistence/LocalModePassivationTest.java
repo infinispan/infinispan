@@ -10,9 +10,11 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -28,7 +30,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
@@ -56,7 +57,8 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.LOCAL, true, true);
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL).lockingMode(LockingMode.PESSIMISTIC)
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
-            .memory().storageType(StorageType.BINARY).size(150)
+            .memory().storage(StorageType.HEAP).maxCount(150)
+            .encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM)
             .locking().useLockStriping(false).isolationLevel(IsolationLevel.READ_COMMITTED)
             .persistence()
                .passivation(passivationEnabled)

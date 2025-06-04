@@ -24,7 +24,7 @@ public class InvalidatedMarshalledValueTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder invlSync = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_SYNC, false);
-      invlSync.memory().storageType(StorageType.BINARY);
+      invlSync.memory().storage(StorageType.BINARY);
 
       createClusteredCaches(2, "invlSync", TestDataSCI.INSTANCE, invlSync);
    }

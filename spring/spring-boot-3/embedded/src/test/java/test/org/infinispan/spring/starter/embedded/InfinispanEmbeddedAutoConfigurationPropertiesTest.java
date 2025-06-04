@@ -40,6 +40,6 @@ public class InfinispanEmbeddedAutoConfigurationPropertiesTest {
       assertThat(globalConfiguration.serialization().marshaller()).isInstanceOf(JavaSerializationMarshaller.class);
 
       final Configuration defaultCacheConfiguration = defaultCacheManager.getDefaultCacheConfiguration();
-      assertThat(defaultCacheConfiguration.memory().size()).isEqualTo(2000L);
+      assertThat(defaultCacheConfiguration.memory().maxCount()).isEqualTo(2000L);
    }
 }

@@ -16,7 +16,7 @@ public class APINonTxPersistenceTest extends APINonTxTest {
    @Override
    protected void configure(ConfigurationBuilder builder) {
       builder
-            .memory().size(0)
+            .memory().maxCount(0)
             .persistence()
                .addStore(DummyInMemoryStoreConfigurationBuilder.class)
                   .storeName(getClass().getName())

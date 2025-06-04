@@ -24,7 +24,7 @@ public class EvictionDuringBatchTest extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfgBuilder = new ConfigurationBuilder();
-      cfgBuilder.memory().size(128) // 128 max entries
+      cfgBuilder.memory().maxCount(128) // 128 max entries
             .expiration().wakeUpInterval(100L)
             .locking().useLockStriping(false) // to minimize chances of deadlock in the unit test
             .invocationBatching().enable(true);

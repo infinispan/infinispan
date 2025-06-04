@@ -2,8 +2,6 @@ package org.infinispan.cdi.embedded.test.cache.configured;
 
 import static org.testng.Assert.assertEquals;
 
-import jakarta.inject.Inject;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.cdi.embedded.test.testutil.Deployments;
@@ -11,6 +9,8 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.Test;
+
+import jakarta.inject.Inject;
 
 /**
  * Tests that the simple form of configuration works.
@@ -39,11 +39,11 @@ public class ConfiguredCacheTest extends Arquillian {
 
    public void testTinyCache() {
       // Check that we have the correctly configured cache
-      assertEquals(tinyCache.getCacheConfiguration().memory().size(), 1);
+      assertEquals(tinyCache.getCacheConfiguration().memory().maxCount(), 1);
    }
 
    public void testSmallCache() {
       // Check that we have the correctly configured cache
-      assertEquals(smallCache.getCacheConfiguration().memory().size(), 10);
+      assertEquals(smallCache.getCacheConfiguration().memory().maxCount(), 10);
    }
 }

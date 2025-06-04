@@ -19,6 +19,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.anchored.configuration.AnchoredKeysConfigurationBuilder;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
@@ -39,7 +40,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.op.TestWriteOperation;
 import org.infinispan.util.ControlledConsistentHashFactory;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -56,7 +56,7 @@ public class AnchoredKeysOperationsTest extends AbstractAnchoredKeysTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            new AnchoredKeysOperationsTest().storageType(StorageType.OBJECT),
+            new AnchoredKeysOperationsTest().storageType(StorageType.HEAP),
             new AnchoredKeysOperationsTest().storageType(StorageType.BINARY),
             new AnchoredKeysOperationsTest().storageType(StorageType.HEAP).serverMode(true),
             };

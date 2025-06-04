@@ -5,6 +5,7 @@ import static org.infinispan.test.TestingUtil.existsDomain;
 import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.configureJmx;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -290,9 +291,9 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       String jmxDomain = cm.getCacheManagerConfiguration().jmx().domain();
 
       ConfigurationBuilder localCache = config();
-      localCache.memory().storageType(StorageType.BINARY);
+      localCache.memory().storage(StorageType.HEAP);
       cm.defineConfiguration("local_cache1", localCache.build());
-      localCache.memory().storageType(StorageType.OBJECT);
+      localCache.memory().storage(StorageType.OFF_HEAP);
       cm.defineConfiguration("local_cache2", localCache.build());
 
       cm.getCache("local_cache1");
@@ -302,12 +303,12 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       Properties props2 = (Properties) server.getAttribute(getCacheObjectName(jmxDomain, "local_cache2(local)", "Cache"), "configurationAsProperties");
       Properties propsGlobal = (Properties) server.getAttribute(getCacheManagerObjectName(jmxDomain), "globalConfigurationAsProperties");
       // configurationAsProperties excludes deprecated methods from the reflection, so 'storageType' is not available anymore.
-      assert "BINARY".equals(props1.getProperty("memory.storage"));
-      assert "OBJECT".equals(props2.getProperty("memory.storage"));
+      assertEquals("HEAP", props1.getProperty("memory.storage"));
+      assertEquals("OFF_HEAP", props2.getProperty("memory.storage"));
       log.tracef("propsGlobal=%s", propsGlobal);
-      assert "TESTVALUE1".equals(propsGlobal.getProperty("transport.siteId"));
-      assert "TESTVALUE2".equals(propsGlobal.getProperty("transport.rackId"));
-      assert "TESTVALUE3".equals(propsGlobal.getProperty("transport.machineId"));
+      assertEquals("TESTVALUE1", propsGlobal.getProperty("transport.siteId"));
+      assertEquals("TESTVALUE2", propsGlobal.getProperty("transport.rackId"));
+      assertEquals("TESTVALUE3", propsGlobal.getProperty("transport.machineId"));
    }
 
    private ConfigurationBuilder config() {

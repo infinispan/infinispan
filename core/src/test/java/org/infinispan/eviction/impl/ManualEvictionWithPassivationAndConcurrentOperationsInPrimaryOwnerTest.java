@@ -16,7 +16,7 @@ public class ManualEvictionWithPassivationAndConcurrentOperationsInPrimaryOwnerT
 
    @Override
    protected void configureEviction(ConfigurationBuilder builder) {
-      builder.memory().size(-1);
+      builder.memory().maxCount(-1);
    }
 
    @Override

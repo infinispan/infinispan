@@ -16,6 +16,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.StorageType;
@@ -36,7 +37,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -61,7 +61,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
    public Object[] factory() {
       return new Object[] {
             new EvictionWithPassivationTest().withStorage(StorageType.BINARY),
-            new EvictionWithPassivationTest().withStorage(StorageType.OBJECT),
+            new EvictionWithPassivationTest().withStorage(StorageType.HEAP),
             new EvictionWithPassivationTest().withStorage(StorageType.OFF_HEAP)
       };
    }
@@ -78,8 +78,8 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
                .passivation(true)
                .addStore(DummyInMemoryStoreConfigurationBuilder.class).purgeOnStartup(true)
             .invocationBatching().enable()
-            .memory().storageType(storage);
-      cfg.memory().size(EVICTION_MAX_ENTRIES);
+            .memory().storage(storage);
+      cfg.memory().maxCount(EVICTION_MAX_ENTRIES);
       return cfg;
    }
 

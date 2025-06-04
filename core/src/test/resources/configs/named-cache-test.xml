@@ -112,7 +112,7 @@
       </local-cache>
       <local-cache name="evictionMemoryExceptionCache">
          <transaction mode="NON_DURABLE_XA" auto-commit="true"  />
-         <memory storage="BINARY" when-full="EXCEPTION" max-size="5000"/>
+         <memory storage="OFF_HEAP" when-full="EXCEPTION" max-size="5000"/>
       </local-cache>
       <replicated-cache name="withouthJmxEnabled" mode="ASYNC" statistics="false"/>
       <local-cache name="storeKeyValueBinary">

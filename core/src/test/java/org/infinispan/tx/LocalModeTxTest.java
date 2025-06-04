@@ -5,9 +5,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -18,6 +15,9 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
+
 @Test(groups = "functional", testName = "tx.LocalModeTxTest")
 public class LocalModeTxTest extends SingleCacheManagerTest {
 
@@ -27,7 +27,7 @@ public class LocalModeTxTest extends SingleCacheManagerTest {
    public Object[] factory() {
       return new Object[] {
             new LocalModeTxTest().withStorage(StorageType.BINARY),
-            new LocalModeTxTest().withStorage(StorageType.OBJECT),
+            new LocalModeTxTest().withStorage(StorageType.HEAP),
             new LocalModeTxTest().withStorage(StorageType.OFF_HEAP)
       };
    }
@@ -35,7 +35,7 @@ public class LocalModeTxTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder configuration = getDefaultStandaloneCacheConfig(true);
-      configuration.memory().storageType(storage);
+      configuration.memory().storage(storage);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(configuration);
       cache = cm.getCache();
       return cm;

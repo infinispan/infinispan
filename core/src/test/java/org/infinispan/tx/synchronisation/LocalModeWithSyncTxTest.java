@@ -2,9 +2,6 @@ package org.infinispan.tx.synchronisation;
 
 import static org.testng.Assert.assertEquals;
 
-import jakarta.transaction.NotSupportedException;
-import jakarta.transaction.SystemException;
-
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -14,6 +11,9 @@ import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.tx.LocalModeTxTest;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.SystemException;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -26,7 +26,7 @@ public class LocalModeWithSyncTxTest extends LocalModeTxTest {
    public Object[] factory() {
       return new Object[] {
             new LocalModeWithSyncTxTest().withStorage(StorageType.BINARY),
-            new LocalModeWithSyncTxTest().withStorage(StorageType.OBJECT),
+            new LocalModeWithSyncTxTest().withStorage(StorageType.HEAP),
             new LocalModeWithSyncTxTest().withStorage(StorageType.OFF_HEAP)
       };
    }

@@ -10,7 +10,7 @@ public class CacheResourceOffHeapTest extends BaseCacheResourceTest {
    @Override
    public ConfigurationBuilder getDefaultCacheBuilder() {
       ConfigurationBuilder configurationBuilder = super.getDefaultCacheBuilder();
-      configurationBuilder.memory().storageType(StorageType.OFF_HEAP);
+      configurationBuilder.memory().storage(StorageType.OFF_HEAP);
       return configurationBuilder;
    }
 

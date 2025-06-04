@@ -30,7 +30,7 @@ public class StoreTypeMultimapCacheTest extends DistributedMultimapCacheTest {
    public Object[] factory() {
       return new Object[]{
             new StoreTypeMultimapCacheTest().storageType(StorageType.OFF_HEAP),
-            new StoreTypeMultimapCacheTest().storageType(StorageType.OBJECT),
+            new StoreTypeMultimapCacheTest().storageType(StorageType.HEAP),
             new StoreTypeMultimapCacheTest().storageType(StorageType.BINARY),
       };
    }
@@ -47,7 +47,7 @@ public class StoreTypeMultimapCacheTest extends DistributedMultimapCacheTest {
    @Override
    protected ConfigurationBuilder buildConfiguration() {
       ConfigurationBuilder cacheCfg = super.buildConfiguration();
-      cacheCfg.memory().storageType(storageType);
+      cacheCfg.memory().storage(storageType);
       return cacheCfg;
    }
 }

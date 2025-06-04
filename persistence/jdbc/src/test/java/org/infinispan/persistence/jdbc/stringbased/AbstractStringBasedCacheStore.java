@@ -16,7 +16,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
@@ -127,9 +126,9 @@ public abstract class AbstractStringBasedCacheStore extends AbstractInfinispanTe
         setTableManipulation(storeBuilder);
 
         if (eviction) {
-            builder.memory().evictionType(EvictionType.COUNT).size(2);
+            builder.memory().maxCount(2);
         } else {
-            builder.memory().evictionType(EvictionType.COUNT).size(-1);
+            builder.memory().maxCount(-1);
         }
 
         tableConfiguration = storeBuilder.create().table();

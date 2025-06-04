@@ -41,14 +41,13 @@ public class APINonTxOffHeapTest extends APINonTxTest {
    @Factory
    public Object[] factory() {
       return new Object[]{
-            new APINonTxOffHeapTest().storageType(StorageType.BINARY),
             new APINonTxOffHeapTest().storageType(StorageType.OFF_HEAP)
       };
    }
 
    @Override
    protected void configure(ConfigurationBuilder builder) {
-      builder.memory().storageType(storageType);
+      builder.memory().storage(storageType);
    }
 
    @Test

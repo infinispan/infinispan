@@ -20,7 +20,6 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.interceptors.AsyncInterceptorChain;
@@ -73,11 +72,6 @@ public class SimpleCacheTest extends APINonTxTest {
       new ConfigurationBuilder().simpleCache(true).indexing().enable().build();
    }
 
-   @Test(expectedExceptions = CacheConfigurationException.class)
-   public void testStoreAsBinary() {
-      new ConfigurationBuilder().simpleCache(true).memory().storageType(StorageType.BINARY).build();
-   }
-
    @Test(dataProvider = "lockedStreamActuallyLocks", expectedExceptions = UnsupportedOperationException.class)
    @Override
    public void testLockedStreamActuallyLocks(BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>> consumer,
@@ -123,7 +117,7 @@ public class SimpleCacheTest extends APINonTxTest {
       int KEY_COUNT = 5;
       Configuration cfg = new ConfigurationBuilder()
             .simpleCache(true)
-            .memory().size(1)
+            .memory().maxCount(1)
             .statistics().enable()
             .build();
       String name = "evictionCache";

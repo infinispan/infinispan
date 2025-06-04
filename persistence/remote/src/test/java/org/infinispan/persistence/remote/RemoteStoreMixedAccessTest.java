@@ -37,7 +37,7 @@ public class RemoteStoreMixedAccessTest extends AbstractInfinispanTest {
    @BeforeClass
    public void setup() throws Exception {
       ConfigurationBuilder serverBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      serverBuilder.memory().size(100)
+      serverBuilder.memory().maxCount(100)
             .expiration().wakeUpInterval(10L);
       serverCacheManager = TestCacheManagerFactory.createCacheManager(
             hotRodCacheConfiguration(serverBuilder));

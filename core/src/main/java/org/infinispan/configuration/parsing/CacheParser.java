@@ -48,7 +48,6 @@ import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.expiration.TouchMode;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.persistence.cluster.ClusterLoader;
@@ -413,7 +412,14 @@ public class CacheParser implements ConfigurationParser {
    private void parseMemory(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
       MemoryConfigurationBuilder memoryBuilder = holder.getCurrentConfigurationBuilder().memory();
       if (reader.getSchema().since(11, 0)) {
-         ParseUtils.parseAttributes(reader, memoryBuilder);
+         ParseUtils.parseAttributes(reader, memoryBuilder, (n, v) -> {
+            if ("storage".equals(n) && "OBJECT".equals(v)) {
+               memoryBuilder.storage(StorageType.HEAP);
+               return true;
+            } else {
+               return false;
+            }
+         });
       }
       if (reader.getSchema().since(15, 0)) {
          ParseUtils.requireNoContent(reader);
@@ -423,16 +429,16 @@ public class CacheParser implements ConfigurationParser {
             CONFIG.warnUsingDeprecatedMemoryConfigs(element.getLocalName());
             switch (element) {
                case OFF_HEAP:
-                  memoryBuilder.storageType(StorageType.OFF_HEAP);
-                  parseOffHeapMemoryAttributes(reader, holder);
+                  memoryBuilder.storage(StorageType.OFF_HEAP);
+                  parseLegacyMemoryAttributes(reader, holder);
                   break;
                case OBJECT:
-                  memoryBuilder.storageType(StorageType.OBJECT);
+                  memoryBuilder.storage(StorageType.HEAP);
                   parseObjectMemoryAttributes(reader, holder);
                   break;
                case BINARY:
-                  memoryBuilder.storageType(StorageType.BINARY);
-                  parseBinaryMemoryAttributes(reader, holder);
+                  memoryBuilder.storage(StorageType.HEAP);
+                  parseLegacyMemoryAttributes(reader, holder);
                   break;
                default:
                   throw ParseUtils.unexpectedElement(reader);
@@ -441,25 +447,32 @@ public class CacheParser implements ConfigurationParser {
       }
    }
 
-   private void parseOffHeapMemoryAttributes(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
+   private void parseLegacyMemoryAttributes(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
       MemoryConfigurationBuilder memoryBuilder = holder.getCurrentConfigurationBuilder().memory();
+      boolean countType = true;
+      String size = "-1";
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case SIZE:
-               memoryBuilder.size(ParseUtils.parseLong(reader, i, value));
+               size = value;
                break;
             case EVICTION:
-               memoryBuilder.evictionType(ParseUtils.parseEnum(reader, i, EvictionType.class, value));
+               countType = "COUNT".equalsIgnoreCase(value);
                break;
             case STRATEGY:
-               memoryBuilder.evictionStrategy(ParseUtils.parseEnum(reader, i, EvictionStrategy.class, value));
+               memoryBuilder.whenFull(ParseUtils.parseEnum(reader, i, EvictionStrategy.class, value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
+      }
+      if (countType) {
+         memoryBuilder.maxCount(Long.parseLong(size));
+      } else {
+         memoryBuilder.maxSize(size);
       }
       ParseUtils.requireNoContent(reader);
    }
@@ -472,10 +485,10 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case SIZE:
-               memoryBuilder.size(ParseUtils.parseLong(reader, i, value));
+               memoryBuilder.maxCount(ParseUtils.parseLong(reader, i, value));
                break;
             case STRATEGY:
-               memoryBuilder.evictionStrategy(ParseUtils.parseEnum(reader, i, EvictionStrategy.class, value));
+               memoryBuilder.whenFull(ParseUtils.parseEnum(reader, i, EvictionStrategy.class, value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -484,18 +497,12 @@ public class CacheParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseBinaryMemoryAttributes(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
-      MemoryConfigurationBuilder memoryBuilder = holder.getCurrentConfigurationBuilder().memory();
-      ParseUtils.parseAttributes(reader, memoryBuilder.legacyBuilder());
-      ParseUtils.requireNoContent(reader);
-   }
-
    private void parseStoreAsBinary(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
       CONFIG.configDeprecatedUseOther(Element.STORE_AS_BINARY, Element.MEMORY, reader.getLocation());
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
       Boolean binaryKeys = null;
       Boolean binaryValues = null;
-      builder.memory().storageType(StorageType.BINARY);
+      builder.memory().storage(StorageType.HEAP);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -511,10 +518,12 @@ public class CacheParser implements ConfigurationParser {
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
-
-      if (binaryKeys != null && !binaryKeys && binaryValues != null && !binaryValues)
-         builder.memory().storageType(StorageType.OBJECT); // explicitly disable
-
+      if (binaryKeys == null || binaryKeys) {
+         builder.encoding().key().mediaType(MediaType.APPLICATION_PROTOSTREAM);
+      }
+      if (binaryValues == null || binaryValues) {
+         builder.encoding().value().mediaType(MediaType.APPLICATION_PROTOSTREAM);
+      }
       ParseUtils.requireNoContent(reader);
    }
 

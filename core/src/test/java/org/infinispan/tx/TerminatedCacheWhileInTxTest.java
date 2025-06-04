@@ -13,8 +13,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -25,6 +23,8 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * Test that verifies that Cache.stop() waits for on-going transactions to
@@ -46,7 +46,7 @@ public class TerminatedCacheWhileInTxTest extends SingleCacheManagerTest {
    public Object[] factory() {
       return new Object[] {
             new TerminatedCacheWhileInTxTest().withStorage(StorageType.BINARY),
-            new TerminatedCacheWhileInTxTest().withStorage(StorageType.OBJECT),
+            new TerminatedCacheWhileInTxTest().withStorage(StorageType.HEAP),
             new TerminatedCacheWhileInTxTest().withStorage(StorageType.OFF_HEAP)
       };
    }
@@ -55,7 +55,7 @@ public class TerminatedCacheWhileInTxTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder c = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       c.transaction().cacheStopTimeout(10000);
-      c.memory().storageType(storage);
+      c.memory().storage(storage);
       return TestCacheManagerFactory.createCacheManager(c);
    }
 

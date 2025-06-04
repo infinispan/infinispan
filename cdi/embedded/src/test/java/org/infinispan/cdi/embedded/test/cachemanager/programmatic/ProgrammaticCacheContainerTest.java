@@ -2,9 +2,6 @@ package org.infinispan.cdi.embedded.test.cachemanager.programmatic;
 
 import static org.testng.Assert.assertEquals;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.cdi.embedded.test.testutil.Deployments;
 import org.infinispan.commons.test.TestResourceTrackingListener;
@@ -13,6 +10,9 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 
 /**
@@ -47,15 +47,15 @@ public class ProgrammaticCacheContainerTest extends Arquillian {
    private SmallCacheObservers observers;
 
    public void testSmallCache() {
-      assertEquals(smallCache.getCacheConfiguration().memory().size(), 7);
+      assertEquals(smallCache.getCacheConfiguration().memory().maxCount(), 7);
       assertEquals(observers.getCacheStartedEventCount(), 1);
    }
 
    public void testLargeCache() {
-      assertEquals(largeCache.getCacheConfiguration().memory().size(), 10);
+      assertEquals(largeCache.getCacheConfiguration().memory().maxCount(), 10);
    }
 
    public void testSuperLargeCache() {
-      assertEquals(superLargeCache.getCacheConfiguration().memory().size(), 20);
+      assertEquals(superLargeCache.getCacheConfiguration().memory().maxCount(), 20);
    }
 }

@@ -62,7 +62,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder replSync = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      replSync.memory().storageType(StorageType.BINARY);
+      replSync.memory().storage(StorageType.BINARY);
       createClusteredCaches(2, "replSync", TestDataSCI.INSTANCE, replSync);
    }
 
@@ -500,7 +500,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
     */
    public void testStores() {
       ConfigurationBuilder cacheCofig = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      cacheCofig.memory().storageType(StorageType.BINARY);
+      cacheCofig.memory().storage(StorageType.BINARY);
       DummyInMemoryStoreConfigurationBuilder dimcs = new DummyInMemoryStoreConfigurationBuilder(cacheCofig.persistence());
       dimcs.storeName(getClass().getSimpleName());
       cacheCofig.persistence().addStore(dimcs);

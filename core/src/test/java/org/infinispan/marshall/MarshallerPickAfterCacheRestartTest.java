@@ -16,12 +16,12 @@ import org.testng.annotations.Test;
  * @since 5.1
  */
 @Test(groups = "functional", testName = "marshall.MarshallerPickAfterCacheRestart")
-public class MarshallerPickAfterCacheRestart extends MultipleCacheManagersTest {
+public class MarshallerPickAfterCacheRestartTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.memory().storageType(StorageType.BINARY)
+      builder.memory().storage(StorageType.HEAP)
             .clustering()
                .cacheMode(CacheMode.REPL_SYNC)
                .stateTransfer().fetchInMemoryState(false);
@@ -29,7 +29,7 @@ public class MarshallerPickAfterCacheRestart extends MultipleCacheManagersTest {
       createCluster(builder, 2);
    }
 
-   public void testCacheRestart() throws Exception {
+   public void testCacheRestart() {
       final Cache<Integer, String> cache0 = cache(0);
       final Cache<Integer, String> cache1 = cache(1);
 

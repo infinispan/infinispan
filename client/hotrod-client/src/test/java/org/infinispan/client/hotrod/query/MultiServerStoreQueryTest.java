@@ -56,11 +56,9 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
    public Object[] factory() {
       return new Object[]{
             new MultiServerStoreQueryTest().storageType(StorageType.OFF_HEAP),
-            new MultiServerStoreQueryTest().storageType(StorageType.BINARY),
-            new MultiServerStoreQueryTest().storageType(StorageType.OBJECT),
+            new MultiServerStoreQueryTest().storageType(StorageType.HEAP),
             new MultiServerStoreQueryTest().storageType(StorageType.OFF_HEAP).evictionSize(1),
-            new MultiServerStoreQueryTest().storageType(StorageType.BINARY).evictionSize(1),
-            new MultiServerStoreQueryTest().storageType(StorageType.OBJECT).evictionSize(1),
+            new MultiServerStoreQueryTest().storageType(StorageType.HEAP).evictionSize(1),
       };
    }
 
@@ -94,9 +92,9 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
             .merge().factor(30).maxSize(1024)
             .addIndexedEntity("News");
 
-      builder.memory().storageType(storageType);
+      builder.memory().storage(storageType);
       if (evictionSize > 0) {
-         builder.memory().size(evictionSize);
+         builder.memory().maxCount(evictionSize);
       }
       if (USE_PERSISTENCE)
          builder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).preload(true).storeName(storeName);

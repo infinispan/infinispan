@@ -107,7 +107,7 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
    }
 
    private Object createKey(Cache<Object, String> primaryOwner, Cache<Object, String> backupOwner) {
-      if (storageType == StorageType.OBJECT) {
+      if (storageType == StorageType.HEAP) {
          return getKeyForCache(primaryOwner, backupOwner);
       } else {
          // BINARY and OFF heap can't use MagicKey as they are serialized

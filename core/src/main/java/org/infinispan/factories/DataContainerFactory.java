@@ -79,17 +79,16 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
          if (shouldSegment) {
             int segments = clusteringConfiguration.hash().numSegments();
             dataContainer = new SegmentedBoundedOffHeapDataContainer(segments, thresholdSize,
-                  memoryConfiguration.evictionType());
+                  memoryConfiguration.maxSize() != null);
          } else {
-            dataContainer = new BoundedOffHeapDataContainer(thresholdSize, memoryConfiguration.evictionType());
+            dataContainer = new BoundedOffHeapDataContainer(thresholdSize, memoryConfiguration.maxSize() != null);
          }
       } else if (shouldSegment) {
          int segments = clusteringConfiguration.hash().numSegments();
          dataContainer = new BoundedSegmentedDataContainer<>(segments, thresholdSize,
-               memoryConfiguration.evictionType());
+               memoryConfiguration.maxSize() != null);
       } else {
-         dataContainer = DefaultDataContainer.boundedDataContainer(level, thresholdSize,
-               memoryConfiguration.evictionType());
+         dataContainer = DefaultDataContainer.boundedDataContainer(level, thresholdSize, memoryConfiguration.maxSize() != null);
       }
       if (sizeInBytes) {
          memoryConfiguration.attributes().attribute(MemoryConfiguration.MAX_SIZE)

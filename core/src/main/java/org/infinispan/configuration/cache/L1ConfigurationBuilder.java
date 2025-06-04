@@ -12,7 +12,6 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TimeQuantity;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
 
 /**
@@ -128,14 +127,10 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
             throw CONFIG.l1InvalidLifespan();
 
          MemoryConfigurationBuilder memoryConfigurationBuilder = getClusteringBuilder().memory();
-         if (memoryConfigurationBuilder.evictionStrategy() == EvictionStrategy.EXCEPTION) {
+         if (memoryConfigurationBuilder.whenFull() == EvictionStrategy.EXCEPTION) {
             throw CONFIG.l1NotValidWithExpirationEviction();
          }
       }
-   }
-
-   @Override
-   public void validate(GlobalConfiguration globalConfig) {
    }
 
    @Override

@@ -52,7 +52,7 @@ public class PassivationInterceptorMBeanTest extends SingleCacheManagerTest {
                    .domain(JMX_DOMAIN);
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.memory().size(1)
+      builder.memory().maxCount(1)
             .statistics().enable()
             .persistence()
                .passivation(true)

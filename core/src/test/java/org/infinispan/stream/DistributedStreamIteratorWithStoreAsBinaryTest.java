@@ -43,7 +43,7 @@ public class DistributedStreamIteratorWithStoreAsBinaryTest extends MultipleCach
       ConfigurationBuilder builderUsed = new ConfigurationBuilder();
       builderUsed.clustering().cacheMode(cacheMode);
       builderUsed.clustering().hash().numOwners(1);
-      builderUsed.memory().storageType(StorageType.BINARY);
+      builderUsed.memory().storage(StorageType.BINARY);
       createClusteredCaches(3, new StreamStoreAsBinarySerializationContextImpl(), builderUsed);
    }
 

@@ -15,7 +15,6 @@ import org.infinispan.container.impl.DefaultSegmentedDataContainer;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.impl.PeekableTouchableMap;
 import org.infinispan.eviction.EvictionManager;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
@@ -65,12 +64,12 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
 
    protected DefaultSegmentedDataContainer dataContainer;
 
-   public SegmentedBoundedOffHeapDataContainer(int numSegments, long maxSize, EvictionType type) {
+   public SegmentedBoundedOffHeapDataContainer(int numSegments, long maxSize, boolean memoryBounded) {
       this.numSegments = numSegments;
       offHeapListener = new OffHeapListener();
 
       this.maxSize = maxSize;
-      this.useCount = type == EvictionType.COUNT;
+      this.useCount = !memoryBounded;
       OffHeapMapSupplier offHeapMapSupplier = new OffHeapMapSupplier();
       this.lruLock = new ReentrantLock();
       firstAddress = 0;

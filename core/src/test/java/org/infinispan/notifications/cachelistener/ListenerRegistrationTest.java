@@ -37,7 +37,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
       ComponentRegistry registry = mock(ComponentRegistry.class);
       Configuration config = mock(Configuration.class, RETURNS_DEEP_STUBS);
       when(config.clustering().cacheMode()).thenReturn(CacheMode.LOCAL);
-      when(config.memory().storageType()).thenReturn(StorageType.OBJECT);
+      when(config.memory().storage()).thenReturn(StorageType.HEAP);
       TestingUtil.inject(notifier, mockCache, new ClusteringDependentLogic.LocalLogic(), config,
                          new InternalEntryFactoryImpl(), mock(ClusterEventManager.class),
                          mock(BasicComponentRegistry.class));

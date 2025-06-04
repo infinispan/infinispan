@@ -5,7 +5,6 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.spring.starter.embedded.InfinispanCacheConfigurer;
 import org.infinispan.spring.starter.embedded.InfinispanGlobalConfigurer;
 import org.springframework.context.annotation.Bean;
@@ -25,9 +24,8 @@ public class InfinispanCacheTestConfiguration {
 
          testCacheBuilder.simpleCache(true)
                .memory()
-               .storageType(StorageType.OBJECT)
-               .evictionType(EvictionType.COUNT)
-               .evictionStrategy(EvictionStrategy.MANUAL);
+               .storage(StorageType.HEAP)
+               .whenFull(EvictionStrategy.MANUAL);
 
          testCacheBuilder.statistics().enable();
 
