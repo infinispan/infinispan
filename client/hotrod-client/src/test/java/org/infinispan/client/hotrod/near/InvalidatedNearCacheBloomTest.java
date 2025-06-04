@@ -42,8 +42,7 @@ public class InvalidatedNearCacheBloomTest extends SingleHotRodServerTest {
    @Factory
    public Object[] factory() {
       return new Object[]{
-            new InvalidatedNearCacheBloomTest().storageType(StorageType.OBJECT),
-            new InvalidatedNearCacheBloomTest().storageType(StorageType.BINARY),
+            new InvalidatedNearCacheBloomTest().storageType(StorageType.HEAP),
             new InvalidatedNearCacheBloomTest().storageType(StorageType.OFF_HEAP),
       };
    }
@@ -73,7 +72,7 @@ public class InvalidatedNearCacheBloomTest extends SingleHotRodServerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       org.infinispan.configuration.cache.ConfigurationBuilder cb = hotRodCacheConfiguration();
-      cb.memory().storageType(storageType);
+      cb.memory().storage(storageType);
       return TestCacheManagerFactory.createCacheManager(cb);
    }
 

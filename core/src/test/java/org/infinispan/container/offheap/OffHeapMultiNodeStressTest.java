@@ -26,7 +26,7 @@ public class OffHeapMultiNodeStressTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      dcc.memory().storageType(StorageType.OFF_HEAP);
+      dcc.memory().storage(StorageType.OFF_HEAP);
       createCluster(dcc, 4);
       waitForClusterToForm();
    }

@@ -49,9 +49,6 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
             .filter(EvictionStrategy::isEnabled)
             .flatMap(strategy ->
                   Arrays.stream(new Object[]{
-                        new SingleStatsTest().withStorage(StorageType.BINARY).withCountEviction(false).withEvictionStrategy(strategy),
-                        new SingleStatsTest().withStorage(StorageType.BINARY).withCountEviction(true).withEvictionStrategy(strategy),
-                        new SingleStatsTest().withStorage(StorageType.BINARY).withCountEviction(true).withEvictionStrategy(strategy).withAccurateSize(false),
                         new SingleStatsTest().withStorage(StorageType.HEAP).withCountEviction(true).withEvictionStrategy(strategy),
                         new SingleStatsTest().withStorage(StorageType.HEAP).withCountEviction(true).withEvictionStrategy(strategy).withAccurateSize(false),
                         new SingleStatsTest().withStorage(StorageType.OFF_HEAP).withCountEviction(true).withEvictionStrategy(strategy),

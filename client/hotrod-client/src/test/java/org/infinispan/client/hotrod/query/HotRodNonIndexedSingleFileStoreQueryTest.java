@@ -44,7 +44,7 @@ public class HotRodNonIndexedSingleFileStoreQueryTest extends HotRodNonIndexedQu
             .location(tmpDirectory);
 
       // ensure the data container contains minimal data so the store will need to be accessed to get the rest
-      builder.locking().concurrencyLevel(1).memory().size(1);
+      builder.locking().concurrencyLevel(1).memory().maxCount(1);
       return builder;
    }
 }
