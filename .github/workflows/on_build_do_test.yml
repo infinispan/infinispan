@@ -113,6 +113,7 @@ jobs:
           name: target-branch
           github-token: ${{ github.token }}
           run-id: ${{ github.event.workflow_run.id }}
+        continue-on-error: true
 
       # Get base branch from the file
       - name: Read target branch
