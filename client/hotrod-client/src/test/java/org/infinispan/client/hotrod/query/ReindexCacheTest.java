@@ -11,13 +11,13 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.dsl.embedded.testdomain.User;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
@@ -36,7 +36,7 @@ public class ReindexCacheTest extends SingleHotRodServerTest {
    @Factory
    public Object[] factory() {
       return new Object[]{
-            new ReindexCacheTest().storageType(StorageType.OBJECT),
+            new ReindexCacheTest().storageType(StorageType.HEAP),
             new ReindexCacheTest().storageType(StorageType.OFF_HEAP)
       };
    }
@@ -60,7 +60,7 @@ public class ReindexCacheTest extends SingleHotRodServerTest {
 
    public ConfigurationBuilder buildIndexedConfig() {
       ConfigurationBuilder builder = hotRodCacheConfiguration(new ConfigurationBuilder());
-      builder.memory().storageType(storageType)
+      builder.memory().storage(storageType)
              .indexing().enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity("sample_bank_account.User");

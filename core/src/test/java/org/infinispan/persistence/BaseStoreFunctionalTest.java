@@ -47,7 +47,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -178,13 +177,13 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
    public void testPreloadStoredAsBinary() {
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
-      createCacheStoreConfig(cb.persistence(), "testPreloadStoredAsBinary", true).memory().storageType(StorageType.BINARY);
+      createCacheStoreConfig(cb.persistence(), "testPreloadStoredAsBinary", true).memory().storage(StorageType.BINARY);
       TestingUtil.defineConfiguration(cacheManager, "testPreloadStoredAsBinary", cb.build());
       Cache<String, Person> cache = cacheManager.getCache("testPreloadStoredAsBinary");
       cache.start();
 
       assert cache.getCacheConfiguration().persistence().preload();
-      assertEquals(StorageType.BINARY, cache.getCacheConfiguration().memory().storageType());
+      assertEquals(StorageType.BINARY, cache.getCacheConfiguration().memory().storage());
 
       byte[] pictureBytes = new byte[]{1, 82, 123, 19};
 
@@ -416,7 +415,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
    public void testReloadWithEviction() {
       int numberOfEntries = 10;
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
-      createCacheStoreConfig(cb.persistence(), "testReloadWithEviction", false).memory().size(numberOfEntries / 2).evictionType(EvictionType.COUNT);
+      createCacheStoreConfig(cb.persistence(), "testReloadWithEviction", false).memory().maxCount(numberOfEntries / 2);
       TestingUtil.defineConfiguration(cacheManager, "testReloadWithEviction", cb.build());
       Cache<String, Object> cache = cacheManager.getCache("testReloadWithEviction");
 

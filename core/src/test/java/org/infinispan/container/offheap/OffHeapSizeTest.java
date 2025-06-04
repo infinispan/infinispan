@@ -13,7 +13,6 @@ import org.infinispan.container.impl.KeyValueMetadataSizeCalculator;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
@@ -35,10 +34,9 @@ public class OffHeapSizeTest extends SingleCacheManagerTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder
             .memory()
-               .storageType(StorageType.OFF_HEAP)
-               .size(ByteQuantity.Unit.MB.toBytes(10))
-               .evictionType(EvictionType.MEMORY)
-               .evictionStrategy(EvictionStrategy.EXCEPTION)
+               .storage(StorageType.OFF_HEAP)
+               .maxSize(ByteQuantity.Unit.MB.toBytes(10))
+               .whenFull(EvictionStrategy.EXCEPTION)
             .transaction()
                .transactionMode(TransactionMode.TRANSACTIONAL);
       return TestCacheManagerFactory.createCacheManager(builder);

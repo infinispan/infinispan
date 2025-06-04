@@ -33,7 +33,7 @@ public class LocalCacheStorageTypeTest extends LocalCacheTest {
       return new Object[]{
             new LocalCacheStorageTypeTest().withStorageType(StorageType.OFF_HEAP),
             new LocalCacheStorageTypeTest().withStorageType(StorageType.BINARY),
-            new LocalCacheStorageTypeTest().withStorageType(StorageType.OBJECT),
+            new LocalCacheStorageTypeTest().withStorageType(StorageType.HEAP),
       };
    }
 
@@ -52,7 +52,7 @@ public class LocalCacheStorageTypeTest extends LocalCacheTest {
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class);
       cfg.memory()
-            .storageType(storageType);
+            .storage(storageType);
       enhanceConfig(cfg);
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
    }
