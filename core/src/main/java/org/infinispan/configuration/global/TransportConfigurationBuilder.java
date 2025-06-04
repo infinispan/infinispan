@@ -10,7 +10,6 @@ import static org.infinispan.configuration.global.TransportConfiguration.RACK_ID
 import static org.infinispan.configuration.global.TransportConfiguration.RAFT_MEMBERS;
 import static org.infinispan.configuration.global.TransportConfiguration.SITE_ID;
 import static org.infinispan.configuration.global.TransportConfiguration.STACK;
-import static org.infinispan.configuration.global.TransportConfiguration.TRANSPORT_EXECUTOR;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.Arrays;
@@ -33,9 +32,6 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
  * Configures the transport used for network communications across the cluster.
  */
 public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<TransportConfiguration> {
-
-   // Lazily instantiate this if the user doesn't request an alternate to avoid a hard dep on jgroups library
-   public static final String DEFAULT_TRANSPORT = "org.infinispan.remoting.transport.jgroups.JGroupsTransport";
 
    private final ThreadsConfigurationBuilder threads;
    private final AttributeSet attributes;
@@ -209,14 +205,6 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       return String.valueOf(typedProperties.get(key));
    }
 
-   public ThreadPoolConfigurationBuilder transportThreadPool() {
-      return threads.transportThreadPool();
-   }
-
-   public ThreadPoolConfigurationBuilder remoteCommandThreadPool() {
-      return threads.remoteCommandThreadPool();
-   }
-
    @Override
    public
    void validate() {
@@ -234,18 +222,11 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    public
    TransportConfiguration create() {
       //if (typedProperties.containsKey("stack")) attributes.attribute(STACK).set(typedProperties.getProperty("stack"));
-      return new TransportConfiguration(attributes.protect(),
-            jgroupsConfigurationBuilder.create(), threads.transportThreadPool().create(), threads.remoteCommandThreadPool().create(), typedProperties);
+      return new TransportConfiguration(attributes.protect(), jgroupsConfigurationBuilder.create(), typedProperties);
    }
 
    public TransportConfigurationBuilder defaultTransport() {
       transport(new JGroupsTransport());
-      return this;
-   }
-
-   @Deprecated(forRemoval=true, since = "11.0")
-   public TransportConfigurationBuilder transportExecutor(String threadPoolName) {
-      attributes.attribute(TRANSPORT_EXECUTOR).set(threadPoolName);
       return this;
    }
 
