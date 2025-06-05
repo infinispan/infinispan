@@ -1,5 +1,5 @@
 /**
- * Hot Rod-based {@link org.infinispan.persistence.spi.AdvancedLoadWriteStore}.
+ * Hot Rod-based {@link org.infinispan.persistence.spi.NonBlockingStore}.
  *
  * @api.public
  */

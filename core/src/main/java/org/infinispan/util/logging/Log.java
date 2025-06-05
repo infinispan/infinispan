@@ -2416,4 +2416,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Failed to initialize global registry", id = 710)
    void failedToInitializeGlobalRegistry(@Cause Throwable t);
+
+   @LogMessage(level = WARN)
+   @Message(value = "The single file store has been deprecated. Please use the Soft-Index File Store instead", id = 711)
+   void singleFileStoreDeprecated();
 }
