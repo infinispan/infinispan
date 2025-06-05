@@ -9,20 +9,17 @@ import java.util.List;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.test.integration.data.Book;
 import org.infinispan.test.integration.data.Person;
 import org.infinispan.test.integration.remote.proto.BookQuerySchema;
 import org.infinispan.test.integration.remote.proto.PersonSchema;
-import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -60,9 +57,8 @@ public abstract class AbstractHotRodQueryIT {
          remoteCache.put(1, book1);
          remoteCache.put(2, book2);
 
-         QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
-         Query<Book> query = queryFactory.create("FROM book_sample.Book WHERE title:'java'");
-         List<Book> list = query.execute().list();
+         Query<Book> query = remoteCache.query("FROM book_sample.Book WHERE title:'java'");
+         List<Book> list = query.list();
          assertEquals(1, list.size());
       }
    }
@@ -83,12 +79,8 @@ public abstract class AbstractHotRodQueryIT {
          cache.put("Adrian", new Person("Adrian"));
 
          assertTrue(cache.containsKey("Adrian"));
-
-         QueryFactory qf = Search.getQueryFactory(cache);
-         Query<Person> query = qf.from(Person.class)
-               .having("name").eq("Adrian")
-               .build();
-         List<Person> list = query.execute().list();
+         Query<Person> query = cache.query("FROM person_sample.Person WHERE name='Adrian'");
+         List<Person> list = query.list();
          assertNotNull(list);
          assertEquals(1, list.size());
          assertEquals(Person.class, list.get(0).getClass());
@@ -113,13 +105,8 @@ public abstract class AbstractHotRodQueryIT {
 
          RemoteCache<String, Person> cache = rcm.getCache();
          cache.clear();
-
-         QueryFactory qf = Search.getQueryFactory(cache);
-         Query<Person> query = qf.from(Person.class)
-               .having("name").eq("John")
-               .orderBy("id")
-               .build();
-         Assert.assertEquals(0, query.execute().list().size());
+         Query<Object> query = cache.query("FROM person_sample.Person WHERE name='John' ORDER BY id");
+         assertEquals(0, query.execute().list().size());
       }
    }
 

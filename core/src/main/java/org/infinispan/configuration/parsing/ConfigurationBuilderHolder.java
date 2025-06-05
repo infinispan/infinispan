@@ -48,6 +48,10 @@ public class ConfigurationBuilderHolder implements ConfigurationReaderContext {
       scope.push(ParserScope.GLOBAL.name());
    }
 
+   public GlobalConfigurationBuilder global() {
+      return globalConfigurationBuilder;
+   }
+
    public GlobalConfigurationBuilder getGlobalConfigurationBuilder() {
       return globalConfigurationBuilder;
    }

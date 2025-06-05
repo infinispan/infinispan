@@ -192,32 +192,6 @@ public class DefaultCacheManager extends InternalCacheManager {
    }
 
    /**
-    * Constructs and starts a new instance of the CacheManager, using the default configuration passed in.  See
-    * {@link org.infinispan.configuration.cache.Configuration} and
-    * {@link org.infinispan.configuration.global.GlobalConfiguration} for details of these defaults.
-    *
-    * @param defaultConfiguration configuration to use as a template for all caches created
-    * @deprecated Since 11.0, please use {@link #DefaultCacheManager(ConfigurationBuilderHolder, boolean)} instead.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public DefaultCacheManager(Configuration defaultConfiguration) {
-      this(null, defaultConfiguration, true);
-   }
-
-   /**
-    * Constructs a new instance of the CacheManager, using the default configuration passed in.  See
-    * {@link org.infinispan.configuration.global.GlobalConfiguration} for details of these defaults.
-    *
-    * @param defaultConfiguration configuration file to use as a template for all caches created
-    * @param start                if true, the cache manager is started
-    * @deprecated Since 11.0, please use {@link #DefaultCacheManager(ConfigurationBuilderHolder, boolean)} instead.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public DefaultCacheManager(Configuration defaultConfiguration, boolean start) {
-      this(null, defaultConfiguration, start);
-   }
-
-   /**
     * Constructs and starts a new instance of the CacheManager, using the global configuration passed in, and system
     * defaults for the default named cache configuration.  See {@link org.infinispan.configuration.cache.Configuration}
     * for details of these defaults.
@@ -238,72 +212,6 @@ public class DefaultCacheManager extends InternalCacheManager {
     */
    public DefaultCacheManager(GlobalConfiguration globalConfiguration, boolean start) {
       this(new ConfigurationBuilderHolder(globalConfiguration.classLoader(), new GlobalConfigurationBuilder().read(globalConfiguration)), start);
-   }
-
-   /**
-    * Constructs and starts a new instance of the CacheManager, using the global and default configurations passed in.
-    * If either of these are null, system defaults are used.
-    *
-    * @param globalConfiguration  global configuration to use. If null, a default instance is created.
-    * @param defaultConfiguration default configuration to use. If null, a default instance is created.
-    * @deprecated Since 11.0, please use {@link #DefaultCacheManager(ConfigurationBuilderHolder, boolean)} instead.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public DefaultCacheManager(GlobalConfiguration globalConfiguration, Configuration defaultConfiguration) {
-      this(globalConfiguration, defaultConfiguration, true);
-   }
-
-   /**
-    * Constructs a new instance of the CacheManager, using the global and default configurations passed in. If either of
-    * these are null, system defaults are used.
-    *
-    * @param globalConfiguration  global configuration to use. If null, a default instance is created.
-    * @param defaultConfiguration default configuration to use. If null, a default instance is created.
-    * @param start                if true, the cache manager is started
-    * @deprecated Since 11.0, please use {@link #DefaultCacheManager(ConfigurationBuilderHolder, boolean)} instead.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public DefaultCacheManager(GlobalConfiguration globalConfiguration, Configuration defaultConfiguration,
-                              boolean start) {
-      globalConfiguration = globalConfiguration == null ? new GlobalConfigurationBuilder().build() : globalConfiguration;
-      this.configurationManager = new ConfigurationManager(globalConfiguration);
-      if (defaultConfiguration != null) {
-         if (globalConfiguration.defaultCacheName().isPresent()) {
-            defaultCacheName = globalConfiguration.defaultCacheName().get();
-         } else {
-            throw CONFIG.defaultCacheConfigurationWithoutName();
-         }
-         configurationManager.putConfiguration(defaultCacheName, defaultConfiguration);
-      } else {
-         if (globalConfiguration.defaultCacheName().isPresent()) {
-            throw CONFIG.missingDefaultCacheDeclaration(globalConfiguration.defaultCacheName().get());
-         } else {
-            defaultCacheName = null;
-         }
-      }
-      ModuleRepository moduleRepository = ModuleRepository.newModuleRepository(globalConfiguration.classLoader(), globalConfiguration);
-      this.classAllowList = globalConfiguration.serialization().allowList().create();
-      this.globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet(),
-            moduleRepository, configurationManager);
-
-      InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
-      this.globalComponentRegistry.registerComponent(cacheDependencyGraph, CACHE_DEPENDENCY_GRAPH, false);
-
-      this.authorizer = new Authorizer(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.cacheManagerName(), null);
-      this.globalComponentRegistry.registerComponent(authorizer, Authorizer.class);
-
-      this.stats = new CacheContainerStatsImpl(this);
-      globalComponentRegistry.registerComponent(stats, CacheContainerStats.class);
-
-      health = new HealthImpl(this, globalComponentRegistry.getComponent(InternalCacheRegistry.class));
-      cacheManagerInfo = new CacheManagerInfo(this, configurationManager, internalCacheRegistry, globalComponentRegistry.getComponent(
-            LocalTopologyManager.class));
-      globalComponentRegistry.registerComponent(new HealthJMXExposerImpl(health), HealthJMXExposer.class);
-
-      this.cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authorizer, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class), null,
-            globalComponentRegistry.getComponent(GlobalConfigurationManager.class));
-     if (start)
-         start();
    }
 
    /**
@@ -366,6 +274,15 @@ public class DefaultCacheManager extends InternalCacheManager {
     */
    public DefaultCacheManager(URL configurationURL, boolean start) throws IOException {
       this(new ParserRegistry().parse(configurationURL), start);
+   }
+
+   /**
+    * Constructs a new instance of the CacheManager, using the holder passed in to read configuration settings.
+    *
+    * @param holder holder containing configuration settings, to use as a template for all caches created
+    */
+   public DefaultCacheManager(ConfigurationBuilderHolder holder) {
+      this(holder, true);
    }
 
    /**
