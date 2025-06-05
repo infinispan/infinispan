@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
@@ -41,6 +42,7 @@ import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
@@ -69,9 +71,9 @@ import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.dummy.Element;
-import org.infinispan.persistence.spi.ExternalStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultiCacheManagerCallable;
@@ -583,22 +585,41 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    private DummyInMemoryStore getDummyStore(Cache<String, String> cache1) {
-      return (DummyInMemoryStore) getFirstStore(cache1);
+      return getFirstStore(cache1);
    }
 
    private DataContainer<?, ?> getDataContainer(Cache<String, String> cache) {
       return extractComponent(cache, InternalDataContainer.class);
    }
 
-   public static class UnreliableCacheStore implements ExternalStore<Object, Object> {
-      @Override public void init(InitializationContext ctx) {}
-      @Override public void write(MarshallableEntry<?, ?> entry) {}
-      @Override public boolean delete(Object key) { return false; }
-      @Override public MarshallableEntry<Object, Object> loadEntry(Object key) { return null; }
-      @Override public boolean contains(Object key) { return false; }
-      @Override public void start() {}
-      @Override public void stop() {
+   public static class UnreliableCacheStore implements NonBlockingStore<Object, Object> {
+      @Override
+      public CompletionStage<Void> start(InitializationContext ctx) {
+         return CompletableFutures.completedNull();
+      }
+
+      @Override public CompletionStage<Void> stop() {
          throw new IllegalStateException("Test");
+      }
+
+      @Override
+      public CompletionStage<MarshallableEntry<Object, Object>> load(int segment, Object key) {
+         return CompletableFutures.completedNull();
+      }
+
+      @Override
+      public CompletionStage<Void> write(int segment, MarshallableEntry<?, ?> entry) {
+         return CompletableFutures.completedNull();
+      }
+
+      @Override
+      public CompletionStage<Boolean> delete(int segment, Object key) {
+         return CompletableFutures.completedFalse();
+      }
+
+      @Override
+      public CompletionStage<Void> clear() {
+         return CompletableFutures.completedNull();
       }
    }
 

@@ -1,5 +1,5 @@
 /**
- * RocksDB-based {@link org.infinispan.persistence.spi.AdvancedLoadWriteStore}.
+ * RocksDB-based {@link org.infinispan.persistence.spi.NonBlockingStore}.
  *
  * @api.public
  */
