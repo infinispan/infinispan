@@ -6,7 +6,7 @@ import java.io.IOException;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
@@ -31,9 +31,9 @@ public abstract class AbstractInfinispanStoreJdbcIT {
 
    @Test
    public void testCacheManager() {
-      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-      gcb.defaultCacheName("default");
-      ConfigurationBuilder builder = new ConfigurationBuilder();
+      ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
+      holder.getGlobalConfigurationBuilder().defaultCacheName("default");
+      ConfigurationBuilder builder = holder.newConfigurationBuilder("default");
       builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
             .table()
             .tableNamePrefix("ISPN")
@@ -47,7 +47,7 @@ public abstract class AbstractInfinispanStoreJdbcIT {
             .segmentColumnType("BIGINT")
             .dataSource().jndiUrl(System.getProperty("infinispan.server.integration.data-source"));
 
-      cm = new DefaultCacheManager(gcb.build(), builder.build());
+      cm = new DefaultCacheManager(holder);
 
       Cache<String, String> cache = cm.getCache();
       cache.put("a", "a");

@@ -9,8 +9,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
 import org.jboss.arquillian.container.test.api.Deployer;
@@ -73,18 +72,18 @@ public abstract class AbstractInfinispanStoreRocksDBIT {
       String expiredDir = baseDir + separator + "expired";
       Util.recursiveFileRemove(Paths.get(baseDir));
 
-      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.transport()
+      ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
+      holder.getGlobalConfigurationBuilder().transport()
             .defaultTransport()
-            .clusterName(AbstractInfinispanStoreRocksDBIT.class.getSimpleName());
-      global.globalState().persistentLocation(baseDir);
-      global.defaultCacheName("default");
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.clustering().cacheMode(CacheMode.REPL_SYNC);
-      builder.persistence()
+            .clusterName(AbstractInfinispanStoreRocksDBIT.class.getSimpleName())
+            .globalState().persistentLocation(baseDir)
+            .defaultCacheName("default");
+      holder.newConfigurationBuilder("default")
+            .clustering().cacheMode(CacheMode.REPL_SYNC)
+            .persistence()
             .addStore(RocksDBStoreConfigurationBuilder.class)
             .location(dataDir)
             .expiredLocation(expiredDir);
-      return new DefaultCacheManager(global.build(), builder.build());
+      return new DefaultCacheManager(holder);
    }
 }
