@@ -32,7 +32,6 @@ import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AuthorizationConfiguration;
 import org.infinispan.configuration.cache.BackupConfiguration;
-import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.CustomStoreConfiguration;
@@ -780,8 +779,6 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          writeFileStore(writer, (SoftIndexFileStoreConfiguration) configuration);
       } else if (configuration instanceof SingleFileStoreConfiguration) {
          writeSingleFileStore(writer, (SingleFileStoreConfiguration) configuration);
-      } else if (configuration instanceof ClusterLoaderConfiguration) {
-         writeClusterLoader(writer, (ClusterLoaderConfiguration) configuration);
       } else if (configuration instanceof CustomStoreConfiguration) {
          writeCustomStore(writer, (CustomStoreConfiguration) configuration);
       } else {
@@ -862,14 +859,6 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
 
    private void writeSingleFileStore(ConfigurationWriter writer, SingleFileStoreConfiguration configuration) {
       writer.writeStartElement(Element.SINGLE_FILE_STORE);
-      configuration.attributes().write(writer);
-      writeCommonStoreSubAttributes(writer, configuration);
-      writeCommonStoreElements(writer, configuration);
-      writer.writeEndElement();
-   }
-
-   private void writeClusterLoader(ConfigurationWriter writer, ClusterLoaderConfiguration configuration) {
-      writer.writeStartElement(Element.CLUSTER_LOADER);
       configuration.attributes().write(writer);
       writeCommonStoreSubAttributes(writer, configuration);
       writeCommonStoreElements(writer, configuration);
