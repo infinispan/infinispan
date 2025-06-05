@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -36,9 +37,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
-
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
@@ -111,6 +109,8 @@ import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 import net.jcip.annotations.GuardedBy;
 
 /**
@@ -189,6 +189,11 @@ public class StateConsumerImpl implements StateConsumer {
     */
    @GuardedBy("transferMapsLock")
    private final Map<Address, List<InboundTransferTask>> transfersBySource = new HashMap<>();
+   /**
+    * A map that stores for a given address its pending update stage. When receiving state from the given address
+    * they must ensure that any prior
+    */
+   private final ConcurrentMap<Address, CompletionStage<Void>> pendingUpdates = new ConcurrentHashMap<>();
 
    /**
     * A map that keeps track of current inbound state transfers by segment id. There is at most one transfers per segment.
@@ -600,12 +605,22 @@ public class StateConsumerImpl implements StateConsumer {
 
    @Override
    public CompletionStage<?> applyState(final Address sender, int topologyId, Collection<StateChunk> stateChunks) {
+      return pendingUpdates.compute(sender, (add, prev) -> {
+         if (prev != null) {
+            return prev.thenCompose(___ -> actualApplyState(sender, topologyId, stateChunks));
+         }
+            return actualApplyState(sender, topologyId, stateChunks);
+      });
+   }
+
+   private CompletionStage<Void> actualApplyState(final Address sender, int topologyId, Collection<StateChunk> stateChunks) {
       ConsistentHash wCh = cacheTopology.getWriteConsistentHash();
       // Ignore responses received after we are no longer a member
       if (!wCh.getMembers().contains(rpcManager.getAddress())) {
          if (log.isTraceEnabled()) {
             log.tracef("Ignoring received state because we are no longer a member of cache %s", cacheName);
          }
+         pendingUpdates.remove(sender);
          return CompletableFutures.completedNull();
       }
 
@@ -615,6 +630,7 @@ public class StateConsumerImpl implements StateConsumer {
       if (rebalanceTopologyId == NO_STATE_TRANSFER_IN_PROGRESS) {
          log.debugf("Discarding state response with topology id %d for cache %s, we don't have a state transfer in progress",
                topologyId, cacheName);
+         pendingUpdates.remove(sender);
          return CompletableFutures.completedNull();
       }
       if (topologyId < rebalanceTopologyId) {
@@ -629,7 +645,13 @@ public class StateConsumerImpl implements StateConsumer {
       }
       IntSet mySegments = IntSets.from(wCh.getSegmentsForOwner(rpcManager.getAddress()));
       Iterator<StateChunk> iterator = stateChunks.iterator();
-      return applyStateIteration(sender, mySegments, iterator).whenComplete((v, t) -> {
+      CompletableFuture<Void> responseFuture = new CompletableFuture<>();
+      AtomicInteger remainingToRequest = new AtomicInteger((int) (configuration.clustering().stateTransfer().chunkSize() * .75));
+      applyStateIteration(sender, mySegments, iterator, () -> {
+         if (remainingToRequest.decrementAndGet() == 0) {
+            responseFuture.complete(null);
+         }
+      }).whenComplete((v, t) -> {
          if (log.isTraceEnabled()) {
             log.tracef("After applying the received state the data container of cache %s has %d keys", cacheName,
                        dataContainer.sizeIncludingExpired());
@@ -637,24 +659,30 @@ public class StateConsumerImpl implements StateConsumer {
                log.tracef("Segments not received yet for cache %s: %s", cacheName, transfersBySource);
             }
          }
+         if (t != null) {
+            responseFuture.completeExceptionally(t);
+         } else {
+            responseFuture.complete(null);
+         }
       });
+      return responseFuture;
    }
 
    private CompletionStage<?> applyStateIteration(Address sender, IntSet mySegments,
-                                                  Iterator<StateChunk> iterator) {
+                                                  Iterator<StateChunk> iterator, Runnable onSubmission) {
       CompletionStage<?> chunkStage = CompletableFutures.completedNull();
       // Replace recursion with iteration if the state was applied synchronously
       while (iterator.hasNext() && CompletionStages.isCompletedSuccessfully(chunkStage)) {
          StateChunk stateChunk = iterator.next();
-         chunkStage = applyChunk(sender, mySegments, stateChunk);
+         chunkStage = applyChunk(sender, mySegments, stateChunk, onSubmission);
       }
       if (!iterator.hasNext())
          return chunkStage;
 
-      return chunkStage.thenCompose(v -> applyStateIteration(sender, mySegments, iterator));
+      return chunkStage.thenCompose(v -> applyStateIteration(sender, mySegments, iterator, onSubmission));
    }
 
-   private CompletionStage<Void> applyChunk(Address sender, IntSet mySegments, StateChunk stateChunk) {
+   private CompletionStage<Void> applyChunk(Address sender, IntSet mySegments, StateChunk stateChunk, Runnable remainingToRequest) {
       if (!mySegments.contains(stateChunk.getSegmentId())) {
          log.debugf("Discarding received cache entries for segment %d of cache %s because they do not belong to this node.", stateChunk.getSegmentId(), cacheName);
          return CompletableFutures.completedNull();
@@ -671,7 +699,7 @@ public class StateConsumerImpl implements StateConsumer {
          }
       }
       if (inboundTransfer != null) {
-         return doApplyState(sender, stateChunk.getSegmentId(), stateChunk.getCacheEntries())
+         return doApplyState(sender, stateChunk.getSegmentId(), stateChunk.getCacheEntries(), remainingToRequest)
                    .thenAccept(v -> {
                       boolean lastChunk = stateChunk.isLastChunk();
                       inboundTransfer.onStateReceived(stateChunk.getSegmentId(), lastChunk);
@@ -683,6 +711,7 @@ public class StateConsumerImpl implements StateConsumer {
          if (cache.wired().getStatus().allowInvocations()) {
             log.ignoringUnsolicitedState(sender, stateChunk.getSegmentId(), cacheName);
          }
+         pendingUpdates.remove(sender);
       }
       return CompletableFutures.completedNull();
    }
@@ -699,7 +728,8 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    private CompletionStage<?> doApplyState(Address sender, int segmentId,
-                                           Collection<InternalCacheEntry<?, ?>> cacheEntries) {
+                                           Collection<InternalCacheEntry<?, ?>> cacheEntries,
+                                           Runnable remainingToRequest) {
       if (cacheEntries == null || cacheEntries.isEmpty())
          return CompletableFutures.completedNull();
 
@@ -722,6 +752,7 @@ public class StateConsumerImpl implements StateConsumer {
                if (!future.isDone()) {
                   throw new IllegalStateException("State transfer in-tx put should always be synchronous");
                }
+               remainingToRequest.run();
             }
          } catch (Throwable t) {
             logApplyException(t, key);
@@ -746,7 +777,7 @@ public class StateConsumerImpl implements StateConsumer {
          for (InternalCacheEntry<?, ?> e : cacheEntries) {
             InvocationContext ctx = icf.createSingleKeyNonTxInvocationContext();
             CompletionStage<?> putStage = invokePut(segmentId, ctx, e);
-            aggregateStage.dependsOn(putStage.exceptionally(t -> {
+            aggregateStage.dependsOn(putStage.thenRun(remainingToRequest).exceptionally(t -> {
                logApplyException(t, e.getKey());
                return null;
             }));
@@ -1270,6 +1301,7 @@ public class StateConsumerImpl implements StateConsumer {
          List<InboundTransferTask> transfers = transfersBySource.get(inboundTransfer.getSource());
          if (transfers != null && transfers.remove(inboundTransfer) && transfers.isEmpty()) {
             transfersBySource.remove(inboundTransfer.getSource());
+            pendingUpdates.remove(inboundTransfer.getSource());
          }
          // Box the segment as the map uses Integer as key
          for (Integer segment : inboundTransfer.getSegments()) {
