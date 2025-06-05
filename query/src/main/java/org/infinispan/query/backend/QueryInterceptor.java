@@ -399,16 +399,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       }
    }
 
-   /**
-    * The indexed classes.
-    *
-    * @deprecated since 11
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public Map<String, Class<?>> indexedEntities() {
-      return indexedClasses;
-   }
-
    private SearchIndexer getSearchIndexer() {
       return searchMapping.getSearchIndexer();
    }

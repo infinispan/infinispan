@@ -15,7 +15,7 @@ import org.infinispan.util.concurrent.NonBlockingManager;
 import net.jcip.annotations.ThreadSafe;
 
 /**
- * Aggregates the initialisation state needed by either a {@link CacheLoader} or a {@link CacheWriter}.
+ * Aggregates the initialisation state needed by org.infinispan.persistence.spi.NonBlockingStore.
  *
  * @author Mircea Markus
  * @since 6.0
@@ -29,7 +29,7 @@ public interface InitializationContext {
 
    /**
     * The configured partitioner that can be used to determine which segment a given key belongs to. This is useful
-    * when a store is segmented (ie. implements {@link SegmentedAdvancedLoadWriteStore}).
+    * when a store is segmented.
     * @return partitioner that can provide what segment a key maps to
     */
    KeyPartitioner getKeyPartitioner();

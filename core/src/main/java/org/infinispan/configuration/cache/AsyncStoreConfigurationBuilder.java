@@ -3,12 +3,10 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.configuration.cache.AsyncStoreConfiguration.ENABLED;
 import static org.infinispan.configuration.cache.AsyncStoreConfiguration.FAIL_SILENTLY;
 import static org.infinispan.configuration.cache.AsyncStoreConfiguration.MODIFICATION_QUEUE_SIZE;
-import static org.infinispan.configuration.cache.AsyncStoreConfiguration.THREAD_POOL_SIZE;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * Configuration for the async cache store. If enabled, this configuration provides
@@ -65,16 +63,6 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
    }
 
    /**
-    * Configures the number of threads in the thread pool that is responsible for applying modifications.
-    * @deprecated since 11.0 with no replacement as the thread pool is no longer used
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public AsyncStoreConfigurationBuilder<S> threadPoolSize(int i) {
-      attributes.attribute(THREAD_POOL_SIZE).set(i);
-      return this;
-   }
-
-   /**
     * @param failSilently If true, the async store attempts to perform write operations only
     *           as many times as configured with `connection-attempts` in the PersistenceConfiguration.
     *           If all attempts fail, the errors are ignored and the write operations are not executed
@@ -89,15 +77,6 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
    public AsyncStoreConfigurationBuilder<S> failSilently(boolean failSilently) {
       attributes.attribute(FAIL_SILENTLY).set(failSilently);
       return this;
-   }
-
-   @Override
-   public
-   void validate() {
-   }
-
-   @Override
-   public void validate(GlobalConfiguration globalConfig) {
    }
 
    @Override

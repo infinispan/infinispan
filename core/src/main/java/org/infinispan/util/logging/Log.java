@@ -2424,4 +2424,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Time between entries/keys retrieved from store exceeded %s ms. Enable TRACE for " + PERSISTENCE_STRING + " to track callers of this", id = 712)
    TimeoutException storeTimeoutBetweenEntries(long ms);
+
+   @LogMessage(level = WARN)
+   @Message(value = "The single file store has been deprecated. Please use the Soft-Index File Store instead", id = 713)
+   void singleFileStoreDeprecated();
 }
