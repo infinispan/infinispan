@@ -22,7 +22,6 @@ import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.EncodingConfiguration;
 import org.infinispan.configuration.cache.IsolationLevel;
@@ -537,11 +536,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals("/tmp/FileCacheStore-Location", loaderCfg.dataLocation());
       assertTrue(loaderCfg.async().enabled());
       assertEquals(700, loaderCfg.async().modificationQueueSize());
-
-      c = getCacheConfiguration(holder, "withClusterLoader");
-      assertEquals(1, c.persistence().stores().size());
-      ClusterLoaderConfiguration clusterLoaderCfg = (ClusterLoaderConfiguration) c.persistence().stores().get(0);
-      assertEquals(15000, clusterLoaderCfg.remoteCallTimeout());
 
       c = getCacheConfiguration(holder, "withLoaderDefaults");
       loaderCfg = (SoftIndexFileStoreConfiguration) c.persistence().stores().get(0);

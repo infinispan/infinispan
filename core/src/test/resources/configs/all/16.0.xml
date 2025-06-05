@@ -162,9 +162,6 @@
          <locking acquire-timeout="31000" concurrency-level="3000" isolation="SERIALIZABLE" striping="true"/>
          <transaction mode="BATCH" stop-timeout="61000" locking="PESSIMISTIC"/>
          <expiration interval="11000" lifespan="12" max-idle="7" touch="ASYNC"/>
-         <persistence>
-            <cluster-loader remote-timeout="35000" preload="false"/>
-         </persistence>
          <memory storage="OBJECT" max-count="21000"/>
          <state-transfer enabled="false" timeout="60000" chunk-size="10000"/>
       </replicated-cache>
@@ -400,9 +397,6 @@
          <locking acquire-timeout="31000" concurrency-level="3000" isolation="SERIALIZABLE" striping="true"/>
          <transaction mode="BATCH" stop-timeout="61000" locking="PESSIMISTIC"/>
          <expiration interval="11000" lifespan="12" max-idle="7"/>
-         <persistence>
-            <cluster-loader remote-timeout="35000" preload="true"/>
-         </persistence>
          <memory storage="OBJECT" max-count="21000"/>
          <state-transfer enabled="false" timeout="60000" chunk-size="10000" />
       </replicated-cache-configuration>
