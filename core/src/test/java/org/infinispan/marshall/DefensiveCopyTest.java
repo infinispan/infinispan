@@ -3,6 +3,7 @@ package org.infinispan.marshall;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -24,7 +25,7 @@ public class DefensiveCopyTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.memory().storage(StorageType.BINARY);
+      builder.memory().storage(StorageType.HEAP).encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM);
       return TestCacheManagerFactory.createCacheManager(TestDataSCI.INSTANCE, builder);
    }
 

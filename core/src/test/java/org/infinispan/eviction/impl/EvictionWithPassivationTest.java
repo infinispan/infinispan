@@ -60,7 +60,6 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
    @Factory
    public Object[] factory() {
       return new Object[] {
-            new EvictionWithPassivationTest().withStorage(StorageType.BINARY),
             new EvictionWithPassivationTest().withStorage(StorageType.HEAP),
             new EvictionWithPassivationTest().withStorage(StorageType.OFF_HEAP)
       };

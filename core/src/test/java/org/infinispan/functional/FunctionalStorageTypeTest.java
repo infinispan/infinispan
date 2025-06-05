@@ -15,7 +15,6 @@ public class FunctionalStorageTypeTest extends FunctionalMapTest {
    public Object[] factory() {
       return new Object[]{
             new FunctionalStorageTypeTest().storageType(StorageType.OFF_HEAP),
-            new FunctionalStorageTypeTest().storageType(StorageType.BINARY),
             new FunctionalStorageTypeTest().storageType(StorageType.HEAP),
       };
    }

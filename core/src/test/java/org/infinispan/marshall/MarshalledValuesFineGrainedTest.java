@@ -3,6 +3,7 @@ package org.infinispan.marshall;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
@@ -38,7 +39,7 @@ public class MarshalledValuesFineGrainedTest extends AbstractInfinispanTest {
 
    public void testStoreAsBinaryOnBoth() {
       ConfigurationBuilder c = new ConfigurationBuilder();
-      c.memory().storage(StorageType.BINARY).build();
+      c.memory().storage(StorageType.HEAP).encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM).build();
       ecm = TestCacheManagerFactory.createCacheManager(TestDataSCI.INSTANCE, c);
       ecm.getCache().put(key, value);
       DataConversion keyDataConversion = ecm.getCache().getAdvancedCache().getKeyDataConversion();

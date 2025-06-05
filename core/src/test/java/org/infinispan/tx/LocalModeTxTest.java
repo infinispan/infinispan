@@ -26,7 +26,6 @@ public class LocalModeTxTest extends SingleCacheManagerTest {
    @Factory
    public Object[] factory() {
       return new Object[] {
-            new LocalModeTxTest().withStorage(StorageType.BINARY),
             new LocalModeTxTest().withStorage(StorageType.HEAP),
             new LocalModeTxTest().withStorage(StorageType.OFF_HEAP)
       };

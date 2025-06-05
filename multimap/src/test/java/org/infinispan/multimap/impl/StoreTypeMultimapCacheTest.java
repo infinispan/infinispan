@@ -31,7 +31,6 @@ public class StoreTypeMultimapCacheTest extends DistributedMultimapCacheTest {
       return new Object[]{
             new StoreTypeMultimapCacheTest().storageType(StorageType.OFF_HEAP),
             new StoreTypeMultimapCacheTest().storageType(StorageType.HEAP),
-            new StoreTypeMultimapCacheTest().storageType(StorageType.BINARY),
       };
    }
 

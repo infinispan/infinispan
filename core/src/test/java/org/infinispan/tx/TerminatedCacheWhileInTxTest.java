@@ -45,7 +45,6 @@ public class TerminatedCacheWhileInTxTest extends SingleCacheManagerTest {
    @Factory
    public Object[] factory() {
       return new Object[] {
-            new TerminatedCacheWhileInTxTest().withStorage(StorageType.BINARY),
             new TerminatedCacheWhileInTxTest().withStorage(StorageType.HEAP),
             new TerminatedCacheWhileInTxTest().withStorage(StorageType.OFF_HEAP)
       };
