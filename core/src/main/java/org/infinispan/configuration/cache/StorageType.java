@@ -22,15 +22,6 @@ public enum StorageType {
    HEAP(Element.HEAP),
 
    /**
-    * Entries are stored in Java heap but as byte[] instances. This mode has equality defined by the byte[] created from
-    * the serialized from of the provided object.
-    * @deprecated since 11.0, with no replacement. Use {@link #HEAP} and the cache's {@link EncodingConfiguration} to
-    * define a {@link MediaType} that is byte[] or primitive based.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   BINARY(Element.BINARY),
-
-   /**
     * Entries are stored in internal memory off the normal Java heap. This mode has equality defined by the byte[]
     * created from the serialized form of the provided object.
     */
@@ -51,7 +42,7 @@ public enum StorageType {
    }
 
    public boolean canStoreReferences() {
-      return this == HEAP || this == HEAP;
+      return this == HEAP;
    }
 
    private static final Map<String, StorageType> STORAGE_PER_ELEMENT = new HashMap<>(3);

@@ -30,7 +30,6 @@ public class AnchoredKeysScalingTest extends AbstractAnchoredKeysTest {
    public Object[] factory() {
       return new Object[]{
             new AnchoredKeysScalingTest().storageType(StorageType.HEAP),
-            new AnchoredKeysScalingTest().storageType(StorageType.BINARY),
             new AnchoredKeysScalingTest().storageType(StorageType.OFF_HEAP),
             };
    }

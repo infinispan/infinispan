@@ -177,13 +177,10 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
    public void testPreloadStoredAsBinary() {
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
-      createCacheStoreConfig(cb.persistence(), "testPreloadStoredAsBinary", true).memory().storage(StorageType.BINARY);
+      createCacheStoreConfig(cb.persistence(), "testPreloadStoredAsBinary", true).memory().storage(StorageType.HEAP).encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM);
       TestingUtil.defineConfiguration(cacheManager, "testPreloadStoredAsBinary", cb.build());
       Cache<String, Person> cache = cacheManager.getCache("testPreloadStoredAsBinary");
       cache.start();
-
-      assert cache.getCacheConfiguration().persistence().preload();
-      assertEquals(StorageType.BINARY, cache.getCacheConfiguration().memory().storage());
 
       byte[] pictureBytes = new byte[]{1, 82, 123, 19};
 

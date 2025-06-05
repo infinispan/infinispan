@@ -14,7 +14,7 @@
        <!-- *************************************** -->
       <replicated-cache name="default" mode="SYNC" remote-timeout="20000" statistics="true">
          <locking acquire-timeout="20000" concurrency-level="500" striping="false" />
-         <memory storage="BINARY" max-count="1" when-full="REMOVE"/>
+         <memory storage="HEAP" max-count="1" when-full="REMOVE"/>
          <expiration max-idle="-1" />
          <indexing storage="local-heap">
             <indexed-entities>

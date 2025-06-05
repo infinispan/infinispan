@@ -57,8 +57,9 @@ public class AnchoredKeysOperationsTest extends AbstractAnchoredKeysTest {
    public Object[] factory() {
       return new Object[]{
             new AnchoredKeysOperationsTest().storageType(StorageType.HEAP),
-            new AnchoredKeysOperationsTest().storageType(StorageType.BINARY),
             new AnchoredKeysOperationsTest().storageType(StorageType.HEAP).serverMode(true),
+            new AnchoredKeysOperationsTest().storageType(StorageType.OFF_HEAP),
+            new AnchoredKeysOperationsTest().storageType(StorageType.OFF_HEAP).serverMode(true),
             };
    }
 
