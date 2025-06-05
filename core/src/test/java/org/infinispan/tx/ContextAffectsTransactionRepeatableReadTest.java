@@ -20,7 +20,6 @@ public class ContextAffectsTransactionRepeatableReadTest extends ContextAffectsT
    @Factory
    public Object[] factory() {
       return new Object[] {
-            new ContextAffectsTransactionRepeatableReadTest().withStorage(StorageType.BINARY),
             new ContextAffectsTransactionRepeatableReadTest().withStorage(StorageType.HEAP),
             new ContextAffectsTransactionRepeatableReadTest().withStorage(StorageType.OFF_HEAP)
       };

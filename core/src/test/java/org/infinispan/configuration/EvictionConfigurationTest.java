@@ -77,7 +77,6 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
 
       assertFalse(configuration.memory().isEvictionEnabled());
       assertEquals(HEAP, configuration.memory().storage());
-      assertEquals(HEAP, configuration.memory().storage());
    }
 
    @Test

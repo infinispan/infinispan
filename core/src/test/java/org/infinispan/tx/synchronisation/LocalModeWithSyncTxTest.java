@@ -25,7 +25,6 @@ public class LocalModeWithSyncTxTest extends LocalModeTxTest {
    @Factory
    public Object[] factory() {
       return new Object[] {
-            new LocalModeWithSyncTxTest().withStorage(StorageType.BINARY),
             new LocalModeWithSyncTxTest().withStorage(StorageType.HEAP),
             new LocalModeWithSyncTxTest().withStorage(StorageType.OFF_HEAP)
       };

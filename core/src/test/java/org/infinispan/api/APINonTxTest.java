@@ -65,10 +65,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "api.APINonTxTest")
 public class APINonTxTest extends SingleCacheManagerTest {
 
-
-
    protected void configure(ConfigurationBuilder builder) {
-
    }
 
    @AfterMethod
