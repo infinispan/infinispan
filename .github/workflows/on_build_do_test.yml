@@ -115,6 +115,14 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
         continue-on-error: true
 
+      - name: Unzip only if exists
+        run: |
+          if [ -f target-branch.zip ]; then
+            unzip target-branch.zip -d target-branch
+          else
+            echo "Artifact not found, skipping unzip."
+          fi
+          
       # Get base branch from the file
       - name: Read target branch
         id: target-branch
