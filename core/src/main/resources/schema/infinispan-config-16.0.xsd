@@ -2016,14 +2016,6 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="thread-pool-size" type="xs:int" default="${AsyncStore.thread-pool-size}">
-      <xs:annotation>
-        <xs:documentation>
-          Specifies the number of threads to apply modifications to the cache
-          store.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
     <xs:attribute name="fail-silently" type="xs:boolean" default="${AsyncStore.fail-silently}">
       <xs:annotation>
         <xs:documentation>

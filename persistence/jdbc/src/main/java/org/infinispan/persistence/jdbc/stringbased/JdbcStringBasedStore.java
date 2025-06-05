@@ -55,7 +55,7 @@ import io.reactivex.rxjava3.processors.FlowableProcessor;
 import io.reactivex.rxjava3.processors.UnicastProcessor;
 
 /**
- * {@link org.infinispan.persistence.spi.AdvancedCacheLoader} implementation that stores the entries in a database.
+ * {@link org.infinispan.persistence.spi.NonBlockingStore} implementation that stores the entries in a database.
  * This cache store will store each entry within a row in the table. This assures a finer grained granularity for all
  * operation, and better performance. In order to be able to store non-string keys, it relies on an {@link
  * org.infinispan.persistence.keymappers.Key2StringMapper}.

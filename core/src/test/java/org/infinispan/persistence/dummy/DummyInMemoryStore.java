@@ -24,7 +24,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
@@ -52,7 +51,6 @@ import io.reactivex.rxjava3.core.Flowable;
  * amongst multiple caches by utilising the same `storeName` for each store instance.
  */
 @ConfiguredBy(DummyInMemoryStoreConfiguration.class)
-@Store(shared = true)
 public class DummyInMemoryStore<K, V> implements WaitNonBlockingStore<K, V> {
    public static final int SLOW_STORE_WAIT = 100;
 

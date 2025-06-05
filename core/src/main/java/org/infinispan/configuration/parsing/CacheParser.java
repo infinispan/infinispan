@@ -1100,6 +1100,7 @@ public class CacheParser implements ConfigurationParser {
    }
 
    protected void parseSingleFileStore(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
+      CONFIG.singleFileStoreDeprecated();
       SingleFileStoreConfigurationBuilder storeBuilder = holder.getCurrentConfigurationBuilder().persistence().addSingleFileStore();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);

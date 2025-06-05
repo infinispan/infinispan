@@ -3,7 +3,7 @@ package org.infinispan.persistence.spi;
 import org.infinispan.commons.CacheException;
 
 /**
- * An exception thrown by a {@link CacheLoader} or a {@link CacheWriter} implementation if there are problems
+ * An exception thrown by a {@link org.infinispan.persistence.spi.NonBlockingStore} implementation if there are problems
  * reading from a loader.
  *
  * @author Manik Surtani

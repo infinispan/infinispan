@@ -3,7 +3,7 @@ package org.infinispan.persistence.modifications;
 import org.infinispan.persistence.spi.MarshallableEntry;
 
 /**
- * Modification representing {@link org.infinispan.persistence.spi.CacheWriter#write(MarshallableEntry)}.
+ * Modification representing {@link org.infinispan.persistence.spi.NonBlockingStore#write(int, MarshallableEntry)}.
  *
  * @author Manik Surtani
  * @since 4.0

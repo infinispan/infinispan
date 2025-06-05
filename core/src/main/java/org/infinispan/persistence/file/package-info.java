@@ -1,5 +1,5 @@
 /**
- * Simple filesystem-based {@link org.infinispan.persistence.spi.CacheWriter} implementation.
+ * Simple filesystem-based {@link org.infinispan.persistence.spi.NonBlockingStore} implementation.
  *
  * @api.public
  */

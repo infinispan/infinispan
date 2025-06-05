@@ -15,8 +15,8 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.util.function.TriPredicate;
@@ -91,7 +91,7 @@ public interface PersistenceManager extends Lifecycle {
    CompletionStage<Void> purgeExpired();
 
    /**
-    * Invokes {@link org.infinispan.persistence.spi.AdvancedCacheWriter#clear()} on all the stores that aloes it.
+    * Invokes {@link NonBlockingStore#clear()} )} on all the stores that allow it.
     */
    CompletionStage<Void> clearAllStores(Predicate<? super StoreConfiguration> predicate);
 
@@ -106,11 +106,11 @@ public interface PersistenceManager extends Lifecycle {
 
    /**
     * Returns a publisher that will publish all entries stored by the underlying cache store. Only the first
-    * cache store that implements {@link AdvancedCacheLoader} will be used. Predicate is applied by the underlying
-    * loader in a best attempt to improve performance.
+    * cache store that doesn't have the {@link org.infinispan.persistence.spi.NonBlockingStore.Characteristic#WRITE_ONLY}
+    * characteristic will be used. Predicate is applied by the underlying loader in an attempt to improve performance.
     * <p>
-    * Caller can tell the store to also fetch the value or metadata. In some cases this can improve performance. If
-    * metadata is not fetched the publisher may include expired entries.
+    * Caller can tell the store to also fetch the value or metadata. In some cases, this can improve performance. If
+    * metadata is not fetched, the publisher may include expired entries.
     * @param filter filter so that only entries whose key matches are returned
     * @param fetchValue whether to fetch value or not
     * @param fetchMetadata whether to fetch metadata or not
@@ -124,7 +124,7 @@ public interface PersistenceManager extends Lifecycle {
 
    /**
     * Returns a publisher that will publish entries that map to the provided segments. It will attempt to find the
-    * first segmented store if one is available. If not it will fall back to the first non segmented store and
+    * first segmented store if one is available. If not, it will fall back to the first non-segmented store and
     * filter out entries that don't map to the provided segment.
     * @param segments only entries that map to these segments are processed
     * @param filter filter so that only entries whose key matches are returned
@@ -140,8 +140,8 @@ public interface PersistenceManager extends Lifecycle {
 
    /**
     * Returns a publisher that will publish all keys stored by the underlying cache store. Only the first cache store
-    * that implements {@link AdvancedCacheLoader} will be used. Predicate is applied by the underlying
-    * loader in a best attempt to improve performance.
+    * that doesn't have the {@link org.infinispan.persistence.spi.NonBlockingStore.Characteristic#WRITE_ONLY}
+    * characteristic will be used. Predicate is applied by the underlying loader in an attempt to improve performance.
     * <p>
     * This method should be preferred over {@link #publishEntries(Predicate, boolean, boolean, Predicate)} when only
     * keys are desired as many stores can do this in a significantly more performant way.
@@ -156,7 +156,7 @@ public interface PersistenceManager extends Lifecycle {
 
    /**
     * Returns a publisher that will publish keys that map to the provided segments. It will attempt to find the
-    * first segmented store if one is available. If not it will fall back to the first non segmented store and
+    * first segmented store if one is available. If not, it will fall back to the first non-segmented store and
     * filter out entries that don't map to the provided segment.
     * <p>
     * This method should be preferred over {@link #publishEntries(IntSet, Predicate, boolean, boolean, Predicate)}
@@ -197,7 +197,6 @@ public interface PersistenceManager extends Lifecycle {
 
    /**
     * Returns an approximate count of how many entries are persisted in the given segments.
-    *
     * If no store can handle the request for the given mode, a value of <b>-1</b> is returned instead.
     *
     * @param predicate whether a loader can be used
@@ -234,8 +233,7 @@ public interface PersistenceManager extends Lifecycle {
 
    enum AccessMode implements Predicate<StoreConfiguration> {
       /**
-       * The operation is performed in all {@link org.infinispan.persistence.spi.CacheWriter} or {@link
-       * org.infinispan.persistence.spi.CacheLoader}
+       * The operation is performed in all {@link NonBlockingStore}s
        */
       BOTH {
          @Override
@@ -244,8 +242,7 @@ public interface PersistenceManager extends Lifecycle {
          }
       },
       /**
-       * The operation is performed only in shared configured {@link org.infinispan.persistence.spi.CacheWriter} or
-       * {@link org.infinispan.persistence.spi.CacheLoader}
+       * The operation is performed only in shared configured {@link NonBlockingStore}
        */
       SHARED {
          @Override
@@ -254,8 +251,7 @@ public interface PersistenceManager extends Lifecycle {
          }
       },
       /**
-       * The operation is performed only in non-shared {@link org.infinispan.persistence.spi.CacheWriter} or {@link
-       * org.infinispan.persistence.spi.CacheLoader}
+       * The operation is performed only in non-shared {@link NonBlockingStore}
        */
       PRIVATE {
          @Override
@@ -264,8 +260,7 @@ public interface PersistenceManager extends Lifecycle {
          }
       },
       /**
-       * The operation is performed only in a {@link org.infinispan.persistence.spi.CacheWriter} or {@link
-       * org.infinispan.persistence.spi.CacheLoader} that has async write behind.
+       * The operation is performed only in a {@link NonBlockingStore that has async write behind.
        */
       ASYNC {
          @Override
@@ -274,8 +269,7 @@ public interface PersistenceManager extends Lifecycle {
          }
       },
       /**
-       * The operation is performed only in a {@link org.infinispan.persistence.spi.CacheWriter} or {@link
-       * org.infinispan.persistence.spi.CacheLoader} that doesn't have async write behind.
+       * The operation is performed only in a {@link NonBlockingStore} that doesn't have async write behind.
        */
       NOT_ASYNC {
          @Override
@@ -291,7 +285,7 @@ public interface PersistenceManager extends Lifecycle {
     * Write to all stores that are not transactional. A store is considered transactional if all of the following are true:
     *
     * <ul>
-    *    <li>The store implements {@link org.infinispan.persistence.spi.TransactionalCacheWriter}</li>
+    *    <li>The store has the {@link org.infinispan.persistence.spi.NonBlockingStore.Characteristic#TRANSACTIONAL} characteristic</li>
     *    <li>The store is configured to be transactional</li>
     *    <li>The cache's TransactionMode === TRANSACTIONAL</li>
     * </ul>
@@ -407,7 +401,7 @@ public interface PersistenceManager extends Lifecycle {
    }
 
    /**
-    * @return true if no {@link org.infinispan.persistence.spi.CacheWriter} instances have been configured.
+    * @return true if no writable {@link NonBlockingStore} instances have been configured.
     */
    boolean isReadOnly();
 }

@@ -16,12 +16,10 @@ import org.infinispan.configuration.parsing.Element;
 public class AsyncStoreConfiguration extends ConfigurationElement<AsyncStoreConfiguration> {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, false).immutable().build();
    public static final AttributeDefinition<Integer> MODIFICATION_QUEUE_SIZE  = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MODIFICATION_QUEUE_SIZE, 1024).immutable().build();
-   @Deprecated(forRemoval=true, since = "11.0")
-   public static final AttributeDefinition<Integer> THREAD_POOL_SIZE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.THREAD_POOL_SIZE, 1).immutable().build();
    public static final AttributeDefinition<Boolean> FAIL_SILENTLY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.FAIL_SILENTLY, false).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(AsyncStoreConfiguration.class, ENABLED, MODIFICATION_QUEUE_SIZE, THREAD_POOL_SIZE, FAIL_SILENTLY);
+      return new AttributeSet(AsyncStoreConfiguration.class, ENABLED, MODIFICATION_QUEUE_SIZE, FAIL_SILENTLY);
    }
 
    private final Attribute<Boolean> failSilently;
@@ -46,15 +44,6 @@ public class AsyncStoreConfiguration extends ConfigurationElement<AsyncStoreConf
     */
    public int modificationQueueSize() {
       return attributes.attribute(MODIFICATION_QUEUE_SIZE).get();
-   }
-
-   /**
-    * Size of the thread pool whose threads are responsible for applying the modifications.
-    * @deprecated since 11.0 with no replacement as the thread pool is no longer used
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public int threadPoolSize() {
-      return attributes.attribute(THREAD_POOL_SIZE).get();
    }
 
    public boolean failSilently() {
