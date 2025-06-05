@@ -25,7 +25,6 @@ import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.CacheType;
-import org.infinispan.configuration.cache.ClusterLoaderConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.ContentTypeConfigurationBuilder;
 import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
@@ -50,7 +49,6 @@ import org.infinispan.conflict.MergePolicy;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.expiration.TouchMode;
 import org.infinispan.partitionhandling.PartitionHandling;
-import org.infinispan.persistence.cluster.ClusterLoader;
 import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
 import org.infinispan.telemetry.SpanCategory;
@@ -928,8 +926,12 @@ public class CacheParser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case CLUSTER_LOADER:
-               CONFIG.warnUsingDeprecatedClusterLoader();
-               parseClusterLoader(reader, holder);
+               if (reader.getSchema().since(16, 0)) {
+                  throw ParseUtils.unexpectedElement(reader);
+               } else {
+                  ignoreElement(reader, element);
+                  ParseUtils.requireNoContent(reader);
+               }
                break;
             case FILE_STORE:
                parseFileStore(reader, holder);
@@ -941,33 +943,12 @@ public class CacheParser implements ConfigurationParser {
                ignoreElement(reader, element);
                break;
             case SINGLE_FILE_STORE:
-               CONFIG.warnUsingDeprecatedClusterLoader();
                parseSingleFileStore(reader, holder);
                break;
             default:
                reader.handleAny(holder);
          }
       }
-   }
-
-   private void parseClusterLoader(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
-      ClusterLoaderConfigurationBuilder cclb = builder.persistence().addClusterLoader();
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = reader.getAttributeValue(i);
-         String attrName = reader.getAttributeName(i);
-         Attribute attribute = Attribute.forName(attrName);
-         switch (attribute) {
-            case REMOTE_TIMEOUT:
-               cclb.remoteCallTimeout(value);
-               break;
-            default:
-               parseStoreAttribute(reader, i, cclb);
-               break;
-         }
-      }
-      parseStoreElements(reader, cclb);
    }
 
    protected void parseFileStore(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
@@ -1329,9 +1310,6 @@ public class CacheParser implements ConfigurationParser {
             if (segmented != null)
                sfs.segmented(segmented);
             parseStoreElements(reader, sfs);
-         } else if (store instanceof ClusterLoader) {
-            ClusterLoaderConfigurationBuilder cscb = builder.persistence().addClusterLoader();
-            parseStoreElements(reader, cscb);
          } else {
             ConfiguredBy annotation = store.getClass().getAnnotation(ConfiguredBy.class);
             Class<? extends StoreConfigurationBuilder> builderClass = null;

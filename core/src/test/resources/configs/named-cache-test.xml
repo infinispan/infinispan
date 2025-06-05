@@ -81,11 +81,6 @@
             <file-store path="/tmp/FileCacheStore-Location"/>
          </persistence>
       </local-cache>
-      <local-cache name="withClusterLoader">
-         <persistence passivation="false">
-            <cluster-loader remote-timeout="15000"/>
-         </persistence>
-      </local-cache>
       <local-cache name="withLoaderDefaults">
          <persistence>
             <file-store path="/tmp/Another-FileCacheStore-Location" />
