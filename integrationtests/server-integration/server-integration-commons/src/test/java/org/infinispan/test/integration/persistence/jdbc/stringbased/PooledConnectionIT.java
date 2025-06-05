@@ -31,7 +31,7 @@ public class PooledConnectionIT {
         cm = jdbcUtil.getCacheManager();
         Cache<String, String> cache = cm.getCache(CACHE_NAME);
         PersistenceManager persistenceManager = ComponentRegistry.componentOf(cache, PersistenceManager.class);
-        JdbcStringBasedStore jdbcStringBasedStore = persistenceManager.getStores(JdbcStringBasedStore.class).iterator().next();
+        JdbcStringBasedStore<String, String> jdbcStringBasedStore = persistenceManager.getStores(JdbcStringBasedStore.class).iterator().next();
         try (TableManipulation table = new TableManipulation(jdbcStringBasedStore.getTableManager(), jdbcUtil.getPersistenceConfiguration())) {
             cache.put("k1", "v1");
             cache.put("k2", "v2");
@@ -69,7 +69,7 @@ public class PooledConnectionIT {
         assertCleanCacheAndStore(cache);
     }
 
-    private void assertCleanCacheAndStore(Cache cache) {
+    private void assertCleanCacheAndStore(Cache<?, ?> cache) {
         cache.clear();
         assertEquals(0, cache.size());
     }
