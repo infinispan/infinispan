@@ -56,16 +56,6 @@ jobs:
           sparse-checkout: ".github"
           fetch-depth: 1
 
-      - uses: graalvm/setup-graalvm@v1
-        with:
-          java-version: 21
-          distribution: 'graalvm'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          set-java-home: 'false'
-
-      - name: Setup Java
-        uses: ./.github/actions/setup-java
-
       - name: Extract Maven Artifacts
         uses: ./.github/actions/extract-maven-artifacts
         with:
@@ -115,15 +105,6 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
         continue-on-error: true
 
-      - name: Unzip only if exists
-        run: |
-          ls -ltr
-          if [[ -f target-branch.zip ]]; then
-            unzip target-branch.zip -d target-branch
-          else
-            echo "Artifact not found, skipping unzip."
-          fi
-          
       # Get base branch from the file
       - name: Read target branch
         id: target-branch
@@ -139,12 +120,29 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ steps.target-branch.outputs.value }}" == "14.0.x" ]]; then
-            echo "MAVEN_SETTINGS=-s maven-settings.xml" >> $GITHUB_ENV
+            echo "maven-settings=-s maven-settings.xml" >> $GITHUB_OUTPUT
+            echo "java-version=11" >> $GITHUB_OUTPUT
+          else
+            echo "maven-settings=" >> $GITHUB_OUTPUT
+            echo "java-version=21" >> $GITHUB_OUTPUT
           fi
+
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: ${{ steps.branch-config.outputs.java-version }}
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          set-java-home: 'false'
+
+      - name: Setup Java
+        uses: ./.github/actions/setup-java
+        with:
+          java-version: ${{ steps.branch-config.outputs.java-version }}
 
       - name: Maven Test
         env:
           HIBERNATE_MATRIX: ${{ github.event.workflow_run.event == 'push' && '-Phibernate-matrix' || '' }}
+          MAVEN_SETTINGS: ${{ steps.branch-config.outputs.maven-settings }}
         id: maven-test
         shell: bash
         run: >
@@ -153,6 +151,7 @@ jobs:
             -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative,coverage $HIBERNATE_MATRIX
             -Dorg.infinispan.test.server.extension.libs=org.jacoco:org.jacoco.agent:0.8.12:runtime
             -Dgithub.action=true
+
       # Renewing token since it last for 1 hour and cannot be extended
       # see for more info https://github.com/actions/create-github-app-token/issues/128
       - uses: actions/create-github-app-token@v2
@@ -255,9 +254,9 @@ jobs:
           - db2
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: ./.github/actions/setup-java
+        with:
+          sparse-checkout: ".github"
+          fetch-depth: 1
 
       - name: Extract Maven Artifacts
         uses: ./.github/actions/extract-maven-artifacts
@@ -304,6 +303,41 @@ jobs:
             --method POST \
             --jq '.id')
           echo "id=$CHECK_RUN" >> $GITHUB_OUTPUT
+
+      - name: Download target branch file
+        uses: actions/download-artifact@v4.2.1
+        with:
+          name: target-branch
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+        continue-on-error: true
+
+      # Get base branch from the file
+      - name: Read target branch
+        id: target-branch
+        shell: bash
+        run: |
+          if [[ -f target-branch.txt ]]; then
+            TARGET_BRANCH=$(cat target-branch.txt)
+            echo "value=$TARGET_BRANCH" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Per branch configuration
+        id: branch-config
+        shell: bash
+        run: |
+          if [[ "${{ steps.target-branch.outputs.value }}" == "14.0.x" ]]; then
+            echo "maven-settings=-s maven-settings.xml" >> $GITHUB_OUTPUT
+            echo "java-version=11" >> $GITHUB_OUTPUT
+          else
+            echo "maven-settings=" >> $GITHUB_OUTPUT
+            echo "java-version=21" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Java
+        uses: ./.github/actions/setup-java
+        with:
+          java-version: ${{ steps.branch-config.outputs.java-version }}
 
       - name: Test
         run: |
@@ -358,6 +392,9 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: ".github"
+          fetch-depth: 1
 
       - name: Setup Java
         uses: ./.github/actions/setup-java
