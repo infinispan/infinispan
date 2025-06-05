@@ -1,18 +1,26 @@
 package org.infinispan.jcache.embedded;
 
+import java.util.EnumSet;
+import java.util.Set;
+import java.util.concurrent.CompletionStage;
+
 import javax.cache.integration.CacheWriter;
 
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.jcache.Exceptions;
 import org.infinispan.jcache.JCacheEntry;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.NonBlockingStore;
+import org.infinispan.util.concurrent.BlockingManager;
 
-public class JCacheWriterAdapter<K, V> implements org.infinispan.persistence.spi.CacheWriter {
+public class JCacheWriterAdapter<K, V> implements NonBlockingStore<K, V> {
 
    private CacheWriter<? super K, ? super V> delegate;
    private DataConversion keyDataConversion;
    private DataConversion valueDataConversion;
+   private BlockingManager blockingManager;
 
    public JCacheWriterAdapter() {
       // Empty constructor required so that it can be instantiated with
@@ -32,34 +40,51 @@ public class JCacheWriterAdapter<K, V> implements org.infinispan.persistence.spi
    }
 
    @Override
-   public void init(InitializationContext ctx) {
+   public Set<Characteristic> characteristics() {
+      return EnumSet.of(Characteristic.WRITE_ONLY, Characteristic.SEGMENTABLE);
    }
 
    @Override
-   public void write(MarshallableEntry entry) {
-      try {
-         delegate.write(new JCacheEntry(keyDataConversion.fromStorage(entry.getKey()), valueDataConversion.fromStorage(entry.getValue())));
-      } catch (Exception e) {
-         throw Exceptions.launderCacheWriterException(e);
-      }
+   public CompletionStage<Void> start(InitializationContext ctx) {
+      this.blockingManager = ctx.getBlockingManager();
+      return CompletableFutures.completedNull();
    }
 
    @Override
-   public boolean delete(Object key) {
-      try {
-         delegate.delete(keyDataConversion.fromStorage(key));
-      } catch (Exception e) {
-         throw Exceptions.launderCacheWriterException(e);
-      }
-      return false;
+   public CompletionStage<Void> stop() {
+      return CompletableFutures.completedNull();
    }
 
    @Override
-   public void start() {
+   public CompletionStage<MarshallableEntry<K, V>> load(int segment, Object key) {
+      return CompletableFutures.completedNull();
    }
 
    @Override
-   public void stop() {
+   public CompletionStage<Void> write(int segment, MarshallableEntry<? extends K, ? extends V> entry) {
+      return blockingManager.runBlocking(() -> {
+         try {
+            delegate.write(new JCacheEntry(keyDataConversion.fromStorage(entry.getKey()), valueDataConversion.fromStorage(entry.getValue())));
+         } catch (Exception e) {
+            throw Exceptions.launderCacheWriterException(e);
+         }
+      }, "jcache-write");
    }
 
+   @Override
+   public CompletionStage<Boolean> delete(int segment, Object key) {
+      return blockingManager.supplyBlocking(() -> {
+         try {
+            delegate.delete(keyDataConversion.fromStorage(key));
+         } catch (Exception e) {
+            throw Exceptions.launderCacheWriterException(e);
+         }
+         return false;
+      }, "jcache-delete");
+   }
+
+   @Override
+   public CompletionStage<Void> clear() {
+      return CompletableFutures.completedNull();
+   }
 }

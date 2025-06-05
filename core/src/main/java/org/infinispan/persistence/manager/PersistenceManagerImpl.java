@@ -78,7 +78,6 @@ import org.infinispan.persistence.spi.NonBlockingStore.Characteristic;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.StoreUnavailableException;
 import org.infinispan.persistence.support.DelegatingNonBlockingStore;
-import org.infinispan.persistence.support.NonBlockingStoreAdapter;
 import org.infinispan.persistence.support.SegmentPublisherWrapper;
 import org.infinispan.persistence.support.SingleSegmentPublisher;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
@@ -549,7 +548,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          while (statusIterator.hasNext()) {
             StoreStatus status = statusIterator.next();
             NonBlockingStore<?, ?> nonBlockingStore = unwrapStore(status.store());
-            if (nonBlockingStore.getClass().getName().equals(storeType) || containedInAdapter(nonBlockingStore, storeType)) {
+            if (nonBlockingStore.getClass().getName().equals(storeType)) {
                statusIterator.remove();
                aggregateCompletionStage.dependsOn(nonBlockingStore.stop()
                      .whenComplete((v, t) -> {
@@ -606,18 +605,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return store;
    }
 
-   private Object unwrapOldSPI(NonBlockingStore<?, ?> store) {
-      if (store instanceof NonBlockingStoreAdapter) {
-         return ((NonBlockingStoreAdapter<?, ?>) store).getActualStore();
-      }
-      return store;
-   }
-
-   private boolean containedInAdapter(NonBlockingStore<?, ?> nonBlockingStore, String adaptedClassName) {
-      return nonBlockingStore instanceof NonBlockingStoreAdapter &&
-            ((NonBlockingStoreAdapter<?, ?>) nonBlockingStore).getActualStore().getClass().getName().equals(adaptedClassName);
-   }
-
    @Override
    public <T> Set<T> getStores(Class<T> storeClass) {
       long stamp = acquireReadLock();
@@ -628,7 +615,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
          return stores.stream()
                .map(StoreStatus::store)
                .map(this::unwrapStore)
-               .map(this::unwrapOldSPI)
                .filter(storeClass::isInstance)
                .map(storeClass::cast)
                .collect(Collectors.toCollection(HashSet::new));
@@ -647,7 +633,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
          return stores.stream()
                .map(StoreStatus::store)
                .map(this::unwrapStore)
-               .map(this::unwrapOldSPI)
                .map(c -> c.getClass().getName())
                .collect(Collectors.toCollection(ArrayList::new));
       } finally {

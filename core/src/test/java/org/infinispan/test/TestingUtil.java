@@ -112,14 +112,10 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImp
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.support.DelegatingNonBlockingStore;
 import org.infinispan.persistence.support.DelegatingPersistenceManager;
-import org.infinispan.persistence.support.NonBlockingStoreAdapter;
 import org.infinispan.persistence.support.SegmentPublisherWrapper;
 import org.infinispan.persistence.support.SingleSegmentPublisher;
 import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
@@ -1172,7 +1168,7 @@ public class TestingUtil {
          // Need to unwrap to the base cache
          return extractCommandsFactory(extractField(cache, "cache"));
       }
-      return (CommandsFactory) extractField(cache, "commandsFactory");
+      return extractField(cache, "commandsFactory");
    }
 
    public static void dumpCacheContents(List<Cache<?, ?>> caches) {
@@ -1298,14 +1294,6 @@ public class TestingUtil {
          cr.rewireNamedRegistries();
       }
       return old != null ? old.wired() : null;
-   }
-
-   public static <K, V> CacheLoader<K, V> getCacheLoader(Cache<K, V> cache) {
-      if (cache.getCacheConfiguration().persistence().usingStores()) {
-         return TestingUtil.getFirstLoader(cache);
-      } else {
-         return null;
-      }
    }
 
    public static String printCache(Cache<?, ?> cache) {
@@ -1679,35 +1667,17 @@ public class TestingUtil {
       return new WaitDelegatingNonBlockingStore<>(nonBlockingStore, keyPartitioner);
    }
 
-   public static <T extends CacheLoader<K, V>, K, V> T getFirstLoader(Cache<K, V> cache) {
+   public static <T extends NonBlockingStore<K, V>, K, V> T getFirstLoader(Cache<K, V> cache) {
       PersistenceManagerImpl persistenceManager = getActualPersistenceManager(cache);
-      NonBlockingStore<K, V> nonBlockingStore = persistenceManager.<K, V>getAllStores(characteristics ->
+      return (T) persistenceManager.<K, V>getAllStores(characteristics ->
             !characteristics.contains(NonBlockingStore.Characteristic.WRITE_ONLY)).get(0);
-      // TODO: Once stores convert to non blocking implementations this will change
-      //noinspection unchecked
-      return (T) ((NonBlockingStoreAdapter<K, V>) nonBlockingStore).loader();
    }
 
-   @SuppressWarnings("unchecked")
-   public static <T extends CacheWriter<K, V>, K, V> T getFirstWriter(Cache<K, V> cache) {
-      return getWriter(cache, 0);
-   }
-
-   public static <T extends CacheWriter<K, V>, K, V> T getWriter(Cache<K, V> cache, int position) {
+   public static <T extends NonBlockingStore<K, V>, K, V> T getWriter(Cache<K, V> cache, int position) {
       PersistenceManagerImpl persistenceManager = getActualPersistenceManager(cache);
-      NonBlockingStore<K, V> nonBlockingStore = persistenceManager.<K, V>getAllStores(characteristics ->
+      // TODO: Once stores convert to non blocking implementations this will change
+      return (T) persistenceManager.<K, V>getAllStores(characteristics ->
             !characteristics.contains(NonBlockingStore.Characteristic.READ_ONLY)).get(position);
-      // TODO: Once stores convert to non blocking implementations this will change
-      return (T) ((NonBlockingStoreAdapter<K, V>) nonBlockingStore).writer();
-   }
-
-   @SuppressWarnings("unchecked")
-   public static <T extends CacheWriter<K, V>, K, V> T getFirstTxWriter(Cache<K, V> cache) {
-      PersistenceManagerImpl persistenceManager = getActualPersistenceManager(cache);
-      NonBlockingStore<K, V> nonBlockingStore = persistenceManager.<K, V>getAllStores(characteristics ->
-            characteristics.contains(NonBlockingStore.Characteristic.TRANSACTIONAL)).get(0);
-      // TODO: Once stores convert to non blocking implementations this will change
-      return (T) ((NonBlockingStoreAdapter<K, V>) nonBlockingStore).transactionalStore();
    }
 
    private static PersistenceManagerImpl getActualPersistenceManager(Cache<?, ?> cache) {
@@ -1716,16 +1686,6 @@ public class TestingUtil {
          return (PersistenceManagerImpl) ((DelegatingPersistenceManager) persistenceManager).getActual();
       }
       return (PersistenceManagerImpl) persistenceManager;
-   }
-
-   public static <K, V> Set<MarshallableEntry<K, V>> allEntries(AdvancedLoadWriteStore<K, V> cl, Predicate<K> filter) {
-      return Flowable.fromPublisher(cl.entryPublisher(filter, true, true))
-            .collectInto(new HashSet<MarshallableEntry<K, V>>(), Set::add)
-            .blockingGet();
-   }
-
-   public static <K, V> Set<MarshallableEntry<K, V>> allEntries(AdvancedLoadWriteStore<K, V> cl) {
-      return allEntries(cl, null);
    }
 
    public static <K, V> Set<MarshallableEntry<K, V>> allEntries(NonBlockingStore<K, V> store) {
