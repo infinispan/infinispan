@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -36,7 +37,7 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder c = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      c.memory().storage(StorageType.BINARY)
+      c.memory().storage(StorageType.HEAP).encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM)
          .transaction().lockingMode(LockingMode.PESSIMISTIC);
       return TestCacheManagerFactory.createCacheManager(TestDataSCI.INSTANCE, c);
    }

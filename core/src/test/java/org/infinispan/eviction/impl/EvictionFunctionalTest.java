@@ -50,7 +50,6 @@ public class EvictionFunctionalTest extends SingleCacheManagerTest {
    @Factory
    public Object[] factory() {
       return new Object[]{
-            new EvictionFunctionalTest().storageType(StorageType.BINARY),
             new EvictionFunctionalTest().storageType(StorageType.HEAP),
             new EvictionFunctionalTest().storageType(StorageType.OFF_HEAP)
       };

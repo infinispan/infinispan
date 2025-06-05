@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
@@ -721,13 +720,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
             c = getConfiguration(holder, "write-skew");
             assertEquals(IsolationLevel.REPEATABLE_READ, c.locking().lockIsolationLevel());
-
-            // Ignore custom-container (if present)
-
-            if (holder.getNamedConfigurationBuilders().containsKey("store-as-binary")) {
-               c = getConfiguration(holder, "store-as-binary");
-               assertSame(StorageType.BINARY, c.memory().storage());
-            }
          }
 
       },

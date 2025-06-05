@@ -36,7 +36,6 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
    @Factory
    public Object[] factory() {
       return new Object[] {
-            new ContextAffectsTransactionReadCommittedTest().withStorage(StorageType.BINARY),
             new ContextAffectsTransactionReadCommittedTest().withStorage(StorageType.HEAP),
             new ContextAffectsTransactionReadCommittedTest().withStorage(StorageType.OFF_HEAP)
       };

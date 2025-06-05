@@ -3,6 +3,7 @@ package org.infinispan.marshall;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
@@ -24,7 +25,7 @@ public class InvalidatedMarshalledValueTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder invlSync = getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_SYNC, false);
-      invlSync.memory().storage(StorageType.BINARY);
+      invlSync.memory().storage(StorageType.HEAP).encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM);
 
       createClusteredCaches(2, "invlSync", TestDataSCI.INSTANCE, invlSync);
    }
