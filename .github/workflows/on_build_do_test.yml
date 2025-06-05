@@ -117,7 +117,8 @@ jobs:
 
       - name: Unzip only if exists
         run: |
-          if [ -f target-branch.zip ]; then
+          ls -ltr
+          if [[ -f target-branch.zip ]]; then
             unzip target-branch.zip -d target-branch
           else
             echo "Artifact not found, skipping unzip."
@@ -128,8 +129,8 @@ jobs:
         id: target-branch
         shell: bash
         run: |
-          if [[ -f target-branch/target-branch.txt ]]; then
-            TARGET_BRANCH=$(cat target-branch/target-branch.txt)
+          if [[ -f target-branch.txt ]]; then
+            TARGET_BRANCH=$(cat target-branch.txt)
             echo "value=$TARGET_BRANCH" >> $GITHUB_OUTPUT
           fi
 
