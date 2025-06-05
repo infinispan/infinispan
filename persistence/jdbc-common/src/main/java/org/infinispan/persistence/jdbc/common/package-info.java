@@ -1,5 +1,5 @@
 /**
- * This package contains a {@link org.infinispan.persistence.spi.AdvancedLoadWriteStore} implementation based on
+ * This package contains a {@link org.infinispan.persistence.spi.NonBlockingStore} implementation based on
  * a JDBC database connection.
  *
  * @api.public

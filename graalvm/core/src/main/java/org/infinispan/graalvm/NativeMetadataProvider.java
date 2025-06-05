@@ -227,9 +227,7 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
                   org.infinispan.configuration.serializing.ConfigurationSerializer.class,
                   org.infinispan.distribution.ch.ConsistentHashFactory.class,
                   org.infinispan.factories.impl.ModuleMetadataBuilder.class,
-                  org.infinispan.persistence.spi.NonBlockingStore.class,
-                  org.infinispan.persistence.spi.CacheLoader.class,
-                  org.infinispan.persistence.spi.CacheWriter.class
+                  org.infinispan.persistence.spi.NonBlockingStore.class
             )
             .addImplementations(true, false,
                   org.infinispan.util.logging.events.Messages.class,

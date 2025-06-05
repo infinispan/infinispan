@@ -13,6 +13,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
@@ -20,6 +21,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Version;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -39,9 +41,9 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration;
-import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -187,28 +189,36 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
     * Used by testStoreWithNoConfigureBy, although the cache is not really created.
     */
    @SuppressWarnings("unused")
-   public static class GenericLoader implements CacheLoader {
+   public static class GenericLoader implements NonBlockingStore<Object, Object> {
 
       @Override
-      public void init(InitializationContext ctx) {
+      public CompletionStage<Void> start(InitializationContext ctx) {
+         return CompletableFutures.completedNull();
       }
 
       @Override
-      public MarshallableEntry loadEntry(Object key) {
-         return null;
+      public CompletionStage<Void> stop() {
+         return CompletableFutures.completedNull();
       }
 
       @Override
-      public boolean contains(Object key) {
-         return false;
+      public CompletionStage<MarshallableEntry<Object, Object>> load(int segment, Object key) {
+         return CompletableFutures.completedNull();
       }
 
       @Override
-      public void start() {
+      public CompletionStage<Void> write(int segment, MarshallableEntry<?, ?> entry) {
+         return CompletableFutures.completedNull();
       }
 
       @Override
-      public void stop() {
+      public CompletionStage<Boolean> delete(int segment, Object key) {
+         return CompletableFutures.completedFalse();
+      }
+
+      @Override
+      public CompletionStage<Void> clear() {
+         return CompletableFutures.completedNull();
       }
    }
 

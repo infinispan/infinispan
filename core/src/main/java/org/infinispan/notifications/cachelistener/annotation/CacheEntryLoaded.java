@@ -8,11 +8,10 @@ import java.lang.annotation.Target;
 import org.infinispan.notifications.IncorrectListenerException;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent;
-import org.infinispan.persistence.spi.CacheLoader;
 
 /**
  * This annotation should be used on methods that need to be notified when a cache entry is loaded from a {@link
- * CacheLoader}.
+ * org.infinispan.persistence.spi.NonBlockingStore}.
   * Methods annotated with this annotation should be public and take in a single parameter, a {@link
  * CacheEntryLoadedEvent} otherwise an {@link IncorrectListenerException} will be thrown when registering your cache
  * listener.

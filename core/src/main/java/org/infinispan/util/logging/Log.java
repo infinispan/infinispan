@@ -2420,4 +2420,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "View event rejected. The installed view id '%s' is newer than the received view: %s", id = 711)
    void rejectOutdatedView(int viewId, String newView);
+
+   @LogMessage(level = WARN)
+   @Message(value = "The single file store has been deprecated. Please use the Soft-Index File Store instead", id = 712)
+   void singleFileStoreDeprecated();
 }
