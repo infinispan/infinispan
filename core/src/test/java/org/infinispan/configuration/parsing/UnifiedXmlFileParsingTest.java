@@ -28,7 +28,6 @@ import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.EncodingConfiguration;
@@ -573,9 +572,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertFalse(c.clustering().stateTransfer().fetchInMemoryState());
             assertEquals(60000, c.clustering().stateTransfer().timeout());
             assertEquals(10000, c.clustering().stateTransfer().chunkSize());
-            ClusterLoaderConfiguration clusterLoader = getStoreConfiguration(c, ClusterLoaderConfiguration.class);
-            assertEquals(35000, clusterLoader.remoteCallTimeout());
-            assertFalse(clusterLoader.preload());
             assertFalse(c.indexing().enabled());
 
             c = getConfiguration(holder, "dist");

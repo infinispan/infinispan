@@ -1517,11 +1517,6 @@
 
   <xs:complexType name="persistence">
     <xs:choice minOccurs="0">
-      <xs:element name="cluster-loader" type="tns:cluster-loader">
-        <xs:annotation>
-          <xs:documentation>Defines a cluster cache loader.</xs:documentation>
-        </xs:annotation>
-      </xs:element>
       <xs:element name="store" type="tns:custom-store">
         <xs:annotation>
           <xs:documentation>Defines a custom cache store.</xs:documentation>
@@ -1931,21 +1926,6 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-  </xs:complexType>
-
-  <xs:complexType name="cluster-loader">
-    <xs:complexContent>
-      <xs:extension base="tns:loader">
-        <xs:attribute name="remote-timeout" type="xs:string" default="${ClusterLoader.remote-timeout}">
-          <xs:annotation>
-            <xs:documentation>
-              The timeout when performing remote calls.
-              You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-      </xs:extension>
-    </xs:complexContent>
   </xs:complexType>
 
   <xs:complexType name="store" abstract="true">
