@@ -35,7 +35,6 @@ import org.infinispan.commons.util.concurrent.FileSystemLock;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.interceptors.impl.ContainerFullException;
 import org.infinispan.jmx.JmxDomainConflictException;
@@ -834,18 +833,18 @@ public interface Log extends BasicLogger {
    //@Message(value = "Unknown response value [%s]. Expected [%s]", id = 221)
    //void unexpectedResponse(String actual, String expected);
 
-   @Message(value = "Custom interceptor missing class", id = 222)
-   CacheConfigurationException customInterceptorMissingClass();
+//   @Message(value = "Custom interceptor missing class", id = 222)
+//   CacheConfigurationException customInterceptorMissingClass();
 
-   @LogMessage(level = WARN)
-   @Message(value = "Custom interceptor '%s' does not extend BaseCustomInterceptor, which is recommended", id = 223)
-   void suggestCustomInterceptorInheritance(String customInterceptorClassName);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Custom interceptor '%s' does not extend BaseCustomInterceptor, which is recommended", id = 223)
+//   void suggestCustomInterceptorInheritance(String customInterceptorClassName);
 
-   @Message(value = "Custom interceptor '%s' specifies more than one position", id = 224)
-   CacheConfigurationException multipleCustomInterceptorPositions(String customInterceptorClassName);
+//   @Message(value = "Custom interceptor '%s' specifies more than one position", id = 224)
+//   CacheConfigurationException multipleCustomInterceptorPositions(String customInterceptorClassName);
 
-   @Message(value = "Custom interceptor '%s' doesn't specify a position", id = 225)
-   CacheConfigurationException missingCustomInterceptorPosition(String customInterceptorClassName);
+//   @Message(value = "Custom interceptor '%s' doesn't specify a position", id = 225)
+//   CacheConfigurationException missingCustomInterceptorPosition(String customInterceptorClassName);
 
 //   @Message(value = "Error while initializing SSL context", id = 226)
 //   CacheConfigurationException sslInitializationException(@Cause Throwable e);
@@ -1098,8 +1097,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to acquire lock after %s for key %s and requestor %s. Lock is held by %s", id = 299)
    TimeoutException unableToAcquireLock(String timeout, Object key, Object requestor, Object owner);
 
-   @Message(value = "There was an exception while processing retrieval of entry values", id = 300)
-   CacheException exceptionProcessingEntryRetrievalValues(@Cause Throwable cause);
+//   @Message(value = "There was an exception while processing retrieval of entry values", id = 300)
+//   CacheException exceptionProcessingEntryRetrievalValues(@Cause Throwable cause);
 
 //   @Message(value = "Iterator response for identifier %s encountered unexpected exception", id = 301)
 //   CacheException exceptionProcessingIteratorResponse(UUID identifier, @Cause Throwable cause);
@@ -1247,8 +1246,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Enabling the L1 cache is not supported when using EXCEPTION based eviction.", id = 352)
    CacheConfigurationException l1NotValidWithExpirationEviction();
 
-   @Message(value = "Cannot define both interceptor class (%s) and interceptor instance (%s)", id = 354)
-   CacheConfigurationException interceptorClassAndInstanceDefined(String customInterceptorClassName, String customInterceptor);
+//   @Message(value = "Cannot define both interceptor class (%s) and interceptor instance (%s)", id = 354)
+//   CacheConfigurationException interceptorClassAndInstanceDefined(String customInterceptorClassName, String customInterceptor);
 
    @Message(value = "Unable to instantiate loader/writer instance for StoreConfiguration %s", id = 355)
    CacheConfigurationException unableToInstantiateClass(Class<?> storeConfigurationClass);
@@ -1417,9 +1416,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Caught exception while invoking a cache manager listener!", id = 405)
    void failedInvokingCacheManagerListener(@Cause Throwable e);
 
-   @LogMessage(level = WARN)
-   @Message(value = "The replication queue is no longer supported since version 9.0. Attribute %s on line %d will be ignored.", id = 406)
-   void ignoredReplicationQueueAttribute(String attributeName, int line);
+//   @LogMessage(level = WARN)
+//   @Message(value = "The replication queue is no longer supported since version 9.0. Attribute %s on line %d will be ignored.", id = 406)
+//   void ignoredReplicationQueueAttribute(String attributeName, int line);
 
    @Message(value = "Extraneous members %s are attempting to join cache %s, as they were not members of the persisted state", id = 407)
    CacheJoinException extraneousMembersJoinRestoredCache(List<Address> extraneousMembers, String cacheName);
@@ -1427,8 +1426,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Node %s with persistent state attempting to join cache %s on cluster without state", id = 408)
    CacheJoinException nodeWithPersistentStateJoiningClusterWithoutState(Address joiner, String cacheName);
 
-   @Message(value = "Node %s without persistent state attempting to join cache %s on cluster with state", id = 409)
-   CacheJoinException nodeWithoutPersistentStateJoiningCacheWithState(Address joiner, String cacheName);
+//   @Message(value = "Node %s without persistent state attempting to join cache %s on cluster with state", id = 409)
+//   CacheJoinException nodeWithoutPersistentStateJoiningCacheWithState(Address joiner, String cacheName);
 
    @Message(value = "Node %s attempting to join cache %s with incompatible state", id = 410)
    CacheJoinException nodeWithIncompatibleStateJoiningCache(Address joiner, String cacheName);
@@ -1474,8 +1473,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Failed waiting for topology %d", id = 422)
    TimeoutException failedWaitingForTopology(int requestTopologyId);
 
-   @Message(value = "Duplicate id found! AdvancedExternalizer id=%d is shared by another externalizer (%s)", id = 423)
-   CacheConfigurationException duplicateExternalizerIdFound(int externalizerId, String otherExternalizer);
+// @Message(value = "Duplicate id found! AdvancedExternalizer id=%d is shared by another externalizer (%s)", id = 423)
+// CacheConfigurationException duplicateExternalizerIdFound(int externalizerId, String otherExternalizer);
 
    @Message(value = "Memory eviction is enabled, please specify a maximum size or count greater than zero", id = 424)
    CacheConfigurationException invalidEvictionSize();
@@ -1495,8 +1494,8 @@ public interface Log extends BasicLogger {
    @Message(value = "On key %s previous read version (%s) is different from currently read version (%s)", id = 429)
    WriteSkewException writeSkewOnRead(@Param Object key, Object key2, EntryVersion lastVersion, EntryVersion remoteVersion);
 
-   @Message(value = "%s cannot be shared", id = 430)
-   CacheConfigurationException nonSharedStoreConfiguredAsShared(String storeType);
+// @Message(value = "%s cannot be shared", id = 430)
+// CacheConfigurationException nonSharedStoreConfiguredAsShared(String storeType);
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "Unable to validate %s's configuration as the @Store annotation is missing", id = 431)
@@ -1512,15 +1511,15 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Direct usage of the ___defaultcache name to retrieve the default cache is deprecated", id = 434)
 //   void deprecatedDefaultCache();
 
-   @Message(value = "Cache manager initialized with a default cache configuration but without a name for it. Set it in the GlobalConfiguration.", id = 435)
-   CacheConfigurationException defaultCacheConfigurationWithoutName();
+// @Message(value = "Cache manager initialized with a default cache configuration but without a name for it. Set it in the GlobalConfiguration.", id = 435)
+// CacheConfigurationException defaultCacheConfigurationWithoutName();
 
    @Message(value = "Cache '%s' has been requested, but no matching cache configuration exists", id = 436)
    CacheConfigurationException noSuchCacheConfiguration(String name);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Unable to validate '%s' with the implementing store as the @ConfigurationFor annotation is missing", id = 437)
-   void warnConfigurationForAnnotationMissing(String name);
+// @LogMessage(level = WARN)
+// @Message(value = "Unable to validate '%s' with the implementing store as the @ConfigurationFor annotation is missing", id = 437)
+// void warnConfigurationForAnnotationMissing(String name);
 
    @Message(value = "Cache with name '%s' is defined more than once!", id = 438)
    CacheConfigurationException duplicateCacheName(String name);
@@ -1605,9 +1604,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to retrieve conflicts as StateTransfer is currently in progress for cache '%s'", id = 463)
    IllegalStateException getConflictsStateTransferInProgress(String cacheName);
 
-   @LogMessage(level = WARN)
-   @Message(value = "The partition handling 'enabled' attribute has been deprecated. Please update your configuration to use 'when-split' instead", id = 464)
-   void partitionHandlingConfigurationEnabledDeprecated();
+//   @LogMessage(level = WARN)
+//   @Message(value = "The partition handling 'enabled' attribute has been deprecated. Please update your configuration to use 'when-split' instead", id = 464)
+//   void partitionHandlingConfigurationEnabledDeprecated();
 
 //   @Message(value = "Keys '%s' are not available. No owners exist in this partition", id = 465)
 //   AvailabilityException degradedModeNoOwnersExist(Object key);
@@ -1785,8 +1784,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Conflict resolution cancelled for cache %s with topology %s", id = 525)
    void cancelledConflictResolution(String cacheName, CacheTopology currentTopology);
 
-   @Message(value = "Maximum startup attempts exceeded for store %s", id = 527)
-   PersistenceException storeStartupAttemptsExceeded(String storeName, @Cause Throwable t);
+//   @Message(value = "Maximum startup attempts exceeded for store %s", id = 527)
+//   PersistenceException storeStartupAttemptsExceeded(String storeName, @Cause Throwable t);
 
    @Message(value = "Cannot acquire lock %s as this partition is DEGRADED", id = 528)
    AvailabilityException degradedModeLockUnavailable(Object key);
@@ -1794,12 +1793,12 @@ public interface Log extends BasicLogger {
    @Message(value = "Class '%s' blocked by deserialization allow list. Include the class name in the server allow list to authorize.", id = 529)
    CacheException errorDeserializing(String className);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Unsupported async cache mode '%s' for transactional caches, forcing %s", id = 530)
-   void unsupportedAsyncCacheMode(CacheMode unsupportedCacheMode, CacheMode forcedCacheMode);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Unsupported async cache mode '%s' for transactional caches, forcing %s", id = 530)
+//   void unsupportedAsyncCacheMode(CacheMode unsupportedCacheMode, CacheMode forcedCacheMode);
 
-   @Message(value = "Store or loader %s must implement SegmentedLoadWriteStore or its config must extend AbstractSegmentedStoreConfiguration if configured as segmented", id = 531)
-   CacheConfigurationException storeNotSegmented(Class<?> implementedClass);
+//   @Message(value = "Store or loader %s must implement SegmentedLoadWriteStore or its config must extend AbstractSegmentedStoreConfiguration if configured as segmented", id = 531)
+//   CacheConfigurationException storeNotSegmented(Class<?> implementedClass);
 
    @Message(value = "Invalid cache loader configuration for '%s'.  If a cache loader is configured with passivation, the cache loader cannot be shared in a cluster!", id = 532)
    CacheConfigurationException passivationStoreCannotBeShared(String name);
@@ -1807,8 +1806,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Content '%s (MediaType: '%s') cannot be converted to '%s'", id = 533)
    EncodingException cannotConvertContent(Object content, MediaType contentType, MediaType destination, @Cause Throwable e);
 
-   @Message(value = "Grouping requires OBJECT storage type but was: %s", id = 534)
-   CacheConfigurationException groupingOnlyCompatibleWithObjectStorage(StorageType storageType);
+//   @Message(value = "Grouping requires OBJECT storage type but was: %s", id = 534)
+//   CacheConfigurationException groupingOnlyCompatibleWithObjectStorage(StorageType storageType);
 
    @Message(value = "Grouping requires application/x-java-object storage type but was: {key=%s, value=%s}", id = 535)
    CacheConfigurationException groupingOnlyCompatibleWithObjectStorage(MediaType keyMediaType, MediaType valueMediaType);
@@ -1893,9 +1892,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot marshall '%s'", id = 559)
    void cannotMarshall(Class<?> aClass, @Cause Throwable t);
 
-   @LogMessage(level = WARN)
-   @Message(value = "The AdvancedExternalizer configuration has been deprecated and will be removed in the future", id = 560)
-   void advancedExternalizerDeprecated();
+//   @LogMessage(level = WARN)
+//   @Message(value = "The AdvancedExternalizer configuration has been deprecated and will be removed in the future", id = 560)
+//   void advancedExternalizerDeprecated();
 
    @Message(value = "Chunk size must be positive, got %d", id = 561)
    CacheConfigurationException invalidChunkSize(int chunkSize);
@@ -1935,9 +1934,9 @@ public interface Log extends BasicLogger {
    @Description("To back up caches from one site to another the cluster transport uses the JGroups RELAY2 protocol. Add RELAY2 to your cluster transport configuration.")
    CacheConfigurationException crossSiteUnavailable();
 
-   @LogMessage(level = WARN)
-   @Message(value = "index mode attribute is deprecated and should no longer be specified because its value is automatically detected. Most previously supported values are no longer supported. Please check the upgrade guide.", id = 572)
-   void indexModeDeprecated();
+//   @LogMessage(level = WARN)
+//   @Message(value = "index mode attribute is deprecated and should no longer be specified because its value is automatically detected. Most previously supported values are no longer supported. Please check the upgrade guide.", id = 572)
+//   void indexModeDeprecated();
 
    @Message(value = "Cannot recreate persisted configuration for cache '%s' because configuration %n%s%n is incompatible with the existing configuration %n%s", id = 573)
    CacheConfigurationException incompatiblePersistedConfiguration(String cacheName, Configuration configuration, Configuration existing);
@@ -2122,14 +2121,14 @@ public interface Log extends BasicLogger {
    @Description("An attempt was made to initiate cross-site state transfer while the operation was already in progress. Wait for the state transfer operation to complete before initiating a subsequent operation. Alternatively you can cancel the cross-site state transfer operation that is in progress.")
    CacheException xsiteStateTransferAlreadyInProgress(String site);
 
-   @Message(value = "Element '%1$s' has been removed at %3$s. Please use element '%2$s' instead", id = 621)
-   CacheConfigurationException elementRemovedUseOther(String elementName, String newElementName, Location location);
+//   @Message(value = "Element '%1$s' has been removed at %3$s. Please use element '%2$s' instead", id = 621)
+//   CacheConfigurationException elementRemovedUseOther(String elementName, String newElementName, Location location);
 
    @Message(value = "Element '%s' at %s has been removed with no replacement", id = 622)
    CacheConfigurationException elementRemoved(String elementName, Location location);
 
-   @Message(value = "Attribute '%1$s' has been removed at %3$s. Please use attribute '%2$s' instead", id = 623)
-   CacheConfigurationException attributeRemovedUseOther(String attributeName, String newAttributeName, Location location);
+//   @Message(value = "Attribute '%1$s' has been removed at %3$s. Please use attribute '%2$s' instead", id = 623)
+//   CacheConfigurationException attributeRemovedUseOther(String attributeName, String newAttributeName, Location location);
 
    @Message(value = "Attribute '%2$s' of element '%1$s' at '%3$s' has been removed with no replacement", id = 624)
    CacheConfigurationException attributeRemoved(String elementName, String attributeName, Location location);
@@ -2182,9 +2181,9 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Failed to send remove request to remote site(s). Reason: tombstone was lost. Key='%s'", id = 639)
 //   void sendFailMissingTombstone(Object key);
 
-   @LogMessage(level = WARN)
-   @Message(value = "SingleFileStore has been deprecated and will be removed in a future version, replaced by SoftIndexFileStore", id = 640)
-   void warnUsingDeprecatedSingleFileStore();
+//   @LogMessage(level = WARN)
+//   @Message(value = "SingleFileStore has been deprecated and will be removed in a future version, replaced by SoftIndexFileStore", id = 640)
+//   void warnUsingDeprecatedSingleFileStore();
 
    @Message(value = "The transaction %s is already rolled back", id = 641)
    InvalidTransactionException transactionAlreadyRolledBack(GlobalTransaction gtx);
