@@ -7,6 +7,7 @@ import javax.cache.configuration.MutableConfiguration;
 import javax.cache.integration.CacheLoader;
 import javax.cache.integration.CacheWriter;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 
@@ -45,7 +46,7 @@ public class ConfigurationAdapter<K, V> {
    private org.infinispan.configuration.cache.Configuration build(ConfigurationBuilder cb) {
 
       if (c.isStoreByValue())
-         cb.memory().storage(StorageType.BINARY);
+         cb.memory().storage(StorageType.HEAP).encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM);
 
       Factory<CacheLoader<K,V>> cacheLoaderFactory = c.getCacheLoaderFactory();
       if (cacheLoaderFactory != null) {

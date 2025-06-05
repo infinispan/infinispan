@@ -32,7 +32,6 @@ public class LocalCacheStorageTypeTest extends LocalCacheTest {
    public Object[] factory() {
       return new Object[]{
             new LocalCacheStorageTypeTest().withStorageType(StorageType.OFF_HEAP),
-            new LocalCacheStorageTypeTest().withStorageType(StorageType.BINARY),
             new LocalCacheStorageTypeTest().withStorageType(StorageType.HEAP),
       };
    }
