@@ -1,18 +1,17 @@
 package org.infinispan.test.integration.persistence.jdbc.util;
 
-import org.infinispan.configuration.cache.Configuration;
+import java.io.IOException;
+import java.util.Properties;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 
-import java.io.IOException;
-import java.util.Properties;
-
 public class JdbcConfigurationUtil {
 
-    private PooledConnectionFactoryConfigurationBuilder persistenceConfiguration;
+    private PooledConnectionFactoryConfigurationBuilder<?> persistenceConfiguration;
     private final ConfigurationBuilder configurationBuilder;
     public static final String CACHE_NAME = "jdbc";
     public String driverClass;
@@ -22,7 +21,7 @@ public class JdbcConfigurationUtil {
         createPersistenceConfiguration(passivation, preload);
     }
 
-    private JdbcConfigurationUtil createPersistenceConfiguration(boolean passivation, boolean preload) {
+    private void createPersistenceConfiguration(boolean passivation, boolean preload) {
         Properties props = loadDBProperties();
         driverClass = props.getProperty("driver.class");
         configurationBuilder.memory().maxCount(2);
@@ -44,17 +43,17 @@ public class JdbcConfigurationUtil {
                 .username(props.getProperty("db.username"))
                 .password(props.getProperty("db.password"));
         persistenceConfiguration.addProperty("infinispan.jdbc.upsert.disabled", props.getProperty("database.upsert.disabled"));
-        return this;
     }
 
-    public PooledConnectionFactoryConfigurationBuilder getPersistenceConfiguration() {
+    public PooledConnectionFactoryConfigurationBuilder<?> getPersistenceConfiguration() {
         return this.persistenceConfiguration;
     }
 
     public DefaultCacheManager getCacheManager() {
-        Configuration configuration = configurationBuilder.build();
-        GlobalConfigurationBuilder configurationBuilder = new GlobalConfigurationBuilder().nonClusteredDefault().defaultCacheName(CACHE_NAME);
-        return new DefaultCacheManager(configurationBuilder.build(), configuration);
+        ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
+        holder.global().nonClusteredDefault().defaultCacheName(CACHE_NAME);
+        holder.newConfigurationBuilder(CACHE_NAME);
+        return new DefaultCacheManager(holder);
     }
 
     private static Properties loadDBProperties() {
