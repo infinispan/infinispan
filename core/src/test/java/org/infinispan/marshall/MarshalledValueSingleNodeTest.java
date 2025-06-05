@@ -1,5 +1,6 @@
 package org.infinispan.marshall;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
@@ -14,7 +15,7 @@ public class MarshalledValueSingleNodeTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(true);
-      c.invocationBatching().enable().memory().storage(StorageType.BINARY);
+      c.invocationBatching().enable().memory().storage(StorageType.HEAP).encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c);
       cache = cm.getCache();
       return cm;

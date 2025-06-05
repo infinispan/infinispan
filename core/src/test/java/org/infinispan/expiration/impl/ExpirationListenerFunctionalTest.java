@@ -25,10 +25,8 @@ public class ExpirationListenerFunctionalTest extends ExpirationFunctionalTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-            new ExpirationListenerFunctionalTest().cacheMode(CacheMode.LOCAL).withStorage(StorageType.BINARY),
             new ExpirationListenerFunctionalTest().cacheMode(CacheMode.LOCAL).withStorage(StorageType.HEAP),
             new ExpirationListenerFunctionalTest().cacheMode(CacheMode.LOCAL).withStorage(StorageType.OFF_HEAP),
-            new ExpirationListenerFunctionalTest().cacheMode(CacheMode.DIST_SYNC).withStorage(StorageType.BINARY),
             new ExpirationListenerFunctionalTest().cacheMode(CacheMode.DIST_SYNC).withStorage(StorageType.HEAP),
             new ExpirationListenerFunctionalTest().cacheMode(CacheMode.DIST_SYNC).withStorage(StorageType.OFF_HEAP)
       };

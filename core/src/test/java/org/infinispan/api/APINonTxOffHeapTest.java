@@ -20,34 +20,14 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Key;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "api.APINonTxOffHeapTest")
 public class APINonTxOffHeapTest extends APINonTxTest {
 
-   private StorageType storageType;
-
-   public APINonTxOffHeapTest storageType(StorageType storageType) {
-      this.storageType = storageType;
-      return this;
-   }
-
-   @Override
-   protected String parameters() {
-      return "[" + storageType + "]";
-   }
-
-   @Factory
-   public Object[] factory() {
-      return new Object[]{
-            new APINonTxOffHeapTest().storageType(StorageType.OFF_HEAP)
-      };
-   }
-
    @Override
    protected void configure(ConfigurationBuilder builder) {
-      builder.memory().storage(storageType);
+      builder.memory().storage(StorageType.OFF_HEAP);
    }
 
    @Test
@@ -75,11 +55,6 @@ public class APINonTxOffHeapTest extends APINonTxTest {
       assertCacheIsEmpty();
    }
 
-   public void testGetOrDefault() {
-      cache.put("A", "B");
-      assertEquals("K", cache.getOrDefault("Not there", "K"));
-   }
-
    public void testMerge() {
       cache.put("A", "B");
 
@@ -89,7 +64,7 @@ public class APINonTxOffHeapTest extends APINonTxTest {
 
       // remove if null value after remapping
       cache.merge("A", "C", (oldValue, newValue) -> null);
-      assertEquals(null, cache.get("A"));
+      assertNull(cache.get("A"));
 
       // put if absent
       cache.merge("F", "42", (oldValue, newValue) -> "" + oldValue + newValue);

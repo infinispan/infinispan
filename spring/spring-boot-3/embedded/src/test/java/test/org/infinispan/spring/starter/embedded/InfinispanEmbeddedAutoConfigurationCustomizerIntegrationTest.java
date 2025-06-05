@@ -80,7 +80,7 @@ public class InfinispanEmbeddedAutoConfigurationCustomizerIntegrationTest {
       @Bean
       public InfinispanConfigurationCustomizer configurationCustomizer() {
          return builder -> {
-            builder.memory().whenFull(EvictionStrategy.REMOVE);
+            builder.memory().whenFull(EvictionStrategy.REMOVE).maxCount(1000L);
          };
       }
    }
