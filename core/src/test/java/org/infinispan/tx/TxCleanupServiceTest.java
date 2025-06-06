@@ -12,15 +12,16 @@ import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
-import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -44,8 +45,9 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
    }
 
    public void testTransactionStateNotLost() throws Throwable {
-      final ControlledCommandFactory ccf = ControlledCommandFactory.registerControlledCommandFactory(cache(1), VersionedCommitCommand.class);
-      ccf.gate.close();
+      CheckPoint checkPoint = new CheckPoint();
+      checkPoint.triggerForever(Mocks.AFTER_RELEASE);
+      Mocks.blockInboundCacheRpcCommand(advancedCache(1), checkPoint, c -> c.getClass().equals(VersionedCommitCommand.class));
 
       final Map<Object, EmbeddedTransaction> keys2Tx = new HashMap<>(TX_COUNT);
 
@@ -68,7 +70,7 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
       });
 
       //now wait for all the commits to block
-      eventuallyEquals(TX_COUNT, ccf.blockTypeCommandsReceived::get);
+      checkPoint.trigger(Mocks.BEFORE_INVOCATION, TX_COUNT);
 
       log.tracef("Viewid middle %s", viewId);
 
@@ -97,7 +99,7 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
       eventuallyEquals(migratedTx.size(), () -> TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount());
 
       log.trace("Releasing the gate");
-      ccf.gate.open();
+      checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
 
       future.get(10, TimeUnit.SECONDS);
 

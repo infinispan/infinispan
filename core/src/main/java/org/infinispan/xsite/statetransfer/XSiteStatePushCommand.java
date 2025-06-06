@@ -5,13 +5,13 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.BlockingManager;
 
 /**
  * Wraps the state to be sent to another site
@@ -22,7 +22,7 @@ import org.infinispan.util.ByteString;
 @ProtoTypeId(ProtoStreamTypeIds.XSITE_STATE_PUSH_COMMAND)
 public class XSiteStatePushCommand extends BaseRpcCommand {
 
-   private List<XSiteState> chunk;
+   private final List<XSiteState> chunk;
 
    @ProtoFactory
    public XSiteStatePushCommand(ByteString cacheName, List<XSiteState> chunk) {
@@ -36,20 +36,17 @@ public class XSiteStatePushCommand extends BaseRpcCommand {
    }
 
    @Override
-   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
-      XSiteStateConsumer stateConsumer = componentRegistry.getXSiteStateTransferManager().running().getStateConsumer();
-      stateConsumer.applyState(chunk);
-      return CompletableFutures.completedNull();
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) {
+      BlockingManager bm = componentRegistry.getGlobalComponentRegistry().getComponent(BlockingManager.class);
+      return bm.runBlocking(() -> {
+         XSiteStateConsumer stateConsumer = componentRegistry.getXSiteStateTransferManager().running().getStateConsumer();
+         stateConsumer.applyState(chunk);
+      }, "xsite-state-push");
    }
 
    @Override
    public boolean isReturnValueExpected() {
       return false;
-   }
-
-   @Override
-   public boolean canBlock() {
-      return true;
    }
 
    @Override
