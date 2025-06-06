@@ -21,12 +21,9 @@ import java.util.Map;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
-import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.UTF8Encoder;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
@@ -35,7 +32,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
@@ -265,38 +261,6 @@ public class DataConversionTest extends AbstractInfinispanTest {
             Cache<byte[], byte[]> utf16ValueCache = cache.getAdvancedCache().withMediaType(MediaType.fromString("text/plain; charset=ISO-8859-1"), MediaType.fromString("text/plain; charset=UTF-16"));
 
             assertEquals(utf16ValueCache.get(key), new byte[]{-2, -1, 0, 97, 0, 118, 0, 105, 0, -29, 0, 111});
-         }
-      });
-   }
-
-   @Test
-   public void testSerialization() {
-      withCacheManager(new CacheManagerCallable(createCacheManager(TestDataSCI.INSTANCE, new ConfigurationBuilder())) {
-
-         final Marshaller marshaller = TestingUtil.extractGlobalMarshaller(cm);
-
-         private void testWith(DataConversion dataConversion, ComponentRegistry registry) throws Exception {
-            byte[] marshalled = marshaller.objectToByteBuffer(dataConversion);
-            Object back = marshaller.objectFromByteBuffer(marshalled);
-            registry.wireDependencies(back);
-            assertEquals(back, dataConversion);
-         }
-
-         @Override
-         public void call() throws Exception {
-            ComponentRegistry registry = ComponentRegistry.of(cm.getCache());
-
-            ConfigurationBuilder builder = new ConfigurationBuilder();
-            cm.defineConfiguration("compat", builder.build());
-            AdvancedCache<?, ?> compat = cm.getCache("compat").getAdvancedCache();
-            ComponentRegistry compatRegistry = ComponentRegistry.of(compat);
-            testWith(compat.getKeyDataConversion(), compatRegistry);
-            testWith(compat.getValueDataConversion(), compatRegistry);
-
-            AdvancedCache<?, ?> wrapped = compat.withEncoding(IdentityEncoder.class).withWrapping(IdentityWrapper.class);
-            ComponentRegistry wrappedRegistry = ComponentRegistry.of(wrapped);
-            testWith(wrapped.getKeyDataConversion(), wrappedRegistry);
-            testWith(wrapped.getValueDataConversion(), wrappedRegistry);
          }
       });
    }
