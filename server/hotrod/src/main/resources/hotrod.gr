@@ -95,7 +95,10 @@ operation returns HotRodOperation
    : opCode { HotRodOperation.fromRequestOpCode(hr2x_byte) }
    ;
 opCode: byte;
-cacheName: string[bytesAvailable(buf)];
+actualCacheName: string[bytesAvailable(buf)];
+cacheName returns String
+   : actualCacheName { checkCacheReady(actualCacheName); }
+   ;
 flags: vInt;
 intelligence: byte;
 topologyId: vInt;
