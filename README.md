@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/github/license/quarkusio/quarkus?style=for-the-badge&logo=apache)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Project Chat](https://img.shields.io/badge/zulip-join_chat-brightgreen.svg?style=for-the-badge&logo=zulip)](https://infinispan.zulipchat.com/)
 
-# Infinispan, In-Memory Distributed Data Store #
+# 1 Infinispan, In-Memory Distributed Data Store #
 
 Infinispan is an open-source in-memory data grid that offers flexible deployment options and 
 robust capabilities for storing, managing, and processing data. 
