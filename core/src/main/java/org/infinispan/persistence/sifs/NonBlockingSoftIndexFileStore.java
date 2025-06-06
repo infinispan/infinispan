@@ -266,9 +266,15 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                migrateFromOldFormat(oldFileProvider);
                migrateData = true;
             } else if (index.load()) {
-               log.debug("Not building the index - loaded from persisted state");
+               long maxSeq = index.getMaxSeqId();
                try {
-                  maxSeqId.set(index.getMaxSeqId());
+                  if (maxSeq == -1) {
+                     log.debug("Maximum sequence id not present - recalculating");
+                     maxSeq = index.getOrCalculateMaxSeqId();
+                  }
+                  log.debug("Not building the index - loaded from persisted state");
+
+                  maxSeqId.set(maxSeq);
                } catch (IOException e) {
                   log.debug("Failed to load index. Rebuilding it.");
                   buildIndex(maxSeqId);
