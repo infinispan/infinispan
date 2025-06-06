@@ -140,7 +140,7 @@ jobs:
           TARGET_BRANCH: ${{ needs.get-info.outputs.target-branch }}
         id: maven-test
         shell: bash
-        run: >
+        run: |
           PROFILES="native"
           if [ -n "$HIBERNATE_MATRIX" ]; then
             PROFILES="$PROFILES,hibernate-matrix"
@@ -150,12 +150,12 @@ jobs:
           # Only for 14.0.x branch we use special settings
           if [ "$TARGET_BRANCH" == "14.0.x" ]; then
             echo "Using Maven settings for 14.0.x branch"
-            ./mvnw -maven-settings.xml verify -V -B -e -DrerunFailingTestsCount=2
+            ./mvnw -maven-settings.xml verify -V -B -e -DrerunFailingTestsCount=2 \
             -Dmaven.test.failure.ignore=true -Dansi.strip=true -P${PROFILES} \
             -Dgithub.action=true
           else
             echo "Using Maven settings for NON 14.0.x branch"
-            ./mvnw verify -V -B -e -DrerunFailingTestsCount=2
+            ./mvnw verify -V -B -e -DrerunFailingTestsCount=2 \
             -Dmaven.test.failure.ignore=true -Dansi.strip=true -P${PROFILES},jacoco \
             -Dorg.infinispan.test.server.extension.libs=org.jacoco:org.jacoco.agent:0.8.12:runtime \
             -Dgithub.action=true
