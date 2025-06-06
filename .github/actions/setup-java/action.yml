@@ -6,10 +6,6 @@ inputs:
     description: "GPG private key for signing artifacts"
     required: false
     default: ""
-  java-version:
-    description: "Java version to use"
-    required: true
-    default: "21"
 
 runs:
   using: composite
@@ -17,7 +13,7 @@ runs:
     - name: Setup Java
       uses: actions/setup-java@v4
       with:
-        java-version: ${{ inputs.java-version }}
+        java-version: 21
         distribution: temurin
         server-id: central
         server-username: MAVEN_USERNAME
