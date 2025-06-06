@@ -23,6 +23,7 @@ import org.infinispan.commons.graalvm.Jandex;
 import org.infinispan.commons.graalvm.ReflectionProcessor;
 import org.infinispan.commons.graalvm.ReflectiveClass;
 import org.infinispan.commons.graalvm.Resource;
+import org.infinispan.distribution.ch.impl.ConsistentHashFactory;
 import org.infinispan.notifications.Listener;
 import org.jboss.jandex.IndexView;
 import org.jgroups.Version;
@@ -225,7 +226,7 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
                   org.infinispan.configuration.cache.AbstractModuleConfigurationBuilder.class,
                   org.infinispan.configuration.cache.StoreConfigurationBuilder.class,
                   org.infinispan.configuration.serializing.ConfigurationSerializer.class,
-                  org.infinispan.distribution.ch.ConsistentHashFactory.class,
+                  ConsistentHashFactory.class,
                   org.infinispan.factories.impl.ModuleMetadataBuilder.class,
                   org.infinispan.persistence.spi.NonBlockingStore.class
             )
