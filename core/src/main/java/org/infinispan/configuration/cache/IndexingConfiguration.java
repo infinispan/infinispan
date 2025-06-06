@@ -112,17 +112,6 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
       return attributes.attribute(INDEXED_ENTITIES).get();
    }
 
-   /**
-    * Check if the indexes can be shared. Currently no index can be shared, so it always returns false. sharing.
-    *
-    * @return always false, starting with version 11.0
-    * @deprecated Since 11.0 with no replacement; to be removed in next major version.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public final boolean indexShareable() {
-      return false;
-   }
-
    public IndexReaderConfiguration reader() {
       return readerConfiguration;
    }
