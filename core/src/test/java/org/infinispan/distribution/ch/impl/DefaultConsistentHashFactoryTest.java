@@ -22,6 +22,8 @@ import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.jgroups.util.ExtendedUUID;
+import org.jgroups.util.Util;
 import org.testng.annotations.Test;
 
 /**
@@ -54,7 +56,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       for (int nn : NUM_NODES) {
          List<Address> nodes = new ArrayList<>(nn);
          for (int j = 0; j < nn; j++) {
-            nodes.add(JGroupsAddress.random());
+            nodes.add(createAddress(j));
          }
 
          for (int ns : NUM_SEGMENTS) {
@@ -74,6 +76,12 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
             }
          }
       }
+   }
+
+   private Address createAddress(int index) {
+      ExtendedUUID euuid = new ExtendedUUID(0, index);
+      euuid.put(new byte[] { 'v' }, Util.stringToBytes("0.0.0"));
+      return JGroupsAddress.fromExtendedUUID(euuid);
    }
 
    private void testConsistentHashModifications(ConsistentHashFactory<DefaultConsistentHash> chf,
@@ -110,7 +118,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
             newMembers.remove(indexToRemove);
          }
          for (int k = 0; k < nodesToAdd; k++) {
-            Address address = JGroupsAddress.random();
+            Address address = createAddress(nodeIndex++);
             newMembers.add(address);
             if (newCapacityFactors != null) {
                newCapacityFactors.put(address, capacityFactors.get(baseMembers.get(k % baseMembers.size())));
