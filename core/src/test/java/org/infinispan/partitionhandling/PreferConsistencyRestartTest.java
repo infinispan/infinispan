@@ -63,6 +63,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
 
       // Cache still degraded.
       ctm = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
+      eventuallyClusterTopologyCoordinator(0);
       assertThat(ctm.getAvailabilityMode(CACHE_NAME)).isEqualTo(DEGRADED_MODE);
 
       // The previous nodes join now.
@@ -111,6 +112,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
 
       // Cache still degraded.
       ctm = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
+      eventuallyClusterTopologyCoordinator(0);
       assertThat(ctm.getAvailabilityMode(CACHE_NAME)).isEqualTo(DEGRADED_MODE);
 
       // Add extraneous nodes.
@@ -155,6 +157,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
 
       // The cache is now in degraded mode.
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
+      eventuallyClusterTopologyCoordinator(0);
       assertThat(ctm.getAvailabilityMode(defaultCacheName)).isEqualTo(DEGRADED_MODE);
 
       // Previous coordinator joins.
@@ -169,6 +172,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
 
       // And the cache is still in degraded mode.
       ctm = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
+      eventuallyClusterTopologyCoordinator(0);
       assertThat(ctm.getAvailabilityMode(defaultCacheName)).isEqualTo(DEGRADED_MODE);
 
       // Add all members back.
@@ -180,6 +184,11 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
 
       // The UUID mapping recovered successfully.
       checkPersistentUUIDMatch(addressMappings);
+   }
+
+   private void eventuallyClusterTopologyCoordinator(int index) {
+      ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager(index), ClusterTopologyManager.class);
+      eventually(() -> ctm.getStatus() == ClusterTopologyManager.ClusterManagerStatus.COORDINATOR);
    }
 
    public void testCrashBeforeRecover() throws Exception {
