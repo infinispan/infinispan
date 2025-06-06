@@ -19,6 +19,7 @@ import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.distribution.TriangleDistributionInterceptor;
 import org.infinispan.remoting.RemoteException;
@@ -56,7 +57,8 @@ public class TriangleExceptionDuringMarshallingTest extends MultipleCacheManager
       ControlledConsistentHashFactory<?> chf =
             new ControlledConsistentHashFactory.Default(new int[][]{{0, 1}, {1, 2}, {2, 0}});
       cacheBuilder.clustering().cacheMode(CacheMode.DIST_SYNC)
-                  .hash().numSegments(NUM_SEGMENTS).consistentHashFactory(chf);
+                  .hash().numSegments(NUM_SEGMENTS);
+      cacheBuilder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(chf);
 
       createCluster(globalBuilder, cacheBuilder, 3);
 

@@ -86,8 +86,7 @@
             <file-store path="/tmp/Another-FileCacheStore-Location" />
          </persistence>
       </local-cache>
-      <distributed-cache name="dist" mode="SYNC" owners="3" l1-lifespan="600000" l1-cleanup-interval="1200"
-                         consistent-hash-factory="org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory">
+      <distributed-cache name="dist" mode="SYNC" owners="3" l1-lifespan="600000" l1-cleanup-interval="1200">
          <state-transfer timeout="120000" />
       </distributed-cache>
       <distributed-cache name="dist_with_capacity_factors" mode="SYNC" owners="3" segments="1000" capacity-factor="0" l1-lifespan="600000">

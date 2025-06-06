@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.ConsistentHashFactory;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheStatusResponse;

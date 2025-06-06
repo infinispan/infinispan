@@ -11,6 +11,7 @@ import java.util.List;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -88,7 +89,7 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
    private void testNodeCrashedBeforeStFinished(final int a0, final int a1, final int c0, final int c1) throws Exception {
 
       cchf.setOwnerIndexes(new int[][]{{a0, a1}, {a1, c0}, {c0, c1}, {c1, a0}});
-      configBuilder.clustering().hash().consistentHashFactory(cchf);
+      configBuilder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(cchf);
       createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, configBuilder, 4);
       waitForClusterToForm();
 

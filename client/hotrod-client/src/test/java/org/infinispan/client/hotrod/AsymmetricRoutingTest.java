@@ -18,6 +18,7 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -50,11 +51,11 @@ public class AsymmetricRoutingTest extends HitsAwareCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       defaultBuilder = defaultCacheConfigurationBuilder();
       distOneBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
-      distOneBuilder.clustering().hash().numOwners(1).numSegments(1)
-            .consistentHashFactory(new ControlledConsistentHashFactory.Default(0));
+      distOneBuilder.clustering().hash().numOwners(1).numSegments(1);
+      distOneBuilder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(new ControlledConsistentHashFactory.Default(0));
       distTwoBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
-      distTwoBuilder.clustering().hash().numOwners(1).numSegments(1)
-            .consistentHashFactory(new ControlledConsistentHashFactory.Default(1));
+      distTwoBuilder.clustering().hash().numOwners(1).numSegments(1);
+      distTwoBuilder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(new ControlledConsistentHashFactory.Default(1));
 
       server1 = addHotRodServer();
       server2 = addHotRodServer();

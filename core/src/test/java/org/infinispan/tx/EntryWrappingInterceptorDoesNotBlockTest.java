@@ -28,6 +28,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commons.TimeoutException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.functional.FunctionalMap;
@@ -93,7 +94,8 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
    protected void createCacheManagers() throws Throwable {
       chFactory = new ControlledConsistentHashFactory.Default(new int[][]{{0, 1}, {0, 2}});
       cb = new ConfigurationBuilder();
-      cb.clustering().cacheMode(CacheMode.DIST_SYNC).hash().consistentHashFactory(chFactory).numSegments(2);
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numSegments(2);
+      cb.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(chFactory);
       cb.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, cb, 3);
    }

@@ -32,7 +32,6 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
-import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.threads.AbstractThreadPoolExecutorFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
@@ -563,7 +562,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(600000, c.clustering().l1().lifespan());
       assertEquals(120000, c.clustering().stateTransfer().timeout());
       assertEquals(1200, c.clustering().l1().cleanupTaskFrequency());
-      assertTrue(c.clustering().hash().consistentHashFactory() instanceof DefaultConsistentHashFactory);
       assertEquals(3, c.clustering().hash().numOwners());
       assertTrue(c.clustering().l1().enabled());
 
@@ -571,7 +569,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(CacheMode.DIST_SYNC, c.clustering().cacheMode());
       assertEquals(600000, c.clustering().l1().lifespan());
       assertEquals(120000, c.clustering().stateTransfer().timeout());
-      assertNull(c.clustering().hash().consistentHashFactory());
       assertEquals(3, c.clustering().hash().numOwners());
       assertTrue(c.clustering().l1().enabled());
       assertEquals(0.0f, c.clustering().hash().capacityFactor());

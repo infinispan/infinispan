@@ -10,6 +10,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -38,7 +39,8 @@ public class ForceSyncAsyncFlagsTest extends MultipleCacheManagersTest {
 
    public void testForceAsyncFlagUsage() throws Exception {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      builder.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
+      builder.clustering().hash().numSegments(1);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
       createClusteredCaches(2, ReplicatedControlledConsistentHashFactory.SCI.INSTANCE, "replSync", builder);
 
       AdvancedCache<String, String> cache1 = this.<String, String>cache(0, "replSync").getAdvancedCache();
@@ -64,7 +66,8 @@ public class ForceSyncAsyncFlagsTest extends MultipleCacheManagersTest {
 
    public void testForceSyncFlagUsage() throws Exception {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, false);
-      builder.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
+      builder.clustering().hash().numSegments(1);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
       createClusteredCaches(2, ReplicatedControlledConsistentHashFactory.SCI.INSTANCE, "replAsync", builder);
 
       AdvancedCache<String, String> cache1 = this.<String, String>cache(0, "replAsync").getAdvancedCache();

@@ -19,6 +19,7 @@ import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand
 import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.MagicKey;
@@ -56,7 +57,8 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       consistentHashFactory = new ControlledConsistentHashFactory.Default(new int[][]{{1, 2, 3}, {1, 2, 3}});
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(3);
-      builder.clustering().hash().numSegments(2).consistentHashFactory(consistentHashFactory);
+      builder.clustering().hash().numSegments(2);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(consistentHashFactory);
       createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, builder, 4);
       waitForClusterToForm();
    }

@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.distribution.DistributionTestHelper;
@@ -67,8 +68,8 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
    protected ConfigurationBuilder buildConfiguration() {
       ConfigurationBuilder builder = super.buildConfiguration();
       builder.clustering().hash().
-            consistentHashFactory(factory).
             numSegments(1);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(factory);
       return builder;
    }
 

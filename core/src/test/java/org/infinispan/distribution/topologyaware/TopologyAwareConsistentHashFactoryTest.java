@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
-import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.ConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.OwnershipStatistics;
 import org.infinispan.distribution.ch.impl.TopologyAwareConsistentHashFactory;

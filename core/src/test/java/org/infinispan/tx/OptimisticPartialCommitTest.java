@@ -12,6 +12,8 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -24,7 +26,6 @@ import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ControlledConsistentHashFactory;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
@@ -44,7 +45,8 @@ public class OptimisticPartialCommitTest extends MultipleCacheManagersTest {
       controlledCHFactory = new ControlledConsistentHashFactory.Default(new int[][]{{1, 2}, {2, 3}});
       ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       configuration.clustering().cacheMode(CacheMode.DIST_SYNC);
-      configuration.clustering().hash().numSegments(2).numOwners(2).consistentHashFactory(controlledCHFactory);
+      configuration.clustering().hash().numSegments(2).numOwners(2);
+      configuration.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(controlledCHFactory);
       configuration.transaction().lockingMode(LockingMode.OPTIMISTIC)
             .locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, configuration, 4);

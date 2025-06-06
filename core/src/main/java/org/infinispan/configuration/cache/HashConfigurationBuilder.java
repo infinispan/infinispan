@@ -1,7 +1,6 @@
 package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.HashConfiguration.CAPACITY_FACTOR;
-import static org.infinispan.configuration.cache.HashConfiguration.CONSISTENT_HASH_FACTORY;
 import static org.infinispan.configuration.cache.HashConfiguration.KEY_PARTITIONER;
 import static org.infinispan.configuration.cache.HashConfiguration.NUM_OWNERS;
 import static org.infinispan.configuration.cache.HashConfiguration.NUM_SEGMENTS;
@@ -11,7 +10,6 @@ import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.util.logging.Log;
 
@@ -34,16 +32,6 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    @Override
    public AttributeSet attributes() {
       return attributes;
-   }
-
-   /**
-    * The consistent hash factory in use.
-    * @deprecated Since 11.0. Will be removed in 14.0, the segment allocation will no longer be customizable.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public HashConfigurationBuilder consistentHashFactory(ConsistentHashFactory<? extends ConsistentHash> consistentHashFactory) {
-      attributes.attribute(CONSISTENT_HASH_FACTORY).set(consistentHashFactory);
-      return this;
    }
 
    /**

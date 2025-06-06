@@ -12,6 +12,7 @@ import java.util.Collections;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.remoting.inboundhandler.OffloadInboundInvocationHandler;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -72,7 +73,8 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
       consistentHashFactory = new ControlledConsistentHashFactory.Default(0, 1);
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.clustering().cacheMode(CacheMode.DIST_SYNC);
-      c.clustering().hash().consistentHashFactory(consistentHashFactory).numSegments(1);
+      c.clustering().hash().numSegments(1);
+      c.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(consistentHashFactory);
       c.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       c.transaction().lockingMode(LockingMode.PESSIMISTIC);
       return c;

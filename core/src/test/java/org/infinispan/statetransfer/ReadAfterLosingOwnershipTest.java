@@ -12,6 +12,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoSchema;
@@ -80,9 +81,10 @@ public class ReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
    protected final ConfigurationBuilder createConfigurationBuilder() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, transactional);
       builder.clustering()
-            .hash().numOwners(2).consistentHashFactory(new SingleKeyConsistentHashFactory()).numSegments(1)
+            .hash().numOwners(2).numSegments(1)
             .l1().enabled(l1)
             .stateTransfer().fetchInMemoryState(true);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(new SingleKeyConsistentHashFactory());
       return builder;
    }
 

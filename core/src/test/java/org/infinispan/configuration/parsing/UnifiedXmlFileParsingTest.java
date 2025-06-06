@@ -51,7 +51,6 @@ import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner;
-import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.threads.AbstractThreadPoolExecutorFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
@@ -580,7 +579,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(4, c.clustering().hash().numOwners());
             assertEquals(35000, c.clustering().remoteTimeout());
             assertEquals(2, c.clustering().hash().numSegments());
-            assertTrue(c.clustering().hash().consistentHashFactory() instanceof SyncConsistentHashFactory);
             assertTrue(c.statistics().enabled());
             assertEquals(31500, c.locking().lockAcquisitionTimeout());
             assertEquals(3500, c.locking().concurrencyLevel());

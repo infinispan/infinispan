@@ -1,10 +1,12 @@
-package org.infinispan.distribution.ch;
+package org.infinispan.distribution.ch.impl;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.PersistedConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.remoting.transport.Address;
 
@@ -21,14 +23,11 @@ import org.infinispan.remoting.transport.Address;
  *
  * @author Dan Berindei
  * @since 5.2
- * @deprecated Since 11.0. Will be removed in 14.0, the segment allocation will no longer be customizable.
  */
-@Deprecated(forRemoval=true, since = "11.0")
 public interface ConsistentHashFactory<CH extends ConsistentHash> {
 
    /**
     * Create a new consistent hash instance.
-    *
     * The consistent hash will be <em>balanced</em>.
     *
     * @param numOwners The ideal number of owners for each key. The created consistent hash

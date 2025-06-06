@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.infinispan.distribution.ch.impl.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.globalstate.impl.ScopedPersistentStateImpl;
 import org.infinispan.remoting.transport.Address;

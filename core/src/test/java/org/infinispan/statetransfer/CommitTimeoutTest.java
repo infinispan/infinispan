@@ -10,14 +10,13 @@ import java.util.Arrays;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.transaction.RollbackException;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.StateSequencer;
@@ -26,6 +25,8 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.RollbackException;
 
 /**
  * Test that a commit command that has timed out on a backup owner cannot write entries after the locks have been
@@ -46,7 +47,8 @@ public class CommitTimeoutTest extends MultipleCacheManagersTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       builder.clustering().remoteTimeout(2000);
-      builder.clustering().hash().numSegments(1).consistentHashFactory(consistentHashFactory);
+      builder.clustering().hash().numSegments(1);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(consistentHashFactory);
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
 
       createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, builder, 3);

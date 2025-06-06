@@ -29,6 +29,7 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -146,7 +147,8 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
             cacheMode.isReplicated() ?
                   new ControlledConsistentHashFactory.Replicated(1) :
                   new ControlledConsistentHashFactory.Default(1, 0);
-      builder.clustering().hash().numSegments(1).consistentHashFactory(consistentHashFactory);
+      builder.clustering().hash().numSegments(1);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(consistentHashFactory);
       createClusteredCaches(4, ControlledConsistentHashFactory.SCI.INSTANCE, builder);
    }
 

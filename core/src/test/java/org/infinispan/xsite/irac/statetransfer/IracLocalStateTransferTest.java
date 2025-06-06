@@ -15,7 +15,9 @@ import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.DistributionInfo;
@@ -27,7 +29,6 @@ import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ControlledConsistentHashFactory;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.xsite.AbstractXSiteTest;
 import org.infinispan.xsite.irac.IracManager;
 import org.infinispan.xsite.irac.ManualIracManager;
@@ -358,9 +359,8 @@ public class IracLocalStateTransferTest extends AbstractXSiteTest {
 
    private ConfigurationBuilder getNycActiveConfig() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      builder.clustering().hash()
-            .consistentHashFactory(nycCHF)
-            .numSegments(1);
+      builder.clustering().hash().numSegments(1);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(nycCHF);
       return builder;
    }
 
@@ -370,9 +370,8 @@ public class IracLocalStateTransferTest extends AbstractXSiteTest {
       lonBackupConfigurationBuilder
             .site(NYC)
             .strategy(BackupConfiguration.BackupStrategy.ASYNC);
-      builder.clustering().hash()
-            .consistentHashFactory(lonCHF)
-            .numSegments(1);
+      builder.clustering().hash().numSegments(1);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(lonCHF);
       return builder;
    }
 

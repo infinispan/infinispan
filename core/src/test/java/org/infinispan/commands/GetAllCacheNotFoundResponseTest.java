@@ -16,6 +16,7 @@ import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.distribution.LocalizedCacheTopology;
@@ -40,7 +41,8 @@ public class GetAllCacheNotFoundResponseTest extends MultipleCacheManagersTest {
       ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       ControlledConsistentHashFactory.Default chf = new ControlledConsistentHashFactory.Default(
             new int[][]{{0, 1}, {0, 2}, {2, 3}});
-      cb.clustering().hash().numOwners(2).numSegments(3).consistentHashFactory(chf);
+      cb.clustering().hash().numOwners(2).numSegments(3);
+      cb.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(chf);
       createClusteredCaches(5, ControlledConsistentHashFactory.SCI.INSTANCE, cb);
    }
 
