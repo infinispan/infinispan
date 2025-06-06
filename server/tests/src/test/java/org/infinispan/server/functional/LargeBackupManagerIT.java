@@ -26,6 +26,7 @@ import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.server.test.core.Common;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,11 @@ public class LargeBackupManagerIT extends AbstractMultiClusterIT {
    private final String name = "testManagerBackupUploadLargeCache";
    private final String cacheName = "cache1";
    private final int size = 35_000;
+
+   public LargeBackupManagerIT() {
+      super(Common.NASHORN_DEPS);
+   }
+
 
    @BeforeAll
    public static void setup() {
