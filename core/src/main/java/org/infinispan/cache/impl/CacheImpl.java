@@ -60,7 +60,6 @@ import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Version;
@@ -778,11 +777,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V>
    }
 
    @Override
-   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapperClass) {
-      throw new UnsupportedOperationException("Wrapping requires EncoderCache");
-   }
-
-   @Override
    public AdvancedCache<K, V> withMediaType(String keyMediaType, String valueMediaType) {
       throw new UnsupportedOperationException("Conversion requires EncoderCache");
    }
@@ -794,11 +788,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V>
 
    @Override
    public AdvancedCache<K, V> withStorageMediaType() {
-      throw new UnsupportedOperationException("Conversion requires EncoderCache");
-   }
-
-   @Override
-   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
       throw new UnsupportedOperationException("Conversion requires EncoderCache");
    }
 

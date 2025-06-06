@@ -19,7 +19,6 @@ import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.api.TransactionalCache;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
@@ -825,17 +824,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> keyEncoder, Class<? extends Encoder> valueEncoder);
 
    /**
-    * Performs any cache operations using the specified pair of {@link Wrapper}.
-    *
-    * @param keyWrapper   {@link Wrapper} for the keys.
-    * @param valueWrapper {@link Wrapper} for the values.
-    * @return {@link AdvancedCache} where all operations will use the supplied wrappers.
-    * @deprecated Since 11.0. To be removed in 14.0, with no replacement.
-    */
-   @Deprecated(forRemoval = true, since = "11.0")
-   AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapper, Class<? extends Wrapper> valueWrapper);
-
-   /**
     * Performs any cache operations using the specified {@link Encoder}.
     *
     * @param encoder {@link Encoder} used for both keys and values.
@@ -844,16 +832,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     */
    @Deprecated(forRemoval=true, since = "12.1")
    AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> encoder);
-
-   /**
-    * Performs any cache operations using the specified {@link Wrapper}.
-    *
-    * @param wrapper {@link Wrapper} for the keys and values.
-    * @return an instance of {@link AdvancedCache} where all operations will use the supplied wrapper.
-    * @deprecated Since 11.0. To be removed in 14.0, with no replacement.
-    */
-   @Deprecated(forRemoval = true, since = "11.0")
-   AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapper);
 
    /**
     * Perform any cache operations using an alternate {@link org.infinispan.commons.dataconversion.MediaType}.
