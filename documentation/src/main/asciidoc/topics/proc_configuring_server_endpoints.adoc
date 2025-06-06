@@ -1,15 +1,7 @@
 [id='configuring-server-endpoints_{context}']
 = Configuring {brandname} Server endpoints
 
-Control how the different protocol endpoints bind to sockets and use security realm configuration.
-You can also configure multiple endpoints and disable administrative capabilities.
-
-[NOTE]
-====
-Each unique endpoint configuration must include both a Hot Rod connector and a REST connector.
-{brandname} Server implicitly includes the `hotrod-connector` and `rest-connector` elements, or fields, in an `endpoint` configuration.
-You should only add these elements to custom configuration to specify authentication mechanisms for endpoints.
-====
+Control how the different server endpoints bind to sockets and use security realm configuration.
 
 .Prerequisites
 
@@ -26,10 +18,18 @@ You should only add these elements to custom configuration to specify authentica
 With this configuration users cannot access {brandname} Console or the Command Line Interface (CLI) from the endpoint.
 . Save the changes to your configuration.
 
+[NOTE]
+====
+{brandname} Server must be configured with at least one endpoint which has a REST connector with administrative
+capabilities.
+====
+
+
 [discrete]
 == Multiple endpoint configuration
 
-The following {brandname} Server configuration creates endpoints on separate socket bindings with dedicated security realms:
+The following {brandname} Server configuration creates endpoints on separate socket bindings with dedicated security realms
+and disabling administrative access on the `public` endpoint:
 
 .XML
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
