@@ -25,7 +25,6 @@ import org.infinispan.server.core.test.ServerTestingUtil;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
-import org.infinispan.configuration.cache.PrivateIndexingConfigurationBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -44,7 +43,6 @@ public class LargePutAllPressureTest extends SingleHotRodServerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder config = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.LOCAL, useTransactions()));
-      config.addModule(PrivateIndexingConfigurationBuilder.class).rebatchRequestsSize(200);
       config.indexing().enable()
             .storage(LOCAL_HEAP)
                .addIndexedEntity("Sale")
