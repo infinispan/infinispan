@@ -29,9 +29,8 @@ public interface XSiteStateConsumer {
     * It applies state from other site.
     *
     * @param chunk a chunk of keys
-    * @throws Exception if something go wrong while applying the state
     */
-   void applyState(List<XSiteState> chunk) throws Exception;
+   void applyState(List<XSiteState> chunk);
 
    /**
     * @return the site name that is sending the state.

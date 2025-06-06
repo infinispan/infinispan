@@ -7,6 +7,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
@@ -14,7 +15,6 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * A write operation sent from the primary owner to the backup owners.
@@ -89,11 +89,6 @@ public abstract class BackupWriteCommand extends BaseRpcCommand {
    @Override
    public final boolean isReturnValueExpected() {
       return false;
-   }
-
-   @Override
-   public final boolean canBlock() {
-      return true;
    }
 
    public final long getSequence() {

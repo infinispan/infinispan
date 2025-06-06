@@ -17,13 +17,14 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
-import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -61,11 +62,10 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       testLockReleasedCorrectly(TxCompletionNotificationCommand.class);
    }
 
-   private void testLockReleasedCorrectly(Class<? extends  ReplicableCommand> toBlock ) throws Throwable {
-
-      final ControlledCommandFactory ccf = ControlledCommandFactory.registerControlledCommandFactory(advancedCache(1), toBlock);
-      ccf.gate.close();
-
+   private void testLockReleasedCorrectly(Class<? extends ReplicableCommand> toBlock) throws Throwable {
+      CheckPoint checkPoint = new CheckPoint();
+      checkPoint.triggerForever(Mocks.AFTER_RELEASE);
+      Mocks.blockInboundCacheRpcCommand(advancedCache(1), checkPoint, c -> c.getClass().equals(toBlock));
       final Set<Object> keys = new HashSet<>(KEY_SET_SIZE);
 
       //fork it into another test as this is going to block in commit
@@ -81,7 +81,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       });
 
       //now wait for all the commits to block
-      eventuallyEquals(1, ccf.blockTypeCommandsReceived::get);
+      checkPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 30, TimeUnit.SECONDS);
 
       if (toBlock == TxCompletionNotificationCommand.class) {
          //at this stage everything should be committed locally
@@ -112,7 +112,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       eventuallyEquals(1, () -> TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount());
 
       log.trace("Releasing the gate");
-      ccf.gate.open();
+      checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
 
       // wait for the forked thread to finish its transaction
       future.get(10, TimeUnit.SECONDS);

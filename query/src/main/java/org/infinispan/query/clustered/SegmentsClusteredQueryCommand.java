@@ -64,11 +64,6 @@ public class SegmentsClusteredQueryCommand extends BaseRpcCommand {
    }
 
    @Override
-   public boolean canBlock() {
-      return true;
-   }
-
-   @Override
    public NodeVersion supportedSince() {
       return NodeVersion.SIXTEEN;
    }

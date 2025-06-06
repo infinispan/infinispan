@@ -11,6 +11,7 @@ import org.infinispan.commands.GlobalRpcCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.topology.AbstractCacheControlCommand;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -21,7 +22,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -148,9 +148,7 @@ public class TopologyManagementHelper {
    }
 
    private CompletionStage<?> invokeAsync(ReplicableCommand command) throws Throwable {
-      if (command instanceof GlobalRpcCommand)
-         return ((GlobalRpcCommand) command).invokeAsync(gcr);
-      return command.invokeAsync();
+      return ((GlobalRpcCommand) command).invokeAsync(gcr);
    }
 
    private record DelegatingResponseCollector<T>(ResponseCollector<Address, T> responseCollector) implements ResponseCollector<Address, Void> {

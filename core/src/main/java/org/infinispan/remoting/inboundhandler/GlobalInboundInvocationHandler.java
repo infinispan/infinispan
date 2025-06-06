@@ -5,7 +5,6 @@ import static org.infinispan.util.logging.Log.CLUSTER;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 
-import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.GlobalRpcCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -118,9 +117,6 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
          reply.reply(CacheNotFoundResponse.INSTANCE);
          return;
       }
-      CommandsFactory commandsFactory = cr.getCommandsFactory();
-      // initialize this command with components specific to the intended cache instance
-      commandsFactory.initializeReplicableCommand(command, true);
       PerCacheInboundInvocationHandler handler = cr.getPerCacheInboundInvocationHandler();
       handler.handle(command, reply, mode);
    }
@@ -130,12 +126,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
          log.tracef("Attempting to execute non-CacheRpcCommand: %s [sender=%s]", command, origin);
       }
       Runnable runnable = new ReplicableCommandRunner(command, reply, globalComponentRegistry, order.preserveOrder());
-      if (order.preserveOrder() || !command.canBlock()) {
-         //we must/can run in this thread
-         runnable.run();
-      } else {
-         blockingManager.runBlocking(runnable, "[blocking] " + command);
-      }
+      runnable.run();
    }
 
    private static class ReplicableCommandRunner extends ResponseConsumer implements Runnable {
@@ -154,14 +145,13 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
       public void run() {
          try {
             CompletionStage<?> stage;
-            if (command instanceof GlobalRpcCommand) {
-               stage = ((GlobalRpcCommand) command).invokeAsync(globalComponentRegistry).whenComplete(this);
+            if (command instanceof GlobalRpcCommand globalRpcCommand) {
+               stage = globalRpcCommand.invokeAsync(globalComponentRegistry).whenComplete(this);
+               if (preserveOrder) {
+                  CompletionStages.join(stage);
+               }
             } else {
-               globalComponentRegistry.wireDependencies(command);
-               stage = command.invokeAsync().whenComplete(this);
-            }
-            if (preserveOrder) {
-               CompletionStages.join(stage);
+               throw new UnsupportedOperationException("GlobalInboundInvocationHandler called with a non GlobalRpcCommand " + command);
             }
          } catch (Throwable throwable) {
             accept(null, throwable);
