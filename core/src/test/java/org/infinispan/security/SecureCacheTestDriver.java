@@ -9,7 +9,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.conflict.ConflictManagerFactory;
@@ -752,16 +751,6 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.NONE)
    public void testWithEncoding_Class_Class(SecureCache<String, String> cache) {
       cache.withEncoding(IdentityEncoder.class, IdentityEncoder.class);
-   }
-
-   @TestCachePermission(AuthorizationPermission.NONE)
-   public void testWithWrapping_Class(SecureCache<String, String> cache) {
-      cache.withWrapping(ByteArrayWrapper.class);
-   }
-
-   @TestCachePermission(AuthorizationPermission.NONE)
-   public void testWithWrapping_Class_Class(SecureCache<String, String> cache) {
-      cache.withWrapping(ByteArrayWrapper.class, ByteArrayWrapper.class);
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
