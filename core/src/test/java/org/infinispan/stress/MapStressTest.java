@@ -82,7 +82,7 @@ public class MapStressTest extends SingleCacheManagerTest {
    private Cache<String, Integer> configureAndBuildCache(int capacity) {
       ConfigurationBuilder config = new ConfigurationBuilder();
       config
-         .memory().size(capacity)
+         .memory().maxCount(capacity)
          .expiration().wakeUpInterval(5000L).maxIdle(120000L);
       String cacheName = "cache" + capacity;
       cacheManager.defineConfiguration(cacheName, config.build());

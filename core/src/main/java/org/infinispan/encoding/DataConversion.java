@@ -2,7 +2,6 @@ package org.infinispan.encoding;
 
 import java.util.Objects;
 
-import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.EncoderIds;
 import org.infinispan.commons.dataconversion.EncodingException;
@@ -14,7 +13,6 @@ import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.dataconversion.WrapperIds;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.encoding.impl.StorageConfigurationManager;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -33,16 +31,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 public final class DataConversion {
 
    /**
-    * @deprecated Since 11.0. To be removed in 14.0, with no replacement.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public static final DataConversion DEFAULT_KEY = new DataConversion(IdentityEncoder.INSTANCE, ByteArrayWrapper.INSTANCE, true);
-   /**
-    * @deprecated Since 11.0. To be removed in 14.0, with no replacement.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public static final DataConversion DEFAULT_VALUE = new DataConversion(IdentityEncoder.INSTANCE, ByteArrayWrapper.INSTANCE, false);
-   /**
     * @deprecated Since 11.0. To be removed in 14.0. For internal use only.
     */
    @Deprecated(forRemoval=true, since = "11.0")
@@ -56,7 +44,7 @@ public final class DataConversion {
    // On the origin node the conversion is initialized with the encoder/wrapper classes, on remote nodes with the ids
    private final transient Class<? extends Encoder> encoderClass;
    // TODO Make final after removing overrideWrapper()
-   private transient Class<? extends Wrapper> wrapperClass;
+   private final transient Class<? extends Wrapper> wrapperClass;
    private final short encoderId;
    private final byte wrapperId;
    private final MediaType requestMediaType;
@@ -149,46 +137,6 @@ public final class DataConversion {
    public DataConversion withWrapping(Class<? extends Wrapper> wrapperClass) {
       if (this.wrapperClass == wrapperClass) return this;
       return new DataConversion(this.encoderClass, wrapperClass, this.requestMediaType, this.isKey);
-   }
-
-   /**
-    * @deprecated Since 11.0, will be removed with no replacement
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public void overrideWrapper(Class<? extends Wrapper> newWrapper, ComponentRegistry cr) {
-      this.customWrapper = null;
-      this.wrapperClass = newWrapper;
-      cr.wireDependencies(this);
-   }
-
-   /**
-    * @deprecated Since 11.0, with no replacement.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public boolean isConversionSupported(MediaType mediaType) {
-      return storageMediaType == null || encoderRegistry.isConversionSupported(storageMediaType, mediaType);
-   }
-
-   /**
-    * @deprecated Since 11.0, with no replacement.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public Object convert(Object o, MediaType from, MediaType to) {
-      if (o == null) return null;
-      if (encoderRegistry == null) return o;
-      Transcoder transcoder = encoderRegistry.getTranscoder(from, to);
-      return transcoder.transcode(o, from, to);
-   }
-
-   /**
-    * @deprecated Since 11.0, with no replacement.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public Object convertToRequestFormat(Object o, MediaType contentType) {
-      if (o == null) return null;
-      if (requestMediaType == null) return fromStorage(o);
-      Transcoder transcoder = encoderRegistry.getTranscoder(contentType, requestMediaType);
-      return transcoder.transcode(o, contentType, requestMediaType);
    }
 
    @Inject
@@ -293,11 +241,19 @@ public final class DataConversion {
    }
 
    /**
-    * @deprecated Since 11.0. To be removed in 14.0, with no replacement.
+    * @return A new instance with an {@link IdentityEncoder} and request type {@link MediaType#APPLICATION_OBJECT}.
+    * @since 11.0
     */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public Class<? extends Wrapper> getWrapperClass() {
-      return wrapperClass;
+   public static DataConversion newKeyDataConversion() {
+      return new DataConversion(IdentityEncoder.class, null, MediaType.APPLICATION_OBJECT, true);
+   }
+
+   /**
+    * @return A new instance with an {@link IdentityEncoder} and request type {@link MediaType#APPLICATION_OBJECT}.
+    * @since 11.0
+    */
+   public static DataConversion newValueDataConversion() {
+      return new DataConversion(IdentityEncoder.class, null, MediaType.APPLICATION_OBJECT, false);
    }
 
    @Override
@@ -331,39 +287,5 @@ public final class DataConversion {
    @Override
    public int hashCode() {
       return Objects.hash(encoderClass, wrapperClass, requestMediaType, isKey);
-   }
-
-   /**
-    * @return A new instance with an {@link IdentityEncoder} and request type {@link MediaType#APPLICATION_OBJECT}.
-    * @since 11.0
-    */
-   public static DataConversion newKeyDataConversion() {
-      return new DataConversion(IdentityEncoder.class, null, MediaType.APPLICATION_OBJECT, true);
-   }
-
-   /**
-    * @return A new instance with an {@link IdentityEncoder} and request type {@link MediaType#APPLICATION_OBJECT}.
-    * @since 11.0
-    */
-   public static DataConversion newValueDataConversion() {
-      return new DataConversion(IdentityEncoder.class, null, MediaType.APPLICATION_OBJECT, false);
-   }
-
-   /**
-    * @deprecated Since 11.0. To be removed in 14.0. Replaced by {@link #newKeyDataConversion()}.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public static DataConversion newKeyDataConversion(Class<? extends Encoder> encoderClass,
-                                                     Class<? extends Wrapper> wrapperClass) {
-      return new DataConversion(encoderClass, wrapperClass, MediaType.APPLICATION_OBJECT, true);
-   }
-
-   /**
-    * @deprecated Since 11.0. To be removed in 14.0. Replaced by {@link #newValueDataConversion()}.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public static DataConversion newValueDataConversion(Class<? extends Encoder> encoderClass,
-                                                       Class<? extends Wrapper> wrapperClass) {
-      return new DataConversion(encoderClass, wrapperClass, MediaType.APPLICATION_OBJECT, false);
    }
 }

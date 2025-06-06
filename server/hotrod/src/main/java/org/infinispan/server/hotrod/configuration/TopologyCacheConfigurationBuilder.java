@@ -42,11 +42,6 @@ public class TopologyCacheConfigurationBuilder implements Builder<TopologyCacheC
       return this;
    }
 
-   public TopologyCacheConfigurationBuilder lazyRetrieval(boolean lazy) {
-      attributes.attribute(TopologyCacheConfiguration.LAZY_RETRIEVAL).set(lazy);
-      return this;
-   }
-
    public TopologyCacheConfigurationBuilder networkPrefixOverride(boolean networkPrefixOverride) {
       attributes.attribute(TopologyCacheConfiguration.NETWORK_PREFIX_OVERRIDE).set(networkPrefixOverride);
       return this;

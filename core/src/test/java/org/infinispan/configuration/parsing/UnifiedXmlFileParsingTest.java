@@ -4,9 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNotSame;
-import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
@@ -30,7 +27,6 @@ import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.EncodingConfiguration;
@@ -55,9 +51,7 @@ import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner;
-import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.threads.AbstractThreadPoolExecutorFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.factories.threads.EnhancedQueueExecutorFactory;
@@ -239,7 +233,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(entityTypes.contains("AnotherEntity"));
 
             Configuration minimalOffHeap = getConfiguration(holder, "minimal-offheap");
-            assertEquals(StorageType.OFF_HEAP, minimalOffHeap.memory().storageType());
+            assertEquals(StorageType.OFF_HEAP, minimalOffHeap.memory().storage());
 
             Configuration mediaTypeCascade = getConfiguration(holder, "media_type_cascade");
             assertEquals(MediaType.APPLICATION_JSON, mediaTypeCascade.encoding().keyDataType().mediaType());
@@ -247,8 +241,8 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
             Configuration heapBinary = getConfiguration(holder, "heap_binary");
             assertEquals(MediaType.APPLICATION_PROTOSTREAM, heapBinary.encoding().keyDataType().mediaType());
-            assertEquals(StorageType.HEAP, heapBinary.memory().storageType());
-            assertEquals(EvictionStrategy.REMOVE, heapBinary.memory().evictionStrategy());
+            assertEquals(StorageType.HEAP, heapBinary.memory().storage());
+            assertEquals(EvictionStrategy.REMOVE, heapBinary.memory().whenFull());
             assertEquals(1_500_000_000, heapBinary.memory().maxSizeBytes());
             assertEquals(MediaType.APPLICATION_PROTOSTREAM, heapBinary.encoding().keyDataType().mediaType());
             assertEquals(MediaType.APPLICATION_PROTOSTREAM, heapBinary.encoding().valueDataType().mediaType());
@@ -319,7 +313,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(MediaType.APPLICATION_OBJECT, encoding.valueDataType().mediaType());
 
             MemoryConfiguration memory = getConfiguration(holder, "dist-template").memory();
-            assertEquals(EvictionStrategy.REMOVE, memory.evictionStrategy());
+            assertEquals(EvictionStrategy.REMOVE, memory.whenFull());
          }
       },
 
@@ -344,16 +338,11 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(30000, globalConfiguration.transport().initialClusterTimeout());
 
             MemoryConfiguration mc = getConfiguration(holder, "off-heap-memory").memory();
-            assertEquals(StorageType.OFF_HEAP, mc.storageType());
-            assertEquals(10000000, mc.size());
-            assertEquals(EvictionType.MEMORY, mc.evictionType());
-
-            mc = getConfiguration(holder, "binary-memory").memory();
-            assertEquals(StorageType.BINARY, mc.storageType());
-            assertEquals(1, mc.size());
+            assertEquals(StorageType.OFF_HEAP, mc.storage());
+            assertEquals(10000000, mc.maxSizeBytes());
 
             mc = getConfiguration(holder, "object-memory").memory();
-            assertEquals(StorageType.OBJECT, mc.storageType());
+            assertEquals(StorageType.HEAP, mc.storage());
          }
       },
 
@@ -382,16 +371,14 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(MergePolicy.NONE, ph.mergePolicy());
 
             MemoryConfiguration mc = getConfiguration(holder, "off-heap-memory").memory();
-            assertEquals(StorageType.OFF_HEAP, mc.storageType());
-            assertEquals(10000000, mc.size());
-            assertEquals(EvictionType.MEMORY, mc.evictionType());
+            assertEquals(StorageType.OFF_HEAP, mc.storage());
+            assertEquals(10000000, mc.maxSizeBytes());
 
             mc = getConfiguration(holder, "binary-memory").memory();
-            assertEquals(StorageType.BINARY, mc.storageType());
-            assertEquals(1, mc.size());
+            assertEquals(1, mc.maxCount());
 
             mc = getConfiguration(holder, "object-memory").memory();
-            assertEquals(StorageType.OBJECT, mc.storageType());
+            assertEquals(StorageType.HEAP, mc.storage());
          }
       },
 
@@ -432,9 +419,8 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          @Override
          public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
             Configuration c = holder.getDefaultConfigurationBuilder().build();
-            assertNotSame(EvictionType.MEMORY, c.memory().evictionType());
+            assertThat(c.memory().maxCount()).isGreaterThan(0);
             c = getConfiguration(holder, "invalid");
-            assertSame(EvictionType.COUNT, c.memory().evictionType());
 
             assertTemplateConfiguration(holder, "local-template");
             assertTemplateConfiguration(holder, "invalidation-template");
@@ -514,16 +500,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals("%G %i", threadFactory.threadNamePattern());
             assertEquals(5, threadFactory.initialPriority());
 
-            threadFactory = getGlobalConfiguration(holder).transport().remoteCommandThreadPool().threadFactory();
-            assertNull(threadFactory);
-            threadPool = getGlobalConfiguration(holder).transport().remoteCommandThreadPool().threadPoolFactory();
-            assertNull(threadPool);
-
-            threadFactory = getGlobalConfiguration(holder).transport().transportThreadPool().threadFactory();
-            assertNull(threadFactory);
-            threadPool = getGlobalConfiguration(holder).transport().transportThreadPool().threadPoolFactory();
-            assertNull(threadPool);
-
             assertTrue(g.serialization().marshaller() instanceof TestObjectStreamMarshaller);
 
             assertEquals(ShutdownHookBehavior.DONT_REGISTER, g.shutdown().hookBehavior());
@@ -543,7 +519,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(LockingMode.OPTIMISTIC, c.transaction().lockingMode());
             assertTrue(c.transaction().transactionManagerLookup() instanceof JBossStandaloneJTAManagerLookup);
             assertEquals(60000, c.transaction().cacheStopTimeout());
-            assertEquals(20000, c.memory().size());
+            assertEquals(20000, c.memory().maxCount());
             assertEquals(10000, c.expiration().wakeUpInterval());
             assertEquals(10, c.expiration().lifespan());
             assertEquals(5, c.expiration().maxIdle());
@@ -568,7 +544,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertFalse(c.transaction().recovery().enabled()); // Non XA
             assertEquals(LockingMode.OPTIMISTIC, c.transaction().lockingMode());
             assertEquals(60500, c.transaction().cacheStopTimeout());
-            assertEquals(20500, c.memory().size());
+            assertEquals(20500, c.memory().maxCount());
             assertEquals(10500, c.expiration().wakeUpInterval());
             assertEquals(11, c.expiration().lifespan());
             assertEquals(6, c.expiration().maxIdle());
@@ -587,16 +563,13 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertFalse(c.transaction().recovery().enabled()); // Batching, non XA
             assertEquals(LockingMode.PESSIMISTIC, c.transaction().lockingMode());
             assertEquals(61000, c.transaction().cacheStopTimeout());
-            assertEquals(21000, c.memory().size());
+            assertEquals(21000, c.memory().maxCount());
             assertEquals(11000, c.expiration().wakeUpInterval());
             assertEquals(12, c.expiration().lifespan());
             assertEquals(7, c.expiration().maxIdle());
             assertFalse(c.clustering().stateTransfer().fetchInMemoryState());
             assertEquals(60000, c.clustering().stateTransfer().timeout());
             assertEquals(10000, c.clustering().stateTransfer().chunkSize());
-            ClusterLoaderConfiguration clusterLoader = getStoreConfiguration(c, ClusterLoaderConfiguration.class);
-            assertEquals(35000, clusterLoader.remoteCallTimeout());
-            assertFalse(clusterLoader.preload());
             assertFalse(c.indexing().enabled());
 
             c = getConfiguration(holder, "dist");
@@ -606,7 +579,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(4, c.clustering().hash().numOwners());
             assertEquals(35000, c.clustering().remoteTimeout());
             assertEquals(2, c.clustering().hash().numSegments());
-            assertTrue(c.clustering().hash().consistentHashFactory() instanceof SyncConsistentHashFactory);
             assertTrue(c.statistics().enabled());
             assertEquals(31500, c.locking().lockAcquisitionTimeout());
             assertEquals(3500, c.locking().concurrencyLevel());
@@ -617,7 +589,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(c.transaction().recovery().enabled()); // Full XA
             assertEquals(LockingMode.OPTIMISTIC, c.transaction().lockingMode());
             assertEquals(61500, c.transaction().cacheStopTimeout());
-            assertEquals(21500, c.memory().size());
+            assertEquals(21500, c.memory().maxCount());
             assertEquals(11500, c.expiration().wakeUpInterval());
             assertEquals(13, c.expiration().lifespan());
             assertEquals(8, c.expiration().maxIdle());
@@ -652,9 +624,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertFalse(c.transaction().recovery().enabled()); // Non XA
             // Storage type was not configurable before 9.0/8.5
             StorageType objectOrDefaultStorageType =
-                  (schemaMajor < 9 && schemaMinor < 5) ? StorageType.HEAP : StorageType.OBJECT;
-            assertEquals(objectOrDefaultStorageType, c.memory().storageType());
-            assertEquals(-1, c.memory().size());
+                  (schemaMajor < 9 && schemaMinor < 5) ? StorageType.HEAP : StorageType.HEAP;
+            assertEquals(objectOrDefaultStorageType, c.memory().storage());
+            assertEquals(-1, c.memory().maxCount());
             fileStore = getStoreConfiguration(c, getFileStoreClass(schemaMajor));
             assertTrue(fileStore.preload());
             assertFalse(fileStore.purgeOnStartup());
@@ -664,8 +636,8 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
             assertTrue(c.transaction().useSynchronization()); // Non XA
             assertFalse(c.transaction().recovery().enabled()); // Non XA
-            assertEquals(objectOrDefaultStorageType, c.memory().storageType());
-            assertEquals(-1, c.memory().size());
+            assertEquals(objectOrDefaultStorageType, c.memory().storage());
+            assertEquals(-1, c.memory().maxCount());
             DummyInMemoryStoreConfiguration dummyStore = getStoreConfiguration(c, DummyInMemoryStoreConfiguration.class);
             assertFalse(dummyStore.preload());
             assertFalse(dummyStore.purgeOnStartup());
@@ -675,8 +647,8 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
             assertTrue(c.transaction().useSynchronization()); // Non XA
             assertFalse(c.transaction().recovery().enabled()); // Non XA
-            assertEquals(objectOrDefaultStorageType, c.memory().storageType());
-            assertEquals(-1, c.memory().size());
+            assertEquals(objectOrDefaultStorageType, c.memory().storage());
+            assertEquals(-1, c.memory().maxCount());
             assertEquals(LockingMode.PESSIMISTIC, c.transaction().lockingMode());
 
             c = getConfiguration(holder, "capedwarf-default");
@@ -684,8 +656,8 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
             assertTrue(c.transaction().useSynchronization()); // Non XA
             assertFalse(c.transaction().recovery().enabled()); // Non XA
-            assertEquals(objectOrDefaultStorageType, c.memory().storageType());
-            assertEquals(-1, c.memory().size());
+            assertEquals(objectOrDefaultStorageType, c.memory().storage());
+            assertEquals(-1, c.memory().maxCount());
             fileStore = getStoreConfiguration(c, getFileStoreClass(schemaMajor));
             assertTrue(fileStore.preload());
             assertFalse(fileStore.purgeOnStartup());
@@ -696,8 +668,8 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
             assertTrue(c.transaction().useSynchronization()); // Non XA
             assertFalse(c.transaction().recovery().enabled()); // Non XA
-            assertEquals(objectOrDefaultStorageType, c.memory().storageType());
-            assertEquals(-1, c.memory().size());
+            assertEquals(objectOrDefaultStorageType, c.memory().storage());
+            assertEquals(-1, c.memory().maxCount());
             assertEquals(LockingMode.PESSIMISTIC, c.transaction().lockingMode());
             fileStore = getStoreConfiguration(c, getFileStoreClass(schemaMajor));
             assertTrue(fileStore.preload());
@@ -708,7 +680,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
             assertTrue(c.transaction().useSynchronization()); // Non XA
             assertFalse(c.transaction().recovery().enabled()); // Non XA
-            assertEquals(10000, c.memory().size());
+            assertEquals(10000, c.memory().maxCount());
             fileStore = getStoreConfiguration(c, getFileStoreClass(schemaMajor));
             assertTrue(fileStore.preload());
             assertFalse(fileStore.purgeOnStartup());
@@ -720,7 +692,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(c.invocationBatching().enabled());
             assertTrue(c.transaction().useSynchronization()); // Non XA
             assertFalse(c.transaction().recovery().enabled()); // Non XA
-            assertEquals(-1, c.memory().size());
+            assertEquals(-1, c.memory().maxCount());
             fileStore = getStoreConfiguration(c, getFileStoreClass(schemaMajor));
             assertTrue(fileStore.preload());
             assertFalse(fileStore.purgeOnStartup());
@@ -731,7 +703,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(c.invocationBatching().enabled());
             assertTrue(c.transaction().useSynchronization()); // Non XA
             assertFalse(c.transaction().recovery().enabled()); // Non XA
-            assertEquals(-1, c.memory().size());
+            assertEquals(-1, c.memory().maxCount());
             fileStore = getStoreConfiguration(c, getFileStoreClass(schemaMajor));
             assertTrue(fileStore.preload());
             assertFalse(fileStore.purgeOnStartup());
@@ -742,17 +714,10 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(c.invocationBatching().enabled());
             assertTrue(c.transaction().useSynchronization()); // Non XA
             assertFalse(c.transaction().recovery().enabled()); // Non XA
-            assertEquals(-1, c.memory().size());
+            assertEquals(-1, c.memory().maxCount());
 
             c = getConfiguration(holder, "write-skew");
             assertEquals(IsolationLevel.REPEATABLE_READ, c.locking().lockIsolationLevel());
-
-            // Ignore custom-container (if present)
-
-            if (holder.getNamedConfigurationBuilders().containsKey("store-as-binary")) {
-               c = getConfiguration(holder, "store-as-binary");
-               assertSame(StorageType.BINARY, c.memory().storageType());
-            }
          }
 
       },

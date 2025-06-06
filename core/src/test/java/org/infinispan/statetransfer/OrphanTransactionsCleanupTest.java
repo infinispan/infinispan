@@ -4,11 +4,10 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Arrays;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.LocalTopologyManager;
@@ -16,6 +15,8 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Transaction;
 
 @Test(groups = "functional", testName = "statetransfer.OrphanTransactionsCleanupTest")
 public class OrphanTransactionsCleanupTest extends MultipleCacheManagersTest {
@@ -31,7 +32,8 @@ public class OrphanTransactionsCleanupTest extends MultipleCacheManagersTest {
       configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       configurationBuilder.transaction().lockingMode(LockingMode.PESSIMISTIC);
       // Make the coordinator the primary owner of the only segment
-      configurationBuilder.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
+      configurationBuilder.clustering().hash().numSegments(1);
+      configurationBuilder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
       configurationBuilder.clustering().stateTransfer().awaitInitialTransfer(false);
 
       createCluster(ReplicatedControlledConsistentHashFactory.SCI.INSTANCE, configurationBuilder, 2);
@@ -69,7 +71,7 @@ public class OrphanTransactionsCleanupTest extends MultipleCacheManagersTest {
       // Cache 2 should not be in the CH yet
       TestingUtil.waitForNoRebalance(c0);
 
-      assertEquals(Arrays.asList(address(0)), c0.getAdvancedCache().getDistributionManager().getWriteConsistentHash().getMembers());
+      assertEquals(Arrays.asList(address(0)), c0.getAdvancedCache().getDistributionManager().getCacheTopology().getWriteConsistentHash().getMembers());
       eventuallyEquals(1, () -> tt0.getRemoteTransactions().size());
 
       // Committing the tx on c2 should succeed

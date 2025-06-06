@@ -36,8 +36,8 @@ public class L1ConfigurationBuilderTest {
                .cacheMode(CacheMode.DIST_SYNC)
                .l1().enable()
             .memory()
-               .evictionStrategy(EvictionStrategy.EXCEPTION)
-               .size(10)
+               .whenFull(EvictionStrategy.EXCEPTION)
+               .maxCount(10)
             .transaction()
                .transactionMode(org.infinispan.transaction.TransactionMode.TRANSACTIONAL)
             .build();

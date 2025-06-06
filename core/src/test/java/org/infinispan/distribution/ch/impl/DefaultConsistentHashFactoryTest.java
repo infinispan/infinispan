@@ -1,6 +1,7 @@
 package org.infinispan.distribution.ch.impl;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
@@ -18,7 +19,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -149,7 +149,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       assertEquals(lfMap, updatedMembersCH.getCapacityFactors());
       if (nodesToRemove > 0) {
          for (int l = 0; l < updatedMembersCH.getNumSegments(); l++) {
-            assertTrue(!updatedMembersCH.locateOwnersForSegment(l).isEmpty());
+            assertFalse(updatedMembersCH.locateOwnersForSegment(l).isEmpty());
             assertTrue(updatedMembersCH.locateOwnersForSegment(l).size() <= actualNumOwners);
          }
       }

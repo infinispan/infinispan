@@ -69,16 +69,6 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    @Override
-   public ConsistentHash getReadConsistentHash() {
-      return extendedTopology.getReadConsistentHash();
-   }
-
-   @Override
-   public ConsistentHash getWriteConsistentHash() {
-      return extendedTopology.getWriteConsistentHash();
-   }
-
-   @Override
    @ManagedOperation(
          description = "Determines whether a given key is affected by an ongoing rehash, if any.",
          displayName = "Could key be affected by rehash?"
@@ -133,7 +123,6 @@ public class DistributionManagerImpl implements DistributionManager {
       return this.extendedTopology;
    }
 
-   @Override
    public void setCacheTopology(CacheTopology cacheTopology) {
       if (log.isTraceEnabled()) log.tracef("Topology updated to %s", cacheTopology);
       this.extendedTopology = createLocalizedCacheTopology(cacheTopology);

@@ -66,11 +66,6 @@ public class EndInvalidationCommand extends BaseRpcCommand {
 	}
 
 	@Override
-	public boolean canBlock() {
-		return true;
-	}
-
-	@Override
 	public NodeVersion supportedSince() {
 		return NodeVersion.SIXTEEN;
 	}

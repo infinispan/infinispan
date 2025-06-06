@@ -69,7 +69,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
    public void testPreloadWithTwoWayKey2StringMapperAndBoundedCache() {
       String mapperName = TwoWayPersonKey2StringMapper.class.getName();
       ConfigurationBuilder config = createCacheStoreConfig(mapperName, true);
-      config.memory().size(3);
+      config.memory().maxCount(3);
 
       withCacheManagerConfig(config, cm -> {
          for (int i = 0; i < 10; i++)

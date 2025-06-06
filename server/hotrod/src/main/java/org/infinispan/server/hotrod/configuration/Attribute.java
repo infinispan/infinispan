@@ -14,6 +14,7 @@ public enum Attribute {
    EXTERNAL_HOST,
    EXTERNAL_PORT,
    HOST_NAME,
+   @Deprecated(forRemoval = true, since = "11.0")
    LAZY_RETRIEVAL,
    LOCK_TIMEOUT,
    MECHANISMS,

@@ -22,7 +22,7 @@ import org.infinispan.util.ByteString;
 @ProtoTypeId(ProtoStreamTypeIds.XSITE_STATE_PUSH_COMMAND)
 public class XSiteStatePushCommand extends BaseRpcCommand {
 
-   private List<XSiteState> chunk;
+   private final List<XSiteState> chunk;
 
    @ProtoFactory
    public XSiteStatePushCommand(ByteString cacheName, List<XSiteState> chunk) {
@@ -45,11 +45,6 @@ public class XSiteStatePushCommand extends BaseRpcCommand {
    @Override
    public boolean isReturnValueExpected() {
       return false;
-   }
-
-   @Override
-   public boolean canBlock() {
-      return true;
    }
 
    @Override

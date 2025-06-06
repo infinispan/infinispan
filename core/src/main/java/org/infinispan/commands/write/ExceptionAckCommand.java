@@ -1,8 +1,11 @@
 package org.infinispan.commands.write;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.marshall.protostream.impl.MarshallableThrowable;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -29,7 +32,7 @@ public class ExceptionAckCommand extends BaseRpcCommand {
    @ProtoField(3)
    final int topologyId;
 
-   private Throwable throwable;
+   private final Throwable throwable;
 
    public ExceptionAckCommand(ByteString cacheName, long id, Throwable throwable, int topologyId) {
       super(cacheName);
@@ -61,6 +64,11 @@ public class ExceptionAckCommand extends BaseRpcCommand {
    @Override
    public NodeVersion supportedSince() {
       return NodeVersion.SIXTEEN;
+   }
+
+   @Override
+   public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
+      throw new UnsupportedOperationException("Should not happen");
    }
 
    @Override

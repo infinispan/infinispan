@@ -57,11 +57,6 @@ public class SerializationConfiguration {
       return allowListConfig;
    }
 
-   @Deprecated(forRemoval=true, since = "11.0")
-   public WhiteListConfiguration whiteList() {
-      return new WhiteListConfiguration(allowListConfig);
-   }
-
    @Override
    public String toString() {
       return "SerializationConfiguration{" +

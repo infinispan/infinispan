@@ -85,11 +85,6 @@ public class DummyInitializationContext implements InitializationContext {
    }
 
    @Override
-   public ExecutorService getExecutor() {
-      return executorService;
-   }
-
-   @Override
    public Executor getNonBlockingExecutor() {
       return executorService;
    }
