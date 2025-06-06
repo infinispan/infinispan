@@ -34,7 +34,6 @@ import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.AbstractDelegatingCollection;
 import org.infinispan.commons.util.AbstractDelegatingSet;
 import org.infinispan.commons.util.CloseableIterator;
@@ -595,16 +594,6 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V>,
    @Override
    public AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> keyEncoder, Class<? extends Encoder> valueEncoder) {
       return cache.withEncoding(keyEncoder, valueEncoder);
-   }
-
-   @Override
-   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapper, Class<? extends Wrapper> valueWrapper) {
-      return cache.withWrapping(keyWrapper, valueWrapper);
-   }
-
-   @Override
-   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapper) {
-      return cache.withWrapping(wrapper);
    }
 
    @Override
