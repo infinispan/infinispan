@@ -347,8 +347,6 @@ jobs:
             -DdefaultTestGroup=database \
             -Dorg.infinispan.test.database.types=${{ matrix.dbs }} \
             -Dorg.infinispan.test.server.dir=/tmp/infinispan-server-${{ steps.dis.outputs.server-version }} \
-            -P coverage \
-            -Dorg.infinispan.test.server.extension.libs=org.jacoco:org.jacoco.agent:0.8.12:runtime \
             -Dit.test=BackupManagerIT
 
       - name: set-commit-failure-status
