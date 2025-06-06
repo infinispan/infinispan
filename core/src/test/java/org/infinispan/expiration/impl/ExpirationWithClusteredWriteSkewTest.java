@@ -6,8 +6,12 @@ import static org.testng.AssertJUnit.assertNull;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -16,9 +20,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledConsistentHashFactory;
-import org.infinispan.commons.time.ControlledTimeService;
-import org.infinispan.commons.time.TimeService;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
@@ -44,7 +45,6 @@ public class ExpirationWithClusteredWriteSkewTest extends MultipleCacheManagersT
             .cacheMode(CacheMode.REPL_SYNC)
             .hash()
             .numSegments(1)
-            .consistentHashFactory(chf)
             .expiration()
             .lifespan(10, TimeUnit.SECONDS)
             .transaction()
@@ -52,7 +52,7 @@ public class ExpirationWithClusteredWriteSkewTest extends MultipleCacheManagersT
             .lockingMode(LockingMode.OPTIMISTIC)
             .locking()
             .isolationLevel(IsolationLevel.REPEATABLE_READ);
-
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(chf);
       createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, builder, 2);
       TestingUtil.replaceComponent(manager(0), TimeService.class, timeService, true);
       expirationManager1 = cache(0).getAdvancedCache().getExpirationManager();

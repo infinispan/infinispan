@@ -24,6 +24,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -115,7 +116,8 @@ public class AnchoredKeysOperationsTest extends AbstractAnchoredKeysTest {
       ControlledConsistentHashFactory.Replicated consistentHashFactory =
             new ControlledConsistentHashFactory.Replicated(new int[]{0, 1, 2});
       cacheBuilder.clustering().cacheMode(CacheMode.REPL_SYNC)
-                  .hash().numSegments(3).consistentHashFactory(consistentHashFactory);
+                  .hash().numSegments(3);
+      cacheBuilder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(consistentHashFactory);
       cacheBuilder.clustering().stateTransfer().awaitInitialTransfer(false);
       cacheBuilder.memory().storage(storageType);
       cacheBuilder.addModule(AnchoredKeysConfigurationBuilder.class).enabled(true);

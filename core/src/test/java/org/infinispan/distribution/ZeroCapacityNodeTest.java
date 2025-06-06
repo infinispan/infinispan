@@ -27,8 +27,9 @@ import org.infinispan.commons.TimeoutException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.ConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
@@ -89,7 +90,8 @@ public class ZeroCapacityNodeTest extends MultipleCacheManagersTest {
    public void testCapacityFactors(CacheMode cacheMode, ConsistentHashFactory<?> consistentHashFactory) {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(cacheMode);
-      cb.clustering().hash().numSegments(NUM_SEGMENTS).consistentHashFactory(consistentHashFactory);
+      cb.clustering().hash().numSegments(NUM_SEGMENTS);
+      cb.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(consistentHashFactory);
       cb.clustering().hash().capacityFactor(1f);
 
       String cacheName = "" + cacheMode + consistentHashFactory;
