@@ -1782,18 +1782,6 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="consistent-hash-factory" type="xs:string">
-          <xs:annotation>
-            <xs:documentation>
-              Deprecated since 11.0. Will be removed in 14.0, the segment allocation will no longer be customizable.
-              The factory to use for generating the consistent hash.
-              Must implement `org.infinispan.distribution.ch.ConsistentHashFactory`.
-              E.g. `org.infinispan.distribution.ch.impl.SyncConsistentHashFactory` can be used to guarantee
-              that multiple distributed caches use exactly the same consistent hash, which for performance
-              reasons is not guaranteed by the default consistent hash factory instance used.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
         <xs:attribute name="key-partitioner" type="xs:string">
           <xs:annotation>
             <xs:documentation>

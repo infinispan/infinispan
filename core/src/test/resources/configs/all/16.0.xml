@@ -153,7 +153,6 @@
          <memory storage="HEAP" max-count="20500"/>
       </invalidation-cache>
       <replicated-cache name="repl" mode="SYNC" statistics="true" segments="16"
-                        consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
                         key-partitioner="org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner">
          <encoding>
             <key media-type="application/x-java-object"/>
@@ -227,7 +226,6 @@
       </local-cache>
       <distributed-cache name="dist" mode="SYNC" l1-lifespan="20m" owners="4"
                          remote-timeout="35s" segments="2" statistics="true"
-                         consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
                          key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
          <backups max-cleanup-delay="60000" tombstone-map-size="128000" merge-policy="ALWAYS_REMOVE">
             <backup site="NYC" failure-policy="WARN" strategy="SYNC" timeout="12500">
@@ -388,7 +386,7 @@
       <invalidation-cache name="invalidation-instance" configuration="invalidation-template" />
 
       <replicated-cache-configuration name="repl-template" mode="SYNC" statistics="true"
-            segments="200" consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
+            segments="200"
             key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
          <encoding>
             <key media-type="application/x-protostream"/>
@@ -410,7 +408,6 @@
 
       <distributed-cache-configuration name="dist-template" mode="SYNC" l1-lifespan="1200000" owners="4"
                          remote-timeout="35000" segments="2" statistics="true"
-                         consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
                          key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
          <backups merge-policy="org.infinispan.xsite.CustomXSiteEntryMergePolicy">
             <backup site="NYC" failure-policy="WARN" strategy="SYNC" timeout="12500">

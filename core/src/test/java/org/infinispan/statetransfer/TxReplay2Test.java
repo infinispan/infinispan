@@ -22,6 +22,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -148,8 +149,9 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .recovery().disable();
       builder.clustering()
-            .hash().numOwners(3).numSegments(1).consistentHashFactory(consistentHashFactory)
+            .hash().numOwners(3).numSegments(1)
             .stateTransfer().fetchInMemoryState(true);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(consistentHashFactory);
       builder.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       createClusteredCaches(4, ControlledConsistentHashFactory.SCI.INSTANCE, builder);
    }

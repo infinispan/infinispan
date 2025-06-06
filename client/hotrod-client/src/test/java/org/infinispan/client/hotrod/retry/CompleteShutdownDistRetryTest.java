@@ -17,6 +17,7 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.Test;
 
@@ -114,7 +115,7 @@ public class CompleteShutdownDistRetryTest extends HitsAwareCacheManagersTest {
    private ConfigurationBuilder getConfiguration() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.clustering().hash().numSegments(3).numOwners(1);
-      builder.clustering().hash().consistentHashFactory(new StableControlledConsistentHashFactory());
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(new StableControlledConsistentHashFactory());
       return hotRodCacheConfiguration(builder);
    }
 }

@@ -16,6 +16,7 @@ import java.util.function.BiFunction;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.functional.EntryView;
@@ -48,7 +49,8 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       chf = new ControlledConsistentHashFactory.Default(0, 1);
       cb = new ConfigurationBuilder();
       cb.transaction().transactionMode(TransactionMode.TRANSACTIONAL).useSynchronization(false);
-      cb.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numSegments(1).consistentHashFactory(chf);
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numSegments(1);
+      cb.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(chf);
 
       createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, cb, 3);
       waitForClusterToForm();

@@ -9,15 +9,13 @@ import java.util.Collection;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
@@ -30,6 +28,9 @@ import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Test for ISPN-8533
@@ -78,9 +79,10 @@ public class PessimisticDeadlockTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
-      builder.clustering().hash().consistentHashFactory(new ControlledConsistentHashFactory.Default(1, 2))
+      builder.clustering().hash()
             .numSegments(1)
             .numOwners(2);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(new ControlledConsistentHashFactory.Default(1, 2));
       createClusteredCaches(4, ControlledConsistentHashFactory.SCI.INSTANCE, builder);
    }
 

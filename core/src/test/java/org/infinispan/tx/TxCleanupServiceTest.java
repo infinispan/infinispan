@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -39,7 +40,8 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
       dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       dcc.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       consistentHashFactory = new ControlledConsistentHashFactory.Default(1);
-      dcc.clustering().hash().numOwners(1).numSegments(1).consistentHashFactory(consistentHashFactory);
+      dcc.clustering().hash().numOwners(1).numSegments(1);
+      dcc.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(consistentHashFactory);
       createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, dcc, 2);
       waitForClusterToForm();
    }
