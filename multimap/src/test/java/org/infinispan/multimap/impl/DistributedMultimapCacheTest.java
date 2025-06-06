@@ -255,6 +255,11 @@ public class DistributedMultimapCacheTest extends BaseDistFunctionalTest<String,
       }));
    }
 
+   static int i = 0;
+   public void testINot0() {
+      assertTrue(i++ > 0);
+   }
+
    public void testGetEmpty() {
       MultimapCache<String, Person> multimapCache = getMultimapCacheMember();
 
