@@ -167,7 +167,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    }
 
    static boolean executeOnExecutorService(DeliverOrder order, CacheRpcCommand command) {
-      return !order.preserveOrder() && command.canBlock();
+      return false;
    }
 
    @Override

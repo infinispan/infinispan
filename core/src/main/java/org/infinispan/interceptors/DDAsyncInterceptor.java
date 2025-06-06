@@ -166,11 +166,6 @@ public abstract class DDAsyncInterceptor extends BaseAsyncInterceptor implements
    }
 
    @Override
-   public Object visitUnknownCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      return handleDefault(ctx, command);
-   }
-
-   @Override
    public Object visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command)
          throws Throwable {
       return handleDefault(ctx, command);

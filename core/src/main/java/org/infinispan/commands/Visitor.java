@@ -96,13 +96,6 @@ public interface Visitor {
    // locking commands
    Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable;
 
-   /**
-    * @deprecated since 11.0 will be removed in the next major version with no direct replacement. There is no reason
-    * that a unknown command should be passed through the interceptor chain.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   Object visitUnknownCommand(InvocationContext ctx, VisitableCommand command) throws Throwable;
-
    Object visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable;
 
    Object visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable;

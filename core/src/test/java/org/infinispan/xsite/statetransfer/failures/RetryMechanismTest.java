@@ -224,7 +224,7 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
       }
 
       @Override
-      public void applyState(List<XSiteState> chunk) throws Exception {
+      public void applyState(List<XSiteState> chunk) {
          boolean fail;
          synchronized (this) {
             fail = nFailures == FAIL_FOR_EVER;

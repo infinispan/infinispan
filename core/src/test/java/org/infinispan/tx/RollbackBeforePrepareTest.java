@@ -12,11 +12,12 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
-import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.Test;
 
 @Test(testName = "tx.RollbackBeforePrepareTest", groups = "functional")
@@ -25,7 +26,6 @@ public class RollbackBeforePrepareTest extends MultipleCacheManagersTest {
 
    public static final long REPL_TIMEOUT = 1000;
    public static final long LOCK_TIMEOUT = 500;
-   private FailPrepareInterceptor failPrepareInterceptor;
    protected int numOwners = 3;
 
    @Override
@@ -40,15 +40,15 @@ public class RollbackBeforePrepareTest extends MultipleCacheManagersTest {
 
       createCluster(config, 3);
       waitForClusterToForm();
-      failPrepareInterceptor = new FailPrepareInterceptor();
+      FailPrepareInterceptor failPrepareInterceptor = new FailPrepareInterceptor();
       extractInterceptorChain(advancedCache(2)).addInterceptor(failPrepareInterceptor, 1);
    }
 
 
    public void testCommitNotSentBeforeAllPrepareAreAck() throws Exception {
-
-      ControlledCommandFactory ccf = ControlledCommandFactory.registerControlledCommandFactory(cache(1), PrepareCommand.class);
-      ccf.gate.close();
+      CheckPoint checkPoint = new CheckPoint();
+      checkPoint.triggerForever(Mocks.AFTER_RELEASE);
+      Mocks.blockInboundCacheRpcCommand(cache(1), checkPoint, c -> c.getClass().equals(PrepareCommand.class));
 
       try {
          cache(0).put("k", "v");
@@ -60,20 +60,17 @@ public class RollbackBeforePrepareTest extends MultipleCacheManagersTest {
       //this will also cause a replication timeout
       allowRollbackToRun();
 
-      ccf.gate.open();
+      checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
 
       //give some time for the prepare to execute
       Thread.sleep(3000);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            int remoteTxCount0 = TestingUtil.getTransactionTable(cache(0)).getRemoteTxCount();
-            int remoteTxCount1 = TestingUtil.getTransactionTable(cache(1)).getRemoteTxCount();
-            int remoteTxCount2 = TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount();
-            log.tracef("remote0=%s, remote1=%s, remote2=%s", remoteTxCount0, remoteTxCount1, remoteTxCount2);
-            return remoteTxCount0 == 0 && remoteTxCount1 == 0 && remoteTxCount2 == 0;
-         }
+      eventually(() -> {
+         int remoteTxCount0 = TestingUtil.getTransactionTable(cache(0)).getRemoteTxCount();
+         int remoteTxCount1 = TestingUtil.getTransactionTable(cache(1)).getRemoteTxCount();
+         int remoteTxCount2 = TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount();
+         log.tracef("remote0=%s, remote1=%s, remote2=%s", remoteTxCount0, remoteTxCount1, remoteTxCount2);
+         return remoteTxCount0 == 0 && remoteTxCount1 == 0 && remoteTxCount2 == 0;
       });
 
       assertNull(cache(0).get("k"));

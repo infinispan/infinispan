@@ -79,7 +79,7 @@ class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecuto
             super.execute(runnable);
          } else {
             try {
-               ReplicableCommand command = new ReplicableRunnableCommand(runnable);
+               ReplicableCommand command = new ReplicableRunnableCommand(runnable, Security.getSubject());
                transport.sendTo(target, command, DeliverOrder.NONE);
             } catch (Exception e) {
                throw new CacheException(e);
@@ -101,7 +101,7 @@ class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecuto
       if (Objects.equals(target, me)) {
          return super.submit(runnable);
       } else {
-         ReplicableCommand command = new ReplicableRunnableCommand(runnable);
+         ReplicableCommand command = new ReplicableRunnableCommand(runnable, Security.getSubject());
          CompletionStage<Response> request =
             transport.invokeCommand(target, command, PassthroughSingleResponseCollector.INSTANCE, DeliverOrder.NONE,
                                     time, unit);
