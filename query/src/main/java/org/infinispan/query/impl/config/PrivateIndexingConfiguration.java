@@ -1,4 +1,4 @@
-package org.infinispan.configuration.cache;
+package org.infinispan.query.impl.config;
 
 import java.util.Objects;
 

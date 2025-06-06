@@ -3,7 +3,7 @@ package org.infinispan.query.impl;
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.IndexWriterConfiguration;
-import org.infinispan.configuration.cache.PrivateIndexingConfiguration;
+import org.infinispan.query.impl.config.PrivateIndexingConfiguration;
 
 public class IndexerConfig {
 

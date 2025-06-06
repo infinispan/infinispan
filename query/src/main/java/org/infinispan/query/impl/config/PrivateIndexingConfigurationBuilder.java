@@ -1,8 +1,10 @@
-package org.infinispan.configuration.cache;
+package org.infinispan.query.impl.config;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.configuration.cache.AbstractModuleConfigurationBuilder;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 
 /**
  * @api.private
