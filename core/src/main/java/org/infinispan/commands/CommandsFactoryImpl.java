@@ -121,8 +121,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
@@ -154,8 +152,6 @@ import org.reactivestreams.Publisher;
  */
 @Scope(Scopes.NAMED_CACHE)
 public class CommandsFactoryImpl implements CommandsFactory {
-   private static final Log log = LogFactory.getLog(CommandsFactoryImpl.class);
-
    @Inject ClusteringDependentLogic clusteringDependentLogic;
    @Inject Configuration configuration;
    @Inject ComponentRef<Cache<Object, Object>> cache;
@@ -301,17 +297,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public ClusteredGetCommand buildClusteredGetCommand(Object key, Integer segment, long flagsBitSet) {
       return new ClusteredGetCommand(key, cacheName, segment, flagsBitSet);
-   }
-
-   /**
-    * @param isRemote true if the command is deserialized and is executed remote.
-    */
-   @Override
-   public void initializeReplicableCommand(ReplicableCommand c, boolean isRemote) {
-      if (c == null) return;
-
-      if (c instanceof InitializableCommand)
-         ((InitializableCommand) c).init(componentRegistry, isRemote);
    }
 
    @SuppressWarnings("unchecked")

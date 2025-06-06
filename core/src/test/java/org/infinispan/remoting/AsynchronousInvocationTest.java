@@ -3,6 +3,7 @@ package org.infinispan.remoting;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.getDefaultCacheConfiguration;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -36,7 +37,6 @@ import org.infinispan.test.TestException;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
-import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -59,25 +59,16 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    private InboundInvocationHandler invocationHandler;
    private Address address;
 
-   private static CacheRpcCommand mockCacheRpcCommand(boolean blocking) throws Throwable {
+   private static CacheRpcCommand mockCacheRpcCommand() throws Throwable {
       CacheRpcCommand mock = mock(CacheRpcCommand.class);
-      when(mock.canBlock()).thenReturn(blocking);
       when(mock.getCacheName()).thenReturn(CACHE_NAME_BYTES);
       when(mock.invokeAsync(any())).thenReturn(CompletableFutures.completedNull());
       return mock;
    }
 
-   private static GlobalRpcCommand mockGlobalRpcCommand(boolean blocking) throws Throwable {
+   private static GlobalRpcCommand mockGlobalRpcCommand() throws Throwable {
       GlobalRpcCommand mock = mock(GlobalRpcCommand.class);
-      when(mock.canBlock()).thenReturn(blocking);
       when(mock.invokeAsync(any())).thenReturn(CompletableFutures.completedNull());
-      return mock;
-   }
-
-   private static ReplicableCommand mockReplicableCommand(boolean blocking) throws Throwable {
-      ReplicableCommand mock = mock(ReplicableCommand.class);
-      when(mock.canBlock()).thenReturn(blocking);
-      when(mock.invokeAsync()).thenReturn(CompletableFutures.completedNull());
       return mock;
    }
 
@@ -121,45 +112,29 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    }
 
    public void testCacheRpcCommands() throws Throwable {
-      CacheRpcCommand blockingCacheRpcCommand = mockCacheRpcCommand(true);
-      assertDispatchForCommand(blockingCacheRpcCommand, true);
-
-      CacheRpcCommand nonBlockingCacheRpcCommand = mockCacheRpcCommand(false);
-      assertDispatchForCommand(nonBlockingCacheRpcCommand, false);
+      CacheRpcCommand nonBlockingCacheRpcCommand = mockCacheRpcCommand();
+      assertDispatchForCommand(nonBlockingCacheRpcCommand);
    }
 
    public void testGlobalRpcCommands() throws Throwable {
-      GlobalRpcCommand blockingGlobalRpcCommand = mockGlobalRpcCommand(true);
-      assertDispatchForCommand(blockingGlobalRpcCommand, true);
-
-      GlobalRpcCommand nonBlockingGlobalRpcCommand = mockGlobalRpcCommand(false);
-      assertDispatchForCommand(nonBlockingGlobalRpcCommand, false);
+      GlobalRpcCommand nonBlockingGlobalRpcCommand = mockGlobalRpcCommand();
+      assertDispatchForCommand(nonBlockingGlobalRpcCommand);
    }
 
-   public void testReplicableCommands() throws Throwable {
-      ReplicableCommand blockingReplicableCommand = mockReplicableCommand(true);
-      assertDispatchForCommand(blockingReplicableCommand, true);
-
-      ReplicableCommand nonBlockingReplicableCommand = mockReplicableCommand(false);
-      assertDispatchForCommand(nonBlockingReplicableCommand, false);
-   }
-
-   private void assertDispatchForCommand(ReplicableCommand command, boolean isBlocking) throws Exception {
-      Assert.assertEquals(isBlocking, command.canBlock());
+   private void assertDispatchForCommand(ReplicableCommand command) throws Exception {
       log.debugf("Testing " + command.getClass().getCanonicalName());
-      DummyTaskCountExecutorService executorToUse = isBlocking ? blockingExecutorService : nonBlockingExecutorService;
+      DummyTaskCountExecutorService executorToUse = nonBlockingExecutorService;
       executorToUse.reset();
       CompletableFutureResponse response = new CompletableFutureResponse();
       invocationHandler.handleFromCluster(address, command, response, DeliverOrder.NONE);
       response.await(30, TimeUnit.SECONDS);
-      Assert.assertEquals(executorToUse.hasExecutedCommand, isBlocking,
-                          "Command " + command.getClass() + " dispatched wrongly.");
+      assertFalse(executorToUse.hasExecutedCommand, "Command " + command.getClass() + " dispatched wrongly.");
 
       executorToUse.reset();
       response = new CompletableFutureResponse();
       invocationHandler.handleFromCluster(address, command, response, DeliverOrder.PER_SENDER);
       response.await(30, TimeUnit.SECONDS);
-      Assert.assertFalse(executorToUse.hasExecutedCommand, "Command " + command.getClass() + " dispatched wrongly.");
+      assertFalse(executorToUse.hasExecutedCommand, "Command " + command.getClass() + " dispatched wrongly.");
    }
 
    private static class DummyTaskCountExecutorService extends AbstractExecutorService {

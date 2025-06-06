@@ -55,7 +55,7 @@ public class CustomCacheRpcCommand extends BaseRpcCommand implements VisitableCo
 
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitUnknownCommand(ctx, this);
+      return null;
    }
 
    @Override

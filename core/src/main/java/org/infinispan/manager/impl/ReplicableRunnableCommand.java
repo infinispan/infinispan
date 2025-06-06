@@ -4,8 +4,8 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.GlobalRpcCommand;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -46,12 +46,6 @@ public class ReplicableRunnableCommand implements GlobalRpcCommand {
    @Override
    public boolean isReturnValueExpected() {
       return false;
-   }
-
-   @Override
-   public boolean canBlock() {
-      // These commands can be arbitrary user commands - so be careful about them blocking
-      return true;
    }
 
    @Override
