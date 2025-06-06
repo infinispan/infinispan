@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -33,7 +34,8 @@ public class LeaveDuringStateTransferTest extends MultipleCacheManagersTest {
 
    private ConfigurationBuilder configuration() {
       ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
-      cb.clustering().hash().numSegments(1).consistentHashFactory(factory);
+      cb.clustering().hash().numSegments(1);
+      cb.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(factory);
       return cb;
    }
 

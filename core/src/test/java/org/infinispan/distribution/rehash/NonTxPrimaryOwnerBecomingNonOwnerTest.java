@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -59,7 +60,8 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
    private ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.clustering().cacheMode(CacheMode.DIST_SYNC);
-      c.clustering().hash().numSegments(1).consistentHashFactory(new CustomConsistentHashFactory());
+      c.clustering().hash().numSegments(1);
+      c.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(new CustomConsistentHashFactory());
       c.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
       return c;
    }

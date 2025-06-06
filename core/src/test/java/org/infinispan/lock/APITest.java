@@ -16,6 +16,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.TimeoutException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.interceptors.locking.AbstractLockingInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
@@ -39,8 +40,8 @@ public class APITest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
-      cfg.clustering().hash().numSegments(1)
-            .consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
+      cfg.clustering().hash().numSegments(1);
+      cfg.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
       cfg.transaction().lockingMode(LockingMode.PESSIMISTIC)
             .cacheStopTimeout(0)
             .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());

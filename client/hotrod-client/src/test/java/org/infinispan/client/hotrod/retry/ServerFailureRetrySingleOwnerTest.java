@@ -10,6 +10,8 @@ import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
@@ -18,7 +20,6 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledConsistentHashFactory;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
@@ -38,9 +39,9 @@ public class ServerFailureRetrySingleOwnerTest extends AbstractRetryTest {
       ConfigurationBuilder builder = hotRodCacheConfiguration(
             getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.clustering().hash().numOwners(1).numSegments(1)
-            .consistentHashFactory(new ControlledConsistentHashFactory.Default(0))
             .transaction().transactionMode(TransactionMode.TRANSACTIONAL).useSynchronization(true)
             .locking().isolationLevel(IsolationLevel.READ_COMMITTED);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(new ControlledConsistentHashFactory.Default(0));
       return builder;
    }
 

@@ -12,6 +12,7 @@ import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.LocalizedCacheTopology;
@@ -52,8 +53,8 @@ public class IracOwnershipChangeTest extends AbstractMultipleSitesTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       builder.clustering().hash()
             .numSegments(1)
-            .numOwners(2)
-            .consistentHashFactory(siteIndex == 0 ? site0CHFactory : site1CHFactory);
+            .numOwners(2);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(siteIndex == 0 ? site0CHFactory : site1CHFactory);
       builder.sites().addBackup()
             .site(siteName(siteIndex == 0 ? 1 : 0))
             .strategy(BackupConfiguration.BackupStrategy.ASYNC);

@@ -20,6 +20,7 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.reactive.publisher.impl.SegmentAwarePublisherSupplier;
@@ -51,7 +52,8 @@ public class DistributedStreamRehashTest extends MultipleCacheManagersTest {
       ConfigurationBuilder builderUsed = new ConfigurationBuilder();
       builderUsed.clustering().cacheMode(cacheMode);
       if (cacheMode == CacheMode.DIST_SYNC) {
-         builderUsed.clustering().clustering().hash().numOwners(2).numSegments(4).consistentHashFactory(consistentHashFactory);
+         builderUsed.clustering().clustering().hash().numOwners(2).numSegments(4);
+         builderUsed.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(consistentHashFactory);
       }
       createClusteredCaches(4, CACHE_NAME, ControlledConsistentHashFactory.SCI.INSTANCE, builderUsed);
    }

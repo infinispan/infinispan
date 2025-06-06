@@ -24,6 +24,7 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.reactive.publisher.PublisherReducers;
@@ -57,7 +58,8 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builderUsed = new ConfigurationBuilder();
       factory = new ControlledConsistentHashFactory.Default(START_SEGMENT_OWNERS);
-      builderUsed.clustering().cacheMode(CacheMode.DIST_SYNC).hash().consistentHashFactory(factory).numSegments(4);
+      builderUsed.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numSegments(4);
+      builderUsed.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(factory);
       createClusteredCaches(4, ControlledConsistentHashFactory.SCI.INSTANCE, builderUsed);
    }
 

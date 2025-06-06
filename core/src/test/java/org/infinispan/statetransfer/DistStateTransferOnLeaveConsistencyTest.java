@@ -20,6 +20,7 @@ import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
@@ -76,7 +77,8 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
 
       // Make it impossible for a key to be owned by nodes 0 and 2
       consistentHashFactory = new ControlledConsistentHashFactory.Default(new int[][]{{0, 1}, {1, 2}});
-      builder.clustering().hash().numOwners(2).numSegments(2).consistentHashFactory(consistentHashFactory);
+      builder.clustering().hash().numOwners(2).numSegments(2);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(consistentHashFactory);
       builder.clustering().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
       builder.clustering().l1().disable().locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       return builder;

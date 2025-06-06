@@ -17,6 +17,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -73,12 +74,12 @@ public class LargeCluster2StressTest extends MultipleCacheManagersTest {
       assertEquals("pbcast.GMS", gmsConfiguration.getProtocolName());
       gmsConfiguration.getProperties().put("join_timeout", "2000");
 
-      final Configuration distConfig = new ConfigurationBuilder()
-            .clustering().cacheMode(CacheMode.DIST_SYNC)
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC)
             .clustering().stateTransfer().awaitInitialTransfer(false)
-//            .hash().consistentHashFactory(TopologyAwareSyncConsistentHashFactory.getInstance()).numSegments(NUM_SEGMENTS)
-            .hash().consistentHashFactory(SyncConsistentHashFactory.getInstance()).numSegments(NUM_SEGMENTS)
-            .build();
+            .hash().numSegments(NUM_SEGMENTS);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(SyncConsistentHashFactory.getInstance());
+      final Configuration distConfig = builder.build();
       final Configuration replConfig = new ConfigurationBuilder()
             .clustering().cacheMode(CacheMode.REPL_SYNC)
             .clustering().hash().numSegments(NUM_SEGMENTS)

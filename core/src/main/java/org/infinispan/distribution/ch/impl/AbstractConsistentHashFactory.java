@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
 
 /**

@@ -14,7 +14,6 @@ import java.util.function.Function;
 
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.PersistedConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -22,7 +21,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 
 /**
- * {@link org.infinispan.distribution.ch.ConsistentHashFactory} implementation
+ * {@link ConsistentHashFactory} implementation
  * that guarantees that multiple caches with the same members will
  * have the same consistent hash (unlike {@link DefaultConsistentHashFactory}).
  *
