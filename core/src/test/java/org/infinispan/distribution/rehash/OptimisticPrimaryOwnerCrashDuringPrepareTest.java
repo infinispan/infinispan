@@ -14,6 +14,7 @@ import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -77,8 +78,8 @@ public class OptimisticPrimaryOwnerCrashDuringPrepareTest extends MultipleCacheM
       config.clustering().cacheMode(CacheMode.DIST_SYNC);
       config.transaction().lockingMode(LockingMode.OPTIMISTIC);
       config.clustering().locking().lockAcquisitionTimeout(2, SECONDS);
-      config.clustering().hash().numSegments(1)
-            .consistentHashFactory(new ControlledConsistentHashFactory.Default(1, 0));
+      config.clustering().hash().numSegments(1);
+      config.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(new ControlledConsistentHashFactory.Default(1, 0));
       config.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .cacheStopTimeout(1, SECONDS);
       createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, config, 2);

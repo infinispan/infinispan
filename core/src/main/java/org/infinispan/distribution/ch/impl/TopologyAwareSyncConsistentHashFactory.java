@@ -11,7 +11,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 
 /**
- * A {@link org.infinispan.distribution.ch.ConsistentHashFactory} implementation that guarantees caches
+ * A {@link ConsistentHashFactory} implementation that guarantees caches
  * with the same members have the same consistent hash and also tries to distribute segments based on the
  * topology information in {@link org.infinispan.configuration.global.TransportConfiguration}.
   * It has a drawback compared to {@link org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory}:

@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 
+import org.infinispan.distribution.ch.impl.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.remoting.transport.Address;
 

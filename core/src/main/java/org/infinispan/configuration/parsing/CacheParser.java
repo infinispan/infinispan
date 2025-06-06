@@ -730,10 +730,11 @@ public class CacheParser implements ConfigurationParser {
             break;
          }
          case CONSISTENT_HASH_FACTORY: {
-            if (reader.getSchema().since(11, 0)) {
-               CONFIG.debug("Consistent hash customization has been deprecated and will be removed");
+            if (reader.getSchema().since(16, 0)) {
+               throw ParseUtils.unexpectedElement(reader);
+            } else {
+               CONFIG.debug("Consistent hash customization has been removed");
             }
-            builder.clustering().hash().consistentHashFactory(Util.getInstance(value, classLoader));
             break;
          }
          case KEY_PARTITIONER: {
