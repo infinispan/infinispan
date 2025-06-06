@@ -19,7 +19,5 @@ public interface GlobalRpcCommand extends ReplicableCommand {
    /**
     * Invoke the command asynchronously.
     */
-   default CompletionStage<?> invokeAsync(GlobalComponentRegistry globalComponentRegistry) throws Throwable {
-      return invokeAsync();
-   }
+   CompletionStage<?> invokeAsync(GlobalComponentRegistry globalComponentRegistry) throws Throwable;
 }

@@ -47,12 +47,6 @@ public class CompleteTransactionCommand extends BaseRpcCommand {
    }
 
    @Override
-   public boolean canBlock() {
-      //this command performs the 2PC commit.
-      return true;
-   }
-
-   @Override
    public NodeVersion supportedSince() {
       return NodeVersion.SIXTEEN;
    }
