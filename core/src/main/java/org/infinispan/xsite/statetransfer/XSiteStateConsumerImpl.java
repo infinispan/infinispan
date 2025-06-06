@@ -97,7 +97,7 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
    }
 
    @Override
-   public void applyState(List<XSiteState> chunk) throws Exception {
+   public void applyState(List<XSiteState> chunk) {
       if (log.isDebugEnabled()) {
          log.debugf("Received state: %s keys", chunk.size());
       }
