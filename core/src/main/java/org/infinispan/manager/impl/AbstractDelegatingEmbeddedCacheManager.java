@@ -178,6 +178,11 @@ public class AbstractDelegatingEmbeddedCacheManager extends InternalCacheManager
    }
 
    @Override
+   public void stopCache(String cacheName) {
+      cm.stopCache(cacheName);
+   }
+
+   @Override
    public EmbeddedCacheManager startCaches(String... cacheNames) {
       return cm.startCaches(cacheNames);
    }
