@@ -46,6 +46,10 @@ public class ManagedConnectionFactory extends ConnectionFactory {
    }
 
    private void initDataSource() {
+      dataSource = managedConfiguration.dataSource();
+      if (dataSource != null) {
+         return;
+      }
       InitialContext ctx = null;
       String datasourceName = managedConfiguration.jndiUrl();
       try {
