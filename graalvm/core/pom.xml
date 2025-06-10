@@ -149,7 +149,7 @@
                         <configuration>
                            <buildArgs>
                               <buildArg>-J-Xmx5g</buildArg>
-                              <buildArg>-J-Djava.util.logging.manager=org.jboss.logmanager.LogManager</buildArg>
+                              <buildArg>-J-Djava.util.logging.manager=java.util.logging.LogManager</buildArg>
                               <buildArg>-H:+AllowDeprecatedBuilderClassesOnImageClasspath</buildArg>
                               <buildArg>-H:IncludeResources=embedded.xml</buildArg>
                               <buildArg>-H:IncludeResources=stacks/udp.xml</buildArg>
@@ -157,7 +157,24 @@
                               <buildArg>-H:IncludeResources=stacks/tcp_mping/tcp1.xml</buildArg>
                               <buildArg>-H:ServiceLoaderFeatureExcludeServiceProviders=org.infinispan.marshall.ServiceLoadedSciImpl</buildArg>
                               <buildArg>--enable-url-protocols=http</buildArg>
-                              <buildArg>--trace-class-initialization=org.junit.platform.launcher.core.LauncherConfig</buildArg>
+                              <!-- Remove the entries below once we upgrade to Native Build Tools 0.11.0 -->
+                              <buildArg>--initialize-at-build-time=org.junit.jupiter.api.DisplayNameGenerator$IndicativeSentences</buildArg>
+                              <buildArg>--initialize-at-build-time=org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor$ClassInfo</buildArg>
+                              <buildArg>--initialize-at-build-time=org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor$LifecycleMethods</buildArg>
+                              <buildArg>--initialize-at-build-time=org.junit.jupiter.engine.descriptor.ClassTemplateInvocationTestDescriptor</buildArg>
+                              <buildArg>--initialize-at-build-time=org.junit.jupiter.engine.descriptor.ClassTemplateTestDescriptor</buildArg>
+                              <buildArg>--initialize-at-build-time=org.junit.jupiter.engine.descriptor.DynamicDescendantFilter$Mode</buildArg>
+                              <buildArg>--initialize-at-build-time=org.junit.jupiter.engine.descriptor.ExclusiveResourceCollector$1</buildArg>
+                              <buildArg>--initialize-at-build-time=org.junit.jupiter.engine.descriptor.MethodBasedTestDescriptor$MethodInfo</buildArg>
+                              <buildArg>--initialize-at-build-time=org.junit.jupiter.engine.discovery.ClassSelectorResolver$DummyClassTemplateInvocationContext</buildArg>
+                              <buildArg>--initialize-at-build-time=org.junit.platform.engine.support.store.NamespacedHierarchicalStore$EvaluatedValue</buildArg>
+                              <buildArg>--initialize-at-build-time=org.junit.platform.launcher.core.DiscoveryIssueNotifier</buildArg>
+                              <buildArg>--initialize-at-build-time=org.junit.platform.launcher.core.HierarchicalOutputDirectoryProvider</buildArg>
+                              <buildArg>--initialize-at-build-time=org.junit.platform.launcher.core.LauncherDiscoveryResult$EngineResultInfo</buildArg>
+                              <buildArg>--initialize-at-build-time=org.junit.platform.launcher.core.LauncherPhase</buildArg>
+                              <buildArg>--initialize-at-build-time=org.junit.platform.suite.engine.DiscoverySelectorResolver</buildArg>
+                              <buildArg>--initialize-at-build-time=org.junit.platform.suite.engine.SuiteTestDescriptor$DiscoveryIssueForwardingListener</buildArg>
+                              <buildArg>--initialize-at-build-time=org.junit.platform.suite.engine.SuiteTestDescriptor$LifecycleMethods</buildArg>
                            </buildArgs>
                            <fallback>false</fallback>
                            <quickBuild>true</quickBuild>
