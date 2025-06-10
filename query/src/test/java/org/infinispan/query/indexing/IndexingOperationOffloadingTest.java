@@ -40,7 +40,7 @@ public class IndexingOperationOffloadingTest extends SingleCacheManagerTest {
             .indexing()
             .enable()
             .storage(IndexStorage.LOCAL_HEAP)
-            .writer().queueCount(5).queueSize(100) // Use a very small single queue
+            .writer().queueCount(10).queueSize(100)
             .addIndexedEntity(TypeA.class)
             .addIndexedEntity(TypeB.class)
             .addIndexedEntity(TypeC.class);

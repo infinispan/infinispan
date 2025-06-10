@@ -32,7 +32,7 @@ public class ReindexPressureTest extends SingleCacheManagerTest {
       config.statistics().enable();
       // While testing this fails around with queueCount=2 & queueSize=50 so making it more for CI to pass (2.5x2 more)
       config.indexing().writer()
-            .queueCount(5)
+            .queueCount(10)
             .queueSize(100);
       config.indexing().enable()
             .storage(LOCAL_HEAP)

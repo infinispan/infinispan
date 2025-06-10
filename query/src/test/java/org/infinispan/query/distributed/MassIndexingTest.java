@@ -5,9 +5,11 @@ import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.fail;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
@@ -59,7 +61,7 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
    }
 
    @Test
-   public void testOverlappingMassIndexers() {
+   public void testOverlappingMassIndexers() throws ExecutionException, InterruptedException {
       Cache<Integer, Car> cache = cache(0);
       IntStream.range(0, 10).forEach(i -> cache.put(i, new Car("whatever", "whatever", 0)));
 
@@ -73,7 +75,20 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
 
       latch.countDown();
 
-      assertTrue(isSuccess(second) && isError(first) || isSuccess(first) && isError(second));
+      if (isSuccess(first)) {
+         if (isSuccess(second)) {
+            fail("Both mass indexers cannot be successful!");
+         }
+      } else if (isError(first)) {
+         try {
+            second.toCompletableFuture().get();
+         } catch (ExecutionException e) {
+            log.fatal("Both indexers should not fail, second error was", e.getCause());
+         }
+         first.toCompletableFuture().get();
+         fail("Both mass indexers failed, but first didn't throw an exception");
+      }
+
       assertFalse(massIndexer.isRunning());
 
       CompletionStage<Void> third = massIndexer.run();
