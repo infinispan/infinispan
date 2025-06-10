@@ -1,7 +1,7 @@
 package org.infinispan.search.mapper.model.impl;
 
-import org.hibernate.annotations.common.reflection.XProperty;
-import org.hibernate.search.mapper.pojo.model.hcann.spi.AbstractPojoHCAnnRawTypeModel;
+import org.hibernate.models.spi.MemberDetails;
+import org.hibernate.search.mapper.pojo.model.models.spi.AbstractPojoModelsRawTypeModel;
 import org.hibernate.search.mapper.pojo.model.spi.GenericContextAwarePojoGenericTypeModel.RawTypeDeclaringContext;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 
@@ -13,7 +13,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-class InfinispanRawTypeModel<T> extends AbstractPojoHCAnnRawTypeModel<T, InfinispanBootstrapIntrospector> {
+class InfinispanRawTypeModel<T> extends AbstractPojoModelsRawTypeModel<T, InfinispanBootstrapIntrospector> {
 
    InfinispanRawTypeModel(InfinispanBootstrapIntrospector introspector, PojoRawTypeIdentifier<T> typeIdentifier,
                           RawTypeDeclaringContext<T> rawTypeDeclaringContext) {
@@ -23,27 +23,27 @@ class InfinispanRawTypeModel<T> extends AbstractPojoHCAnnRawTypeModel<T, Infinis
    @Override
    @SuppressWarnings("unchecked") // xClass represents T, so its supertypes represent ? super T
    public Stream<InfinispanRawTypeModel<? super T>> ascendingSuperTypes() {
-      return introspector.ascendingSuperClasses(xClass)
+      return introspector.ascendingSuperClasses(classDetails)
             .map(xc -> (InfinispanRawTypeModel<? super T>) introspector.typeModel(xc));
    }
 
    @Override
    @SuppressWarnings("unchecked") // xClass represents T, so its supertypes represent ? super T
    public Stream<InfinispanRawTypeModel<? super T>> descendingSuperTypes() {
-      return introspector.descendingSuperClasses(xClass)
+      return introspector.descendingSuperClasses(classDetails)
             .map(xc -> (InfinispanRawTypeModel<? super T>) introspector.typeModel(xc));
    }
 
    @Override
    protected InfinispanPropertyModel<?> createPropertyModel(String propertyName) {
-      List<XProperty> declaredXProperties = new ArrayList<>(2);
-      List<XProperty> methodAccessXProperties = declaredMethodAccessXPropertiesByName().get(propertyName);
-      if (methodAccessXProperties != null) {
-         declaredXProperties.addAll(methodAccessXProperties);
+      List<MemberDetails> declaredProperties = new ArrayList<>(2);
+      List<MemberDetails> methodAccessProperties = declaredMethodAccessPropertiesByName().get(propertyName);
+      if (methodAccessProperties != null) {
+         declaredProperties.addAll(methodAccessProperties);
       }
-      XProperty fieldAccessXProperty = declaredFieldAccessXPropertiesByName().get(propertyName);
+      MemberDetails fieldAccessXProperty = declaredFieldAccessPropertiesByName().get(propertyName);
       if (fieldAccessXProperty != null) {
-         declaredXProperties.add(fieldAccessXProperty);
+         declaredProperties.add(fieldAccessXProperty);
       }
 
       List<Member> members = findPropertyMember(propertyName);
@@ -53,7 +53,7 @@ class InfinispanRawTypeModel<T> extends AbstractPojoHCAnnRawTypeModel<T, Infinis
 
       return new InfinispanPropertyModel<>(
             introspector, this, propertyName,
-            declaredXProperties, members
+            declaredProperties, members
       );
    }
 

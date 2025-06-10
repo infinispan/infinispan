@@ -126,8 +126,8 @@ public final class SearchQueryBuilder {
    }
 
    private <T> LuceneSearchQuery<T> build(SearchProjection<T> searchProjection, boolean withMetadata) {
-      LuceneSearchQueryOptionsStep<T, InfinispanSelectionLoadingOptionsStep> queryOptionsStep =
-            (LuceneSearchQueryOptionsStep<T, InfinispanSelectionLoadingOptionsStep>) querySession.search(scope)
+      LuceneSearchQueryOptionsStep<?, T, InfinispanSelectionLoadingOptionsStep> queryOptionsStep =
+            (LuceneSearchQueryOptionsStep<?, T, InfinispanSelectionLoadingOptionsStep>) querySession.search(scope)
             .extension(LuceneExtension.get())
             .select(searchProjection)
             .where(predicate)
@@ -146,7 +146,7 @@ public final class SearchQueryBuilder {
    private <T, A> LuceneSearchQuery<T> buildWithAggregation(SearchProjection<T> searchProjection,
                                                                    InfinispanAggregation<A> aggregation) {
       AggregationKey<Map<A, Long>> aggregationKey = AggregationKey.of(INFINISPAN_AGGREGATION_KEY_NAME);
-      LuceneSearchQueryOptionsStep<T, ?> queryOptionsStep = querySession.search(scope)
+      LuceneSearchQueryOptionsStep<?, T, ?> queryOptionsStep = querySession.search(scope)
             .extension(LuceneExtension.get())
             .select(searchProjection)
             .where(predicate)

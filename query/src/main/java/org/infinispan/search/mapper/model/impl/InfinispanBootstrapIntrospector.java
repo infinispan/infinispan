@@ -8,17 +8,21 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.hibernate.annotations.common.reflection.java.JavaReflectionManager;
-import org.hibernate.search.mapper.pojo.model.hcann.spi.AbstractPojoHCAnnBootstrapIntrospector;
-import org.hibernate.search.mapper.pojo.model.hcann.spi.PojoHCannOrmGenericContextHelper;
+import org.hibernate.search.engine.environment.classpath.spi.AggregatedClassLoader;
+import org.hibernate.search.engine.environment.classpath.spi.ClassResolver;
+import org.hibernate.search.engine.environment.classpath.spi.DefaultClassResolver;
+import org.hibernate.search.engine.environment.classpath.spi.DefaultResourceResolver;
+import org.hibernate.search.engine.environment.classpath.spi.ResourceResolver;
+import org.hibernate.search.mapper.pojo.model.models.spi.AbstractPojoModelsBootstrapIntrospector;
+import org.hibernate.search.mapper.pojo.model.models.spi.PojoModelsGenericContextHelper;
 import org.hibernate.search.mapper.pojo.model.spi.GenericContextAwarePojoGenericTypeModel.RawTypeDeclaringContext;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeModel;
 import org.hibernate.search.util.common.AssertionFailure;
 import org.hibernate.search.util.common.impl.ReflectionHelper;
+import org.hibernate.search.util.common.reflect.spi.ValueHandleFactory;
 import org.hibernate.search.util.common.reflect.spi.ValueReadHandle;
-import org.hibernate.search.util.common.reflect.spi.ValueReadHandleFactory;
 import org.infinispan.search.mapper.log.impl.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -27,20 +31,26 @@ import org.infinispan.util.logging.LogFactory;
  * <p>
  * As per JavaBeans conventions, only public getters are supported, and field access is not.
  */
-public class InfinispanBootstrapIntrospector extends AbstractPojoHCAnnBootstrapIntrospector
+public class InfinispanBootstrapIntrospector extends AbstractPojoModelsBootstrapIntrospector
       implements PojoBootstrapIntrospector {
 
    private static final Log log = LogFactory.getLog(InfinispanBootstrapIntrospector.class, Log.class);
 
-   private final ValueReadHandleFactory valueReadHandleFactory;
-   private final PojoHCannOrmGenericContextHelper genericContextHelper;
+   private final PojoModelsGenericContextHelper genericContextHelper;
 
    private final Map<Class<?>, PojoRawTypeModel<?>> typeModelCache = new HashMap<>();
 
-   public InfinispanBootstrapIntrospector(ValueReadHandleFactory valueReadHandleFactory) {
-      super(new JavaReflectionManager(), valueReadHandleFactory);
-      this.valueReadHandleFactory = valueReadHandleFactory;
-      this.genericContextHelper = new PojoHCannOrmGenericContextHelper(this);
+   public InfinispanBootstrapIntrospector(ValueHandleFactory valueHandleFactory) {
+      this(AggregatedClassLoader.createDefault(), valueHandleFactory);
+   }
+
+   public InfinispanBootstrapIntrospector(AggregatedClassLoader aggregatedClassLoader, ValueHandleFactory valueHandleFactory) {
+      this(DefaultClassResolver.create(aggregatedClassLoader), DefaultResourceResolver.create(aggregatedClassLoader), valueHandleFactory);
+   }
+
+   public InfinispanBootstrapIntrospector(ClassResolver classResolver, ResourceResolver resourceResolver, ValueHandleFactory valueHandleFactory) {
+      super(classResolver, resourceResolver, null, valueHandleFactory);
+      this.genericContextHelper = new PojoModelsGenericContextHelper(this);
    }
 
    @Override
@@ -61,20 +71,15 @@ public class InfinispanBootstrapIntrospector extends AbstractPojoHCAnnBootstrapI
       throw log.namedTypesNotSupported(name);
    }
 
-   @Override
-   public ValueReadHandleFactory annotationValueReadHandleFactory() {
-      return valueReadHandleFactory;
-   }
-
    protected ValueReadHandle<?> createValueReadHandle(Member member) throws IllegalAccessException {
       if (member instanceof Method) {
          Method method = (Method) member;
          setAccessible(method);
-         return valueReadHandleFactory.createForMethod(method);
+         return valueHandleFactory.createForMethod(method);
       } else if (member instanceof Field) {
          Field field = (Field) member;
          setAccessible(field);
-         return valueReadHandleFactory.createForField(field);
+         return valueHandleFactory.createForField(field);
       } else {
          throw new AssertionFailure("Unexpected type for a " + Member.class.getName() + ": " + member);
       }
