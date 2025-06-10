@@ -8,7 +8,7 @@
 [![Project Chat](https://img.shields.io/badge/zulip-join_chat-pink.svg?style=for-the-badge&logo=zulip)](https://infinispan.zulipchat.com/)
 
 
-# 2 Infinispan, In-Memory Distributed Database #
+# 3 Infinispan, In-Memory Distributed Database #
 
 Infinispan is an open-source in-memory database that offers flexible deployment options and 
 robust capabilities for storing, managing, and processing data. 
@@ -29,6 +29,6 @@ whether you use Infinispan as a volatile cache or a persistent data store.
 
 ## Contributing
 
-For contributing guidelines please refer to this [document](CONTRIBUTING.md). All contributions are subject to [Developer Certificate of Origin (DCO)](https://developercertificate.org/).
+4 For contributing guidelines please refer to this [document](CONTRIBUTING.md). All contributions are subject to [Developer Certificate of Origin (DCO)](https://developercertificate.org/).
 
 *The Infinispan project team*
