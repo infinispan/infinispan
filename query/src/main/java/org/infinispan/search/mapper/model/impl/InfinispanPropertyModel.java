@@ -3,17 +3,17 @@ package org.infinispan.search.mapper.model.impl;
 import java.lang.reflect.Member;
 import java.util.List;
 
-import org.hibernate.annotations.common.reflection.XProperty;
-import org.hibernate.search.mapper.pojo.model.hcann.spi.AbstractPojoHCAnnPropertyModel;
+import org.hibernate.models.spi.MemberDetails;
+import org.hibernate.search.mapper.pojo.model.models.spi.AbstractPojoModelsPropertyModel;
 import org.hibernate.search.util.common.reflect.spi.ValueReadHandle;
 
-class InfinispanPropertyModel<T> extends AbstractPojoHCAnnPropertyModel<T, InfinispanBootstrapIntrospector> {
+class InfinispanPropertyModel<T> extends AbstractPojoModelsPropertyModel<T, InfinispanBootstrapIntrospector> {
 
    InfinispanPropertyModel(InfinispanBootstrapIntrospector introspector,
                            InfinispanRawTypeModel<?> holderTypeModel,
-                           String name, List<XProperty> declaredXProperties,
+                           String name, List<MemberDetails> declaredProperties,
                            List<Member> members) {
-      super(introspector, holderTypeModel, name, declaredXProperties, members);
+      super(introspector, holderTypeModel, name, declaredProperties, members);
    }
 
    @Override

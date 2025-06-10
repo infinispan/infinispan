@@ -23,7 +23,7 @@ public interface SearchSession extends AutoCloseable {
     * @return The initial step of a DSL where the search query can be defined.
     * @see SearchQuerySelectStep
     */
-   <E> SearchQuerySelectStep<?, EntityReference, E, ?, ?, ?> search(SearchScope<E> scope);
+   <E> SearchQuerySelectStep<?, ?, EntityReference, E, ?, ?, ?> search(SearchScope<E> scope);
 
    /**
     * Create a {@link SearchScope} limited to the given type.

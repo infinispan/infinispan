@@ -257,6 +257,14 @@
          </dependency>
 
          <dependency>
+            <groupId>org.hibernate.search</groupId>
+            <artifactId>hibernate-search-bom</artifactId>
+            <version>${version.hibernate.search}</version>
+            <type>pom</type>
+            <scope>import</scope>
+         </dependency>
+
+         <dependency>
             <groupId>org.junit</groupId>
             <artifactId>junit-bom</artifactId>
             <version>${version.junit5}</version>
@@ -900,6 +908,11 @@
             <scope>test</scope>
          </dependency>
          <dependency>
+            <groupId>org.hibernate.models</groupId>
+            <artifactId>hibernate-models</artifactId>
+            <version>${version.hibernate.models}</version>
+         </dependency>
+         <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-core</artifactId>
             <version>${version.hibernate.core}</version>
@@ -914,21 +927,6 @@
             <artifactId>hibernate-jpamodelgen</artifactId>
             <version>${version.hibernate.core}</version>
             <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate.search</groupId>
-            <artifactId>hibernate-search-backend-lucene</artifactId>
-            <version>${version.hibernate.search}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate.search</groupId>
-            <artifactId>hibernate-search-mapper-pojo-base</artifactId>
-            <version>${version.hibernate.search}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.hibernate.search</groupId>
-            <artifactId>hibernate-search-v5migrationhelper-engine</artifactId>
-            <version>${version.hibernate.search}</version>
          </dependency>
          <dependency>
             <groupId>org.hibernate.lucene-jbossmodules</groupId>

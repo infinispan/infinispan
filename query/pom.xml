@@ -49,8 +49,8 @@
       </dependency>
 
       <dependency>
-         <groupId>org.hibernate.search</groupId>
-         <artifactId>hibernate-search-v5migrationhelper-engine</artifactId>
+         <groupId>org.hibernate.models</groupId>
+         <artifactId>hibernate-models</artifactId>
       </dependency>
 
       <dependency>

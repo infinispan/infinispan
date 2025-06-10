@@ -15,10 +15,10 @@ import org.infinispan.search.mapper.scope.SearchWorkspace;
 
 public class SearchScopeImpl<E> implements SearchScope<E> {
 
-   private final PojoScopeDelegate<EntityReference, E, PojoRawTypeIdentifier<? extends E>> delegate;
+   private final PojoScopeDelegate<?, EntityReference, E, PojoRawTypeIdentifier<? extends E>> delegate;
    private final EntityLoaderFactory<E> entityLoader;
 
-   public SearchScopeImpl(PojoScopeDelegate<EntityReference, E, PojoRawTypeIdentifier<? extends E>> delegate,
+   public SearchScopeImpl(PojoScopeDelegate<?, EntityReference, E, PojoRawTypeIdentifier<? extends E>> delegate,
                           EntityLoaderFactory<E> entityLoader) {
       this.delegate = delegate;
       this.entityLoader = entityLoader;
@@ -49,7 +49,7 @@ public class SearchScopeImpl<E> implements SearchScope<E> {
       return new SearchWorkspaceImpl(delegate.workspace((String) null));
    }
 
-   public SearchQuerySelectStep<?, EntityReference, E, ?, ?, ?> search(PojoScopeSessionContext sessionContext) {
+   public SearchQuerySelectStep<?, ?, EntityReference, E, ?, ?, ?> search(PojoScopeSessionContext sessionContext) {
       return delegate.search(sessionContext, entityLoader.builder());
    }
 }
