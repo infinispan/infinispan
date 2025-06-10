@@ -8,7 +8,7 @@
 [![Project Chat](https://img.shields.io/badge/zulip-join_chat-pink.svg?style=for-the-badge&logo=zulip)](https://infinispan.zulipchat.com/)
 
 
-# 1 Infinispan, In-Memory Distributed Database #
+# 2 Infinispan, In-Memory Distributed Database #
 
 Infinispan is an open-source in-memory database that offers flexible deployment options and 
 robust capabilities for storing, managing, and processing data. 
@@ -17,7 +17,7 @@ Infinispan provides a key/value data store that can hold all types of data,
 from Java objects to plain text. 
 
 Infinispan distributes your data across elastically 
-scalable clusters to guarantee high availability and fault tolerance,
+ultrascalable clusters to guarantee high availability and fault tolerance,
 whether you use Infinispan as a volatile cache or a persistent data store.
 
 
