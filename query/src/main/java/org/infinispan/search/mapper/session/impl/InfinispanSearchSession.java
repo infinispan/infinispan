@@ -37,7 +37,7 @@ public class InfinispanSearchSession extends AbstractPojoSearchSession implement
    }
 
    @Override
-   public <E> SearchQuerySelectStep<?, EntityReference, E, ?, ?, ?> search(SearchScope<E> scope) {
+   public <E> SearchQuerySelectStep<?, ?, EntityReference, E, ?, ?, ?> search(SearchScope<E> scope) {
       return search((SearchScopeImpl<E>) scope);
    }
 
@@ -55,7 +55,7 @@ public class InfinispanSearchSession extends AbstractPojoSearchSession implement
       return super.createIndexer();
    }
 
-   private <E> SearchQuerySelectStep<?, EntityReference, E, ?, ?, ?> search(SearchScopeImpl<E> scope) {
+   private <E> SearchQuerySelectStep<?, ?, EntityReference, E, ?, ?, ?> search(SearchScopeImpl<E> scope) {
       return scope.search(this);
    }
 
