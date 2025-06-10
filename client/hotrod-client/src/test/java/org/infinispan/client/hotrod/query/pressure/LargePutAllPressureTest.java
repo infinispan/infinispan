@@ -47,8 +47,8 @@ public class LargePutAllPressureTest extends SingleHotRodServerTest {
             .storage(LOCAL_HEAP)
                .addIndexedEntity("Sale")
             .writer()
-               .queueCount(1)
-               .queueSize(200);
+               .queueCount(10)
+               .queueSize(100);
 
       return TestCacheManagerFactory.createServerModeCacheManager(config);
    }
