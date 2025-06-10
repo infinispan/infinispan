@@ -257,7 +257,9 @@
                   <autoPublish>true</autoPublish>
                   <deploymentName>Infinispan ${project.version}</deploymentName>
                   <publishingServerId>central</publishingServerId>
-                  <waitForPublishCompletion>true</waitForPublishCompletion>
+                  <waitMaxTime>7200</waitMaxTime>
+                  <waitPollingInterval>60</waitPollingInterval>
+                  <waitUntil>published</waitUntil>
                </configuration>
             </plugin>
             <plugin>
