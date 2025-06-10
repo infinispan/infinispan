@@ -80,8 +80,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
 
-  native-cli:
+  published:
     needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: artiz/poll-endpoint@1.0.2
+        with:
+          url: https://repo1.maven.org/maven2/org/infinispan/infinispan-distribution/${{ github.event.inputs.version }}/
+          method: GET
+          expect-status: 200
+          timeout: 10800000
+          interval: 60000
+
+  native-cli:
+    needs: published
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -137,7 +149,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
 
   images:
-    needs: release
+    needs: published
     uses: infinispan/infinispan-images/.github/workflows/release.yml@main
     secrets: inherit
     with:
