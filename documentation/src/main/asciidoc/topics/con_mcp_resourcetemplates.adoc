@@ -1,0 +1,4 @@
+= MCP Resource Templates
+
+Resource templates allow servers to expose parameterized resources using URI templates.
+Arguments may be auto-completed through the completion API.

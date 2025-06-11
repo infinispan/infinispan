@@ -1,0 +1,28 @@
+//Directory attributes
+:stories: ../../stories
+:topics: ../topics
+:imagesdir: ../{topics}/images
+
+//Community doc attributes
+include::../{topics}/attributes/community-attributes.adoc[]
+
+//Community title attributes
+:toc2:
+:icons: font
+:toclevels: 3
+:numbered:
+:sectanchors:
+:stem: asciimath
+:context: mcp
+
+//Title
+= Using {brandname} as an MCP server
+
+{brandname} Server provides a link:https://modelcontextprotocol.io[Model Context Protocol] (MCP) server implementation that
+cam be easily integrated within AI-driven workflows.
+Use MCP clients, such as link:https://claude.ai/download[Claude Desktop], to seamlessly access and manipulate data stored in your
+{brandname} Server.
+This guide provides details about the features available in {brandname}'s MCP endpoint.
+
+//User stories
+include::stories.adoc[]

@@ -1,0 +1,5 @@
+= MCP Tools
+
+{brandname}'s MCP tools expose operations that allows models to interact with various components, such as caches,
+counters, configurations and metrics.
+
