@@ -34,12 +34,11 @@ import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.FilterResult;
-import org.infinispan.server.functional.ClusteredIT;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.api.TestClientDriver;
+import org.infinispan.server.test.junit5.InfinispanServer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * Basic test for query DSL based remote event filters.
@@ -48,8 +47,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  * @since 8.1
  */
 public class HotRodListenerWithDslFilter {
-   @RegisterExtension
-   public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
+   @InfinispanServer
+   public static TestClientDriver SERVERS;
 
    @Test
    public void testEventFilter() {

@@ -14,18 +14,17 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.rest.helper.RestResponses;
-import org.infinispan.server.functional.ClusteredIT;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.api.TestClientDriver;
+import org.infinispan.server.test.junit5.InfinispanServer;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @since 10.0
  */
 public class IgnoreCaches {
 
-   @RegisterExtension
-   public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
+   @InfinispanServer
+   public static TestClientDriver SERVERS;
 
    @Test
    public void testIgnoreCaches() {

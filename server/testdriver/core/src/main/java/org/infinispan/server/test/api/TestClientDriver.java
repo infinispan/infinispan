@@ -1,5 +1,6 @@
 package org.infinispan.server.test.api;
 
+import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.counter.api.CounterManager;
 
 /**
@@ -11,11 +12,21 @@ import org.infinispan.counter.api.CounterManager;
 public interface TestClientDriver {
 
    /**
+    * Adds a script to
+    * @param remoteCacheManager
+    * @param script
+    * @return
+    */
+   String addScript(RemoteCacheManager remoteCacheManager, String script);
+
+   boolean isServerInContainer();
+
+   /**
     * Get the HotRod instance for hotrod api operations
     *
     * @return {@link HotRodTestClientDriver} instance
     */
-   HotRodTestClientDriver hotrod();
+   HotRodClientDriver<?> hotrod();
 
    /**
     * Get the REST instance

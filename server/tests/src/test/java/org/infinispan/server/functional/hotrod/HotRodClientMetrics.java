@@ -12,26 +12,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import io.micrometer.prometheusmetrics.PrometheusConfig;
-import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.metrics.micrometer.MicrometerRemoteCacheManagerMetricsRegistry;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.functional.rest.RestMetricsResourceIT;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.api.TestClientDriver;
+import org.infinispan.server.test.junit5.InfinispanServer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.prometheusmetrics.PrometheusConfig;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 
 public class HotRodClientMetrics {
 
@@ -95,8 +94,8 @@ public class HotRodClientMetrics {
       }
    }
 
-   @RegisterExtension
-   public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
+   @InfinispanServer
+   public static TestClientDriver SERVERS;
 
    @ParameterizedTest(name = "testConnectionPoolMetrics[{0},{1}]")
    @ArgumentsSource(ConnectionPoolArgsProvider.class)

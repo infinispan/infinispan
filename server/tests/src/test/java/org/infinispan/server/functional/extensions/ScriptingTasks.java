@@ -14,10 +14,9 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.server.functional.ClusteredIT;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.api.TestClientDriver;
+import org.infinispan.server.test.junit5.InfinispanServer;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -25,8 +24,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  **/
 public class ScriptingTasks {
 
-   @RegisterExtension
-   public static final InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
+   @InfinispanServer
+   public static TestClientDriver SERVERS;
 
    @Test
    public void testSimpleScript() {

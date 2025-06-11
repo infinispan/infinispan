@@ -26,12 +26,11 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.functional.extensions.entities.Entities;
+import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.core.Common;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServer;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
@@ -43,8 +42,8 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
  **/
 public class HotRodCacheEvents {
 
-   @RegisterExtension
-   public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
+   @InfinispanServer
+   public static TestClientDriver SERVERS;
 
    static class ArgsProvider implements ArgumentsProvider {
       @Override

@@ -20,7 +20,7 @@ import org.infinispan.server.test.core.TestServer;
  * @author Tristan Tarrant
  * @since 10
  */
-public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDriver> {
+public class RestTestClientDriver extends AbstractTestClientDriver<RestTestClientDriver> {
    public static final int TIMEOUT = Integer.getInteger("org.infinispan.test.server.http.timeout", 10);
 
    private RestClientConfigurationBuilder clientConfiguration = new RestClientConfigurationBuilder();
@@ -82,7 +82,7 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
          configEntity = RestEntity.create(MediaType.APPLICATION_XML, serverConfiguration.toStringConfiguration(name));
 
       } else {
-         configEntity = RestEntity.create(MediaType.APPLICATION_JSON, forCacheMode(mode != null ? mode : CacheMode.DIST_SYNC).toStringConfiguration(name));
+         configEntity = RestEntity.create(MediaType.APPLICATION_JSON, CommonTestClientDriver.forCacheMode(mode != null ? mode : CacheMode.DIST_SYNC).toStringConfiguration(name));
       }
       future = restClient.cache(name).createWithConfiguration(configEntity, flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
       try (RestResponse response = Exceptions.unchecked(() -> future.toCompletableFuture().get(TIMEOUT, TimeUnit.SECONDS))) {

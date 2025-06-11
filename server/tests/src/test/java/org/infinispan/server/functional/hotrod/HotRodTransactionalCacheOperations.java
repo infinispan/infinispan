@@ -9,9 +9,8 @@ import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.transaction.lookup.RemoteTransactionManagerLookup;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.configuration.parsing.Parser;
-import org.infinispan.server.functional.ClusteredIT;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.infinispan.server.test.api.TestClientDriver;
+import org.infinispan.server.test.junit5.InfinispanServer;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -31,8 +30,8 @@ public class HotRodTransactionalCacheOperations {
                "  </distributed-cache-configuration>" +
                "</cache-container></infinispan>";
 
-   @RegisterExtension
-   public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
+   @InfinispanServer
+   public static TestClientDriver SERVERS;
 
    @ParameterizedTest(name = "{0}")
    @EnumSource(value = Parser.TransactionMode.class, names = {"NON_XA", "NON_DURABLE_XA", "FULL_XA"})

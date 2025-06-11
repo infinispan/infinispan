@@ -7,10 +7,9 @@ import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.api.SyncStrongCounter;
 import org.infinispan.counter.api.SyncWeakCounter;
-import org.infinispan.server.functional.ClusteredIT;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.api.TestClientDriver;
+import org.infinispan.server.test.junit5.InfinispanServer;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -18,8 +17,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  **/
 public class HotRodCounterOperations {
 
-   @RegisterExtension
-   public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
+   @InfinispanServer
+   public static TestClientDriver SERVERS;
 
    @Test
    public void testCounters() {

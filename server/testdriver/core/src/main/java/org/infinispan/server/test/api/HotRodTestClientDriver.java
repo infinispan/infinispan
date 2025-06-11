@@ -1,5 +1,7 @@
 package org.infinispan.server.test.api;
 
+import java.util.Properties;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
@@ -10,15 +12,13 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
 
-import java.util.Properties;
-
 /**
  *  Hot Rod operations for the testing framework
  *
  * @author Tristan Tarrant
  * @since 10
  */
-public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClientDriver> {
+public class HotRodTestClientDriver extends AbstractTestClientDriver<HotRodTestClientDriver> implements HotRodClientDriver<HotRodTestClientDriver> {
    private final TestServer testServer;
    private final TestClient testClient;
    private ConfigurationBuilder clientConfiguration;
@@ -45,6 +45,7 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
     * @param clientConfiguration
     * @return the current {@link HotRodTestClientDriver} instance with the client configuration override
     */
+   @Override
    public HotRodTestClientDriver withClientConfiguration(ConfigurationBuilder clientConfiguration) {
       this.clientConfiguration = applyDefaultConfiguration(clientConfiguration);
       return this;
@@ -56,11 +57,13 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
     * @param clientIntelligence
     * @return the current {@link HotRodTestClientDriver} instance with the client intelligence override
     */
+   @Override
    public HotRodTestClientDriver withClientConfiguration(ClientIntelligence clientIntelligence) {
       clientConfiguration.clientIntelligence(clientIntelligence);
       return this;
    }
 
+   @Override
    public HotRodTestClientDriver withClientConfiguration(Properties properties) {
       clientConfiguration.withProperties(properties);
       return this;
@@ -72,6 +75,7 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
     * @param marshallerClass
     * @return the current {@link HotRodTestClientDriver} instance with the Marshaller configuration override
     */
+   @Override
    public HotRodTestClientDriver withMarshaller(Class<? extends Marshaller> marshallerClass) {
       this.clientConfiguration.marshaller(marshallerClass);
       return this;
@@ -110,6 +114,7 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
     *
     * @return {@link RemoteCache}, the cache
     */
+   @Override
    public <K, V> RemoteCache<K, V> create() {
       return create(-1);
    }
@@ -119,6 +124,7 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
     * @param index the server index, -1 for all
     * @return {@link RemoteCache}, the cache
     */
+   @Override
    public <K, V> RemoteCache<K, V> create(int index) {
       RemoteCacheManager remoteCacheManager;
       if (index >= 0) {
@@ -131,18 +137,20 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
       if (serverConfiguration != null) {
          remoteCache = remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, serverConfiguration);
       } else if (mode != null) {
-         remoteCache = remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, forCacheMode(mode));
+         remoteCache = remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, CommonTestClientDriver.forCacheMode(mode));
       } else {
-         remoteCache = remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, forCacheMode(CacheMode.DIST_SYNC));
       }
+      remoteCache = remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, CommonTestClientDriver.forCacheMode(CacheMode.DIST_SYNC));
       testClient.registerHotRodCache(name, remoteCacheManager);
       return remoteCache;
    }
 
+   @Override
    public RemoteCacheManager createRemoteCacheManager() {
       return testClient.registerResource(testServer.newHotRodClient(clientConfiguration, port));
    }
 
+   @Override
    public RemoteCacheManager createRemoteCacheManager(int index) {
       return testClient.registerResource(testServer.newHotRodClient(clientConfiguration, port, index));
    }
