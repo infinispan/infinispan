@@ -13,8 +13,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.server.functional.ClusteredIT;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.infinispan.server.test.api.TestClientDriver;
+import org.infinispan.server.test.junit5.InfinispanServer;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -29,8 +29,8 @@ import net.spy.memcached.internal.GetFuture;
  **/
 public class MemcachedOperations {
 
-   @RegisterExtension
-   public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
+   @InfinispanServer(ClusteredIT.class)
+   public static TestClientDriver SERVERS;
 
    private static final AtomicInteger KCOUNTER = new AtomicInteger(0);
 
