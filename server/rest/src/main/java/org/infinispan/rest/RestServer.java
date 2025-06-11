@@ -23,6 +23,7 @@ import org.infinispan.rest.resources.ContainerResource;
 import org.infinispan.rest.resources.CounterResource;
 import org.infinispan.rest.resources.HealthCheckResource;
 import org.infinispan.rest.resources.LoggingResource;
+import org.infinispan.rest.resources.McpResource;
 import org.infinispan.rest.resources.MetricsResource;
 import org.infinispan.rest.resources.OpenAPIResource;
 import org.infinispan.rest.resources.ProtobufResource;
@@ -34,6 +35,7 @@ import org.infinispan.rest.resources.StaticContentResource;
 import org.infinispan.rest.resources.SwaggerUIResource;
 import org.infinispan.rest.resources.TasksResource;
 import org.infinispan.rest.resources.XSiteResource;
+import org.infinispan.rest.resources.mcp.McpConstants;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.logging.Log;
@@ -177,6 +179,9 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
          resourceManager.registerResource(restContext, new ClusterResource(invocationHelper));
          resourceManager.registerResource(restContext, new  SecurityResource(invocationHelper, rootContext + "console/", rootContext + "console/forbidden.html"));
          registerLoggingResource(resourceManager, restContext);
+      }
+      if (SecurityActions.getCacheManagerConfiguration(cacheManager).features().isAvailable(McpConstants.MCP_SERVER_FEATURE)) {
+         resourceManager.registerResource(restContext, new McpResource(invocationHelper));
       }
       this.restDispatcher = new RestDispatcherImpl(resourceManager, restCacheManager.getAuthorizer());
    }
