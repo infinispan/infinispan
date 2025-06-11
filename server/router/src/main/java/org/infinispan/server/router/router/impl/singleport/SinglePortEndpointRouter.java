@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -129,5 +130,15 @@ public class SinglePortEndpointRouter extends AbstractProtocolServer<SinglePortR
    @Override
    public Protocol getProtocol() {
       return Protocol.SINGLE_PORT;
+   }
+
+   @Override
+   protected String protocolType() {
+      return "http";
+   }
+
+   @Override
+   public String toString() {
+      return toString("SinglePort", "routes=" + routingTable.streamRoutes().map(route -> route.getRouteDestination().toString()).collect(Collectors.joining("/")));
    }
 }

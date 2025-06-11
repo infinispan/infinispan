@@ -20,10 +20,7 @@ public class Route<Source extends RouteSource, Destination extends RouteDestinat
 
     @Override
     public String toString() {
-        return "Route{" +
-                "routeSource=" + routeSource +
-                ", routeDestination=" + routeDestination +
-                '}';
+        return routeSource.toString() + "=>" + routeDestination.toString();
     }
 
     @Override
@@ -34,9 +31,7 @@ public class Route<Source extends RouteSource, Destination extends RouteDestinat
         Route route = (Route) o;
 
         if (!getRouteSource().equals(route.getRouteSource())) return false;
-        if (!routeDestination.equals(route.routeDestination)) return false;
-
-        return true;
+       return routeDestination.equals(route.routeDestination);
     }
 
     @Override
