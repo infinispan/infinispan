@@ -4,7 +4,7 @@
 -->
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.3.xsd">
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.4.xsd">
    <!-- jgroups.tcp.address is deprecated and will be removed, see ISPN-11867 -->
    <TCP bind_addr="${jgroups.bind.address,jgroups.tcp.address:SITE_LOCAL}"
         bind_port="${jgroups.bind.port,jgroups.tcp.port:7800}"
@@ -29,6 +29,8 @@
         thread_pool.thread_dumps_enabled="${jgroups.thread_dumps_enabled:false}"
 
         use_vthreads="${jgroups.thread.virtual,org.infinispan.threads.virtual:true}"
+
+        enable_suspect_events="true"
    />
    <RED/>
    <aws.S3_PING region_name="${jgroups.s3.region_name}"
@@ -38,7 +40,6 @@
    <MERGE3 min_interval="10s"
            max_interval="30s"
    />
-   <FD_SOCK2 offset="${jgroups.fd.port-offset:50000}"/>
    <FD_ALL3/>
    <VERIFY_SUSPECT2 timeout="1s"/>
    <pbcast.NAKACK2 use_mcast_xmit="false"
