@@ -25,7 +25,12 @@ public class MockProtocolServer extends AbstractProtocolServer<MockServerConfigu
    }
 
    public MockProtocolServer() {
-      super(null);
+      super("MOCK");
+   }
+
+   public MockProtocolServer(MockServerConfiguration configuration) {
+      this();
+      this.configuration = configuration;
    }
 
    @Override
@@ -50,5 +55,15 @@ public class MockProtocolServer extends AbstractProtocolServer<MockServerConfigu
    @Override
    public ChannelInitializer<Channel> getInitializer() {
       return null;
+   }
+
+   @Override
+   protected String protocolType() {
+      return "mock";
+   }
+
+   @Override
+   protected String details() {
+      return "undetailed";
    }
 }

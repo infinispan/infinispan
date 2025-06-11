@@ -59,7 +59,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    private final Random random = new Random(); // TODO: we should be able to set a cluster-wide seed
 
    public RespServer() {
-      super("Resp");
+      super("RESP");
    }
 
    @Override
@@ -225,5 +225,15 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
 
    public Random random() {
       return random;
+   }
+
+   @Override
+   protected String protocolType() {
+      return "redis";
+   }
+
+   @Override
+   protected String details() {
+      return "auth=RESP";
    }
 }

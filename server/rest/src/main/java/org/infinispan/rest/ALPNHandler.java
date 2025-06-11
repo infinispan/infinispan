@@ -82,7 +82,7 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
             StandardCompressionOptions.deflate(configuration.getCompressionLevel(), 15, 8),
             StandardCompressionOptions.gzip(configuration.getCompressionLevel(), 15, 8)
       ));
-      pipeline.addLast(new HttpContentDecompressor());
+      pipeline.addLast(new HttpContentDecompressor(0));
       // Handles chunked data
       pipeline.addLast(new HttpObjectAggregator(restServer.maxContentLength()));
       // Handles Http/2 headers propagation from request to response
