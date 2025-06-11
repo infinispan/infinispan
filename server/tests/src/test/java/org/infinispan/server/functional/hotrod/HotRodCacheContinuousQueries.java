@@ -17,8 +17,8 @@ import org.infinispan.commons.api.query.ContinuousQueryListener;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.server.functional.ClusteredIT;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.infinispan.server.test.api.TestClientDriver;
+import org.infinispan.server.test.junit5.InfinispanServer;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -28,8 +28,8 @@ import org.junit.jupiter.params.provider.ValueSource;
  **/
 public class HotRodCacheContinuousQueries {
 
-   @RegisterExtension
-   public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
+   @InfinispanServer(ClusteredIT.class)
+   public static TestClientDriver SERVERS;
 
    @ParameterizedTest
    @ValueSource(booleans = {true, false})

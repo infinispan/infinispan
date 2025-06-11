@@ -11,7 +11,7 @@ import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.RedisConnection;
 import io.vertx.redis.client.RedisOptions;
 
-public class RespTestClientDriver extends BaseTestClientDriver<RespTestClientDriver> {
+public class RespTestClientDriver extends AbstractTestClientDriver<RespTestClientDriver> {
 
    private final TestServer testServer;
    private final TestClient testClient;

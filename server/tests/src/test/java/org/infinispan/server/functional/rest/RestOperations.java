@@ -31,8 +31,8 @@ import org.infinispan.counter.configuration.ConvertUtil;
 import org.infinispan.rest.resources.AbstractRestResourceTest;
 import org.infinispan.rest.resources.WeakSSEListener;
 import org.infinispan.server.functional.ClusteredIT;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.infinispan.server.test.api.TestClientDriver;
+import org.infinispan.server.test.junit5.InfinispanServer;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -42,8 +42,8 @@ import org.junit.jupiter.params.provider.EnumSource;
  **/
 public class RestOperations {
 
-   @RegisterExtension
-   public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
+   @InfinispanServer(ClusteredIT.class)
+   public static TestClientDriver SERVERS;
 
    @ParameterizedTest
    @EnumSource(Protocol.class)
