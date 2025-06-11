@@ -226,4 +226,14 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    public Random random() {
       return random;
    }
+
+   @Override
+   protected String protocolType() {
+      return "redis";
+   }
+
+   @Override
+   public String toString() {
+      return toString("RESP",  "auth=RESP");
+   }
 }

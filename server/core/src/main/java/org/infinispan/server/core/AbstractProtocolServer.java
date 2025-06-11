@@ -314,4 +314,42 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
    public ProtocolServer<?> getEnclosingProtocolServer() {
       return enclosingProtocolServer;
    }
+
+   protected final String toString(String name, String details) {
+      StringBuilder sb = new StringBuilder(name);
+      sb.append(" [");
+      if (!configuration.name().isEmpty()) {
+         sb.append("name=").append(configuration.name()).append(", ");
+      }
+      if (configuration.startTransport()) {
+         sb.append("binding=");
+         sb.append(configuration.socketBinding());
+         sb.append(", address=");
+         sb.append(protocolType());
+         if (configuration.ssl().enabled()) {
+            sb.append('s');
+         }
+         sb.append("://");
+         sb.append(configuration.host());
+         sb.append(':');
+         sb.append(configuration.port());
+      } else {
+         sb.append("address=internal");
+      }
+      sb.append(", ");
+      if (configuration.ssl().enabled()) {
+         if (configuration.ssl().requireClientAuth()) {
+            sb.append("m");
+         }
+         sb.append("TLS");
+         if (!details.isEmpty()) {
+            sb.append(" ,");
+         }
+      }
+      sb.append(details);
+      sb.append(']');
+      return sb.toString();
+   }
+
+   protected abstract String protocolType();
 }

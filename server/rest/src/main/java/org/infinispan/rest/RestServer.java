@@ -220,4 +220,13 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
    public boolean isStarted() {
       return started;
    }
+
+   protected String protocolType() {
+      return "http";
+   }
+
+   @Override
+   public String toString() {
+      return toString("REST", "auth=" + String.join(",", configuration.authentication().mechanisms()));
+   }
 }
