@@ -47,6 +47,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
 
       // The remaining node is the new coordinator.
       assertThat(manager(0).isCoordinator()).isTrue();
+      eventuallyClusterTopologyCoordinator(0);
 
       // The cache is now in degraded mode.
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
@@ -96,6 +97,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
 
       // The remaining node is the new coordinator.
       assertThat(manager(0).isCoordinator()).isTrue();
+      eventuallyClusterTopologyCoordinator(0);
 
       // The cache is now in degraded mode.
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
