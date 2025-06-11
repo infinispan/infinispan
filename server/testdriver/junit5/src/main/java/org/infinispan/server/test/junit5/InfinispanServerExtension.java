@@ -14,9 +14,7 @@ import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
 import org.junit.jupiter.api.Assumptions;
-import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
-import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -43,12 +41,8 @@ import org.junit.jupiter.api.extension.ExtensionContext;
  * @author Katia Aresti
  * @since 11
  */
-public class InfinispanServerExtension extends AbstractServerExtension implements
-      TestClientDriver,
-      BeforeAllCallback,
-      BeforeEachCallback,
-      AfterEachCallback,
-      AfterAllCallback {
+public class InfinispanServerExtension extends AbstractServerExtension implements TestClientDriver, BeforeEachCallback,
+      AfterEachCallback {
 
    private final TestServer testServer;
    private TestClient testClient;
@@ -57,9 +51,15 @@ public class InfinispanServerExtension extends AbstractServerExtension implement
    }
 
    @Override
-   public void beforeAll(ExtensionContext extensionContext) {
-      initSuiteClasses(extensionContext);
+   protected void onTestsStart(ExtensionContext extensionContext) throws Exception {
       startTestServer(extensionContext, testServer);
+   }
+
+   @Override
+   protected void onTestsComplete(ExtensionContext extensionContext) {
+      if (testServer.isDriverInitialized())
+         stopTestServer(extensionContext, testServer);
+      testServer.afterListeners();
    }
 
    @Override
@@ -71,17 +71,6 @@ public class InfinispanServerExtension extends AbstractServerExtension implement
    @Override
    public void afterEach(ExtensionContext extensionContext) {
       testClient.clearResources();
-   }
-
-   @Override
-   public void afterAll(ExtensionContext extensionContext) {
-      cleanupSuiteClasses(extensionContext);
-      // Only stop the extension resources when all tests in a Suite have been completed
-      if (suiteTestClasses.isEmpty()) {
-         if (testServer.isDriverInitialized())
-            stopTestServer(extensionContext, testServer);
-         testServer.afterListeners();
-      }
    }
 
    public void assumeContainerMode() {
@@ -135,7 +124,13 @@ public class InfinispanServerExtension extends AbstractServerExtension implement
       return testServer.getDriver();
    }
 
+   @Override
    public String addScript(RemoteCacheManager remoteCacheManager, String script) {
       return testClient.addScript(remoteCacheManager, script);
+   }
+
+   @Override
+   public boolean isContainerized() {
+      return testServer.getDriver() instanceof  ContainerInfinispanServerDriver;
    }
 }
