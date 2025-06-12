@@ -32,6 +32,11 @@ public class TestServer {
       this.configuration = configuration;
    }
 
+   public TestServer(InfinispanServerTestConfiguration configuration, InfinispanServerDriver serverDriver) {
+      this.configuration = configuration;
+      this.serverDriver = serverDriver;
+   }
+
    public boolean isDriverInitialized() {
       return serverDriver != null;
    }
@@ -83,7 +88,9 @@ public class TestServer {
 
    private void configureHotRodClient(ConfigurationBuilder builder, int port, int i) {
       InetSocketAddress serverAddress = getDriver().getServerSocket(i, port);
-      builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
+      if (serverAddress != null) {
+         builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
+      }
    }
 
    public RestClient newRestClient(RestClientConfigurationBuilder builder) {

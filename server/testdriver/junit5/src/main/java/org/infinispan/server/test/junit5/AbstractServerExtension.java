@@ -1,20 +1,27 @@
 package org.infinispan.server.test.junit5;
 
+import static org.junit.platform.commons.support.AnnotationSupport.findAnnotatedFields;
+
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
+import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.platform.commons.support.ModifierSupport;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
 
-public abstract class AbstractServerExtension {
+public abstract class AbstractServerExtension implements BeforeAllCallback, AfterAllCallback {
 
    protected final List<Consumer<File>> configurationEnhancers = new ArrayList<>();
    protected final Set<Class<?>> suiteTestClasses = new HashSet<>();
@@ -73,4 +80,53 @@ public abstract class AbstractServerExtension {
       String testName = testName(extensionContext);
       testServer.stopServerDriver(testName);
    }
+
+   private void injectFields(Class<?> testClass, Object testInstance,
+                             Object value, Predicate<Field> predicate) {
+      findAnnotatedFields(testClass, InfinispanServer.class, predicate)
+            .forEach(field -> {
+               try {
+                  field.setAccessible(true);
+                  field.set(testInstance, value);
+               }
+               catch (Exception ex) {
+                  throw new RuntimeException(ex);
+               }
+            });
+   }
+
+   private void injectExtension(Class<?> testClass, Object value) {
+      injectFields(testClass, null, value, ModifierSupport::isStatic);
+   }
+
+   @Override
+   public final void beforeAll(ExtensionContext context) throws Exception {
+      initSuiteClasses(context);
+
+      // Inject all classes that are using a static @InfinispanServer field.
+      Class<?> testClass = context.getRequiredTestClass();
+
+      injectExtension(testClass, this);
+
+      SelectClasses selectClasses = testClass.getAnnotation(SelectClasses.class);
+      if (selectClasses != null) {
+         for (Class<?> selectClass : selectClasses.value()) {
+            injectExtension(selectClass, this);
+         }
+      }
+      onTestsStart(context);
+   }
+
+   protected abstract void onTestsStart(ExtensionContext extensionContext) throws Exception;
+
+   @Override
+   public final void afterAll(ExtensionContext context) {
+      cleanupSuiteClasses(context);
+      // Only stop the extension resources when all tests in a Suite have been completed
+      if (suiteTestClasses.isEmpty()) {
+         onTestsComplete(context);
+      }
+   }
+
+   protected abstract void onTestsComplete(ExtensionContext extensionContext);
 }

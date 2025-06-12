@@ -499,13 +499,20 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
    @Override
    public InetSocketAddress getServerSocket(int server, int port) {
-      return new InetSocketAddress(getServerAddress(server), port);
+      InetAddress address = getServerAddress(server);
+      if (address != null) {
+         return new InetSocketAddress(address, port);
+      }
+      return null;
    }
 
    @Override
    public InetAddress getServerAddress(int server) {
       InfinispanGenericContainer container = containers.get(server);
-      return container.getIpAddress();
+      if (container.isRunning()) {
+         return container.getIpAddress();
+      }
+      return null;
    }
 
    @Override

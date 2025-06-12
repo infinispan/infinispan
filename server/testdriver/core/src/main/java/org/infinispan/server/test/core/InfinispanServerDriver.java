@@ -63,11 +63,11 @@ public interface InfinispanServerDriver {
 
    /**
     * Returns an InetSocketAddress for connecting to a specific port on a specific server. The implementation will need
-    * to provide a specific mapping (e.g. port offset).
+    * to provide a specific mapping (e.g. port offset). This will return null if the container is not running.
     *
     * @param server the index of the server
     * @param port   the service port
-    * @return an unresolved InetSocketAddress pointing to the actual running service
+    * @return an unresolved InetSocketAddress pointing to the actual running service or null if it is not running
     */
    InetSocketAddress getServerSocket(int server, int port);
 

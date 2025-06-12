@@ -1,10 +1,5 @@
 package org.infinispan.server.test.junit5;
 
-import static org.junit.platform.commons.support.AnnotationSupport.findAnnotatedFields;
-
-import java.lang.reflect.Field;
-import java.util.function.Predicate;
-
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
@@ -19,13 +14,9 @@ import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
 import org.junit.jupiter.api.Assumptions;
-import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
-import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.platform.commons.support.ModifierSupport;
-import org.junit.platform.suite.api.SelectClasses;
 
 /**
  * <a href="https://junit.org/junit5">JUnit 5</a> extension. <br/>
@@ -52,10 +43,8 @@ import org.junit.platform.suite.api.SelectClasses;
  */
 public class InfinispanServerExtension extends AbstractServerExtension implements
       TestClientDriver,
-      BeforeAllCallback,
       BeforeEachCallback,
-      AfterEachCallback,
-      AfterAllCallback {
+      AfterEachCallback {
 
    private final TestServer testServer;
    private TestClient testClient;
@@ -63,39 +52,16 @@ public class InfinispanServerExtension extends AbstractServerExtension implement
       testServer = new TestServer(configuration);
    }
 
-   private void injectFields(Class<?> testClass, Object testInstance,
-                             Object value, Predicate<Field> predicate) {
-      findAnnotatedFields(testClass, InfinispanServer.class, predicate)
-            .forEach(field -> {
-               try {
-                  field.setAccessible(true);
-                  field.set(testInstance, value);
-               }
-               catch (Exception ex) {
-                  throw new RuntimeException(ex);
-               }
-            });
-   }
-
-   private void injectExtension(Class<?> testClass, Object value) {
-      injectFields(testClass, null, value, ModifierSupport::isStatic);
+   @Override
+   protected void onTestsStart(ExtensionContext extensionContext) throws Exception {
+      startTestServer(extensionContext, testServer);
    }
 
    @Override
-   public void beforeAll(ExtensionContext extensionContext) {
-      initSuiteClasses(extensionContext);
-      startTestServer(extensionContext, testServer);
-
-      Class<?> testClass = extensionContext.getRequiredTestClass();
-
-      injectExtension(testClass, this);
-
-      SelectClasses selectClasses = testClass.getAnnotation(SelectClasses.class);
-      if (selectClasses != null) {
-         for (Class<?> selectClass : selectClasses.value()) {
-            injectExtension(selectClass, this);
-         }
-      }
+   protected void onTestsComplete(ExtensionContext extensionContext) {
+      if (testServer.isDriverInitialized())
+         stopTestServer(extensionContext, testServer);
+      testServer.afterListeners();
    }
 
    @Override
@@ -107,17 +73,6 @@ public class InfinispanServerExtension extends AbstractServerExtension implement
    @Override
    public void afterEach(ExtensionContext extensionContext) {
       testClient.clearResources();
-   }
-
-   @Override
-   public void afterAll(ExtensionContext extensionContext) {
-      cleanupSuiteClasses(extensionContext);
-      // Only stop the extension resources when all tests in a Suite have been completed
-      if (suiteTestClasses.isEmpty()) {
-         if (testServer.isDriverInitialized())
-            stopTestServer(extensionContext, testServer);
-         testServer.afterListeners();
-      }
    }
 
    public void assumeContainerMode() {
