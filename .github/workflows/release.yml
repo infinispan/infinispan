@@ -1,9 +1,18 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - '*'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "The Infinispan branch to checkout when cutting the release."
+        required: true
+        default: "main"
+      version:
+        description: "Release version"
+        required: true
+      nextVersion:
+        description: "Next version"
+        required: true
 
 jobs:
   release:
@@ -21,15 +30,16 @@ jobs:
           gpg-private-key: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
-    steps:
       - name: Checkout Source
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
 
-      - id: images
+      - name: Configure Git User
         run: |
-          BRANCH=${{ github.ref_name }}
-          MAJOR=${BRANCH%.*.*.*}
-          [ "${MAJOR}" -ge "15" ] && echo "images=true" >> ${GITHUB_OUTPUT} || true
+          git config user.email "infinispan@infinispan.org"
+          git config user.name "Infinispan"
 
       - name: Update proto.lock files
         run: |
@@ -70,23 +80,38 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
 
-  native-cli:
+  published:
     needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: artiz/poll-endpoint@1.0.2
+        with:
+          url: https://repo1.maven.org/maven2/org/infinispan/infinispan-distribution/${{ github.event.inputs.version }}/
+          method: GET
+          expectStatus: 200
+          timeout: 10800000
+          interval: 10000
+
+  native-cli:
+    needs: published
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-2022]
+        os: [ubuntu-latest, macos-latest, windows-2022, ubuntu-24.04-arm]
         include:
           - os: ubuntu-latest
-            asset_name: linux-amd64
+            asset_name: linux-x86_64
             gu_binary: gu
           - os: macos-latest
-            asset_name: darwin-arm64
+            asset_name: osx-aarch_64
             gu_binary: gu
           - os: windows-2022
-            asset_name: windows-amd64
+            asset_name: windows-x86_64
             gu_binary: gu.cmd
+          - os: ubuntu-24.04-arm
+            asset_name: linux-aarch_64
+            gu_binary: gu
     steps:
       - uses: actions/checkout@v4
 
@@ -102,6 +127,8 @@ jobs:
 
       - name: Checkout Release Tag
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
 
       - if: ${{ matrix.os == 'windows-2022' }}
         name: Build native executable
@@ -116,18 +143,24 @@ jobs:
 
       - name: Upload CLI native executable
         id: upload-cli-native-executable
-        uses: actions/upload-release-asset@v1
+        run: |
+          gh release upload ${{ github.event.inputs.version }} quarkus/cli/target/infinispan-cli-${{ github.event.inputs.version }}-${{ matrix.asset_name }}.zip
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url:  ${{ needs.release.outputs.upload_url }}
-          asset_path: ./quarkus/cli/target/infinispan-cli-${{github.ref_name}}.zip
-          asset_name: infinispan-cli-${{github.ref_name}}-${{ matrix.asset_name }}.zip
-          asset_content_type: application/zip
+          GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+
+  images:
+    needs: published
+    uses: infinispan/infinispan-images/.github/workflows/release.yml@main
+    secrets: inherit
+    with:
+      branch: main
+      repository: infinispan/infinispan-images
+      ispnVersion: ${{ github.event.inputs.version }}
+      latest: false
 
   operator:
     needs: images
-    if: contains(github.ref_name, '.Final')
+    if: contains(github.event.inputs.version, '.Final')
     uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@main
     secrets: inherit
     with:
