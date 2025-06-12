@@ -37,6 +37,8 @@ public class ChannelCloseAndInactiveTest extends AbstractRetryTest {
    @Override
    protected void amendRemoteCacheManagerConfiguration(org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder) {
       builder.maxRetries(1);
+      // We manually stall operations, so let's define something that won't timeout.
+      builder.socketTimeout(60_000);
       builder.connectionPool().maxActive(2);
    }
 
@@ -79,7 +81,7 @@ public class ChannelCloseAndInactiveTest extends AbstractRetryTest {
       Channel spyChannel = spy(secondChannel);
       CountDownLatch closeSecondLatch = new CountDownLatch(1);
       doAnswer(ivk -> {
-         closeSecondLatch.await(10, TimeUnit.SECONDS);
+         assertThat(closeSecondLatch.await(10, TimeUnit.SECONDS)).isTrue();
          return ivk.callRealMethod();
       }).when(spyChannel).close();
 
