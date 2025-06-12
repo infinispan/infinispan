@@ -13,6 +13,33 @@
       }
     }
   }, {
+    "protopath" : "generated:/:persistence.commons.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "MediaType",
+        "type_id" : 12,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "tree",
+          "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "WrappedByteArray",
+        "type_id" : 1,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "bytes",
+          "type" : "bytes",
+          "optional" : true
+        } ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.commons"
+      }
+    }
+  }, {
     "protopath" : "generated:/:global.commons.proto",
     "def" : {
       "enums" : [ ],
@@ -40,33 +67,6 @@
       } ],
       "package" : {
         "name" : "org.infinispan.global.commons"
-      }
-    }
-  }, {
-    "protopath" : "generated:/:persistence.commons.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "MediaType",
-        "type_id" : 12,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "tree",
-          "type" : "string",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "WrappedByteArray",
-        "type_id" : 1,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "bytes",
-          "type" : "bytes",
-          "optional" : true
-        } ]
-      } ],
-      "package" : {
-        "name" : "org.infinispan.persistence.commons"
       }
     }
   } ]
