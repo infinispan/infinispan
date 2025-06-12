@@ -97,12 +97,12 @@ public class TestClient {
    }
 
    public CounterManager getCounterManager() {
-      RemoteCacheManager remoteCacheManager = registerResource(testServer.newHotRodClient());
+      RemoteCacheManager remoteCacheManager = registerResource(hotrod().createRemoteCacheManager());
       return RemoteCounterManagerFactory.asCounterManager(remoteCacheManager);
    }
 
    public <K, V> MultimapCacheManager<K, V> getRemoteMultimapCacheManager() {
-      RemoteCacheManager remoteCacheManager = registerResource(testServer.newHotRodClient());
+      RemoteCacheManager remoteCacheManager = registerResource(hotrod().createRemoteCacheManager());
       return RemoteMultimapCacheManagerFactory.from(remoteCacheManager);
    }
 

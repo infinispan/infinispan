@@ -32,6 +32,11 @@ public class TestServer {
       this.configuration = configuration;
    }
 
+   public TestServer(InfinispanServerTestConfiguration configuration, InfinispanServerDriver serverDriver) {
+      this.configuration = configuration;
+      this.serverDriver = serverDriver;
+   }
+
    public boolean isDriverInitialized() {
       return serverDriver != null;
    }
@@ -83,7 +88,9 @@ public class TestServer {
 
    private void configureHotRodClient(ConfigurationBuilder builder, int port, int i) {
       InetSocketAddress serverAddress = getDriver().getServerSocket(i, port);
-      builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
+      if (serverAddress != null) {
+         builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
+      }
    }
 
    public RestClient newRestClient(RestClientConfigurationBuilder builder) {
@@ -95,7 +102,9 @@ public class TestServer {
       if (builder.servers().isEmpty()) {
          for (int i = 0; i < getDriver().getConfiguration().numServers(); i++) {
             InetSocketAddress serverAddress = getDriver().getServerSocket(i, port);
-            builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
+            if (serverAddress != null) {
+               builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
+            }
          }
       }
       return RestClient.forConfiguration(builder.build());
@@ -109,7 +118,9 @@ public class TestServer {
       List<InetSocketAddress> addresses = new ArrayList<>();
       for (int i = 0; i < getDriver().getConfiguration().numServers(); i++) {
          InetSocketAddress unresolved = getDriver().getServerSocket(i, port);
-         addresses.add(new InetSocketAddress(unresolved.getHostString(), unresolved.getPort()));
+         if (unresolved != null) {
+            addresses.add(new InetSocketAddress(unresolved.getHostString(), unresolved.getPort()));
+         }
       }
       builder.setClientMode(ClientMode.Static); // Legacy memcached mode
 
