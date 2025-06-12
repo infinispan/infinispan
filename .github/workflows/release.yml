@@ -88,9 +88,9 @@ jobs:
         with:
           url: https://repo1.maven.org/maven2/org/infinispan/infinispan-distribution/${{ github.event.inputs.version }}/
           method: GET
-          expect-status: 200
+          expectStatus: 200
           timeout: 10800000
-          interval: 60000
+          interval: 10000
 
   native-cli:
     needs: published
