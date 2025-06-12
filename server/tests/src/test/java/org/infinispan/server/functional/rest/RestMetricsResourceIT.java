@@ -17,6 +17,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -221,12 +222,8 @@ public class RestMetricsResourceIT {
             writes[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_store_%s_total", cache.name(), OWNERSHIP[i])).value;
          }
 
-         int sum = 0;
-         for (var v : reads) {
-            sum += v;
-         }
          // only 1 operation was performed
-         assertEquals(1, sum);
+         assertEquals(1, Arrays.stream(reads).sum());
 
          // all arrays must have the same position set
          assertArrayEquals(reads, writes);
@@ -242,40 +239,38 @@ public class RestMetricsResourceIT {
 
          assertStatus(NO_CONTENT, cache.post("hit", "value"));
          assertStatus(NOT_FOUND, cache.get("miss"));
-         // count as miss because if IGNORE_RETURN_VALUE flag.
          assertStatus(NO_CONTENT, cache.remove("hit"));
 
          var metrics = getMetrics(client.metrics());
 
          var reads = new int[OWNERSHIP.length];
          var writes = new int[OWNERSHIP.length];
-         var removes = new int[OWNERSHIP.length];
+         var rm_misses = new int[OWNERSHIP.length];
+         var rm_hits = new int[OWNERSHIP.length];
 
          log.debugf("Test miss:%n%s", metrics.stream().map(Metric::toString).collect(Collectors.joining("\n")));
 
-         // unable to test remove hit since the return value is always ignored.
          for (var i = 0; i < OWNERSHIP.length; ++i) {
             reads[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_miss_%s_total", cache.name(), OWNERSHIP[i])).value;
             writes[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_store_%s_total", cache.name(), OWNERSHIP[i])).value;
-            removes[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_remove_miss_%s_total", cache.name(), OWNERSHIP[i])).value;
+            rm_misses[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_remove_miss_%s_total", cache.name(), OWNERSHIP[i])).value;
+            rm_hits[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_remove_hit_%s_total", cache.name(), OWNERSHIP[i])).value;
          }
 
-         int sum = 0;
-         for (var v : reads) {
-            sum += v;
-         }
          // 1 miss + 1 hit (remove performs a read before removing)
-         assertEquals(2, sum);
+         assertEquals(2, Arrays.stream(reads).sum());
 
-         sum = 0;
-         for (var v : writes) {
-            sum += v;
-         }
          // 1 write
-         assertEquals(1, sum);
+         assertEquals(1, Arrays.stream(writes).sum());
 
-         // arrays must have the same position set
-         assertArrayEquals(writes, removes);
+         // The arrays must have the same position set
+         // If the request is sent to the primary owner, it is recorded as a hit.
+         // Because "IGNORE_RETURN_VALUES" flag is set, the back owner records it as a miss.
+         if (writes[0] == 1) {
+            assertArrayEquals(writes, rm_hits);
+         } else {
+            assertArrayEquals(writes, rm_misses);
+         }
       }
    }
 
