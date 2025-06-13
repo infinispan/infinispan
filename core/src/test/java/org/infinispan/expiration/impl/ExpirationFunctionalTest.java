@@ -41,11 +41,9 @@ public class ExpirationFunctionalTest extends SingleCacheManagerTest {
    @Factory
    public Object[] factory() {
       return new Object[]{
-         new ExpirationFunctionalTest().cacheMode(CacheMode.LOCAL).withStorage(StorageType.BINARY),
-         new ExpirationFunctionalTest().cacheMode(CacheMode.LOCAL).withStorage(StorageType.OBJECT),
+         new ExpirationFunctionalTest().cacheMode(CacheMode.LOCAL).withStorage(StorageType.HEAP),
          new ExpirationFunctionalTest().cacheMode(CacheMode.LOCAL).withStorage(StorageType.OFF_HEAP),
-         new ExpirationFunctionalTest().cacheMode(CacheMode.DIST_SYNC).withStorage(StorageType.BINARY),
-         new ExpirationFunctionalTest().cacheMode(CacheMode.DIST_SYNC).withStorage(StorageType.OBJECT),
+         new ExpirationFunctionalTest().cacheMode(CacheMode.DIST_SYNC).withStorage(StorageType.HEAP),
          new ExpirationFunctionalTest().cacheMode(CacheMode.DIST_SYNC).withStorage(StorageType.OFF_HEAP)
       };
    }

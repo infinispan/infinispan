@@ -1,7 +1,6 @@
 package org.infinispan.commons.dataconversion;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Arrays.stream;
 import static java.util.Collections.emptyMap;
 import static org.infinispan.commons.dataconversion.JavaStringCodec.BYTE_ARRAY;
 import static org.infinispan.commons.logging.Log.CONTAINER;
@@ -34,7 +33,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.MEDIA_TYPE)
 public final class MediaType {
    private static final Pattern TREE_PATTERN;
-   private static final Pattern LIST_SEPARATOR_PATTERN;
 
    static {
       // Adapted from https://stackoverflow.com/a/48046041/55870
@@ -52,7 +50,6 @@ public final class MediaType {
       String listSeparator = "\\G," + ows;
       String tree = "^" + typeSubtype + "|\\G" + parameter + "|\\G" + listSeparator;
       TREE_PATTERN = Pattern.compile(tree, Pattern.DOTALL);
-      LIST_SEPARATOR_PATTERN = Pattern.compile(listSeparator, Pattern.DOTALL);
    }
 
    // OpenMetrics aka Prometheus content type
@@ -85,16 +82,6 @@ public final class MediaType {
    public static final String TEXT_PLAIN_TYPE = "text/plain";
    public static final String TEXT_HTML_TYPE = "text/html";
    public static final String TEXT_EVENT_STREAM_TYPE = "text/event-stream";
-   /**
-    * @deprecated Since 11.0, will be removed with ISPN-9622
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public static final String APPLICATION_INFINISPAN_MARSHALLING_TYPE = "application/x-infinispan-marshalling";
-   /**
-    * @deprecated Since 11.0, will be removed in 14.0. No longer used for BINARY storage.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public static final String APPLICATION_INFINISPAN_BINARY_TYPE = "application/x-infinispan-binary";
    public static final String MATCH_ALL_TYPE = "*/*";
 
    // OpenMetrics aka Prometheus content type
@@ -108,11 +95,6 @@ public final class MediaType {
    public static final MediaType APPLICATION_YAML = fromString(APPLICATION_YAML_TYPE);
    public static final MediaType APPLICATION_PROTOSTREAM = fromString(APPLICATION_PROTOSTREAM_TYPE);
    public static final MediaType APPLICATION_JBOSS_MARSHALLING = fromString(APPLICATION_JBOSS_MARSHALLING_TYPE);
-   /**
-    * @deprecated Since 11.0, will be removed with ISPN-9622
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public static final MediaType APPLICATION_INFINISPAN_MARSHALLED = fromString(APPLICATION_INFINISPAN_MARSHALLING_TYPE);
    public static final MediaType APPLICATION_WWW_FORM_URLENCODED = fromString(WWW_FORM_URLENCODED_TYPE);
    public static final MediaType IMAGE_PNG = fromString(IMAGE_PNG_TYPE);
    public static final MediaType MULTIPART_FORM_DATA = fromString(MULTIPART_FORM_DATA_TYPE);
@@ -123,20 +105,10 @@ public final class MediaType {
    public static final MediaType IMAGE_GIF = fromString(IMAGE_GIF_TYPE);
    public static final MediaType IMAGE_JPEG = fromString(IMAGE_JPEG_TYPE);
    public static final MediaType TEXT_EVENT_STREAM = fromString(TEXT_EVENT_STREAM_TYPE);
-   /**
-    * @deprecated Since 11.0, will be removed in 14.0. No longer used for BINARY storage.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public static final MediaType APPLICATION_INFINISPAN_BINARY = fromString(APPLICATION_INFINISPAN_BINARY_TYPE);
    public static final MediaType APPLICATION_PDF = fromString(APPLICATION_PDF_TYPE);
    public static final MediaType APPLICATION_RTF = fromString(APPLICATION_RTF_TYPE);
    public static final MediaType APPLICATION_ZIP = fromString(APPLICATION_ZIP_TYPE);
    public static final MediaType APPLICATION_GZIP = fromString(APPLICATION_GZIP_TYPE);
-   /**
-    * @deprecated Since 11.0, will be removed with ISPN-9622
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public static final MediaType APPLICATION_INFINISPAN_MARSHALLING = fromString(APPLICATION_INFINISPAN_MARSHALLING_TYPE);
    /**
     * @deprecated Since 11.0, without replacement.
     */
@@ -144,8 +116,6 @@ public final class MediaType {
    public static final MediaType APPLICATION_UNKNOWN = fromString(APPLICATION_UNKNOWN_TYPE);
    public static final MediaType MATCH_ALL = fromString(MATCH_ALL_TYPE);
 
-   @Deprecated(forRemoval=true, since = "11.0")
-   public static final String BYTE_ARRAY_TYPE = BYTE_ARRAY.getName();
    private static final String WEIGHT_PARAM_NAME = "q";
    private static final String CHARSET_PARAM_NAME = "charset";
    private static final String CLASS_TYPE_PARAM_NAME = "type";
@@ -194,14 +164,6 @@ public final class MediaType {
    @ProtoField(1)
    String getTree() {
       return toString();
-   }
-
-   /**
-    * @deprecated replaced by {@link #fromString}
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public static MediaType parse(String str) {
-      return fromString(str);
    }
 
    @ProtoFactory
@@ -425,23 +387,6 @@ public final class MediaType {
       Map<String, String> newParams = new HashMap<>(params);
       newParams.put(name, value);
       return new MediaType(typeSubtype, newParams);
-   }
-
-   /**
-    * @deprecated Use {@link #getParameters()} and {@link #getTypeSubtype()} to build a custom String representation.
-    */
-   @Deprecated(forRemoval=true)
-   public String toStringExcludingParam(String... params) {
-      if (!hasParameters()) return typeSubtype;
-      StringBuilder builder = new StringBuilder().append(typeSubtype);
-
-      String strParams = this.params.entrySet().stream()
-            .filter(e -> stream(params).noneMatch(p -> p.equals(e.getKey())))
-            .map(e -> e.getKey() + "=" + e.getValue())
-            .collect(Collectors.joining("; "));
-
-      if (strParams.isEmpty()) return builder.toString();
-      return builder.append("; ").append(strParams).toString();
    }
 
    /**

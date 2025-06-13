@@ -39,13 +39,6 @@ import org.infinispan.util.concurrent.NonBlockingManagerImpl;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.mockito.Mockito;
 
-/**
- * Util class that mocks {@link org.infinispan.AdvancedCache} and {@link org.infinispan.persistence.spi.InitializationContext}
- * for {@link org.infinispan.persistence.spi.CacheWriter} and {@link org.infinispan.persistence.spi.CacheLoader}
- *
- * @author pedro
- * @since 7.0
- */
 public class PersistenceMockUtil {
 
    public static class InvocationContextBuilder {

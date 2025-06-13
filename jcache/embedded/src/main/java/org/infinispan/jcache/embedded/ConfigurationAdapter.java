@@ -7,8 +7,11 @@ import javax.cache.configuration.MutableConfiguration;
 import javax.cache.integration.CacheLoader;
 import javax.cache.integration.CacheWriter;
 
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * ConfigurationAdapter takes {@link javax.cache.configuration.Configuration} and creates
@@ -20,9 +23,11 @@ import org.infinispan.configuration.cache.StorageType;
  */
 public class ConfigurationAdapter<K, V> {
 
-   private MutableConfiguration<K, V> c;
+   private final GlobalConfiguration global;
+   private final MutableConfiguration<K, V> c;
 
-   private ConfigurationAdapter(MutableConfiguration<K, V> configuration) {
+   private ConfigurationAdapter(GlobalConfiguration global, MutableConfiguration<K, V> configuration) {
+      this.global = global;
       this.c = configuration;
    }
 
@@ -43,11 +48,12 @@ public class ConfigurationAdapter<K, V> {
    }
 
    private org.infinispan.configuration.cache.Configuration build(ConfigurationBuilder cb) {
+      if (c.isStoreByValue()) {
+         Marshaller marshaller = global.serialization().marshaller();
+         cb.memory().storage(StorageType.HEAP).encoding().mediaType(marshaller != null ? marshaller.mediaType() : MediaType.APPLICATION_PROTOSTREAM);
+      }
 
-      if (c.isStoreByValue())
-         cb.memory().storage(StorageType.BINARY);
-
-      Factory<CacheLoader<K,V>> cacheLoaderFactory = c.getCacheLoaderFactory();
+      Factory<CacheLoader<K, V>> cacheLoaderFactory = c.getCacheLoaderFactory();
       if (cacheLoaderFactory != null) {
          // User-defined cache loader will be plugged once cache has started
          cb.persistence().addStore(JStoreAdapterConfigurationBuilder.class);
@@ -65,23 +71,23 @@ public class ConfigurationAdapter<K, V> {
       return cb.build();
    }
 
-   public static <K, V> ConfigurationAdapter<K, V> create(Configuration<K, V> c) {
+   public static <K, V> ConfigurationAdapter<K, V> create(GlobalConfiguration global, Configuration<K, V> c) {
       // A configuration copy as required by the spec
       if (c instanceof CompleteConfiguration) {
-         return new ConfigurationAdapter<K, V>(
-               new MutableConfiguration<K, V>((CompleteConfiguration<K, V>) c));
+         return new ConfigurationAdapter<>(global,
+               new MutableConfiguration<>((CompleteConfiguration<K, V>) c));
       } else {
          //support use of Basic Configuration
-         MutableConfiguration<K, V> mutableConfiguration = new MutableConfiguration<K, V>();
+         MutableConfiguration<K, V> mutableConfiguration = new MutableConfiguration<>();
          mutableConfiguration.setStoreByValue(c.isStoreByValue());
          mutableConfiguration.setTypes(c.getKeyType(), c.getValueType());
-         return new ConfigurationAdapter<K, V>(
-               new MutableConfiguration<K, V>(mutableConfiguration));
+         return new ConfigurationAdapter<>(global,
+               new MutableConfiguration<>(mutableConfiguration));
       }
    }
 
-   public static <K, V> ConfigurationAdapter<K, V> create() {
-      return new ConfigurationAdapter<K, V>(new MutableConfiguration<K, V>());
+   public static <K, V> ConfigurationAdapter<K, V> create(GlobalConfiguration global) {
+      return new ConfigurationAdapter<>(global, new MutableConfiguration<>());
    }
 
 

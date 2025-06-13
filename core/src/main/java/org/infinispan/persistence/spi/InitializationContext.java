@@ -1,7 +1,6 @@
 package org.infinispan.persistence.spi;
 
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactory;
@@ -16,7 +15,7 @@ import org.infinispan.util.concurrent.NonBlockingManager;
 import net.jcip.annotations.ThreadSafe;
 
 /**
- * Aggregates the initialisation state needed by either a {@link CacheLoader} or a {@link CacheWriter}.
+ * Aggregates the initialisation state needed by org.infinispan.persistence.spi.NonBlockingStore.
  *
  * @author Mircea Markus
  * @since 6.0
@@ -30,7 +29,7 @@ public interface InitializationContext {
 
    /**
     * The configured partitioner that can be used to determine which segment a given key belongs to. This is useful
-    * when a store is segmented (ie. implements {@link SegmentedAdvancedLoadWriteStore}).
+    * when a store is segmented.
     * @return partitioner that can provide what segment a key maps to
     */
    KeyPartitioner getKeyPartitioner();
@@ -41,15 +40,6 @@ public interface InitializationContext {
     * To be used for building {@link org.infinispan.commons.io.ByteBuffer} objects.
     */
    ByteBufferFactory getByteBufferFactory();
-
-   /**
-    * Returns the preferred executor to be used by stores if needed. Stores normally shouldn't need this unless they
-    * *must* perform some blocking code asynchronously.
-    * @return the executor to be used with stores
-    * @deprecated since 11.0 - Please use {@link #getBlockingManager()} ()} or {@link #getNonBlockingExecutor()} instead
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   ExecutorService getExecutor();
 
    /**
     * Returns an executor for non-blocking tasks. Users must guarantee that the tasks they submit to this executor

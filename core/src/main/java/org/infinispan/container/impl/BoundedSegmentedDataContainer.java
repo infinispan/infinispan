@@ -21,7 +21,6 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntrySizeCalculator;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.PrimitiveEntrySizeCalculator;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.marshall.core.WrappedByteArraySizeCalculator;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -42,22 +41,17 @@ public class BoundedSegmentedDataContainer<K, V> extends DefaultSegmentedDataCon
    protected final Cache<K, InternalCacheEntry<K, V>> evictionCache;
    protected final PeekableTouchableMap<K, V> entries;
 
-   public BoundedSegmentedDataContainer(int numSegments, long thresholdSize, EvictionType thresholdPolicy) {
+   public BoundedSegmentedDataContainer(int numSegments, long thresholdSize, boolean memoryBased) {
       super(PeekableTouchableContainerMap::new, numSegments);
 
       Caffeine<K, InternalCacheEntry<K, V>> caffeine = caffeineBuilder();
 
-      switch (thresholdPolicy) {
-         case MEMORY:
-            CacheEntrySizeCalculator<K, V> calc = new CacheEntrySizeCalculator<>(new WrappedByteArraySizeCalculator<>(
-                  new PrimitiveEntrySizeCalculator()));
-            caffeine.weigher((k, v) -> (int) calc.calculateSize(k, v)).maximumWeight(thresholdSize);
-            break;
-         case COUNT:
-            caffeine.maximumSize(thresholdSize);
-            break;
-         default:
-            throw new UnsupportedOperationException("Policy not supported: " + thresholdPolicy);
+      if (memoryBased) {
+         CacheEntrySizeCalculator<K, V> calc = new CacheEntrySizeCalculator<>(new WrappedByteArraySizeCalculator<>(
+               new PrimitiveEntrySizeCalculator()));
+         caffeine.weigher((k, v) -> (int) calc.calculateSize(k, v)).maximumWeight(thresholdSize);
+      } else {
+         caffeine.maximumSize(thresholdSize);
       }
       DefaultEvictionListener evictionListener = new DefaultEvictionListener() {
          @Override

@@ -70,12 +70,12 @@ public enum Flag {
    FORCE_SYNCHRONOUS,
 
    /**
-    * Skips storing an entry to any configured {@link org.infinispan.persistence.spi.CacheLoader}s.
+    * Skips storing an entry to any configured {@link org.infinispan.persistence.spi.NonBlockingStore}s.
     */
    SKIP_CACHE_STORE,
 
    /**
-    * Skips loading an entry from any configured {@link org.infinispan.persistence.spi.CacheLoader}s.
+    * Skips loading an entry from any configured {@link org.infinispan.persistence.spi.NonBlockingStore}s.
     * Useful for example to perform a {@link Cache#put(Object, Object)} operation while not interested
     * in the return value (i.e. the previous value of the key).
     * <br>

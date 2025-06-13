@@ -77,7 +77,7 @@ public class OnlyPrimaryOwnerTest {
       when(componentRegistry.getComponent(BasicComponentRegistry.class)).thenReturn(mockRegistry);
       mockRegistry.registerMocks(RpcManager.class, CommandsFactory.class, Encoder.class);
       mockRegistry.registerMock(KnownComponentNames.INTERNAL_MARSHALLER, Marshaller.class);
-      Configuration config = new ConfigurationBuilder().memory().storageType(StorageType.OBJECT).build();
+      Configuration config = new ConfigurationBuilder().memory().storage(StorageType.HEAP).build();
       ClusterEventManager cem = mock(ClusterEventManager.class);
       when(cem.sendEvents(any())).thenReturn(CompletableFutures.completedNull());
       TestingUtil.inject(n, mockCache, cdl, config, mockRegistry,

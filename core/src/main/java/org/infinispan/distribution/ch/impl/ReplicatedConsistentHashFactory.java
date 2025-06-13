@@ -12,7 +12,6 @@ import java.util.UUID;
 import java.util.function.Function;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.PersistedConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.protostream.annotations.ProtoFactory;

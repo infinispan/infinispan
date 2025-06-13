@@ -8,6 +8,7 @@ import static org.infinispan.hibernate.cache.spi.InfinispanProperties.TIMESTAMPS
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -30,7 +31,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.infinispan.manager.DefaultCacheManager;
@@ -85,8 +85,7 @@ public class InfinispanRegionFactoryTestCase  {
 		try {
 			assertEquals("person-cache", factory.getBaseConfiguration(person));
 			Configuration personOverride = factory.getConfigurationOverride(person);
-			assertEquals(EvictionType.COUNT, personOverride.memory().evictionType());
-			assertEquals(5000, personOverride.memory().size());
+			assertEquals(5000, personOverride.memory().maxCount());
 			assertEquals(2000, personOverride.expiration().wakeUpInterval());
 			assertEquals(60000, personOverride.expiration().lifespan());
 			assertEquals(30000, personOverride.expiration().maxIdle());
@@ -98,8 +97,7 @@ public class InfinispanRegionFactoryTestCase  {
 
 			assertEquals("my-query-cache", factory.getBaseConfiguration(InfinispanProperties.QUERY));
 			Configuration queryOverride = factory.getConfigurationOverride(InfinispanProperties.QUERY);
-			assertEquals(EvictionType.COUNT, queryOverride.memory().evictionType());
-			assertEquals(10000, queryOverride.memory().size());
+			assertEquals(10000, queryOverride.memory().maxCount());
 			assertEquals(3000, queryOverride.expiration().wakeUpInterval());
 		} finally {
 			factory.stop();
@@ -151,9 +149,8 @@ public class InfinispanRegionFactoryTestCase  {
 			assertTrue(isDefinedCache(factory, person));
 			cache = region.getCache();
 			Configuration cacheCfg = cache.getCacheConfiguration();
-			assertEquals(EvictionType.COUNT, cacheCfg.memory().evictionType());
 			assertEquals(2000, cacheCfg.expiration().wakeUpInterval());
-			assertEquals(5000, cacheCfg.memory().size());
+			assertEquals(5000, cacheCfg.memory().maxCount());
 			assertEquals(60000, cacheCfg.expiration().lifespan());
 			assertEquals(30000, cacheCfg.expiration().maxIdle());
 			assertFalse(cacheCfg.statistics().enabled());
@@ -162,18 +159,16 @@ public class InfinispanRegionFactoryTestCase  {
 			assertTrue(isDefinedCache(factory, person));
 			cache = region.getCache();
 			cacheCfg = cache.getCacheConfiguration();
-			assertEquals(EvictionType.COUNT, cacheCfg.memory().evictionType());
 			assertEquals(3000, cacheCfg.expiration().wakeUpInterval());
-			assertEquals(20000, cacheCfg.memory().size());
+			assertEquals(20000, cacheCfg.memory().maxCount());
 			assertFalse(cacheCfg.statistics().enabled());
 
          region = factory.buildEntityRegion(car, AccessType.TRANSACTIONAL);
 			assertTrue(isDefinedCache(factory, person));
 			cache = region.getCache();
 			cacheCfg = cache.getCacheConfiguration();
-			assertEquals(EvictionType.COUNT, cacheCfg.memory().evictionType());
 			assertEquals(3000, cacheCfg.expiration().wakeUpInterval());
-			assertEquals(20000, cacheCfg.memory().size());
+			assertEquals(20000, cacheCfg.memory().maxCount());
 			assertFalse(cacheCfg.statistics().enabled());
 
 			InfinispanBaseRegion collectionRegion = factory.buildCollectionRegion(addresses, AccessType.TRANSACTIONAL);
@@ -181,9 +176,8 @@ public class InfinispanRegionFactoryTestCase  {
 
 			cache = collectionRegion .getCache();
 			cacheCfg = cache.getCacheConfiguration();
-			assertEquals(EvictionType.COUNT, cacheCfg.memory().evictionType());
 			assertEquals(2500, cacheCfg.expiration().wakeUpInterval());
-			assertEquals(5500, cacheCfg.memory().size());
+			assertEquals(5500, cacheCfg.memory().maxCount());
 			assertEquals(65000, cacheCfg.expiration().lifespan());
 			assertEquals(35000, cacheCfg.expiration().maxIdle());
 			assertFalse(cacheCfg.statistics().enabled());
@@ -192,18 +186,16 @@ public class InfinispanRegionFactoryTestCase  {
 			assertTrue(isDefinedCache(factory, addresses));
 			cache = collectionRegion.getCache();
 			cacheCfg = cache.getCacheConfiguration();
-			assertEquals(EvictionType.COUNT, cacheCfg.memory().evictionType());
 			assertEquals(3500, cacheCfg.expiration().wakeUpInterval());
-			assertEquals(25000, cacheCfg.memory().size());
+			assertEquals(25000, cacheCfg.memory().maxCount());
 			assertFalse(cacheCfg.statistics().enabled());
 
 			collectionRegion = factory.buildCollectionRegion(parts, AccessType.TRANSACTIONAL);
 			assertTrue(isDefinedCache(factory, addresses));
 			cache = collectionRegion.getCache();
 			cacheCfg = cache.getCacheConfiguration();
-			assertEquals(EvictionType.COUNT, cacheCfg.memory().evictionType());
 			assertEquals(3500, cacheCfg.expiration().wakeUpInterval());
-			assertEquals(25000, cacheCfg.memory().size());
+			assertEquals(25000, cacheCfg.memory().maxCount());
 			assertFalse(cacheCfg.statistics().enabled());
 		} finally {
 			factory.stop();
@@ -229,7 +221,6 @@ public class InfinispanRegionFactoryTestCase  {
 			assertNull(factory.getBaseConfiguration(address));
 			cache = region.getCache();
 			Configuration cacheCfg = cache.getCacheConfiguration();
-			assertEquals(EvictionType.COUNT, cacheCfg.memory().evictionType());
 			assertEquals(3000, cacheCfg.expiration().wakeUpInterval());
 			assertEquals(30000, cacheCfg.memory().maxCount());
 			// Max idle value comes from base XML configuration
@@ -239,9 +230,8 @@ public class InfinispanRegionFactoryTestCase  {
 			assertNull(factory.getBaseConfiguration(personAddressses));
 			cache = collectionRegion.getCache();
 			cacheCfg = cache.getCacheConfiguration();
-			assertEquals(EvictionType.COUNT, cacheCfg.memory().evictionType());
 			assertEquals(3500, cacheCfg.expiration().wakeUpInterval());
-			assertEquals(35000, cacheCfg.memory().size());
+			assertEquals(35000, cacheCfg.memory().maxCount());
 			assertEquals(100000, cacheCfg.expiration().maxIdle());
 		} finally {
 			factory.stop();
@@ -267,9 +257,8 @@ public class InfinispanRegionFactoryTestCase  {
 			assertTrue( isDefinedCache(factory, person ) );
 			AdvancedCache cache = region.getCache();
 			Configuration cacheCfg = cache.getCacheConfiguration();
-			assertEquals(EvictionType.COUNT, cacheCfg.memory().evictionType());
 			assertEquals(3000, cacheCfg.expiration().wakeUpInterval());
-			assertEquals(10000, cacheCfg.memory().size());
+			assertEquals(10000, cacheCfg.memory().maxCount());
 			assertEquals(60000, cacheCfg.expiration().lifespan());
 			assertEquals(30000, cacheCfg.expiration().maxIdle());
 		} finally {
@@ -353,7 +342,7 @@ public class InfinispanRegionFactoryTestCase  {
 			AdvancedCache cache = region.getCache();
 			Configuration cacheCfg = cache.getCacheConfiguration();
 			assertEquals(CacheMode.REPL_SYNC, cacheCfg.clustering().cacheMode());
-			assertTrue(cacheCfg.memory().storageType() != StorageType.BINARY);
+         assertNotSame(StorageType.OFF_HEAP, cacheCfg.memory().storage());
 			assertFalse(cacheCfg.statistics().enabled());
 		} finally {
 			factory.stop();
@@ -448,9 +437,8 @@ public class InfinispanRegionFactoryTestCase  {
 			assertTrue(isDefinedCache(factory, queryRegionName));
 			AdvancedCache cache = region.getCache();
 			Configuration cacheCfg = cache.getCacheConfiguration();
-			assertEquals(EvictionType.COUNT, cacheCfg.memory().evictionType());
 			assertEquals(2222, cacheCfg.expiration().wakeUpInterval());
-			assertEquals( 11111, cacheCfg.memory().size() );
+			assertEquals( 11111, cacheCfg.memory().maxCount() );
 		} finally {
 			factory.stop();
 		}

@@ -252,10 +252,11 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case LAZY_RETRIEVAL: {
-               if (reader.getSchema().since(11, 0))
+               if (reader.getSchema().since(11, 0)) {
                   Server.log.warnHotRodLazyRetrievalDeprecated();
-               builder.topologyStateTransfer(!Boolean.parseBoolean(value));
-               break;
+                  break;
+               }
+               // else fallthrough
             }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);

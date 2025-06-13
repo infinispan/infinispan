@@ -10,6 +10,7 @@ import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.test.ExceptionRunnable;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.MagicKey;
@@ -47,7 +48,8 @@ public class PrimaryOwnerChangePessimistTxTest extends MultipleCacheManagersTest
    private ConfigurationBuilder configuration() {
       ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       cb.transaction().lockingMode(LockingMode.PESSIMISTIC);
-      cb.clustering().hash().numSegments(2).consistentHashFactory(factory);
+      cb.clustering().hash().numSegments(2);
+      cb.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(factory);
       return cb;
    }
 

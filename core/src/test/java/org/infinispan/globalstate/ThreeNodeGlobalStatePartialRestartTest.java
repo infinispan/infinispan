@@ -50,7 +50,7 @@ public class ThreeNodeGlobalStatePartialRestartTest extends AbstractGlobalStateR
    public void testClusterDelayedJoiners() throws Exception {
       var addressMappings = createInitialCluster();
 
-      ConsistentHash oldConsistentHash = advancedCache(0, CACHE_NAME).getDistributionManager().getWriteConsistentHash();
+      ConsistentHash oldConsistentHash = advancedCache(0, CACHE_NAME).getDistributionManager().getCacheTopology().getWriteConsistentHash();
 
       // Shutdown the cache cluster-wide
       cache(0, CACHE_NAME).shutdown();
@@ -83,7 +83,7 @@ public class ThreeNodeGlobalStatePartialRestartTest extends AbstractGlobalStateR
       checkData();
 
       ConsistentHash newConsistentHash =
-            advancedCache(0, CACHE_NAME).getDistributionManager().getWriteConsistentHash();
+            advancedCache(0, CACHE_NAME).getDistributionManager().getCacheTopology().getWriteConsistentHash();
       PersistentUUIDManager persistentUUIDManager = TestingUtil.extractGlobalComponent(manager(0), PersistentUUIDManager.class);
       assertEquivalent(addressMappings, oldConsistentHash, newConsistentHash, persistentUUIDManager);
    }
@@ -91,7 +91,7 @@ public class ThreeNodeGlobalStatePartialRestartTest extends AbstractGlobalStateR
    public void testConnectAndDisconnectDuringRestart() throws Exception {
       var addressMappings = createInitialCluster();
 
-      ConsistentHash oldConsistentHash = advancedCache(0, CACHE_NAME).getDistributionManager().getWriteConsistentHash();
+      ConsistentHash oldConsistentHash = advancedCache(0, CACHE_NAME).getDistributionManager().getCacheTopology().getWriteConsistentHash();
 
       // Shutdown the cache cluster-wide
       cache(0, CACHE_NAME).shutdown();
@@ -140,7 +140,7 @@ public class ThreeNodeGlobalStatePartialRestartTest extends AbstractGlobalStateR
       checkData();
 
       ConsistentHash newConsistentHash =
-          advancedCache(0, CACHE_NAME).getDistributionManager().getWriteConsistentHash();
+          advancedCache(0, CACHE_NAME).getDistributionManager().getCacheTopology().getWriteConsistentHash();
       PersistentUUIDManager persistentUUIDManager = TestingUtil.extractGlobalComponent(manager(0), PersistentUUIDManager.class);
       assertEquivalent(addressMappings, oldConsistentHash, newConsistentHash, persistentUUIDManager);
    }
@@ -148,7 +148,7 @@ public class ThreeNodeGlobalStatePartialRestartTest extends AbstractGlobalStateR
    public void testClusterWithRestartsDuringPartitioning() throws Exception {
       var addressMappings = createInitialCluster();
 
-      ConsistentHash oldConsistentHash = advancedCache(0, CACHE_NAME).getDistributionManager().getWriteConsistentHash();
+      ConsistentHash oldConsistentHash = advancedCache(0, CACHE_NAME).getDistributionManager().getCacheTopology().getWriteConsistentHash();
 
       // Shutdown the cache cluster-wide
       cache(0, CACHE_NAME).shutdown();
@@ -196,7 +196,7 @@ public class ThreeNodeGlobalStatePartialRestartTest extends AbstractGlobalStateR
       checkData();
 
       ConsistentHash newConsistentHash =
-            advancedCache(0, CACHE_NAME).getDistributionManager().getWriteConsistentHash();
+            advancedCache(0, CACHE_NAME).getDistributionManager().getCacheTopology().getWriteConsistentHash();
       PersistentUUIDManager persistentUUIDManager = TestingUtil.extractGlobalComponent(manager(0), PersistentUUIDManager.class);
       assertEquivalent(addressMappings, oldConsistentHash, newConsistentHash, persistentUUIDManager);
    }

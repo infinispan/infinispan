@@ -13,8 +13,6 @@ public class ThreadsConfiguration {
    private final ThreadPoolConfiguration expirationThreadPool;
    private final ThreadPoolConfiguration listenerThreadPool;
    private final ThreadPoolConfiguration persistenceThreadPool;
-   private final ThreadPoolConfiguration remoteThreadPool;
-   private final ThreadPoolConfiguration transportThreadPool;
    private final ThreadPoolConfiguration nonBlockingThreadPool;
    private final ThreadPoolConfiguration blockingThreadPool;
 
@@ -26,16 +24,12 @@ public class ThreadsConfiguration {
                         ThreadPoolConfiguration expirationThreadPool,
                         ThreadPoolConfiguration listenerThreadPool,
                         ThreadPoolConfiguration persistenceThreadPool,
-                        ThreadPoolConfiguration remoteThreadPool,
-                        ThreadPoolConfiguration transportThreadPool,
                         ThreadPoolConfiguration nonBlockingThreadPool,
                         ThreadPoolConfiguration blockingThreadPool) {
       this.asyncThreadPool = asyncThreadPool;
       this.expirationThreadPool = expirationThreadPool;
       this.listenerThreadPool = listenerThreadPool;
       this.persistenceThreadPool = persistenceThreadPool;
-      this.remoteThreadPool = remoteThreadPool;
-      this.transportThreadPool = transportThreadPool;
       this.nonBlockingThreadPool = nonBlockingThreadPool;
       this.blockingThreadPool = blockingThreadPool;
       this.threadFactories.addAll(threadFactories);
@@ -58,18 +52,6 @@ public class ThreadsConfiguration {
 
    public ThreadPoolConfiguration persistenceThreadPool() {
       return persistenceThreadPool;
-   }
-
-   public ThreadPoolConfiguration remoteThreadPool() {
-      return remoteThreadPool;
-   }
-
-   /**
-    * @return An empty {@code ThreadPoolConfiguration}.
-    * @deprecated Since 11.0, no longer used.
-    */
-   public ThreadPoolConfiguration transportThreadPool() {
-      return transportThreadPool;
    }
 
    public ThreadPoolConfiguration nonBlockingThreadPool() {
@@ -107,8 +89,6 @@ public class ThreadsConfiguration {
             ", expirationThreadPool=" + expirationThreadPool +
             ", listenerThreadPool=" + listenerThreadPool +
             ", persistenceThreadPool=" + persistenceThreadPool +
-            ", remoteThreadPool=" + remoteThreadPool +
-            ", transportThreadPool=" + transportThreadPool +
             '}';
    }
 }

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.distribution.ch.impl.ConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory;
 import org.infinispan.profiling.testinternals.Generator;
 import org.infinispan.remoting.transport.Address;

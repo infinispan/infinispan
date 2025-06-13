@@ -13,10 +13,11 @@ import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.internal.PrivateCacheConfiguration;
 import org.infinispan.container.versioning.irac.IracVersionGenerator;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.distribution.ch.impl.ConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncReplicatedConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
@@ -126,10 +127,11 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    /**
-    * If no ConsistentHashFactory was explicitly configured we choose a suitable one based on cache mode.
+    * If no ConsistentHashFactory was explicitly configured, we choose a suitable one based on cache mode.
     */
    public static ConsistentHashFactory pickConsistentHashFactory(GlobalConfiguration globalConfiguration, Configuration configuration) {
-      ConsistentHashFactory factory = configuration.clustering().hash().consistentHashFactory();
+      PrivateCacheConfiguration privateCacheConfiguration = configuration.module(PrivateCacheConfiguration.class);
+      ConsistentHashFactory factory = privateCacheConfiguration != null ? privateCacheConfiguration.consistentHashFactory() : null;
       if (factory == null) {
          CacheMode cacheMode = configuration.clustering().cacheMode();
          if (cacheMode.isClustered()) {

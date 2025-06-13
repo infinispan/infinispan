@@ -6,7 +6,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
@@ -14,7 +13,6 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.concurrent.BlockingManager;
 
 /**
  * Simulates a remote invocation on the local node. This is needed because the transport does not redirect to itself the
@@ -28,18 +26,14 @@ public class LocalInvocation implements Callable<Response>, Function<Object, Res
    private final ResponseGenerator responseGenerator;
    private final CacheRpcCommand command;
    private final ComponentRegistry componentRegistry;
-   private final CommandsFactory commandsFactory;
    private final Address self;
-   private final BlockingManager blockingManager;
 
    private LocalInvocation(ResponseGenerator responseGenerator, CacheRpcCommand command,
                            ComponentRegistry componentRegistry, Address self) {
       this.responseGenerator = responseGenerator;
       this.command = command;
       this.componentRegistry = componentRegistry;
-      this.commandsFactory = componentRegistry.getCommandsFactory();
       this.self = self;
-      this.blockingManager = componentRegistry.getComponent(BlockingManager.class);
    }
 
    @Override
@@ -74,22 +68,9 @@ public class LocalInvocation implements Callable<Response>, Function<Object, Res
    }
 
    public CompletionStage<Response> callAsync() {
-      commandsFactory.initializeReplicableCommand(command, false);
       command.setOrigin(self);
       try {
-         CompletionStage<?> stage;
-         if (command.canBlock()) {
-            stage = blockingManager.supplyBlocking(() -> {
-               try {
-                  return command.invokeAsync(componentRegistry);
-               } catch (Throwable t) {
-                  throw CompletableFutures.asCompletionException(t);
-               }
-            }, command.getClass().getSimpleName())
-                  .thenCompose(Function.identity());
-         } else {
-            stage = command.invokeAsync(componentRegistry);
-         }
+         CompletionStage<?> stage= command.invokeAsync(componentRegistry);
          return stage.thenApply(this);
       } catch (Throwable throwable) {
          return CompletableFuture.failedFuture(throwable);

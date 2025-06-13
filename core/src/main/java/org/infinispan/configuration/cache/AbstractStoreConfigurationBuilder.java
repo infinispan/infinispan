@@ -15,13 +15,8 @@ import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
-import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.persistence.spi.NonBlockingStore;
-import org.infinispan.persistence.spi.SegmentedAdvancedLoadWriteStore;
 
 public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfiguration, S extends AbstractStoreConfigurationBuilder<T, S>>
       extends AbstractPersistenceConfigurationChildBuilder implements StoreConfigurationBuilder<T, S> {
@@ -155,12 +150,6 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
 
    @Override
    public void validate() {
-      validate(false);
-   }
-
-   protected void validate(boolean skipClassChecks) {
-      if (!skipClassChecks)
-         validateStoreWithAnnotations();
       validateStoreAttributes();
    }
 
@@ -199,30 +188,6 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
 
       if (transactional && builder.persistence().passivation())
          throw CONFIG.transactionalStoreInPassivatedCache();
-   }
-
-   private void validateStoreWithAnnotations() {
-      Class configKlass = attributes.getKlass();
-      if (configKlass != null && configKlass.isAnnotationPresent(ConfigurationFor.class)) {
-         Class storeKlass = ((ConfigurationFor) configKlass.getAnnotation(ConfigurationFor.class)).value();
-         if (storeKlass.isAnnotationPresent(Store.class)) {
-            Store storeProps = (Store) storeKlass.getAnnotation(Store.class);
-            boolean segmented = attributes.attribute(SEGMENTED).get();
-            if (segmented && !AbstractSegmentedStoreConfiguration.class.isAssignableFrom(configKlass)
-                  && !(SegmentedAdvancedLoadWriteStore.class.isAssignableFrom(storeKlass) || NonBlockingStore.class.isAssignableFrom(storeKlass))) {
-               throw CONFIG.storeNotSegmented(storeKlass);
-            }
-            if (!storeProps.shared() && attributes.attribute(SHARED).get()) {
-               throw CONFIG.nonSharedStoreConfiguredAsShared(storeKlass.getSimpleName());
-            }
-         }
-      } else {
-         CONFIG.warnConfigurationForAnnotationMissing(attributes.getName());
-      }
-   }
-
-   @Override
-   public void validate(GlobalConfiguration globalConfig) {
    }
 
    @Override

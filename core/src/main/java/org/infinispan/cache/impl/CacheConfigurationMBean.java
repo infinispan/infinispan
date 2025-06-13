@@ -23,10 +23,10 @@ public class CacheConfigurationMBean {
          displayName = "Gets the eviction size for the cache",
          writable = true)
    public long getEvictionSize() {
-      return configuration.memory().size();
+      return configuration.memory().maxCount();
    }
 
    public void setEvictionSize(long newSize) {
-      configuration.memory().size(newSize);
+      configuration.memory().maxCount(newSize);
    }
 }

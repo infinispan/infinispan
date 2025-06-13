@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import io.micrometer.prometheusmetrics.PrometheusConfig;
-import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
@@ -32,6 +30,8 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.prometheusmetrics.PrometheusConfig;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 
 public class HotRodClientMetrics {
 
@@ -223,7 +223,7 @@ public class HotRodClientMetrics {
       builder.withMetricRegistry(metricsBuilder.build());
       builder.statistics().enable();
       if (nearCache) {
-         builder.nearCache().mode(NearCacheMode.INVALIDATED).maxEntries(1000);
+         builder.remoteCache("*").nearCacheMode(NearCacheMode.INVALIDATED).nearCacheMaxEntries(1000);
       }
       return builder;
    }

@@ -8,15 +8,14 @@ import org.testng.annotations.Test;
 public class FunctionalStorageTypeTest extends FunctionalMapTest {
    @Override
    protected void configureCache(ConfigurationBuilder builder) {
-      builder.memory().storageType(storageType);
+      builder.memory().storage(storageType);
       super.configureCache(builder);
    }
 
    public Object[] factory() {
       return new Object[]{
             new FunctionalStorageTypeTest().storageType(StorageType.OFF_HEAP),
-            new FunctionalStorageTypeTest().storageType(StorageType.BINARY),
-            new FunctionalStorageTypeTest().storageType(StorageType.OBJECT),
+            new FunctionalStorageTypeTest().storageType(StorageType.HEAP),
       };
    }
 }
