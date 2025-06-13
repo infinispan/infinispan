@@ -1,6 +1,6 @@
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.3.xsd">
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.4.xsd">
    <TCP bind_addr="${jgroups.bind.address,jgroups.tcp.address:127.0.0.1}"
         bind_port="7800"
         port_range="30"
@@ -14,6 +14,8 @@
         thread_pool.keep_alive_time="5s"
 
         use_vthreads="${jgroups.thread.virtual,org.infinispan.threads.virtual:true}"
+
+        enable_suspect_events="true"
    />
    <RED/>
 
@@ -29,7 +31,6 @@
           ip_ttl="${jgroups.udp.ip_ttl:2}"/>
 
    <MERGE3/>
-   <FD_SOCK2/>
    <!-- Suspect node `timeout` to `timeout + timeout_check_interval` millis after the last heartbeat -->
    <FD_ALL3 timeout="3000"
            interval="1000"
