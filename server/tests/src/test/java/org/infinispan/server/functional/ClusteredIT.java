@@ -34,6 +34,15 @@ import org.infinispan.server.functional.hotrod.HotRodMultiMapOperations;
 import org.infinispan.server.functional.hotrod.HotRodTransactionalCacheOperations;
 import org.infinispan.server.functional.hotrod.IgnoreCaches;
 import org.infinispan.server.functional.memcached.MemcachedOperations;
+import org.infinispan.server.functional.resp.RespDistributedTest;
+import org.infinispan.server.functional.resp.RespHashTest;
+import org.infinispan.server.functional.resp.RespListTest;
+import org.infinispan.server.functional.resp.RespPubSubTest;
+import org.infinispan.server.functional.resp.RespScriptTest;
+import org.infinispan.server.functional.resp.RespSetTest;
+import org.infinispan.server.functional.resp.RespSortedSetTest;
+import org.infinispan.server.functional.resp.RespStringTest;
+import org.infinispan.server.functional.resp.RespTransactionTest;
 import org.infinispan.server.functional.rest.RestLoggingResource;
 import org.infinispan.server.functional.rest.RestOperations;
 import org.infinispan.server.functional.rest.RestRouter;
@@ -74,7 +83,16 @@ import org.junit.platform.suite.api.Suite;
       ScriptingTasks.class,
       ServerTasks.class,
       PojoMarshalling.class,
-      HotRodClientMetrics.class
+      HotRodClientMetrics.class,
+      RespDistributedTest.class,
+      RespHashTest.class,
+      RespListTest.class,
+      RespPubSubTest.class,
+      RespScriptTest.class,
+      RespSetTest.class,
+      RespSortedSetTest.class,
+      RespStringTest.class,
+      RespTransactionTest.class,
 })
 public class ClusteredIT extends InfinispanSuite {
 
