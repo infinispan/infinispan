@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -274,15 +273,8 @@ public class BaseCacheResource {
       Configuration config = SecurityActions.getCacheConfiguration(cache);
       final Metadata metadata = CacheOperationsHelper.createMetadata(config, ttl, idleTime);
       responseBuilder.header("etag", calcETAG(data));
-      CompletionStage<Object> stage;
-      // Indexing is still blocking - can be removed when https://issues.redhat.com/browse/ISPN-11731 is complete
-      if (config.indexing().enabled()) {
-         stage = CompletableFuture.supplyAsync(() -> cache.putAsync(key, data, metadata), invocationHelper.getExecutor())
-               .thenCompose(Function.identity());
-      } else {
-         stage = cache.putAsync(key, data, metadata);
-      }
-      return stage.thenApply(o -> responseBuilder.build());
+      return cache.putAsync(key, data, metadata)
+            .thenApply(o -> responseBuilder.build());
    }
 
    private <T> InfinispanSpan<T> requestStart(String operationName, InfinispanSpanAttributes attributes, RestRequest request) {
