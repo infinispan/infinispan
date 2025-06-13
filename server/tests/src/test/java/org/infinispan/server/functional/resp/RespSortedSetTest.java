@@ -26,17 +26,19 @@ public class RespSortedSetTest extends AbstractRespTest {
             })
             .compose(v -> {
                ctx.verify(() -> assertThat(v.toLong()).isEqualTo(1));
-               return redis.zrange(List.of("zadd", "0", "-1"));
+               return redis.zrange(List.of("zadd", "0", "-1", "WITHSCORES"));
             })
             .compose(v -> {
                ctx.verify(() -> assertThat(v)
-                     // [v1, 10.4, v2, 20.4]
-                     .hasSize(4)
+                     // [[v1, 10.4], [v2, 20.4]]
+                     .hasSize(2)
                      .isInstanceOfSatisfying(MultiType.class, mt -> {
-                        assertThat(mt.get(0).toString()).isEqualTo("v1");
-                        assertThat(mt.get(1).toDouble()).isEqualTo(10.4);
-                        assertThat(mt.get(2).toString()).isEqualTo("v2");
-                        assertThat(mt.get(3).toDouble()).isEqualTo(20.4);
+                        MultiType first = (MultiType) mt.get(0);
+                        MultiType second = (MultiType) mt.get(1);
+                        assertThat(first.get(0).toString()).isEqualTo("v1");
+                        assertThat(first.get(1).toDouble()).isEqualTo(10.4);
+                        assertThat(second.get(0).toString()).isEqualTo("v2");
+                        assertThat(second.get(1).toDouble()).isEqualTo(20.4);
                      }));
                return redis.zcount("zadd", "(10.4", "20.4");
             })
