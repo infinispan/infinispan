@@ -112,7 +112,7 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
    private final int hitCountAccuracy;
 
    private Map<String, Object> namedParameters;
-   private LuceneSearchPredicateFactory predicateFactory;
+   private LuceneSearchPredicateFactory<?> predicateFactory;
    private SearchIndexedEntity indexedEntity;
    private Integer knn;
    private BooleanExpr filteringClause;
@@ -273,7 +273,7 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
       if (sortFields.length == 1) {
          return makeSort(sortFactory, sortFields[0]);
       }
-      CompositeSortComponentsStep<?> composite = sortFactory.composite();
+      CompositeSortComponentsStep<?, ?> composite = sortFactory.composite();
       for (SortField sortField : sortFields) {
          composite.add(makeSort(sortFactory, sortField));
       }
@@ -286,10 +286,10 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
          FunctionPropertyPath<?> functionPath = (FunctionPropertyPath<?>) path;
          Double lat = (Double) functionPath.getArgs().get(0);
          Double lon = (Double) functionPath.getArgs().get(1);
-         DistanceSortOptionsStep<?, ? extends SearchPredicateFactory> optionsStep = sortFactory.distance(functionPath.asStringPathWithoutAlias(), lat, lon);
+         DistanceSortOptionsStep<?, ?, ? extends SearchPredicateFactory> optionsStep = sortFactory.distance(functionPath.asStringPathWithoutAlias(), lat, lon);
          return (sortField.isAscending() ? optionsStep.asc() : optionsStep.desc()).toSort();
       }
-      FieldSortOptionsStep<?, ? extends SearchPredicateFactory> optionsStep = sortFactory.field(path.asStringPathWithoutAlias());
+      FieldSortOptionsStep<?, ?, ? extends SearchPredicateFactory> optionsStep = sortFactory.field(path.asStringPathWithoutAlias());
       return (sortField.isAscending() ? optionsStep.asc() : optionsStep.desc()).toSort();
    }
 
@@ -467,7 +467,7 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
          return predicateFactory.exists().field(absoluteFieldPath);
       }
 
-      RangePredicateFieldMoreStep<?, ?> range = predicateFactory.range().field(absoluteFieldPath);
+      RangePredicateFieldMoreStep<?, ?, ?> range = predicateFactory.range().field(absoluteFieldPath);
       return range.between(
             lower, includeLower ? RangeBoundInclusion.INCLUDED : RangeBoundInclusion.EXCLUDED,
             upper, includeUpper ? RangeBoundInclusion.INCLUDED : RangeBoundInclusion.EXCLUDED);
@@ -578,7 +578,7 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
 
    @Override
    public PredicateFinalStep visit(OrExpr orExpr) {
-      BooleanPredicateClausesStep<?> bool = predicateFactory.bool();
+      BooleanPredicateClausesStep<?, ?> bool = predicateFactory.bool();
       for (BooleanExpr c : orExpr.getChildren()) {
          PredicateFinalStep clause = c.acceptVisitor(this);
          bool.should(clause);
@@ -588,7 +588,7 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
 
    @Override
    public PredicateFinalStep visit(AndExpr andExpr) {
-      BooleanPredicateClausesStep<?> bool = predicateFactory.bool();
+      BooleanPredicateClausesStep<?, ?> bool = predicateFactory.bool();
       for (BooleanExpr c : andExpr.getChildren()) {
          PredicateFinalStep clause = c.acceptVisitor(this);
          bool.must(clause);
@@ -696,8 +696,8 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
 
    @Override
    public PredicateFinalStep visit(NestedExpr nestedExpr) {
-      BooleanPredicateClausesStep<?> bool = predicateFactory.bool();
-      NestedPredicateClausesStep<?> nested = predicateFactory.nested(nestedExpr.getNestedPath());
+      BooleanPredicateClausesStep<?, ?> bool = predicateFactory.bool();
+      NestedPredicateClausesStep<?, ?> nested = predicateFactory.nested(nestedExpr.getNestedPath());
       for (BooleanExpr c : nestedExpr.getChildren()) {
          PredicateFinalStep clause = c.acceptVisitor(this);
          nested.add(clause);

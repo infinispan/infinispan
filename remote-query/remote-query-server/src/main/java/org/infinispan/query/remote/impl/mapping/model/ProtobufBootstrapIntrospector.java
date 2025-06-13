@@ -5,7 +5,6 @@ import java.lang.invoke.MethodHandles;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeModel;
 import org.hibernate.search.util.common.reflect.spi.ValueHandleFactory;
-import org.hibernate.search.util.common.reflect.spi.ValueReadHandleFactory;
 import org.infinispan.query.remote.impl.mapping.reference.GlobalReferenceHolder;
 import org.infinispan.query.remote.impl.mapping.type.ProtobufKeyValuePair;
 import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
@@ -36,8 +35,4 @@ public class ProtobufBootstrapIntrospector implements PojoBootstrapIntrospector 
       return delegate.annotationValueHandleFactory();
    }
 
-   @Override
-   public ValueReadHandleFactory annotationValueReadHandleFactory() {
-      return delegate.annotationValueReadHandleFactory();
-   }
 }
