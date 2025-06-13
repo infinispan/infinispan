@@ -84,6 +84,11 @@ public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
       this.maxContentLength = server.getConfiguration().maxContentLengthBytes();
    }
 
+   protected final void assertCacheIsReady() {
+      if (!server.isDefaultCacheRunning())
+         throw log.cacheIsNotReady(server.defaultCacheName());
+   }
+
    protected int bytesAvailable(ByteBuf buf, int requestBytes) {
       if (maxContentLength > 0) {
          return Math.max(maxContentLength - requestBytes - buf.readerIndex() + posBefore, 0);

@@ -178,6 +178,7 @@ public class EndpointsCacheFactory<K, V> {
          rest = new RestServer();
          rest.setServerManagement(new DummyServerManagement(), true);
          rest.start(builder.build(), cacheManager);
+         rest.postStart();
          return rest;
       });
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
@@ -196,6 +197,7 @@ public class EndpointsCacheFactory<K, V> {
          }
          MemcachedServer server = new MemcachedServer();
          server.start(builder.build(), cacheManager);
+         server.postStart();
          return server;
       });
       memcachedClient = createMemcachedClient(60000, memcached.getPort());

@@ -148,6 +148,12 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
          log.tracef("Received command: %s with arguments %s for %s", command, Util.toStr(arguments), ctx.channel());
       }
 
+      if (!requestHandler.respServer().isDefaultCacheRunning()) {
+         requestHandler.initializeIfNecessary(ctx);
+         requestHandler.writer().error("-ERR Server not ready");
+         return;
+      }
+
       if (traceAccess) accessLogger.track(command, arguments);
 
       CompletionStage<RespRequestHandler> stage = requestHandler.handleRequest(ctx, command, arguments);
