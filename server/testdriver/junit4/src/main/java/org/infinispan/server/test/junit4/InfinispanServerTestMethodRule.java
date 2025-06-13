@@ -91,6 +91,11 @@ public class InfinispanServerTestMethodRule implements TestRule, TestClientDrive
       return testClient.addScript(remoteCacheManager, script);
    }
 
+   @Override
+   public boolean isContainerized() {
+      return false;
+   }
+
    public RestClient newRestClient(RestClientConfigurationBuilder restClientConfigurationBuilder) {
       return testClient.newRestClient(restClientConfigurationBuilder);
    }

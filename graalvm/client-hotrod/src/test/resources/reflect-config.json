@@ -10,5 +10,13 @@
   {
     "name": "org.infinispan.server.functional.extensions.entities.Entities$Person",
     "allDeclaredFields": true
+  },
+  {
+    "name": "org.infinispan.server.test.junit5.CustomInfinispanExtension",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.infinispan.server.test.junit5.InfinispanServerExtension",
+    "allPublicMethods": true
   }
 ]

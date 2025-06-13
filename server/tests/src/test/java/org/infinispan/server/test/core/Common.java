@@ -53,8 +53,8 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.persistence.PersistenceIT;
-import org.infinispan.server.test.api.HotRodTestClientDriver;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.api.HotRodClientDriver;
+import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.test.TestingUtil;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
@@ -248,12 +248,12 @@ public class Common {
    }
 
 
-   public static <K, V> RemoteCache<K, V> createQueryableCache(InfinispanServerExtension server, boolean indexed, String protoFile, String entityName) {
+   public static <K, V> RemoteCache<K, V> createQueryableCache(TestClientDriver server, boolean indexed, String protoFile, String entityName) {
 
       ConfigurationBuilder config = new ConfigurationBuilder();
       config.marshaller(new ProtoStreamMarshaller());
 
-      HotRodTestClientDriver hotRodTestClientDriver = server.hotrod().withClientConfiguration(config);
+      HotRodClientDriver<?> hotRodTestClientDriver = server.hotrod().withClientConfiguration(config);
       RemoteCacheManager remoteCacheManager = hotRodTestClientDriver.createRemoteCacheManager();
 
       if (protoFile != null) {
