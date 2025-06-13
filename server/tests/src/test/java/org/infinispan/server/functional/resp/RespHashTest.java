@@ -87,7 +87,7 @@ public class RespHashTest extends AbstractRespTest {
             .compose(v -> server0.hgetall("conc-dhash"))
             .onSuccess(v -> {
                ctx.verify(() -> assertThat(v)
-                     .hasSize(size * 2)
+                     .hasSize(size)
                      .isInstanceOfSatisfying(MultiType.class, mt -> {
                         for (Map.Entry<String, String> entry : data.entrySet()) {
                            assertThat(mt.get(entry.getKey()).toString()).isEqualTo(entry.getValue());
