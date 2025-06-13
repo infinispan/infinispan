@@ -278,4 +278,10 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "There was no JDBC metadata present in table %s, unable to confirm if segments are properly configured! Segments are assumed to be properly configured.", id = 8072)
    void sqlMetadataNotPresent(String tableName);
+
+   @Message(value = "Either jndiUrl or dataSource must be set", id = 8073)
+   CacheConfigurationException jndiUrlOrDataSourceRequired();
+
+   @Message(value = "Both jndiUrl and dataSource must not be set", id = 8074)
+   CacheConfigurationException jndiUrlAndDataSourceSet();
 }
