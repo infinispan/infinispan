@@ -698,8 +698,12 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             TestSystemPropertyNames.INFINISPAN_TEST_SERVER_SNAPSHOT_IMAGE_NAME, SNAPSHOT_IMAGE);
       try {
          InspectImageResponse response = DOCKER_CLIENT.inspectImageCmd(snapshotImageName).exec();
-         log.infof("Reusing existing image");
-         return response.getConfig().getImage();
+         log.infof("Reusing existing image: %s", response);
+         String name = response.getConfig().getImage();
+         if (name == null || name.isEmpty()) {
+            return snapshotImageName;
+         }
+         return name;
       } catch (NotFoundException e) {
          // We build our local image based on the supplied server directory
          Path serverOutputPath = Paths.get(serverOutputDir).normalize();
@@ -720,7 +724,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                      .user("root")
                      .run(String.format("microdnf install -y %s", String.join(" ", IMAGE_DEPENDENCIES)))
                      .user(IMAGE_USER));
-         log.infof("Building server snapshot image from %s", serverOutputPath);
+         log.infof("Building server snapshot image %s from %s", snapshotImageName, serverOutputPath);
          image.get();
          return image.getDockerImageName();
       }

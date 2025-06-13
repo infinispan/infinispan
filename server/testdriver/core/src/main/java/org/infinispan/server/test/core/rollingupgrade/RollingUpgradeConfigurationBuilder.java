@@ -1,7 +1,10 @@
 package org.infinispan.server.test.core.rollingupgrade;
 
 import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -10,6 +13,7 @@ import java.util.function.Predicate;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.commons.configuration.StringConfiguration;
+import org.jboss.shrinkwrap.api.spec.JavaArchive;
 
 public class RollingUpgradeConfigurationBuilder {
    private final String fromVersion;
@@ -17,6 +21,11 @@ public class RollingUpgradeConfigurationBuilder {
 
    private int nodeCount = 3;
    private boolean xSite;
+   private String serverConfigurationFile = "infinispan.xml";
+   private boolean defaultServerConfigurationFile = true;
+   private final Properties properties = new Properties();
+   private final List<JavaArchive> customArtifacts = new ArrayList<>();
+   private final List<String> mavenArtifacts = new ArrayList<>();
    private String jgroupsProtocol = "tcp";
    private int serverCheckTimeSecs = 30;
    private boolean useSharedDataMount = true;
@@ -84,6 +93,35 @@ public class RollingUpgradeConfigurationBuilder {
       return this;
    }
 
+   public RollingUpgradeConfigurationBuilder useDefaultServerConfiguration(String serverConfigurationFile) {
+      this.serverConfigurationFile = Objects.requireNonNull(serverConfigurationFile);
+      this.defaultServerConfigurationFile = true;
+      return this;
+   }
+
+   public RollingUpgradeConfigurationBuilder useCustomServerConfiguration(String serverConfigurationFile) {
+      this.serverConfigurationFile = Objects.requireNonNull(serverConfigurationFile);
+      this.defaultServerConfigurationFile = false;
+      return this;
+   }
+
+   public RollingUpgradeConfigurationBuilder addProperty(String key, String value) {
+      properties.put(Objects.requireNonNull(key), Objects.requireNonNull(value));
+      return this;
+   }
+
+   public RollingUpgradeConfigurationBuilder addArtifacts(JavaArchive ... mavenArtifact) {
+      customArtifacts.addAll(List.of(mavenArtifact));
+      return this;
+   }
+
+   public RollingUpgradeConfigurationBuilder addMavenArtifacts(String ... mavenArtifacts) {
+      for (String artifact : mavenArtifacts) {
+         this.mavenArtifacts.add(Objects.requireNonNull(artifact));
+      }
+      return this;
+   }
+
    public RollingUpgradeConfigurationBuilder handlers(Consumer<RollingUpgradeHandler> initialHandler,
                                                       Predicate<RollingUpgradeHandler> isValidServerState) {
       this.initialHandler = Objects.requireNonNull(initialHandler);
@@ -93,6 +131,8 @@ public class RollingUpgradeConfigurationBuilder {
 
    public RollingUpgradeConfiguration build() {
       return new RollingUpgradeConfiguration(nodeCount, fromVersion, toVersion, xSite, jgroupsProtocol, serverCheckTimeSecs,
-            useSharedDataMount, exceptionHandler, initialHandler, isValidServerState);
+            useSharedDataMount, serverConfigurationFile, defaultServerConfigurationFile, properties,
+            customArtifacts.toArray(new JavaArchive[0]), mavenArtifacts.toArray(new String[0]),
+            exceptionHandler, initialHandler, isValidServerState);
    }
 }
