@@ -14,7 +14,7 @@ import net.spy.memcached.auth.AuthDescriptor;
  * @author Tristan Tarrant
  * @since 15
  */
-public class MemcachedTestClientDriver extends BaseTestClientDriver<MemcachedTestClientDriver> {
+public class MemcachedTestClientDriver extends AbstractTestClientDriver<MemcachedTestClientDriver> {
    private final TestServer testServer;
    private final TestClient testClient;
    private ConnectionFactoryBuilder builder;

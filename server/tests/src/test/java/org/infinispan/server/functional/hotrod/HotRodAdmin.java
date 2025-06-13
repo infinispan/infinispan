@@ -11,9 +11,9 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.server.functional.ClusteredIT;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.api.TestClientDriver;
+import org.infinispan.server.test.junit5.InfinispanServer;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Ryan Emerson
@@ -21,8 +21,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  */
 public class HotRodAdmin {
 
-   @RegisterExtension
-   public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
+   @InfinispanServer(ClusteredIT.class)
+   public static TestClientDriver SERVERS;
 
    @Test
    public void testCreateDeleteCache() {
