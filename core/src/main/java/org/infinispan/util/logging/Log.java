@@ -2416,4 +2416,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Failed to initialize global registry", id = 710)
    void failedToInitializeGlobalRegistry(@Cause Throwable t);
+
+   @LogMessage(level = WARN)
+   @Message(value = "View event rejected. The installed view id '%s' is newer than received view: %s", id = 711)
+   void rejectOutdatedView(int viewId, String newView);
 }
