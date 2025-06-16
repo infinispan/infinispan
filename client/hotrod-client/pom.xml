@@ -303,6 +303,7 @@
                      <goal>test</goal>
                   </goals>
                   <configuration>
+                     <reportsDirectory>${project.build.directory}/ignored-surefire-reports</reportsDirectory>
                      <properties>
                         <configurationParameters>
                            testng.excludedGroups = ${defaultExcludedTestNGGroups}
@@ -323,6 +324,7 @@
                </execution>
             </executions>
             <configuration>
+               <reportsDirectory>${project.build.directory}/ignored-surefire-reports</reportsDirectory>
                <systemPropertyVariables combine.self="append">
                   <infinispan.server.hotrod.workerThreads>3</infinispan.server.hotrod.workerThreads>
                </systemPropertyVariables>
@@ -344,6 +346,7 @@
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
+                     <reportsDirectory>${project.build.directory}/ignored-surefire-reports</reportsDirectory>
                      <excludes>
                         <exclude>**/*QueryDslConditions*.java</exclude>
                         <exclude>**/*QueryString*.java</exclude>
