@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -38,19 +39,36 @@ public class RollingUpgradeConfigurationBuilder {
       cache.put("foo", "bar");
    };
 
-   private Predicate<RollingUpgradeHandler> isValidServerState = uh -> {
-      RemoteCacheManager rcm = uh.getRemoteCacheManager();
-      RemoteCache<String, String> cache = rcm.getCache("rolling-upgrade");
+   private Predicate<RollingUpgradeHandler> isValidServerState = hotrodPredicate("rolling-upgrade",
+         (uh, rc) -> {
+            String value = rc.get("foo");
+            return "bar".equals(value);
+         });
 
-      String value = cache.get("foo");
-      if (value != null && !"bar".equals(value)) {
-         throw new IllegalStateException("Remote cache returned " + value + " instead of bar");
-      }
+   /**
+    * Creates a predicate handler to be used for {@link #handlers(Consumer, Predicate)} where the cache and node count
+    * verification is handled and the provided predicate may be used to provide additional verifications.
+    * <p>
+    * There must be a synchronous call to the remote cache in the predicate to ensure the client receives a topology
+    * response so that the server list can be verified.
+    * @param function additional test to add for each stage of the remote cache
+    * @return
+    */
+   public static Predicate<RollingUpgradeHandler> hotrodPredicate(String cacheName,
+                                                                  BiPredicate<RollingUpgradeHandler, RemoteCache<String, String>> function) {
+      return uh -> {
+         RemoteCacheManager rcm = uh.getRemoteCacheManager();
+         RemoteCache<String, String> cache = rcm.getCache(cacheName);
 
-      Set<SocketAddress> servers = cache.getCacheTopologyInfo().getSegmentsPerServer().keySet();
-      return servers.size() == uh.getConfiguration().nodeCount() +
-            (uh.getCurrentState() == RollingUpgradeHandler.STATE.REMOVED_OLD ? -1 : 0);
-   };
+         if (!function.test(uh, cache)) {
+            return false;
+         }
+         Set<SocketAddress> servers = cache.getCacheTopologyInfo().getSegmentsPerServer().keySet();
+         return servers.size() == uh.getConfiguration().nodeCount() +
+               (uh.getCurrentState() == RollingUpgradeHandler.STATE.REMOVED_OLD ? -1 : 0);
+
+      };
+   }
 
    public RollingUpgradeConfigurationBuilder(String fromVersion, String toVersion) {
       this.fromVersion = fromVersion;

@@ -32,6 +32,11 @@ public class TestServer {
       this.configuration = configuration;
    }
 
+   public TestServer(InfinispanServerTestConfiguration configuration, InfinispanServerDriver serverDriver) {
+      this.configuration = configuration;
+      this.serverDriver = serverDriver;
+   }
+
    public boolean isDriverInitialized() {
       return serverDriver != null;
    }

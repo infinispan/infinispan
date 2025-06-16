@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.net.ConnectException;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -13,6 +12,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.junit.jupiter.api.Test;
@@ -24,7 +24,6 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.RedisAPI;
-import io.vertx.redis.client.RedisClientType;
 import io.vertx.redis.client.RedisOptions;
 import io.vertx.redis.client.Response;
 import io.vertx.redis.client.impl.types.ErrorType;
@@ -36,55 +35,19 @@ abstract class RESPAuthorizationTest {
    protected final InfinispanServerExtension ext;
 
    protected final boolean cert;
+   protected final boolean useSsl;
    protected final Function<TestUser, String> serverPrincipal;
    protected final Map<TestUser, RedisOptions> respBuilders;
 
    public RESPAuthorizationTest(InfinispanServerExtension ext) {
-      this(ext, false, TestUser::getUser, user -> {
-         int size = ext.getServerDriver().getConfiguration().numServers();
-         RedisOptions options = new RedisOptions()
-               .setPoolName("pool-" + user);
-
-         if (size > 1) {
-            options = options.setType(RedisClientType.CLUSTER);
-         } else {
-            options = options.setType(RedisClientType.STANDALONE);
-         }
-
-         for (int i = 0; i < size; i++) {
-            InetSocketAddress serverSocket = ext.getServerDriver().getServerSocket(i, 11222);
-            options = options.addConnectionString(redisURI(serverSocket, user, false));
-         }
-
-         return options;
-      });
+      this(ext, false, false, TestUser::getUser, user ->
+            new RedisOptions().setPoolName("pool-" + user));
    }
 
-   static String redisURI(InetSocketAddress serverSocket, TestUser user, boolean ssl) {
-      StringBuilder sb = new StringBuilder();
-
-      if (ssl) {
-         sb.append("rediss://");
-      } else {
-         sb.append("redis://");
-      }
-
-      if (user != null && user != TestUser.ANONYMOUS) {
-         sb.append(user.getUser()).append(":").append(user.getPassword()).append("@");
-      }
-
-      sb.append(serverSocket.getHostString()).append(":").append(serverSocket.getPort());
-
-      if (ssl) {
-         sb.append("?verifyPeer=NONE");
-      }
-
-      return sb.toString();
-   }
-
-   public RESPAuthorizationTest(InfinispanServerExtension ext, boolean cert, Function<TestUser, String> serverPrincipal, Function<TestUser, RedisOptions> respBuilder) {
+   public RESPAuthorizationTest(InfinispanServerExtension ext, boolean cert, boolean useSsl, Function<TestUser, String> serverPrincipal, Function<TestUser, RedisOptions> respBuilder) {
       this.ext = ext;
       this.cert = cert;
+      this.useSsl = useSsl;
       this.serverPrincipal = serverPrincipal;
       this.respBuilders = Stream.of(TestUser.values()).collect(Collectors.toMap(user -> user, respBuilder));
    }
@@ -303,7 +266,15 @@ abstract class RESPAuthorizationTest {
          fail(this.getClass().getSimpleName() + " does not define configuration for user " + user);
       }
 
-      return ext.resp().withOptions(config).withVertx(vertx).get();
+      RespTestClientDriver driver = ext.resp()
+            .withOptions(config)
+            .withVertx(vertx);
+      if (useSsl) {
+         driver = driver.requireSsl(user != TestUser.ANONYMOUS);
+      } else {
+         driver = driver.withUser(user);
+      }
+      return driver.get();
    }
 
    private RedisAPI createConnection(TestUser user, Vertx vertx) {

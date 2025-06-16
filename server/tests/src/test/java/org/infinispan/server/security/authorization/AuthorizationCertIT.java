@@ -17,7 +17,6 @@ import org.junit.platform.suite.api.Suite;
 
 import io.vertx.core.net.JdkSSLEngineOptions;
 import io.vertx.core.net.PfxOptions;
-import io.vertx.redis.client.RedisClientType;
 import io.vertx.redis.client.RedisOptions;
 
 /**
@@ -87,21 +86,9 @@ public class AuthorizationCertIT extends InfinispanSuite {
       static InfinispanServerExtension SERVERS = AuthorizationCertIT.SERVERS;
 
       public Resp() {
-         super(SERVERS, true, AuthorizationCertIT::expectedServerPrincipalName, user -> {
-            int size = SERVERS.getServerDriver().getConfiguration().numServers();
+         super(SERVERS, true, true, AuthorizationCertIT::expectedServerPrincipalName, user -> {
             RedisOptions options = new RedisOptions()
                   .setPoolName("pool-" + user.getUser());
-
-            if (size > 1) {
-               options = options.setType(RedisClientType.CLUSTER);
-            } else {
-               options = options.setType(RedisClientType.STANDALONE);
-            }
-
-            for (int i = 0; i < size; i++) {
-               String uri = redisURI(SERVERS.getServerDriver().getServerSocket(i, 11222), null, user != TestUser.ANONYMOUS);
-               options = options.addConnectionString(uri);
-            }
 
             PfxOptions certOpts;
             if (user == TestUser.ANONYMOUS) {
