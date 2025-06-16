@@ -114,9 +114,9 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
 
       objectName = getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager", NON_BLOCKING_EXECUTOR);
       assertTrue(server.isRegistered(objectName));
-      assertEquals(ThreadCreator.useVirtualThreads() ? -1L : 30000L,
+      assertEquals(ThreadCreator.isVirtualThreadsEnabled() ? -1L : 30000L,
             server.getAttribute(objectName, "KeepAliveTime"));
-      assertEquals(ThreadCreator.useVirtualThreads() ? -1 : TestCacheManagerFactory.NAMED_EXECUTORS_THREADS_NO_QUEUE,
+      assertEquals(ThreadCreator.isVirtualThreadsEnabled() ? -1 : TestCacheManagerFactory.NAMED_EXECUTORS_THREADS_NO_QUEUE,
             server.getAttribute(objectName, "MaximumPoolSize"));
    }
 }

@@ -28,4 +28,9 @@ public class ThreadCreatorImpl implements org.infinispan.commons.spi.ThreadCreat
       return thread.isVirtual();
    }
 
+   @Override
+   public boolean isVirtualThreadsEnabled() {
+      return true;
+   }
+
 }
