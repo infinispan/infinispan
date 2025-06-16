@@ -40,7 +40,7 @@ public class ServerTaskEngineBlockingTest {
 
                @Override
                public Void call() {
-                  if (ThreadCreator.useVirtualThreads()) {
+                  if (ThreadCreator.isVirtualThreadsEnabled()) {
                      assertThat(Thread.currentThread())
                            .withFailMessage(String.format("%s is not a virtual thread", Thread.currentThread()))
                            .matches(ThreadCreator::isVirtual);
