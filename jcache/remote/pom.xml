@@ -130,6 +130,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
+               <reportsDirectory>${project.build.directory}/ignored-surefire-reports</reportsDirectory>
                <parallel>none</parallel>
                <systemPropertyVariables>
                   <infinispan.jcache.mgmt.lookup.skip>true</infinispan.jcache.mgmt.lookup.skip>

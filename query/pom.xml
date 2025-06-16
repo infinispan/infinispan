@@ -221,6 +221,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
+               <reportsDirectory>${project.build.directory}/ignored-surefire-reports</reportsDirectory>
                <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Djdk.attach.allowAttachSelf=true</argLine>
             </configuration>
          </plugin>
@@ -247,6 +248,7 @@
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
+                     <reportsDirectory>${project.build.directory}/ignored-surefire-reports</reportsDirectory>
                      <!-- explicitly exclude some tests because of TestNG issue which ignores
                           restricted groups in subclasses -->
                      <includes>
