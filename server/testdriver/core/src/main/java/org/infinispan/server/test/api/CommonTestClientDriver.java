@@ -9,4 +9,6 @@ public interface CommonTestClientDriver<T extends CommonTestClientDriver<T>> {
    T withServerConfiguration(StringConfiguration configuration);
 
    T withCacheMode(CacheMode mode);
+
+   T withUser(TestUser testUser);
 }

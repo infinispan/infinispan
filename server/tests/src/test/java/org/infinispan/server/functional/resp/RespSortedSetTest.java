@@ -52,9 +52,9 @@ public class RespSortedSetTest extends AbstractRespTest {
    public void testMixTypes(Vertx vertx, VertxTestContext ctx) {
       RedisAPI redis = createConnection(vertx);
 
-      redis.zadd(List.of("zadd", "10.4", "v1"))
+      redis.zadd(List.of("mix", "10.4", "v1"))
             .onFailure(ctx::failNow)
-            .compose(ignore -> redis.get("zadd"))
+            .compose(ignore -> redis.get("mix"))
             .onComplete(res -> {
                ctx.verify(() -> assertThat(res.failed()).isTrue());
                ctx.verify(() -> assertThat(res.cause())

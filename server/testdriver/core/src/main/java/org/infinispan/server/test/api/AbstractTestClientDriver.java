@@ -20,6 +20,7 @@ abstract class AbstractTestClientDriver<S extends AbstractTestClientDriver<S>> i
    protected BasicConfiguration serverConfiguration = null;
    protected EnumSet<CacheContainerAdmin.AdminFlag> flags = EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class);
    protected CacheMode mode = null;
+   protected TestUser user;
    protected Object[] qualifiers;
 
    static StringConfiguration forCacheMode(CacheMode mode) {
@@ -57,6 +58,12 @@ abstract class AbstractTestClientDriver<S extends AbstractTestClientDriver<S>> i
          throw new IllegalStateException("Cannot set server configuration and cache mode");
       }
       this.mode = mode;
+      return self();
+   }
+
+   @Override
+   public S withUser(TestUser testUser) {
+      this.user = testUser;
       return self();
    }
 
