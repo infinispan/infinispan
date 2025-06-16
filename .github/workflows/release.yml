@@ -84,7 +84,7 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     steps:
-      - uses: gerdemann/http-status-code@1.0.0
+      - uses: gerdemann/http-status-code@1.1.1
         with:
           url: https://repo1.maven.org/maven2/org/infinispan/infinispan-distribution/${{ github.event.inputs.version }}/infinispan-distribution-${{ github.event.inputs.version }}.pom
           code: 200
