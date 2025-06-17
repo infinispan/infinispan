@@ -18,7 +18,6 @@ import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.Log;
@@ -64,7 +63,7 @@ abstract class AbstractClusterExecutor<T extends ClusterExecutor> extends LocalC
             // but we don't treat them specially here
             throwableEater.accept(exception);
          } else if (resp instanceof SuccessfulResponse) {
-            resultsEater.accept(((SuccessfulResponse) resp).getResponseValue());
+            resultsEater.accept(((SuccessfulResponse<?>) resp).getResponseValue());
          } else if (resp instanceof CacheNotFoundResponse) {
             throwableEater.accept(getLog().remoteNodeSuspected(target));
          } else {
@@ -117,8 +116,7 @@ abstract class AbstractClusterExecutor<T extends ClusterExecutor> extends LocalC
       if (!manager.getCacheManagerConfiguration().transport().hasTopologyInfo()) {
          throw new IllegalStateException("Topology information is not available!");
       }
-      return sameClusterExecutor(a -> policy.include((TopologyAwareAddress) me,
-            (TopologyAwareAddress) a), time, unit);
+      return sameClusterExecutor(a -> policy.include(me, a), time, unit);
    }
 
    @Override
@@ -126,8 +124,7 @@ abstract class AbstractClusterExecutor<T extends ClusterExecutor> extends LocalC
       if (!manager.getCacheManagerConfiguration().transport().hasTopologyInfo()) {
          throw new IllegalStateException();
       }
-      return sameClusterExecutor(a -> policy.include((TopologyAwareAddress) me,
-            (TopologyAwareAddress) a) && predicate.test(a), time, unit);
+      return sameClusterExecutor(a -> policy.include(me, a) && predicate.test(a), time, unit);
    }
 
    @Override

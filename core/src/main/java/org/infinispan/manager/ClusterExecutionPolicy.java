@@ -1,6 +1,6 @@
 package org.infinispan.manager;
 
-import org.infinispan.remoting.transport.TopologyAwareAddress;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * ClusterExecutionPolicy controls how which nodes commands submitted via {@link ClusterExecutor}. That is the user
@@ -22,7 +22,7 @@ public enum ClusterExecutionPolicy {
     */
    ALL {
       @Override
-      public boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress) {
+      public boolean include(Address thisAddress, Address otherAddress) {
          return true;
       }
    },
@@ -32,7 +32,7 @@ public enum ClusterExecutionPolicy {
     */
    SAME_MACHINE {
       @Override
-      public boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress) {
+      public boolean include(Address thisAddress, Address otherAddress) {
          return thisAddress.isSameMachine(otherAddress);
       }
    },
@@ -42,7 +42,7 @@ public enum ClusterExecutionPolicy {
     */
    DIFFERENT_MACHINE {
       @Override
-      public boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress) {
+      public boolean include(Address thisAddress, Address otherAddress) {
          return !thisAddress.isSameMachine(otherAddress);
       }
    },
@@ -52,7 +52,7 @@ public enum ClusterExecutionPolicy {
     */
    SAME_RACK {
       @Override
-      public boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress) {
+      public boolean include(Address thisAddress, Address otherAddress) {
          return thisAddress.isSameRack(otherAddress);
       }
    },
@@ -61,7 +61,7 @@ public enum ClusterExecutionPolicy {
     */
    DIFFERENT_RACK {
       @Override
-      public boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress) {
+      public boolean include(Address thisAddress, Address otherAddress) {
          return !thisAddress.isSameRack(otherAddress);
       }
    },
@@ -71,7 +71,7 @@ public enum ClusterExecutionPolicy {
     */
    SAME_SITE {
       @Override
-      public boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress) {
+      public boolean include(Address thisAddress, Address otherAddress) {
          return thisAddress.isSameSite(otherAddress);
       }
    },
@@ -80,11 +80,11 @@ public enum ClusterExecutionPolicy {
     */
    DIFFERENT_SITE {
       @Override
-      public boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress) {
+      public boolean include(Address thisAddress, Address otherAddress) {
          return !thisAddress.isSameSite(otherAddress);
       }
    },
    ;
 
-   public abstract boolean include(TopologyAwareAddress thisAddress, TopologyAwareAddress otherAddress);
+   public abstract boolean include(Address thisAddress, Address otherAddress);
 }

@@ -13,7 +13,6 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.NodeVersion;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.util.ByteString;
 
 /**
@@ -26,12 +25,12 @@ import org.infinispan.util.ByteString;
 @ProtoTypeId(ProtoStreamTypeIds.INVALIDATE_L1_COMMAND)
 public class InvalidateL1Command extends InvalidateCommand {
 
-   @ProtoField(number = 6, javaType = JGroupsAddress.class)
+   @ProtoField(6)
    final Address writeOrigin;
 
    @ProtoFactory
    InvalidateL1Command(ByteString cacheName, long flagsWithoutRemote, int topologyId, CommandInvocationId commandInvocationId,
-                       MarshallableArray<Object> wrappedKeys, JGroupsAddress writeOrigin) {
+                       MarshallableArray<Object> wrappedKeys, Address writeOrigin) {
       super(cacheName, flagsWithoutRemote, topologyId, commandInvocationId, wrappedKeys);
       this.writeOrigin = writeOrigin;
    }

@@ -131,7 +131,6 @@ import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.GroupPrincipal;
@@ -271,8 +270,7 @@ public class TestingUtil {
 
    public static void installNewView(Stream<Address> members, Function<EmbeddedCacheManager, JChannel> channelRetriever, EmbeddedCacheManager... where) {
       List<org.jgroups.Address> viewMembers = members
-            .map(JGroupsAddress.class::cast)
-            .map(JGroupsAddress::toExtendedUUID)
+            .map(Address::toExtendedUUID)
             .map(org.jgroups.Address.class::cast)
             .toList();
 

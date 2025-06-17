@@ -22,7 +22,6 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -59,7 +58,7 @@ public class DistributionManagerImpl implements DistributionManager {
 
       cacheMode = configuration.clustering().cacheMode();
       // We need an extended topology for preload, before the start of StateTransferManagerImpl
-      Address localAddress = transport == null ? JGroupsAddress.LOCAL : transport.getAddress();
+      Address localAddress = transport == null ? Address.LOCAL : transport.getAddress();
       extendedTopology = makeSingletonTopology(cacheMode, keyPartitioner, configuration.clustering().hash().numSegments(),
             localAddress);
    }

@@ -21,7 +21,6 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 import net.jcip.annotations.Immutable;
 
@@ -103,8 +102,8 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    }
 
    @ProtoFactory
-   DefaultConsistentHash(List<JGroupsAddress> jGroupsMembers, List<Float> capacityFactorsList, int numOwners, List<Integer> segmentOwners) {
-      super(segmentOwners.size(), (List<Address>)(List<?>) jGroupsMembers, capacityFactorsList);
+   DefaultConsistentHash(List<Address> jGroupsMembers, List<Float> capacityFactorsList, int numOwners, List<Integer> segmentOwners) {
+      super(segmentOwners.size(), jGroupsMembers, capacityFactorsList);
       if (numOwners < 1)
          throw new IllegalArgumentException("The number of owners must be strictly positive");
 
@@ -133,8 +132,8 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    }
 
    @ProtoField(1)
-   List<JGroupsAddress> getJGroupsMembers() {
-      return (List<JGroupsAddress>)(List<?>) members;
+   List<Address> getJGroupsMembers() {
+      return members;
    }
 
    @ProtoField(number = 2, name = "capacityFactors")

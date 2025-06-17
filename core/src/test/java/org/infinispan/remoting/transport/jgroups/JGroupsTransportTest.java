@@ -61,7 +61,7 @@ public class JGroupsTransportTest extends MultipleCacheManagersTest {
    }
 
    public void testSynchronousIgnoreLeaversInvocationToNonMembers() throws Exception {
-      Address randomAddress = JGroupsAddress.random();
+      Address randomAddress = Address.random();
 
       JGroupsTransport transport = (JGroupsTransport) extractGlobalComponent(manager(0), Transport.class);
       long initialMessages = transport.getChannel().getProtocolStack().getTransport().getMessageStats().getNumMsgsSent();
@@ -74,7 +74,7 @@ public class JGroupsTransportTest extends MultipleCacheManagersTest {
    }
 
    public void testInvokeCommandStaggeredToNonMember() throws Exception {
-      Address randomAddress = JGroupsAddress.random();
+      Address randomAddress = Address.random();
 
       // Send message only to non-member
       JGroupsTransport transport = (JGroupsTransport) extractGlobalComponent(manager(0), Transport.class);

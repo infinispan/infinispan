@@ -51,11 +51,9 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    }
 
    @Override
-   @SuppressWarnings("unchecked")
    public Map<Object, CacheEntry> getLookedUpEntries() {
-      return (Map<Object, CacheEntry>)
-            (lookedUpEntries == null ?
-                   Collections.emptyMap() : lookedUpEntries);
+      return lookedUpEntries == null ?
+             Collections.emptyMap() : lookedUpEntries;
    }
 
    @Override

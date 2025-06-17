@@ -19,7 +19,6 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.LocalTopologyManager;
@@ -83,7 +82,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
       // Check restart. Add new extraneous node.
       var uuid = TestingUtil.extractGlobalComponent(manager(0), LocalTopologyManager.class)
             .getPersistentUUID();
-      addressMappings.put((JGroupsAddress) manager(0).getAddress(), uuid);
+      addressMappings.put(manager(0).getAddress(), uuid);
       checkPersistentUUIDMatch(addressMappings);
    }
 

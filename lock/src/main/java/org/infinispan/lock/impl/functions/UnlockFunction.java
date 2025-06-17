@@ -3,8 +3,6 @@ package org.infinispan.lock.impl.functions;
 import java.util.Collections;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -17,7 +15,6 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 /**
  * Function that allows to unlock the lock, if it's not already released.
@@ -47,14 +44,10 @@ public class UnlockFunction implements Function<EntryView.ReadWriteEntryView<Clu
       this.requesters = Collections.singleton(requestor);
    }
 
+   @ProtoFactory
    public UnlockFunction(String requestId, Set<Address> requesters) {
       this.requestId = requestId;
       this.requesters = requesters;
-   }
-
-   @ProtoFactory
-   UnlockFunction(String requestId, Stream<JGroupsAddress> requesters) {
-      this(requestId, requesters.collect(Collectors.toSet()));
    }
 
    @ProtoField(1)
@@ -63,8 +56,8 @@ public class UnlockFunction implements Function<EntryView.ReadWriteEntryView<Clu
    }
 
    @ProtoField(2)
-   Stream<JGroupsAddress> getRequesters() {
-      return requesters.stream().map(JGroupsAddress.class::cast);
+   Set<Address> getRequesters() {
+      return requesters;
    }
 
    @Override

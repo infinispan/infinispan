@@ -17,8 +17,6 @@ import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.OwnershipStatistics;
 import org.infinispan.distribution.ch.impl.TopologyAwareConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.TopologyAwareAddress;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -371,8 +369,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    private int countMachines(List<Address> addresses) {
       Set<String> machines = new HashSet<>(addresses.size());
       for (Address a : addresses) {
-         TopologyAwareAddress taa = (TopologyAwareAddress) a;
-         machines.add(taa.getMachineId() + taa.getRackId() + taa.getSiteId());
+         machines.add(a.getMachineId() + a.getRackId() + a.getSiteId());
       }
       return machines.size();
    }
@@ -380,8 +377,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    private int countRacks(List<Address> addresses) {
       Set<String> racks = new HashSet<>(addresses.size());
       for (Address a : addresses) {
-         TopologyAwareAddress taa = (TopologyAwareAddress) a;
-         racks.add(taa.getRackId() + taa.getSiteId());
+         racks.add(a.getRackId() + a.getSiteId());
       }
       return racks.size();
    }
@@ -389,8 +385,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    private int countSites(List<Address> addresses) {
       Set<String> sites = new HashSet<>(addresses.size());
       for (Address a : addresses) {
-         TopologyAwareAddress taa = (TopologyAwareAddress) a;
-         sites.add(taa.getSiteId());
+         sites.add(a.getSiteId());
       }
       return sites.size();
    }
@@ -470,29 +465,27 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       // Check the number of machines
       Set<String> receivedMachines = new HashSet<>();
       for (Address a : received) {
-         TopologyAwareAddress taa = (TopologyAwareAddress) a;
-         receivedMachines.add(taa.getMachineId() + "|" + taa.getRackId() + "|" + taa.getSiteId());
+         receivedMachines.add(a.getMachineId() + "|" + a.getRackId() + "|" + a.getSiteId());
       }
       assertEquals(receivedMachines.size(), expectedMachines);
 
       // Check the number of racks
       Set<String> receivedRacks = new HashSet<>();
       for (Address a : received) {
-         TopologyAwareAddress taa = (TopologyAwareAddress) a;
-         receivedRacks.add(taa.getRackId() + "|" + taa.getSiteId());
+         receivedRacks.add(a.getRackId() + "|" + a.getSiteId());
       }
       assertEquals(receivedRacks.size(), expectedRacks);
 
       // Check the number of sites
       Set<String> receivedSites = new HashSet<>();
       for (Address a : received) {
-         receivedSites.add(((TopologyAwareAddress) a).getSiteId());
+         receivedSites.add(a.getSiteId());
       }
       assertEquals(receivedSites.size(), expectedSites);
    }
 
    void addNode(String machineID, String rackId, String siteId) {
-      Address address = JGroupsAddress.random(null, machineID, rackId, siteId);
+      Address address = Address.random(null, machineID, rackId, siteId);
       chMembers.add(address);
    }
 
