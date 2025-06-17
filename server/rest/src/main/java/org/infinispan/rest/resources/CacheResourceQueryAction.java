@@ -44,7 +44,6 @@ class CacheResourceQueryAction {
 
    public CompletionStage<RestResponse> search(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
-
       JsonQueryRequest query = null;
       if (request.method() == Method.GET) {
          query = getQueryFromString(request);
@@ -60,26 +59,54 @@ class CacheResourceQueryAction {
       if (query == null || query.getQuery() == null || query.getQuery().isEmpty()) {
          return CompletableFuture.completedFuture(queryError(request, "Invalid search request, missing 'query' parameter", null));
       }
+      return callQueryOperation(request, query, false, responseBuilder);
+   }
 
+   public CompletionStage<RestResponse> deleteByQuery(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
+      JsonQueryRequest query = null;
+      if (request.method() == Method.DELETE) {
+         query = getQueryFromString(request);
+      }
+      if (request.method() == Method.POST) {
+         try {
+            query = getQueryFromJSON(request);
+         } catch (IOException e) {
+            return CompletableFuture.completedFuture(queryError(request, "Invalid delete by query request", e.getMessage()));
+         }
+      }
+
+      if (query == null || query.getQuery() == null || query.getQuery().isEmpty() || !query.getQuery().toUpperCase().startsWith("DELETE")) {
+         return CompletableFuture.completedFuture(queryError(request, "Invalid delete by query request, missing 'query' parameter or not 'DELETE' statement", null));
+      }
+      return callQueryOperation(request, query, true, responseBuilder);
+   }
+
+   private CompletableFuture<RestResponse> callQueryOperation(RestRequest request,
+                                                              JsonQueryRequest query,
+                                                              boolean isDelete,
+                                                              NettyRestResponse.Builder responseBuilder) {
       String cacheName = request.variables().get("cacheName");
       boolean isLocal = Boolean.parseBoolean(request.getParameter("local"));
       MediaType keyContentType = request.keyContentType();
       AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, keyContentType, MediaType.APPLICATION_JSON, request);
-
+      RemoteQueryManager remoteQueryManager = SecurityActions.getCacheComponentRegistry(cache).getComponent(RemoteQueryManager.class);
       QueryConfiguration queryConfiguration = SecurityActions.getCacheConfiguration(cache).query();
       query.setDefaultHitCountAccuracy(queryConfiguration.hitCountAccuracy());
       String queryString = query.getQuery();
-
-      RemoteQueryManager remoteQueryManager = SecurityActions.getCacheComponentRegistry(cache).getComponent(RemoteQueryManager.class);
-      JsonQueryRequest finalQuery = query;
       return CompletableFuture.supplyAsync(() -> {
          try {
-            byte[] queryResultBytes = remoteQueryManager.executeQuery(queryString, emptyMap(), finalQuery.getStartOffset(),
-                  finalQuery.getMaxResults(), finalQuery.getHitCountAccuracy(), cache, MediaType.APPLICATION_JSON, isLocal);
+            byte[] queryResultBytes;
+            if (isDelete) {
+               queryResultBytes = remoteQueryManager.executeDeleteByQuery(queryString, emptyMap(), cache, MediaType.APPLICATION_JSON, isLocal);
+            } else {
+               queryResultBytes = remoteQueryManager.executeQuery(queryString, emptyMap(), query.getStartOffset(),
+                       query.getMaxResults(), query.getHitCountAccuracy(), cache, MediaType.APPLICATION_JSON, isLocal);
+            }
             responseBuilder.entity(queryResultBytes);
             return responseBuilder.build();
          } catch (IllegalArgumentException | ParsingException | IllegalStateException | CacheException e) {
-            return queryError(request, "Error executing search", e.getMessage());
+            return queryError(request, "Error executing search or query operation", e.getMessage());
          }
       }, invocationHelper.getExecutor());
    }

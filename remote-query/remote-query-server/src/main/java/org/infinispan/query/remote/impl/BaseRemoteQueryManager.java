@@ -49,16 +49,31 @@ abstract class BaseRemoteQueryManager implements RemoteQueryManager {
    }
 
    @Override
-   public byte[] executeQuery(String queryString, Map<String, Object> namedParametersMap, Integer offset, Integer maxResults,
-                              Integer hitCountAccuracy, AdvancedCache<?, ?> cache, MediaType outputFormat, boolean isLocal) {
+   public byte[] executeDeleteByQuery(String queryString, Map<String, Object> namedParametersMap,
+                                      AdvancedCache<?, ?> cache, MediaType outputFormat, boolean isLocal) {
       QueryResultWithProjection resultWithProjection =
-            localQuery(queryString, namedParametersMap, offset, maxResults, hitCountAccuracy, cache, isLocal);
+            localQuery(queryString, namedParametersMap, null, null, null, cache, isLocal);
       QueryResult<Object> queryResult = resultWithProjection.queryResult;
       String[] projection = resultWithProjection.projection;
 
       QuerySerializer<?> querySerializer = querySerializers.getSerializer(outputFormat);
       RemoteQueryResult remoteQueryResult = new RemoteQueryResult(projection, queryResult.count().value(),
             queryResult.count().isExact(), queryResult.list());
+      Object response = querySerializer.createQueryResponse(remoteQueryResult);
+      return querySerializer.encodeQueryResponse(response, outputFormat);
+   }
+
+   @Override
+   public byte[] executeQuery(String queryString, Map<String, Object> namedParametersMap, Integer offset, Integer maxResults,
+                              Integer hitCountAccuracy, AdvancedCache<?, ?> cache, MediaType outputFormat, boolean isLocal) {
+      QueryResultWithProjection resultWithProjection =
+              localQuery(queryString, namedParametersMap, offset, maxResults, hitCountAccuracy, cache, isLocal);
+      QueryResult<Object> queryResult = resultWithProjection.queryResult;
+      String[] projection = resultWithProjection.projection;
+
+      QuerySerializer<?> querySerializer = querySerializers.getSerializer(outputFormat);
+      RemoteQueryResult remoteQueryResult = new RemoteQueryResult(projection, queryResult.count().value(),
+              queryResult.count().isExact(), queryResult.list());
       Object response = querySerializer.createQueryResponse(remoteQueryResult);
       return querySerializer.encodeQueryResponse(response, outputFormat);
    }
