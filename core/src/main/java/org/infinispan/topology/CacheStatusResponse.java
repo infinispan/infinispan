@@ -9,7 +9,6 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 /**
 * @author Dan Berindei
@@ -18,7 +17,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 @ProtoTypeId(ProtoStreamTypeIds.CACHE_STATUS_RESPONSE)
 public class CacheStatusResponse implements Serializable {
 
-   private static final CacheStatusResponse EMPTY = new CacheStatusResponse(null, null, null, null, (List<Address>) null);
+   private static final CacheStatusResponse EMPTY = new CacheStatusResponse(null, null, null, null, null);
 
    @ProtoField(1)
    final CacheJoinInfo cacheJoinInfo;
@@ -32,8 +31,10 @@ public class CacheStatusResponse implements Serializable {
    @ProtoField(4)
    final AvailabilityMode availabilityMode;
 
+   @ProtoField(5)
    final List<Address> current;
 
+   @ProtoFactory
    public CacheStatusResponse(CacheJoinInfo cacheJoinInfo, CacheTopology cacheTopology, CacheTopology stableTopology,
                               AvailabilityMode availabilityMode, List<Address> current) {
       this.cacheJoinInfo = cacheJoinInfo;
@@ -41,17 +42,6 @@ public class CacheStatusResponse implements Serializable {
       this.stableTopology = stableTopology;
       this.availabilityMode = availabilityMode;
       this.current = current;
-   }
-
-   @ProtoFactory
-   static CacheStatusResponse create(CacheJoinInfo cacheJoinInfo, CacheTopology cacheTopology, CacheTopology stableTopology,
-                              AvailabilityMode availabilityMode, List<JGroupsAddress> current) {
-      return new CacheStatusResponse(cacheJoinInfo, cacheTopology, stableTopology, availabilityMode, (List<Address>)(List<?>) current);
-   }
-
-   @ProtoField(5)
-   List<JGroupsAddress> getCurrent() {
-      return (List<JGroupsAddress>)(List<?>) current;
    }
 
    public static CacheStatusResponse empty() {

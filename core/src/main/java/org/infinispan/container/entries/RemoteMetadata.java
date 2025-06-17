@@ -8,7 +8,6 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 /**
  * This is a metadata type used by scattered cache during state transfer. The address points to node which has last
@@ -20,20 +19,20 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
  */
 @ProtoTypeId(ProtoStreamTypeIds.REMOTE_METADATA)
 public class RemoteMetadata implements Metadata {
-   private final JGroupsAddress address;
+   private final Address address;
    private final SimpleClusteredVersion version;
 
    public RemoteMetadata(Address address, EntryVersion version) {
-      this((JGroupsAddress) address, (SimpleClusteredVersion) version);
+      this(address, (SimpleClusteredVersion) version);
    }
 
    @ProtoFactory
-   RemoteMetadata(JGroupsAddress address, SimpleClusteredVersion version) {
+   RemoteMetadata(Address address, SimpleClusteredVersion version) {
       this.address = address;
       this.version = version;
    }
 
-   @ProtoField(number = 1, javaType = JGroupsAddress.class)
+   @ProtoField(1)
    public Address getAddress() {
       return address;
    }
@@ -61,10 +60,8 @@ public class RemoteMetadata implements Metadata {
 
    @Override
    public String toString() {
-      final StringBuilder sb = new StringBuilder("RemoteMetadata{");
-      sb.append("address=").append(address);
-      sb.append(", version=").append(version);
-      sb.append('}');
-      return sb.toString();
+      return "RemoteMetadata{" + "address=" + address +
+            ", version=" + version +
+            '}';
    }
 }

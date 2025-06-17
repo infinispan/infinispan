@@ -46,7 +46,6 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.persistence.util.EntryLoader;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -89,9 +88,9 @@ public class OnlyPrimaryOwnerTest {
    }
 
    private static class MockCDL implements ClusteringDependentLogic {
-      private static final Address PRIMARY = JGroupsAddress.random();
-      private static final Address BACKUP = JGroupsAddress.random();
-      private static final Address NON_OWNER = JGroupsAddress.random();
+      private static final Address PRIMARY = Address.random();
+      private static final Address BACKUP = Address.random();
+      private static final Address NON_OWNER = Address.random();
       boolean isOwner, isPrimaryOwner;
 
       @Override

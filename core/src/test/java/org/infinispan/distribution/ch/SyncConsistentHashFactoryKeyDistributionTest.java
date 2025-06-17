@@ -13,7 +13,6 @@ import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.OwnershipStatistics;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
@@ -246,7 +245,7 @@ public class SyncConsistentHashFactoryKeyDistributionTest extends AbstractInfini
    }
 
    protected Address createSingleAddress(int nodeIndex) {
-      return JGroupsAddress.random();
+      return Address.random();
    }
 
    protected double getSegmentsPerNodesMinMaxRatio(DefaultConsistentHash ch) {

@@ -52,7 +52,7 @@ public class HashFunctionComparisonTest {
    }
 
    /**
-    * Tests how well JGroupsAddresses are distributed on a hash wheel.
+    * Tests how well {@link Address} are distributed on a hash wheel.
     */
    private void addressDistribution(int numAddresses) {
       int hashSpace = 10240;

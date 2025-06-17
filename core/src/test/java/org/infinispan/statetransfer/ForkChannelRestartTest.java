@@ -21,7 +21,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.PartitionHandling;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -125,14 +125,14 @@ public class ForkChannelRestartTest extends MultipleCacheManagersTest {
                                                                   new TransportFlags().withFD(true));
 
       JChannel channel = new JChannel(new ByteArrayInputStream(configString.getBytes()));
-      TestResourceTracker.addResource(new TestResourceTracker.Cleaner<JChannel>(channel) {
+      TestResourceTracker.addResource(new TestResourceTracker.Cleaner<>(channel) {
          @Override
          public void close() {
             ref.close();
          }
       });
       channel.setName(name);
-      channel.addAddressGenerator(JGroupsAddress::randomUUID);
+      channel.addAddressGenerator(Address::randomUUID);
       FORK fork = new FORK();
       fork.setUnknownForkHandler(new UnknownForkHandler() {
          @Override

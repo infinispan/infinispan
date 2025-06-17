@@ -46,7 +46,6 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.statetransfer.InboundTransferTask;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -104,7 +103,7 @@ public class StateReceiverTest extends AbstractInfinispanTest {
       assertEquals(0, receiverKeyMap.size());
       stateReceiver.receiveState(sourceAddresses.get(0), 2, createStateChunks("Key1", "Value1"));
       assertEquals(1, receiverKeyMap.size());
-      stateReceiver.receiveState(JGroupsAddress.random(), 2, createStateChunks("Key2", "Value2"));
+      stateReceiver.receiveState(Address.random(), 2, createStateChunks("Key2", "Value2"));
       assertEquals(1, receiverKeyMap.size());
       stateReceiver.receiveState(sourceAddresses.get(1), 1, new ArrayList<>());
       assertEquals(1, receiverKeyMap.size());
@@ -177,7 +176,7 @@ public class StateReceiverTest extends AbstractInfinispanTest {
       PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
       List<Address> addresses = new ArrayList<>(numberOfNodes);
       for (int i = 0; i < numberOfNodes; i++) {
-         Address address = JGroupsAddress.random();
+         Address address = Address.random();
          addresses.add(address);
          persistentUUIDManager.addPersistentAddressMapping(address, UUID.randomUUID());
       }

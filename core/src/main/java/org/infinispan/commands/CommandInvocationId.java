@@ -8,7 +8,6 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 /**
  * Represents a unique identifier for non-transaction write commands.
@@ -26,14 +25,10 @@ public final class CommandInvocationId {
    private final Address address;
    private final long id;
 
-   private CommandInvocationId(Address address, long id) {
+   @ProtoFactory
+   CommandInvocationId(Address address, long id) {
       this.address = address;
       this.id = id;
-   }
-
-   @ProtoFactory
-   CommandInvocationId(JGroupsAddress address, long id) {
-      this((Address) address, id);
    }
 
    @ProtoField(1)
@@ -41,7 +36,7 @@ public final class CommandInvocationId {
       return id;
    }
 
-   @ProtoField(number = 2, name = "address", javaType = JGroupsAddress.class)
+   @ProtoField(2)
    public Address getAddress() {
       return address;
    }

@@ -56,7 +56,6 @@ import org.infinispan.persistence.manager.PersistenceStatus;
 import org.infinispan.persistence.util.EntryLoader;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.transaction.impl.WriteSkewHelper;
@@ -339,7 +338,7 @@ public interface ClusteringDependentLogic {
 
       @Inject
       public void init(Transport transport, Configuration configuration, KeyPartitioner keyPartitioner) {
-         Address address = transport != null ? transport.getAddress() : JGroupsAddress.LOCAL;
+         Address address = transport != null ? transport.getAddress() : Address.LOCAL;
          boolean segmented = configuration.persistence().stores().stream().anyMatch(StoreConfiguration::segmented);
          if (segmented) {
             this.localTopology = LocalizedCacheTopology.makeSegmentedSingletonTopology(keyPartitioner,

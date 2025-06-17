@@ -12,7 +12,6 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.impl.DistributionManagerImpl;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -93,18 +92,18 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
 
    private void assertTopologyInfo3Nodes(List<Address> caches) {
       assertTopologyInfo2Nodes(Arrays.asList(caches.get(0), caches.get(2)));
-      TopologyAwareAddress address1 = (TopologyAwareAddress) caches.get(1);
+      Address address1 = caches.get(1);
       assertEquals(address1.getSiteId(), "s1");
       assertEquals(address1.getRackId(), "r1");
       assertEquals(address1.getMachineId(), "m1");
    }
 
    private void assertTopologyInfo2Nodes(List<Address> caches) {
-      TopologyAwareAddress address0 = (TopologyAwareAddress) caches.get(0);
+      Address address0 = caches.get(0);
       assertEquals(address0.getSiteId(), "s0");
       assertEquals(address0.getRackId(), "r0");
       assertEquals(address0.getMachineId(), "m0");
-      TopologyAwareAddress address2 = (TopologyAwareAddress) caches.get(1);
+      Address address2 = caches.get(1);
       assertEquals(address2.getSiteId(), "s2");
       assertEquals(address2.getRackId(), "r2");
       assertEquals(address2.getMachineId(), "m2");

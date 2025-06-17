@@ -40,7 +40,6 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.MockTransport;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.TestingEventLogManager;
@@ -54,8 +53,8 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
    private final ExecutorService executor = Executors.newFixedThreadPool(2, getTestThreadFactory("Executor"));
    private final ExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor(getTestThreadFactory("Executor"));
 
-    private static final Address A = JGroupsAddress.random("A");
-    private static final Address B = JGroupsAddress.random("B");
+    private static final Address A = Address.random("A");
+    private static final Address B = Address.random("B");
    private final ConsistentHashFactory<?> replicatedChf = ReplicatedConsistentHashFactory.getInstance();
    // The persistent UUIDs are different, the rest of the join info is the same
    private final CacheJoinInfo joinInfoA = makeJoinInfo();
