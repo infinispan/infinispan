@@ -253,6 +253,11 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             .permission(AuthorizationPermission.BULK_READ)
             .handleWith(queryAction::search)
 
+            // Search - Delete By Query
+            .invocation().methods(DELETE, POST).path("/v2/caches/{cacheName}").withAction("deleteByQuery")
+            .permission(AuthorizationPermission.BULK_WRITE)
+            .handleWith(queryAction::deleteByQuery)
+
             // Misc
             .invocation().methods(POST).path("/v2/caches").withAction("toJSON").deprecated().handleWith(this::convertToJson)
             .invocation().methods(POST).path("/v2/caches").withAction("convert").handleWith(this::convert)

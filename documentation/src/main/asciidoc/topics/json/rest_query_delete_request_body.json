@@ -1,0 +1,3 @@
+{
+ "query":"DELETE from Entity where name:\"user1\""
+}
