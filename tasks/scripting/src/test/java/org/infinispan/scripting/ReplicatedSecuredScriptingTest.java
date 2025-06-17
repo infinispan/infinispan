@@ -16,7 +16,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.mappers.IdentityRoleMapper;
@@ -138,7 +138,7 @@ public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
 
       Security.doAs(RUNNER, () -> {
          Cache cache = manager(0).getCache();
-         List<JGroupsAddress> value = CompletionStages.join(scriptingManager.runScript("testRole_dist.js",
+         List<Address> value = CompletionStages.join(scriptingManager.runScript("testRole_dist.js",
                new TaskContext().cache(cache).addParameter("a", "value")));
 
          assertEquals(value.get(0), manager(0).getAddress());

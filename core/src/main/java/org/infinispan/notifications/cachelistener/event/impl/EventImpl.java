@@ -345,12 +345,12 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
 
    @Override
    public Collection<Address> getMembersAtStart() {
-      return readConsistentHashAtStart != null ? readConsistentHashAtStart.getMembers() : Collections.<Address>emptySet();
+      return readConsistentHashAtStart != null ? readConsistentHashAtStart.getMembers() : Collections.emptySet();
    }
 
    @Override
    public Collection<Address> getMembersAtEnd() {
-      return readConsistentHashAtEnd != null ? readConsistentHashAtEnd.getMembers() : Collections.<Address>emptySet();
+      return readConsistentHashAtEnd != null ? readConsistentHashAtEnd.getMembers() : Collections.emptySet();
    }
 
    @Override

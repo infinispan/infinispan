@@ -26,7 +26,6 @@ import org.infinispan.reactive.publisher.impl.Notifications;
 import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.TestException;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.mockito.ArgumentCaptor;
@@ -47,7 +46,7 @@ public class OutboundTransferTaskTest {
       CommandsFactory commandsFactory = mock(CommandsFactory.class);
 
       OutboundTransferTask task = new OutboundTransferTask(
-            JGroupsAddress.LOCAL,
+            Address.LOCAL,
             segments,
             numSegments,
             numSegments,

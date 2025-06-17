@@ -255,7 +255,7 @@
         "fields" : [ {
           "id" : 1,
           "name" : "address",
-          "type" : "JGroupsAddress",
+          "type" : "Address",
           "optional" : true
         }, {
           "id" : 2,

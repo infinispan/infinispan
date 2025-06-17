@@ -21,7 +21,6 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
@@ -118,13 +117,11 @@ public class PartitionStressTest extends MultipleCacheManagersTest {
          for (int i = 0; i < NUM_NODES; i++) {
             if (partitionOne.contains(address(i))) {
                for (Address a : partitionTwo) {
-                  assert a instanceof JGroupsAddress;
-                  discards[i].addIgnoreMember(JGroupsAddress.toExtendedUUID((JGroupsAddress) a));
+                  discards[i].addIgnoreMember(Address.toExtendedUUID(a));
                }
             } else {
                for (Address a : partitionOne) {
-                  assert a instanceof JGroupsAddress;
-                  discards[i].addIgnoreMember(JGroupsAddress.toExtendedUUID((JGroupsAddress) a));
+                  discards[i].addIgnoreMember(Address.toExtendedUUID((Address) a));
                }
             }
          }

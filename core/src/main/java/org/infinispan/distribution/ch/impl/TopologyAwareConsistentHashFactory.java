@@ -9,7 +9,6 @@ import org.infinispan.distribution.topologyaware.TopologyInfo;
 import org.infinispan.distribution.topologyaware.TopologyLevel;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.infinispan.util.KeyValuePair;
 
 /**
@@ -185,25 +184,13 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
    }
 
    private Object getLocationId(Address address, TopologyLevel level) {
-      TopologyAwareAddress taa = (TopologyAwareAddress) address;
-      Object locationId;
-      switch (level) {
-         case SITE:
-            locationId = taa.getSiteId();
-            break;
-         case RACK:
-            locationId = new KeyValuePair<>(taa.getSiteId(), taa.getRackId());
-            break;
-         case MACHINE:
-            locationId = new KeyValuePair<>(taa.getSiteId(), new KeyValuePair<>(taa.getRackId(), taa.getMachineId()));
-            break;
-         case NODE:
-            locationId = address;
-            break;
-         default:
-            throw new IllegalStateException("Unknown level: " + level);
-      }
-      return locationId;
+      return switch (level) {
+         case SITE -> address.getSiteId();
+         case RACK -> new KeyValuePair<>(address.getSiteId(), address.getRackId());
+         case MACHINE ->
+               new KeyValuePair<>(address.getSiteId(), new KeyValuePair<>(address.getRackId(), address.getMachineId()));
+         case NODE -> address;
+      };
    }
 
    private boolean maintainsDiversity(List<Address> owners, Address candidate, Address replaced) {

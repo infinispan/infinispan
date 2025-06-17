@@ -51,7 +51,6 @@ import org.infinispan.reactive.publisher.impl.Notifications;
 import org.infinispan.reactive.publisher.impl.SegmentAwarePublisherSupplier;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.PersistentUUIDManager;
@@ -78,13 +77,13 @@ public class StateProviderTest {
 
    // Number of segments must be a power of 2 for keyPartition4Segments to work
    private static final int NUM_SEGMENTS = 4;
-   private static final Address A = JGroupsAddress.random("A");
-   private static final Address B = JGroupsAddress.random("B");
-   private static final Address C = JGroupsAddress.random("C");
-   private static final Address D = JGroupsAddress.random("D");
-   private static final Address E = JGroupsAddress.random("E");
-   private static final Address F = JGroupsAddress.random("F");
-   private static final Address G = JGroupsAddress.random("G");
+   private static final Address A = Address.random("A");
+   private static final Address B = Address.random("B");
+   private static final Address C = Address.random("C");
+   private static final Address D = Address.random("D");
+   private static final Address E = Address.random("E");
+   private static final Address F = Address.random("F");
+   private static final Address G = Address.random("G");
 
    private static final PersistentUUIDManager persistentUUIDManager = new PersistentUUIDManagerImpl();
    static {

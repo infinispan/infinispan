@@ -15,8 +15,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.TopologyAwareAddress;
-
 
 /**
  * This class holds the topology hierarchy of a cache's members and estimates for owned segments.
@@ -72,18 +70,12 @@ public class TopologyInfo {
    }
 
    public int getDistinctLocationsCount(TopologyLevel level) {
-      switch (level) {
-         case NODE:
-            return allNodes.size();
-         case MACHINE:
-            return allMachines.size();
-         case RACK:
-            return allRacks.size();
-         case SITE:
-            return cluster.sites.size();
-         default:
-            throw new IllegalArgumentException("Unknown level: " + level);
-      }
+      return switch (level) {
+         case NODE -> allNodes.size();
+         case MACHINE -> allMachines.size();
+         case RACK -> allRacks.size();
+         case SITE -> cluster.sites.size();
+      };
    }
 
    public int getDistinctLocationsCount(TopologyLevel level, Collection<Address> addresses) {
@@ -107,31 +99,18 @@ public class TopologyInfo {
 
    public Object getLocationId(TopologyLevel level, Address address) {
       Node node = addressMap.get(address);
-      Object locationId;
-      switch (level) {
-         case SITE:
-            locationId = node.machine.rack.site;
-            break;
-         case RACK:
-            locationId = node.machine.rack;
-            break;
-         case MACHINE:
-            locationId = node.machine;
-            break;
-         case NODE:
-            locationId = node;
-            break;
-         default:
-            throw new IllegalStateException("Unexpected value: " + level);
-      }
-      return locationId;
+      return switch (level) {
+         case SITE -> node.machine.rack.site;
+         case RACK -> node.machine.rack;
+         case MACHINE -> node.machine;
+         case NODE -> node;
+      };
    }
 
    private void addNode(Address address, float capacityFactor) {
-      TopologyAwareAddress taa = (TopologyAwareAddress) address;
-      String siteId = taa.getSiteId();
-      String rackId = taa.getRackId();
-      String machineId = taa.getMachineId();
+      String siteId = address.getSiteId();
+      String rackId = address.getRackId();
+      String machineId = address.getMachineId();
 
       cluster.addNode(siteId, rackId, machineId, address, capacityFactor);
    }

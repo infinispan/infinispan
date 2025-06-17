@@ -13,7 +13,6 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 /**
  * Lock function that allows to acquire the lock by a requestor, if such action is possible. It returns {@link
@@ -30,14 +29,10 @@ public class LockFunction implements Function<EntryView.ReadWriteEntryView<Clust
    private final String requestId;
    private final Address requestor;
 
+   @ProtoFactory
    public LockFunction(String requestId, Address requestor) {
       this.requestId = requestId;
       this.requestor = requestor;
-   }
-
-   @ProtoFactory
-   LockFunction(String requestId, JGroupsAddress requestor) {
-      this(requestId, (Address) requestor);
    }
 
    @ProtoField(1)
@@ -45,7 +40,7 @@ public class LockFunction implements Function<EntryView.ReadWriteEntryView<Clust
       return requestId;
    }
 
-   @ProtoField(value = 2, javaType = JGroupsAddress.class)
+   @ProtoField(2)
    Address getRequestor() {
       return requestor;
    }

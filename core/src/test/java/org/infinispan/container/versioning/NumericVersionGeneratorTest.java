@@ -11,7 +11,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.notifications.cachemanagerlistener.event.Event;
 import org.infinispan.notifications.cachemanagerlistener.event.impl.EventImpl;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -29,9 +28,9 @@ public class NumericVersionGeneratorTest {
       vg.start();
       vg.resetCounter();
 
-      Address addr1 = JGroupsAddress.random();
-      Address addr2 = JGroupsAddress.random();
-      Address addr3 = JGroupsAddress.random();
+      Address addr1 = Address.random();
+      Address addr2 = Address.random();
+      Address addr3 = Address.random();
       List<Address> members = Arrays.asList(addr1, addr2, addr3);
       rankCalculator.updateRank(new EventImpl(null, null, Event.Type.VIEW_CHANGED, members, members, addr2, 1));
 

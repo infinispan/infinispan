@@ -21,13 +21,11 @@ import org.infinispan.commons.util.IntSets;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.PersistedConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
-import org.infinispan.marshall.protostream.impl.MarshallableList;
 import org.infinispan.marshall.protostream.impl.MarshallableMap;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 /**
  * Special implementation of {@link ConsistentHash} for replicated caches.
@@ -67,20 +65,21 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    }
 
    @ProtoFactory
-   static ReplicatedConsistentHash protoFactory(List<JGroupsAddress> jGroupsMembers, List<Integer> primaryOwners,
+   static ReplicatedConsistentHash protoFactory(List<Address> members, List<Integer> primaryOwners,
                                                 MarshallableMap<Address, Float> capacityFactors,
-                                                MarshallableList<Address> membersWithoutState) {
+                                                List<Address> membersWithoutState) {
       return new ReplicatedConsistentHash(
-            (List<Address>)(List<?>) jGroupsMembers,
+            members,
             MarshallableMap.unwrap(capacityFactors),
-            MarshallableList.unwrap(membersWithoutState),
+            membersWithoutState,
             primaryOwners
       );
    }
 
    @ProtoField(1)
-   List<JGroupsAddress> getJGroupsMembers() {
-      return (List<JGroupsAddress>)(List<?>) members;
+   @Override
+   public List<Address> getMembers() {
+      return members;
    }
 
    @ProtoField(2)
@@ -94,8 +93,8 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    }
 
    @ProtoField(4)
-   MarshallableList<Address> getMembersWithoutState() {
-      return MarshallableList.create(membersWithoutState);
+   List<Address> getMembersWithoutState() {
+      return membersWithoutState;
    }
 
    public ReplicatedConsistentHash union(ReplicatedConsistentHash ch2) {
@@ -213,11 +212,6 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
    public int getNumOwners() {
       return membersWithState.size();
-   }
-
-   @Override
-   public List<Address> getMembers() {
-      return members;
    }
 
    @Override
