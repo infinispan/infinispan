@@ -123,7 +123,7 @@ jobs:
             cd test_dir/infinispan &&
             ./mvnw verify -V -B -e -DrerunFailingTestsCount=2
             -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative,coverage $HIBERNATE_MATRIX
-            -Dorg.infinispan.test.server.extension.libs=org.jacoco:org.jacoco.agent:0.8.12:runtime
+            -Dorg.infinispan.test.server.extension.libs=org.jacoco:org.jacoco.agent:0.8.13:runtime
             -Dgithub.action=true
       # Renewing token since it last for 1 hour and cannot be extended
       # see for more info https://github.com/actions/create-github-app-token/issues/128
@@ -168,9 +168,19 @@ jobs:
             !test_dir/infinispan/**/ignored*reports*
             test_dir/infinispan/**/*.dump*
             test_dir/infinispan/**/hs_err_*
-            test_dir/infinispan/jacoco/
             github-sha.txt
             pr-number.txt
+
+      - name: Upload infinispan with coverage execution files
+        if: (success() || failure())
+        uses: actions/upload-artifact@v4
+        with:
+          name: infinispan-with-exec-files
+          path: |
+            test_dir/infinispan/
+            github-sha.txt
+            pr-number.txt
+          include-hidden-files: true
 
 # Create artifact with branch name and surefile flaky test report
       - name: Check flaky report existence
@@ -259,7 +269,7 @@ jobs:
         with:
             app-id: ${{ secrets.GH_APP_ISPN_ID }}
             private-key: ${{ secrets.GH_APP_ISPN_KEY }}
-  
+
       - name: Create Check Run for Test Report
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -294,7 +304,7 @@ jobs:
             -Dorg.infinispan.test.database.types=${{ matrix.dbs }} \
             -Dorg.infinispan.test.server.dir=/tmp/infinispan-server-${{ steps.dis.outputs.server-version }} \
             -P coverage \
-            -Dorg.infinispan.test.server.extension.libs=org.jacoco:org.jacoco.agent:0.8.12:runtime
+            -Dorg.infinispan.test.server.extension.libs=org.jacoco:org.jacoco.agent:0.8.13:runtime
 
       - name: set-commit-failure-status
         if: always() && failure()
@@ -340,8 +350,15 @@ jobs:
             test_dir/infinispan/**/*.dump*
             test_dir/infinispan/**/hs_err_*
             test_dir/infinispan/**/failsafe-summary.xml
-            test_dir/infinispan/jacoco/
             github-sha.txt
+
+      - name: Upload jacoco exec files for db
+        if: (success() || failure())
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-files-${{ matrix.dbs }}
+          path: |
+            test_dir/infinispan/server/tests/target/*.exec
 
   coverage:
     needs: [get-info, ci-build-test-pr, db]
@@ -356,58 +373,63 @@ jobs:
       - name: Setup Java
         uses: ./.github/actions/setup-java
 
-      - uses: actions/download-artifact@v5
-        with:
-          pattern: surefire-test-report*
-
       - name: Extract Maven Artifacts
         uses: ./.github/actions/extract-maven-artifacts
         with:
           run-id: ${{ github.event.workflow_run.id }}
 
-      - name: Download Infinispan Server
-        id: dis
-        uses: ./.github/actions/download-infinispan
+      - uses: actions/download-artifact@v5
         with:
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ github.token }}
+          name: infinispan-with-exec-files
+          path: infinispan-with-exec-files
 
-      - name: Extract Infinispan Source
+      - uses: actions/download-artifact@v5
+        with:
+          pattern: jacoco-files-*
+
+      - name: Copy DB jacoco files to infinispan server/tests/target directory
         shell: bash
         # language=bash
         run: |
-          mkdir test_dir && cd test_dir
-          unzip ${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip
-          mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
-
-      - name: Copy jacoco directories to Infinispan
-        shell: bash
-        # language=bash
-        run: |
-          mkdir test_dir/infinispan/jacoco
-          .github/scripts/merge-jacoco-files.sh "$GITHUB_WORKSPACE/test_dir/infinispan/jacoco/" "${GITHUB_WORKSPACE}/surefire-test-report*/"
+          .github/scripts/merge-jacoco-files.sh "$GITHUB_WORKSPACE/infinispan-with-exec-files/test_dir/infinispan/server/tests/target" "${GITHUB_WORKSPACE}/jacoco-files-*"
           #Read and store value of PR from the File
-          PR_NUMBER=$(cat "$GITHUB_WORKSPACE/surefire-test-report/pr-number.txt")
+          PR_NUMBER=$(cat "$GITHUB_WORKSPACE/infinispan-with-exec-files/pr-number.txt")
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
 
-      - name: Coverage merge and report generation
-        id: coverage_merge
+      - name: Grant execute permission to github hooks (were lost with upload/download artifact actions)
         shell: bash
-        working-directory: test_dir/infinispan
-        run: >
-          ./mvnw validate -pl ./ -P jacocoReport
+        # language=bash
+        run: |
+          cd infinispan-with-exec-files/test_dir/infinispan/
+          chmod +x .githooks/configure-hooks
+          chmod +x .githooks/commit-msg
+
+      - name: Coverage report generation
+        id: generate_coverage
+        shell: bash
+        # language=bash
+        run: |
+          cd infinispan-with-exec-files/test_dir/infinispan/
+          mvn validate -P jacocoReport
 
       - name: Add coverage to PR
         id: jacoco
         uses: madrapps/jacoco-report@v1.7.2
         with:
           paths: |
-            ${{ github.workspace }}/test_dir/infinispan/jacoco/report/jacoco.xml
+            ${{ github.workspace }}/infinispan-with-exec-files/test_dir/infinispan/jacoco-report/jacoco.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: 70
           min-coverage-changed-files: 70
           pr-number: ${{ env.PR_NUMBER }}
           debug-mode: true
+
+      - name: Copy the Jacoco Report into Readable directory
+        shell: bash
+        # language=bash
+        run: |
+          mkdir ${{ github.workspace }}/jacocoReport
+          cp -R ${{ github.workspace }}/infinispan-with-exec-files/test_dir/infinispan/jacoco-report/ ${{ github.workspace }}/jacocoReport/ 
 
       - name: Upload jacoco report
         if: (success() || failure())
@@ -415,4 +437,4 @@ jobs:
         with:
           name: jacocoReport
           path: |
-            test_dir/infinispan/jacoco/report/
+            ${{ github.workspace }}/jacocoReport/

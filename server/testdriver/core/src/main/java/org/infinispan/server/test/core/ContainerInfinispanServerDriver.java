@@ -9,7 +9,6 @@ import static org.infinispan.server.test.core.TestSystemPropertyNames.COVERAGE_E
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_ULIMIT;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_LOG_FILE;
-import static org.infinispan.server.test.core.TestSystemPropertyNames.JACOCO_REPORTS_DIR;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -90,6 +89,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    private static final Long IMAGE_MEMORY_SWAP = Long.getLong(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_MEMORY_SWAP, null);
    public static final String INFINISPAN_SERVER_HOME = "/opt/infinispan";
    public static final String JACOCO_COVERAGE_CONTAINER_PATH = "/opt/jacoco.exec";
+   public static final String JACOCO_COVERAGE_HOST_PATH = "target/";
    public static final String JDK_BASE_IMAGE_NAME = "registry.access.redhat.com/ubi9/openjdk-21-runtime";
    private static final String[] IMAGE_DEPENDENCIES = {
          "file",
@@ -427,8 +427,8 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       }
       String isCoverageEnabled = System.getProperty(COVERAGE_ENABLED);
       if (Boolean.parseBoolean(isCoverageEnabled)) {
-         javaOpts = javaOpts == null ? "-javaagent:/opt/infinispan/server/lib/org.jacoco.agent-0.8.12-runtime.jar=output=file,destfile=" + JACOCO_COVERAGE_CONTAINER_PATH + ",append=true"
-                 : javaOpts + " " + "-javaagent:/opt/infinispan/server/lib/org.jacoco.agent-0.8.12-runtime.jar=output=file,destfile=" + JACOCO_COVERAGE_CONTAINER_PATH + ",append=true";
+         javaOpts = javaOpts == null ? "-javaagent:/opt/infinispan/server/lib/org.jacoco.agent-0.8.13-runtime.jar=output=file,destfile=" + JACOCO_COVERAGE_CONTAINER_PATH + ",append=true"
+                 : javaOpts + " " + "-javaagent:/opt/infinispan/server/lib/org.jacoco.agent-0.8.13-runtime.jar=output=file,destfile=" + JACOCO_COVERAGE_CONTAINER_PATH + ",append=true";
          // Code coverage requires more metaspace when the base image only has 96MB by default
          container.withEnv("JAVA_GC_MAX_METASPACE_SIZE", "512M");
       }
@@ -538,7 +538,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          String isCoverageEnabled = System.getProperty(COVERAGE_ENABLED);
          if (Boolean.parseBoolean(isCoverageEnabled) && !container.isKilled()) {
             //Getting Jacoco Coverage Report after stopping the container
-            container.uploadCoverageInfoToHost(JACOCO_COVERAGE_CONTAINER_PATH, System.getProperty(JACOCO_REPORTS_DIR) + this.name + "-" + server + ".exec");
+            container.uploadCoverageInfoToHost(JACOCO_COVERAGE_CONTAINER_PATH, JACOCO_COVERAGE_HOST_PATH + this.name + "-" + server + ".exec");
          }
          eventually("Container wasn't stopped.", () -> !isRunning(server));
          log.infof("Stopped container %s", containerAndSite);
