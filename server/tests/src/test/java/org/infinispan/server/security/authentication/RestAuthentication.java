@@ -7,10 +7,8 @@ import static org.infinispan.server.test.core.Common.HTTP_PROTOCOLS;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.wildfly.security.mechanism._private.ElytronMessages.httpDigest;
 
-import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -24,12 +22,12 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.core.Common;
-import org.infinispan.server.test.core.InfinispanServerDriver;
 import org.infinispan.server.test.core.tags.Security;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServer;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
@@ -44,8 +42,8 @@ import org.wildfly.security.mechanism.digest.DigestUtil;
 @Security
 public class RestAuthentication {
 
-   @RegisterExtension
-   public static InfinispanServerExtension SERVERS = AuthenticationIT.SERVERS;
+   @InfinispanServer(AuthenticationIT.class)
+   public static TestClientDriver SERVERS;
 
    static class ArgsProvider implements ArgumentsProvider {
       @Override
@@ -60,32 +58,22 @@ public class RestAuthentication {
       }
    }
 
-   @ParameterizedTest(name = "{1}({0})")
-   @ArgumentsSource(ArgsProvider.class)
-   public void testStaticResourcesAnonymously(Protocol protocol, String mechanism) throws Exception {
-      InfinispanServerDriver serverDriver = SERVERS.getServerDriver();
+   @Test
+   public void testStaticResourcesAnonymously() throws Exception {
+      RestClient restClient = SERVERS.rest()
+            .withClientConfiguration(new RestClientConfigurationBuilder().followRedirects(false))
+            .get(0);
 
-      InetSocketAddress serverAddress = serverDriver.getServerSocket(0, 11222);
-      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder().followRedirects(false);
-      builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
-
-      try (RestClient restClient = RestClient.forConfiguration(builder.build())) {
-         assertStatus(307, restClient.raw().get("/")); // The root resource redirects to the console
-      }
+      assertStatus(307, restClient.raw().get("/")); // The root resource redirects to the console
    }
 
-   @ParameterizedTest(name = "{1}({0})")
-   @ArgumentsSource(ArgsProvider.class)
-   public void testMalformedDigestHeader(Protocol protocol, String mechanism) throws Exception {
-      assumeTrue(mechanism.startsWith("DIGEST"));
-      InfinispanServerDriver serverDriver = SERVERS.getServerDriver();
+   @Test
+   public void testMalformedDigestHeader() throws Exception {
+      RestClient restClient = SERVERS.rest()
+            .withClientConfiguration(new RestClientConfigurationBuilder().followRedirects(false))
+            .get(0);
 
-      InetSocketAddress serverAddress = serverDriver.getServerSocket(0, 11222);
-      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder().followRedirects(false);
-      builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
-
-      try (RestClient restClient = RestClient.forConfiguration(builder.build());
-           RestResponse response = sync(restClient.raw().get("/rest/v2/caches"))) {
+      try (RestResponse response = sync(restClient.raw().get("/rest/v2/caches"))) {
          assertEquals(401, response.status());
          String auth = response.headers().get("Www-Authenticate").stream().filter(h -> h.startsWith("Digest")).findFirst().get();
          HashMap<String, byte[]> parameters = DigestUtil.parseResponse(auth.substring(7).getBytes(UTF_8), UTF_8, false, httpDigest);

@@ -14,10 +14,10 @@ import java.util.concurrent.TimeoutException;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.commons.util.Util;
+import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.tags.Security;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.infinispan.server.test.junit5.InfinispanServer;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -33,8 +33,8 @@ import net.spy.memcached.internal.OperationFuture;
 @Security
 public class MemcachedAuthentication {
 
-   @RegisterExtension
-   public static InfinispanServerExtension SERVERS = AuthenticationIT.SERVERS;
+   @InfinispanServer(AuthenticationIT.class)
+   public static TestClientDriver SERVERS;
 
    private static final Provider[] SECURITY_PROVIDERS;
 
