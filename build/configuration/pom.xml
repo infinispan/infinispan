@@ -93,7 +93,7 @@
       <version.commons.compress>1.27.1</version.commons.compress>
       <version.console>16.0.1.Final</version.console>
       <version.ehcache.sizeof>0.3.0</version.ehcache.sizeof>
-      <version.fabric8.kubernetes-client>6.14.0</version.fabric8.kubernetes-client>
+      <version.fabric8.kubernetes-client>7.3.1</version.fabric8.kubernetes-client>
       <version.gdx-jnigen-loader>2.5.2</version.gdx-jnigen-loader>
       <version.glassfish.jaxb>4.0.5</version.glassfish.jaxb>
       <version.graalvm>24.0.0</version.graalvm>
@@ -145,7 +145,7 @@
       <version.mockito_dep.bytebuddy>1.15.3</version.mockito_dep.bytebuddy>
       <version.mockito_dep.objenesis>3.3</version.mockito_dep.objenesis>
       <version.nashorn>15.6</version.nashorn>
-      <version.netty>4.1.119.Final</version.netty>
+      <version.netty>4.1.121.Final</version.netty>
       <version.netty.incubator.iouring>0.0.26.Final</version.netty.incubator.iouring>
       <version.openjdk.jmh>1.37</version.openjdk.jmh>
       <version.org.wildfly.arquillian>5.0.1.Final</version.org.wildfly.arquillian>
@@ -167,7 +167,7 @@
       <version.hdrhistogram>2.2.2</version.hdrhistogram>
       <version.latencyutils>2.0.3</version.latencyutils>
 
-      <version.quarkus>3.15.3</version.quarkus>
+      <version.quarkus>3.25.0</version.quarkus>
       <version.graalvm>24.2.2</version.graalvm>
       <version.jandex>3.4.0</version.jandex>
 
