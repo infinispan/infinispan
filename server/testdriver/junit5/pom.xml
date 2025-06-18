@@ -67,7 +67,7 @@
                   <usedefaultlisteners>false</usedefaultlisteners>
                   <listener>org.infinispan.server.test.junit5.InfinispanServerTestListener</listener>
                </properties>
-               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Dorg.infinispan.test.server.dir=${org.infinispan.test.server.dir} -Djdk.attach.allowAttachSelf=true -Ddir.jacoco=${dir.jacoco}</argLine>
+               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Dorg.infinispan.test.server.dir=${org.infinispan.test.server.dir} -Djdk.attach.allowAttachSelf=true</argLine>
             </configuration>
             <dependencies>
                <dependency>

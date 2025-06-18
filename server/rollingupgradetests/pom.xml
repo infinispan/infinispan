@@ -212,7 +212,7 @@
                   <listener>${junitListener},org.infinispan.server.test.junit4.InfinispanServerTestListener</listener>
                   <org.infinispan.test.database.jdbc.drivers.file>../tests/target/test-classes/database/jdbc-drivers.txt</org.infinispan.test.database.jdbc.drivers.file>
                </properties>
-               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} ${test.driverArgs} -Djdk.attach.allowAttachSelf=true -Ddir.jacoco=${dir.jacoco}</argLine>
+               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} ${test.driverArgs} -Djdk.attach.allowAttachSelf=true</argLine>
             </configuration>
             <executions>
                <execution>

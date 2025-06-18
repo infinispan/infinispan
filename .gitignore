@@ -46,4 +46,4 @@ classes
 .idea
 # recording files
 *.jfr
-jacoco
+jacoco-report
