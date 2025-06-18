@@ -67,10 +67,33 @@ public class RespTestClientDriver extends AbstractTestClientDriver<RespTestClien
       return client.get();
    }
 
+   public String connectionString() {
+      return String.join("", applyDefaultOptions().getEndpoints());
+   }
+
+   public String connectionString(int index) {
+      return specificServerOptions(index).getEndpoint();
+   }
+
    public RedisConnection connect(Redis client) {
       RedisConnection conn = client.connect().result();
       testClient.registerResource(conn::close);
       return conn;
+   }
+
+   private RedisOptions applyUrl(RedisOptions redisOptions, InetSocketAddress serverSocket) {
+      StringBuilder sb = new StringBuilder();
+      sb.append(requireSsl ? "rediss://" : "redis://");
+      if (user != null && user != TestUser.ANONYMOUS) {
+         sb.append(user.getUser()).append(":").append(user.getPassword()).append("@");
+      } else if (userPerm != null) {
+         sb.append(userPerm.name().toLowerCase()).append("_user").append(":").append(userPerm.name().toLowerCase()).append("@");
+      }
+      sb.append(serverSocket.getHostString()).append(":").append(serverSocket.getPort());
+      if (requireSsl) {
+         sb.append("?verifyPeer=NONE");
+      }
+      return redisOptions.addConnectionString(sb.toString());
    }
 
    protected RedisOptions applyDefaultOptions() {
@@ -84,28 +107,21 @@ public class RespTestClientDriver extends AbstractTestClientDriver<RespTestClien
          opts = opts.setType(RedisClientType.STANDALONE);
       }
       for (int i = 0; i < size; i++) {
-         StringBuilder sb = new StringBuilder();
-         InetSocketAddress serverSocket = testServer.getDriver().getServerSocket(i, port);
-         sb.append(requireSsl ? "rediss://" : "redis://");
-         if (user != null && user != TestUser.ANONYMOUS) {
-            sb.append(user.getUser()).append(":").append(user.getPassword()).append("@");
-         }
-         sb.append(serverSocket.getHostString()).append(":").append(serverSocket.getPort());
-         if (requireSsl) {
-            sb.append("?verifyPeer=NONE");
-         }
-         opts = opts.addConnectionString(sb.toString());
+         opts = applyUrl(opts, testServer.getDriver().getServerSocket(i, port));
       }
       return opts;
    }
 
    protected RedisOptions specificServerOptions(int index) {
       InetSocketAddress serverSocket = testServer.getDriver().getServerSocket(index, port);
-      return new RedisOptions()
+      RedisOptions redisOptions = new RedisOptions()
             .setType(RedisClientType.STANDALONE)
             .setMaxPoolWaiting(-1)
-            .addConnectionString("redis://" + serverSocket.getHostString() + ":" + serverSocket.getPort())
             .setPoolName("resp-index-" + index);
+
+      redisOptions = applyUrl(redisOptions, serverSocket);
+
+      return redisOptions;
    }
 
    public RedisConnection getConnection() {
