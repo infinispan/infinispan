@@ -2,16 +2,15 @@ package org.infinispan.server.security.authentication;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.lettuce.core.RedisURI;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.core.tags.Security;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServer;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisClient;
@@ -29,14 +28,13 @@ import io.lettuce.core.protocol.CommandType;
 @Security
 public class RespAuthentication {
 
-   @RegisterExtension
-   public static InfinispanServerExtension SERVERS = AuthenticationIT.SERVERS;
+   @InfinispanServer(AuthenticationIT.class)
+   public static TestClientDriver SERVERS;
 
    @Test
    public void testRestReadWrite() {
-      InetSocketAddress serverSocket = SERVERS.getServerDriver().getServerSocket(0, 11222);
-      RedisClient client = RedisClient.create(
-            RedisURI.Builder.redis(serverSocket.getHostString()).withPort(serverSocket.getPort()).withAuthentication("all_user", "all").build());
+      RedisClient client = RedisClient.create(SERVERS.resp().withUser(AuthorizationPermission.ALL)
+            .connectionString(0));
       try (StatefulRedisConnection<String, String> redisConnection = client.connect()) {
          RedisCommands<String, String> redis = redisConnection.sync();
          redis.set("k1", "v1");
@@ -58,8 +56,8 @@ public class RespAuthentication {
 
    @Test
    public void testRespCommandDocs() {
-      InetSocketAddress serverSocket = SERVERS.getServerDriver().getServerSocket(0, 11222);
-      RedisClient client = RedisClient.create(String.format("redis://all_user:all@%s:%d", serverSocket.getHostString(), serverSocket.getPort()));
+      RedisClient client = RedisClient.create(SERVERS.resp().withUser(AuthorizationPermission.ALL)
+            .connectionString(0));
       try (StatefulRedisConnection<String, String> redisConnection = client.connect()) {
          RedisCommands<String, String> redis = redisConnection.sync();
          Exceptions.expectException(RedisCommandExecutionException.class, () -> redis.dispatch(CommandType.COMMAND,
