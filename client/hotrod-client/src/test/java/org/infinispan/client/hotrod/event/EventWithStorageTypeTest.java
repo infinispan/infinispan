@@ -33,15 +33,14 @@ public class EventWithStorageTypeTest extends SingleHotRodServerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.memory().storageType(storageType);
+      builder.memory().storage(storageType);
       return TestCacheManagerFactory.createCacheManager(contextInitializer(), builder);
    }
 
    @Factory
    public Object[] factory() {
       return new Object[]{
-            new EventWithStorageTypeTest().storageType(StorageType.OBJECT),
-            new EventWithStorageTypeTest().storageType(StorageType.BINARY),
+            new EventWithStorageTypeTest().storageType(StorageType.HEAP),
             new EventWithStorageTypeTest().storageType(StorageType.OFF_HEAP),
       };
    }

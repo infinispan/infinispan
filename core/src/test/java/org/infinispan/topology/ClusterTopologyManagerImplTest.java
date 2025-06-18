@@ -26,7 +26,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.ConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;

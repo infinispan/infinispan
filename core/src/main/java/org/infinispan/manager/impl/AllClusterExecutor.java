@@ -94,7 +94,7 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
             log.tracef("Submitting runnable to single remote node - JGroups Address %s", target);
          }
          remoteFuture = new CompletableFuture<>();
-         ReplicableCommand command = new ReplicableRunnableCommand(runnable);
+         ReplicableCommand command = new ReplicableRunnableCommand(runnable, Security.getSubject());
          CompletionStage<Response> request = transport.invokeCommand(target, command, PassthroughSingleResponseCollector.INSTANCE, DeliverOrder.NONE, time, unit);
          request.handle((r, t) -> {
             if (t != null) {
@@ -108,7 +108,7 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
          });
       } else if (size > 1) {
          remoteFuture = new CompletableFuture<>();
-         ReplicableCommand command = new ReplicableRunnableCommand(runnable);
+         ReplicableCommand command = new ReplicableRunnableCommand(runnable, Security.getSubject());
          var collector = new PassthroughMapResponseCollector(targets.size());
          CompletionStage<Map<Address, Response>> request = transport.invokeCommand(targets, command, collector, DeliverOrder.NONE, time, unit);
          request.handle((r, t) -> {
@@ -224,10 +224,4 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
       return ClusterExecutors.singleNodeSubmissionExecutor(predicate, manager, transport, time, unit, blockingManager,
             timeoutExecutor, failOverCount);
    }
-
-   @Override
-   public ClusterExecutor allNodeSubmission() {
-      return this;
-   }
-
 }

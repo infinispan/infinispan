@@ -566,24 +566,6 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    }
 
    @Override
-   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
-      checkSubclass(keyWrapperClass, Wrapper.class);
-      checkSubclass(valueWrapperClass, Wrapper.class);
-
-      DataConversion newKeyDataConversion = keyDataConversion.withWrapping(keyWrapperClass);
-      DataConversion newValueDataConversion = valueDataConversion.withWrapping(valueWrapperClass);
-      EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, entryFactory, componentRegistry,
-                                                           newKeyDataConversion, newValueDataConversion);
-      encoderCache.lookupEncoderWrapper();
-      return encoderCache;
-   }
-
-   @Override
-   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapper) {
-      return withWrapping(wrapper, wrapper);
-   }
-
-   @Override
    public AdvancedCache<K, V> withMediaType(String keyMediaType, String valueMediaType) {
       MediaType kType = MediaType.fromString(keyMediaType);
       MediaType vType = MediaType.fromString(valueMediaType);

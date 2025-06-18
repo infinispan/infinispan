@@ -19,6 +19,7 @@ import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand
 import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.MagicKey;
@@ -56,7 +57,8 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       consistentHashFactory = new ControlledConsistentHashFactory.Default(new int[][]{{1, 2, 3}, {1, 2, 3}});
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(3);
-      builder.clustering().hash().numSegments(2).consistentHashFactory(consistentHashFactory);
+      builder.clustering().hash().numSegments(2);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(consistentHashFactory);
       createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, builder, 4);
       waitForClusterToForm();
    }
@@ -133,7 +135,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       consistentHashFactory.triggerRebalance(cache(0));
       // waitForStableTopology doesn't work here, since the cache looks already "balanced"
       // So we wait for the primary owner of segment 1 to change
-      eventuallyEquals(address(2), () -> advancedCache(0).getDistributionManager().getReadConsistentHash().locatePrimaryOwnerForSegment(1));
+      eventuallyEquals(address(2), () -> advancedCache(0).getDistributionManager().getCacheTopology().getReadConsistentHash().locatePrimaryOwnerForSegment(1));
 
       // See https://issues.jboss.org/browse/ISPN-3120?focusedCommentId=12777231
       // Start with segment 0 owned by [cache1, cache2, cache3], and segment 1 owned by [cache2, cache1, cache3]

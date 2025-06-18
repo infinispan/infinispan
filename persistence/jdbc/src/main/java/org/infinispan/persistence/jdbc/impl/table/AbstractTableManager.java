@@ -153,7 +153,7 @@ public abstract class AbstractTableManager<K, V> extends BaseTableOperations<K, 
       JdbcStringBasedStoreConfiguration configuration = ctx.getConfiguration();
       try {
          Object mapper = Util.loadClassStrict(configuration.key2StringMapper(),
-               ctx.getGlobalConfiguration().classLoader()).newInstance();
+               ctx.getGlobalConfiguration().classLoader()).getDeclaredConstructor().newInstance();
          if (mapper instanceof Key2StringMapper) key2StringMapper = (Key2StringMapper) mapper;
       } catch (Exception e) {
          log.errorf("Trying to instantiate %s, however it failed due to %s", configuration.key2StringMapper(),

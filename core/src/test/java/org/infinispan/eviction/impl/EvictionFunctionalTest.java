@@ -50,8 +50,7 @@ public class EvictionFunctionalTest extends SingleCacheManagerTest {
    @Factory
    public Object[] factory() {
       return new Object[]{
-            new EvictionFunctionalTest().storageType(StorageType.BINARY),
-            new EvictionFunctionalTest().storageType(StorageType.OBJECT),
+            new EvictionFunctionalTest().storageType(StorageType.HEAP),
             new EvictionFunctionalTest().storageType(StorageType.OFF_HEAP)
       };
    }
@@ -63,7 +62,7 @@ public class EvictionFunctionalTest extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      builder.memory().size(CACHE_SIZE).storageType(getStorageType())
+      builder.memory().maxCount(CACHE_SIZE).storage(getStorageType())
             .expiration().wakeUpInterval(100L).locking()
             .useLockStriping(false) // to minimize chances of deadlock in the unit test
             .invocationBatching();

@@ -41,7 +41,6 @@ import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.CloseableIterator;
@@ -647,11 +646,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache
    }
 
    @Override
-   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapper) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
    public AdvancedCache<?, ?> withMediaType(String keyMediaType, String valueMediaType) {
       throw new UnsupportedOperationException();
    }
@@ -663,11 +657,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache
 
    @Override
    public AdvancedCache<K, V> withStorageMediaType() {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapper, Class<? extends Wrapper> valueWrapper) {
       throw new UnsupportedOperationException();
    }
 

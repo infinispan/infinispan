@@ -6,14 +6,15 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "distribution.DistSyncTxFuncTest")
 public class DistSyncTxFuncTest extends BaseDistFunctionalTest<Object, String> {
@@ -316,7 +317,8 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest<Object, String> {
       ConfigurationBuilder builder = super.buildConfiguration();
       ControlledConsistentHashFactory.Default chf = new ControlledConsistentHashFactory.Default(
             new int[][]{{0, 1}, {1, 2}});
-      builder.clustering().hash().numOwners(2).numSegments(2).consistentHashFactory(chf);
+      builder.clustering().hash().numOwners(2).numSegments(2);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(chf);
       return builder;
    }
 

@@ -19,7 +19,7 @@ public class ExpensiveEvictionTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
-      cfg.memory().size(MAX_CACHE_ELEMENTS)
+      cfg.memory().maxCount(MAX_CACHE_ELEMENTS)
          .expiration().wakeUpInterval(3000L)
          .build();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
@@ -30,8 +30,7 @@ public class ExpensiveEvictionTest extends SingleCacheManagerTest {
    public void testSimpleEvictionMaxEntries() throws Exception {
       log.tracef("Max entries: ", MAX_CACHE_ELEMENTS);
       for (int i = 0; i < MAX_CACHE_ELEMENTS; i++) {
-         Integer integer = Integer.valueOf(i);
-         cache.put(integer, integer, 6, TimeUnit.HOURS);
+         cache.put(i, i, 6, TimeUnit.HOURS);
          if (i % 50000 == 0) {
             log.tracef("Elements in cache: %s", cache.size());
          }

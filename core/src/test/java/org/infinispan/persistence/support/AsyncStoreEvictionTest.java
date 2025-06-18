@@ -32,7 +32,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
    private static ConfigurationBuilder config(boolean passivation, int threads) {
       ConfigurationBuilder config = new ConfigurationBuilder();
       config.expiration().wakeUpInterval(100);
-      config.memory().size(1);
+      config.memory().maxCount(1);
       config.persistence()
          .passivation(passivation)
          .addStore(LockableStoreConfigurationBuilder.class)
@@ -202,7 +202,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
 
    public void testLIRS() throws Exception {
       ConfigurationBuilder config = config(false, 1);
-      config.memory().size(1);
+      config.memory().maxCount(1);
       TestingUtil.withCacheManager(new CacheCallable(config) {
          @Override
          public void call() {

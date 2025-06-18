@@ -28,6 +28,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.BlockingInterceptor;
@@ -74,7 +75,8 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
    private ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.clustering().cacheMode(CacheMode.DIST_SYNC);
-      c.clustering().hash().numSegments(1).consistentHashFactory(new CustomConsistentHashFactory());
+      c.clustering().hash().numSegments(1);
+      c.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(new CustomConsistentHashFactory());
       c.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
       return c;
    }

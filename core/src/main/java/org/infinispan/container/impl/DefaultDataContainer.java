@@ -16,7 +16,6 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntrySizeCalculator;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.PrimitiveEntrySizeCalculator;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.marshall.core.WrappedByteArraySizeCalculator;
 import org.reactivestreams.Publisher;
@@ -53,21 +52,16 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
       evictionCache = null;
    }
 
-   protected DefaultDataContainer(int concurrencyLevel, long thresholdSize, EvictionType thresholdPolicy) {
+   protected DefaultDataContainer(int concurrencyLevel, long thresholdSize, boolean memoryBound) {
       DefaultEvictionListener evictionListener = new DefaultEvictionListener();
       Caffeine<K, InternalCacheEntry<K, V>> caffeine = caffeineBuilder();
 
-      switch (thresholdPolicy) {
-         case MEMORY:
-            CacheEntrySizeCalculator<K, V> calc = new CacheEntrySizeCalculator<>(new WrappedByteArraySizeCalculator<>(
-                  new PrimitiveEntrySizeCalculator()));
-            caffeine.weigher((k, v) -> (int) calc.calculateSize(k, v)).maximumWeight(thresholdSize);
-            break;
-         case COUNT:
-            caffeine.maximumSize(thresholdSize);
-            break;
-         default:
-            throw new UnsupportedOperationException("Policy not supported: " + thresholdPolicy);
+      if (memoryBound) {
+         CacheEntrySizeCalculator<K, V> calc = new CacheEntrySizeCalculator<>(new WrappedByteArraySizeCalculator<>(
+               new PrimitiveEntrySizeCalculator()));
+         caffeine.weigher((k, v) -> (int) calc.calculateSize(k, v)).maximumWeight(thresholdSize);
+      } else {
+         caffeine.maximumSize(thresholdSize);
       }
       evictionCache = applyListener(caffeine, evictionListener).build();
       entries = new PeekableTouchableCaffeineMap<>(evictionCache);
@@ -101,9 +95,8 @@ public class DefaultDataContainer<K, V> extends AbstractInternalDataContainer<K,
       entries = new PeekableTouchableCaffeineMap<>(evictionCache);
    }
 
-   public static <K, V> DefaultDataContainer<K, V> boundedDataContainer(int concurrencyLevel, long maxEntries,
-            EvictionType thresholdPolicy) {
-      return new DefaultDataContainer<>(concurrencyLevel, maxEntries, thresholdPolicy);
+   public static <K, V> DefaultDataContainer<K, V> boundedDataContainer(int concurrencyLevel, long maxEntries, boolean memoryBound) {
+      return new DefaultDataContainer<>(concurrencyLevel, maxEntries, memoryBound);
    }
 
    public static <K, V> DefaultDataContainer<K, V> boundedDataContainer(int concurrencyLevel, long maxEntries,
