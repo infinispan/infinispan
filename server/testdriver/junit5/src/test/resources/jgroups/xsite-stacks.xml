@@ -1,8 +1,8 @@
 <jgroups xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="urn:infinispan:config:15.0 https://infinispan.org/schemas/infinispan-config-fragment-15.0.xsd
-                             urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.3.xsd"
-         xmlns="urn:infinispan:config:15.0"
-         xmlns:ispn="urn:infinispan:config:15.0">
+         xsi:schemaLocation="urn:infinispan:config:15.0 https://infinispan.org/schemas/infinispan-config-fragment-16.0.xsd
+                             urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.4.xsd"
+         xmlns="urn:infinispan:config:16.0"
+         xmlns:ispn="urn:infinispan:config:16.0">
    <stack name="global" extends="tcp">
       <MPING mcast_addr="${jgroups.xsite.mcast_addr:239.6.7.8}"
              mcast_port="${jgroups.xsite.mcast_port:55555}"
@@ -19,7 +19,6 @@
              ispn:stack.combine="REPLACE"
       />
       <MERGE3 min_interval="1s" max_interval="5s" ispn:stack.combine="REPLACE"/>
-      <FD_SOCK2 connect_timeout="3000"/>
       <FD_ALL3 timeout="3000"
                interval="1000"/>
       <relay.RELAY2 site="${relay.site_name}" max_site_masters="3" xmlns="urn:org:jgroups"/>
