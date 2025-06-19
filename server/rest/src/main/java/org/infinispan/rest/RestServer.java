@@ -24,12 +24,14 @@ import org.infinispan.rest.resources.CounterResource;
 import org.infinispan.rest.resources.HealthCheckResource;
 import org.infinispan.rest.resources.LoggingResource;
 import org.infinispan.rest.resources.MetricsResource;
+import org.infinispan.rest.resources.OpenAPIResource;
 import org.infinispan.rest.resources.ProtobufResource;
 import org.infinispan.rest.resources.RedirectResource;
 import org.infinispan.rest.resources.SearchAdminResource;
 import org.infinispan.rest.resources.SecurityResource;
 import org.infinispan.rest.resources.ServerResource;
 import org.infinispan.rest.resources.StaticContentResource;
+import org.infinispan.rest.resources.SwaggerUIResource;
 import org.infinispan.rest.resources.TasksResource;
 import org.infinispan.rest.resources.XSiteResource;
 import org.infinispan.security.actions.SecurityActions;
@@ -149,6 +151,8 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       resourceManager.registerResource(restContext, new TasksResource(invocationHelper));
       resourceManager.registerResource(restContext, new ProtobufResource(invocationHelper, telemetryService));
       resourceManager.registerResource(rootContext, new HealthCheckResource(invocationHelper));
+      resourceManager.registerResource(restContext, new OpenAPIResource(invocationHelper, resourceManager.registry()));
+      resourceManager.registerResource(rootContext, new SwaggerUIResource(invocationHelper));
       resourceManager.registerResource(rootContext, new MetricsResource(auth.metricsAuth(), invocationHelper));
       Path staticResources = configuration.staticResources();
       if (staticResources != null) {
@@ -161,6 +165,12 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
          // if the cache name contains '.' we need to retrieve the console and access to the cache detail. See ISPN-14376
          resourceManager.registerResource(rootContext, new StaticContentResource(invocationHelper, console, "console/cache/", (path, resource) -> StaticContentResource.DEFAULT_RESOURCE));
          resourceManager.registerResource(rootContext, new RedirectResource(invocationHelper, rootContext, rootContext + "console/welcome", true));
+
+         Path swagger = configuration.staticResources().resolve("swagger-ui");
+         resourceManager.registerResource(rootContext, new StaticContentResource(invocationHelper, swagger, "swagger-ui", (path, resource) -> {
+            if (!path.contains(".")) return StaticContentResource.DEFAULT_RESOURCE;
+            return path;
+         }));
       }
       if (adminEndpoint) {
          resourceManager.registerResource(restContext, new ServerResource(invocationHelper));
