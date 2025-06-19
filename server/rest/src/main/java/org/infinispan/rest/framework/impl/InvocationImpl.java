@@ -6,8 +6,10 @@ import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.rest.framework.Invocation;
 import org.infinispan.rest.framework.Method;
+import org.infinispan.rest.framework.ResourceDescription;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.security.AuditContext;
@@ -21,15 +23,20 @@ public class InvocationImpl implements Invocation {
    private final Set<Method> methods;
    private final Set<String> paths;
    private final Function<RestRequest, CompletionStage<RestResponse>> handler;
+   @Deprecated
    private final String action;
    private final String name;
    private final boolean anonymous;
    private final boolean deprecated;
    private final AuthorizationPermission permission;
    private final AuditContext auditContext;
+   private final ResourceDescription resourceDescription;
 
-   private InvocationImpl(Set<Method> methods, Set<String> paths, Function<RestRequest,
-         CompletionStage<RestResponse>> handler, String action, String name, boolean anonymous, AuthorizationPermission permission, boolean deprecated, AuditContext auditContext) {
+   private InvocationImpl(ResourceDescription resource, Set<Method> methods, Set<String> paths,
+                          Function<RestRequest, CompletionStage<RestResponse>> handler, @Deprecated String action,
+                          String name, boolean anonymous, AuthorizationPermission permission, boolean deprecated,
+                          AuditContext auditContext) {
+      this.resourceDescription = resource;
       this.methods = methods;
       this.paths = paths;
       this.handler = handler;
@@ -41,6 +48,7 @@ public class InvocationImpl implements Invocation {
       this.auditContext = auditContext;
    }
 
+   @Deprecated
    public String getAction() {
       return action;
    }
@@ -82,6 +90,11 @@ public class InvocationImpl implements Invocation {
    }
 
    @Override
+   public ResourceDescription resourceGroup() {
+      return resourceDescription;
+   }
+
+   @Override
    public boolean deprecated() {
       return deprecated;
    }
@@ -112,6 +125,7 @@ public class InvocationImpl implements Invocation {
       private boolean deprecated;
       private AuthorizationPermission permission;
       private AuditContext auditContext;
+      private MediaType response;
 
 
       public Builder method(Method method) {
@@ -154,6 +168,11 @@ public class InvocationImpl implements Invocation {
          return this;
       }
 
+      public Builder response(MediaType response) {
+         this.response = response;
+         return this;
+      }
+
       public Builder auditContext(AuditContext auditContext) {
          this.auditContext = auditContext;
          return this;
@@ -164,6 +183,7 @@ public class InvocationImpl implements Invocation {
          return this;
       }
 
+      @Deprecated
       public Builder withAction(String action) {
          this.action = action;
          return this;
@@ -182,7 +202,7 @@ public class InvocationImpl implements Invocation {
       }
 
       InvocationImpl build() {
-         return new InvocationImpl(methods, paths, handler, action, name, anonymous, permission, deprecated, auditContext);
+         return new InvocationImpl(parent.description(), methods, paths, handler, action, name, anonymous, permission, deprecated, auditContext);
       }
    }
 }

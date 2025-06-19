@@ -94,7 +94,7 @@ public class ContainerResource implements ResourceHandler {
 
    @Override
    public Invocations getInvocations() {
-      return new Invocations.Builder()
+      return new Invocations.Builder("container", "REST resource to manage the cache container.")
             // Health
             .invocation().methods(GET, HEAD).path("/v2/cache-managers/{name}/health")
             .deprecated() // TODO: remove in 16
