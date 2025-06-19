@@ -73,7 +73,7 @@ public class SecurityResource implements ResourceHandler {
 
    @Override
    public Invocations getInvocations() {
-      return new Invocations.Builder()
+      return new Invocations.Builder("security", "REST resource to handle security")
             .invocation().methods(GET).path("/v2/login").withAction("config")
                .anonymous().handleWith(this::loginConfiguration)
             .invocation().methods(GET, POST).deprecated().path("/v2/login").withAction("login")

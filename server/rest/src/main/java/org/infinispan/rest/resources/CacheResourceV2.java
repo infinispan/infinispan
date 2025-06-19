@@ -163,12 +163,12 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
    );
 
-   private static final int STREAM_BATCH_SIZE = 1000;
-   private static final String MIGRATOR_NAME = "hotrod";
+   protected static final int STREAM_BATCH_SIZE = 1000;
+   protected static final String MIGRATOR_NAME = "hotrod";
 
-   private final ParserRegistry parserRegistry = new ParserRegistry();
-   private final InternalCacheRegistry internalCacheRegistry;
-   private final ServerStateManager serverStateManager;
+   protected final ParserRegistry parserRegistry = new ParserRegistry();
+   protected final InternalCacheRegistry internalCacheRegistry;
+   protected final ServerStateManager serverStateManager;
 
    public CacheResourceV2(InvocationHelper invocationHelper, InfinispanTelemetry telemetryService) {
       super(invocationHelper, telemetryService);
@@ -191,7 +191,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
    @Override
    public Invocations getInvocations() {
-      return new Invocations.Builder()
+      return new Invocations.Builder("cache", "REST resource to manage caches.")
             // Key related operations
             .invocation().methods(PUT, POST).path("/v2/caches/{cacheName}/{cacheKey}").handleWith(this::putValueToCache)
             .invocation().methods(GET, HEAD).path("/v2/caches/{cacheName}/{cacheKey}").handleWith(this::getCacheValue)
@@ -636,11 +636,11 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       return convert(request, APPLICATION_JSON);
    }
 
-   private CompletionStage<RestResponse> convert(RestRequest request) {
+   protected CompletionStage<RestResponse> convert(RestRequest request) {
       return convert(request, negotiateMediaType(request, APPLICATION_JSON, APPLICATION_XML, APPLICATION_YAML));
    }
 
-   private CompletionStage<RestResponse> compare(RestRequest request) {
+   protected CompletionStage<RestResponse> compare(RestRequest request) {
       boolean ignoreMutable = Boolean.parseBoolean(request.getParameter("ignoreMutable"));
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       MediaType contentType = request.contentType();
@@ -685,7 +685,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       }
    }
 
-   private CompletionStage<RestResponse> streamKeys(RestRequest request) {
+   protected CompletionStage<RestResponse> streamKeys(RestRequest request) {
       String cacheName = request.variables().get("cacheName");
 
       String batchParam = request.getParameter("batch");
@@ -720,7 +720,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       return CompletableFuture.completedFuture(responseBuilder.build());
    }
 
-   private CompletionStage<RestResponse> streamEntries(RestRequest request) {
+   protected CompletionStage<RestResponse> streamEntries(RestRequest request) {
       String cacheName = request.variables().get("cacheName");
       String limitParam = request.getParameter("limit");
       String metadataParam = request.getParameter("metadata");
@@ -812,7 +812,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       return APPLICATION_OCTET_STREAM.withEncoding("hex");
    }
 
-   private CompletionStage<RestResponse> removeCache(RestRequest request) {
+   protected CompletionStage<RestResponse> removeCache(RestRequest request) {
       String cacheName = request.variables().get("cacheName");
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
       if (!restCacheManager.cacheExists(cacheName))
@@ -826,7 +826,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       }, invocationHelper.getExecutor());
    }
 
-   private CompletionStage<RestResponse> cacheExists(RestRequest request) {
+   protected CompletionStage<RestResponse> cacheExists(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       String cacheName = request.variables().get("cacheName");
 
@@ -903,14 +903,14 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    }
 
 
-   private CompletionStage<RestResponse> getCacheStats(RestRequest request) {
+   protected CompletionStage<RestResponse> getCacheStats(RestRequest request) {
       String cacheName = request.variables().get("cacheName");
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       return CompletableFuture.supplyAsync(() ->
             asJsonResponse(invocationHelper.newResponse(request), cache.getAdvancedCache().getStats().toJson(), isPretty(request)), invocationHelper.getExecutor());
    }
 
-   private CompletionStage<RestResponse> resetCacheStats(RestRequest request) {
+   protected CompletionStage<RestResponse> resetCacheStats(RestRequest request) {
       String cacheName = request.variables().get("cacheName");
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       return CompletableFuture.supplyAsync(() -> {
@@ -919,7 +919,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       }, invocationHelper.getExecutor());
    }
 
-   private CompletionStage<RestResponse> getCacheDistribution(RestRequest request) {
+   protected CompletionStage<RestResponse> getCacheDistribution(RestRequest request) {
       String cacheName = request.variables().get("cacheName");
       RestCacheManager<?> cache = invocationHelper.getRestCacheManager();
       boolean pretty = isPretty(request);
@@ -928,7 +928,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             .thenApply(distributions -> asJsonResponse(invocationHelper.newResponse(request), Json.array(distributions.stream().map(CacheDistributionInfo::toJson).toArray()), pretty));
    }
 
-   private CompletionStage<RestResponse> getKeyDistribution(RestRequest request) {
+   protected CompletionStage<RestResponse> getKeyDistribution(RestRequest request) {
       boolean pretty = isPretty(request);
       return keyDistribution(request)
             .thenApply(distribution -> asJsonResponse(invocationHelper.newResponse(request), distribution.toJson(), pretty));
@@ -1080,7 +1080,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       return CompletableFuture.completedFuture(responseBuilder.status(OK).build());
    }
 
-   private CompletionStage<RestResponse> getCacheAvailability(RestRequest request) {
+   protected CompletionStage<RestResponse> getCacheAvailability(RestRequest request) {
       String cacheName = request.variables().get("cacheName");
       // Use EmbeddedCacheManager directly to allow internal caches to be updated
       if (!invocationHelper.getRestCacheManager().getInstance().isRunning(cacheName))
@@ -1099,7 +1099,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       );
    }
 
-   private CompletionStage<RestResponse> setCacheAvailability(RestRequest request) {
+   protected CompletionStage<RestResponse> setCacheAvailability(RestRequest request) {
       String cacheName = request.variables().get("cacheName");
       String availability = request.getParameter("availability");
       // Use EmbeddedCacheManager directly to allow internal caches to be updated
@@ -1230,7 +1230,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       return cache.sizeAsync().thenApply(size -> asJsonResponse(invocationHelper.newResponse(request), Json.make(size), pretty));
    }
 
-   private CompletionStage<RestResponse> getCacheNames(RestRequest request) throws RestResponseException {
+   protected CompletionStage<RestResponse> getCacheNames(RestRequest request) throws RestResponseException {
       Collection<String> cacheNames = invocationHelper.getRestCacheManager().getAccessibleCacheNames();
       return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(cacheNames), isPretty(request));
    }
