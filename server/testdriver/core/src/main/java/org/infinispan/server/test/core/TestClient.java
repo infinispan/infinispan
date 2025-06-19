@@ -32,6 +32,7 @@ import org.infinispan.counter.api.CounterManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
 import org.infinispan.server.test.api.JmxTestClient;
 import org.infinispan.server.test.api.MemcachedTestClientDriver;
+import org.infinispan.server.test.api.OpenAPITestClientDriver;
 import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
 
@@ -82,6 +83,10 @@ public class TestClient {
 
    public RestTestClientDriver rest() {
       return new RestTestClientDriver(testServer, this);
+   }
+
+   public OpenAPITestClientDriver openapi() {
+      return new OpenAPITestClientDriver(testServer, this);
    }
 
    public RespTestClientDriver resp() {
@@ -164,7 +169,7 @@ public class TestClient {
 
    public MemcachedClient getMemcachedClient(ConnectionFactoryBuilder builder) {
       TestServer.CloseableMemcachedClient memcachedClient = testServer.newMemcachedClient(builder);
-      return registerResource(memcachedClient).getClient();
+      return registerResource(memcachedClient).client();
    }
 
    public String getMethodName() {
