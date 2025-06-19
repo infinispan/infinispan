@@ -2,12 +2,12 @@ package org.infinispan.rest.search;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
-import static org.infinispan.server.core.query.json.JSONConstants.HIT;
-import static org.infinispan.server.core.query.json.JSONConstants.HIT_COUNT;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
-import static org.infinispan.commons.util.concurrent.CompletionStages.join;
+import static org.infinispan.server.core.query.json.JSONConstants.HIT;
+import static org.infinispan.server.core.query.json.JSONConstants.HIT_COUNT;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -525,7 +525,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
    protected CompletionStage<RestResponse> get(String id, String accept) {
       String path = String.format("/rest/v2/caches/%s/%s", cacheName(), id);
-      return client.raw().get(path, Collections.singletonMap(RequestHeader.ACCEPT_HEADER.getValue(), accept));
+      return client.raw().get(path, Collections.singletonMap(RequestHeader.ACCEPT_HEADER.toString(), accept));
    }
 
    protected Json createPerson(int id, String name, String surname, String street, String postCode, String gender, int... phoneNumbers) {

@@ -35,7 +35,7 @@ public class RedirectResource implements ResourceHandler {
 
    @Override
    public Invocations getInvocations() {
-      return new Invocations.Builder()
+      return new Invocations.Builder("redirect", "REST resource to redirect requests.")
             .invocation().methods(GET).path(path).anonymous(anonymous).handleWith(this::redirect)
             .create();
    }

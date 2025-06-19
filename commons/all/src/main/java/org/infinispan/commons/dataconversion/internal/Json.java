@@ -1737,6 +1737,23 @@ public class Json implements java.io.Serializable {
 
    /**
     * <p>
+    * Set a <code>Json</code> object's property only if the value is not null
+    * </p>
+    *
+    * @param property The property name.
+    * @param value    The value of the property, converted to a <code>Json</code> representation with {@link #make}.
+    * @return this
+    */
+   public final Json setIfNotNull(String property, Object value) {
+      if (value != null) {
+         return set(property, make(value));
+      } else {
+         return this;
+      }
+   }
+
+   /**
+    * <p>
     * Change the value of a JSON array element. This must be an array.
     * </p>
     *

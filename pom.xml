@@ -75,6 +75,7 @@
       <module>server/tests</module>
       <module>server/rollingupgradetests</module>
       <module>client/rest-client</module>
+      <module>client/openapi-client</module>
       <module>client/hotrod-client</module>
       <module>client/hotrod-client-test</module>
       <module>client/infinispan-key-value-store-hotrod</module>
@@ -223,6 +224,7 @@
       <versionx.org.jboss.weld.weld-api>5.0.SP3</versionx.org.jboss.weld.weld-api>
       <versionx.org.mariadb.jdbc>3.5.6</versionx.org.mariadb.jdbc>
       <versionx.org.objectweb.howl.howl>1.0.1-1</versionx.org.objectweb.howl.howl>
+      <versionx.org.openapitools>7.15.0</versionx.org.openapitools>
       <versionx.org.postgresql>42.7.8</versionx.org.postgresql>
       <versionx.org.testcontainers.testcontainers>1.21.4</versionx.org.testcontainers.testcontainers>
       <!-- Test dependency. Only update if testcontainer dependency > 1.17.6 with newer docker-java version is available in GraalVM metadata repository -->
@@ -2263,6 +2265,11 @@
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-project-info-reports-plugin</artifactId>
                <version>${version.maven.project-info-reports}</version>
+            </plugin>
+            <plugin>
+               <groupId>org.openapitools</groupId>
+               <artifactId>openapi-generator-maven-plugin</artifactId>
+               <version>${versionx.org.openapitools}</version>
             </plugin>
             <plugin>
                <groupId>org.springframework.boot</groupId>

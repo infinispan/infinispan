@@ -58,3 +58,4 @@ Use Infinispan caching capabilities to boost application performance with a faul
 * link:apidocs/index.html[JavaDoc APIs]
 * link:logging/logs.html[Log messages]
 * link:titles/metrics/metrics.html[Metrics]
+* link:titles/openapi/openapi.html[OpenAPI]

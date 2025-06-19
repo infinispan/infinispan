@@ -62,7 +62,7 @@ public class CounterResource implements ResourceHandler {
 
    @Override
    public Invocations getInvocations() {
-      return new Invocations.Builder()
+      return new Invocations.Builder("counter", "REST resource to manage counters.")
             // Lifecycle
             .invocation().methods(POST).path("/v2/counters/{counterName}").handleWith(this::createCounter)
             .invocation().methods(DELETE).path("/v2/counters/{counterName}").handleWith(this::deleteCounter)

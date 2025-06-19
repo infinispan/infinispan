@@ -1,0 +1,23 @@
+//Directory attributes
+:generated: ../../../../../target/generated-asciidoc
+:stories: ../../stories
+:topics: ../topics
+:imagesdir: ../{topics}/images
+
+//Community doc attributes
+include::../{topics}/attributes/community-attributes.adoc[]
+
+//Community title attributes
+:toc2:
+:icons: font
+:toclevels: 4
+:numbered:
+:sectanchors:
+:stem: asciimath
+:context: metrics
+
+//Title
+= {brandname} OpenAPI
+
+//User stories
+include::stories.adoc[]

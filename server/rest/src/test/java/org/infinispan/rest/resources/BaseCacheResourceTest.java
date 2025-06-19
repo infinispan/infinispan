@@ -223,7 +223,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putBinaryValueInCache("serialized", "test", convertToBytes(testClass), APPLICATION_SERIALIZED_OBJECT);
 
       //when
-      RestResponse response = join(client.cache("serialized").get("test", Map.of(ACCEPT_HEADER.getValue(), APPLICATION_SERIALIZED_OBJECT_TYPE)));
+      RestResponse response = join(client.cache("serialized").get("test", Map.of(ACCEPT_HEADER.toString(), APPLICATION_SERIALIZED_OBJECT_TYPE)));
 
       TestClass convertedObject = convertFromBytes(response.bodyAsByteArray());
 
@@ -663,10 +663,10 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    protected RestResponse get(String cacheName, Object key, String keyContentType, String acceptHeader) {
       Map<String, String> headers = new HashMap<>();
       if (acceptHeader != null) {
-         headers.put(ACCEPT_HEADER.getValue(), acceptHeader);
+         headers.put(ACCEPT_HEADER.toString(), acceptHeader);
       }
       if (keyContentType != null) {
-         headers.put(KEY_CONTENT_TYPE_HEADER.getValue(), keyContentType);
+         headers.put(KEY_CONTENT_TYPE_HEADER.toString(), keyContentType);
       }
       RestResponse response = join(client.cache(cacheName).get(key.toString(), headers));
       ResponseAssertion.assertThat(response).isOk();
@@ -887,7 +887,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
    protected Map<String, String> createHeaders(RequestHeader header, String value) {
       Map<String, String> headers = new HashMap<>();
-      headers.put(header.getValue(), value);
+      headers.put(header.toString(), value);
       return headers;
    }
 

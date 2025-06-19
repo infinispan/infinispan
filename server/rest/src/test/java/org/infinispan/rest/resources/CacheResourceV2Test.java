@@ -1632,16 +1632,16 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
       // Read the changed value as an integer
       Map<String, String> headers = new HashMap<>();
-      headers.put(KEY_CONTENT_TYPE_HEADER.getValue(), integerType.toString());
-      headers.put(ACCEPT_HEADER.getValue(), integerType.toString());
+      headers.put(KEY_CONTENT_TYPE_HEADER.toString(), integerType.toString());
+      headers.put(ACCEPT_HEADER.toString(), integerType.toString());
       response = client.get("1", headers);
       assertThat(response).isOk();
       assertThat(response).hasReturnedText("2");
 
       // Read the changed value as protobuf
       headers = new HashMap<>();
-      headers.put(KEY_CONTENT_TYPE_HEADER.getValue(), integerType.toString());
-      headers.put(ACCEPT_HEADER.getValue(), MediaType.APPLICATION_PROTOSTREAM_TYPE);
+      headers.put(KEY_CONTENT_TYPE_HEADER.toString(), integerType.toString());
+      headers.put(ACCEPT_HEADER.toString(), MediaType.APPLICATION_PROTOSTREAM_TYPE);
       response = client.get("1", headers);
       assertThat(response).isOk();
       assertThat(response).hasReturnedBytes(new ProtoStreamMarshaller().objectToByteBuffer(2));
