@@ -359,7 +359,7 @@ public class JGroupsTransport implements Transport {
       XSiteResponseImpl<O> xSiteResponse = new XSiteResponseImpl<>(timeService, backup);
       try {
          traceRequest(request, rpcCommand);
-         sendCommand(recipient, rpcCommand, request.getRequestId(), order, false);
+         doSendForCrossSite(recipient, rpcCommand, request.getRequestId(), order);
          if (timeout > 0) {
             request.setTimeout(timeoutExecutor, timeout, TimeUnit.MILLISECONDS);
          }
@@ -391,12 +391,11 @@ public class JGroupsTransport implements Transport {
       if (channel == null) {
          return List.of();
       }
-      var ipAddress = channel.getProtocolStack().getTransport().localPhysicalAddress();
+      org.jgroups.PhysicalAddress ipAddress = channel.getProtocolStack().getTransport().localPhysicalAddress();
       if (ipAddress == null) {
          return List.of();
       }
-      assert ipAddress instanceof IpAddress;
-      return List.of(new PhysicalAddress(((IpAddress) ipAddress).getIpAddress(), ((IpAddress) ipAddress).getPort()));
+      return List.of(new PhysicalAddress(ipAddress.getIpAddress(), ipAddress.getPort()));
    }
 
    @Override
@@ -956,11 +955,12 @@ public class JGroupsTransport implements Transport {
       logRequest(requestId, command, target, "single");
       SingleTargetRequest<T> request = new SingleTargetRequest<>(collector, requestId, requests, metricsManager.trackRequest(target));
       addRequest(request);
-      var view = clusterView;
-      if (!request.onNewView(view.getMembersSet())) {
-         traceRequest(request, command);
-         sendCommand(view.getAddressFromView(target), command, requestId, deliverOrder, true);
+      if (request.onNewView(clusterView.getMembersSet())) {
+         // The request is completed, destination not found in view. We can return immediately.
+         return request;
       }
+      traceRequest(request, command);
+      sendCommandCheckingView(target, command, requestId, deliverOrder);
       if (timeout > 0) {
          request.setTimeout(timeoutExecutor, timeout, unit);
       }
@@ -1115,7 +1115,11 @@ public class JGroupsTransport implements Transport {
       }
       addRequest(request);
       var view = clusterView;
-      boolean checkView = request.onNewView(view.getMembersSet());
+      request.onNewView(view.getMembersSet());
+      if (request.isDone()) {
+         // The request is completed.
+         return request;
+      }
       try {
          for (Address target : targets) {
             if (target.equals(excludedTarget))
@@ -1124,11 +1128,7 @@ public class JGroupsTransport implements Transport {
             ReplicableCommand command = commandGenerator.apply(target);
             logRequest(requestId, command, target, "mixed");
             traceRequest(request, command); // TODO is correct?
-            if (checkView) {
-               sendCommandCheckingView(target, command, requestId, deliverOrder);
-            } else {
-               sendCommand(view.getAddressFromView(target), command, requestId, deliverOrder, true);
-            }
+            sendCommandCheckingView(target, command, requestId, deliverOrder);
          }
       } catch (Throwable t) {
          request.cancel(true);
@@ -1168,27 +1168,27 @@ public class JGroupsTransport implements Transport {
    }
 
    void sendCommandCheckingView(Address destination, Object command, long requestId, DeliverOrder deliverOrder) {
-      var target = clusterView.getAddressFromView(destination);
+      ExtendedUUID target = clusterView.getAddressFromView(destination);
       if (target == null) {
          // not in view
          return;
       }
-      sendCommand(target, command, requestId, deliverOrder, true);
+      doSendForCluster(destination, target, command, requestId, deliverOrder);
    }
 
-   void sendCommand(org.jgroups.Address target, Object command, long requestId, DeliverOrder deliverOrder,
-                    boolean noRelay) {
+   void doSendForCrossSite(SiteAddress target, Object command, long requestId, DeliverOrder deliverOrder) {
       Message message = new BytesMessage(target);
       marshallRequest(message, command, requestId);
-      setMessageFlags(message, deliverOrder, noRelay);
-
+      setMessageFlagsForCrossSite(message, deliverOrder);
       send(message);
-      if (noRelay) {
-         assert target instanceof ExtendedUUID;
-         // only record non cross-site messages
-         // TODO FIX: the implementation uses `toString` from the address (uses the name in the tag)
-         metricsManager.recordMessageSent(JGroupsAddressCache.fromExtendedUUID((ExtendedUUID) target), message.size(), requestId == Request.NO_REQUEST_ID);
-      }
+   }
+
+   void doSendForCluster(Address address, ExtendedUUID target, Object command, long requestId, DeliverOrder deliverOrder) {
+      Message message = new BytesMessage(target);
+      marshallRequest(message, command, requestId);
+      setMessageFlagsForCluster(message, deliverOrder);
+      send(message);
+      metricsManager.recordMessageSent(address, message.size(), requestId == Request.NO_REQUEST_ID);
    }
 
    private void marshallRequest(Message message, Object command, long requestId) {
@@ -1203,14 +1203,16 @@ public class JGroupsTransport implements Transport {
       }
    }
 
-   private static void setMessageFlags(Message message, DeliverOrder deliverOrder, boolean noRelay) {
-      short flags = encodeDeliverMode(deliverOrder);
-      if (noRelay) {
-         flags |= Message.Flag.NO_RELAY.value();
-      }
+   private static void setMessageFlagsForCrossSite(Message message, DeliverOrder deliverOrder) {
+      message.setFlag(encodeDeliverMode(deliverOrder), false);
+      message.setFlag(Message.TransientFlag.DONT_LOOPBACK.value(), true);
+   }
 
+
+   private static void setMessageFlagsForCluster(Message message, DeliverOrder deliverOrder) {
+      short flags = (short) (encodeDeliverMode(deliverOrder) | Message.Flag.NO_RELAY.value());
       message.setFlag(flags, false);
-      message.setFlag(Message.TransientFlag.DONT_LOOPBACK);
+      message.setFlag(Message.TransientFlag.DONT_LOOPBACK.value(), true);
    }
 
    private void send(Message message) {
@@ -1329,7 +1331,7 @@ public class JGroupsTransport implements Transport {
    private void sendCommandToAll(ReplicableCommand command, long requestId, DeliverOrder deliverOrder) {
       Message message = new BytesMessage();
       marshallRequest(message, command, requestId);
-      setMessageFlags(message, deliverOrder, true);
+      setMessageFlagsForCluster(message, deliverOrder);
       send(message);
       clusterView.getMembersSet().stream()
             .filter(t -> !t.equals(address))
@@ -1396,7 +1398,7 @@ public class JGroupsTransport implements Transport {
       Objects.requireNonNull(targets);
       Message message = new BytesMessage();
       marshallRequest(message, command, requestId);
-      setMessageFlags(message, deliverOrder, true);
+      setMessageFlagsForCluster(message, deliverOrder);
 
       Message copy = message;
       for (Iterator<Address> it = targets.iterator(); it.hasNext(); ) {
