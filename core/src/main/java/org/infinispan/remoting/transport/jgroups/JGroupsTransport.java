@@ -715,49 +715,59 @@ public class JGroupsTransport implements Transport {
             log.tracef("Local address %s, uuid %s", jgroupsAddress, uuid);
          }
       }
-      if (installIfFirst && clusterView.getViewId() != ClusterView.INITIAL_VIEW_ID) {
-         return;
-      }
-      long viewId = newView.getViewId().getId();
-      var newClusterView = new ClusterView((int) viewId, newView.getMembers().stream().map(ExtendedUUID.class::cast).toList(), (ExtendedUUID) channel.getAddress(), version);
+
+      ClusterView newClusterView;
+      ClusterView oldClusterView;
       List<List<Address>> subGroups;
-      if (newView instanceof MergeView) {
-         if (!(channel instanceof ForkChannel)) {
-            CLUSTER.receivedMergedView(channel.clusterName(), newView);
-         }
-         subGroups = new ArrayList<>();
-         List<View> jgroupsSubGroups = ((MergeView) newView).getSubgroups();
-         for (View group : jgroupsSubGroups) {
-            var mapped = group.getMembers().stream()
-                  .map(ExtendedUUID.class::cast)
-                  .map(JGroupsAddressCache::fromExtendedUUID)
-                  .map(Address.class::cast)
-                  .toList();
-            subGroups.add(mapped);
-         }
-      } else {
-         if (!(channel instanceof ForkChannel)) {
-            CLUSTER.receivedClusterView(channel.clusterName(), newView);
-         }
-         subGroups = Collections.emptyList();
-      }
-
-      if (newView.getMembers().isEmpty()) {
-         return;
-      }
-
-      ClusterView oldView = this.clusterView;
-
-      // Update every view-related field while holding the lock so that waitForView only returns
-      // after everything was updated.
       CompletableFuture<Void> oldFuture = null;
+      int viewId = (int) newView.getViewId().getId();
+
       viewUpdateLock.lock();
       try {
+         oldClusterView = this.clusterView;
+         if (installIfFirst && oldClusterView.getViewId() != ClusterView.INITIAL_VIEW_ID) {
+            log.debugf("Rejected because installIfFirst is set to true and the current view id is %s", oldClusterView.getViewId());
+            return;
+         }
+
+         if (oldClusterView.getViewId() >= viewId) {
+            log.rejectOutdatedView(oldClusterView.getViewId(), String.valueOf(newView));
+            return;
+         }
+
+         newClusterView = new ClusterView(viewId, newView.getMembers().stream().map(ExtendedUUID.class::cast).toList(), (ExtendedUUID) channel.getAddress(), version);
+         if (newView instanceof MergeView) {
+            if (!(channel instanceof ForkChannel)) {
+               CLUSTER.receivedMergedView(channel.clusterName(), newView);
+            }
+            subGroups = new ArrayList<>();
+            List<View> jgroupsSubGroups = ((MergeView) newView).getSubgroups();
+            for (View group : jgroupsSubGroups) {
+               var mapped = group.getMembers().stream()
+                     .map(ExtendedUUID.class::cast)
+                     .map(JGroupsAddressCache::fromExtendedUUID)
+                     .map(Address.class::cast)
+                     .toList();
+               subGroups.add(mapped);
+            }
+         } else {
+            if (!(channel instanceof ForkChannel)) {
+               CLUSTER.receivedClusterView(channel.clusterName(), newView);
+            }
+            subGroups = Collections.emptyList();
+         }
+
+         if (newView.getMembers().isEmpty()) {
+            return;
+         }
+
+         // Update every view-related field while holding the lock so that waitForView only returns
+         // after everything was updated.
          // Delta view debug log for large cluster
-         if (log.isDebugEnabled() && oldView.getMembers() != null) {
+         if (log.isDebugEnabled() && oldClusterView.getMembers() != null) {
             List<Address> joined = new ArrayList<>(newClusterView.getMembers());
-            joined.removeAll(oldView.getMembers());
-            List<Address> left = new ArrayList<>(oldView.getMembers());
+            joined.removeAll(oldClusterView.getMembers());
+            List<Address> left = new ArrayList<>(oldClusterView.getMembers());
             left.removeAll(newClusterView.getMembers());
             log.debugf("Joined: %s, Left: %s", joined, left);
          }
@@ -786,9 +796,9 @@ public class JGroupsTransport implements Transport {
       if (hasNotifier) {
          if (!subGroups.isEmpty()) {
             final Address address1 = getAddress();
-            CompletionStages.join(notifier.notifyMerge(newClusterView.getMembers(), oldView.getMembers(), address1, (int) viewId, subGroups));
+            CompletionStages.join(notifier.notifyMerge(newClusterView.getMembers(), oldClusterView.getMembers(), address1, viewId, subGroups));
          } else {
-            CompletionStages.join(notifier.notifyViewChange(newClusterView.getMembers(), oldView.getMembers(), getAddress(), (int) viewId));
+            CompletionStages.join(notifier.notifyViewChange(newClusterView.getMembers(), oldClusterView.getMembers(), getAddress(), viewId));
          }
       }
 
