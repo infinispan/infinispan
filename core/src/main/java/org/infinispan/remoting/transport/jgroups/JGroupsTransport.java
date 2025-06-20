@@ -395,8 +395,7 @@ public class JGroupsTransport implements Transport {
       if (ipAddress == null) {
          return List.of();
       }
-      assert ipAddress instanceof IpAddress;
-      return List.of(new PhysicalAddress(((IpAddress) ipAddress).getIpAddress(), ((IpAddress) ipAddress).getPort()));
+      return List.of(new PhysicalAddress(ipAddress.getIpAddress(), ipAddress.getPort()));
    }
 
    @Override
@@ -709,7 +708,7 @@ public class JGroupsTransport implements Transport {
       if (address == null) {
          org.jgroups.Address jgroupsAddress = channel.getAddress();
          assert jgroupsAddress instanceof ExtendedUUID;
-         this.address = JGroupsAddressCache.fromExtendedUUID((ExtendedUUID) jgroupsAddress);
+         this.address = AddressCache.fromExtendedUUID((ExtendedUUID) jgroupsAddress);
          if (log.isTraceEnabled()) {
             String uuid = ((org.jgroups.util.UUID) jgroupsAddress).toStringLong();
             log.tracef("Local address %s, uuid %s", jgroupsAddress, uuid);
@@ -745,8 +744,7 @@ public class JGroupsTransport implements Transport {
             for (View group : jgroupsSubGroups) {
                var mapped = group.getMembers().stream()
                      .map(ExtendedUUID.class::cast)
-                     .map(JGroupsAddressCache::fromExtendedUUID)
-                     .map(Address.class::cast)
+                     .map(AddressCache::fromExtendedUUID)
                      .toList();
                subGroups.add(mapped);
             }
@@ -810,7 +808,7 @@ public class JGroupsTransport implements Transport {
          }
       });
 
-      JGroupsAddressCache.pruneAddressCache();
+      AddressCache.pruneAddressCache();
    }
 
    @Stop
@@ -927,8 +925,7 @@ public class JGroupsTransport implements Transport {
             .map(RELAY2::siteMasters)
             .map(addresses -> addresses.stream()
                   .map(ExtendedUUID.class::cast)
-                  .map(JGroupsAddressCache::fromExtendedUUID)
-                  .map(Address.class::cast)
+                  .map(AddressCache::fromExtendedUUID)
                   .toList())
             .orElse(Collections.emptyList());
    }
@@ -1187,7 +1184,7 @@ public class JGroupsTransport implements Transport {
          assert target instanceof ExtendedUUID;
          // only record non cross-site messages
          // TODO FIX: the implementation uses `toString` from the address (uses the name in the tag)
-         metricsManager.recordMessageSent(JGroupsAddressCache.fromExtendedUUID((ExtendedUUID) target), message.size(), requestId == Request.NO_REQUEST_ID);
+         metricsManager.recordMessageSent(AddressCache.fromExtendedUUID((ExtendedUUID) target), message.size(), requestId == Request.NO_REQUEST_ID);
       }
    }
 
@@ -1533,7 +1530,7 @@ public class JGroupsTransport implements Transport {
          if (org.jgroups.util.Util.isFlagSet(flags, Message.Flag.NO_RELAY)) {
             assert command instanceof ReplicableCommand;
             assert src instanceof ExtendedUUID;
-            invocationHandler.handleFromCluster(JGroupsAddressCache.fromExtendedUUID((ExtendedUUID) src), (ReplicableCommand) command, reply, deliverOrder);
+            invocationHandler.handleFromCluster(AddressCache.fromExtendedUUID((ExtendedUUID) src), (ReplicableCommand) command, reply, deliverOrder);
          } else {
             assert src instanceof SiteAddress;
             assert command instanceof XSiteRequest;
@@ -1564,7 +1561,7 @@ public class JGroupsTransport implements Transport {
             requests.addResponse(requestId, siteUUID.getSite(), response);
          } else {
             assert src instanceof ExtendedUUID;
-            requests.addResponse(requestId, JGroupsAddressCache.fromExtendedUUID((ExtendedUUID) src), response);
+            requests.addResponse(requestId, AddressCache.fromExtendedUUID((ExtendedUUID) src), response);
          }
       } catch (Throwable t) {
          CLUSTER.errorProcessingResponse(requestId, src, t);
@@ -1675,7 +1672,7 @@ public class JGroupsTransport implements Transport {
       @Override
       public org.jgroups.Address generateAddress(String name) {
          var transportCfg = configuration.transport();
-         return JGroupsAddress.randomUUID(name, version, transportCfg.siteId(), transportCfg.rackId(),
+         return Address.randomUUID(name, version, transportCfg.siteId(), transportCfg.rackId(),
                transportCfg.machineId());
       }
    }

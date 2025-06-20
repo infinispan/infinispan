@@ -20,7 +20,6 @@ import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 /**
  * {@link org.infinispan.distribution.ch.ConsistentHashFactory} implementation
@@ -305,14 +304,7 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       long nodeHash(Address address, int virtualNode) {
          // 64-bit hashes from 32-bit hashes have a non-negligible chance of collision,
          // so we try to get all 128 bits from UUID addresses
-         long[] key = new long[2];
-         if (address instanceof JGroupsAddress addr) {
-            key[0] = addr.getLeastSignificantBits();
-            key[1] = addr.getMostSignificantBits();
-         } else {
-            key[0] = address.hashCode();
-         }
-         return MurmurHash3.MurmurHash3_x64_64(key, virtualNode) & Long.MAX_VALUE;
+         return MurmurHash3.MurmurHash3_x64_64(new long[] {address.getLeastSignificantBits(), address.getMostSignificantBits()}, virtualNode) & Long.MAX_VALUE;
       }
 
       /**

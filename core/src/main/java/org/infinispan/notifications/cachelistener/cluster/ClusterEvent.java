@@ -16,7 +16,6 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
@@ -43,7 +42,7 @@ public class ClusterEvent<K, V> implements CacheEntryCreatedEvent<K, V>, CacheEn
    @ProtoField(2)
    final GlobalTransaction transaction;
 
-   @ProtoField(number = 3, javaType = JGroupsAddress.class)
+   @ProtoField(3)
    final Address origin;
 
    @ProtoField(4)
@@ -97,7 +96,7 @@ public class ClusterEvent<K, V> implements CacheEntryCreatedEvent<K, V>, CacheEn
    @ProtoFactory
    ClusterEvent(MarshallableObject<K> wrappedKey, MarshallableObject<V> wrappedValue,
                 MarshallableObject<V> wrappedOldValue, MarshallableObject<Metadata> wrappedMetadata,
-                GlobalTransaction transaction, JGroupsAddress origin, Type type, boolean commandRetried) {
+                GlobalTransaction transaction, Address origin, Type type, boolean commandRetried) {
       this(MarshallableObject.unwrap(wrappedKey), MarshallableObject.unwrap(wrappedValue),
             MarshallableObject.unwrap(wrappedOldValue), MarshallableObject.unwrap(wrappedMetadata),
             type, origin, transaction, commandRetried);

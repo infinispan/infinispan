@@ -18,7 +18,6 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
@@ -34,7 +33,7 @@ public class ConsistentHashPerfTest extends AbstractInfinispanTest {
    private List<Address> createAddresses(int numNodes) {
       List<Address> addresses = new ArrayList<>(numNodes);
       while (addresses.size() < numNodes)
-         addresses.add(JGroupsAddress.random());
+         addresses.add(Address.random());
       return addresses;
    }
 

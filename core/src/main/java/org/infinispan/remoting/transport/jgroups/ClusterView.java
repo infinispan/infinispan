@@ -22,7 +22,7 @@ public class ClusterView {
    static final int FINAL_VIEW_ID = Integer.MAX_VALUE;
 
    private final int viewId;
-   private final Map<JGroupsAddress, ExtendedUUID> view;
+   private final Map<Address, ExtendedUUID> view;
    private final boolean isCoordinator;
    private final Address coordinator;
    private final NodeVersion oldestMember;
@@ -39,10 +39,10 @@ public class ClusterView {
       } else {
          this.view = new LinkedHashMap<>();
          isCoordinator = Objects.equals(self, members.get(0));
-         coordinator = JGroupsAddressCache.fromExtendedUUID(members.get(0));
+         coordinator = AddressCache.fromExtendedUUID(members.get(0));
 
          for (ExtendedUUID member : members) {
-            var address = JGroupsAddressCache.fromExtendedUUID(member);
+            var address = AddressCache.fromExtendedUUID(member);
             view.put(address, member);
 
             var v = address.getVersion();
@@ -100,7 +100,6 @@ public class ClusterView {
    }
 
    public ExtendedUUID getAddressFromView(Address address) {
-      assert address instanceof JGroupsAddress;
       return view.get(address);
    }
 }

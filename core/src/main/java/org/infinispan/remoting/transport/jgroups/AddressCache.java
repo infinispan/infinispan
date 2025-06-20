@@ -3,27 +3,28 @@ package org.infinispan.remoting.transport.jgroups;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.infinispan.remoting.transport.Address;
 import org.jgroups.util.ExtendedUUID;
 import org.jgroups.util.NameCache;
 
 /**
- * Cache JGroupsAddress instances
+ * Cache {@link Address} instances
  *
  * @author Dan Berindei
  * @since 7.0
  */
-public class JGroupsAddressCache {
-   private static final Map<ExtendedUUID, JGroupsAddress> addressCache = new ConcurrentHashMap<>();
+public class AddressCache {
+   private static final Map<ExtendedUUID, Address> addressCache = new ConcurrentHashMap<>();
 
-   public static JGroupsAddress fromExtendedUUID(ExtendedUUID addr) {
+   public static Address fromExtendedUUID(ExtendedUUID addr) {
       // New entries are rarely added after startup, but computeIfAbsent synchronizes every time
       var existing = addressCache.get(addr);
       return existing == null ?
-            addressCache.computeIfAbsent(addr, JGroupsAddress::fromExtendedUUID) :
+            addressCache.computeIfAbsent(addr, Address::fromExtendedUUID) :
             existing;
    }
 
-   static JGroupsAddress getIfPresent(long mostSignificantBits, long leastSignificantBits) {
+   public static Address getIfPresent(long mostSignificantBits, long leastSignificantBits) {
       return addressCache.get(new ExtendedUUID(mostSignificantBits, leastSignificantBits));
    }
 

@@ -300,7 +300,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
     */
    @GuardedBy("maxNumberInvariant")
    private void resetNumberOfKeys() {
-      maxNumberOfKeys.set(address2key.keySet().size() * bufferSize);
+      maxNumberOfKeys.set(address2key.size() * bufferSize);
       existingKeyCount.set(0);
       if (log.isTraceEnabled()) {
          log.tracef("resetNumberOfKeys ends with: maxNumberOfKeys=%s, existingKeyCount=%s",

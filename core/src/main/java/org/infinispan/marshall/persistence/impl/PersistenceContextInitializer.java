@@ -15,7 +15,7 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.remoting.transport.NodeVersion;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.CacheRoleImpl;
 import org.infinispan.security.mappers.ClusterRoleMapper;
@@ -43,7 +43,7 @@ import org.infinispan.util.logging.events.EventLogLevel;
             EmbeddedMetadata.EmbeddedMaxIdleExpirableMetadata.class,
             EventLogCategory.class,
             EventLogLevel.class,
-            JGroupsAddress.class,
+            Address.class,
             MarshalledValueImpl.class,
             MetaParamsInternalMetadata.class,
             NodeVersion.class,

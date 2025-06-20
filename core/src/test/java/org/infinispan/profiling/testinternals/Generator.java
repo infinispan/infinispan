@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Random;
 
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 public class Generator {
 
@@ -39,6 +38,6 @@ public class Generator {
    }
 
    public static Address generateAddress() {
-      return JGroupsAddress.random();
+      return Address.random();
    }
 }

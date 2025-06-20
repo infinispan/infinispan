@@ -15,7 +15,6 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.NodeVersion;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.topology.CacheTopology;
 
 /**
@@ -42,7 +41,7 @@ public class TopologyUpdateCommand extends AbstractCacheControlCommand {
    final CacheTopology.Phase phase;
 
    @ProtoField(5)
-   final List<JGroupsAddress> actualMembers;
+   final List<Address> actualMembers;
 
    @ProtoField(6)
    final List<UUID> persistentUUIDs;
@@ -61,7 +60,7 @@ public class TopologyUpdateCommand extends AbstractCacheControlCommand {
 
    @ProtoFactory
    TopologyUpdateCommand(String cacheName, WrappedMessage currentCH, WrappedMessage pendingCH,
-                         CacheTopology.Phase phase, List<JGroupsAddress> actualMembers,
+                         CacheTopology.Phase phase, List<Address> actualMembers,
                          List<UUID> persistentUUIDs, AvailabilityMode availabilityMode,
                          int rebalanceId, int topologyId, int viewId) {
       this.cacheName = cacheName;
@@ -86,7 +85,7 @@ public class TopologyUpdateCommand extends AbstractCacheControlCommand {
       this.pendingCH = new WrappedMessage(cacheTopology.getPendingCH());
       this.phase = cacheTopology.getPhase();
       this.availabilityMode = availabilityMode;
-      this.actualMembers = (List<JGroupsAddress>)(List<?>) cacheTopology.getActualMembers();
+      this.actualMembers = cacheTopology.getActualMembers();
       this.persistentUUIDs = cacheTopology.getMembersPersistentUUIDs();
       this.viewId = viewId;
    }
@@ -94,7 +93,7 @@ public class TopologyUpdateCommand extends AbstractCacheControlCommand {
    @Override
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry gcr) throws Throwable {
       CacheTopology topology = new CacheTopology(topologyId, rebalanceId, getCurrentCH(), getPendingCH(), phase,
-            (List<Address>)(List<?>) actualMembers, persistentUUIDs);
+            actualMembers, persistentUUIDs);
       return gcr.getLocalTopologyManager()
             .handleTopologyUpdate(cacheName, topology, availabilityMode, viewId, origin);
    }

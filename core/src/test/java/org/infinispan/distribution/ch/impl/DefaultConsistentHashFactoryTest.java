@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.jgroups.util.ExtendedUUID;
 import org.jgroups.util.Util;
@@ -81,7 +80,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
    private Address createAddress(int index) {
       ExtendedUUID euuid = new ExtendedUUID(0, index);
       euuid.put(new byte[] { 'v' }, Util.stringToBytes("0.0.0"));
-      return JGroupsAddress.fromExtendedUUID(euuid);
+      return Address.fromExtendedUUID(euuid);
    }
 
    private void testConsistentHashModifications(ConsistentHashFactory<DefaultConsistentHash> chf,
@@ -388,10 +387,10 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
 
    public void testNullCapacityFactors() {
       ConsistentHashFactory<DefaultConsistentHash> chf = createConsistentHashFactory();
-      Address A = JGroupsAddress.random("A");
-      Address B = JGroupsAddress.random("B");
-      Address C = JGroupsAddress.random("C");
-      Address D = JGroupsAddress.random("D");
+      Address A = Address.random("A");
+      Address B = Address.random("B");
+      Address C = Address.random("C");
+      Address D = Address.random("D");
       Map<Address, Float> cf = new HashMap<>();
       cf.put(A, 1f);
       cf.put(B, 1f);
@@ -423,10 +422,10 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
 
    public void testDifferentCapacityFactors() {
       ConsistentHashFactory<DefaultConsistentHash> chf = createConsistentHashFactory();
-      Address A = JGroupsAddress.random("A");
-      Address B = JGroupsAddress.random("B");
-      Address C = JGroupsAddress.random("C");
-      Address D = JGroupsAddress.random("D");
+      Address A = Address.random("A");
+      Address B = Address.random("B");
+      Address C = Address.random("C");
+      Address D = Address.random("D");
       Map<Address, Float> cf = new HashMap<>();
       cf.put(A, 1f);
       cf.put(B, 1f);

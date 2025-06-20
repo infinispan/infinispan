@@ -10,7 +10,6 @@ import org.infinispan.distribution.ch.impl.OwnershipStatistics;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.testng.annotations.Test;
 
 /**
@@ -25,10 +24,10 @@ public class ReplicatedConsistentHashFactoryTest {
       int[] testSegments = { 1, 2, 4, 8, 16, 31, 32, 33, 67, 128};
 
        ReplicatedConsistentHashFactory factory = ReplicatedConsistentHashFactory.getInstance();
-      Address A = JGroupsAddress.random("A");
-      Address B = JGroupsAddress.random("B");
-      Address C = JGroupsAddress.random("C");
-      Address D = JGroupsAddress.random("D");
+      Address A = Address.random("A");
+      Address B = Address.random("B");
+      Address C = Address.random("C");
+      Address D = Address.random("D");
       List<Address> a = Arrays.asList(A);
       List<Address> ab = Arrays.asList(A, B);
       List<Address> abc = Arrays.asList(A, B, C);

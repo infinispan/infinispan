@@ -25,7 +25,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.LocalTopologyManager;
@@ -112,7 +112,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
       // Recreate the cluster
       createStatefulCacheManagers(false, extraneousNodePosition, reverse);
       if(reverse) {
-         Map<JGroupsAddress, UUID> reversed = new LinkedHashMap<>();
+         Map<Address, UUID> reversed = new LinkedHashMap<>();
          reverseLinkedMap(addressMappings.entrySet().iterator(), reversed);
          addressMappings = reversed;
       }
@@ -156,7 +156,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
       }
    }
 
-   protected void assertHealthyCluster(Map<JGroupsAddress, UUID> addressMappings, ConsistentHash oldConsistentHash) throws Throwable {
+   protected void assertHealthyCluster(Map<Address, UUID> addressMappings, ConsistentHash oldConsistentHash) throws Throwable {
       // Healthy cluster
       waitForClusterToForm(CACHE_NAME);
 
@@ -190,12 +190,12 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
       }
    }
 
-   void assertEquivalent(Map<JGroupsAddress, UUID> addressMappings, ConsistentHash oldConsistentHash,
+   void assertEquivalent(Map<Address, UUID> addressMappings, ConsistentHash oldConsistentHash,
                          ConsistentHash newConsistentHash, PersistentUUIDManager persistentUUIDManager) {
       assertTrue(isEquivalent(addressMappings, oldConsistentHash, newConsistentHash, persistentUUIDManager));
    }
 
-   void checkClusterRestartedCorrectly(Map<JGroupsAddress, UUID> addressMappings) throws Exception {
+   void checkClusterRestartedCorrectly(Map<Address, UUID> addressMappings) throws Exception {
       var addressIterator = addressMappings.entrySet().iterator();
       Set<UUID> uuids = new HashSet<>();
       for (int i = 0; i < cacheManagers.size(); i++) {
@@ -222,15 +222,15 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
       }
    }
 
-   Map<JGroupsAddress, UUID> createInitialCluster() {
+   Map<Address, UUID> createInitialCluster() {
       waitForClusterToForm(CACHE_NAME);
-      Map<JGroupsAddress, UUID> addressMappings = new LinkedHashMap<>();
+      Map<Address, UUID> addressMappings = new LinkedHashMap<>();
 
       for (int i = 0; i < getClusterSize(); i++) {
          LocalTopologyManager ltm = TestingUtil.extractGlobalComponent(manager(i), LocalTopologyManager.class);
          var uuid = ltm.getPersistentUUID();
          assertNotNull(uuid);
-         addressMappings.put((JGroupsAddress) manager(i).getAddress(), uuid);
+         addressMappings.put(manager(i).getAddress(), uuid);
       }
 
       fillData();
@@ -246,12 +246,12 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
       }
    }
 
-   private boolean isEquivalent(Map<JGroupsAddress, UUID> addressMapping, ConsistentHash oldConsistentHash, ConsistentHash newConsistentHash, PersistentUUIDManager persistentUUIDManager) {
+   private boolean isEquivalent(Map<Address, UUID> addressMapping, ConsistentHash oldConsistentHash, ConsistentHash newConsistentHash, PersistentUUIDManager persistentUUIDManager) {
       if (oldConsistentHash.getNumSegments() != newConsistentHash.getNumSegments()) return false;
       for (int i = 0; i < oldConsistentHash.getMembers().size(); i++) {
-         JGroupsAddress oldAddress = (JGroupsAddress) oldConsistentHash.getMembers().get(i);
-         JGroupsAddress remappedOldAddress = (JGroupsAddress) persistentUUIDManager.getAddress(addressMapping.get(oldAddress));
-         JGroupsAddress newAddress = (JGroupsAddress) newConsistentHash.getMembers().get(i);
+         Address oldAddress = oldConsistentHash.getMembers().get(i);
+         Address remappedOldAddress = persistentUUIDManager.getAddress(addressMapping.get(oldAddress));
+         Address newAddress = newConsistentHash.getMembers().get(i);
          if (!remappedOldAddress.equals(newAddress)) return false;
          Set<Integer> oldSegmentsForOwner = oldConsistentHash.getSegmentsForOwner(oldAddress);
          Set<Integer> newSegmentsForOwner = newConsistentHash.getSegmentsForOwner(newAddress);
@@ -261,12 +261,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
       return true;
    }
 
-   private void checkStateDirNotEmpty(String location) {
-      File[] listFiles = new File(location).listFiles();
-      assertTrue(listFiles.length > 0);
-   }
-
-   private void reverseLinkedMap(Iterator<Map.Entry<JGroupsAddress, UUID>> iterator, Map<JGroupsAddress, UUID> reversed) {
+   private void reverseLinkedMap(Iterator<Map.Entry<Address, UUID>> iterator, Map<Address, UUID> reversed) {
       if (iterator.hasNext()) {
          var entry = iterator.next();
          reverseLinkedMap(iterator, reversed);

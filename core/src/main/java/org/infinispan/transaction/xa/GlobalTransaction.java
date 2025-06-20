@@ -11,8 +11,6 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-
 
 /**
  * Uniquely identifies a transaction that spans all JVMs in a cluster. This is used when replicating all modifications
@@ -31,7 +29,7 @@ public class GlobalTransaction implements Cloneable {
    private static final AtomicLong sid = new AtomicLong(0);
 
    private long id;
-   private JGroupsAddress addr;
+   private Address addr;
    private int hash_code = -1;  // in the worst case, hashCode() returns 0, then increases, so we're safe here
    private boolean remote = false;
    private final boolean clientTx;
@@ -43,15 +41,14 @@ public class GlobalTransaction implements Cloneable {
    }
 
    public GlobalTransaction(Address addr, boolean remote, boolean clientTx) {
-      assert addr == null || addr instanceof JGroupsAddress;
       this.id = sid.incrementAndGet();
-      this.addr = (JGroupsAddress) addr;
+      this.addr = addr;
       this.remote = remote;
       this.clientTx = clientTx;
    }
 
    @ProtoFactory
-   GlobalTransaction(long id, JGroupsAddress address, XidImpl xid, long internalId, boolean clientTransaction) {
+   GlobalTransaction(long id, Address address, XidImpl xid, long internalId, boolean clientTransaction) {
       this.id = id;
       this.addr = address;
       this.xid = xid;
@@ -59,7 +56,7 @@ public class GlobalTransaction implements Cloneable {
       this.clientTx = clientTransaction;
    }
 
-   @ProtoField(number = 1, javaType = JGroupsAddress.class)
+   @ProtoField(1)
    public Address getAddress() {
       return addr;
    }
@@ -104,10 +101,9 @@ public class GlobalTransaction implements Cloneable {
    public boolean equals(Object other) {
       if (this == other)
          return true;
-      if (!(other instanceof GlobalTransaction))
+      if (!(other instanceof GlobalTransaction otherGtx))
          return false;
 
-      GlobalTransaction otherGtx = (GlobalTransaction) other;
       return id == otherGtx.id &&
             Objects.equals(addr, otherGtx.addr);
    }
@@ -124,8 +120,7 @@ public class GlobalTransaction implements Cloneable {
    }
 
    public void setAddress(Address address) {
-      assert address == null || address instanceof JGroupsAddress;
-      this.addr = (JGroupsAddress) address;
+      this.addr = address;
    }
 
    public void setXid(Xid xid) {

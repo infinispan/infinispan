@@ -9,21 +9,17 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+
 
 @ProtoTypeId(ProtoStreamTypeIds.SERVER_HR_CHECK_ADDRESS_TASK)
 class CheckAddressTask implements Function<EmbeddedCacheManager, Boolean> {
    final String cacheName;
    final Address clusterAddress;
 
+   @ProtoFactory
    CheckAddressTask(String cacheName, Address clusterAddress) {
       this.cacheName = cacheName;
       this.clusterAddress = clusterAddress;
-   }
-
-   @ProtoFactory
-   CheckAddressTask(String cacheName, JGroupsAddress address) {
-      this(cacheName, (Address) address);
    }
 
    @ProtoField(1)
@@ -31,8 +27,8 @@ class CheckAddressTask implements Function<EmbeddedCacheManager, Boolean> {
       return cacheName;
    }
 
-   @ProtoField(number = 2, javaType = JGroupsAddress.class)
-   Address getAddress() {
+   @ProtoField(2)
+   Address getClusterAddress() {
       return clusterAddress;
    }
 
