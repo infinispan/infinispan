@@ -1,8 +1,6 @@
 package org.infinispan.server.persistence;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -26,56 +24,6 @@ public class PooledConnectionOperations {
 
    @ParameterizedTest
    @ArgumentsSource(Common.DatabaseProvider.class)
-   public void testTwoCachesSameCacheStore(Database database) {
-      JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.DIST_SYNC, database, false, false);
-      RemoteCache<String, String> cache1 = SERVERS.hotrod()
-              .withClientConfiguration(database.getHotrodClientProperties())
-              .withServerConfiguration(jdbcUtil.getConfigurationBuilder()).withQualifier("1").create();
-      RemoteCache<String, String> cache2 = SERVERS.hotrod()
-              .withClientConfiguration(database.getHotrodClientProperties())
-              .withServerConfiguration(jdbcUtil.getConfigurationBuilder()).withQualifier("2").create();
-
-      cache1.put("k1", "v1");
-      String firstK1 = cache1.get("k1");
-      assertEquals("v1", firstK1);
-      assertNull(cache2.get("k1"));
-
-      cache2.put("k2", "v2");
-      assertEquals("v2", cache2.get("k2"));
-      assertNull(cache1.get("k2"));
-
-      assertCleanCacheAndStore(cache1);
-      assertCleanCacheAndStore(cache2);
-   }
-
-   @ParameterizedTest
-   @ArgumentsSource(Common.DatabaseProvider.class)
-   public void testPutGetRemove(Database database) {
-      JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.DIST_SYNC, database, false, false);
-      RemoteCache<String, String> cache = SERVERS.hotrod()
-              .withClientConfiguration(database.getHotrodClientProperties())
-              .withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
-
-      cache.put("k1", "v1");
-      cache.put("k2", "v2");
-
-      assertNotNull(cache.get("k1"));
-      assertNotNull(cache.get("k2"));
-
-      cache.stop();
-      cache.start();
-
-      assertNotNull(cache.get("k1"));
-      assertNotNull(cache.get("k2"));
-      assertEquals("v1", cache.get("k1"));
-      assertEquals("v2", cache.get("k2"));
-      cache.remove("k1");
-      assertNull(cache.get("k1"));
-      assertCleanCacheAndStore(cache);
-   }
-
-   @ParameterizedTest
-   @ArgumentsSource(Common.DatabaseProvider.class)
    public void testPreload(Database database) throws Exception {
       JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, false, true)
               .setLockingConfigurations();
@@ -85,8 +33,8 @@ public class PooledConnectionOperations {
       cache.put("k1", "v1");
       cache.put("k2", "v2");
 
-      SERVERS.getServerDriver().stop(0);
-      SERVERS.getServerDriver().restart(0);
+      SERVERS.getServerDriver().stopCluster();
+      SERVERS.getServerDriver().restartCluster();
 
       // test preload==true, entries should be immediately in the cache after restart
       assertEquals(2, cache.withFlags(Flag.SKIP_CACHE_LOAD).size());
@@ -111,8 +59,8 @@ public class PooledConnectionOperations {
       //now k3 is evicted and stored in store
       assertEquals(2, cache.withFlags(Flag.SKIP_CACHE_LOAD).size());
 
-     SERVERS.getServerDriver().stop(0);
-     SERVERS.getServerDriver().restart(0); //soft stop should store all entries from cache to store
+     SERVERS.getServerDriver().stopCluster();
+     SERVERS.getServerDriver().restartCluster(); //soft stop should store all entries from cache to store
 
      // test preload==false
      assertEquals(0, cache.withFlags(Flag.SKIP_CACHE_LOAD).size());
@@ -122,7 +70,7 @@ public class PooledConnectionOperations {
       assertCleanCacheAndStore(cache);
    }
 
-   protected void assertCleanCacheAndStore(RemoteCache cache) {
+   static void assertCleanCacheAndStore(RemoteCache<?, ?> cache) {
       cache.clear();
       assertEquals(0, cache.size());
    }

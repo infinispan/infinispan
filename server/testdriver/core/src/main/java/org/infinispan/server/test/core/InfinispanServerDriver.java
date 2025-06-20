@@ -146,6 +146,27 @@ public interface InfinispanServerDriver {
    void restartCluster();
 
    /**
+    * Stop all nodes in the cluster.
+    */
+   default void stopCluster() {
+      for (int i = 0; i < getConfiguration().numServers(); i++) {
+         stop(i);
+      }
+   }
+
+   /**
+    * Forcefully stops all nodes in the cluster.
+    * <p>
+    * Equivalent of submitting a -SIGKILL to all processes in order.
+    * </p>
+    */
+   default void killCluster() {
+      for (int i = 0; i < getConfiguration().numServers(); i++) {
+         kill(i);
+      }
+   }
+
+   /**
     * Returns a {@link MBeanServerConnection} to the specified server
     *
     * @param server the index of the server

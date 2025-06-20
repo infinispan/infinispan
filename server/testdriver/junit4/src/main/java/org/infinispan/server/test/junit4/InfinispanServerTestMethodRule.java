@@ -1,5 +1,6 @@
 package org.infinispan.server.test.junit4;
 
+import java.net.InetAddress;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -69,6 +70,11 @@ public class InfinispanServerTestMethodRule implements TestRule, TestClientDrive
    @Override
    public CounterManager getCounterManager() {
       return testClient.getCounterManager();
+   }
+
+   @Override
+   public InetAddress getServerAddress(int offset) {
+      return testClient.getServerDriver().getServerAddress(offset);
    }
 
    @Override

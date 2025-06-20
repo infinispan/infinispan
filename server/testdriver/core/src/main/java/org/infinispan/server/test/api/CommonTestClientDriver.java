@@ -14,4 +14,10 @@ public interface CommonTestClientDriver<T extends CommonTestClientDriver<T>> {
    T withUser(TestUser testUser);
 
    T withUser(AuthorizationPermission permission);
+
+   T withQualifiers(Object... qualifiers);
+
+   default T withQualifier(String qualifier) {
+      return withQualifiers(qualifier);
+   }
 }
