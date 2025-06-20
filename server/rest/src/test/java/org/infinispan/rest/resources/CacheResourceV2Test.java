@@ -759,17 +759,20 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       RestResponse response = join(adminClient.cache("proto").details());
       Json document = Json.read(response.body());
       assertThat(response).isOk();
+      assertThat(document.at("name").asString()).isEqualTo("proto");
+      assertThat(document.at("status").asString()).isEqualTo("RUNNING");
+      assertThat(document.at("type").asString()).isEqualTo("distributed-cache");
       assertThat(document.at("stats")).isNotNull();
       assertThat(document.at("size")).isNotNull();
       assertThat(document.at("configuration")).isNotNull();
-      assertThat(document.at("rehash_in_progress")).isNotNull();
-      assertThat(document.at("persistent")).isNotNull();
-      assertThat(document.at("bounded")).isNotNull();
-      assertThat(document.at("indexed")).isNotNull();
-      assertThat(document.at("has_remote_backup")).isNotNull();
-      assertThat(document.at("secured")).isNotNull();
-      assertThat(document.at("tracing")).isNotNull();
-      assertThat(document.at("indexing_in_progress")).isNotNull();
+      assertThat(document.at("rehash_in_progress").asBoolean()).isFalse();
+      assertThat(document.at("persistent").asBoolean()).isFalse();
+      assertThat(document.at("bounded").asBoolean()).isFalse();
+      assertThat(document.at("indexed").asBoolean()).isFalse();
+      assertThat(document.at("has_remote_backup").asBoolean()).isFalse();
+      assertThat(document.at("secured").asBoolean()).isFalse();
+      assertThat(document.at("tracing").asBoolean()).isFalse();
+      assertThat(document.at("indexing_in_progress").asBoolean()).isFalse();
       assertThat(document.at("aliases")).isNotNull();
       assertThat(document.at("queryable")).isNotNull();
       assertThat(document.at("rebalancing_enabled")).isNotNull();
@@ -792,6 +795,9 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
          assertThat(document.at("storage_type")).isNull();
          assertThat(document.at("max_size")).isNull();
          assertThat(document.at("max_size_bytes")).isNull();
+         assertThat(document.at("name").asString()).isEqualTo("default");
+         assertThat(document.at("status").asString()).isEqualTo("RUNNING");
+         assertThat(document.at("type").asString()).isEqualTo("distributed-cache");
       }
 
       response = join(client.cache("proto").details());
