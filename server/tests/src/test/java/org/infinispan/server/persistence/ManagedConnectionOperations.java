@@ -11,19 +11,19 @@ import org.infinispan.cli.impl.AeshDelegatingShell;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
+import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.core.AeshTestConnection;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.persistence.Database;
-import org.infinispan.server.test.junit5.InfinispanServerExtension;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.infinispan.server.test.junit5.InfinispanServer;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 @org.infinispan.server.test.core.tags.Database
 public class ManagedConnectionOperations {
 
-   @RegisterExtension
-   public static InfinispanServerExtension SERVERS = PersistenceIT.SERVERS;
+   @InfinispanServer(PersistenceIT.class)
+   public static TestClientDriver SERVERS;
 
    private org.infinispan.configuration.cache.ConfigurationBuilder createConfigurationBuilder(Database database) {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
@@ -94,7 +94,7 @@ public class ManagedConnectionOperations {
    public void testDataSourceCLI(Database database) {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, new Properties());
-         terminal.send("connect " + SERVERS.getServerDriver().getServerAddress(0).getHostAddress() + ":11222");
+         terminal.send("connect " + SERVERS.getServerAddress(0).getHostAddress() + ":11222");
          terminal.assertContains("//containers/default]>");
          terminal.clear();
          terminal.send("server datasource ls");

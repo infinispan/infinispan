@@ -11,4 +11,10 @@ public interface CommonTestClientDriver<T extends CommonTestClientDriver<T>> {
    T withCacheMode(CacheMode mode);
 
    T withUser(TestUser testUser);
+
+   T withQualifiers(Object... qualifiers);
+
+   default T withQualifier(String qualifier) {
+      return withQualifiers(qualifier);
+   }
 }
