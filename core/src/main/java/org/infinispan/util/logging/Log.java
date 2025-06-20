@@ -2418,6 +2418,6 @@ public interface Log extends BasicLogger {
    void failedToInitializeGlobalRegistry(@Cause Throwable t);
 
    @LogMessage(level = WARN)
-   @Message(value = "View event rejected. The installed view id '%s' is newer than received view: %s", id = 711)
+   @Message(value = "View event rejected. The installed view id '%s' is newer than the received view: %s", id = 711)
    void rejectOutdatedView(int viewId, String newView);
 }
