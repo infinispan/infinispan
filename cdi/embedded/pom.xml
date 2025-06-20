@@ -88,6 +88,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <reportsDirectory>${project.build.directory}/ignored-surefire-reports</reportsDirectory>
                     <reuseForks>true</reuseForks>
                     <forkCount>1</forkCount>
                     <parallel>none</parallel>

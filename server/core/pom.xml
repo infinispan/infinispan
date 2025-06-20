@@ -189,6 +189,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
+               <reportsDirectory>${project.build.directory}/ignored-surefire-reports</reportsDirectory>
                <dependenciesToScan>
                   <!-- TestNGSuiteChecksTest -->
                   <dependency>org.infinispan:infinispan-commons-test</dependency>
