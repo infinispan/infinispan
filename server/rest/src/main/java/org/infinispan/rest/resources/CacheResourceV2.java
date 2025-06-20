@@ -1036,6 +1036,9 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       fullDetail.mode = configuration.clustering().cacheModeString();
       fullDetail.tracing = globalTracingEnabled && configuration.tracing().enabled();
       fullDetail.aliases = configuration.aliases();
+      fullDetail.name = cache.getName();
+      fullDetail.status = cache.getStatus().name();
+      fullDetail.type = configuration.clustering().cacheMode().toCacheType();
       return addEntityAsJson(fullDetail.toJson(), invocationHelper.newResponse(request), pretty).build();
    }
 
