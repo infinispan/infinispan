@@ -1,0 +1,8 @@
+{
+  "endpoints": [
+    {
+      "socket-binding": "default",
+      "security-realm": "default"
+    }
+  ]
+}
