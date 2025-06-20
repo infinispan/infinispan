@@ -266,6 +266,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          this.joinInfo = joinInfo;
       }
 
+      if (isGracefulStopped())
+         return false;
+
       HashMap<Address, Float> newCapacityFactors = new HashMap<>(capacityFactors);
       newCapacityFactors.put(joiner, joinInfo.getCapacityFactor());
       capacityFactors = Immutables.immutableMapWrap(newCapacityFactors);
@@ -408,8 +411,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    public void doHandleClusterView(int viewId) {
       acquireLock();
       try {
-         // TODO Clean up ClusterCacheStatus instances once they no longer have any members
-         if (currentTopology == null)
+         if (currentTopology == null || isGracefulStopped())
             return;
 
          List<Address> newClusterMembers = transport.getMembers();
@@ -756,7 +758,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          boolean memberJoined = addMember(joiner, joinInfo);
          if (!memberJoined) {
             if (log.isTraceEnabled()) log.tracef("Trying to add node %s to cache %s, but it is already a member: " +
-                                                 "members = %s, joiners = %s", joiner, cacheName, expectedMembers, joiners);
+                                                 "members = %s, joiners = %s, availability = %s", joiner, cacheName, expectedMembers, joiners, availabilityMode);
             return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode, expectedMembers);
          }
          final List<Address> current = Collections.unmodifiableList(expectedMembers);
@@ -1137,6 +1139,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       try {
          if (status == ComponentStatus.RUNNING) {
             status = ComponentStatus.STOPPING;
+            availabilityMode = AvailabilityMode.STOPPED;
             CompletionStage<Void> cs = clusterTopologyManager.setRebalancingEnabled(cacheName, false);
             return clusterTopologyManager.broadcastShutdownCache(cacheName)
                     .thenCompose(ignore -> cs)
@@ -1286,6 +1289,10 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       } finally {
          releaseLock();
       }
+   }
+
+   public boolean isGracefulStopped() {
+      return availabilityMode == AvailabilityMode.STOPPED || status.isStopping() || status.isTerminated();
    }
 
    private class ConflictResolution {

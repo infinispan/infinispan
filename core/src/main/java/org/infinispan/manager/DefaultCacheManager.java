@@ -928,6 +928,15 @@ public class DefaultCacheManager extends InternalCacheManager {
       internalStop();
    }
 
+   @Override
+   public void stopCache(String cacheName) {
+      try {
+         terminate(cacheName);
+      } catch (Throwable t) {
+         CONTAINER.componentFailedToStop(t);
+      }
+   }
+
    private void internalStop() {
       lifecycleLock.lock();
       String identifierString = identifierString();
@@ -985,11 +994,7 @@ public class DefaultCacheManager extends InternalCacheManager {
       log.tracef("Cache stop order: %s", cachesToStop);
 
       for (String cacheName : cachesToStop) {
-         try {
-            terminate(cacheName);
-         } catch (Throwable t) {
-            CONTAINER.componentFailedToStop(t);
-         }
+         stopCache(cacheName);
       }
    }
 
