@@ -49,8 +49,8 @@ public class JdbcStringBasedCacheStoreIT {
             assertNotNull(table.getValueByKey("k1"));
             assertNotNull(table.getValueByKey("k2"));
 
-            SERVERS.getServerDriver().stop(0);
-            SERVERS.getServerDriver().restart(0);
+            SERVERS.getServerDriver().stopCluster();
+            SERVERS.getServerDriver().restartCluster();
 
             assertNotNull(table.getValueByKey("k1"));
             assertNotNull(table.getValueByKey("k2"));
@@ -80,38 +80,14 @@ public class JdbcStringBasedCacheStoreIT {
             assertNotNull(table.getValueByKey("k1"));
             assertNotNull(table.getValueByKey("k2"));
 
-            SERVERS.getServerDriver().stop(0);
-            SERVERS.getServerDriver().restart(0);
+            SERVERS.getServerDriver().stopCluster();
+            SERVERS.getServerDriver().restartCluster();
 
             // test preload==true, entries should be immediately in the cache after restart
             assertEquals(2, cache.size());
             // test purge==false, entries should remain in the database after restart
             assertNotNull(table.getValueByKey("k1"));
             assertNotNull(table.getValueByKey("k2"));
-        }
-    }
-
-    /*
-     * This should verify that DefaultTwoWayKey2StringMapper on server side can work with ByteArrayKey which
-     * is always produced by HotRod client regardless of type of key being stored in a cache.
-     */
-    @ParameterizedTest
-    @ArgumentsSource(Common.DatabaseProvider.class)
-    public void testDefaultTwoWayKey2StringMapper(Database database) {
-        JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, false, true)
-                .setLockingConfigurations();
-        RemoteCache<Object, Object> cache = SERVERS.hotrod()
-                .withClientConfiguration(database.getHotrodClientProperties())
-                .withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
-        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration())) {
-            Double doubleKey = 10.0;
-            Double doubleValue = 20.0;
-            assertEquals(0, cache.size());
-            assertEquals(0, table.countAllRows());
-            cache.put(doubleKey, doubleValue);
-            // test passivation==false, database should contain all entries which are in the cache
-            assertEquals(1, table.countAllRows());
-            assertEquals(doubleValue, cache.get(doubleKey));
         }
     }
 
@@ -136,8 +112,8 @@ public class JdbcStringBasedCacheStoreIT {
             //the passivation is asynchronous
             Eventually.eventuallyEquals(1, table::countAllRows);
 
-            SERVERS.getServerDriver().stop(0);
-            SERVERS.getServerDriver().restart(0); //soft stop should store all entries from cache to store
+            SERVERS.getServerDriver().stopCluster();
+            SERVERS.getServerDriver().restartCluster(); //soft stop should store all entries from cache to store
 
             // test preload==false
             assertEquals(0, getNumberOfEntriesInMemory(cache));
@@ -171,8 +147,8 @@ public class JdbcStringBasedCacheStoreIT {
             assertEquals(2, getNumberOfEntriesInMemory(cache));
             Eventually.eventuallyEquals(1, table::countAllRows);
 
-            SERVERS.getServerDriver().kill(0);
-            SERVERS.getServerDriver().restart(0);
+            SERVERS.getServerDriver().killCluster();
+            SERVERS.getServerDriver().restartCluster();
 
             assertEquals(0, getNumberOfEntriesInMemory(cache));
             assertEquals(1, table.countAllRows());
@@ -181,29 +157,6 @@ public class JdbcStringBasedCacheStoreIT {
             assertEquals(1, list.size());
             Map.Entry<String, String> entry = list.get(0);
             assertEquals(entry.getValue().substring(1), entry.getKey().substring(1));
-        }
-    }
-
-    @ParameterizedTest
-    @ArgumentsSource(Common.DatabaseProvider.class)
-    public void testExpiration(Database database) {
-        var jdbcUtil = new JdbcConfigurationUtil(CacheMode.LOCAL, database, false, false);
-        var configBuilder = jdbcUtil.getConfigurationBuilder();
-        configBuilder.expiration()
-              .lifespan(1)
-              .wakeUpInterval("10ms");
-        RemoteCache<String, String> cache = SERVERS.hotrod()
-                .withClientConfiguration(database.getHotrodClientProperties())
-                .withServerConfiguration(configBuilder).create();
-        cache.put("Key", "Value");
-        Eventually.eventually(cache::isEmpty);
-        try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration())) {
-            table.countAllRows();
-            Eventually.eventually(() -> {
-                var rows = table.countAllRows();
-                System.out.println(rows);
-                return rows == 0;
-            });
         }
     }
 

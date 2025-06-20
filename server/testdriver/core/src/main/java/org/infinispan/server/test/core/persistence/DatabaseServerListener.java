@@ -1,8 +1,12 @@
 package org.infinispan.server.test.core.persistence;
 
+import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_PROPERTIES;
+import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_TYPES;
+
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -10,9 +14,6 @@ import java.util.Properties;
 import org.infinispan.server.test.core.InfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerListener;
 import org.jboss.logging.Logger;
-
-import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_PROPERTIES;
-import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_TYPES;
 
 /**
  * @author Gustavo Lira &lt;glira@redhat.com&gt;
@@ -22,28 +23,31 @@ public class DatabaseServerListener implements InfinispanServerListener {
    private static final Logger log = Logger.getLogger(DatabaseServerListener.class);
    private static final String DATABASE_PROPERTIES = "org.infinispan.server.test.database.%s.%s";
    private final String[] databaseTypes;
-   public Map<String, Database> databases;
+   public final Map<String, Database> databases;
 
    public DatabaseServerListener(String... databaseTypes) {
       String property = System.getProperty(INFINISPAN_TEST_CONTAINER_DATABASE_TYPES);
       if (property != null) {
          this.databaseTypes = property.split(",");
-         log.infof("Overriding databases: %s", this.databaseTypes);
+         log.infof("Overriding databases: %s", Arrays.toString(this.databaseTypes));
       } else {
          this.databaseTypes = databaseTypes;
       }
+      this.databases = new LinkedHashMap<>(databaseTypes.length);
    }
 
    @Override
    public void before(InfinispanServerDriver driver) {
-      databases = new LinkedHashMap<>(databaseTypes.length);
       for (String dbType : databaseTypes) {
-         Database database = initDatabase(dbType);
-         log.infof("Starting database: %s", database.getType());
-         database.start();
-         log.infof("Started database: %s", database.getType());
-         if (databases.putIfAbsent(dbType, database) != null) {
-            throw new RuntimeException("Duplicate database type " + dbType);
+         Database database = databases.get(dbType);
+         if (database == null) {
+            database = initDatabase(dbType);
+            log.infof("Starting database: %s", database.getType());
+            database.start();
+            log.infof("Started database: %s", database.getType());
+            if (databases.putIfAbsent(dbType, database) != null) {
+               throw new RuntimeException("Duplicate database type " + dbType);
+            }
          }
          addDbProperty(driver, database,"jdbcUrl", database.jdbcUrl());
          addDbProperty(driver, database,"username", database.username());
@@ -56,6 +60,7 @@ public class DatabaseServerListener implements InfinispanServerListener {
    public void after(InfinispanServerDriver driver) {
       log.info("Stopping databases");
       databases.values().forEach(Database::stop);
+      databases.clear();
       log.info("Stopped databases");
    }
 

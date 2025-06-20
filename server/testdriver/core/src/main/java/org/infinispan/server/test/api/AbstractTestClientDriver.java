@@ -81,10 +81,7 @@ abstract class AbstractTestClientDriver<S extends AbstractTestClientDriver<S>> i
       return self();
    }
 
-   public S withQualifier(String qualifier) {
-      return withQualifiers(qualifier);
-   }
-
+   @Override
    public S withQualifiers(Object... qualifiers) {
       this.qualifiers = qualifiers;
       return self();

@@ -25,6 +25,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.server.Server;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
+import org.infinispan.server.test.core.InfinispanServerListener;
 import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.ServerConfigBuilder;
 import org.infinispan.server.test.core.ServerRunMode;
@@ -208,7 +209,7 @@ public class RollingUpgradeHandler {
          handler.fromDriver = handler.startNode(false, configuration.nodeCount(), configuration.nodeCount(),
                handler.clusterName, configuration.jgroupsProtocol(), null,configuration.serverConfigurationFile(),
                configuration.defaultServerConfigurationFile(), configuration.customArtifacts(),
-               configuration.mavenArtifacts(), configuration.properties());
+               configuration.mavenArtifacts(), configuration.properties(), configuration.listeners());
          handler.currentState = STATE.OLD_RUNNING;
 
          configuration.initialHandler().accept(handler);
@@ -249,7 +250,7 @@ public class RollingUpgradeHandler {
          toDriver = startNode(true, 1, nodeCount, site1Name,
                configuration.jgroupsProtocol(), volumeId, configuration.serverConfigurationFile(),
                configuration.defaultServerConfigurationFile(), configuration.customArtifacts(),
-               configuration.mavenArtifacts(), configuration.properties());
+               configuration.mavenArtifacts(), configuration.properties(), configuration.listeners());
       } else {
          toDriver.containerInfinispanServerDriver.startAdditionalServer(nodeCount, volumeId);
       }
@@ -359,9 +360,10 @@ public class RollingUpgradeHandler {
    }
 
    private ConfigAndDriver startNode(boolean toOrFrom, int nodeCount, int expectedCount,
-                                                     String clusterName, String protocol, String volumeId,
-                                                     String serverConfigurationFile, boolean defaultServerConfigurationFile,
-                                                     JavaArchive[] artifacts, String[] mavenArtifacts, Properties properties) {
+                                     String clusterName, String protocol, String volumeId,
+                                     String serverConfigurationFile, boolean defaultServerConfigurationFile,
+                                     JavaArchive[] artifacts, String[] mavenArtifacts, Properties properties,
+                                     List<InfinispanServerListener> listeners) {
       ServerConfigBuilder builder = new ServerConfigBuilder(serverConfigurationFile, defaultServerConfigurationFile);
       builder.runMode(ServerRunMode.CONTAINER);
       builder.numServers(nodeCount);
@@ -375,6 +377,7 @@ public class RollingUpgradeHandler {
       builder.artifacts(artifacts);
       builder.mavenArtifacts(mavenArtifacts);
       builder.property(Server.INFINISPAN_CLUSTER_STACK, protocol);
+      listeners.forEach(builder::addListener);
       // If the nodeCount was the same as expected it means it is the start of a fresh cluster. In that case we don't
       // need the join timeout as there shouldn't be any existing nodes in the cluster and don't wait
       builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_REQUIRE_JOIN_TIMEOUT, Boolean.toString(nodeCount != expectedCount));
@@ -407,6 +410,9 @@ public class RollingUpgradeHandler {
 
       ContainerInfinispanServerDriver driver = (ContainerInfinispanServerDriver) ServerRunMode.CONTAINER.newDriver(config);
       driver.prepare(versionToUse);
+      // Invoke listener before starting any container.
+      // Listener might add extra runtime properties.
+      listeners.forEach(l -> l.before(driver));
       if (volumeId != null) {
          if (nodeCount != 1) {
             throw new IllegalArgumentException("nodeCount " + nodeCount + " must be 1 when a volumeId is passed " + volumeId);

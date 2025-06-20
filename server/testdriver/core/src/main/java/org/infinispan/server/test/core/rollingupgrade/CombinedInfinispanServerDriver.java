@@ -147,6 +147,16 @@ public class CombinedInfinispanServerDriver implements InfinispanServerDriver {
    }
 
    @Override
+   public void stopCluster() {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void killCluster() {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
    public String syncFilesFromServer(int server, String dir) {
       throw new UnsupportedOperationException();
    }
