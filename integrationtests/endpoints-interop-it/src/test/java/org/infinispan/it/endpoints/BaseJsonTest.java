@@ -74,6 +74,7 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       restServer = new RestServer();
       restServer.setServerManagement(new DummyServerManagement(), true);
       restServer.start(builder.build(), cacheManager);
+      restServer.postStart();
       restClient = RestClient.forConfiguration(new RestClientConfigurationBuilder().addServer().host(restServer.getHost()).port(restServer.getPort()).build());
       restCacheClient = restClient.cache(CACHE_NAME);
       hotRodServer = startHotRodServer(cacheManager);

@@ -14,6 +14,7 @@ import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.server.core.dataconversion.TranscodingException;
@@ -233,4 +234,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "For better performance, it is recommended to use Netty's default thread factory. Current: %s", id = 5065)
    void useNettyThreadFactory(Class<?> clazz);
+
+   @Message(value = "Cache '%s' is not ready", id = 5066)
+   IllegalLifecycleStateException cacheIsNotReady(String cacheName);
 }

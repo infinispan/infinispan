@@ -33,6 +33,7 @@ public class RestTestingUtil {
         cacheManager.start();
         nettyRestServer.setServerManagement(new DummyServerManagement(), true);
         nettyRestServer.start(configuration.build(), cacheManager);
+        nettyRestServer.postStart();
         return nettyRestServer;
     }
 

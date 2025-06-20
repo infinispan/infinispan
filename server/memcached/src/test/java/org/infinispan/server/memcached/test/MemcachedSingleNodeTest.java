@@ -73,6 +73,7 @@ public abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest {
 
    protected void startServer(MemcachedServer server, MemcachedServerConfigurationBuilder builder) {
       server.start(builder.build(), cacheManager);
+      server.postStart();
    }
 
    protected EmbeddedCacheManager createTestCacheManager() {

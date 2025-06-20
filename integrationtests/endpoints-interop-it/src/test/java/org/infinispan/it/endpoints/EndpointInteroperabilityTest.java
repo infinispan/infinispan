@@ -99,6 +99,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       restServer = new RestServer();
       restServer.setServerManagement(new DummyServerManagement(), true);
       restServer.start(builder.build(), cacheManager);
+      restServer.postStart();
       RestClientConfigurationBuilder clientBuilder = new RestClientConfigurationBuilder();
       RestClientConfiguration configuration = clientBuilder.addServer().host(restServer.getHost()).port(restServer.getPort()).build();
       restClient = RestClient.forConfiguration(configuration);

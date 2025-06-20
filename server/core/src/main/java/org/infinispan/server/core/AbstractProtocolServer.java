@@ -64,14 +64,22 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
    protected void startInternal() {
       registerAdminOperationsHandler();
 
-      // Start default cache
-      startCaches();
-
       if (configuration.startTransport())
          startTransport();
    }
 
-   protected void internalPostStart() { }
+   protected void internalPostStart() {
+      // Start default cache
+      startCaches();
+
+      if (configuration.startTransport())
+         registerMetrics();
+   }
+
+   public boolean isDefaultCacheRunning() {
+      String name = defaultCacheName();
+      return name == null || cacheManager.isRunning(name);
+   }
 
    private void registerAdminOperationsHandler() {
       if (configuration.adminOperationsHandler() != null) {
@@ -154,8 +162,6 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
          }
          throw re;
       }
-
-      registerMetrics();
    }
 
    public BlockingManager getBlockingManager() {
