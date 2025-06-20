@@ -17,7 +17,7 @@ import org.hibernate.search.mapper.pojo.bridge.IdentifierBridge;
 import org.hibernate.search.mapper.pojo.mapping.definition.programmatic.ProgrammaticMappingConfigurationContext;
 import org.hibernate.search.mapper.pojo.model.spi.PojoBootstrapIntrospector;
 import org.hibernate.search.util.common.impl.SuppressingCloser;
-import org.hibernate.search.util.common.reflect.spi.ValueReadHandleFactory;
+import org.hibernate.search.util.common.reflect.spi.ValueHandleFactory;
 import org.infinispan.query.concurrent.FailureCounter;
 import org.infinispan.query.impl.EntityLoaderFactory;
 import org.infinispan.query.impl.IndexerConfig;
@@ -32,7 +32,7 @@ import org.infinispan.util.concurrent.BlockingManager;
 public final class SearchMappingBuilder {
 
    public static InfinispanBootstrapIntrospector introspector(MethodHandles.Lookup lookup) {
-      ValueReadHandleFactory valueReadHandleFactory = ValueReadHandleFactory.usingMethodHandle(lookup);
+      ValueHandleFactory valueReadHandleFactory = ValueHandleFactory.usingMethodHandle(lookup);
       return new InfinispanBootstrapIntrospector(valueReadHandleFactory);
    }
 

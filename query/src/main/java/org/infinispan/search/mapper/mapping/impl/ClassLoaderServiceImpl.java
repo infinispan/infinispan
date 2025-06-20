@@ -37,6 +37,16 @@ public final class ClassLoaderServiceImpl implements ClassResolver, ResourceReso
    }
 
    @Override
+   public Package packageForName(String packageName) {
+      try {
+         return Class.forName(packageName + ".package-info", true, classLoader)
+                 .getPackage();
+      } catch (Exception | LinkageError e) {
+         return null;
+      }
+   }
+
+   @Override
    public InputStream locateResourceStream(String name) {
       try {
          InputStream is = classLoader.getResourceAsStream(name);
@@ -63,6 +73,15 @@ public final class ClassLoaderServiceImpl implements ClassResolver, ResourceReso
       }
 
       return null;
+   }
+
+   @Override
+   public URL locateResource(String resourceName) {
+      try {
+         return classLoader.getResource(resourceName);
+      } catch (Exception e) {
+         return null;
+      }
    }
 
    @Override
