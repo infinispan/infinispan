@@ -58,4 +58,9 @@ public interface Invocation {
    AuthorizationPermission permission();
 
    AuditContext auditContext();
+
+   /**
+    * @return The resource group which contains this invocation.
+    */
+   ResourceDescription resourceGroup();
 }
