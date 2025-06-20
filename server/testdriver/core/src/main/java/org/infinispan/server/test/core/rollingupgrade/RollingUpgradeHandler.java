@@ -202,8 +202,9 @@ public class RollingUpgradeHandler {
       try {
          log.debugf("Starting %d nodes to version %s", handler.nodeCount, handler.versionFrom);
          handler.fromDriver = handler.startNode(false, configuration.nodeCount(), configuration.nodeCount(),
-               handler.site1Name, configuration.jgroupsProtocol(), null,configuration.serverConfigurationFile(), configuration.defaultServerConfigurationFile(),
-               configuration.customArtifacts(), configuration.mavenArtifacts(), configuration.properties());
+               handler.site1Name, configuration.jgroupsProtocol(), null,configuration.serverConfigurationFile(),
+               configuration.defaultServerConfigurationFile(), configuration.customArtifacts(),
+               configuration.mavenArtifacts(), configuration.properties());
          handler.currentState = STATE.OLD_RUNNING;
 
          configuration.initialHandler().accept(handler);
@@ -341,6 +342,9 @@ public class RollingUpgradeHandler {
          TestUser user = TestUser.ADMIN;
          builder.security().authentication().username(user.getUser()).password(user.getPassword());
       }
+
+      // Apply the configuration updates after applying others but not the server info as test shouldn't be updating it
+      builder = configuration.configurationHandler().apply(builder);
 
       for (int i = 0; i < fromDriver.infinispanServerTestConfiguration.numServers(); i++) {
          InetSocketAddress address = fromDriver.containerInfinispanServerDriver.getServerSocket(i, 11222);

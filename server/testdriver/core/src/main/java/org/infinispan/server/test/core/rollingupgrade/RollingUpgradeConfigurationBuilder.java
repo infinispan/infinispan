@@ -9,10 +9,12 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 
@@ -31,6 +33,7 @@ public class RollingUpgradeConfigurationBuilder {
    private int serverCheckTimeSecs = 30;
    private boolean useSharedDataMount = true;
    private BiConsumer<Throwable, RollingUpgradeHandler> exceptionHandler = (t, uh) -> { };
+   private Function<ConfigurationBuilder, ConfigurationBuilder> configurationHandler = Function.identity();
 
    private Consumer<RollingUpgradeHandler> initialHandler = uh -> {
       RemoteCacheManager rcm = uh.getRemoteCacheManager();
@@ -147,10 +150,15 @@ public class RollingUpgradeConfigurationBuilder {
       return this;
    }
 
+   public RollingUpgradeConfigurationBuilder configurationUpdater(Function<ConfigurationBuilder, ConfigurationBuilder> updateConfig) {
+      this.configurationHandler = Objects.requireNonNull(updateConfig);
+      return this;
+   }
+
    public RollingUpgradeConfiguration build() {
       return new RollingUpgradeConfiguration(nodeCount, fromVersion, toVersion, xSite, jgroupsProtocol, serverCheckTimeSecs,
             useSharedDataMount, serverConfigurationFile, defaultServerConfigurationFile, properties,
             customArtifacts.toArray(new JavaArchive[0]), mavenArtifacts.toArray(new String[0]),
-            exceptionHandler, initialHandler, isValidServerState);
+            exceptionHandler, initialHandler, isValidServerState, configurationHandler);
    }
 }

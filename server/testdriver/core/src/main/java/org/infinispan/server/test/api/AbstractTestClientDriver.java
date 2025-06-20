@@ -8,6 +8,7 @@ import org.infinispan.commons.configuration.BasicConfiguration;
 import org.infinispan.commons.configuration.Self;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.security.AuthorizationPermission;
 
 /**
  * Base class for the driver API
@@ -21,6 +22,7 @@ abstract class AbstractTestClientDriver<S extends AbstractTestClientDriver<S>> i
    protected EnumSet<CacheContainerAdmin.AdminFlag> flags = EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class);
    protected CacheMode mode = null;
    protected TestUser user;
+   protected AuthorizationPermission userPerm;
    protected Object[] qualifiers;
 
    static StringConfiguration forCacheMode(CacheMode mode) {
@@ -63,7 +65,19 @@ abstract class AbstractTestClientDriver<S extends AbstractTestClientDriver<S>> i
 
    @Override
    public S withUser(TestUser testUser) {
+      if (userPerm != null) {
+         throw new IllegalStateException("Both TestUser and AuthorizationPermission cannot be set!");
+      }
       this.user = testUser;
+      return self();
+   }
+
+   @Override
+   public S withUser(AuthorizationPermission permission) {
+      if (user != null) {
+         throw new IllegalStateException("Both TestUser and AuthorizationPermission cannot be set!");
+      }
+      this.userPerm = permission;
       return self();
    }
 
