@@ -2,6 +2,7 @@ package org.infinispan.remoting.transport.jgroups;
 
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -14,6 +15,7 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
@@ -27,6 +29,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.commands.remote.XSiteRequest;
+import org.jgroups.View;
 import org.jgroups.util.UUID;
 import org.testng.annotations.Test;
 
@@ -41,9 +44,21 @@ public class JGroupsTransportTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
-      configurationBuilder.clustering().cacheMode(CacheMode.REPL_SYNC);
-      createCluster(configurationBuilder, 2);
+      // do not share builders between the instances!
+      addClusterEnabledCacheManager(globalBuilder(), cacheBuilder());
+      addClusterEnabledCacheManager(globalBuilder(), cacheBuilder());
+   }
+
+   private ConfigurationBuilder cacheBuilder() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.REPL_SYNC);
+      return builder;
+   }
+
+   private GlobalConfigurationBuilder globalBuilder() {
+      GlobalConfigurationBuilder builder = defaultGlobalConfigurationBuilder();
+      builder.transport().transport(new ExposedJGroupsTransport());
+      return builder;
    }
 
    public void testSynchronousIgnoreLeaversInvocationToNonMembers() throws Exception {
@@ -100,6 +115,24 @@ public class JGroupsTransportTest extends MultipleCacheManagersTest {
       }
    }
 
+   public void testOutOfOrderView() {
+      Transport transport = TestingUtil.extractGlobalComponent(manager(0), Transport.class);
+      assertTrue(transport instanceof ExposedJGroupsTransport);
+      ExposedJGroupsTransport exposedTransport = (ExposedJGroupsTransport) transport;
+      long viewId = transport.getViewId();
+      org.jgroups.Address creator = exposedTransport.getJGroupsViewCreator();
+
+      // With installIfFirst=true, the view should be rejected.
+      exposedTransport.receiveClusterView(View.create(creator, viewId + 1L, creator), true);
+      assertEquals(viewId, transport.getViewId());
+      exposedTransport.receiveClusterView(View.create(creator, viewId -1L, creator), true);
+      assertEquals(viewId, transport.getViewId());
+
+      // Any outdated view should be rejected.
+      exposedTransport.receiveClusterView(View.create(creator, viewId - 1L, creator), false);
+      assertEquals(viewId, transport.getViewId());
+   }
+
    private CompletableFuture<Void> blockRemoteGets() {
       CompletableFuture<Void> blocker = new CompletableFuture<>();
       InboundInvocationHandler oldInvocationHandler = extractGlobalComponent(manager(1),
@@ -124,5 +157,16 @@ public class JGroupsTransportTest extends MultipleCacheManagersTest {
       };
       TestingUtil.replaceComponent(manager(1), InboundInvocationHandler.class, blockingInvocationHandler, true);
       return blocker;
+   }
+
+   public static class ExposedJGroupsTransport extends JGroupsTransport{
+      @Override
+      public void receiveClusterView(View newView, boolean installIfFirst) {
+         super.receiveClusterView(newView, installIfFirst);
+      }
+
+      public org.jgroups.Address getJGroupsViewCreator() {
+         return channel.getView().getViewId().getCreator();
+      }
    }
 }
