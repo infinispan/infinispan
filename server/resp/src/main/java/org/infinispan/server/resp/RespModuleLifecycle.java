@@ -1,5 +1,6 @@
 package org.infinispan.server.resp;
 
+
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
