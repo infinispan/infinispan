@@ -4,9 +4,11 @@ import java.util.function.DoubleFunction;
 import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.stream.impl.intops.MappingOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -15,6 +17,7 @@ import io.reactivex.rxjava3.core.Flowable;
  * Performs boxed operation on a {@link DoubleStream}
  * @param <R> the type of the output stream
  */
+@ProtoTypeId(ProtoStreamTypeIds.STREAM_INTOP_PRIMITIVE_DOUBLE_MAP_TO_OBJ_OPERATION)
 public class MapToObjDoubleOperation<R> implements MappingOperation<Double, DoubleStream, R, Stream<R>> {
    private final DoubleFunction<? extends R> function;
 

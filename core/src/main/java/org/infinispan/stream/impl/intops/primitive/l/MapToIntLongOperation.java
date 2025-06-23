@@ -4,9 +4,11 @@ import java.util.function.LongToIntFunction;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.stream.impl.intops.MappingOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -14,6 +16,7 @@ import io.reactivex.rxjava3.core.Flowable;
 /**
  * Performs map to int operation on a {@link LongStream}
  */
+@ProtoTypeId(ProtoStreamTypeIds.STREAM_INTOP_PRIMITIVE_LONG_MAP_TO_INT_OPERATION)
 public class MapToIntLongOperation implements MappingOperation<Long, LongStream, Integer, IntStream> {
    private final LongToIntFunction function;
 
