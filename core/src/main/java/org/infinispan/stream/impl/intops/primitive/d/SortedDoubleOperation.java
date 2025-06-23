@@ -2,7 +2,6 @@ package org.infinispan.stream.impl.intops.primitive.d;
 
 import java.util.stream.DoubleStream;
 
-import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -14,7 +13,6 @@ public class SortedDoubleOperation implements IntermediateOperation<Double, Doub
    private static final SortedDoubleOperation OPERATION = new SortedDoubleOperation();
    private SortedDoubleOperation() { }
 
-   @ProtoFactory
    public static SortedDoubleOperation getInstance() {
       return OPERATION;
    }

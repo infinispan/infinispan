@@ -3,9 +3,11 @@ package org.infinispan.stream.impl.intops.primitive.l;
 import java.util.function.LongUnaryOperator;
 import java.util.stream.LongStream;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.stream.impl.intops.MappingOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -13,6 +15,7 @@ import io.reactivex.rxjava3.core.Flowable;
 /**
  * Performs map operation on a {@link LongStream}
  */
+@ProtoTypeId(ProtoStreamTypeIds.STREAM_INTOP_PRIMITIVE_LONG_MAP_OPERATION)
 public class MapLongOperation implements MappingOperation<Long, LongStream, Long, LongStream> {
    private final LongUnaryOperator operator;
 

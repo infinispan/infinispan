@@ -10,6 +10,7 @@ import java.util.function.ObjIntConsumer;
 import java.util.function.ObjLongConsumer;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
@@ -17,6 +18,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 public class CacheBiConsumers {
    private CacheBiConsumers() { }
@@ -37,6 +39,7 @@ public class CacheBiConsumers {
       return new CacheIntConsumer<>(objIntConsumer);
    }
 
+   @ProtoTypeId(ProtoStreamTypeIds.STREAM_BI_CONSUMER_CACHE_OBJECT)
    @Scope(Scopes.NONE)
    public static class CacheObjBiConsumer<K, V, R> implements Consumer<R> {
       private final BiConsumer<Cache<K, V>, ? super R> biConsumer;
@@ -69,6 +72,7 @@ public class CacheBiConsumers {
       }
    }
 
+   @ProtoTypeId(ProtoStreamTypeIds.STREAM_BI_CONSUMER_CACHE_DOUBLE)
    @Scope(Scopes.NONE)
    public static class CacheDoubleConsumer<K, V> implements DoubleConsumer {
       private final ObjDoubleConsumer<Cache<K, V>> objDoubleConsumer;
@@ -101,6 +105,7 @@ public class CacheBiConsumers {
       }
    }
 
+   @ProtoTypeId(ProtoStreamTypeIds.STREAM_BI_CONSUMER_CACHE_LONG)
    @Scope(Scopes.NONE)
    public static class CacheLongConsumer<K, V> implements LongConsumer {
       private final ObjLongConsumer<Cache<K, V>> objLongConsumer;
@@ -133,6 +138,7 @@ public class CacheBiConsumers {
       }
    }
 
+   @ProtoTypeId(ProtoStreamTypeIds.STREAM_BI_CONSUMER_CACHE_INT)
    @Scope(Scopes.NONE)
    public static class CacheIntConsumer<K, V> implements IntConsumer {
       private final ObjIntConsumer<Cache<K, V>> objIntConsumer;

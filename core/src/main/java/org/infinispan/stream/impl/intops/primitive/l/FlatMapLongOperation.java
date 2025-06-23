@@ -4,9 +4,11 @@ import java.util.function.LongFunction;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.stream.impl.intops.FlatMappingOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -14,6 +16,7 @@ import io.reactivex.rxjava3.core.Flowable;
 /**
  * Performs flat map operation on a {@link LongStream}
  */
+@ProtoTypeId(ProtoStreamTypeIds.STREAM_INTOP_PRIMITIVE_LONG_FLAT_MAP_OPERATION)
 public class FlatMapLongOperation implements FlatMappingOperation<Long, LongStream, Long, LongStream> {
    private final LongFunction<? extends LongStream> function;
 

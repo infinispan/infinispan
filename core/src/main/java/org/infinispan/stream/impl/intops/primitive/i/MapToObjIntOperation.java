@@ -4,9 +4,11 @@ import java.util.function.IntFunction;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.stream.impl.intops.MappingOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -14,6 +16,7 @@ import io.reactivex.rxjava3.core.Flowable;
 /**
  * Performs map to object operation on a {@link IntStream}
  */
+@ProtoTypeId(ProtoStreamTypeIds.STREAM_INTOP_PRIMITIVE_INT_MAP_TO_OBJ_OPERATION)
 public class MapToObjIntOperation<R> implements MappingOperation<Integer, IntStream, R, Stream<R>> {
    private final IntFunction<? extends R> function;
 

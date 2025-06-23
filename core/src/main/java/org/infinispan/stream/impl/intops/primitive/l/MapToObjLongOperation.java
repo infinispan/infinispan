@@ -4,9 +4,11 @@ import java.util.function.LongFunction;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.stream.impl.intops.MappingOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -14,6 +16,7 @@ import io.reactivex.rxjava3.core.Flowable;
 /**
  * Performs map to object operation on a {@link LongStream}
  */
+@ProtoTypeId(ProtoStreamTypeIds.STREAM_INTOP_PRIMITIVE_LONG_MAP_TO_OBJ_OPERATION)
 public class MapToObjLongOperation<R> implements MappingOperation<Long, LongStream, R, Stream<R>> {
    private final LongFunction<? extends R> function;
 
