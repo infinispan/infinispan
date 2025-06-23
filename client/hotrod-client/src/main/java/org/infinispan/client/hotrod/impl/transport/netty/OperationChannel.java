@@ -80,34 +80,41 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
          }
       }
       channel = null;
-      ChannelFuture channelFuture = newChannelInvoker.createChannel();
-      // This check here is in case if there is an issue with the event loop executor where it doesn't actually run
-      // the listener above, which can happen if the event loop group is shutdown
-      Throwable immediateError = channelFuture.cause();
-      if (immediateError == null) {
-         // It is possible for channelActive calls and this to be done in non deterministic ordering
-         channelFuture.addListener(f -> {
-            if (f.isSuccess()) {
-               Channel c = channelFuture.channel();
-               assert c.eventLoop().inEventLoop();
-               c.attr(OPERATION_CHANNEL_ATTRIBUTE_KEY).set(this);
-               channel = c;
-               headerDecoder = c.pipeline().get(HeaderDecoder.class);
-               codec = headerDecoder.getConfiguration().version().getCodec();
-               connectionFailureListener.accept(this, null);
-               // Now we can let auth or operations to continue
-               channel.pipeline().fireUserEventTriggered(ActivationHandler.ACTIVATION_EVENT);
-               log.tracef("OperationChannel %s connect complete to %s", this, c);
-            } else {
-               Throwable cause = f.cause();
-               log.tracef("Connection attempt to %s encountered exception for %s", address, cause);
-               // Allow another attempt later
-               handleError(connectFuture, cause);
-            }
-         });
-         // Just in case if the future had an exception while adding the listener
+      ChannelFuture channelFuture;
+      Throwable immediateError;
+      try {
+         channelFuture = newChannelInvoker.createChannel();
+         // This check here is in case if there is an issue with the event loop executor where it doesn't actually run
+         // the listener below, which can happen if the event loop group is shutdown
          immediateError = channelFuture.cause();
+         if (immediateError == null) {
+            // It is possible for channelActive calls and this to be done in non deterministic ordering
+            channelFuture.addListener(f -> {
+               if (f.isSuccess()) {
+                  Channel c = channelFuture.channel();
+                  assert c.eventLoop().inEventLoop();
+                  c.attr(OPERATION_CHANNEL_ATTRIBUTE_KEY).set(this);
+                  channel = c;
+                  headerDecoder = c.pipeline().get(HeaderDecoder.class);
+                  codec = headerDecoder.getConfiguration().version().getCodec();
+                  connectionFailureListener.accept(this, null);
+                  // Now we can let auth or operations to continue
+                  channel.pipeline().fireUserEventTriggered(ActivationHandler.ACTIVATION_EVENT);
+                  log.tracef("OperationChannel %s connect complete to %s", this, c);
+               } else {
+                  Throwable cause = f.cause();
+                  log.tracef("Connection attempt to %s encountered exception for %s", address, cause);
+                  // Allow another attempt later
+                  handleError(connectFuture, cause);
+               }
+            });
+            // Just in case if the future had an exception while adding the listener
+            immediateError = channelFuture.cause();
+         }
+      } catch (Throwable t) {
+         immediateError = t;
       }
+
       if (immediateError != null) {
          log.tracef("Connection to %s encountered immediate exception from %s", address, immediateError);
          // Allow another attempt later
