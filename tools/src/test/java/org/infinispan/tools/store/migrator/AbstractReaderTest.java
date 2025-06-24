@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
 @Test(testName = "org.infinispan.tools.store.migrator.AbstractReaderTest", groups = "functional")
 public abstract class AbstractReaderTest extends AbstractInfinispanTest {
 
-   private static final String TEST_CACHE_NAME = "reader-test";
+   protected static final String TEST_CACHE_NAME = "reader-test";
 
    protected int majorVersion = 8;
    protected int sourceSegments;
@@ -87,11 +87,16 @@ public abstract class AbstractReaderTest extends AbstractInfinispanTest {
       }
    }
 
+   protected void beforeMigration() {
+      //no-op, to be overwritten by the concrete implementations
+   }
+
    @Test
    public void readerCompatibilityTest() throws Exception {
       Properties properties = new Properties();
       configureStoreProperties(properties, SOURCE);
       configureStoreProperties(properties, TARGET);
+      beforeMigration();
       new StoreMigrator(properties).run();
 
       GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder();
