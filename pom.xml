@@ -78,6 +78,7 @@
       <module>server/runtime</module>
       <module>server/testdriver</module>
       <module>server/tests</module>
+      <module>server/rollingupgradetests</module>
       <module>client/rest-client</module>
       <module>client/hotrod-client</module>
       <module>client/hotrod-client-test</module>
@@ -1092,6 +1093,13 @@
             <artifactId>infinispan-server-tests</artifactId>
             <version>${version.infinispan}</version>
             <type>test-jar</type>
+         </dependency>
+         <dependency>
+             <groupId>org.infinispan</groupId>
+             <artifactId>infinispan-server-tests</artifactId>
+             <version>${version.infinispan}</version>
+             <scope>test</scope>
+             <type>test-jar</type>
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>

@@ -1,0 +1,232 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <modelVersion>4.0.0</modelVersion>
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-server-parent</artifactId>
+      <version>16.0.0-SNAPSHOT</version>
+      <relativePath>../pom.xml</relativePath>
+   </parent>
+
+   <artifactId>infinispan-server-rollingupgrade-tests</artifactId>
+   <packaging>jar</packaging>
+   <name>Infinispan Server Rolling Upgrade Integration Tests</name>
+   <description>Infinispan Server Rolling Upgrade Integration Tests</description>
+
+   <properties>
+      <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
+      <defaultTestGroup/>
+      <defaultExcludedTestGroup/>
+      <org.infinispan.test.server.dir>${project.basedir}/../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</org.infinispan.test.server.dir>
+      <org.infinispan.test.server.lib.dir>${project.build.directory}/testlibs</org.infinispan.test.server.lib.dir>
+      <org.infinispan.test.server.container.ulimit>4096,65539</org.infinispan.test.server.container.ulimit>
+      <infinispan.cluster.stack>test-tcp</infinispan.cluster.stack>
+      <log4j.configurationFile>${project.build.testOutputDirectory}/configuration/log4j2.xml</log4j.configurationFile>
+      <infinispan.server.log.path>${project.build.directory}</infinispan.server.log.path>
+
+      <test.driverArgs>
+         -Dorg.infinispan.test.server.dir=${org.infinispan.test.server.dir}
+         -Dorg.infinispan.test.server.container.ulimit=${org.infinispan.test.server.container.ulimit}
+      </test.driverArgs>
+   </properties>
+
+   <dependencies>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-tests</artifactId>
+         <scope>test</scope>
+         <type>test-jar</type>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-testdriver-junit5</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.junit.jupiter</groupId>
+         <artifactId>junit-jupiter-api</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.junit.jupiter</groupId>
+         <artifactId>junit-jupiter-engine</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.junit.jupiter</groupId>
+         <artifactId>junit-jupiter-params</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.junit.platform</groupId>
+         <artifactId>junit-platform-suite</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>proto-sample-domain-implementation</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream-processor</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-rest</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.kerby</groupId>
+         <artifactId>kerby-kdc</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.directory.server</groupId>
+         <artifactId>apacheds-test-framework</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.apache.directory.server</groupId>
+         <artifactId>apacheds-interceptor-kerberos</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.antlr</groupId>
+         <artifactId>antlr-runtime</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>io.lettuce</groupId>
+         <artifactId>lettuce-core</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>io.vertx</groupId>
+         <artifactId>vertx-redis-client</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>io.vertx</groupId>
+         <artifactId>vertx-junit5</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.apache.commons</groupId>
+         <artifactId>commons-compress</artifactId>
+         <version>${version.commons.compress}</version>
+         <scope>test</scope>
+      </dependency>
+
+      <!-- Database test dependencies -->
+      <dependency>
+         <groupId>com.h2database</groupId>
+         <artifactId>h2</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.mariadb.jdbc</groupId>
+         <artifactId>mariadb-java-client</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>com.mysql</groupId>
+         <artifactId>mysql-connector-j</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.postgresql</groupId>
+         <artifactId>postgresql</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>com.microsoft.sqlserver</groupId>
+         <artifactId>mssql-jdbc</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>com.oracle.ojdbc</groupId>
+         <artifactId>ojdbc8</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>com.ibm.db2</groupId>
+         <artifactId>jcc</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.assertj</groupId>
+         <artifactId>assertj-core</artifactId>
+         <scope>test</scope>
+      </dependency>
+   </dependencies>
+
+   <build>
+
+   <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-checkstyle-plugin</artifactId>
+            <configuration>
+               <configLocation>checkstyle-junit5.xml</configLocation>
+            </configuration>
+         </plugin>
+         <plugin>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+               <groups combine.self="override">${defaultTestGroup}</groups>
+               <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
+               <parallel>none</parallel>
+               <threadCount>${infinispan.test.parallel.threads}</threadCount>
+               <forkCount>1</forkCount>
+               <reuseForks>true</reuseForks>
+               <disableXmlReport>false</disableXmlReport>
+               <useFile>false</useFile>
+               <systemPropertyVariables>
+                  <infinispan.cluster.stack>${infinispan.cluster.stack}</infinispan.cluster.stack>
+                  <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
+                  <jgroups.join_timeout>2000</jgroups.join_timeout>
+                  <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
+                  <build.directory>${project.build.directory}</build.directory>
+                  <com.arjuna.ats.arjuna.common.propertiesFile>test-jbossts-properties.xml</com.arjuna.ats.arjuna.common.propertiesFile>
+
+                  <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
+                  <log4j2.contextSelector>org.apache.logging.log4j.core.selector.BasicContextSelector</log4j2.contextSelector>
+                  <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
+                  <infinispan.server.log.path>${infinispan.server.log.path}</infinispan.server.log.path>
+
+                  <!-- this is picked up in log4j2.xml, which adds it to each module's log file name-->
+                  <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
+                  <ansi.strip>${ansi.strip}</ansi.strip>
+               </systemPropertyVariables>
+               <trimStackTrace>false</trimStackTrace>
+               <testNGArtifactName>none:none</testNGArtifactName>
+               <properties>
+                  <usedefaultlisteners>false</usedefaultlisteners>
+                  <listener>${junitListener},org.infinispan.server.test.junit4.InfinispanServerTestListener</listener>
+               </properties>
+               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} ${test.driverArgs} -Djdk.attach.allowAttachSelf=true -Ddir.jacoco=${dir.jacoco}</argLine>
+            </configuration>
+            <executions>
+               <execution>
+                  <goals>
+                     <goal>integration-test</goal>
+                     <goal>verify</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <skipTests>true</skipTests>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
+</project>
