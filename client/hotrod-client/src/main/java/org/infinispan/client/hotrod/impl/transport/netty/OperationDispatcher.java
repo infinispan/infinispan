@@ -108,6 +108,7 @@ public class OperationDispatcher {
 
    private final ClientListenerNotifier clientListenerNotifier;
    private final CounterTracker totalRetriesMetric;
+   private volatile boolean isRunning;
 
    public OperationDispatcher(Configuration configuration, ExecutorService executorService, TimeService timeService,
                               ClientListenerNotifier clientListenerNotifier, Consumer<ChannelPipeline> pipelineDecorator) {
@@ -199,6 +200,7 @@ public class OperationDispatcher {
    }
 
    public void start() {
+      isRunning = true;
       Util.await(CompletionStages.performSequentially(topologyInfo.getCluster().getInitialServers().iterator(),
             sa -> channelHandler.startChannelIfNeeded(sa)
                   .exceptionally(t -> {
@@ -210,6 +212,7 @@ public class OperationDispatcher {
 
    public void stop() {
       try {
+         isRunning = false;
          channelHandler.close();
       } catch (Exception e) {
          log.warn("Exception while shutting down the operation dispatcher.", e);
@@ -864,6 +867,10 @@ public class OperationDispatcher {
 
    public void handleChannelFailure(Channel channel, Throwable t) {
       assert channel.eventLoop().inEventLoop();
+      if (!isRunning) {
+         log.tracef("Dispatcher is not running, ignoring received exception: " + t.toString());
+         return;
+      }
       SocketAddress unresolved = ChannelRecord.of(channel);
       OperationChannel operationChannel = channelHandler.getChannelForAddress(unresolved);
       if (operationChannel != null) {
