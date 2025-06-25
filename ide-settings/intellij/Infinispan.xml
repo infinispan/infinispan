@@ -1,0 +1,81 @@
+<code_scheme name="Infinispan" version="173">
+  <option name="OTHER_INDENT_OPTIONS">
+    <value>
+      <option name="INDENT_SIZE" value="3" />
+      <option name="CONTINUATION_INDENT_SIZE" value="6" />
+      <option name="TAB_SIZE" value="3" />
+    </value>
+  </option>
+  <option name="LINE_SEPARATOR" value="&#10;" />
+  <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="999" />
+  <option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="999" />
+  <option name="PACKAGES_TO_USE_IMPORT_ON_DEMAND">
+    <value />
+  </option>
+  <option name="IMPORT_LAYOUT_TABLE">
+    <value>
+      <package name="" withSubpackages="true" static="true" />
+      <emptyLine />
+      <package name="java" withSubpackages="true" static="false" />
+      <emptyLine />
+      <package name="javax" withSubpackages="true" static="false" />
+      <emptyLine />
+      <package name="org" withSubpackages="true" static="false" />
+      <emptyLine />
+      <package name="com" withSubpackages="true" static="false" />
+      <emptyLine />
+      <package name="" withSubpackages="true" static="false" />
+    </value>
+  </option>
+  <option name="ALIGN_MULTILINE_PARAMETERS_IN_CALLS" value="true" />
+  <option name="ALIGN_MULTILINE_THROWS_LIST" value="true" />
+  <option name="ALIGN_MULTILINE_EXTENDS_LIST" value="true" />
+  <option name="ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION" value="true" />
+  <option name="ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION" value="true" />
+  <option name="KEEP_SIMPLE_BLOCKS_IN_ONE_LINE" value="true" />
+  <option name="WRAP_COMMENTS" value="true" />
+  <JavaCodeStyleSettings>
+    <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="999" />
+    <option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="999" />
+    <option name="PACKAGES_TO_USE_IMPORT_ON_DEMAND">
+      <value />
+    </option>
+    <option name="IMPORT_LAYOUT_TABLE">
+      <value>
+        <package name="" withSubpackages="true" static="false" module="true" />
+        <package name="" withSubpackages="true" static="true" />
+        <emptyLine />
+        <package name="java" withSubpackages="true" static="false" />
+        <emptyLine />
+        <package name="javax" withSubpackages="true" static="false" />
+        <emptyLine />
+        <package name="jakarta" withSubpackages="true" static="false" />
+        <emptyLine />
+        <package name="org" withSubpackages="true" static="false" />
+        <emptyLine />
+        <package name="com" withSubpackages="true" static="false" />
+        <emptyLine />
+        <package name="" withSubpackages="true" static="false" />
+      </value>
+    </option>
+  </JavaCodeStyleSettings>
+  <MultiMarkdownCodeStyleSettings>
+    <option name="RIGHT_MARGIN" value="72" />
+  </MultiMarkdownCodeStyleSettings>
+  <ADDITIONAL_INDENT_OPTIONS fileType="java">
+    <option name="INDENT_SIZE" value="3" />
+    <option name="CONTINUATION_INDENT_SIZE" value="6" />
+    <option name="TAB_SIZE" value="3" />
+  </ADDITIONAL_INDENT_OPTIONS>
+  <ADDITIONAL_INDENT_OPTIONS fileType="osql">
+    <option name="INDENT_SIZE" value="2" />
+  </ADDITIONAL_INDENT_OPTIONS>
+  <codeStyleSettings language="JAVA">
+    <option name="RIGHT_MARGIN" value="120" />
+    <indentOptions>
+      <option name="INDENT_SIZE" value="3" />
+      <option name="CONTINUATION_INDENT_SIZE" value="6" />
+      <option name="TAB_SIZE" value="3" />
+    </indentOptions>
+  </codeStyleSettings>
+</code_scheme>
