@@ -1,5 +1,6 @@
-package org.infinispan.server.functional;
+package org.infinispan.server.rollingupgrade;
 
+import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.functional.extensions.PojoMarshalling;
 import org.infinispan.server.functional.extensions.ScriptingTasks;
 import org.infinispan.server.functional.extensions.ServerTasks;
