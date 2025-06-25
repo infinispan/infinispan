@@ -89,6 +89,17 @@ public abstract class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       assertEquals(v(m, "v3-"), ret.get(k(m, "k3-")));
    }
 
+   public void testGetMultipleKeysWithNonExistent(Method m) throws InterruptedException, ExecutionException, TimeoutException {
+      OperationFuture<Boolean> f1 = client.set(k(m, "k1-"), 0, v(m, "v1-"));
+      OperationFuture<Boolean> f3 = client.set(k(m, "k3-"), 0, v(m, "v3-"));
+      assertTrue(f1.get(timeout, TimeUnit.SECONDS));
+      assertTrue(f3.get(timeout, TimeUnit.SECONDS));
+      List<String> keys = Arrays.asList(k(m, "k1-"), k(m, "k2-"), k(m, "k3-"));
+      Map<String, Object> ret = client.getBulk(keys);
+      assertEquals(v(m, "v1-"), ret.get(k(m, "k1-")));
+      assertEquals(v(m, "v3-"), ret.get(k(m, "k3-")));
+   }
+
    public void testAddBasic(Method m) throws InterruptedException, ExecutionException, TimeoutException {
       addAndGet(m);
    }
