@@ -24,6 +24,8 @@ atlassian-ide-plugin.xml
 maven-ant-tasks.jar
 test-output
 classes
+# ignore VSCode files
+.vscode
 # log files
 *.log
 !persistence/rocksdb/src/test/resources/**/*.log
