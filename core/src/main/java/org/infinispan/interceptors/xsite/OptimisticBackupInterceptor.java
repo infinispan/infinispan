@@ -3,6 +3,7 @@ package org.infinispan.interceptors.xsite;
 import java.lang.invoke.MethodHandles;
 import java.util.function.Predicate;
 
+import org.infinispan.commands.RequestUUID;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -119,8 +120,8 @@ public class OptimisticBackupInterceptor extends BaseBackupInterceptor {
    }
 
    private void trackKeysForAsyncBackups(CommitCommand command) {
-      var gtx = command.getGlobalTransaction();
+      RequestUUID requestUUID = command.getGlobalTransaction().getRequestUUID();
       keysFromMods(getModificationsFrom(command))
-            .forEach(key -> iracManager.trackUpdatedKey(key.getSegment(), key.getKey(), gtx));
+            .forEach(key -> iracManager.trackUpdatedKey(key.getSegment(), key.getKey(), requestUUID));
    }
 }

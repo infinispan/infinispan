@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
 
+import org.infinispan.commands.RequestUUID;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -28,27 +29,27 @@ public interface IracManager {
    /**
     * Sets the {@code key} as changed by the {@code lockOwner}.
     *
-    * @param segment   The key's segment.
-    * @param key       The key changed.
-    * @param lockOwner The lock owner who updated the key.
+    * @param segment The key's segment.
+    * @param key     The key changed.
+    * @param owner   The lock owner who updated the key.
     */
-   void trackUpdatedKey(int segment, Object key, Object lockOwner);
+   void trackUpdatedKey(int segment, Object key, RequestUUID owner);
 
    /**
-    * Similar to {@link #trackUpdatedKey(int, Object, Object)} but it tracks expired keys instead.
+    * Similar to {@link #trackUpdatedKey(int, Object, RequestUUID)} but it tracks expired keys instead.
     * <p>
     * Expired key need a different conflict resolution algorithm since remove expired should never win any conflict.
     *
-    * @param segment   The key's segment.
-    * @param key       The key expired.
-    * @param lockOwner The lock owner who updated the key.
+    * @param segment The key's segment.
+    * @param key     The key expired.
+    * @param owner   The lock owner who updated the key.
     */
-   void trackExpiredKey(int segment, Object key, Object lockOwner);
+   void trackExpiredKey(int segment, Object key, RequestUUID owner);
 
    /**
     * Tracks a set of keys to be sent to the remote site.
     * <p>
-    * There is no much difference between this method and {@link #trackUpdatedKey(int, Object, Object)}. It just returns
+    * There is no much difference between this method and {@link #trackUpdatedKey(int, Object, RequestUUID)}. It just returns
     * a {@link CompletionStage} to notify when the keys were sent. It is required by the cross-site state transfer
     * protocol to know when it has finish.
     *
@@ -93,10 +94,10 @@ public interface IracManager {
     *
     * @param segment   The key's segment.
     * @param key       The key modified.
-    * @param lockOwner The last {@code lockOwner}.
+    * @param owner     The last {@code lockOwner}.
     * @param tombstone The tombstone (can be {@code null})
     */
-   void receiveState(int segment, Object key, Object lockOwner, IracMetadata tombstone);
+   void receiveState(int segment, Object key, RequestUUID owner, IracMetadata tombstone);
 
    /**
     * Checks if the given key is expired on all other sites. If the key is expired on all other sites this will return

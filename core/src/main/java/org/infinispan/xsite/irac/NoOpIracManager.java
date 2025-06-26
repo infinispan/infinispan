@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
 
+import org.infinispan.commands.RequestUUID;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.scopes.Scope;
@@ -24,12 +25,12 @@ public enum NoOpIracManager implements IracManager {
    INSTANCE;
 
    @Override
-   public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
+   public void trackUpdatedKey(int segment, Object key, RequestUUID owner) {
       // no-op
    }
 
    @Override
-   public void trackExpiredKey(int segment, Object key, Object lockOwner) {
+   public void trackExpiredKey(int segment, Object key, RequestUUID owner) {
       // no-op
    }
 
@@ -59,7 +60,7 @@ public enum NoOpIracManager implements IracManager {
    }
 
    @Override
-   public void receiveState(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
+   public void receiveState(int segment, Object key, RequestUUID owner, IracMetadata tombstone) {
       // no-op
    }
 
