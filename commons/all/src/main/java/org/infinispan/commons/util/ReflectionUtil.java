@@ -44,15 +44,6 @@ public class ReflectionUtil {
       return annotated;
    }
 
-   private static void getAnnotatedFieldHelper(List<Field> list, Class<?> c, Class<? extends Annotation> annotationType) {
-      Field[] declaredFields = c.getDeclaredFields();
-      for (Field field : declaredFields) {
-         if (field.isAnnotationPresent(annotationType)) {
-            list.add(field);
-         }
-      }
-   }
-
    public static Method findMethod(Class<?> type, String methodName) {
       try {
          return type.getDeclaredMethod(methodName);
@@ -93,21 +84,6 @@ public class ReflectionUtil {
             inspectRecursively(c.getSuperclass(), s, annotationType);
          }
          for (Class<?> ifc : c.getInterfaces()) inspectRecursively(ifc, s, annotationType);
-      }
-   }
-
-   private static void inspectFieldsRecursively(Class<?> c, List<Field> s, Class<? extends Annotation> annotationType) {
-      if (c == null || c.isInterface()) {
-         return;
-      }
-      for (Field f : c.getDeclaredFields()) {
-         if (f.isAnnotationPresent(annotationType)) {
-            s.add(f);
-         }
-      }
-
-      if (c != Object.class) {
-         inspectFieldsRecursively(c.getSuperclass(), s, annotationType);
       }
    }
 
