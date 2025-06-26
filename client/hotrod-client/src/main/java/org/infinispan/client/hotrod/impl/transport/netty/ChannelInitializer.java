@@ -80,9 +80,6 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
    }
 
    ChannelFuture createChannel() {
-      if (bootstrap.config().group().isShuttingDown()) {
-         throw new IllegalStateException("Event loop is already shutdown!");
-      }
       return bootstrap.clone().connect();
    }
 
