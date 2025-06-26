@@ -1,5 +1,7 @@
 package org.infinispan.xsite.irac;
 
+import org.infinispan.commands.RequestUUID;
+
 /**
  * Keeps a key state for {@link IracManager}.
  * <p>
@@ -27,7 +29,7 @@ interface IracManagerKeyState {
    /**
     * @return The owner who updated the key.
     */
-   Object getOwner();
+   RequestUUID getOwner();
 
    /**
     * @return The key's segment.

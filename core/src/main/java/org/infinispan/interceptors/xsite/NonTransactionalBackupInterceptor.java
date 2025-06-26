@@ -153,7 +153,7 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
          if (info.isPrimary() || (!ctx.isOriginLocal() && info.isWriteOwner())) {
             // track the update for the ASYNC cross-site
             // backup owner only track updates when the context is remote.
-            iracManager.trackUpdatedKey(info.segmentId(), key, writeCommand.getCommandInvocationId());
+            iracManager.trackUpdatedKey(info.segmentId(), key, writeCommand.getCommandInvocationId().getRequestUUID());
          }
          if (!info.isPrimary()) {
             if (log.isTraceEnabled()) {

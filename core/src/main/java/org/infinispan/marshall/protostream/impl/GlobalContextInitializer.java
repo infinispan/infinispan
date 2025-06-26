@@ -29,6 +29,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.cache.impl.FunctionMapper.class,
             org.infinispan.cache.impl.KeyFunctionEncoder.class,
             org.infinispan.commands.CommandInvocationId.class,
+            org.infinispan.commands.RequestUUID.class,
             org.infinispan.commands.control.LockControlCommand.class,
             org.infinispan.commands.irac.IracCleanupKeysCommand.class,
             org.infinispan.commands.irac.IracMetadataRequestCommand.class,

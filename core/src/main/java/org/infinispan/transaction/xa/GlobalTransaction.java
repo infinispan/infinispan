@@ -1,10 +1,9 @@
 package org.infinispan.transaction.xa;
 
-import java.util.Objects;
+import javax.transaction.xa.Xid;
 import java.util.concurrent.atomic.AtomicLong;
 
-import javax.transaction.xa.Xid;
-
+import org.infinispan.commands.RequestUUID;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -28,8 +27,7 @@ public class GlobalTransaction implements Cloneable {
 
    private static final AtomicLong sid = new AtomicLong(0);
 
-   private long id;
-   private Address addr;
+   private final RequestUUID requestUUID;
    private int hash_code = -1;  // in the worst case, hashCode() returns 0, then increases, so we're safe here
    private boolean remote = false;
    private final boolean clientTx;
@@ -41,42 +39,45 @@ public class GlobalTransaction implements Cloneable {
    }
 
    public GlobalTransaction(Address addr, boolean remote, boolean clientTx) {
-      this.id = sid.incrementAndGet();
-      this.addr = addr;
+      this.requestUUID = addr == null ?
+            RequestUUID.localOf(sid.incrementAndGet()) :
+            RequestUUID.of(addr, sid.incrementAndGet());
       this.remote = remote;
       this.clientTx = clientTx;
    }
 
    @ProtoFactory
-   GlobalTransaction(long id, Address address, XidImpl xid, long internalId, boolean clientTransaction) {
-      this.id = id;
-      this.addr = address;
+   GlobalTransaction(RequestUUID requestUUID, XidImpl xid, long internalId, boolean clientTransaction) {
+      this.requestUUID = requestUUID;
       this.xid = xid;
       this.internalId = internalId;
       this.clientTx = clientTransaction;
    }
 
-   @ProtoField(1)
    public Address getAddress() {
-      return addr;
+      return requestUUID.toAddress();
+   }
+
+   public long getId() {
+      return requestUUID.getRequestId();
+   }
+
+   @ProtoField(1)
+   public RequestUUID getRequestUUID() {
+      return requestUUID;
    }
 
    @ProtoField(2)
-   public long getId() {
-      return id;
-   }
-
-   @ProtoField(3)
    public XidImpl getXid() {
       return xid;
    }
 
-   @ProtoField(4)
+   @ProtoField(3)
    public long getInternalId() {
       return internalId;
    }
 
-   @ProtoField(5)
+   @ProtoField(4)
    public boolean isClientTransaction() {
       return clientTx;
    }
@@ -89,10 +90,14 @@ public class GlobalTransaction implements Cloneable {
       this.remote = remote;
    }
 
+   public GlobalTransaction changeAddress(Address address) {
+      return new GlobalTransaction(requestUUID.asNodeUUID(address.getNodeUUID()), getXid(), getInternalId(), isClientTransaction());
+   }
+
    @Override
    public int hashCode() {
       if (hash_code == -1) {
-         hash_code = (addr != null ? addr.hashCode() : 0) + (int) id;
+         hash_code = requestUUID.hashCode();
       }
       return hash_code;
    }
@@ -104,23 +109,14 @@ public class GlobalTransaction implements Cloneable {
       if (!(other instanceof GlobalTransaction otherGtx))
          return false;
 
-      return id == otherGtx.id &&
-            Objects.equals(addr, otherGtx.addr);
+      return requestUUID.equals(otherGtx.requestUUID);
    }
 
    /**
     * Returns a simplified representation of the transaction.
     */
    public final String globalId() {
-      return getAddress() + ":" + getId();
-   }
-
-   public void setId(long id) {
-      this.id = id;
-   }
-
-   public void setAddress(Address address) {
-      this.addr = address;
+      return requestUUID.toIdString();
    }
 
    public void setXid(Xid xid) {
@@ -143,8 +139,8 @@ public class GlobalTransaction implements Cloneable {
    @Override
    public String toString() {
       return "GlobalTransaction{" +
-            "id=" + id +
-            ", addr=" + Objects.toString(addr, "local") +
+            "id=" + getId() +
+            ", addr=" + getAddress() +
             ", remote=" + remote +
             ", xid=" + xid +
             ", internalId=" + internalId +

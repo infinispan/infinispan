@@ -18,35 +18,40 @@ import org.infinispan.remoting.transport.Address;
  */
 @ProtoTypeId(ProtoStreamTypeIds.COMMAND_INVOCATION_ID)
 public final class CommandInvocationId {
-   public static final CommandInvocationId DUMMY_INVOCATION_ID = new CommandInvocationId(null, 0);
+   public static final CommandInvocationId DUMMY_INVOCATION_ID = new CommandInvocationId(RequestUUID.NO_REQUEST);
 
    private static final AtomicLong nextId = new AtomicLong(0);
 
-   private final Address address;
-   private final long id;
+   private final RequestUUID requestUUID;
+
+   CommandInvocationId(RequestUUID requestUUID) {
+      this.requestUUID = Objects.requireNonNull(requestUUID);
+   }
 
    @ProtoFactory
-   CommandInvocationId(Address address, long id) {
-      this.address = address;
-      this.id = id;
+   static CommandInvocationId protoFactory(RequestUUID requestUUID) {
+      // A transaction cache uses DUMMY_INVOCATION_ID
+      // We check it here to avoid creating multiple instances of it.
+      return Objects.equals(requestUUID, RequestUUID.NO_REQUEST) ?
+            DUMMY_INVOCATION_ID :
+            new CommandInvocationId(requestUUID);
+   }
+
+   public long getId() {
+      return requestUUID.getRequestId();
+   }
+
+   public Address getAddress() {
+      return requestUUID.toAddress();
    }
 
    @ProtoField(1)
-   public long getId() {
-      return id;
-   }
-
-   @ProtoField(2)
-   public Address getAddress() {
-      return address;
+   public RequestUUID getRequestUUID() {
+      return requestUUID;
    }
 
    public static CommandInvocationId generateId(Address address) {
-      return new CommandInvocationId(address, nextId.getAndIncrement());
-   }
-
-   public static CommandInvocationId generateIdFrom(CommandInvocationId commandInvocationId) {
-      return new CommandInvocationId(commandInvocationId.address, nextId.getAndIncrement());
+      return new CommandInvocationId(RequestUUID.of(address, nextId.getAndIncrement()));
    }
 
    @Override
@@ -60,20 +65,18 @@ public final class CommandInvocationId {
 
       CommandInvocationId that = (CommandInvocationId) o;
 
-      return id == that.id && Objects.equals(address, that.address);
+      return requestUUID.equals(that.requestUUID);
 
    }
 
    @Override
    public int hashCode() {
-      int result = address != null ? address.hashCode() : 0;
-      result = 31 * result + (int) (id ^ (id >>> 32));
-      return result;
+      return requestUUID.hashCode();
    }
 
    @Override
    public String toString() {
-      return "CommandInvocation:" + Objects.toString(address, "local") + ":" + id;
+      return "CommandInvocation:" + requestUUID.toIdString();
    }
 
    public static String show(CommandInvocationId id) {

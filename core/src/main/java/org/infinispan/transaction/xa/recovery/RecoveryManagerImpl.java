@@ -198,8 +198,8 @@ public class RecoveryManagerImpl implements RecoveryManager {
    @Override
    public List<XidImpl> getInDoubtTransactions() {
       List<XidImpl> result = inDoubtTransactions.keySet().stream()
-            .filter(recoveryInfoKey -> recoveryInfoKey.cacheName.equals(cacheName))
-            .map(recoveryInfoKey -> recoveryInfoKey.xid)
+            .filter(recoveryInfoKey -> recoveryInfoKey.cacheName().equals(cacheName))
+            .map(RecoveryInfoKey::xid)
             .collect(Collectors.toList());
       log.tracef("Returning %s ", result);
       return result;
@@ -295,8 +295,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
       } else {
          RecoveryAwareRemoteTransaction tx = getPreparedTransaction(xid);
          if (tx == null) return CompletableFuture.completedFuture("Could not find transaction " + xid);
-         GlobalTransaction globalTransaction = tx.getGlobalTransaction();
-         globalTransaction.setAddress(rpcManager.getAddress());
+         GlobalTransaction globalTransaction = tx.getGlobalTransaction().changeAddress(rpcManager.getAddress());
          globalTransaction.setRemote(false);
          RecoveryAwareLocalTransaction localTx = (RecoveryAwareLocalTransaction) txFactory.newLocalTransaction(null, globalTransaction, false, tx.getTopologyId());
          localTx.setModifications(tx.getModifications());
