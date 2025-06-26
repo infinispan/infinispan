@@ -46,7 +46,9 @@ import javax.security.auth.Subject;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Version;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
@@ -56,8 +58,6 @@ import org.infinispan.server.memcached.MemcachedMetadata;
 import org.infinispan.server.memcached.MemcachedResponse;
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.ParseUtil;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 import io.netty.buffer.ByteBuf;
 
@@ -221,11 +221,16 @@ public abstract class TextOpDecoder extends TextDecoder {
    }
 
    private Object createMultiGetResponse(List<CacheEntry<byte[], byte[]>> entries) {
-      ByteBuf[] elements = new ByteBuf[entries.size() + 1];
-      for (int i = 0; i < entries.size(); i++) {
-         elements[i] = buildGetResponse(entries.get(i));
+      int size = (int)entries.stream().filter(e -> e!=null && e.getValue()!=null).count();
+      ByteBuf[] elements = new ByteBuf[size + 1];
+      int i = 0;
+      for (CacheEntry<byte[],byte[]> entry : entries) {
+         if (entry == null || entry.getValue() == null) {
+            continue;
+         }
+         elements[i++] = buildGetResponse(entry);
       }
-      elements[entries.size()] = wrappedBuffer(END);
+      elements[i] = wrappedBuffer(END);
       return elements;
    }
 
