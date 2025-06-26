@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
 
+import org.infinispan.commands.RequestUUID;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -29,13 +30,13 @@ public class ControlledIracManager implements IracManager {
    }
 
    @Override
-   public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
-      actual.trackUpdatedKey(segment, key, lockOwner);
+   public void trackUpdatedKey(int segment, Object key, RequestUUID owner) {
+      actual.trackUpdatedKey(segment, key, owner);
    }
 
    @Override
-   public void trackExpiredKey(int segment, Object key, Object lockOwner) {
-      actual.trackExpiredKey(segment, key, lockOwner);
+   public void trackExpiredKey(int segment, Object key, RequestUUID owner) {
+      actual.trackExpiredKey(segment, key, owner);
    }
 
    @Override
@@ -64,8 +65,8 @@ public class ControlledIracManager implements IracManager {
    }
 
    @Override
-   public void receiveState(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
-      actual.receiveState(segment, key, lockOwner, tombstone);
+   public void receiveState(int segment, Object key, RequestUUID owner, IracMetadata tombstone) {
+      actual.receiveState(segment, key, owner, tombstone);
    }
 
    @Override

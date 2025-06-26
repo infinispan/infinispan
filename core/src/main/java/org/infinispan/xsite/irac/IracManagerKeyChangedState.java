@@ -8,6 +8,7 @@ import java.util.BitSet;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
+import org.infinispan.commands.RequestUUID;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -33,7 +34,7 @@ class IracManagerKeyChangedState implements IracManagerKeyState {
 
    private volatile Status status = Status.READY;
 
-   public IracManagerKeyChangedState(int segment, Object key, Object owner, boolean expiration, int numberOfBackups) {
+   public IracManagerKeyChangedState(int segment, Object key, RequestUUID owner, boolean expiration, int numberOfBackups) {
       this.keyInfo = new IracManagerKeyInfo(segment, key, owner);
       this.expiration = expiration;
       BitSet backupMissing = new BitSet(numberOfBackups);
@@ -52,7 +53,7 @@ class IracManagerKeyChangedState implements IracManagerKeyState {
    }
 
    @Override
-   public Object getOwner() {
+   public RequestUUID getOwner() {
       return keyInfo.getOwner();
    }
 

@@ -2,6 +2,7 @@ package org.infinispan.xsite.irac;
 
 import java.util.Objects;
 
+import org.infinispan.commands.RequestUUID;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
@@ -18,25 +19,21 @@ public class IracManagerKeyInfo {
 
    final int segment;
    final Object key;
-   final Object owner;
+   final RequestUUID owner;
 
-   public IracManagerKeyInfo(int segment, Object key, Object owner) {
+   public IracManagerKeyInfo(int segment, Object key, RequestUUID owner) {
       this.segment = segment;
       this.key = Objects.requireNonNull(key);
       this.owner = Objects.requireNonNull(owner);
    }
 
    @ProtoFactory
-   IracManagerKeyInfo(int segment, MarshallableObject<Object> wrappedKey, MarshallableObject<Object> wrappedOwner) {
-      this(segment, MarshallableObject.unwrap(wrappedKey), MarshallableObject.unwrap(wrappedOwner));
+   IracManagerKeyInfo(int segment, MarshallableObject<Object> wrappedKey, RequestUUID owner) {
+      this(segment, MarshallableObject.unwrap(wrappedKey), owner);
    }
 
    public Object getKey() {
       return key;
-   }
-
-   public Object getOwner() {
-      return owner;
    }
 
    @ProtoField(1)
@@ -50,8 +47,8 @@ public class IracManagerKeyInfo {
    }
 
    @ProtoField(3)
-   MarshallableObject<Object> getWrappedOwner() {
-      return MarshallableObject.create(owner);
+   public RequestUUID getOwner() {
+      return owner;
    }
 
    @Override

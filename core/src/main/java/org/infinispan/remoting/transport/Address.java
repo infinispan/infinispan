@@ -1,6 +1,7 @@
 package org.infinispan.remoting.transport;
 
 import java.util.Objects;
+import java.util.UUID;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -25,17 +26,15 @@ public class Address implements Comparable<Address> {
 
    public static final Address LOCAL = random();
 
-   @ProtoField(value = 1, defaultValue = "0")
-   final long mostSignificantBits;
-   @ProtoField(value = 2, defaultValue = "0")
-   final long leastSignificantBits;
-   @ProtoField(3)
+   @ProtoField(1)
+   final UUID nodeUUID;
+   @ProtoField(2)
    final NodeVersion version;
-   @ProtoField(4)
+   @ProtoField(3)
    final String siteId;
-   @ProtoField(5)
+   @ProtoField(4)
    final String rackId;
-   @ProtoField(6)
+   @ProtoField(5)
    final String machineId;
    private transient String cachedName;
 
@@ -105,8 +104,11 @@ public class Address implements Comparable<Address> {
 
    private Address(long mostSignificantBits, long leastSignificantBits, NodeVersion version, String siteId,
                    String rackId, String machineId) {
-      this.mostSignificantBits = mostSignificantBits;
-      this.leastSignificantBits = leastSignificantBits;
+      this(new UUID(mostSignificantBits, leastSignificantBits), version, siteId, rackId, machineId);
+   }
+
+   private Address(UUID nodeUUID, NodeVersion version, String siteId, String rackId, String machineId) {
+      this.nodeUUID = nodeUUID;
       this.version = version;
       this.siteId = siteId;
       this.rackId = rackId;
@@ -114,21 +116,29 @@ public class Address implements Comparable<Address> {
    }
 
    @ProtoFactory
-   public static Address protoFactory(long mostSignificantBits, long leastSignificantBits, NodeVersion version,
+   public static Address protoFactory(UUID nodeUUID, NodeVersion version,
                                       String siteId, String rackId, String machineId) {
-      var existing = AddressCache.getIfPresent(mostSignificantBits, leastSignificantBits);
+      var existing = AddressCache.getIfPresent(nodeUUID.getMostSignificantBits(), nodeUUID.getLeastSignificantBits());
       if (existing != null) {
          return existing;
       }
-      return new Address(mostSignificantBits, leastSignificantBits, version, siteId, rackId, machineId);
+      return new Address(nodeUUID, version, siteId, rackId, machineId);
+   }
+
+   public static Address fromNodeUUID(UUID nodeUUID) {
+      return new Address(Objects.requireNonNull(nodeUUID), NodeVersion.INSTANCE, null, null, null);
    }
 
    public long getLeastSignificantBits() {
-      return leastSignificantBits;
+      return nodeUUID.getLeastSignificantBits();
    }
 
    public long getMostSignificantBits() {
-      return mostSignificantBits;
+      return nodeUUID.getMostSignificantBits();
+   }
+
+   public UUID getNodeUUID() {
+      return nodeUUID;
    }
 
    public NodeVersion getVersion() {
@@ -170,15 +180,12 @@ public class Address implements Comparable<Address> {
       if (o == null || getClass() != o.getClass()) return false;
 
       Address that = (Address) o;
-      return mostSignificantBits == that.mostSignificantBits &&
-            leastSignificantBits == that.leastSignificantBits;
+      return nodeUUID.equals(that.nodeUUID);
    }
 
    @Override
    public int hashCode() {
-      int result = Long.hashCode(mostSignificantBits);
-      result = 31 * result + Long.hashCode(leastSignificantBits);
-      return result;
+      return nodeUUID.hashCode();
    }
 
    @Override
@@ -186,17 +193,18 @@ public class Address implements Comparable<Address> {
       if (cachedName != null) {
          return cachedName;
       }
-      var name = NameCache.get(new org.jgroups.util.UUID(getMostSignificantBits(), getLeastSignificantBits()));
-      return name != null ? (cachedName = name) : toStringLong();
+      long most = getMostSignificantBits();
+      long least = getLeastSignificantBits();
+      var name = NameCache.get(new org.jgroups.util.UUID(most, least));
+      return name != null ? (cachedName = name) : toStringLong(most, least);
    }
 
    @Override
    public int compareTo(Address other) {
-      int mostSigBits = Long.compare(this.mostSignificantBits, other.mostSignificantBits);
-      return mostSigBits != 0 ? mostSigBits : Long.compare(this.leastSignificantBits, other.mostSignificantBits);
+      return nodeUUID.compareTo(other.nodeUUID);
    }
 
-   public String toStringLong() {
+   public static String toStringLong(long mostSignificantBits, long leastSignificantBits) {
       return (digits(mostSignificantBits >> 32, 8) + "-" +
             digits(mostSignificantBits >> 16, 4) + "-" +
             digits(mostSignificantBits, 4) + "-" +

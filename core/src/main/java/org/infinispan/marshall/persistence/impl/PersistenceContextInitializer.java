@@ -32,6 +32,7 @@ import org.infinispan.util.logging.events.EventLogLevel;
  */
 @ProtoSchema(
       dependsOn = {
+            org.infinispan.protostream.types.java.CommonTypes.class,
             org.infinispan.commons.marshall.PersistenceContextInitializer.class,
             org.infinispan.counter.api._private.PersistenceContextInitializer.class
       },

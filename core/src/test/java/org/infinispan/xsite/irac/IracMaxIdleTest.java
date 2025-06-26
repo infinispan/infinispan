@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.RequestUUID;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.BackupConfiguration;
@@ -223,15 +224,15 @@ public class IracMaxIdleTest extends AbstractMultipleSitesTest {
       }
 
       @Override
-      public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
+      public void trackUpdatedKey(int segment, Object key, RequestUUID owner) {
          if (enabled) {
             var existing = pendingKeys.get(key);
             if (existing != null && existing.isExpiration()) {
                actual.trackExpiredKey(existing.getSegment(), existing.getKey(), existing.getOwner());
             }
-            pendingKeys.put(key, new PendingKeyRequest(key, lockOwner, segment, false));
+            pendingKeys.put(key, new PendingKeyRequest(key, owner, segment, false));
          } else {
-            super.trackUpdatedKey(segment, key, lockOwner);
+            super.trackUpdatedKey(segment, key, owner);
          }
       }
    }

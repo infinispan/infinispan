@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.RequestUUID;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
@@ -42,20 +43,20 @@ public class ManualIracManager extends ControlledIracManager {
    }
 
    @Override
-   public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
+   public void trackUpdatedKey(int segment, Object key, RequestUUID owner) {
       if (enabled) {
-         pendingKeys.put(key, new PendingKeyRequest(key, lockOwner, segment, false));
+         pendingKeys.put(key, new PendingKeyRequest(key, owner, segment, false));
       } else {
-         super.trackUpdatedKey(segment, key, lockOwner);
+         super.trackUpdatedKey(segment, key, owner);
       }
    }
 
    @Override
-   public void trackExpiredKey(int segment, Object key, Object lockOwner) {
+   public void trackExpiredKey(int segment, Object key, RequestUUID owner) {
       if (enabled) {
-         pendingKeys.put(key, new PendingKeyRequest(key, lockOwner, segment, true));
+         pendingKeys.put(key, new PendingKeyRequest(key, owner, segment, true));
       } else {
-         super.trackExpiredKey(segment, key, lockOwner);
+         super.trackExpiredKey(segment, key, owner);
       }
    }
 
@@ -165,8 +166,8 @@ public class ManualIracManager extends ControlledIracManager {
       private final IracManagerKeyInfo keyInfo;
       private final boolean expiration;
 
-      protected PendingKeyRequest(Object key, Object lockOwner, int segment, boolean expiration) {
-         keyInfo = new IracManagerKeyInfo(segment, key, lockOwner);
+      protected PendingKeyRequest(Object key, RequestUUID owner, int segment, boolean expiration) {
+         keyInfo = new IracManagerKeyInfo(segment, key, owner);
          this.expiration = expiration;
       }
 
@@ -181,7 +182,7 @@ public class ManualIracManager extends ControlledIracManager {
       }
 
       @Override
-      public Object getOwner() {
+      public RequestUUID getOwner() {
          return keyInfo.getOwner();
       }
 
