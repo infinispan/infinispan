@@ -1,20 +1,25 @@
 package org.infinispan.commons.test;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 
 import org.jboss.logging.Logger;
+import org.testng.IAnnotationTransformer;
 import org.testng.IConfigurationListener2;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
+import org.testng.annotations.ITestAnnotation;
 import org.testng.annotations.Test;
 
 /**
  * Logs TestNG test progress.
  */
-public class TestNGTestListener implements ITestListener, IConfigurationListener2, ISuiteListener {
+public class TestNGTestListener implements ITestListener, IConfigurationListener2, ISuiteListener, IAnnotationTransformer {
+   static final long MAX_TEST_SECONDS = Long.parseUnsignedLong(System.getProperty("infinispan.test.maxTestSeconds", "300"));
    private static final Logger log = Logger.getLogger(TestNGTestListener.class);
 
    private final TestSuiteProgress progressLogger;
@@ -40,8 +45,6 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
 
    @Override
    public void onTestSkipped(ITestResult result) {
-      // Unregister thread in case the method threw a SkipException
-      RunningTestsRegistry.unregisterThreadWithTest();
       progressLogger.testIgnored(testName(result));
    }
 
@@ -52,7 +55,7 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
 
    @Override
    public void onStart(ITestContext context) {
-      Thread.currentThread().setName("testng-" + context.getName());
+      Thread.currentThread().setName("TestNG-" + context.getName());
       ThreadLeakChecker.testStarted(context.getCurrentXmlTest().getXmlClasses().get(0).getName());
    }
 
@@ -99,25 +102,21 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
 
    @Override
    public void onFinish(ISuite suite) {
-      ThreadLeakChecker.checkForLeaks(suite.getName());
+      ThreadLeakChecker.checkForLeaks("");
    }
 
    @Override
    public void beforeConfiguration(ITestResult testResult) {
       progressLogger.configurationStarted(testName(testResult));
-      String simpleName = testResult.getTestClass().getRealClass().getSimpleName();
-      RunningTestsRegistry.registerThreadWithTest(testName(testResult), simpleName);
    }
 
    @Override
    public void onConfigurationSuccess(ITestResult testResult) {
-      RunningTestsRegistry.unregisterThreadWithTest();
       progressLogger.configurationFinished(testName(testResult));
    }
 
    @Override
    public void onConfigurationFailure(ITestResult testResult) {
-      RunningTestsRegistry.unregisterThreadWithTest();
       if (testResult.getThrowable() != null) {
          progressLogger.configurationFailed(testName(testResult), testResult.getThrowable());
       }
@@ -126,9 +125,18 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
    @Override
    public void onConfigurationSkip(ITestResult testResult) {
       // Unregister thread in case the configuration method threw a SkipException
-      RunningTestsRegistry.unregisterThreadWithTest();
       if (testResult.getThrowable() != null) {
          progressLogger.testIgnored(testName(testResult));
+      }
+   }
+
+   @SuppressWarnings("rawtypes")
+   @Override
+   public void transform(ITestAnnotation annotation, Class testClass, Constructor testConstructor, Method testMethod) {
+      if (annotation.getTimeOut() == 0) {
+         // Set a default timeout for tests that don't specify one
+         log.tracef("Setting timeout for test %s to %d seconds", testMethod, MAX_TEST_SECONDS);
+         annotation.setTimeOut(MAX_TEST_SECONDS * 1000);
       }
    }
 }

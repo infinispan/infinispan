@@ -19,7 +19,9 @@ public class CommonsTestBlockHoundIntegration implements BlockHoundIntegration {
             // TestNG may be started on main thread and load this before renaming to testng
             t.getName().startsWith("main") ||
             // The threads our tests run on directly
-            t.getName().startsWith("testng") ||
+            t.getName().startsWith("TestNG") ||
+            // The threads used by JUnit tests
+            t.getName().startsWith("Time-limited test") ||
             // These threads are part of AbstractInfinispanTest#testExecutor and fork methods
             t.getName().startsWith("ForkThread"));
 
