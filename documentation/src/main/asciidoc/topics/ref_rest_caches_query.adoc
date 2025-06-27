@@ -63,6 +63,43 @@ POST /rest/v2/caches/{cacheName}?action=search
 include::json/rest_query_request_body.json[]
 ----
 
+[id='rest_v2_query_delete']
+== Delete by query
+Delete multiple entries using delete by query in remote caches with `DELETE` requests and the `?action=deleteByQuery&query` parameter from any HTTP client.
+
+[source,options="nowrap",subs=attributes+]
+----
+DELETE /rest/v2/caches/{cacheName}?action=deleteByQuery&query={ickle query}
+----
+
+.Request Parameters
+
+|===
+|Parameter |Required or Optional |Value
+
+|`query`
+|REQUIRED
+|Specifies the query string.
+
+|`local`
+|OPTIONAL
+|When `true`, the query is restricted to the data present in node that process the request. The default is `false`.
+|===
+
+To use the body of the request instead of specifying query parameters, invoke
+`POST` requests as follows:
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/caches/{cacheName}?action=deleteByQuery
+----
+
+.Delete statement in request body
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/rest_query_delete_request_body.json[]
+----
+
 [id='rest_v2_query_reindex']
 == Rebuilding indexes
 When you delete fields or change index field definitions, you must rebuild the index to ensure the index is consistent with data in the cache.

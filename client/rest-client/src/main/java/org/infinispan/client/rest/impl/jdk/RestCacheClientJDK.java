@@ -296,6 +296,11 @@ public class RestCacheClientJDK implements RestCacheClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> deleteByQuery(String query, boolean local) {
+      return client.delete(path + "?action=deleteByQuery&query=" + sanitize(query) + "&local=" + local);
+   }
+
+   @Override
    public CompletionStage<RestResponse> query(String query, int maxResults, int offset) {
 
       return client.get(String.format("%s?action=search&query=%s&max_results=%d&offset=%d", path, sanitize(query), maxResults, offset));
