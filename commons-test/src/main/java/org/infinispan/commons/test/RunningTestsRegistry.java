@@ -33,8 +33,6 @@ import org.infinispan.commons.test.skip.OS;
  * @since 9.2
  */
 class RunningTestsRegistry {
-   private static final long MAX_TEST_SECONDS = Long.parseUnsignedLong(System.getProperty("infinispan.test.maxTestSeconds", "300"));
-
    private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
          r -> new Thread(r, "RunningTestsRegistry-Worker"));
    private static final Map<Thread, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
@@ -49,13 +47,13 @@ class RunningTestsRegistry {
    static void registerThreadWithTest(String testName, String simpleName) {
       Thread testThread = Thread.currentThread();
       ScheduledFuture<?> future = executor.schedule(
-         () -> killLongTest(testThread, testName, simpleName), MAX_TEST_SECONDS, SECONDS);
+         () -> killLongTest(testThread, testName, simpleName), TestNGTestListener.MAX_TEST_SECONDS, SECONDS);
       scheduledTasks.put(testThread, future);
    }
 
    private static void killLongTest(Thread testThread, String testName, String simpleName) {
       RuntimeException exception =
-         new RuntimeException(String.format("Test timed out after %d seconds", MAX_TEST_SECONDS));
+         new RuntimeException(String.format("Test timed out after %d seconds", TestNGTestListener.MAX_TEST_SECONDS));
       exception.setStackTrace(testThread.getStackTrace());
       TestSuiteProgress.fakeTestFailure(testName, exception);
       writeJUnitReport(testName, exception);
