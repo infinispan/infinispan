@@ -1,12 +1,14 @@
 {
   "server": {
-    "endpoints": [{
+    "endpoints": [
+      {
+        "socket-binding": "public",
+        "security-realm": "application-realm",
+        "admin": "false"
+      },
+      {
       "socket-binding": "private",
-      "security-realm": "private-realm"
-    }, {
-      "socket-binding": "public",
-      "security-realm": "default",
-      "admin": "false"
+      "security-realm": "management-realm"
     }]
   }
 }
