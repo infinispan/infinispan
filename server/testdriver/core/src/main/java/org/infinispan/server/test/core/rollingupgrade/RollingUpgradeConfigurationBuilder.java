@@ -14,6 +14,7 @@ import java.util.function.Predicate;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.commons.configuration.StringConfiguration;
+import org.infinispan.server.test.core.InfinispanServerListener;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 
 public class RollingUpgradeConfigurationBuilder {
@@ -27,6 +28,7 @@ public class RollingUpgradeConfigurationBuilder {
    private final Properties properties = new Properties();
    private final List<JavaArchive> customArtifacts = new ArrayList<>();
    private final List<String> mavenArtifacts = new ArrayList<>();
+   private final List<InfinispanServerListener> listeners = new ArrayList<>();
    private String jgroupsProtocol = "tcp";
    private int serverCheckTimeSecs = 30;
    private boolean useSharedDataMount = true;
@@ -140,6 +142,11 @@ public class RollingUpgradeConfigurationBuilder {
       return this;
    }
 
+   public RollingUpgradeConfigurationBuilder addListener(InfinispanServerListener listener) {
+      this.listeners.add(listener);
+      return this;
+   }
+
    public RollingUpgradeConfigurationBuilder handlers(Consumer<RollingUpgradeHandler> initialHandler,
                                                       Predicate<RollingUpgradeHandler> isValidServerState) {
       this.initialHandler = Objects.requireNonNull(initialHandler);
@@ -150,7 +157,7 @@ public class RollingUpgradeConfigurationBuilder {
    public RollingUpgradeConfiguration build() {
       return new RollingUpgradeConfiguration(nodeCount, fromVersion, toVersion, xSite, jgroupsProtocol, serverCheckTimeSecs,
             useSharedDataMount, serverConfigurationFile, defaultServerConfigurationFile, properties,
-            customArtifacts.toArray(new JavaArchive[0]), mavenArtifacts.toArray(new String[0]),
+            customArtifacts.toArray(new JavaArchive[0]), mavenArtifacts.toArray(new String[0]), listeners,
             exceptionHandler, initialHandler, isValidServerState);
    }
 }

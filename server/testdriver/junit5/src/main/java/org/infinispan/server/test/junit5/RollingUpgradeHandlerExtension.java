@@ -1,5 +1,7 @@
 package org.infinispan.server.test.junit5;
 
+import java.net.InetAddress;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
@@ -8,6 +10,7 @@ import org.infinispan.server.test.api.MemcachedTestClientDriver;
 import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
 import org.infinispan.server.test.api.TestClientDriver;
+import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
 import org.infinispan.server.test.core.rollingupgrade.CombinedInfinispanServerDriver;
@@ -29,9 +32,33 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
       this.configurationBuilder = configurationBuilder;
    }
 
+   public static RollingUpgradeHandlerExtension from(InfinispanServerExtensionBuilder iseb, String fromVersion, String toVersion) {
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(fromVersion, toVersion);
+      InfinispanServerTestConfiguration configuration = iseb.createServerTestConfiguration();
+
+      if (configuration.isDefaultFile()) {
+         builder.useDefaultServerConfiguration(configuration.configurationFile());
+      } else {
+         builder.useCustomServerConfiguration(configuration.configurationFile());
+      }
+      builder.nodeCount(configuration.numServers())
+            .addMavenArtifacts(configuration.mavenArtifacts())
+            .addArtifacts(configuration.archives());
+
+      configuration.properties().forEach((k, v) -> {
+         if (k instanceof String ks && v instanceof String vs) {
+            builder.addProperty(ks, vs);
+         }
+      });
+      configuration.listeners().forEach(builder::addListener);
+
+      return new RollingUpgradeHandlerExtension(builder);
+   }
+
    @Override
    protected void onTestsComplete(ExtensionContext extensionContext) {
       if (handler != null) {
+         testServer.afterListeners();
          if (extensionContext.getExecutionException().isPresent()) {
             handler.exceptionEncountered(extensionContext.getExecutionException().get());
          } else {
@@ -108,5 +135,10 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
    @Override
    public CounterManager getCounterManager() {
       return testClient.getCounterManager();
+   }
+
+   @Override
+   public InetAddress getServerAddress(int offset) {
+      return testClient.getServerDriver().getServerAddress(offset);
    }
 }

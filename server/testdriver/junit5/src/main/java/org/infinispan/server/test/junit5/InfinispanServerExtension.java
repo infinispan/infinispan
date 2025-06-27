@@ -1,5 +1,7 @@
 package org.infinispan.server.test.junit5;
 
+import java.net.InetAddress;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
@@ -115,6 +117,11 @@ public class InfinispanServerExtension extends AbstractServerExtension implement
    @Override
    public CounterManager getCounterManager() {
       return testClient.getCounterManager();
+   }
+
+   @Override
+   public InetAddress getServerAddress(int offset) {
+      return getServerDriver().getServerAddress(offset);
    }
 
    public TestServer getTestServer() {
