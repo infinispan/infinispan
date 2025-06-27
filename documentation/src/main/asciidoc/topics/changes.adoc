@@ -90,6 +90,10 @@ We recommend monitoring your application's performance after the upgrade, especi
 The legacy Hot Rod client (`org.infinispan:infinispan-hotrod-client-legacy`) has been removed. If, for some reason,
 you still need to use it, please use one from previous versions which are still maintained.
 
+=== Deprecation removals
+
+Everything that was deprecated in 10.x, 11.0 has been removed.
+
 == Upgrading from 15.1 to 15.2
 
 === Native Server
