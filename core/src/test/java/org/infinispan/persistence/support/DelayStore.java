@@ -110,7 +110,10 @@ public class DelayStore extends DummyInMemoryStore {
       return super.publishEntries(segments, filter, fetchValue)
             .delay(me -> {
                      if (!delayFuture.isDone() && delayBeforeEmitCount.decrementAndGet() >= 0) {
-                        return Completable.fromCompletionStage(delayFuture).toFlowable();
+                        log.tracef("Delaying emit of %s", me);
+                        return Completable.fromCompletionStage(delayFuture.thenRun(() -> {
+                           log.tracef("Resuming emit of %s", me);
+                        })).toFlowable();
                      } else {
                         return Flowable.empty();
                      }
