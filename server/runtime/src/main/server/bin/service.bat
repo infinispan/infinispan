@@ -16,7 +16,6 @@ REM  v1	2021-06-11 initial edit
 REM
 REM Author: Lei Yu
 REM ========================================================
-setlocal EnableExtensions EnableDelayedExpansion
 
 set DEBUG=0
 if "%DEBUG%" == "1" (
