@@ -21,7 +21,12 @@ public enum AvailabilityMode {
    /**
     * Data can not be safely accessed because of a network split or successive nodes leaving.
     */
-   DEGRADED_MODE;
+   DEGRADED_MODE,
+
+   /**
+    * Data is not available because the cache is performing graceful shutdown.
+    */
+   STOPPED;
 
    public AvailabilityMode min(AvailabilityMode other) {
       if (this == DEGRADED_MODE || other == DEGRADED_MODE)
