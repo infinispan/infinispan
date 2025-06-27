@@ -210,6 +210,9 @@ public class Bootstrap extends Main {
       out.printf("  -v, --version                 %s%n", MSG.toolHelpVersion());
       out.printf("  -D<name>=<value>              %s%n", MSG.serverHelpProperty());
       out.printf("  -P, --properties=<file>       %s%n", MSG.serverHelpProperties());
+      out.printf("  --aot                         %s%n", MSG.serverHelpAOT());
+      out.printf("  --debug <port>                %s%n", MSG.serverHelpDebug());
+      out.printf("  --jmx <port>                  %s%n", MSG.serverHelpJMX());
    }
 
    @Override
