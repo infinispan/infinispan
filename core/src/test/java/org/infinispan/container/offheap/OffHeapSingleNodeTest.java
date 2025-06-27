@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.WrappedBytes;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -17,7 +18,6 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.commons.time.ControlledTimeService;
 import org.testng.annotations.Test;
 
 /**
@@ -30,7 +30,7 @@ public class OffHeapSingleNodeTest extends OffHeapMultiNodeTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
-      dcc.memory().storageType(StorageType.OFF_HEAP);
+      dcc.memory().storage(StorageType.OFF_HEAP);
       // Only start up the 1 cache
       addClusterEnabledCacheManager(dcc);
 

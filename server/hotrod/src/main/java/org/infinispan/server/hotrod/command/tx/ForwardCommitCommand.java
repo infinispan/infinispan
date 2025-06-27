@@ -5,13 +5,17 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.tx.XidImpl;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.server.hotrod.tx.operation.Util;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.BlockingManager;
+
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.RollbackException;
 
 /**
  * A {@link CacheRpcCommand} implementation to forward the commit request from a client to the member that run the
@@ -29,9 +33,15 @@ public class ForwardCommitCommand extends AbstractForwardTxCommand {
    }
 
    @Override
-   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
-      Util.commitLocalTransaction(componentRegistry.getCache().wired(), xid, timeout);
-      return CompletableFutures.completedNull();
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) {
+      BlockingManager bm = componentRegistry.getGlobalComponentRegistry().getComponent(BlockingManager.class);
+      return bm.runBlocking(() -> {
+         try {
+            Util.commitLocalTransaction(componentRegistry.getCache().wired(), xid, timeout);
+         } catch (HeuristicRollbackException | HeuristicMixedException | RollbackException e) {
+            throw new RuntimeException(e);
+         }
+      }, "forward-commit");
    }
 
    @Override

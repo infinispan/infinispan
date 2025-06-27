@@ -1,7 +1,6 @@
 package org.infinispan.persistence.support;
 
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.io.ByteBufferFactory;
@@ -41,11 +40,6 @@ public abstract class DelegatingInitializationContext implements InitializationC
    @Override
    public ByteBufferFactory getByteBufferFactory() {
       return delegate().getByteBufferFactory();
-   }
-
-   @Override
-   public ExecutorService getExecutor() {
-      return delegate().getExecutor();
    }
 
    @Override

@@ -84,7 +84,8 @@ class TestCluster {
       if (!transactional) {
          return getRemoteCache(cacheName);
       } else {
-         return remoteCacheManager.getCache(cacheName, TransactionMode.NON_XA, transactionManager);
+         remoteCacheManager.getConfiguration().addRemoteCache(cacheName, c -> c.transactionMode(TransactionMode.NON_XA).transactionManager(transactionManager));
+         return remoteCacheManager.getCache(cacheName);
       }
    }
 

@@ -18,6 +18,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -73,7 +74,8 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
       ControlledConsistentHashFactory consistentHashFactory =
             new ControlledConsistentHashFactory.Default(new int[][]{{KILLED_INDEX, ORIGINATOR_INDEX},
                   {KILLED_INDEX, OTHER_INDEX}});
-      configurationBuilder.clustering().hash().numSegments(2).consistentHashFactory(consistentHashFactory);
+      configurationBuilder.clustering().hash().numSegments(2);
+      configurationBuilder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(consistentHashFactory);
 
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       globalBuilder.serialization().addContextInitializers(TestDataSCI.INSTANCE, ControlledConsistentHashFactory.SCI.INSTANCE,

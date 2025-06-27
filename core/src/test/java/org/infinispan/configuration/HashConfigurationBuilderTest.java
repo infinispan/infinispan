@@ -1,9 +1,10 @@
 package org.infinispan.configuration;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -16,7 +17,7 @@ public class HashConfigurationBuilderTest extends AbstractInfinispanTest {
       cb.clustering().cacheMode(CacheMode.DIST_SYNC);
       cb.clustering().hash().numOwners(5);
       Configuration c = cb.build();
-      Assert.assertEquals(5, c.clustering().hash().numOwners());
+      assertEquals(5, c.clustering().hash().numOwners());
 
       try {
          cb.clustering().hash().numOwners(0);
@@ -31,25 +32,12 @@ public class HashConfigurationBuilderTest extends AbstractInfinispanTest {
       cb.clustering().hash().numSegments(5);
 
       Configuration c = cb.build();
-      Assert.assertEquals(5, c.clustering().hash().numSegments());
+      assertEquals(5, c.clustering().hash().numSegments());
 
       try {
          cb.clustering().hash().numSegments(0);
          Assert.fail("IllegalArgumentException expected");
       } catch (IllegalArgumentException e) {
       }
-   }
-
-   public void testConsistentHashFactory() {
-      ConfigurationBuilder cb = new ConfigurationBuilder();
-      cb.clustering().cacheMode(CacheMode.DIST_SYNC);
-
-      Configuration c = cb.build();
-      Assert.assertNull(c.clustering().hash().consistentHashFactory());
-
-      SyncConsistentHashFactory consistentHashFactory = SyncConsistentHashFactory.getInstance();
-      cb.clustering().hash().consistentHashFactory(consistentHashFactory);
-      c = cb.build();
-      Assert.assertSame(c.clustering().hash().consistentHashFactory(), consistentHashFactory);
    }
 }

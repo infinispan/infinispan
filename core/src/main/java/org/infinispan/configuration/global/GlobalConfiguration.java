@@ -31,13 +31,12 @@ import org.infinispan.factories.scopes.Scopes;
 public class GlobalConfiguration {
 
    private final Map<Class<?>, ?> modules;
-   private final SiteConfiguration site;
    private final ClassLoader cl;
    private final CacheContainerConfiguration cacheContainerConfiguration;
    private final Features features;
 
    GlobalConfiguration(CacheContainerConfiguration cacheContainerConfiguration,
-                       List<?> modules, SiteConfiguration site,
+                       List<?> modules,
                        ClassLoader cl, Features features) {
       this.cacheContainerConfiguration = cacheContainerConfiguration;
       Map<Class<?>, Object> moduleMap = new HashMap<>();
@@ -45,7 +44,6 @@ public class GlobalConfiguration {
          moduleMap.put(module.getClass(), module);
       }
       this.modules = Map.copyOf(moduleMap);
-      this.site = site;
       this.cl = cl;
       this.features = features;
    }
@@ -142,10 +140,6 @@ public class GlobalConfiguration {
       return cl;
    }
 
-   public SiteConfiguration sites() {
-      return site;
-   }
-
    public Optional<String> defaultCacheName() {
       return Optional.ofNullable(cacheContainerConfiguration.defaultCacheName());
    }
@@ -172,7 +166,6 @@ public class GlobalConfiguration {
    public String toString() {
       return "GlobalConfiguration{" +
             ", modules=" + modules +
-            ", site=" + site +
             ", cl=" + cl +
             '}';
    }

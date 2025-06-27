@@ -13,10 +13,10 @@ import org.apache.lucene.index.SegmentInfos;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
@@ -32,7 +32,6 @@ import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -166,7 +165,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
       globalBuilder.serialization().addContextInitializer(QueryTestSCI.INSTANCE);
 
       ConfigurationBuilder b = new ConfigurationBuilder();
-      b.memory().evictionType(EvictionType.COUNT).size(maxEntries)
+      b.memory().maxCount(maxEntries)
             .persistence().passivation(true)
             .addSingleFileStore().preload(true)
             .indexing().enable()

@@ -2,9 +2,7 @@ package org.infinispan.query.blackbox;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.query.helper.TestQueryHelperFactory.createCacheQuery;
-import static org.testng.Assert.assertEquals;
-
-import java.io.IOException;
+import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -23,7 +21,7 @@ public class OffHeapQueryTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(false);
-      cfg.memory().storageType(StorageType.OFF_HEAP).size(10);
+      cfg.memory().storage(StorageType.OFF_HEAP).maxCount(10);
       cfg.indexing().enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity(Person.class);
@@ -34,7 +32,7 @@ public class OffHeapQueryTest extends SingleCacheManagerTest {
    public void testQuery() throws Exception {
       cache.put("1", new Person("Donald", "MAGA", 78));
 
-      assertEquals(getIndexDocs(), 1);
+      assertEquals(1, getIndexDocs());
 
       Query<Object> queryFromLucene = createCacheQuery(Person.class, cache, "name", "Donald");
       assertEquals(1, queryFromLucene.execute().list().size());
@@ -43,7 +41,7 @@ public class OffHeapQueryTest extends SingleCacheManagerTest {
       assertEquals(1, queryFromIckle.execute().list().size());
    }
 
-   private long getIndexDocs() throws IOException {
+   private long getIndexDocs() {
      return IndexAccessor.of(cache, Person.class).getIndexReader().numDocs();
    }
 }

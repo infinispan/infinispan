@@ -14,7 +14,6 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
@@ -29,8 +28,8 @@ public class BoundedOffHeapDataContainer extends SegmentedBoundedOffHeapDataCont
    protected final List<Consumer<Iterable<InternalCacheEntry<WrappedBytes, WrappedBytes>>>> listeners =
       new CopyOnWriteArrayList<>();
 
-   public BoundedOffHeapDataContainer(long maxSize, EvictionType type) {
-      super(1, maxSize, type);
+   public BoundedOffHeapDataContainer(long maxSize, boolean memoryBounded) {
+      super(1, maxSize, memoryBounded);
    }
 
    @Override

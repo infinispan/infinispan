@@ -1,8 +1,24 @@
 package org.infinispan.statetransfer;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.withSettings;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -18,21 +34,6 @@ import org.mockito.AdditionalAnswers;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.withSettings;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 @Test(groups = "functional", testName = "statetransfer.StateTransferSegmentMetricsTest")
 @CleanupAfterMethod
@@ -62,8 +63,9 @@ public class StateTransferSegmentMetricsTest extends BaseDistFunctionalTest<Stri
    @Override
    protected ConfigurationBuilder buildConfiguration() {
       ConfigurationBuilder builder = super.buildConfiguration();
-      builder.clustering().hash().consistentHashFactory(factory).numSegments(MAX_NUM_SEGMENTS)
+      builder.clustering().hash().numSegments(MAX_NUM_SEGMENTS)
             .transaction().transactionMode(TransactionMode.TRANSACTIONAL).lockingMode(LockingMode.OPTIMISTIC);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(factory);
       return builder;
    }
 

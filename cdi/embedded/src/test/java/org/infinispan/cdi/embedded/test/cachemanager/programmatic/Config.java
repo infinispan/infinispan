@@ -1,16 +1,16 @@
 package org.infinispan.cdi.embedded.test.cachemanager.programmatic;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.inject.Disposes;
-import jakarta.enterprise.inject.Produces;
-import jakarta.inject.Named;
-
 import org.infinispan.cdi.embedded.ConfigureCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Disposes;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Named;
 
 /**
  * Creates a cache, based on some external mechanism.
@@ -31,7 +31,7 @@ public class Config {
    @Named("large")
    @ConfigureCache("large")
    @Produces
-   public Configuration largeConfiguration = new ConfigurationBuilder().memory().size(10).build();
+   public Configuration largeConfiguration = new ConfigurationBuilder().memory().maxCount(10).build();
 
    /**
     * The same as the above. The intention here is to check whether we can use 2 Configurations with <code>@Named</code>
@@ -40,7 +40,7 @@ public class Config {
    @Named("super-large")
    @ConfigureCache("super-large")
    @Produces
-   public Configuration superLargeConfiguration = new ConfigurationBuilder().memory().size(20).build();
+   public Configuration superLargeConfiguration = new ConfigurationBuilder().memory().maxCount(20).build();
 
    /**
     * <p>Associates the "small" cache with the qualifier {@link Small}.</p>
@@ -61,7 +61,7 @@ public class Config {
    @SuppressWarnings("unused")
    public EmbeddedCacheManager defaultCacheManager() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.memory().size(7);
+      builder.memory().maxCount(7);
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 

@@ -75,7 +75,7 @@ public class JCacheManager extends AbstractJCacheManager {
          throw new IllegalArgumentException("Classloader cannot be null");
       }
       if (uri == null) {
-         throw new IllegalArgumentException("Invalid CacheManager URI " + uri);
+         throw new IllegalArgumentException("Missing CacheManager URI");
       }
 
       ConfigurationBuilderHolder cbh;
@@ -135,7 +135,7 @@ public class JCacheManager extends AbstractJCacheManager {
 
          registerPredefinedCache(cacheName, new JCache<>(
                cm.getCache(cacheName).getAdvancedCache(), this,
-               ConfigurationAdapter.create()));
+               ConfigurationAdapter.create(cm.getCacheManagerConfiguration())));
       }
    }
 
@@ -209,7 +209,7 @@ public class JCacheManager extends AbstractJCacheManager {
       if (baseConfig == null) {
          baseConfig = cm.getCacheConfiguration(cacheName);
       }
-      ConfigurationAdapter<K, V> adapter = ConfigurationAdapter.create(configuration);
+      ConfigurationAdapter<K, V> adapter = ConfigurationAdapter.create(cm.getCacheManagerConfiguration(), configuration);
       cm.defineConfiguration(cacheName, adapter.build(baseConfig));
       AdvancedCache<K, V> ispnCache =
             cm.<K, V>getCache(cacheName).getAdvancedCache();
@@ -225,7 +225,7 @@ public class JCacheManager extends AbstractJCacheManager {
    protected <K, V, I extends BasicCache<K, V>> AbstractJCache<K, V> create(I ispnCache) {
       checkNotInternalCache(ispnCache.getName());
 
-      return new JCache<>((AdvancedCache<K, V>) ispnCache, this, ConfigurationAdapter.create());
+      return new JCache<>((AdvancedCache<K, V>) ispnCache, this, ConfigurationAdapter.create(cm.getCacheManagerConfiguration()));
    }
 
    private void checkNotInternalCache(String cacheName) {

@@ -12,11 +12,10 @@ public class TopologyCacheConfiguration extends ConfigurationElement<TopologyCac
    public static final AttributeDefinition<Boolean> TOPOLOGY_AWAIT_INITIAL_TRANSFER = AttributeDefinition.builder(Attribute.AWAIT_INITIAL_RETRIEVAL, true).immutable().build();
    public static final AttributeDefinition<TimeQuantity> TOPOLOGY_LOCK_TIMEOUT = AttributeDefinition.builder(Attribute.LOCK_TIMEOUT, TimeQuantity.valueOf("10s")).immutable().build();
    public static final AttributeDefinition<TimeQuantity> TOPOLOGY_REPL_TIMEOUT = AttributeDefinition.builder(Attribute.REPLICATION_TIMEOUT, TimeQuantity.valueOf("10s")).immutable().build();
-   public static final AttributeDefinition<Boolean> LAZY_RETRIEVAL = AttributeDefinition.builder(Attribute.LAZY_RETRIEVAL, false).immutable().build();
    public static final AttributeDefinition<Boolean> NETWORK_PREFIX_OVERRIDE = AttributeDefinition.builder(Attribute.NETWORK_PREFIX_OVERRIDE, true).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(TopologyCacheConfiguration.class, TOPOLOGY_AWAIT_INITIAL_TRANSFER, TOPOLOGY_LOCK_TIMEOUT, TOPOLOGY_REPL_TIMEOUT, LAZY_RETRIEVAL, NETWORK_PREFIX_OVERRIDE);
+      return new AttributeSet(TopologyCacheConfiguration.class, TOPOLOGY_AWAIT_INITIAL_TRANSFER, TOPOLOGY_LOCK_TIMEOUT, TOPOLOGY_REPL_TIMEOUT, NETWORK_PREFIX_OVERRIDE);
    }
 
    TopologyCacheConfiguration(AttributeSet attributes) {
@@ -33,10 +32,6 @@ public class TopologyCacheConfiguration extends ConfigurationElement<TopologyCac
 
    public boolean awaitInitialTransfer() {
       return attributes.attribute(TOPOLOGY_AWAIT_INITIAL_TRANSFER).get();
-   }
-
-   public boolean lazyRetrieval() {
-      return attributes.attribute(LAZY_RETRIEVAL).get();
    }
 
    public boolean networkPrefixOverride() {

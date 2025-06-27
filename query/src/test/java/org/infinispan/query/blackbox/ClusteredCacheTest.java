@@ -68,8 +68,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    public Object[] factory() {
       return new Object[]{
             new ClusteredCacheTest().storageType(StorageType.OFF_HEAP),
-            new ClusteredCacheTest().storageType(StorageType.BINARY),
-            new ClusteredCacheTest().storageType(StorageType.OBJECT),
+            new ClusteredCacheTest().storageType(StorageType.HEAP),
       };
    }
 
@@ -94,7 +93,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
             .addIndexedEntity(Person.class)
             .addKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);
       cacheCfg.memory()
-            .storageType(storageType);
+            .storage(storageType);
       enhanceConfig(cacheCfg);
       createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
       cache1 = cache(0);

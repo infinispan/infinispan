@@ -3,12 +3,7 @@ package org.infinispan.commands;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 
-import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.upgrade.VersionAware;
@@ -22,34 +17,6 @@ import org.infinispan.upgrade.VersionAware;
  * @since 4.0
  */
 public interface ReplicableCommand extends TracedCommand, VersionAware {
-
-   /**
-    * Invoke the command asynchronously.
-    *
-    * @since 9.0
-    * @deprecated since 11.0, please use {@link org.infinispan.commands.remote.CacheRpcCommand#invokeAsync(ComponentRegistry)}
-    * or {@link GlobalRpcCommand#invokeAsync(GlobalComponentRegistry)} instead.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   default CompletableFuture<Object> invokeAsync() throws Throwable {
-      return CompletableFuture.completedFuture(invoke());
-   }
-
-   /**
-    * Invoke the command synchronously.
-    *
-    * @since 9.0
-    * @deprecated since 11.0, please use {@link org.infinispan.commands.remote.CacheRpcCommand#invokeAsync(ComponentRegistry)}
-    * or {@link GlobalRpcCommand#invokeAsync(GlobalComponentRegistry)} instead.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   default Object invoke() throws Throwable {
-      try {
-         return invokeAsync().join();
-      } catch (CompletionException e) {
-         throw CompletableFutures.extractException(e);
-      }
-   }
 
    /**
     * Used by marshallers to convert this command into an id for streaming.
@@ -78,21 +45,6 @@ public interface ReplicableCommand extends TracedCommand, VersionAware {
     */
    default boolean isSuccessful() {
       return true;
-   }
-
-   /**
-    * If true, the command is processed asynchronously in a thread provided by an Infinispan thread pool. Otherwise,
-    * the command is processed directly in the JGroups thread.
-        * This feature allows to avoid keep a JGroups thread busy that can originate discard of messages and
-    * retransmissions. So, the commands that can block (waiting for some state, acquiring locks, etc.) should return
-    * true.
-    *
-    * @return {@code true} if the command can block/wait, {@code false} otherwise
-    * @deprecated since 11.0 - All commands will be required to be non blocking!
-    */
-   @Deprecated(forRemoval=true)
-   default boolean canBlock() {
-      return false;
    }
 
    default boolean logThrowable(Throwable t) {

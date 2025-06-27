@@ -1,7 +1,7 @@
 package org.infinispan.persistence.modifications;
 
 /**
- * Represents a {@link org.infinispan.persistence.spi.CacheWriter#delete(Object)} (Object)} modification
+ * Represents a {@link org.infinispan.persistence.spi.NonBlockingStore#delete(int, Object)} modification
  *
  * @author Manik Surtani
  * @since 4.0

@@ -8,18 +8,15 @@ import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 
 /**
- * Allows fine-tuning of rehashing characteristics. Must only used with 'distributed' cache mode.
+ * Allows fine-tuning of rehashing characteristics. Must be used only with 'distributed' cache mode.
  *
  * @author pmuir
  */
 public class HashConfiguration extends ConfigurationElement<HashConfiguration> {
-   public static final AttributeDefinition<ConsistentHashFactory> CONSISTENT_HASH_FACTORY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CONSISTENT_HASH_FACTORY, null, ConsistentHashFactory.class)
-         .serializer(AttributeSerializer.INSTANCE_CLASS_NAME).immutable().build();
    public static final AttributeDefinition<Integer> NUM_OWNERS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.OWNERS, 2).immutable().build();
    // Because it assigns owners randomly, SyncConsistentHashFactory doesn't work very well with a low number
    // of segments. (With DefaultConsistentHashFactory, 60 segments was ok up to 6 nodes.)
@@ -37,11 +34,10 @@ public class HashConfiguration extends ConfigurationElement<HashConfiguration> {
          .immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(HashConfiguration.class, CONSISTENT_HASH_FACTORY, NUM_OWNERS,
+      return new AttributeSet(HashConfiguration.class, NUM_OWNERS,
             NUM_SEGMENTS, CAPACITY_FACTOR, KEY_PARTITIONER);
    }
 
-   private final Attribute<ConsistentHashFactory> consistentHashFactory;
    private final Attribute<Integer> numOwners;
    private final Attribute<Integer> numSegments;
    private final Attribute<Float> capacityFactor;
@@ -51,21 +47,10 @@ public class HashConfiguration extends ConfigurationElement<HashConfiguration> {
    HashConfiguration(AttributeSet attributes, GroupsConfiguration groupsConfiguration) {
       super(Element.HASH, attributes);
       this.groupsConfiguration = groupsConfiguration;
-      consistentHashFactory = attributes.attribute(CONSISTENT_HASH_FACTORY);
       numOwners = attributes.attribute(NUM_OWNERS);
       numSegments = attributes.attribute(NUM_SEGMENTS);
       capacityFactor = attributes.attribute(CAPACITY_FACTOR);
       attributes.attribute(KEY_PARTITIONER).get().init(this);
-   }
-
-   /**
-    * The consistent hash factory in use.
-    *
-    * @deprecated Since 11.0. Will be removed in 14.0, the segment allocation will no longer be customizable.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   public ConsistentHashFactory<?> consistentHashFactory() {
-      return consistentHashFactory.get();
    }
 
    /**

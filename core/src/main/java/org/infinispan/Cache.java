@@ -24,14 +24,14 @@ import org.infinispan.util.function.SerializableFunction;
  * The central interface of Infinispan.  A Cache provides a highly concurrent, optionally distributed data structure
  * with additional features such as:
  * <ul> <li>JTA transaction compatibility</li> <li>Eviction support for evicting entries from memory to prevent {@link
- * OutOfMemoryError}s</li> <li>Persisting entries to a {@link org.infinispan.persistence.spi.CacheLoader}, either when they are evicted as an overflow,
+ * OutOfMemoryError}s</li> <li>Persisting entries to a {@link org.infinispan.persistence.spi.NonBlockingStore}, either when they are evicted as an overflow,
  * or all the time, to maintain persistent copies that would withstand server failure or restarts.</li> </ul>
  * For convenience, Cache extends {@link ConcurrentMap} and implements all methods accordingly.  Methods like
  * {@link #keySet()}, {@link #values()} and {@link #entrySet()} produce backing collections in that updates done to them
  * also update the original Cache instance.  Certain methods on these maps can be expensive however (prohibitively so
  * when using a distributed cache).  The {@link #size()} and {@link #containsValue(Object)} methods upon invocation can
  * also be expensive just as well.  The reason these methods are expensive are that they take into account entries
- * stored in a configured {@link org.infinispan.persistence.spi.CacheLoader} and remote entries when using a distributed cache.
+ * stored in a configured {@link org.infinispan.persistence.spi.NonBlockingStore} and remote entries when using a distributed cache.
  * Frequent use of these methods is not recommended if used in this manner.  These aforementioned methods do take into
  * account in-flight transactions, however key/value pairs read in using an iterator will not be placed into the transactional
  * context to prevent {@link OutOfMemoryError}s.  Please note all of these methods behavior can be controlled using
@@ -190,7 +190,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * Care should be taken when invoking {@link java.util.Set#toArray()}, {@link Set#toArray(Object[])},
     * {@link java.util.Set#size()}, {@link Set#retainAll(Collection)} and {@link java.util.Set#iterator()}
     * methods as they will traverse the entire contents of the cluster including a configured
-    * {@link org.infinispan.persistence.spi.CacheLoader} and remote entries.  The former 2 methods especially have a
+    * {@link org.infinispan.persistence.spi.NonBlockingStore} and remote entries.  The former 2 methods especially have a
     * very high likelihood of causing a {@link java.lang.OutOfMemoryError} due to storing all the keys in the entire
     * cluster in the array.
     * Use involving execution of this method on a production system is not recommended as they can be quite expensive
@@ -228,7 +228,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * Care should be taken when invoking {@link Collection#toArray()}, {@link Collection#toArray(Object[])},
     * {@link Collection#size()}, {@link Collection#retainAll(Collection)} and {@link Collection#iterator()}
     * methods as they will traverse the entire contents of the cluster including a configured
-    * {@link org.infinispan.persistence.spi.CacheLoader} and remote entries.  The former 2 methods especially have a
+    * {@link org.infinispan.persistence.spi.NonBlockingStore} and remote entries.  The former 2 methods especially have a
     * very high likelihood of causing a {@link java.lang.OutOfMemoryError} due to storing all the keys in the entire
     * cluster in the array.
     * Use involving execution of this method on a production system is not recommended as they can be quite expensive
@@ -268,7 +268,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * Care should be taken when invoking {@link java.util.Set#toArray()}, {@link Set#toArray(Object[])},
     * {@link java.util.Set#size()}, {@link Set#retainAll(Collection)} and {@link java.util.Set#iterator()}
     * methods as they will traverse the entire contents of the cluster including a configured
-    * {@link org.infinispan.persistence.spi.CacheLoader} and remote entries.  The former 2 methods especially have a
+    * {@link org.infinispan.persistence.spi.NonBlockingStore} and remote entries.  The former 2 methods especially have a
     * very high likelihood of causing a {@link java.lang.OutOfMemoryError} due to storing all the keys in the entire
     * cluster in the array.
     * Use involving execution of this method on a production system is not recommended as they can be quite expensive

@@ -32,7 +32,7 @@ public class CacheOpsTest extends SingleCacheManagerTest {
       gcb.jmx().enabled(true).domain(JMX_DOMAIN).mBeanServerLookup(mBeanServerLookup);
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       cfg.transaction().autoCommit(false)
-         .memory().size(1000);
+         .memory().maxCount(1000);
       return TestCacheManagerFactory.createCacheManager(gcb, cfg);
    }
 

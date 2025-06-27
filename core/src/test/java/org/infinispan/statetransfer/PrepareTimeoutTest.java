@@ -14,6 +14,7 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.StateSequencer;
@@ -43,7 +44,8 @@ public class PrepareTimeoutTest extends MultipleCacheManagersTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       builder.clustering().remoteTimeout(2000);
-      builder.clustering().hash().numSegments(1).consistentHashFactory(consistentHashFactory);
+      builder.clustering().hash().numSegments(1);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(consistentHashFactory);
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       builder.transaction().completedTxTimeout(COMPLETED_TX_TIMEOUT);
 

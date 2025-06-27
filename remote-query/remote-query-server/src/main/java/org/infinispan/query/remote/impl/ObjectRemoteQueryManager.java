@@ -15,7 +15,6 @@ import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 
@@ -82,20 +81,7 @@ final class ObjectRemoteQueryManager extends BaseRemoteQueryManager {
          return new ProtobufEntityNameResolver(serCtx);
       } else {
          ClassLoader classLoader = cr.getGlobalComponentRegistry().getComponent(ClassLoader.class);
-         ReflectionEntityNamesResolver reflectionEntityNamesResolver = new ReflectionEntityNamesResolver(classLoader);
-         if (searchMapping != null) {
-            // If indexing is enabled then use the declared set of indexed classes for lookup but fallback to global classloader.
-            QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
-            Map<String, Class<?>> indexedEntities = queryInterceptor.indexedEntities();
-            return name -> {
-               Class<?> c = indexedEntities.get(name);
-               if (c == null) {
-                  c = reflectionEntityNamesResolver.resolve(name);
-               }
-               return c;
-            };
-         }
-         return reflectionEntityNamesResolver;
+         return new ReflectionEntityNamesResolver(classLoader);
       }
    }
 }
