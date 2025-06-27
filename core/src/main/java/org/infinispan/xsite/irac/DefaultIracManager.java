@@ -24,6 +24,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.RequestUUID;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -147,13 +148,13 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    }
 
    @Override
-   public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
-      trackState(new IracManagerKeyChangedState(segment, key, lockOwner, false, asyncBackups.size()));
+   public void trackUpdatedKey(int segment, Object key, RequestUUID owner) {
+      trackState(new IracManagerKeyChangedState(segment, key, owner, false, asyncBackups.size()));
    }
 
    @Override
-   public void trackExpiredKey(int segment, Object key, Object lockOwner) {
-      trackState(new IracManagerKeyChangedState(segment, key, lockOwner, true, asyncBackups.size()));
+   public void trackExpiredKey(int segment, Object key, RequestUUID owner) {
+      trackState(new IracManagerKeyChangedState(segment, key, owner, true, asyncBackups.size()));
    }
 
    @Override
@@ -238,9 +239,9 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    }
 
    @Override
-   public void receiveState(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
+   public void receiveState(int segment, Object key, RequestUUID owner, IracMetadata tombstone) {
       iracTombstoneManager.storeTombstoneIfAbsent(segment, key, tombstone);
-      updatedKeys.putIfAbsent(key, new IracManagerKeyChangedState(segment, key, lockOwner, false, asyncBackups.size()));
+      updatedKeys.putIfAbsent(key, new IracManagerKeyChangedState(segment, key, owner, false, asyncBackups.size()));
       iracExecutor.run();
    }
 

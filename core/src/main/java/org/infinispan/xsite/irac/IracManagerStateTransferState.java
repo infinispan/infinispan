@@ -3,6 +3,8 @@ package org.infinispan.xsite.irac;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commands.RequestUUID;
+
 /**
  * A {@link IracManagerKeyState} implementation for state transfer requests,
  *
@@ -13,7 +15,7 @@ class IracManagerStateTransferState extends IracManagerKeyChangedState {
    private final CompletableFuture<Void> completableFuture = new CompletableFuture<>();
 
    public IracManagerStateTransferState(int segment, Object key, int numberOfBackups) {
-      super(segment, key, "state-transfer", false, numberOfBackups);
+      super(segment, key, RequestUUID.NO_REQUEST, false, numberOfBackups);
    }
 
    @Override

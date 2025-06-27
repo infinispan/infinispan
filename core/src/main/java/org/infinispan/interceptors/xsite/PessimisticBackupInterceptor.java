@@ -1,5 +1,6 @@
 package org.infinispan.interceptors.xsite;
 
+import org.infinispan.commands.RequestUUID;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -50,11 +51,12 @@ public class PessimisticBackupInterceptor extends BaseBackupInterceptor {
       // We need to way for the other site commit.
       // In the local site, we have locks locked so no other transaction will commit.
       // If the other site fails to commit, we abort it here.
+      RequestUUID requestUUID = command.getGlobalTransaction().getRequestUUID();
       return makeStage(asyncInvokeNext(ctx, command, stage))
             .thenApply(ctx, command, (rCtx, rCommand, rv) -> {
                //for async, all nodes need to keep track of the updates keys after it is applied locally.
                keysFromMods(rCommand.getModifications().stream())
-                     .forEach(key -> iracManager.trackUpdatedKey(key.getSegment(), key.getKey(), rCommand.getGlobalTransaction()));
+                     .forEach(key -> iracManager.trackUpdatedKey(key.getSegment(), key.getKey(), requestUUID));
                return rv;
             });
    }

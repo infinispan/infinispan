@@ -95,7 +95,7 @@ public abstract class BaseBackupInterceptor extends DDAsyncInterceptor {
 
    private void handleExpiredReturn(InvocationContext context, RemoveExpiredCommand command, Object returnValue) {
       if (command.isSuccessful()) {
-         iracManager.trackExpiredKey(command.getSegment(), command.getKey(), command.getCommandInvocationId());
+         iracManager.trackExpiredKey(command.getSegment(), command.getKey(), command.getCommandInvocationId().getRequestUUID());
       }
    }
 
@@ -139,14 +139,14 @@ public abstract class BaseBackupInterceptor extends DDAsyncInterceptor {
       int segment = dataWriteCommand.getSegment();
       if (clusteringDependentLogic.getCacheTopology().getSegmentDistribution(segment).isPrimary()) {
          //primary owner always tracks updates to the remote sites (and sends the update in the background)
-         iracManager.trackUpdatedKey(segment, dataWriteCommand.getKey(), dataWriteCommand.getCommandInvocationId());
+         iracManager.trackUpdatedKey(segment, dataWriteCommand.getKey(), dataWriteCommand.getCommandInvocationId().getRequestUUID());
          CacheEntry<?,?> entry = ctx.lookupEntry(dataWriteCommand.getKey());
          WriteCommand crossSiteCommand = createCommandForXSite(entry, segment, dataWriteCommand.getFlagsBitSet());
          return backupSender.backupWrite(crossSiteCommand, dataWriteCommand).thenReturn(ctx, dataWriteCommand, rv);
       } else if (!ctx.isOriginLocal()) {
          // backup owners need to keep track of the update in the remote context for ASYNC cross-site
          // if backup owner == originator, we don't want to track the key again when ctx.isOriginLocal==true
-         iracManager.trackUpdatedKey(segment, dataWriteCommand.getKey(), dataWriteCommand.getCommandInvocationId());
+         iracManager.trackUpdatedKey(segment, dataWriteCommand.getKey(), dataWriteCommand.getCommandInvocationId().getRequestUUID());
       }
       return rv;
    }
