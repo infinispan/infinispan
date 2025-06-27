@@ -55,6 +55,7 @@ public class RemoteSpringSessionTest extends AbstractSpringSessionTCK {
 
       server = new HotRodServer();
       server.start(hotRodServerConfigurationBuilder.build(), serverCache);
+      server.postStart();
    }
 
    @AfterAll

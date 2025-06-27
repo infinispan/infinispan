@@ -439,6 +439,7 @@ public abstract class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
       MemcachedServerConfigurationBuilder serverBuilder = serverBuilder().protocol(MemcachedProtocol.TEXT).port(server.getPort() + 33);
       MemcachedServer testServer = MemcachedTestingUtil.createMemcachedServer(decoderReplay);
       testServer.start(serverBuilder.build(), cm);
+      testServer.postStart();
       try {
          Cache memcachedCache = cm.getCache(testServer.getConfiguration().defaultCacheName());
          assertEquals(StorageType.BINARY, memcachedCache.getCacheConfiguration().memory().storageType());

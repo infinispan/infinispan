@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -17,8 +18,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.globalstate.impl.ConfigCacheLock;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -30,6 +33,7 @@ import org.infinispan.server.core.logging.Log;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
+import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLogger;
 
 /**
@@ -42,27 +46,24 @@ public class BackupManagerImpl implements BackupManager {
 
    final ParserRegistry parserRegistry;
 
-   final EventLogger eventLogger;
    final BlockingManager blockingManager;
    final Path rootDir;
    final BackupReader reader;
-   final ConfigCacheLock backupLock;
-   final ConfigCacheLock restoreLock;
+   volatile EventLogger eventLogger;
+   volatile ConfigCacheLock backupLock;
+   volatile ConfigCacheLock restoreLock;
    private final EmbeddedCacheManager cacheManager;
    final Map<String, DefaultCacheManager> cacheManagers;
    final Map<String, BackupRequest> backupMap;
    final Map<String, CompletionStage<Void>> restoreMap;
 
-   public BackupManagerImpl(EventLogger eventLogger, BlockingManager blockingManager, DefaultCacheManager cm, Path dataRoot) {
-      this.eventLogger = eventLogger;
+   public BackupManagerImpl(BlockingManager blockingManager, DefaultCacheManager cm, Path dataRoot) {
       this.blockingManager = blockingManager;
       this.rootDir = dataRoot.resolve(WORKING_DIR);
       this.cacheManager = cm;
       this.cacheManagers = Collections.singletonMap(cm.getName(), cm);
       this.parserRegistry = new ParserRegistry();
       this.reader = new BackupReader(blockingManager, cacheManagers, parserRegistry);
-      this.backupLock = new ConfigCacheLock("backup", cm);
-      this.restoreLock = new ConfigCacheLock("restore", cm);
       this.backupMap = new ConcurrentHashMap<>();
       this.restoreMap = new ConcurrentHashMap<>();
    }
@@ -70,6 +71,11 @@ public class BackupManagerImpl implements BackupManager {
    @Override
    public void init() throws IOException {
       Files.createDirectories(rootDir);
+      this.backupLock = new ConfigCacheLock("backup", cacheManager);
+      this.restoreLock = new ConfigCacheLock("restore", cacheManager);
+
+      GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cacheManager);
+      this.eventLogger = Objects.requireNonNull(gcr.getComponent(EventLogManager.class).getEventLogger(), "Event logger not found");
    }
 
    @Override
@@ -107,10 +113,20 @@ public class BackupManagerImpl implements BackupManager {
          return Status.NOT_FOUND;
 
       CompletableFuture<?> future = stage.toCompletableFuture();
-      if (future.isCompletedExceptionally())
+      if (future.isCompletedExceptionally()) {
+         showCFException(future);
          return Status.FAILED;
+      }
 
       return future.isDone() ? Status.COMPLETE : Status.IN_PROGRESS;
+   }
+
+   private void showCFException(CompletableFuture<?> cf) {
+      try {
+         cf.get();
+      } catch (Throwable e) {
+         log.errorf(CompletableFutures.extractException(e), "Backup request failed");
+      }
    }
 
    @Override
