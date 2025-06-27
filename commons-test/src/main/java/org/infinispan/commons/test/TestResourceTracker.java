@@ -132,7 +132,7 @@ public class TestResourceTracker {
       TestResources resources = getTestResources(testName);
       String shortName = resources.getShortName();
       int nextThreadIndex = resources.addThread();
-      return "testng-" + shortName + (nextThreadIndex != 0 ? "-" + nextThreadIndex : "");
+      return "TestNG-" + shortName + (nextThreadIndex != 0 ? "-" + nextThreadIndex : "");
    }
 
    public static String getNameForIndex(int i) {
