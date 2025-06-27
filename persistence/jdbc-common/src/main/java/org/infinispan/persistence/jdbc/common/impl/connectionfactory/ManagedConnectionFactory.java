@@ -45,42 +45,15 @@ public class ManagedConnectionFactory extends ConnectionFactory {
       }
    }
 
-   private void initDataSource() {
-      InitialContext ctx = null;
-      String datasourceName = managedConfiguration.jndiUrl();
-      try {
-         ctx = new InitialContext();
-         dataSource = (DataSource) ctx.lookup(datasourceName);
-         if (log.isTraceEnabled()) {
-            log.tracef("Datasource lookup for %s succeeded: %b", datasourceName, dataSource);
-         }
-         if (dataSource == null) {
-            PERSISTENCE.connectionNotFound("JNDI", datasourceName);
-            throw new PersistenceException(String.format("Could not find a connection in jndi under the name '%s'", datasourceName));
-         }
-      } catch (NamingException e) {
-         PERSISTENCE.namingExceptionLookingUpConnection(datasourceName, e);
-         throw new PersistenceException(e);
-      } finally {
-         if (ctx != null) {
-            try {
-               ctx.close();
-            } catch (NamingException e) {
-               PERSISTENCE.failedClosingNamingCtx(e);
-            }
-         }
-      }
-   }
-
    @Override
    public void stop() {
    }
 
    @Override
    public Connection getConnection() throws PersistenceException {
-      if (dataSource == null)
+      if (dataSource == null) {
          initDataSource();
-
+      }
       Connection connection;
       try {
          connection = dataSource.getConnection();
@@ -97,10 +70,41 @@ public class ManagedConnectionFactory extends ConnectionFactory {
    @Override
    public void releaseConnection(Connection conn) {
       try {
-         if (conn != null) // Could be null if getConnection failed
+         if (conn != null) {
+            // Could be null if getConnection failed
             conn.close();
+         }
       } catch (SQLException e) {
          PERSISTENCE.sqlFailureClosingConnection(conn, e);
+      }
+   }
+
+   private void initDataSource() {
+      dataSource = managedConfiguration.dataSource();
+      if (dataSource != null) {
+         return;
+      }
+      InitialContext ctx = null;
+      String datasourceName = managedConfiguration.jndiUrl();
+      try {
+         ctx = new InitialContext();
+         dataSource = (DataSource) ctx.lookup(datasourceName);
+         if (log.isTraceEnabled()) {
+            log.tracef("Datasource lookup for %s succeeded: %b", datasourceName, dataSource);
+         }
+         if (dataSource == null) {
+            throw PERSISTENCE.connectionNotFound("JNDI", datasourceName);
+         }
+      } catch (NamingException e) {
+         throw PERSISTENCE.namingExceptionLookingUpConnection(datasourceName, e);
+      } finally {
+         if (ctx != null) {
+            try {
+               ctx.close();
+            } catch (NamingException e) {
+               PERSISTENCE.failedClosingNamingCtx(e);
+            }
+         }
       }
    }
 }
