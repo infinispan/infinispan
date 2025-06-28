@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -41,10 +42,12 @@ public class RollingUpgradeHandler {
    record ConfigAndDriver(InfinispanServerTestConfiguration infinispanServerTestConfiguration, ContainerInfinispanServerDriver containerInfinispanServerDriver) {}
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+   private static final AtomicInteger clusterOffset = new AtomicInteger();
+
    private final RollingUpgradeConfiguration configuration;
 
    private final int nodeCount;
-   private final String site1Name;
+   private final String clusterName;
    // Holds a value of how many nodes are left to upgrade
    private int nodeLeft;
 
@@ -93,13 +96,14 @@ public class RollingUpgradeHandler {
 
    private RollingUpgradeHandler(RollingUpgradeConfiguration configuration) {
       this.nodeCount = configuration.nodeCount();
-      this.site1Name = "site1";
       this.nodeLeft = nodeCount;
       this.versionFrom = configuration.fromVersion();
       this.versionTo = configuration.toVersion();
       this.configuration = configuration;
       this.restClients = new RestClient[nodeCount];
       this.memcachedClients = new MemcachedClient[nodeCount];
+
+      this.clusterName = "rolling-upgrade-" + clusterOffset.getAndIncrement();
    }
 
    public String getToImageCreated() {
@@ -202,13 +206,14 @@ public class RollingUpgradeHandler {
       try {
          log.debugf("Starting %d nodes to version %s", handler.nodeCount, handler.versionFrom);
          handler.fromDriver = handler.startNode(false, configuration.nodeCount(), configuration.nodeCount(),
-               handler.site1Name, configuration.jgroupsProtocol(), null,configuration.serverConfigurationFile(), configuration.defaultServerConfigurationFile(),
-               configuration.customArtifacts(), configuration.mavenArtifacts(), configuration.properties());
+               handler.clusterName, configuration.jgroupsProtocol(), null,configuration.serverConfigurationFile(),
+               configuration.defaultServerConfigurationFile(), configuration.customArtifacts(),
+               configuration.mavenArtifacts(), configuration.properties());
          handler.currentState = STATE.OLD_RUNNING;
 
          configuration.initialHandler().accept(handler);
 
-         handler.removeOldAndAddNew(handler.site1Name);
+         handler.removeOldAndAddNew(handler.clusterName);
 
          handler.currentState = STATE.NEW_RUNNING;
       } catch (Throwable t) {
@@ -262,7 +267,7 @@ public class RollingUpgradeHandler {
    public void complete() {
       try {
          while (nodeLeft > 0) {
-            removeOldAndAddNew(site1Name);
+            removeOldAndAddNew(clusterName);
             currentState = STATE.NEW_RUNNING;
          }
       } catch (Throwable e) {
@@ -341,6 +346,9 @@ public class RollingUpgradeHandler {
          TestUser user = TestUser.ADMIN;
          builder.security().authentication().username(user.getUser()).password(user.getPassword());
       }
+
+      // Apply the configuration updates after applying others but not the server info as test shouldn't be updating it
+      builder = configuration.configurationHandler().apply(builder);
 
       for (int i = 0; i < fromDriver.infinispanServerTestConfiguration.numServers(); i++) {
          InetSocketAddress address = fromDriver.containerInfinispanServerDriver.getServerSocket(i, 11222);
