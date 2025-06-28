@@ -102,7 +102,7 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
 
    @Override
    public void onFinish(ISuite suite) {
-      ThreadLeakChecker.checkForLeaks(suite.getName());
+      ThreadLeakChecker.checkForLeaks("");
    }
 
    @Override

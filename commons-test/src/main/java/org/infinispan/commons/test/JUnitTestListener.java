@@ -1,8 +1,8 @@
 package org.infinispan.commons.test;
 
-import static org.infinispan.commons.test.RunningTestsRegistry.registerThreadWithTest;
-import static org.infinispan.commons.test.RunningTestsRegistry.unregisterThreadWithTest;
+import java.util.concurrent.TimeUnit;
 
+import org.junit.internal.runners.statements.FailOnTimeout;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
@@ -11,6 +11,7 @@ import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
+import org.junit.runners.model.Statement;
 
 /**
  * Logs JUnit test progress.
@@ -35,9 +36,27 @@ public class JUnitTestListener extends RunListener {
       @Override
       protected void runChild(final FrameworkMethod method, RunNotifier notifier) {
          notifier.addListener(new JUnitTestListener());
-
-         super.runChild(method, notifier);
+         Description description = describeChild(method);
+         if (isIgnored(method)) {
+            notifier.fireTestIgnored(description);
+         } else {
+            Statement statement = methodBlock(method);
+            long timeoutMillis = computeTimeoutForMethod(method);
+            if (timeoutMillis > 0) {
+               statement = FailOnTimeout.builder().withTimeout(timeoutMillis, TimeUnit.MILLISECONDS).build(statement);
+            }
+            runLeaf(statement, description, notifier);
+         }
       }
+   }
+
+   private static long computeTimeoutForMethod(FrameworkMethod method) {
+      org.junit.Test testAnnotation = method.getAnnotation(org.junit.Test.class);
+      if (testAnnotation != null && testAnnotation.timeout() > 0) {
+        // The test already specifies a timeout, don't override it
+        return 0;
+      }
+      return TestNGTestListener.MAX_TEST_SECONDS * 1000; // Convert seconds to milliseconds
    }
 
    private final ThreadLocal<Boolean> currentTestIsSuccessful = new ThreadLocal<>();
@@ -52,15 +71,12 @@ public class JUnitTestListener extends RunListener {
    @Override
    public void testStarted(Description description) throws Exception {
       String testName = testName(description);
-      String simpleName = description.getTestClass().getSimpleName();
       progressLogger.testStarted(testName);
-      registerThreadWithTest(testName, simpleName);
       currentTestIsSuccessful.set(true);
    }
 
    @Override
    public void testFinished(Description description) throws Exception {
-      unregisterThreadWithTest();
       if (currentTestIsSuccessful.get()) {
          progressLogger.testSucceeded(testName(description));
       }
