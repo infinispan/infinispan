@@ -23,7 +23,7 @@ import org.junit.platform.suite.api.Suite;
 public class RollingUpgradeAuthenticationIT extends InfinispanSuite {
 
    static {
-      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder("15.2.0.Final", "15.2.1.Final")
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(RollingUpgradeAuthenticationIT.class.getName(), "15.2.0.Final", "15.2.1.Final")
             .nodeCount(3)
             .configurationUpdater(cb -> {
                cb.security().authentication()

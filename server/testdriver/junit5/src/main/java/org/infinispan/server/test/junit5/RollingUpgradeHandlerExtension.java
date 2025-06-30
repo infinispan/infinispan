@@ -32,8 +32,8 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
       this.configurationBuilder = configurationBuilder;
    }
 
-   public static RollingUpgradeHandlerExtension from(InfinispanServerExtensionBuilder iseb, String fromVersion, String toVersion) {
-      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(fromVersion, toVersion);
+   public static RollingUpgradeHandlerExtension from(Class<?> caller, InfinispanServerExtensionBuilder iseb, String fromVersion, String toVersion) {
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(caller.getName(), fromVersion, toVersion);
       InfinispanServerTestConfiguration configuration = iseb.createServerTestConfiguration();
 
       if (configuration.isDefaultFile()) {
