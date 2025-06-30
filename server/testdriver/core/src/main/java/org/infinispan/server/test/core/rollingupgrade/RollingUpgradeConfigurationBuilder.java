@@ -22,6 +22,7 @@ import org.jboss.shrinkwrap.api.spec.JavaArchive;
 public class RollingUpgradeConfigurationBuilder {
    private final String fromVersion;
    private final String toVersion;
+   private final String name;
 
    private int nodeCount = 3;
    private boolean xSite;
@@ -34,7 +35,9 @@ public class RollingUpgradeConfigurationBuilder {
    private String jgroupsProtocol = "tcp";
    private int serverCheckTimeSecs = 30;
    private boolean useSharedDataMount = true;
-   private BiConsumer<Throwable, RollingUpgradeHandler> exceptionHandler = (t, uh) -> { };
+   private BiConsumer<Throwable, RollingUpgradeHandler> exceptionHandler = (t, uh) -> {
+      throw new RuntimeException(t);
+   };
    private Function<ConfigurationBuilder, ConfigurationBuilder> configurationHandler = Function.identity();
 
    private Consumer<RollingUpgradeHandler> initialHandler = uh -> {
@@ -75,9 +78,10 @@ public class RollingUpgradeConfigurationBuilder {
       };
    }
 
-   public RollingUpgradeConfigurationBuilder(String fromVersion, String toVersion) {
+   public RollingUpgradeConfigurationBuilder(String name, String fromVersion, String toVersion) {
       this.fromVersion = fromVersion;
       this.toVersion = toVersion;
+      this.name = name;
    }
 
    public RollingUpgradeConfigurationBuilder nodeCount(int nodeCount) {
@@ -163,7 +167,7 @@ public class RollingUpgradeConfigurationBuilder {
    }
 
    public RollingUpgradeConfiguration build() {
-      return new RollingUpgradeConfiguration(nodeCount, fromVersion, toVersion, xSite, jgroupsProtocol, serverCheckTimeSecs,
+      return new RollingUpgradeConfiguration(nodeCount, fromVersion, toVersion, name, xSite, jgroupsProtocol, serverCheckTimeSecs,
             useSharedDataMount, serverConfigurationFile, defaultServerConfigurationFile, properties,
             customArtifacts.toArray(new JavaArchive[0]), mavenArtifacts.toArray(new String[0]), listeners,
             exceptionHandler, initialHandler, isValidServerState, configurationHandler);
