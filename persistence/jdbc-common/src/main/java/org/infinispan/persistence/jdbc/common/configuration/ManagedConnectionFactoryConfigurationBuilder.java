@@ -1,8 +1,11 @@
 package org.infinispan.persistence.jdbc.common.configuration;
 
+import static org.infinispan.persistence.jdbc.common.logging.Log.CONFIG;
 import static org.infinispan.persistence.jdbc.common.configuration.ManagedConnectionFactoryConfiguration.JNDI_URL;
+import static org.infinispan.persistence.jdbc.common.configuration.ManagedConnectionFactoryConfiguration.DATA_SOURCE;
 
-import org.infinispan.commons.CacheConfigurationException;
+import javax.sql.DataSource;
+
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -28,15 +31,25 @@ public class ManagedConnectionFactoryConfigurationBuilder<S extends AbstractJdbc
       return attributes;
    }
 
-   public void jndiUrl(String jndiUrl) {
+   public ManagedConnectionFactoryConfigurationBuilder<S> jndiUrl(String jndiUrl) {
       attributes.attribute(JNDI_URL).set(jndiUrl);
+      return this;
+   }
+
+   public ManagedConnectionFactoryConfigurationBuilder<S> dataSource(DataSource dataSource) {
+      attributes.attribute(DATA_SOURCE).set(dataSource);
+      return this;
    }
 
    @Override
    public void validate() {
       String jndiUrl = attributes.attribute(JNDI_URL).get();
-      if (jndiUrl == null) {
-         throw new CacheConfigurationException("The jndiUrl has not been specified");
+      DataSource dataSource = attributes.attribute(DATA_SOURCE).get();
+      if (jndiUrl == null && dataSource == null) {
+         throw CONFIG.jndiUrlOrDataSourceRequired();
+      }
+      if (jndiUrl != null && dataSource != null) {
+         throw CONFIG.jndiUrlAndDataSourceSet();
       }
    }
 

@@ -25,8 +25,9 @@ public class CDIConnectionFactoryConfigurationBuilder<S extends AbstractJdbcStor
       return attributes;
    }
 
-   public void name(String name) {
+   public CDIConnectionFactoryConfigurationBuilder<S> name(String name) {
       attributes.attribute(NAME).set(name);
+      return this;
    }
 
    @Override
