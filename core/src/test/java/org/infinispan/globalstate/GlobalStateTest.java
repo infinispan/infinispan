@@ -19,6 +19,7 @@ import java.lang.reflect.Method;
 import java.nio.channels.FileLock;
 import java.util.Properties;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.jdkspecific.CallerId;
@@ -80,6 +81,42 @@ public class GlobalStateTest extends AbstractInfinispanTest {
          EmbeddedCacheManager newCm1 = TestCacheManagerFactory.createClusteredCacheManager(true, global1, new ConfigurationBuilder(), new TransportFlags());
          assertNotNull(newCm1.getCache("replicated-cache"));
          assertNotNull(newCm1.getCacheConfiguration("replicated-template"));
+      } finally {
+         TestingUtil.killCacheManagers(cm1, cm2);
+      }
+   }
+
+   public void testAliasReassignment(Method m) {
+      String dir1 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "1");
+      String dir2 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "2");
+      GlobalConfigurationBuilder gcb1 = statefulGlobalBuilder(dir1, true);
+      GlobalConfigurationBuilder gcb2 = statefulGlobalBuilder(dir2, true);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(true, gcb1, null, new TransportFlags());
+      EmbeddedCacheManager cm2 = null;
+      try {
+         String alias = "my-alias";
+         Configuration conf1 = new ConfigurationBuilder()
+               .aliases(alias)
+               .clustering().cacheMode(CacheMode.DIST_SYNC).persistence().addSoftIndexFileStore().build();
+         Configuration conf2 = new ConfigurationBuilder()
+               .clustering().cacheMode(CacheMode.DIST_SYNC).persistence().addSoftIndexFileStore().build();
+
+         Cache<String, String> c1 = cm1.administration().createCache("c1", conf1);
+         Cache<String, String> c2 = cm1.administration().createCache("c2", conf2);
+
+         c1.put("key", "value-1");
+         c2.put("key", "value-2");
+
+         assertThat(cm1.<String, String>getCache(alias).get("key")).isEqualTo("value-1");
+         cm1.administration().assignAlias(alias, "c2");
+         assertThat(cm1.<String, String>getCache(alias).get("key")).isEqualTo("value-2");
+
+         // New node joins and receives the existing configurations from cm1.
+         cm2 = TestCacheManagerFactory.createClusteredCacheManager(true, gcb2, null, new TransportFlags());
+
+         assertThat(cm2.getCache("c1").get("key")).isEqualTo("value-1");
+         assertThat(cm2.getCache("c2").get("key")).isEqualTo("value-2");
+         assertThat(cm2.getCache(alias).get("key")).isEqualTo("value-2");
       } finally {
          TestingUtil.killCacheManagers(cm1, cm2);
       }
