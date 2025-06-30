@@ -32,7 +32,9 @@ public class RollingUpgradeConfigurationBuilder {
    private String jgroupsProtocol = "tcp";
    private int serverCheckTimeSecs = 30;
    private boolean useSharedDataMount = true;
-   private BiConsumer<Throwable, RollingUpgradeHandler> exceptionHandler = (t, uh) -> { };
+   private BiConsumer<Throwable, RollingUpgradeHandler> exceptionHandler = (t, uh) -> {
+      throw new AssertionError(t);
+   };
    private Function<ConfigurationBuilder, ConfigurationBuilder> configurationHandler = Function.identity();
 
    private Consumer<RollingUpgradeHandler> initialHandler = uh -> {
