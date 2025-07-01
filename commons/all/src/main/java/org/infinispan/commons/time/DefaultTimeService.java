@@ -1,5 +1,6 @@
 package org.infinispan.commons.time;
 
+import java.lang.management.ManagementFactory;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
@@ -67,5 +68,10 @@ public class DefaultTimeService implements TimeService {
          return time();
       }
       return time() + inputTimeUnit.toNanos(duration);
+   }
+
+   @Override
+   public long uptime() {
+      return ManagementFactory.getRuntimeMXBean().getUptime();
    }
 }

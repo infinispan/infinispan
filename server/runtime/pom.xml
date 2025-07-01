@@ -598,5 +598,41 @@
             </dependency>
          </dependencies>
       </profile>
+      <profile>
+         <id>image</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>io.fabric8</groupId>
+                  <artifactId>docker-maven-plugin</artifactId>
+                  <version>0.45.0</version>
+                  <executions>
+                     <execution>
+                        <id>image</id>
+                        <goals>
+                           <goal>build</goal>
+                        </goals>
+                        <configuration>
+                           <images>
+                              <image>
+                                 <alias>infinispan</alias>
+                                 <name>infinispan/micro:${project.version}</name>
+                                 <build>
+                                    <args>
+                                       <INFINISPAN_VERSION>${project.version}</INFINISPAN_VERSION>
+                                    </args>
+                                    <contextDir>${basedir}</contextDir>
+                                    <dockerFile>src/main/docker/Dockerfile</dockerFile>
+                                 </build>
+                              </image>
+                           </images>
+                        </configuration>
+                     </execution>
+                  </executions>
+
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
    </profiles>
 </project>
