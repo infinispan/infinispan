@@ -20,6 +20,7 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -33,7 +34,6 @@ import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ControlledRpcManager;
-import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.SkipException;
@@ -151,7 +151,7 @@ public class ClusterExpirationLifespanTest extends MultipleCacheManagersTest {
    }
 
    private Object createKey(Cache<Object, ?> primaryOwner, Cache<Object, ?> backupOwner) {
-      if (storageType == StorageType.OBJECT) {
+      if (storageType == StorageType.HEAP) {
          return new MagicKey(primaryOwner, backupOwner);
       } else {
          // BINARY and OFF heap can't use MagicKey as they are serialized

@@ -16,11 +16,12 @@ import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.distribution.impl.DistributionManagerImpl;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
@@ -40,7 +41,8 @@ public class GetAllCacheNotFoundResponseTest extends MultipleCacheManagersTest {
       ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       ControlledConsistentHashFactory.Default chf = new ControlledConsistentHashFactory.Default(
             new int[][]{{0, 1}, {0, 2}, {2, 3}});
-      cb.clustering().hash().numOwners(2).numSegments(3).consistentHashFactory(chf);
+      cb.clustering().hash().numOwners(2).numSegments(3);
+      cb.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(chf);
       createClusteredCaches(5, ControlledConsistentHashFactory.SCI.INSTANCE, cb);
    }
 
@@ -98,7 +100,7 @@ public class GetAllCacheNotFoundResponseTest extends MultipleCacheManagersTest {
 
    private Future<Void> simulateTopologyUpdate(Cache<Object, Object> cache) {
       StateTransferLock stl4 = TestingUtil.extractComponent(cache, StateTransferLock.class);
-      DistributionManager dm4 = cache.getAdvancedCache().getDistributionManager();
+      DistributionManagerImpl dm4 = (DistributionManagerImpl) cache.getAdvancedCache().getDistributionManager();
       LocalizedCacheTopology cacheTopology = dm4.getCacheTopology();
       int newTopologyId = cacheTopology.getTopologyId() + 1;
       CacheTopology newTopology = new CacheTopology(newTopologyId, cacheTopology.getRebalanceId(),

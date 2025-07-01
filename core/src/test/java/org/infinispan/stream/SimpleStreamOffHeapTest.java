@@ -12,6 +12,6 @@ public class SimpleStreamOffHeapTest extends SimpleStreamTest {
    @Override
    protected void enhanceConfiguration(ConfigurationBuilder builder) {
       super.enhanceConfiguration(builder);
-      builder.memory().storageType(StorageType.OFF_HEAP);
+      builder.memory().storage(StorageType.OFF_HEAP);
    }
 }

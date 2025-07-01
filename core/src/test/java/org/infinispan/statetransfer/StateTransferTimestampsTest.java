@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -14,7 +15,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.commons.time.ControlledTimeService;
 import org.testng.annotations.Test;
 
 /**
@@ -35,8 +35,7 @@ public class StateTransferTimestampsTest extends MultipleCacheManagersTest {
          new StateTransferTimestampsTest().cacheMode(CacheMode.DIST_SYNC),
          new StateTransferTimestampsTest().cacheMode(CacheMode.REPL_SYNC),
          // With other storage types there's an opportunity to change the timestamps before the write
-         new StateTransferTimestampsTest().cacheMode(CacheMode.DIST_SYNC).storageType(StorageType.OFF_HEAP),
-         new StateTransferTimestampsTest().cacheMode(CacheMode.DIST_SYNC).storageType(StorageType.BINARY),
+         new StateTransferTimestampsTest().cacheMode(CacheMode.DIST_SYNC).storageType(StorageType.OFF_HEAP)
       };
    }
 

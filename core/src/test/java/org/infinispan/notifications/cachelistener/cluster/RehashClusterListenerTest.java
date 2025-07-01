@@ -9,6 +9,7 @@ import java.util.List;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -63,7 +64,8 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       builderUsed = new ConfigurationBuilder();
-      builderUsed.clustering().cacheMode(cacheMode).hash().consistentHashFactory(factory).numSegments(1);
+      builderUsed.clustering().cacheMode(cacheMode).hash().numSegments(1);
+      builderUsed.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(factory);
       createClusteredCaches(3, ControlledConsistentHashFactory.SCI.INSTANCE, CACHE_NAME, builderUsed);
    }
 

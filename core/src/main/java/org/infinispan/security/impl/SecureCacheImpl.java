@@ -26,7 +26,6 @@ import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -802,11 +801,6 @@ public final class SecureCacheImpl<K, V> extends AbstractDelegatingAdvancedCache
    }
 
    @Override
-   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapperClass) {
-      return new SecureCacheImpl<>(delegate.withWrapping(wrapperClass), authzManager, subject);
-   }
-
-   @Override
    public AdvancedCache<?, ?> withMediaType(String keyMediaType, String valueMediaType) {
       return new SecureCacheImpl<>(delegate.withMediaType(keyMediaType, valueMediaType), authzManager, subject);
    }
@@ -825,12 +819,6 @@ public final class SecureCacheImpl<K, V> extends AbstractDelegatingAdvancedCache
    public AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> keyEncoderClass,
                                            Class<? extends Encoder> valueEncoderClass) {
       return new SecureCacheImpl<>(delegate.withEncoding(keyEncoderClass, valueEncoderClass), authzManager, subject);
-   }
-
-   @Override
-   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapperClass,
-                                           Class<? extends Wrapper> valueWrapperClass) {
-      return new SecureCacheImpl<>(delegate.withWrapping(keyWrapperClass, valueWrapperClass), authzManager, subject);
    }
 
    @Override

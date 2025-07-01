@@ -67,6 +67,8 @@ import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ExpiryHelper;
@@ -107,8 +109,6 @@ import org.infinispan.reactive.publisher.PublisherReducers;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.util.UserRaisedFunctionalException;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -815,11 +815,6 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       // Nothing to do
       return null;
-   }
-
-   @Override
-   public Object visitUnknownCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      return command.invoke();
    }
 
    @Override

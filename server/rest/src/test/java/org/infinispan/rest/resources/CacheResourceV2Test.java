@@ -1456,7 +1456,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       String xml = String.format(
             """
                   <%s name="cacheName" mode="SYNC" configuration="parent">
-                     <memory storage="OBJECT" max-count="20"/>
+                     <memory storage="HEAP" max-count="20"/>
                      <persistence>
                         <file-store/>
                      </persistence>
@@ -1487,7 +1487,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
                   "configuration":"parent",
                   "mode":"SYNC",
                   "memory":{
-                     "storage":"OBJECT","max-count":"20"
+                     "storage":"HEAP","max-count":"20"
                   },
                   "persistence": {
                      "file-store": {}
@@ -1519,7 +1519,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
               mode: 'SYNC'
               configuration: 'parent'
               memory:
-                storage: 'OBJECT'
+                storage: 'HEAP'
                 maxCount: 20
               persistence:
                 fileStore: ~
@@ -1575,7 +1575,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       NodeList children = root.getElementsByTagName("memory");
       assertEquals(1, children.getLength());
       Element memory = (Element) children.item(0);
-      assertEquals("OBJECT", memory.getAttribute("storage"));
+      assertEquals("HEAP", memory.getAttribute("storage"));
       assertEquals("20", memory.getAttribute("max-count"));
    }
 
@@ -1585,7 +1585,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
          Map<String, Object> config = yaml.asMap();
          assertEquals("parent", getYamlProperty(config, name, rootElement, "configuration"));
          assertEquals("SYNC", getYamlProperty(config, name, rootElement, "mode"));
-         assertEquals("OBJECT", getYamlProperty(config, name, rootElement, "memory", "storage"));
+         assertEquals("HEAP", getYamlProperty(config, name, rootElement, "memory", "storage"));
          assertEquals("20", getYamlProperty(config, name, rootElement, "memory", "maxCount"));
       }
    }
@@ -1906,12 +1906,13 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    public void testComparison() {
       RestRawClient rawClient = client.raw();
 
-      String xml = "<distributed-cache name=\"cacheName\" mode=\"SYNC\">\n" +
-            "<memory storage=\"OBJECT\" max-count=\"20\"/>\n" +
-            "</distributed-cache>";
-      String json20 = "{\"distributed-cache\":{\"memory\":{\"storage\":\"OBJECT\",\"max-count\":\"20\"}}}";
-      String json30 = "{\"distributed-cache\":{\"memory\":{\"storage\":\"OBJECT\",\"max-count\":\"30\"}}}";
-      String jsonrepl = "{\"replicated-cache\":{\"memory\":{\"storage\":\"OBJECT\",\"max-count\":\"30\"}}}";
+      String xml = """
+            <distributed-cache name="cacheName" mode="SYNC">
+            <memory storage="HEAP" max-count="20"/>
+            </distributed-cache>""";
+      String json20 = "{\"distributed-cache\":{\"memory\":{\"storage\":\"HEAP\",\"max-count\":\"20\"}}}";
+      String json30 = "{\"distributed-cache\":{\"memory\":{\"storage\":\"HEAP\",\"max-count\":\"30\"}}}";
+      String jsonrepl = "{\"replicated-cache\":{\"memory\":{\"storage\":\"HEAP\",\"max-count\":\"30\"}}}";
 
       MultiPartRestEntity multiPart = RestEntity.multiPart();
       multiPart.addPart("one", xml);

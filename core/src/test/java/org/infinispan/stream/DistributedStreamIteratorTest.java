@@ -450,7 +450,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       putValueInEachCache(3);
 
       KeyPartitioner keyPartitioner = TestingUtil.extractComponent(cache0, KeyPartitioner.class);
-      ConsistentHash ch = cache0.getAdvancedCache().getDistributionManager().getWriteConsistentHash();
+      ConsistentHash ch = cache0.getAdvancedCache().getDistributionManager().getCacheTopology().getWriteConsistentHash();
       IntSet segmentsCache0 = IntSets.from(ch.getSegmentsForOwner(address(0)));
 
       CacheStream<Map.Entry<Object, String>> stream = cache0.entrySet().stream();

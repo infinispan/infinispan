@@ -88,8 +88,6 @@ import org.infinispan.container.versioning.irac.IracEntryVersion;
 import org.infinispan.container.versioning.irac.IracTombstoneInfo;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.expiration.impl.TouchCommand;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.functional.EntryView.ReadEntryView;
@@ -135,16 +133,6 @@ import org.reactivestreams.Publisher;
  * A factory to build commands, initializing and injecting dependencies accordingly. Commands built for a specific,
  * named cache instance cannot be reused on a different cache instance since most commands contain the cache name it was
  * built for along with references to other named-cache scoped components.
- * <p>
- * Commands returned by the various build*Command methods should be initialised sufficiently for local execution via the
- * interceptor chain, with no calls to  {@link #initializeReplicableCommand(ReplicableCommand, boolean)} required.
- * However, for remote execution, it's assumed that a command will be initialized via {@link
- * #initializeReplicableCommand(ReplicableCommand, boolean)} before being invoked.
- * <p>
- * Note, {@link InitializableCommand} implementations should not rely on access to the {@link
- * org.infinispan.factories.ComponentRegistry} in their constructors for local execution initialization as this leads to
- * duplicated code. Instead implementations of this interface should call {@link InitializableCommand#init(ComponentRegistry,
- * boolean)} before returning the created command.
  *
  * @author Manik Surtani
  * @author Mircea.Markus@jboss.com
@@ -395,21 +383,6 @@ public interface CommandsFactory {
     * @return a RollbackCommand
     */
    RollbackCommand buildRollbackCommand(GlobalTransaction gtx);
-
-   /**
-    * Initializes a {@link org.infinispan.commands.ReplicableCommand} read from a data stream with components specific
-    * to the target cache instance.
-        * Implementations should also be deep, in that if the command contains other commands, these should be recursed
-    * into.
-        *
-    * @param command command to initialize.  Cannot be null.
-    * @param isRemote
-    * @deprecated since 11.0, please use {@link org.infinispan.commands.remote.CacheRpcCommand#invokeAsync(ComponentRegistry)}
-    * or {@link GlobalRpcCommand#invokeAsync(GlobalComponentRegistry)} instead.
-    * to access any components required at invocation time.
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   void initializeReplicableCommand(ReplicableCommand command, boolean isRemote);
 
    /**
     * Builds a ClusteredGetCommand, which is a remote lookup command

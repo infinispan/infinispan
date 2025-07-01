@@ -114,7 +114,7 @@ public class BaseStatefulPartitionHandlingTest extends BasePartitionHandlingTest
       checkData();
 
       ConsistentHash newConsistentHash =
-            advancedCache(0, CACHE_NAME).getDistributionManager().getWriteConsistentHash();
+            advancedCache(0, CACHE_NAME).getDistributionManager().getCacheTopology().getWriteConsistentHash();
       PersistentUUIDManager persistentUUIDManager = TestingUtil.extractGlobalComponent(manager(0), PersistentUUIDManager.class);
       assertEquivalent(addressMappings, oldConsistentHash, newConsistentHash, persistentUUIDManager);
    }

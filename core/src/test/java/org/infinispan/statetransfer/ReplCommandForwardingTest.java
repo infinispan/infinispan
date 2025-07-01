@@ -20,6 +20,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -55,7 +56,8 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig( CacheMode.REPL_ASYNC, false);
       configurationBuilder.clustering().remoteTimeout(15000);
       // The coordinator will always be the primary owner
-      configurationBuilder.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
+      configurationBuilder.clustering().hash().numSegments(1);
+      configurationBuilder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
       configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
       return configurationBuilder;
    }

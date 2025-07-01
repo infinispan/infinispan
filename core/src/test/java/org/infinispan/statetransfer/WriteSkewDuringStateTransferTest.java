@@ -31,6 +31,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -240,7 +241,8 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       builder.clustering()
             .stateTransfer().fetchInMemoryState(true)
-            .hash().numSegments(1).numOwners(3).consistentHashFactory(new ConsistentHashFactoryImpl());
+            .hash().numSegments(1).numOwners(3);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(new ConsistentHashFactoryImpl());
       builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       return builder;
    }

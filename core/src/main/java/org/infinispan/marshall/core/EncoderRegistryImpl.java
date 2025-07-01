@@ -28,7 +28,6 @@ public class EncoderRegistryImpl implements EncoderRegistry {
    private final List<Transcoder> transcoders = Collections.synchronizedList(new ArrayList<>());
    private final Map<MediaType, Map<MediaType, Transcoder>> transcoderCache = new ConcurrentHashMap<>();
 
-   @Override
    public void registerEncoder(Encoder encoder) {
       if (encoder == null) {
          throw new NullPointerException("Encoder cannot be null");

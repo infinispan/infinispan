@@ -55,11 +55,4 @@ public interface HotRodServerChildConfigurationBuilder {
     */
    HotRodServerConfigurationBuilder topologyNetworkPrefixOverride(boolean topologyNetworkPrefixOverride);
 
-   /**
-    * Configures whether to enable state transfer for the topology cache. If disabled, a {@link
-    * org.infinispan.persistence.cluster.ClusterLoader} will be used to lazily retrieve topology information from the
-    * other nodes. Defaults to true.
-    */
-   HotRodServerChildConfigurationBuilder topologyStateTransfer(boolean topologyStateTransfer);
-
 }

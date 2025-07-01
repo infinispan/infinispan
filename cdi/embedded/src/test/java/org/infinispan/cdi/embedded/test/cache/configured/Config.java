@@ -1,10 +1,10 @@
 package org.infinispan.cdi.embedded.test.cache.configured;
 
-import jakarta.enterprise.inject.Produces;
-
 import org.infinispan.cdi.embedded.ConfigureCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+
+import jakarta.enterprise.inject.Produces;
 
 /**
  * @author Kevin Pollet &lt;kevin.pollet@serli.com&gt; (C) 2011 SERLI
@@ -21,7 +21,7 @@ public class Config {
    @Produces
    public Configuration tinyConfiguration() {
       return new ConfigurationBuilder()
-            .memory().size(1)
+            .memory().maxCount(1)
             .build();
    }
 
@@ -36,7 +36,7 @@ public class Config {
    @Produces
    public Configuration smallConfiguration() {
       return new ConfigurationBuilder()
-            .memory().size(10)
+            .memory().maxCount(10)
             .build();
    }
 }

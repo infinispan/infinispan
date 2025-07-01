@@ -32,7 +32,6 @@ import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AuthorizationConfiguration;
 import org.infinispan.configuration.cache.BackupConfiguration;
-import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.CustomStoreConfiguration;
@@ -181,12 +180,9 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
             globalConfiguration.expirationThreadPool(),
             globalConfiguration.listenerThreadPool(),
             globalConfiguration.nonBlockingThreadPool(),
-            globalConfiguration.blockingThreadPool(),
-            globalConfiguration.transport().remoteCommandThreadPool(),
-            globalConfiguration.transport().transportThreadPool())) {
+            globalConfiguration.blockingThreadPool())) {
          ThreadFactory threadFactory = threadPoolConfiguration.threadFactory();
-         if (threadFactory instanceof DefaultThreadFactory) {
-            DefaultThreadFactory tf = (DefaultThreadFactory) threadFactory;
+         if (threadFactory instanceof DefaultThreadFactory tf) {
             threadFactories.putIfAbsent(tf.getName(), tf);
          }
       }
@@ -202,7 +198,6 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          writeThreadPool(writer, globalConfiguration.expirationThreadPoolName(), globalConfiguration.expirationThreadPool());
          writeThreadPool(writer, globalConfiguration.listenerThreadPoolName(), globalConfiguration.listenerThreadPool());
          writeThreadPool(writer, globalConfiguration.blockingThreadPoolName(), globalConfiguration.blockingThreadPool());
-         writeThreadPool(writer, globalConfiguration.transport().remoteThreadPoolName(), globalConfiguration.transport().remoteCommandThreadPool());
          writer.writeEndMap();
          writer.writeEndElement();
       }
@@ -427,7 +422,6 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       configuration.attributes().write(writer);
       AttributeSet hashAttributes = configuration.clustering().hash().attributes();
       hashAttributes.write(writer, HashConfiguration.NUM_SEGMENTS);
-      hashAttributes.write(writer, HashConfiguration.CONSISTENT_HASH_FACTORY);
       hashAttributes.write(writer, HashConfiguration.KEY_PARTITIONER);
 
       writeCommonClusteredCacheAttributes(writer, configuration);
@@ -514,9 +508,6 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          }
          attributes.write(writer, TransportConfiguration.NODE_NAME, Attribute.NODE_NAME);
          attributes.write(writer, TransportConfiguration.STACK);
-         if (transport.remoteCommandThreadPool().threadPoolFactory() != null) {
-            writer.writeAttribute(Attribute.REMOTE_COMMAND_EXECUTOR, transport.remoteThreadPoolName());
-         }
          attributes.write(writer, TransportConfiguration.DISTRIBUTED_SYNC_TIMEOUT, Attribute.LOCK_TIMEOUT);
          attributes.write(writer, TransportConfiguration.INITIAL_CLUSTER_SIZE, Attribute.INITIAL_CLUSTER_SIZE);
          attributes.write(writer, TransportConfiguration.INITIAL_CLUSTER_TIMEOUT, Attribute.INITIAL_CLUSTER_TIMEOUT);
@@ -787,8 +778,6 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          writeFileStore(writer, (SoftIndexFileStoreConfiguration) configuration);
       } else if (configuration instanceof SingleFileStoreConfiguration) {
          writeSingleFileStore(writer, (SingleFileStoreConfiguration) configuration);
-      } else if (configuration instanceof ClusterLoaderConfiguration) {
-         writeClusterLoader(writer, (ClusterLoaderConfiguration) configuration);
       } else if (configuration instanceof CustomStoreConfiguration) {
          writeCustomStore(writer, (CustomStoreConfiguration) configuration);
       } else {
@@ -869,14 +858,6 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
 
    private void writeSingleFileStore(ConfigurationWriter writer, SingleFileStoreConfiguration configuration) {
       writer.writeStartElement(Element.SINGLE_FILE_STORE);
-      configuration.attributes().write(writer);
-      writeCommonStoreSubAttributes(writer, configuration);
-      writeCommonStoreElements(writer, configuration);
-      writer.writeEndElement();
-   }
-
-   private void writeClusterLoader(ConfigurationWriter writer, ClusterLoaderConfiguration configuration) {
-      writer.writeStartElement(Element.CLUSTER_LOADER);
       configuration.attributes().write(writer);
       writeCommonStoreSubAttributes(writer, configuration);
       writeCommonStoreElements(writer, configuration);

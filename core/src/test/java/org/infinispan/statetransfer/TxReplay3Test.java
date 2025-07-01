@@ -19,6 +19,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -112,8 +113,8 @@ public class TxReplay3Test extends MultipleCacheManagersTest {
       builder.clustering()
             .remoteTimeout(1, TimeUnit.MINUTES)
             .hash().numOwners(1).numSegments(1)
-            .consistentHashFactory(new ControlledConsistentHashFactory.Default(0))
             .stateTransfer().fetchInMemoryState(false);
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(new ControlledConsistentHashFactory.Default(0));
       return builder;
    }
 

@@ -12,7 +12,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.versioning.NumericVersion;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -30,9 +29,8 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.memory()
             // Only allocate enough for address count and 1 byte
-            .size(UnpooledOffHeapMemoryAllocator.estimateSizeOverhead((OffHeapConcurrentMap.INITIAL_SIZE << 3)) + 1)
-            .evictionType(EvictionType.MEMORY)
-            .storageType(StorageType.OFF_HEAP);
+            .maxSize(UnpooledOffHeapMemoryAllocator.estimateSizeOverhead((OffHeapConcurrentMap.INITIAL_SIZE << 3)) + 1)
+            .storage(StorageType.OFF_HEAP);
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(builder);
       Cache<Object, Object> smallHeapCache = manager.getCache();
       assertEquals(0, smallHeapCache.size());
@@ -51,9 +49,8 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
    public void testAllocatedAmountEqual() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.memory()
-            .size(ByteQuantity.Unit.MB.toBytes(20))
-            .evictionType(EvictionType.MEMORY)
-            .storageType(StorageType.OFF_HEAP);
+            .maxSize(ByteQuantity.Unit.MB.toBytes(20))
+            .storage(StorageType.OFF_HEAP);
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(builder);
       AdvancedCache<Object, Object> cache = manager.getCache().getAdvancedCache();
 
@@ -73,9 +70,8 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
    public void testAllocatedAmountEqualWithVersion() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.memory()
-            .size(ByteQuantity.Unit.MB.toBytes(20))
-            .evictionType(EvictionType.MEMORY)
-            .storageType(StorageType.OFF_HEAP);
+            .maxSize(ByteQuantity.Unit.MB.toBytes(20))
+            .storage(StorageType.OFF_HEAP);
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(builder);
       AdvancedCache<Object, Object> cache = manager.getCache().getAdvancedCache();
 
@@ -93,9 +89,8 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
    public void testAllocatedAmountEqualWithExpiration() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.memory()
-            .size(ByteQuantity.Unit.MB.toBytes(20))
-            .evictionType(EvictionType.MEMORY)
-            .storageType(StorageType.OFF_HEAP);
+            .maxSize(ByteQuantity.Unit.MB.toBytes(20))
+            .storage(StorageType.OFF_HEAP);
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(builder);
       AdvancedCache<Object, Object> cache = manager.getCache().getAdvancedCache();
 
@@ -115,9 +110,8 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
    public void testAllocatedAmountEqualWithVersionAndExpiration() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.memory()
-            .size(ByteQuantity.Unit.MB.toBytes(20))
-            .evictionType(EvictionType.MEMORY)
-            .storageType(StorageType.OFF_HEAP);
+            .maxSize(ByteQuantity.Unit.MB.toBytes(20))
+            .storage(StorageType.OFF_HEAP);
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(builder);
       AdvancedCache<Object, Object> cache = manager.getCache().getAdvancedCache();
 

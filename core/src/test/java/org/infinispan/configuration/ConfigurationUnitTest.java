@@ -4,8 +4,8 @@ import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
 import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
@@ -68,9 +68,9 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
    @Test
    public void testEvictionSize() {
       Configuration configuration = new ConfigurationBuilder()
-            .memory().size(20)
+            .memory().maxCount(20)
             .build();
-      Assert.assertEquals(configuration.memory().size(), 20);
+      assertEquals(20, configuration.memory().maxCount());
    }
 
    @Test
@@ -79,8 +79,8 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
             .clustering().cacheMode(CacheMode.DIST_SYNC)
             .transaction().autoCommit(true)
             .build();
-      Assert.assertTrue(configuration.transaction().autoCommit());
-      Assert.assertEquals(configuration.clustering().cacheMode(), CacheMode.DIST_SYNC);
+      assertTrue(configuration.transaction().autoCommit());
+      assertEquals(CacheMode.DIST_SYNC, configuration.clustering().cacheMode());
    }
 
    @Test
@@ -165,7 +165,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
             .persistence()
             .clearStores()
             .build();
-      assertEquals(c.persistence().stores().size(), 0);
+      assertEquals(0, c.persistence().stores().size());
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class)
@@ -199,7 +199,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
       cb.clustering().hash().numOwners(5);
 
       Configuration c = cb.build();
-      Assert.assertEquals(5, c.clustering().hash().numOwners());
+      assertEquals(5, c.clustering().hash().numOwners());
 
       // negative test
       cb.clustering().hash().numOwners(0);
@@ -212,7 +212,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
       cb.clustering().hash().numSegments(5);
 
       Configuration c = cb.build();
-      Assert.assertEquals(5, c.clustering().hash().numSegments());
+      assertEquals(5, c.clustering().hash().numSegments());
 
       // negative test
       cb.clustering().hash().numSegments(0);
@@ -387,7 +387,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
          builder.validate();
          fail("Expected CacheConfigurationException");
       } catch (CacheConfigurationException e) {
-         assertEquals(e.getSuppressed().length, 2);
+         assertEquals(2, e.getSuppressed().length);
          assertTrue(e.getMessage().startsWith("ISPN000919"));
          assertTrue(e.getSuppressed()[0].getMessage().startsWith("ISPN000344"));
          assertEquals("MODULE ERROR", e.getSuppressed()[1].getMessage());
@@ -400,7 +400,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
          global.validate();
          fail("Expected CacheConfigurationException");
       } catch (CacheConfigurationException e) {
-         assertEquals(e.getSuppressed().length, 2);
+         assertEquals(2, e.getSuppressed().length);
          assertTrue(e.getMessage(), e.getMessage().startsWith("ISPN000919"));
          assertTrue(e.getSuppressed()[0].getMessage().startsWith("ISPN000288"));
          assertEquals("MODULE ERROR", e.getSuppressed()[1].getMessage());

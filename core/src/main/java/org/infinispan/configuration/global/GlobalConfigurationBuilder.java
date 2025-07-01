@@ -2,7 +2,6 @@ package org.infinispan.configuration.global;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -22,7 +21,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    private final CacheContainerConfigurationBuilder cacheContainerConfiguration;
 
    private final Map<Class<?>, Builder<?>> modules;
-   private final SiteConfigurationBuilder site;
    private Features features;
 
    public GlobalConfigurationBuilder() {
@@ -30,7 +28,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       if (defaultCL == null) defaultCL = GlobalConfigurationBuilder.class.getClassLoader();
       this.cl = defaultCL;
       this.cacheContainerConfiguration = new CacheContainerConfigurationBuilder(this);
-      this.site = new SiteConfigurationBuilder(this);
       this.modules = new LinkedHashMap<>();
    }
 
@@ -189,11 +186,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    }
 
    @Override
-   public SiteConfigurationBuilder site() {
-      return site;
-   }
-
-   @Override
    public <T extends Builder<?>> T addModule(Class<T> klass) {
       try {
          Constructor<T> constructor = klass.getDeclaredConstructor(GlobalConfigurationBuilder.class);
@@ -223,16 +215,11 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    public void validate() {
       features = new Features(cl);
       List<RuntimeException> validationExceptions = new ArrayList<>();
-      Arrays.asList(
-            cacheContainerConfiguration,
-            site
-      ).forEach(c -> {
-         try {
-            c.validate();
-         } catch (RuntimeException e) {
-            validationExceptions.add(e);
-         }
-      });
+      try {
+         cacheContainerConfiguration.validate();
+      } catch (RuntimeException e) {
+         validationExceptions.add(e);
+      }
       modules.values().forEach(c -> {
          try {
             c.validate();
@@ -254,7 +241,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return new GlobalConfiguration(
             cacheContainerConfiguration.create(),
             modulesConfig,
-            site.create(),
             cl,
             features);
    }
@@ -272,7 +258,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
          builder.read(c, Combine.DEFAULT);
       }
       cacheContainerConfiguration.read(template.cacheContainer(), Combine.DEFAULT);
-      site.read(template.sites(), Combine.DEFAULT);
       tracing().read(template.tracing(), Combine.DEFAULT);
       return this;
    }
@@ -289,7 +274,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             "cl=" + cl +
             ", cacheContainerConfiguration=" + cacheContainerConfiguration +
             ", modules=" + modules +
-            ", site=" + site +
             ", features=" + features +
             '}';
    }
@@ -299,12 +283,12 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       GlobalConfigurationBuilder that = (GlobalConfigurationBuilder) o;
-      return Objects.equals(cl, that.cl) && Objects.equals(cacheContainerConfiguration, that.cacheContainerConfiguration) && Objects.equals(modules, that.modules) && Objects.equals(site, that.site) && Objects.equals(features, that.features);
+      return Objects.equals(cl, that.cl) && Objects.equals(cacheContainerConfiguration, that.cacheContainerConfiguration) && Objects.equals(modules, that.modules) && Objects.equals(features, that.features);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(cl, cacheContainerConfiguration, modules, site, features);
+      return Objects.hash(cl, cacheContainerConfiguration, modules, features);
    }
 
    public ThreadsConfigurationBuilder threads() {

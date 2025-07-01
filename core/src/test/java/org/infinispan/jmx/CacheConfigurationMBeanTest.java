@@ -34,7 +34,7 @@ public class CacheConfigurationMBeanTest extends SingleCacheManagerTest {
       gcb.jmx().enabled(true).domain(JMX_DOMAIN).mBeanServerLookup(mBeanServerLookup);
       ConfigurationBuilder dcc = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       dcc.transaction().autoCommit(false);
-      dcc.memory().size(1000);
+      dcc.memory().maxCount(1000);
       return TestCacheManagerFactory.createCacheManager(gcb, dcc);
    }
 
@@ -42,12 +42,12 @@ public class CacheConfigurationMBeanTest extends SingleCacheManagerTest {
       MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
       ObjectName defaultOn = getCacheObjectName(JMX_DOMAIN, getDefaultCacheName() + "(local)", "Configuration");
       assertEquals(1000L, (long) mBeanServer.getAttribute(defaultOn, "evictionSize"));
-      assertEquals(1000, cache().getCacheConfiguration().memory().size());
+      assertEquals(1000, cache().getCacheConfiguration().memory().maxCount());
       DefaultDataContainer<Object, Object> dataContainer = (DefaultDataContainer<Object, Object>) cache()
             .getAdvancedCache().getDataContainer();
       assertEquals(1000, dataContainer.capacity());
       mBeanServer.setAttribute(defaultOn, new Attribute("evictionSize", 2000L));
-      assertEquals(2000, cache().getCacheConfiguration().memory().size());
+      assertEquals(2000, cache().getCacheConfiguration().memory().maxCount());
       assertEquals(2000, dataContainer.capacity());
    }
 }

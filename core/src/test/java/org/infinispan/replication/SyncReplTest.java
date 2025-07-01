@@ -12,6 +12,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
@@ -32,7 +33,8 @@ public class SyncReplTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder replSync = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      replSync.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
+      replSync.clustering().hash().numSegments(1);
+      replSync.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
       createClusteredCaches(2, ReplicatedControlledConsistentHashFactory.SCI.INSTANCE, "replSync", replSync);
    }
 
@@ -133,7 +135,8 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       RpcManagerImpl asyncRpcManager = null;
       try {
          ConfigurationBuilder asyncCache = getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, false);
-         asyncCache.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
+         asyncCache.clustering().hash().numSegments(1);
+         asyncCache.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
          defineConfigurationOnAllManagers("asyncCache", asyncCache);
          Cache<String, String> asyncCache1 = manager(0).getCache("asyncCache");
          manager(1).getCache("asyncCache");

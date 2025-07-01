@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.infinispan.distribution.ch.impl.ConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.OwnershipStatistics;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;

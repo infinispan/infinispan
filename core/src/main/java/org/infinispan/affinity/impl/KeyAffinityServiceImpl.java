@@ -337,7 +337,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
 
    private boolean isNodeInConsistentHash(Address address) {
       DistributionManager distributionManager = getDistributionManager();
-      ConsistentHash hash = distributionManager.getWriteConsistentHash();
+      ConsistentHash hash = distributionManager.getCacheTopology().getWriteConsistentHash();
       return hash.getMembers().contains(address);
    }
    private DistributionManager getDistributionManager() {
