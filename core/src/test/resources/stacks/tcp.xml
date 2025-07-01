@@ -1,6 +1,6 @@
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.3.xsd">
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.4.xsd">
    <!-- Disable the regular thread pool queue for tests so we can set a lower min_threads -->
    <TCP_NIO2
          bind_addr="${jgroups.bind.address,jgroups.tcp.address:127.0.0.1}"
@@ -18,6 +18,8 @@
          thread_pool.keep_alive_time="1m"
 
          use_vthreads="${jgroups.thread.virtual,org.infinispan.threads.virtual:true}"
+
+         enable_suspect_events="true"
          />
    <RED/>
 
@@ -37,7 +39,6 @@
 
    <MERGE3 min_interval="1s" max_interval="5s"/>
 
-   <!--FD_SOCK2 connect_timeout="3000"/-->
    <!-- Suspect node `timeout` to `timeout + timeout_check_interval` millis after the last heartbeat -->
    <FD_ALL3 timeout="3000"
             interval="1000"

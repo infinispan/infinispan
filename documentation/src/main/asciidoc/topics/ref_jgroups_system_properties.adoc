@@ -22,17 +22,17 @@ Use the following properties to customize JGroups cluster transport.
 | Optional
 
 | `jgroups.mcast_addr`
-| IP address for multicast, both discovery and inter-cluster communication. The IP address must be a valid "class D" address that is suitable for IP multicast.
+| IP address for multicast when using UDP transport, both discovery and inter-cluster communication. The IP address must be a valid "class D" address that is suitable for IP multicast.
 | `239.6.7.8`
 | Optional
 
 | `jgroups.mcast_port`
-| Port for the multicast socket.
+| Port for the multicast socket when using UDP transport.
 | `46655`
 | Optional
 
 | `jgroups.ip_ttl`
-| Time-to-live (TTL) for IP multicast packets. The value defines the number of network hops a packet can make before it is dropped.
+| Time-to-live (TTL) for IP multicast packets when using UDP transport. The value defines the number of network hops a packet can make before it is dropped.
 | 2
 | Optional
 
@@ -57,7 +57,7 @@ Use the following properties to customize JGroups cluster transport.
 | Optional
 
 | `jgroups.fd.port-offset`
-| Offset from `jgroups.bind.port` port for the FD (failure detection protocol) socket.
+| Offset from `jgroups.bind.port` port for the FD (failure detection protocol) socket when using UDP transport.
 | `50000` (port `57800` )
 | Optional
 
