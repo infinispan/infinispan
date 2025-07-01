@@ -55,7 +55,7 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
 
    @Override
    public void onStart(ITestContext context) {
-      Thread.currentThread().setName("testng-" + context.getName());
+      Thread.currentThread().setName("TestNG-" + context.getName());
       ThreadLeakChecker.testStarted(context.getCurrentXmlTest().getXmlClasses().get(0).getName());
    }
 
