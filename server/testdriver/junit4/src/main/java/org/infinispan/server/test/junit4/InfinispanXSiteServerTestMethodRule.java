@@ -33,6 +33,11 @@ public class InfinispanXSiteServerTestMethodRule implements TestRule, TestClient
    }
 
    @Override
+   public String hostAndPort(String siteName) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
    public HotRodTestClientDriver hotrod(String siteName) {
       return testClients.get(siteName).hotrod();
    }
