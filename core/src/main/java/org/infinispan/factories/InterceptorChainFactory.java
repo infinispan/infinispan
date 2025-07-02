@@ -29,6 +29,8 @@ import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.interceptors.impl.ClusteredCacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.DistCacheWriterInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
+import org.infinispan.interceptors.impl.InvalidationCacheLoaderInterceptor;
+import org.infinispan.interceptors.impl.InvalidationCacheWriterInterceptor;
 import org.infinispan.interceptors.impl.InvalidationInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.interceptors.impl.IsMarshallableInterceptor;
@@ -293,7 +295,9 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          }
          addInterceptor(interceptorChain, new PassivationWriterInterceptor(), PassivationWriterInterceptor.class, lastAdded);
       } else {
-         if (cacheMode.isClustered()) {
+         if (cacheMode.isInvalidation()) {
+            lastAdded = addInterceptor(interceptorChain, new InvalidationCacheLoaderInterceptor<>(), CacheLoaderInterceptor.class, lastAdded);
+         } else if (cacheMode.isClustered()) {
             lastAdded = addInterceptor(interceptorChain, new ClusteredCacheLoaderInterceptor<>(), CacheLoaderInterceptor.class, lastAdded);
          } else {
             lastAdded = addInterceptor(interceptorChain, new CacheLoaderInterceptor<>(), CacheLoaderInterceptor.class, lastAdded);
@@ -308,7 +312,11 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
             case DIST_ASYNC:
             case REPL_SYNC:
             case REPL_ASYNC:
-               addInterceptor(interceptorChain, new DistCacheWriterInterceptor(), DistCacheWriterInterceptor.class, lastAdded);
+               addInterceptor(interceptorChain, new DistCacheWriterInterceptor(), CacheWriterInterceptor.class, lastAdded);
+               break;
+            case INVALIDATION_ASYNC:
+            case INVALIDATION_SYNC:
+               addInterceptor(interceptorChain, new InvalidationCacheWriterInterceptor(), CacheWriterInterceptor.class, lastAdded);
                break;
             default:
                addInterceptor(interceptorChain, new CacheWriterInterceptor(), CacheWriterInterceptor.class, lastAdded);
