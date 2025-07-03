@@ -54,7 +54,7 @@ public enum DatabaseType {
          type = DatabaseType.INTERBASE;
       } else if (name.contains("firebird")) {
          type = DatabaseType.FIREBIRD;
-      } else if (name.contains("sqlserver") || name.contains("microsoft")) {
+      } else if (name.contains("sqlserver") || name.contains("microsoft") || name.contains("mssql")) {
          type = DatabaseType.SQL_SERVER;
       } else if (name.contains("access")) {
          type = DatabaseType.ACCESS;
