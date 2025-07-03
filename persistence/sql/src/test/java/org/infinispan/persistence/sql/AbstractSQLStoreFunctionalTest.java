@@ -482,7 +482,12 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
    String floatType() {
       switch (DB_TYPE) {
          case SQLITE:
+         // SQL_SERVER and DB2 databases do not support NUMERIC data type with precision of 45
+         case SQL_SERVER:
+         case DB2:
             return "REAL";
+         case ORACLE:
+            return "BINARY_FLOAT";
          default:
             return "NUMERIC(45, 6)";
       }
@@ -492,6 +497,12 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
       switch (DB_TYPE) {
          case SQLITE:
             return "REAL";
+         case SQL_SERVER:
+            return "FLOAT";
+         case POSTGRES:
+            return "DOUBLE PRECISION";
+         case ORACLE:
+            return "BINARY_DOUBLE";
          default:
             return "DOUBLE";
       }
@@ -541,12 +552,19 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
       String tableCreation;
       String upperCaseCacheName = cacheName.toUpperCase();
       if ("testKeyWithNullFields".equalsIgnoreCase(cacheName)) {
-         tableCreation = "CREATE TABLE " + tableName + " (" +
-               "NAME VARCHAR(255) NOT NULL, " +
-               "street VARCHAR(255), " +
-               "city VARCHAR(255), " +
-               "zip INT, " +
-               "PRIMARY KEY (zip))";
+         StringBuilder sb = new StringBuilder();
+         sb.append("CREATE TABLE ").append(tableName).append(" (");
+         sb.append("NAME VARCHAR(255) NOT NULL, ");
+         sb.append("street VARCHAR(255), ");
+         sb.append("city VARCHAR(255), ");
+         sb.append("zip INT NOT NULL, ");
+         sb.append("PRIMARY KEY (zip)");
+         if(DB_TYPE == DatabaseType.POSTGRES) {
+            sb.append(", UNIQUE (street, city)");
+         }
+         sb.append(")");
+
+         tableCreation = sb.toString();
       } else if ("testPreloadStoredAsBinary".equalsIgnoreCase(cacheName)) {
          tableCreation = "CREATE TABLE " + tableName + " (" +
                "keycolumn VARCHAR(255) NOT NULL, " +
@@ -616,7 +634,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
                "PRIMARY KEY (sex))";
       } else if ("TESTNUMERICCOLUMNS".equals(upperCaseCacheName)) {
          tableCreation = "CREATE TABLE " + tableName + " (" +
-               "keycolumn " + integerType() + ", " +
+               "keycolumn " + integerType() + " NOT NULL, " +
                "simpleLong " + longType() + ", " +
                "simpleFloat " + floatType() + ", " +
                "simpleDouble " + doubleType() + ", " +
@@ -655,6 +673,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
 
    String tableToSearch(String tableName) {
       if (DB_TYPE == DatabaseType.POSTGRES) return tableName.toLowerCase();
+      else if (DB_TYPE == DatabaseType.MYSQL || DB_TYPE == DatabaseType.MARIA_DB) return tableName ;
       return tableName.toUpperCase();
    }
 
