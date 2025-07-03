@@ -29,7 +29,7 @@ You can also use the `org.infinispan.test.database.properties.path`system proper
 
 To add JDBC drivers to the servers in order to run tests against specific databases, you can use `org.infinispan.test.database.jdbc.drivers` or `org.infinispan.test.database.jdbc.drivers.file` system property:
 
-`mvn -Dorg.infinispan.test.database.jdbc.drivers=com.h2database:h2:1.4.199,com.oracle.jdbc:ojdbc8:jar:18.3.0.0 ...`
+`mvn -Dorg.infinispan.test.database.jdbc.drivers=com.h2database:h2:1.4.199,com.oracle.database.jdbc:ojdbc11:jar:23.5.0.24.07 ...`
 
 `mvn -Dorg.infinispan.test.database.jdbc.drivers.file=/opt/jdbc-drivers.txt`
 
