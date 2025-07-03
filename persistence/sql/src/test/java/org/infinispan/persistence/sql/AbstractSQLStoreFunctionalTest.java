@@ -483,6 +483,8 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
       switch (DB_TYPE) {
          case SQLITE:
             return "REAL";
+         case SQL_SERVER:
+            return "FLOAT";
          default:
             return "NUMERIC(45, 6)";
       }
@@ -491,7 +493,10 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
    String doubleType() {
       switch (DB_TYPE) {
          case SQLITE:
+         case SQL_SERVER:
             return "REAL";
+         case POSTGRES:
+            return "DOUBLE PRECISION";
          default:
             return "DOUBLE";
       }
@@ -546,7 +551,8 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
                "street VARCHAR(255), " +
                "city VARCHAR(255), " +
                "zip INT, " +
-               "PRIMARY KEY (zip))";
+               "PRIMARY KEY (zip), " +
+               "UNIQUE (street, city))";
       } else if ("testPreloadStoredAsBinary".equalsIgnoreCase(cacheName)) {
          tableCreation = "CREATE TABLE " + tableName + " (" +
                "keycolumn VARCHAR(255) NOT NULL, " +
@@ -655,6 +661,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
 
    String tableToSearch(String tableName) {
       if (DB_TYPE == DatabaseType.POSTGRES) return tableName.toLowerCase();
+      else if (DB_TYPE == DatabaseType.MYSQL || DB_TYPE == DatabaseType.MARIA_DB) return tableName ;
       return tableName.toUpperCase();
    }
 
