@@ -197,7 +197,7 @@
       <versionx.com.microsoft.sqlserver>12.6.1.jre11</versionx.com.microsoft.sqlserver>
       <versionx.com.mysqldatabase.mysql>8.3.0</versionx.com.mysqldatabase.mysql>
       <versionx.com.postgresqldatabase.postgresql>42.7.3</versionx.com.postgresqldatabase.postgresql>
-      <versionx.com.oracle.ojdbc.ojdbc8>19.3.0.0</versionx.com.oracle.ojdbc.ojdbc8>
+      <versionx.com.oracle.database.jdbc.ojdbc11>23.5.0.24.07</versionx.com.oracle.database.jdbc.ojdbc11>
       <versionx.com.squareup.protoparser>4.0.3</versionx.com.squareup.protoparser>
       <versionx.commons-dbcp.commons-dbcp>1.4</versionx.commons-dbcp.commons-dbcp>
       <versionx.commons-io.commons-io>2.18.0</versionx.commons-io.commons-io>
@@ -1458,9 +1458,9 @@
             <scope>test</scope>
          </dependency>
          <dependency>
-            <groupId>com.oracle.ojdbc</groupId>
-            <artifactId>ojdbc8</artifactId>
-            <version>${versionx.com.oracle.ojdbc.ojdbc8}</version>
+            <groupId>com.oracle.database.jdbc</groupId>
+            <artifactId>ojdbc11</artifactId>
+            <version>${versionx.com.oracle.database.jdbc.ojdbc11}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
