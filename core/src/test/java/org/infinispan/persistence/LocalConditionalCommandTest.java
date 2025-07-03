@@ -7,7 +7,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
-import org.infinispan.eviction.impl.ActivationManager;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -19,7 +18,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.configuration.cache.IsolationLevel;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -61,15 +59,6 @@ public class LocalConditionalCommandTest extends SingleCacheManagerTest {
             .shared(shared);
       builder.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       return builder;
-   }
-
-   @AfterMethod
-   public void afterMethod() {
-      if (passivation) {
-         ActivationManager activationManager = TestingUtil.extractComponent(cache(PRIVATE_STORE_CACHE_NAME), ActivationManager.class);
-         // Make sure no passivations are pending, which could leak between tests
-         eventuallyEquals((long) 0, activationManager::getPendingActivationCount);
-      }
    }
 
    private static <K, V> void writeToStore(Cache<K, V> cache, K key, V value) {

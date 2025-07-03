@@ -12,13 +12,11 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -32,20 +30,19 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 /**
- * Tester class for ActivationInterceptor and PassivationInterceptor.
+ * Tester class for PassivationInterceptor.
  *
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
  */
-@Test(groups = "functional", testName = "jmx.ActivationAndPassivationInterceptorMBeanTest")
-public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheManagerTest {
+@Test(groups = "functional", testName = "jmx.PassivationInterceptorMBeanTest")
+public class PassivationInterceptorMBeanTest extends SingleCacheManagerTest {
 
-   private static final String JMX_DOMAIN = ActivationAndPassivationInterceptorMBeanTest.class.getSimpleName();
+   private static final String JMX_DOMAIN = PassivationInterceptorMBeanTest.class.getSimpleName();
 
    private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
-   private DummyInMemoryStore loader;
-   private ObjectName activationInterceptorObjName;
+   private DummyInMemoryStore<Object, Object> loader;
    private ObjectName passivationInterceptorObjName;
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -67,8 +64,6 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
    @Override
    protected void setup() throws Exception {
       super.setup();
-      activationInterceptorObjName =
-            getCacheObjectName(JMX_DOMAIN, getDefaultCacheName() + "(local)", "Activation");
       passivationInterceptorObjName =
             getCacheObjectName(JMX_DOMAIN, getDefaultCacheName() + "(local)", "Passivation");
       loader = TestingUtil.getFirstStore(cache);
@@ -77,69 +72,41 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
    @AfterMethod
    public void resetStats() throws Exception {
       MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
-      mBeanServer.invoke(activationInterceptorObjName, "resetStatistics", new Object[0], new String[0]);
       mBeanServer.invoke(passivationInterceptorObjName, "resetStatistics", new Object[0], new String[0]);
    }
 
-   public void passivateAll() throws Exception {
+   private void passivateAll() throws Exception {
       mBeanServerLookup.getMBeanServer().invoke(passivationInterceptorObjName, "passivateAll", new Object[0], new String[0]);
    }
 
-   public void testDisableStatistics() throws Exception {
-      MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
-      mBeanServer.setAttribute(activationInterceptorObjName, new Attribute("StatisticsEnabled", Boolean.FALSE));
-      assert mBeanServer.getAttribute(activationInterceptorObjName, "Activations").toString().equals("N/A");
-      mBeanServer.setAttribute(activationInterceptorObjName, new Attribute("StatisticsEnabled", Boolean.TRUE));
-   }
-
-   public void testActivationOnGet(Method m) {
-      assertActivationCount(0);
-      assert cache.get(k(m)) == null;
-      assertActivationCount(0);
-      loader.write(MarshalledEntryUtil.create(k(m), v(m), cache));
-      assert loader.contains(k(m));
-      assert cache.get(k(m)).equals(v(m));
-      assertActivationCount(0);
-      assert loader.contains(k(m));
-   }
-
    public void testActivationOnPut(Method m) {
-      assertActivationCount(0);
-      assert cache.get(k(m)) == null;
-      assertActivationCount(0);
+      assertNull(cache.get(k(m)));
       loader.write(MarshalledEntryUtil.create(k(m), v(m), cache));
-      assert loader.contains(k(m));
+      assertTrue(loader.contains(k(m)));
       cache.put(k(m), v(m, 2));
-      assert cache.get(k(m)).equals(v(m, 2));
-      assertActivationCount(0);
-      assert loader.contains(k(m));
+      assertEquals(v(m, 2), cache.get(k(m)));
+      assertTrue(loader.contains(k(m)));
    }
 
    public void testActivationOnReplace(Method m) {
-      assertActivationCount(0);
       assertNull(cache.get(k(m)));
-      assertActivationCount(0);
       loader.write(MarshalledEntryUtil.create(k(m), v(m), cache));
       assertTrue(loader.contains(k(m)));
 
       Object prev = cache.replace(k(m), v(m, 2));
       assertNotNull(prev);
       assertEquals(v(m), prev);
-      assertActivationCount(0);
       assertTrue(loader.contains(k(m)));
    }
 
    public void testActivationOnPutMap(Method m) {
-      assertActivationCount(0);
       assertNull(cache.get(k(m)));
-      assertActivationCount(0);
       loader.write(MarshalledEntryUtil.create(k(m), v(m), cache));
       assertTrue(loader.contains(k(m)));
 
       Map<String, String> toAdd = new HashMap<>();
       toAdd.put(k(m), v(m, 2));
       cache.putAll(toAdd);
-      assertActivationCount(0);
       Object obj = cache.get(k(m));
       assertNotNull(obj);
       assertEquals(v(m, 2), obj);
@@ -165,17 +132,6 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       }
       passivateAll();
       assertPassivationCount(9);
-   }
-
-   private void assertActivationCount(long activationCount) {
-      eventuallyEquals(activationCount, () -> {
-         try {
-            return Long.parseLong(mBeanServerLookup.getMBeanServer()
-                  .getAttribute(activationInterceptorObjName, "Activations").toString());
-         } catch (Exception e) {
-            throw Util.rewrapAsCacheException(e);
-         }
-      });
    }
 
    private void assertPassivationCount(long activationCount) throws Exception {

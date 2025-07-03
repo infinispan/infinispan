@@ -2,9 +2,9 @@ package org.infinispan.interceptors.locking;
 
 import static org.infinispan.transaction.impl.WriteSkewHelper.performWriteSkewCheckAndReturnNewVersions;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -36,7 +36,6 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionManager;
-import org.infinispan.eviction.impl.ActivationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -61,8 +60,6 @@ import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.transaction.impl.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.concurrent.DataOperationOrderer;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Abstractization for logic related to different clustering modes: replicated or distributed. This implements the <a
@@ -148,7 +145,6 @@ public interface ClusteringDependentLogic {
 
    @Scope(Scopes.NAMED_CACHE)
    abstract class AbstractClusteringDependentLogic implements ClusteringDependentLogic, StoreChangeListener {
-      private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
       @Inject protected ComponentRegistry componentRegistry;
       @Inject protected DistributionManager distributionManager;
       @Inject protected InternalDataContainer<Object, Object> dataContainer;
@@ -161,29 +157,17 @@ public interface ClusteringDependentLogic {
       @Inject protected KeyPartitioner keyPartitioner;
       @Inject protected EvictionManager<?,?> evictionManager;
       @Inject protected DataOperationOrderer orderer;
-      @Inject protected ActivationManager activationManager;
-      @Inject protected KeyPartitioner keyPartioner;
 
       private WriteSkewHelper.KeySpecificLogic keySpecificLogic;
-      private EntryLoader<?, ?> entryLoader;
+      private EntryLoader<Object, Object> entryLoader;
       private volatile boolean writeOrdering = false;
       @Start
       public void start() {
          updateOrdering(configuration.persistence().usingStores());
 
          this.keySpecificLogic = initKeySpecificLogic();
-         CacheLoaderInterceptor<?, ?> cli = componentRegistry.getComponent(CacheLoaderInterceptor.class);
-         if (cli != null) {
-            entryLoader = cli;
-         } else {
-            entryLoader = (ctx, key, segment, cmd) -> {
-               InternalCacheEntry<Object, Object> ice = dataContainer.peek(segment, key);
-               if (ice != null && ice.canExpire() && ice.isExpired(timeService.wallClockTime())) {
-                  ice = null;
-               }
-               return CompletableFuture.completedFuture(ice);
-            };
-         }
+         CacheLoaderInterceptor<Object, Object> cli = componentRegistry.getComponent(CacheLoaderInterceptor.class);
+         entryLoader = Objects.requireNonNullElse(cli, (EntryLoader<Object, Object>) this::dataContainerLoader);
 
          persistenceManager.addStoreListener(this);
       }
@@ -327,6 +311,14 @@ public interface ClusteringDependentLogic {
       public final <K, V> EntryLoader<K, V> getEntryLoader() {
          //noinspection unchecked
          return (EntryLoader<K, V>) entryLoader;
+      }
+
+      private CompletionStage<InternalCacheEntry<Object, Object>> dataContainerLoader(InvocationContext ctx, Object key, int segment, FlagAffectedCommand cmd) {
+         InternalCacheEntry<Object, Object> ice = dataContainer.peek(segment, key);
+         if (ice == null || (ice.canExpire() && ice.isExpired(timeService.wallClockTime()))) {
+            return CompletableFutures.completedNull();
+         }
+         return CompletableFuture.completedFuture(ice);
       }
    }
 

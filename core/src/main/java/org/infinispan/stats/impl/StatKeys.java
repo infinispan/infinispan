@@ -36,7 +36,6 @@ final class StatKeys {
    //Invalidation/passivation/activation
    static final String INVALIDATIONS = "invalidations";
    static final String PASSIVATIONS = "passivations";
-   static final String ACTIVATIONS = "activations";
 
    //cache loaders
    static final String CACHE_LOADER_LOADS = "cacheLoaderLoads";

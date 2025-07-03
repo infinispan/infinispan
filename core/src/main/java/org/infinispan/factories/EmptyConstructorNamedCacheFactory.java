@@ -27,8 +27,6 @@ import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.distribution.impl.L1ManagerImpl;
 import org.infinispan.encoding.impl.StorageConfigurationManager;
 import org.infinispan.eviction.EvictionManager;
-import org.infinispan.eviction.impl.ActivationManager;
-import org.infinispan.eviction.impl.ActivationManagerImpl;
 import org.infinispan.eviction.impl.EvictionManagerImpl;
 import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.eviction.impl.PassivationManagerImpl;
@@ -87,7 +85,7 @@ import org.infinispan.xsite.status.TakeOfflineManager;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {CacheNotifier.class, CacheConfigurationMBean.class, ClusterCacheNotifier.class, CommandsFactory.class,
-                              PersistenceManager.class, PassivationManager.class, ActivationManager.class,
+                              PersistenceManager.class, PassivationManager.class,
                               PreloadManager.class, BatchContainer.class, EvictionManager.class,
                               TransactionCoordinator.class, RecoveryAdminOperations.class, StateTransferLock.class,
                               L1Manager.class, TransactionFactory.class, BackupSender.class,
@@ -125,8 +123,6 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return persistenceManager;
       } else if (componentName.equals(PassivationManager.class.getName())) {
          return new PassivationManagerImpl();
-      } else if (componentName.equals(ActivationManager.class.getName())) {
-         return new ActivationManagerImpl();
       } else if (componentName.equals(PreloadManager.class.getName())) {
          return new PreloadManager();
       } else if (componentName.equals(BatchContainer.class.getName())) {
