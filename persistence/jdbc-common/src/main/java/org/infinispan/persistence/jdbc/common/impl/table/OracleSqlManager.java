@@ -14,7 +14,7 @@ public class OracleSqlManager extends GenericSqlManager {
       upsert.append(" t USING (SELECT ");
       appendStrings(upsert, allColumns, all -> parameterName(all) + " " + all, ", ");
       upsert.append(" from dual) tmp ON (");
-      appendStrings(upsert, keyColumns, key -> "t." + key + " = tmp." + key, ", ");
+      appendStrings(upsert, keyColumns, key -> "t." + key + " = tmp." + key, " AND ");
       upsert.append(") WHEN MATCHED THEN UPDATE SET ");
       appendStrings(upsert, valueIterable(keyColumns, allColumns), key -> "t." + key + " = tmp." + key, ", ");
       upsert.append(" WHEN NOT MATCHED THEN INSERT (");
