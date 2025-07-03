@@ -111,7 +111,7 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
       } else if (typeName.toUpperCase().startsWith("BOOL")) {
          // Some databases store as int32 or something similar but have the typename as BOOLEAN or some derivation
          return Types.BOOLEAN;
-      } else if ((sqlType == Types.NUMERIC || sqlType == Types.INTEGER) && scale == 0) {
+      } else if ((sqlType == Types.NUMERIC || sqlType == Types.INTEGER || sqlType == Types.DECIMAL) && scale == 0) {
          // If scale is 0 we don't want to use float or double types.
          // For integers, we go at most with 9 digits. Although Integer.MAX_VALUE reaches 10-digit numbers, it does not
          // cover the whole range up to 9_999_999_999. Therefore, we need to utilize a long numbers with precision 10 or higher.
@@ -123,6 +123,10 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
          if (scale < 8)
             return Types.FLOAT;
 
+         return Types.DOUBLE;
+      } else if ("BINARY_FLOAT".equalsIgnoreCase(typeName)) {
+         return Types.FLOAT;
+      } else if ("BINARY_DOUBLE".equalsIgnoreCase(typeName)) {
          return Types.DOUBLE;
       }
       return sqlType;
