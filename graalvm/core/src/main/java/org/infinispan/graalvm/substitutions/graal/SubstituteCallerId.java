@@ -10,7 +10,6 @@ import org.infinispan.commons.util.Version;
  * Both variations using a security manager or using Reflection class require loading up JNI
  */
 @TargetClass(CallerId.class)
-@Substitute
 public final class SubstituteCallerId {
 
     @Substitute
