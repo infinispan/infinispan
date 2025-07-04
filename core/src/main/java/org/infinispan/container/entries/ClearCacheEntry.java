@@ -64,6 +64,11 @@ public class ClearCacheEntry<K, V> implements CacheEntry<K, V> {
    }
 
    @Override
+   public boolean isInvalidated() {
+      return false;
+   }
+
+   @Override
    public void setEvicted(boolean evicted) {
       /*no-op*/
    }
@@ -106,6 +111,11 @@ public class ClearCacheEntry<K, V> implements CacheEntry<K, V> {
 
       @Override
    public void setSkipLookup(boolean skipLookup) {
+      /*no-op*/
+   }
+
+   @Override
+   public void setInvalidated(boolean invalidated) {
       /*no-op*/
    }
 
