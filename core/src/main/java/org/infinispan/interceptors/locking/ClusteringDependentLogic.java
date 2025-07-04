@@ -16,13 +16,11 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
-import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ClearCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.container.versioning.VersionGenerator;
@@ -160,7 +158,7 @@ public interface ClusteringDependentLogic {
       @Inject protected FunctionalNotifier<Object, Object> functionalNotifier;
       @Inject protected Configuration configuration;
       @Inject protected KeyPartitioner keyPartitioner;
-      @Inject protected EvictionManager<?,?> evictionManager;
+      @Inject protected EvictionManager<Object, Object> evictionManager;
       @Inject protected DataOperationOrderer orderer;
       @Inject protected ActivationManager activationManager;
       @Inject protected KeyPartitioner keyPartioner;
@@ -203,7 +201,6 @@ public interface ClusteringDependentLogic {
 
       private void updateOrdering(boolean usingStores) {
          MemoryConfiguration memoryConfiguration = configuration.memory();
-         PersistenceConfiguration persistenceConfiguration = configuration.persistence();
          // If eviction is enabled or stores we have to make sure to order writes with other concurrent operations
          // Eviction requires it to perform eviction notifications in a non blocking fashion
          // Stores require writing entries to data container after loading - in an atomic fashion
@@ -291,7 +288,7 @@ public interface ClusteringDependentLogic {
       protected abstract CompletionStage<Void> commitSingleEntry(CacheEntry entry, FlagAffectedCommand command,
                                                 InvocationContext ctx, Flag trackFlag, boolean l1Invalidation);
 
-      protected Commit clusterCommitType(FlagAffectedCommand command, InvocationContext ctx, int segment, boolean removed) {
+      protected Commit clusterCommitType(FlagAffectedCommand command, int segment) {
          // ignore locality for removals, even if skipOwnershipCheck is not true
          if (command != null && command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK)) {
             return Commit.COMMIT_LOCAL;
@@ -309,7 +306,7 @@ public interface ClusteringDependentLogic {
 
       @Override
       public Commit commitType(FlagAffectedCommand command, InvocationContext ctx, int segment, boolean removed) {
-         return clusterCommitType(command, ctx, segment, removed);
+         return clusterCommitType(command, segment);
       }
 
       protected abstract WriteSkewHelper.KeySpecificLogic initKeySpecificLogic();
@@ -369,9 +366,6 @@ public interface ClusteringDependentLogic {
                                        Flag trackFlag, boolean l1Invalidation) {
          // Cache flags before they're reset
          // TODO: Can the reset be done after notification instead?
-         boolean created = entry.isCreated();
-         boolean removed = entry.isRemoved();
-         boolean expired = removed && entry instanceof MVCCEntry && ((MVCCEntry) entry).isExpired();
 
          Object key = entry.getKey();
          int segment = SegmentSpecificCommand.extractSegment(command, key, keyPartitioner);
@@ -389,7 +383,7 @@ public interface ClusteringDependentLogic {
          CompletionStage<Void> stage = commitManager.commit(entry, trackFlag, segment, l1Invalidation, ctx);
 
          // Notify after events if necessary
-         return stage.thenCompose(ignore -> NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
+         return stage.thenCompose(ignore -> NotifyHelper.entryCommitted(notifier, functionalNotifier,
                entry, ctx, command, previousValue, previousMetadata, evictionManager));
       }
 
@@ -412,17 +406,6 @@ public interface ClusteringDependentLogic {
       @Override
       protected CompletionStage<Void> commitSingleEntry(CacheEntry entry, FlagAffectedCommand command,
                                        InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
-         // Cache flags before they're reset
-         // TODO: Can the reset be done after notification instead?
-         boolean created = entry.isCreated();
-         boolean removed = entry.isRemoved();
-         boolean expired;
-         if (removed && entry instanceof MVCCEntry) {
-            expired = ((MVCCEntry) entry).isExpired();
-         } else {
-            expired = false;
-         }
-
          Object key = entry.getKey();
          int segment = SegmentSpecificCommand.extractSegment(command, key, keyPartitioner);
 
@@ -439,7 +422,7 @@ public interface ClusteringDependentLogic {
          CompletionStage<Void> stage = commitManager.commit(entry, trackFlag, segment, l1Invalidation, ctx);
 
          // Notify after events if necessary
-         return stage.thenCompose(ignore -> NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
+         return stage.thenCompose(ignore -> NotifyHelper.entryCommitted(notifier, functionalNotifier,
                entry, ctx, command, previousValue, previousMetadata, evictionManager));
       }
 
@@ -460,7 +443,7 @@ public interface ClusteringDependentLogic {
 
       @Override
       public Commit commitType(FlagAffectedCommand command, InvocationContext ctx, int segment, boolean removed) {
-         return clusterCommitType(command, ctx, segment, removed);
+         return clusterCommitType(command, segment);
       }
 
       @Override
@@ -492,22 +475,13 @@ public interface ClusteringDependentLogic {
          }
 
          if (doCommit.isCommit() && doCommit.isLocal()) {
-            boolean created = entry.isCreated();
-            boolean removed = entry.isRemoved();
-            boolean expired;
-            if (removed && entry instanceof MVCCEntry) {
-               expired = ((MVCCEntry) entry).isExpired();
-            } else {
-               expired = false;
-            }
-
             if (stage == null || CompletionStages.isCompletedSuccessfully(stage)) {
-               return NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
+               return NotifyHelper.entryCommitted(notifier, functionalNotifier,
                      entry, ctx, command, previousValue, previousMetadata, evictionManager);
             } else {
                Object finalPreviousValue = previousValue;
                Metadata finalPreviousMetadata = previousMetadata;
-               return stage.thenCompose(ignore -> NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
+               return stage.thenCompose(ignore -> NotifyHelper.entryCommitted(notifier, functionalNotifier,
                      entry, ctx, command, finalPreviousValue, finalPreviousMetadata, evictionManager));
             }
          }
@@ -584,23 +558,14 @@ public interface ClusteringDependentLogic {
          }
 
          if (doCommit.isCommit() && doCommit.isLocal()) {
-            boolean created = entry.isCreated();
-            boolean removed = entry.isRemoved();
-            boolean expired;
-            if (removed && entry instanceof MVCCEntry) {
-               expired = ((MVCCEntry) entry).isExpired();
-            } else {
-               expired = false;
-            }
-
             if (stage == null || CompletionStages.isCompletedSuccessfully(stage)) {
-               return NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
+               return NotifyHelper.entryCommitted(notifier, functionalNotifier,
                      entry, ctx, command, previousValue, previousMetadata, evictionManager);
             } else {
                Object finalPreviousValue = previousValue;
                Metadata finalPreviousMetadata = previousMetadata;
-               return stage.thenCompose(ignore -> NotifyHelper.entryCommitted(notifier, functionalNotifier, created,
-                     removed, expired, entry, ctx, command, finalPreviousValue, finalPreviousMetadata, evictionManager));
+               return stage.thenCompose(ignore -> NotifyHelper.entryCommitted(notifier, functionalNotifier,
+                     entry, ctx, command, finalPreviousValue, finalPreviousMetadata, evictionManager));
             }
          }
          return stage == null ? CompletableFutures.completedNull() : stage;
