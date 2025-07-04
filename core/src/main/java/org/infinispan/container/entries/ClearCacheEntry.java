@@ -64,6 +64,11 @@ public class ClearCacheEntry<K, V> implements CacheEntry<K, V> {
    }
 
    @Override
+   public boolean isInvalidated() {
+      return false;
+   }
+
+   @Override
    public void setEvicted(boolean evicted) {
       /*no-op*/
    }
@@ -110,7 +115,12 @@ public class ClearCacheEntry<K, V> implements CacheEntry<K, V> {
    }
 
    @Override
-   final public CacheEntry<K, V> clone() {
+   public void setInvalidated(boolean invalidated) {
+      /*no-op*/
+   }
+
+   @Override
+   public final CacheEntry<K, V> clone() {
       return getInstance(); //no clone. singleton
    }
 

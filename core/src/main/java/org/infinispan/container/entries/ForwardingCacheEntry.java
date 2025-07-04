@@ -39,6 +39,11 @@ public abstract class ForwardingCacheEntry<K, V> implements CacheEntry<K, V> {
    }
 
    @Override
+   public boolean isInvalidated() {
+      return delegate().isInvalidated();
+   }
+
+   @Override
    public K getKey() {
       return delegate().getKey();
    }
@@ -69,7 +74,7 @@ public abstract class ForwardingCacheEntry<K, V> implements CacheEntry<K, V> {
    }
 
    @Override
-   public void commit(DataContainer container) {
+   public void commit(DataContainer<K, V> container) {
       delegate().commit(container);
    }
 
@@ -96,6 +101,11 @@ public abstract class ForwardingCacheEntry<K, V> implements CacheEntry<K, V> {
    @Override
    public void setSkipLookup(boolean skipLookup) {
       delegate().setSkipLookup(skipLookup);
+   }
+
+   @Override
+   public void setInvalidated(boolean invalidated) {
+      delegate().setInvalidated(invalidated);
    }
 
    @Override

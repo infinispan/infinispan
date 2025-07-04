@@ -40,6 +40,11 @@ public class NullCacheEntry<K, V> implements CacheEntry<K, V> {
    }
 
    @Override
+   public boolean isInvalidated() {
+      return false;
+   }
+
+   @Override
    public K getKey() {
       return null;
    }
@@ -70,7 +75,7 @@ public class NullCacheEntry<K, V> implements CacheEntry<K, V> {
    }
 
    @Override
-   public void commit(DataContainer container) {
+   public void commit(DataContainer<K, V> container) {
       // No-op
    }
 
@@ -96,6 +101,11 @@ public class NullCacheEntry<K, V> implements CacheEntry<K, V> {
 
    @Override
    public void setSkipLookup(boolean skipLookup) {
+      // No-op
+   }
+
+   @Override
+   public void setInvalidated(boolean invalidated) {
       // No-op
    }
 
