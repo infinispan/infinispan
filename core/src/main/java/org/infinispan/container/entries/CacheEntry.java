@@ -44,6 +44,11 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAw
    boolean isEvicted();
 
    /**
+    * @return {@code true} if the entry is invalidated (Invalidation cache type).
+    */
+   boolean isInvalidated();
+
+   /**
     * Retrieves the key to this entry
     *
     * @return a key
@@ -114,9 +119,13 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAw
 
    /**
     * See {@link #skipLookup()}.
-    * @param skipLookup
     */
    void setSkipLookup(boolean skipLookup);
+
+   /**
+    * See {@link #isInvalidated()}
+    */
+   void setInvalidated(boolean invalidated);
 
    CacheEntry<K, V> clone();
 
