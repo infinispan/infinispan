@@ -6,12 +6,14 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 
 import javax.security.auth.Subject;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.security.AuthorizationPermission;
@@ -129,6 +131,7 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    public void assignAlias(String aliasName, String cacheName) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
       Cache<Object, Object> cache = cacheManager.getCache(cacheName);
+      Cache<?, ?> oldAliased = cacheManager.getCache(aliasName);
       Configuration config = cache.getCacheConfiguration();
       Attribute<Set<String>> attribute = config.attributes().attribute(Configuration.ALIASES);
       Set<String> aliases = new HashSet<>(attribute.get());
@@ -136,6 +139,18 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
       attribute.set(aliases);
       EnumSet<AdminFlag> newFlags = flags.clone();
       newFlags.add(CacheContainerAdmin.AdminFlag.UPDATE);
-      join(clusterConfigurationManager.getOrCreateCache(cacheName, config, newFlags));
+      join(clusterConfigurationManager.getOrCreateCache(cacheName, config, newFlags)
+            .thenCompose(ignore -> removeOldAlias(oldAliased)));
+   }
+
+   private CompletionStage<Void> removeOldAlias(Cache<?, ?> assigned) {
+      if (assigned == null)
+         return CompletableFutures.completedNull();
+
+      Configuration configuration = assigned.getCacheConfiguration();
+      EnumSet<AdminFlag> newFlags = flags.clone();
+      newFlags.add(AdminFlag.UPDATE);
+      return clusterConfigurationManager.getOrCreateCache(assigned.getName(), configuration, newFlags)
+            .thenApply(CompletableFutures.toNullFunction());
    }
 }
