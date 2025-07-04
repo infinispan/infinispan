@@ -1,14 +1,9 @@
 package org.infinispan.interceptors.impl;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
@@ -89,7 +84,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    }
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
       if (!isPutForExternalRead(command)) {
          return handleInvalidate(ctx, command, command.getKey());
       }
@@ -97,27 +92,27 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    }
 
    @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) {
       return handleInvalidate(ctx, command, command.getKey());
    }
 
    @Override
-   public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
+   public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) {
       return handleInvalidate(ctx, command, command.getKey());
    }
 
    @Override
-   public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
+   public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) {
       return handleInvalidate(ctx, command, command.getKey());
    }
 
    @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) {
       return handleInvalidate(ctx, command, command.getKey());
    }
 
    @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) {
       return invokeNextThenApply(ctx, command, (rCtx, clearCommand, rv) -> {
          if (!isLocalModeForced(clearCommand)) {
             // just broadcast the clear command - this is simplest!
@@ -134,19 +129,19 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    }
 
    @Override
-   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
       Object[] keys = command.getMap() == null ? null : command.getMap().keySet().toArray();
       return handleInvalidate(ctx, command, keys);
    }
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) {
       return invokeNextThenApply(ctx, command, handlePrepare);
    }
 
-   private Object handlePrepare(InvocationContext ctx, PrepareCommand prepareCommand, Object rv) throws Throwable {
+   private Object handlePrepare(InvocationContext ctx, PrepareCommand prepareCommand, Object rv) {
       // fetch the modifications before the transaction is committed (and thus removed from the txTable)
-      TxInvocationContext txInvocationContext = (TxInvocationContext) ctx;
+      TxInvocationContext<?> txInvocationContext = (TxInvocationContext<?>) ctx;
       if (!shouldInvokeRemoteTxCommand(txInvocationContext)) {
          log.tracef("Nothing to invalidate - no modifications in the transaction.");
          return rv;
@@ -154,14 +149,20 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
 
       if (txInvocationContext.getTransaction() == null)
          throw new IllegalStateException("We must have an associated transaction");
-      List<WriteCommand> mods = prepareCommand.getModifications();
-      Collection<Object> remoteKeys = keysToInvalidateForPrepare(mods, txInvocationContext);
-      if (remoteKeys == null) {
+
+      Object[] keys = prepareCommand.getModifications()
+            .stream()
+            .filter(InvalidationInterceptor::flagCacheModeLocalNotSet) // skip commands with CACHE_MODE_LOCAL flag
+            .filter(InvalidationInterceptor::writeCommandIsNotPutForExternalRead) // skip putForExternalRead()
+            .map(WriteCommand::getAffectedKeys)
+            .mapMulti(Iterable::forEach)
+            .toArray();
+      if (keys.length == 0) {
          return rv;
       }
 
       CompletionStage<Void> remoteInvocation =
-         invalidateAcrossCluster(txInvocationContext, remoteKeys.toArray(), defaultSynchronous,
+         invalidateAcrossCluster(txInvocationContext, keys, defaultSynchronous,
                                  prepareCommand.isOnePhaseCommit(), prepareCommand.getTopologyId());
       return asyncValue(remoteInvocation.handle((responses, t) -> {
          if (t == null) {
@@ -175,8 +176,16 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
       }));
    }
 
+   private static boolean flagCacheModeLocalNotSet(FlagAffectedCommand cmd) {
+      return !cmd.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL);
+   }
+
+   private static boolean writeCommandIsNotPutForExternalRead(WriteCommand cmd) {
+      return !(cmd.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ) && cmd instanceof PutKeyValueCommand);
+   }
+
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) {
       if (!shouldInvokeRemoteTxCommand(ctx)) {
          return invokeNext(ctx, command);
       }
@@ -203,8 +212,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
    }
 
    @Override
-   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
-         throws Throwable {
+   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) {
       if (!ctx.isOriginLocal()) {
          return invokeNext(ctx, command);
       }
@@ -224,8 +232,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
       });
    }
 
-   private Object handleInvalidate(InvocationContext ctx, WriteCommand command, Object... keys)
-         throws Throwable {
+   private Object handleInvalidate(InvocationContext ctx, WriteCommand command, Object... keys) {
       if (ctx.isInTxScope()) {
          return invokeNext(ctx, command);
       }
@@ -248,71 +255,15 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
       });
    }
 
-   private Collection<Object> keysToInvalidateForPrepare(List<WriteCommand> modifications,
-                                                         InvocationContext ctx)
-         throws Throwable {
-      // A prepare does not carry flags, so skip checking whether is local or not
-      if (!ctx.isInTxScope()) return null;
-      if (modifications.isEmpty()) return null;
-
-      InvalidationFilterVisitor filterVisitor = new InvalidationFilterVisitor(modifications.size());
-      filterVisitor.visitCollection(ctx, modifications);
-
-      if (filterVisitor.containsPutForExternalRead) {
-         log.debug("Modification list contains a putForExternalRead operation.  Not invalidating.");
-      } else if (filterVisitor.containsLocalModeFlag) {
-         log.debug("Modification list contains a local mode flagged operation.  Not invalidating.");
-      } else {
-         return filterVisitor.result;
-      }
-      return null;
-   }
-
-   private static class InvalidationFilterVisitor extends AbstractVisitor {
-      Set<Object> result;
-      boolean containsPutForExternalRead = false;
-      boolean containsLocalModeFlag = false;
-
-      InvalidationFilterVisitor(int maxSetSize) {
-         result = new HashSet<>(maxSetSize);
-      }
-
-      private void processCommand(FlagAffectedCommand command) {
-         containsLocalModeFlag = containsLocalModeFlag || command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL);
-      }
-
-      @Override
-      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         processCommand(command);
-         containsPutForExternalRead = containsPutForExternalRead || command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ);
-         result.add(command.getKey());
-         return null;
-      }
-
-      @Override
-      public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-         processCommand(command);
-         result.add(command.getKey());
-         return null;
-      }
-
-      @Override
-      public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-         processCommand(command);
-         result.addAll(command.getAffectedKeys());
-         return null;
-      }
-   }
-
    private CompletionStage<Void> invalidateAcrossCluster(InvocationContext ctx, Object[] keys, boolean synchronous,
-                                                         boolean onePhaseCommit, int topologyId) throws Throwable {
+                                                         boolean onePhaseCommit, int topologyId) {
       // increment invalidations counter if statistics maintained
       incrementInvalidations();
       final InvalidateCommand invalidateCommand = commandsFactory.buildInvalidateCommand(EnumUtil.EMPTY_BIT_SET, keys);
 
       TopologyAffectedCommand command = invalidateCommand;
       if (ctx.isInTxScope()) {
-         TxInvocationContext txCtx = (TxInvocationContext) ctx;
+         TxInvocationContext<?> txCtx = (TxInvocationContext<?>) ctx;
          // A Prepare command containing the invalidation command in its 'modifications' list is sent to the remote nodes
          // so that the invalidation is executed in the same transaction and locks can be acquired and released properly.
          command = commandsFactory.buildPrepareCommand(txCtx.getGlobalTransaction(),
