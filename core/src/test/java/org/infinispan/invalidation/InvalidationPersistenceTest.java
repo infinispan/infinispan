@@ -70,9 +70,8 @@ public class InvalidationPersistenceTest extends MultipleCacheManagersTest {
    public static Object[][] cacheNames() {
       return new Object[][]{
             {NON_TX_CACHE_NAME},
-            // TODO will be fixed by https://github.com/infinispan/infinispan/issues/15193
-            //{OPT_TX_CACHE_NAME},
-            //{PES_TX_CACHE_NAME}
+            {OPT_TX_CACHE_NAME},
+            {PES_TX_CACHE_NAME}
       };
    }
 

@@ -18,7 +18,7 @@ import org.infinispan.protostream.annotations.ProtoField;
  */
 public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
 
-   protected Object key;
+   protected final Object key;
    protected Object value;
    protected PrivateMetadata internalMetadata;
 
@@ -80,6 +80,11 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
    }
 
    @Override
+   public void setInvalidated(boolean invalidated) {
+      //no-op
+   }
+
+   @Override
    public final boolean isNull() {
       return false;
    }
@@ -107,6 +112,11 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
    @Override
    public boolean skipLookup() {
       return true;
+   }
+
+   @Override
+   public boolean isInvalidated() {
+      return false;
    }
 
    @Override
@@ -166,9 +176,7 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
    @Override
    public final boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof Map.Entry)) return false;
-
-      Map.Entry that = (Map.Entry) o;
+      if (!(o instanceof Map.Entry<?, ?> that)) return false;
 
       return Objects.equals(getKey(), that.getKey()) && Objects.equals(getValue(), that.getValue());
    }
