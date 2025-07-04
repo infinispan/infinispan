@@ -128,8 +128,6 @@ public class EvictionWithPassivationAndConcurrentOperationsTest extends Eviction
       // #1 evicted-key evicted by other-key from write
       // #2 other-key evicted by evicted-key from the get
       assertEquals(2L, extractComponent(cache, PassivationManager.class).getPassivations());
-      assertEquals(0L, extractComponent(cache, ActivationManager.class).getActivationCount());
-      assertEquals(0L, extractComponent(cache, ActivationManager.class).getPendingActivationCount());
    }
 
    private CompletableFuture<DataOperationOrderer.Operation> acquireOrderer(DataOperationOrderer orderer, String key,

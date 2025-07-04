@@ -18,7 +18,6 @@ import org.infinispan.container.impl.DefaultDataContainer;
 import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.EvictionType;
-import org.infinispan.eviction.impl.ActivationManagerStub;
 import org.infinispan.eviction.impl.PassivationManagerStub;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -76,9 +75,9 @@ public class DataContainerStressTest {
       TimeService timeService = new EmbeddedTimeService();
       TestingUtil.inject(entryFactory, timeService);
       // Mockito cannot be used as it will run out of memory from keeping all the invocations, thus we use blank impls
-      TestingUtil.inject(dc, (EvictionManager) (evicted, cmd) -> CompletableFutures.completedNull(),
-                         new PassivationManagerStub(), entryFactory, new ActivationManagerStub(), null, timeService,
-                         null, new InternalExpirationManager() {
+      TestingUtil.inject(dc, (EvictionManager<?, ?>) (evicted, cmd) -> CompletableFutures.completedNull(),
+                         new PassivationManagerStub(), entryFactory, timeService,
+                         new InternalExpirationManager<>() {
                @Override
                public void processExpiration() {
 

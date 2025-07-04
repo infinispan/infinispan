@@ -1,6 +1,5 @@
 package org.infinispan.stats.impl;
 
-import static org.infinispan.stats.impl.StatKeys.ACTIVATIONS;
 import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES;
 import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES_IN_MEMORY;
 import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES_UNIQUE;
@@ -48,7 +47,6 @@ import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.context.Flag;
-import org.infinispan.eviction.impl.ActivationManager;
 import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -81,7 +79,7 @@ import org.infinispan.util.logging.LogFactory;
 public class ClusterCacheStatsImpl extends AbstractClusterStats implements ClusterCacheStats {
 
    private static final String[] LONG_ATTRIBUTES = {EVICTIONS, HITS, MISSES, OFF_HEAP_MEMORY_USED, REMOVE_HITS,
-         REMOVE_MISSES, INVALIDATIONS, PASSIVATIONS, ACTIVATIONS, CACHE_LOADER_LOADS, CACHE_LOADER_MISSES, CACHE_WRITER_STORES,
+         REMOVE_MISSES, INVALIDATIONS, PASSIVATIONS, CACHE_LOADER_LOADS, CACHE_LOADER_MISSES, CACHE_WRITER_STORES,
          STORES, DATA_MEMORY_USED};
 
    private static final Log log = LogFactory.getLog(ClusterCacheStatsImpl.class);
@@ -451,13 +449,13 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    }
 
    @ManagedAttribute(description = "The total number of activations across the cluster",
-         displayName = "Cluster-wide total number of activations",
+         displayName = "Cluster-wide total number of activations. This attribute is deprecated and its value is always zero.",
          measurementType = MeasurementType.TRENDSUP,
          clusterWide = true
    )
    @Override
    public long getActivations() {
-      return getStatAsLong(ACTIVATIONS);
+      return 0L;
    }
 
    @ManagedAttribute(description = "The total number of passivations across the cluster",
@@ -603,16 +601,8 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
             map.put(PASSIVATIONS, 0);
          }
 
-         //activations
-         ActivationManager aManager =  ComponentRegistry.componentOf(remoteCache, ActivationManager.class);
-         if (aManager != null) {
-            map.put(ACTIVATIONS, aManager.getActivationCount());
-         } else {
-            map.put(ACTIVATIONS, 0);
-         }
-
          //cache loaders
-         CacheLoaderInterceptor
+         CacheLoaderInterceptor<?, ?>
                aInterceptor = getFirstInterceptorWhichExtends(remoteCache, CacheLoaderInterceptor.class);
          if (aInterceptor != null) {
             map.put(CACHE_LOADER_LOADS, aInterceptor.getCacheLoaderLoads());

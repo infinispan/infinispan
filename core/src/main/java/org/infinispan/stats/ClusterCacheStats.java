@@ -37,7 +37,9 @@ public interface ClusterCacheStats extends Stats, ClusterStats {
 
    /**
     * @return the total number of activations in the cluster
+    * @deprecated To be removed without replacement. Infinispan no longer does activations.
     */
+   @Deprecated(forRemoval = true, since = "16.0")
    long getActivations();
 
    /**
