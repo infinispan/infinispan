@@ -1680,6 +1680,38 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    }
 
    @Test
+   public void testDeleteByQuery() {
+      RestCacheClient cacheClient = adminClient.cache("indexedCache");
+      join(cacheClient.clear());
+
+      insertEntity(1, "Another", 11, "Eleven 1");
+      insertEntity(2, "Another", 11, "Eleven 2");
+      insertEntity(3, "Another", 11, "Eleven 3");
+      insertEntity(4, "Another", 9, "Nine 1");
+      insertEntity(5, "Another", 9, "Nine 2");
+
+      RestResponse response = join(cacheClient.size());
+      assertThat(response).hasReturnedText("5");
+
+      response = join(cacheClient.deleteByQuery("DELETE FROM Another WHERE value > 10", true));
+      assertThat(response).isOk();
+
+      response = join(cacheClient.size());
+      assertThat(response).hasReturnedText("2");
+
+      // Test with POST
+      RestRawClient rawClient = adminClient.raw();
+      RestEntity restEntity = RestEntity.create("{\"query\": \"DELETE FROM Another WHERE value = 9\"}");
+      response = join(rawClient.post("/rest/v2/caches/indexedCache?action=deleteByQuery", restEntity));
+      assertThat(response).isOk();
+      response = join(cacheClient.size());
+      assertThat(response).hasReturnedText("0");
+
+      response = join(cacheClient.deleteByQuery("FROM Another WHERE value = 9", true));
+      assertThat(response).isBadRequest();
+   }
+
+   @Test
    public void testSearchStatistics() {
       RestCacheClient cacheClient = adminClient.cache("indexedCache");
       join(cacheClient.clear());
