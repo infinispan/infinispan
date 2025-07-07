@@ -60,4 +60,13 @@ public interface Messages {
 
    @Message("Sets system properties from the specified file.")
    String serverHelpProperties();
+
+   @Message("Activate the JVM AOT mode to reduce startup time and initial memory footprint. Requires JDK 24 or greater.")
+   String serverHelpAOT();
+
+   @Message("Activate debug mode with an optional argument to override the default port (8787).")
+   String serverHelpDebug();
+
+   @Message("Activate JMX remoting with an optional argument to override the default port (9999).")
+   String serverHelpJMX();
 }
