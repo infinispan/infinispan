@@ -58,4 +58,11 @@ public interface Invocation {
    AuthorizationPermission permission();
 
    AuditContext auditContext();
+
+   /**
+    * Verify whether the invocation requires the cache manager to be started.
+    *
+    * @return <code>true</code> means the cache manager must be running. <code>false</code>, otherwise.
+    */
+   boolean requireCacheManagerStart();
 }

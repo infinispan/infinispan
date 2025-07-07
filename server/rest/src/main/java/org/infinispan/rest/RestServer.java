@@ -59,6 +59,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
    private InvocationHelper invocationHelper;
    private volatile List<CorsConfig> corsRules;
    private volatile int maxContentLength;
+   private volatile boolean started;
 
    public RestServer() {
       super("REST");
@@ -168,6 +169,15 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       this.restDispatcher = new RestDispatcherImpl(resourceManager, restCacheManager.getAuthorizer());
    }
 
+   @Override
+   protected void internalPostStart() {
+      super.internalPostStart();
+      invocationHelper.postStart();
+      restDispatcher.initialize();
+
+      started = true;
+   }
+
    private void registerLoggingResource(ResourceManager resourceManager, String restContext) {
       String includeLoggingResource = System.getProperty("infinispan.server.resource.logging", "true");
       if (Boolean.parseBoolean(includeLoggingResource)) {
@@ -205,5 +215,9 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
    public boolean isDefaultCacheRunning() {
       // REST operate over all caches. We provide the health API to verify for readiness.
       return true;
+   }
+
+   public boolean isStarted() {
+      return started;
    }
 }

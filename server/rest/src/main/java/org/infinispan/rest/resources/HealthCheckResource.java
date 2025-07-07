@@ -29,10 +29,10 @@ public class HealthCheckResource implements ResourceHandler {
    public Invocations getInvocations() {
       return new Invocations.Builder()
 
-            .invocation().methods(GET, HEAD).anonymous(true).path("/health/live")
+            .invocation().methods(GET, HEAD).anonymous(true).path("/health/live").requireCacheManagerStart(false)
             .handleWith(this::notifyServerRunning)
 
-            .invocation().methods(GET, HEAD).anonymous(true).path("/health/ready")
+            .invocation().methods(GET, HEAD).anonymous(true).path("/health/ready").requireCacheManagerStart(false)
             .handleWith(this::verifyServerReady)
 
             .create();
