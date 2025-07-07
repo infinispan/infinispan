@@ -136,16 +136,16 @@ public class Loader {
             }
 
             @Override
-            public FileVisitResult visitFileFailed(Path p, IOException exc) throws IOException {
+            public FileVisitResult visitFileFailed(Path p, IOException exc) {
                return FileVisitResult.SKIP_SUBTREE;
             }
 
             @Override
-            public FileVisitResult postVisitDirectory(Path p, IOException exc) throws IOException {
+            public FileVisitResult postVisitDirectory(Path p, IOException exc) {
                return FileVisitResult.CONTINUE;
             }
          });
-         final URL[] array = urls.values().toArray(new URL[urls.size()]);
+         final URL[] array = urls.values().toArray(new URL[0]);
          if (parent == null)
             return new URLClassLoader(array);
          else

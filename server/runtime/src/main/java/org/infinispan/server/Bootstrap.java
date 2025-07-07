@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Reader;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -22,6 +23,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.infinispan.commons.jdkspecific.ProcessInfo;
+import org.infinispan.commons.util.ByteQuantity;
 import org.infinispan.commons.util.Version;
 import org.infinispan.server.tool.Main;
 
@@ -42,10 +44,23 @@ public class Bootstrap extends Main {
 
    // This method is here solely for replacement with Quarkus, do not remove or rename without updating Infinispan Quarkus
    private static void staticInitializer() {
+      if (Runtime.version().feature() >= 24) {
+         try {
+            /*
+             * This is a horrible hack to disable the Unsafe-related warnings that are printed on startup.
+             */
+            Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+            Method trySetMemoryAccessWarnedMethod = unsafeClass.getDeclaredMethod("trySetMemoryAccessWarned");
+            trySetMemoryAccessWarnedMethod.setAccessible(true);
+            trySetMemoryAccessWarnedMethod.invoke(null);
+         } catch (Throwable t) {
+            //let's ignore it - if we failed with our horrible hack, worst that could happen is that the ugly warning is printed
+         }
+      }
       // This has to be before logging so it can instrument the classes properly
       try {
          Class.forName("reactor.blockhound.BlockHound");
-         System.out.println("Blockhound found on classpath, installing non blocking checks");
+         System.out.println("BlockHound found on classpath, installing non blocking checks");
          BlockHound.install();
       } catch (ClassNotFoundException e) {
          // Just ignore if blockhound isn't present
@@ -210,6 +225,9 @@ public class Bootstrap extends Main {
       out.printf("  -v, --version                 %s%n", MSG.toolHelpVersion());
       out.printf("  -D<name>=<value>              %s%n", MSG.serverHelpProperty());
       out.printf("  -P, --properties=<file>       %s%n", MSG.serverHelpProperties());
+      out.printf("  --aot                         %s%n", MSG.serverHelpAOT());
+      out.printf("  --debug <port>                %s%n", MSG.serverHelpDebug());
+      out.printf("  --jmx <port>                  %s%n", MSG.serverHelpJMX());
    }
 
    @Override
@@ -225,6 +243,12 @@ public class Bootstrap extends Main {
       ProcessInfo process = ProcessInfo.getInstance();
       logger.info("JVM arguments = " + process.getArguments());
       logger.info("PID = " + process.getPid());
+      Runtime runtime = Runtime.getRuntime();
+      logger.info("Architecture = " + System.getProperty("os.arch"));
+      logger.info("OS = " + System.getProperty("os.name") + ' ' + System.getProperty("os.version"));
+      logger.info("Processors = " + runtime.availableProcessors());
+      logger.info("Memory total = " + ByteQuantity.Unit.MiB.toString(runtime.totalMemory()));
+      logger.info("Memory max = " + ByteQuantity.Unit.MiB.toString(runtime.maxMemory()));
       if (logger.isLoggable(Level.FINE)) {
          StringBuilder sb = new StringBuilder("Classpath JARs:" + System.lineSeparator());
          URLClassLoader cl = (URLClassLoader) this.getClass().getClassLoader();

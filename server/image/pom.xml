@@ -1,0 +1,104 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <modelVersion>4.0.0</modelVersion>
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-server-parent</artifactId>
+      <version>16.0.0-SNAPSHOT</version>
+      <relativePath>../pom.xml</relativePath>
+   </parent>
+
+   <artifactId>infinispan-server-image</artifactId>
+   <packaging>jar</packaging>
+   <name>Infinispan Server Image</name>
+   <description>Infinispan Server Container Image</description>
+
+   <properties>
+      <arch>${os.arch}</arch>
+      <module.skipMavenRemoteResource>true</module.skipMavenRemoteResource>
+      <defaultTestGroup/>
+      <defaultExcludedTestGroup/>
+      <server.output.dir>../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.output.dir>
+      <jdk.dist>https://api.adoptium.net/v3/binary/latest/25/ga/linux/${arch}/jdk/hotspot/normal/eclipse</jdk.dist>
+      <server.dist>target/${infinispan.brand.prefix}-server-${infinispan.brand.version}.zip</server.dist>
+   </properties>
+
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>assemble-server</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>single</goal>
+                  </goals>
+                  <configuration>
+                     <descriptors>
+                        <descriptor>src/main/docker/server-assembly.xml</descriptor>
+                     </descriptors>
+                     <finalName>${infinispan.brand.prefix}-server-${infinispan.brand.version}</finalName>
+                     <appendAssemblyId>false</appendAssemblyId>
+                  </configuration>
+               </execution>
+            </executions>
+            <configuration>
+               <outputDirectory>${project.build.directory}</outputDirectory>
+               <workDirectory>${project.build.directory}/assembly/work</workDirectory>
+               <attach>false</attach>
+            </configuration>
+         </plugin>
+         <plugin>
+            <groupId>io.fabric8</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>image</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>build</goal>
+                  </goals>
+                  <configuration>
+                     <verbose>true</verbose>
+                     <images>
+                        <image>
+                           <alias>infinispan</alias>
+                           <name>infinispan/server:${project.version}</name>
+                           <build>
+                              <args>
+                                 <ARCH>${os.detected.arch}</ARCH>
+                                 <BRAND_NAME>${infinispan.brand.name}</BRAND_NAME>
+                                 <BRAND_VERSION>${infinispan.brand.version}</BRAND_VERSION>
+                                 <JDK_DIST>${jdk.dist}</JDK_DIST>
+                                 <SERVER_DIST>${server.dist}</SERVER_DIST>
+                              </args>
+                              <contextDir>${basedir}</contextDir>
+                              <dockerFile>src/main/docker/Dockerfile</dockerFile>
+                           </build>
+                        </image>
+                     </images>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+      </plugins>
+   </build>
+
+   <profiles>
+      <profile>
+         <id>x64arch</id>
+         <activation>
+            <property>
+               <name>os.arch</name>
+               <value>amd64</value>
+            </property>
+         </activation>
+         <properties>
+            <arch>x64</arch>
+         </properties>
+      </profile>
+   </profiles>
+</project>

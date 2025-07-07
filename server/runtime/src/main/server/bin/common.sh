@@ -1,35 +1,41 @@
 #!/bin/sh
 
 # Use --debug to activate debug mode with an optional argument to specify the port.
-# Usage : server.sh --debug
-#         server.sh --debug 9797
+# Usage: server.sh --debug
+#        server.sh --debug 9797
 # By default debug mode is disabled.
 DEBUG_MODE="${DEBUG:-false}"
 DEBUG_PORT="${DEBUG_PORT:-8787}"
 
 # Use --jmx to activate JMX remoting mode with an optional argument to specify the port.
-# Usage : server.sh --jmx
-#         server.sh --jmx 1234
+# Usage: server.sh --jmx
+#        server.sh --jmx 1234
 # By default JMX remoting is disabled.
 JMX_REMOTING="${JMX:-false}"
 JMX_PORT="${JMX_PORT:-9999}"
 
-GC_LOG="$GC_LOG"
+# Activate the JVM AOT mode to reduce startup time and initial memory footprint. Requires JDK 25 or greater.
+# Usage: server.sh --aot
+AOT="${AOT:-false}"
+
 JAVA_OPTS_EXTRA=""
 PROPERTIES=""
 while [ "$#" -gt 0 ]
 do
     case "$1" in
+      --aot)
+          AOT=true
+          ;;
       --debug)
           DEBUG_MODE=true
-          if [ -n "$2" ] && [ "$2" = $(echo "$2" | sed 's/-//') ]; then
+          if [ -n "$2" ] && [ "$2" = $(echo "$2" | sed "s/-//") ]; then
               DEBUG_PORT=$2
               shift
           fi
           ;;
       --jmx)
           JMX_REMOTING=true
-          if [ -n "$2" ] && [ "$2" = $(echo "$2" | sed 's/-//') ]; then
+          if [ -n "$2" ] && [ "$2" = $(echo "$2" | sed "s/-//") ]; then
               JMX_PORT=$2
               shift
           fi
@@ -65,9 +71,6 @@ done
 echo "$PROPERTIES"
 
 GREP="grep"
-
-# Use the maximum available, or set MAX_FD != -1 to use that
-MAX_FD="maximum"
 
 # tell linux glibc how many memory pools can be created that are used by malloc
 MALLOC_ARENA_MAX="${MALLOC_ARENA_MAX:-1}"
@@ -113,12 +116,12 @@ if $cygwin ; then
 fi
 
 # Setup ISPN_HOME
-RESOLVED_ISPN_HOME=$(cd "$DIRNAME/.." >/dev/null; pwd)
-if [ "x$ISPN_HOME" = "x" ]; then
+RESOLVED_ISPN_HOME=$(cd "$DIRNAME/.."  || exit; pwd)
+if [ "$ISPN_HOME" = "" ]; then
     # get the full path (without any relative bits)
     ISPN_HOME=$RESOLVED_ISPN_HOME
 else
-  SANITIZED_ISPN_HOME=$(cd "$ISPN_HOME"; pwd)
+  SANITIZED_ISPN_HOME=$(cd "$ISPN_HOME" || exit; pwd)
   if [ "$RESOLVED_ISPN_HOME" != "$SANITIZED_ISPN_HOME" ]; then
     echo ""
     echo "   WARNING:  ISPN_HOME may be pointing to a different installation - unpredictable results may occur."
@@ -131,11 +134,12 @@ fi
 export ISPN_HOME
 
 # Read an optional running configuration file
-if [ "x$RUN_CONF" = "x" ]; then
+if [ "$RUN_CONF" = "" ]; then
     BASEPROGNAME=$(basename "$PROGNAME" .sh)
     RUN_CONF="$DIRNAME/$BASEPROGNAME.conf"
 fi
 if [ -r "$RUN_CONF" ]; then
+    # shellcheck source=server.conf
     . "$RUN_CONF"
 fi
 
@@ -144,7 +148,7 @@ JAVA_OPTS="$JAVA_OPTS_EXTRA $JAVA_OPTS"
 # Set debug settings if not already set
 if [ "$DEBUG_MODE" = "true" ]; then
     DEBUG_OPT=$(echo "$JAVA_OPTS" | $GREP "\-agentlib:jdwp")
-    if [ "x$DEBUG_OPT" = "x" ]; then
+    if [ "$DEBUG_OPT" = "" ]; then
         JAVA_OPTS="$JAVA_OPTS -agentlib:jdwp=transport=dt_socket,address=$DEBUG_PORT,server=y,suspend=n"
     else
         echo "Debug already enabled in JAVA_OPTS, ignoring --debug argument"
@@ -154,7 +158,7 @@ fi
 # Enable JMX authenticator if needed
 if [ "$JMX_REMOTING" = "true" ]; then
     JMX_OPT=$(echo "$JAVA_OPTS" | $GREP "\-Dcom.sun.management.jmxremote")
-    if [ "x$JMX_OPT" = "x" ]; then
+    if [ "$JMX_OPT" = "" ]; then
         JAVA_OPTS="$JAVA_OPTS -Dcom.sun.management.jmxremote.port=$JMX_PORT -Djava.security.auth.login.config=$DIRNAME/server-jaas.config -Dcom.sun.management.jmxremote.login.config=ServerJMXConfig -Dcom.sun.management.jmxremote.ssl=false"
     else
         echo "JMX already enabled in JAVA_OPTS, ignoring --jmx argument"
@@ -162,13 +166,16 @@ if [ "$JMX_REMOTING" = "true" ]; then
 fi
 
 # Setup the JVM
-if [ "x$JAVA" = "x" ]; then
+if [ "$JAVA" = "" ]; then
     if [ "x$JAVA_HOME" != "x" ]; then
         JAVA="$JAVA_HOME/bin/java"
     else
         JAVA="java"
     fi
 fi
+
+# Detect the JVM version
+JAVA_VERSION=$("$JAVA" -version 2>&1 | sed -n ';s/.* version "\([^\.\-]*\).*".*/\1/p;')
 
 if $linux; then
     # consolidate the server and command line opts
@@ -225,34 +232,38 @@ if $darwin || $freebsd || $other ; then
        p=$(echo "$var" | tr -d "'")
        case $p in
          -Dinfinispan.server.root.path=*|--server-root=*)
-              ISPN_ROOT_DIR=$(cd "${p#*=}" ; pwd -P)
+              ISPN_ROOT_DIR=$(cd "${p#*=}" || exit; pwd -P)
               ;;
          -Dinfinispan.server.log.path=*)
               if [ -d "${p#*=}" ]; then
-                ISPN_LOG_DIR=$(cd "${p#*=}" ; pwd -P)
+                ISPN_LOG_DIR=$(cd "${p#*=}"  || exit; pwd -P)
              else
                 #since the specified directory doesn't exist we don't validate it
                 ISPN_LOG_DIR=${p#*=}
              fi
              ;;
          -Dinfinispan.server.config.path=*)
-              ISPN_CONFIG_DIR=$(cd "${p#*=}" ; pwd -P)
+              ISPN_CONFIG_DIR=$(cd "${p#*=}"  || exit; pwd -P)
               ;;
        esac
     done
 fi
 
 # determine the default base dir, if not set
-if [ "x$ISPN_ROOT_DIR" = "x" ]; then
+if [ "$ISPN_ROOT_DIR" = "" ]; then
    ISPN_ROOT_DIR="$ISPN_HOME/server"
 fi
 # determine the default log dir, if not set
-if [ "x$ISPN_LOG_DIR" = "x" ]; then
+if [ "$ISPN_LOG_DIR" = "" ]; then
    ISPN_LOG_DIR="$ISPN_ROOT_DIR/log"
 fi
 # determine the default configuration dir, if not set
-if [ "x$ISPN_CONFIG_DIR" = "x" ]; then
+if [ "$ISPN_CONFIG_DIR" = "" ]; then
    ISPN_CONFIG_DIR="$ISPN_ROOT_DIR/conf"
+fi
+# determine the default tmp dir, if not set
+if [ "$ISPN_TMP_DIR" = "" ]; then
+   ISPN_TMP_DIR="$ISPN_ROOT_DIR/tmp"
 fi
 
 # For Cygwin, switch paths to Windows format before running java
@@ -263,27 +274,34 @@ if $cygwin; then
     ISPN_ROOT_DIR=$(cygpath --path --windows "$ISPN_ROOT_DIR")
     ISPN_LOG_DIR=$(cygpath --path --windows "$ISPN_LOG_DIR")
     ISPN_CONFIG_DIR=$(cygpath --path --windows "$ISPN_CONFIG_DIR")
+    ISPN_TMP_DIR=$(cygpath --path --windows "$ISPN_TMP_DIR")
+fi
+
+# Use a previously generated AOT cache if possible
+if [ "$JAVA_VERSION" -ge 25 ]; then
+  mkdir -p "$ISPN_ROOT_DIR/cache"
+  AOT_CACHE="$ISPN_ROOT_DIR/cache/$PROCESS_NAME.$(uname -m).aot"
 fi
 
 if [ "$PRESERVE_JAVA_OPTS" != "true" ]; then
     # Check for -d32/-d64 in JAVA_OPTS
-    JVM_D64_OPTION=$(echo $JAVA_OPTS | $GREP "\-d64")
-    JVM_D32_OPTION=$(echo $JAVA_OPTS | $GREP "\-d32")
+    JVM_D64_OPTION=$(echo "$JAVA_OPTS" | $GREP "\-d64")
+    JVM_D32_OPTION=$(echo "$JAVA_OPTS" | $GREP "\-d32")
 
     # Check If server or client is specified
-    SERVER_SET=$(echo $JAVA_OPTS | $GREP "\-server")
-    CLIENT_SET=$(echo $JAVA_OPTS | $GREP "\-client")
+    SERVER_SET=$(echo "$JAVA_OPTS" | $GREP "\-server")
+    CLIENT_SET=$(echo "$JAVA_OPTS" | $GREP "\-client")
 
     if [ "x$JVM_D32_OPTION" != "x" ]; then
         JVM_OPTVERSION="-d32"
     elif [ "x$JVM_D64_OPTION" != "x" ]; then
         JVM_OPTVERSION="-d64"
-    elif $darwin && [ "x$SERVER_SET" = "x" ]; then
+    elif $darwin && [ "$SERVER_SET" = "" ]; then
         # Use 32-bit on Mac, unless server has been specified or the user opts are incompatible
-        "$JAVA" -d32 $JAVA_OPTS -version > /dev/null 2>&1 && PREPEND_JAVA_OPTS="-d32" && JVM_OPTVERSION="-d32"
+        "$JAVA" -d32 "$JAVA_OPTS" -version > /dev/null 2>&1 && PREPEND_JAVA_OPTS="-d32" && JVM_OPTVERSION="-d32"
     fi
 
-    if [ "x$CLIENT_SET" = "x" -a "x$SERVER_SET" = "x" ]; then
+    if [ "$CLIENT_SET" = "" ] && [ "$SERVER_SET" = "" ]; then
         # neither -client nor -server is specified
         if $darwin && [ "$JVM_OPTVERSION" = "-d32" ]; then
             # Prefer client for Macs, since they are primarily used for development
@@ -296,16 +314,31 @@ if [ "$PRESERVE_JAVA_OPTS" != "true" ]; then
     # Enable export for LDAP
     PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.util.concurrent=ALL-UNNAMED"
 
-    JAVA_VERSION=$("$JAVA" -version 2>&1 | sed -n ';s/.* version "\([^\.\-]*\).*".*/\1/p;')
     if [ "$JAVA_VERSION" -ge 24 ]; then
         PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS --enable-native-access=ALL-UNNAMED"
+    fi
+
+    if [ "$JAVA_VERSION" -ge 25 ]; then
+        PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS -XX:+UseCompactObjectHeaders"
+    fi
+
+    if [ "$AOT" = "true" ]; then
+        # Handle AOT cache creation
+        if [ "$JAVA_VERSION" -lt 25 ]; then
+            echo "AOT mode requires JDK 25 or greater"
+            exit
+        fi
+        PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS -XX:AOTCacheOutput=${AOT_CACHE} -Dinfinispan.shutdown.immediately=true -Djgroups.join_timeout=0"
+    elif [ -f "$AOT_CACHE" ]; then
+        # If an AOT cache is present, use it
+        PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS -XX:AOTMode=on -XX:AOTCache=$AOT_CACHE"
     fi
 
     if [ "$GC_LOG" = "true" ]; then
         # Enable rotating GC logs if the JVM supports it and GC logs are not already enabled
         mkdir -p "$ISPN_LOG_DIR"
-        NO_GC_LOG_ROTATE=$(echo $JAVA_OPTS | $GREP "\-Xlog\:\?gc")
-        if [ "x$NO_GC_LOG_ROTATE" = "x" ]; then
+        NO_GC_LOG_ROTATE=$(echo "$JAVA_OPTS" | $GREP "\-Xlog:\?gc")
+        if [ "$NO_GC_LOG_ROTATE" = "" ]; then
             # backup prior gc logs
             mv -f "$ISPN_LOG_DIR/gc.log" "$ISPN_LOG_DIR/backupgc.log" >/dev/null 2>&1
             mv -f "$ISPN_LOG_DIR/gc.log.0" "$ISPN_LOG_DIR/backupgc.log.0" >/dev/null 2>&1
@@ -321,7 +354,7 @@ if [ "$PRESERVE_JAVA_OPTS" != "true" ]; then
             else
                 TMP_PARAM="-Xlog:gc*:file=\"$ISPN_LOG_DIR/gc.log\":time,uptimemillis:filecount=5,filesize=3M"
             fi
-            eval "$JAVA" $JVM_OPTVERSION $TMP_PARAM -version >/dev/null 2>&1 && PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS $TMP_PARAM"
+            eval "$JAVA" "$JVM_OPTVERSION" "$TMP_PARAM" -version >/dev/null 2>&1 && PREPEND_JAVA_OPTS="$PREPEND_JAVA_OPTS $TMP_PARAM"
             # Remove the gc.log file from the -version check
             rm -f "$ISPN_LOG_DIR/gc.log" >/dev/null 2>&1
         fi

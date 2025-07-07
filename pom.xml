@@ -1842,6 +1842,11 @@
       <pluginManagement>
          <plugins>
             <plugin>
+               <groupId>io.fabric8</groupId>
+               <artifactId>docker-maven-plugin</artifactId>
+               <version>${version.fabric8.docker-maven-plugin}</version>
+            </plugin>
+            <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-archetype-plugin</artifactId>
                <version>${version.maven.archetype}</version>
@@ -2554,6 +2559,12 @@
                </plugin>
             </plugins>
          </build>
+      </profile>
+      <profile>
+         <id>image</id>
+         <modules>
+            <module>server/image</module>
+         </modules>
       </profile>
       <profile>
          <id>java21-test</id>

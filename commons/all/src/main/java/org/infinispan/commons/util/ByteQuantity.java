@@ -88,5 +88,9 @@ public final class ByteQuantity {
       public long toBytes(long quantity) {
          return toBytes(BigDecimal.valueOf(quantity));
       }
+
+      public String toString(long quantity) {
+         return BigDecimal.valueOf(quantity).divideToIntegralValue(base.pow(exp)) + name();
+      }
    }
 }
