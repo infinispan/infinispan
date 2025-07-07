@@ -42,10 +42,13 @@ public class ThreadCreator {
       try {
          if (useVirtualThreads) {
             org.infinispan.commons.spi.ThreadCreator instance = Util.getInstance("org.infinispan.commons.jdk21.ThreadCreatorImpl", ThreadCreator.class.getClassLoader());
-            Log.CONTAINER.infof("Virtual threads support enabled");
+            Log.CONTAINER.virtualThreadSupport("enabled");
             return instance;
+         } else {
+            Log.CONTAINER.virtualThreadSupport("disabled");
          }
       } catch (Throwable t) {
+         Log.CONTAINER.virtualThreadSupport("unavailable");
          Log.CONTAINER.debugf("Could not initialize virtual threads", t);
       }
       return new ThreadCreatorImpl();
