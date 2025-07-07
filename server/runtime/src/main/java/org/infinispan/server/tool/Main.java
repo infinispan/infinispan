@@ -77,7 +77,11 @@ public abstract class Main {
                return;
             case "-D":
                int equals = parameter.indexOf('=');
-               properties.setProperty(parameter.substring(0, equals), parameter.substring(equals + 1));
+               if (equals > 0) {
+                  properties.setProperty(parameter.substring(0, equals), parameter.substring(equals + 1));
+               } else {
+                  properties.setProperty(parameter, "");
+               }
                break;
             case "-v":
             case "--version":
