@@ -27,9 +27,11 @@ public class InvocationImpl implements Invocation {
    private final boolean deprecated;
    private final AuthorizationPermission permission;
    private final AuditContext auditContext;
+   private final boolean requireCacheManagerStart;
 
-   private InvocationImpl(Set<Method> methods, Set<String> paths, Function<RestRequest,
-         CompletionStage<RestResponse>> handler, String action, String name, boolean anonymous, AuthorizationPermission permission, boolean deprecated, AuditContext auditContext) {
+   private InvocationImpl(Set<Method> methods, Set<String> paths, Function<RestRequest, CompletionStage<RestResponse>> handler,
+                          String action, String name, boolean anonymous, AuthorizationPermission permission,
+                          boolean deprecated, AuditContext auditContext, boolean requireCacheManagerStart) {
       this.methods = methods;
       this.paths = paths;
       this.handler = handler;
@@ -39,6 +41,7 @@ public class InvocationImpl implements Invocation {
       this.permission = permission;
       this.deprecated = deprecated;
       this.auditContext = auditContext;
+      this.requireCacheManagerStart = requireCacheManagerStart;
    }
 
    public String getAction() {
@@ -82,6 +85,11 @@ public class InvocationImpl implements Invocation {
    }
 
    @Override
+   public boolean requireCacheManagerStart() {
+      return requireCacheManagerStart;
+   }
+
+   @Override
    public boolean deprecated() {
       return deprecated;
    }
@@ -112,6 +120,7 @@ public class InvocationImpl implements Invocation {
       private boolean deprecated;
       private AuthorizationPermission permission;
       private AuditContext auditContext;
+      private boolean requireCacheManagerStart = true;
 
 
       public Builder method(Method method) {
@@ -169,6 +178,11 @@ public class InvocationImpl implements Invocation {
          return this;
       }
 
+      public Builder requireCacheManagerStart(boolean value) {
+         this.requireCacheManagerStart = value;
+         return this;
+      }
+
       public Invocations create() {
          return parent.build(this);
       }
@@ -182,7 +196,7 @@ public class InvocationImpl implements Invocation {
       }
 
       InvocationImpl build() {
-         return new InvocationImpl(methods, paths, handler, action, name, anonymous, permission, deprecated, auditContext);
+         return new InvocationImpl(methods, paths, handler, action, name, anonymous, permission, deprecated, auditContext, requireCacheManagerStart);
       }
    }
 }

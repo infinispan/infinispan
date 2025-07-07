@@ -8,7 +8,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
-import io.prometheus.metrics.expositionformats.ExpositionFormats;
 import org.infinispan.commons.util.Util;
 import org.infinispan.metrics.impl.MetricsRegistry;
 import org.infinispan.rest.InvocationHelper;
@@ -18,6 +17,8 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.framework.impl.RestResponseBuilder;
+
+import io.prometheus.metrics.expositionformats.ExpositionFormats;
 
 /**
  * Micrometer metrics resource.
@@ -31,13 +32,11 @@ public final class MetricsResource implements ResourceHandler {
 
    private final boolean auth;
    private final Executor blockingExecutor;
-   private final MetricsRegistry metricsRegistry;
    private final InvocationHelper invocationHelper;
 
    public MetricsResource(boolean auth, InvocationHelper invocationHelper) {
       this.auth = auth;
       this.blockingExecutor = invocationHelper.getExecutor();
-      this.metricsRegistry = invocationHelper.getMetricsRegistry();
       this.invocationHelper = invocationHelper;
    }
 
@@ -53,6 +52,7 @@ public final class MetricsResource implements ResourceHandler {
       return CompletableFuture.supplyAsync(() -> {
          RestResponseBuilder<NettyRestResponse.Builder> builder = invocationHelper.newResponse(request);
 
+         MetricsRegistry metricsRegistry = invocationHelper.getMetricsRegistry();
          try {
             if (metricsRegistry.supportScrape()) {
                String contentType = ExpositionFormats.init().findWriter(request.getAcceptHeader()).getContentType();

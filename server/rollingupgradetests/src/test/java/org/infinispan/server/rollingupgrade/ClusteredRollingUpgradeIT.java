@@ -27,6 +27,7 @@ import org.infinispan.server.functional.resp.RespStringTest;
 import org.infinispan.server.functional.resp.RespTransactionTest;
 import org.infinispan.server.functional.rest.RestLoggingResource;
 import org.infinispan.server.functional.rest.RestOperations;
+import org.infinispan.server.functional.rest.RestProtobufResourceTest;
 import org.infinispan.server.functional.rest.RestRouter;
 import org.infinispan.server.functional.rest.RestServerResource;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfigurationBuilder;
@@ -70,6 +71,7 @@ import org.junit.platform.suite.api.Suite;
       RespSortedSetTest.class,
       RespStringTest.class,
       RespTransactionTest.class,
+      RestProtobufResourceTest.class,
 })
 public class ClusteredRollingUpgradeIT extends InfinispanSuite {
 

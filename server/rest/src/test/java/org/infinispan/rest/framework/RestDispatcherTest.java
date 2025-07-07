@@ -1,10 +1,11 @@
 package org.infinispan.rest.framework;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.HEAD;
 import static org.infinispan.rest.framework.Method.POST;
-import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -23,6 +24,7 @@ import org.infinispan.rest.framework.impl.ResourceManagerImpl;
 import org.infinispan.rest.framework.impl.RestDispatcherImpl;
 import org.infinispan.rest.framework.impl.SimpleRequest;
 import org.infinispan.rest.framework.impl.SimpleRestResponse;
+import org.infinispan.rest.operations.exceptions.ServiceUnavailableException;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.CustomAuditLoggerTest;
@@ -38,6 +40,40 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "rest.framework.RestDispatcherTest")
 public class RestDispatcherTest {
 
+   public void testDispatchUnavailable() {
+      ResourceManagerImpl manager = new ResourceManagerImpl();
+      manager.registerResource("ctx", new EchoResource());
+
+      GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().build();
+      RestDispatcherImpl restDispatcher = new RestDispatcherImpl(manager, new Authorizer(globalConfiguration.security(), AuditContext.SERVER, "test", null));
+
+      // Dispatcher is not initialized and this commands requires the CM start.
+      RestRequest restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/context/var1/var2").build();
+      CompletionStage<RestResponse> response = restDispatcher.dispatch(restRequest);
+      final CompletionStage<RestResponse> finalResponse = response;
+      assertThatThrownBy(() -> join(finalResponse)).hasCauseInstanceOf(ServiceUnavailableException.class);
+
+      // This request can proceed without the CM start.
+      restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/context/echo").build();
+      response = restDispatcher.dispatch(restRequest);
+      assertEquals("echo", join(response).getEntity().toString());
+
+      // After initializing the dispatcher, all commands should be accepted.
+      restDispatcher.initialize();
+
+      restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/context/echo").build();
+      response = restDispatcher.dispatch(restRequest);
+      assertEquals("echo", join(response).getEntity().toString());
+
+      restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/context/var1/var2").build();
+      response = restDispatcher.dispatch(restRequest);
+      assertEquals("var1,var2", join(response).getEntity().toString());
+
+      restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/context/var1/var2/var3?action=triple").build();
+      response = restDispatcher.dispatch(restRequest);
+      assertEquals("triple(var1,var2,var3)", join(response).getEntity().toString());
+   }
+
    @Test
    public void testDispatch() {
       ResourceManagerImpl manager = new ResourceManagerImpl();
@@ -50,6 +86,7 @@ public class RestDispatcherTest {
       GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().build();
 
       RestDispatcherImpl restDispatcher = new RestDispatcherImpl(manager, new Authorizer(globalConfiguration.security(), AuditContext.SERVER, "test", null));
+      restDispatcher.initialize();
 
       RestRequest restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/").build();
       CompletionStage<RestResponse> response = restDispatcher.dispatch(restRequest);
@@ -138,6 +175,7 @@ public class RestDispatcherTest {
 
 
       RestDispatcherImpl restDispatcher = new RestDispatcherImpl(manager, new Authorizer(globalConfiguration.security(), AuditContext.SERVER, "test", null));
+      restDispatcher.initialize();
 
       // Anonymous
       RestRequest restRequest = new SimpleRequest.Builder().setMethod(GET).setPath("/ctx/secure").build();
@@ -171,6 +209,7 @@ public class RestDispatcherTest {
       @Override
       public Invocations getInvocations() {
          return new Invocations.Builder()
+               .invocation().name("alwaysReady").method(GET).path("/context/{variable1}").requireCacheManagerStart(false).handleWith(this::singleVar)
                .invocation().name("doubleVars").method(GET).path("/context/{variable1}/{variable2}").handleWith(this::doubleVars)
                .invocation().name("tripleVars").method(GET).path("/context/{variable1}/{variable2}/{variable3}").withAction("triple").handleWith(this::tripleVarWithAction)
                .create();
@@ -190,6 +229,12 @@ public class RestDispatcherTest {
          String variable1 = restRequest.variables().get("variable1");
          String variable2 = restRequest.variables().get("variable2");
          return completedFuture(responseBuilder.entity(variable1 + "," + variable2).build());
+      }
+
+      private CompletionStage<RestResponse> singleVar(RestRequest restRequest) {
+         SimpleRestResponse.Builder responseBuilder = new SimpleRestResponse.Builder();
+         String variable = restRequest.variables().get("variable1");
+         return completedFuture(responseBuilder.entity(variable).build());
       }
    }
 
