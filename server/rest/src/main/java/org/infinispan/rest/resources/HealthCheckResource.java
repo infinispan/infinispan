@@ -47,7 +47,7 @@ public class HealthCheckResource implements ResourceHandler {
       NettyRestResponse.Builder builder = helper.newResponse(request);
       DefaultCacheManager dcm = helper.getServer().getCacheManager();
       HttpResponseStatus status = HttpResponseStatus.SERVICE_UNAVAILABLE;
-      if (dcm.getStatus().allowInvocations()) {
+      if (dcm.getStatus().allowInvocations() && helper.getProtocolServer().isStarted()) {
          CacheManagerInfo cmi = dcm.getCacheManagerInfo();
          if (cmi.allCachesReady())
             status = HttpResponseStatus.OK;

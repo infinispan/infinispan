@@ -52,6 +52,19 @@ public class RestServerLifecycleTest extends AbstractInfinispanTest {
       });
    }
 
+   public void testHealthEndpointInitialization() throws Throwable {
+      runTest((status, client) -> {
+         ResponseAssertion.assertThat(client.server().live()).isOk();
+
+         if (status == Status.NOT_STARTED || status == Status.CONTAINER_STARTED) {
+            ResponseAssertion.assertThat(client.server().ready()).isServiceUnavailable();
+            return;
+         }
+
+         ResponseAssertion.assertThat(client.server().ready()).isOk();
+      });
+   }
+
    private void runTest(BiConsumer<Status, RestClient> test) throws Throwable {
       EmbeddedCacheManager ecm = null;
       RestServer server = null;
