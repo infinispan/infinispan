@@ -99,7 +99,7 @@
       <version.graalvm>24.0.0</version.graalvm>
       <version.groovy>2.4.21</version.groovy>
       <version.hamcrest>2.2</version.hamcrest>
-      <version.hibernate.core>6.4.10.Final</version.hibernate.core>
+      <version.hibernate.core>6.6.20.Final</version.hibernate.core>
       <version.hibernate.search>8.0.0.Final</version.hibernate.search>
       <version.hibernate.models>1.0.0</version.hibernate.models>
       <version.infinispan>16.0.0-SNAPSHOT</version.infinispan>
