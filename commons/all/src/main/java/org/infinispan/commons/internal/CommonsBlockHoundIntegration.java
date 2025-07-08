@@ -16,6 +16,7 @@ import org.infinispan.commons.util.ProgressTracker;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.commons.util.concurrent.NonBlockingRejectedExecutionHandler;
+import org.jboss.logging.Logger;
 import org.kohsuke.MetaInfServices;
 
 import reactor.blockhound.BlockHound;
@@ -105,5 +106,8 @@ public class CommonsBlockHoundIntegration implements BlockHoundIntegration {
       }
 
       builder.allowBlockingCallsInside("org.apache.logging.log4j.core.Logger", "logMessage");
+
+      // Ignore blocking when initializing a Logger as it rarely occurs
+      builder.allowBlockingCallsInside(Logger.class.getName(), "getMessageLogger");
    }
 }
