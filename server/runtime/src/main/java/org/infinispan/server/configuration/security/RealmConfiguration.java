@@ -21,13 +21,13 @@ import org.infinispan.server.configuration.Element;
 import org.infinispan.server.security.ServerSecurityRealm;
 import org.infinispan.server.security.realm.CachingModifiableSecurityRealm;
 import org.infinispan.server.security.realm.CachingSecurityRealm;
+import org.infinispan.server.security.realm.CaffeineRealmIdentityCache;
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.realm.CacheableSecurityRealm;
 import org.wildfly.security.auth.server.EvidenceDecoder;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityRealm;
-import org.wildfly.security.cache.LRURealmIdentityCache;
 import org.wildfly.security.cache.RealmIdentityCache;
 import org.wildfly.security.permission.PermissionVerifier;
 import org.wildfly.security.ssl.SSLContextBuilder;
@@ -171,7 +171,7 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
       int maxEntries = attributes.attribute(CACHE_MAX_SIZE).get();
       if (maxEntries > 0 && realm instanceof CacheableSecurityRealm) {
          if (cache == null) {
-            cache = new LRURealmIdentityCache(maxEntries, attributes.attribute(CACHE_LIFESPAN).get().longValue());
+            cache = new CaffeineRealmIdentityCache(maxEntries, attributes.attribute(CACHE_LIFESPAN).get().longValue());
          }
          if (realm instanceof ModifiableSecurityRealm) {
             return new CachingModifiableSecurityRealm((CacheableSecurityRealm) realm, cache);
