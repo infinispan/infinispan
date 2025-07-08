@@ -20,11 +20,11 @@ This procedure explains how to index and query a remote cache that stores `Perso
 include::protobuf/indexedperson.proto[]
 ----
 +
-From the {brandname} CLI, use the [command]`schema` command with the [command]`--upload=` argument as follows:
+From the {brandname} CLI, use the [command]`schema upload` command with the `--file` option as follows:
 +
 [source,options="nowrap",subs=attributes+]
 ----
-schema --upload=person.proto person.proto
+schema upload --file person.proto person.proto
 ----
 
 . Create a cache named **people** that uses ProtoStream encoding and configures {brandname} to index entities declared in your Protobuf schema.
@@ -36,7 +36,7 @@ The following cache indexes the `Person` entity from the previous step:
 include::xml/indexing_person_cache.xml[]
 ----
 +
-From the CLI, use the [command]`create cache` command with the [command]`--file=` argument as follows:
+From the CLI, use the [command]`create cache` command with the [command]`--file=` option as follows:
 +
 [source,options="nowrap",subs=attributes+]
 ----
@@ -48,29 +48,29 @@ create cache --file=people.xml people
 To query a remote cache, it needs to contain some data.
 For this example procedure, create entries that use the following JSON values:
 +
-.PersonOne
+.PersonOne.json
 [source,json,options="nowrap",subs=attributes+]
 ----
 include::json/personone.json[]
 ----
 +
-.PersonTwo
+.PersonTwo.json
 [source,json,options="nowrap",subs=attributes+]
 ----
 include::json/persontwo.json[]
 ----
 +
-.PersonThree
+.PersonThree.json
 [source,json,options="nowrap",subs=attributes+]
 ----
 include::json/personthree.json[]
 ----
 +
-From the CLI, use the [command]`put` command with the [command]`--file=` argument to add each entry, as follows:
+From the CLI, use the [command]`put` command with the [command]`--file=` option to add each entry, as follows:
 +
 [source,options="nowrap",subs=attributes+]
 ----
-put --encoding=application/json --file=personone.json personone
+put --cache=people --encoding=application/json --file=personOne.json personone
 ----
 +
 [TIP]
