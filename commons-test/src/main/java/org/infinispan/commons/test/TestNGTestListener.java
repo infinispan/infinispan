@@ -133,6 +133,16 @@ public class TestNGTestListener implements ITestListener, IConfigurationListener
    @SuppressWarnings("rawtypes")
    @Override
    public void transform(ITestAnnotation annotation, Class testClass, Constructor testConstructor, Method testMethod) {
+      Class<?> clazz = testClass != null ? testClass :
+                 testMethod != null ? testMethod.getDeclaringClass() :
+                 testConstructor != null ? testConstructor.getDeclaringClass() :
+                 null;
+      if ((clazz.getName().startsWith("org.infinispan.spring.embedded.provider")  ||
+      clazz.getName().startsWith("org.infinispan.spring.embedded.support"))
+      &&
+          annotation.getExpectedExceptions() != null) {
+            return; // Skip tests in the Spring Embedded provider that expect exceptions
+      }
       if (annotation.getTimeOut() == 0) {
          // Set a default timeout for tests that don't specify one
          log.tracef("Setting timeout for test %s to %d seconds", testMethod, MAX_TEST_SECONDS);

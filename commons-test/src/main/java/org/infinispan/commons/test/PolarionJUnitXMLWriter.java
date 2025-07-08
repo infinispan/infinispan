@@ -137,11 +137,13 @@ public class PolarionJUnitXMLWriter implements AutoCloseable {
    }
 
    private void writeCauseElement(String tag, Throwable throwable) throws XMLStreamException {
-      String throwableClass = throwable.getClass().getName();
-      String message = throwable.getMessage();
+      String throwableClass = throwable == null || throwable.getClass() == null ? "null" : throwable.getClass().getName();
+      String message = throwable==null ? "null" : throwable.getMessage();
       StringWriter sw = new StringWriter();
       PrintWriter pw = new PrintWriter(sw);
-      throwable.printStackTrace(pw);
+      if (throwable!=null) {
+         throwable.printStackTrace(pw);
+      }
       pw.flush();
       String stackTrace = escapeHtml(sw.toString());
 
