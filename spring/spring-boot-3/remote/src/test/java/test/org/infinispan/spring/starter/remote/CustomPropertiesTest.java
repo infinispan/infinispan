@@ -17,6 +17,7 @@ import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.ClusterConfiguration;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
+import org.infinispan.client.hotrod.configuration.RemoteCacheConfiguration;
 import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.security.BasicCallbackHandler;
@@ -137,5 +138,11 @@ public class CustomPropertiesTest {
       assertThat(configuration.statistics().jmxEnabled()).isTrue();
       assertThat(configuration.statistics().jmxName()).isEqualTo("elaJmx");
       assertThat(configuration.statistics().jmxDomain()).isEqualTo("elaJmxDom2");
+
+      // caches
+      assertThat(configuration.remoteCaches()).hasSize(1);
+      assertThat(configuration.remoteCaches().get("example")).isNotNull();
+      RemoteCacheConfiguration example = configuration.remoteCaches().get("example");
+      assertThat(example.forceReturnValues()).isTrue();
    }
 }
