@@ -1,0 +1,42 @@
+name: Check API_TOKEN_GITHUB Permissions
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  check-permissions:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check API_TOKEN_GITHUB permissions
+        run: |
+          echo "🔍 Checking permissions for API_TOKEN_GITHUB"
+          echo "============================================"
+          
+          # Get user info
+          USER_INFO=$(curl -s -H "Authorization: token ${{ secrets.API_TOKEN_GITHUB }}" \
+                           -H "Accept: application/vnd.github.v3+json" \
+                           https://api.github.com/user)
+          
+          echo "👤 User: $(echo "$USER_INFO" | jq -r '.login // "N/A"')"
+          echo "📝 Type: $(echo "$USER_INFO" | jq -r '.type // "N/A"')"
+          
+          # Get current repository permissions
+          REPO_INFO=$(curl -s -H "Authorization: token ${{ secrets.API_TOKEN_GITHUB }}" \
+                           -H "Accept: application/vnd.github.v3+json" \
+                           https://api.github.com/repos/${{ github.repository }})
+          
+          echo ""
+          echo "🔑 Current Repository (${{ github.repository }}) Permissions:"
+          echo "$REPO_INFO" | jq -r '.permissions // "No permissions found"'
+          
+          # Get specific repository permissions
+          SPECIFIC_REPO_INFO=$(curl -s -H "Authorization: token ${{ secrets.API_TOKEN_GITHUB }}" \
+                                    -H "Accept: application/vnd.github.v3+json" \
+                                    https://api.github.com/repos/infinispan/infinispan-images)
+          
+          echo ""
+          echo "🔑 Specific Repository (infinispan/infinispan-images) Permissions:"
+          echo "$SPECIFIC_REPO_INFO" | jq -r '.permissions // "No permissions found"'
+ 
