@@ -1,0 +1,64 @@
+[id='configuring-remote-cache-config-remote_{context}']
+= Configuring and creating caches on startup from the client
+
+Configure {brandname} to create caches on first access from the client.
+
+.Procedure
+
+. Open `hotrod-client.properties` or `application.properties` or  `application.yaml` for editing.
+. Do one of the following:
++
+[source,properties,options=nowrap,subs=attributes+]
+----
+infinispan.client.hotrod.cache.mycache.template_name=mytemplate1
+infinispan.client.hotrod.cache.mycache.force_return_values=true
+infinispan.client.hotrod.cache.mycache.marshaller=org.infinispan.commons.marshall.JavaSerializationMarshaller
+infinispan.client.hotrod.cache.[com.myproject.mycache].template_name=mytemplate1
+infinispan.client.hotrod.cache.[com.myproject.mycache].marshaller=org.infinispan.commons.marshall.UTF8StringMarshaller
+infinispan.client.hotrod.cache.[com.myproject.mycache].near_cache.mode=INVALIDATED
+infinispan.client.hotrod.cache.[com.myproject.*].template_name=mytemplate2
+infinispan.client.hotrod.cache.[com.myproject.*].transaction.transaction_mode=NON_XA
+----
++
+[source,properties,options=nowrap,subs=attributes+]
+----
+infinispan.remote.cache.example.configuration=<distributed-cache/>
+infinispan.remote.cache.example.force-return-values=true
+infinispan.remote.cache.mycache.template-name=myTemplate
+infinispan.remote.cache.mycache.marshaller=org.infinispan.commons.marshall.JavaSerializationMarshaller
+infinispan.remote.cache.[com.myproject.mycache].template-name=myCustomTemplate
+infinispan.remote.cache.[com.myproject.mycache].marshaller=org.infinispan.commons.marshall.UTF8StringMarshaller
+infinispan.remote.cache.[com.myproject.mycache].near-cache.mode=INVALIDATED
+infinispan.remote.cache.[com.myproject.*].template-name=myCustomTemplate
+infinispan.remote.cache.[com.myproject.*].transaction.transaction-mode=NON_XA
+----
++
+[source,yaml,options=nowrap,subs=attributes+]
+----
+# Infinispan Configuration
+infinispan:
+  remote:
+    # Basic Connection Settings
+    server-list: "180.567.112.333:6668"
+
+    # Cache Configurations
+    cache:
+      example:
+        configuration: "<distributed-cache/>"
+        force-return-values: true
+      mycache:
+        template-name: "myTemplate"
+        marshaller: "org.infinispan.commons.marshall.JavaSerializationMarshaller"
+      "[com.mycompany.mycache]":
+        template-name: "mytemplate2"
+        marshaller: "org.infinispan.commons.marshall.UTF8StringMarshaller"
+        near-cache:
+          mode: "INVALIDATED"
+      "[com.mycompany.*]":
+        template-name: "mytemplate2"
+        transaction:
+          transaction-mode: "NON_XA"
+----
+
++
+. Save and close your properties or yaml file.
