@@ -12,12 +12,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.Version;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -197,9 +195,9 @@ public class CacheManagerInfo implements JsonSerialization {
                  .getGlobalConfiguration().tracing().enabled();
    }
 
-   public boolean allCachesReady() {
+   public boolean allCachesStopped() {
       return cacheManager.getCaches().keySet().stream()
-            .allMatch(this::isCacheReady);
+            .noneMatch(this::isCacheReady);
    }
 
    public boolean isCacheReady(String cacheName) {
@@ -216,15 +214,14 @@ public class CacheManagerInfo implements JsonSerialization {
          // Component registry will be null if the cache is misconfigured or shutdown.
          // We must retrieve the initialization future to verify the expected status.
          if (cr == null) {
-            // Unknown cache does not make cluster not ready.
+            // Unknown cache is not started.
             CompletableFuture<Cache<?, ?>> cf = cacheManager.getCaches().get(cacheName);
-            if (cf == null) return true;
+            if (cf == null) return false;
 
             if (cf.isDone()) {
                // A cache was requested to start, but it has failed, e.g., misconfiguration.
-               // We still mark the cluster as ready.
                if (cf.isCompletedExceptionally())
-                  return isCacheInitializationFailureAllowed(cacheName, cf);
+                  return false;
 
                return cf.join().getStatus().allowInvocations();
             }
@@ -248,21 +245,6 @@ public class CacheManagerInfo implements JsonSerialization {
          return dm != null && !dm.isRehashInProgress();
       } catch (Exception e) {
          log.tracef(e, "Failed to verify if cache '%s' is ready", cacheName);
-         return false;
-      }
-   }
-
-   private static boolean isCacheInitializationFailureAllowed(String cacheName, CompletableFuture<Cache<?, ?>> cf) {
-      try {
-         return cf
-               .thenApply(CompletableFutures.toTrueFunction())
-               .exceptionally(t -> {
-                  log.tracef(t, "Cache %s not initialized with exception", cacheName);
-                  return CompletableFutures.extractException(t) instanceof CacheConfigurationException;
-               })
-               .join();
-      } catch (Throwable t) {
-         log.tracef(t, "Cache %s failed to initialize", cacheName);
          return false;
       }
    }
