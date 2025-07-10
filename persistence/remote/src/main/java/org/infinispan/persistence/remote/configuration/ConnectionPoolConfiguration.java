@@ -7,6 +7,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 
 @BuiltBy(ConnectionPoolConfigurationBuilder.class)
+@Deprecated(forRemoval = true, since = "15.1")
 public class ConnectionPoolConfiguration extends ConfigurationElement<ConnectionPoolConfiguration> {
 
    static final AttributeDefinition<ExhaustedAction> EXHAUSTED_ACTION = AttributeDefinition.builder(Attribute.EXHAUSTED_ACTION, ExhaustedAction.WAIT, ExhaustedAction.class).immutable().build();

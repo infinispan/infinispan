@@ -9,6 +9,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -25,7 +26,6 @@ import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commons.util.ObjectDuplicator;
 import org.infinispan.context.Flag;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.transport.Address;
@@ -242,8 +242,8 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
          Set expKeys = TestingUtil.getInternalKeys(c);
          Collection expValues = TestingUtil.getInternalValues(c);
 
-         Set expKeyEntries = ObjectDuplicator.duplicateSet(expKeys);
-         Collection expValueEntries = ObjectDuplicator.duplicateCollection(expValues);
+         Set expKeyEntries = new HashSet(expKeys);
+         Collection expValueEntries = new ArrayList(expValues);
 
          // CACHE_MODE_LOCAL prohibits RPCs and SKIP_OWNERSHIP_CHECKS forces that all entries from DC are read
          AdvancedCache cacheWithIgnoredOwnership = c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_OWNERSHIP_CHECK);

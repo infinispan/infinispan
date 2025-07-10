@@ -1,6 +1,9 @@
-package org.infinispan.configuration;
+package org.infinispan.query.config;
+
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -12,9 +15,11 @@ public class CreateCacheIndexTemplateTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
+      global.globalState().persistentLocation(tmpDirectory(CreateCacheIndexTemplateTest.class));
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().enable().addIndexedEntities(Person.class);
-      return TestCacheManagerFactory.createCacheManager(builder);
+      return TestCacheManagerFactory.createCacheManager(global, builder);
    }
 
    public void createCacheTest() {

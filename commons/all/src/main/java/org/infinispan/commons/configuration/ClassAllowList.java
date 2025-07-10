@@ -18,7 +18,6 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
@@ -28,7 +27,7 @@ import org.infinispan.commons.util.KeyValueWithPrevious;
  * The {@link ClassAllowList} maintains classes definitions either by name or regular expression and is used for
  * permissioning.
  * <p>
- * By default it includes regular expressions from the system property "infinispan.deserialization.allowlist.regexps"
+ * By default, it includes regular expressions from the system property "infinispan.deserialization.allowlist.regexps"
  * and fully qualified class names from "infinispan.deserialization.allowlist.classes".
  * <p>
  * Classes are checked first against the set of class names, and in case not present each of the regular expressions are
@@ -40,10 +39,6 @@ public class ClassAllowList {
 
    private static final Log log = LogFactory.getLog(ClassAllowList.class);
 
-   @Deprecated(forRemoval=true, since = "12.0")
-   private static final String CLASSES_PROPERTY_NAME_LEGACY = "infinispan.deserialization.whitelist.classes";
-   @Deprecated(forRemoval=true, since = "12.0")
-   private static final String REGEXPS_PROPERTY_NAME_LEGACY = "infinispan.deserialization.whitelist.regexps";
    private static final String CLASSES_PROPERTY_NAME = "infinispan.deserialization.allowlist.classes";
    private static final String REGEXPS_PROPERTY_NAME = "infinispan.deserialization.allowlist.regexps";
 
@@ -89,29 +84,17 @@ public class ClassAllowList {
       SYS_ALLOWED_CLASSES.add(Enum.class.getName());
       SYS_ALLOWED_CLASSES.add(Number.class.getName());
 
-      // Reference array regex, for arrray representations of allowed classes e.g '[Ljava.lang.Byte;'
+      // Reference array regex, for array representations of allowed classes e.g '[Ljava.lang.Byte;'
       SYS_ALLOWED_REGEXP.add("^\\[[\\[L].*\\;$");
 
       // Infinispan classes
       // Used by client listeners
       SYS_ALLOWED_CLASSES.add(KeyValueWithPrevious.class.getName());
-
-      // Legacy handling
-      String regexps = System.getProperty(REGEXPS_PROPERTY_NAME_LEGACY);
-      if (regexps != null) {
-         log.deprecatedProperty(REGEXPS_PROPERTY_NAME_LEGACY, REGEXPS_PROPERTY_NAME);
-         SYS_ALLOWED_REGEXP.addAll(asList(regexps.trim().split(",")));
-      }
-      regexps = System.getProperty(REGEXPS_PROPERTY_NAME);
+      String regexps = System.getProperty(REGEXPS_PROPERTY_NAME);
       if (regexps != null) {
          SYS_ALLOWED_REGEXP.addAll(asList(regexps.trim().split(",")));
       }
-      String cls = System.getProperty(CLASSES_PROPERTY_NAME_LEGACY);
-      if (cls != null) {
-         log.deprecatedProperty(CLASSES_PROPERTY_NAME_LEGACY, CLASSES_PROPERTY_NAME);
-         SYS_ALLOWED_CLASSES.addAll(asList(cls.trim().split(",")));
-      }
-      cls = System.getProperty(CLASSES_PROPERTY_NAME);
+      String cls = System.getProperty(CLASSES_PROPERTY_NAME);
       if (cls != null) {
          SYS_ALLOWED_CLASSES.addAll(asList(cls.trim().split(",")));
       }
@@ -135,7 +118,7 @@ public class ClassAllowList {
       Collection<String> regexList = requireNonNull(regexps, "Regexps must not be null");
       this.classes.addAll(classList);
       this.regexps.addAll(regexList);
-      this.compiled.addAll(this.regexps.stream().map(Pattern::compile).collect(Collectors.toList()));
+      this.compiled.addAll(this.regexps.stream().map(Pattern::compile).toList());
       this.classLoader = classLoader;
    }
 
@@ -164,7 +147,7 @@ public class ClassAllowList {
 
    public void addRegexps(String... regexps) {
       this.regexps.addAll(asList(regexps));
-      this.compiled.addAll(stream(regexps).map(Pattern::compile).collect(Collectors.toList()));
+      this.compiled.addAll(stream(regexps).map(Pattern::compile).toList());
    }
 
    public void read(ClassAllowList allowList) {

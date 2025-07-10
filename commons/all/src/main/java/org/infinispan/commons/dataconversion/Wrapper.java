@@ -1,7 +1,7 @@
 package org.infinispan.commons.dataconversion;
 
 /**
- * A Wrapper is used to decorate objects produced by the {@link Encoder}.
+ * A Wrapper is used to decorate objects.
  * A Wrapper, contrary to the Encoder, does not cause data conversion and it's used to provide additional
  * behaviour to the encoded data such as equality/hashCode and indexing capabilities.
  *

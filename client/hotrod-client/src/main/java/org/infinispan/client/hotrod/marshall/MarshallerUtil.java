@@ -124,22 +124,6 @@ public final class MarshallerUtil {
       return false;
    }
 
-   /**
-    * @deprecated Since 12.0, will be removed in 15.0
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public static byte[] obj2bytes(Marshaller marshaller, Object o, boolean isKey, int estimateKeySize, int estimateValueSize) {
-      try {
-         return marshaller.objectToByteBuffer(o, isKey ? estimateKeySize : estimateValueSize);
-      } catch (IOException ioe) {
-         throw new HotRodClientException(
-               "Unable to marshall object of type [" + o.getClass().getName() + "]", ioe);
-      } catch (InterruptedException ie) {
-         Thread.currentThread().interrupt();
-         return null;
-      }
-   }
-
    public static byte[] obj2bytes(Marshaller marshaller, Object o, BufferSizePredictor sizePredictor) {
       try {
          byte[] bytes = marshaller.objectToByteBuffer(o, sizePredictor.nextSize(o));

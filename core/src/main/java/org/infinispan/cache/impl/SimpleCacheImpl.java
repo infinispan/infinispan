@@ -39,7 +39,6 @@ import org.infinispan.LockedStream;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
-import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
@@ -628,26 +627,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache
          return CompletableFutures.completedTrue();
       }
       return CompletableFutures.completedFalse();
-   }
-
-   @Override
-   public AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> encoder) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> keyEncoder, Class<? extends Encoder> valueEncoder) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public AdvancedCache<Object, Object> withKeyEncoding(Class<? extends Encoder> encoder) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public AdvancedCache<?, ?> withMediaType(String keyMediaType, String valueMediaType) {
-      throw new UnsupportedOperationException();
    }
 
    @Override

@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "scripting.SecureScriptingTest")
 public class SecureScriptingTest extends AbstractScriptingTest {
 
-   static final Subject ADMIN = TestingUtil.makeSubject("admin", ScriptingManager.SCRIPT_MANAGER_ROLE);
+   static final Subject ADMIN = TestingUtil.makeSubject("admin");
    static final Subject RUNNER = TestingUtil.makeSubject("runner", "runner");
    static final Subject PHEIDIPPIDES = TestingUtil.makeSubject("pheidippides", "pheidippides");
    static final Subject ACHILLES = TestingUtil.makeSubject("achilles", "achilles");

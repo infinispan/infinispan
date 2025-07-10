@@ -2,13 +2,11 @@ package org.infinispan.spring.remote;
 
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.ASYNC_EXECUTOR_FACTORY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.FORCE_RETURN_VALUES;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_SIZE_ESTIMATE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MARSHALLER;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_BALANCING_STRATEGY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_LIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_KEEP_ALIVE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_NO_DELAY;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.VALUE_SIZE_ESTIMATE;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -142,36 +140,6 @@ public class ConfigurationPropertiesOverridesTest {
                          + ") should have overridden property 'transportFactory'. However, it didn't.",
                    expectedRequestBalancingStrategy,
                    overriddenConfigurationProperties.getProperty(REQUEST_BALANCING_STRATEGY));
-   }
-
-   @Test
-   public final void testIfSetKeySizeEstimateOverridesDefaultKeySizeEstimate() {
-      final int expectedKeySizeEstimate = -123456;
-      final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
-
-      objectUnderTest.setKeySizeEstimate(expectedKeySizeEstimate);
-      final Properties overriddenConfigurationProperties = objectUnderTest
-            .override(this.defaultConfigurationProperties);
-
-      assertEquals("override(" + this.defaultConfigurationProperties
-                         + ") should have overridden property 'transportFactory'. However, it didn't.",
-                   String.valueOf(expectedKeySizeEstimate),
-                   overriddenConfigurationProperties.getProperty(KEY_SIZE_ESTIMATE));
-   }
-
-   @Test
-   public final void testIfValueSizeEstimateOverridesDefaultValueSizeEstimate() {
-      final int expectedValueSizeEstimate = -3456789;
-      final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
-
-      objectUnderTest.setValueSizeEstimate(expectedValueSizeEstimate);
-      final Properties overriddenConfigurationProperties = objectUnderTest
-            .override(this.defaultConfigurationProperties);
-
-      assertEquals("override(" + this.defaultConfigurationProperties
-                         + ") should have overridden property 'transportFactory'. However, it didn't.",
-                   String.valueOf(expectedValueSizeEstimate),
-                   overriddenConfigurationProperties.getProperty(VALUE_SIZE_ESTIMATE));
    }
 
    @Test

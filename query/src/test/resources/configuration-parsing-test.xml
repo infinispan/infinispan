@@ -9,6 +9,9 @@
    </jgroups>
 
    <cache-container default-cache="default" statistics="false">
+      <global-state unclean-shutdown-action="FAIL">
+         <persistent-location path="${project.build.directory}"/>
+      </global-state>
       <transport stack="test-tcp"/>
       <local-cache name="default">
          <indexing enabled="false"/>
@@ -32,14 +35,14 @@
          </indexing>
       </local-cache>
       <replicated-cache name="repl-with-default">
-         <indexing>
+         <indexing storage="filesystem">
          <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
             </indexed-entities>
          </indexing>
       </replicated-cache>
       <distributed-cache name="dist-with-default">
-         <indexing>
+         <indexing storage="filesystem">
          <indexed-entities>
                <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
             </indexed-entities>

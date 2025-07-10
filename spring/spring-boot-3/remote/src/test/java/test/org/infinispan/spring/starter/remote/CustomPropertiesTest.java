@@ -16,8 +16,6 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.ClusterConfiguration;
 import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.configuration.ExhaustedAction;
-import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
@@ -67,24 +65,14 @@ public class CustomPropertiesTest {
       assertThat(configuration.batchSize()).isEqualTo(90);
       assertThat(configuration.version()).isEqualTo(ProtocolVersion.PROTOCOL_VERSION_40);
 
-      // Connection pool properties
-      assertThat(configuration.connectionPool().maxActive()).isEqualTo(91);
-      assertThat(configuration.connectionPool().exhaustedAction()).isEqualTo(ExhaustedAction.EXCEPTION);
-      assertThat(configuration.connectionPool().maxWait()).isEqualTo(20001);
-      assertThat(configuration.connectionPool().minIdle()).isEqualTo(1001);
-      assertThat(configuration.connectionPool().minEvictableIdleTime()).isEqualTo(9001);
-      assertThat(configuration.connectionPool().maxPendingRequests()).isEqualTo(846);
-
       // Thread pool properties
       assertThat(configuration.asyncExecutorFactory().factoryClass()).isEqualTo(DefaultAsyncExecutorFactory.class);
       // TODO: how to assert thread pool size ? default_executor_factory.pool_size
 
       // Marshalling properties
       assertThat(configuration.marshallerClass()).isEqualTo(JavaSerializationMarshaller.class);
-      assertThat(configuration.keySizeEstimate()).isEqualTo(123456);
-      assertThat(configuration.valueSizeEstimate()).isEqualTo(789012);
       assertThat(configuration.forceReturnValues()).isTrue();
-      assertThat(configuration.serialWhitelist()).contains("SERIAL-KILLER");
+      assertThat(configuration.serialAllowList()).contains("SERIAL-KILLER");
       // TODO: Consistent Hash Impl ??
       //assertThat(configuration.consistentHashImpl().getClass().toString()).isEqualTo("");
 
@@ -120,8 +108,7 @@ public class CustomPropertiesTest {
 
       // Transaction properties
       // TODO: transaction_manager_lookup??
-      assertThat(configuration.transaction().transactionMode()).isEqualTo(TransactionMode.FULL_XA);
-      assertThat(configuration.transaction().timeout()).isEqualTo(50001);
+      assertThat(configuration.transactionTimeout()).isEqualTo(50001);
 
       // xsite
       assertThat(configuration.clusters()).hasSize(2);

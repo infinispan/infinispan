@@ -299,7 +299,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
       RestResponse namesResponse = join(client.caches());
       assertThat(namesResponse).isOk();
-      List<String> names = Json.read(namesResponse.body()).asJsonList().stream().map(Json::asString).collect(Collectors.toList());
+      List<String> names = Json.read(namesResponse.body()).asJsonList().stream().map(Json::asString).toList();
       assertTrue(names.contains(name));
 
       CompletionStage<RestResponse> putResponse = cacheClient.post("key", "value");
@@ -1074,8 +1074,8 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       Json entity = singleSet.stream().findFirst().orElseThrow();
       assertTrue(entity.has("key"));
       assertTrue(entity.has("value"));
-      assertEquals(entity.at("key").asString(), "José");
-      assertEquals(entity.at("value").asString(), "Uberlândia");
+      assertEquals("José", entity.at("key").asString());
+      assertEquals("Uberlândia", entity.at("value").asString());
    }
 
    @Test
@@ -1346,7 +1346,6 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
    @Test
    public void testProtobufMetadataManipulation() {
-      // Special role {@link ProtobufMetadataManager#SCHEMA_MANAGER_ROLE} is needed for authz. Subject USER has it
       String cache = PROTOBUF_METADATA_CACHE_NAME;
       putStringValueInCache(cache, "file1.proto", "message A{}");
       putStringValueInCache(cache, "file2.proto", "message B{}");
@@ -1393,12 +1392,12 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
          switch (key) {
             case "key-1":
-               Assert.assertEquals(7L, version.asLong());
+               assertEquals(7L, version.asLong());
                assertNull(topologyId);
                break;
             case "key-2":
-               Assert.assertEquals(3L, version.asLong());
-               Assert.assertEquals(7, topologyId.asInteger());
+               assertEquals(3L, version.asLong());
+               assertEquals(7, topologyId.asInteger());
                break;
             case "key-3":
                assertNull(version);
@@ -1775,7 +1774,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       response = join(cacheClient.query(hybrid));
       Json queryJson = Json.read(response.body());
       assertEquals(2, queryJson.at("hit_count").asInteger());
-      assertEquals(true, queryJson.at("hit_count_exact").asBoolean());
+      assertTrue(queryJson.at("hit_count_exact").asBoolean());
       response = join(cacheClient.searchStats());
       statJson = Json.read(response.body());
 
@@ -1830,12 +1829,14 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
    @Test
    public void testLazySearchMapping() {
-      String proto = " package future;\n" +
-            " /* @Indexed */\n" +
-            " message Entity {\n" +
-            "    /* @Basic */\n" +
-            "    optional string name=1;\n" +
-            " }";
+      String proto = """
+             package future;
+             /* @Indexed */
+             message Entity {
+                /* @Basic */
+                optional string name=1;
+             }
+            """;
 
       String value = Json.object().set("_type", "future.Entity").set("name", "Kim").toString();
       RestEntity restEntity = RestEntity.create(APPLICATION_JSON, value);

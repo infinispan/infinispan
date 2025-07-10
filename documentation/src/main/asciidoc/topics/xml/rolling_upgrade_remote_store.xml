@@ -7,7 +7,6 @@
      <remote-store xmlns="urn:infinispan:config:store:remote:{schemaversion}"
                    cache="myDistCache"
                    protocol-version="2.5"
-                   raw-values="true"
                    segmented="false">
         <!-- Configures authentication and encryption according to the security realm of the source cluster. -->
         <security>
@@ -19,6 +18,8 @@
         </security>
         <!-- Points to the location of the source cluster. -->
         <remote-server host="127.0.0.1" port="11222"/>
+        <!-- enables migration -->
+        <property name="migration">true</property>
      </remote-store>
   </persistence>
 </distributed-cache>

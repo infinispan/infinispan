@@ -28,7 +28,7 @@ public class RocksDBStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    RocksDBStoreConfigurationBuilder createStoreBuilder(PersistenceConfigurationBuilder loaders) {
       new File(tmpDirectory).mkdirs();
-      return loaders.addStore(RocksDBStoreConfigurationBuilder.class).location(tmpDirectory + "/data").expiredLocation(tmpDirectory + "/expiry").clearThreshold(2);
+      return loaders.addStore(RocksDBStoreConfigurationBuilder.class).location(tmpDirectory + "/data").expiredLocation(tmpDirectory + "/expiry");
    }
 
    @Override

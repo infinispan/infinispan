@@ -59,19 +59,6 @@ public class ProtostreamTranscoderTest extends AbstractTranscoderTest {
 
 
    @Test
-   @Override
-   public void testTranscoderTranscode() throws Exception {
-      Object transcoded = transcoder.transcode(dataSrc, TEXT_PLAIN, APPLICATION_PROTOSTREAM);
-      assertTrue(transcoded instanceof byte[], "Must be byte[]");
-
-      Object transcodedBack = transcoder.transcode(transcoded, APPLICATION_PROTOSTREAM, TEXT_PLAIN);
-
-      // Must be String as byte[] as sent over the wire by hotrod
-      assertTrue(transcodedBack instanceof byte[], "Must be instance of byte[]");
-      assertEquals(dataSrc, new String((byte[]) transcodedBack, TEXT_PLAIN.getCharset().name()), "Must be equal strings");
-   }
-
-   @Test
    public void testWrappedMessage() throws IOException {
       Person input = new Person("value");
 

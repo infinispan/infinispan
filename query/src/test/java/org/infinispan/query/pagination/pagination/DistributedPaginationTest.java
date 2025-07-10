@@ -1,4 +1,4 @@
-package org.infinispan.pagination;
+package org.infinispan.query.pagination.pagination;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 

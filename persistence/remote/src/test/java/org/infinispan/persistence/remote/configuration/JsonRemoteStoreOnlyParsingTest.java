@@ -25,59 +25,58 @@ public class JsonRemoteStoreOnlyParsingTest {
 
    @Test
    public void testJsonParsing() throws IOException {
-      String json = "{\n" +
-            "    \"remote-store\":{\n" +
-            "        \"cache\":\"ccc\",\n" +
-            "        \"shared\":true,\n" +
-            "        \"read-only\":false,\n" +
-            "        \"hotrod-wrapping\":false,\n" +
-            "        \"raw-values\":false,\n" +
-            "        \"socket-timeout\":60000,\n" +
-            "        \"protocol-version\":\"3.1\",\n" +
-            "        \"remote-server\":[\n" +
-            "            {\n" +
-            "                \"host\":\"127.0.0.2\",\n" +
-            "                \"port\":12222\n" +
-            "            }\n" +
-            "        ],\n" +
-            "        \"connection-pool\":{\n" +
-            "            \"max-active\":110,\n" +
-            "            \"exhausted-action\":\"CREATE_NEW\"\n" +
-            "        },\n" +
-            "        \"async-executor\":{\n" +
-            "            \"properties\":{\n" +
-            "                \"name\":4\n" +
-            "            }\n" +
-            "        },\n" +
-            "        \"properties\":{\n" +
-            "                \"key\":\"value\"\n" +
-            "        },\n" +
-            "        \"security\":{\n" +
-            "            \"authentication\":{\n" +
-            "                \"server-name\":\"servername\",\n" +
-            "                \"digest\":{\n" +
-            "                    \"username\":\"username\",\n" +
-            "                    \"password\":\"password\",\n" +
-            "                    \"realm\":\"realm\"\n" +
-            "                }\n" +
-            "            },\n" +
-            "            \"encryption\":{\n" +
-            "                \"protocol\":\"TLSv1.2\",\n" +
-            "                \"sni-hostname\":\"snihostname\",\n" +
-            "                \"keystore\":{\n" +
-            "                    \"filename\":\"${project.build.testOutputDirectory}/keystore_client.jks\",\n" +
-            "                    \"password\":\"secret\",\n" +
-            "                    \"key-alias\":\"hotrod\",\n" +
-            "                    \"type\":\"JKS\"\n" +
-            "                },\n" +
-            "                \"truststore\":{\n" +
-            "                    \"filename\":\"${project.build.testOutputDirectory}/ca.jks\",\n" +
-            "                    \"type\":\"pem\"\n" +
-            "                }\n" +
-            "            }\n" +
-            "        }\n" +
-            "    }\n" +
-            "}";
+      String json = """
+            {
+                "remote-store":{
+                    "cache":"ccc",
+                    "shared":true,
+                    "read-only":false,
+                    "socket-timeout":60000,
+                    "protocol-version":"3.1",
+                    "remote-server":[
+                        {
+                            "host":"127.0.0.2",
+                            "port":12222
+                        }
+                    ],
+                    "connection-pool":{
+                        "max-active":110,
+                        "exhausted-action":"CREATE_NEW"
+                    },
+                    "async-executor":{
+                        "properties":{
+                            "name":4
+                        }
+                    },
+                    "properties":{
+                            "key":"value"
+                    },
+                    "security":{
+                        "authentication":{
+                            "server-name":"servername",
+                            "digest":{
+                                "username":"username",
+                                "password":"password",
+                                "realm":"realm"
+                            }
+                        },
+                        "encryption":{
+                            "protocol":"TLSv1.2",
+                            "sni-hostname":"snihostname",
+                            "keystore":{
+                                "filename":"${project.build.testOutputDirectory}/keystore_client.jks",
+                                "password":"secret",
+                                "key-alias":"hotrod",
+                                "type":"JKS"
+                            },
+                            "truststore":{
+                                "filename":"${project.build.testOutputDirectory}/ca.jks",
+                                "type":"pem"
+                            }
+                        }
+                    }
+                }
+            }""";
 
 
       RemoteStoreConfiguration store = SerializationUtils.fromJson(json);
@@ -85,8 +84,6 @@ public class JsonRemoteStoreOnlyParsingTest {
       assertEquals("ccc", store.remoteCacheName());
       assertTrue(store.shared());
       assertFalse(store.ignoreModifications());
-      assertFalse(store.hotRodWrapping());
-      assertFalse(store.rawValues());
       assertEquals(60000, store.socketTimeout());
       assertEquals(ProtocolVersion.PROTOCOL_VERSION_31, store.protocol());
 
@@ -100,14 +97,10 @@ public class JsonRemoteStoreOnlyParsingTest {
       assertEquals(1, asyncExecutorProps.size());
       assertEquals(4, asyncExecutorProps.getLongProperty("name", 0L));
 
-      ConnectionPoolConfiguration poolConfiguration = store.connectionPool();
-      assertEquals(ExhaustedAction.CREATE_NEW, poolConfiguration.exhaustedAction());
-      assertEquals(110, poolConfiguration.maxActive());
-
       AuthenticationConfiguration authentication = store.security().authentication();
       assertEquals("servername", authentication.serverName());
       MechanismConfiguration mechanismConfiguration = authentication.mechanismConfiguration();
-      assertEquals(mechanismConfiguration.saslMechanism(), "DIGEST-MD5");
+      assertEquals("DIGEST-MD5", mechanismConfiguration.saslMechanism());
 
       SslConfiguration ssl = store.security().ssl();
       assertEquals("snihostname", ssl.sniHostName());

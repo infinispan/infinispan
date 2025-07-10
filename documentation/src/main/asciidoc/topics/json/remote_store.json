@@ -2,7 +2,6 @@
   "remote-store": {
     "cache": "my-cache",
     "shared": true,
-    "raw-values": true,
     "socket-timeout": 60000,
     "protocol-version": "2.9",
     "remote-server": [
@@ -11,10 +10,6 @@
         "port": 12222
       }
     ],
-    "connection-pool": {
-      "max-active": 110,
-      "exhausted-action": "CREATE_NEW"
-    },
     "async-executor": {
       "properties": {
         "name": 4

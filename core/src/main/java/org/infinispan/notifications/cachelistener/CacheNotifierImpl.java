@@ -26,7 +26,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
@@ -46,7 +45,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
-import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
@@ -63,6 +61,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.encoding.impl.DataConversionInternal;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.BasicComponentRegistry;
@@ -312,10 +311,9 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
    private K convertKey(CacheEntryListenerInvocation listenerInvocation, K key) {
       if (key == null) return null;
       DataConversion keyDataConversion = listenerInvocation.getKeyDataConversion();
-      Wrapper wrp = keyDataConversion.getWrapper();
-      Object unwrappedKey = keyDataConversion.getEncoder().fromStorage(wrp.unwrap(key));
       CacheEventFilter filter = listenerInvocation.getFilter();
       CacheEventConverter converter = listenerInvocation.getConverter();
+      Object unwrappedKey = keyDataConversion.unwrap(key);
       if (filter == null && converter == null) {
          if (listenerInvocation.useStorageFormat()) {
             return (K) unwrappedKey;
@@ -336,8 +334,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
    private V convertValue(CacheEntryListenerInvocation listenerInvocation, V value) {
       if (value == null) return null;
       DataConversion valueDataConversion = listenerInvocation.getValueDataConversion();
-      Wrapper wrp = valueDataConversion.getWrapper();
-      Object unwrappedValue = valueDataConversion.getEncoder().fromStorage(wrp.unwrap(value));
+      Object unwrappedValue = valueDataConversion.unwrap(value);
       CacheEventFilter filter = listenerInvocation.getFilter();
       CacheEventConverter converter = listenerInvocation.getConverter();
       if (filter == null && converter == null) {
@@ -1035,8 +1032,8 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
       FilterIndexingServiceProvider indexingProvider = null;
       boolean foundMethods = false;
       // We use identity for null as this means it was invoked by a non encoder cache
-      DataConversion keyConversion = keyDataConversion == null ? DataConversion.IDENTITY_KEY : keyDataConversion;
-      DataConversion valueConversion = valueDataConversion == null ? DataConversion.IDENTITY_VALUE : valueDataConversion;
+      DataConversion keyConversion = keyDataConversion == null ? DataConversionInternal.IDENTITY_KEY : keyDataConversion;
+      DataConversion valueConversion = valueDataConversion == null ? DataConversionInternal.IDENTITY_VALUE : valueDataConversion;
       Set<Class<? extends Annotation>> filterAnnotations = findListenerCallbacks(listener);
       if (filter instanceof IndexedFilter) {
          indexingProvider = findIndexingServiceProvider((IndexedFilter) filter);
@@ -1092,7 +1089,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
          }
          Queue<IntermediateOperation<?, ?, ?, ?>> intermediateOperations = new ArrayDeque<>();
 
-         if (keyDataConversion != DataConversion.IDENTITY_KEY && valueDataConversion != DataConversion.IDENTITY_VALUE) {
+         if (keyDataConversion != DataConversionInternal.IDENTITY_KEY && valueDataConversion != DataConversionInternal.IDENTITY_VALUE) {
             intermediateOperations.add(new MapOperation<>(EncoderEntryMapper.newCacheEntryMapper(
                   keyDataConversion, valueDataConversion, entryFactory)));
          }
@@ -1185,7 +1182,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
    @Override
    public <C> CompletionStage<Void> addListenerAsync(Object listener, CacheEventFilter<? super K, ? super V> filter,
                                CacheEventConverter<? super K, ? super V, C> converter, ClassLoader classLoader) {
-      return addListenerInternal(listener, DataConversion.IDENTITY_KEY, DataConversion.IDENTITY_VALUE, filter, converter, classLoader, false);
+      return addListenerInternal(listener, DataConversionInternal.IDENTITY_KEY, DataConversionInternal.IDENTITY_VALUE, filter, converter, classLoader, false);
    }
 
    /**
@@ -1294,8 +1291,8 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
       FilterIndexingServiceProvider indexingProvider = null;
       boolean foundMethods = false;
       // We use identity for null as this means it was invoked by a non encoder cache
-      DataConversion keyConversion = keyDataConversion == null ? DataConversion.IDENTITY_KEY : keyDataConversion;
-      DataConversion valueConversion = valueDataConversion == null ? DataConversion.IDENTITY_VALUE : valueDataConversion;
+      DataConversion keyConversion = keyDataConversion == null ? DataConversionInternal.IDENTITY_KEY : keyDataConversion;
+      DataConversion valueConversion = valueDataConversion == null ? DataConversionInternal.IDENTITY_VALUE : valueDataConversion;
       if (filter instanceof IndexedFilter) {
          indexingProvider = findIndexingServiceProvider((IndexedFilter) filter);
          if (indexingProvider != null) {
@@ -1386,13 +1383,10 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
             }
          }
 
-         if (!Objects.equals(chainedKeyDataConversion, keyDataConversion) ||
-               !Objects.equals(chainedValueDataConversion, valueDataConversion)) {
-            componentRegistry.wireDependencies(chainedKeyDataConversion, false);
-            componentRegistry.wireDependencies(chainedValueDataConversion, false);
-            intermediateOperations.add(new MapOperation<>(EncoderEntryMapper.newCacheEntryMapper(chainedKeyDataConversion,
-                  chainedValueDataConversion, entryFactory)));
-         }
+         componentRegistry.wireDependencies(chainedKeyDataConversion, false);
+         componentRegistry.wireDependencies(chainedValueDataConversion, false);
+         intermediateOperations.add(new MapOperation<>(EncoderEntryMapper.newCacheEntryMapper(chainedKeyDataConversion,
+               chainedValueDataConversion, entryFactory)));
 
          if (filter instanceof CacheEventFilterConverter && (filter == converter || converter == null)) {
             intermediateOperations.add(new MapOperation<>(CacheFilters.converterToFunction(

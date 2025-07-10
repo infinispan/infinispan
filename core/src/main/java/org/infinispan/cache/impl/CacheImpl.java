@@ -58,7 +58,6 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
-import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -759,26 +758,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V>
          resumePreviousOngoingTransaction(ongoingTransaction,
                "Had problems trying to resume a transaction after removeExpired()");
       }
-   }
-
-   @Override
-   public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> encoderClass) {
-      throw new UnsupportedOperationException("Encoding requires EncoderCache");
-   }
-
-   @Override
-   public AdvancedCache<?, ?> withKeyEncoding(Class<? extends Encoder> encoderClass) {
-      throw new UnsupportedOperationException("Encoding requires EncoderCache");
-   }
-
-   @Override
-   public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass) {
-      throw new UnsupportedOperationException("Encoding requires EncoderCache");
-   }
-
-   @Override
-   public AdvancedCache<K, V> withMediaType(String keyMediaType, String valueMediaType) {
-      throw new UnsupportedOperationException("Conversion requires EncoderCache");
    }
 
    @Override

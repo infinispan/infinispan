@@ -4,6 +4,7 @@ import static org.infinispan.transaction.TransactionMode.TRANSACTIONAL;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
+import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Factory;
@@ -39,8 +40,8 @@ public class HotRodUpgradeDynamicPojoTest extends HotRodUpgradePojoTest {
    protected void connectTargetCluster() {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       RemoteStoreConfigurationBuilder storeBuilder = cfg.persistence().addStore(RemoteStoreConfigurationBuilder.class);
-      storeBuilder.rawValues(false).marshaller(GenericJBossMarshaller.class).remoteCacheName(CACHE_NAME).segmented(false).shared(true)
-            .addServer().host("localhost").port(sourceCluster.getHotRodPort());
+      storeBuilder.marshaller(GenericJBossMarshaller.class).remoteCacheName(CACHE_NAME).segmented(false).shared(true)
+            .addServer().host("localhost").port(sourceCluster.getHotRodPort()).addProperty(RemoteStore.MIGRATION, "true");
       targetCluster.connectSource(CACHE_NAME, cfg.build().persistence().stores().get(0));
    }
 }

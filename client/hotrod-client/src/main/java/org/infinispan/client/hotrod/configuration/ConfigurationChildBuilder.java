@@ -107,12 +107,6 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder forceReturnValues(boolean forceReturnValues);
 
    /**
-    * @deprecated Since 12.0, does nothing and will be removed in 15.0
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   ConfigurationBuilder keySizeEstimate(int keySizeEstimate);
-
-   /**
     * Allows you to specify a custom {@link Marshaller} implementation to
     * serialize and deserialize user objects. This method is mutually exclusive with {@link #marshaller(Marshaller)}.
     */
@@ -187,12 +181,6 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder uri(String uri);
 
    /**
-    * @deprecated Since 12.0, does nothing and will be removed in 15.0
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   ConfigurationBuilder valueSizeEstimate(int valueSizeEstimate);
-
-   /**
     * It sets the maximum number of retries for each request. A valid value should be greater or equals than 0 (zero).
     * Zero means no retry will made in case of a network failure. It defaults to 10.
     */
@@ -216,12 +204,6 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder addJavaSerialAllowList(String... regEx);
 
    /**
-    * @deprecated Use {@link #addJavaSerialAllowList(String...)} instead. To be removed in 14.0.
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   ConfigurationBuilder addJavaSerialWhiteList(String... regEx);
-
-   /**
     * Sets the batch size of internal iterators (ie. <code>keySet().iterator()</code>. Defaults to 10_000
     * @param batchSize the batch size to set
     * @return this configuration builder with the batch size set
@@ -232,11 +214,6 @@ public interface ConfigurationChildBuilder {
     * Configures client-side statistics.
     */
    StatisticsConfigurationBuilder statistics();
-
-   /**
-    * Transaction configuration
-    */
-   TransactionConfigurationBuilder transaction();
 
    /**
     * Per-cache configuration

@@ -9,6 +9,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.testng.annotations.AfterMethod;
@@ -74,7 +75,8 @@ public class HotRodUpgradeMediaTypesTest extends AbstractInfinispanTest {
       targetCluster = new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
             .cache().name(CACHE_NAME).configuredWith(config)
             .remoteProtocolVersion(version)
-            .remotePort(sourceCluster.getHotRodPort()).remoteStoreWrapping(true).remoteStoreRawValues(true)
+            .remotePort(sourceCluster.getHotRodPort())
+            .remoteStoreProperty(RemoteStore.MIGRATION, "true")
             .build();
 
    }

@@ -21,9 +21,6 @@
                 name="configurationProperties">
             <props>
                 <prop
-                        key="infinispan.client.hotrod.value_size_estimate">1024
-                </prop>
-                <prop
                         key="infinispan.client.hotrod.tcp_no_delay">false
                 </prop>
                 <prop
@@ -36,7 +33,6 @@
     <bean
             id="infinispanRemoteCacheManagerConfiguredUsingSetters"
             class="org.infinispan.spring.remote.support.InfinispanRemoteCacheManagerFactoryBean"
-            p:keySizeEstimate="768"
             p:forceReturnValues="true"
             p:startAutomatically="false"
             p:readTimeout="500"

@@ -73,14 +73,6 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
       return this;
    }
 
-   /**
-    * @deprecated since 12.0. Use {@link #allowList()} instead. To be removed in 14.0.
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public WhiteListConfigurationBuilder whiteList() {
-      return new WhiteListConfigurationBuilder(allowListBuilder);
-   }
-
    @Override
    public void validate() {
       // No-op, no validation required
