@@ -3066,6 +3066,7 @@
                         <exclude>org/infinispan/objectfilter/impl/ql/parse/**</exclude>
                         <exclude>org/infinispan/server/hotrod/HotRodDecoder.class</exclude>
                         <exclude>**/*$___Marshaller_*.class</exclude>
+                        <exclude>org/infinispan/**/test/**</exclude>
                      </excludes>
                   </configuration>
                </plugin>
