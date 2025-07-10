@@ -19,7 +19,6 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.configuration.ExhaustedAction;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.HotRodURI;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
@@ -44,7 +43,6 @@ import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.remote.configuration.AuthenticationConfiguration;
-import org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration;
 import org.infinispan.persistence.remote.configuration.RemoteServerConfiguration;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.remote.configuration.SslConfiguration;
@@ -78,8 +76,8 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  */
 @ConfiguredBy(RemoteStoreConfiguration.class)
 public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
-
    private static final Log log = LogFactory.getLog(RemoteStore.class, Log.class);
+   public static final String MIGRATION = "migration";
 
    private RemoteStoreConfiguration configuration;
 
@@ -95,6 +93,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
    private BlockingManager blockingManager;
    private int segmentCount;
    private boolean supportsSegmentation;
+   private boolean migration;
 
    @Override
    public CompletionStage<Void> start(InitializationContext ctx) {
@@ -109,18 +108,19 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
       this.segmentCount = clusterConfiguration.hash().numSegments();
 
       final Marshaller marshaller;
+      migration = Boolean.parseBoolean(configuration.properties().getProperty(MIGRATION));
       if (configuration.marshaller() != null) {
          marshaller = Util.getInstance(configuration.marshaller(), ctx.getCache().getAdvancedCache().getClassLoader());
       } else {
-         // If rawValues are required, then it's necessary to utilise the user marshaller directly to prevent objects being wrapped with a MarshallableUserObject
-         marshaller = configuration.rawValues() ? ctx.getPersistenceMarshaller().getUserMarshaller() : ctx.getPersistenceMarshaller();
+         // If we're migrating, then it's necessary to utilise the user marshaller directly to prevent objects being wrapped with a MarshallableUserObject
+         marshaller = migration ? ctx.getPersistenceMarshaller().getUserMarshaller() : ctx.getPersistenceMarshaller();
       }
 
       if (clusterConfiguration.cacheMode().isClustered() && !configuration.shared()) {
          throw log.clusteredRequiresBeingShared();
       }
 
-      if (configuration.rawValues() && iceFactory == null) {
+      if (migration && iceFactory == null) {
          iceFactory = ComponentRegistry.componentOf(ctx.getCache(), InternalEntryFactory.class);
       }
 
@@ -172,7 +172,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
 
                MediaType localKeyStorageType = storageConfigurationManager.getKeyStorageMediaType();
                // When it isn't raw values we store as a Marshalled entry, so we have object storage for the value
-               MediaType localValueStorageType = configuration.rawValues() ?
+               MediaType localValueStorageType = migration ?
                      storageConfigurationManager.getValueStorageMediaType() : MediaType.APPLICATION_OBJECT;
 
                // Older servers don't provide media type information
@@ -239,7 +239,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
 
    @Override
    public CompletionStage<MarshallableEntry<K, V>> load(int segment, Object key) {
-      if (configuration.rawValues()) {
+      if (migration) {
          Object unwrappedKey = unwrap(key);
          return remoteCache.getWithMetadataAsync(unwrappedKey).thenApplyAsync(metadataValue -> {
             if (metadataValue == null) {
@@ -296,7 +296,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
    public Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter, boolean includeValues) {
       // We assume our segments don't map to the remote node when segmentation is disabled
       IntSet segmentsToUse = configuration.segmented() ? segments : null;
-      if (configuration.rawValues()) {
+      if (migration) {
          Flowable<Map.Entry<Object, MetadataValue<Object>>> entryFlowable = Flowable.fromPublisher(remoteCache.publishEntriesWithMetadata(segmentsToUse, 512));
          if (filter != null) {
             entryFlowable = entryFlowable.filter(e -> filter.test(wrap(e.getKey())));
@@ -388,7 +388,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
    }
 
    private Object getValue(MarshallableEntry entry) {
-      if (configuration.rawValues()) {
+      if (migration) {
          return unwrap(entry.getValue());
       }
       return entry.getMarshalledValue();
@@ -479,26 +479,19 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
                .host(s.host())
                .port(s.port());
       }
-      ConnectionPoolConfiguration poolConfiguration = configuration.connectionPool();
-      Long connectionTimeout = configuration.connectionTimeout();
-      Long socketTimeout = configuration.socketTimeout();
+
+      long connectionTimeout = configuration.connectionTimeout();
+      long socketTimeout = configuration.socketTimeout();
 
       builder
             .balancingStrategy(configuration.balancingStrategy())
-            .connectionPool()
-            .exhaustedAction(ExhaustedAction.valueOf(poolConfiguration.exhaustedAction().toString()))
-            .maxActive(poolConfiguration.maxActive())
-            .minIdle(poolConfiguration.minIdle())
-            .minEvictableIdleTime(poolConfiguration.minEvictableIdleTime())
-            .connectionTimeout(connectionTimeout.intValue())
+            .connectionTimeout((int) connectionTimeout)
             .forceReturnValues(configuration.forceReturnValues())
-            .keySizeEstimate(configuration.keySizeEstimate())
             .marshaller(marshaller)
             .asyncExecutorFactory().factoryClass(configuration.asyncExecutorFactory().factory().getClass())
             .asyncExecutorFactory().withExecutorProperties(configuration.asyncExecutorFactory().properties())
-            .socketTimeout(socketTimeout.intValue())
+            .socketTimeout((int) socketTimeout)
             .tcpNoDelay(configuration.tcpNoDelay())
-            .valueSizeEstimate(configuration.valueSizeEstimate())
             .version(configuration.protocol() == null ? ProtocolVersion.DEFAULT_PROTOCOL_VERSION : configuration.protocol());
 
       SslConfiguration ssl = configuration.security().ssl();

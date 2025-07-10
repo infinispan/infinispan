@@ -19,7 +19,6 @@ import org.infinispan.CacheCollection;
 import org.infinispan.CachePublisher;
 import org.infinispan.CacheSet;
 import org.infinispan.LockedStream;
-import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -102,16 +101,6 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
       } else {
          return newInstance(this.cacheImplementation, lockOwner, 0L);
       }
-   }
-
-   @Override
-   public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> encoderClass) {
-      throw new UnsupportedOperationException("Encoding requires EncoderCache");
-   }
-
-   @Override
-   public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass) {
-      throw new UnsupportedOperationException("Encoding requires EncoderCache");
    }
 
    @Override

@@ -5,17 +5,13 @@ import static org.infinispan.configuration.cache.AbstractStoreConfiguration.SEGM
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.BALANCING_STRATEGY;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.CONNECTION_TIMEOUT;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.FORCE_RETURN_VALUES;
-import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.HOTROD_WRAPPING;
-import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.KEY_SIZE_ESTIMATE;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.MARSHALLER;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.PROTOCOL_VERSION;
-import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.RAW_VALUES;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.REMOTE_CACHE_CONTAINER;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.REMOTE_CACHE_NAME;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.SOCKET_TIMEOUT;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.TCP_NO_DELAY;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.URI;
-import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.VALUE_SIZE_ESTIMATE;
 import static org.infinispan.persistence.remote.logging.Log.CONFIG;
 
 import java.util.ArrayList;
@@ -86,24 +82,6 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
       return this;
    }
 
-   @Deprecated(forRemoval=true, since = "12.0")
-   @Override
-   public RemoteStoreConfigurationBuilder hotRodWrapping(boolean hotRodWrapping) {
-      attributes.attribute(HOTROD_WRAPPING).set(hotRodWrapping);
-      this.rawValues(true);
-      return this;
-   }
-
-   /**
-    * @deprecated Since 12.0, does nothing and will be removed in 15.0
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   @Override
-   public RemoteStoreConfigurationBuilder keySizeEstimate(int keySizeEstimate) {
-      attributes.attribute(KEY_SIZE_ESTIMATE).set(keySizeEstimate);
-      return this;
-   }
-
    @Override
    public RemoteStoreConfigurationBuilder marshaller(String marshaller) {
       attributes.attribute(MARSHALLER).set(marshaller);
@@ -119,13 +97,6 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
    @Override
    public RemoteStoreConfigurationBuilder protocolVersion(ProtocolVersion protocolVersion) {
       attributes.attribute(PROTOCOL_VERSION).set(protocolVersion);
-      return this;
-   }
-
-   @Deprecated(forRemoval=true, since = "12.0")
-   @Override
-   public RemoteStoreConfigurationBuilder rawValues(boolean rawValues) {
-      attributes.attribute(RAW_VALUES).set(rawValues);
       return this;
    }
 
@@ -160,15 +131,6 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
    @Override
    public RemoteStoreConfigurationBuilder tcpNoDelay(boolean tcpNoDelay) {
       attributes.attribute(TCP_NO_DELAY).set(tcpNoDelay);
-      return this;
-   }
-
-   /**
-    * @deprecated Since 12.0, does nothing and will be removed in 15.0
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public RemoteStoreConfigurationBuilder valueSizeEstimate(int valueSizeEstimate) {
-      attributes.attribute(VALUE_SIZE_ESTIMATE).set(valueSizeEstimate);
       return this;
    }
 
@@ -235,11 +197,6 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
       for (RemoteServerConfigurationBuilder server : servers) {
          server.validate();
       }
-
-      if (attributes.attribute(HOTROD_WRAPPING).get() && attributes.attribute(MARSHALLER).get() != null) {
-         throw CONFIG.cannotEnableHotRodWrapping();
-      }
-
       if (attributes.attribute(SEGMENTED).get() && builder.clustering().hash().groups().isEnabled()) {
          throw CONFIG.segmentationNotSupportedWithGroups();
       }

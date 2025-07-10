@@ -11,6 +11,7 @@ import javax.cache.integration.CacheLoader;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.encoding.impl.DataConversionInternal;
 import org.infinispan.jcache.Exceptions;
 import org.infinispan.jcache.Expiration;
 import org.infinispan.marshall.persistence.impl.MarshallableEntryImpl;
@@ -36,8 +37,8 @@ public class JCacheLoaderAdapter<K, V> implements NonBlockingStore<K, V> {
       // Empty constructor required so that it can be instantiated with
       // reflection. This is a limitation of the way the current cache
       // loader configuration works.
-      this.keyDataConversion = DataConversion.IDENTITY_KEY;
-      this.valueDataConversion = DataConversion.IDENTITY_KEY;
+      this.keyDataConversion = DataConversionInternal.IDENTITY_KEY;
+      this.valueDataConversion = DataConversionInternal.IDENTITY_KEY;
    }
 
    public void setCacheLoader(CacheLoader<K, V> delegate) {

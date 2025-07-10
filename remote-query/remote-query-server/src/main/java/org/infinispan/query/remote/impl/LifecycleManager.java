@@ -64,9 +64,6 @@ public final class LifecycleManager implements ModuleLifecycle {
    private void initProtobufMetadataManager(BasicComponentRegistry bcr) {
       ProtobufMetadataManagerImpl protobufMetadataManager = new ProtobufMetadataManagerImpl();
       bcr.registerComponent(ProtobufMetadataManager.class, protobufMetadataManager, true).running();
-
-      EncoderRegistry encoderRegistry = bcr.getComponent(EncoderRegistry.class).wired();
-      encoderRegistry.registerWrapper(ProtobufWrapper.INSTANCE);
    }
 
    @Override

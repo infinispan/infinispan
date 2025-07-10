@@ -44,7 +44,7 @@ public class SecureScriptingTaskManagerTest extends SingleCacheManagerTest {
    protected static final String SCRIPT_NAME = "testRole.js";
    protected TaskManager taskManager;
 
-   static final Subject ADMIN = TestingUtil.makeSubject("admin", ScriptingManager.SCRIPT_MANAGER_ROLE);
+   static final Subject ADMIN = TestingUtil.makeSubject("admin");
    static final Subject RUNNER = TestingUtil.makeSubject("runner", "runner");
    static final Subject PHEIDIPPIDES = TestingUtil.makeSubject("pheidippides", "pheidippides");
 

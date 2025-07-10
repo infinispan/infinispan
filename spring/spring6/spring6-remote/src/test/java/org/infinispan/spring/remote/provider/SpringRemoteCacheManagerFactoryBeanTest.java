@@ -3,13 +3,11 @@ package org.infinispan.spring.remote.provider;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.ASYNC_EXECUTOR_FACTORY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.FORCE_RETURN_VALUES;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_ALLOWLIST;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_SIZE_ESTIMATE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MARSHALLER;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_BALANCING_STRATEGY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_LIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_KEEP_ALIVE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_NO_DELAY;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.VALUE_SIZE_ESTIMATE;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -395,50 +393,6 @@ public class SpringRemoteCacheManagerFactoryBeanTest extends AbstractInfinispanT
                   + ") should have overridden property 'requestBalancingStrategy'. However, it didn't.",
             expectedRequestBalancingStrategy, remoteCacheManager.getNativeCacheManager()
                   .getConfiguration().properties().get(REQUEST_BALANCING_STRATEGY));
-   }
-
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.remote.provider.SpringRemoteCacheManagerFactoryBean#setKeySizeEstimate(int)}
-    * .
-    *
-    * @throws Exception
-    */
-   @Test
-   public final void setKeySizeEstimateShouldOverrideDefaultKeySizeEstimate() throws Exception {
-      final int expectedKeySizeEstimate = -123456;
-      objectUnderTest = new SpringRemoteCacheManagerFactoryBean();
-      objectUnderTest.setKeySizeEstimate(expectedKeySizeEstimate);
-      objectUnderTest.afterPropertiesSet();
-
-      final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
-
-      assertEquals("setKeySizeEstimate(" + expectedKeySizeEstimate
-                         + ") should have overridden property 'keySizeEstimate'. However, it didn't.",
-                   String.valueOf(expectedKeySizeEstimate), remoteCacheManager.getNativeCacheManager()
-                  .getConfiguration().properties().get(KEY_SIZE_ESTIMATE));
-   }
-
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.remote.provider.SpringRemoteCacheManagerFactoryBean#setValueSizeEstimate(int)}
-    * .
-    *
-    * @throws Exception
-    */
-   @Test
-   public final void setValueSizeEstimateShouldOverrideDefaultValueSizeEstimate() throws Exception {
-      final int expectedValueSizeEstimate = -3456789;
-      objectUnderTest = new SpringRemoteCacheManagerFactoryBean();
-      objectUnderTest.setValueSizeEstimate(expectedValueSizeEstimate);
-      objectUnderTest.afterPropertiesSet();
-
-      final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
-
-      assertEquals("setValueSizeEstimate(" + expectedValueSizeEstimate
-                         + ") should have overridden property 'valueSizeEstimate'. However, it didn't.",
-                   String.valueOf(expectedValueSizeEstimate), remoteCacheManager
-                  .getNativeCacheManager().getConfiguration().properties().get(VALUE_SIZE_ESTIMATE));
    }
 
    /**

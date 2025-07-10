@@ -13,16 +13,16 @@ import org.infinispan.metadata.Metadata;
  */
 public interface CacheEventFilter<K, V> {
    /**
-    * Whether or not this event should be raised to the listener it is attached to.
+    * Whether this event should be raised to the listener it is attached to.
     * @param key The key for the entry that was changed for the event
     * @param oldValue The previous value before the event takes place
     * @param oldMetadata The old value before the event takes place
     * @param newValue The new value for the entry after the event takes place
     * @param newMetadata The new metadata for the entry after the event takes place
     * @param eventType The type of event that is being raised
-    * @return Whether or not to notify the listener
+    * @return Whether to notify the listener
     */
-   public boolean accept(K key, V oldValue, Metadata oldMetadata, V newValue, Metadata newMetadata, EventType eventType);
+   boolean accept(K key, V oldValue, Metadata oldMetadata, V newValue, Metadata newMetadata, EventType eventType);
 
    /**
     * @return The desired data format to be used in the accept operation. If null, the filter will receive data as it's stored.

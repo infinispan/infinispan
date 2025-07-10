@@ -8,19 +8,12 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_REA
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_SERVER_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_USERNAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CLUSTER_PROPERTIES_PREFIX;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_EXHAUSTED_ACTION;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_MAX_ACTIVE;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_MAX_PENDING_REQUESTS;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_MAX_WAIT;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_MIN_EVICTABLE_IDLE_TIME;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_MIN_IDLE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECT_TIMEOUT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.HASH_FUNCTION_PREFIX;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_ALLOWLIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JMX;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JMX_DOMAIN;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JMX_NAME;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_SIZE_ESTIMATE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_FILE_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_PASSWORD;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MAX_RETRIES;
@@ -42,7 +35,6 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRUST_ST
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRUST_STORE_PASSWORD;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.USE_AUTH;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.USE_SSL;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.VALUE_SIZE_ESTIMATE;
 import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -96,24 +88,11 @@ public class ConfigurationTest extends AbstractInfinispanTest {
    static {
       OPTIONS.put(ASYNC_EXECUTOR_FACTORY, c -> c.asyncExecutorFactory().factoryClass());
       OPTIONS.put(REQUEST_BALANCING_STRATEGY, c -> c.balancingStrategyFactory().get().getClass());
-      OPTIONS.put("maxActive", c -> c.connectionPool().maxActive());
-      OPTIONS.put(CONNECTION_POOL_MAX_ACTIVE, c -> c.connectionPool().maxActive());
-      OPTIONS.put("maxWait", c -> c.connectionPool().maxWait());
-      OPTIONS.put(CONNECTION_POOL_MAX_WAIT, c -> c.connectionPool().maxWait());
-      OPTIONS.put("minIdle", c -> c.connectionPool().minIdle());
-      OPTIONS.put(CONNECTION_POOL_MIN_IDLE, c -> c.connectionPool().minIdle());
-      OPTIONS.put("exhaustedAction", c -> c.connectionPool().exhaustedAction());
-      OPTIONS.put(CONNECTION_POOL_EXHAUSTED_ACTION, c -> c.connectionPool().exhaustedAction());
-      OPTIONS.put("minEvictableIdleTimeMillis", c -> c.connectionPool().minEvictableIdleTime());
-      OPTIONS.put(CONNECTION_POOL_MIN_EVICTABLE_IDLE_TIME, c -> c.connectionPool().minEvictableIdleTime());
-      OPTIONS.put(CONNECTION_POOL_MAX_PENDING_REQUESTS, c -> c.connectionPool().maxPendingRequests());
       OPTIONS.put(CONNECT_TIMEOUT, Configuration::connectionTimeout);
       OPTIONS.put(PROTOCOL_VERSION, Configuration::version);
       OPTIONS.put(SO_TIMEOUT, Configuration::socketTimeout);
       OPTIONS.put(TCP_NO_DELAY, Configuration::tcpNoDelay);
       OPTIONS.put(TCP_KEEP_ALIVE, Configuration::tcpKeepAlive);
-      OPTIONS.put(KEY_SIZE_ESTIMATE, Configuration::keySizeEstimate);
-      OPTIONS.put(VALUE_SIZE_ESTIMATE, Configuration::valueSizeEstimate);
       OPTIONS.put(MAX_RETRIES, Configuration::maxRetries);
       OPTIONS.put(USE_SSL, c -> c.security().ssl().enabled());
       OPTIONS.put(KEY_STORE_FILE_NAME, c -> c.security().ssl().keyStoreFileName());
@@ -134,7 +113,6 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       OPTIONS.put(JAVA_SERIAL_ALLOWLIST, Configuration::serialAllowList);
 
       TYPES.put(Boolean.class, b -> Boolean.toString((Boolean) b));
-      TYPES.put(ExhaustedAction.class, Object::toString);
       TYPES.put(Class.class, c -> ((Class<?>) c).getName());
       TYPES.put(Integer.class, Object::toString);
       TYPES.put(Long.class, Object::toString);
@@ -185,19 +163,11 @@ public class ConfigurationTest extends AbstractInfinispanTest {
             .factoryClass(SomeAsyncExecutorFactory.class)
             .balancingStrategy(SomeRequestBalancingStrategy.class)
             .connectionPool()
-            .maxActive(100)
-            .maxWait(1000)
-            .minIdle(10)
-            .minEvictableIdleTime(12000)
-            .exhaustedAction(ExhaustedAction.WAIT)
-            .maxPendingRequests(12)
             .connectionTimeout(100)
             .version(ProtocolVersion.PROTOCOL_VERSION_30)
             .consistentHashImpl(2, SomeCustomConsistentHashV2.class)
             .socketTimeout(100)
             .tcpNoDelay(false)
-            .keySizeEstimate(128)
-            .valueSizeEstimate(1024)
             .maxRetries(0)
             .tcpKeepAlive(true)
             .security()
@@ -240,26 +210,11 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       p.setProperty(ASYNC_EXECUTOR_FACTORY, "org.infinispan.client.hotrod.SomeAsyncExecutorFactory");
       p.setProperty(REQUEST_BALANCING_STRATEGY, "org.infinispan.client.hotrod.SomeRequestBalancingStrategy");
       p.setProperty(HASH_FUNCTION_PREFIX + "." + 2, "org.infinispan.client.hotrod.SomeCustomConsistentHashV2");
-      p.setProperty(CONNECTION_POOL_MAX_ACTIVE, "100");
-      p.setProperty("maxTotal", "150");
-      p.setProperty(CONNECTION_POOL_MAX_WAIT, "1000");
-      p.setProperty("maxIdle", "20");
-      p.setProperty(CONNECTION_POOL_MIN_IDLE, "10");
-      p.setProperty(CONNECTION_POOL_EXHAUSTED_ACTION, ExhaustedAction.WAIT.name());
-      p.setProperty("numTestsPerEvictionRun", "5");
-      p.setProperty("timeBetweenEvictionRunsMillis", "15000");
-      p.setProperty(CONNECTION_POOL_MIN_EVICTABLE_IDLE_TIME, "12000");
-      p.setProperty(CONNECTION_POOL_MAX_PENDING_REQUESTS, "12");
-      p.setProperty("testOnBorrow", "true");
-      p.setProperty("testOnReturn", "true");
-      p.setProperty("testWhileIdle", "false");
       p.setProperty(CONNECT_TIMEOUT, "100");
       p.setProperty(PROTOCOL_VERSION, "3.0");
       p.setProperty(SO_TIMEOUT, "100");
       p.setProperty(TCP_NO_DELAY, "false");
       p.setProperty(TCP_KEEP_ALIVE, "true");
-      p.setProperty(KEY_SIZE_ESTIMATE, "128");
-      p.setProperty(VALUE_SIZE_ESTIMATE, "1024");
       p.setProperty(MAX_RETRIES, "0");
       p.setProperty(USE_SSL, "true");
       p.setProperty(KEY_STORE_FILE_NAME, "my-key-store.file");
@@ -290,7 +245,6 @@ public class ConfigurationTest extends AbstractInfinispanTest {
 
       ConfigurationBuilder builderWithOtherTypes = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       p.replace(SO_TIMEOUT, 100); // adding an integer
-      p.replace(CONNECTION_POOL_MAX_ACTIVE, Short.valueOf("100")); //adding a short
       configuration = builderWithOtherTypes.withProperties(p).build();
       validateConfiguration(configuration);
 
@@ -398,15 +352,6 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       System.setProperty("test.property.marshaller", "org.infinispan.commons.marshall.ProtoStreamMarshaller");
       System.setProperty("test.property.tcp_no_delay", "false");
       System.setProperty("test.property.tcp_keep_alive", "true");
-      System.setProperty("test.property.key_size_estimate", "128");
-      System.setProperty("test.property.value_size_estimate", "256");
-      System.setProperty("test.property.maxTotal", "79");
-      System.setProperty("test.property.maxActive", "78");
-      System.setProperty("test.property.maxIdle", "77");
-      System.setProperty("test.property.minIdle", "76");
-      System.setProperty("test.property.timeBetweenEvictionRunsMillis", "1000");
-      System.setProperty("test.property.minEvictableIdleTimeMillis", "2000");
-      System.setProperty("test.property.testWhileIdle", "true");
       System.setProperty("test.property.use_auth", "true");
       System.setProperty("test.property.auth_username", "testuser");
       System.setProperty("test.property.auth_password", "testpassword");
@@ -424,11 +369,6 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       assertEquals(ProtoStreamMarshaller.class, cfg.marshallerClass());
       assertFalse(cfg.tcpNoDelay());
       assertTrue(cfg.tcpKeepAlive());
-      assertEquals(128, cfg.keySizeEstimate());
-      assertEquals(256, cfg.valueSizeEstimate());
-      assertEquals(78, cfg.connectionPool().maxActive());
-      assertEquals(76, cfg.connectionPool().minIdle());
-      assertEquals(2000, cfg.connectionPool().minEvictableIdleTime());
       assertTrue(cfg.security().authentication().enabled());
       assertEquals("PLAIN", cfg.security().authentication().saslMechanism());
       CallbackHandler callbackHandler = cfg.security().authentication().callbackHandler();
@@ -568,22 +508,10 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       assertEqualsConfig(SomeRequestBalancingStrategy.class, REQUEST_BALANCING_STRATEGY, configuration);
       assertNull(configuration.consistentHashImpl(1));
       assertEquals(SomeCustomConsistentHashV2.class, configuration.consistentHashImpl(2));
-      assertEqualsConfig(100, "maxActive", configuration);
-      assertEqualsConfig(100, CONNECTION_POOL_MAX_ACTIVE, configuration);
-      assertEqualsConfig(1000L, "maxWait", configuration);
-      assertEqualsConfig(1000L, CONNECTION_POOL_MAX_WAIT, configuration);
-      assertEqualsConfig(10, "minIdle", configuration);
-      assertEqualsConfig(10, CONNECTION_POOL_MIN_IDLE, configuration);
-      assertEqualsConfig(ExhaustedAction.WAIT, CONNECTION_POOL_EXHAUSTED_ACTION, configuration);
-      assertEqualsConfig(12000L, "minEvictableIdleTimeMillis", configuration);
-      assertEqualsConfig(12000L, CONNECTION_POOL_MIN_EVICTABLE_IDLE_TIME, configuration);
-      assertEqualsConfig(12, CONNECTION_POOL_MAX_PENDING_REQUESTS, configuration);
       assertEqualsConfig(100, CONNECT_TIMEOUT, configuration);
       assertEqualsConfig(100, SO_TIMEOUT, configuration);
       assertEqualsConfig(false, TCP_NO_DELAY, configuration);
       assertEqualsConfig(true, TCP_KEEP_ALIVE, configuration);
-      assertEqualsConfig(128, KEY_SIZE_ESTIMATE, configuration);
-      assertEqualsConfig(1024, VALUE_SIZE_ESTIMATE, configuration);
       assertEqualsConfig(0, MAX_RETRIES, configuration);
       assertEqualsConfig(true, USE_SSL, configuration);
       assertEqualsConfig("my-key-store.file", KEY_STORE_FILE_NAME, configuration);
@@ -710,7 +638,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       assertEquals("host3", configuration.servers().get(2).host());
       assertEquals(11222, configuration.servers().get(2).port());
       assertFalse(configuration.security().ssl().enabled());
-      configuration = HotRodURI.create("hotrods://user:password@host1:11222,host2:11322?trust_store_path=cert.pem&sni_host_name=infinispan.test").toConfigurationBuilder().build();
+      configuration = HotRodURI.create("hotrods://user:password@host1:11222,host2:11322?trust_store_file_name=cert.pem&trust_store_type=pem&sni_host_name=infinispan.test").toConfigurationBuilder().build();
       assertEquals(2, configuration.servers().size());
       assertEquals("host1", configuration.servers().get(0).host());
       assertEquals(11222, configuration.servers().get(0).port());

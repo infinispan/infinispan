@@ -1,8 +1,7 @@
 <distributed-cache>
   <persistence>
     <remote-store xmlns="urn:infinispan:config:store:remote:{schemaversion}"
-                  cache="mycache"
-                  raw-values="true">
+                  cache="mycache">
       <remote-server host="one"
                      port="12111" />
       <remote-server host="two" />

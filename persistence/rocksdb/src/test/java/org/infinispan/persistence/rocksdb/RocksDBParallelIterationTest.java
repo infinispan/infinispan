@@ -21,8 +21,7 @@ public class RocksDBParallelIterationTest extends ParallelIterationTest {
       cb.persistence()
             .addStore(RocksDBStoreConfigurationBuilder.class)
             .location(tmpDirectory + "/data")
-            .expiredLocation(tmpDirectory + "/expiry")
-            .clearThreshold(2);
+            .expiredLocation(tmpDirectory + "/expiry");
    }
 
    @Override

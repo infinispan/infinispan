@@ -12,13 +12,12 @@
          <persistence passivation="false">
             <remote-store xmlns="urn:infinispan:config:store:remote:${infinispan.core.schema.version}"
                           cache="RemoteStoreConfigTest" preload="false" purge="false" shared="true" read-only="false"
-                          hotrod-wrapping="false" raw-values="false" socket-timeout="60000"
+                          socket-timeout="60000"
                           tcp-no-delay="true"
                           balancing-strategy="org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy"
-                          key-size-estimate="62" value-size-estimate="512" force-return-values="false"
+                          force-return-values="false"
                           segmented="false">
                <remote-server host="127.0.0.1" port="19711" outbound-socket-binding="hotrod-server-1"/>
-               <connection-pool max-active="99" max-pending-requests="97" min-idle="98"/>
                <async-executor factory="org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory">
                   <property name="pool_size">1</property>
                   <property name="queue_size">10000</property>

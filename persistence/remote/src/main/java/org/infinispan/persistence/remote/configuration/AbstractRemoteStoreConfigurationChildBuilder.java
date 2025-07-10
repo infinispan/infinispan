@@ -52,20 +52,6 @@ public abstract class AbstractRemoteStoreConfigurationChildBuilder<S> extends Ab
    }
 
    @Override
-   public RemoteStoreConfigurationBuilder hotRodWrapping(boolean hotRodWrapping) {
-      return builder.hotRodWrapping(hotRodWrapping);
-   }
-
-   /**
-    * @deprecated Since 12.0, does nothing and will be removed in 15.0
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   @Override
-   public RemoteStoreConfigurationBuilder keySizeEstimate(int keySizeEstimate) {
-      return builder.keySizeEstimate(keySizeEstimate);
-   }
-
-   @Override
    public RemoteStoreConfigurationBuilder marshaller(String marshaller) {
       return builder.marshaller(marshaller);
    }
@@ -78,11 +64,6 @@ public abstract class AbstractRemoteStoreConfigurationChildBuilder<S> extends Ab
    @Override
    public RemoteStoreConfigurationBuilder protocolVersion(ProtocolVersion protocolVersion) {
       return builder.protocolVersion(protocolVersion);
-   }
-
-   @Override
-   public RemoteStoreConfigurationBuilder rawValues(boolean rawValues) {
-      return builder.rawValues(rawValues);
    }
 
    @Override
@@ -108,15 +89,6 @@ public abstract class AbstractRemoteStoreConfigurationChildBuilder<S> extends Ab
    @Override
    public RemoteStoreConfigurationBuilder tcpNoDelay(boolean tcpNoDelay) {
       return builder.tcpNoDelay(tcpNoDelay);
-   }
-
-   /**
-    * @deprecated Since 12.0, does nothing and will be removed in 15.0
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   @Override
-   public RemoteStoreConfigurationBuilder valueSizeEstimate(int valueSizeEstimate) {
-      return builder.valueSizeEstimate(valueSizeEstimate);
    }
 
    public RemoteStoreConfigurationBuilder getRemoteStoreBuilder() {

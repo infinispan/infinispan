@@ -46,11 +46,11 @@ public class RemoteStoreMixedAccessTest extends AbstractInfinispanTest {
 
       ConfigurationBuilder clientBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       clientBuilder.persistence().addStore(RemoteStoreConfigurationBuilder.class)
-         .rawValues(true)
          .segmented(false)
          .addServer()
             .host(hrServer.getHost())
-            .port(hrServer.getPort());
+            .port(hrServer.getPort())
+            .addProperty(RemoteStore.MIGRATION, "true");
       clientCacheManager = TestCacheManagerFactory.createCacheManager(clientBuilder);
       clientCache = clientCacheManager.getCache();
 
