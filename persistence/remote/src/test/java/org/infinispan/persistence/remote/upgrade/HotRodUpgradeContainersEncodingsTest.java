@@ -4,6 +4,7 @@ import java.util.Properties;
 
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.configuration.global.RemoteContainersConfigurationBuilder;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -27,6 +28,7 @@ public class HotRodUpgradeContainersEncodingsTest extends HotRodUpgradeEncodings
       return new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
             .cache().name(CACHE_NAME).remotePort(sourceCluster.getHotRodPort())
             .useRemoteContainer(CONTAINER_NAME).configuredWith(getConfigurationBuilder())
+            .remoteStoreProperty(RemoteStore.MIGRATION, "true")
             .build(() -> {
                GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
                RemoteContainersConfigurationBuilder rccb = global.addModule(RemoteContainersConfigurationBuilder.class);

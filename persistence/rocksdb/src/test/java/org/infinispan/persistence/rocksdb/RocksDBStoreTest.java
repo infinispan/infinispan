@@ -80,7 +80,6 @@ public class RocksDBStoreTest extends BaseNonBlockingStoreTest {
       cfg.segmented(segmented);
       cfg.location(tmpDirectory);
       cfg.expiredLocation(tmpDirectory);
-      cfg.clearThreshold(2);
       return cfg;
    }
 

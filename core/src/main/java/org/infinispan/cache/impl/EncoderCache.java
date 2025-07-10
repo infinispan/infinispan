@@ -25,9 +25,7 @@ import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CachePublisher;
 import org.infinispan.CacheSet;
-import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.InjectiveFunction;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.concurrent.CompletionStages;
@@ -52,7 +50,7 @@ import org.infinispan.util.function.SerializableFunction;
 import org.reactivestreams.Publisher;
 
 /**
- * Cache decoration that makes use of the {@link Encoder} and {@link Wrapper} to convert between storage value and
+ * Cache decoration that makes use of the {@link org.infinispan.commons.dataconversion.Transcoder} to convert between storage value and
  * read/write value.
  *
  * @since 9.1
@@ -523,53 +521,10 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       componentRegistry.wireDependencies(valueDataConversion, true);
    }
 
-   @Override
-   public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass) {
-      checkSubclass(keyEncoderClass, Encoder.class);
-      checkSubclass(valueEncoderClass, Encoder.class);
-
-      DataConversion newKeyDataConversion = keyDataConversion.withEncoding(keyEncoderClass);
-      DataConversion newValueDataConversion = valueDataConversion.withEncoding(valueEncoderClass);
-      EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, entryFactory, componentRegistry,
-                                                           newKeyDataConversion, newValueDataConversion);
-      encoderCache.lookupEncoderWrapper();
-      return encoderCache;
-   }
-
-   @Override
-   public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> encoderClass) {
-      checkSubclass(encoderClass, Encoder.class);
-
-      DataConversion newKeyDataConversion = keyDataConversion.withEncoding(encoderClass);
-      DataConversion newValueDataConversion = valueDataConversion.withEncoding(encoderClass);
-      EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, entryFactory, componentRegistry,
-                                                           newKeyDataConversion, newValueDataConversion);
-      encoderCache.lookupEncoderWrapper();
-      return encoderCache;
-   }
-
-   @Override
-   public AdvancedCache<K, V> withKeyEncoding(Class<? extends Encoder> encoderClass) {
-      checkSubclass(encoderClass, Encoder.class);
-
-      DataConversion newKeyDataConversion = keyDataConversion.withEncoding(encoderClass);
-      EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, entryFactory, componentRegistry,
-                                                           newKeyDataConversion, valueDataConversion);
-      encoderCache.lookupEncoderWrapper();
-      return encoderCache;
-   }
-
    private void checkSubclass(Class<?> configured, Class<?> required) {
       if (!required.isAssignableFrom(configured)) {
          throw CONTAINER.invalidEncodingClass(configured, required);
       }
-   }
-
-   @Override
-   public AdvancedCache<K, V> withMediaType(String keyMediaType, String valueMediaType) {
-      MediaType kType = MediaType.fromString(keyMediaType);
-      MediaType vType = MediaType.fromString(valueMediaType);
-      return withMediaType(kType, vType);
    }
 
    @Override

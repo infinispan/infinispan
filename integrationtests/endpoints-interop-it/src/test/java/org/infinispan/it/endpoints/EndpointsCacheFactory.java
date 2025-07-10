@@ -22,7 +22,6 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;
 import org.infinispan.commons.marshall.Marshaller;
@@ -252,7 +251,7 @@ public class EndpointsCacheFactory<K, V> {
    }
 
    public Cache<K, V> getEmbeddedCache() {
-      return (Cache<K, V>) embeddedCache.getAdvancedCache().withEncoding(IdentityEncoder.class);
+      return embeddedCache.getAdvancedCache();
    }
 
    public RemoteCache<K, V> getHotRodCache() {

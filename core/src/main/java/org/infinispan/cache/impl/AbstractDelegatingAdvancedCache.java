@@ -18,7 +18,6 @@ import org.infinispan.CacheSet;
 import org.infinispan.LockedStream;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -491,46 +490,6 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    @Override
    public CompletableFuture<Boolean> removeMaxIdleExpired(K key, V value) {
       return cache.removeMaxIdleExpired(key, value);
-   }
-
-   @Override
-   public AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> encoder) {
-      AdvancedCache encoderCache = cache.withEncoding(encoder);
-      if (encoderCache != cache) {
-         return rewrap(encoderCache);
-      } else {
-         return this;
-      }
-   }
-
-   @Override
-   public AdvancedCache withEncoding(Class<? extends Encoder> keyEncoder, Class<? extends Encoder> valueEncoder) {
-      AdvancedCache encoderCache = cache.withEncoding(keyEncoder, valueEncoder);
-      if (encoderCache != cache) {
-         return rewrap(encoderCache);
-      } else {
-         return this;
-      }
-   }
-
-   @Override
-   public AdvancedCache<?, ?> withKeyEncoding(Class<? extends Encoder> encoder) {
-      AdvancedCache encoderCache = cache.withKeyEncoding(encoder);
-      if (encoderCache != cache) {
-         return rewrap(encoderCache);
-      } else {
-         return this;
-      }
-   }
-
-   @Override
-   public AdvancedCache<?, ?> withMediaType(String keyMediaType, String valueMediaType) {
-      AdvancedCache encoderCache = this.cache.withMediaType(keyMediaType, valueMediaType);
-      if (encoderCache != cache) {
-         return rewrap(encoderCache);
-      } else {
-         return this;
-      }
    }
 
    @Override

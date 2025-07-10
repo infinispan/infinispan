@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
-import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
@@ -220,16 +219,8 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          }
          writer.writeMapItem(element, Attribute.NAME, name);
          ThreadFactory threadFactory = threadPoolConfiguration.threadFactory();
-         if (threadFactory instanceof DefaultThreadFactory) {
-            DefaultThreadFactory tf = (DefaultThreadFactory) threadFactory;
+         if (threadFactory instanceof DefaultThreadFactory tf) {
             writer.writeAttribute(Attribute.THREAD_FACTORY, tf.getName());
-         }
-         if (threadPoolFactory instanceof BlockingThreadPoolExecutorFactory) {
-            BlockingThreadPoolExecutorFactory pool = (BlockingThreadPoolExecutorFactory) threadPoolFactory;
-            writer.writeAttribute(Attribute.MAX_THREADS, Integer.toString(pool.maxThreads()));
-            writer.writeAttribute(Attribute.CORE_THREADS, Integer.toString(pool.coreThreads()));
-            writer.writeAttribute(Attribute.QUEUE_LENGTH, Integer.toString(pool.queueLength()));
-            writer.writeAttribute(Attribute.KEEP_ALIVE_TIME, Long.toString(pool.keepAlive()));
          }
          writer.writeEndMapItem();
       }
@@ -376,11 +367,9 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
                writer.writeEmptyElement(Element.IDENTITY_ROLE_MAPPER);
             } else if (mapper instanceof CommonNameRoleMapper) {
                writer.writeEmptyElement(Element.COMMON_NAME_ROLE_MAPPER);
-            } else if (mapper instanceof ClusterRoleMapper) {
-               ClusterRoleMapper clusterRoleMapper = (ClusterRoleMapper) mapper;
+            } else if (mapper instanceof ClusterRoleMapper clusterRoleMapper) {
                NameRewriter rewriter = clusterRoleMapper.nameRewriter();
-               if (rewriter instanceof RegexNameRewriter) {
-                  RegexNameRewriter regexNameRewriter = (RegexNameRewriter) rewriter;
+               if (rewriter instanceof RegexNameRewriter regexNameRewriter) {
                   writer.writeStartElement(Element.CLUSTER_ROLE_MAPPER);
                   writer.writeStartElement(Element.NAME_REWRITER);
                   writer.writeStartElement(Element.REGEX_PRINCIPAL_TRANSFORMER);

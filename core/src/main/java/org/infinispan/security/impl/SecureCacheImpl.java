@@ -24,7 +24,6 @@ import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
 import org.infinispan.cache.impl.InternalCache;
 import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
-import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
@@ -791,21 +790,6 @@ public final class SecureCacheImpl<K, V> extends AbstractDelegatingAdvancedCache
    }
 
    @Override
-   public AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> encoderClass) {
-      return new SecureCacheImpl<>(delegate.withEncoding(encoderClass), authzManager, subject);
-   }
-
-   @Override
-   public AdvancedCache<?, ?> withKeyEncoding(Class<? extends Encoder> encoder) {
-      return new SecureCacheImpl<>(delegate.withKeyEncoding(encoder), authzManager, subject);
-   }
-
-   @Override
-   public AdvancedCache<?, ?> withMediaType(String keyMediaType, String valueMediaType) {
-      return new SecureCacheImpl<>(delegate.withMediaType(keyMediaType, valueMediaType), authzManager, subject);
-   }
-
-   @Override
    public <K1, V1> AdvancedCache<K1, V1> withMediaType(MediaType keyMediaType, MediaType valueMediaType) {
       return new SecureCacheImpl<>(delegate.withMediaType(keyMediaType, valueMediaType), authzManager, subject);
    }
@@ -813,12 +797,6 @@ public final class SecureCacheImpl<K, V> extends AbstractDelegatingAdvancedCache
    @Override
    public AdvancedCache<K, V> withStorageMediaType() {
       return new SecureCacheImpl<>(delegate.withStorageMediaType(), authzManager, subject);
-   }
-
-   @Override
-   public AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> keyEncoderClass,
-                                           Class<? extends Encoder> valueEncoderClass) {
-      return new SecureCacheImpl<>(delegate.withEncoding(keyEncoderClass, valueEncoderClass), authzManager, subject);
    }
 
    @Override

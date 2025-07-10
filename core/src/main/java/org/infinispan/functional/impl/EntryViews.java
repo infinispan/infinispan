@@ -11,6 +11,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.encoding.impl.DataConversionInternal;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
@@ -38,7 +39,7 @@ public final class EntryViews {
    }
 
    public static <K, V> ReadEntryView<K, V> readOnly(CacheEntry entry) {
-      return new EntryBackedReadOnlyView<>(entry, DataConversion.IDENTITY_KEY, DataConversion.IDENTITY_VALUE);
+      return new EntryBackedReadOnlyView<>(entry, DataConversionInternal.IDENTITY_KEY, DataConversionInternal.IDENTITY_VALUE);
    }
 
    public static <K, V> ReadEntryView<K, V> readOnly(K key, V value, Metadata metadata) {

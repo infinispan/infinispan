@@ -4,10 +4,8 @@ import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.BinaryTranscoder;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.DefaultTranscoder;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;
-import org.infinispan.commons.dataconversion.UTF8Encoder;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.encoding.ProtostreamTranscoder;
 import org.infinispan.encoding.impl.JavaSerializationTranscoder;
@@ -41,9 +39,6 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       ClassLoader classLoader = globalConfiguration.classLoader();
       EncoderRegistryImpl encoderRegistry = new EncoderRegistryImpl();
       ClassAllowList classAllowList = embeddedCacheManager.getClassAllowList();
-
-      encoderRegistry.registerEncoder(IdentityEncoder.INSTANCE);
-      encoderRegistry.registerEncoder(UTF8Encoder.INSTANCE);
 
       // Default and binary transcoder use the user marshaller to convert data to/from a byte array
       encoderRegistry.registerTranscoder(new DefaultTranscoder(userMarshaller));

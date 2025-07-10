@@ -6,6 +6,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.configuration.global.RemoteContainersConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
@@ -23,7 +24,7 @@ public class HotRodUpgradeContainerStoreTest extends HotRodUpgradeWithStoreTest 
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("targetStore");
 
       return new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
-            .cache().name(CACHE_NAME).remotePort(sourceCluster.getHotRodPort()).useRemoteContainer(CONTAINER_NAME)
+            .cache().name(CACHE_NAME).remotePort(sourceCluster.getHotRodPort()).useRemoteContainer(CONTAINER_NAME).remoteStoreProperty(RemoteStore.MIGRATION, "true")
             .configuredWith(targetStoreBuilder)
             .build(() -> {
                GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();

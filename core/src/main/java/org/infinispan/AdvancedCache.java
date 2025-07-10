@@ -17,7 +17,6 @@ import org.infinispan.batch.BatchContainer;
 import org.infinispan.cache.impl.DecoratedCache;
 import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.api.TransactionalCache;
-import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -813,41 +812,12 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    CompletableFuture<Boolean> removeMaxIdleExpired(K key, V value);
 
    /**
-    * Performs any cache operations using the specified pair of {@link Encoder}.
-    *
-    * @param keyEncoder {@link Encoder} for the keys.
-    * @param valueEncoder {@link Encoder} for the values.
-    * @return an instance of {@link AdvancedCache} where all operations will use the supplied encoders.
-    * @deprecated Since 12.1, to be removed in a future version.
-    */
-   @Deprecated(forRemoval=true, since = "12.1")
-   AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> keyEncoder, Class<? extends Encoder> valueEncoder);
-
-   /**
-    * Performs any cache operations using the specified {@link Encoder}.
-    *
-    * @param encoder {@link Encoder} used for both keys and values.
-    * @return an instance of {@link AdvancedCache} where all operations will use the supplied encoder.
-    * @deprecated Since 12.1, to be removed in a future version.
-    */
-   @Deprecated(forRemoval=true, since = "12.1")
-   AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> encoder);
-
-   /**
     * Perform any cache operations using an alternate {@link org.infinispan.commons.dataconversion.MediaType}.
     *
     * @param keyMediaType   {@link org.infinispan.commons.dataconversion.MediaType} for the keys.
     * @param valueMediaType {@link org.infinispan.commons.dataconversion.MediaType} for the values.
     * @return an instance of {@link AdvancedCache} where all data will formatted according to the supplied {@link
     * org.infinispan.commons.dataconversion.MediaType}.
-    *
-    * @deprecated Use {@link #withMediaType(MediaType, MediaType)} instead.
-    */
-   @Deprecated(forRemoval=true, since = "12.1")
-   AdvancedCache<?, ?> withMediaType(String keyMediaType, String valueMediaType);
-
-   /**
-    * @see #withMediaType(String, String)
     */
    <K1, V1> AdvancedCache<K1, V1> withMediaType(MediaType keyMediaType, MediaType valueMediaType);
 
@@ -868,12 +838,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @return The associated {@link DataConversion} for the cache's values.
     */
    DataConversion getValueDataConversion();
-
-   /**
-    * @deprecated Since 12.1, to be removed in a future version.
-    */
-   @Deprecated(forRemoval=true, since = "12.1")
-   AdvancedCache<?, ?> withKeyEncoding(Class<? extends Encoder> encoder);
 
    /**
     * An extension of {@link #removeAsync(Object)}, which returns a {@link CacheEntry} instead of only the value.

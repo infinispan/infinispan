@@ -14,6 +14,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.configuration.cache.IsolationLevel;
@@ -49,7 +50,7 @@ public class HotRodUpgradeWithStoreTest extends AbstractInfinispanTest {
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).shared(true).storeName("targetStore");
 
       return new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
-            .cache().name(CACHE_NAME).remotePort(sourceCluster.getHotRodPort()).configuredWith(targetStoreBuilder)
+            .cache().name(CACHE_NAME).remotePort(sourceCluster.getHotRodPort()).remoteStoreProperty(RemoteStore.MIGRATION, "true").configuredWith(targetStoreBuilder)
             .build();
    }
 

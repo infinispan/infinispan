@@ -39,17 +39,17 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.ServerAddress;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.testng.Assert;
 
 
-class TestCluster {
+public class TestCluster {
 
    private final List<HotRodServer> hotRodServers;
    private final List<EmbeddedCacheManager> embeddedCacheManagers;
    private RemoteCacheManager remoteCacheManager;
-   private final EmbeddedTransactionManager transactionManager = EmbeddedTransactionManager.getInstance();
 
    private TestCluster(List<HotRodServer> hotRodServers, List<EmbeddedCacheManager> embeddedCacheManagers,
                        RemoteCacheManager remoteCacheManager) {
@@ -84,7 +84,7 @@ class TestCluster {
       if (!transactional) {
          return getRemoteCache(cacheName);
       } else {
-         remoteCacheManager.getConfiguration().addRemoteCache(cacheName, c -> c.transactionMode(TransactionMode.NON_XA).transactionManager(transactionManager));
+         remoteCacheManager.getConfiguration().addRemoteCache(cacheName, c -> c.transactionMode(TransactionMode.NON_XA).transactionManagerLookup(new EmbeddedTransactionManagerLookup()));
          return remoteCacheManager.getCache(cacheName);
       }
    }
@@ -196,8 +196,7 @@ class TestCluster {
          private ProtocolVersion protocolVersion = DEFAULT_PROTOCOL_VERSION;
          private Integer remotePort;
          private String remoteContainerName;
-         private boolean wrapping = true;
-         private boolean rawValues = true;
+         private final Properties remoteStoreProperties = new Properties();
          private Class<? extends Marshaller> marshaller;
 
          CacheDefinitionBuilder(Builder builder) {
@@ -214,13 +213,8 @@ class TestCluster {
             return this;
          }
 
-         CacheDefinitionBuilder remoteStoreWrapping(boolean wrapping) {
-            this.wrapping = wrapping;
-            return this;
-         }
-
-         CacheDefinitionBuilder remoteStoreRawValues(boolean rawValues) {
-            this.rawValues = rawValues;
+         CacheDefinitionBuilder remoteStoreProperty(String key, String value) {
+            this.remoteStoreProperties.setProperty(key, value);
             return this;
          }
 
@@ -263,8 +257,7 @@ class TestCluster {
                configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
             if (remotePort != null) {
                RemoteStoreConfigurationBuilder store = configurationBuilder.persistence().addStore(RemoteStoreConfigurationBuilder.class);
-               store.hotRodWrapping(wrapping).rawValues(rawValues)
-                     .remoteCacheName(name).protocolVersion(protocolVersion).shared(true);
+               store.remoteCacheName(name).protocolVersion(protocolVersion).shared(true).withProperties(remoteStoreProperties);
 
                if (remoteContainerName != null) {
                   store.remoteCacheContainer(remoteContainerName);

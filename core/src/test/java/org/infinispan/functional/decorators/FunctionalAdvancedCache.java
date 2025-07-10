@@ -32,7 +32,6 @@ import org.infinispan.batch.BatchContainer;
 import org.infinispan.cache.impl.InternalCache;
 import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
-import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.AbstractDelegatingCollection;
 import org.infinispan.commons.util.AbstractDelegatingSet;
@@ -579,26 +578,6 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V>,
    @Override
    public CompletableFuture<Boolean> removeMaxIdleExpired(K key, V value) {
       throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> encoder) {
-      return cache.withEncoding(encoder);
-   }
-
-   @Override
-   public AdvancedCache<?, ?> withKeyEncoding(Class<? extends Encoder> encoder) {
-      return cache.withKeyEncoding(encoder);
-   }
-
-   @Override
-   public AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> keyEncoder, Class<? extends Encoder> valueEncoder) {
-      return cache.withEncoding(keyEncoder, valueEncoder);
-   }
-
-   @Override
-   public AdvancedCache<?, ?> withMediaType(String keyMediaType, String valueMediaType) {
-      return cache.withMediaType(keyMediaType, valueMediaType);
    }
 
    @Override

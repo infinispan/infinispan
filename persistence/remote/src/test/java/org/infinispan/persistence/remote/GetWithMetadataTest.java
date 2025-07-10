@@ -4,9 +4,9 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemo
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.TimeUnit;
 
@@ -47,13 +47,13 @@ public class GetWithMetadataTest extends AbstractInfinispanTest {
       cb.persistence()
             .addStore(RemoteStoreConfigurationBuilder.class)
             .remoteCacheName(CACHE_NAME)
-            .hotRodWrapping(true)
             // Store cannot be segmented as the remote cache is LOCAL and it doesn't report its segments?
             .segmented(false)
             .addServer()
             .host("localhost")
             .port(sourcePort)
-            .shared(true);
+            .shared(true)
+            .addProperty(RemoteStore.MIGRATION, "true");
       return cb;
    }
 
@@ -92,14 +92,14 @@ public class GetWithMetadataTest extends AbstractInfinispanTest {
 
          MetadataValue<String> otherMetadataEntry = targetRemoteCache.getWithMetadata("key2");
          assertNotNull(otherMetadataEntry);
-         assertEquals(otherMetadataEntry.getLifespan(), 48 * 3600);
-         assertEquals(otherMetadataEntry.getMaxIdle(), 24 * 3600);
+         assertEquals(48 * 3600, otherMetadataEntry.getLifespan());
+         assertEquals(24 * 3600, otherMetadataEntry.getMaxIdle());
          assertEquals(otherMetadataEntry.getCreated(), k2Created);
          assertTrue(otherMetadataEntry.getLastUsed() > 0);
 
       } finally {
-         killRemoteCacheManager(targetRemoteCache != null ? targetRemoteCache.getRemoteCacheManager() : null);
-         killRemoteCacheManager(sourceRemoteCache != null ? sourceRemoteCache.getRemoteCacheManager() : null);
+         killRemoteCacheManager(targetRemoteCache != null ? targetRemoteCache.getRemoteCacheContainer() : null);
+         killRemoteCacheManager(sourceRemoteCache != null ? sourceRemoteCache.getRemoteCacheContainer() : null);
          killCacheManagers(targetCacheManager, sourceCacheManager);
          killServers(targetServer, sourceServer);
       }

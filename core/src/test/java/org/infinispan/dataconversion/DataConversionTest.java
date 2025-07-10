@@ -11,8 +11,6 @@ import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,7 +20,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.dataconversion.UTF8Encoder;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -86,41 +83,6 @@ public class DataConversionTest extends AbstractInfinispanTest {
             // Read unencoded
             Cache<?, ?> unencodedCache = cache.getAdvancedCache().withStorageMediaType();
             assertEquals(unencodedCache.get(asStored("1")), asStored(value));
-         }
-      });
-   }
-
-   @Test
-   public void testUTF8Encoders() {
-      ConfigurationBuilder cfg = new ConfigurationBuilder();
-
-      withCacheManager(new CacheManagerCallable(
-            createCacheManager(TestDataSCI.INSTANCE, cfg)) {
-
-         final String charset = "UTF-8";
-
-         private byte[] asUTF8Bytes(String value) throws UnsupportedEncodingException {
-            return value.getBytes(charset);
-         }
-
-         @Override
-         public void call() throws IOException {
-            Cache<byte[], byte[]> cache = cm.getCache();
-
-            String keyUnencoded = "1";
-            String valueUnencoded = "value";
-            cache.put(asUTF8Bytes(keyUnencoded), asUTF8Bytes(valueUnencoded));
-
-            // Read using different valueEncoder
-            Cache utf8Cache = cache.getAdvancedCache().withEncoding(UTF8Encoder.class);
-            assertEquals(utf8Cache.get(keyUnencoded), valueUnencoded);
-
-            // Write with one valueEncoder and read with another
-            String key2Unencoded = "2";
-            String value2Unencoded = "anotherValue";
-            utf8Cache.put(key2Unencoded, value2Unencoded);
-
-            assertEquals(cache.get(asUTF8Bytes(key2Unencoded)), asUTF8Bytes(value2Unencoded));
          }
       });
    }

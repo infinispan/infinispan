@@ -31,9 +31,6 @@ import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
 import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.AsyncStoreConfigurationBuilder;
-import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.global.AllowListConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -1339,40 +1336,6 @@ public class Parser extends CacheParser {
          threadFactory.setComponent(shortened(componentName));
       }
       return threadPoolConfiguration;
-   }
-
-   /**
-    * @deprecated use {@link CacheParser#parseStoreAttribute(ConfigurationReader, int, AbstractStoreConfigurationBuilder)}
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public static void parseStoreAttribute(ConfigurationReader reader, int index, AbstractStoreConfigurationBuilder<?, ?> storeBuilder) {
-      CacheParser.parseStoreAttribute(reader, index, storeBuilder);
-   }
-
-   /**
-    * @deprecated use {@link CacheParser#parseStoreElement(ConfigurationReader, StoreConfigurationBuilder)}
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public static void parseStoreElement(ConfigurationReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) {
-      CacheParser.parseStoreElement(reader, storeBuilder);
-   }
-
-   /**
-    * @deprecated use {@link CacheParser#parseStoreWriteBehind(ConfigurationReader, AsyncStoreConfigurationBuilder)}
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public static void parseStoreWriteBehind(ConfigurationReader reader, AsyncStoreConfigurationBuilder<?> storeBuilder) {
-      CacheParser.parseStoreWriteBehind(reader, storeBuilder);
-   }
-
-   /**
-    * @deprecated use {@link CacheParser#parseStoreProperty(ConfigurationReader, StoreConfigurationBuilder)}
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public static void parseStoreProperty(ConfigurationReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) {
-      String property = ParseUtils.requireSingleAttribute(reader, Attribute.NAME.getLocalName());
-      String value = reader.getElementText();
-      storeBuilder.addProperty(property, value);
    }
 
    private void addJGroupsDefaultStacksIfNeeded(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {

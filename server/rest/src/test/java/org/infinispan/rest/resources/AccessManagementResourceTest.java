@@ -105,7 +105,7 @@ public class AccessManagementResourceTest extends AbstractRestResourceTest {
       assertThat(jsonNode.at("ADMIN").at("implicit").asBoolean()).isFalse();
       assertThat(jsonNode.at("ADMIN").at("description").asString()).contains("admin role");
       assertThat(jsonNode.at("USER").at("permissions").asList())
-            .containsExactlyInAnyOrder("READ", "WRITE", "BULK_READ", "EXEC");
+            .containsExactlyInAnyOrder("READ", "WRITE", "BULK_READ", "EXEC", "CREATE");
       assertThat(jsonNode.at("USER").at("inheritable").asBoolean()).isTrue();
       assertThat(jsonNode.at("USER").at("implicit").asBoolean()).isFalse();
       assertThat(jsonNode.at("USER").at("description").asString()).contains("user role");

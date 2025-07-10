@@ -3,7 +3,6 @@ package org.infinispan.factories;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.util.ProcessorInfo;
 
 /**
@@ -73,10 +72,6 @@ public class KnownComponentNames {
       } else {
          return getDefaultThreads(componentName);
       }
-   }
-
-   public static long getDefaultKeepaliveMillis() {
-      return BlockingThreadPoolExecutorFactory.DEFAULT_KEEP_ALIVE_MILLIS;
    }
 
    public static String shortened(String cn) {

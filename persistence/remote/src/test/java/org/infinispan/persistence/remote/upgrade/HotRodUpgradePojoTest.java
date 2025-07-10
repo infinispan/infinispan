@@ -15,6 +15,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
+import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
@@ -91,7 +92,8 @@ public class HotRodUpgradePojoTest extends AbstractInfinispanTest {
             .marshaller(GenericJBossMarshaller.class)
             .ctx(SerializationCtx.INSTANCE)
             .cache().name(CACHE_NAME).configuredWith(cacheConfig)
-            .remotePort(sourceCluster.getHotRodPort()).remoteStoreWrapping(false).remoteStoreRawValues(false)
+            .remotePort(sourceCluster.getHotRodPort())
+            .remoteStoreProperty(RemoteStore.MIGRATION, "true")
             .remoteStoreMarshaller(GenericJBossMarshaller.class)
             .build();
    }

@@ -2,7 +2,7 @@
   "infinispan": {
     "remote-cache-containers": [
       {
-        "uri": "hotrod://one,two:12111?max-active=10&exhausted-action=CREATE_NEW"
+        "uri": "hotrod://one,two:12111"
       }
     ],
     "cache-container": {
@@ -10,8 +10,7 @@
         "mycache": {
           "distributed-cache": {
             "remote-store": {
-              "cache": "mycache",
-              "raw-values": "true"
+              "cache": "mycache"
             }
           }
         }

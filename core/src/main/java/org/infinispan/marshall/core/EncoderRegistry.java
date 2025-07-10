@@ -1,40 +1,24 @@
 package org.infinispan.marshall.core;
 
-import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
-import org.infinispan.commons.dataconversion.Wrapper;
-import org.infinispan.encoding.DataConversion;
 
 /**
- * Manages existent {@link Encoder}, {@link Wrapper} and {@link Transcoder} instances.
+ * Manages {@link Transcoder} instances.
  *
  * @since 9.1
  */
 public interface EncoderRegistry {
 
-   @Deprecated(forRemoval=true, since = "11.0")
-   Encoder getEncoder(Class<? extends Encoder> encoderClass, short encoderId);
-
-   @Deprecated(forRemoval=true, since = "11.0")
-   boolean isRegistered(Class<? extends Encoder> encoderClass);
-
    /**
-    * @deprecated Since 11.0. To be removed in 14.0, with {@link DataConversion#getWrapper()}
+    * Registers a transcoder in the registry
+    *
+    * @param transcoder the transcoder instance to register
     */
-   @Deprecated(forRemoval=true, since = "11.0")
-   Wrapper getWrapper(Class<? extends Wrapper> wrapperClass, byte wrapperId);
-
-   /**
-    * @deprecated Since 11.0. To be removed in 14.0, with {@link DataConversion#getWrapper()}
-    */
-   @Deprecated(forRemoval=true, since = "11.0")
-   void registerWrapper(Wrapper wrapper);
-
    void registerTranscoder(Transcoder transcoder);
 
    /**
-    * Obtain an instance of {@link Transcoder} from the registry.
+    * Retrieves an instance of {@link Transcoder} from the registry.
     *
     * @param type1 {@link MediaType} supported by the transcoder.
     * @param type2 {@link MediaType} supported by the transcoder.
@@ -42,16 +26,30 @@ public interface EncoderRegistry {
     */
    Transcoder getTranscoder(MediaType type1, MediaType type2);
 
+   /**
+    * Looks up a {@link Transcoder} in the registry
+    *
+    * @param clazz the class of the transcoder
+    * @param <T>   the specific transcoder implementation type
+    * @return the registered instance of the transcoder
+    */
    <T extends Transcoder> T getTranscoder(Class<T> clazz);
 
+   /**
+    * Returns whether conversion between specific {@link MediaType}s is supported
+    *
+    * @param from the source {@link MediaType}
+    * @param to   the destination {@link MediaType}
+    * @return true if conversion between the specified types is supported
+    */
    boolean isConversionSupported(MediaType from, MediaType to);
 
    /**
     * Performs a data conversion.
     *
-    * @param o object to convert
+    * @param o    object to convert
     * @param from the object MediaType
-    * @param to the format to convert to
+    * @param to   the format to convert to
     * @return the object converted.
     * @since 11.0
     */

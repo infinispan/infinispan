@@ -59,21 +59,6 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="hotrod-wrapping" type="xs:boolean" default="${RemoteStore.hotrod-wrapping}">
-          <xs:annotation>
-            <xs:documentation>
-              Deprecated since 12.0. Since 13.0, use only 'raw-values' if the remote server will be accessed by Hot Rod clients.
-              Ensures that, when entries are retrieved from the remote store, they will be wrapped in a format suitable for serving via HotRod. This flag must be enabled when performing a rolling upgrade.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="raw-values" type="xs:boolean" default="${RemoteStore.raw-values}">
-          <xs:annotation>
-            <xs:documentation>
-              Enables the storage of data on the remote server in "raw" format as opposed to wrapping the entries in InternalCacheEntry. This ensures that clients can use data directly from the remote cache store.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
         <xs:attribute name="balancing-strategy" type="xs:string" default="${RemoteStore.balancing-strategy}">
           <xs:annotation>
             <xs:documentation>
@@ -92,13 +77,6 @@
           <xs:annotation>
             <xs:documentation>
               Whether or not to implicitly FORCE_RETURN_VALUE for all calls.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="key-size-estimate" type="xs:int" default="${RemoteStore.key-size-estimate}">
-          <xs:annotation>
-            <xs:documentation>
-              Deprecated since 12.0, does nothing and will be removed in 15.0
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
@@ -121,13 +99,6 @@
             <xs:documentation>
               The name of the remote cache in the remote infinispan cluster, to which to connect to. If unspecified, the default
               cache will be used
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="value-size-estimate" type="xs:int" default="${RemoteStore.value-size-estimate}">
-          <xs:annotation>
-            <xs:documentation>
-              Deprecated since 12.0, does nothing and will be removed in 15.0
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>

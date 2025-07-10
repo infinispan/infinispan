@@ -11,12 +11,6 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CACHE_NE
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CACHE_PREFIX;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CACHE_TEMPLATE_NAME_SUFFIX;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CLIENT_INTELLIGENCE;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_EXHAUSTED_ACTION;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_MAX_ACTIVE;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_MAX_PENDING_REQUESTS;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_MAX_WAIT;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_MIN_EVICTABLE_IDLE_TIME;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECTION_POOL_MIN_IDLE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONNECT_TIMEOUT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.CONTEXT_INITIALIZERS;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_POOL_SIZE;
@@ -26,7 +20,6 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.DNS_RESO
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.FORCE_RETURN_VALUES;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.HASH_FUNCTION_PREFIX;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_ALLOWLIST;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_SIZE_ESTIMATE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_FILE_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_PASSWORD;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MARSHALLER;
@@ -44,11 +37,11 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SSL_PROT
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.STATISTICS;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_KEEP_ALIVE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_NO_DELAY;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRANSACTION_TIMEOUT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRUST_STORE_FILE_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRUST_STORE_PASSWORD;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.USE_AUTH;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.USE_SSL;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.VALUE_SIZE_ESTIMATE;
 
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
@@ -92,7 +85,6 @@ public class Configuration implements org.infinispan.api.configuration.Configura
    private final int connectionTimeout;
    private final Class<? extends ConsistentHash>[] consistentHashImpl;
    private final boolean forceReturnValues;
-   private final int keySizeEstimate;
    private final Class<? extends Marshaller> marshallerClass;
    private final Marshaller marshaller;
    private final ProtocolVersion protocolVersion;
@@ -101,15 +93,12 @@ public class Configuration implements org.infinispan.api.configuration.Configura
    private final SecurityConfiguration security;
    private final boolean tcpNoDelay;
    private final boolean tcpKeepAlive;
-   private final int valueSizeEstimate;
    private final int maxRetries;
    private final List<ClusterConfiguration> clusters;
    private final List<String> serialAllowList;
    private final int batchSize;
    private final ClassAllowList classAllowList;
    private final StatisticsConfiguration statistics;
-   @Deprecated(forRemoval=true, since = "12.0")
-   private final TransactionConfiguration transaction;
    private final Features features;
    private final List<SerializationContextInitializer> contextInitializers;
    private final Map<String, RemoteCacheConfiguration> remoteCaches;
@@ -120,16 +109,17 @@ public class Configuration implements org.infinispan.api.configuration.Configura
    private final int dnsResolverNegativeTTL;
    private final RemoteCacheManagerMetricsRegistry metricRegistry;
    private final int serverFailureTimeout;
+   private final long transactionTimeout;
 
    public Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory, ClassLoader classLoader,
                         ClientIntelligence clientIntelligence, ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl,
                         int dnsResolverMinTTL, int dnsResolverMaxTTL, int dnsResolverNegativeTTL,
-                        boolean forceReturnValues, int keySizeEstimate,
+                        boolean forceReturnValues,
                         Marshaller marshaller, Class<? extends Marshaller> marshallerClass,
                         ProtocolVersion protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
-                        int valueSizeEstimate, int maxRetries,
-                        List<ClusterConfiguration> clusters, List<String> serialAllowList, int batchSize,
-                        TransactionConfiguration transaction, StatisticsConfiguration statistics, Features features,
+                        int maxRetries,
+                        List<ClusterConfiguration> clusters, List<String> serialAllowList, int batchSize, long transactionTimeout,
+                        StatisticsConfiguration statistics, Features features,
                         List<SerializationContextInitializer> contextInitializers,
                         Map<String, RemoteCacheConfiguration> remoteCaches,
                         TransportFactory transportFactory, boolean tracingPropagationEnabled, RemoteCacheManagerMetricsRegistry metricRegistry,
@@ -146,7 +136,6 @@ public class Configuration implements org.infinispan.api.configuration.Configura
       this.dnsResolverMaxTTL = dnsResolverMaxTTL;
       this.dnsResolverNegativeTTL = dnsResolverNegativeTTL;
       this.forceReturnValues = forceReturnValues;
-      this.keySizeEstimate = keySizeEstimate;
       this.marshallerClass = marshallerClass;
       this.marshaller = marshaller;
       this.protocolVersion = protocolVersion;
@@ -155,12 +144,11 @@ public class Configuration implements org.infinispan.api.configuration.Configura
       this.security = security;
       this.tcpNoDelay = tcpNoDelay;
       this.tcpKeepAlive = tcpKeepAlive;
-      this.valueSizeEstimate = valueSizeEstimate;
       this.clusters = clusters;
       this.serialAllowList = serialAllowList;
       this.classAllowList = new ClassAllowList(serialAllowList);
       this.batchSize = batchSize;
-      this.transaction = transaction;
+      this.transactionTimeout = transactionTimeout;
       this.statistics = statistics;
       this.features = features;
       this.contextInitializers = contextInitializers;
@@ -220,14 +208,6 @@ public class Configuration implements org.infinispan.api.configuration.Configura
       return forceReturnValues;
    }
 
-   /**
-    * @deprecated Since 12.0, does nothing and will be removed in 15.0
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public int keySizeEstimate() {
-      return keySizeEstimate;
-   }
-
    public Marshaller marshaller() {
       return marshaller;
    }
@@ -264,36 +244,12 @@ public class Configuration implements org.infinispan.api.configuration.Configura
       return tcpKeepAlive;
    }
 
-   /**
-    * @deprecated Since 12.0, does nothing and will be removed in 15.0
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public int valueSizeEstimate() {
-      return valueSizeEstimate;
-   }
-
    public int maxRetries() {
       return maxRetries;
    }
 
-   /**
-    * @deprecated Use {@link #serialAllowList()} instead. To be removed in 14.0.
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public List<String> serialWhitelist() {
-      return serialAllowList();
-   }
-
    public List<String> serialAllowList() {
       return serialAllowList;
-   }
-
-   /**
-    * @deprecated Use {@link #getClassAllowList()} instead. To be removed in 14.0.
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public ClassAllowList getClassWhiteList() {
-      return getClassAllowList();
    }
 
    public ClassAllowList getClassAllowList() {
@@ -341,19 +297,10 @@ public class Configuration implements org.infinispan.api.configuration.Configura
    }
 
    /**
-    * @deprecated since 12.0. To be removed in Infinispan 14.
-    */
-   @Deprecated(forRemoval=true, since = "12.0")
-   public TransactionConfiguration transaction() {
-      return transaction;
-   }
-
-   /**
     * see {@link ConfigurationBuilder#transactionTimeout(long, TimeUnit)},
     */
    public long transactionTimeout() {
-      //TODO replace with field in this class then TransactionConfiguration is removed.
-      return transaction.timeout();
+      return transactionTimeout;
    }
 
    public Features features() {
@@ -400,13 +347,13 @@ public class Configuration implements org.infinispan.api.configuration.Configura
       return "Configuration [asyncExecutorFactory=" + asyncExecutorFactory + ", balancingStrategyFactory=()->" + balancingStrategyFactory.get()
             + ",classLoader=" + classLoader + ", clientIntelligence=" + clientIntelligence + ", connectionPool="
             + connectionPool + ", connectionTimeout=" + connectionTimeout + ", consistentHashImpl=" + Arrays.toString(consistentHashImpl) + ", forceReturnValues="
-            + forceReturnValues + ", keySizeEstimate=" + keySizeEstimate + ", marshallerClass=" + marshallerClass + ", marshaller=" + marshaller + ", protocolVersion="
+            + forceReturnValues + ", marshallerClass=" + marshallerClass + ", marshaller=" + marshaller + ", protocolVersion="
             + protocolVersion + ", servers=" + servers + ", socketTimeout=" + socketTimeout + ", security=" + security + ", tcpNoDelay=" + tcpNoDelay + ", tcpKeepAlive=" + tcpKeepAlive
-            + ", valueSizeEstimate=" + valueSizeEstimate + ", maxRetries=" + maxRetries
+            + ", maxRetries=" + maxRetries
             + ", serialAllowList=" + serialAllowList
             + ", batchSize=" + batchSize
             + ", remoteCaches= " + remoteCaches
-            + ", transaction=" + transaction
+            + ", transactionTimeout=" + transactionTimeout
             + ", statistics=" + statistics
             + ", metricRegistry=" + metricRegistry
             + ", serverFailureTimeout=" + serverFailureTimeout
@@ -433,13 +380,11 @@ public class Configuration implements org.infinispan.api.configuration.Configura
          }
       }
       properties.setProperty(FORCE_RETURN_VALUES, forceReturnValues());
-      properties.setProperty(KEY_SIZE_ESTIMATE, keySizeEstimate());
       properties.setProperty(MARSHALLER, marshallerClass().getName());
       properties.setProperty(PROTOCOL_VERSION, version().toString());
       properties.setProperty(SO_TIMEOUT, socketTimeout());
       properties.setProperty(TCP_NO_DELAY, tcpNoDelay());
       properties.setProperty(TCP_KEEP_ALIVE, tcpKeepAlive());
-      properties.setProperty(VALUE_SIZE_ESTIMATE, valueSizeEstimate());
       properties.setProperty(MAX_RETRIES, maxRetries());
       properties.setProperty(STATISTICS, statistics().enabled());
       properties.setProperty(SERVER_FAILURE_TIMEOUT, serverFailureTimeout());
@@ -447,18 +392,6 @@ public class Configuration implements org.infinispan.api.configuration.Configura
       properties.setProperty(DNS_RESOLVER_MIN_TTL, dnsResolverMinTTL);
       properties.setProperty(DNS_RESOLVER_MAX_TTL, dnsResolverMaxTTL);
       properties.setProperty(DNS_RESOLVER_NEGATIVE_TTL, dnsResolverNegativeTTL);
-
-      properties.setProperty(CONNECTION_POOL_EXHAUSTED_ACTION, connectionPool().exhaustedAction().name());
-      properties.setProperty("exhaustedAction", connectionPool().exhaustedAction().ordinal());
-      properties.setProperty(CONNECTION_POOL_MAX_ACTIVE, connectionPool().maxActive());
-      properties.setProperty("maxActive", connectionPool().maxActive());
-      properties.setProperty(CONNECTION_POOL_MAX_WAIT, connectionPool().maxWait());
-      properties.setProperty("maxWait", connectionPool().maxWait());
-      properties.setProperty(CONNECTION_POOL_MIN_IDLE, connectionPool().minIdle());
-      properties.setProperty("minIdle", connectionPool().minIdle());
-      properties.setProperty(CONNECTION_POOL_MIN_EVICTABLE_IDLE_TIME, connectionPool().minEvictableIdleTime());
-      properties.setProperty("minEvictableIdleTimeMillis", connectionPool().minEvictableIdleTime());
-      properties.setProperty(CONNECTION_POOL_MAX_PENDING_REQUESTS, connectionPool().maxPendingRequests());
 
       String servers = servers().stream()
             .map(server -> server.host() + ":" + server.port())
@@ -509,7 +442,7 @@ public class Configuration implements org.infinispan.api.configuration.Configura
 
       properties.setProperty(BATCH_SIZE, Integer.toString(batchSize));
 
-      transaction.toProperties(properties);
+      properties.setProperty(TRANSACTION_TIMEOUT, Long.toString(transactionTimeout));
 
       if (contextInitializers != null && !contextInitializers.isEmpty())
          properties.setProperty(CONTEXT_INITIALIZERS, contextInitializers.stream().map(sci -> sci.getClass().getName()).collect(Collectors.joining(",")));

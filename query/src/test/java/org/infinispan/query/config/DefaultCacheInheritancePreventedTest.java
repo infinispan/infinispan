@@ -27,7 +27,7 @@ public class DefaultCacheInheritancePreventedTest extends AbstractInfinispanTest
    @Test
    public void verifyIndexDisabledCorrectly() throws IOException {
       withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.fromXml("configuration-parsing-test-enbledInDefault.xml")) {
+            TestCacheManagerFactory.fromXml("configuration-parsing-test-enabledInDefault.xml")) {
          @Override
          public void call() {
             assertIndexingEnabled(cm.getCache(), true);

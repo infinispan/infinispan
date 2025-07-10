@@ -56,18 +56,6 @@ public class StateTransferConfiguration extends ConfigurationElement<StateTransf
    }
 
    /**
-    * This is the maximum amount of time - in milliseconds - to wait for state from neighboring
-    * caches, before throwing an exception and aborting startup.
-    *
-    * @deprecated Since 12.1, the attribute was never writable
-    */
-   @Deprecated(forRemoval=true, since = "12.1")
-   public StateTransferConfiguration timeout(long l) {
-      timeout.set(TimeQuantity.valueOf(l));
-      return this;
-   }
-
-   /**
     * The state will be transferred in batches of {@code chunkSize} cache entries.
     * If chunkSize is equal to Integer.MAX_VALUE, the state will be transferred in all at once. Not recommended.
     */

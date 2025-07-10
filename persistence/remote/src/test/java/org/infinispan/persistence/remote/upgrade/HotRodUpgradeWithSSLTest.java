@@ -1,6 +1,7 @@
 package org.infinispan.persistence.remote.upgrade;
 
 import org.infinispan.commons.test.security.TestCertificates;
+import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -38,8 +39,8 @@ public class HotRodUpgradeWithSSLTest extends HotRodUpgradeSynchronizerTest {
             .withSSLKeyStore(TestCertificates.certificate("client"), TestCertificates.KEY_PASSWORD)
             .withSSLTrustStore(TestCertificates.certificate("ca"), TestCertificates.KEY_PASSWORD)
             .withHotRodBuilder(getHotRodServerBuilder())
-            .cache().name(OLD_CACHE).remotePort(sourceCluster.getHotRodPort()).remoteProtocolVersion(OLD_PROTOCOL_VERSION)
-            .cache().name(TEST_CACHE).remotePort(sourceCluster.getHotRodPort()).remoteProtocolVersion(NEW_PROTOCOL_VERSION)
+            .cache().name(OLD_CACHE).remotePort(sourceCluster.getHotRodPort()).remoteProtocolVersion(OLD_PROTOCOL_VERSION).remoteStoreProperty(RemoteStore.MIGRATION, "true")
+            .cache().name(TEST_CACHE).remotePort(sourceCluster.getHotRodPort()).remoteProtocolVersion(NEW_PROTOCOL_VERSION).remoteStoreProperty(RemoteStore.MIGRATION, "true")
             .build();
    }
 

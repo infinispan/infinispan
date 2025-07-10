@@ -18,6 +18,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * @author Tristan Tarrant
  * @since 5.2
  */
+@Deprecated(forRemoval = true, since = "15.1")
 public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfigurationChildBuilder<RemoteStoreConfigurationBuilder> implements
       Builder<ConnectionPoolConfiguration> {
 

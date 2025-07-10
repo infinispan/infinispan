@@ -21,6 +21,7 @@ public enum Attribute {
    FACTORY("factory"),
    FORCE_RETURN_VALUES("force-return-values"),
    HOST("host"),
+   @Deprecated(forRemoval = true, since = "12.1")
    HOTROD_WRAPPING("hotrod-wrapping"),
    FILENAME("filename"),
    CERTIFICATE_PASSWORD("certificate-password"),
@@ -45,6 +46,7 @@ public enum Attribute {
    PORT("port"),
    PROTOCOL("protocol"),
    PROTOCOL_VERSION("protocol-version"),
+   @Deprecated(forRemoval = true, since = "12.1")
    RAW_VALUES("raw-values"),
    REALM("realm"),
    REMOTE_CACHE_CONTAINER("remote-cache-container"),

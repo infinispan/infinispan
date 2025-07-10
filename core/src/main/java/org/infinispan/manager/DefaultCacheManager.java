@@ -1271,11 +1271,6 @@ public class DefaultCacheManager extends InternalCacheManager {
    }
 
    @Override
-   public ClassAllowList getClassWhiteList() {
-      return getClassAllowList();
-   }
-
-   @Override
    public ClassAllowList getClassAllowList() {
       return classAllowList;
    }

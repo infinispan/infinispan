@@ -50,7 +50,7 @@ public class RemoteStoreConfigTest extends AbstractInfinispanTest {
    public void startUp() {
       cacheManager = TestCacheManagerFactory.createCacheManager();
       Cache<?, ?> storeCache = cacheManager.createCache(this.storeCacheName, hotRodCacheConfiguration().build());
-      assertEquals(storeCache.size(), 0);
+      assertEquals(0, storeCache.size());
       hotRodServer = HotRodTestingUtil.startHotRodServer(cacheManager, this.port);
    }
 

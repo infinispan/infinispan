@@ -18,7 +18,7 @@ include::json/remote_store.json[]
 ----
 
 Several elements are optional such as `security`, `async-executor` and `connection-pool`.
-The configuration must contain minimally the cache name, the `raw-values` set to `false` and the
+The configuration must contain minimally the cache name and the
 host/ip of the single port in the source cluster. For details about the `remote-store` configuration,
 consult the link:https://infinispan.org/schemas/infinispan-cachestore-remote-config-12.0.xsd[XSD Schema].
 

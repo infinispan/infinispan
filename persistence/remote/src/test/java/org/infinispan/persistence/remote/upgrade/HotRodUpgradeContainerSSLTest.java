@@ -4,6 +4,7 @@ import java.util.Properties;
 
 import org.infinispan.commons.test.security.TestCertificates;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.configuration.global.RemoteContainersConfigurationBuilder;
 import org.testng.annotations.Test;
 
@@ -33,11 +34,13 @@ public class HotRodUpgradeContainerSSLTest extends HotRodUpgradeWithSSLTest {
             .remotePort(sourceCluster.getHotRodPort())
             .useRemoteContainer(CONTAINER_NAME_TEST)
             .remoteProtocolVersion(NEW_PROTOCOL_VERSION)
+            .remoteStoreProperty(RemoteStore.MIGRATION, "true")
             .cache()
             .name(OLD_CACHE)
             .remotePort(sourceCluster.getHotRodPort())
             .useRemoteContainer(CONTAINER_NAME_OLD)
             .remoteProtocolVersion(OLD_PROTOCOL_VERSION)
+            .remoteStoreProperty(RemoteStore.MIGRATION, "true")
             .build(() -> {
                GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
                RemoteContainersConfigurationBuilder rccb = global.addModule(RemoteContainersConfigurationBuilder.class);
