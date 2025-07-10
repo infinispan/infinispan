@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
@@ -88,10 +89,6 @@ public record InvocationImpl(ResourceDescription resourceGroup, Set<Method> meth
          return this;
       }
 
-      public Builder response(HttpResponseStatus status, String description) {
-         return response(status, description, null);
-      }
-
       public Builder response(HttpResponseStatus status, String description, MediaType type) {
          return response(status, description, type, null);
       }
@@ -147,7 +144,8 @@ public record InvocationImpl(ResourceDescription resourceGroup, Set<Method> meth
       }
 
       InvocationImpl build() {
-         return new InvocationImpl(parent.description(), methods, paths, handler, action, name, anonymous, permission, deprecated, auditContext, responses, parameters, requireCacheManagerStart);
+         Objects.requireNonNull(handler, "handler must be non-null");
+         return new InvocationImpl(parent.description(), methods, paths, handler, action, name, anonymous, permission, deprecated, auditContext, responses == null ? Collections.emptyMap() : responses, parameters, requireCacheManagerStart);
       }
 
       public Builder parameter(Enum<?> name, ParameterIn in, Schema schema, String description) {

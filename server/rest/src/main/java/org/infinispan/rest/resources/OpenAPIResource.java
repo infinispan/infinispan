@@ -46,8 +46,13 @@ public class OpenAPIResource implements ResourceHandler {
 
    @Override
    public Invocations getInvocations() {
-      return new Invocations.Builder("openapi", "Generates the OpenAPI description")
-            .invocation().method(Method.GET).path("/v3/openapi").handleWith(this::createResponse).anonymous(true).response(MediaType.APPLICATION_JSON)
+      return new Invocations.Builder("openapi", "Infinispan OpenAPI descriptor")
+            .invocation()
+               .method(Method.GET)
+                  .path("/v3/openapi")
+                  .anonymous(true)
+                  .response(HttpResponseStatus.OK, "Infinispan OpenAPI descriptor", MediaType.APPLICATION_JSON)
+                  .handleWith(this::createResponse)
             .create();
    }
 

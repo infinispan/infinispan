@@ -1,6 +1,5 @@
 package org.infinispan.rest.resources;
 
-import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONFLICT;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
@@ -19,13 +18,10 @@ import static org.infinispan.rest.framework.Method.POST;
 import static org.infinispan.rest.framework.Method.PUT;
 import static org.infinispan.rest.resources.MediaTypeUtils.negotiateMediaType;
 import static org.infinispan.rest.resources.ResourceUtil.addEntityAsJson;
-import static org.infinispan.rest.resources.ResourceUtil.asJsonResponse;
 import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
 import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -36,7 +32,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
@@ -49,7 +44,6 @@ import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -57,8 +51,6 @@ import org.infinispan.configuration.cache.SecurityConfiguration;
 import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.health.CacheHealth;
 import org.infinispan.health.HealthStatus;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -71,10 +63,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.remote.RemoteStore;
-import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
-import org.infinispan.persistence.remote.upgrade.SerializationUtils;
-import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.rest.EventStream;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
@@ -82,6 +70,8 @@ import org.infinispan.rest.RequestHeader;
 import org.infinispan.rest.RestResponseException;
 import org.infinispan.rest.ServerSentEvent;
 import org.infinispan.rest.cachemanager.RestCacheManager;
+import org.infinispan.rest.distribution.CacheDistributionInfo;
+import org.infinispan.rest.distribution.CompleteKeyDistribution;
 import org.infinispan.rest.framework.ContentSource;
 import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
@@ -96,9 +86,7 @@ import org.infinispan.security.Role;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.telemetry.InfinispanTelemetry;
-import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.LocalTopologyManager;
-import org.infinispan.upgrade.RollingUpgradeManager;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.rxjava3.core.Flowable;
@@ -115,6 +103,8 @@ import io.reactivex.rxjava3.core.Flowable;
  */
 public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler {
 
+   public static final String CACHE_NOT_FOUND_MESSAGE = "Cache not found";
+
    public CacheResourceV3(InvocationHelper invocationHelper, InfinispanTelemetry telemetryService) {
       super(invocationHelper, telemetryService);
    }
@@ -128,7 +118,7 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
                .parameter(RequestHeader.KEY_CONTENT_TYPE_HEADER, ParameterIn.HEADER, Schema.STRING, "The content type for the key")
                .parameter(RequestHeader.TTL_SECONDS_HEADER, ParameterIn.HEADER, Schema.INTEGER, "The time-to-live (TTL) of the entry in seconds")
                .parameter(RequestHeader.MAX_TIME_IDLE_HEADER, ParameterIn.HEADER, Schema.INTEGER, "The maximum idle time in seconds")
-               .response(NO_CONTENT, "Entry was stored")
+               .response(NO_CONTENT, "Entry was stored", TEXT_PLAIN)
                .response(CONFLICT, "ETag conflict", TEXT_PLAIN)
                .handleWith(this::putValueToCache)
             .invocation().methods(GET, HEAD).path("/v3/caches/{cacheName}/entries/{cacheKey}")
@@ -137,6 +127,7 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
                .handleWith(this::getCacheValue)
             .invocation().method(GET).path("/v3/caches/{cacheName}/_distribution/{cacheKey}")
                .name("Retrieve key distribution")
+               .response(OK, "The key distribution", APPLICATION_JSON, new Schema(CompleteKeyDistribution.class))
                .handleWith(this::getKeyDistribution)
             .invocation().method(DELETE).path("/v3/caches/{cacheName}/entries/{cacheKey}")
                .name("Delete an entry from a cache")
@@ -144,17 +135,17 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
             .invocation().methods(GET).path("/v3/caches/{cacheName}/keys")
                .name("Retrieve all keys from a cache")
                .response(OK, "All cache keys", APPLICATION_JSON)
-               .response(NOT_FOUND, "Cache not found")
+               .response(NOT_FOUND, CACHE_NOT_FOUND_MESSAGE, MediaType.TEXT_PLAIN)
                .handleWith(this::streamKeys)
             .invocation().methods(GET).path("/v3/caches/{cacheName}/entries")
                .name("Retrieve all entries from a cache")
                .response(OK, "All cache keys", APPLICATION_JSON)
-               .response(NOT_FOUND, "Cache not found")
+               .response(NOT_FOUND, CACHE_NOT_FOUND_MESSAGE, MediaType.TEXT_PLAIN)
                .handleWith(this::streamEntries)
             .invocation().methods(GET).path("/v3/caches/{cacheName}/_listen")
                .name("Receive events from a cache")
                .response(OK, "Cache events", TEXT_EVENT_STREAM)
-               .response(NOT_FOUND, "Cache not found")
+               .response(NOT_FOUND, CACHE_NOT_FOUND_MESSAGE, MediaType.TEXT_PLAIN)
                .handleWith(this::cacheListen)
             // Config
             .invocation().methods(GET, HEAD).path("/v3/caches/{cacheName}/config").name("Retrieve cache configuration")
@@ -162,42 +153,44 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
                .response(OK, "Cache configuration as XML", APPLICATION_XML)
                .response(OK, "Cache configuration as JSON", APPLICATION_JSON)
                .response(OK, "Cache configuration as YAML", APPLICATION_YAML)
-               .response(NOT_FOUND, "Cache not found")
+               .response(NOT_FOUND, CACHE_NOT_FOUND_MESSAGE, MediaType.TEXT_PLAIN)
                .handleWith(this::getCacheConfig)
             .invocation().methods(GET).path("/v3/caches/{cacheName}/config/attributes")
                .name("Retrieve all mutable configuration attributes for a cache")
                .permission(AuthorizationPermission.ADMIN)
                .parameter("full", ParameterIn.QUERY, Schema.BOOLEAN, "Retrieve all mutable attributes and their values")
                .response(OK, "Mutable cache attributes", APPLICATION_JSON)
-               .response(NOT_FOUND, "Cache not found")
+               .response(NOT_FOUND, CACHE_NOT_FOUND_MESSAGE, MediaType.TEXT_PLAIN)
                .handleWith(this::getCacheConfigMutableAttributes)
             .invocation().methods(GET).path("/v3/caches/{cacheName}/config/attributes/{attribute}")
                .name("Retrieve the value of a single mutable configuration attribute for a cache")
                .permission(AuthorizationPermission.ADMIN)
                .response(OK, "The value of the requested cache configuration attribute", TEXT_PLAIN, Schema.STRING)
-               .response(NOT_FOUND, "Cache not found")
+               .response(NOT_FOUND, CACHE_NOT_FOUND_MESSAGE, MediaType.TEXT_PLAIN)
                .handleWith(this::getCacheConfigMutableAttribute)
             .invocation().methods(POST).path("/v3/caches/{cacheName}/config/attributes/{attribute}")
                .name("Sets the value of a single mutable configuration attribute for a cache")
                .permission(AuthorizationPermission.ADMIN)
                .handleWith(this::setCacheConfigMutableAttribute)
-            .invocation().methods(POST).path("/v3/caches/{cacheName}/_assign-alias").permission(AuthorizationPermission.ADMIN).handleWith(this::assignAlias)
+            .invocation().methods(POST).path("/v3/caches/{cacheName}/_assign-alias")
+               .permission(AuthorizationPermission.ADMIN)
+               .handleWith(this::assignAlias)
 
             // Stats
             .invocation().methods(GET).path("/v3/caches/{cacheName}/_stats")
                .name("Retrieve cache statistics")
                .response(OK, "The cache statistics", APPLICATION_JSON)
-               .response(NOT_FOUND, "Cache not found")
+               .response(NOT_FOUND, CACHE_NOT_FOUND_MESSAGE, MediaType.TEXT_PLAIN)
                .handleWith(this::getCacheStats)
             .invocation().methods(POST).path("/v3/caches/{cacheName}/_stats-reset")
                .name("Reset cache statistics")
                .permission(AuthorizationPermission.ADMIN)
                .response(NO_CONTENT, "The cache statistics were reset", APPLICATION_JSON)
-               .response(NOT_FOUND, "Cache not found")
+               .response(NOT_FOUND, CACHE_NOT_FOUND_MESSAGE, MediaType.TEXT_PLAIN)
                .handleWith(this::resetCacheStats)
             .invocation().methods(GET).path("/v3/caches/{cacheName}/_distribution")
                .response(OK, "The cache distribution", APPLICATION_JSON)
-               .response(NOT_FOUND, "Cache not found")
+               .response(NOT_FOUND, CACHE_NOT_FOUND_MESSAGE, MediaType.TEXT_PLAIN, new Schema(CacheDistributionInfo[].class))
                .handleWith(this::getCacheDistribution)
 
             // List
@@ -215,7 +208,7 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
             .invocation().methods(GET).path("/v3/caches/{cacheName}/_health")
                .name("Retrieve the cache health")
                .response(OK, "Cache health status", TEXT_PLAIN)
-               .response(NOT_FOUND, "Cache not found")
+               .response(NOT_FOUND, CACHE_NOT_FOUND_MESSAGE, MediaType.TEXT_PLAIN)
                .handleWith(this::getCacheHealth)
 
             // Cache lifecycle
@@ -224,13 +217,13 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
                .handleWith(this::createOrUpdate)
             .invocation().method(DELETE).path("/v3/caches/{cacheName}")
                .name("Deletes a cache")
-               .response(OK, "Cache exists status")
-               .response(NOT_FOUND, "Cache not found")
+               .response(OK, "Cache exists status", MediaType.TEXT_PLAIN)
+               .response(NOT_FOUND, CACHE_NOT_FOUND_MESSAGE, MediaType.TEXT_PLAIN)
                .handleWith(this::removeCache)
             .invocation().method(HEAD).path("/v3/caches/{cacheName}")
                .name("Determines if a cache exists")
-               .response(OK, "Cache exists status")
-               .response(NOT_FOUND, "Cache not found")
+               .response(OK, "Cache exists status", MediaType.TEXT_PLAIN)
+               .response(NOT_FOUND, CACHE_NOT_FOUND_MESSAGE, MediaType.TEXT_PLAIN)
                .handleWith(this::cacheExists)
 
             .invocation().method(GET).path("/v3/caches/{cacheName}/_availability")
@@ -416,133 +409,6 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
       }
 
       return cacheInfo;
-   }
-
-   @SuppressWarnings("rawtypes")
-   private CompletionStage<RestResponse> getSourceConnection(RestRequest request) {
-      NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
-      String cacheName = request.variables().get("cacheName");
-
-      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-
-      PersistenceManager persistenceManager =
-            SecurityActions.getCacheComponent(invocationHelper.getRestCacheManager().getInstance(), cache.getName(), PersistenceManager.class);
-
-      List<RemoteStore> remoteStores = new ArrayList<>(persistenceManager.getStores(RemoteStore.class));
-
-      if (remoteStores.isEmpty()) {
-         builder.status(NOT_FOUND);
-         return completedFuture(builder.build());
-      }
-
-      if (remoteStores.size() != 1) {
-         throw Log.REST.multipleRemoteStores();
-      }
-
-      RemoteStoreConfiguration storeConfiguration = remoteStores.get(0).getConfiguration();
-
-      builder.entity(SerializationUtils.toJson(storeConfiguration));
-      return completedFuture(builder.build());
-   }
-
-   private CompletionStage<RestResponse> hasSourceConnections(RestRequest request) {
-      NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
-      String cacheName = request.variables().get("cacheName");
-
-      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-      RollingUpgradeManager upgradeManager = ComponentRegistry.componentOf(cache, RollingUpgradeManager.class);
-
-      return CompletableFuture.supplyAsync(() -> {
-         if (!upgradeManager.isConnected(MIGRATOR_NAME)) {
-            builder.status(NOT_FOUND);
-         }
-         return builder.build();
-      }, invocationHelper.getExecutor());
-   }
-
-   private CompletionStage<RestResponse> deleteSourceConnection(RestRequest request) {
-      NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
-      builder.status(NO_CONTENT);
-
-      String cacheName = request.variables().get("cacheName");
-
-      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-      RollingUpgradeManager upgradeManager = ComponentRegistry.componentOf(cache, RollingUpgradeManager.class);
-      return CompletableFuture.supplyAsync(() -> {
-         if (upgradeManager.isConnected(MIGRATOR_NAME)) {
-            upgradeManager.disconnectSource(MIGRATOR_NAME);
-         } else {
-            builder.status(HttpResponseStatus.NOT_MODIFIED);
-         }
-
-         return builder.build();
-      }, invocationHelper.getExecutor());
-   }
-
-   private CompletionStage<RestResponse> addSourceConnection(RestRequest request) {
-      final NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
-      builder.status(NO_CONTENT);
-
-      String cacheName = request.variables().get("cacheName");
-      ContentSource contents = request.contents();
-      byte[] config = contents.rawContent();
-
-      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-
-      if (cache == null) {
-         return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
-      }
-
-      if (config == null || config.length == 0) {
-         return invocationHelper.newResponse(request, BAD_REQUEST, "A remote-store config must be provided").toFuture();
-      }
-
-      String storeConfig = new String(config, UTF_8);
-      Json read = Json.read(storeConfig);
-
-      if (!read.isObject() || read.at("remote-store") == null || read.asMap().size() != 1) {
-         return invocationHelper.newResponse(request, BAD_REQUEST, "Invalid remote-store JSON description: a single remote-store element must be provided").toFuture();
-      }
-
-      return CompletableFuture.supplyAsync(() -> {
-         RollingUpgradeManager upgradeManager = ComponentRegistry.componentOf(cache, RollingUpgradeManager.class);
-         try {
-            RemoteStoreConfiguration storeConfiguration = SerializationUtils.fromJson(read.toString());
-            if (!upgradeManager.isConnected(MIGRATOR_NAME)) {
-               upgradeManager.connectSource(MIGRATOR_NAME, storeConfiguration);
-            } else {
-               builder.status(HttpResponseStatus.NOT_MODIFIED);
-            }
-            return builder.build();
-         } catch (IOException e) {
-            throw new RuntimeException(e);
-         }
-      }, invocationHelper.getExecutor());
-   }
-
-   private CompletionStage<RestResponse> syncData(RestRequest request) {
-      NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
-      String cacheName = request.variables().get("cacheName");
-      String readBatchReq = request.getParameter("read-batch");
-      String threadsReq = request.getParameter("threads");
-
-      int readBatch = readBatchReq == null ? 10_000 : Integer.parseInt(readBatchReq);
-      if (readBatch < 1) {
-         throw Log.REST.illegalArgument("read-batch", readBatch);
-      }
-      int threads = request.getParameter("threads") == null ? ProcessorInfo.availableProcessors() : Integer.parseInt(threadsReq);
-      if (threads < 1) {
-         throw Log.REST.illegalArgument("threads", threads);
-      }
-
-      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-      RollingUpgradeManager upgradeManager = ComponentRegistry.componentOf(cache, RollingUpgradeManager.class);
-
-      return CompletableFuture.supplyAsync(() -> {
-         long hotrod = upgradeManager.synchronizeData(MIGRATOR_NAME, readBatch, threads);
-         builder.entity(Log.REST.synchronizedEntries(hotrod));
-         return builder.build();
-      }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> cacheListen(RestRequest request) {
@@ -739,30 +605,6 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
       }, invocationHelper.getExecutor());
    }
 
-   private CompletionStage<RestResponse> assignAlias(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
-      String alias = request.getParameter("alias");
-      String cacheName = request.variables().get("cacheName");
-      Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-      if (cache == null) {
-         return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
-      }
-      invocationHelper.getRestCacheManager().getCacheManagerAdmin(request);
-      EmbeddedCacheManagerAdmin administration = invocationHelper.getRestCacheManager().getCacheManagerAdmin(request);
-      return CompletableFuture.supplyAsync(() -> {
-         administration.assignAlias(alias, cacheName);
-         return responseBuilder.status(OK).build();
-      }, invocationHelper.getExecutor());
-   }
-
-   private CompletionStage<RestResponse> getSize(RestRequest request) {
-      String cacheName = request.variables().get("cacheName");
-
-      AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-      boolean pretty = isPretty(request);
-      return cache.sizeAsync().thenApply(size -> asJsonResponse(invocationHelper.newResponse(request), Json.make(size), pretty));
-   }
-
    private CompletionStage<RestResponse> getCacheHealth(RestRequest request) throws RestResponseException {
       String cacheName = request.variables().get("cacheName");
       RestCacheManager<?> restCacheManager = invocationHelper.getRestCacheManager();
@@ -782,72 +624,6 @@ public class CacheResourceV3 extends CacheResourceV2 implements ResourceHandler 
                   .status(OK)
                   .build()
       );
-   }
-
-   private CompletionStage<RestResponse> setRebalancing(boolean enable, RestRequest request) {
-      String cacheName = request.variables().get("cacheName");
-      RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
-      if (!restCacheManager.cacheExists(cacheName))
-         return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
-
-      return CompletableFuture.supplyAsync(() -> {
-         NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
-         LocalTopologyManager ltm = SecurityActions.getGlobalComponentRegistry(restCacheManager.getInstance()).getLocalTopologyManager();
-         try {
-            ltm.setCacheRebalancingEnabled(cacheName, enable);
-            builder.status(NO_CONTENT);
-         } catch (Exception e) {
-            throw Util.unchecked(e);
-         }
-         return builder.build();
-      }, invocationHelper.getExecutor());
-   }
-
-   private CompletionStage<RestResponse> reinitializeCache(RestRequest request) {
-      boolean force = Boolean.parseBoolean(request.getParameter("force"));
-      NettyRestResponse.Builder builder = new NettyRestResponse.Builder();
-      EmbeddedCacheManager ecm = invocationHelper.getProtocolServer().getCacheManager();
-      if (!ecm.isCoordinator()) {
-         builder.status(BAD_REQUEST);
-         builder.entity(Json.make("Node not coordinator, request at " + ecm.getCoordinator()));
-         return CompletableFuture.completedFuture(builder.build());
-      }
-
-      GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(ecm);
-      ClusterTopologyManager ctm = gcr.getClusterTopologyManager();
-      LocalTopologyManager ltm = gcr.getLocalTopologyManager();
-      if (ctm == null || ltm == null) {
-         builder.status(BAD_REQUEST);
-         return CompletableFuture.completedFuture(builder.build());
-      }
-
-      builder.status(NO_CONTENT);
-      String cache = request.variables().get("cacheName");
-      InternalCacheRegistry internalRegistry = gcr.getComponent(InternalCacheRegistry.class);
-      if (internalRegistry.isInternalCache(cache)) {
-         return CompletableFuture.completedFuture(builder
-               .status(BAD_REQUEST)
-               .entity(Json.make(String.format("Cache '%s' is internal", cache)))
-               .build());
-      }
-      if (ecm.isRunning(cache)) return CompletableFuture.completedFuture(builder.build());
-      if (!ecm.cacheExists(cache)) {
-         return CompletableFuture.completedFuture(builder
-               .status(NOT_FOUND)
-               .entity(Json.make(String.format("Cache '%s' does not exist", cache)))
-               .build());
-      }
-
-      return CompletableFuture.supplyAsync(() -> {
-               if (!ctm.useCurrentTopologyAsStable(cache, force))
-                  return CompletableFuture.completedFuture(builder.build());
-
-               // We wait for the topology to be installed.
-               return ltm.stableTopologyCompletion(cache)
-                     .thenApply(ignore -> builder.build());
-            }, invocationHelper.getExecutor())
-            .thenCompose(Function.identity())
-            .thenApply(Function.identity());
    }
 
    public abstract static class BaseCacheListener {

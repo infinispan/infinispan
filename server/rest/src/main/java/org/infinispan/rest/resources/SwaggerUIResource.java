@@ -26,7 +26,12 @@ public class SwaggerUIResource implements ResourceHandler {
    @Override
    public Invocations getInvocations() {
       return new Invocations.Builder("swaggerui", "Swagger UI Initializer")
-            .invocation().methods(Method.GET).path("/swagger-initializer").handleWith(this::swaggerInitializer).anonymous(true).response(MediaType.TEXT_JAVASCRIPT)
+            .invocation()
+               .methods(Method.GET)
+               .path("/swagger-initializer")
+               .anonymous(true)
+               .response(HttpResponseStatus.OK, "Swagger UI initializer", MediaType.TEXT_JAVASCRIPT)
+               .handleWith(this::swaggerInitializer)
             .create();
    }
 

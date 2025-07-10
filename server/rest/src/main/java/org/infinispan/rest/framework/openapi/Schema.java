@@ -13,13 +13,12 @@ public record Schema(Class<?> clazz) implements JsonSerialization {
 
    @Override
    public Json toJson() {
-      Json json = Json.object();
-      inspect(clazz, json);
-      return json;
+      return inspect(clazz, true);
    }
 
-   private static void inspect(Class<?> clazz, Json json) {
+   private static Json inspect(Class<?> clazz, boolean named) {
       boolean done = true;
+      Json json = Json.object();
       if (clazz == boolean.class || clazz == Boolean.class) {
          json.set("type", "boolean");
       } else if (clazz == int.class || clazz == Integer.class) {
@@ -49,18 +48,18 @@ public record Schema(Class<?> clazz) implements JsonSerialization {
          json.set("enum", Json.array(EnumSet.allOf((Class<Enum>) clazz).toArray()));
       } else if (clazz.isArray()) {
          json.set("type", "array");
+         Json items = inspect(clazz.componentType(), false);
+         json.set("items", items);
       } else {
          if ((done = !isLocalClass(clazz))) {
             json.set("type", "object");
          }
       }
-      if (done) return;
+      if (done) return json;
 
       Json properties = Json.object();
       for (Field field : clazz.getDeclaredFields()) {
-         System.out.println("Field: " + field);
-         Json f = Json.object();
-         inspect(field.getType(), f);
+         Json f = inspect(field.getType(), true);
          properties.set(field.getName(), f);
       }
 
@@ -68,6 +67,7 @@ public record Schema(Class<?> clazz) implements JsonSerialization {
             .set("type", "object")
             .set("properties", properties);
       json.set(clazz.getSimpleName(), internal);
+      return json;
    }
 
    private static boolean isLocalClass(Class<?> clazz) {
