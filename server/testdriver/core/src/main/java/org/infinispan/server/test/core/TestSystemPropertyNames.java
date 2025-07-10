@@ -110,6 +110,18 @@ public class TestSystemPropertyNames {
     */
    public static final String INFINISPAN_TEST_SERVER_CONTAINER_ULIMIT = PREFIX + "container.ulimit";
 
+   private static final String INFINISPAN_ROLLING_UPGRADE_TEST = PREFIX + "rolling.upgrade.";
+
+   /**
+    * Specifies the version to start the containers during the rolling upgrade procedure.
+    */
+   public static final String INFINISPAN_ROLLING_UPGRADE_FROM_VERSION = INFINISPAN_ROLLING_UPGRADE_TEST + "from";
+
+   /**
+    * Specifies the target version to perform the rolling upgrades.
+    */
+   public static final String INFINISPAN_ROLLING_UPGRADE_TO_VERSION = INFINISPAN_ROLLING_UPGRADE_TEST + "to";
+
    /**
     * Specifies the name of the keycloak base image
     */

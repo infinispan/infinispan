@@ -1,5 +1,8 @@
 package org.infinispan.server.test.core.rollingupgrade;
 
+import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_ROLLING_UPGRADE_FROM_VERSION;
+import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_ROLLING_UPGRADE_TO_VERSION;
+
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -79,8 +82,8 @@ public class RollingUpgradeConfigurationBuilder {
    }
 
    public RollingUpgradeConfigurationBuilder(String name, String fromVersion, String toVersion) {
-      this.fromVersion = fromVersion;
-      this.toVersion = toVersion;
+      this.fromVersion = System.getProperty(INFINISPAN_ROLLING_UPGRADE_FROM_VERSION, fromVersion);
+      this.toVersion = System.getProperty(INFINISPAN_ROLLING_UPGRADE_TO_VERSION, toVersion);
       this.name = name;
    }
 
