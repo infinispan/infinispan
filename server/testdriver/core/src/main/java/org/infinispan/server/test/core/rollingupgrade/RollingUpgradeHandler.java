@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -43,7 +42,6 @@ public class RollingUpgradeHandler {
    record ConfigAndDriver(InfinispanServerTestConfiguration infinispanServerTestConfiguration, ContainerInfinispanServerDriver containerInfinispanServerDriver) {}
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private static final AtomicInteger clusterOffset = new AtomicInteger();
 
    private final RollingUpgradeConfiguration configuration;
 
@@ -103,8 +101,7 @@ public class RollingUpgradeHandler {
       this.configuration = configuration;
       this.restClients = new RestClient[nodeCount];
       this.memcachedClients = new MemcachedClient[nodeCount];
-
-      this.clusterName = "rolling-upgrade-" + clusterOffset.getAndIncrement();
+      this.clusterName = configuration.name();
    }
 
    public String getToImageCreated() {
@@ -205,7 +202,7 @@ public class RollingUpgradeHandler {
       RollingUpgradeHandler handler = new RollingUpgradeHandler(configuration);
 
       try {
-         log.debugf("Starting %d nodes to version %s", handler.nodeCount, handler.versionFrom);
+         log.debugf("Starting %d nodes to version %s in cluster %s", handler.nodeCount, handler.versionFrom, handler.clusterName);
          handler.fromDriver = handler.startNode(false, configuration.nodeCount(), configuration.nodeCount(),
                handler.clusterName, configuration.jgroupsProtocol(), null,configuration.serverConfigurationFile(),
                configuration.defaultServerConfigurationFile(), configuration.customArtifacts(),
@@ -230,7 +227,7 @@ public class RollingUpgradeHandler {
    }
 
    private void removeOldAndAddNew(String site1Name) throws InterruptedException {
-      log.debugf("Shutting down 1 node from version: %s", versionFrom);
+      log.debugf("Shutting down 1 node from version: %s for cluster %s", versionFrom, clusterName);
       int nodeId = nodeLeft-- - 1;
       String volumeId = fromDriver.containerInfinispanServerDriver.volumeId(nodeId);
       fromDriver.containerInfinispanServerDriver.stop(nodeId);
@@ -245,7 +242,7 @@ public class RollingUpgradeHandler {
          throw new IllegalStateException("Servers did not shut down properly within 30 seconds, assuming error");
       }
 
-      log.debugf("Starting 1 node to version %s", versionTo);
+      log.debugf("Starting 1 node to version %s at cluster %s", versionTo, clusterName);
       if (toDriver == null) {
          toDriver = startNode(true, 1, nodeCount, site1Name,
                configuration.jgroupsProtocol(), volumeId, configuration.serverConfigurationFile(),
@@ -385,7 +382,8 @@ public class RollingUpgradeHandler {
          builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED, "true");
       }
 
-      String versionToUse = toOrFrom ? configuration.toVersion() : configuration.fromVersion();
+      String prefix = (toOrFrom ? "To-" : "From-") + clusterName;
+      String versionToUse = prefix + (toOrFrom ? configuration.toVersion() : configuration.fromVersion());
 
       if (versionToUse.startsWith("image://")) {
          builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_BASE_IMAGE_NAME, versionToUse.substring("image://".length()));

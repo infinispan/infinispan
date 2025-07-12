@@ -36,7 +36,7 @@ public class RollingUpgradePersistenceTest {
             </distributed-cache>
             """.formatted(cacheName);
 
-      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder("15.2.0.Final", "15.2.1.Final")
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(RollingUpgradePersistenceTest.class.getName(), "15.2.0.Final", "15.2.1.Final")
             .nodeCount(nodeCount);
       builder.handlers(
             uh -> handleInitializer(uh, cacheName, new StringConfiguration(xml)),
@@ -53,7 +53,7 @@ public class RollingUpgradePersistenceTest {
       String cacheName = "rolling_upgrade_jdbc";
       int nodeCount = 2;
       DatabaseServerListener listener = new DatabaseServerListener(databaseType);
-      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder("15.2.0.Final", "15.2.1.Final")
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(RollingUpgradePersistenceTest.class.getName(), "15.2.0.Final", "15.2.1.Final")
             .nodeCount(nodeCount)
             .addArtifacts(PersistenceIT.getJavaArchive())
             .addMavenArtifacts(PersistenceIT.getJdbcDrivers())

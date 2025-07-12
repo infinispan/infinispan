@@ -76,7 +76,7 @@ import org.junit.platform.suite.api.Suite;
 public class ClusteredRollingUpgradeIT extends InfinispanSuite {
 
    static {
-      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder("15.2.0.Final", "15.2.1.Final")
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(ClusteredRollingUpgradeIT.class.getName(), "15.2.0.Final", "15.2.1.Final")
             // ClusterIT only currently passes with just 2 nodes.. some tests aren't testing serialization and other things
             .nodeCount(2)
             .useCustomServerConfiguration("configuration/ClusteredServerTest.xml")

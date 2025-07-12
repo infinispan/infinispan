@@ -14,6 +14,9 @@ import java.util.function.Predicate;
 
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -23,8 +26,11 @@ import org.junit.platform.suite.api.Suite;
 
 public abstract class AbstractServerExtension implements BeforeAllCallback, AfterAllCallback {
 
+   private static final Log log = LogFactory.getLog(AbstractServerExtension.class);
+
    protected final List<Consumer<File>> configurationEnhancers = new ArrayList<>();
    protected final Set<Class<?>> suiteTestClasses = new HashSet<>();
+   protected Class<?> suite;
 
    protected String testName(ExtensionContext extensionContext) {
       // We need to replace the $ for subclasses as it causes issues with the testcontainers docker client
@@ -38,6 +44,10 @@ public abstract class AbstractServerExtension implements BeforeAllCallback, Afte
       addSuiteTestClasses(testClass);
       // Add SelectClasses from outer class definition
       addSuiteTestClasses(testClass.getDeclaringClass());
+
+      if (suite == null && isSuiteClass(extensionContext)) {
+         suite = testClass;
+      }
    }
 
    private void addSuiteTestClasses(Class<?> clazz) {
@@ -101,30 +111,40 @@ public abstract class AbstractServerExtension implements BeforeAllCallback, Afte
 
    @Override
    public final void beforeAll(ExtensionContext context) throws Exception {
-      initSuiteClasses(context);
+      try {
+         initSuiteClasses(context);
 
-      // Inject all classes that are using a static @InfinispanServer(ClusteredIT.class) field.
-      Class<?> testClass = context.getRequiredTestClass();
+         // Inject all classes that are using a static @InfinispanServer(ClusteredIT.class) field.
+         Class<?> testClass = context.getRequiredTestClass();
+         log.infof("Starting test suite: %s for test %s", suite, testClass);
 
-      injectExtension(testClass, this);
+         injectExtension(testClass, this);
 
-      SelectClasses selectClasses = testClass.getAnnotation(SelectClasses.class);
-      if (selectClasses != null) {
-         for (Class<?> selectClass : selectClasses.value()) {
-            injectExtension(selectClass, this);
+         SelectClasses selectClasses = testClass.getAnnotation(SelectClasses.class);
+         if (selectClasses != null) {
+            for (Class<?> selectClass : selectClasses.value()) {
+               injectExtension(selectClass, this);
+            }
          }
+         onTestsStart(context);
+      } catch (Throwable t) {
+         Assertions.fail(String.format("Failed during '%s#beforeAll' suite execution", suite.getName()), t);
       }
-      onTestsStart(context);
    }
 
    protected abstract void onTestsStart(ExtensionContext extensionContext) throws Exception;
 
    @Override
    public final void afterAll(ExtensionContext context) {
-      cleanupSuiteClasses(context);
-      // Only stop the extension resources when all tests in a Suite have been completed
-      if (suiteTestClasses.isEmpty()) {
-         onTestsComplete(context);
+      try {
+         log.infof("Finishing suite: %s for test %s", suite, context.getTestClass().orElse(null));
+         cleanupSuiteClasses(context);
+         // Only stop the extension resources when all tests in a Suite have been completed
+         if (suiteTestClasses.isEmpty()) {
+            onTestsComplete(context);
+         }
+      } catch (Throwable t) {
+         Assertions.fail(String.format("Failed during '%s#afterAll' suite execution", suite.getName()), t);
       }
    }
 
