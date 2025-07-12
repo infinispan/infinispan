@@ -48,9 +48,10 @@ public class HealthCheckResource implements ResourceHandler {
       DefaultCacheManager dcm = helper.getServer().getCacheManager();
       HttpResponseStatus status = HttpResponseStatus.SERVICE_UNAVAILABLE;
       if (dcm.getStatus().allowInvocations() && helper.getProtocolServer().isStarted()) {
+         status = HttpResponseStatus.OK;
          CacheManagerInfo cmi = dcm.getCacheManagerInfo();
-         if (cmi.allCachesReady())
-            status = HttpResponseStatus.OK;
+         if (cmi.allCachesStopped())
+            status = HttpResponseStatus.SERVICE_UNAVAILABLE;
       }
 
       return CompletableFuture.completedFuture(builder.status(status).build());

@@ -14,6 +14,7 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestServerClient;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.globalstate.ConfigurationStorage;
@@ -62,6 +63,10 @@ public class HealthCheckResourceTest extends AbstractRestResourceTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.statistics().enable().clustering().cacheMode(DIST_SYNC).partitionHandling().whenSplit(DENY_READ_WRITES).aliases("alias");
       cm.defineConfiguration(TEST_CACHE_NAME, builder.build());
+
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.simpleCache(true).clustering().cacheMode(CacheMode.LOCAL);
+      cm.defineConfiguration("local-cache", cb.build());
    }
 
    @Override
@@ -91,6 +96,7 @@ public class HealthCheckResourceTest extends AbstractRestResourceTest {
 
    public void testReplyDuringShutdown() {
       manager(0).getCache(TEST_CACHE_NAME).put("key", "value");
+      manager(0).getCache("local-cache").put("key", "value");
 
       try (RestResponse res = join(restServerClient.ready())) {
          assertThat(res.status()).isEqualTo(OK);
