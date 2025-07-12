@@ -18,9 +18,9 @@ import org.infinispan.client.rest.RestMetricsClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.server.functional.XSiteIT;
-import org.infinispan.server.test.junit5.InfinispanXSiteServerExtension;
+import org.infinispan.server.test.api.TestClientXSiteDriver;
+import org.infinispan.server.test.junit5.InfinispanServer;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * Test site status metrics
@@ -47,8 +47,8 @@ public class XSiteRestMetricsOperations {
                "  </replicated-cache>" +
                "</cache-container></infinispan>";
 
-   @RegisterExtension
-   public static final InfinispanXSiteServerExtension SERVERS = XSiteIT.SERVERS;
+   @InfinispanServer(XSiteIT.class)
+   public static TestClientXSiteDriver SERVERS;
 
 
    private static final String[] TAGGED_METRICS = {
@@ -122,7 +122,13 @@ public class XSiteRestMetricsOperations {
       String nycXML = String.format(NYC_CACHE_XML_CONFIG, SERVERS.getMethodName());
 
       //noinspection resource
-      RestClient client = SERVERS.rest(LON).withServerConfiguration(new StringConfiguration(lonXML)).create();
+
+      RestClient client;
+      try {
+         client = SERVERS.rest(LON).withServerConfiguration(new StringConfiguration(lonXML)).create();
+      } catch (Throwable t) {
+         throw t;
+      }
       RestMetricsClient metricsClient = client.metrics();
 
       // create cache in NYC

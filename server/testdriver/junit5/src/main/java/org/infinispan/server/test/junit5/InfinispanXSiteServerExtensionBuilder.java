@@ -3,7 +3,9 @@ package org.infinispan.server.test.junit5;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.server.test.core.TestServer;
@@ -22,6 +24,11 @@ public class InfinispanXSiteServerExtensionBuilder {
       siteBuilder.site(siteName);
       sites.add(siteBuilder);
       return this;
+   }
+
+   public Map<String, InfinispanServerExtensionBuilder> siteConfigurations() {
+      return sites.stream().collect(Collectors.toMap(
+            InfinispanServerExtensionBuilder::site, Function.identity()));
    }
 
    public InfinispanXSiteServerExtension build() {

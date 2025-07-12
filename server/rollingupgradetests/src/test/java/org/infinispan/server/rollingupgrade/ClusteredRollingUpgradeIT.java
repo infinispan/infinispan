@@ -81,7 +81,7 @@ public class ClusteredRollingUpgradeIT extends InfinispanSuite {
             .nodeCount(2)
             .useCustomServerConfiguration("configuration/ClusteredServerTest.xml")
             .addMavenArtifacts(ClusteredIT.mavenArtifacts())
-            .addArtifacts(ClusteredIT.artifacts())
+            .addArchives(ClusteredIT.artifacts())
             .addProperty("infinispan.query.lucene.max-boolean-clauses", "1025");
       SERVERS = new RollingUpgradeHandlerExtension(builder);
    }

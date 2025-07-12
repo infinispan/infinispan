@@ -45,6 +45,7 @@ import org.infinispan.server.functional.resp.RespSetTest;
 import org.infinispan.server.functional.resp.RespSortedSetTest;
 import org.infinispan.server.functional.resp.RespStringTest;
 import org.infinispan.server.functional.resp.RespTransactionTest;
+import org.infinispan.server.functional.rest.RestContainerListenerTest;
 import org.infinispan.server.functional.rest.RestLoggingResource;
 import org.infinispan.server.functional.rest.RestOperations;
 import org.infinispan.server.functional.rest.RestRouter;
@@ -72,6 +73,7 @@ import org.junit.platform.suite.api.Suite;
       RestOperations.class,
       RestRouter.class,
       RestServerResource.class,
+      RestContainerListenerTest.class,
       MemcachedOperations.class,
       HotRodAdmin.class,
       HotRodCounterOperations.class,
