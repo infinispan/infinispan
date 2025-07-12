@@ -127,11 +127,11 @@ public class InvocationHelper {
    }
 
    public NettyRestResponse.Builder newResponse(FullHttpRequest request) {
-      return newResponse(request.headers().get(RequestHeader.USER_AGENT.getValue()), request.uri());
+      return newResponse(request.headers().get(RequestHeader.USER_AGENT.toString()), request.uri());
    }
 
    public NettyRestResponse.Builder newResponse(RestRequest request) {
-      return newResponse(request.header(RequestHeader.USER_AGENT.getValue()), request.uri());
+      return newResponse(request.header(RequestHeader.USER_AGENT.toString()), request.uri());
    }
 
    private NettyRestResponse.Builder newResponse(String userAgent, String uri) {
