@@ -207,10 +207,15 @@ public class ClusterResource implements ResourceHandler {
                  Map<String, Object> info = Json.read(json).asMap();
                  Json infoToPass = Json.object();
                  infoToPass.set(VERSION, info.get(VERSION));
-                 infoToPass.set(NODE_ADDRESS, info.get(NODE_ADDRESS));
+                 Object nodeAdd = info.get(NODE_ADDRESS);
+                 infoToPass.set(NODE_ADDRESS, nodeAdd);
                  infoToPass.set(PHYSICAL_ADDRESSES, info.get(PHYSICAL_ADDRESSES));
                  infoToPass.set(CACHE_MANAGER_STATUS, info.get(CACHE_MANAGER_STATUS));
-                 clusterInfos.put(addr.toString(), infoToPass);
+                 if (addr == null) {
+                    clusterInfos.put(nodeAdd.toString(), infoToPass);
+                 } else {
+                    clusterInfos.put(addr.toString(), infoToPass);
+                 }
               })
               .thenApply(ignore -> {
                  Json members = Json.make(clusterInfos.values());
