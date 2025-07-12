@@ -17,7 +17,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
-import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.InternalCacheSet;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -60,12 +59,10 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -98,13 +95,11 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
    protected final AtomicLong cacheMisses = new AtomicLong(0);
 
    @Inject protected PersistenceManager persistenceManager;
-   @Inject protected CacheNotifier notifier;
+   @Inject protected CacheNotifier<Object, Object> notifier;
    @Inject protected EntryFactory entryFactory;
    @Inject TimeService timeService;
    @Inject InternalEntryFactory iceFactory;
    @Inject InternalDataContainer<K, V> dataContainer;
-   @Inject GroupManager groupManager;
-   @Inject ComponentRef<Cache<K, V>> cache;
    @Inject KeyPartitioner partitioner;
    @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
    protected ExecutorService nonBlockingExecutor;
@@ -203,8 +198,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
    }
 
    @Override
-   public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command)
-         throws Throwable {
+   public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) {
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          if (hasSkipLoadFlag(rCommand)) {
             // Continue with the existing throwable/return value
@@ -216,8 +210,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
    }
 
    @Override
-   public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command)
-         throws Throwable {
+   public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) {
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          if (hasSkipLoadFlag(rCommand)) {
             // Continue with the existing throwable/return value
@@ -240,8 +233,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
    }
 
    @Override
-   public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command)
-         throws Throwable {
+   public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) {
       return visitDataCommand(ctx, command);
    }
 
@@ -256,7 +248,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
    }
 
    @Override
-   public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
+   public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) {
       return visitManyDataCommand(ctx, command, command.getAffectedKeys());
    }
 
@@ -292,11 +284,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
             persistenceManager.size(PRIVATE.and(NOT_ASYNC), command.getSegments()));
    }
 
-   protected final boolean isConditional(WriteCommand cmd) {
-      return cmd.isConditional();
-   }
-
-   protected final boolean hasSkipLoadFlag(FlagAffectedCommand cmd) {
+   protected static boolean hasSkipLoadFlag(FlagAffectedCommand cmd) {
       return cmd.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD);
    }
 
@@ -374,9 +362,9 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
       if (entry != null) {
          entryFactory.wrapExternalEntry(ctx, key, entry, true, cmd instanceof WriteCommand);
       }
-      CacheEntry contextEntry = ctx.lookupEntry(key);
-      if (contextEntry instanceof MVCCEntry) {
-         ((MVCCEntry) contextEntry).setLoaded(true);
+      CacheEntry<?, ?> contextEntry = ctx.lookupEntry(key);
+      if (contextEntry instanceof MVCCEntry<?, ?> e) {
+         e.setLoaded(true);
       }
    }
 
@@ -446,7 +434,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
    }
 
    private boolean skipLoad(InvocationContext ctx, Object key, int segment, FlagAffectedCommand cmd) {
-      CacheEntry e = ctx.lookupEntry(key);
+      CacheEntry<?, ?> e = ctx.lookupEntry(key);
       if (e == null) {
          if (log.isTraceEnabled()) {
             log.tracef("Skip load for command %s. Entry is not in the context.", cmd);
@@ -555,7 +543,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
 
    /**
     * Disables a store of a given type.
-    *
+    * <p>
     * If the given type cannot be found, this is a no-op.  If more than one store of the same type is configured,
     * all stores of the given type are disabled.
     *
