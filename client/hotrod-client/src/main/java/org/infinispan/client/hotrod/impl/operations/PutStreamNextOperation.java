@@ -34,6 +34,8 @@ public class PutStreamNextOperation extends AbstractCacheOperation<Boolean> {
       buf.writeBoolean(lastChunk);
       ByteBufUtil.writeVInt(buf, valueBytes.readableBytes());
       buf.writeBytes(valueBytes);
+      // We don't support retry so just release immediately after writing
+      valueBytes.release();
    }
 
    @Override

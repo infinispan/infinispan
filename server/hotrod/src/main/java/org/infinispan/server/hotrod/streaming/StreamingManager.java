@@ -28,11 +28,12 @@ public class StreamingManager {
       Caffeine<Object, Object> builder = Caffeine.newBuilder();
       builder.expireAfterAccess(5, TimeUnit.MINUTES).removalListener(
             (RemovalListener<Integer, StreamingState>) (key, value, cause) -> {
-               if (value != null) {
-                  value.close();
-               }
                if (cause.wasEvicted()) {
+                  // Keys and values cannot be null as we don't use weak key or values
+                  assert key != null;
+                  assert value != null;
                   log.removedUnclosedIterator(key.toString());
+                  value.close();
                }
             }).ticker(new TimeServiceTicker(timeService)).executor(new WithinThreadExecutor());
       iterationStateMap = builder.<Integer, StreamingState>build().asMap();
@@ -74,6 +75,7 @@ public class StreamingManager {
          iterationStateMap.computeIfPresent(streamId, (k, v) -> {
             v.nextPut(buf);
             ref.set(v);
+            v.closePut();
             return null;
          });
 
