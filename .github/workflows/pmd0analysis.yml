@@ -1,0 +1,50 @@
+name: PMD Static Analysis
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  run-pmd:
+    name: Run PMD
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Run PMD
+        run: mvn -B pmd:pmd
+
+      - name: Upload PMD Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pmd-report
+          path: target/site/pmd.html
+
+      - name: Fail if violations exceed threshold
+        run: |
+          if grep -q "<violation" target/site/pmd.xml; then
+            echo "::error file=target/site/pmd.xml::PMD violations found"
+            exit 1
+          else
+            echo "No PMD violations found"
+          fi
