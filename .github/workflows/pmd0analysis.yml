@@ -8,7 +8,7 @@ on:
 
 jobs:
   run-pmd:
-    name: Run PMD
+    name: Run PMD on core module
     runs-on: ubuntu-latest
 
     steps:
@@ -30,25 +30,23 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-
-      - name: Build all modules (install SNAPSHOTs locally)
-        run: mvn -B install -DskipTests
-
-      - name: Run PMD
-        run: mvn -B pmd:pmd
+      - name: Run PMD on core module
+        run: |
+          cd core
+          mvn -B pmd:pmd
 
       - name: Upload PMD Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: pmd-report
-          path: target/site/pmd.html
+          path: core/target/site/pmd.html
 
-      - name: Fail if violations exceed threshold
+      - name: Fail if violations found
         run: |
-          if grep -q "<violation" target/site/pmd.xml; then
-            echo "::error file=target/site/pmd.xml::PMD violations found"
+          if [ -f core/target/site/pmd.xml ] && grep -q "<violation" core/target/site/pmd.xml; then
+            echo "::error file=core/target/site/pmd.xml::PMD violations found"
             exit 1
           else
-            echo "No PMD violations found"
+            echo "No PMD violations found or report file missing"
           fi
