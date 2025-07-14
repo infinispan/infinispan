@@ -463,19 +463,19 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       for (Consumer<OutputFrame> consumer : logConsumers)
          container.withLogConsumer(consumer);
 
-      log.infof("Starting container %d", i);
+      String containerAndSite = i + (site != null ? "-" + site : "");
+      log.infof("Starting container %s", containerAndSite);
       container.start();
       containers.set(i, new InfinispanGenericContainer(container));
-      log.infof("Started container %d", i);
+      log.infof("Started container %s", containerAndSite);
       return container;
    }
 
    @Override
    public void stop() {
+      String site = configuration.site();
       for (int i = 0; i < containers.size(); i++) {
-         log.infof("Stopping container %d", i);
          stop(i);
-         log.infof("Stopped container %d", i);
       }
       if (image != null) {
          cleanup(image.getDockerImageName());
@@ -527,8 +527,11 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    @Override
    public void stop(int server) {
       InfinispanGenericContainer container = containers.get(server);
+      String site = configuration.site();
+      String containerAndSite = server + (site != null ? "-" + site : "");
       // can fail during the startup
       if (container != null) {
+         log.infof("Stopping container %s", containerAndSite);
          CountdownLatchLoggingConsumer latch = new CountdownLatchLoggingConsumer(1, SHUTDOWN_MESSAGE_REGEX);
          container.withLogConsumer(latch);
          container.stop();
@@ -538,7 +541,10 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             container.uploadCoverageInfoToHost(JACOCO_COVERAGE_CONTAINER_PATH, System.getProperty(JACOCO_REPORTS_DIR) + this.name + "-" + server + ".exec");
          }
          eventually("Container wasn't stopped.", () -> !isRunning(server));
+         log.infof("Stopped container %s", containerAndSite);
          System.out.printf("[%d] STOP %n", server);
+      } else {
+         log.infof("Container %s not present", containerAndSite);
       }
    }
 

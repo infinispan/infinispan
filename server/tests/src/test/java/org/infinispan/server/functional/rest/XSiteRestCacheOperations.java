@@ -28,9 +28,9 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.server.functional.XSiteIT;
-import org.infinispan.server.test.junit5.InfinispanXSiteServerExtension;
+import org.infinispan.server.test.api.TestClientXSiteDriver;
+import org.infinispan.server.test.junit5.InfinispanServer;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Pedro Ruivo
@@ -39,8 +39,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  **/
 public class XSiteRestCacheOperations {
 
-   @RegisterExtension
-   public static final InfinispanXSiteServerExtension SERVERS = XSiteIT.SERVERS;
+   @InfinispanServer(XSiteIT.class)
+   public static TestClientXSiteDriver SERVERS;
 
    @Test
    public void testRestOperationsLonToNycBackup() {

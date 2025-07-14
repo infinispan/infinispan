@@ -39,7 +39,7 @@ import net.spy.memcached.ConnectionFactoryBuilder;
 import net.spy.memcached.MemcachedClient;
 
 public class RollingUpgradeHandler {
-   record ConfigAndDriver(InfinispanServerTestConfiguration infinispanServerTestConfiguration, ContainerInfinispanServerDriver containerInfinispanServerDriver) {}
+   public record ConfigAndDriver(InfinispanServerTestConfiguration infinispanServerTestConfiguration, ContainerInfinispanServerDriver containerInfinispanServerDriver) {}
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
@@ -47,6 +47,7 @@ public class RollingUpgradeHandler {
 
    private final int nodeCount;
    private final String clusterName;
+   private final String siteName;
    // Holds a value of how many nodes are left to upgrade
    private int nodeLeft;
 
@@ -93,7 +94,7 @@ public class RollingUpgradeHandler {
       ERROR
    }
 
-   private RollingUpgradeHandler(RollingUpgradeConfiguration configuration) {
+   private RollingUpgradeHandler(RollingUpgradeConfiguration configuration, String siteName) {
       this.nodeCount = configuration.nodeCount();
       this.nodeLeft = nodeCount;
       this.versionFrom = configuration.fromVersion();
@@ -102,6 +103,7 @@ public class RollingUpgradeHandler {
       this.restClients = new RestClient[nodeCount];
       this.memcachedClients = new MemcachedClient[nodeCount];
       this.clusterName = configuration.name();
+      this.siteName = siteName;
    }
 
    public String getToImageCreated() {
@@ -197,36 +199,58 @@ public class RollingUpgradeHandler {
     * @param configuration the configuration to use
     * @return a future to signal when it should complete the upgrade
     */
-   public static RollingUpgradeHandler runUntilMixed(RollingUpgradeConfiguration configuration) throws InterruptedException {
-      // TODO: eventually support xsite
-      RollingUpgradeHandler handler = new RollingUpgradeHandler(configuration);
+   public static RollingUpgradeHandler runUntilMixed(RollingUpgradeConfiguration configuration) {
+      RollingUpgradeHandler handler = startOldCluster(configuration);
 
       try {
-         log.debugf("Starting %d nodes to version %s in cluster %s", handler.nodeCount, handler.versionFrom, handler.clusterName);
-         handler.fromDriver = handler.startNode(false, configuration.nodeCount(), configuration.nodeCount(),
-               handler.clusterName, configuration.jgroupsProtocol(), null,configuration.serverConfigurationFile(),
-               configuration.defaultServerConfigurationFile(), configuration.customArtifacts(),
-               configuration.mavenArtifacts(), configuration.properties(), configuration.listeners());
-         handler.currentState = STATE.OLD_RUNNING;
-
-         configuration.initialHandler().accept(handler);
-
-         handler.removeOldAndAddNew(handler.clusterName);
-
-         handler.currentState = STATE.NEW_RUNNING;
+         handler.upgradeNewNode();
       } catch (Throwable t) {
          try {
             handler.exceptionEncountered(t);
-            throw t;
          } finally {
-            handler.cleanup();
+            handler.close();
          }
       }
 
       return handler;
    }
 
-   private void removeOldAndAddNew(String site1Name) throws InterruptedException {
+   public static RollingUpgradeHandler startOldCluster(RollingUpgradeConfiguration configuration) {
+      return startOldCluster(configuration, null);
+   }
+
+   public static RollingUpgradeHandler startOldCluster(RollingUpgradeConfiguration configuration, String siteName) {
+      if (configuration.nodeCount() <= 1) {
+         throw new IllegalStateException("Rolling Upgrade requires at least 2 nodes, but received " + configuration.nodeCount());
+      }
+      RollingUpgradeHandler handler = new RollingUpgradeHandler(configuration, siteName);
+
+      try {
+         log.debugf("Starting %d nodes to version %s in cluster %s", handler.nodeCount, handler.versionFrom, handler.clusterName);
+         handler.fromDriver = handler.startNode(false, configuration.nodeCount(), configuration.nodeCount(),
+               configuration.jgroupsProtocol(), null,configuration.serverConfigurationFile(),
+               configuration.defaultServerConfigurationFile(), configuration.customArtifacts(),
+               configuration.mavenArtifacts(), configuration.properties(), configuration.listeners());
+         handler.currentState = STATE.OLD_RUNNING;
+
+         configuration.initialHandler().accept(handler);
+      } catch (Throwable t) {
+         try {
+            handler.exceptionEncountered(t);
+            throw t;
+         } finally {
+            handler.close();
+         }
+      }
+
+      return handler;
+   }
+
+   public void upgradeNewNode() throws InterruptedException {
+      if (nodeLeft <= 0) {
+         throw new IllegalStateException("All nodes have already been migrated to a new server. Check invocation count," +
+               " configured nodeCount is: " + nodeCount);
+      }
       log.debugf("Shutting down 1 node from version: %s for cluster %s", versionFrom, clusterName);
       int nodeId = nodeLeft-- - 1;
       String volumeId = fromDriver.containerInfinispanServerDriver.volumeId(nodeId);
@@ -244,7 +268,7 @@ public class RollingUpgradeHandler {
 
       log.debugf("Starting 1 node to version %s at cluster %s", versionTo, clusterName);
       if (toDriver == null) {
-         toDriver = startNode(true, 1, nodeCount, site1Name,
+         toDriver = startNode(true, 1, nodeCount,
                configuration.jgroupsProtocol(), volumeId, configuration.serverConfigurationFile(),
                configuration.defaultServerConfigurationFile(), configuration.customArtifacts(),
                configuration.mavenArtifacts(), configuration.properties(), configuration.listeners());
@@ -262,16 +286,18 @@ public class RollingUpgradeHandler {
       }
    }
 
-   public void complete() {
+   public void completeUpgrade(boolean shouldClose) {
       try {
          while (nodeLeft > 0) {
-            removeOldAndAddNew(clusterName);
+            upgradeNewNode();
             currentState = STATE.NEW_RUNNING;
          }
       } catch (Throwable e) {
          exceptionEncountered(e);
       } finally {
-         cleanup();
+         if (shouldClose) {
+            close();
+         }
       }
    }
 
@@ -280,14 +306,14 @@ public class RollingUpgradeHandler {
       configuration.exceptionHandler().accept(t, this);
    }
 
-   public static void performUpgrade(RollingUpgradeConfiguration configuration) throws InterruptedException {
+   public static void performUpgrade(RollingUpgradeConfiguration configuration) {
       RollingUpgradeHandler ruh = runUntilMixed(configuration);
       try {
-         ruh.complete();
+         ruh.completeUpgrade(false);
       } catch (Throwable t) {
          ruh.exceptionEncountered(t);
       } finally {
-         ruh.cleanup();
+         ruh.close();
       }
    }
 
@@ -305,12 +331,14 @@ public class RollingUpgradeHandler {
       return false;
    }
 
-   private void cleanup() {
+   public void close() {
       if (fromDriver != null) {
          fromDriver.containerInfinispanServerDriver.stop(configuration.fromVersion());
+         fromDriver = null;
       }
       if (toDriver != null) {
          toDriver.containerInfinispanServerDriver.stop(configuration.toVersion());
+         toDriver = null;
       }
 
       Util.close(remoteCacheManager);
@@ -357,7 +385,7 @@ public class RollingUpgradeHandler {
    }
 
    private ConfigAndDriver startNode(boolean toOrFrom, int nodeCount, int expectedCount,
-                                     String clusterName, String protocol, String volumeId,
+                                     String protocol, String volumeId,
                                      String serverConfigurationFile, boolean defaultServerConfigurationFile,
                                      JavaArchive[] artifacts, String[] mavenArtifacts, Properties properties,
                                      List<InfinispanServerListener> listeners) {
@@ -371,6 +399,9 @@ public class RollingUpgradeHandler {
             builder.property((String) k, (String) v);
          }
       });
+      if (siteName != null) {
+         builder.site(siteName);
+      }
       builder.artifacts(artifacts);
       builder.mavenArtifacts(mavenArtifacts);
       builder.property(Server.INFINISPAN_CLUSTER_STACK, protocol);
@@ -383,7 +414,7 @@ public class RollingUpgradeHandler {
       }
 
       String versionToUse = toOrFrom ? configuration.toVersion() : configuration.fromVersion();
-      final String name = clusterName + "-" + versionToUse;
+      final String name = (siteName != null ? siteName : "") + clusterName + "-" + versionToUse;
 
       if (versionToUse.startsWith("image://")) {
          builder.property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_BASE_IMAGE_NAME, versionToUse.substring("image://".length()));

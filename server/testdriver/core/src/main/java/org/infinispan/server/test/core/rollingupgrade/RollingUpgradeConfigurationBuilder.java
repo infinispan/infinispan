@@ -28,14 +28,13 @@ public class RollingUpgradeConfigurationBuilder {
    private final String name;
 
    private int nodeCount = 3;
-   private boolean xSite;
    private String serverConfigurationFile = "infinispan.xml";
    private boolean defaultServerConfigurationFile = true;
    private final Properties properties = new Properties();
-   private final List<JavaArchive> customArtifacts = new ArrayList<>();
+   private final List<JavaArchive> customArchives = new ArrayList<>();
    private final List<String> mavenArtifacts = new ArrayList<>();
    private final List<InfinispanServerListener> listeners = new ArrayList<>();
-   private String jgroupsProtocol = "tcp";
+   private String jgroupsProtocol = "test-tcp";
    private int serverCheckTimeSecs = 30;
    private boolean useSharedDataMount = true;
    private BiConsumer<Throwable, RollingUpgradeHandler> exceptionHandler = (t, uh) -> {
@@ -95,11 +94,6 @@ public class RollingUpgradeConfigurationBuilder {
       return this;
    }
 
-   public RollingUpgradeConfigurationBuilder xSite(boolean xSite) {
-      this.xSite = xSite;
-      return this;
-   }
-
    public RollingUpgradeConfigurationBuilder jgroupsProtocol(String jgroupsProtocol) {
       this.jgroupsProtocol = Objects.requireNonNull(jgroupsProtocol);
       return this;
@@ -140,8 +134,8 @@ public class RollingUpgradeConfigurationBuilder {
       return this;
    }
 
-   public RollingUpgradeConfigurationBuilder addArtifacts(JavaArchive ... mavenArtifact) {
-      customArtifacts.addAll(List.of(mavenArtifact));
+   public RollingUpgradeConfigurationBuilder addArchives(JavaArchive ... javaArchives) {
+      customArchives.addAll(List.of(javaArchives));
       return this;
    }
 
@@ -170,9 +164,9 @@ public class RollingUpgradeConfigurationBuilder {
    }
 
    public RollingUpgradeConfiguration build() {
-      return new RollingUpgradeConfiguration(nodeCount, fromVersion, toVersion, name, xSite, jgroupsProtocol, serverCheckTimeSecs,
+      return new RollingUpgradeConfiguration(nodeCount, fromVersion, toVersion, name, jgroupsProtocol, serverCheckTimeSecs,
             useSharedDataMount, serverConfigurationFile, defaultServerConfigurationFile, properties,
-            customArtifacts.toArray(new JavaArchive[0]), mavenArtifacts.toArray(new String[0]), listeners,
+            customArchives.toArray(new JavaArchive[0]), mavenArtifacts.toArray(new String[0]), listeners,
             exceptionHandler, initialHandler, isValidServerState, configurationHandler);
    }
 }

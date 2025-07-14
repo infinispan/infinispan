@@ -23,13 +23,12 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.server.functional.XSiteIT;
+import org.infinispan.server.test.api.TestClientXSiteDriver;
 import org.infinispan.server.test.core.AeshTestConnection;
-import org.infinispan.server.test.core.TestServer;
-import org.infinispan.server.test.junit5.InfinispanXSiteServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * CLI test for 'site' command
@@ -39,8 +38,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  */
 public class XSiteCliOperations {
 
-   @RegisterExtension
-   public static final InfinispanXSiteServerExtension SERVERS = XSiteIT.SERVERS;
+   @InfinispanServer(XSiteIT.class)
+   public static TestClientXSiteDriver SERVERS;
 
    private static File workingDir;
    private static Properties properties;
@@ -165,11 +164,12 @@ public class XSiteCliOperations {
          terminal.assertContains("true");
          terminal.clear();
 
-         // max_site_master is 3 so the relay-nodes is the same as cluster_members
+         // max_site_master is 100 so the relay-nodes is the same as cluster_members
          // method has side effects, invoke before "site relay-nodes"
          List<String> view = extractView(terminal);
 
          terminal.send("site relay-nodes");
+
          view.forEach(terminal::assertContains);
 
          terminal.clear();
@@ -178,7 +178,7 @@ public class XSiteCliOperations {
 
    private void connect(AeshTestConnection terminal, String site) {
       // connect
-      terminal.send("connect " + hostAndPort(site));
+      terminal.send("connect " + SERVERS.hostAndPort(site));
       terminal.assertContains("//containers/default]>");
       terminal.clear();
    }
@@ -187,17 +187,6 @@ public class XSiteCliOperations {
       // connect
       terminal.send("disconnect");
       terminal.clear();
-   }
-
-   private String hostAndPort(String site) {
-      for (TestServer server : SERVERS.getTestServers()) {
-         if (site.equals(server.getSiteName())) {
-            String host = server.getDriver().getServerAddress(0).getHostAddress();
-            int port = server.getDriver().getServerSocket(0, 11222).getPort();
-            return host + ":" + port;
-         }
-      }
-      throw new IllegalStateException("Site " + site + " not found.");
    }
 
    private static List<String> extractView(AeshTestConnection terminal) {
