@@ -3,10 +3,12 @@ name: PMD Static Analysis
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   run-pmd:
-    name: Run PMD with reviewdog (comment-only)
+    name: Run PMD and comment with reviewdog
     runs-on: ubuntu-latest
 
     steps:
@@ -30,20 +32,26 @@ jobs:
       - name: Run PMD
         run: mvn -B pmd:pmd
 
-      - name: Upload PMD Report
+      - name: Upload PMD Reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: pmd-reports
           path: |
-            **/target/site/pmd.xml
             **/target/site/pmd.html
+            **/target/site/pmd.xml
 
-      - name: Comment PMD results via reviewdog
+      - name: Comment PMD violations using reviewdog
         if: github.event_name == 'pull_request'
-        uses: reviewdog/action-pmd@v1
+        uses: reviewdog/action-reviewdog@v5
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          name: pmd
           reporter: github-pr-review
-          level: warning  # or 'info' if you want even softer tone
-          fail_on_error: false  # <- This ensures the job never fails
+          tool_name: pmd
+          level: warning
+          fail_on_error: false
+          filter_mode: diff_context
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          format: pmd
+          # Assume single root XML; if PMD runs in many modules, you might need to merge XMLs or point to one
+          input: core/target/site/pmd.xml
