@@ -149,8 +149,23 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
    @Test(dataProvider = "HttpMethodProvider")
    public void shouldReportInvalidQueries(Method method) throws Exception {
-      CompletionStage<RestResponse> response;
       String wrongQuery = "from Whatever";
+      checkUnknownEntityError(wrongQuery, method);
+   }
+
+   @Test(dataProvider = "HttpMethodProvider")
+   public void shouldReportInvalidQueriesWhenIndexed(Method method) throws Exception {
+      boolean indexingEnabled = cacheManagers.get(0).getCache(cacheName()).getCacheConfiguration().indexing().enabled();
+      String queryStr = "from org.infinispan.rest.search.entity.Address";
+      if (indexingEnabled) {
+         checkUnknownEntityError(queryStr, method);
+      } else {
+         assertZeroHits(query(queryStr, method));
+      }
+   }
+
+   private void checkUnknownEntityError(String wrongQuery, Method method) {
+      CompletionStage<RestResponse> response;
       String path = getPath();
       if (method == POST) {
          response = client.raw().post(path, RestEntity.create(APPLICATION_JSON, "{ \"query\": \"" + wrongQuery + "\"}"));

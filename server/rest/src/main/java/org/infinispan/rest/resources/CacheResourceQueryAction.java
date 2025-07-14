@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import org.hibernate.search.util.common.SearchException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -105,7 +106,7 @@ class CacheResourceQueryAction {
             }
             responseBuilder.entity(queryResultBytes);
             return responseBuilder.build();
-         } catch (IllegalArgumentException | ParsingException | IllegalStateException | CacheException e) {
+         } catch (IllegalArgumentException | SearchException | ParsingException | IllegalStateException | CacheException e) {
             return queryError(request, "Error executing search or query operation", e.getMessage());
          }
       }, invocationHelper.getExecutor());
