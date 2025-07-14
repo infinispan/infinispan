@@ -35,6 +35,13 @@ public interface TestClientXSiteDriver {
    String getMethodName();
 
    /**
+    * Returns
+    * @param siteName
+    * @return
+    */
+   String hostAndPort(String siteName);
+
+   /**
     * Access to the {@link CounterManager} to perform counters operations on tests
     *
     * @return the {@link CounterManager} instance

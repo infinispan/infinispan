@@ -57,6 +57,7 @@ public class CustomInfinispanExtension implements BeforeAllCallback, BeforeEachC
       fields.forEach(f -> {
          try {
             Object is = f.get(null);
+            Class<?> fieldType = f.getType();
             // Means the suite didn't define an extension to use - so inject the default
             if (is == null) {
                Class<? extends InfinispanSuite> suiteClass;
@@ -80,7 +81,7 @@ public class CustomInfinispanExtension implements BeforeAllCallback, BeforeEachC
                List<Field> extensionFields = findAnnotatedFields(suiteClass, RegisterExtension.class,
                      possibleField -> {
                         try {
-                           return ModifierSupport.isStatic(possibleField) && possibleField.get(null) instanceof AbstractServerExtension;
+                           return ModifierSupport.isStatic(possibleField) && fieldType.isAssignableFrom(possibleField.get(null).getClass());
                         } catch (IllegalAccessException e) {
                            return false;
                         }
@@ -88,7 +89,7 @@ public class CustomInfinispanExtension implements BeforeAllCallback, BeforeEachC
                if (extensionFields.size() != 1) {
                   throw new IllegalStateException("Test " + testClass + " was ran without an explicit Suite explicit RegisterExtension and" +
                         " its default suite class " + suiteClass + " doesn't have a single static" +
-                        " @RegisterExtension field that extends AbstractServerExtension, had " + extensionFields);
+                        " @RegisterExtension field that is assignable to type: " + fieldType + ", had " + extensionFields);
                }
                is = extensionFields.get(0).get(null);
                f.set(null, is);

@@ -32,7 +32,7 @@ import org.junit.platform.suite.api.Suite;
 })
 public class XSiteIT extends InfinispanSuite {
 
-   public static final int NUM_SERVERS = 1;
+   public static final int NUM_SERVERS = 2;
 
    public static final String LON_CACHE_CONFIG =
          "<replicated-cache name=\"%s\">" +
@@ -89,9 +89,10 @@ public class XSiteIT extends InfinispanSuite {
          .runMode(ServerRunMode.CONTAINER)
          .numServers(NUM_SERVERS);
 
+   public static final InfinispanXSiteServerExtensionBuilder EXTENSION_BUILDER = new InfinispanXSiteServerExtensionBuilder()
+         .addSite(LON, lonServerRule)
+         .addSite(NYC, nycServerRule);
+
    @RegisterExtension
-   public static final InfinispanXSiteServerExtension SERVERS = new InfinispanXSiteServerExtensionBuilder()
-            .addSite(LON, lonServerRule)
-            .addSite(NYC, nycServerRule)
-            .build();
+   public static final InfinispanXSiteServerExtension SERVERS = EXTENSION_BUILDER.build();
 }

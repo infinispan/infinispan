@@ -127,6 +127,10 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
       return (T) this;
    }
 
+   public String site() {
+      return this.siteName;
+   }
+
    public T portOffset(int port) {
       this.portOffset = port;
       return (T) this;
