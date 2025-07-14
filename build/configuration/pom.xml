@@ -89,7 +89,7 @@
        <version.blockhound>1.0.13.RELEASE</version.blockhound>
       <version.bouncycastle>1.70</version.bouncycastle>
       <version.byteman>4.0.25</version.byteman>
-      <version.caffeine>3.2.1</version.caffeine>
+      <version.caffeine>3.2.2</version.caffeine>
       <version.commons.compress>1.27.1</version.commons.compress>
       <version.console>16.0.0.Final</version.console>
       <version.ehcache.sizeof>0.3.0</version.ehcache.sizeof>
