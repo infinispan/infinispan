@@ -133,6 +133,7 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
          });
          relay2.addSite(remoteSite.getKey(), siteConfig);
       }
+      relay2.enableAddressTagging(true);
    }
 
    private static List<ProtocolConfiguration> combineStack(JGroupsChannelConfigurator baseStack, List<ProtocolConfiguration> stack) {

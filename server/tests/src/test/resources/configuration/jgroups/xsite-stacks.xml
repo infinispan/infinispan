@@ -22,7 +22,7 @@
       <FD_SOCK2 connect_timeout="3000"/>
       <FD_ALL3 timeout="3000"
                interval="1000"/>
-      <relay.RELAY2 site="${relay.site_name}" max_site_masters="3" xmlns="urn:org:jgroups"/>
+      <relay.RELAY2 site="${relay.site_name}" max_site_masters="100" xmlns="urn:org:jgroups"/>
       <remote-sites default-stack="global">
          <remote-site name="LON"/>
          <remote-site name="NYC"/>
@@ -55,7 +55,7 @@
       <FD_SOCK2 connect_timeout="3000"/>
       <FD_ALL3 timeout="3000"
                interval="1000"/>
-      <relay.RELAY2 site="${relay.site_name}" max_site_masters="3" xmlns="urn:org:jgroups"/>
+      <relay.RELAY2 site="${relay.site_name}" max_site_masters="100" xmlns="urn:org:jgroups"/>
       <remote-sites default-stack="global">
          <remote-site name="LON"/>
          <remote-site name="NYC"/>
