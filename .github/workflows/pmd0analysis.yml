@@ -43,7 +43,7 @@ jobs:
 
       - name: Comment PMD violations using reviewdog
         if: github.event_name == 'pull_request'
-        uses: reviewdog/action-reviewdog@v1
+        uses: reviewdog/reviewdog@v1
         with:
           name: pmd
           reporter: github-pr-review
