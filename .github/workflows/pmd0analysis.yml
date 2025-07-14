@@ -29,32 +29,28 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: Install all modules (skip tests)
+      - name: Build all modules (skip tests)
         run: mvn -B clean install -DskipTests
 
-      - name: Run PMD across all modules
-        run: mvn -B pmd:pmd
+      - name: Run PMD
+        run: mvn -B pmd:pmd -Dskip=false -DskipPmd=false
 
-      - name: Upload PMD Reports
+      - name: Upload PMD Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pmd-reports
-          path: |
-            **/target/site/pmd.html
-            **/target/site/pmd.xml
+          name: pmd-report
+          path: core/target/pmd.xml
 
       - name: Install reviewdog
         run: |
           curl -sfL https://raw.githubusercontent.com/reviewdog/reviewdog/master/install.sh | sh -s -- -b ./bin
           echo "$(pwd)/bin" >> $GITHUB_PATH
 
-      - name: Comment PMD findings using reviewdog
+      - name: Comment PMD findings with reviewdog
         if: github.event_name == 'pull_request'
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          find . -name "pmd.xml" | while read file; do
-            ./bin/reviewdog -f=pmd -name="PMD" -reporter=github-pr-review \
-              -fail-on-error=false -level=warning < "$file"
-          done
+          ./bin/reviewdog -f=pmd -name="PMD" -reporter=github-pr-review \
+            -fail-on-error=false -level=warning < core/target/pmd.xml
