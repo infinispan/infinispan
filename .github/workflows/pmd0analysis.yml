@@ -43,7 +43,7 @@ jobs:
 
       - name: Comment PMD violations using reviewdog
         if: github.event_name == 'pull_request'
-        uses: reviewdog/action-reviewdog@v5
+        uses: reviewdog/action-reviewdog@v1
         with:
           name: pmd
           reporter: github-pr-review
@@ -53,5 +53,4 @@ jobs:
           filter_mode: diff_context
           github_token: ${{ secrets.GITHUB_TOKEN }}
           format: pmd
-          # Assume single root XML; if PMD runs in many modules, you might need to merge XMLs or point to one
           input: core/target/site/pmd.xml
