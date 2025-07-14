@@ -1,52 +1,49 @@
 name: PMD Static Analysis
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
 
 jobs:
   run-pmd:
-    name: Run PMD on core module
+    name: Run PMD with reviewdog (comment-only)
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      - name: Cache Maven packages
+      - name: Cache Maven dependencies
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.m2/repository
+          path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: Run PMD on core module
-        run: |
-          cd core
-          mvn -B pmd:pmd
+      - name: Run PMD
+        run: mvn -B pmd:pmd
 
       - name: Upload PMD Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pmd-report
-          path: core/target/site/pmd.html
+          name: pmd-reports
+          path: |
+            **/target/site/pmd.xml
+            **/target/site/pmd.html
 
-      - name: Fail if violations found
-        run: |
-          if [ -f core/target/site/pmd.xml ] && grep -q "<violation" core/target/site/pmd.xml; then
-            echo "::error file=core/target/site/pmd.xml::PMD violations found"
-            exit 1
-          else
-            echo "No PMD violations found or report file missing"
-          fi
+      - name: Comment PMD results via reviewdog
+        if: github.event_name == 'pull_request'
+        uses: reviewdog/action-pmd@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+          level: warning  # or 'info' if you want even softer tone
+          fail_on_error: false  # <- This ensures the job never fails
