@@ -114,6 +114,14 @@ public interface CacheOperationsFactory {
    HotRodOperation<PutStreamResponse> newPutStreamStartOperation(Object key, long version, long lifespan,
                                                                  TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
 
+   /**
+    * Creates a new operation to be used for a stream write operation for a new chunk
+    * @param id the id when first starting the put operationws
+    * @param lastChunk whether this is the last chunk for the value
+    * @param valueBytes the bytes to be appended, the operation will release when written
+    * @param channel the channel this was written from
+    * @return the operation to submit
+    */
    HotRodOperation<Boolean> newPutStreamNextOperation(int id, boolean lastChunk, ByteBuf valueBytes, Channel channel);
 
    PutStreamEndOperation newPutStreamEndOperation(int id);
