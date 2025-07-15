@@ -1,12 +1,4 @@
-package org.infinispan.client.hotrod.query.schema;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
-
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
+package org.infinispan.client.hotrod.admin;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.Programmer;
@@ -35,6 +27,14 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
+
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 @Test(groups = "functional", testName = "org.infinispan.client.hotrod.query.schema.SchemaUpdateMetadataTest")
 @TestForIssue(jiraKey = "ISPN-14527")

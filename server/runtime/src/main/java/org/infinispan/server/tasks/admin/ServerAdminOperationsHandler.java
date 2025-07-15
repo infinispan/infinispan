@@ -10,6 +10,7 @@ import org.infinispan.server.core.admin.embeddedserver.CacheUpdateConfigurationA
 import org.infinispan.server.core.admin.embeddedserver.CacheUpdateIndexSchemaTask;
 import org.infinispan.server.core.admin.embeddedserver.TemplateCreateTask;
 import org.infinispan.server.core.admin.embeddedserver.TemplateRemoveTask;
+import org.infinispan.server.core.admin.embeddedserver.ValidateSafeSchemaDeleteTask;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -38,7 +39,8 @@ public class ServerAdminOperationsHandler extends AdminOperationsHandler {
                new LoggingSetTask(),
                new LoggingRemoveTask(),
                new TemplateCreateTask(),
-               new TemplateRemoveTask()
+               new TemplateRemoveTask(),
+               new ValidateSafeSchemaDeleteTask()
          };
       } else {
          return generateTasksWithoutLogging();
@@ -58,7 +60,8 @@ public class ServerAdminOperationsHandler extends AdminOperationsHandler {
             new CacheUpdateConfigurationAttributeTask(),
             new CacheUpdateIndexSchemaTask(),
             new TemplateCreateTask(),
-            new TemplateRemoveTask()
+            new TemplateRemoveTask(),
+            new ValidateSafeSchemaDeleteTask()
       };
    }
 }

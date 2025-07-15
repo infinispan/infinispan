@@ -3,6 +3,7 @@ package org.infinispan.manager;
 import javax.security.auth.Subject;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.admin.SchemasAdministration;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -116,4 +117,6 @@ public interface EmbeddedCacheManagerAdmin extends CacheContainerAdmin<EmbeddedC
     * @param value the new value to apply to the attribute
     */
    void updateConfigurationAttribute(String cacheName, String attribute, String value);
+
+   SchemasAdministration schemas();
 }

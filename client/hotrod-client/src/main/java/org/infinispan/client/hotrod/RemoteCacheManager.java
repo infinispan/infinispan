@@ -677,6 +677,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
     *
     * @return an instance of {@link RemoteCacheManagerAdmin} which can perform administrative operations on the server.
     */
+   @Override
    public RemoteCacheManagerAdmin administration() {
       return new RemoteCacheManagerAdminImpl(this, managerOpFactory, dispatcher, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class), this::stopCache);
    }

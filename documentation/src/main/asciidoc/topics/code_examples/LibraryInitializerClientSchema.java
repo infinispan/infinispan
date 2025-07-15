@@ -2,19 +2,17 @@
  * Register generated Protobuf schema with {brandname} Server.
  * This requires the RemoteCacheManager to be initialized.
  *
- * @param initializer The serialization context initializer for the schema.
+ * @param schema The schema to be registered. Can be a {@link GeneratedSchema } or a programmatic one.
+ * See {@link SerializationContextInitialiser}
  */
-private void registerSchemas(SerializationContextInitializer initializer) {
-  // Store schemas in the '___protobuf_metadata' cache to register them.
-  // Using ProtobufMetadataManagerConstants might require the query dependency.
-  final RemoteCache<String, String> protoMetadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-  // Add the generated schema to the cache.
-  protoMetadataCache.put(initializer.getProtoFileName(), initializer.getProtoFile());
+private void registerSchemas(Schema schema) {
+  SchemasAdministration schemas = remoteCacheManager.administration().schemas();
+  schemas.create(schema);
 
   // Ensure the registered Protobuf schemas do not contain errors.
   // Throw an exception if errors exist.
-  String errors = protoMetadataCache.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX);
-  if (errors != null) {
-    throw new IllegalStateException("Some Protobuf schema files contain errors: " + errors + "\nSchema :\n" + initializer.getProtoFileName());
+  Optional<String> error = schemas.retrieveError(schema.getName())
+  if (error.isPresent()) {
+    throw new IllegalStateException("The schema contains an error: " + error.get() + "\nSchema :\n" + schema.getName());
   }
 }

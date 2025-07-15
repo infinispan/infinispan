@@ -11,6 +11,7 @@ import java.util.concurrent.CompletionStage;
 import javax.security.auth.Subject;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.admin.SchemasAdministration;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -152,5 +153,10 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
       newFlags.add(AdminFlag.UPDATE);
       return clusterConfigurationManager.getOrCreateCache(assigned.getName(), configuration, newFlags)
             .thenApply(CompletableFutures.toNullFunction());
+   }
+
+   @Override
+   public SchemasAdministration schemas() {
+      return new EmbeddedSchemasAdmin();
    }
 }

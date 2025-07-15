@@ -2,7 +2,6 @@ package org.infinispan.query.remote.impl;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
-import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 
 import javax.management.ObjectName;
 
@@ -107,7 +106,7 @@ public final class LifecycleManager implements ModuleLifecycle {
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
       BasicComponentRegistry gcr = cr.getGlobalComponentRegistry().getComponent(BasicComponentRegistry.class);
       LocalQueryStatistics queryStatistics = cr.getComponent(LocalQueryStatistics.class);
-      if (PROTOBUF_METADATA_CACHE_NAME.equals(cacheName)) {
+      if (InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME.equals(cacheName)) {
          // a protobuf metadata cache is starting, need to register the interceptor
          ProtobufMetadataManagerImpl protobufMetadataManager =
                (ProtobufMetadataManagerImpl) gcr.getComponent(ProtobufMetadataManager.class).running();

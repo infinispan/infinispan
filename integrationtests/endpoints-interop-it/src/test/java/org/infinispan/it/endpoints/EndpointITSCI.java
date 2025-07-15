@@ -1,7 +1,7 @@
 package org.infinispan.it.endpoints;
 
 import org.infinispan.client.hotrod.event.CustomEventLogListener;
-import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.annotations.ProtoSchema;
 
 @ProtoSchema(
@@ -16,7 +16,7 @@ import org.infinispan.protostream.annotations.ProtoSchema;
       schemaPackageName = EndpointITSCI.PACKAGE_NAME,
       service = false
 )
-public interface EndpointITSCI extends SerializationContextInitializer {
+public interface EndpointITSCI extends GeneratedSchema {
    String PACKAGE_NAME = "org.infinispan.test.endpoint.it";
    EndpointITSCI INSTANCE = new EndpointITSCIImpl();
 

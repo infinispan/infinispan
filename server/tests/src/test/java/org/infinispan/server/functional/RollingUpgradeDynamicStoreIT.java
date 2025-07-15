@@ -3,7 +3,6 @@ package org.infinispan.server.functional;
 import static org.infinispan.client.rest.RestResponse.NOT_FOUND;
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
-import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
@@ -16,6 +15,7 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.RemoteServerConfiguration;
@@ -34,6 +34,7 @@ public class RollingUpgradeDynamicStoreIT extends AbstractMultiClusterIT {
 
    protected static final String CACHE_NAME = "rolling";
    protected static final int ENTRIES = 50;
+   static final String PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME = InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME;
 
    @BeforeEach
    public void before() {
@@ -71,29 +72,29 @@ public class RollingUpgradeDynamicStoreIT extends AbstractMultiClusterIT {
       populateCache(CACHE_NAME, restClientSource);
 
       // Connect target cluster to the source cluster
-      assertSourceDisconnected(PROTOBUF_METADATA_CACHE_NAME);
+      assertSourceDisconnected(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME);
       assertSourceDisconnected(CACHE_NAME);
-      connectTargetCluster(PROTOBUF_METADATA_CACHE_NAME);
+      connectTargetCluster(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME);
       connectTargetCluster(CACHE_NAME);
-      assertSourceConnected(PROTOBUF_METADATA_CACHE_NAME);
+      assertSourceConnected(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME);
       assertSourceConnected(CACHE_NAME);
 
       // Make sure data is accessible from the target cluster
-      assertStatus(NO_CONTENT, restClientTarget.cache(PROTOBUF_METADATA_CACHE_NAME).exists());
+      assertStatus(NO_CONTENT, restClientTarget.cache(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME).exists());
       assertEquals("name-13", getPersonName("13", restClientTarget));
 
       // Do a rolling upgrade from the target
-      doRollingUpgrade(PROTOBUF_METADATA_CACHE_NAME, restClientTarget);
+      doRollingUpgrade(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME, restClientTarget);
       doRollingUpgrade(CACHE_NAME, restClientTarget);
 
       // Do a second rolling upgrade, should be harmless and simply override the data
-      doRollingUpgrade(PROTOBUF_METADATA_CACHE_NAME, restClientTarget);
+      doRollingUpgrade(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME, restClientTarget);
       doRollingUpgrade(CACHE_NAME, restClientTarget);
 
       // Disconnect source from the remote store
-      disconnectSource(PROTOBUF_METADATA_CACHE_NAME, restClientTarget);
+      disconnectSource(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME, restClientTarget);
       disconnectSource(CACHE_NAME, restClientTarget);
-      assertSourceDisconnected(PROTOBUF_METADATA_CACHE_NAME);
+      assertSourceDisconnected(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME);
       assertSourceDisconnected(CACHE_NAME);
 
       // Stop source cluster
@@ -104,7 +105,7 @@ public class RollingUpgradeDynamicStoreIT extends AbstractMultiClusterIT {
          RestClient restClient = target.getClient(i);
          assertEquals(ENTRIES, getCacheSize(CACHE_NAME, restClient));
          assertEquals("name-35", getPersonName("35", restClient));
-         assertStatus(NO_CONTENT, restClient.cache(PROTOBUF_METADATA_CACHE_NAME).exists());
+         assertStatus(NO_CONTENT, restClient.cache(PROTOBUF_SCHEMAS_INTERNAL_CACHE_NAME).exists());
       }
    }
 
