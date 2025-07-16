@@ -175,7 +175,7 @@
       <!-- used by the opentelemetry autoconfigure module as incubator runtime dependency -->
       <version.opentelemetry.alpha>1.39.0-alpha</version.opentelemetry.alpha>
 
-      <version.smallrye-mutiny>2.9.2</version.smallrye-mutiny>
+      <version.smallrye-mutiny>2.9.3</version.smallrye-mutiny>
       <!-- Spring 6, Spring Boot 3 versions -->
       <version.spring>6.2.8</version.spring>
       <version.spring.boot>3.5.3</version.spring.boot>
