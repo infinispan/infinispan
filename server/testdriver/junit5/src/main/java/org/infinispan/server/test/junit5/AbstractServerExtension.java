@@ -111,12 +111,16 @@ public abstract class AbstractServerExtension implements BeforeAllCallback, Afte
 
    @Override
    public final void beforeAll(ExtensionContext context) throws Exception {
+      Class<?> testClass = context.getRequiredTestClass();
       try {
          initSuiteClasses(context);
 
          // Inject all classes that are using a static @InfinispanServer(ClusteredIT.class) field.
-         Class<?> testClass = context.getRequiredTestClass();
-         log.infof("Starting test suite: %s for test %s", suite, testClass);
+         if (suite != null) {
+            log.infof("Starting test suite: %s for test %s", suite, testClass);
+         } else {
+            log.infof("Starting test %s", testClass);
+         }
 
          injectExtension(testClass, this);
 
@@ -128,7 +132,11 @@ public abstract class AbstractServerExtension implements BeforeAllCallback, Afte
          }
          onTestsStart(context);
       } catch (Throwable t) {
-         Assertions.fail(String.format("Failed during '%s#beforeAll' suite execution", suite.getName()), t);
+         if (suite != null) {
+            Assertions.fail(String.format("Failed during '%s#beforeAll' suite execution", suite.getName()), t);
+         } else {
+            Assertions.fail(String.format("Failed during '%s#afterAll' execution", testClass), t);
+         }
       }
    }
 
@@ -136,15 +144,24 @@ public abstract class AbstractServerExtension implements BeforeAllCallback, Afte
 
    @Override
    public final void afterAll(ExtensionContext context) {
+      String testName = String.valueOf(context.getTestClass().orElse(null));
       try {
-         log.infof("Finishing suite: %s for test %s", suite, context.getTestClass().orElse(null));
+         if (suite != null) {
+            log.infof("Finishing suite: %s for test %s", suite, testName);
+         } else {
+            log.infof("Finishing test %s", testName);
+         }
          cleanupSuiteClasses(context);
          // Only stop the extension resources when all tests in a Suite have been completed
          if (suiteTestClasses.isEmpty()) {
             onTestsComplete(context);
          }
       } catch (Throwable t) {
-         Assertions.fail(String.format("Failed during '%s#afterAll' suite execution", suite.getName()), t);
+         if (suite != null) {
+            Assertions.fail(String.format("Failed during '%s#afterAll' suite execution", suite.getName()), t);
+         } else {
+            Assertions.fail(String.format("Failed during '%s#afterAll' execution", testName), t);
+         }
       }
    }
 
