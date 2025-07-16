@@ -91,7 +91,7 @@
       <version.byteman>4.0.25</version.byteman>
       <version.caffeine>3.2.2</version.caffeine>
       <version.commons.compress>1.27.1</version.commons.compress>
-      <version.console>16.0.0.Final</version.console>
+      <version.console>16.0.1.Final</version.console>
       <version.ehcache.sizeof>0.3.0</version.ehcache.sizeof>
       <version.fabric8.kubernetes-client>6.14.0</version.fabric8.kubernetes-client>
       <version.gdx-jnigen-loader>2.5.2</version.gdx-jnigen-loader>
