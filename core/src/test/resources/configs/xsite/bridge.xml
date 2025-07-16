@@ -14,8 +14,6 @@
          thread_pool.keep_alive_time="5s"
 
          use_vthreads="${jgroups.thread.virtual,org.infinispan.threads.virtual:true}"
-
-         enable_suspect_events="true"
     />
     <RED/>
 
