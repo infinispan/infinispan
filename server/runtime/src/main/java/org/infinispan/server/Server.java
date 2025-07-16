@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.management.ManagementFactory;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -211,7 +212,6 @@ public class Server extends BaseServerManagement implements AutoCloseable {
    private final File serverHome;
    private final File serverRoot;
    private final File serverConf;
-   private final long startTime;
    private final Properties properties;
    private final LoggingAuditLogger defaultAuditLogger = new LoggingAuditLogger();
    private final CompletableFuture<Void> cacheManagerStart = new CompletableFuture<>();
@@ -262,7 +262,6 @@ public class Server extends BaseServerManagement implements AutoCloseable {
    private Server(File serverRoot, Properties properties) {
       this.classLoader = Thread.currentThread().getContextClassLoader();
       this.timeService = DefaultTimeService.INSTANCE;
-      this.startTime = timeService.time();
       this.serverHome = new File(properties.getProperty(INFINISPAN_SERVER_HOME_PATH, ""));
       this.serverRoot = serverRoot;
       this.properties = properties;
@@ -530,12 +529,19 @@ public class Server extends BaseServerManagement implements AutoCloseable {
             // Change status
             this.status = ComponentStatus.RUNNING;
             SecurityActions.postStartProtocolServer(protocolServers.values());
-            log.serverStarted(Version.getBrandName(), Version.getBrandVersion(), timeService.timeDuration(startTime, TimeUnit.MILLISECONDS));
+            log.serverStarted(Version.getBrandName(), Version.getBrandVersion(), uptime());
+            if (Boolean.getBoolean("infinispan.shutdown.immediately")) {
+               r.complete(ExitStatus.SERVER_SHUTDOWN);
+            }
          });
       } catch (Exception e) {
          r.completeExceptionally(e);
       }
       return exit;
+   }
+
+   private long uptime() {
+      return ManagementFactory.getRuntimeMXBean().getUptime();
    }
 
    @Override
