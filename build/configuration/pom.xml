@@ -168,7 +168,7 @@
       <version.latencyutils>2.0.3</version.latencyutils>
 
       <version.quarkus>3.15.3</version.quarkus>
-      <version.graalvm>24.2.1</version.graalvm>
+      <version.graalvm>24.2.2</version.graalvm>
       <version.jandex>3.3.2</version.jandex>
 
       <version.opentelemetry>1.39.0</version.opentelemetry>
