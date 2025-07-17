@@ -260,7 +260,7 @@ public interface PersistenceManager extends Lifecycle {
          }
       },
       /**
-       * The operation is performed only in a {@link NonBlockingStore that has async write behind.
+       * The operation is performed only in a {@link NonBlockingStore} that has async write behind.
        */
       ASYNC {
          @Override
