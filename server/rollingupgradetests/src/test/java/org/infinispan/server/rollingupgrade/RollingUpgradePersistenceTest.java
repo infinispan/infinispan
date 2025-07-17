@@ -36,7 +36,8 @@ public class RollingUpgradePersistenceTest {
             </distributed-cache>
             """.formatted(cacheName);
 
-      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(RollingUpgradePersistenceTest.class.getName(), "15.2.0.Final", "15.2.1.Final")
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(RollingUpgradePersistenceTest.class.getName(),
+            RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion())
             .nodeCount(nodeCount);
       builder.handlers(
             uh -> handleInitializer(uh, cacheName, new StringConfiguration(xml)),

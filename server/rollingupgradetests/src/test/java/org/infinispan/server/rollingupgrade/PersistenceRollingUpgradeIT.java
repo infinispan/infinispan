@@ -22,5 +22,6 @@ public class PersistenceRollingUpgradeIT extends InfinispanSuite {
 
    @RegisterExtension
    public static RollingUpgradeHandlerExtension SERVERS =
-         RollingUpgradeHandlerExtension.from(PersistenceRollingUpgradeIT.class, PersistenceIT.EXTENSION_BUILDER, "15.2.0.Final", "15.2.1.Final");
+         RollingUpgradeHandlerExtension.from(PersistenceRollingUpgradeIT.class, PersistenceIT.EXTENSION_BUILDER,
+               RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion());
 }
