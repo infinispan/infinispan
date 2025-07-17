@@ -429,6 +429,8 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       if (Boolean.parseBoolean(isCoverageEnabled)) {
          javaOpts = javaOpts == null ? "-javaagent:/opt/infinispan/server/lib/org.jacoco.agent-0.8.12-runtime.jar=output=file,destfile=" + JACOCO_COVERAGE_CONTAINER_PATH + ",append=true"
                  : javaOpts + " " + "-javaagent:/opt/infinispan/server/lib/org.jacoco.agent-0.8.12-runtime.jar=output=file,destfile=" + JACOCO_COVERAGE_CONTAINER_PATH + ",append=true";
+         // Code coverage requires more metaspace when the base image only has 96MB by default
+         container.withEnv("JAVA_GC_MAX_METASPACE_SIZE", "512M");
       }
 
       if (javaOpts != null) {
