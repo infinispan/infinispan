@@ -417,12 +417,6 @@
  *          <td>The {@link org.infinispan.client.hotrod.configuration.NearCacheConfigurationBuilder#maxEntries(int) maximum} number of entries to keep in the local cache. It is preferable to use the per-cache configuration.</td>
  *       </tr>
  *       <tr>
- *          <td><b><s>infinispan.client.hotrod.near_cache.name_pattern</s></b></td>
- *          <td>String (regex pattern, see {@link java.util.regex.Pattern})</td>
- *          <td>null (matches all cache names)</td>
- *          <td>A {@link org.infinispan.client.hotrod.configuration.NearCacheConfigurationBuilder#cacheNamePattern(String) regex} which matches caches for which near-caching should be enabled. This property is deprecated and it is preferable to use the per-cache configuration.</td>
- *       </tr>
- *       <tr>
  *          <th colspan="4">Cross-site replication properties</th>
  *       </tr>
  *       <tr>
