@@ -1737,7 +1737,7 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="replicate-puts" type="xs:boolean" default="false">
+        <xs:attribute name="replicate-puts" type="xs:boolean" default="true">
           <xs:annotation>
             <xs:documentation>
                 If true, cache entries are replicated to all nodes in the cluster when they are put into the cache.
