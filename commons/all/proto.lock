@@ -1,48 +1,5 @@
 {
   "definitions" : [ {
-    "protopath" : "generated:/:user.commons.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "NullValue",
-        "type_id" : 128,
-        "fields" : [ ]
-      } ],
-      "package" : {
-        "name" : "org.infinispan.commons"
-      }
-    }
-  }, {
-    "protopath" : "generated:/:global.commons.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "KeyValueWithPrevious",
-        "fields" : [ {
-          "id" : 1,
-          "name" : "wrappedKey",
-          "type" : "org.infinispan.protostream.WrappedMessage",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "wrappedValue",
-          "type" : "org.infinispan.protostream.WrappedMessage",
-          "optional" : true
-        }, {
-          "id" : 3,
-          "name" : "wrappedPrev",
-          "type" : "org.infinispan.protostream.WrappedMessage",
-          "optional" : true
-        } ]
-      } ],
-      "imports" : [ {
-        "path" : "org/infinispan/protostream/message-wrapping.proto"
-      } ],
-      "package" : {
-        "name" : "org.infinispan.global.commons"
-      }
-    }
-  }, {
     "protopath" : "generated:/:persistence.commons.proto",
     "def" : {
       "enums" : [ {
@@ -159,6 +116,49 @@
       } ],
       "package" : {
         "name" : "org.infinispan.persistence.commons"
+      }
+    }
+  }, {
+    "protopath" : "generated:/:global.commons.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "KeyValueWithPrevious",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "wrappedKey",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "wrappedValue",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "wrappedPrev",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "org/infinispan/protostream/message-wrapping.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.global.commons"
+      }
+    }
+  }, {
+    "protopath" : "generated:/:user.commons.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "NullValue",
+        "type_id" : 128,
+        "fields" : [ ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.commons"
       }
     }
   } ]
