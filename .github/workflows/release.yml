@@ -163,6 +163,6 @@ jobs:
     uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@main
     secrets: inherit
     with:
-      image: quay.io/infinispan/server:${{ github.ref_name }}
+      image: quay.io/infinispan/server:${{ github.event.inputs.version }}
       ref: main
       repository: infinispan/infinispan-operator
