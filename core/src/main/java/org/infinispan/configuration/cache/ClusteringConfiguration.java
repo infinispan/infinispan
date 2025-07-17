@@ -19,9 +19,11 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
    public static final AttributeDefinition<Boolean> CACHE_SYNC = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MODE, true, Boolean.class).immutable().autoPersist(false).build();
    public static final AttributeDefinition<TimeQuantity> REMOTE_TIMEOUT =
          AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.REMOTE_TIMEOUT, TimeQuantity.valueOf("15s")).parser(TimeQuantity.PARSER).build();
+   public static final AttributeDefinition<Boolean> REPLICATE_PUTS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.REPLICATE_PUTS, false, Boolean.class).immutable().autoPersist(false).build();
+
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(ClusteringConfiguration.class, CACHE_TYPE, CACHE_SYNC, REMOTE_TIMEOUT);
+      return new AttributeSet(ClusteringConfiguration.class, CACHE_TYPE, CACHE_SYNC, REMOTE_TIMEOUT, REPLICATE_PUTS);
    }
 
    private final CacheMode cacheMode;
@@ -30,6 +32,7 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
    private final L1Configuration l1Configuration;
    private final StateTransferConfiguration stateTransferConfiguration;
    private final PartitionHandlingConfiguration partitionHandlingConfiguration;
+   private final Attribute<Boolean> replicatePuts;
 
    ClusteringConfiguration(AttributeSet attributes, HashConfiguration hashConfiguration,
                            L1Configuration l1Configuration, StateTransferConfiguration stateTransferConfiguration,
@@ -41,6 +44,7 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
       this.l1Configuration = l1Configuration;
       this.stateTransferConfiguration = stateTransferConfiguration;
       this.partitionHandlingConfiguration  = partitionHandlingStrategy;
+      this.replicatePuts = attributes.attribute(REPLICATE_PUTS);
    }
 
    /**
@@ -100,4 +104,11 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
    public StateTransferConfiguration stateTransfer() {
       return stateTransferConfiguration;
    }
+
+    /**
+     * If true, puts are replicated to all nodes in the cluster. If false, puts are not replicated.
+     */
+    public boolean replicatePuts() {
+       return replicatePuts.get();
+    }
 }

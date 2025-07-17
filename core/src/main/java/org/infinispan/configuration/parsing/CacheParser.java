@@ -768,6 +768,10 @@ public class CacheParser implements ConfigurationParser {
             builder.clustering().remoteTimeout(value);
             break;
          }
+         case REPLICATE_PUTS: {
+            builder.clustering().replicatePuts(value);
+            break;
+         }
          default: {
             this.parseCacheAttribute(reader, index, attribute, value, builder);
          }
